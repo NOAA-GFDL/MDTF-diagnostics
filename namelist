@@ -8,7 +8,7 @@
 # entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
 
 CASE QBOi.EXP1.AMIP.001 CESM 1977 1981
-#CASE GFDL.CM4.c96L32.am4g10r8 AM4 1977 1981
+#CASE GFDL.CM4.c96L32.am4g10r8 CM4 1977 1981
 
 # List all desired packages with POD tag at the start of the line
 # Comment out any with # at start of line

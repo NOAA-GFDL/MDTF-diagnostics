@@ -1,3 +1,40 @@
+# MDTF-diagnostics
+
+Analysis framework and collection of process-oriented diagnostics for weather and climate simulations
+
+The MDTF diagnostic package is portable, extensible, usable, and open for contribution from the community. A goal is to allow diagnostics to be repeatable inside, or outside, of modeling center workflows. These are diagnostics focused on model improvement, and as such a slightly different focus from other efforts. The code runs on CESM model output, as well as on GFDL and CF-compliant model output.
+
+
+The MDTF Diagnostic Framework consists of multiple modules, each of which is developed by an individual research group or user. Modules are independent of each other, each module:
+
+1. Produces its own html file (webpage) as the final product
+2. Consists of a set of process-oriented diagnostics
+3. Produces a figures or multiple figures that can be displayed by the html in a browser
+
+## Diagnostics in Package
+Follow the links in the table below to view sample output, including a brief description 
+and a link to the full documentation for each diagnostic.
+| header 1 | header 2 |
+| -------- | -------- |
+| cell 1   | cell 2   |
+| cell 3   | cell 4   |
+| cell 3   | cell 4   |
+| cell 3   | cell 4   |
+| cell 3   | cell 4   |
+| cell 3   | cell 4   |
+| cell 3   | cell 4   |
+
+## Sample Output Webpage
+Latest complete package on a CESM-CAM run
+
+
+## Downloading and Running
+
+## Developer's Information
+
+
+
+
 <div class="row">
 <div class="col-lg-8">
 <div class="post-image">

@@ -1,0 +1,139 @@
+Only in var_code/MJO_teleconnection/: .diff.old.new
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_diag_EWR_MDTF.ncl var_code/MJO_teleconnection/mjo_diag_EWR_MDTF.ncl
+27,30c27,30
+<    ymdStrt = getenv("strtdy")                         ; start yyyymmdd
+<    ymdLast = getenv("lastdy") 
+<    yrStrt  = tointeger(ymdStrt)/10000
+<    yrLast  = tointeger(ymdLast)/10000
+---
+>    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
+>    ymdLast = tointeger(getenv("lastdy")) 
+>    yrStrt  = ymdStrt/10000
+>    yrLast  = ymdLast/10000
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_diag_geop_hgt_comp_MDTF.ncl var_code/MJO_teleconnection/mjo_diag_geop_hgt_comp_MDTF.ncl
+31,34c31,34
+<    ymdStrt = getenv("strtdy")                         ; start yyyymmdd
+<    ymdLast = getenv("lastdy") 
+<    yrStrt  = tointeger(ymdStrt)/10000
+<    yrLast  = tointeger(ymdLast)/10000
+---
+>    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
+>    ymdLast = tointeger(getenv("lastdy")) 
+>    yrStrt  = ymdStrt/10000
+>    yrLast  = ymdLast/10000
+94,95c94,96
+<   print(yeart(iStrt))
+<   print(yeart(iLast))
+---
+> 
+> ;  print(yeart(iStrt))
+> ;  print(yeart(iLast))
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_diag_prec_comp_MDTF.ncl var_code/MJO_teleconnection/mjo_diag_prec_comp_MDTF.ncl
+28,31c28,31
+<    ymdStrt = getenv("strtdy")                         ; start yyyymmdd
+<    ymdLast = getenv("lastdy") 
+<    yrStrt  = tointeger(ymdStrt)/10000
+<    yrLast  = tointeger(ymdLast)/10000
+---
+>    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
+>    ymdLast = tointeger(getenv("lastdy")) 
+>    yrStrt  = ymdStrt/10000
+>    yrLast  = ymdLast/10000
+67c67
+<    
+---
+> 
+92,93c92
+<   print(yeart(iStrt))
+<   print(yeart(iLast))
+---
+> 
+109a109,110
+>   print("time indices "+iStrt+" "+iLast+" "+ymd(iStrt)+" "+ymd(iLast))
+>   printVarSummary(pr)
+111c112
+<   H_all = pr(iStrt:iLast,:,:)
+---
+>   H_all = pr(:,:,:)
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_diag_RMM_MDTF.ncl var_code/MJO_teleconnection/mjo_diag_RMM_MDTF.ncl
+65,69c65,68
+<    ymdStrt = getenv("strtdy")                         ; start yyyymmdd
+<    ymdLast = getenv("lastdy") 
+<    yrStrt  = tointeger(ymdStrt)/10000
+<    yrLast  = tointeger(ymdLast)/10000
+< 
+---
+>    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
+>    ymdLast = tointeger(getenv("lastdy")) 
+>    yrStrt  = ymdStrt/10000
+>    yrLast  = ymdLast/10000
+103d101
+< 
+111,112c109,110
+<    print(yeart(iStrt))
+<    print(yeart(iLast))
+---
+>     
+>     print("Date range from year "+yeart(iStrt)+" to "+yeart(iLast))
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_diag_U250_MDTF.ncl var_code/MJO_teleconnection/mjo_diag_U250_MDTF.ncl
+22,25c22,25
+<    ymdStrt = getenv("strtdy")                         ; start yyyymmdd
+<    ymdLast = getenv("lastdy") 
+<    yrStrt  = tointeger(ymdStrt)/10000
+<    yrLast  = tointeger(ymdLast)/10000
+---
+>    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
+>    ymdLast = tointeger(getenv("lastdy")) 
+>    yrStrt  = ymdStrt/10000
+>    yrLast  = ymdLast/10000
+92a93
+> 
+95a97
+> 
+107,108c109
+<   utc_date = cd_calendar((b->time), 0)
+< 
+---
+>   utc_date = cd_calendar((b->time(iStrt:iLast)), 0)
+113c114
+<   delete(utc_date)
+---
+> ;  delete(utc_date)
+124c125
+<     DJF_days = ind((month .le. 2 .or. month .eq. 12) .and. (.not.(month .eq. 2 .and. days .eq. 29) .and. (.not.(year .eq. year(0) .and. month .le. 2)) .and. (.not.(year .eq. year(dimsizes(year)-1) .and. month .eq. 12))))
+---
+>     DJF_days = ind((month .le. 2 .or. month .eq. 12) .and. (.not.(month .eq. 2 .and. days .eq. 29) .and. (.not.(year .eq. year(0) .and. month .le. 2)) .and. (.not.(year .eq. max(year) .and. month .eq. 12))))
+127c128,131
+<   print("Total Seasons : " + dimsizes(DJF_days)/90)
+---
+> 
+> ;debug  date_str =  sprinti("%0.4i", year(DJF_days)) +  sprinti("%0.2i",month(DJF_days)) +sprinti("%0.2i ", days(DJF_days))
+>  ; print(date_str)
+> 
+Only in var_code/MJO_teleconnection/: mjo_diag_U250_MDTF.ncl_work
+diff -r ../MDTF_20180920.orig/var_code/MJO_teleconnection/mjo_teleconnection.py var_code/MJO_teleconnection/mjo_teleconnection.py
+75a76
+>       print("Calling ",nclPlotFile)
+88c89
+< print("    Execution of MJO Teleconnection Daignotics is started from here")
+---
+> print("    Execution of MJO Teleconnection Diagnotics is started from here")
+152c153
+<       os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
+---
+>    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
+158,159c159,161
+<       os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
+<   
+---
+>    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
+>       
+> 
+163c165
+<    a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO")
+---
+>    a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_teleconnection")
+Only in ../MDTF_20180920.orig/var_code/MJO_teleconnection/: mjo_teleconnection.py~
+Only in ../MDTF_20180920.orig/var_code/MJO_teleconnection/: varlist.~1~
+Only in ../MDTF_20180920.orig/var_code/MJO_teleconnection/: varlist.~2~
+Only in var_code/MJO_teleconnection/: versions

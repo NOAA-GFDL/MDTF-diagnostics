@@ -1,7 +1,4 @@
 # MDTF-diagnostics
-
-Analysis framework and collection of process-oriented diagnostics for weather and climate simulations
-
 The MDTF diagnostic package is portable, extensible, usable, and open for contribution from the community. A goal is to allow diagnostics to be repeatable inside, or outside, of modeling center workflows. These are diagnostics focused on model improvement, and as such a slightly different focus from other efforts. The code runs on CESM model output, as well as on GFDL and CF-compliant model output.
 
 
@@ -14,132 +11,41 @@ The MDTF Diagnostic Framework consists of multiple modules, each of which is dev
 ## Diagnostics in Package
 Follow the links in the table below to view sample output, including a brief description 
 and a link to the full documentation for each diagnostic.
-| header 1 | header 2 |
-| -------- | -------- |
-| cell 1   | cell 2   |
-| cell 3   | cell 4   |
-| cell 3   | cell 4   |
-| cell 3   | cell 4   |
-| cell 3   | cell 4   |
-| cell 3   | cell 4   |
-| cell 3   | cell 4   |
+
+| Diagnostic | Contributor |
+| :-------- | :-------- |
+| [Convective Transition Diagnostics](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html)  | J. David Neelin (UCLA)  |
+|[MJO Teleconnections](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_teleconnection/MJO_teleconnection.html)   | Eric Maloney (CSU)   |
+| [Extratropical Variance (EOF 500hPa Height)](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/EOF_500hPa/EOF_500hPa.html)   |CESM/AMWG (NCAR)  |
+| [Wavenumber-Frequency Spectra](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html) | CESM/AMWG (NCAR) |
+| [MJO Spectra and Phasing](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_suite/MJO_suite.html)  | CESM/AMWG (NCAR)  |
+| [Diurnal Cycle of Precipitation](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html)  | Rich Neale (NCAR)   |
+| [MJO Propagation and Amplitude ](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html) (example with GFDL CM4 data)  | Xianan Jiang (UCLA)  |
+| [AMOC 3D structure ](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html) (implementation in progress, example with GFDL CM2 model data)  | Xiaobiao Xu (FSU/COAPS)   |
+| [ENSO Moist Static Energy budget](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_CCSM4/MSE_diag/MSE_diag.html) (implementation in progress, example with CCSM4 data)  | Hariharasubramanian Annamalai (U. Hawaii)  |
+| [Warm Rain Microphysics](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation) (implementation in progress) | Kentaroh Suzuki (AORI, U. Tokyo)  |
+
 
 ## Sample Output Webpage
-Latest complete package on a CESM-CAM run
+[Latest complete package based on a CESM-CAM run](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save)
 
 
 ## Downloading and Running
+- [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf)
+
+- [Latest code](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.var_code.tar) (2 MB) 
+
+- [Pre-digested observational data](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (300 MB) 
+
+- Sample model data
+
+    - [NCAR-CESM-CAM](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
+
+    - [NOAA-GFDL-CM4](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G) For MJO_prop_amp module
 
 ## Developer's Information
+[Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf)
 
+## Disclaimer
+The United States Department of Commerce (DOC) GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. DOC has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any claims against the Department of Commerce stemming from the use of its GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
 
-
-
-<div class="row">
-<div class="col-lg-8">
-<div class="post-image">
-<div class="post-heading">
-<h1>MDTF-diagnostics</h1>
-</div>
-</div>
-The MDTF diagnostic package is portable, extensible, usable, and open for contribution from the community. A goal is to allow diagnostics to be repeatable inside, or outside, of modeling center workflows. These are diagnostics focused on model improvement, and as such a slightly different focus from other efforts. The code runs on CESM model output, as well as on GFDL and CF-compliant model output.
-
-The MDTF Diagnostic Framework consists of multiple modules, each of which is developed by an individual research group or user. Modules are independent of each other, each module:
-<ol type="1">
- 	<li>Produces its own html file (webpage) as the final product</li>
- 	<li>Consists of a set of process-oriented diagnostics</li>
- 	<li>Produces a figures or multiple figures that can be displayed by the html in a browser</li>
-</ol>
-
-<h2>Diagnostics in Package</h2>
-<div class="post-border-bottom">
-
-Follow the links in the table below to view sample output, including a brief description and a link to the full documentation for each diagnostic.
-<table class="table table-striped sort">
-<thead>
-<tr>
-<th class="header">Diagnostic</th>
-<th class="header">Contributor</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html">Convective Transition Diagnostics</a></td>
-<td>J. David Neelin (UCLA)</td>
-</tr>
-<tr class="even">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_teleconnection/MJO_teleconnection.html">MJO Teleconnections</a></td>
-<td>Eric Maloney (CSU)</td>
-</tr>
-<tr class="odd">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/EOF_500hPa/EOF_500hPa.html">Extratropical Variance (EOF 500hPa Height)</a></td>
-<td>CESM/AMWG (NCAR)</td>
-</tr>
-<tr class="even">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html">Wavenumber-Frequency Spectra</a></td>
-<td>CESM/AMWG (NCAR)</td>
-</tr>
-<tr class="odd">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_suite/MJO_suite.html">MJO Spectra and Phasing</a></td>
-<td>CESM/AMWG (NCAR)</td>
-</tr>
-<tr class="even">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html">Diurnal Cycle of Precipitation</a></td>
-<td>Rich Neale (NCAR)</td>
-</tr>
-<tr class="odd">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html">MJO Propagation and Amplitude</a> (example with GFDL CM4 data)</td>
-<td>Xianan Jiang (UCLA)</td>
-</tr>
-<tr class="even">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html">AMOC 3D structure</a> (implementation in progress, example with GFDL CM2 model data)</td>
-<td>Xiaobiao Xu (FSU/COAPS)</td>
-</tr>
-<tr class="odd">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_CCSM4/MSE_diag/MSE_diag.html">ENSO Moist Static Energy budget</a> (implementation in progress, example with CCSM4 data)</td>
-<td>Hariharasubramanian Annamalai (U. Hawaii)</td>
-</tr>
-<tr class="even">
-<td><a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation">Warm Rain Microphysics</a> (implementation in progress)</td>
-<td>Kentaroh Suzuki (AORI, U. Tokyo)</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="post-border-bottom">
-<h2>Sample Output Webpage</h2>
-<a href="http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/">Latest complete package based on a CESM-CAM run</a>
-
-
-
-</div>
-<div class="post-border-bottom">
-<h2>Downloading and Running</h2>
-<ul>
- 	<li><a href="http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf">Getting Started</a></li>
- 	<li><a href="ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.var_code.tar">Latest code</a> (2 MB)</li>
- 	<li><a href="ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar">Pre-digested observational data</a> (300 MB)</li>
- 	<li>Sample model data
-<ul>
- 	<li><a href="ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar">NCAR-CESM-CAM</a> (13G)</li>
- 	<li><a href="ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar">NOAA-GFDL-CM4 </a> For MJO_prop_amp module (5G)</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="post-border-bottom">
-<h2>Developer’s Information</h2>
-<ul>
- 	<li><a href="http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf">Developer's Walk-through (v2.0)</a></li>
-</ul>
-</div>
-</div>
-<!-- WG Info Include -->
-<div class="widget"></div>
-<!-- end WG Include -->
-
-</div>

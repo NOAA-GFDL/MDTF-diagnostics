@@ -110,7 +110,6 @@ prvar = getenv("pr_var")
 
   print("First doy: " + min(time) + "  last doy: " + max(time))
   print("time indices "+iStrt+" "+iLast+" "+ymd(iStrt)+" "+ymd(iLast))
-  printVarSummary(pr)
 
   H_all = pr(:,:,:)
   H_all@_FillValue = -999

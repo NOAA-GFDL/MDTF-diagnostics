@@ -71,7 +71,7 @@ print("data table for t stat is read in ")
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
    
 
-    zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
+    zgt = a->$z250var$(iStrt:iLast,{25000},:,:)     ;time,lat,lon
     zgt@_FillValue = -999
 
     lon = tofloat(a->lon)

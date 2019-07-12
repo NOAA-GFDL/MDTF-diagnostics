@@ -110,7 +110,7 @@ print("-------------------------------------------------------------------------
     
     print("Date range from year "+yeart(iStrt)+" to "+yeart(iLast))
 
-    u250t = a->$u250var$(iStrt:iLast,lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
+    u250t = a->$u250var$(iStrt:iLast,{25000},lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
     u250t@_FillValue = -999
 
     delete(temp_time)
@@ -154,7 +154,7 @@ print("Reading data for 250mb wind")
 
   u250 = u250t(:,:,:); Reading data over the all avaliable time period
   u250@_FillValue = -999
-printVarSummary(u250)
+  poisson_grid_fill(u250,True,1,1000,1e-2,0.6,0)
   delete(u250t)
 print("U250 data has been read")
 ;----------- 850mb wind --------------
@@ -196,7 +196,8 @@ print("Reading data for 850mb wind")
   delete(time2)
  
  ;-read in data-
-    u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
+    u850 = b->$u850var$(iStrt:iLast,{85000},lat_ind,:)     ;time,lat,lon , 15N - 15S
+    poisson_grid_fill(u850,True,1,1000,1e-2,0.6,0)
     u850@_FillValue = -999
 print("U850 data has been read")
 print("-------------------------------------------")

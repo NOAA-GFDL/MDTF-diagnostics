@@ -15,6 +15,7 @@ print("Starting...")
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
+level = getenv("lev_coord")
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
 file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"
@@ -162,6 +163,8 @@ delete_existing = False  ;overwrite
 
 plevs = (/850,200/)       ;this package expects new files to be written with these names
 var_names = (/"u","v"/)
+source = (/datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc",datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"/)
+print("             AAAAAA")
 
 do i=0,dimsizes(plevs)-1
    plev = plevs(i)
@@ -176,6 +179,13 @@ do i=0,dimsizes(plevs)-1
 
       var_name_plev_package = var_names(j)+tostring(plev)      ; new file name & varname in file
       print(" var_name_plev_package "+var_name_plev_package)
+
+      LEV = tostring(plevs(i)*100)+"." 
+      src = source(j)
+      dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
+      NCKS = "ncks -d "+level+","+LEV+","+LEV+"  "+src+" "+dst
+      print(NCKS)
+      system(NCKS)
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+"."+var_name_plev_package+".day.nc"

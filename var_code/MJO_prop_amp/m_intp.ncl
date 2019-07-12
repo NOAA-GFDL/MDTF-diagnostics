@@ -122,6 +122,7 @@ husm!2="lon"
 husm&time=time
 husm&lat=newlat
 husm&lon=newlon
+printMinMax(husm,0)
 
 print("Writing $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")
 system("rm -f $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")

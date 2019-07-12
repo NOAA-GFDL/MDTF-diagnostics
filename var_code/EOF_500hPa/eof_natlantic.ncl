@@ -77,11 +77,12 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
 
  evec = eofunc(anom(lat|:,lon|:,year|:),2,optEOF)
  printVarSummary(evec)
+ printMinMax(evec,0)
 
  if ( min(evec) .lt. 0 ) then
     print("WARNING: changing sign of eofs because of negative evec (see above)")
     evec = evec * -1  
- end if	 
+ end if 
 
  evectors(0,:,:) = (/evec(0,:,:)*sqrt(evec@eval(0))/)
  evectors(1,:,:) = (/evec(1,:,:)*sqrt(evec@eval(1))/)

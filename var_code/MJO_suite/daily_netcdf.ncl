@@ -11,6 +11,7 @@ begin
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
+print("Starting...")
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
@@ -21,6 +22,7 @@ file_v200 = datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"
 file_u850 = datadir+"/day/"+casename+"."+getenv("u850_var")+".day.nc"
 file_rlut = datadir+"/day/"+casename+"."+getenv("rlut_var")+".day.nc"
 file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
+;file_pr = "/archive/wnd/MDTF-GFDL/inputdata/model/CM4_historical/day/CM4_historical.pr.day.nc"
 
 
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
@@ -93,6 +95,7 @@ do i=0,dimsizes(date_all)-1
 end do
 
 date = date_all(i1:i2)
+print(date(0:9))
 ndays = dimsizes(date)
 time = ispan(0,ndays-1,1)
 

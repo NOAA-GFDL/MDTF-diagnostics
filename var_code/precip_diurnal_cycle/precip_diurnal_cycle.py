@@ -43,6 +43,7 @@ def generate_ncl_plots(nclPlotFile):
 
    return 0
 
+print(os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".3hr.nc")
 if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".3hr.nc"):
       print("3 hourly precipitation rate file found")
       print("computing diurnal cycle of precipitation")

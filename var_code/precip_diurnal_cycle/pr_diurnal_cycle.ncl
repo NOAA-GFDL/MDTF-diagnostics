@@ -26,6 +26,7 @@ nlatlim = 90.
 ;this_year = stringtodouble(getenv("year"))
 plot_range = (/0,20./)
 plot_mult = 1000*86400.
+;plot_mult = 86400.
 
 ;cam_year0 = stringtodouble(getenv("base_year"))
 tspd = 24

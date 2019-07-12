@@ -1,6 +1,5 @@
 ; This file is part of the MJO_prop_amp module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 
-# testing testing 123
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
@@ -237,8 +236,8 @@ hus!0 = "lat"
 hus!1 = "lon"
 hus&lat=fin->$latname$({lats_map:latn_map})
 hus&lon=fin->$lonname$({lonw_map:lone_map})
-;printVarSummary(hus)
-;printMinMax(hus,0)
+printVarSummary(hus)
+printMinMax(hus,0)
 
 ;***********************************************************
 ; Step 6: Compute lag regressions using regCoef_n

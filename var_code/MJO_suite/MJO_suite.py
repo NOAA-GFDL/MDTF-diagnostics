@@ -7,16 +7,20 @@
 
 import os
 import subprocess
+# ------------------------------------------------------------------------
+# Variables for mjo_diag (MJO propogation)
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
+print("Let us get started!!!")
 def generate_ncl_plots(nclPlotFile):
    """generate_plots_call - call a nclPlotFile via subprocess call
    
    Arguments:
    nclPlotFile (string) - full path to ncl plotting file name
    """
+   print("calling NCL")
    # check if the nclPlotFile exists - 
    # don't exit if it does not exists just print a warning.
    try:

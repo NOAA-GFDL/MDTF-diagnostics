@@ -69,6 +69,7 @@ prvar = getenv("pr_var")
 
     pr = a->$prvar$(iStrt:iLast,:,:)     ;time,lat,lon
     pr@_FillValue = -999
+    printMinMax(pr,0)
 
      print("convert to mm/day")
      pr = pr * pr_conv

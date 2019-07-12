@@ -61,7 +61,6 @@ print("Output data path :" + diro)
 print("Input data file for OLR :" + filolr)
 print("Input data file for U850:" + filu850)
 print("Input data file for U250:" + filu250)
-print(u250var)
 print("---------------------------------------------------------------------------------")
 
    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
@@ -169,10 +168,10 @@ print("Reading data for 850mb wind")
   latt2 = b->lat
   lont2 = b->lon
   time2 = b->time(iStrt:iLast)
-print(dimsizes(time2))
-print(dimsizes(time))
-print(time2(0))
-print(time(0))
+;print(dimsizes(time2))
+;print(dimsizes(time))
+;print(time2(0))
+;print(time(0))
 
   if(latt2(0) .eq. latt(0) .and. (dimsizes(latt2) .eq. dimsizes(latt)))
     print("850mb wind: latitudes match")

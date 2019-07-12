@@ -63,12 +63,12 @@ do i=0,nlat-1
 end do
 
 time_all = f_zg->$time_var$
-date_all = ut_calendar(time_all,-2)
-year_all = date_all/10000
+date_all = ut_calendar(time_all,-1)
+year_all = date_all/100
 iLev = ind(lev.eq.50000)
 
-start_date = firstyr*10000+201
-end_date = (lastyr+1)*10000+101
+start_date = firstyr*100+1
+end_date = (lastyr)*100+12
 
 do i=0,dimsizes(date_all)-1
    if( date_all(i).eq.start_date ) then

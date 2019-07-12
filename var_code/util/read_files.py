@@ -343,7 +343,8 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list = []
    for item in varlist:
       if (verbose > 2 ): print func_name +" "+item
-      filepath = makefilepath(item['varname'],item['varfreq'],os.environ['CASENAME'],os.environ['DATADIR'])
+      #filepath = makefilepath(item['varname'],item['varfreq'],os.environ['CASENAME'],os.environ['DATADIR'])
+      filepath = makefilepath(item['varname'],item['varfreq'],os.environ['model'].os.environ['CASENAME'],os.environ['DATADIR'])
 
       if ( os.path.isfile(filepath) ):
          print "found ",filepath

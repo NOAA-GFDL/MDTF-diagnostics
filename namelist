@@ -3,26 +3,22 @@
 # Comment out any with # at start of line
 # Note that the mdtf package does not yet handle multiple cases
 
-# The cases below correspond to the two different test data sets
-# Uncomment the first entry to run NCAR-CESM and the second
-# entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
-
-CASE QBOi.EXP1.AMIP.001 CESM 1977 1981
-#CASE GFDL.CM4.c96L32.am4g10r8 CM4 1977 1981
+#CASE QBOi.EXP1.AMIP.001 CESM 1977 1981
+CASE CM4_historical GFDL 1990 1994
+#CASE CM4_Scenario_ssp245 GFDL 2090 2094
+#CASE ESM4_historical_D1 GFDL 1980 2014
 
 # List all desired packages with POD tag at the start of the line
 # Comment out any with # at start of line
 
 POD Wheeler_Kiladis
 POD EOF_500hPa
-POD convective_transition_diag
-POD MJO_suite
 POD MJO_teleconnection
-#POD MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
-
-# These PODS require more resources 
-#POD precip_diurnal_cycle #- high memory requirement
+POD precip_diurnal_cycle #- high memory requirement
 #POD fortran_example  #-for example purposes only
+POD MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+#POD convective_transition_diag
+POD MJO_suite
 
 # List any envvars to be set here with VAR tag at the start of the line
 # These will override any settings in mdtf.py, but case *must* match script

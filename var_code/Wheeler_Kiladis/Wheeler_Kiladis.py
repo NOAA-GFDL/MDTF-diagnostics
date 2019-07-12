@@ -74,6 +74,7 @@ os.chdir(os.environ["DATADIR"])
 if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"):
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["rlut_var"]
+   os.environ["LEV"] = "sfc"
    print("file of "+os.environ["rlut_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
    generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
 else:  
@@ -84,6 +85,7 @@ else:
 if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"):
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["pr_var"]
+   os.environ["LEV"] = "sfc"
    print("file of "+os.environ["pr_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
    generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
 else:  
@@ -94,6 +96,7 @@ else:
 if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["omega500_var"]+".day.nc"):
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["omega500_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["omega500_var"]
+   os.environ["LEV"] = "500"
    print("file of "+os.environ["omega500_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
    generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
 else:  
@@ -104,6 +107,7 @@ else:
 if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["u200_var"]+".day.nc"):
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u200_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["u200_var"]
+   os.environ["LEV"] = "200"
    print("file of "+os.environ["u200_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
    generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
 else:  
@@ -114,6 +118,7 @@ else:
 if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"):
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["u850_var"]
+   os.environ["LEV"] = "850"
    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
    generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
 else:  
@@ -149,11 +154,11 @@ files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
 a = 0
 while a < len(files):
    file0 = files[a]
-   file1 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["rlut_var"]+"/rlut/g")   
-   file2 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["pr_var"]+"/pr/g")  
-   file3 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["omega500_var"]+"/omega500/g") 
-   file4 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u200_var"]+"/u200/g") 
-   file5 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u850_var"]+"/u850/g")
+   file1 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["rlut_var"]+"-sfc/rlut/g")   
+   file2 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["pr_var"]+"-sfc/pr/g")  
+   file3 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["omega500_var"]+"-500/omega500/g") 
+   file4 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u200_var"]+"-200/u200/g") 
+   file5 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u850_var"]+"-850/u850/g")
 
    if file0 != file1:
       os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file1)

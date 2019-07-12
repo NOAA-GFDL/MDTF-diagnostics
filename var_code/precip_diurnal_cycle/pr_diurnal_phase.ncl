@@ -508,7 +508,8 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
          end if
  
 ; Requested start time and index in data
-          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
+          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*101) 
+          print(tstart)
           
 ; Adjust for ut_calendar problems in cam/climo runs as the first year is usually 0000 and
 ; ut_calendar changes this to 0001 !! So adjust tstart forward by 1 year.

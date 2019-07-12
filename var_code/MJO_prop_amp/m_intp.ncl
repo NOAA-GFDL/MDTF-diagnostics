@@ -110,9 +110,13 @@ xxm&lon=lon
 
 do itim=0,ntim-1
 hus= filein_hus->$hus_name$(itim,:,:,:)
-ps = hus(1,:,:)*0+1000.       ; surface pressure "Pa"
-opt = (/ 1, 650, 900 /)
-xxm = wgt_vert_avg_beta(lev,hus,ps,0,opt)
+poisson_grid_fill(hus,True,1,1000,1e-2,0.6,0)
+
+ps = hus(1,:,:)*0+100000.       ; surface pressure "Pa"
+;opt = (/ 1, 650, 900 /)
+opt = (/ 1, 60000, 92500 /)
+;xxm = wgt_vert_avg_beta(lev,hus,ps,0,opt)
+xxm = wgt_vert_avg_beta(lev,hus,ps,1,opt)
 husm(itim,:,:)= linint2_Wrap(lon,lat,xxm,True,newlon,newlat,0)
 end do
 

@@ -70,7 +70,7 @@ res@tmXBLabelFontHeightF = 0.015
 res@tiXAxisString = "Local Hour"
 res@tiXAxisFontHeightF = 0.018
 res@tiYAxisFontHeightF = 0.018
-res@trYMinF = plot_range(0)
+;res@trYMinF = plot_range(0)
 res@trYMaxF = plot_range(1)
 res@gsnLeftString = ""
 res@gsnRightString = ""
@@ -425,7 +425,7 @@ res@tmXBOn              = True
 ;Plot
     res@gsnCenterString=ptitle(ireg)
     plot(ireg) = gsn_csm_xy(wks,region_JJA_adc&time,region_JJA_adc,res)                  ; create plot
-    print(region_JJA_adc)
+    ;print(region_JJA_adc)
   end do
   print("    Done plotting...")
   

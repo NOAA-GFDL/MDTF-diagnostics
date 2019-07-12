@@ -117,8 +117,10 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
    res@tiMainFontHeightF = 0.018
 ; EOF 1
    res@cnLevels = (/-55,-45,-35,-25,-15,-10,-5,0,5,10,15,25,35,45,55/)
+   ;res@cnLevels = fspan(-0.03,0.03,11)
    res@gsnLeftString="EOF 1"
    res@gsnRightString=sprintf("%4.1f",evec@pcvar(0))+" %"
    plot = gsn_csm_contour_map_ce (wks,evectors(0,:,:),res) 
+   ;plot = gsn_csm_contour_map_ce (wks,evec(0,:,:),res) 
    
 end

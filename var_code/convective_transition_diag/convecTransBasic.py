@@ -74,6 +74,31 @@ print("**************************************************")
 # This is in the /var_code/convective_transition_diag folder under
 #  convecTransBasic_usp_calc.py
 #  & convecTransBasic_usp_plot.py
+print("**************************************************")
+print("Preparing hourly datasets......")
+print("daily 2 hourly interpolation for pr, prw, and ta......")
+print("**************************************************")
+def generate_ncl_plots(nclPlotFile):
+   """generate_plots_call - call a nclPlotFile via subprocess call
+   
+   Arguments:
+   nclPlotFile (string) - full path to ncl plotting file name
+   """
+   # check if the nclPlotFile exists - 
+   # don't exit if it does not exists just print a warning.
+   try:
+      print("Calling ",nclPlotFile)
+      pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
+      output = pipe.communicate()[0]
+      print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
+      while pipe.poll() is None:
+         time.sleep(0.5)
+   except OSError as e:
+      print('WARNING',e.errno,e.strerror)
+
+   return 0
+   generate_ncl_plots(os.environ["VARCODE"]+"/convective_transition_diag/interpolate.ncl")
+
 
 print("Load user-specified binning parameters..."),
 

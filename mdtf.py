@@ -225,6 +225,8 @@ write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=ver
 #   (B) Converts plots to png
 #   (C) Adds plot links to HTML file
 
+pod_procs = []
+log_files = []
 for pod in pod_do:
 
    if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
@@ -254,17 +256,26 @@ for pod in pod_do:
             print("TEST mode: would call :  "+run_pod)
          else:
             start_time = timeit.default_timer()
+            log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
+            log_files.append(log)
             try:
-               print("Calling :  "+run_pod)
-               os.system(run_pod)  # This is where the POD is called #
+               print("Calling :  "+run_pod) # This is where the POD is called #
+               proc = subprocess.Popen(run_pod, shell=True, env = os.environ, stdout = log, stderr = subprocess.STDOUT)
+               pod_procs.append(proc)
             except OSError as e:
                print('ERROR :',e.errno,e.strerror)
                print(errstr + " occured with call: " +run_pod)
-            finally:
-               elapsed = timeit.default_timer() - start_time
-               print(pod+" Elapsed time ",elapsed)
 
-   if verbose > 0: print("---  MDTF.py Finished POD "+pod+"\n")
+for proc in pod_procs:
+   proc.wait()
+
+for log in log_files:
+   log.close()
+               
+if verbose > 0: 
+   print("---  MDTF.py Finished POD "+pod+"\n")
+   # elapsed = timeit.default_timer() - start_time
+   # print(pod+" Elapsed time ",elapsed)
         
 # ==================================================================================================
 #  Make tar file

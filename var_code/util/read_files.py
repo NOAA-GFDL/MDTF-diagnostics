@@ -81,6 +81,7 @@ def pprint_list(list_in,title=""):
 
 import re 
 import os
+import sys
 
 
 #==========================================================================
@@ -102,7 +103,7 @@ class Namelist:
       
 
 def get_available_programs(verbose=0):
-   return {'py': 'python', 'ncl': 'ncl'}  
+   return {'py': sys.executable, 'ncl': 'ncl'}  
 
 def print_namelist_podlist(namelist,verbose=0):
    print "POD LIST : "

@@ -56,8 +56,14 @@ import os
 import sys
 import glob
 import shutil
-import subprocess
 import timeit
+if os.name == 'posix' and sys.version_info[0] < 3:
+  try:
+    import subprocess32 as subprocess
+  except (ImportError, ModuleNotFoundError):
+    import subprocess
+else:
+    import subprocess
 sys.path.insert(0,'var_code/util/')
 import read_files
 import write_files 

@@ -171,6 +171,9 @@ if os.environ["model"] == "CMIP":
 if os.environ["model"] == "AM4":
    import set_variables_AM4
    found_model = True
+if os.environ["model"] == "GFDL":
+   import set_variables_GFDL
+   found_model = True
 if found_model == False:
    print "ERROR: model ", os.environ["model"]," Not Found"
    print "      This is set in namelist "

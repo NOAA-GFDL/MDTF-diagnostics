@@ -80,12 +80,13 @@ def write_envvar_all (outfile):
    # Even better to check if file contains these already
    write_envvar(outfile,"CASENAME")   #take out this and other case items
    write_envvar(outfile,"NCARG_ROOT")
-   write_envvar(outfile,"CLEAN")
    write_envvar(outfile,"DIAG_HOME")
    write_envvar(outfile,"WKDIR")
    write_envvar(outfile,"variab_dir")
    write_envvar(outfile,"DATADIR")
    write_envvar(outfile,"OUTDIR")
+   write_envvar(outfile,"save_ps")
+   write_envvar(outfile,"save_nc")
    write_envvar(outfile,"make_variab_tar")
    write_envvar(outfile,"model")   #case specifiec, remove
    write_envvar(outfile,"VARCODE")  

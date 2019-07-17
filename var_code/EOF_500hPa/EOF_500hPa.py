@@ -128,8 +128,13 @@ if os.path.isfile( filename1):
          file2 = os.environ["variab_dir"]+"/EOF_500hPa/model/"+files[a]
          os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
          a = a+1
-      if os.environ["CLEAN"] == "1":
+      if os.environ["save_ps"] == "0":
          os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
+
+      # delete netCDF files if requested
+      if os.environ["save_nc"] == "0":    
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
 
 #============================================================
 # Copy obs gifs into the expected location

@@ -16,12 +16,13 @@ vars = (/"pr","rlut","u200","u850","v200","v850"/)
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
-filename_pr = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.anom.nc"
-filename_rlut = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc"
-filename_u200 = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc"
-filename_u850 = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.day.anom.nc"
-filename_v200 = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.day.anom.nc"
-filename_v850 = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc"
+file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+filename_pr = file_dir+casename+".pr.day.anom.nc"
+filename_rlut = file_dir+casename+".rlut.day.anom.nc"
+filename_u200 = file_dir+casename+".u200.day.anom.nc"
+filename_u850 = file_dir+casename+".u850.day.anom.nc"
+filename_v200 = file_dir+casename+".v200.day.anom.nc"
+filename_v850 = file_dir+casename+".v850.day.anom.nc"
 
 seasons_name = (/"winter","summer"/)
 
@@ -37,7 +38,7 @@ seasons_name = (/"winter","summer"/)
 ;   yrStrt  = ymdStrt/10000
 ;   yrLast  = ymdLast/10000
 
-   pltDir  = wkdir+"/MDTF_"+casename+"/MJO_suite/model/PS/"                            ; plot directory
+   pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS/"             ; plot directory
    pltType = "ps"
 ;   pltName = "mjoclivar"                      ; yrStrt+"_"+yrLast
   

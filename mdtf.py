@@ -56,8 +56,14 @@ import os
 import sys
 import glob
 import shutil
-import subprocess
 import timeit
+if os.name == 'posix' and sys.version_info[0] < 3:
+  try:
+    import subprocess32 as subprocess
+  except (ImportError, ModuleNotFoundError):
+    import subprocess
+else:
+    import subprocess
 sys.path.insert(0,'var_code/util/')
 import read_files
 import write_files 
@@ -78,9 +84,21 @@ test_mode = False                     # False = run the packages, True = don't m
 
 # dictionary of all the environment variables set in this script, to be archived in variab_dir/namelist file
 envvars = {}   
-setenv('CLEAN',"0",envvars,verbose=verbose)           # default = 0: don't delete old files, 1 = delete them
-setenv('make_variab_tar',"1",envvars,verbose=verbose) # default = 1 : create tar file of results, tar file in wkdir
 
+# ======================================================================
+# Check for programs that must exist (eg ncl)
+# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
+# ======================================================================
+
+ncl_err = os.system("which ncl")
+if ncl_err == 0:
+   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
+   print("using ncl "+os.environ["NCL"])
+else:
+   print(errstr+ ": ncl not found")
+# workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
+if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
+   setenv("NCARG_ROOT","CONDA_PREFIX",envvars,verbose=verbose)
 
 
 # ======================================================================
@@ -127,7 +145,7 @@ pod_do    = namelist.pod_list   # list of pod names to do here
 read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
 
 # update local variables used in this script with env var changes from reading namelist
-# variables that are used through os.environ don't need to be assigned here (eg. CLEAN, NCARG_ROOT)
+# variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
 test_mode = read_files.get_var_from_namelist('test_mode','bool',namelist.envvar,default=test_mode,verbose=verbose)
 verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,default=verbose,verbose=verbose)
 
@@ -136,7 +154,8 @@ verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,def
 # output goes into WKDIR & variab_dir (diagnostics should generate .nc
 # files & .ps files in subdirectories herein)
 
-setenv("variab_dir",os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
+variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
+setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
 
 # ======================================================================
 # INPUT: directory of model output
@@ -181,19 +200,6 @@ if found_model == False:
    quit()
 
 
-
-# ======================================================================
-# Check for programs that must exist (eg ncl)
-# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
-# ======================================================================
-
-ncl_err = os.system("which ncl")
-if ncl_err == 0:
-   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
-   print("using ncl "+os.environ["NCL"])
-else:
-   print(errstr+ ": ncl not found")
-   
 # ======================================================================
 # Check directories that must already exist
 # ======================================================================
@@ -228,6 +234,8 @@ write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=ver
 #   (B) Converts plots to png
 #   (C) Adds plot links to HTML file
 
+pod_procs = []
+log_files = []
 for pod in pod_do:
 
    if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
@@ -257,17 +265,26 @@ for pod in pod_do:
             print("TEST mode: would call :  "+run_pod)
          else:
             start_time = timeit.default_timer()
+            log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
+            log_files.append(log)
             try:
-               print("Calling :  "+run_pod)
-               os.system(run_pod)  # This is where the POD is called #
+               print("Calling :  "+run_pod) # This is where the POD is called #
+               proc = subprocess.Popen(run_pod, shell=True, env = os.environ, stdout = log, stderr = subprocess.STDOUT)
+               pod_procs.append(proc)
             except OSError as e:
                print('ERROR :',e.errno,e.strerror)
                print(errstr + " occured with call: " +run_pod)
-            finally:
-               elapsed = timeit.default_timer() - start_time
-               print(pod+" Elapsed time ",elapsed)
 
-   if verbose > 0: print("---  MDTF.py Finished POD "+pod+"\n")
+for proc in pod_procs:
+   proc.wait()
+
+for log in log_files:
+   log.close()
+               
+if verbose > 0: 
+   print("---  MDTF.py Finished POD "+pod+"\n")
+   # elapsed = timeit.default_timer() - start_time
+   # print(pod+" Elapsed time ",elapsed)
         
 # ==================================================================================================
 #  Make tar file
@@ -282,7 +299,8 @@ else:
       os.chdir(os.environ["WKDIR"])
 
    print "Creating "+os.environ["variab_dir"]+".tar "
-   status = os.system("tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf MDTF_"+os.environ["CASENAME"]+".tar MDTF_"+os.environ["CASENAME"])
+   status = os.system(
+      "tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf " + variab_dir + ".tar " + variab_dir)
    if not status == 0:
       print("ERROR $0")
       print("trying to do:     tar -cf "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"])

@@ -1,0 +1,14 @@
+name: _MDTF-diagnostics
+channels:
+- defaults
+- conda-forge
+dependencies:
+- python=2.7
+- numpy
+- scipy
+- matplotlib
+- ncl=6.5
+- netCDF4
+- networkx
+- numba
+- subprocess32

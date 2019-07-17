@@ -154,7 +154,8 @@ verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,def
 # output goes into WKDIR & variab_dir (diagnostics should generate .nc
 # files & .ps files in subdirectories herein)
 
-setenv("variab_dir",os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
+variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
+setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
 
 # ======================================================================
 # INPUT: directory of model output

@@ -87,6 +87,20 @@ envvars = {}
 setenv('CLEAN',"0",envvars,verbose=verbose)           # default = 0: don't delete old files, 1 = delete them
 setenv('make_variab_tar',"1",envvars,verbose=verbose) # default = 1 : create tar file of results, tar file in wkdir
 
+# ======================================================================
+# Check for programs that must exist (eg ncl)
+# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
+# ======================================================================
+
+ncl_err = os.system("which ncl")
+if ncl_err == 0:
+   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
+   print("using ncl "+os.environ["NCL"])
+else:
+   print(errstr+ ": ncl not found")
+# workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
+if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
+   setenv("NCARG_ROOT","CONDA_PREFIX",envvars,verbose=verbose)
 
 
 # ======================================================================
@@ -184,19 +198,6 @@ if found_model == False:
    quit()
 
 
-
-# ======================================================================
-# Check for programs that must exist (eg ncl)
-# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
-# ======================================================================
-
-ncl_err = os.system("which ncl")
-if ncl_err == 0:
-   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
-   print("using ncl "+os.environ["NCL"])
-else:
-   print(errstr+ ": ncl not found")
-   
 # ======================================================================
 # Check directories that must already exist
 # ======================================================================

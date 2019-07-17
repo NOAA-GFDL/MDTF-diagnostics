@@ -296,7 +296,8 @@ else:
       os.chdir(os.environ["WKDIR"])
 
    print "Creating "+os.environ["variab_dir"]+".tar "
-   status = os.system("tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf MDTF_"+os.environ["CASENAME"]+".tar MDTF_"+os.environ["CASENAME"])
+   status = os.system(
+      "tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf " + variab_dir + ".tar " + variab_dir)
    if not status == 0:
       print("ERROR $0")
       print("trying to do:     tar -cf "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"])

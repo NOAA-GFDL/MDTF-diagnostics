@@ -12,6 +12,7 @@ begin
 
    wkdir = getenv("WKDIR")
    casename = getenv("CASENAME")
+   file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 
    latS    = -20
    latN    =  20
@@ -24,15 +25,15 @@ begin
 
    pltSubTitle = "Anomalous: OLR, U850, V850"
 
-   pltDir  = wkdir+"/MDTF_"+casename+"/MJO_suite/model/PS/"                           ; plot directory
+   pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS/"                           ; plot directory
    pltType = "ps"  
    pltName = casename+".MJO.life.cycle"                      ; yrStrt+"_"+yrLast
   
 ;   diri    = "/Users/shea/Data/AMWG/"         ; input directory   
 
-   filo    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc"
-   filu    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.day.anom.nc"
-   filv    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc"
+   filo    = file_dir+casename+".rlut.day.anom.nc"
+   filu    = file_dir+casename+".u850.day.anom.nc"
+   filv    = file_dir+casename+".v850.day.anom.nc"
 
 ;************************************************
 ; create BandPass Filter
@@ -88,7 +89,7 @@ begin
 ; Open PC components file created in 'mjo_14.ncl'
 ;***********************************************************
 ;  diri    = "/Users/shea/ncld/AMWG/"         ; input directory   
-  fMJO    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/MJO_PC_INDEX.nc"                ; created in mjo_14.ncl
+  fMJO    = file_dir+"MJO_PC_INDEX.nc"                ; created in mjo_14.ncl
   f       = addfile (fMJO, "r")
 
 ;***********************************************************

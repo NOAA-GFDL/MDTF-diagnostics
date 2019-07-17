@@ -27,10 +27,11 @@ POD MJO_teleconnection
 # List any envvars to be set here with VAR tag at the start of the line
 # These will override any settings in mdtf.py, but case *must* match script
 
-VAR make_variab_tar 1
-VAR verbose 1 # 0-minimal,1-normal,2-copious,3-debug
-VAR CLEAN  0  #dont remove existing files
-VAR test_mode False  #True = script just reports what it would do, doesn't call actual packages
+VAR verbose 1         # 0-minimal,1-normal,2-copious,3-debug
+VAR save_ps 0         # True to retain output .ps plots
+VAR save_nc 0         # True to retain output netcdf files
+VAR make_variab_tar 1 # True to save output in .tar file
+VAR test_mode False   #True = script just reports what it would do, doesn't call actual packages
 
 # Uncomment to set WKDIR to a location other than default (mdtf/MDTF_v2.0) (it will create MDTF_CASENAME here)
 #VAR WKDIR /full-path

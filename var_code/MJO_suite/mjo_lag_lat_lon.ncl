@@ -12,8 +12,9 @@ vars = (/"pr","u850"/)
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
-filename_pr = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.anom.nc"
-filename_u850 = wkdir+"/MDTF_"+casename+"/MJO_suite//model/netCDF/"+casename+".u850.day.anom.nc"
+file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+filename_pr = file_dir+casename+".pr.day.anom.nc"
+filename_u850 = file_dir+casename+".u850.day.anom.nc"
 
 nameSeason = (/"winter","summer","annual"/)
 
@@ -52,7 +53,7 @@ nameSeason = (/"winter","summer","annual"/)
 
   pltName    = casename+".MJO.lag.lat.lon"       ; output plot name         
   pltType    = "ps"       ; x11, ps, eps, pdf, png 
-  pltDir     = wkdir+"/MDTF_"+casename+"/MJO_suite/model/PS/"       ; output plot directory
+  pltDir     = getenv("variab_dir")+"/MJO_suite/model/PS/"       ; output plot directory
 
 ;************************************************
 ; create Lanczos BandPass Filter

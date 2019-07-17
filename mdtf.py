@@ -84,8 +84,6 @@ test_mode = False                     # False = run the packages, True = don't m
 
 # dictionary of all the environment variables set in this script, to be archived in variab_dir/namelist file
 envvars = {}   
-setenv('CLEAN',"0",envvars,verbose=verbose)           # default = 0: don't delete old files, 1 = delete them
-setenv('make_variab_tar',"1",envvars,verbose=verbose) # default = 1 : create tar file of results, tar file in wkdir
 
 # ======================================================================
 # Check for programs that must exist (eg ncl)
@@ -147,7 +145,7 @@ pod_do    = namelist.pod_list   # list of pod names to do here
 read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
 
 # update local variables used in this script with env var changes from reading namelist
-# variables that are used through os.environ don't need to be assigned here (eg. CLEAN, NCARG_ROOT)
+# variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
 test_mode = read_files.get_var_from_namelist('test_mode','bool',namelist.envvar,default=test_mode,verbose=verbose)
 verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,default=verbose,verbose=verbose)
 

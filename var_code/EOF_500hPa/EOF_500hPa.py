@@ -109,6 +109,11 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
       if os.environ["save_ps"] == "0":
          os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
 
+      # delete netCDF files if requested
+      if os.environ["save_nc"] == "0":    
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
+
 #============================================================
 # Copy obs gifs into the expected location
 #============================================================

@@ -114,3 +114,8 @@ if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/PS/")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.gif "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.png "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
+
+# delete netCDF files if requested
+if os.environ["save_nc"] == "0":    
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/obs/netCDF")
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/netCDF")

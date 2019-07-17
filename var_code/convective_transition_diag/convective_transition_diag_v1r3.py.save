@@ -206,6 +206,11 @@ else:
             a = a+1
         if os.environ["save_ps"] == "0":
             os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
+
+    # delete netCDF files if requested
+    if os.environ["save_nc"] == "0":    
+        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF")
+        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF")
     # ======================================================================
     # End of HTML sections
     # ======================================================================    

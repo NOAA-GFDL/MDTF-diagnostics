@@ -120,6 +120,10 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
 
       os.system("cp "+os.environ["VARDATA"]+"/precip_diurnal_cycle/*.png "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/.")
 
+      # delete netCDF files if requested
+      if os.environ["save_nc"] == "0":    
+         os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/netCDF")
+         os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/model/netCDF")
 
       print("--------- Finished DIURNAL CYCLE OF PRECIPITATION webpage generation ----------------------------")
 else:

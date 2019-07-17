@@ -19,7 +19,7 @@ time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
 
-file_path = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF"
+file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 datadir = getenv("DATADIR")
 yr1 = stringtointeger(getenv("FIRSTYR"))
 yr2 = stringtointeger(getenv("LASTYR"))
@@ -40,14 +40,14 @@ file_v850 = casename+".v850.day.nc"
 
 ; pr
 
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.daily.anom.nc") ) then
-    print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.daily.anom.nc already exists!!")
+if( isfilepresent(file_dir+casename+".pr.daily.anom.nc") ) then
+    print(file_dir+casename+".pr.daily.anom.nc already exists!!")
 
 else
-    print("trying to create "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.daily.anom.nc")
-    if( isfilepresent(file_path+"/"+file_pr) ) then
-    	print("reading "+file_path+"/"+file_pr)
-	f = addfile(file_path+"/"+file_pr,"r")
+    print("trying to create "+file_dir+casename+".pr.daily.anom.nc")
+    if( isfilepresent(file_dir+file_pr) ) then
+    	print("reading "+file_dir+file_pr)
+	f = addfile(file_dir+file_pr,"r")
 	time = f->$time_var$
 	date = ut_calendar(time,-2)
 
@@ -67,8 +67,8 @@ else
 	var = (/var*1000.0*86400.0/) ; mm/day
 	var@units = "mm/day"
 
-	print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.anom.nc")
-	fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.anom.nc","c")
+	print("writing "+file_dir+casename+".pr.day.anom.nc")
+	fo = addfile(file_dir+casename+".pr.day.anom.nc","c")
 
 	fo->gw = gw
 	fo->date = date
@@ -80,21 +80,21 @@ else
 	delete(var)
  
     else
-	print("ERROR: missing daily_netcdf.ncl created file "+file_path+"/"+file_pr)
-    end if ; if( isfilepresent(file_path+"/"+file_pr) ) then
+	print("ERROR: missing daily_netcdf.ncl created file "+file_dir+file_pr)
+    end if ; if( isfilepresent(file_dir+file_pr) ) then
 end if ; isfilepresent(wkdir+ ... anom ...
 
 
 ; U200
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc") ) then
+if( isfilepresent(file_dir+casename+".u200.day.anom.nc") ) then
 
-print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc already exists")
+print(file_dir+casename+".u200.day.anom.nc already exists")
 
 else
 
-if( isfilepresent(file_path+"/"+file_u200) ) then
+if( isfilepresent(file_dir+file_u200) ) then
 
-f = addfile(file_path+"/"+file_u200,"r")
+f = addfile(file_dir+file_u200,"r")
 time = f->$time_var$
 date = ut_calendar(time,-2)
 
@@ -109,8 +109,8 @@ var&time = time
 var&lat = f->$lat_var$
 var&lon = f->$lon_var$
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc","c")
+print("writing "+file_dir+casename+".u200.day.anom.nc")
+fo = addfile(file_dir+casename+".u200.day.anom.nc","c")
 
 fo->gw = gw
 fo->date = date
@@ -125,17 +125,17 @@ end if
 end if
 
 ; u850
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.daily.anom.nc") ) then
+if( isfilepresent(file_dir+casename+".u850.daily.anom.nc") ) then
 
-print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.daily.anom.nc exists!")
+print(file_dir+casename+".u850.daily.anom.nc exists!")
 
 else
 
-print(get_script_name()+"Creating "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.daily.anom.nc")
-if( isfilepresent(file_path+"/"+file_u850) ) then
+print(get_script_name()+"Creating "+file_dir+casename+".u850.daily.anom.nc")
+if( isfilepresent(file_dir+file_u850) ) then
 
 print("reading "+file_u850)
-f = addfile(file_path+"/"+file_u850,"r")
+f = addfile(file_dir+file_u850,"r")
 time = f->$time_var$
 date = ut_calendar(time,-2)
 
@@ -150,8 +150,8 @@ var&time = time
 var&lat = f->$lat_var$
 var&lon = f->$lon_var$
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.day.anom.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.day.anom.nc","c")
+print("writing "+file_dir+casename+".u850.day.anom.nc")
+fo = addfile(file_dir+casename+".u850.day.anom.nc","c")
 
 fo->gw = gw
 fo->date = date
@@ -166,16 +166,16 @@ end if
 end if
 
 ; v200
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.day.anom.nc") ) then
+if( isfilepresent(file_dir+casename+".v200.day.anom.nc") ) then
 
-print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.day.anom.nc already exists")
+print(file_dir+casename+".v200.day.anom.nc already exists")
 
 else
 
-if( isfilepresent(file_path+"/"+file_v200) ) then
-    print(get_script_name()+"Creating "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.daily.anom.nc")
+if( isfilepresent(file_dir+file_v200) ) then
+    print(get_script_name()+"Creating "+file_dir+casename+".v200.daily.anom.nc")
     print("reading "+file_v200)
-    f = addfile(file_path+"/"+file_v200,"r")
+    f = addfile(file_dir+file_v200,"r")
     time = f->$time_var$
     date = ut_calendar(time,-2)
 
@@ -189,8 +189,8 @@ if( isfilepresent(file_path+"/"+file_v200) ) then
     var&lat = f->$lat_var$
     var&lon = f->$lon_var$
 
-    print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.day.anom.nc")
-    fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v200.day.anom.nc","c")
+    print("writing "+file_dir+casename+".v200.day.anom.nc")
+    fo = addfile(file_dir+casename+".v200.day.anom.nc","c")
 
     fo->gw = gw
     fo->date = date
@@ -202,22 +202,22 @@ if( isfilepresent(file_path+"/"+file_v200) ) then
     delete(var)
 
 else
-    print("UH oh: file doens't exist: "+file_path+"/"+file_v200)
+    print("UH oh: file doens't exist: "+file_dir+file_v200)
 
 end if
 end if
 
 ; v850
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc") ) then
+if( isfilepresent(file_dir+casename+".v850.day.anom.nc") ) then
 
-print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc already exists!!")
+print(file_dir+casename+".v850.day.anom.nc already exists!!")
 
 else
 
-if( isfilepresent(file_path+"/"+file_v850) ) then
-print(get_script_name()+"Creating "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.daily.anom.nc")
+if( isfilepresent(file_dir+file_v850) ) then
+print(get_script_name()+"Creating "+file_dir+casename+".v850.daily.anom.nc")
 print("reading "+file_v850)
-f = addfile(file_path+"/"+file_v850,"r")
+f = addfile(file_dir+file_v850,"r")
 time = f->$time_var$
 date = ut_calendar(time,-2)
 
@@ -231,8 +231,8 @@ var&time = time
 var&lat = f->$lat_var$
 var&lon = f->$lon_var$
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".v850.day.anom.nc","c")
+print("writing "+file_dir+casename+".v850.day.anom.nc")
+fo = addfile(file_dir+casename+".v850.day.anom.nc","c")
 
 fo->gw = gw
 fo->date = date
@@ -249,16 +249,16 @@ end if
 end if
 
 ; rlut
-if( isfilepresent(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc") ) then
+if( isfilepresent(file_dir+casename+".rlut.day.anom.nc") ) then
 
-print(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc exists!!")
+print(file_dir+casename+".rlut.day.anom.nc exists!!")
 
 else
 
-if( isfilepresent(file_path+"/"+file_rlut) ) then
+if( isfilepresent(file_dir+file_rlut) ) then
 
 print("reading "+file_rlut)
-f = addfile(file_path+"/"+file_rlut,"r")
+f = addfile(file_dir+file_rlut,"r")
 time = f->$time_var$
 date = ut_calendar(time,-2)
 
@@ -272,8 +272,8 @@ var&time = time
 var&lat = f->$lat_var$
 var&lon = f->$lon_var$
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc","c")
+print("writing "+file_dir+casename+".rlut.day.anom.nc")
+fo = addfile(file_dir+casename+".rlut.day.anom.nc","c")
 
 fo->gw = gw
 fo->date = date

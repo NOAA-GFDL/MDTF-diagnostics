@@ -11,6 +11,7 @@ begin
 
    wkdir = getenv("WKDIR")
    casename = getenv("CASENAME")
+   file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 
    neof    =  2
 
@@ -23,15 +24,15 @@ begin
 ;   yrStrt  = ymdStrt/10000
 ;   yrLast  = ymdLast/10000
 
-   pltDir  = wkdir+"/MDTF_"+casename+"/MJO_suite/model/PS/"                             ; plot directory
+   pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS/"                             ; plot directory
    pltType = "ps"  
    pltName = "mjoclivar"                      ; yrStrt+"_"+yrLast
   
 ;   diri    = "/Users/shea/Data/AMWG/"         ; input directory   
 
-   filolr     = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.anom.nc"
-   filu850    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u850.day.anom.nc"
-   filu200    = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.anom.nc"
+   filolr     = file_dir+casename+".rlut.day.anom.nc"
+   filu850    = file_dir+casename+".u850.day.anom.nc"
+   filu200    = file_dir+casename+".u200.day.anom.nc"
 
 ;************************************************
 ; create BandPass Filter
@@ -233,7 +234,7 @@ begin
   PC2@info      = "PC2/stddev(PC2)"
 
 ;  diro = "./"
-  filo = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/MJO_PC_INDEX.nc"
+  filo = file_dir+"MJO_PC_INDEX.nc"
   system("/bin/rm -f "+filo)   ; remove any pre-existing file
   ncdf = addfile(filo,"c")     ; open output netCDF file
                                     ; make time an UNLIMITED dimension 

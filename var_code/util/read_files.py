@@ -144,42 +144,10 @@ def determine_pod_name(path ,verbose=0):
    if (verbose > 2): print "determine_pod_name received args ",path
    filename_split = path.split('/')
    if ( len(filename_split) >= 1 ):
-      if (verbose > 1 ): print "Setting pod_name to ",filename_split[-1]
-      return filename_split[-1]
+      if (verbose > 1 ): print "Setting pod_name to ",filename_split[-2]
+      return filename_split[-2]
    else:
       return ""
-
-def determine_file_type(filename_fullpath,verbose=0):
-
-   if ( verbose > 2 ): print "determine_file_type received argument ",filename_fullpath
-   path, filename = os.path.split(filename_fullpath)
-
-   if ( verbose > 2 ): print "determine_file_type determined filename ",filename
-   file_input = Any_file_input()  #initialize class (empty so far)
-
-   if (filename == "settings.yml"):
-      if verbose > 1: print "Determined input file ",filename," is settings "
-      file_input.filename = filename_fullpath
-      file_input.file_type = 'settings'
-      file_input.read_function = read_pod_settings
-      file_input.pod_name = determine_pod_name(path)
-      file_input.pod_settings = {}
-   elif (filename == "varlist"):
-      if verbose > 1: print "Determined input file ",filename," is varlist "
-      file_input.filename = path + '/settings.yml'
-      file_input.file_type = filename
-      file_input.read_function = read_pod_varlist
-      file_input.pod_name = determine_pod_name(path)
-      file_input.varlist = []
-   else:                          
-      if verbose > 1: print "Assuming input file ",filename," is namelist input "
-      file_input.filename = filename_fullpath
-      file_input.file_type = "namelist"
-      file_input.read_function = read_namelist_line
-      file_input.namelist = Namelist()  #initialize class (defined above)
-      file_input.pod_name = ""
-
-   return file_input
 
 def remove_junk(line,verbose=0):
    if (verbose > 2 ): print "remove_junk: received line",line
@@ -345,13 +313,6 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list_wo_empties = [x for x in missing_list if x]
    return missing_list_wo_empties
 
-def read_namelist_line(file_input, file_contents, verbose=0):
-   func_name = "read_namelist_line"
-
-   read_namelist_case(file_input,file_contents, verbose)
-   read_namelist_pod(file_input,file_contents, verbose)
-   read_namelist_envvar(file_input,file_contents, verbose)
-
 def set_pod_driver(varval,pod_name,verbose=0):
    func_name = " set_pod_driver "
    if verbose > 2:  print func_name+" received input: ",varval,pod_name
@@ -440,90 +401,54 @@ def check_pod_settings(pod_name,pod_settings,verbose=0):
       print "POD settings: ",pod_name
       pprint_dict(pod_settings)
 
-   
-def determine_namelist_file(argv,verbose=0):
-   func_name = "determine_namelist_file"
-   if (verbose > 2 ): print func_name+"eceived arguments "+str(argv)
-   namelist_file_default = os.environ["DIAG_HOME"]+"/config.yml"  
 
+def read_mdtf_config_file(argv, verbose=0):
+   if (verbose > 2): print "read_mdtf_config_file received arguments "+str(argv)
+   
+   namelist_file_default = os.environ["DIAG_HOME"]+"/config.yml"  
    if (len(argv) > 1 ):
       namelist_file = argv[1]
-      if ( verbose > 0 ): print "Received command-line argument for input namelist file: ",namelist_file
+      if ( verbose > 0 ): print "Received command-line argument for input namelist file: ", namelist_file
    else:  #try the default
       namelist_file = namelist_file_default
-      if ( verbose > 0 ): print "WARNING : Expected command-line argument with input namelist file name.\n\t Checking for default input namelist file ",namelist_file
+      if ( verbose > 0 ): print """WARNING : Expected command-line argument with input namelist file name.
+         \n\t Checking for default input namelist file """, namelist_file
+   assert(os.path.exists(namelist_file)), "Input file does not exist "+str(namelist_file)
 
-   namelist_is_fullpath = namelist_file.startswith("/")
-   if ( not namelist_is_fullpath ):  namelist_file = os.environ["PWD"]+"/"+namelist_file   
-
-   errstr =  "Input file does not exist "+str(namelist_file)
-   assert(os.path.exists(namelist_file)),errstr
-
-   return(namelist_file)
-
-def read_text_file(filename,verbose=0,**optional_args):
-   """ 
-   read_text_file is the interface for reading namelist files, pod setting files and varlist file
-   it determines which file to read (file named exactly setting or varlist, otherwise it is type namelist)
-    and calls the correct reader for the file.
-   """
-   func_name = " read_text_file "
-   if ( not filename ):
-      errstr = "ERROR: "+__file__+": "+func_name +" No filename given "+str(optional_args)
-   else:
-      errstr = "ERROR: "+__file__+": "+func_name +filename+" "+str(optional_args)
-
-   # initialize class while determining file type
-   file_input = determine_file_type(filename,verbose=verbose)
-   if ( verbose > 2): print "file determined to be of type ",file_input.file_type
-
-   if ('pod_name' in optional_args):  
-      if (verbose > 1): print 'pod_name found by read_text_file: ', optional_args['pod_name']
-      file_input.pod_name = optional_args['pod_name']
-                  
-   if ( not os.path.exists(file_input.filename) ):
-      errstr_file_not_found = "WARNING: ",func_name,file_input.filename," not found"
-      if file_input.file_type == "settings":
-         print errstr_file_not_found
-         print "Trying to find driver file..."
-         file_input.pod_settings = {}
-         check_pod_settings(file_input.pod_name,file_input.pod_settings,verbose=verbose)
-         return file_input
-      else:
-         assert( os.path.exists(file_input.filename)),errstr_file_not_found
-         #DRB this is repetious, but needs to continue
-   
-   if (verbose > 1 ): print "Found: ",func_name,file_input.filename
-
-   fileobject = open(file_input.filename,'r')
+   fileobject = open(namelist_file, 'r')
    file_contents = yaml.safe_load(fileobject)
-   file_input.read_function(file_input, file_contents, verbose)
    fileobject.close()
 
-   if (file_input.file_type == "namelist"):
-      print_namelist(file_input.namelist)  #print it to stdout 
-   elif (file_input.file_type == "settings"):
-      check_pod_settings(file_input.pod_name,file_input.pod_settings,verbose=verbose)
-   elif (file_input.file_type == "varlist"):
-      if (verbose > 0): print_varlist(file_input.varlist,file_input.pod_name)
+   file_input = Any_file_input()
+   file_input.namelist = Namelist()  #initialize class (defined above)
+   file_input.pod_name = ""
+   read_namelist_case(file_input, file_contents, verbose)
+   read_namelist_pod(file_input, file_contents, verbose)
+   read_namelist_envvar(file_input, file_contents, verbose)
 
+   if (verbose > 1):
+      print_namelist(file_input.namelist)  #print it to stdout 
    return file_input
 
 
-def check_varlist(pod_dir,verbose=0):
-   func_name = "check_varlist"
-   if ( verbose > 1): print func_name+" received args: ",pod_dir
+def read_pod_settings_file(filename, verbose=0):
+   assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 
-   varlist_file = pod_dir+"/varlist"
-   if (verbose > 1 ): print "Looking for varlist file ",varlist_file
+   fileobject = open(filename,'r')
+   file_contents = yaml.safe_load(fileobject)
+   fileobject.close()
 
-   try:
-      varlist = read_text_file(varlist_file,verbose=verbose).varlist
-      if ( verbose > 1 ):print func_name+" read varlist: "+str(varlist)
-      return(check_for_varlist_files(varlist))  
-   except Exception as error:
-      print func_name+" received :"+str(error) 
+   file_input = Any_file_input()
+   file_input.pod_name = determine_pod_name(filename)
+   file_input.pod_settings = {}
+   file_input.varlist = []
+   read_pod_settings(file_input, file_contents, verbose)
+   read_pod_varlist(file_input, file_contents, verbose)
+   check_pod_settings(file_input.pod_name, file_input.pod_settings, verbose=verbose)
 
+   if (verbose > 0): 
+      print_varlist(file_input.varlist, file_input.pod_name)
+   return file_input
 
 
 # ------------ MAIN for testing ----------------------------------------------
@@ -542,7 +467,7 @@ else:
        print "ERROR, read_files.py in testing mode requires filename argument"
    exit()
 
-   read_text_file(argv[1],verbose=verbose)
+   read_mdtf_config_file(argv[1],verbose=verbose)
 
 
    

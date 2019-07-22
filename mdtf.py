@@ -129,14 +129,12 @@ setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
 # Namelist class defined in read_files, contains: case (dict), pod_list (list), envvar (dict)
 
 try:
-   namelist_file = read_files.determine_namelist_file(sys.argv,verbose=verbose)
+   file_input = read_files.read_mdtf_config_file(sys.argv,verbose=verbose)
 except Exception as error:
    print error
    exit()
 
-# case info (type dict) =  {['casename',casename],['model',model],['FIRSTYR',FIRSTYR],['LASTYR',LASTYR]}
-namelist  = read_files.read_text_file(namelist_file,verbose).namelist
-
+namelist  = file_input.namelist
 # pod_list (type list) =  [pod_name1,pod_name2,...]
 pod_do    = namelist.pod_list   # list of pod names to do here
 
@@ -241,17 +239,17 @@ for pod in pod_do:
 
    pod_dir = os.environ["VARCODE"]+"/"+pod
    try:
-      pod_settings = read_files.read_text_file(pod_dir+"/settings.yml",verbose).pod_settings
+      file_input = read_files.read_pod_settings_file(pod_dir+"/settings.yml",verbose)
    except AssertionError as error:  
       print str(error)
    else:
-
+      pod_settings = file_input.pod_settings
+      varlist = file_input.varlist
       run_pod = pod_settings['program']+" "+pod_settings['driver']
       if ('long_name' in pod_settings) and verbose > 0: print "POD long name: ",pod_settings['long_name']
 
       # Check for files necessary for the pod to run (if pod provides varlist file)
-
-      missing_file_list = read_files.check_varlist(pod_dir,verbose=verbose)
+      missing_file_list = read_files.check_for_varlist_files(varlist,verbose=verbose)
       if ( missing_file_list  ):
          print "WARNING: POD ",pod," Not executed because missing required input files:"
          print missing_file_list

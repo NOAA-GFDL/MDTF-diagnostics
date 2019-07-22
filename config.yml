@@ -1,0 +1,60 @@
+# Configuration for MDTF-diagnostics driver script
+# Note that whitespace (indentation) is significant, 
+# and colons in assignment statments must be followed by a space
+
+# MODEL INPUT
+
+# List all cases below with CASE tag at front of line
+# CASE casename model-type startyr endyr
+# Comment out any with # at start of line
+# Note that the mdtf package does not yet handle multiple cases
+
+# The cases below correspond to the two different test data sets
+# Uncomment the first entry to run NCAR-CESM and the second
+# entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
+
+case_list:
+  - CASENAME: QBOi.EXP1.AMIP.001
+    model: CESM
+    FIRSTYR: 1977
+    LASTYR: 1981
+  # - CASENAME: GFDL.CM4.c96L32.am4g10r8
+  #   model: CM4
+  #   FIRSTYR: 1977
+  #   LASTYR: 1981
+
+# DIAGNOSTICS
+
+# List all desired packages with hyphen at the start of the line
+# Comment out any with # at start of line
+
+pod_list: 
+  - Wheeler_Kiladis
+  - EOF_500hPa
+  - convective_transition_diag
+  - MJO_suite
+  - MJO_teleconnection
+  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  # These PODS require more resources 
+  #- precip_diurnal_cycle #- high memory requirement
+
+# PATHS
+
+# Uncomment to set WKDIR to a location other than default (mdtf/MDTF_v2.0) (it will create MDTF_CASENAME here)
+
+paths:
+#- WKDIR: /full-path
+
+# SETTINGS
+
+# List any envvars to be set here with VAR tag at the start of the line
+# These will override any settings in mdtf.py, but case *must* match script
+
+settings:
+  verbose: 1         # 0-minimal,1-normal,2-copious,3-debug
+  save_ps: False        # True to retain output .ps plots
+  save_nc: True         # True to retain output netcdf files
+  make_variab_tar: True # True to save output in .tar file
+  test_mode: False   #True = script just reports what it would do, doesn't call actual packages
+
+

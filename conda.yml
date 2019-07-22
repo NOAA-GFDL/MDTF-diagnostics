@@ -12,3 +12,4 @@ dependencies:
 - networkx
 - numba
 - subprocess32
+- pyyaml

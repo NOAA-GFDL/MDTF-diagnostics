@@ -72,7 +72,6 @@ from util import setenv, check_required_dirs
 
 os.system("date")
 
-
 errstr = "ERROR "+__file__+" : "
 
 # ======================================================================
@@ -98,7 +97,7 @@ else:
    print(errstr+ ": ncl not found")
 # workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
 if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
-   setenv("NCARG_ROOT","CONDA_PREFIX",envvars,verbose=verbose)
+   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],envvars,verbose=verbose)
 
 
 # ======================================================================
@@ -136,7 +135,7 @@ except Exception as error:
    exit()
 
 # case info (type dict) =  {['casename',casename],['model',model],['FIRSTYR',FIRSTYR],['LASTYR',LASTYR]}
-namelist  = read_files.read_text_file(namelist_file,verbose).namelist    
+namelist  = read_files.read_text_file(namelist_file,verbose).namelist
 
 # pod_list (type list) =  [pod_name1,pod_name2,...]
 pod_do    = namelist.pod_list   # list of pod names to do here

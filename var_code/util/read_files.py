@@ -1,6 +1,12 @@
 # This file is part of the util module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 
 
+import re 
+import os
+import sys
+import yaml
+
+
 def get_var_from_namelist(varname,vartype,vardict,default,verbose=0):
    if (varname in vardict): 
       if verbose > 2: print "get_var_from_namelist found key ",varname," of type ",type(default)," in dict"
@@ -78,11 +84,6 @@ def pprint_list(list_in,title=""):
          pprint_dict(item,title=title)
       else:
          print "\t "+str(item)
-
-import re 
-import os
-import sys
-
 
 #==========================================================================
 class Any_file_input:
@@ -188,55 +189,33 @@ def remove_junk(line,verbose=0):
 
 
 
-def read_namelist_case(file_input,line,verbose=0):
+def read_namelist_case(file_input,file_contents, verbose=0):
    func_name = " read_namelist_case "
-   if ( len(line) < 5 ): 
-      if (verbose > 0 ): 
-         print "WARNING:"+func_name+" Line too short: ",line
-         print "\t "+func_name+" expects: CASE casename modeltype firstyr lastyr"
-      return
-   if verbose > 2: print func_name +" called with args: ",line
-   file_input.namelist.case['casename']   = line[1]
-   file_input.namelist.case['modeltype']  = line[2]
-   file_input.namelist.case['firstyr'] = line[3]
-   file_input.namelist.case['lastyr']   = line[4]
+   if verbose > 2: print func_name +" called with args: ",file_contents['case_list'][0]
+   file_input.namelist.case['casename'] = file_contents['case_list'][0]['CASENAME']
+   file_input.namelist.case['modeltype'] = file_contents['case_list'][0]['model']
+   file_input.namelist.case['firstyr'] = file_contents['case_list'][0]['FIRSTYR']
+   file_input.namelist.case['lastyr'] = file_contents['case_list'][0]['LASTYR']
 
    os.environ["CASENAME"] = file_input.namelist.case['casename']
    os.environ["model"]    = file_input.namelist.case['modeltype']
    os.environ["FIRSTYR"]  = file_input.namelist.case['firstyr']
    os.environ["LASTYR"]   = file_input.namelist.case['lastyr']
 
-      
-def read_namelist_pod(file_input,line,verbose=0):
+def read_namelist_pod(file_input,file_contents,verbose=0):
    func_name = " read_namelist_pod "
    #   print func_name+" verbose = "+str(verbose)
-   if verbose > 2: print func_name +" called with args: ",line
-   if ( len(line) < 2 ): 
-      if ( verbose > 0 ):
-         print "WARNING:"+func_name+" Line too short: ",line
-         print "\t "+func_name+ " expects: POD pod_name"
-      return
-   file_input.namelist.pod_list.append(line[1])
-   if ( verbose > 1 ): print "Added to pod list: ",file_input.namelist.pod_list[-1]
-
-
+   if verbose > 2: print func_name +" called with args: ",file_contents['pod_list']
+   file_input.namelist.pod_list = file_contents['pod_list']
       
-def read_namelist_envvar(file_input,line,verbose=0):
+def read_namelist_envvar(file_input,file_contents,verbose=0):
    func_name = " read_namelist_envvar "
    #   print func_name+" verbose = "+str(verbose)
-   if verbose > 2: print func_name +" called with args: ",line
-   if ( len(line) < 3 ): 
-      if ( verbose > 0 ):
-         print "WARNING:"+func_name+" Line too short: ",line
-         print "\t "+func_name+" expects:  VAR varname value"
-      return
-   varname = line[1]
-   varvalue = line[2]
-   if (( verbose > 1 ) and ( len(line) > 3 )): print "WARNING: "+func_name+" ignoring line after 3 items ",line
-   file_input.namelist.envvar[varname] = varvalue  #this should be sent to setenv but currently is not!
-   os.environ[varname] = varvalue
-
-   if ( verbose > 1 ): print func_name," Added environment variable:  ",varname," = ",varvalue
+   if verbose > 2: print func_name +" called with args: ",file_contents['settings']
+   for varname, varvalue in file_contents['settings'].items():
+      file_input.namelist.envvar[varname] = varvalue  #this should be sent to setenv but currently is not!
+      os.environ[varname] = varvalue
+      if ( verbose > 1 ): print func_name," Added environment variable:  ",varname," = ",varvalue
 
 def read_pod_varlist_varname(varname_in,verbose=0):
    func_name = " read_pod_varlist_varname "
@@ -376,23 +355,12 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list_wo_empties = [x for x in missing_list if x]
    return missing_list_wo_empties
 
-def read_namelist_line(file_input,line,verbose=0):
+def read_namelist_line(file_input, file_contents, verbose=0):
    func_name = "read_namelist_line"
-   #   print func_name+" verbose = "+str(verbose)
-   if verbose > 2: 
-      print "read_namelist_line received input line: ",line
-      print "                   of length ",len(line)
-   
-   first_char = line[0]
-   if ( first_char == "CASE" ):
-      read_namelist_case(file_input,line,verbose)
-   elif ( first_char == "POD" ):
-      read_namelist_pod(file_input,line,verbose)
-   elif ( first_char == "VAR" ):
-      read_namelist_envvar(file_input,line,verbose)
-   else:
-      # best to raise an exception so calling function can 
-      print "WARNING: ignoring line starting with unexpected tag ",first_char
+
+   read_namelist_case(file_input,file_contents, verbose)
+   read_namelist_pod(file_input,file_contents, verbose)
+   read_namelist_envvar(file_input,file_contents, verbose)
 
 def set_pod_driver(varval,pod_name,verbose=0):
    func_name = " set_pod_driver "
@@ -496,7 +464,7 @@ def check_pod_settings(pod_name,pod_settings,verbose=0):
 def determine_namelist_file(argv,verbose=0):
    func_name = "determine_namelist_file"
    if (verbose > 2 ): print func_name+"eceived arguments "+str(argv)
-   namelist_file_default = os.environ["DIAG_HOME"]+"/namelist"  
+   namelist_file_default = os.environ["DIAG_HOME"]+"/config.yml"  
 
    if (len(argv) > 1 ):
       namelist_file = argv[1]
@@ -546,26 +514,32 @@ def read_text_file(filename,verbose=0,**optional_args):
          #DRB this is repetious, but needs to continue
    
    if (verbose > 1 ): print "Found: ",func_name,filename
+
    fileobject = open(filename,'r')
-   line = fileobject.readline()
-   while line != "":
-      first_char = line[0]
-      if (verbose > 2): print "   "+func_name+": raw input line (L255) ",first_char,len(line)
+   if (file_input.file_type == "namelist"):
+      file_contents = yaml.load(fileobject, Loader=yaml.BaseLoader)
+      file_input.read_function(file_input, file_contents, verbose)
+   else: # legacy method
+      line = fileobject.readline()
+      while line != "":
+         first_char = line[0]
+         if (verbose > 2): print "   "+func_name+": raw input line (L255) ",first_char,len(line)
 
-      # if the line isn't a comment or empty    - move to function, then use try/except
-      if (( first_char != "#" )   & ( not line in ['\n', '\r\n'] )):
-         if (verbose > 2): print("  valid input line: "+line)
+         # if the line isn't a comment or empty    - move to function, then use try/except
+         if (( first_char != "#" )   & ( not line in ['\n', '\r\n'] )):
+            if (verbose > 2): print("  valid input line: "+line)
 
-         line_in = remove_junk(line,verbose)
-         if ( verbose > 2 ): print "line_in, cleaned up ",line_in
-            
-         try:
-            if (verbose >2): print "calling read_function right now"
-            file_input.read_function(file_input,line_in,verbose)  #updates file_input.values
-         except AssertionError as error:
-            print(error)
-      line = fileobject.readline()  #read the next line
-   
+            line_in = remove_junk(line,verbose)
+            if ( verbose > 2 ): print "line_in, cleaned up ",line_in
+               
+            try:
+               if (verbose >2): print "calling read_function right now"
+               file_input.read_function(file_input,line_in,verbose)  #updates file_input.values
+            except AssertionError as error:
+               print(error)
+         line = fileobject.readline()  #read the next line
+   fileobject.close()
+
    if (file_input.file_type == "namelist"):
       print_namelist(file_input.namelist)  #print it to stdout 
    elif (file_input.file_type == "settings"):

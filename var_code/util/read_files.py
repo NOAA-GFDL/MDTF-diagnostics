@@ -34,7 +34,7 @@ def get_boolean_from_namelist(varname,vardict,default,verbose=0):
    if verbose > 2: print "get_boolean_from_namelist ",varname
    
    try:
-      var = eval(vardict[varname])
+      var = (vardict[varname] in ('True', 'true', '1'))
    except:
       errstr = "Failed to eval() ",varname," = ",vardict[varname]
       return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
@@ -202,8 +202,8 @@ def read_namelist_case(file_input,file_contents, verbose=0):
 
    os.environ["CASENAME"] = file_input.namelist.case['casename']
    os.environ["model"]    = file_input.namelist.case['modeltype']
-   os.environ["FIRSTYR"]  = file_input.namelist.case['firstyr']
-   os.environ["LASTYR"]   = file_input.namelist.case['lastyr']
+   os.environ["FIRSTYR"]  = str(file_input.namelist.case['firstyr'])
+   os.environ["LASTYR"]   = str(file_input.namelist.case['lastyr'])
 
 def read_namelist_pod(file_input,file_contents,verbose=0):
    func_name = " read_namelist_pod "
@@ -216,6 +216,14 @@ def read_namelist_envvar(file_input,file_contents,verbose=0):
    #   print func_name+" verbose = "+str(verbose)
    if verbose > 2: print func_name +" called with args: ",file_contents['settings']
    for varname, varvalue in file_contents['settings'].items():
+      # environment variables must be strings
+      if type(varvalue) is bool:
+         if varvalue == True:
+            varvalue = '1'
+         else:
+            varvalue = '0'
+      elif type(varvalue) is not str:
+         varvalue = str(varvalue)
       file_input.namelist.envvar[varname] = varvalue  #this should be sent to setenv but currently is not!
       os.environ[varname] = varvalue
       if ( verbose > 1 ): print func_name," Added environment variable:  ",varname," = ",varvalue
@@ -488,7 +496,7 @@ def read_text_file(filename,verbose=0,**optional_args):
    if (verbose > 1 ): print "Found: ",func_name,file_input.filename
 
    fileobject = open(file_input.filename,'r')
-   file_contents = yaml.load(fileobject, Loader=yaml.BaseLoader)
+   file_contents = yaml.safe_load(fileobject)
    file_input.read_function(file_input, file_contents, verbose)
    fileobject.close()
 

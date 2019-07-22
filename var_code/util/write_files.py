@@ -9,8 +9,8 @@ def write_namelist_case(file,case):
 #   from read_files import Namelist  #is this necessary?
    file.write("CASE "+case['casename'] +\
               " "    +case['modeltype'] +\
-              " "    +case['firstyr'] +\
-              " "    +case['lastyr']  +\
+              " "    +str(case['firstyr']) +\
+              " "    +str(case['lastyr'])  +\
               "\n")
 
 

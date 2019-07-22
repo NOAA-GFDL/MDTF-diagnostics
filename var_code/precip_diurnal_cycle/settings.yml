@@ -1,0 +1,31 @@
+# ==================================================================================================
+# 3.  Diurnal cycle of precipitation 
+#     see Gervais et al., J. Climate, 5219-5239, 2014.
+#     This requires 3 hourly precipitation. 
+#     the code is in NCL
+# ==================================================================================================
+
+settings:
+  driver: precip_diurnal_cycle.py
+  long_name: Diurnal cycle of precipitation 
+
+# USAGE varlist
+# var_name      time-frequency     [requirement]
+#
+# - var_name: as found in var_code/util/set_variables_*
+# - freq: mon (monthly), day, 6hr, 3hr, 1hr
+# - requirement = blank  (default = optional)                                          
+#                      required (package cannot run without this)                           
+#                      required unless field_name field_name2 ...
+# - alternates: 
+#
+#   nb. if a variable is required at multiple time frequencies,
+#       list it separately for each one
+#
+#          Clearly the developer can just leave out optional files
+#          However, it is always nice to get an upfront warning of missing files
+
+varlist:
+  - var_name: pr_var
+    freq: 3hr
+    requirement: required

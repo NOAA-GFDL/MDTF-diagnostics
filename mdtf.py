@@ -241,7 +241,7 @@ for pod in pod_do:
 
    pod_dir = os.environ["VARCODE"]+"/"+pod
    try:
-      pod_settings = read_files.read_text_file(pod_dir+"/settings",verbose).pod_settings
+      pod_settings = read_files.read_text_file(pod_dir+"/settings.yml",verbose).pod_settings
    except AssertionError as error:  
       print str(error)
    else:

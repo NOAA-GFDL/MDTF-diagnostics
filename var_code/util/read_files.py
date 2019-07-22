@@ -157,9 +157,9 @@ def determine_file_type(filename_fullpath,verbose=0):
    if ( verbose > 2 ): print "determine_file_type determined filename ",filename
    file_input = Any_file_input()  #initialize class (empty so far)
 
-   if (filename == "settings"):
+   if (filename == "settings.yml"):
       if verbose > 1: print "Determined input file ",filename," is settings "
-      file_input.file_type = filename
+      file_input.file_type = 'settings'
       file_input.read_function = read_pod_settings
       file_input.pod_name = determine_pod_name(filename_split)
       file_input.pod_settings = {}
@@ -405,20 +405,10 @@ def set_pod_settings(var,varval,pod_name,pod_settings,verbose=0):
       pod_settings[var] = varval
 
 
-def read_pod_settings(file_input,line,verbose=0):
+def read_pod_settings(file_input,file_contents,verbose=0):
    func_name = " read_pod_settings "
-   nargs = len(line)
-   if verbose > 2:  print func_name+" received input line of length ",nargs,": ",line
-
-   #check that there are atleast two elements in line
-   error_str = "WARNING: "+func_name+" "+file_input.pod_name+" expected 2 or more entries in line "
-   assert ( nargs >= 2 ), error_str
-   
-   #check up on settings
-   var    = line[0]  
-   varval = " ".join(line[1:])
-   set_pod_settings(var,varval,file_input.pod_name,file_input.pod_settings,verbose)
-
+   for var, varval in file_contents['settings'].items():
+      set_pod_settings(var,varval,file_input.pod_name,file_input.pod_settings,verbose)
    # pod_settings dict defined in determine_file_type
    if ( verbose > 2): print func_name+" "+str(file_input.pod_settings)
 
@@ -516,7 +506,7 @@ def read_text_file(filename,verbose=0,**optional_args):
    if (verbose > 1 ): print "Found: ",func_name,filename
 
    fileobject = open(filename,'r')
-   if (file_input.file_type == "namelist"):
+   if (file_input.file_type in ["namelist", "settings"]):
       file_contents = yaml.load(fileobject, Loader=yaml.BaseLoader)
       file_input.read_function(file_input, file_contents, verbose)
    else: # legacy method

@@ -160,7 +160,7 @@ def remove_junk(line,verbose=0):
 
 
 
-def read_namelist_case(file_input,file_contents, verbose=0):
+def parse_namelist(file_input,file_contents, verbose=0):
    func_name = " read_namelist_case "
    if verbose > 2: print func_name +" called with args: ",file_contents['case_list'][0]
    file_input.namelist.case['casename'] = file_contents['case_list'][0]['CASENAME']
@@ -173,16 +173,8 @@ def read_namelist_case(file_input,file_contents, verbose=0):
    os.environ["FIRSTYR"]  = str(file_input.namelist.case['firstyr'])
    os.environ["LASTYR"]   = str(file_input.namelist.case['lastyr'])
 
-def read_namelist_pod(file_input,file_contents,verbose=0):
-   func_name = " read_namelist_pod "
-   #   print func_name+" verbose = "+str(verbose)
-   if verbose > 2: print func_name +" called with args: ",file_contents['pod_list']
    file_input.namelist.pod_list = file_contents['pod_list']
       
-def read_namelist_envvar(file_input,file_contents,verbose=0):
-   func_name = " read_namelist_envvar "
-   #   print func_name+" verbose = "+str(verbose)
-   if verbose > 2: print func_name +" called with args: ",file_contents['settings']
    for varname, varvalue in file_contents['settings'].items():
       # environment variables must be strings
       if type(varvalue) is bool:
@@ -206,49 +198,28 @@ def read_pod_varlist_varname(varname_in,verbose=0):
       varname = varname_in
       if ( verbose > 1): print func_name+"WARNING: didn't find ",varname, " in environment vars, not substituting"
       #      print "To do: Modify read_files.main to accept argument of model type and import"
-
    if ( verbose > 2): print func_name + "returning ",varname
    return varname
 
-def read_pod_varlist_varfreq(varfreq,verbose=0):
-   func_name = " read_pot_varlist_varfreq: "
-   freq_list = ["1hr","3hr","6hr","day","mon"]
-   error_str = "WARNING: didn't find "+varfreq+" in frequency options "+str(freq_list)+\
-               " (set in "+__file__+":"+func_name+")"
-   assert ( varfreq in freq_list ), error_str
-   return varfreq 
-
-def read_pod_varlist_required(args,verbose=0):
-   func_name = "\t \t read_pod_varlist_required: "
-   if ( verbose > 1): print func_name+"scanning remaining args ",args
-   # Should make case insensitive
-   if ("required" in args ):
-      return True
-   elif ("optional" in args ):
-      return False
-
-
-def  read_pod_varlist_alternatives(args,verbose=0):
-   func_name = "\t \t read_pod_varlist_alternatives"
-   if ( any(args) ):
-      return args
-   else:
-      return ''
-
-
-def read_pod_varlist(file_input,file_contents,verbose=0):
-   func_name = " read_pod_varlist: "
+def parse_pod_varlist(file_input,file_contents,verbose=0):
+   func_name = " parse_pod_varlist: "
    default_file_required = False 
    for var in file_contents['varlist']:
       item = {}
-      item['varname'] = read_pod_varlist_varname(var['var_name'])
-      item['varfreq'] = read_pod_varlist_varfreq(var['freq'])
+      item['varname'] = read_pod_varlist_varname(var['var_name'], verbose=verbose)
+
+      assert(var['freq'] in ["1hr","3hr","6hr","day","mon"]), \
+         "WARNING: didn't find "+var['freq']+" in frequency options "+\
+            " (set in "+__file__+":"+func_name+")"
+      item['varfreq'] = var['freq']
       if 'requirement' in var.keys():
-         item['required'] = read_pod_varlist_required(var['requirement'],verbose=verbose)
+         item['required'] = (var['requirement'].lower() == 'required')
       else:
          item['required'] = default_file_required
       if 'alternates' in var.keys():
-         item['alternatives'] = read_pod_varlist_alternatives(var['alternates'],verbose=verbose)
+         item['alternatives'] = var['alternates']
+      else:
+         item['alternatives'] = ''
 
       file_input.varlist.append(item)  #Add this item to the list of all requested
       if ( verbose > 1): print "added item to file_input.varlist ",file_input.varlist[-1]
@@ -264,15 +235,6 @@ def makefilepath(varname,timefreq,casename,datadir):
 
     return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
 
-
-def temp(pod_dir,verbose=0):
-   func_name = "temp:"
-
-   missing_list = []
-   missing_list.append('test')
-   print func_name +" returning: ",missing_list
-
-   return missing_list
 
 def check_for_varlist_files(varlist,verbose=0):
    func_name = "\t \t check_for_varlist_files :"
@@ -344,24 +306,18 @@ def set_pod_program(driver,verbose=0):
 
    return programs[pod_tail]
 
-def set_pod_settings(var,varval,pod_name,pod_settings,verbose=0):
-   func_name = " set_pod_settings "
-   if verbose > 2:  print func_name+" received input: ",var,varval,pod_name
-
-   if ( verbose > 1): print func_name+" setting "+var+" "+varval
-   if ( var == 'driver'):
-      pod_settings['driver']  = set_pod_driver(varval,pod_name,verbose)
-      pod_settings['program'] = set_pod_program(pod_settings['driver'],verbose)
-   else:
-      pod_settings[var] = varval
-
-
-def read_pod_settings(file_input,file_contents,verbose=0):
+def parse_pod_settings(file_input,file_contents,verbose=0):
    func_name = " read_pod_settings "
    for var, varval in file_contents['settings'].items():
-      set_pod_settings(var,varval,file_input.pod_name,file_input.pod_settings,verbose)
-   # pod_settings dict defined in determine_file_type
-   if ( verbose > 2): print func_name+" "+str(file_input.pod_settings)
+      if (verbose > 1): print func_name+" setting "+var+" "+varval
+      if ( var == 'driver'):
+         file_input.pod_settings['driver']  = set_pod_driver(
+            varval,file_input.pod_name,verbose)
+         file_input.pod_settings['program'] = set_pod_program(
+            file_input.pod_settings['driver'],verbose)
+      else:
+         file_input.pod_settings[var] = varval
+   if (verbose > 2): print func_name+" "+str(file_input.pod_settings)
 
 def check_pod_settings(pod_name,pod_settings,verbose=0):
    func_name = "check_pod_settings "
@@ -422,9 +378,7 @@ def read_mdtf_config_file(argv, verbose=0):
    file_input = Any_file_input()
    file_input.namelist = Namelist()  #initialize class (defined above)
    file_input.pod_name = ""
-   read_namelist_case(file_input, file_contents, verbose)
-   read_namelist_pod(file_input, file_contents, verbose)
-   read_namelist_envvar(file_input, file_contents, verbose)
+   parse_namelist(file_input, file_contents, verbose)
 
    if (verbose > 1):
       print_namelist(file_input.namelist)  #print it to stdout 
@@ -442,9 +396,9 @@ def read_pod_settings_file(filename, verbose=0):
    file_input.pod_name = determine_pod_name(filename)
    file_input.pod_settings = {}
    file_input.varlist = []
-   read_pod_settings(file_input, file_contents, verbose)
-   read_pod_varlist(file_input, file_contents, verbose)
+   parse_pod_settings(file_input, file_contents, verbose)
    check_pod_settings(file_input.pod_name, file_input.pod_settings, verbose=verbose)
+   parse_pod_varlist(file_input, file_contents, verbose)
 
    if (verbose > 0): 
       print_varlist(file_input.varlist, file_input.pod_name)

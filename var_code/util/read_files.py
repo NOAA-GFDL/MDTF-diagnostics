@@ -140,37 +140,40 @@ def check_required_envvar(verbose=0,*varlist):
          print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
          exit()
 
-def determine_pod_name(filename_split,verbose=0):
-   if (verbose > 2): print "determine_pod_name received args ",filename_split
-   if ( len(filename_split) > 1 ):
-      if (verbose > 1 ): print "Setting pod_name to ",filename_split[-2]
-      return filename_split[-2]
+def determine_pod_name(path ,verbose=0):
+   if (verbose > 2): print "determine_pod_name received args ",path
+   filename_split = path.split('/')
+   if ( len(filename_split) >= 1 ):
+      if (verbose > 1 ): print "Setting pod_name to ",filename_split[-1]
+      return filename_split[-1]
    else:
       return ""
 
 def determine_file_type(filename_fullpath,verbose=0):
 
    if ( verbose > 2 ): print "determine_file_type received argument ",filename_fullpath
-   filename_split = filename_fullpath.split("/") # split string by "/"
-   filename = filename_split[-1]                 # choose the last element 
+   path, filename = os.path.split(filename_fullpath)
 
    if ( verbose > 2 ): print "determine_file_type determined filename ",filename
    file_input = Any_file_input()  #initialize class (empty so far)
 
    if (filename == "settings.yml"):
       if verbose > 1: print "Determined input file ",filename," is settings "
+      file_input.filename = filename_fullpath
       file_input.file_type = 'settings'
       file_input.read_function = read_pod_settings
-      file_input.pod_name = determine_pod_name(filename_split)
+      file_input.pod_name = determine_pod_name(path)
       file_input.pod_settings = {}
    elif (filename == "varlist"):
       if verbose > 1: print "Determined input file ",filename," is varlist "
+      file_input.filename = path + '/settings.yml'
       file_input.file_type = filename
       file_input.read_function = read_pod_varlist
-      file_input.pod_name = determine_pod_name(filename_split)
+      file_input.pod_name = determine_pod_name(path)
       file_input.varlist = []
    else:                          
       if verbose > 1: print "Assuming input file ",filename," is namelist input "
+      file_input.filename = filename_fullpath
       file_input.file_type = "namelist"
       file_input.read_function = read_namelist_line
       file_input.namelist = Namelist()  #initialize class (defined above)
@@ -242,58 +245,37 @@ def read_pod_varlist_varfreq(varfreq,verbose=0):
 def read_pod_varlist_required(args,verbose=0):
    func_name = "\t \t read_pod_varlist_required: "
    if ( verbose > 1): print func_name+"scanning remaining args ",args
-
    # Should make case insensitive
    if ("required" in args ):
-      args.remove("required")
       return True
    elif ("optional" in args ):
-      args.remove("optional")
       return False
 
 
 def  read_pod_varlist_alternatives(args,verbose=0):
    func_name = "\t \t read_pod_varlist_alternatives"
-   list_of_flags = ["OR","or","alt","alternatives"]
-   for str in list_of_flags:
-      if str in args: args.remove(str)
-
    if ( any(args) ):
       return args
    else:
       return ''
 
 
-def read_pod_varlist(file_input,line,verbose=0):
-   required_default = False
+def read_pod_varlist(file_input,file_contents,verbose=0):
    func_name = " read_pod_varlist: "
-   nargs = len(line)
-   if verbose > 2:  print func_name+" received input line of length ",nargs,": ",line
-      
-   #check that there are atleast two elements in line
-   error_str = "WARNING: "+func_name+" "+file_input.pod_name+" expected 2 or more entries in line "
-   assert ( nargs >= 2 ), error_str
-
-   # create new dictionary item in varlist EG v200_var	day  required  or v 
-   # line can contain one of two flags:
-   #      required, optional (with no arguments)
-   #      or (with one or more arguments giving alternative variable names)
-   if ( verbose > 2 ): print "file_input varlist init           ",file_input.varlist
    default_file_required = False 
+   for var in file_contents['varlist']:
+      item = {}
+      item['varname'] = read_pod_varlist_varname(var['var_name'])
+      item['varfreq'] = read_pod_varlist_varfreq(var['freq'])
+      if 'requirement' in var.keys():
+         item['required'] = read_pod_varlist_required(var['requirement'],verbose=verbose)
+      else:
+         item['required'] = default_file_required
+      if 'alternates' in var.keys():
+         item['alternatives'] = read_pod_varlist_alternatives(var['alternates'],verbose=verbose)
 
-   item = {}
-   item['varname'] = read_pod_varlist_varname(line[0])
-   item['varfreq'] = read_pod_varlist_varfreq(line[1])
-   item['required'] = default_file_required
-
-   if ( nargs > 2):  
-      args = line[2:]
-      item['required']     = read_pod_varlist_required(args,verbose=verbose)  #removes 'required'/'optional' from arg list
-      item['alternatives'] = read_pod_varlist_alternatives(args,verbose=verbose)
-
-   file_input.varlist.append(item)  #Add this item to the list of all requested
-   if ( verbose > 1): print "added item to file_input.varlist ",file_input.varlist[-1]
-
+      file_input.varlist.append(item)  #Add this item to the list of all requested
+      if ( verbose > 1): print "added item to file_input.varlist ",file_input.varlist[-1]
 
 def makefilepath(varname,timefreq,casename,datadir):
     """ 
@@ -491,8 +473,8 @@ def read_text_file(filename,verbose=0,**optional_args):
       if (verbose > 1): print 'pod_name found by read_text_file: ', optional_args['pod_name']
       file_input.pod_name = optional_args['pod_name']
                   
-   if ( not os.path.exists(filename) ):
-      errstr_file_not_found = "WARNING: ",func_name,filename," not found"
+   if ( not os.path.exists(file_input.filename) ):
+      errstr_file_not_found = "WARNING: ",func_name,file_input.filename," not found"
       if file_input.file_type == "settings":
          print errstr_file_not_found
          print "Trying to find driver file..."
@@ -500,34 +482,14 @@ def read_text_file(filename,verbose=0,**optional_args):
          check_pod_settings(file_input.pod_name,file_input.pod_settings,verbose=verbose)
          return file_input
       else:
-         assert( os.path.exists(filename)),errstr_file_not_found
+         assert( os.path.exists(file_input.filename)),errstr_file_not_found
          #DRB this is repetious, but needs to continue
    
-   if (verbose > 1 ): print "Found: ",func_name,filename
+   if (verbose > 1 ): print "Found: ",func_name,file_input.filename
 
-   fileobject = open(filename,'r')
-   if (file_input.file_type in ["namelist", "settings"]):
-      file_contents = yaml.load(fileobject, Loader=yaml.BaseLoader)
-      file_input.read_function(file_input, file_contents, verbose)
-   else: # legacy method
-      line = fileobject.readline()
-      while line != "":
-         first_char = line[0]
-         if (verbose > 2): print "   "+func_name+": raw input line (L255) ",first_char,len(line)
-
-         # if the line isn't a comment or empty    - move to function, then use try/except
-         if (( first_char != "#" )   & ( not line in ['\n', '\r\n'] )):
-            if (verbose > 2): print("  valid input line: "+line)
-
-            line_in = remove_junk(line,verbose)
-            if ( verbose > 2 ): print "line_in, cleaned up ",line_in
-               
-            try:
-               if (verbose >2): print "calling read_function right now"
-               file_input.read_function(file_input,line_in,verbose)  #updates file_input.values
-            except AssertionError as error:
-               print(error)
-         line = fileobject.readline()  #read the next line
+   fileobject = open(file_input.filename,'r')
+   file_contents = yaml.load(fileobject, Loader=yaml.BaseLoader)
+   file_input.read_function(file_input, file_contents, verbose)
    fileobject.close()
 
    if (file_input.file_type == "namelist"):

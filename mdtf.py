@@ -64,9 +64,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     import subprocess
 else:
     import subprocess
+import yaml
 sys.path.insert(0,'var_code/util/')
 import read_files
-import write_files 
 from util import setenv, check_required_dirs
 
 
@@ -199,8 +199,6 @@ if found_model == False:
 check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
 os.chdir(os.environ["WKDIR"])
 
-
-
 # ======================================================================
 # set up html file
 # ======================================================================
@@ -209,13 +207,6 @@ if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
 else: 
    os.system("cp "+os.environ["VARCODE"]+"/html/mdtf_diag_banner.png "+os.environ["variab_dir"])
    os.system("cp "+os.environ["VARCODE"]+"/html/mdtf1.html "+os.environ["variab_dir"]+"/index.html")
-
-
-# ======================================================================
-# Record settings in file variab_dir/namelist_YYYYMMDDHHRR for rerunning
-#====================================================================
-write_files.write_namelist(os.environ["variab_dir"],config,verbose=verbose)  
-
 
 # ======================================================================
 # Diagnostics:
@@ -277,7 +268,21 @@ if verbose > 0:
    print("---  MDTF.py Finished POD "+pod+"\n")
    # elapsed = timeit.default_timer() - start_time
    # print(pod+" Elapsed time ",elapsed)
-        
+
+
+# ======================================================================
+# Record settings in file variab_dir/config_save.yml for rerunning
+#=======================================================================
+out_file = os.environ["variab_dir"]+'/config_save.yml'
+if os.path.isfile(out_file):
+   out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
+   if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
+   shutil.move(out_file,out_fileold)
+file_object = open(out_file,'w')  #create it
+yaml.dump(config, file_object)
+file_object.close() 
+
+
 # ==================================================================================================
 #  Make tar file
 # ==================================================================================================

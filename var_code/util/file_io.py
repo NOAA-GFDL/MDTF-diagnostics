@@ -5,7 +5,6 @@ import sys
 import yaml
 import util
 from util import setenv
-from util_validation import check_pod_driver, check_for_varlist_files
 
 def parse_pod_varlist(varlist, verbose=0):
    func_name = " parse_pod_varlist: "
@@ -72,8 +71,11 @@ def read_pod_settings_file(pod_name, verbose=0):
    if (verbose > 0): 
       print file_contents['settings']['pod_name']+" varlist: "
       print yaml.dump(file_contents['varlist'])
-      
+
    return file_contents
+
+
+
 
 
 # ------------ MAIN for testing ----------------------------------------------

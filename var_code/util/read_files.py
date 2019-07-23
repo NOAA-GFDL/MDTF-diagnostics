@@ -44,12 +44,12 @@ def parse_pod_varlist(varlist, verbose=0):
       assert(var['freq'] in ["1hr","3hr","6hr","day","mon"]), \
          "WARNING: didn't find "+var['freq']+" in frequency options "+\
             " (set in "+__file__+":"+func_name+")"
-      if 'requirement' in var.keys():
+      if 'requirement' in var:
          varlist[idx]['required'] = (var['requirement'].lower() == 'required')
       else:
          varlist[idx]['required'] = default_file_required
-      if not 'alternates' in var.keys():
-         varlist[idx]['alternates'] = ''
+      if ('alternates' in var) and (type(var['alternates']) is not list):
+         varlist[idx]['alternates'] = [var['alternates']]
 
 def makefilepath(varname,timefreq,casename,datadir):
     """ 
@@ -73,27 +73,23 @@ def check_for_varlist_files(varlist,verbose=0):
 
       if ( os.path.isfile(filepath) ):
          print "found ",filepath
+         continue
+      if (not item['required']):
+         print "WARNING: optional file not found ",filepath
+         continue
+      if not (('alternates' in item) and (len(item['alternates'])>0)):
+         print "ERROR: missing required file ",filepath,". No alternatives found"
+         missing_list.append(filepath)
       else:
-         if ( not item['required'] ):
-            print "WARNING: optional file not found ",filepath
-         else: 
-            if ( not 'alternates' in item ):
-               print "ERROR: required file not found ",filepath
-               missing_list.append(filepath)
-            else:
-               alt_list = item['alternates']
-               if ( not alt_list  ):
-                  print "ERROR: missing required file ",filepath,". No alternatives found"
-                  missing_list.append(filepath)
-               else:
-                  print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
-                  for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
-                     if (verbose > 1): print "\t \t examining alternative ",alt_item
-                     new_var = item.copy()  # modifyable dict with all settings from original
-                     new_var['name_in_model'] = translate_varname(alt_item,verbose=verbose)  # alternative variable name 
-                     del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
-                     if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
-                     missing_list.append(check_for_varlist_files([new_var],verbose=verbose))
+         alt_list = item['alternates']
+         print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
+         for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
+            if (verbose > 1): print "\t \t examining alternative ",alt_item
+            new_var = item.copy()  # modifyable dict with all settings from original
+            new_var['name_in_model'] = translate_varname(alt_item,verbose=verbose)  # alternative variable name 
+            del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
+            if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
+            missing_list.append(check_for_varlist_files([new_var],verbose=verbose))
 
    if (verbose > 2): print "check_for_varlist_files returning ",missing_list
 

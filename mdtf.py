@@ -64,14 +64,13 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     import subprocess
 else:
     import subprocess
+import yaml
 sys.path.insert(0,'var_code/util/')
 import read_files
-import write_files 
 from util import setenv, check_required_dirs
 
 
 os.system("date")
-
 
 errstr = "ERROR "+__file__+" : "
 
@@ -98,7 +97,7 @@ else:
    print(errstr+ ": ncl not found")
 # workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
 if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
-   setenv("NCARG_ROOT","CONDA_PREFIX",envvars,verbose=verbose)
+   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],envvars,verbose=verbose)
 
 
 # ======================================================================
@@ -130,24 +129,20 @@ setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
 # Namelist class defined in read_files, contains: case (dict), pod_list (list), envvar (dict)
 
 try:
-   namelist_file = read_files.determine_namelist_file(sys.argv,verbose=verbose)
+   config = read_files.read_mdtf_config_file(sys.argv,verbose=verbose)
 except Exception as error:
    print error
    exit()
-
-# case info (type dict) =  {['casename',casename],['model',model],['FIRSTYR',FIRSTYR],['LASTYR',LASTYR]}
-namelist  = read_files.read_text_file(namelist_file,verbose).namelist    
-
-# pod_list (type list) =  [pod_name1,pod_name2,...]
-pod_do    = namelist.pod_list   # list of pod names to do here
+config['envvars'].update(envvars)
+pod_do = config['pod_list']   # list of pod names to do here
 
 # Check if any required namelist/envvars are missing  
 read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
 
 # update local variables used in this script with env var changes from reading namelist
 # variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
-test_mode = read_files.get_var_from_namelist('test_mode','bool',namelist.envvar,default=test_mode,verbose=verbose)
-verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,default=verbose,verbose=verbose)
+test_mode = config['envvars']['test_mode']
+verbose   = config['envvars']['verbose']
 
 # ======================================================================
 # OUTPUT
@@ -155,11 +150,11 @@ verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,def
 # files & .ps files in subdirectories herein)
 
 variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
+setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 # INPUT: directory of model output
-setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
+setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 
@@ -173,9 +168,9 @@ setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,o
 #    It indicates where the variability package source code lives and should
 #    contain the directories var_code and obs_data although these can be 
 #    located elsewhere by specifying below.
-setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",envvars,overwrite=False,verbose=verbose)
-setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",envvars,overwrite=False,verbose=verbose)
-setenv("RGB",os.environ["VARCODE"]+"/util/rgb",envvars,overwrite=False,verbose=verbose)
+setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",config['envvars'],overwrite=False,verbose=verbose)
+setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 # set variable names based on model
@@ -204,8 +199,6 @@ if found_model == False:
 check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
 os.chdir(os.environ["WKDIR"])
 
-
-
 # ======================================================================
 # set up html file
 # ======================================================================
@@ -214,13 +207,6 @@ if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
 else: 
    os.system("cp "+os.environ["VARCODE"]+"/html/mdtf_diag_banner.png "+os.environ["variab_dir"])
    os.system("cp "+os.environ["VARCODE"]+"/html/mdtf1.html "+os.environ["variab_dir"]+"/index.html")
-
-
-# ======================================================================
-# Record settings in file variab_dir/namelist_YYYYMMDDHHRR for rerunning
-#====================================================================
-write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=verbose)  
-
 
 # ======================================================================
 # Diagnostics:
@@ -234,43 +220,38 @@ write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=ver
 pod_procs = []
 log_files = []
 for pod in pod_do:
-
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
-
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
 
-   pod_dir = os.environ["VARCODE"]+"/"+pod
+   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
    try:
-      pod_settings = read_files.read_text_file(pod_dir+"/settings",verbose).pod_settings
+      pod_cfg = read_files.read_pod_settings_file(pod, verbose)
    except AssertionError as error:  
       print str(error)
+   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
+      print "POD long name: ", pod_cfg['settings']['long_name']
+
+   if len(pod_cfg['missing_files']) > 0:
+      print "WARNING: POD ",pod," Not executed because missing required input files:"
+      print yaml.dump(pod_cfg['missing_files'])
+      continue
    else:
+      if (verbose > 0): print "No known missing required input files"
 
-      run_pod = pod_settings['program']+" "+pod_settings['driver']
-      if ('long_name' in pod_settings) and verbose > 0: print "POD long name: ",pod_settings['long_name']
-
-      # Check for files necessary for the pod to run (if pod provides varlist file)
-
-      missing_file_list = read_files.check_varlist(pod_dir,verbose=verbose)
-      if ( missing_file_list  ):
-         print "WARNING: POD ",pod," Not executed because missing required input files:"
-         print missing_file_list
-      else:  # all_required_files_found
-         if (verbose > 0): print "No known missing required input files"
-         if test_mode:
-            print("TEST mode: would call :  "+run_pod)
-         else:
-            start_time = timeit.default_timer()
-            log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
-            log_files.append(log)
-            try:
-               print("Calling :  "+run_pod) # This is where the POD is called #
-               proc = subprocess.Popen(run_pod, shell=True, env = os.environ, stdout = log, stderr = subprocess.STDOUT)
-               pod_procs.append(proc)
-            except OSError as e:
-               print('ERROR :',e.errno,e.strerror)
-               print(errstr + " occured with call: " +run_pod)
+   command_str = pod_cfg['settings']['program']+" "+pod_cfg['settings']['driver']  
+   if test_mode:
+      print("TEST mode: would call :  "+command_str)
+   else:
+      start_time = timeit.default_timer()
+      log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
+      log_files.append(log)
+      try:
+         print("Calling :  "+command_str) # This is where the POD is called #
+         proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
+         pod_procs.append(proc)
+      except OSError as e:
+         print('ERROR :',e.errno,e.strerror)
+         print(errstr + " occured with call: " +command_str)
 
 for proc in pod_procs:
    proc.wait()
@@ -282,7 +263,21 @@ if verbose > 0:
    print("---  MDTF.py Finished POD "+pod+"\n")
    # elapsed = timeit.default_timer() - start_time
    # print(pod+" Elapsed time ",elapsed)
-        
+
+
+# ======================================================================
+# Record settings in file variab_dir/config_save.yml for rerunning
+#=======================================================================
+out_file = os.environ["variab_dir"]+'/config_save.yml'
+if os.path.isfile(out_file):
+   out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
+   if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
+   shutil.move(out_file,out_fileold)
+file_object = open(out_file,'w')  #create it
+yaml.dump(config, file_object)
+file_object.close() 
+
+
 # ==================================================================================================
 #  Make tar file
 # ==================================================================================================

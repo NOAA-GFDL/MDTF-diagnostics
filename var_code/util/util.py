@@ -2,23 +2,29 @@
 
 
 
-def setenv (varname,varvalue,env_dict,verbose=0,overwrite=True):
+def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
    import os
-   # Not currently used. Needs to be a dictionary to be dumped once file is created
-   #
-   # Ideally this could be a wrapper to os.environ so any new env vars 
+   # env_dict: a dictionary to be dumped once file is created
+   # This is a wrapper to os.environ so any new env vars 
    # automatically get written to the file
-   "replaces os.environ to set the variable AND save it to write out in namelist"
-
-   if (( not overwrite ) and ('varname' in env_dict)): 
+   
+   if (not overwrite) and ('varname' in env_dict): 
       if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
    else:
+      if ('varname' in env_dict) and (env_dict[varname] != varvalue) and (verbose > 0): 
+         print "WARNING: setenv ",varname," = ",varvalue," overriding previous setting ",env_dict[varname]
+      env_dict[varname] = varvalue
+
+      # environment variables must be strings
+      if type(varvalue) is bool:
+         if varvalue == True:
+            varvalue = '1'
+         else:
+            varvalue = '0'
+      elif type(varvalue) is not str:
+         varvalue = str(varvalue)
       os.environ[varname] = varvalue
-      env_dict[varname]   = varvalue
-      if ('varname' in env_dict):
-         if (verbose > 0): 
-            print "WARNING: setenv ",varname," = ",varvalue," overriding previous setting ",env_dict[varname]
-         
+
       if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
 

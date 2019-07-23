@@ -63,7 +63,7 @@ def read_pod_settings_file(pod_name, verbose=0):
 
    file_contents['settings']['pod_name'] = pod_name
    file_contents['settings']['pod_dir'] = pod_dir
-   check_pod_driver(file_contents['settings'], verbose)
+   
    if (verbose > 0): 
       print file_contents['settings']['pod_name']+" settings: "
       print yaml.dump(file_contents['settings'])
@@ -72,10 +72,7 @@ def read_pod_settings_file(pod_name, verbose=0):
    if (verbose > 0): 
       print file_contents['settings']['pod_name']+" varlist: "
       print yaml.dump(file_contents['varlist'])
-
-   var_files = check_for_varlist_files(file_contents['varlist'], verbose)
-   file_contents.update(var_files)
-
+      
    return file_contents
 
 

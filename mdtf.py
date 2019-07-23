@@ -224,6 +224,9 @@ for pod in pod_do:
    if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
    try:
       pod_cfg = util.read_pod_settings_file(pod, verbose)
+      util.check_pod_driver(pod_cfg['settings'], verbose)
+      var_files = util.check_for_varlist_files(pod_cfg['varlist'], verbose)
+      pod_cfg.update(var_files)
    except AssertionError as error:  
       print str(error)
    if ('long_name' in pod_cfg['settings']) and verbose > 0: 

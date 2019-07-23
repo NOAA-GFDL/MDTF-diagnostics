@@ -220,43 +220,38 @@ else:
 pod_procs = []
 log_files = []
 for pod in pod_do:
-
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
-
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
 
+   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
    try:
-      file_input = read_files.read_pod_settings_file(pod, verbose)
+      pod_cfg = read_files.read_pod_settings_file(pod, verbose)
    except AssertionError as error:  
       print str(error)
-   else:
-      pod_settings = file_input['settings']
-      varlist = file_input['varlist']
-      run_pod = pod_settings['program']+" "+pod_settings['driver']
-      if ('long_name' in pod_settings) and verbose > 0: 
-         print "POD long name: ",pod_settings['long_name']
+   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
+      print "POD long name: ", pod_cfg['settings']['long_name']
 
-      # Check for files necessary for the pod to run (if pod provides varlist file)
-      missing_file_list = read_files.check_for_varlist_files(varlist,verbose=verbose)
-      if ( missing_file_list  ):
-         print "WARNING: POD ",pod," Not executed because missing required input files:"
-         print missing_file_list
-      else:  # all_required_files_found
-         if (verbose > 0): print "No known missing required input files"
-         if test_mode:
-            print("TEST mode: would call :  "+run_pod)
-         else:
-            start_time = timeit.default_timer()
-            log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
-            log_files.append(log)
-            try:
-               print("Calling :  "+run_pod) # This is where the POD is called #
-               proc = subprocess.Popen(run_pod, shell=True, env = os.environ, stdout = log, stderr = subprocess.STDOUT)
-               pod_procs.append(proc)
-            except OSError as e:
-               print('ERROR :',e.errno,e.strerror)
-               print(errstr + " occured with call: " +run_pod)
+   if len(pod_cfg['missing_files']) > 0:
+      print "WARNING: POD ",pod," Not executed because missing required input files:"
+      print yaml.dump(pod_cfg['missing_files'])
+      continue
+   else:
+      if (verbose > 0): print "No known missing required input files"
+
+   command_str = pod_cfg['settings']['program']+" "+pod_cfg['settings']['driver']  
+   if test_mode:
+      print("TEST mode: would call :  "+command_str)
+   else:
+      start_time = timeit.default_timer()
+      log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
+      log_files.append(log)
+      try:
+         print("Calling :  "+command_str) # This is where the POD is called #
+         proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
+         pod_procs.append(proc)
+      except OSError as e:
+         print('ERROR :',e.errno,e.strerror)
+         print(errstr + " occured with call: " +command_str)
 
 for proc in pod_procs:
    proc.wait()

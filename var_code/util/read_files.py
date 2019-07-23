@@ -65,14 +65,15 @@ def makefilepath(varname,timefreq,casename,datadir):
 def check_for_varlist_files(varlist,verbose=0):
    func_name = "\t \t check_for_varlist_files :"
    if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ",varlist
-#   all_required_files_found = True
+   found_list = []
    missing_list = []
    for item in varlist:
       if (verbose > 2 ): print func_name +" "+item
       filepath = makefilepath(item['name_in_model'],item['freq'],os.environ['CASENAME'],os.environ['DATADIR'])
 
-      if ( os.path.isfile(filepath) ):
+      if (os.path.isfile(filepath)):
          print "found ",filepath
+         found_list.append(filepath)
          continue
       if (not item['required']):
          print "WARNING: optional file not found ",filepath
@@ -92,11 +93,11 @@ def check_for_varlist_files(varlist,verbose=0):
             missing_list.append(check_for_varlist_files([new_var],verbose=verbose))
 
    if (verbose > 2): print "check_for_varlist_files returning ",missing_list
-
-   #   return all_required_files_found
-   missing_list_wo_empties = [x for x in missing_list if x]
-   return missing_list_wo_empties
-
+   # remove empty list entries
+   files = {}
+   files['found_files'] = [x for x in found_list if x]
+   files['missing_files'] = [x for x in missing_list if x]
+   return files
 
 def check_pod_driver(settings, verbose=0):
    from distutils.spawn import find_executable #determine if a program is on $PATH
@@ -196,6 +197,10 @@ def read_pod_settings_file(pod_name, verbose=0):
    if (verbose > 0): 
       print file_contents['settings']['pod_name']+" varlist: "
       print yaml.dump(file_contents['varlist'])
+
+   var_files = check_for_varlist_files(file_contents['varlist'], verbose)
+   file_contents.update(var_files)
+
    return file_contents
 
 

@@ -1,9 +1,23 @@
 # This file is part of the util module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 
+import os
+import sys
 
+
+def get_available_programs(verbose=0):
+   return {'py': sys.executable, 'ncl': 'ncl'}  
+
+def makefilepath(varname,timefreq,casename,datadir):
+    """ 
+    USAGE (varname, timefreq, casename, datadir )
+       str varname  (as set by var_code/util/set_variables_*.py)
+       str timefreq "mon","day","6hr","3hr","1hr"
+       str datadir directory where model data lives
+
+    """
+    return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
-   import os
    # env_dict: a dictionary to be dumped once file is created
    # This is a wrapper to os.environ so any new env vars 
    # automatically get written to the file
@@ -29,31 +43,18 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
 
 
+def translate_varname(varname_in,verbose=0):
+   func_name = " translate_varname "
+   if ( verbose > 2): print func_name+" read in varname: ",varname_in
+   if ( varname_in in os.environ ):
+      varname = os.environ[varname_in]  #gets variable name as imported by set_variables_$modeltype.py
+      if ( verbose > 1): print func_name+" found varname: ",varname
+   else: 
+      varname = varname_in
+      if ( verbose > 1): print func_name+"WARNING: didn't find ",varname, " in environment vars, not substituting"
+      #      print "To do: Modify read_files.main to accept argument of model type and import"
+   if ( verbose > 2): print func_name + "returning ",varname
+   return varname
 
-def check_required_dirs(verbose=3, already_exist =[], create_if_nec = []):
-   # arguments can be envvar name or just the paths
 
-   import os
-   filestr = __file__+":check_required_dirs: "
-   errstr = "ERROR "+filestr
-   if verbose > 1: filestr +" starting"
-   for dir_in in already_exist + create_if_nec : 
-      if verbose > 1: "\t looking at "+dir_in
 
-      if dir_in in os.environ:  
-         dir = os.environ[dir_in]
-      else:
-         if verbose>2: print(" envvar "+dir_in+" not defined")    
-         dir = dir_in
-
-      if not os.path.exists(dir):
-         if not dir_in in create_if_nec:
-            if (verbose>0): 
-                print(errstr+dir_in+" = "+dir+" directory does not exist")
-                print("         and not create_if_nec list: ",create_if_nec)
-            exit()
-         else:
-            print(dir_in+" = "+dir+" created")
-            os.makedirs(dir)
-      else:
-         print("Found "+dir)

@@ -65,10 +65,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
-sys.path.insert(0,'var_code/util/')
-import read_files
-from util import setenv, check_required_dirs
-
+sys.path.insert(0,'var_code')
+import util
+from util import setenv
 
 os.system("date")
 
@@ -126,10 +125,9 @@ setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
 # ======================================================================
 # Input settings from namelist file (name = argument to this script, default DIAG_HOME/namelist)
 # to set CASENAME,model,FIRSTYR,LASTYR, POD list and environment variables 
-# Namelist class defined in read_files, contains: case (dict), pod_list (list), envvar (dict)
 
 try:
-   config = read_files.read_mdtf_config_file(sys.argv,verbose=verbose)
+   config = util.read_mdtf_config_file(sys.argv,verbose=verbose)
 except Exception as error:
    print error
    exit()
@@ -137,7 +135,7 @@ config['envvars'].update(envvars)
 pod_do = config['pod_list']   # list of pod names to do here
 
 # Check if any required namelist/envvars are missing  
-read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
+util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
 
 # update local variables used in this script with env var changes from reading namelist
 # variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
@@ -168,7 +166,7 @@ setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],config['e
 #    It indicates where the variability package source code lives and should
 #    contain the directories var_code and obs_data although these can be 
 #    located elsewhere by specifying below.
-setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+util.setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
 setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",config['envvars'],overwrite=False,verbose=verbose)
 setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
@@ -196,7 +194,7 @@ if found_model == False:
 # Check directories that must already exist
 # ======================================================================
 
-check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
+util.check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
 os.chdir(os.environ["WKDIR"])
 
 # ======================================================================
@@ -225,7 +223,7 @@ for pod in pod_do:
 
    if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
    try:
-      pod_cfg = read_files.read_pod_settings_file(pod, verbose)
+      pod_cfg = util.read_pod_settings_file(pod, verbose)
    except AssertionError as error:  
       print str(error)
    if ('long_name' in pod_cfg['settings']) and verbose > 0: 

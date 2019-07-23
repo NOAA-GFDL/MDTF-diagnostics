@@ -90,7 +90,9 @@ def check_for_varlist_files(varlist,verbose=0):
             new_var['name_in_model'] = translate_varname(alt_item,verbose=verbose)  # alternative variable name 
             del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
             if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
-            missing_list.append(check_for_varlist_files([new_var],verbose=verbose))
+            new_files = check_for_varlist_files([new_var],verbose=verbose)
+            found_list.append(new_files['found_files'])
+            missing_list.append(new_files['missing_files'])
 
    if (verbose > 2): print "check_for_varlist_files returning ",missing_list
    # remove empty list entries

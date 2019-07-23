@@ -8,32 +8,12 @@ import yaml
 sys.path.insert(0,'var_code/util/')
 from util import setenv
 
-def pprint_dict(dict,title=""):
-   if ( title != "" ): print title
-   if ('casename' in dict):  # print in this order
-      print "\t  %-10s =  " % "casename",dict['casename']
-      print "\t  %-10s =  " % "modeltype",dict['modeltype']
-      print "\t  %-10s =  " % "firstyr",dict['firstyr']
-      print "\t  %-10s =  " % "lastyr",dict['lastyr']
-   else: 
-      for key, value in dict.iteritems():
-         print "\t "+str(key)+" = "+str(value)
-
-def pprint_list(list_in,title=""):
-   for item in list_in:
-      if (type(item)== type({})):
-         pprint_dict(item,title=title)
-      else:
-         print "\t "+str(item)
-
-#==========================================================================
 class Any_file_input:
    pass
 
 class Varlist:
    def __init__(self):
       self.varlist = []
-
 
 class Namelist:
    def __init__(self):
@@ -46,24 +26,6 @@ class Namelist:
 
 def get_available_programs(verbose=0):
    return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def print_namelist_podlist(namelist,verbose=0):
-   print "POD LIST : "
-   pprint_list(namelist['pod_list'])
-
-def print_namelist_case(namelist,verbose=0):
-   print("CASE LIST :")
-   pprint_dict(namelist['case_list'][0])
-
-def print_namelist(namelist,verbose=0):
-   print_namelist_case(namelist,verbose)
-   print_namelist_podlist(namelist,verbose)
-
-def print_varlist(varlist,pod_name,verbose=0):
-   if (verbose > 1): print pod_name+" varlist: "
-   for i in varlist:
-      print "\t",i
-
 
 def check_required_envvar(verbose=0,*varlist):
    varlist = varlist[0]   #unpack tuple
@@ -253,7 +215,7 @@ def check_pod_settings(pod_name,pod_settings,verbose=0):
 
    if (verbose > 0): 
       print "POD settings: ",pod_name
-      pprint_dict(pod_settings)
+      print yaml.dump(pod_settings)
 
 
 def read_mdtf_config_file(argv, verbose=0):
@@ -280,7 +242,7 @@ def read_mdtf_config_file(argv, verbose=0):
       setenv(key, val, file_contents['envvars'], verbose=verbose)
 
    if (verbose > 1):
-      print_namelist(file_contents)  #print it to stdout 
+      print yaml.dump(file_contents)  #print it to stdout 
    return file_contents
 
 
@@ -300,7 +262,8 @@ def read_pod_settings_file(filename, verbose=0):
    parse_pod_varlist(file_input, file_contents, verbose)
 
    if (verbose > 0): 
-      print_varlist(file_input.varlist, file_input.pod_name)
+      print file_input.pod_name+" varlist: "
+      print yaml.dump(file_input.varlist)
    return file_input
 
 

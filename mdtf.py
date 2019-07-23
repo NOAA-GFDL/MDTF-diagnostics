@@ -226,16 +226,16 @@ for pod in pod_do:
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
 
-   pod_dir = os.environ["VARCODE"]+"/"+pod
    try:
-      file_input = read_files.read_pod_settings_file(pod_dir+"/settings.yml",verbose)
+      file_input = read_files.read_pod_settings_file(pod, verbose)
    except AssertionError as error:  
       print str(error)
    else:
-      pod_settings = file_input.pod_settings
-      varlist = file_input.varlist
+      pod_settings = file_input['settings']
+      varlist = file_input['varlist']
       run_pod = pod_settings['program']+" "+pod_settings['driver']
-      if ('long_name' in pod_settings) and verbose > 0: print "POD long name: ",pod_settings['long_name']
+      if ('long_name' in pod_settings) and verbose > 0: 
+         print "POD long name: ",pod_settings['long_name']
 
       # Check for files necessary for the pod to run (if pod provides varlist file)
       missing_file_list = read_files.check_for_varlist_files(varlist,verbose=verbose)

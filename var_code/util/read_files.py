@@ -38,18 +38,8 @@ def check_required_envvar(verbose=0,*varlist):
          print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
          exit()
 
-def determine_pod_name(path ,verbose=0):
-   if (verbose > 2): print "determine_pod_name received args ",path
-   filename_split = path.split('/')
-   if ( len(filename_split) >= 1 ):
-      if (verbose > 1 ): print "Setting pod_name to ",filename_split[-2]
-      return filename_split[-2]
-   else:
-      return ""
-
-
-def read_pod_varlist_varname(varname_in,verbose=0):
-   func_name = " read_pod_varlist_varname "
+def translate_varname(varname_in,verbose=0):
+   func_name = " translate_varname "
    if ( verbose > 2): print func_name+" read in varname: ",varname_in
    if ( varname_in in os.environ ):
       varname = os.environ[varname_in]  #gets variable name as imported by set_variables_$modeltype.py
@@ -61,28 +51,21 @@ def read_pod_varlist_varname(varname_in,verbose=0):
    if ( verbose > 2): print func_name + "returning ",varname
    return varname
 
-def parse_pod_varlist(file_input,file_contents,verbose=0):
+def parse_pod_varlist(varlist, verbose=0):
    func_name = " parse_pod_varlist: "
    default_file_required = False 
-   for var in file_contents['varlist']:
-      item = {}
-      item['varname'] = read_pod_varlist_varname(var['var_name'], verbose=verbose)
+   for idx, var in enumerate(varlist):
+      varlist[idx]['name_in_model'] = translate_varname(var['var_name'], verbose=verbose)
 
       assert(var['freq'] in ["1hr","3hr","6hr","day","mon"]), \
          "WARNING: didn't find "+var['freq']+" in frequency options "+\
             " (set in "+__file__+":"+func_name+")"
-      item['varfreq'] = var['freq']
       if 'requirement' in var.keys():
-         item['required'] = (var['requirement'].lower() == 'required')
+         varlist[idx]['required'] = (var['requirement'].lower() == 'required')
       else:
-         item['required'] = default_file_required
-      if 'alternates' in var.keys():
-         item['alternatives'] = var['alternates']
-      else:
-         item['alternatives'] = ''
-
-      file_input.varlist.append(item)  #Add this item to the list of all requested
-      if ( verbose > 1): print "added item to file_input.varlist ",file_input.varlist[-1]
+         varlist[idx]['required'] = default_file_required
+      if not 'alternates' in var.keys():
+         varlist[idx]['alternates'] = ''
 
 def makefilepath(varname,timefreq,casename,datadir):
     """ 
@@ -92,7 +75,6 @@ def makefilepath(varname,timefreq,casename,datadir):
        str datadir directory where model data lives
 
     """
-
     return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
 
 
@@ -103,7 +85,7 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list = []
    for item in varlist:
       if (verbose > 2 ): print func_name +" "+item
-      filepath = makefilepath(item['varname'],item['varfreq'],os.environ['CASENAME'],os.environ['DATADIR'])
+      filepath = makefilepath(item['name_in_model'],item['freq'],os.environ['CASENAME'],os.environ['DATADIR'])
 
       if ( os.path.isfile(filepath) ):
          print "found ",filepath
@@ -111,11 +93,11 @@ def check_for_varlist_files(varlist,verbose=0):
          if ( not item['required'] ):
             print "WARNING: optional file not found ",filepath
          else: 
-            if ( not 'alternatives' in item ):
+            if ( not 'alternates' in item ):
                print "ERROR: required file not found ",filepath
                missing_list.append(filepath)
             else:
-               alt_list = item['alternatives']
+               alt_list = item['alternates']
                if ( not alt_list  ):
                   print "ERROR: missing required file ",filepath,". No alternatives found"
                   missing_list.append(filepath)
@@ -124,8 +106,8 @@ def check_for_varlist_files(varlist,verbose=0):
                   for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
                      if (verbose > 1): print "\t \t examining alternative ",alt_item
                      new_var = item.copy()  # modifyable dict with all settings from original
-                     new_var['varname'] = read_pod_varlist_varname(alt_item,verbose=verbose)  # alternative variable name 
-                     del new_var['alternatives']    # remove alternatives (could use this to implement multiple options)
+                     new_var['name_in_model'] = translate_varname(alt_item,verbose=verbose)  # alternative variable name 
+                     del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
                      if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
                      missing_list.append(check_for_varlist_files([new_var],verbose=verbose))
 
@@ -135,87 +117,55 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list_wo_empties = [x for x in missing_list if x]
    return missing_list_wo_empties
 
-def set_pod_driver(varval,pod_name,verbose=0):
-   func_name = " set_pod_driver "
-   if verbose > 2:  print func_name+" received input: ",varval,pod_name
 
-   driver_fullpath = os.path.join(os.environ["VARCODE"],pod_name,varval)
-   errstr = "ERROR: "+func_name+" driver script specified in "+pod_name+"/settings file does not exist"
-   assert( os.path.exists(driver_fullpath)),errstr  #this should be an error since user setting!
+def check_pod_driver(settings, verbose=0):
+   from distutils.spawn import find_executable #determine if a program is on $PATH
 
-   if (verbose > 2):  print "confirmed existence of settings file driver ",driver_fullpath
+   func_name = "check_pod_driver "
+   if (verbose > 1):  print func_name," received POD settings: ", settings
 
-   return driver_fullpath
-
-def set_pod_program(driver,verbose=0):
-   func_name = "set_pod_program"
-   if verbose > 2:  print func_name+" received input: ",driver
-
+   pod_name = settings['pod_name']
+   pod_dir  = settings['pod_dir']
    programs = get_available_programs()
-   program_tails = programs.keys()
 
-   # Find ending of filename to determine the program that should be used
-   pod_tail  = driver.split(".")[-1]   #last element of the split (can have full path or not)
-
-   # Possible error: Driver found but tail is not recognized so program can't call
-   errstr_programs = "Available programs: "+str(program_tails)
-   errstr_badtail = func_name+" does not know how to call a ."+pod_tail+" file \n\t"+errstr_programs
-   assert (pod_tail in program_tails),errstr_badtail
-
-   if ( verbose >2): print func_name +": Found program "+programs[pod_tail]
-
-   return programs[pod_tail]
-
-def parse_pod_settings(file_input,file_contents,verbose=0):
-   func_name = " read_pod_settings "
-   for var, varval in file_contents['settings'].items():
-      if (verbose > 1): print func_name+" setting "+var+" "+varval
-      if ( var == 'driver'):
-         file_input.pod_settings['driver']  = set_pod_driver(
-            varval,file_input.pod_name,verbose)
-         file_input.pod_settings['program'] = set_pod_program(
-            file_input.pod_settings['driver'],verbose)
-      else:
-         file_input.pod_settings[var] = varval
-   if (verbose > 2): print func_name+" "+str(file_input.pod_settings)
-
-def check_pod_settings(pod_name,pod_settings,verbose=0):
-   func_name = "check_pod_settings "
-   if (verbose > 1):  print func_name," received POD settings: ",pod_name,pod_settings
-
-   pod_dir  = os.path.join(os.environ["VARCODE"],pod_name)
-
-   if ( not 'driver' in pod_settings):  #try to find one
+   if (not 'driver' in settings):  
+      print "WARNING: no valid driver entry found for ", pod_name
+      #try to find one anyway
       try_filenames = [pod_name+".","driver."]      
-      programs = get_available_programs()
-
-      if (verbose > 1):  print "WARNING: no valid driver entry found for ",pod_name
-
-      # cross-product
-      file_combos = [ file_root + program for file_root in try_filenames for program in programs.keys()]
+      file_combos = [ file_root + ext for file_root in try_filenames for ext in programs.keys()]
       if verbose > 1: print "Checking for possible driver names in ",pod_dir," ",file_combos
-
       for try_file in file_combos:
          try_path = os.path.join(pod_dir,try_file)
          if verbose > 1: print " looking for driver file "+try_path
          if os.path.exists(try_path):
-            pod_settings['driver'] = try_path
-            if (verbose > 0): print "Found driver script for "+pod_name+" : "+pod_settings['driver']
+            settings['driver'] = try_path
+            if (verbose > 0): print "Found driver script for "+pod_name+" : "+settings['driver']
             break    #go with the first one found
          else:
             if (verbose > 1 ): print "\t "+try_path+" not found..."
+   errstr_nodriver = "No driver script found for package "+pod_name +"\n\t"\
+      +"Looked in "+pod_dir+" for pod_name.* or driver.* \n\t"\
+      +"To specify otherwise, add a line to "+pod_name+"/settings file containing:  driver driver_script_name \n\t" \
+      +"\n\t"+func_name
+   assert ('driver' in settings), errstr_nodriver
 
-   # Possible error: No driver found
-   errstr_nodriver = "No driver script found for package "+str(pod_name) +"\n\t"\
-                 +"Looked in "+pod_dir+" for pod_name.* or driver.* \n\t"\
-                 +"To specify otherwise, add a line to "+pod_name+"/settings file containing:  driver driver_script_name \n\t" \
-                 +"\n\t"+func_name
-   assert ('driver' in pod_settings),errstr_nodriver
-   pod_settings['program'] = set_pod_program(pod_settings['driver'],verbose)
+   if not os.path.isabs(settings['driver']): # expand relative path
+      settings['driver'] = os.path.join(settings['pod_dir'], settings['driver'])
 
-   if (verbose > 0): 
-      print "POD settings: ",pod_name
-      print yaml.dump(pod_settings)
+   errstr = "ERROR: "+func_name+" can't find "+ settings['driver']+" to run "+pod_name
+   assert(os.path.exists(settings['driver'])), errstr 
+
+   if (not 'program' in settings):
+      # Find ending of filename to determine the program that should be used
+      driver_ext  = settings['driver'].split(".")[-1]
+      # Possible error: Driver file type unrecognized
+      errstr_badext = func_name+" does not know how to call a ."+driver_ext+" file \n\t"\
+         +"Available programs: "+str(programs.keys())
+      assert (driver_ext in programs), errstr_badext
+      settings['program'] = programs[driver_ext]
+      if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
+   errstr = "ERROR: "+func_name+" can't find "+ settings['program']+" to run "+pod_name
+   assert(find_executable(settings['program']) is not None), errstr     
 
 
 def read_mdtf_config_file(argv, verbose=0):
@@ -246,25 +196,27 @@ def read_mdtf_config_file(argv, verbose=0):
    return file_contents
 
 
-def read_pod_settings_file(filename, verbose=0):
+def read_pod_settings_file(pod_name, verbose=0):
+   pod_dir = os.environ['VARCODE']+'/'+pod_name
+   filename = pod_dir+'/settings.yml'
    assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 
    fileobject = open(filename,'r')
    file_contents = yaml.safe_load(fileobject)
    fileobject.close()
 
-   file_input = Any_file_input()
-   file_input.pod_name = determine_pod_name(filename)
-   file_input.pod_settings = {}
-   file_input.varlist = []
-   parse_pod_settings(file_input, file_contents, verbose)
-   check_pod_settings(file_input.pod_name, file_input.pod_settings, verbose=verbose)
-   parse_pod_varlist(file_input, file_contents, verbose)
-
+   file_contents['settings']['pod_name'] = pod_name
+   file_contents['settings']['pod_dir'] = pod_dir
+   check_pod_driver(file_contents['settings'], verbose)
    if (verbose > 0): 
-      print file_input.pod_name+" varlist: "
-      print yaml.dump(file_input.varlist)
-   return file_input
+      print file_contents['settings']['pod_name']+" settings: "
+      print yaml.dump(file_contents['settings'])
+
+   parse_pod_varlist(file_contents['varlist'], verbose)
+   if (verbose > 0): 
+      print file_contents['settings']['pod_name']+" varlist: "
+      print yaml.dump(file_contents['varlist'])
+   return file_contents
 
 
 # ------------ MAIN for testing ----------------------------------------------
@@ -284,6 +236,3 @@ else:
    exit()
 
    read_mdtf_config_file(argv[1],verbose=verbose)
-
-
-   

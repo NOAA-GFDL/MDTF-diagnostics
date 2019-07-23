@@ -8,22 +8,6 @@ import yaml
 sys.path.insert(0,'var_code/util/')
 from util import setenv
 
-class Any_file_input:
-   pass
-
-class Varlist:
-   def __init__(self):
-      self.varlist = []
-
-class Namelist:
-   def __init__(self):
-      self.case     = {}  #dict ['casename',casename],['modeltype',model],['startyr',startyr],,['endyr',endyr]
-      self.pod_list = []  #list [pod_name1,pod_name2,...]
-      self.envvar   = {}  #dict ['envvar_name',envvar_value,],...
-#      print "Namelist initialized self"
-#      print self
-      
-
 def get_available_programs(verbose=0):
    return {'py': sys.executable, 'ncl': 'ncl'}  
 

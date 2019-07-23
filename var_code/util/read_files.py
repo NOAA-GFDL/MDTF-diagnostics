@@ -5,68 +5,9 @@ import re
 import os
 import sys
 import yaml
+sys.path.insert(0,'var_code/util/')
+from util import setenv
 
-
-def get_var_from_namelist(varname,vartype,vardict,default,verbose=0):
-   if (varname in vardict): 
-      if verbose > 2: print "get_var_from_namelist found key ",varname," of type ",type(default)," in dict"
-
-      if type(default) == type(True):    #boolean
-         var = get_boolean_from_namelist(varname,vardict,default,verbose) 
-      elif type(default) == type(0):     #int
-         var = get_int_from_namelist(varname,vardict,default,verbose) 
-      elif type(default) == type('s'):   #string
-         var = vardict['varname']
-      else:
-         errstr= "get_var_from_namelist cannot deal with vartype ",vartype
-         return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-
-      if verbose > 2: print "VAR from namelist: ",varname," = ",var
-      return var
-
-   else:
-      errstr = "Did not find varname ",varname," in dict"
-      return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-
-
-def get_boolean_from_namelist(varname,vardict,default,verbose=0):
-
-   if verbose > 2: print "get_boolean_from_namelist ",varname
-   
-   try:
-      var = (vardict[varname] in ('True', 'true', '1'))
-   except:
-      errstr = "Failed to eval() ",varname," = ",vardict[varname]
-      return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-
-   if ( type(var) != type(True) ):
-      errstr = "Conversion to boolean erroneously returned type "+type(var)
-      return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-   else:
-      if verbose > 2: print "SUCCESS: trying for boolean, var ',varname,' is type ",type(var)
-
-   return var
-
-
-def get_int_from_namelist(varname,vardict,default,verbose=0):
-
-   if verbose > 2: print "get_int_from_namelist ",varname
-   
-   try:
-      var = int(vardict[varname])
-   except:
-      errstr = "Conversion to int failed, for ",varname," = ",vardict[varname]
-      return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-
-   if ( type(var) != type(0) ):
-      errstr = "Conversion to int erroneously returned type "+type(var)
-      return return_default_from_namelist(varname,default,errstr=errstr,verbose=verbose)
-   else:
-      if verbose > 2: print "SUCCESS: trying for intvar ',varname,' is type ",type(var)
-
-   return var
-
-#==========================================================================
 def pprint_dict(dict,title=""):
    if ( title != "" ): print title
    if ('casename' in dict):  # print in this order
@@ -108,11 +49,11 @@ def get_available_programs(verbose=0):
 
 def print_namelist_podlist(namelist,verbose=0):
    print "POD LIST : "
-   pprint_list(namelist.pod_list)
+   pprint_list(namelist['pod_list'])
 
 def print_namelist_case(namelist,verbose=0):
    print("CASE LIST :")
-   pprint_dict(namelist.case)
+   pprint_dict(namelist['case_list'][0])
 
 def print_namelist(namelist,verbose=0):
    print_namelist_case(namelist,verbose)
@@ -122,11 +63,6 @@ def print_varlist(varlist,pod_name,verbose=0):
    if (verbose > 1): print pod_name+" varlist: "
    for i in varlist:
       print "\t",i
-
-def return_default_from_namelist(varname,default,errstr="",verbose=0):
-   if verbose > 0: print "WARNING: Using default ",varname,"  = ",default," ",errstr
-   return default
-
 
 
 def check_required_envvar(verbose=0,*varlist):
@@ -149,44 +85,6 @@ def determine_pod_name(path ,verbose=0):
    else:
       return ""
 
-def remove_junk(line,verbose=0):
-   if (verbose > 2 ): print "remove_junk: received line",line
-   spec_chars = re.compile(r"[\"\t\n:, ]+") #define spec_chars to split string below,
-   line_in = spec_chars.split(line) # split string by characters defined above in spec_chars (space, tab, comma, ", ...) 
-   line_in = filter(None,line_in)   # remove empty elements
-   
-   if (verbose > 2 ): print "remove_junk: returning line_in",line_in
-   return line_in
-
-
-
-def parse_namelist(file_input,file_contents, verbose=0):
-   func_name = " read_namelist_case "
-   if verbose > 2: print func_name +" called with args: ",file_contents['case_list'][0]
-   file_input.namelist.case['casename'] = file_contents['case_list'][0]['CASENAME']
-   file_input.namelist.case['modeltype'] = file_contents['case_list'][0]['model']
-   file_input.namelist.case['firstyr'] = file_contents['case_list'][0]['FIRSTYR']
-   file_input.namelist.case['lastyr'] = file_contents['case_list'][0]['LASTYR']
-
-   os.environ["CASENAME"] = file_input.namelist.case['casename']
-   os.environ["model"]    = file_input.namelist.case['modeltype']
-   os.environ["FIRSTYR"]  = str(file_input.namelist.case['firstyr'])
-   os.environ["LASTYR"]   = str(file_input.namelist.case['lastyr'])
-
-   file_input.namelist.pod_list = file_contents['pod_list']
-      
-   for varname, varvalue in file_contents['settings'].items():
-      # environment variables must be strings
-      if type(varvalue) is bool:
-         if varvalue == True:
-            varvalue = '1'
-         else:
-            varvalue = '0'
-      elif type(varvalue) is not str:
-         varvalue = str(varvalue)
-      file_input.namelist.envvar[varname] = varvalue  #this should be sent to setenv but currently is not!
-      os.environ[varname] = varvalue
-      if ( verbose > 1 ): print func_name," Added environment variable:  ",varname," = ",varvalue
 
 def read_pod_varlist_varname(varname_in,verbose=0):
    func_name = " read_pod_varlist_varname "
@@ -371,18 +269,19 @@ def read_mdtf_config_file(argv, verbose=0):
          \n\t Checking for default input namelist file """, namelist_file
    assert(os.path.exists(namelist_file)), "Input file does not exist "+str(namelist_file)
 
-   fileobject = open(namelist_file, 'r')
-   file_contents = yaml.safe_load(fileobject)
-   fileobject.close()
+   file_object = open(namelist_file, 'r')
+   file_contents = yaml.safe_load(file_object)
+   file_object.close()
 
-   file_input = Any_file_input()
-   file_input.namelist = Namelist()  #initialize class (defined above)
-   file_input.pod_name = ""
-   parse_namelist(file_input, file_contents, verbose)
+   file_contents['envvars'] = {}
+   for key, val in file_contents['case_list'][0].items():
+      setenv(key, val, file_contents['envvars'], verbose=verbose)
+   for key, val in file_contents['settings'].items():
+      setenv(key, val, file_contents['envvars'], verbose=verbose)
 
    if (verbose > 1):
-      print_namelist(file_input.namelist)  #print it to stdout 
-   return file_input
+      print_namelist(file_contents)  #print it to stdout 
+   return file_contents
 
 
 def read_pod_settings_file(filename, verbose=0):

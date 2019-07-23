@@ -7,26 +7,26 @@ import os
 def write_namelist_case(file,case):
 #format    CASE QBOi.EXP1.AMIP.001 CESM 1977 1981   
 #   from read_files import Namelist  #is this necessary?
-   file.write("CASE "+case['casename'] +\
-              " "    +case['modeltype'] +\
-              " "    +str(case['firstyr']) +\
-              " "    +str(case['lastyr'])  +\
+   file.write("CASE "+case['CASENAME'] +\
+              " "    +case['model'] +\
+              " "    +str(case['FIRSTYR']) +\
+              " "    +str(case['LASTYR'])  +\
               "\n")
 
 
-def write_namelist (dir,namelist,envvars,verbose=0):
+def write_namelist (dir,namelist,verbose=0):
    "write_namelist creates a file with MDTF run settings: dir/namelist_YYYYMMDDHHMM"
    from read_files import pprint_dict
    outfile = create_namelist_outfile(dir,verbose)
-   write_namelist_case(outfile,namelist.case)
-   write_list(outfile,namelist.pod_list,tag="POD")
+   write_namelist_case(outfile,namelist['case_list'][0])
+   write_list(outfile,namelist['pod_list'],tag="POD")
 
    #drb: need to combine these dictionaries, make uniq, and sort output alpha
-   if (verbose >2 ):pprint_dict(namelist.envvar,title= "Env vars from namelist")
-   if (verbose >2): pprint_dict(envvars,title= "OLD envvars")
-   envvars.update(namelist.envvar)   #adds namelist envvars to others, over-riding any repeats with namelist
-   if ( verbose >1 ): pprint_dict(envvars,title= "Env vars written to output namelist in "+dir)
-   write_dict(outfile,envvars,tag="VAR")
+   if (verbose >2 ):pprint_dict(namelist['envvars'],title= "Env vars from namelist")
+   if (verbose >2): pprint_dict(namelist['settings'],title= "OLD envvars")
+   #envvars.update(namelist.envvar)   #adds namelist envvars to others, over-riding any repeats with namelist
+   #if ( verbose >1 ): pprint_dict(envvars,title= "Env vars written to output namelist in "+dir)
+   write_dict(outfile,namelist['envvars'],tag="VAR")
 
 #   write_envvar_all(outfile)
 
@@ -54,11 +54,11 @@ def create_namelist_outfile(dir,verbose=0):
 
 def write_dict(file,dict_in,tag=""):
    for key, value in dict_in.iteritems():
-      file.write(tag+" "+key+" "+value+"\n")
+      file.write(tag+" "+key+" "+str(value)+"\n")
 
 def write_list(file,list_in,tag=""):
    for item in list_in:
-      file.write(tag+" "+item+"\n")
+      file.write(tag+" "+str(item)+"\n")
 
 
 

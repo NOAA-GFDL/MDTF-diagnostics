@@ -129,22 +129,20 @@ setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
 # Namelist class defined in read_files, contains: case (dict), pod_list (list), envvar (dict)
 
 try:
-   file_input = read_files.read_mdtf_config_file(sys.argv,verbose=verbose)
+   config = read_files.read_mdtf_config_file(sys.argv,verbose=verbose)
 except Exception as error:
    print error
    exit()
-
-namelist  = file_input.namelist
-# pod_list (type list) =  [pod_name1,pod_name2,...]
-pod_do    = namelist.pod_list   # list of pod names to do here
+config['envvars'].update(envvars)
+pod_do = config['pod_list']   # list of pod names to do here
 
 # Check if any required namelist/envvars are missing  
 read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
 
 # update local variables used in this script with env var changes from reading namelist
 # variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
-test_mode = read_files.get_var_from_namelist('test_mode','bool',namelist.envvar,default=test_mode,verbose=verbose)
-verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,default=verbose,verbose=verbose)
+test_mode = config['envvars']['test_mode']
+verbose   = config['envvars']['verbose']
 
 # ======================================================================
 # OUTPUT
@@ -152,11 +150,11 @@ verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,def
 # files & .ps files in subdirectories herein)
 
 variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
+setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 # INPUT: directory of model output
-setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
+setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 
@@ -170,9 +168,9 @@ setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,o
 #    It indicates where the variability package source code lives and should
 #    contain the directories var_code and obs_data although these can be 
 #    located elsewhere by specifying below.
-setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",envvars,overwrite=False,verbose=verbose)
-setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",envvars,overwrite=False,verbose=verbose)
-setenv("RGB",os.environ["VARCODE"]+"/util/rgb",envvars,overwrite=False,verbose=verbose)
+setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",config['envvars'],overwrite=False,verbose=verbose)
+setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 # set variable names based on model
@@ -216,7 +214,7 @@ else:
 # ======================================================================
 # Record settings in file variab_dir/namelist_YYYYMMDDHHRR for rerunning
 #====================================================================
-write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=verbose)  
+write_files.write_namelist(os.environ["variab_dir"],config,verbose=verbose)  
 
 
 # ======================================================================

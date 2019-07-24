@@ -54,6 +54,7 @@ print "==== Starting "+__file__
 
 import os
 import sys
+import argparse
 import glob
 import shutil
 import timeit
@@ -69,6 +70,20 @@ sys.path.insert(0,'var_code')
 import util
 from util import setenv
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbosity", action="count",
+                    help="increase output verbosity")
+parser.add_argument("--test_mode", action="store_true",
+                    help="Set flag to not call PODs, just say what would be called")
+parser.add_argument('--DIAG_HOME', type=str, 
+                    default=os.getcwd(),
+                    help="Code installation directory")
+parser.add_argument('--MODEL_DATA', type=str, 
+                    default=os.getcwd(),
+                    help="Code installation directory")
+args = parser.parse_args()
+
+
 os.system("date")
 
 errstr = "ERROR "+__file__+" : "
@@ -77,49 +92,26 @@ errstr = "ERROR "+__file__+" : "
 # Default script settings over-ridden by namelist: VAR var-name varvalue
 # It is recommended to make all changes in the namelist
 #
-verbose = 1                           # 0 = sparse, 1 = normal, 2 = a lot, 3 = every possible thing
-test_mode = False                     # False = run the packages, True = don't make the calls, just say what would be called
 
-# dictionary of all the environment variables set in this script, to be archived in variab_dir/namelist file
-envvars = {}   
-
-# ======================================================================
-# Check for programs that must exist (eg ncl)
-# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
-# ======================================================================
-
-ncl_err = os.system("which ncl")
-if ncl_err == 0:
-   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
-   print("using ncl "+os.environ["NCL"])
-else:
-   print(errstr+ ": ncl not found")
-# workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
-if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
-   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],envvars,verbose=verbose)
-
-
+envvars = {}
 # ======================================================================
 # DIRECTORIES: set up locations
 # ======================================================================
 
-# ======================================================================
 #  Home directory for diagnostic code (needs to have 'var_code',  sub-directories)
 setenv("DIAG_HOME",os.getcwd(),envvars,verbose=verbose)   # eg. mdtf/MDTF_2.0
 setenv("DIAG_ROOT",os.path.dirname(os.environ["DIAG_HOME"]),envvars,verbose=verbose) # dir above DIAG_HOME
 
 path_var_code_absolute = os.environ["DIAG_HOME"]+'/var_code/util/'
-
 if ( verbose > 1): print "Adding absolute path to modules in "+path_var_code_absolute
 sys.path.insert(0,path_var_code_absolute)
 
-# ======================================================================
 # inputdata contains model/$casename, obs_data/$package/*  #drb change?
 setenv("DATA_IN",os.environ["DIAG_ROOT"]+"/inputdata/",envvars,verbose=verbose)
+setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",envvars,overwrite=False,verbose=verbose)
+setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",envvars,overwrite=False,verbose=verbose)
+setenv("RGB",os.environ["VARCODE"]+"/util/rgb",envvars,overwrite=False,verbose=verbose)
 
-# ======================================================================
-# output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
-setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
 
 
 # ======================================================================
@@ -132,43 +124,66 @@ except Exception as error:
    print error
    exit()
 config['envvars'].update(envvars)
-pod_do = config['pod_list']   # list of pod names to do here
+
+
+# output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
+
+setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
+
+setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
+variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
+setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
+util.check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
+
+
+
+pod_configs = []
+for pod in config['pod_list']: # list of pod names to do here
+   try:
+      pod_cfg = util.read_pod_settings_file(pod, verbose)
+      util.check_pod_driver(pod_cfg['settings'], verbose)
+      var_files = util.check_for_varlist_files(pod_cfg['varlist'], verbose)
+      pod_cfg.update(var_files)
+   except AssertionError as error:  
+      print str(error)
+   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
+      print "POD long name: ", pod_cfg['settings']['long_name']
+
+   if len(pod_cfg['missing_files']) > 0:
+      print "WARNING: POD ",pod," Not executed because missing required input files:"
+      print yaml.dump(pod_cfg['missing_files'])
+      continue
+   else:
+      if (verbose > 0): print "No known missing required input files"
+
+   pod_configs.append(pod_cfg)
+
+# ======================================================================
+# Check for programs that must exist (eg ncl)
+# To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
+# ======================================================================
+
+ncl_err = os.system("which ncl")
+if ncl_err == 0:
+   setenv("NCL",subprocess.check_output("which ncl", shell=True),config['envvars'],overwrite=False,verbose=verbose)
+   print("using ncl "+os.environ["NCL"])
+else:
+   print(errstr+ ": ncl not found")
+# workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
+if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
+   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],config['envvars'],verbose=verbose)
 
 # Check if any required namelist/envvars are missing  
 util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
+util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
+
 
 # update local variables used in this script with env var changes from reading namelist
 # variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
 test_mode = config['envvars']['test_mode']
 verbose   = config['envvars']['verbose']
 
-# ======================================================================
-# OUTPUT
-# output goes into WKDIR & variab_dir (diagnostics should generate .nc
-# files & .ps files in subdirectories herein)
 
-variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,config['envvars'],overwrite=False,verbose=verbose)
-
-# ======================================================================
-# INPUT: directory of model output
-setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],config['envvars'],overwrite=False,verbose=verbose)
-
-# ======================================================================
-
-# ======================================================================
-# Software 
-# ======================================================================
-#
-# Diagnostic package location and settings
-#
-# The environment variable DIAG_HOME must be set to run this script
-#    It indicates where the variability package source code lives and should
-#    contain the directories var_code and obs_data although these can be 
-#    located elsewhere by specifying below.
-util.setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
-setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",config['envvars'],overwrite=False,verbose=verbose)
-setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
 # ======================================================================
 # set variable names based on model
@@ -194,7 +209,6 @@ if found_model == False:
 # Check directories that must already exist
 # ======================================================================
 
-util.check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
 os.chdir(os.environ["WKDIR"])
 
 # ======================================================================
@@ -217,34 +231,18 @@ else:
 
 pod_procs = []
 log_files = []
-for pod in pod_do:
+for pod in pod_configs:
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
 
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
-   try:
-      pod_cfg = util.read_pod_settings_file(pod, verbose)
-      util.check_pod_driver(pod_cfg['settings'], verbose)
-      var_files = util.check_for_varlist_files(pod_cfg['varlist'], verbose)
-      pod_cfg.update(var_files)
-   except AssertionError as error:  
-      print str(error)
-   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
-      print "POD long name: ", pod_cfg['settings']['long_name']
+   if verbose > 0: print("--- MDTF.py Starting POD "+pod['pod_name']+"\n")
 
-   if len(pod_cfg['missing_files']) > 0:
-      print "WARNING: POD ",pod," Not executed because missing required input files:"
-      print yaml.dump(pod_cfg['missing_files'])
-      continue
-   else:
-      if (verbose > 0): print "No known missing required input files"
-
-   command_str = pod_cfg['settings']['program']+" "+pod_cfg['settings']['driver']  
+   command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if test_mode:
       print("TEST mode: would call :  "+command_str)
    else:
       start_time = timeit.default_timer()
-      log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
+      log = open(os.environ["variab_dir"]+"/"+pod['pod_name']+".log", 'w')
       log_files.append(log)
       try:
          print("Calling :  "+command_str) # This is where the POD is called #

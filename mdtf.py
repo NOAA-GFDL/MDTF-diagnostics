@@ -113,6 +113,11 @@ util.check_required_dirs(
    create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
    verbose=verbose)
 
+try:
+   model_varnames = util.read_model_varnames(verbose=verbose)
+except Exception as error:
+   print error
+   exit()
 
 os.system("date")
 
@@ -127,10 +132,6 @@ errstr = "ERROR "+__file__+" : "
 # DIRECTORIES: set up locations
 # ======================================================================
 
-path_var_code_absolute = os.environ["DIAG_HOME"]+'/var_code/util/'
-if ( verbose > 1): print "Adding absolute path to modules in "+path_var_code_absolute
-sys.path.insert(0,path_var_code_absolute)
-
 # inputdata contains model/$casename, obs_data/$package/*  #drb change?
 # output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
 setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
@@ -140,7 +141,11 @@ util.check_required_dirs(
    already_exist =["DATADIR"], create_if_nec = ["variab_dir"], 
    verbose=verbose)
 
+# ======================================================================
+# set variable names based on model
+# ======================================================================
 
+util.set_model_env_vars(os.environ["model"], model_varnames)
 
 pod_configs = []
 for pod in config['pod_list']: # list of pod names to do here
@@ -184,24 +189,6 @@ util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
 
 
 
-# ======================================================================
-# set variable names based on model
-# ======================================================================
-found_model = False
-if os.environ["model"] == "CESM":
-   import set_variables_CESM        #in var_code/util
-   found_model = True
-if os.environ["model"] == "CMIP":
-   import set_variables_CMIP
-   found_model = True
-if os.environ["model"] == "AM4":
-   import set_variables_AM4
-   found_model = True
-if found_model == False:
-   print "ERROR: model ", os.environ["model"]," Not Found"
-   print "      This is set in namelist "
-   print "      CASE case-name *model* start-year end-year"
-   quit()
 
 
 # ======================================================================
@@ -233,15 +220,15 @@ log_files = []
 for pod in pod_configs:
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
-
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod['pod_name']+"\n")
+   pod_name = pod['settings']['pod_name']
+   if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
    command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if config['envvars']['test_mode']:
       print("TEST mode: would call :  "+command_str)
    else:
       start_time = timeit.default_timer()
-      log = open(os.environ["variab_dir"]+"/"+pod['pod_name']+".log", 'w')
+      log = open(os.environ["variab_dir"]+"/"+pod_name+".log", 'w')
       log_files.append(log)
       try:
          print("Calling :  "+command_str) # This is where the POD is called #
@@ -258,7 +245,7 @@ for log in log_files:
    log.close()
                
 if verbose > 0: 
-   print("---  MDTF.py Finished POD "+pod+"\n")
+   print("---  MDTF.py Finished POD "+pod_name+"\n")
    # elapsed = timeit.default_timer() - start_time
    # print(pod+" Elapsed time ",elapsed)
 

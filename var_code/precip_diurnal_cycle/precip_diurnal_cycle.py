@@ -48,27 +48,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
       print("computing diurnal cycle of precipitation")
 
 #============================================================
-# Set up Directories
-#============================================================
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle/model"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle/model")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle/model/netCDF"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle/model/netCDF")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle/obs"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle/obs")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/netCDF"):
-         os.makedirs(os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/netCDF")
-
-#============================================================
 # Call NCL code here
 #============================================================
       print("--------- Starting DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")

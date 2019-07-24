@@ -40,28 +40,6 @@ def generate_ncl_plots(nclPlotFile):
 
    return 0
 
-#============================================================
-# Set up directories
-#============================================================
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF")
-
-
 print("COMPUTING THE SPACE-TIME SPECTRA")
 
 #============================================================

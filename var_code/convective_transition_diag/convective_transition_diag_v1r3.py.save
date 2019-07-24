@@ -102,24 +102,6 @@ if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["ta_file"]))==0:
 if missing_file==1:
     print("Convective Transition Diagnostic Package will NOT be executed!")
 else:
-    # ======================================================================
-    # Create directories
-    # ======================================================================
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model/PS"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF")
-
     ##### Functionalities in Convective Transition Diagnostic Package #####
     # ======================================================================
     # Convective Transition Basic Statistics

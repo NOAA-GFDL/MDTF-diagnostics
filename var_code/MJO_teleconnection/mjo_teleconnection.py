@@ -109,27 +109,8 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model")
-
    if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/figures"):
       os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
-
 
    if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/htmls"):
       os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/htmls")

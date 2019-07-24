@@ -63,14 +63,6 @@ os.environ["file_pr"]  = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+".
 os.environ["file_prw"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["prw_var"]+".day.nc"
 os.environ["file_hus"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["qa_var"]+".day.nc"
 
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_prop_amp"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/obs")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/obs/netCDF")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/model")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/model/netCDF")
-
 print("    ")
 print("=======")
 print("Diagnostics for MJO propagation and amplitude")

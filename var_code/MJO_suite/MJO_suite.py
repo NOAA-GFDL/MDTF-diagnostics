@@ -31,25 +31,6 @@ def generate_ncl_plots(nclPlotFile):
    return 0
 
 #============================================================
-# Set up directories
-#============================================================
-print("MJO suite using daily data")
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_suite/model"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_suite/model")
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_suite/model/PS"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_suite/model/PS")
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_suite/model/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_suite/model/netCDF")
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_suite/obs"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_suite/obs")
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_suite/obs/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_suite/obs/netCDF")
-
-#============================================================
 # Call NCL code here
 #============================================================
 print("OBTAINING DAILY OUTPUT")

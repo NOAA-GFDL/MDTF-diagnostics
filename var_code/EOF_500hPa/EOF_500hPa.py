@@ -44,24 +44,6 @@ if not os.path.isfile( filename2 ):
 if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
       print("height and surface pressure files found") 
       print("computing EOF of geopotential height anomalies of 500 hPa")
-#============================================================
-# Set up directories
-#============================================================
-      print("MAKE EOF PLOTS FROM MODEL MONTHLY DATA ")
-      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model"):
-         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model/PS"):
-         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model/PS")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF"):
-         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/obs"):
-         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/obs")
-
-      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF"):
-         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
 
 #============================================================
 # Call NCL code here

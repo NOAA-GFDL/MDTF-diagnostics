@@ -114,7 +114,7 @@ def set_model_env_vars(model_name, model_dict):
 
 def setup_pod_directories(pod_name):
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
-   dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/netCDF']
+   dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
    for d in dirs:
       if not os.path.exists(os.path.join(pod_wk_dir, d)):
          os.makedirs(os.path.join(pod_wk_dir, d))

@@ -38,7 +38,7 @@ print("-------------------------------------------------------------------------
   print("Reading daily precipitation data") 
   pName     = getenv("pr_var")           ; mm/day
   diri      = getenv("DATADIR")+"/day/"                               ;Input data directory
-  dirobs    = getenv("VARDATA")+"/"+"MJO_teleconnection/"
+  dirobs    = getenv("OBS_DATA")+"/"
   diro      = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"
   filp      = getenv("prec_file")    
   filewcmip ="EWratio_wf_CMIP5"

@@ -34,8 +34,8 @@ FIG_OUTPUT_FILENAME=bin_data["BIN_OUTPUT_FILENAME"]+".ps"
 ## Binned data filename & figure directory/filename for OBS (default: R2TMIv7) ##
 OBS="Reanalysis-2 + TMIv7r1" # will show up in the MODEL figure
 REGION_STR_OBS=["WPac","EPac","Atl","Ind"]
-bin_obs_list=sorted(glob.glob(os.environ["VARDATA"]\
-                    +"/convective_transition_diag/convecTransBasic_R2TMIv7r1_200206_201405_res="\
+bin_obs_list=sorted(glob.glob(os.environ["OBS_DATA"]\
+                    +"/convecTransBasic_R2TMIv7r1_200206_201405_res="\
                     +os.environ["RES"]+"_fillNrCWV_"\
                     +bin_data["TEMP_VAR"]+".nc"))
 FIG_OBS_DIR=os.environ["variab_dir"]+"/convective_transition_diag/obs/PS"

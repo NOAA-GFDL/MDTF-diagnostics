@@ -32,7 +32,7 @@ pentad = 0
 ;---------------------------------------------------------------------------------------------------------|
 ;                                    Input and output data directories
 ;---------------------------------------------------------------------------------------------------------|
-dirobs   = getenv("VARDATA")+"/"+"MJO_teleconnection/" 
+dirobs   = getenv("OBS_DATA")+"/" 
 dirm     = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"
 dirfig   = getenv("variab_dir")+"/"+"MJO_teleconnection/figures/"
 dirindex     = getenv("variab_dir")

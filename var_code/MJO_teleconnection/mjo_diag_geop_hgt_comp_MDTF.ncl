@@ -37,7 +37,7 @@ old_model = True
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
 diri     = getenv("DATADIR")+"/day/"                                           ;Input data directory
-dirobs   = getenv("VARDATA")+"/"+"MJO_teleconnection/"                      ;Obs input directory
+dirobs   = getenv("OBS_DATA")+"/"                      ;Obs input directory
 diro     = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"        ;Output data directory
 filz250  = getenv("z250_file")                                              ; input file
 tfile    = "t_table_data.txt"

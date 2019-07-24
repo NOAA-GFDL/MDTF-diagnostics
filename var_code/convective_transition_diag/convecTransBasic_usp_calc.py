@@ -31,7 +31,7 @@ LON_VAR=os.environ["lon_coord"]
 
 # ======================================================================
 # Region mask directory & filename
-REGION_MASK_DIR=os.environ["VARDATA"]+"/convective_transition_diag"
+REGION_MASK_DIR=os.environ["OBS_DATA"]
 REGION_MASK_FILENAME="region_0.25x0.25_costal2.5degExcluded.mat"
 # Number of regions
 #  Use grids with 1<=region<=NUMBER_OF_REGIONS in the mask

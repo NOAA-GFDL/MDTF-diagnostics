@@ -41,7 +41,7 @@ while a < len(files):
    a = a+1
 if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
-os.system("cp "+os.environ["VARDATA"]+"/EOF_500hPa/*.gif "+os.environ["variab_dir"]+"/EOF_500hPa/obs/.")
+os.system("cp "+os.environ["OBS_DATA"]+"/*.gif "+os.environ["variab_dir"]+"/EOF_500hPa/obs/.")
 
 
 
@@ -108,8 +108,8 @@ while a < len(files):
    a = a+1
 if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
+os.system("cp "+os.environ["OBS_DATA"]+"/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
+os.system("cp "+os.environ["OBS_DATA"]+"/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
 
 
 
@@ -147,7 +147,7 @@ while a < len(files):
    a = a+1
 if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS/")
-os.system("cp "+os.environ["VARDATA"]+"/precip_diurnal_cycle/*.png "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/.")
+os.system("cp "+os.environ["OBS_DATA"]+"/*.png "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/.")
 
 
 

@@ -36,7 +36,7 @@ print("Model: " + Model)
 ;--directory for output files--
 ;-------------------------------------------------------------------------------------
 diri  = getenv("DATADIR")+"/day/"                               ;Input data directory
-dirobs  = getenv("VARDATA")+"/"+"MJO_teleconnection/"         ;Output data directory
+dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
 diro  = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
 filpr = getenv("prec_file")                   ; input file
 

@@ -357,7 +357,7 @@ fout->hus = husm
 ; specific humidity   
 ;***********************************************************
 ; make Hovmoller one-dimensional for pattern correlation
-fin = addfile("$VARDATA/MJO_prop_amp/obs_hovmoller.nc","r")            
+fin = addfile("$OBS_DATA/obs_hovmoller.nc","r")            
 if precision .eq. "float"
 prcp(:,:,2)=doubletofloat(fin->prcp_io(:,0,:))
 prcp(:,:,3)=doubletofloat(fin->prcp_wp(:,0,:))
@@ -377,7 +377,7 @@ delete([/pc_io,pc_wp,fin/])
 husobs = new((/ny_q,nx_q/),precision)
 husobs!0 = "lat"
 husobs!1 = "lon"
-fin = addfile("$VARDATA/MJO_prop_amp/obs_hus_900_650_mean.nc","r")            
+fin = addfile("$OBS_DATA/obs_hus_900_650_mean.nc","r")            
 if precision .eq. "float"
 husobs(:,:)=doubletofloat(fin->hus(0,:,:))
 else

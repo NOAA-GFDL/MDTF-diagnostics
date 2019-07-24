@@ -82,6 +82,34 @@ def read_pod_settings_file(pod_name, verbose=0):
 
 
 
+def read_model_varnames(verbose=0):
+   import glob
+
+   model_dict = {}
+   config_files = glob.glob(os.environ["DIAG_HOME"]+"/var_code/util/config_*.yml")
+   for filename in config_files:
+      fileobject = open(filename,'r')
+      file_contents = yaml.safe_load(fileobject)
+      fileobject.close()
+
+      if type(file_contents['model_name']) is str:
+         file_contents['model_name'] = [file_contents['model_name']]
+      for model in file_contents['model_name']:
+         if verbose > 0: print "found model "+ model
+         model_dict[model] = file_contents['var_names']
+   return model_dict
+
+def set_model_env_vars(model_name, model_dict):
+   # todo: set/unset for multiple models
+   # verify all vars requested by PODs have been set
+   if model_name in model_dict:
+      for key, val in model_dict[model_name].items():
+         os.environ[key] = str(val)
+   else:
+      print "ERROR: model ", model_name," Not Found"
+      print "      This is set in namelist "
+      print "      CASE case-name *model* start-year end-year"
+      quit()
 
 
 

@@ -11,7 +11,7 @@ begin
 ; each daily file has 30 days of data
 ; U200(time,lat,lon)
 
-varcode = getenv("VARCODE")
+pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 yr1 = getenv("FIRSTYR")
@@ -38,7 +38,7 @@ data!0 = "u200"
 data = wgt_areaave(u200,gw({-10:10}),1.,0)
 
 ; read the 20-100 day filter weights
-weights = asciiread(varcode+"/MJO_suite/bp_filter_20-100",-1,"float")
+weights = asciiread(pod_home+"/bp_filter_20-100",-1,"float")
 nwgts = dimsizes(weights)
 
 ; filter the U200 data

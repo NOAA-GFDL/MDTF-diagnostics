@@ -108,7 +108,7 @@ else:
     # Convective Transition Basic Statistics
     #  See convecTransBasic.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -120,7 +120,7 @@ else:
     ##  Requires output from convecTransBasic.py
     ##  See convecTransCriticalCollapse.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransCriticalCollapse.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransCriticalCollapse.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -131,7 +131,7 @@ else:
     ## ======================================================================
     ## Moisture Precipitation Joint Probability Density Function
     ##  See cwvPrecipJPDF.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"cwvPrecipJPDF.py")
+    #os.system("python "+os.environ["POD_HOME"]+"/"+"cwvPrecipJPDF.py")
     ## ======================================================================
     ## Super Critical Precipitation Probability
     ##  Requires output from convecTransBasic.py

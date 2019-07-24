@@ -53,7 +53,7 @@ if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.en
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["rlut_var"]
    print("file of "+os.environ["rlut_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-   generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
 else:  
    print("file of "+os.environ["rlut_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
@@ -63,7 +63,7 @@ if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.en
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["pr_var"]
    print("file of "+os.environ["pr_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-   generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
 else:  
    print("file of "+os.environ["pr_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
@@ -73,7 +73,7 @@ if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.en
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["omega500_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["omega500_var"]
    print("file of "+os.environ["omega500_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-   generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
 else:  
    print("file of "+os.environ["omega500_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
@@ -83,7 +83,7 @@ if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.en
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u200_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["u200_var"]
    print("file of "+os.environ["u200_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-   generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
 else:  
    print("file of "+os.environ["u200_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
@@ -93,7 +93,7 @@ if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.en
    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"
    os.environ["MVAR"] = os.environ["u850_var"]
    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-   generate_ncl_plots(os.environ["VARCODE"]+"/Wheeler_Kiladis/wkSpaceTime_driver.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
 else:  
    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 

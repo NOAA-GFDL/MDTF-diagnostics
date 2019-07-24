@@ -4,7 +4,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
-load "$VARCODE/Wheeler_Kiladis/getVarSlice.ncl"
+load "$POD_HOME/getVarSlice.ncl"
 
 ;==================================================================
 ;                     USER INTERFACE 

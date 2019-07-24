@@ -34,28 +34,28 @@ def generate_ncl_plots(nclPlotFile):
 # Call NCL code here
 #============================================================
 print("OBTAINING DAILY OUTPUT")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/daily_netcdf.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl")
 
 print("COMPUTING DAILY ANOMALIES")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/daily_anom.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/daily_anom.ncl")
 
 print("COMPUTING MJO EOF")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_EOF.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF.ncl")
 
 print("MJO lag plots")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_lag_lat_lon.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_lag_lat_lon.ncl")
 
 print("MJO spectra")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_spectra.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
 if os.path.isfile( os.environ["variab_dir"]+"/MJO_suite/model/netCDF/MJO_PC_INDEX.nc"):
    print("WARNING: MJO_PC_INDEX.nc already exists!")
 else:
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_EOF_cal.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")
    
 print("MJO life cycle composite")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_life_cycle.ncl")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_life_cycle_v2.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle_v2.ncl")
 
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo.ncl")
 

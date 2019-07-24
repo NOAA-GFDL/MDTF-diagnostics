@@ -227,5 +227,5 @@ TAVE_VAR,\
 QSAT_INT_VAR,\
 BULK_TROPOSPHERIC_TEMPERATURE_MEASURE ]
 
-with open(os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_calc_parameters.json", "w") as outfile:
+with open(os.environ["POD_HOME"]+"/"+"convecTransBasic_calc_parameters.json", "w") as outfile:
     json.dump(data, outfile)

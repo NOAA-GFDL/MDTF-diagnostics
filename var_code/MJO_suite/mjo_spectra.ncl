@@ -4,7 +4,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
-load "$VARCODE/MJO_suite/my_cam_diags.ncl"
+load "$POD_HOME/my_cam_diags.ncl"
    
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin

@@ -14,7 +14,7 @@
 if os.path.isfile( os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html" ):
    os.system("rm -f "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html")
    
-os.system("cp "+os.environ["VARCODE"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/.")
+os.system("cp "+os.environ["POD_HOME"]+"/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/.")
 
 os.system("cp "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
 os.system("cat "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
@@ -52,7 +52,7 @@ os.system("cp "+os.environ["VARDATA"]+"/EOF_500hPa/*.gif "+os.environ["variab_di
 if os.path.isfile( os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html" ):
    os.system("rm -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
    
-os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
+os.system("cp "+os.environ["POD_HOME"]+"/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
 
 os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
 os.system("cat "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
@@ -120,7 +120,7 @@ os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["vari
 if os.path.isfile( os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html" ):
    os.system("rm -f "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html")
 
-os.system("cp "+os.environ["VARCODE"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/.")
+os.system("cp "+os.environ["POD_HOME"]+"/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/.")
 
 # move template html file
 os.system("cp "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
@@ -159,7 +159,7 @@ os.system("cp "+os.environ["VARDATA"]+"/precip_diurnal_cycle/*.png "+os.environ[
 if os.path.isfile( os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html" ):
    os.system("rm -f "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
 
-os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_
+os.system("cp "+os.environ["POD_HOME"]+"/convective_transition_diag.html "+os.environ["variab_
 dir"]+"/convective_transition_diag/.")
 
 # Replace keywords in the copied html template if different bulk temperature or resolution are used

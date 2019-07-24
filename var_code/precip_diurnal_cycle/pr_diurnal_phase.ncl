@@ -10,8 +10,8 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$VARCODE/precip_diurnal_cycle/calc_utils.ncl"
-load "$VARCODE/precip_diurnal_cycle/evans_plot.ncl"
+load "$POD_HOME/calc_utils.ncl"
+load "$POD_HOME/evans_plot.ncl"
 
 begin
 ; Set variables for two runs.

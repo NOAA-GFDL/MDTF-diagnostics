@@ -49,13 +49,13 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
 # Call NCL code here
 #============================================================
       print("COMPUTING ANOMALIES")
-      generate_ncl_plots(os.environ["VARCODE"]+"/EOF_500hPa/compute_anomalies.ncl")
+      generate_ncl_plots(os.environ["POD_HOME"]+"/compute_anomalies.ncl")
 
       print(" N ATLANTIC EOF PLOT")
-      generate_ncl_plots(os.environ["VARCODE"]+"/EOF_500hPa/eof_natlantic.ncl")
+      generate_ncl_plots(os.environ["POD_HOME"]+"/eof_natlantic.ncl")
 
       print(" N PACIFIC EOF PLOT")
-      generate_ncl_plots(os.environ["VARCODE"]+"/EOF_500hPa/eof_npacific.ncl")
+      generate_ncl_plots(os.environ["POD_HOME"]+"/eof_npacific.ncl")
 
 
 else:

@@ -10,7 +10,6 @@ begin
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 rgb = getenv("RGB")
-wkdir = getenv("WKDIR")
 variab_dir = getenv("variab_dir")
 casename = getenv("CASENAME")
 

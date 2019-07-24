@@ -12,7 +12,6 @@ begin
 ; U200(time,lat,lon)
 
 varcode = getenv("VARCODE")
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 yr1 = getenv("FIRSTYR")

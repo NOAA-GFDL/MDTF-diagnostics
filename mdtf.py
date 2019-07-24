@@ -195,7 +195,7 @@ util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
 # Check directories that must already exist
 # ======================================================================
 
-os.chdir(os.environ["WKDIR"])
+os.chdir(os.environ["WORKING_DIR"])
 
 # ======================================================================
 # set up html file
@@ -223,6 +223,7 @@ for pod in pod_configs:
    pod_name = pod['settings']['pod_name']
    if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
+   util.set_pod_env_vars(pod_name, config, verbose=verbose)
    command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if config['envvars']['test_mode']:
       print("TEST mode: would call :  "+command_str)
@@ -282,7 +283,7 @@ else:
    if os.path.isfile( os.environ["variab_dir"]+".tar" ):
       print "Moving existing "+os.environ["variab_dir"]+".tar to "+os.environ["variab_dir"]+".tar_old"
       os.system("mv -f "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"]+".tar_old")
-      os.chdir(os.environ["WKDIR"])
+      os.chdir(os.environ["WORKING_DIR"])
 
    print "Creating "+os.environ["variab_dir"]+".tar "
    status = os.system(

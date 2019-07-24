@@ -8,7 +8,6 @@ load "$VARCODE/MJO_suite/calc_utils.ncl"
 
 begin
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
 lat_var = getenv("lat_var")

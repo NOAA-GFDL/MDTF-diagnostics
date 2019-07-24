@@ -13,7 +13,6 @@ begin
 ;============================================================
 vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"

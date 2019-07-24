@@ -9,7 +9,6 @@ begin
 
 ;==== INPUT DATA ============================================
 
-wkdir = getenv("WKDIR")
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
 dir_stub = getenv("variab_dir")

@@ -11,7 +11,6 @@ begin
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"

@@ -9,7 +9,6 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
 ;******************** MAIN **********************************
 begin
 vars = (/"pr","u850"/)
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"

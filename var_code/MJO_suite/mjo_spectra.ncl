@@ -10,7 +10,6 @@ load "$VARCODE/MJO_suite/my_cam_diags.ncl"
 begin
 vars = (/"pr","rlut","u200","u850","v200","v200"/)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
 file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"

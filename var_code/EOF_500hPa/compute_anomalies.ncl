@@ -5,7 +5,6 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
-wkdir = getenv("WKDIR")
 variab_dir = getenv("variab_dir")
 casename = getenv("CASENAME")
 yr1 = getenv("FIRSTYR")

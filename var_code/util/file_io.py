@@ -23,32 +23,38 @@ def parse_pod_varlist(varlist, verbose=0):
          varlist[idx]['alternates'] = [var['alternates']]
 
 
-def read_mdtf_config_file(argv, verbose=0):
-   if (verbose > 2): print "read_mdtf_config_file received arguments "+str(argv)
-   
-   namelist_file_default = os.environ["DIAG_HOME"]+"/config.yml"  
-   if (len(argv) > 1 ):
-      namelist_file = argv[1]
-      if ( verbose > 0 ): print "Received command-line argument for input namelist file: ", namelist_file
-   else:  #try the default
-      namelist_file = namelist_file_default
-      if ( verbose > 0 ): print """WARNING : Expected command-line argument with input namelist file name.
-         \n\t Checking for default input namelist file """, namelist_file
+def read_mdtf_config_file(namelist_file, verbose=0):
    assert(os.path.exists(namelist_file)), "Input file does not exist "+str(namelist_file)
 
    file_object = open(namelist_file, 'r')
    file_contents = yaml.safe_load(file_object)
    file_object.close()
 
-   file_contents['envvars'] = {}
-   for key, val in file_contents['case_list'][0].items():
-      setenv(key, val, file_contents['envvars'], verbose=verbose)
-   for key, val in file_contents['settings'].items():
-      setenv(key, val, file_contents['envvars'], verbose=verbose)
-
    if (verbose > 1):
       print yaml.dump(file_contents)  #print it to stdout 
    return file_contents
+
+def set_mdtf_env_vars(args, config, verbose=0):
+   config['envvars'] = {}
+   # need to expand ./ and ../ in paths
+   for key, val in config['paths'].items():
+      if (key in args) and (args.__getattribute__(key) != None):
+         val = args.__getattribute__(key)
+      val = os.path.realpath(val)
+      setenv(key, val, config['envvars'], verbose=verbose)
+
+   # following are redundant but used by PODs
+   setenv("WKDIR",os.environ['WORKING_DIR'],config['envvars'],verbose=verbose)
+   setenv("VARDATA",os.environ["OBS_ROOT_DIR"],config['envvars'],overwrite=False,verbose=verbose)
+   setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+   setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
+
+   vars_to_set = config['settings'].copy()
+   vars_to_set.update(config['case_list'][0])
+   for key, val in vars_to_set.items():
+      if (key in args) and (args.__getattribute__(key) != None):
+         val = args.__getattribute__(key)
+      setenv(key, val, config['envvars'], verbose=verbose)
 
 
 def read_pod_settings_file(pod_name, verbose=0):
@@ -73,6 +79,7 @@ def read_pod_settings_file(pod_name, verbose=0):
       print yaml.dump(file_contents['varlist'])
 
    return file_contents
+
 
 
 

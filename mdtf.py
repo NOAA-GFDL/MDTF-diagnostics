@@ -109,7 +109,7 @@ except Exception as error:
 util.set_mdtf_env_vars(args, config, verbose=verbose)
 verbose = config['envvars']['verbose']
 util.check_required_dirs(
-   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR","VARCODE","RGB"], 
+   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR","RGB"], 
    create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
    verbose=verbose)
 
@@ -203,8 +203,9 @@ os.chdir(os.environ["WORKING_DIR"])
 if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
    print("WARNING: index.html exists, not re-creating.")
 else: 
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf_diag_banner.png "+os.environ["variab_dir"])
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf1.html "+os.environ["variab_dir"]+"/index.html")
+   html_dir = os.environ["DIAG_HOME"]+"/var_code/html/"
+   os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
+   os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
 # ======================================================================
 # Diagnostics:

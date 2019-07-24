@@ -47,7 +47,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
 
    # following are redundant but used by PODs
 
-   setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
+   setenv("RGB",os.environ["DIAG_HOME"]+"/var_code/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
    vars_to_set = config['settings'].copy()
    vars_to_set.update(config['case_list'][0])
@@ -58,7 +58,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
 
 
 def read_pod_settings_file(pod_name, verbose=0):
-   pod_dir = os.environ['VARCODE']+'/'+pod_name
+   pod_dir = os.environ["DIAG_HOME"]+"/var_code/"+pod_name
    filename = pod_dir+'/settings.yml'
    assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 

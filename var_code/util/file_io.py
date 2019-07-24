@@ -43,6 +43,12 @@ def set_mdtf_env_vars(args, config, verbose=0):
       val = os.path.realpath(val)
       setenv(key, val, config['envvars'], verbose=verbose)
 
+   # following are redundant but used by PODs
+   setenv("WKDIR",os.environ['WORKING_DIR'],config['envvars'],verbose=verbose)
+   setenv("VARDATA",os.environ["OBS_ROOT_DIR"],config['envvars'],overwrite=False,verbose=verbose)
+   setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+   setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
+
    vars_to_set = config['settings'].copy()
    vars_to_set.update(config['case_list'][0])
    for key, val in vars_to_set.items():

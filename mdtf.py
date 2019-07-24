@@ -76,27 +76,42 @@ parser.add_argument("-v", "--verbosity", action="count",
                     help="Increase output verbosity")
 parser.add_argument("--test_mode", action="store_true",
                     help="Set flag to not call PODs, just say what would be called")
-parser.add_argument('--DIAG_HOME', type=str, 
-                    default=cwd,
-                    help="Code installation directory")
-parser.add_argument('--MODEL_ROOT_DIR', type=str, 
-                    default=os.path.join(os.path.dirname(cwd), 'inputdata', 'model'),
+# default paths set in config.yml/paths
+parser.add_argument('--DIAG_HOME', nargs='?', type=str, 
+                    help="Code installation directory.")
+parser.add_argument('--MODEL_ROOT_DIR', nargs='?', type=str, 
                     help="Parent directory containing results from different models.")
-parser.add_argument('--OBS_ROOT_DIR', type=str, 
-                    default=os.path.join(os.path.dirname(cwd), 'inputdata', 'obs_data'),
+parser.add_argument('--OBS_ROOT_DIR', nargs='?', type=str, 
                     help="Parent directory containing observational data used by individual PODs.")
-parser.add_argument('--WORKING_DIR', type=str, 
-                    default=os.path.join(cwd, 'wkdir'),
+parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
                     help="Working directory.")
-parser.add_argument('--OUTPUT_DIR', type=str, 
-                    default=os.path.join(cwd, 'wkdir'),
+parser.add_argument('--OUTPUT_DIR', nargs='?', type=str, 
                     help="Directory to write output files. Defaults to working directory.")
+parser.add_argument('config_file', nargs='?', type=str, 
+                    default=os.path.join(cwd, 'config.yml'),
+                    help="Configuration file.")
 args = parser.parse_args()
 if args.verbosity == None:
    verbose = 1
 else:
    verbose = args.verbosity + 1 # fix for case  verb = 0
 test_mode = args.test_mode
+
+# ======================================================================
+# Input settings from namelist file (name = argument to this script, default DIAG_HOME/namelist)
+# to set CASENAME,model,FIRSTYR,LASTYR, POD list and environment variables 
+
+try:
+   config = util.read_mdtf_config_file(args.config_file, verbose=verbose)
+except Exception as error:
+   print error
+   exit()
+util.set_mdtf_env_vars(args, config, verbose=verbose)
+util.check_required_dirs(
+   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR"], 
+   create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
+   verbose=verbose)
+
 
 os.system("date")
 
@@ -107,46 +122,29 @@ errstr = "ERROR "+__file__+" : "
 # It is recommended to make all changes in the namelist
 #
 
-envvars = {}
 # ======================================================================
 # DIRECTORIES: set up locations
 # ======================================================================
-
-#  Home directory for diagnostic code (needs to have 'var_code',  sub-directories)
-setenv("DIAG_HOME",args.DIAG_HOME,envvars,verbose=verbose)   # eg. mdtf/MDTF_2.0
-setenv("DIAG_ROOT",os.path.dirname(os.environ["DIAG_HOME"]),envvars,verbose=verbose) # dir above DIAG_HOME
 
 path_var_code_absolute = os.environ["DIAG_HOME"]+'/var_code/util/'
 if ( verbose > 1): print "Adding absolute path to modules in "+path_var_code_absolute
 sys.path.insert(0,path_var_code_absolute)
 
 # inputdata contains model/$casename, obs_data/$package/*  #drb change?
-setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",envvars,overwrite=False,verbose=verbose)
-setenv("VARDATA",args.OBS_ROOT_DIR,envvars,overwrite=False,verbose=verbose)
-setenv("RGB",os.environ["VARCODE"]+"/util/rgb",envvars,overwrite=False,verbose=verbose)
-
-
-
-# ======================================================================
-# Input settings from namelist file (name = argument to this script, default DIAG_HOME/namelist)
-# to set CASENAME,model,FIRSTYR,LASTYR, POD list and environment variables 
-
-try:
-   config = util.read_mdtf_config_file(sys.argv,verbose=verbose)
-except Exception as error:
-   print error
-   exit()
-config['envvars'].update(envvars)
-
+setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+setenv("VARDATA",os.environ["OBS_ROOT_DIR"],config['envvars'],overwrite=False,verbose=verbose)
+setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
 # output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
+setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
 
-setenv("DATADIR",os.path.join(args.MODEL_ROOT_DIR, os.environ["CASENAME"]),envvars,overwrite=False,verbose=verbose)
-
-setenv("WKDIR",args.WORKING_DIR,envvars,verbose=verbose)
+setenv("WKDIR",os.environ['WORKING_DIR'],config['envvars'],verbose=verbose)
 variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.path.join(args.WORKING_DIR, variab_dir),envvars,overwrite=False,verbose=verbose)
-util.check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
+setenv("variab_dir",os.path.join(os.environ['WORKING_DIR'], variab_dir),config['envvars'],overwrite=False,verbose=verbose)
+util.check_required_dirs(
+   already_exist =["VARCODE","VARDATA","RGB"], 
+   create_if_nec = ["WKDIR","variab_dir"], 
+   verbose=verbose)
 
 
 

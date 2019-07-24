@@ -46,9 +46,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
       setenv(key, val, config['envvars'], verbose=verbose)
 
    # following are redundant but used by PODs
-   setenv("WKDIR",os.environ['WORKING_DIR'],config['envvars'],verbose=verbose)
-   setenv("VARDATA",os.environ["OBS_ROOT_DIR"],config['envvars'],overwrite=False,verbose=verbose)
-   setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
+
    setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
    vars_to_set = config['settings'].copy()
@@ -82,6 +80,23 @@ def read_pod_settings_file(pod_name, verbose=0):
 
    return file_contents
 
+
+def set_pod_env_vars(pod_name, config, verbose=0):
+   pod_envvars = {}
+   # location of POD's code
+   setenv("POD_HOME", os.environ["DIAG_HOME"]+"/var_code/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+   # POD's observational data
+   setenv("OBS_DATA",os.environ["OBS_ROOT_DIR"]+"/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+   # POD's subdir within working directory
+   setenv("WK_DIR", os.environ['variab_dir']+"/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+
+   util.check_required_dirs(
+      already_exist =["POD_HOME", 'OBS_DATA'], create_if_nec = ["WK_DIR"], 
+      verbose=verbose)
+   return pod_envvars
 
 
 def read_model_varnames(verbose=0):

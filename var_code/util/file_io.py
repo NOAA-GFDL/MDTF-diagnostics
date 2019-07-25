@@ -128,7 +128,7 @@ def set_model_env_vars(model_name, model_dict):
 
 
 def setup_pod_directories(pod_name):
-   pod_wk_dir = os.environ['WK_DIR']
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
    for d in dirs:
       if not os.path.exists(os.path.join(pod_wk_dir, d)):
@@ -136,7 +136,7 @@ def setup_pod_directories(pod_name):
 
 def convert_pod_figures(pod_name):
    # Convert PS to png
-   pod_wk_dir = os.environ['WK_DIR']
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    dirs = ['figures', 'model/PS', 'obs/PS']
    for d in dirs:
       full_path = os.path.join(pod_wk_dir, d)
@@ -152,12 +152,13 @@ def convert_pod_figures(pod_name):
 
 def make_pod_html(pod_name, pod_description):
    # do templating on POD's html file
-   pod_code_dir = os.environ['POD_HOME']
-   pod_wk_dir = os.environ['WK_DIR']
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    html_file = pod_wk_dir+'/'+pod_name+'.html'
    temp_file = pod_wk_dir+'/tmp.html'
 
-   os.remove(html_file)
+   if os.path.exists(html_file):
+      os.remove(html_file)
    shutil.copy2(pod_code_dir+'/'+pod_name+'.html', pod_wk_dir)
    os.system("cat "+ html_file \
       + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
@@ -166,11 +167,12 @@ def make_pod_html(pod_name, pod_description):
    # need to find a more elegant way to handle this
    if pod_name == 'convective_transition_diag':
       temp_file2 = pod_wk_dir+'/tmp2.html'
-      if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
+      if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
+         and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
          os.system("cat " + temp_file \
             + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
          shutil.move(temp_file2, temp_file)
-      if os.environ["RES"] != "1.00":
+      if ("RES" in os.environ) and os.environ["RES"] != "1.00":
          os.system("cat " + temp_file \
             + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
             + temp_file2)
@@ -189,9 +191,9 @@ def make_pod_html(pod_name, pod_description):
 
 
 def cleanup_pod_files(pod_name):
-   pod_code_dir = os.environ['POD_HOME']
-   pod_data_dir = os.environ['OBS_DATA']
-   pod_wk_dir = os.environ['WK_DIR']
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
+   pod_data_dir = os.path.join(os.environ['OBS_ROOT_DIR'], pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
 
    # copy PDF documentation (if any) to output
    files = glob.glob(pod_code_dir+"/*.pdf")
@@ -207,8 +209,10 @@ def cleanup_pod_files(pod_name):
       shutil.copy2(file, pod_wk_dir+"/obs")
 
    # remove .eps files if requested
-   if os.environ["save_ps"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "figures"))   
+   if os.environ["save_ps"] == "0":
+      if os.path.exists(os.path.join(pod_wk_dir, "figures")):
+         # only in MJO_teleconnection, fix this
+         shutil.rmtree(os.path.join(pod_wk_dir, "figures"))   
       shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS"))
       shutil.rmtree(os.path.join(pod_wk_dir, "model/PS"))
 

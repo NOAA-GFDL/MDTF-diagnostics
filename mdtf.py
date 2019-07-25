@@ -225,15 +225,14 @@ for pod in pod_configs:
    if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
    util.set_pod_env_vars(pod_name, config, verbose=verbose)
+   util.setup_pod_directories(pod_name)
    command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if config['envvars']['test_mode']:
       print("TEST mode: would call :  "+command_str)
    else:
       start_time = timeit.default_timer()
       log = open(os.environ["WK_DIR"]+"/"+pod_name+".log", 'w')
-      log_files.append(log)
-
-      util.setup_pod_directories(pod_name)
+      log_files.append(log)   
       try:
          print("Calling :  "+command_str) # This is where the POD is called #
          proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)

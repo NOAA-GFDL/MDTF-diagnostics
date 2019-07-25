@@ -164,7 +164,7 @@ def make_pod_html(pod_name, pod_description):
       + temp_file)
    # following two substitutions are specific to convective_transition_diag
    # need to find a more elegant way to handle this
-   if pod_name == 'convective_transition_diag'
+   if pod_name == 'convective_transition_diag':
       temp_file2 = pod_wk_dir+'/tmp2.html'
       if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
          os.system("cat " + temp_file \
@@ -194,7 +194,7 @@ def cleanup_pod_files(pod_name):
    pod_wk_dir = os.environ['WK_DIR']
 
    # copy PDF documentation (if any) to output
-   files = glob.glob(pod_code_dir+"/*.pdf"))
+   files = glob.glob(pod_code_dir+"/*.pdf")
    for file in files:
       shutil.copy2(file, pod_wk_dir)
 
@@ -208,14 +208,14 @@ def cleanup_pod_files(pod_name):
 
    # remove .eps files if requested
    if os.environ["save_ps"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "figures")   
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS")
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS")
+      shutil.rmtree(os.path.join(pod_wk_dir, "figures"))   
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS"))
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS"))
 
    # delete netCDF files if requested
    if os.environ["save_nc"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF")
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF")
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF"))
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF"))
 
 # ------------ MAIN for testing ----------------------------------------------
 # USAGE  python read_files.py filename [namelist,settings,varlist]

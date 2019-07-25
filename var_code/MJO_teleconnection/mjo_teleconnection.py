@@ -139,10 +139,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 
    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
 
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MDTF_Documentation_MJO_teleconnection.pdf "+os.environ["variab_dir"]+"/MJO_teleconnection/.")
-  
-# 
-
    if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
       os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
@@ -165,17 +161,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
       file2 = os.environ["variab_dir"]+"/MJO_teleconnection/model/"+files[a]
       os.system("convert "+file1+" "+file2[:-3]+"jpeg")
       a = a+1
-
-# remove .eps files if requested
-if os.environ["save_ps"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/figures")   
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/PS")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
-
-# delete netCDF files if requested
-if os.environ["save_nc"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
 
 #============================================================
    print("-----------------------------------------------------------------------------")

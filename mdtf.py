@@ -239,13 +239,18 @@ for pod in pod_configs:
       except OSError as e:
          print('ERROR :',e.errno,e.strerror)
          print(errstr + " occured with call: " +command_str)
+      util.cleanup_pod_files(pod_name)
 
 for proc in pod_procs:
    proc.wait()
 
 for log in log_files:
-   log.close()
-               
+   log.close
+
+for pod in pod_configs:
+   pod_name = pod['settings']['pod_name']
+   util.cleanup_pod_files(pod_name)
+
 if verbose > 0: 
    print("---  MDTF.py Finished POD "+pod_name+"\n")
    # elapsed = timeit.default_timer() - start_time

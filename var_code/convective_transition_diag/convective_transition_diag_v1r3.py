@@ -148,8 +148,6 @@ else:
 
     os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_dir"]+"/convective_transition_diag/.")
 
-    os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/MDTF_Documentation_convective_transition.pdf "+os.environ["variab_dir"]+"/convective_transition_diag/.")
-
     # Replace keywords in the copied html template if different bulk temperature or resolution are used
     if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
         os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/_tave\./_qsat_int\./g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
@@ -177,8 +175,6 @@ else:
             file2 = os.environ["variab_dir"]+"/convective_transition_diag/model/"+files[a]
             os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
             a = a+1
-        if os.environ["save_ps"] == "0":
-            os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
     if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
         files = os.listdir(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
         a = 0
@@ -187,13 +183,6 @@ else:
             file2 = os.environ["variab_dir"]+"/convective_transition_diag/obs/"+files[a]
             os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
             a = a+1
-        if os.environ["save_ps"] == "0":
-            os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
-
-    # delete netCDF files if requested
-    if os.environ["save_nc"] == "0":    
-        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF")
-        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF")
 
     # ======================================================================
     # End of HTML sections

@@ -64,7 +64,6 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
          os.system("rm -f "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html")
    
       os.system("cp "+os.environ["VARCODE"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/.")
-      os.system("cp "+os.environ["VARCODE"]+"/EOF_500hPa/MDTF_Documentation_EOF500.pdf "+os.environ["variab_dir"]+"/EOF_500hPa/.")
       os.system("cp "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
       os.system("cat "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
       os.system("cp "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html")
@@ -88,19 +87,6 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
          file2 = os.environ["variab_dir"]+"/EOF_500hPa/model/"+files[a]
          os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
          a = a+1
-      if os.environ["save_ps"] == "0":
-         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
-
-      # delete netCDF files if requested
-      if os.environ["save_nc"] == "0":    
-         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
-         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
-
-#============================================================
-# Copy obs gifs into the expected location
-#============================================================
-      os.system("cp "+os.environ["VARDATA"]+"/EOF_500hPa/*.gif "+os.environ["variab_dir"]+"/EOF_500hPa/obs/.")
-
 
 else:
       print("height and surface pressure files NOT found, skip EOF of geopotential height anomalies of 500 hPa")        

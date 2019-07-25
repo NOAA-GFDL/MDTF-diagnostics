@@ -107,8 +107,6 @@ os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+o
 
 os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
 
-os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/MDTF_Documentation_Wavenumber-Frequency.pdf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
-
 os.system("cat "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
 os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
 os.system("rm -f "+os.environ["variab_dir"]+"/tmp.html")
@@ -160,12 +158,5 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["save_ps"] == "0":
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
 os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
 os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
-
-# delete netCDF files if requested
-if os.environ["save_nc"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF")

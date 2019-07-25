@@ -68,7 +68,6 @@ if os.path.isfile( os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html" ):
 os.system("cp "+os.environ["VARCODE"]+"/MJO_suite/MJO_suite.html "+os.environ["variab_dir"]+"/MJO_suite/.")
 
 os.system("cp "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
-os.system("cp "+os.environ["VARCODE"]+"/MJO_suite/MDTF_Documentation_MJO_suite.pdf "+os.environ["variab_dir"]+"/MJO_suite/.")
 os.system("cat "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
 os.system("cp "+os.environ["variab_dir"]+"/MJO_suite/tmp.html "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html")
 os.system("rm -f "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
@@ -91,12 +90,5 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/MJO_suite/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["save_ps"] == "0":
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/PS/")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.gif "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.png "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
-
-# delete netCDF files if requested
-if os.environ["save_nc"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/obs/netCDF")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/netCDF")

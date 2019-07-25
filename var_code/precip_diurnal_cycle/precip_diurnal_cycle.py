@@ -69,8 +69,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
 
       os.system("cp "+os.environ["VARCODE"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/.")
 
-      os.system("cp "+os.environ["VARCODE"]+"/precip_diurnal_cycle/MDTF_Documentation_precip_diurnal_cycle.pdf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/.")
-
       # move template html file
       os.system("cp "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
       os.system("cat "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
@@ -94,15 +92,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
          file2 = os.environ["variab_dir"]+"/precip_diurnal_cycle/model/"+files[a]
          os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
          a = a+1
-      if os.environ["save_ps"] == "0":
-         os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS/")
-
-      os.system("cp "+os.environ["VARDATA"]+"/precip_diurnal_cycle/*.png "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/.")
-
-      # delete netCDF files if requested
-      if os.environ["save_nc"] == "0":    
-         os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/netCDF")
-         os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/model/netCDF")
 
       print("--------- Finished DIURNAL CYCLE OF PRECIPITATION webpage generation ----------------------------")
 else:

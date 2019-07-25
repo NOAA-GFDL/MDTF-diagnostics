@@ -2,6 +2,8 @@
 
 import os
 import sys
+import glob
+import shutil
 import yaml
 import util
 from util import setenv
@@ -83,8 +85,6 @@ def read_pod_settings_file(pod_name, verbose=0):
 
 
 def read_model_varnames(verbose=0):
-   import glob
-
    model_dict = {}
    config_files = glob.glob(os.environ["DIAG_HOME"]+"/var_code/util/config_*.yml")
    for filename in config_files:
@@ -119,7 +119,37 @@ def setup_pod_directories(pod_name):
       if not os.path.exists(os.path.join(pod_wk_dir, d)):
          os.makedirs(os.path.join(pod_wk_dir, d))
 
+def convert_pod_figures():
+   pass
 
+def cleanup_pod_files(pod_name):
+   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_data_dir = os.path.join(os.environ['VARDATA'], pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+
+   # copy PDF documentation (if any) to output
+   files = glob.glob(pod_code_dir+"/*.pdf"))
+   for file in files:
+      shutil.copy2(file, pod_wk_dir)
+
+   # copy premade figures (if any) to output 
+   files = glob.glob(pod_data_dir+"/*.gif")
+   files.extend(glob.glob(pod_data_dir+"/*.png"))
+   files.extend(glob.glob(pod_data_dir+"/*.jpg"))
+   files.extend(glob.glob(pod_data_dir+"/*.jpeg"))
+   for file in files:
+      shutil.copy2(file, pod_wk_dir+"/obs")
+
+   # remove .eps files if requested
+   if os.environ["save_ps"] == "0":    
+      shutil.rmtree(os.path.join(pod_wk_dir, "figures")   
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS")
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS")
+
+   # delete netCDF files if requested
+   if os.environ["save_nc"] == "0":    
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF")
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF")
 
 # ------------ MAIN for testing ----------------------------------------------
 # USAGE  python read_files.py filename [namelist,settings,varlist]

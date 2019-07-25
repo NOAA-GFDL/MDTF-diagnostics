@@ -6,7 +6,7 @@
 # ==================================================================================================
 
 settings:
-  driver: mjo_prop_amp.py
+  driver: MJO_prop_amp.py
   long_name: MJO propagation and amplitude in GCMs
   description: Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)
 

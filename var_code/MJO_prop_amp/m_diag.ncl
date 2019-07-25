@@ -18,9 +18,9 @@ VARDATA = getenv("VARDATA")
 ss_name = (/"prop","shum","amp","tc"/)
 
 ; model output files
-fn_pr  = "$variab_dir/MJO_prop_amp/model_pr.nc"
-fn_prw = "$variab_dir/MJO_prop_amp/model_prw.nc"
-fn_hus = "$variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc"
+fn_pr  = "$variab_dir/MJO_prop_amp/model/netCDF/model_pr.nc"
+fn_prw = "$variab_dir/MJO_prop_amp/model/netCDF/model_prw.nc"
+fn_hus = "$variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_avg.nc"
 
 ; season of interest (use first 3 letters only 
 ; in the format: Jan, Feb, Mar,..., Dec) 
@@ -311,8 +311,8 @@ prcp_wp&lat@units = "degrees_north"
 prcp_wp&lon@units = "degrees_east"
 prcp_wp&time@units = "days since 0000-01-21 00:00:00"
 
-system("rm -f $variab_dir/MJO_prop_amp/model_hovmoller.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model_hovmoller.nc","c")            
+system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_hovmoller.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_hovmoller.nc","c")            
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Hovmoller Diagram of Rainfall associated with the MJO"
 fAtt@source_file   =  ""
@@ -339,8 +339,8 @@ husm&lat@units = "degrees_north"
 husm&lon@units = "degrees_east"
 husm&time@units = "days since 0000-01-11 00:00:00"
 
-system("rm -f $variab_dir/MJO_prop_amp/model_hus_900_650_mean.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model_hus_900_650_mean.nc","c")
+system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_mean.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_mean.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Winter mean (Nov-Apr) 900-650hPa specific humidity"
 fAtt@source_file   =  ""
@@ -910,7 +910,6 @@ yy2 =  7.5
    delete([/wks4,plot/])
 
 system("cp $VARDATA/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/obs/netCDF")
-system("mv $variab_dir/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/model/netCDF")
 
 print_clock("Finishing program")
 end

@@ -43,9 +43,9 @@ newpr&time=newtime
 newpr2 = calculate_daily_values (newpr, "avg", 0, False)  
 newtime2=newpr2&time
 
-print("Writing $variab_dir/MJO_prop_amp/model_pr.nc")
-system("rm -f $variab_dir/MJO_prop_amp/model_pr.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model_pr.nc","c") 
+print("Writing $variab_dir/MJO_prop_amp/model/netCDF/model_pr.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_pr.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_pr.nc","c") 
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_pr"
@@ -78,9 +78,9 @@ newprw&time=newtime
 newprw2 = calculate_daily_values (newprw, "avg", 0, False)
 newtime2=newprw2&time
 
-print("Writing fout "+"$variab_dir/MJO_prop_amp/model_prw.nc")
-system("rm -f $variab_dir/MJO_prop_amp/model_prw.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model_prw.nc","c")
+print("Writing fout "+"$variab_dir/MJO_prop_amp/model/netCDF/model_prw.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_prw.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_prw.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_prw"
@@ -126,9 +126,9 @@ husm&time=time
 husm&lat=newlat
 husm&lon=newlon
 
-print("Writing $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")
-system("rm -f $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc","c")
+print("Writing $variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_avg.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_avg.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_avg.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated model 900-650hPa averaged specific humidity"
 fAtt@source_file   =  "$file_hus"

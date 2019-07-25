@@ -109,27 +109,8 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model")
-
    if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/figures"):
       os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
-
 
    if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/htmls"):
       os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/htmls")
@@ -151,50 +132,13 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
    generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig1_MDTF.ncl")
    generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig2_MDTF.ncl")
 #============================================================
-# set up template html file
+# copy additional html files
 #============================================================
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html")
-
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
-
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MDTF_Documentation_MJO_teleconnection.pdf "+os.environ["variab_dir"]+"/MJO_teleconnection/.")
-  
-# 
 
    if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
       os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
       
-
-#============================================================
-# Add line to top level HTML file (index.html)
-#============================================================
-   a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_teleconnection")
-   if a != 0:
-      os.system("echo '<H3><font color=navy>MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 <A HREF=\"MJO_teleconnection/MJO_teleconnection.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-#============================================================
-# convert eps to jpeg
-#============================================================
-   files = os.listdir(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-   a = 0
-   while a < len(files):
-      file1 = os.environ["variab_dir"]+"/MJO_teleconnection/figures/"+files[a]
-      file2 = os.environ["variab_dir"]+"/MJO_teleconnection/model/"+files[a]
-      os.system("convert "+file1+" "+file2[:-3]+"jpeg")
-      a = a+1
-
-# remove .eps files if requested
-if os.environ["save_ps"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/figures")   
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/PS")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
-
-# delete netCDF files if requested
-if os.environ["save_nc"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
 
 #============================================================
    print("-----------------------------------------------------------------------------")

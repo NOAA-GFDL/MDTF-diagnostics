@@ -2,6 +2,8 @@
 
 import os
 import sys
+import glob
+import shutil
 import yaml
 import util
 from util import setenv
@@ -83,8 +85,6 @@ def read_pod_settings_file(pod_name, verbose=0):
 
 
 def read_model_varnames(verbose=0):
-   import glob
-
    model_dict = {}
    config_files = glob.glob(os.environ["DIAG_HOME"]+"/var_code/util/config_*.yml")
    for filename in config_files:
@@ -112,6 +112,93 @@ def set_model_env_vars(model_name, model_dict):
       quit()
 
 
+def setup_pod_directories(pod_name):
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
+   for d in dirs:
+      if not os.path.exists(os.path.join(pod_wk_dir, d)):
+         os.makedirs(os.path.join(pod_wk_dir, d))
+
+def convert_pod_figures(pod_name):
+   # Convert PS to png
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   dirs = ['figures', 'model/PS', 'obs/PS']
+   for d in dirs:
+      full_path = os.path.join(pod_wk_dir, d)
+      files = glob.glob(full_path+"/*.ps")
+      files.extend(glob.glob(full_path+"/*.eps"))
+      for f in files:
+         command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
+            + f + ' ' + os.path.splitext(f)[0] + '.' + os.environ['convert_output_fmt']
+         os.system(command_str)   
+
+
+def make_pod_html(pod_name, pod_description):
+   # do templating on POD's html file
+   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   html_file = pod_wk_dir+'/'+pod_name+'.html'
+   temp_file = pod_wk_dir+'/tmp.html'
+
+   os.remove(html_file)
+   shutil.copy2(pod_code_dir+'/'+pod_name+'.html', pod_wk_dir)
+   os.system("cat "+ html_file \
+      + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
+      + temp_file)
+   # following two substitutions are specific to convective_transition_diag
+   # need to find a more elegant way to handle this
+   if pod_name == 'convective_transition_diag'
+      temp_file2 = pod_wk_dir+'/tmp2.html'
+      if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
+         os.system("cat " + temp_file \
+            + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
+         shutil.move(temp_file2, temp_file)
+      if os.environ["RES"] != "1.00":
+         os.system("cat " + temp_file \
+            + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
+            + temp_file2)
+         shutil.move(temp_file2, temp_file)
+   shutil.copy2(temp_file, html_file) 
+   os.remove(temp_file)
+
+   # add link and description to main html page
+   html_file = os.environ["variab_dir"]+"/index.html"
+   a = os.system("cat " + html_file + " | grep " + pod_name)
+   if a != 0:
+      os.system("echo '<H3><font color=navy>" + pod_description \
+         + " <A HREF=\""+ pod_name+"/"+pod_name+".html\">plots</A></H3>' >> " \
+         + html_file)
+
+
+
+def cleanup_pod_files(pod_name):
+   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_data_dir = os.path.join(os.environ['VARDATA'], pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+
+   # copy PDF documentation (if any) to output
+   files = glob.glob(pod_code_dir+"/*.pdf"))
+   for file in files:
+      shutil.copy2(file, pod_wk_dir)
+
+   # copy premade figures (if any) to output 
+   files = glob.glob(pod_data_dir+"/*.gif")
+   files.extend(glob.glob(pod_data_dir+"/*.png"))
+   files.extend(glob.glob(pod_data_dir+"/*.jpg"))
+   files.extend(glob.glob(pod_data_dir+"/*.jpeg"))
+   for file in files:
+      shutil.copy2(file, pod_wk_dir+"/obs")
+
+   # remove .eps files if requested
+   if os.environ["save_ps"] == "0":    
+      shutil.rmtree(os.path.join(pod_wk_dir, "figures")   
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS")
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS")
+
+   # delete netCDF files if requested
+   if os.environ["save_nc"] == "0":    
+      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF")
+      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF")
 
 # ------------ MAIN for testing ----------------------------------------------
 # USAGE  python read_files.py filename [namelist,settings,varlist]

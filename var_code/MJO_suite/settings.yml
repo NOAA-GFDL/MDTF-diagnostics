@@ -2,6 +2,7 @@
 settings:
   driver: MJO_suite.py
   long_name: MJO diagnostics suite (from AMWG variability diagnostic package)
+  description: MJO CLIVAR suite (NCAR) 
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

@@ -87,8 +87,6 @@ if a != 0:
    os.system("cat "+os.environ["VARCODE"]+"/MJO_prop_amp/index_MJO_prop_amp.html >> "+os.environ["variab_dir"]+"/index.html")
    print("Wrote into "+os.environ["variab_dir"]+"/index.html : ")
    print(os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp"))
-   print("Copying "+os.environ["VARCODE"]+"/MJO_prop_amp/MDTF_Documentation_MJO_prop_amp.pdf to "+os.environ["variab_dir"])
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_prop_amp/MDTF_Documentation_MJO_prop_amp.pdf  "+os.environ["variab_dir"]+"/MJO_prop_amp/")
    exit()
 
    

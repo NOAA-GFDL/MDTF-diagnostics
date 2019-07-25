@@ -74,7 +74,7 @@ cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently execut
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbosity", action="count",
                     help="Increase output verbosity")
-parser.add_argument("--test_mode", action="store_true",
+parser.add_argument("--test_mode", action="store_const", const=True,
                     help="Set flag to not call PODs, just say what would be called")
 # default paths set in config.yml/paths
 parser.add_argument('--DIAG_HOME', nargs='?', type=str, 
@@ -230,6 +230,8 @@ for pod in pod_configs:
       start_time = timeit.default_timer()
       log = open(os.environ["variab_dir"]+"/"+pod_name+".log", 'w')
       log_files.append(log)
+
+      util.setup_pod_directories(pod_name)
       try:
          print("Calling :  "+command_str) # This is where the POD is called #
          proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
@@ -237,13 +239,20 @@ for pod in pod_configs:
       except OSError as e:
          print('ERROR :',e.errno,e.strerror)
          print(errstr + " occured with call: " +command_str)
+      util.cleanup_pod_files(pod_name)
 
 for proc in pod_procs:
    proc.wait()
 
 for log in log_files:
-   log.close()
-               
+   log.close
+
+for pod in pod_configs:
+   pod_name = pod['settings']['pod_name']
+   util.make_pod_html(pod_name, pod['settings']['description'])
+   util.convert_pod_figures(pod_name)
+   util.cleanup_pod_files(pod_name)
+
 if verbose > 0: 
    print("---  MDTF.py Finished POD "+pod_name+"\n")
    # elapsed = timeit.default_timer() - start_time

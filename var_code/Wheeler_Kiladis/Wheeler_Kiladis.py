@@ -40,28 +40,6 @@ def generate_ncl_plots(nclPlotFile):
 
    return 0
 
-#============================================================
-# Set up directories
-#============================================================
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs")
-
-if not os.path.exists(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF"):
-   os.makedirs(os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF")
-
-
 print("COMPUTING THE SPACE-TIME SPECTRA")
 
 #============================================================
@@ -120,29 +98,6 @@ else:
    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
 #============================================================
-# set up template html file
-#============================================================
-if os.path.isfile( os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html" ):
-   os.system("rm -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
-   
-os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
-
-os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
-
-os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/MDTF_Documentation_Wavenumber-Frequency.pdf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
-
-os.system("cat "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
-os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
-os.system("rm -f "+os.environ["variab_dir"]+"/tmp.html")
-
-#============================================================
-# Add line to top level HTML file (index.html)
-#============================================================
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep Wheeler_Kiladis")
-if a != 0:
-   os.system("echo '<H3><font color=navy>Wavenumber-Frequency Power Spectra (Wheeler and Kiladis) <A HREF=\"Wheeler_Kiladis/Wheeler_Kiladis.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-#============================================================
 # Rename PS files
 #============================================================
 files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
@@ -171,23 +126,3 @@ while a < len(files):
       os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file5)
  
    a = a+1
-
-#============================================================
-# Convert PS to png
-#============================================================
-files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-a = 0
-while a < len(files):
-   file1 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+files[a]
-   file2 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/"+files[a]
-   os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-   a = a+1
-if os.environ["save_ps"] == "0":
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
-
-# delete netCDF files if requested
-if os.environ["save_nc"] == "0":    
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/netCDF")
-   os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/netCDF")

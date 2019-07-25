@@ -10,6 +10,7 @@
 settings:
   driver: convective_transition_diag_v1r3.py
   long_name: Convection Transition
+  description: Convective transition diagnostics 
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

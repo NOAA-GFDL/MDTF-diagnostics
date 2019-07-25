@@ -136,39 +136,7 @@ else:
     ## Super Critical Precipitation Probability
     ##  Requires output from convecTransBasic.py
     ##  See supCriticPrecipProb.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"supCriticPrecipProb.py")
-
-    ######################### HTML sections below #########################
-    # ======================================================================
-    #  Copy & modify the template html
-    # ======================================================================
-    # Copy template html (and delete old html if necessary)
-    if os.path.isfile( os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html" ):
-        os.system("rm -f "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-
-    os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_dir"]+"/convective_transition_diag/.")
-
-    # Replace keywords in the copied html template if different bulk temperature or resolution are used
-    if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
-        os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/_tave\./_qsat_int\./g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-        os.system("mv "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-    if os.environ["RES"] != "1.00":
-        os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/_res\=1\.00_/_res\="+os.environ["RES"]+"_/g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-        os.system("mv "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-
-    # Replace CASENAME so that the figures are correctly linked through the html
-    os.system("cp "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-    os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-    os.system("cp "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-    os.system("rm -f "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-
-    a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep convective_transition_diag")
-    if a != 0:
-       os.system("echo '<H3><font color=navy>Convective transition diagnostics <A HREF=\"convective_transition_diag/convective_transition_diag.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-    # ======================================================================
-    # End of HTML sections
-    # ======================================================================    
+    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"supCriticPrecipProb.py") 
 
     print("**************************************************")
     print("Convective Transition Diagnostic Package (convective_transition_diag_v1r3.py) Executed!")

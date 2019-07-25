@@ -98,27 +98,6 @@ else:
    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
 
 #============================================================
-# set up template html file
-#============================================================
-if os.path.isfile( os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html" ):
-   os.system("rm -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
-   
-os.system("cp "+os.environ["VARCODE"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/.")
-
-os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
-
-os.system("cat "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html")
-os.system("cp "+os.environ["variab_dir"]+"/Wheeler_Kiladis/tmp.html "+os.environ["variab_dir"]+"/Wheeler_Kiladis/Wheeler_Kiladis.html")
-os.system("rm -f "+os.environ["variab_dir"]+"/tmp.html")
-
-#============================================================
-# Add line to top level HTML file (index.html)
-#============================================================
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep Wheeler_Kiladis")
-if a != 0:
-   os.system("echo '<H3><font color=navy>Wavenumber-Frequency Power Spectra (Wheeler and Kiladis) <A HREF=\"Wheeler_Kiladis/Wheeler_Kiladis.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-#============================================================
 # Rename PS files
 #============================================================
 files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")

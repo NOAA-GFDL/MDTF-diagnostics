@@ -249,6 +249,7 @@ for log in log_files:
 
 for pod in pod_configs:
    pod_name = pod['settings']['pod_name']
+   util.make_pod_html(pod_name, pod['settings']['description'])
    util.convert_pod_figures(pod_name)
    util.cleanup_pod_files(pod_name)
 

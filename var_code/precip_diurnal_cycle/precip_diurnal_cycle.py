@@ -60,28 +60,5 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
 
       print("--------- Finished DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
 
-#============================================================
-# Copy over template html file
-#============================================================
-
-      if os.path.isfile( os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html" ):
-         os.system("rm -f "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html")
-
-      os.system("cp "+os.environ["VARCODE"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/.")
-
-      # move template html file
-      os.system("cp "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
-      os.system("cat "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
-      os.system("cp "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html "+os.environ["variab_dir"]+"/precip_diurnal_cycle/precip_diurnal_cycle.html")
-      os.system("rm -f "+os.environ["variab_dir"]+"/precip_diurnal_cycle/tmp.html")
-
-#============================================================
-# Add a line to the top level HTML file (index.html)
-#============================================================
-      a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep precip_diurnal_cycle")
-      if a != 0:
-         os.system("echo '<H3><font color=navy>Diurnal Cycle of Precipitation <A HREF=\"precip_diurnal_cycle/precip_diurnal_cycle.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-      print("--------- Finished DIURNAL CYCLE OF PRECIPITATION webpage generation ----------------------------")
 else:
       print("3 hourly precipitation rate file NOT found, skip diurnal cycle of precipitation")            

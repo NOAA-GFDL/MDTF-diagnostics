@@ -57,26 +57,6 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
       print(" N PACIFIC EOF PLOT")
       generate_ncl_plots(os.environ["VARCODE"]+"/EOF_500hPa/eof_npacific.ncl")
 
-#============================================================
-# Copy Template HTML File to appropriate directory
-#============================================================
-      if os.path.isfile( os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html" ):
-         os.system("rm -f "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html")
-   
-      os.system("cp "+os.environ["VARCODE"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/.")
-      os.system("cp "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
-      os.system("cat "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
-      os.system("cp "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html "+os.environ["variab_dir"]+"/EOF_500hPa/EOF_500hPa.html")
-      os.system("rm -f "+os.environ["variab_dir"]+"/EOF_500hPa/tmp.html")
-
-#============================================================
-# Add to HTML File
-#  This adds a line to the main html page (index.html)
-#============================================================
-      a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep EOF_500hPa")
-      if a != 0:
-         os.system("echo '<H3><font color=navy>EOF of geopotenitial height anomalies for 500 hPa <A HREF=\"EOF_500hPa/EOF_500hPa.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
 
 else:
       print("height and surface pressure files NOT found, skip EOF of geopotential height anomalies of 500 hPa")        

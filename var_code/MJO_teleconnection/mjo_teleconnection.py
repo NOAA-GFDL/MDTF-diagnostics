@@ -132,25 +132,13 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
    generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig1_MDTF.ncl")
    generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig2_MDTF.ncl")
 #============================================================
-# set up template html file
+# copy additional html files
 #============================================================
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html")
-
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
 
    if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
       os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
    os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
       
-
-#============================================================
-# Add line to top level HTML file (index.html)
-#============================================================
-   a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_teleconnection")
-   if a != 0:
-      os.system("echo '<H3><font color=navy>MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 <A HREF=\"MJO_teleconnection/MJO_teleconnection.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
 
 #============================================================
    print("-----------------------------------------------------------------------------")

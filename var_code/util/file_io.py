@@ -132,6 +132,45 @@ def convert_pod_figures(pod_name):
             + f + ' ' + os.path.splitext(f)[0] + '.' + os.environ['convert_output_fmt']
          os.system(command_str)   
 
+
+def make_pod_html(pod_name, pod_description):
+   # do templating on POD's html file
+   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   html_file = pod_wk_dir+'/'+pod_name+'.html'
+   temp_file = pod_wk_dir+'/tmp.html'
+
+   os.remove(html_file)
+   shutil.copy2(pod_code_dir+'/'+pod_name+'.html', pod_wk_dir)
+   os.system("cat "+ html_file \
+      + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
+      + temp_file)
+   # following two substitutions are specific to convective_transition_diag
+   # need to find a more elegant way to handle this
+   if pod_name == 'convective_transition_diag'
+      temp_file2 = pod_wk_dir+'/tmp2.html'
+      if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
+         os.system("cat " + temp_file \
+            + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
+         shutil.move(temp_file2, temp_file)
+      if os.environ["RES"] != "1.00":
+         os.system("cat " + temp_file \
+            + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
+            + temp_file2)
+         shutil.move(temp_file2, temp_file)
+   shutil.copy2(temp_file, html_file) 
+   os.remove(temp_file)
+
+   # add link and description to main html page
+   html_file = os.environ["variab_dir"]+"/index.html"
+   a = os.system("cat " + html_file + " | grep " + pod_name)
+   if a != 0:
+      os.system("echo '<H3><font color=navy>" + pod_description \
+         + " <A HREF=\""+ pod_name+"/"+pod_name+".html\">plots</A></H3>' >> " \
+         + html_file)
+
+
+
 def cleanup_pod_files(pod_name):
    pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
    pod_data_dir = os.path.join(os.environ['VARDATA'], pod_name)

@@ -59,24 +59,3 @@ generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo_life_cycle_v2.ncl")
 
 generate_ncl_plots(os.environ["VARCODE"]+"/MJO_suite/mjo.ncl")
 
-#============================================================
-# Copy Template HTML File to appropriate directory
-#============================================================
-if os.path.isfile( os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html" ):
-   os.system("rm -f "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html")
-   
-os.system("cp "+os.environ["VARCODE"]+"/MJO_suite/MJO_suite.html "+os.environ["variab_dir"]+"/MJO_suite/.")
-
-os.system("cp "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
-os.system("cat "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
-os.system("cp "+os.environ["variab_dir"]+"/MJO_suite/tmp.html "+os.environ["variab_dir"]+"/MJO_suite/MJO_suite.html")
-os.system("rm -f "+os.environ["variab_dir"]+"/MJO_suite/tmp.html")
-
-#============================================================
-# Add to HTML File
-#  This adds a line to the main html page (index.html)
-#============================================================
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_suite")
-if a != 0:
-   os.system("echo '<H3><font color=navy>MJO CLIVAR suite (NCAR) <A HREF=\"MJO_suite/MJO_suite.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-

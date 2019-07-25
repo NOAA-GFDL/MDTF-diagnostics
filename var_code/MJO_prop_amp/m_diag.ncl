@@ -441,9 +441,9 @@ reg2 = rc*(tau-rc@xave) + rc@yave
 ;***********************************************************
 
 ; figure type (ps, pdf, eps, tif)
-   figtype = "png"
-   figtype@wkWidth = 2500
-   figtype@wkHeight = 2500 
+   figtype = "ps"
+;   figtype@wkWidth = 2500
+;   figtype@wkHeight = 2500 
 
 ; plot resources (always set to true)
    res = True
@@ -533,7 +533,7 @@ nlev_p =  14
    res@lbTitleFontHeightF = lbfh 
    res@lbLabelFontHeightF = lbfh 
 
-   wks1a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/fig1b")
+   wks1a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig1b")
    plot   = new(1,graphic)                     ; create a plot array for all panels
    ;plotxy = new(4,graphic)                    ; optional 5 m/s line, can be done later
    do jj=0,0
@@ -561,7 +561,7 @@ nlev_p =  14
    gsn_panel(wks1a,plot,(/2,2/),False) ; now draw as one plot
    delete([/wks1a,plot/])
 
-   wks1c = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/fig1d")
+   wks1c = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig1d")
    plot   = new(1,graphic)                     ; create a plot array for all panels
       res@gsnLeftString  = ""                  ; left title
       res@lbLabelBarOn   = True                 ; whether or not to have a labelbar
@@ -637,7 +637,7 @@ nlev_q =   16
    res@pmLabelBarOrthogonalPosF = 0.2
    res@lbTitleString       = "g kg~S~-1"             ; specific humidity units string
 
-   wks2a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/fig2b")
+   wks2a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig2b")
    plot   = new(1,graphic)                     ; create a plot array for all panels
 	jj=0
       res@lbLabelBarOn   = True
@@ -663,7 +663,7 @@ nlev_q =   16
    delete([/wks2a,plot,res/])
 
 ;----Scatter plots MJO propagation vs moisture pattern---
-   wks3 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/fig3")
+   wks3 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig3")
 
 ; create new colors from ColorBrewer2.org (credit: Cynthia Brewer)
 ;  black     = todouble((/0,0,0/))/256d
@@ -788,7 +788,7 @@ yy2 =  7.5
    delete([/wks3,plot,res/])
 
 ;-------Scatter plots MJO amplitude vs convective timescale-------
-   wks4 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/fig4")
+   wks4 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig4")
 
    ; create new colors from ColorBrewer2.org 
    ; (credit: Cynthia Brewer)

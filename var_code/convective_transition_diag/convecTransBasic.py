@@ -79,13 +79,13 @@ print("Load user-specified binning parameters..."),
 
 # Create and read user-specified parameters
 os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic_usp_calc.py")
-with open(os.environ["POD_HOME"]+"/"+"convecTransBasic_calc_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_calc_parameters.json") as outfile:
     bin_data=json.load(outfile)
 print("...Loaded!")
 
 print("Load user-specified plotting parameters..."),
 os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic_usp_plot.py")
-with open(os.environ["POD_HOME"]+"/"+"convecTransBasic_plot_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_plot_parameters.json") as outfile:
     plot_data=json.load(outfile)
 print("...Loaded!")
 

@@ -326,5 +326,5 @@ for i in ['f1','f2','f3','f4','f5','f6']:
 
 data["plot_params"]=fig_params
 
-with open(os.environ["POD_HOME"]+"/convecTransCriticalCollapse_parameters.json", "w") as outfile:
+with open(os.environ["WK_DIR"]+"/convecTransCriticalCollapse_parameters.json", "w") as outfile:
     json.dump(data, outfile)

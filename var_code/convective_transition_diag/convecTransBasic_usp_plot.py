@@ -13,7 +13,7 @@ import json
 import os
 import glob
 
-with open(os.environ["POD_HOME"]+"/"+"convecTransBasic_calc_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_calc_parameters.json") as outfile:
     bin_data=json.load(outfile)
     
 # ======================================================================
@@ -189,5 +189,5 @@ for i in ['f1','f2','f3','f4']:
                 
 data["plot_params"]=fig_params
 
-with open(os.environ["POD_HOME"]+"/"+"convecTransBasic_plot_parameters.json", "w") as outfile:
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_plot_parameters.json", "w") as outfile:
     json.dump(data, outfile)

@@ -71,14 +71,5 @@ generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_intp.ncl")
 print("Starting disgostic program ...")
 generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_diag.ncl")
 
-print("Updating package html file")
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp")
-print("DRBDBG a=",a)
-print("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp")
-if a != 0:  
-   os.system("cat "+os.environ["VARCODE"]+"/MJO_prop_amp/index_MJO_prop_amp.html >> "+os.environ["variab_dir"]+"/index.html")
-   print("Wrote into "+os.environ["variab_dir"]+"/index.html : ")
-   print(os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp"))
-   exit()
 
    

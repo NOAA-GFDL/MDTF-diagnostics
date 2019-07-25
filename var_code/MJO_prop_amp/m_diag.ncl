@@ -8,6 +8,11 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
 begin
 
+
+variab_dir = getenv("variab_dir")
+VARCODE = getenv("VARCODE")
+VARDATA = getenv("VARDATA")
+
 ; model skill score names (MJO propagtion, specific humidity,
 ;                          MJO amplitude, convect. timescale)
 ss_name = (/"prop","shum","amp","tc"/)

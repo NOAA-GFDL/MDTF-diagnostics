@@ -8,6 +8,9 @@ begin
 
 print_clock("Starting model data inteperation")
 
+
+variab_dir = getenv("variab_dir")
+
 pr_name  = getenv("pr_var")
 prw_name = getenv("prw_var")
 hus_name = getenv("qa_var")

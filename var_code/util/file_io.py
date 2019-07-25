@@ -5,14 +5,14 @@ import sys
 import glob
 import shutil
 import yaml
-import util
-from util import setenv
+from util import setenv, translate_varname
+from input_validation import check_required_dirs
 
 def parse_pod_varlist(varlist, verbose=0):
    func_name = " parse_pod_varlist: "
    default_file_required = False 
    for idx, var in enumerate(varlist):
-      varlist[idx]['name_in_model'] = util.translate_varname(var['var_name'], verbose=verbose)
+      varlist[idx]['name_in_model'] = translate_varname(var['var_name'], verbose=verbose)
 
       assert(var['freq'] in ["1hr","3hr","6hr","day","mon"]), \
          "WARNING: didn't find "+var['freq']+" in frequency options "+\
@@ -93,7 +93,7 @@ def set_pod_env_vars(pod_name, config, verbose=0):
    setenv("WK_DIR", os.environ['variab_dir']+"/"+pod_name,
       pod_envvars,overwrite=False,verbose=verbose)
 
-   util.check_required_dirs(
+   check_required_dirs(
       already_exist =["POD_HOME", 'OBS_DATA'], create_if_nec = ["WK_DIR"], 
       verbose=verbose)
    return pod_envvars

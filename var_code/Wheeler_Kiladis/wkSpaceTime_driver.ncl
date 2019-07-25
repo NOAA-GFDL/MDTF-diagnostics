@@ -28,7 +28,7 @@ print("In wkSpaceTime_driver")
 ;  latBound = stringtointeger(getenv("LATBND"))
   tstride = 1
 ;  tstride = stringtointeger(getenv("TSTRIDE"))
-  diro     = getenv("variab_dir")+"/Wheeler_Kiladis/model/PS/"     ; output dir: location of plots
+  diro     = getenv("WK_DIR")+"/model/PS/"     ; output dir: location of plots
   print ("writing to "+diro)
 ;-------------------------------------------------------------------
 ; spectral input params for wkSpaceTime

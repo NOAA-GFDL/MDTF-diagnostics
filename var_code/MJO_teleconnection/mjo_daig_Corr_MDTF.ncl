@@ -30,7 +30,7 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------
      print("Reading Geopotential height data for model : "+Model)
      
-     diri   = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"
+     diri   = getenv("WK_DIR")+"/model/netCDF/"
      dirobs = getenv("OBS_DATA")+"/"  
      filgeom    = "geop_compositesP_hgt250_"+Model+".nc"
      filgeobs    = "geop_compositesP_hgt250.nc"

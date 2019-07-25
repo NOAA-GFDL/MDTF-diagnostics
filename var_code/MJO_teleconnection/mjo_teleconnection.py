@@ -109,11 +109,11 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/figures"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
+   if not os.path.exists(os.environ["WK_DIR"]+"/figures"):
+      os.makedirs(os.environ["WK_DIR"]+"/figures")
 
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/htmls"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/htmls")
+   if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
+      os.makedirs(os.environ["WK_DIR"]+"/htmls")
 
 #======================================================================================
 #      Calling a NCL script to calculate RMM index of a given model data
@@ -135,16 +135,16 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 # copy additional html files
 #============================================================
 
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
-   os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
+   if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
+      os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
+   os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
 
 #============================================================
    print("-----------------------------------------------------------------------------")
    print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
    print("=============================================================================")
-   print("Check: " + os.environ["variab_dir"])
+   print("Check: " + os.environ["WK_DIR"])
    print( "now you can open index.html in browser to see the results " )
    print("-----------------------------------------------------------------------------")
 

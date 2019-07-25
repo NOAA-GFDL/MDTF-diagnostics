@@ -5,7 +5,7 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
-variab_dir = getenv("variab_dir")
+wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
@@ -33,9 +33,9 @@ zg_var = getenv("zg_var")
 ps_var = getenv("ps_var")
 
 ; Z500 
-if( fileexists(variab_dir+"/EOF_500hPa/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then
+if( fileexists(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then
 
-print(variab_dir+"/netCDF/"+casename+".Z500.ANOMS.nc exists!!")
+print(wk_dir+"/"+casename+".Z500.ANOMS.nc exists!!")
 
 else
 
@@ -103,7 +103,7 @@ do yr = firstyr+1,lastyr
   win_anom(yr-firstyr-1,:,:) = (/(anom(n,:,:)+anom(n+1,:,:)+anom(n+2,:,:)+anom(n+3,:,:))/4./)
   n = n + 12
 end do
-fo = addfile(variab_dir+"/EOF_500hPa/model/netCDF/"+casename+".Z500.ANOMS.nc","c")
+fo = addfile(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc","c")
 fo->Z500_ANOM = win_anom
 fo->gw = gw
 

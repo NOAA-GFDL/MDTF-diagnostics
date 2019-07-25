@@ -128,7 +128,7 @@ def set_model_env_vars(model_name, model_dict):
 
 
 def setup_pod_directories(pod_name):
-   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   pod_wk_dir = os.environ['WK_DIR']
    dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
    for d in dirs:
       if not os.path.exists(os.path.join(pod_wk_dir, d)):
@@ -136,7 +136,7 @@ def setup_pod_directories(pod_name):
 
 def convert_pod_figures(pod_name):
    # Convert PS to png
-   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   pod_wk_dir = os.environ['WK_DIR']
    dirs = ['figures', 'model/PS', 'obs/PS']
    for d in dirs:
       full_path = os.path.join(pod_wk_dir, d)
@@ -153,7 +153,7 @@ def convert_pod_figures(pod_name):
 def make_pod_html(pod_name, pod_description):
    # do templating on POD's html file
    pod_code_dir = os.environ['POD_HOME']
-   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   pod_wk_dir = os.environ['WK_DIR']
    html_file = pod_wk_dir+'/'+pod_name+'.html'
    temp_file = pod_wk_dir+'/tmp.html'
 
@@ -191,7 +191,7 @@ def make_pod_html(pod_name, pod_description):
 def cleanup_pod_files(pod_name):
    pod_code_dir = os.environ['POD_HOME']
    pod_data_dir = os.environ['OBS_DATA']
-   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   pod_wk_dir = os.environ['WK_DIR']
 
    # copy PDF documentation (if any) to output
    files = glob.glob(pod_code_dir+"/*.pdf"))

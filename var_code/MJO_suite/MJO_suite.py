@@ -48,7 +48,7 @@ generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_lag_lat_lon.ncl")
 print("MJO spectra")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
-if os.path.isfile( os.environ["variab_dir"]+"/MJO_suite/model/netCDF/MJO_PC_INDEX.nc"):
+if os.path.isfile( os.environ["WK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
    print("WARNING: MJO_PC_INDEX.nc already exists!")
 else:
    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")

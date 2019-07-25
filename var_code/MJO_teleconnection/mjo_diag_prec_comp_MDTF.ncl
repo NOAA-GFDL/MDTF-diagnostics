@@ -37,7 +37,7 @@ print("Model: " + Model)
 ;-------------------------------------------------------------------------------------
 diri  = getenv("DATADIR")+"/day/"                               ;Input data directory
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
-diro  = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
+diro  = getenv("WK_DIR")+"/model/netCDF/" 
 filpr = getenv("prec_file")                   ; input file
 
 print("Input data path :" + diri)

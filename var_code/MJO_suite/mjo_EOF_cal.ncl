@@ -10,7 +10,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
       casename = getenv("CASENAME")
-   file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+   file_dir = getenv("WK_DIR")+"/model/netCDF/"
 
    neof    =  2
 
@@ -23,7 +23,7 @@ begin
 ;   yrStrt  = ymdStrt/10000
 ;   yrLast  = ymdLast/10000
 
-   pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS/"                             ; plot directory
+   pltDir  = getenv("WK_DIR")+"/model/PS/"                             ; plot directory
    pltType = "ps"  
    pltName = "mjoclivar"                      ; yrStrt+"_"+yrLast
   

@@ -59,7 +59,7 @@ BULK_TROPOSPHERIC_TEMPERATURE_MEASURE=int(os.environ["BULK_TROPOSPHERIC_TEMPERAT
 # ======================================================================
 # Directory & Filename for saving binned results (netCDF4)
 #  tave or qsat_int will be appended to BIN_OUTPUT_FILENAME
-BIN_OUTPUT_DIR=os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF"
+BIN_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/netCDF"
 BIN_OUTPUT_FILENAME=os.environ["CASENAME"]+".convecTransBasic"
 
 # ======================================================================

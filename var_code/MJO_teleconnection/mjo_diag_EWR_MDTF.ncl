@@ -39,7 +39,7 @@ print("-------------------------------------------------------------------------
   pName     = getenv("pr_var")           ; mm/day
   diri      = getenv("DATADIR")+"/day/"                               ;Input data directory
   dirobs    = getenv("OBS_DATA")+"/"
-  diro      = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"
+  diro      = getenv("WK_DIR")+"/model/netCDF/"
   filp      = getenv("prec_file")    
   filewcmip ="EWratio_wf_CMIP5"
      print("Input data path   :" + diri)

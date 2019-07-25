@@ -44,7 +44,7 @@ print("Reading DJF mean ERA-I(1979-2016) zonal wind data .....")
 ;---------------------------------------------------------------------------------
 diri    = getenv("DATADIR")+"/day/"                               ;Input data directory
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
-diro    = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
+diro    = getenv("WK_DIR")+"/model/netCDF/" 
 filobsU = "ERAi.1979_2016.DJF.mean.nc"
 filu250   = getenv("u250_file")                   ; input file
 

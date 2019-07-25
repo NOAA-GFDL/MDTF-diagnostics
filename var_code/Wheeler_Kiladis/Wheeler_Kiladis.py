@@ -100,7 +100,7 @@ else:
 #============================================================
 # Rename PS files
 #============================================================
-files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
+files = os.listdir(os.environ["WK_DIR"]+"/model/PS")
 a = 0
 while a < len(files):
    file0 = files[a]
@@ -111,18 +111,18 @@ while a < len(files):
    file5 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u850_var"]+"/u850/g")
 
    if file0 != file1:
-      os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file1)
+      os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file1)
 
    if file0 != file2:
-      os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file2)
+      os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file2)
 
    if file0 != file3:
-      os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file3)
+      os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file3)
 
    if file0 != file4:
-      os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file4)
+      os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file4)
 
    if file0 != file5:
-      os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file5)
+      os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file5)
  
    a = a+1

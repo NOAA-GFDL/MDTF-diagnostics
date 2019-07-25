@@ -37,7 +37,7 @@ BULK_TROPOSPHERIC_TEMPERATURE_MEASURE=int(os.environ["BULK_TROPOSPHERIC_TEMPERAT
 
 # Directory & Filename for saving binned results (netCDF4)
 #  tave or qsat_int will be appended to BIN_OUTPUT_FILENAME
-BIN_OUTPUT_DIR=os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF"
+BIN_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/netCDF"
 BIN_OUTPUT_FILENAME=os.environ["CASENAME"]+".convecTransBasic"
 
 if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
@@ -55,7 +55,7 @@ bin_output_list=sorted(glob.glob(BIN_OUTPUT_DIR+"/"+BIN_OUTPUT_FILENAME+".nc"))
 
 # Directory & Filename for saving figures 
 #  convecTransCriticalCollapse.py generates 2 sets figures for MODEL
-FIG_OUTPUT_DIR=os.environ["variab_dir"]+"/convective_transition_diag/model/PS"
+FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
 # Figure filename for Convective Transition Statistics (CTS)
 #  collapsed by shifting CWV by Critical CWV
 FIG_FILENAME_CTS=os.environ["CASENAME"]+".convecTransCriticalCollapse_stats"+"_"+TEMP_VAR+".ps"
@@ -69,7 +69,7 @@ bin_obs_list=sorted(glob.glob(os.environ["OBS_DATA"]\
                     +RES+"_fillNrCWV_"\
                     +TEMP_VAR+".nc"))
 # convecTransCriticalCollapse.py generates 2 sets figures for OBS too
-FIG_OBS_DIR=os.environ["variab_dir"]+"/convective_transition_diag/obs/PS"
+FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
 FIG_OBS_FILENAME_CTS="convecTransCriticalCollapse_stats_R2TMIv7r1_200206_201405_res="\
                       +RES+"_fillNrCWV_"+TEMP_VAR+".ps"
 FIG_OBS_FILENAME_WC="convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res="\

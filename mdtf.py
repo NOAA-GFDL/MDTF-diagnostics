@@ -230,7 +230,7 @@ for pod in pod_configs:
       print("TEST mode: would call :  "+command_str)
    else:
       start_time = timeit.default_timer()
-      log = open(os.environ["variab_dir"]+"/"+pod_name+".log", 'w')
+      log = open(os.environ["WK_DIR"]+"/"+pod_name+".log", 'w')
       log_files.append(log)
 
       util.setup_pod_directories(pod_name)

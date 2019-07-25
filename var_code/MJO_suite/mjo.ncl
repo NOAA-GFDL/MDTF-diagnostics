@@ -13,7 +13,7 @@ begin
 
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 
@@ -58,7 +58,7 @@ do n = 50,nfil-51
 end do
 
 ; MAKE PLOTS
-psplot = getenv("variab_dir")+"/MJO_suite/model/PS/"+casename+".MJO"
+psplot = getenv("WK_DIR")+"/model/PS/"+casename+".MJO"
 wks = gsn_open_wks("ps",psplot)
 plot = new(3,graphic)
 res = True

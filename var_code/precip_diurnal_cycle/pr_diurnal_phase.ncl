@@ -27,7 +27,7 @@ begin
   phase_only = False ; Set true iff not amplitude color saturation is required.
   
 ;  ps_dir = "/datalocal/haystack/cchen/dcycle/"
-  ps_dir = getenv("variab_dir")+"/precip_diurnal_cycle/model/PS/"
+  ps_dir = getenv("WK_DIR")+"/model/PS/"
   firstyr = stringtoint(getenv("FIRSTYR"))
   lastyr = stringtoint(getenv("LASTYR"))
   print(firstyr)

@@ -128,8 +128,10 @@ def convert_pod_figures(pod_name):
       files = glob.glob(full_path+"/*.ps")
       files.extend(glob.glob(full_path+"/*.eps"))
       for f in files:
+         (dd, ff) = os.path.split(os.path.splitext(f)[0])
+         ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
          command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
-            + f + ' ' + os.path.splitext(f)[0] + '.' + os.environ['convert_output_fmt']
+            + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
          os.system(command_str)   
 
 

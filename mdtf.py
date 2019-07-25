@@ -249,6 +249,7 @@ for log in log_files:
 
 for pod in pod_configs:
    pod_name = pod['settings']['pod_name']
+   util.convert_pod_figures(pod_name)
    util.cleanup_pod_files(pod_name)
 
 if verbose > 0: 

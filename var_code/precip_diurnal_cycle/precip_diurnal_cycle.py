@@ -82,17 +82,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
       if a != 0:
          os.system("echo '<H3><font color=navy>Diurnal Cycle of Precipitation <A HREF=\"precip_diurnal_cycle/precip_diurnal_cycle.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
 
-#============================================================
-# convert PS to png
-#============================================================
-      files = os.listdir(os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS")
-      a = 0
-      while a < len(files):
-         file1 = os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS/"+files[a]
-         file2 = os.environ["variab_dir"]+"/precip_diurnal_cycle/model/"+files[a]
-         os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-         a = a+1
-
       print("--------- Finished DIURNAL CYCLE OF PRECIPITATION webpage generation ----------------------------")
 else:
       print("3 hourly precipitation rate file NOT found, skip diurnal cycle of precipitation")            

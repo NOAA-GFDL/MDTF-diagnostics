@@ -80,15 +80,3 @@ a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_suite")
 if a != 0:
    os.system("echo '<H3><font color=navy>MJO CLIVAR suite (NCAR) <A HREF=\"MJO_suite/MJO_suite.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
 
-#============================================================
-# convert PS to png
-#============================================================
-files = os.listdir(os.environ["variab_dir"]+"/MJO_suite/model/PS")
-a = 0
-while a < len(files):
-   file1 = os.environ["variab_dir"]+"/MJO_suite/model/PS/"+files[a]
-   file2 = os.environ["variab_dir"]+"/MJO_suite/model/"+files[a]
-   os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-   a = a+1
-os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.gif "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
-os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.png "+os.environ["variab_dir"]+"/MJO_suite/obs/.")

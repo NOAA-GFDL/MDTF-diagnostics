@@ -151,16 +151,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
    if a != 0:
       os.system("echo '<H3><font color=navy>MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 <A HREF=\"MJO_teleconnection/MJO_teleconnection.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
 
-#============================================================
-# convert eps to jpeg
-#============================================================
-   files = os.listdir(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-   a = 0
-   while a < len(files):
-      file1 = os.environ["variab_dir"]+"/MJO_teleconnection/figures/"+files[a]
-      file2 = os.environ["variab_dir"]+"/MJO_teleconnection/model/"+files[a]
-      os.system("convert "+file1+" "+file2[:-3]+"jpeg")
-      a = a+1
 
 #============================================================
    print("-----------------------------------------------------------------------------")

@@ -77,16 +77,6 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
       if a != 0:
          os.system("echo '<H3><font color=navy>EOF of geopotenitial height anomalies for 500 hPa <A HREF=\"EOF_500hPa/EOF_500hPa.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
 
-#============================================================
-# convert PS to png
-#============================================================
-      files = os.listdir(os.environ["variab_dir"]+"/EOF_500hPa/model/PS")
-      a = 0
-      while a < len(files):
-         file1 = os.environ["variab_dir"]+"/EOF_500hPa/model/PS/"+files[a]
-         file2 = os.environ["variab_dir"]+"/EOF_500hPa/model/"+files[a]
-         os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-         a = a+1
 
 else:
       print("height and surface pressure files NOT found, skip EOF of geopotential height anomalies of 500 hPa")        

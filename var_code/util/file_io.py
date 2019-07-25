@@ -119,8 +119,18 @@ def setup_pod_directories(pod_name):
       if not os.path.exists(os.path.join(pod_wk_dir, d)):
          os.makedirs(os.path.join(pod_wk_dir, d))
 
-def convert_pod_figures():
-   pass
+def convert_pod_figures(pod_name):
+   # Convert PS to png
+   pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
+   dirs = ['figures', 'model/PS', 'obs/PS']
+   for d in dirs:
+      full_path = os.path.join(pod_wk_dir, d)
+      files = glob.glob(full_path+"/*.ps")
+      files.extend(glob.glob(full_path+"/*.eps"))
+      for f in files:
+         command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
+            + f + ' ' + os.path.splitext(f)[0] + '.' + os.environ['convert_output_fmt']
+         os.system(command_str)   
 
 def cleanup_pod_files(pod_name):
    pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)

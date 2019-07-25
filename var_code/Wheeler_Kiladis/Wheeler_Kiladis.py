@@ -147,16 +147,3 @@ while a < len(files):
       os.system("mv -f "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file0+" "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+file5)
  
    a = a+1
-
-#============================================================
-# Convert PS to png
-#============================================================
-files = os.listdir(os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
-a = 0
-while a < len(files):
-   file1 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS/"+files[a]
-   file2 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/"+files[a]
-   os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-   a = a+1
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
-os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")

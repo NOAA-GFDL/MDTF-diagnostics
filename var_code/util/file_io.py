@@ -190,7 +190,7 @@ def make_pod_html(pod_name, pod_description):
 
 def cleanup_pod_files(pod_name):
    pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
-   pod_data_dir = os.path.join(os.environ['VARDATA'], pod_name)
+   pod_data_dir = os.environ['OBS_DATA']
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
 
    # copy PDF documentation (if any) to output

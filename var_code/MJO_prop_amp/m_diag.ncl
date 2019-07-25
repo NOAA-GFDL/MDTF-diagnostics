@@ -11,7 +11,7 @@ begin
 
 variab_dir = getenv("variab_dir")
 VARCODE = getenv("VARCODE")
-VARDATA = getenv("VARDATA")
+OBS_DATA = getenv("OBS_DATA")
 
 ; model skill score names (MJO propagtion, specific humidity,
 ;                          MJO amplitude, convect. timescale)
@@ -909,7 +909,7 @@ yy2 =  7.5
    gsn_panel(wks4,plot,(/2,2/),False) ; now draw as one plot
    delete([/wks4,plot/])
 
-system("cp $VARDATA/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/obs/netCDF")
+system("cp $OBS_DATA/*.nc $variab_dir/MJO_prop_amp/obs/netCDF")
 
 print_clock("Finishing program")
 end

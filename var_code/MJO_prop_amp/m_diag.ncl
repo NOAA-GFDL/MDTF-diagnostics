@@ -10,7 +10,6 @@ begin
 
 
 variab_dir = getenv("variab_dir")
-VARCODE = getenv("VARCODE")
 OBS_DATA = getenv("OBS_DATA")
 
 ; model skill score names (MJO propagtion, specific humidity,

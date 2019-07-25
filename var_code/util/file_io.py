@@ -152,7 +152,7 @@ def convert_pod_figures(pod_name):
 
 def make_pod_html(pod_name, pod_description):
    # do templating on POD's html file
-   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_code_dir = os.environ['POD_HOME']
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    html_file = pod_wk_dir+'/'+pod_name+'.html'
    temp_file = pod_wk_dir+'/tmp.html'
@@ -189,7 +189,7 @@ def make_pod_html(pod_name, pod_description):
 
 
 def cleanup_pod_files(pod_name):
-   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_code_dir = os.environ['POD_HOME']
    pod_data_dir = os.environ['OBS_DATA']
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
 

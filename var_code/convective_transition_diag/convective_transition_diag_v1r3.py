@@ -136,7 +136,7 @@ else:
     ## Super Critical Precipitation Probability
     ##  Requires output from convecTransBasic.py
     ##  See supCriticPrecipProb.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"supCriticPrecipProb.py") 
+    #os.system("python "+os.environ['POD_HOME']+"/supCriticPrecipProb.py") 
 
     print("**************************************************")
     print("Convective Transition Diagnostic Package (convective_transition_diag_v1r3.py) Executed!")

@@ -908,24 +908,9 @@ yy2 =  7.5
 
    gsn_panel(wks4,plot,(/2,2/),False) ; now draw as one plot
    delete([/wks4,plot/])
-system("convert $variab_dir/MJO_prop_amp/fig1b.png -trim $variab_dir/MJO_prop_amp/fig1b_trim.png")
-system("convert $variab_dir/MJO_prop_amp/fig1d.png -trim $variab_dir/MJO_prop_amp/fig1d_trim.png")
-system("convert $variab_dir/MJO_prop_amp/fig2b.png -trim $variab_dir/MJO_prop_amp/fig2b_trim.png")
-system("convert $variab_dir/MJO_prop_amp/fig3.png -trim $variab_dir/MJO_prop_amp/fig3_trim.png")
-system("convert $variab_dir/MJO_prop_amp/fig4.png -trim $variab_dir/MJO_prop_amp/fig4_trim.png")
 
-system("cp $VARDATA/MJO_prop_amp/fig1a_trim.png $variab_dir/MJO_prop_amp/obs")
-system("cp $VARDATA/MJO_prop_amp/fig1c_trim.png $variab_dir/MJO_prop_amp/obs")
-system("cp $VARDATA/MJO_prop_amp/fig2a_trim.png $variab_dir/MJO_prop_amp/obs")
-system("cp $variab_dir/MJO_prop_amp/fig1b_trim.png $variab_dir/MJO_prop_amp/model")
-system("cp $variab_dir/MJO_prop_amp/fig1d_trim.png $variab_dir/MJO_prop_amp/model")
-system("cp $variab_dir/MJO_prop_amp/fig2b_trim.png $variab_dir/MJO_prop_amp/model")
-system("cp $variab_dir/MJO_prop_amp/fig3_trim.png $variab_dir/MJO_prop_amp/model")
-system("cp $variab_dir/MJO_prop_amp/fig4_trim.png $variab_dir/MJO_prop_amp/model")
-system("cp $VARCODE/MJO_prop_amp/MJO_prop_amp.html $variab_dir/MJO_prop_amp")
 system("cp $VARDATA/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/obs/netCDF")
 system("mv $variab_dir/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/model/netCDF")
-system("\rm -f $variab_dir/MJO_prop_amp/*.png")
 
 print_clock("Finishing program")
 end

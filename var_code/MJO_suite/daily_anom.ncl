@@ -4,11 +4,10 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$VARCODE/MJO_suite/calc_utils.ncl"
+load "$POD_HOME/calc_utils.ncl"
 
 begin
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
 lat_var = getenv("lat_var")
@@ -19,7 +18,7 @@ time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
 
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 datadir = getenv("DATADIR")
 yr1 = stringtointeger(getenv("FIRSTYR"))
 yr2 = stringtointeger(getenv("LASTYR"))

@@ -54,6 +54,7 @@ print "==== Starting "+__file__
 
 import os
 import sys
+import argparse
 import glob
 import shutil
 import timeit
@@ -64,14 +65,61 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     import subprocess
 else:
     import subprocess
-sys.path.insert(0,'var_code/util/')
-import read_files
-import write_files 
-from util import setenv, check_required_dirs
+import yaml
+sys.path.insert(0,'var_code')
+import util
+from util import setenv
 
+cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbosity", action="count",
+                    help="Increase output verbosity")
+parser.add_argument("--test_mode", action="store_const", const=True,
+                    help="Set flag to not call PODs, just say what would be called")
+# default paths set in config.yml/paths
+parser.add_argument('--DIAG_HOME', nargs='?', type=str, 
+                    default=cwd,
+                    help="Code installation directory.")
+parser.add_argument('--MODEL_ROOT_DIR', nargs='?', type=str, 
+                    help="Parent directory containing results from different models.")
+parser.add_argument('--OBS_ROOT_DIR', nargs='?', type=str, 
+                    help="Parent directory containing observational data used by individual PODs.")
+parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
+                    help="Working directory.")
+parser.add_argument('--OUTPUT_DIR', nargs='?', type=str, 
+                    help="Directory to write output files. Defaults to working directory.")
+parser.add_argument('config_file', nargs='?', type=str, 
+                    default=os.path.join(cwd, 'config.yml'),
+                    help="Configuration file.")
+args = parser.parse_args()
+if args.verbosity == None:
+   verbose = 1
+else:
+   verbose = args.verbosity + 1 # fix for case  verb = 0
+
+# ======================================================================
+# Input settings from namelist file (name = argument to this script, default DIAG_HOME/namelist)
+# to set CASENAME,model,FIRSTYR,LASTYR, POD list and environment variables 
+
+try:
+   config = util.read_mdtf_config_file(args.config_file, verbose=verbose)
+except Exception as error:
+   print error
+   exit()
+util.set_mdtf_env_vars(args, config, verbose=verbose)
+verbose = config['envvars']['verbose']
+util.check_required_dirs(
+   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR","RGB"], 
+   create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
+   verbose=verbose)
+
+try:
+   model_varnames = util.read_model_varnames(verbose=verbose)
+except Exception as error:
+   print error
+   exit()
 
 os.system("date")
-
 
 errstr = "ERROR "+__file__+" : "
 
@@ -79,11 +127,46 @@ errstr = "ERROR "+__file__+" : "
 # Default script settings over-ridden by namelist: VAR var-name varvalue
 # It is recommended to make all changes in the namelist
 #
-verbose = 1                           # 0 = sparse, 1 = normal, 2 = a lot, 3 = every possible thing
-test_mode = False                     # False = run the packages, True = don't make the calls, just say what would be called
 
-# dictionary of all the environment variables set in this script, to be archived in variab_dir/namelist file
-envvars = {}   
+# ======================================================================
+# DIRECTORIES: set up locations
+# ======================================================================
+
+# inputdata contains model/$casename, obs_data/$package/*  #drb change?
+# output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
+setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
+variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
+setenv("variab_dir",os.path.join(os.environ['WORKING_DIR'], variab_dir),config['envvars'],overwrite=False,verbose=verbose)
+util.check_required_dirs(
+   already_exist =["DATADIR"], create_if_nec = ["variab_dir"], 
+   verbose=verbose)
+
+# ======================================================================
+# set variable names based on model
+# ======================================================================
+
+util.set_model_env_vars(os.environ["model"], model_varnames)
+
+pod_configs = []
+for pod in config['pod_list']: # list of pod names to do here
+   try:
+      pod_cfg = util.read_pod_settings_file(pod, verbose)
+      util.check_pod_driver(pod_cfg['settings'], verbose)
+      var_files = util.check_for_varlist_files(pod_cfg['varlist'], verbose)
+      pod_cfg.update(var_files)
+   except AssertionError as error:  
+      print str(error)
+   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
+      print "POD long name: ", pod_cfg['settings']['long_name']
+
+   if len(pod_cfg['missing_files']) > 0:
+      print "WARNING: POD ",pod," Not executed because missing required input files:"
+      print yaml.dump(pod_cfg['missing_files'])
+      continue
+   else:
+      if (verbose > 0): print "No known missing required input files"
+
+   pod_configs.append(pod_cfg)
 
 # ======================================================================
 # Check for programs that must exist (eg ncl)
@@ -92,119 +175,27 @@ envvars = {}
 
 ncl_err = os.system("which ncl")
 if ncl_err == 0:
-   setenv("NCL",subprocess.check_output("which ncl", shell=True),envvars,overwrite=False,verbose=verbose)
+   setenv("NCL",subprocess.check_output("which ncl", shell=True),config['envvars'],overwrite=False,verbose=verbose)
    print("using ncl "+os.environ["NCL"])
 else:
    print(errstr+ ": ncl not found")
 # workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
 if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
-   setenv("NCARG_ROOT","CONDA_PREFIX",envvars,verbose=verbose)
-
-
-# ======================================================================
-# DIRECTORIES: set up locations
-# ======================================================================
-
-# ======================================================================
-#  Home directory for diagnostic code (needs to have 'var_code',  sub-directories)
-setenv("DIAG_HOME",os.getcwd(),envvars,verbose=verbose)   # eg. mdtf/MDTF_2.0
-setenv("DIAG_ROOT",os.path.dirname(os.environ["DIAG_HOME"]),envvars,verbose=verbose) # dir above DIAG_HOME
-
-path_var_code_absolute = os.environ["DIAG_HOME"]+'/var_code/util/'
-
-if ( verbose > 1): print "Adding absolute path to modules in "+path_var_code_absolute
-sys.path.insert(0,path_var_code_absolute)
-
-# ======================================================================
-# inputdata contains model/$casename, obs_data/$package/*  #drb change?
-setenv("DATA_IN",os.environ["DIAG_ROOT"]+"/inputdata/",envvars,verbose=verbose)
-
-# ======================================================================
-# output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
-setenv("WKDIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
-
-
-# ======================================================================
-# Input settings from namelist file (name = argument to this script, default DIAG_HOME/namelist)
-# to set CASENAME,model,FIRSTYR,LASTYR, POD list and environment variables 
-# Namelist class defined in read_files, contains: case (dict), pod_list (list), envvar (dict)
-
-try:
-   namelist_file = read_files.determine_namelist_file(sys.argv,verbose=verbose)
-except Exception as error:
-   print error
-   exit()
-
-# case info (type dict) =  {['casename',casename],['model',model],['FIRSTYR',FIRSTYR],['LASTYR',LASTYR]}
-namelist  = read_files.read_text_file(namelist_file,verbose).namelist    
-
-# pod_list (type list) =  [pod_name1,pod_name2,...]
-pod_do    = namelist.pod_list   # list of pod names to do here
+   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],config['envvars'],verbose=verbose)
 
 # Check if any required namelist/envvars are missing  
-read_files.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
+util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
+util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
 
-# update local variables used in this script with env var changes from reading namelist
-# variables that are used through os.environ don't need to be assigned here (eg. NCARG_ROOT)
-test_mode = read_files.get_var_from_namelist('test_mode','bool',namelist.envvar,default=test_mode,verbose=verbose)
-verbose   = read_files.get_var_from_namelist('verbose','int',namelist.envvar,default=verbose,verbose=verbose)
 
-# ======================================================================
-# OUTPUT
-# output goes into WKDIR & variab_dir (diagnostics should generate .nc
-# files & .ps files in subdirectories herein)
 
-variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.environ["WKDIR"]+"/"+variab_dir,envvars,overwrite=False,verbose=verbose)
-
-# ======================================================================
-# INPUT: directory of model output
-setenv("DATADIR",os.environ["DATA_IN"]+"model/"+os.environ["CASENAME"],envvars,overwrite=False,verbose=verbose)
-
-# ======================================================================
-
-# ======================================================================
-# Software 
-# ======================================================================
-#
-# Diagnostic package location and settings
-#
-# The environment variable DIAG_HOME must be set to run this script
-#    It indicates where the variability package source code lives and should
-#    contain the directories var_code and obs_data although these can be 
-#    located elsewhere by specifying below.
-setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",envvars,overwrite=False,verbose=verbose)
-setenv("VARDATA",os.environ["DATA_IN"]+"obs_data/",envvars,overwrite=False,verbose=verbose)
-setenv("RGB",os.environ["VARCODE"]+"/util/rgb",envvars,overwrite=False,verbose=verbose)
-
-# ======================================================================
-# set variable names based on model
-# ======================================================================
-found_model = False
-if os.environ["model"] == "CESM":
-   import set_variables_CESM        #in var_code/util
-   found_model = True
-if os.environ["model"] == "CMIP":
-   import set_variables_CMIP
-   found_model = True
-if os.environ["model"] == "AM4":
-   import set_variables_AM4
-   found_model = True
-if found_model == False:
-   print "ERROR: model ", os.environ["model"]," Not Found"
-   print "      This is set in namelist "
-   print "      CASE case-name *model* start-year end-year"
-   quit()
 
 
 # ======================================================================
 # Check directories that must already exist
 # ======================================================================
 
-check_required_dirs( already_exist =["DIAG_HOME","VARCODE","VARDATA","NCARG_ROOT"], create_if_nec = ["WKDIR","variab_dir"],verbose=verbose)
-os.chdir(os.environ["WKDIR"])
-
-
+os.chdir(os.environ["WORKING_DIR"])
 
 # ======================================================================
 # set up html file
@@ -212,15 +203,9 @@ os.chdir(os.environ["WKDIR"])
 if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
    print("WARNING: index.html exists, not re-creating.")
 else: 
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf_diag_banner.png "+os.environ["variab_dir"])
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf1.html "+os.environ["variab_dir"]+"/index.html")
-
-
-# ======================================================================
-# Record settings in file variab_dir/namelist_YYYYMMDDHHRR for rerunning
-#====================================================================
-write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=verbose)  
-
+   html_dir = os.environ["DIAG_HOME"]+"/var_code/html/"
+   os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
+   os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
 # ======================================================================
 # Diagnostics:
@@ -233,56 +218,64 @@ write_files.write_namelist(os.environ["variab_dir"],namelist,envvars,verbose=ver
 
 pod_procs = []
 log_files = []
-for pod in pod_do:
-
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod+"\n")
-
+for pod in pod_configs:
    # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
    # Each pod could have a settings files giving the name of its driver script and long name
+   pod_name = pod['settings']['pod_name']
+   if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
-   pod_dir = os.environ["VARCODE"]+"/"+pod
-   try:
-      pod_settings = read_files.read_text_file(pod_dir+"/settings",verbose).pod_settings
-   except AssertionError as error:  
-      print str(error)
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
+   util.setup_pod_directories(pod_name)
+   command_str = pod['settings']['program']+" "+pod['settings']['driver']  
+   if config['envvars']['test_mode']:
+      print("TEST mode: would call :  "+command_str)
    else:
-
-      run_pod = pod_settings['program']+" "+pod_settings['driver']
-      if ('long_name' in pod_settings) and verbose > 0: print "POD long name: ",pod_settings['long_name']
-
-      # Check for files necessary for the pod to run (if pod provides varlist file)
-
-      missing_file_list = read_files.check_varlist(pod_dir,verbose=verbose)
-      if ( missing_file_list  ):
-         print "WARNING: POD ",pod," Not executed because missing required input files:"
-         print missing_file_list
-      else:  # all_required_files_found
-         if (verbose > 0): print "No known missing required input files"
-         if test_mode:
-            print("TEST mode: would call :  "+run_pod)
-         else:
-            start_time = timeit.default_timer()
-            log = open(os.environ["variab_dir"]+"/"+pod+".log", 'w')
-            log_files.append(log)
-            try:
-               print("Calling :  "+run_pod) # This is where the POD is called #
-               proc = subprocess.Popen(run_pod, shell=True, env = os.environ, stdout = log, stderr = subprocess.STDOUT)
-               pod_procs.append(proc)
-            except OSError as e:
-               print('ERROR :',e.errno,e.strerror)
-               print(errstr + " occured with call: " +run_pod)
+      start_time = timeit.default_timer()
+      log = open(os.environ["WK_DIR"]+"/"+pod_name+".log", 'w')
+      log_files.append(log)   
+      try:
+         print("Calling :  "+command_str) # This is where the POD is called #
+         proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
+         pod_procs.append(proc)
+      except OSError as e:
+         print('ERROR :',e.errno,e.strerror)
+         print(errstr + " occured with call: " +command_str)
 
 for proc in pod_procs:
    proc.wait()
 
 for log in log_files:
-   log.close()
-               
+   log.close
+
+for pod in pod_configs:
+   # shouldn't need to re-set env vars, but used by 
+   # convective_transition_diag to set filename info 
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
+
+   pod_name = pod['settings']['pod_name']
+   util.make_pod_html(pod_name, pod['settings']['description'])
+   util.convert_pod_figures(pod_name)
+   util.cleanup_pod_files(pod_name)
+
 if verbose > 0: 
-   print("---  MDTF.py Finished POD "+pod+"\n")
+   print("---  MDTF.py Finished POD "+pod_name+"\n")
    # elapsed = timeit.default_timer() - start_time
    # print(pod+" Elapsed time ",elapsed)
-        
+
+
+# ======================================================================
+# Record settings in file variab_dir/config_save.yml for rerunning
+#=======================================================================
+out_file = os.environ["variab_dir"]+'/config_save.yml'
+if os.path.isfile(out_file):
+   out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
+   if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
+   shutil.move(out_file,out_fileold)
+file_object = open(out_file,'w')  #create it
+yaml.dump(config, file_object)
+file_object.close() 
+
+
 # ==================================================================================================
 #  Make tar file
 # ==================================================================================================
@@ -293,7 +286,7 @@ else:
    if os.path.isfile( os.environ["variab_dir"]+".tar" ):
       print "Moving existing "+os.environ["variab_dir"]+".tar to "+os.environ["variab_dir"]+".tar_old"
       os.system("mv -f "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"]+".tar_old")
-      os.chdir(os.environ["WKDIR"])
+      os.chdir(os.environ["WORKING_DIR"])
 
    print "Creating "+os.environ["variab_dir"]+".tar "
    status = os.system(

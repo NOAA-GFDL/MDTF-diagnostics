@@ -4,17 +4,16 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$VARCODE/MJO_suite/utils.ncl"
+load "$POD_HOME/utils.ncl"
 
 begin
 ; read daily output files from CAM2 and process the data
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
 file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"

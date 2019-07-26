@@ -78,11 +78,6 @@ os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
 #os.environ["tave_file"] = "*."+os.environ["tave_var"]+".1hr.nc"
 #os.environ["qsat_int_file"] = "*."+os.environ["qsat_int_var"]+".1hr.nc"
 
-# Specify parameters for Convective Transition Diagnostic Package
-# Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure 
-os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] = "2"
-os.environ["RES"] = "1.00" # Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00)
-
 missing_file=0
 if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["pr_file"]))==0:
     print("Required Precipitation data missing!")
@@ -102,30 +97,13 @@ if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["ta_file"]))==0:
 if missing_file==1:
     print("Convective Transition Diagnostic Package will NOT be executed!")
 else:
-    # ======================================================================
-    # Create directories
-    # ======================================================================
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model/PS"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
-    if not os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF"):
-        os.makedirs(os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF")
 
     ##### Functionalities in Convective Transition Diagnostic Package #####
     # ======================================================================
     # Convective Transition Basic Statistics
     #  See convecTransBasic.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -137,7 +115,7 @@ else:
     ##  Requires output from convecTransBasic.py
     ##  See convecTransCriticalCollapse.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransCriticalCollapse.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransCriticalCollapse.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -148,73 +126,12 @@ else:
     ## ======================================================================
     ## Moisture Precipitation Joint Probability Density Function
     ##  See cwvPrecipJPDF.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"cwvPrecipJPDF.py")
+    #os.system("python "+os.environ["POD_HOME"]+"/"+"cwvPrecipJPDF.py")
     ## ======================================================================
     ## Super Critical Precipitation Probability
     ##  Requires output from convecTransBasic.py
     ##  See supCriticPrecipProb.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"supCriticPrecipProb.py")
-
-    ######################### HTML sections below #########################
-    # ======================================================================
-    #  Copy & modify the template html
-    # ======================================================================
-    # Copy template html (and delete old html if necessary)
-    if os.path.isfile( os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html" ):
-        os.system("rm -f "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-
-    os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_dir"]+"/convective_transition_diag/.")
-
-    os.system("cp "+os.environ["VARCODE"]+"/convective_transition_diag/MDTF_Documentation_convective_transition.pdf "+os.environ["variab_dir"]+"/convective_transition_diag/.")
-
-    # Replace keywords in the copied html template if different bulk temperature or resolution are used
-    if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
-        os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/_tave\./_qsat_int\./g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-        os.system("mv "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-    if os.environ["RES"] != "1.00":
-        os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/_res\=1\.00_/_res\="+os.environ["RES"]+"_/g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-        os.system("mv "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-
-    # Replace CASENAME so that the figures are correctly linked through the html
-    os.system("cp "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-    os.system("cat "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-    os.system("cp "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html "+os.environ["variab_dir"]+"/convective_transition_diag/convective_transition_diag.html")
-    os.system("rm -f "+os.environ["variab_dir"]+"/convective_transition_diag/tmp.html")
-
-    a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep convective_transition_diag")
-    if a != 0:
-       os.system("echo '<H3><font color=navy>Convective transition diagnostics <A HREF=\"convective_transition_diag/convective_transition_diag.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-    # Convert PS to png
-    if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model"):
-        files = os.listdir(os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
-        a = 0
-        while a < len(files):
-            file1 = os.environ["variab_dir"]+"/convective_transition_diag/model/PS/"+files[a]
-            file2 = os.environ["variab_dir"]+"/convective_transition_diag/model/"+files[a]
-            os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-            a = a+1
-        if os.environ["save_ps"] == "0":
-            os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
-    if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
-        files = os.listdir(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
-        a = 0
-        while a < len(files):
-            file1 = os.environ["variab_dir"]+"/convective_transition_diag/obs/PS/"+files[a]
-            file2 = os.environ["variab_dir"]+"/convective_transition_diag/obs/"+files[a]
-            os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-            a = a+1
-        if os.environ["save_ps"] == "0":
-            os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
-
-    # delete netCDF files if requested
-    if os.environ["save_nc"] == "0":    
-        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/netCDF")
-        os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF")
-
-    # ======================================================================
-    # End of HTML sections
-    # ======================================================================    
+    #os.system("python "+os.environ['POD_HOME']+"/supCriticPrecipProb.py") 
 
     print("**************************************************")
     print("Convective Transition Diagnostic Package (convective_transition_diag_v1r3.py) Executed!")

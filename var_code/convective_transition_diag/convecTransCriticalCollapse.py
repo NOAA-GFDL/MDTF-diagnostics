@@ -96,8 +96,8 @@ print("**************************************************")
 print("Load user-specified binning parameters..."),
 
 # Create and read user-specified parameters
-os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransCriticalCollapse_usp.py")
-with open(os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransCriticalCollapse_parameters.json") as outfile:
+os.system("python "+os.environ["POD_HOME"]+"/convecTransCriticalCollapse_usp.py")
+with open(os.environ["WK_DIR"]+"/convecTransCriticalCollapse_parameters.json") as outfile:
     params_data=json.load(outfile)
 print("...Loaded!")
 

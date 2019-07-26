@@ -1,4 +1,4 @@
-name: _MDTF-diagnostics
+name: _MDTF-diagnostics-NCL
 channels:
 - defaults
 - conda-forge

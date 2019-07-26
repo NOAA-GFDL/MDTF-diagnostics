@@ -123,6 +123,10 @@ os.system("date")
 
 errstr = "ERROR "+__file__+" : "
 
+#### Future loop over models in config['case_list'] starts here
+# loop over PODs by model, since starting a new model may involve 
+# time-consuming gcp'ing of remote data 
+
 # ======================================================================
 # Default script settings over-ridden by namelist: VAR var-name varvalue
 # It is recommended to make all changes in the namelist
@@ -147,8 +151,14 @@ util.check_required_dirs(
 
 util.set_model_env_vars(os.environ["model"], model_varnames)
 
+if 'pod_list' in config['case_list'][0]:
+   # run a set of PODs specific to this model
+   pod_list = config['case_list'][0]['pod_list']
+else:
+   pod_list = config['pod_list'] # use global list of PODs
+
 pod_configs = []
-for pod in config['pod_list']: # list of pod names to do here
+for pod in pod_list: # list of pod names to do here
    try:
       pod_cfg = util.read_pod_settings_file(pod, verbose)
       util.check_pod_driver(pod_cfg['settings'], verbose)

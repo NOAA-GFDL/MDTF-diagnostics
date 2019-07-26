@@ -13,6 +13,7 @@ settings:
   description: >
     MJO Teleconnections Diagnostics, 
     see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 
+  conda_env: NCL
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

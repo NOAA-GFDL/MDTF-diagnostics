@@ -68,6 +68,11 @@ def read_pod_settings_file(pod_name, verbose=0):
 
    file_contents['settings']['pod_name'] = pod_name
    file_contents['settings']['pod_dir'] = pod_dir
+   if 'conda_env' not in file_contents['settings']:
+      file_contents['settings']['conda_env'] = '_MDTF-diagnostics'
+   elif not file_contents['settings']['conda_env'].startswith('_MDTF-diagnostics'):
+      file_contents['settings']['conda_env'] = \
+         '_MDTF-diagnostics' + '-' + file_contents['settings']['conda_env']
    
    if (verbose > 0): 
       print file_contents['settings']['pod_name']+" settings: "

@@ -14,13 +14,6 @@
 # entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
 
 case_list:
-    # formerly namelist_mjo_prop_amp:
-  - CASENAME: GFDL.CM4.c96L32.am4g10r8
-    model: AM4
-    FIRSTYR: 1977
-    LASTYR: 1981
-    pod_list: # Optional: PODs to run for this model only
-      - MJO_prop_amp
   - CASENAME: QBOi.EXP1.AMIP.001
     model: CESM
     FIRSTYR: 1977
@@ -31,7 +24,14 @@ case_list:
       - convective_transition_diag
       - MJO_suite
       - MJO_teleconnection
-      - precip_diurnal_cycle #- high memory requirement
+      #- precip_diurnal_cycle #- high memory requirement
+    # formerly namelist_mjo_prop_amp:
+  - CASENAME: GFDL.CM4.c96L32.am4g10r8
+    model: AM4
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list: # Optional: PODs to run for this model only
+      - MJO_prop_amp
 
 
 # DIAGNOSTICS
@@ -45,9 +45,9 @@ pod_list:
   - convective_transition_diag
   - MJO_suite
   - MJO_teleconnection
-  - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
   # These PODS require more resources 
-  - precip_diurnal_cycle #- high memory requirement
+  #- precip_diurnal_cycle #- high memory requirement
 
 # PATHS
 paths:
@@ -72,7 +72,7 @@ settings:
   save_ps: False        # True to retain output .ps plots
   save_nc: True         # True to retain output netcdf files
   make_variab_tar: True # True to save output in .tar file
-  test_mode: True   #True = script just reports what it would do, doesn't call actual packages
+  test_mode: False   #True = script just reports what it would do, doesn't call actual packages
 
   convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion
   convert_output_fmt: 'png' # default bitmap figure output (for html)

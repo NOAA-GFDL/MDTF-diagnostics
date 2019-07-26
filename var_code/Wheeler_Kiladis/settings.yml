@@ -10,6 +10,7 @@ settings:
   driver: Wheeler_Kiladis.py
   long_name: Wheeler Kiladis plots 
   description: Wavenumber-Frequency Power Spectra (Wheeler and Kiladis) 
+  conda_env: NCL
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

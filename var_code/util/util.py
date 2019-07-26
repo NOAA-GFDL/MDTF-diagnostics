@@ -5,7 +5,8 @@ import sys
 
 
 def get_available_programs(verbose=0):
-   return {'py': sys.executable, 'ncl': 'ncl'}  
+   return {'py': 'python', 'ncl': 'ncl'}
+   #return {'py': sys.executable, 'ncl': 'ncl'}  
 
 def makefilepath(varname,timefreq,casename,datadir):
     """ 

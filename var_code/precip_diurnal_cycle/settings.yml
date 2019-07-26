@@ -9,6 +9,7 @@ settings:
   driver: precip_diurnal_cycle.py
   long_name: Diurnal cycle of precipitation 
   description: Diurnal Cycle of Precipitation
+  conda_env: NCL
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

@@ -183,19 +183,19 @@ for pod in pod_list: # list of pod names to do here
 # To Do: make a dictionary 'program name':'ENV VARNAME' and loop like dir_list below
 # ======================================================================
 
-ncl_err = os.system("which ncl")
-if ncl_err == 0:
-   setenv("NCL",subprocess.check_output("which ncl", shell=True),config['envvars'],overwrite=False,verbose=verbose)
-   print("using ncl "+os.environ["NCL"])
-else:
-   print(errstr+ ": ncl not found")
-# workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
-if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
-   setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],config['envvars'],verbose=verbose)
+# ncl_err = os.system("which ncl")
+# if ncl_err == 0:
+#    setenv("NCL",subprocess.check_output("which ncl", shell=True),config['envvars'],overwrite=False,verbose=verbose)
+#    print("using ncl "+os.environ["NCL"])
+# else:
+#    print(errstr+ ": ncl not found")
+# # workaround for conda-installed ncl on csh: ncl activation script doesn't set environment variables properly
+# if not ("NCARG_ROOT" in os.environ) and ("CONDA_PREFIX" in os.environ):
+#    setenv("NCARG_ROOT",os.environ['CONDA_PREFIX'],config['envvars'],verbose=verbose)
 
 # Check if any required namelist/envvars are missing  
-util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
-util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
+#util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
+#util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
 
 
 
@@ -245,7 +245,18 @@ for pod in pod_configs:
       log_files.append(log)   
       try:
          print("Calling :  "+command_str) # This is where the POD is called #
-         proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
+         print('Will run in conda env: '+pod['settings']['conda_env'])
+         # Details on this invocation: Need to run bash explicitly because 
+         # 'conda activate' sources env vars (can't do that in posix sh).
+         # tcsh would also work. Source conda_init.sh to set things that 
+         # aren't set b/c we aren't in an interactive shell. '&&' so we abort 
+         # and don't try to run the POD if 'conda activate' fails.
+         proc = subprocess.Popen([
+            'bash', '-c',
+            'source '+os.environ['DIAG_HOME']+'/var_code/util/conda_init.sh' \
+            + ' && conda activate '+pod['settings']['conda_env'] \
+            + ' && ' + command_str],
+            env=os.environ, stdout=log, stderr=subprocess.STDOUT)
          pod_procs.append(proc)
       except OSError as e:
          print('ERROR :',e.errno,e.strerror)

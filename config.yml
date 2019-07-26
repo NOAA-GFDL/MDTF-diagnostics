@@ -14,14 +14,25 @@
 # entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
 
 case_list:
+    # formerly namelist_mjo_prop_amp:
+  - CASENAME: GFDL.CM4.c96L32.am4g10r8
+    model: AM4
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list: # Optional: PODs to run for this model only
+      - MJO_prop_amp
   - CASENAME: QBOi.EXP1.AMIP.001
     model: CESM
     FIRSTYR: 1977
     LASTYR: 1981
-  # - CASENAME: GFDL.CM4.c96L32.am4g10r8
-  #   model: CM4
-  #   FIRSTYR: 1977
-  #   LASTYR: 1981
+    pod_list:  # Optional: PODs to run for this model only
+      - Wheeler_Kiladis
+      - EOF_500hPa
+      - convective_transition_diag
+      - MJO_suite
+      - MJO_teleconnection
+      - precip_diurnal_cycle #- high memory requirement
+
 
 # DIAGNOSTICS
 
@@ -30,13 +41,13 @@ case_list:
 
 pod_list: 
   - Wheeler_Kiladis
-  #- EOF_500hPa
+  - EOF_500hPa
   - convective_transition_diag
-  #- MJO_suite
-  #- MJO_teleconnection
-  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  - MJO_suite
+  - MJO_teleconnection
+  - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
   # These PODS require more resources 
-  #- precip_diurnal_cycle #- high memory requirement
+  - precip_diurnal_cycle #- high memory requirement
 
 # PATHS
 paths:

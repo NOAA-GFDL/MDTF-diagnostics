@@ -14,6 +14,13 @@
 # entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
 
 case_list:
+  # formerly namelist_ABerg:
+  - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
+    model: CMIP
+    FIRSTYR: 1951
+    LASTYR: 2005
+    pod_list:
+      - SM_ET_coupling
   - CASENAME: QBOi.EXP1.AMIP.001
     model: CESM
     FIRSTYR: 1977

@@ -109,7 +109,7 @@ except Exception as error:
 util.set_mdtf_env_vars(args, config, verbose=verbose)
 verbose = config['envvars']['verbose']
 util.check_required_dirs(
-   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR","VARCODE","RGB"], 
+   already_exist =["DIAG_HOME","MODEL_ROOT_DIR","OBS_ROOT_DIR","RGB"], 
    create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
    verbose=verbose)
 
@@ -195,7 +195,7 @@ util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
 # Check directories that must already exist
 # ======================================================================
 
-os.chdir(os.environ["WKDIR"])
+os.chdir(os.environ["WORKING_DIR"])
 
 # ======================================================================
 # set up html file
@@ -203,8 +203,9 @@ os.chdir(os.environ["WKDIR"])
 if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
    print("WARNING: index.html exists, not re-creating.")
 else: 
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf_diag_banner.png "+os.environ["variab_dir"])
-   os.system("cp "+os.environ["VARCODE"]+"/html/mdtf1.html "+os.environ["variab_dir"]+"/index.html")
+   html_dir = os.environ["DIAG_HOME"]+"/var_code/html/"
+   os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
+   os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
 # ======================================================================
 # Diagnostics:
@@ -223,15 +224,15 @@ for pod in pod_configs:
    pod_name = pod['settings']['pod_name']
    if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
+   util.setup_pod_directories(pod_name)
    command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if config['envvars']['test_mode']:
       print("TEST mode: would call :  "+command_str)
    else:
       start_time = timeit.default_timer()
-      log = open(os.environ["variab_dir"]+"/"+pod_name+".log", 'w')
-      log_files.append(log)
-
-      util.setup_pod_directories(pod_name)
+      log = open(os.environ["WK_DIR"]+"/"+pod_name+".log", 'w')
+      log_files.append(log)   
       try:
          print("Calling :  "+command_str) # This is where the POD is called #
          proc = subprocess.Popen(command_str, shell=True, env=os.environ, stdout=log, stderr=subprocess.STDOUT)
@@ -239,7 +240,6 @@ for pod in pod_configs:
       except OSError as e:
          print('ERROR :',e.errno,e.strerror)
          print(errstr + " occured with call: " +command_str)
-      util.cleanup_pod_files(pod_name)
 
 for proc in pod_procs:
    proc.wait()
@@ -248,6 +248,10 @@ for log in log_files:
    log.close
 
 for pod in pod_configs:
+   # shouldn't need to re-set env vars, but used by 
+   # convective_transition_diag to set filename info 
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
+
    pod_name = pod['settings']['pod_name']
    util.make_pod_html(pod_name, pod['settings']['description'])
    util.convert_pod_figures(pod_name)
@@ -282,7 +286,7 @@ else:
    if os.path.isfile( os.environ["variab_dir"]+".tar" ):
       print "Moving existing "+os.environ["variab_dir"]+".tar to "+os.environ["variab_dir"]+".tar_old"
       os.system("mv -f "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"]+".tar_old")
-      os.chdir(os.environ["WKDIR"])
+      os.chdir(os.environ["WORKING_DIR"])
 
    print "Creating "+os.environ["variab_dir"]+".tar "
    status = os.system(

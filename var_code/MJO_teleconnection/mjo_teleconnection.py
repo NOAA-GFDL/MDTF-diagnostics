@@ -109,11 +109,9 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/figures"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
 
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/htmls"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/htmls")
+   if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
+      os.makedirs(os.environ["WK_DIR"]+"/htmls")
 
 #======================================================================================
 #      Calling a NCL script to calculate RMM index of a given model data
@@ -123,32 +121,32 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 
    os.chdir(os.environ["DATADIR"])
 
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_RMM_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_geop_hgt_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_prec_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_U250_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_daig_Corr_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_EWR_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig1_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig2_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_RMM_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_geop_hgt_comp_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_prec_comp_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_U250_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_daig_Corr_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
 #============================================================
 # copy additional html files
 #============================================================
 
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
+   if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
+      os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
+   os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
 
 #============================================================
    print("-----------------------------------------------------------------------------")
    print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
    print("=============================================================================")
-   print("Check: " + os.environ["variab_dir"])
+   print("Check: " + os.environ["WK_DIR"])
    print( "now you can open index.html in browser to see the results " )
    print("-----------------------------------------------------------------------------")
 
 else:
    print("Requested Input data file are not found, Please check input data directory ")
-   print("check data directory and :" +os.environ["VARCODE"]+ "/util/set_variables_xxxx.py to set variable names" )  
+   print("check data directory and /util/config_XXX.yml to set variable names" )  
    

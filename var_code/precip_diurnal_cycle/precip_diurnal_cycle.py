@@ -52,9 +52,9 @@ if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.e
 #============================================================
       print("--------- Starting DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
       if ( True ):
-         generate_ncl_plots(os.environ["VARCODE"]+"/precip_diurnal_cycle/pr_diurnal_cycle.ncl")
+         generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_cycle.ncl")
 
-         generate_ncl_plots(os.environ["VARCODE"]+"/precip_diurnal_cycle/pr_diurnal_phase.ncl")
+         generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_phase.ncl")
       else:
          print("WARNING: For testing purposes, skipping diurnal cycle figure generation")
 

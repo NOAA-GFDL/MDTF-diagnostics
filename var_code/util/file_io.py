@@ -5,14 +5,14 @@ import sys
 import glob
 import shutil
 import yaml
-import util
-from util import setenv
+from util import setenv, translate_varname
+from input_validation import check_required_dirs
 
 def parse_pod_varlist(varlist, verbose=0):
    func_name = " parse_pod_varlist: "
    default_file_required = False 
    for idx, var in enumerate(varlist):
-      varlist[idx]['name_in_model'] = util.translate_varname(var['var_name'], verbose=verbose)
+      varlist[idx]['name_in_model'] = translate_varname(var['var_name'], verbose=verbose)
 
       assert(var['freq'] in ["1hr","3hr","6hr","day","mon"]), \
          "WARNING: didn't find "+var['freq']+" in frequency options "+\
@@ -46,10 +46,8 @@ def set_mdtf_env_vars(args, config, verbose=0):
       setenv(key, val, config['envvars'], verbose=verbose)
 
    # following are redundant but used by PODs
-   setenv("WKDIR",os.environ['WORKING_DIR'],config['envvars'],verbose=verbose)
-   setenv("VARDATA",os.environ["OBS_ROOT_DIR"],config['envvars'],overwrite=False,verbose=verbose)
-   setenv("VARCODE",os.environ["DIAG_HOME"]+"/var_code",config['envvars'],overwrite=False,verbose=verbose)
-   setenv("RGB",os.environ["VARCODE"]+"/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
+
+   setenv("RGB",os.environ["DIAG_HOME"]+"/var_code/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
    vars_to_set = config['settings'].copy()
    vars_to_set.update(config['case_list'][0])
@@ -60,7 +58,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
 
 
 def read_pod_settings_file(pod_name, verbose=0):
-   pod_dir = os.environ['VARCODE']+'/'+pod_name
+   pod_dir = os.environ["DIAG_HOME"]+"/var_code/"+pod_name
    filename = pod_dir+'/settings.yml'
    assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 
@@ -82,6 +80,30 @@ def read_pod_settings_file(pod_name, verbose=0):
 
    return file_contents
 
+
+def set_pod_env_vars(pod_settings, config, verbose=0):
+   pod_name = pod_settings['pod_name']
+   pod_envvars = {}
+   # location of POD's code
+   setenv("POD_HOME", os.environ["DIAG_HOME"]+"/var_code/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+   # POD's observational data
+   setenv("OBS_DATA",os.environ["OBS_ROOT_DIR"]+"/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+   # POD's subdir within working directory
+   setenv("WK_DIR", os.environ['variab_dir']+"/"+pod_name,
+      pod_envvars,overwrite=False,verbose=verbose)
+
+   check_required_dirs(
+      already_exist =["POD_HOME", 'OBS_DATA'], create_if_nec = ["WK_DIR"], 
+      verbose=verbose)
+
+   # optional POD-specific env vars defined in settings.yml
+   if 'pod_env_vars' in pod_settings:
+      for key, val in pod_settings['pod_env_vars'].items():
+         setenv(key, val, pod_envvars,overwrite=False,verbose=verbose)
+   
+   return pod_envvars
 
 
 def read_model_varnames(verbose=0):
@@ -137,25 +159,27 @@ def convert_pod_figures(pod_name):
 
 def make_pod_html(pod_name, pod_description):
    # do templating on POD's html file
-   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    html_file = pod_wk_dir+'/'+pod_name+'.html'
    temp_file = pod_wk_dir+'/tmp.html'
 
-   os.remove(html_file)
+   if os.path.exists(html_file):
+      os.remove(html_file)
    shutil.copy2(pod_code_dir+'/'+pod_name+'.html', pod_wk_dir)
    os.system("cat "+ html_file \
       + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
       + temp_file)
    # following two substitutions are specific to convective_transition_diag
    # need to find a more elegant way to handle this
-   if pod_name == 'convective_transition_diag'
+   if pod_name == 'convective_transition_diag':
       temp_file2 = pod_wk_dir+'/tmp2.html'
-      if os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
+      if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
+         and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
          os.system("cat " + temp_file \
             + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
          shutil.move(temp_file2, temp_file)
-      if os.environ["RES"] != "1.00":
+      if ("RES" in os.environ) and os.environ["RES"] != "1.00":
          os.system("cat " + temp_file \
             + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
             + temp_file2)
@@ -174,12 +198,12 @@ def make_pod_html(pod_name, pod_description):
 
 
 def cleanup_pod_files(pod_name):
-   pod_code_dir = os.path.join(os.environ['VARCODE'], pod_name)
-   pod_data_dir = os.path.join(os.environ['VARDATA'], pod_name)
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
+   pod_data_dir = os.path.join(os.environ['OBS_ROOT_DIR'], pod_name)
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
 
    # copy PDF documentation (if any) to output
-   files = glob.glob(pod_code_dir+"/*.pdf"))
+   files = glob.glob(pod_code_dir+"/*.pdf")
    for file in files:
       shutil.copy2(file, pod_wk_dir)
 
@@ -192,15 +216,18 @@ def cleanup_pod_files(pod_name):
       shutil.copy2(file, pod_wk_dir+"/obs")
 
    # remove .eps files if requested
-   if os.environ["save_ps"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "figures")   
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS")
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS")
+   if os.environ["save_ps"] == "0":
+      dirs = ['model/PS', 'obs/PS']
+      for d in dirs:
+         if os.path.exists(os.path.join(pod_wk_dir, d)):
+            shutil.rmtree(os.path.join(pod_wk_dir, d))
 
    # delete netCDF files if requested
    if os.environ["save_nc"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF")
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF")
+      dirs = ['model/netCDF', 'obs/netCDF']
+      for d in dirs:
+         if os.path.exists(os.path.join(pod_wk_dir, d)):
+            shutil.rmtree(os.path.join(pod_wk_dir, d))
 
 # ------------ MAIN for testing ----------------------------------------------
 # USAGE  python read_files.py filename [namelist,settings,varlist]

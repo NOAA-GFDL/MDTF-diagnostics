@@ -9,18 +9,17 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
 
-variab_dir = getenv("variab_dir")
-VARCODE = getenv("VARCODE")
-VARDATA = getenv("VARDATA")
+wk_dir = getenv("WK_DIR")
+OBS_DATA = getenv("OBS_DATA")
 
 ; model skill score names (MJO propagtion, specific humidity,
 ;                          MJO amplitude, convect. timescale)
 ss_name = (/"prop","shum","amp","tc"/)
 
 ; model output files
-fn_pr  = "$variab_dir/MJO_prop_amp/model/netCDF/model_pr.nc"
-fn_prw = "$variab_dir/MJO_prop_amp/model/netCDF/model_prw.nc"
-fn_hus = "$variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_avg.nc"
+fn_pr  = "$wk_dir/model/netCDF/model_pr.nc"
+fn_prw = "$wk_dir/model/netCDF/model_prw.nc"
+fn_hus = "$wk_dir/model/netCDF/model_hus_900_650_avg.nc"
 
 ; season of interest (use first 3 letters only 
 ; in the format: Jan, Feb, Mar,..., Dec) 
@@ -311,8 +310,8 @@ prcp_wp&lat@units = "degrees_north"
 prcp_wp&lon@units = "degrees_east"
 prcp_wp&time@units = "days since 0000-01-21 00:00:00"
 
-system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_hovmoller.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_hovmoller.nc","c")            
+system("rm -f $wk_dir/model/netCDF/model_hovmoller.nc")
+fout = addfile("$wk_dir/model/netCDF/model_hovmoller.nc","c")            
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Hovmoller Diagram of Rainfall associated with the MJO"
 fAtt@source_file   =  ""
@@ -339,8 +338,8 @@ husm&lat@units = "degrees_north"
 husm&lon@units = "degrees_east"
 husm&time@units = "days since 0000-01-11 00:00:00"
 
-system("rm -f $variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_mean.nc")
-fout = addfile("$variab_dir/MJO_prop_amp/model/netCDF/model_hus_900_650_mean.nc","c")
+system("rm -f $wk_dir/model/netCDF/model_hus_900_650_mean.nc")
+fout = addfile("$wk_dir/model/netCDF/model_hus_900_650_mean.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Winter mean (Nov-Apr) 900-650hPa specific humidity"
 fAtt@source_file   =  ""
@@ -357,7 +356,7 @@ fout->hus = husm
 ; specific humidity   
 ;***********************************************************
 ; make Hovmoller one-dimensional for pattern correlation
-fin = addfile("$VARDATA/MJO_prop_amp/obs_hovmoller.nc","r")            
+fin = addfile("$OBS_DATA/obs_hovmoller.nc","r")            
 if precision .eq. "float"
 prcp(:,:,2)=doubletofloat(fin->prcp_io(:,0,:))
 prcp(:,:,3)=doubletofloat(fin->prcp_wp(:,0,:))
@@ -377,7 +376,7 @@ delete([/pc_io,pc_wp,fin/])
 husobs = new((/ny_q,nx_q/),precision)
 husobs!0 = "lat"
 husobs!1 = "lon"
-fin = addfile("$VARDATA/MJO_prop_amp/obs_hus_900_650_mean.nc","r")            
+fin = addfile("$OBS_DATA/obs_hus_900_650_mean.nc","r")            
 if precision .eq. "float"
 husobs(:,:)=doubletofloat(fin->hus(0,:,:))
 else
@@ -533,7 +532,7 @@ nlev_p =  14
    res@lbTitleFontHeightF = lbfh 
    res@lbLabelFontHeightF = lbfh 
 
-   wks1a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig1b")
+   wks1a = gsn_open_wks(figtype,"$wk_dir/model/PS/fig1b")
    plot   = new(1,graphic)                     ; create a plot array for all panels
    ;plotxy = new(4,graphic)                    ; optional 5 m/s line, can be done later
    do jj=0,0
@@ -561,7 +560,7 @@ nlev_p =  14
    gsn_panel(wks1a,plot,(/2,2/),False) ; now draw as one plot
    delete([/wks1a,plot/])
 
-   wks1c = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig1d")
+   wks1c = gsn_open_wks(figtype,"$wk_dir/model/PS/fig1d")
    plot   = new(1,graphic)                     ; create a plot array for all panels
       res@gsnLeftString  = ""                  ; left title
       res@lbLabelBarOn   = True                 ; whether or not to have a labelbar
@@ -637,7 +636,7 @@ nlev_q =   16
    res@pmLabelBarOrthogonalPosF = 0.2
    res@lbTitleString       = "g kg~S~-1"             ; specific humidity units string
 
-   wks2a = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig2b")
+   wks2a = gsn_open_wks(figtype,"$wk_dir/model/PS/fig2b")
    plot   = new(1,graphic)                     ; create a plot array for all panels
 	jj=0
       res@lbLabelBarOn   = True
@@ -663,7 +662,7 @@ nlev_q =   16
    delete([/wks2a,plot,res/])
 
 ;----Scatter plots MJO propagation vs moisture pattern---
-   wks3 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig3")
+   wks3 = gsn_open_wks(figtype,"$wk_dir/model/PS/fig3")
 
 ; create new colors from ColorBrewer2.org (credit: Cynthia Brewer)
 ;  black     = todouble((/0,0,0/))/256d
@@ -788,7 +787,7 @@ yy2 =  7.5
    delete([/wks3,plot,res/])
 
 ;-------Scatter plots MJO amplitude vs convective timescale-------
-   wks4 = gsn_open_wks(figtype,"$variab_dir/MJO_prop_amp/model/PS/fig4")
+   wks4 = gsn_open_wks(figtype,"$wk_dir/model/PS/fig4")
 
    ; create new colors from ColorBrewer2.org 
    ; (credit: Cynthia Brewer)
@@ -909,7 +908,7 @@ yy2 =  7.5
    gsn_panel(wks4,plot,(/2,2/),False) ; now draw as one plot
    delete([/wks4,plot/])
 
-system("cp $VARDATA/MJO_prop_amp/*.nc $variab_dir/MJO_prop_amp/obs/netCDF")
+system("cp $OBS_DATA/*.nc $wk_dir/obs/netCDF")
 
 print_clock("Finishing program")
 end

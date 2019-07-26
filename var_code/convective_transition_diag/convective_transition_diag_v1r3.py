@@ -78,11 +78,6 @@ os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
 #os.environ["tave_file"] = "*."+os.environ["tave_var"]+".1hr.nc"
 #os.environ["qsat_int_file"] = "*."+os.environ["qsat_int_var"]+".1hr.nc"
 
-# Specify parameters for Convective Transition Diagnostic Package
-# Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure 
-os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] = "2"
-os.environ["RES"] = "1.00" # Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00)
-
 missing_file=0
 if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["pr_file"]))==0:
     print("Required Precipitation data missing!")
@@ -108,7 +103,7 @@ else:
     # Convective Transition Basic Statistics
     #  See convecTransBasic.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -120,7 +115,7 @@ else:
     ##  Requires output from convecTransBasic.py
     ##  See convecTransCriticalCollapse.py for detailed info
     try:
-        os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransCriticalCollapse.py")
+        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransCriticalCollapse.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
@@ -131,12 +126,12 @@ else:
     ## ======================================================================
     ## Moisture Precipitation Joint Probability Density Function
     ##  See cwvPrecipJPDF.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"cwvPrecipJPDF.py")
+    #os.system("python "+os.environ["POD_HOME"]+"/"+"cwvPrecipJPDF.py")
     ## ======================================================================
     ## Super Critical Precipitation Probability
     ##  Requires output from convecTransBasic.py
     ##  See supCriticPrecipProb.py for detailed info
-    #os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"supCriticPrecipProb.py") 
+    #os.system("python "+os.environ['POD_HOME']+"/supCriticPrecipProb.py") 
 
     print("**************************************************")
     print("Convective Transition Diagnostic Package (convective_transition_diag_v1r3.py) Executed!")

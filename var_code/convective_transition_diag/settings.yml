@@ -11,6 +11,11 @@ settings:
   driver: convective_transition_diag_v1r3.py
   long_name: Convection Transition
   description: Convective transition diagnostics 
+  pod_env_vars: # optional pod-specific shell environment variables
+    # Specify parameters for Convective Transition Diagnostic Package
+    # Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure 
+    BULK_TROPOSPHERIC_TEMPERATURE_MEASURE: "2"
+    RES: "1.00" # Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00)
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

@@ -67,9 +67,9 @@ print("    ")
 print("=======")
 print("Diagnostics for MJO propagation and amplitude")
 print("Interpolating model data to standard grids ...")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_intp.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/m_intp.ncl")
 print("Starting disgostic program ...")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_diag.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/m_diag.ncl")
 
 
    

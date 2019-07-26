@@ -81,7 +81,8 @@ def read_pod_settings_file(pod_name, verbose=0):
    return file_contents
 
 
-def set_pod_env_vars(pod_name, config, verbose=0):
+def set_pod_env_vars(pod_settings, config, verbose=0):
+   pod_name = pod_settings['pod_name']
    pod_envvars = {}
    # location of POD's code
    setenv("POD_HOME", os.environ["DIAG_HOME"]+"/var_code/"+pod_name,
@@ -96,6 +97,12 @@ def set_pod_env_vars(pod_name, config, verbose=0):
    check_required_dirs(
       already_exist =["POD_HOME", 'OBS_DATA'], create_if_nec = ["WK_DIR"], 
       verbose=verbose)
+
+   # optional POD-specific env vars defined in settings.yml
+   if 'pod_env_vars' in pod_settings:
+      for key, val in pod_settings['pod_env_vars'].items():
+         setenv(key, val, pod_envvars,overwrite=False,verbose=verbose)
+   
    return pod_envvars
 
 
@@ -210,16 +217,17 @@ def cleanup_pod_files(pod_name):
 
    # remove .eps files if requested
    if os.environ["save_ps"] == "0":
-      if os.path.exists(os.path.join(pod_wk_dir, "figures")):
-         # only in MJO_teleconnection, fix this
-         shutil.rmtree(os.path.join(pod_wk_dir, "figures"))   
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/PS"))
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/PS"))
+      dirs = ['figures', 'model/PS', 'obs/PS']
+      for d in dirs:
+         if os.path.exists(os.path.join(pod_wk_dir, d)):
+            shutil.rmtree(os.path.join(pod_wk_dir, d))
 
    # delete netCDF files if requested
    if os.environ["save_nc"] == "0":    
-      shutil.rmtree(os.path.join(pod_wk_dir, "obs/netCDF"))
-      shutil.rmtree(os.path.join(pod_wk_dir, "model/netCDF"))
+      dirs = ['model/netCDF', 'obs/netCDF']
+      for d in dirs:
+         if os.path.exists(os.path.join(pod_wk_dir, d)):
+            shutil.rmtree(os.path.join(pod_wk_dir, d))
 
 # ------------ MAIN for testing ----------------------------------------------
 # USAGE  python read_files.py filename [namelist,settings,varlist]

@@ -224,7 +224,7 @@ for pod in pod_configs:
    pod_name = pod['settings']['pod_name']
    if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
 
-   util.set_pod_env_vars(pod_name, config, verbose=verbose)
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
    util.setup_pod_directories(pod_name)
    command_str = pod['settings']['program']+" "+pod['settings']['driver']  
    if config['envvars']['test_mode']:
@@ -240,7 +240,6 @@ for pod in pod_configs:
       except OSError as e:
          print('ERROR :',e.errno,e.strerror)
          print(errstr + " occured with call: " +command_str)
-      util.cleanup_pod_files(pod_name)
 
 for proc in pod_procs:
    proc.wait()
@@ -249,6 +248,10 @@ for log in log_files:
    log.close
 
 for pod in pod_configs:
+   # shouldn't need to re-set env vars, but used by 
+   # convective_transition_diag to set filename info 
+   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
+
    pod_name = pod['settings']['pod_name']
    util.make_pod_html(pod_name, pod['settings']['description'])
    util.convert_pod_figures(pod_name)

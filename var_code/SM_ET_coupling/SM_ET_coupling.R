@@ -1,15 +1,13 @@
 ################################
-.libPaths("/home/water2/ab5/R/x86_64-redhat-linux-gnu-library/3.2")
+# .libPaths("/home/water2/ab5/R/x86_64-redhat-linux-gnu-library/3.2")
 library(colorRamps)
 library(maps)
 library(fields)
 library(akima)
 library(ncdf4)
 
-DIAG_HOME <- Sys.getenv("DIAG_HOME")
-WKDIR <- Sys.getenv("WKDIR")
-variab_dir <- Sys.getenv("variab_dir")
-DATA_IN <- Sys.getenv("DATA_IN")
+WK_DIR <- Sys.getenv("WK_DIR")
+OBS_DATA <- Sys.getenv("OBS_DATA")
 DATADIR <- Sys.getenv("DATADIR")
 CASENAME <- Sys.getenv("CASENAME")
 yr1 <- Sys.getenv("FIRSTYR")
@@ -65,7 +63,7 @@ corr_mrsos_evspsbl[i,j] <- cor(mrsos_JJA[i,j,],evspsbl_JJA[i,j,], use="complete.
  
 ##########################################
 print("Plotting model correlation")
-png(paste(variab_dir,"/SM_ET_coupling/model/corr_mrsos_evspsbl_summer_model.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/corr_mrsos_evspsbl_summer_model.png",sep=""), width=700)
 print("plotting model")
 lowlat_model <- min(which(lat_model > -60))
 highlat_model <- min(which(lat_model > 80))
@@ -78,9 +76,9 @@ dev.off()
 ##########################################
 
 ### Compare to GLEAM: map GLEAM
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/corr_smsurf_E_GLEAM_1980_2014.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lon_GLEAM.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lat_GLEAM.RData", sep=""))
+load(paste(OBS_DATA, "/corr_smsurf_E_GLEAM_1980_2014.RData", sep=""))
+load(paste(OBS_DATA, "/lon_GLEAM.RData", sep=""))
+load(paste(OBS_DATA, "/lat_GLEAM.RData", sep=""))
 corr_mrsos_evspsbl_GLEAM <- corr_smsurf_E_GLEAM
 print("Regridding GLEAM to same as model")
 corr_mrsos_evspsbl_GLEAM_corrected <- corr_smsurf_E_GLEAM
@@ -88,7 +86,7 @@ corr_mrsos_evspsbl_GLEAM_corrected[which(is.na(corr_smsurf_E_GLEAM)==T)] <- 0
 corr_mrsos_evspsbl_GLEAM_modelres <- bicubic.grid(lon_GLEAM, lat_GLEAM, corr_mrsos_evspsbl_GLEAM_corrected[,], xlim=range(lon_GLEAM), ylim=range(lat_GLEAM), dx=(lon_model[3]-lon_model[2]),  dy=(lat_model[3]-lat_model[2]) )$z
 
 print("Plotting GLEAM correlation")
-png(paste(variab_dir,"/SM_ET_coupling/obs/corr_mrsos_evspsbl_summer_GLEAM_modelres.png",sep=""), width=700)
+png(paste(WK_DIR,"/obs/corr_mrsos_evspsbl_summer_GLEAM_modelres.png",sep=""), width=700)
 print("plotting obs")
 image.plot(lon_model - 180, lat_model[lowlat_model:highlat_model], corr_mrsos_evspsbl_GLEAM_modelres[,lowlat_model:highlat_model]*mask_model[ c((length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model], zlim=c(-1,1), breaks=seq(-1,1, by=0.1),  col=matlab.like(20), xlab="", ylab="", main="cor(SM,ET), summer, 1980-2014, GLEAM (regridded to model res.)")
 map(add=T)  ; abline(h=0, lwd=.2)
@@ -96,7 +94,7 @@ dev.off()
 
 ######################
 print("Plotting MODEL - GLEAM correlation")
-png(paste(variab_dir,"/SM_ET_coupling/model/corr_mrsos_evspsbl_summer_model_GLEAM_diff.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/corr_mrsos_evspsbl_summer_model_GLEAM_diff.png",sep=""), width=700)
 diff <- (corr_mrsos_evspsbl[c((length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model] - corr_mrsos_evspsbl_GLEAM_modelres[,lowlat_model:highlat_model]) * mask_model[ c((length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model]
 image.plot(lon_model - 180, lat_model[lowlat_model:highlat_model], diff, zlim=c(-2,2), breaks=seq(-2,2, by=0.1),  col=matlab.like(40), xlab="", ylab="", main="cor(SM,ET), summer, Model - GLEAM (regridded to model res.)")
 map(add=T)  ; abline(h=0, lwd=.2); rm(diff)
@@ -150,7 +148,7 @@ mean_pr_summer_model[,  (floor(length(lat_model)/2)+1):length(lat_model) ] <- ap
 
 #######################################
 print("Plotting model mean precipitation")
-png(paste(variab_dir,"/SM_ET_coupling/model/mean_pr_summer_model.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/mean_pr_summer_model.png",sep=""), width=700)
 print("plotting model")
 lowlat_model <- min(which(lat_model > -60))
 highlat_model <- min(which(lat_model > 80))
@@ -162,9 +160,9 @@ dev.off()
 #######################################
 
 ## Now getting GLEAM
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/mean_precip_summer_GLEAM_1980_2014.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lon_GLEAM_P.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lat_GLEAM_P.RData", sep=""))
+load(paste(OBS_DATA, "/mean_precip_summer_GLEAM_1980_2014.RData", sep=""))
+load(paste(OBS_DATA, "/lon_GLEAM_P.RData", sep=""))
+load(paste(OBS_DATA, "/lat_GLEAM_P.RData", sep=""))
 print("Regridding GLEAM Precip")
 mean_precip_summer_GLEAM_corrected <- mean_precip_summer_GLEAM
 mean_precip_summer_GLEAM_corrected[which(is.na( mean_precip_summer_GLEAM== T))] <- 0
@@ -172,7 +170,7 @@ mean_precip_summer_GLEAM_modelres <- bicubic.grid(lon_GLEAM_P, lat_GLEAM_P, mean
 
 print("Plotting GLEAM Pr")
 
-png(paste(variab_dir,"/SM_ET_coupling/obs/mean_precip_summer_summer_GLEAM.png",sep=""), width=700)
+png(paste(WK_DIR,"/obs/mean_precip_summer_summer_GLEAM.png",sep=""), width=700)
 mean_precip_summer_GLEAM_modelres[which(mean_precip_summer_GLEAM_modelres > 15)] <- 15
 image.plot(lon_model - 180, lat_model[lowlat_model:highlat_model], mean_precip_summer_GLEAM_modelres[,lowlat_model:highlat_model]*mask_model[ c((length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model], zlim=c(0,15), breaks=seq(0,15, by=1),  col=matlab.like(15), xlab="", ylab="", main="Mean Pr summer (mm/d), 1980-2014, GLEAM (regridded to model res.)")
 map(add=T)  ; abline(h=0, lwd=.2)
@@ -180,7 +178,7 @@ dev.off()
 
 #######################################
 print("Plotting Pr diff, Model - GLEAM")
-png(paste(variab_dir,"/SM_ET_coupling/model/mean_precip_summer_summer_model_GLEAM_diff.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/mean_precip_summer_summer_model_GLEAM_diff.png",sep=""), width=700)
 diff <- (mean_pr_summer_model*mask_model)[ c( (length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model] - mean_precip_summer_GLEAM_modelres[,lowlat_model:highlat_model]*mask_model[ c((length(lon_model)/2+1):length(lon_model), 1:(length(lon_model)/2)),lowlat_model:highlat_model]
 diff[which(diff > 5)] <- 5; diff[which(diff <  -5)] <- -5;
 image.plot(lon_model - 180, lat_model[lowlat_model:highlat_model],  diff , zlim=c(-5,5), breaks=seq(-5,5, by=0.5),  col=matlab.like(20), xlab="", ylab="", main="Mean Pr (mm/d), summer, Model - GLEAM (saturates at +/-5 mm/d)")
@@ -216,14 +214,14 @@ dev.off()
 print("Correcting model coupling for precipitation biases")
 print("loading the CMIP5, 2x2 data")
 
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lon.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/lat.RData", sep=""))
+load(paste(OBS_DATA, "/lon.RData", sep=""))
+load(paste(OBS_DATA, "/lat.RData", sep=""))
 lon_2x2 <- lon; lat_2x2 <- lat
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/mean_pr_summer_2x2_allmodels.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/corr_mrsos_evspsbl_summer_2x2_allmodels.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/list_models_mrsos_PCMDI.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/list_models_pr_long.RData", sep=""))
-load(paste(DATA_IN, "/obs_data/SM_ET_coupling/mask_2x2_NAs.RData", sep=""))
+load(paste(OBS_DATA, "/mean_pr_summer_2x2_allmodels.RData", sep=""))
+load(paste(OBS_DATA, "/corr_mrsos_evspsbl_summer_2x2_allmodels.RData", sep=""))
+load(paste(OBS_DATA, "/list_models_mrsos_PCMDI.RData", sep=""))
+load(paste(OBS_DATA, "/list_models_pr_long.RData", sep=""))
+load(paste(OBS_DATA, "/mask_2x2_NAs.RData", sep=""))
 
 ###############################
 #We have to regrid everything to 2 degrees:
@@ -305,7 +303,7 @@ col_custom =  colorRampPalette(c("darkblue","blue","cyan","white","orange","red"
 
 ##########################################
 print("Plotting model coupling corrected for P, on 2x2")
-png(paste(variab_dir,"/SM_ET_coupling/model/corr_mrsos_evspsbl_summer_model_2x2_corrP.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/corr_mrsos_evspsbl_summer_model_2x2_corrP.png",sep=""), width=700)
 print("plotting model")
 lowlat_2x2 <- min(which(lat_2x2 > -60))
 highlat_2x2 <- min(which(lat_2x2 > 80))
@@ -322,7 +320,7 @@ dev.off()
 
 ##########################################
 print("Plotting GLEAM coupling on 2x2")
-png(paste(variab_dir,"/SM_ET_coupling/obs/corr_mrsos_evspsbl_summer_GLEAM_2x2.png",sep=""), width=700)
+png(paste(WK_DIR,"/obs/corr_mrsos_evspsbl_summer_GLEAM_2x2.png",sep=""), width=700)
 print("plotting model")
 lowlat_2x2 <- min(which(lat_2x2 > -60))
 highlat_2x2 <- min(which(lat_2x2 > 80))
@@ -333,7 +331,7 @@ dev.off()
 
 ##########################################
 print("Plotting model - GLEAM coupling on 2x2")
-png(paste(variab_dir,"/SM_ET_coupling/model/corr_mrsos_evspsbl_summer_model_GLEAM_diff_2x2.png",sep=""), width=700)
+png(paste(WK_DIR,"/model/corr_mrsos_evspsbl_summer_model_GLEAM_diff_2x2.png",sep=""), width=700)
 print("plotting model")
 lowlat_2x2 <- min(which(lat_2x2 > -60))
 highlat_2x2 <- min(which(lat_2x2 > 80))

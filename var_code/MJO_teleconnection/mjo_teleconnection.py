@@ -109,8 +109,6 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["WK_DIR"]+"/figures"):
-      os.makedirs(os.environ["WK_DIR"]+"/figures")
 
    if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
       os.makedirs(os.environ["WK_DIR"]+"/htmls")

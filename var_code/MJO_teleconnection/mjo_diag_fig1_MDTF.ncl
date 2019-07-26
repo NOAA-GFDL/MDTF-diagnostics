@@ -40,7 +40,7 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------------------------------|
 dirobs   = getenv("OBS_DATA")+"/" 
 dirm     = getenv("WK_DIR")+"/model/netCDF/"
-dirfig   = getenv("WK_DIR")+"/figures/"
+dirfig   = getenv("WK_DIR")+"/model/PS/"
 
 
 print("precipitation and geopotential height composites are read in")

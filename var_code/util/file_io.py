@@ -217,7 +217,7 @@ def cleanup_pod_files(pod_name):
 
    # remove .eps files if requested
    if os.environ["save_ps"] == "0":
-      dirs = ['figures', 'model/PS', 'obs/PS']
+      dirs = ['model/PS', 'obs/PS']
       for d in dirs:
          if os.path.exists(os.path.join(pod_wk_dir, d)):
             shutil.rmtree(os.path.join(pod_wk_dir, d))

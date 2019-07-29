@@ -23,7 +23,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
    # This is a wrapper to os.environ so any new env vars 
    # automatically get written to the file
    
-   if (not overwrite) and ('varname' in env_dict): 
+   if (not overwrite) and (varname in env_dict): 
       if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
    else:
       if ('varname' in env_dict) and (env_dict[varname] != varvalue) and (verbose > 0): 

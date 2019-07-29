@@ -66,8 +66,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
-import util
-from util import setenv
+import var_code.util
+from var_code.util import setenv
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
 parser = argparse.ArgumentParser()

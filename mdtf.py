@@ -66,7 +66,6 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
-sys.path.insert(0,'var_code')
 import util
 from util import setenv
 

@@ -1,6 +1,6 @@
 import os
 import unittest
-import mock
+import mock # define mock os.environ so we don't mess up real env vars
 import var_code.util as util
 
 
@@ -12,7 +12,6 @@ class TestUtil(unittest.TestCase):
         pass
     
     def test_setenv_overwrite(self):
-        # mock obj so we don't mess up real env variables
         with mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'}):
             test_d = {'TEST_OVERWRITE': 'A'}
             util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
@@ -20,7 +19,6 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
 
     def test_setenv_str(self):
-        # mock obj so we don't mess up real env variables
         with mock.patch.dict('os.environ', {}):
             test_d = {}
             util.setenv('TEST_STR','B', test_d)
@@ -28,7 +26,6 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(os.environ['TEST_STR'], 'B')
 
     def test_setenv_int(self):
-        # mock obj so we don't mess up real env variables
         with mock.patch.dict('os.environ', {}):
             test_d = {}        
             util.setenv('TEST_INT',2019, test_d)
@@ -36,7 +33,6 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(os.environ['TEST_INT'], '2019')
 
     def test_setenv_bool(self):
-        # mock obj so we don't mess up real env variables
         with mock.patch.dict('os.environ', {}):
             test_d = {}
             util.setenv('TEST_TRUE',True, test_d)
@@ -49,7 +45,6 @@ class TestUtil(unittest.TestCase):
 
 
     def test_translate_varname(self):
-        # mock obj so we don't mess up real env variables
         with mock.patch.dict('os.environ', {'pr_var': 'PRECT'}):
             self.assertEqual(util.translate_varname('pr_var'), 'PRECT')
             self.assertEqual(util.translate_varname('nonexistent_var'), 'nonexistent_var')

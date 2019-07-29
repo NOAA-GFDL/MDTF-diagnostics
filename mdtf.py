@@ -66,7 +66,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
-import var_code.util
+import var_code.util as util
 from var_code.util import setenv
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
@@ -194,7 +194,7 @@ for pod in pod_list: # list of pod names to do here
 
 # Check if any required namelist/envvars are missing  
 #util.check_required_envvar(verbose,["CASENAME","model","FIRSTYR","LASTYR","NCARG_ROOT"])
-#util.check_required_dirs( already_exist =["NCARG_ROOT"], verbose=verbose)
+#util.check_required_dirs( already_exist =["NCARG_ROOT"], [], verbose=verbose)
 
 
 

@@ -14,7 +14,7 @@ def check_required_envvar(verbose=0,*varlist):
          exit()
 
 
-def check_required_dirs(verbose=3, already_exist =[], create_if_nec = []):
+def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
    # arguments can be envvar name or just the paths
    filestr = __file__+":check_required_dirs: "
    errstr = "ERROR "+filestr
@@ -31,8 +31,8 @@ def check_required_dirs(verbose=3, already_exist =[], create_if_nec = []):
       if not os.path.exists(dir):
          if not dir_in in create_if_nec:
             if (verbose>0): 
-                print(errstr+dir_in+" = "+dir+" directory does not exist")
-                print("         and not create_if_nec list: ",create_if_nec)
+               print errstr+dir_in+" = "+dir+" directory does not exist"
+               #print "         and not create_if_nec list: "+create_if_nec
             exit()
          else:
             print(dir_in+" = "+dir+" created")

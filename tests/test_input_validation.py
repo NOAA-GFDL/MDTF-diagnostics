@@ -15,7 +15,7 @@ class TestInputValidation(unittest.TestCase):
     def test_check_required_envvar_not_found(self):
         # try to exit() if any variables not found
         with mock.patch.dict('os.environ', {'A':'B', 'C':'D'}):
-            self.assertRaises(SystemExit, util.check_required_envvar('A', 'C'))
+            self.assertRaises(SystemExit, util.check_required_envvar, 'A', 'E')
 
 
     def test_check_required_dirs_found(self):
@@ -33,7 +33,7 @@ class TestInputValidation(unittest.TestCase):
         # try to exit() if any directories not found
         with mock.patch('os.path.exists', return_value = False):
             with mock.patch('os.makedirs') as mock_makedirs:    
-                self.assertRaises(SystemExit, util.check_required_dirs(['DIR1'], []))
+                self.assertRaises(SystemExit, util.check_required_dirs, ['DIR1XXX'], [])
                 mock_makedirs.assert_not_called()
 
     def test_check_required_dirs_not_found_created(self):      

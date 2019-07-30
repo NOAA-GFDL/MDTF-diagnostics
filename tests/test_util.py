@@ -10,6 +10,8 @@ class TestUtil(unittest.TestCase):
 
     def test_makefilepath(self):
         pass
+
+# ---------------------------------------------------
     
     def test_setenv_overwrite(self):
         with mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'}):
@@ -43,6 +45,7 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(test_d['TEST_FALSE'], False)
             self.assertEqual(os.environ['TEST_FALSE'], '0')
 
+# ---------------------------------------------------
 
     def test_translate_varname(self):
         with mock.patch.dict('os.environ', {'pr_var': 'PRECT'}):

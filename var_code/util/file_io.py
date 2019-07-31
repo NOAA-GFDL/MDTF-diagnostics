@@ -40,7 +40,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
    config['envvars'] = {}
    # need to expand ./ and ../ in paths
    for key, val in config['paths'].items():
-      if (key in args) and (args.__getattribute__(key) != None):
+      if (key in args.__dict__) and (args.__getattribute__(key) != None):
          val = args.__getattribute__(key)
       val = os.path.realpath(val)
       setenv(key, val, config['envvars'], verbose=verbose)
@@ -52,7 +52,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
    vars_to_set = config['settings'].copy()
    vars_to_set.update(config['case_list'][0])
    for key, val in vars_to_set.items():
-      if (key in args) and (args.__getattribute__(key) != None):
+      if (key in args.__dict__) and (args.__getattribute__(key) != None):
          val = args.__getattribute__(key)
       setenv(key, val, config['envvars'], verbose=verbose)
 

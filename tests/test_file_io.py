@@ -1,4 +1,5 @@
 import os
+import sys
 import collections
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
@@ -118,19 +119,51 @@ class TestFileIO(unittest.TestCase):
 
 # ---------------------------------------------------  
 
-    # os_environ_set_pod_env_vars = {
-    #     'DIAG_HOME':'/HOME',
-    #     'OBS_ROOT_DIR':'/A',
-    #     'variab_dir':'/B '
-    #     }
+    os_environ_set_pod_env_vars = {
+        'DIAG_HOME':'/HOME',
+        'OBS_ROOT_DIR':'/A',
+        'variab_dir':'/B'
+        }
+    @mock.patch.dict('os.environ', os_environ_set_pod_env_vars)
+    @mock.patch('os.path.exists', return_value = True)
+    def test_set_pod_env_vars_paths(self, mock_exists):
+        # check definition of pod paths
+        env = util.set_pod_env_vars({'pod_name':'C'}, {})
+        self.assertEqual(os.environ['POD_HOME'], '/HOME/var_code/C')
+        self.assertEqual(env['POD_HOME'], '/HOME/var_code/C')
+        self.assertEqual(os.environ['OBS_DATA'], '/A/C')
+        self.assertEqual(env['OBS_DATA'], '/A/C')
+        self.assertEqual(os.environ['WK_DIR'], '/B/C')
+        self.assertEqual(env['WK_DIR'], '/B/C')
 
-    def test_set_pod_env_vars(self):
-        #TBD
-        pass
+    @mock.patch.dict('os.environ', os_environ_set_pod_env_vars)
+    @mock.patch('os.path.exists', return_value = True)
+    def test_set_pod_env_vars_vars(self, mock_exists):
+        # check definition of additional env vars
+        env = util.set_pod_env_vars({'pod_name':'C', 'pod_env_vars':{'D':'E'}}, {})
+        self.assertEqual(os.environ['D'], 'E')
+        self.assertEqual(env['D'], 'E')
 
-    def test_read_model_varnames(self):
-        #TBD
-        pass
+# ---------------------------------------------------  
+
+    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    @mock.patch('glob.glob', return_value = [''])
+    @mock.patch('__builtin__.open', create=True)
+    @mock.patch('yaml.safe_load', 
+        return_value = {'model_name':'A','var_names':['B']})
+    def test_read_model_varnames(self, mock_safe_load, mock_open, mock_glob):
+        # normal operation - convert string to list
+        self.assertEqual(util.read_model_varnames()['A'], ['B'])
+
+    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    @mock.patch('glob.glob', return_value = [''])
+    @mock.patch('__builtin__.open', create=True)
+    @mock.patch('yaml.safe_load', 
+        return_value = {'model_name':['A','C'],'var_names':['B']})
+    def test_read_model_varnames_multiple(self, mock_safe_load, mock_open, mock_glob):
+        # create multiple entries when multiple models specified
+        self.assertEqual(util.read_model_varnames()['A'], ['B'])
+        self.assertEqual(util.read_model_varnames()['C'], ['B'])
 
 # ---------------------------------------------------
 
@@ -187,9 +220,25 @@ class TestFileIO(unittest.TestCase):
 
 # ---------------------------------------------------
 
-    def test_make_pod_html(self):
-        #TBD
-        pass
+
+    @mock.patch.dict('os.environ', {
+        'DIAG_HOME':'/HOME',
+        'variab_dir':'/B',
+        'CASENAME':'C'
+        })
+    @mock.patch('os.path.exists', return_value = True)
+    @mock.patch('shutil.copy2')
+    @mock.patch('os.system')
+    @mock.patch('os.remove')
+    def test_make_pod_html(self, mock_remove, mock_system, mock_copy2, mock_exists):
+        util.make_pod_html('A','D')
+        mock_copy2.assert_has_calls([
+            mock.call('/HOME/var_code/A/A.html', '/B/A'),
+            mock.call('/B/A/tmp.html', '/B/A/A.html')
+        ])
+        mock_system.assert_has_calls([
+            mock.call('cat /B/A/A.html | sed -e s/casename/C/g > /B/A/tmp.html')
+        ])
 
 # ---------------------------------------------------
 

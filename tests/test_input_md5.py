@@ -44,17 +44,17 @@ class TestSequenceMeta(type):
             return test       
 
         for pod in pods:
-            test_name = "test_file_md5_%s" % pod
+            test_name = "test_input_md5_%s" % pod
             test_dict[test_name] = generate_test(pod, 'obs_data', obs_path)
 
         for model in models:
-            test_name = "test_file_md5_%s" % model
+            test_name = "test_input_md5_%s" % model
             test_dict[test_name] = generate_test(model, 'model', model_path)
         return type.__new__(mcs, name, bases, test_dict)
 
 @unittest.skipIf(('TRAVIS' in os.environ) and (os.environ['TRAVIS']=='true'),
     "Skipping input file md5 tests because running in Travis CI environment")
-class TestFileMD5(unittest.TestCase):
+class TestInputMD5(unittest.TestCase):
     __metaclass__ = TestSequenceMeta
 
 if __name__ == '__main__':

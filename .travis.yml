@@ -15,7 +15,8 @@ install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - |
+    if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -32,11 +33,11 @@ install:
   - source $(conda info --root)/etc/profile.d/conda.sh # workaround for conda init
   - export _CONDA_ROOT=$(conda info --root)
   - | # define conda environments
-  for ENV in `find var_code/util/conda_*.yml`
-  do
-    echo $ENV
-    conda env create -q -f $ENV
-  done
+    for ENV in `find var_code/util/conda_*.yml`
+    do
+      echo $ENV
+      conda env create -q -f $ENV
+    done
   - conda activate _MDTF-diagnostics
   - python setup.py install
 

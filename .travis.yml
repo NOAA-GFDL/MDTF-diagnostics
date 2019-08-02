@@ -7,7 +7,8 @@ python: '2.7' # only supported version, for now
 
 branches:
   only:
-    - feature/travis-CI
+    - develop
+    - /^feature/ 
 
 install:
 # miniconda setup taken from official guide at 

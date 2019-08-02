@@ -5,6 +5,10 @@ language: python
 sudo: required
 python: "2.7" # only supported version, for now
 
+branches:
+  only:
+    - feature/travis-CI
+
 install:
 # miniconda setup taken from official guide at 
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html

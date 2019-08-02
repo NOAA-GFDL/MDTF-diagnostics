@@ -3,7 +3,7 @@
 # content of individual diagnostics.
 language: python
 sudo: required
-python: "2.7" # only supported version, for now
+python: '2.7' # only supported version, for now
 
 branches:
   only:

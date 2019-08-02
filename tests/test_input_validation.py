@@ -113,16 +113,18 @@ class TestInputValidation(unittest.TestCase):
         # fill in absolute path
         test_set = {'pod_name':'A', 'pod_dir':'/B', 'driver':'C.ncl'}
         with mock.patch('os.path.exists', return_value = True):
-            util.check_pod_driver(test_set)
-            self.assertEqual(test_set['driver'], '/B/C.ncl')
-            self.assertEqual(test_set['program'], 'ncl')
+            with mock.patch('distutils.spawn.find_executable', return_value = True):
+                util.check_pod_driver(test_set)
+                self.assertEqual(test_set['driver'], '/B/C.ncl')
+                self.assertEqual(test_set['program'], 'ncl')
 
     def test_check_pod_driver_program(self):
         # fill in program from driver's extension
         test_set = {'pod_name':'A', 'pod_dir':'/B', 'driver':'C.ncl'}
         with mock.patch('os.path.exists', return_value = True):
-            util.check_pod_driver(test_set)
-            self.assertEqual(test_set['program'], 'ncl')
+            with mock.patch('distutils.spawn.find_executable', return_value = True):
+                util.check_pod_driver(test_set)
+                self.assertEqual(test_set['program'], 'ncl')
 
     def test_check_pod_driver_no_program_1(self):
         # assertion fail if can't recognize driver's extension

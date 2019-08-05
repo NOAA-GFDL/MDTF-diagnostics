@@ -18,3 +18,9 @@ case_list:
     LASTYR: 1981
     pod_list:
       - MJO_prop_amp
+  - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
+    model: CMIP
+    FIRSTYR: 1951
+    LASTYR: 2005
+    pod_list:
+      - SM_ET_coupling

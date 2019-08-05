@@ -100,10 +100,11 @@ class TestInputValidation(unittest.TestCase):
         programs = util.get_available_programs()
         test_set = {'pod_name':'A', 'pod_dir':'/B'}
         with mock.patch('os.path.exists', return_value = True):
-            util.check_pod_driver(test_set)
-            ext = os.path.splitext(test_set['driver'])[1][1:]
-            self.assertTrue(ext in programs)
-            self.assertEqual(test_set['program'], programs[ext])
+            with mock.patch('distutils.spawn.find_executable', return_value = True):
+                util.check_pod_driver(test_set)
+                ext = os.path.splitext(test_set['driver'])[1][1:]
+                self.assertTrue(ext in programs)
+                self.assertEqual(test_set['program'], programs[ext])
 
     def test_check_pod_driver_no_driver_2(self):
         # assertion fails if no driver found

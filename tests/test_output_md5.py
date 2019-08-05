@@ -10,6 +10,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 import yaml
 
+DOING_TRAVIS = os.environ.get('TRAVIS', False)
+DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
+
 # configure paths from config.yml; currently no option to override this
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
 md5_path = os.path.join(cwd,'md5')
@@ -46,8 +49,10 @@ class PNGTestSequenceMeta(type):
             test_dict[test_name] = generate_test(pod, 'output_png')
         return type.__new__(mcs, name, bases, test_dict)
 
-@unittest.skipIf(('TRAVIS' in os.environ) and (os.environ['TRAVIS']=='true'),
+@unittest.skipIf(DOING_TRAVIS,
     "Skipping output file md5 tests because running in Travis CI environment")
+@unittest.skipUnless(DOING_MDTF_DATA_TESTS,
+    "Skipping output file md5 tests because not running data-intensive test suite.")
 class TestOutputPNGMD5(unittest.TestCase):
     __metaclass__ = PNGTestSequenceMeta
 
@@ -60,8 +65,10 @@ class NCTestSequenceMeta(type):
         return type.__new__(mcs, name, bases, test_dict)
 
 @unittest.expectedFailure # netcdfs won't be bitwise reproducible
-@unittest.skipIf(('TRAVIS' in os.environ) and (os.environ['TRAVIS']=='true'),
+@unittest.skipIf(DOING_TRAVIS,
     "Skipping output file md5 tests because running in Travis CI environment")
+@unittest.skipUnless(DOING_MDTF_DATA_TESTS,
+    "Skipping output file md5 tests because not running data-intensive test suite.")
 class TestOutputNCMD5(unittest.TestCase):
     __metaclass__ = NCTestSequenceMeta
 

@@ -10,7 +10,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 import yaml
 
-DOING_TRAVIS = os.environ.get('TRAVIS', False)
+DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
 
 # configure paths from config.yml; currently no option to override this

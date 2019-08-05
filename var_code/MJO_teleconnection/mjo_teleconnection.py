@@ -109,30 +109,9 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 #===================================================================================
 #                               Set up directories
 #===================================================================================
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection")
 
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/figures"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs")
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
-
-
-   if not os.path.exists(os.environ["variab_dir"]+"/MJO_teleconnection/htmls"):
-      os.makedirs(os.environ["variab_dir"]+"/MJO_teleconnection/htmls")
+   if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
+      os.makedirs(os.environ["WK_DIR"]+"/htmls")
 
 #======================================================================================
 #      Calling a NCL script to calculate RMM index of a given model data
@@ -142,58 +121,32 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 
    os.chdir(os.environ["DATADIR"])
 
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_RMM_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_geop_hgt_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_prec_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_U250_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_daig_Corr_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_EWR_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig1_MDTF.ncl")
-   generate_ncl_plots(os.environ["VARCODE"]+"/MJO_teleconnection/mjo_diag_fig2_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_RMM_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_geop_hgt_comp_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_prec_comp_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_U250_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_daig_Corr_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
 #============================================================
-# set up template html file
+# copy additional html files
 #============================================================
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/MJO_teleconnection.html")
 
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MJO_teleconnection.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/")
-
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/MDTF_Documentation_MJO_teleconnection.pdf "+os.environ["variab_dir"]+"/MJO_teleconnection/.")
-  
-# 
-
-   if os.path.isfile( os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/MJO_teleconnection/htmls/*.html")
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_teleconnection/htmls/*.html "+os.environ["variab_dir"]+ "/MJO_teleconnection/htmls")
+   if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
+      os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
+   os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
-
-#============================================================
-# Add line to top level HTML file (index.html)
-#============================================================
-   a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_teleconnection")
-   if a != 0:
-      os.system("echo '<H3><font color=navy>MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 <A HREF=\"MJO_teleconnection/MJO_teleconnection.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
-
-#============================================================
-# convert eps to jpeg
-#============================================================
-   files = os.listdir(os.environ["variab_dir"]+"/MJO_teleconnection/figures")
-   a = 0
-   while a < len(files):
-      file1 = os.environ["variab_dir"]+"/MJO_teleconnection/figures/"+files[a]
-      file2 = os.environ["variab_dir"]+"/MJO_teleconnection/model/"+files[a]
-      os.system("convert "+file1+" "+file2[:-3]+"jpeg")
-      a = a+1
 
 #============================================================
    print("-----------------------------------------------------------------------------")
    print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
    print("=============================================================================")
-   print("Check: " + os.environ["variab_dir"])
+   print("Check: " + os.environ["WK_DIR"])
    print( "now you can open index.html in browser to see the results " )
    print("-----------------------------------------------------------------------------")
 
 else:
    print("Requested Input data file are not found, Please check input data directory ")
-   print("check data directory and :" +os.environ["VARCODE"]+ "/util/set_variables_xxxx.py to set variable names" )  
+   print("check data directory and /util/config_XXX.yml to set variable names" )  
    

@@ -9,15 +9,14 @@ begin
 
 ;==== INPUT DATA ============================================
 
-wkdir = getenv("WKDIR")
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
-dir_stub = getenv("variab_dir")
+dir_stub = getenv("WK_DIR")
 filename = getenv("DATADIR")+"/3hr/"+casename+"."+getenv("pr_var")+".3hr.nc"
 ;fincl = getenv("fincl")
 ver = getenv("ver")
-file_obs_DJF = getenv("VARDATA")+"/precip_diurnal_cycle/TRMM_DJF.nc"
-file_obs_JJA = getenv("VARDATA")+"/precip_diurnal_cycle/TRMM_JJA.nc"
+file_obs_DJF = getenv("OBS_DATA")+"/TRMM_DJF.nc"
+file_obs_JJA = getenv("OBS_DATA")+"/TRMM_JJA.nc"
 start_year = stringtodouble(getenv("FIRSTYR"))
 end_year = stringtodouble(getenv("LASTYR"))
 vars = (/getenv("pr_var"),"TRMM"/)
@@ -125,11 +124,11 @@ res@tmXBOn              = True
    copy_VarCoords(TRMM_JJA_adc(lon|:,lat|:,time|:),TRMM_DJF_adc)
 
 ;Netcdf output file.
-  fout_JJA = addfile(dir_stub+"/precip_diurnal_cycle/model/netCDF/"+casename+"_pr_JJA_adc.nc","c")
-  fout_DJF = addfile(dir_stub+"/precip_diurnal_cycle/model/netCDF/"+casename+"_pr_DJF_adc.nc","c")
+  fout_JJA = addfile(dir_stub+"/model/netCDF/"+casename+"_pr_JJA_adc.nc","c")
+  fout_DJF = addfile(dir_stub+"/model/netCDF/"+casename+"_pr_DJF_adc.nc","c")
 
-  fout_TRMM_JJA = addfile(dir_stub+"/precip_diurnal_cycle/obs/netCDF/TRMM_JJA_adc.nc","c")
-  fout_TRMM_DJF = addfile(dir_stub+"/precip_diurnal_cycle/obs/netCDF/TRMM_DJF_adc.nc","c")
+  fout_TRMM_JJA = addfile(dir_stub+"/obs/netCDF/TRMM_JJA_adc.nc","c")
+  fout_TRMM_DJF = addfile(dir_stub+"/obs/netCDF/TRMM_DJF_adc.nc","c")
 
   lon     = f->lon
   lat     = f->lat
@@ -406,8 +405,8 @@ res@tmXBOn              = True
     
 
 ; Plot fields
-  plotname1 = dir_stub+"/precip_diurnal_cycle/model/PS/pr_JJA_dc_regions"
-  plotname2 = dir_stub+"/precip_diurnal_cycle/model/PS/pr_DJF_dc_regions"
+  plotname1 = dir_stub+"/model/PS/pr_JJA_dc_regions"
+  plotname2 = dir_stub+"/model/PS/pr_DJF_dc_regions"
 
   print ("  Plotting fields for this case")
   wks = gsn_open_wks("ps",plotname1)

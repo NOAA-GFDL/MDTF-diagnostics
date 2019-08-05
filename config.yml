@@ -1,0 +1,85 @@
+# Configuration for MDTF-diagnostics driver script
+# Note that whitespace (indentation) is significant, 
+# and colons in assignment statments must be followed by a space
+
+# MODEL INPUT
+
+# List all cases below with CASE tag at front of line
+# CASE casename model-type startyr endyr
+# Comment out any with # at start of line
+# Note that the mdtf package does not yet handle multiple cases
+
+# The cases below correspond to the two different test data sets
+# Uncomment the first entry to run NCAR-CESM and the second
+# entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
+
+case_list:
+  # formerly namelist_ABerg:
+  - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
+    model: CMIP
+    FIRSTYR: 1951
+    LASTYR: 2005
+    pod_list:
+      - SM_ET_coupling
+  - CASENAME: QBOi.EXP1.AMIP.001
+    model: CESM
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list:  # Optional: PODs to run for this model only
+      - Wheeler_Kiladis
+      - EOF_500hPa
+      - convective_transition_diag
+      - MJO_suite
+      - MJO_teleconnection
+      #- precip_diurnal_cycle #- high memory requirement
+    # formerly namelist_mjo_prop_amp:
+  - CASENAME: GFDL.CM4.c96L32.am4g10r8
+    model: AM4
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list: # Optional: PODs to run for this model only
+      - MJO_prop_amp
+
+
+# DIAGNOSTICS
+
+# List all desired packages with hyphen at the start of the line
+# Comment out any with # at start of line
+
+pod_list: 
+  - Wheeler_Kiladis
+  - EOF_500hPa
+  - convective_transition_diag
+  - MJO_suite
+  - MJO_teleconnection
+  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  # These PODS require more resources 
+  #- precip_diurnal_cycle #- high memory requirement
+
+# PATHS
+paths:
+# Code installation directory.
+  DIAG_HOME: '.'
+# Parent directory containing results from different models.
+  MODEL_ROOT_DIR: ../inputdata/model/
+# Parent directory containing observational data used by individual PODs.  
+  OBS_ROOT_DIR: ../inputdata/obs_data/
+# Working directory.
+  WORKING_DIR: ./wkdir
+# Directory to write output files. Defaults to working directory.  
+  OUTPUT_DIR: ./wkdir
+
+# SETTINGS
+
+# List any envvars to be set here with VAR tag at the start of the line
+# These will override any settings in mdtf.py, but case *must* match script
+
+settings:
+  verbose: 2         # 0-minimal,1-normal,2-copious,3-debug
+  save_ps: False        # True to retain output .ps plots
+  save_nc: True         # True to retain output netcdf files
+  make_variab_tar: True # True to save output in .tar file
+  test_mode: False   #True = script just reports what it would do, doesn't call actual packages
+
+  convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion
+  convert_output_fmt: 'png' # default bitmap figure output (for html)

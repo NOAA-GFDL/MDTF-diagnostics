@@ -4,16 +4,16 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$VARCODE/MJO_suite/utils.ncl"
+load "$POD_HOME/utils.ncl"
 
 begin
 ; read daily output files from CAM2 and process the data
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
 file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"
@@ -134,8 +134,8 @@ pr = (/pr*pr_conversion_factor*0.001/)            ; m/s
 pr@units = "m/s"
 ;prEq = pr($time_coord$ | :,{$lat_coord$ | -40 : 40 }, {$lon_coord$ | : })
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.nc","c")
+print("writing "+file_dir+casename+".pr.day.nc")
+fo = addfile(file_dir+casename+".pr.day.nc","c")
 fo->gw = gwEq
 fo->date = date
 fo->pr = pr
@@ -175,7 +175,7 @@ do i=0,dimsizes(plevs)-1
       print(" var_name_plev_package "+var_name_plev_package)
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
-      file_out = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+"."+var_name_plev_package+".day.nc"
+      file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv
 
@@ -198,8 +198,8 @@ rlut_var = getenv("rlut_var")
 
 rlut = f_rlut->$rlut_var$($time_coord$|i1:i2,{$lat_coord$|-40:40},$lon_coord$|:)
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.nc","c")
+print("writing "+file_dir+casename+".rlut.day.nc")
+fo = addfile(file_dir+casename+".rlut.day.nc","c")
 fo->gw = gwEq
 fo->date = date
 fo->rlut = rlut

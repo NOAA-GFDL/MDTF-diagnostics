@@ -43,6 +43,6 @@ install:
   - python setup.py install
 
 script:
-  - cd $TRAVIS_BUILD_DIR # shouldn't need this?
-  - export TRAVIS="${TRAVIS:-true}" # also shouldn't need this
+  # - cd $TRAVIS_BUILD_DIR # shouldn't need this?
+  # - export TRAVIS="${TRAVIS:-true}" # also shouldn't need this
   - python -m unittest discover

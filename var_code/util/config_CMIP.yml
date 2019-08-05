@@ -78,4 +78,8 @@ var_names:
   prw_var: prw # Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
   tave_var: tave # Mass-Weighted Column Average Tropospheric Temperature, units = K
   qsat_int_var: qsat_int # Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
-
+  
+  # ------------------------------------------------------------------------
+  # Variables for SM_ET_coupling module:
+  mrsos_var: mrsos 
+  evspsbl_var: evspsbl 

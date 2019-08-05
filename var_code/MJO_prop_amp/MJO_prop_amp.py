@@ -63,32 +63,13 @@ os.environ["file_pr"]  = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+".
 os.environ["file_prw"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["prw_var"]+".day.nc"
 os.environ["file_hus"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["qa_var"]+".day.nc"
 
-
-if not os.path.exists(os.environ["variab_dir"]+"/MJO_prop_amp"):
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/obs")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/obs/netCDF")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/model")
-   os.makedirs(os.environ["variab_dir"]+"/MJO_prop_amp/model/netCDF")
-
 print("    ")
 print("=======")
 print("Diagnostics for MJO propagation and amplitude")
 print("Interpolating model data to standard grids ...")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_intp.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/m_intp.ncl")
 print("Starting disgostic program ...")
-generate_ncl_plots(os.environ["VARCODE"]+"/MJO_prop_amp/m_diag.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/m_diag.ncl")
 
-print("Updating package html file")
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp")
-print("DRBDBG a=",a)
-print("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp")
-if a != 0:  
-   os.system("cat "+os.environ["VARCODE"]+"/MJO_prop_amp/index_MJO_prop_amp.html >> "+os.environ["variab_dir"]+"/index.html")
-   print("Wrote into "+os.environ["variab_dir"]+"/index.html : ")
-   print(os.system("cat "+os.environ["variab_dir"]+"/index.html | grep MJO_prop_amp"))
-   print("Copying "+os.environ["VARCODE"]+"/MJO_prop_amp/MDTF_Documentation_MJO_prop_amp.pdf to "+os.environ["variab_dir"])
-   os.system("cp "+os.environ["VARCODE"]+"/MJO_prop_amp/MDTF_Documentation_MJO_prop_amp.pdf  "+os.environ["variab_dir"]+"/MJO_prop_amp/")
-   exit()
 
    

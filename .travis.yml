@@ -32,7 +32,6 @@ install:
 
   # MDTF-specific setup
   - source $(conda info --root)/etc/profile.d/conda.sh # workaround for conda init
-  - export _CONDA_ROOT=$(conda info --root)
   - | # define conda environments
     for ENV in `find var_code/util/conda_*.yml`
     do

@@ -7,10 +7,7 @@
 # NOTE this has only been tested with conda 4.7.10; I know earlier 
 # versions had things in different places.
 
-if [ -z "$_CONDA_ROOT" ]; then
-    echo "Need to set _CONDA_ROOT"
-    exit 1
-fi  
+export _CONDA_ROOT=$(conda info --root)
 
 __conda_path="$_CONDA_ROOT"'/bin/conda'
 echo "$__conda_path"

@@ -9,6 +9,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     else:
         import subprocess
 import yaml
+import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
@@ -20,40 +21,22 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 # if they're going to be skipped later.
 
 if DOING_SETUP:
-    # configure paths from config.yml; currently no option to override this
-    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    with open(os.path.join(cwd,'..','config.yml'), 'r') as file_object:
-        config = yaml.safe_load(file_object)
+    config = shared.get_configuration('', check_input = True)
+    out_path = config['paths']['OUTPUT_DIR']
+
+    case_list = shared.get_test_data_configuration()
+
+    # write temp configuration, one for each POD  
     temp_config = config.copy()
     temp_config['pod_list'] = []
     temp_config['settings']['make_variab_tar'] = False
-    # temp_config['settings']['test_mode'] = True
-    out_path = os.path.realpath(config['paths']['OUTPUT_DIR'])
+    temp_config['settings']['test_mode'] = True
 
-    # find PODs that are present on current system
-    pods = next(os.walk('var_code'))[1]
-    pods.remove('html')
-    pods.remove('util')
-    if ('MDTF_diagnostics.egg-info') in pods:
-        pods.remove('MDTF_diagnostics.egg-info')
-
-    # set up configuration, one for each POD
-    with open(os.path.join(cwd,'pod_test_configs.yml'), 'r') as file_object:
-        cases = yaml.safe_load(file_object) 
-    pod_configs = {}
-    found_pods = []
-    for case_list in cases['case_list']:
-        temp_case = case_list.copy()
-        for pod in case_list['pod_list']:
-            if pod in pods:
-                found_pods.append(pod)
-                pod_configs[pod] = temp_config.copy()
-                pod_configs[pod]['case_list'] = [temp_case]
-                pod_configs[pod]['case_list'][0]['pod_list'] = [pod]
-
-                temp_config_file = os.path.join(out_path, pod+'_temp.yml')
-                with open(temp_config_file,'w') as file_object:
-                    yaml.dump(pod_configs[pod], file_object)
+    pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
+    for pod in case_list['pods']:
+        temp_config_file = os.path.join(out_path, pod+'_temp.yml')
+        with open(temp_config_file, 'w') as file_object:
+            yaml.dump(pod_configs[pod], file_object)
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
 # the advanced construction presented in https://stackoverflow.com/a/20870875 
@@ -71,8 +54,8 @@ class TestSequenceMeta(type):
             return test       
 
         if DOING_SETUP:
-            for pod in found_pods:
-                test_name = "test_pod_%s" % pod
+            for pod in case_list['pods']:
+                test_name = "test_pod_" + pod
                 test_dict[test_name] = generate_test(pod)
         return type.__new__(mcs, name, bases, test_dict)
 

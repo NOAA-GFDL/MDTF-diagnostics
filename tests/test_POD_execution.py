@@ -30,7 +30,7 @@ if DOING_SETUP:
     temp_config = config.copy()
     temp_config['pod_list'] = []
     temp_config['settings']['make_variab_tar'] = False
-    temp_config['settings']['test_mode'] = True
+    #temp_config['settings']['test_mode'] = True
 
     pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
     for pod in case_list['pods']:

@@ -18,7 +18,7 @@ settings:
 # # 2 or three fields:
 # var_name      time-frequency     required [optional]
 # 
-# - var_name: as found in var_code/util/set_variables_*
+# - var_name: as found in src/config_*.yml
 # - time-frequency: mon (monthly), day, 6hr, 3hr, 1hr
 #   nb. if a variable is required at multiple time frequencies,
 #       list it separately for each one

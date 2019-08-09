@@ -9,7 +9,7 @@ import subprocess
 # Run commands to set up conda environments post-install
 # see https://stackoverflow.com/a/36902139
 def _post_install():
-    envs_to_create = glob.glob('var_code/util/conda_*.yml')
+    envs_to_create = glob.glob('src/conda_*.yml')
     envs_to_create = ['echo Creating conda env from '+env+'\n' \
             +'conda env create --force -q -f '+ env for env in envs_to_create]
     command_str = '\n'.join(envs_to_create)

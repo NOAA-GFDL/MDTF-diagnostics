@@ -14,7 +14,7 @@
 #    (3) Evaluate model MJO amplitude and link it to model conovective moisture adjustment time scale 
 #        following Jiang et al. (2016);
 
-#   All scripts of this package can be found under: /var_code/MJO_prop_amp 
+#   All scripts of this package can be found under: /diagnostics/MJO_prop_amp 
 #    & observational data under: /obs_data/MJO_prop_amp
 
 #   The following Python packages are required: os, subprocess

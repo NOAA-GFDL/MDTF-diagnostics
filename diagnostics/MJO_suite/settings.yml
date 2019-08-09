@@ -8,7 +8,7 @@ settings:
 # USAGE varlist
 # var_name      time-frequency     [requirement]
 #
-# - var_name: as found in var_code/util/set_variables_*
+# - var_name: as found in src/config_*.yml
 # - freq: mon (monthly), day, 6hr, 3hr, 1hr
 # - requirement = blank  (default = optional)                                          
 #                      required (package cannot run without this)                           

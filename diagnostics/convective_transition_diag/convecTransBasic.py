@@ -71,7 +71,7 @@ print("**************************************************")
 
 # ======================================================================
 # Load user-specified parameters (usp) for BINNING and PLOTTING
-# This is in the /var_code/convective_transition_diag folder under
+# This is in the /diagnostics/convective_transition_diag folder under
 #  convecTransBasic_usp_calc.py
 #  & convecTransBasic_usp_plot.py
 

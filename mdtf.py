@@ -66,8 +66,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
-import var_code.util as util
-from var_code.util import setenv
+import src as util
+from src.util import setenv
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
 parser = argparse.ArgumentParser()
@@ -212,7 +212,7 @@ os.chdir(os.environ["WORKING_DIR"])
 if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
    print("WARNING: index.html exists, not re-creating.")
 else: 
-   html_dir = os.environ["DIAG_HOME"]+"/var_code/html/"
+   html_dir = os.environ["DIAG_HOME"]+"/src/html/"
    os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
    os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
@@ -252,7 +252,7 @@ for pod in pod_configs:
          # and don't try to run the POD if 'conda activate' fails.
          proc = subprocess.Popen([
             'bash', '-c',
-            'source '+os.environ['DIAG_HOME']+'/var_code/util/conda_init.sh' \
+            'source '+os.environ['DIAG_HOME']+'/src/conda_init.sh' \
             + ' && conda activate '+pod['settings']['conda_env'] \
             + ' && ' + command_str],
             env=os.environ, stdout=log, stderr=subprocess.STDOUT)

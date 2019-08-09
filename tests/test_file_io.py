@@ -3,7 +3,7 @@ import sys
 import collections
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
-import var_code.util as util
+import src as util
 
 class TestFileIO(unittest.TestCase):
     os_environ_parse_pod_varlist = {'pr_var':'PRECT'}
@@ -78,8 +78,8 @@ class TestFileIO(unittest.TestCase):
         args = TestFileIO.MockArgs(None, None)
         config = self.config_test.copy()
         util.set_mdtf_env_vars(args, config)
-        self.assertEqual(config['envvars']['RGB'], '/HOME/var_code/util/rgb')
-        self.assertEqual(os.environ['RGB'], '/HOME/var_code/util/rgb')
+        self.assertEqual(config['envvars']['RGB'], '/HOME/src/rgb')
+        self.assertEqual(os.environ['RGB'], '/HOME/src/rgb')
 
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     def test_set_mdtf_env_vars_config_cmdline(self):
@@ -104,7 +104,7 @@ class TestFileIO(unittest.TestCase):
         # normal operation
         pod_set = util.read_pod_settings_file('A')
         self.assertEqual(pod_set['settings']['pod_name'], 'A')
-        self.assertEqual(pod_set['settings']['pod_dir'], '/HOME/var_code/A')
+        self.assertEqual(pod_set['settings']['pod_dir'], '/HOME/diagnostics/A')
         self.assertEqual(pod_set['settings']['conda_env'], '_MDTF-diagnostics')
 
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
@@ -129,8 +129,8 @@ class TestFileIO(unittest.TestCase):
     def test_set_pod_env_vars_paths(self, mock_exists):
         # check definition of pod paths
         env = util.set_pod_env_vars({'pod_name':'C'}, {})
-        self.assertEqual(os.environ['POD_HOME'], '/HOME/var_code/C')
-        self.assertEqual(env['POD_HOME'], '/HOME/var_code/C')
+        self.assertEqual(os.environ['POD_HOME'], '/HOME/diagnostics/C')
+        self.assertEqual(env['POD_HOME'], '/HOME/diagnostics/C')
         self.assertEqual(os.environ['OBS_DATA'], '/A/C')
         self.assertEqual(env['OBS_DATA'], '/A/C')
         self.assertEqual(os.environ['WK_DIR'], '/B/C')
@@ -233,7 +233,7 @@ class TestFileIO(unittest.TestCase):
     def test_make_pod_html(self, mock_remove, mock_system, mock_copy2, mock_exists):
         util.make_pod_html('A','D')
         mock_copy2.assert_has_calls([
-            mock.call('/HOME/var_code/A/A.html', '/B/A'),
+            mock.call('/HOME/diagnostics/A/A.html', '/B/A'),
             mock.call('/B/A/tmp.html', '/B/A/A.html')
         ])
         mock_system.assert_has_calls([

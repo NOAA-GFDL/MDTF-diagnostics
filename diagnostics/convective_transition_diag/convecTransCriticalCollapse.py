@@ -91,7 +91,7 @@ print("**************************************************")
 
 # ======================================================================
 # Load user-specified parameters (usp) for FITTING and PLOTTING
-# This is in the var_code/convective_transition_diag folder under
+# This is in the diagnostics/convective_transition_diag folder under
 #  convecTransCriticalCollapse_usp.py
 print("Load user-specified binning parameters..."),
 

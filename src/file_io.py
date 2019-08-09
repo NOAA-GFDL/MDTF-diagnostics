@@ -47,7 +47,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
 
    # following are redundant but used by PODs
 
-   setenv("RGB",os.environ["DIAG_HOME"]+"/var_code/util/rgb",config['envvars'],overwrite=False,verbose=verbose)
+   setenv("RGB",os.environ["DIAG_HOME"]+"/src/rgb",config['envvars'],overwrite=False,verbose=verbose)
 
    vars_to_set = config['settings'].copy()
    vars_to_set.update(config['case_list'][0])
@@ -58,7 +58,7 @@ def set_mdtf_env_vars(args, config, verbose=0):
 
 
 def read_pod_settings_file(pod_name, verbose=0):
-   pod_dir = os.environ["DIAG_HOME"]+"/var_code/"+pod_name
+   pod_dir = os.environ["DIAG_HOME"]+"/diagnostics/"+pod_name
    filename = pod_dir+'/settings.yml'
    assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 
@@ -90,7 +90,7 @@ def set_pod_env_vars(pod_settings, config, verbose=0):
    pod_name = pod_settings['pod_name']
    pod_envvars = {}
    # location of POD's code
-   setenv("POD_HOME", os.environ["DIAG_HOME"]+"/var_code/"+pod_name,
+   setenv("POD_HOME", os.environ["DIAG_HOME"]+"/diagnostics/"+pod_name,
       pod_envvars,overwrite=False,verbose=verbose)
    # POD's observational data
    setenv("OBS_DATA",os.environ["OBS_ROOT_DIR"]+"/"+pod_name,
@@ -113,7 +113,7 @@ def set_pod_env_vars(pod_settings, config, verbose=0):
 
 def read_model_varnames(verbose=0):
    model_dict = {}
-   config_files = glob.glob(os.environ["DIAG_HOME"]+"/var_code/util/config_*.yml")
+   config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
    for filename in config_files:
       fileobject = open(filename,'r')
       file_contents = yaml.safe_load(fileobject)
@@ -164,7 +164,7 @@ def convert_pod_figures(pod_name):
 
 def make_pod_html(pod_name, pod_description):
    # do templating on POD's html file
-   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', pod_name)
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
    html_file = pod_wk_dir+'/'+pod_name+'.html'
    temp_file = pod_wk_dir+'/tmp.html'
@@ -203,7 +203,7 @@ def make_pod_html(pod_name, pod_description):
 
 
 def cleanup_pod_files(pod_name):
-   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'var_code', pod_name)
+   pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', pod_name)
    pod_data_dir = os.path.join(os.environ['OBS_ROOT_DIR'], pod_name)
    pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
 

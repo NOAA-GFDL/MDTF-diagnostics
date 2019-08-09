@@ -2,7 +2,7 @@
 # 7. MJO teleconnection Diagnostic 
 #   This requires daily-timescale precipitation rate(mm/day), OLR (w/m2), zonal wind (m/s) at 850 and 250-hPa levels and
 #   geopotential height(m) at 250-hPa
-#   For further details see comments section of /var_code/MJO_teleconnection/mjo_teleconnection.py
+#   For further details see comments section of /diagnostics/MJO_teleconnection/mjo_teleconnection.py
 #   Each variable should store in a single file. 
 #   The codes are in NCL
 # ==================================================================================================
@@ -18,7 +18,7 @@ settings:
 # USAGE varlist
 # var_name      time-frequency     [requirement]
 #
-# - var_name: as found in var_code/util/set_variables_*
+# - var_name: as found in src/config_*.yml
 # - freq: mon (monthly), day, 6hr, 3hr, 1hr
 # - requirement = blank  (default = optional)                                          
 #                      required (package cannot run without this)                           

@@ -31,7 +31,7 @@
 #    More on the way...(* under development)
 #
 #   As a module of the MDTF code package, all scripts of this package can be found under
-#    mdtf/MDTF_$ver/var_code/convective_transition_diag**
+#    MDTF-diagnostics/diagnostics/convective_transition_diag**
 #   and pre-digested observational data under 
 #    mdtf/inputdata/obs_data/convective_transition_diag
 #   (**$ver depends on the actual version of the MDTF code package)

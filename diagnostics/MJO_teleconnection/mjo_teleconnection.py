@@ -29,7 +29,7 @@
 #
 #   -----------------------------------------------------------------------------------------------
 #    All scripts of this package can be found under
-#    /var_code/MJO_teleconnection
+#    /diagnostics/MJO_teleconnection
 #    Observed data and precalculated 10 CMIP5 models data can be cound under
 #    /obs_data/MJO_teleconnection
 #
@@ -49,7 +49,7 @@
 #     
 #     Please change the variable names and conversion factor according to your data before running
 #     MJO teleconnection diagnostic at :
-#     var_code/util/set_variables_CESM.py
+#     src/config_<model name>.yml
 #     Please provide each input variable into a single file
 #
 #   -------------------------------------------------------------------------------------------------------

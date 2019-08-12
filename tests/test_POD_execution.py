@@ -48,7 +48,7 @@ class TestSequenceMeta(type):
             def test(self):
                 temp_config_file = os.path.join(out_path, pod_name+'_temp.yml')
                 self.assertEqual(0, subprocess.check_call(
-                    ['python', 'mdtf.py', temp_config_file]
+                    ['python', 'src/mdtf-local.py', temp_config_file]
                 ))
                 # should do better cleanup here
             return test       

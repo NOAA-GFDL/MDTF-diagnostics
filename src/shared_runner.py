@@ -76,9 +76,7 @@ class DiagnosticRunner:
             out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
             if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
             shutil.move(out_file,out_fileold)
-        file_object = open(out_file,'w')  #create it
-        yaml.dump(config, file_object)
-        file_object.close() 
+        util.write_yaml(config, out_file)
 
     def _makeTarFile(self):
         # Make tar file

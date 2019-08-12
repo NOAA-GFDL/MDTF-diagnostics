@@ -11,7 +11,7 @@ class TestDiagnostic(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('os.path.exists', return_value = True)
     @mock.patch('__builtin__.open', create=True)
-    @mock.patch('yaml.safe_load', return_value = {'settings':{},'varlist':[]})
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {'settings':{},'varlist':[]})
     def test_read_pod_settings_file(self, mock_safe_load, mock_open, mock_exists):
         # normal operation
         pod = Diagnostic('A')
@@ -23,7 +23,7 @@ class TestDiagnostic(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('os.path.exists', return_value = True)
     @mock.patch('__builtin__.open', create=True)
-    @mock.patch('yaml.safe_load', return_value = {
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
         'settings':{'conda_env':'B'},'varlist':[]})
     def test_read_pod_settings_file_conda_env(self, mock_safe_load, mock_open, mock_exists):
         # fill in conda environment

@@ -2,7 +2,6 @@ import os
 import sys
 import glob
 import shutil
-import yaml
 import util
 from util import setenv # fix
 
@@ -17,9 +16,7 @@ class Model:
         model_dict = {}
         config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
         for filename in config_files:
-            fileobject = open(filename,'r')
-            file_contents = yaml.safe_load(fileobject)
-            fileobject.close()
+            file_contents = util.read_yaml(filename)
 
             if type(file_contents['model_name']) is str:
                 file_contents['model_name'] = [file_contents['model_name']]

@@ -15,12 +15,8 @@ class Diagnostic:
     def _read_pod_settings_file(self, pod_name, verbose=0):
         pod_dir = os.environ["DIAG_HOME"]+"/diagnostics/"+pod_name
         filename = pod_dir+'/settings.yml'
-        assert(os.path.exists(filename)), "Input file does not exist "+str(filename)
 
-        fileobject = open(filename,'r')
-        file_contents = yaml.safe_load(fileobject)
-        fileobject.close()
-
+        file_contents = util.read_yaml(filename)
         file_contents['settings']['pod_name'] = pod_name
         file_contents['settings']['pod_dir'] = pod_dir
         if 'conda_env' not in file_contents['settings']:
@@ -31,12 +27,12 @@ class Diagnostic:
         
         if (verbose > 0): 
             print file_contents['settings']['pod_name']+" settings: "
-            print yaml.dump(file_contents['settings'])
+            print file_contents['settings']
 
         self._parse_pod_varlist(file_contents['varlist'], verbose)
         if (verbose > 0): 
             print file_contents['settings']['pod_name']+" varlist: "
-            print yaml.dump(file_contents['varlist'])
+            print file_contents['varlist']
 
         return file_contents
 

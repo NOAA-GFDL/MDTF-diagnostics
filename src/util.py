@@ -4,16 +4,20 @@ import os
 import sys
 import yaml
 
-def read_mdtf_config_file(namelist_file, verbose=0):
-    assert(os.path.exists(namelist_file)), "Input file does not exist "+str(namelist_file)
+def read_yaml(file_path, verbose=0):
+    # wrapper to load config files
+    assert(os.path.exists(file_path))
+    with open(file_path, 'r') as file_obj:
+        file_contents = yaml.safe_load(file_obj)
 
-    file_object = open(namelist_file, 'r')
-    file_contents = yaml.safe_load(file_object)
-    file_object.close()
-
-    if (verbose > 1):
+    if (verbose > 2):
         print yaml.dump(file_contents)  #print it to stdout 
     return file_contents
+
+def write_yaml(struct, file_path, verbose=0):
+    # wrapper to write config files
+    with open(file_path, 'w') as file_obj:
+        yaml.dump(struct, file_obj)
 
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}

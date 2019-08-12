@@ -6,7 +6,10 @@ import src.util as util
 
 class TestUtil(unittest.TestCase):
 
-    def test_read_mdtf_config_file(self):
+    def test_read_yaml(self):
+        pass
+
+    def test_write_yaml(self):
         pass
 
     def test_get_available_programs(self):

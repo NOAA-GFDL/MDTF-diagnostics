@@ -10,7 +10,7 @@ class TestModel(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('__builtin__.open', create=True)
-    @mock.patch('yaml.safe_load', 
+    @mock.patch('src.shared_model.util.read_yaml', 
         return_value = {'model_name':'A','var_names':['B']})
     def test_read_model_varnames(self, mock_safe_load, mock_open, mock_glob):
         # normal operation - convert string to list
@@ -20,7 +20,7 @@ class TestModel(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('__builtin__.open', create=True)
-    @mock.patch('yaml.safe_load', 
+    @mock.patch('src.shared_model.util.read_yaml', 
         return_value = {'model_name':['A','C'],'var_names':['B']})
     def test_read_model_varnames_multiple(self, mock_safe_load, mock_open, mock_glob):
         # create multiple entries when multiple models specified

@@ -10,7 +10,6 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
-import yaml
 import util
 from util import setenv # fix
 from shared_diagnostic import Diagnostic
@@ -43,7 +42,7 @@ class EnvironmentManager:
 
             if len(pod.config['missing_files']) > 0:
                 print "WARNING: POD ",pod," Not executed because missing required input files:"
-                print yaml.dump(pod.config['missing_files'])
+                print pod.config['missing_files']
                 continue
             else:
                 if (verbose > 0): print "No known missing required input files"

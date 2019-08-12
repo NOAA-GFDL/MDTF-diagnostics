@@ -137,12 +137,6 @@ errstr = "ERROR "+__file__+" : "
 
 # inputdata contains model/$casename, obs_data/$package/*  #drb change?
 # output goes into wkdir & variab_dir (diagnostics should generate .nc files & .ps files in subdirectories herein)
-setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
-variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-setenv("variab_dir",os.path.join(os.environ['WORKING_DIR'], variab_dir),config['envvars'],overwrite=False,verbose=verbose)
-util.check_required_dirs(
-   already_exist =["DATADIR"], create_if_nec = ["variab_dir"], 
-   verbose=verbose)
 
 # ======================================================================
 # set variable names based on model
@@ -150,32 +144,7 @@ util.check_required_dirs(
 
 util.set_model_env_vars(os.environ["model"], model_varnames)
 
-if 'pod_list' in config['case_list'][0]:
-   # run a set of PODs specific to this model
-   pod_list = config['case_list'][0]['pod_list']
-else:
-   pod_list = config['pod_list'] # use global list of PODs
 
-pod_configs = []
-for pod in pod_list: # list of pod names to do here
-   try:
-      pod_cfg = util.read_pod_settings_file(pod, verbose)
-      util.check_pod_driver(pod_cfg['settings'], verbose)
-      var_files = util.check_for_varlist_files(pod_cfg['varlist'], verbose)
-      pod_cfg.update(var_files)
-   except AssertionError as error:  
-      print str(error)
-   if ('long_name' in pod_cfg['settings']) and verbose > 0: 
-      print "POD long name: ", pod_cfg['settings']['long_name']
-
-   if len(pod_cfg['missing_files']) > 0:
-      print "WARNING: POD ",pod," Not executed because missing required input files:"
-      print yaml.dump(pod_cfg['missing_files'])
-      continue
-   else:
-      if (verbose > 0): print "No known missing required input files"
-
-   pod_configs.append(pod_cfg)
 
 # ======================================================================
 # Check for programs that must exist (eg ncl)
@@ -204,68 +173,7 @@ for pod in pod_list: # list of pod names to do here
 # Check directories that must already exist
 # ======================================================================
 
-os.chdir(os.environ["WORKING_DIR"])
 
-# ======================================================================
-# set up html file
-# ======================================================================
-if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
-   print("WARNING: index.html exists, not re-creating.")
-else: 
-   html_dir = os.environ["DIAG_HOME"]+"/src/html/"
-   os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
-   os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
-
-# ======================================================================
-# Diagnostics:
-# ======================================================================
-
-# Diagnostic logic: call a piece of python code that: 
-#   (A) Calls NCL, python (or other languages) to generate plots (PS)
-#   (B) Converts plots to png
-#   (C) Adds plot links to HTML file
-
-pod_procs = []
-log_files = []
-for pod in pod_configs:
-   # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
-   # Each pod could have a settings files giving the name of its driver script and long name
-   pod_name = pod['settings']['pod_name']
-   if verbose > 0: print("--- MDTF.py Starting POD "+pod_name+"\n")
-
-   util.set_pod_env_vars(pod['settings'], config, verbose=verbose)
-   util.setup_pod_directories(pod_name)
-   command_str = pod['settings']['program']+" "+pod['settings']['driver']  
-   if config['envvars']['test_mode']:
-      print("TEST mode: would call :  "+command_str)
-   else:
-      start_time = timeit.default_timer()
-      log = open(os.environ["WK_DIR"]+"/"+pod_name+".log", 'w')
-      log_files.append(log)   
-      try:
-         print("Calling :  "+command_str) # This is where the POD is called #
-         print('Will run in conda env: '+pod['settings']['conda_env'])
-         # Details on this invocation: Need to run bash explicitly because 
-         # 'conda activate' sources env vars (can't do that in posix sh).
-         # tcsh would also work. Source conda_init.sh to set things that 
-         # aren't set b/c we aren't in an interactive shell. '&&' so we abort 
-         # and don't try to run the POD if 'conda activate' fails.
-         proc = subprocess.Popen([
-            'bash', '-c',
-            'source '+os.environ['DIAG_HOME']+'/src/conda_init.sh' \
-            + ' && conda activate '+pod['settings']['conda_env'] \
-            + ' && ' + command_str],
-            env=os.environ, stdout=log, stderr=subprocess.STDOUT)
-         pod_procs.append(proc)
-      except OSError as e:
-         print('ERROR :',e.errno,e.strerror)
-         print(errstr + " occured with call: " +command_str)
-
-for proc in pod_procs:
-   proc.wait()
-
-for log in log_files:
-   log.close
 
 for pod in pod_configs:
    # shouldn't need to re-set env vars, but used by 
@@ -277,44 +185,11 @@ for pod in pod_configs:
    util.convert_pod_figures(pod_name)
    util.cleanup_pod_files(pod_name)
 
-if verbose > 0: 
-   print("---  MDTF.py Finished POD "+pod_name+"\n")
-   # elapsed = timeit.default_timer() - start_time
-   # print(pod+" Elapsed time ",elapsed)
 
 
-# ======================================================================
-# Record settings in file variab_dir/config_save.yml for rerunning
-#=======================================================================
-out_file = os.environ["variab_dir"]+'/config_save.yml'
-if os.path.isfile(out_file):
-   out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
-   if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
-   shutil.move(out_file,out_fileold)
-file_object = open(out_file,'w')  #create it
-yaml.dump(config, file_object)
-file_object.close() 
 
 
-# ==================================================================================================
-#  Make tar file
-# ==================================================================================================
-if ( ( os.environ["make_variab_tar"] == "0" ) ):
-   print "Not making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
-else:
-   print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
-   if os.path.isfile( os.environ["variab_dir"]+".tar" ):
-      print "Moving existing "+os.environ["variab_dir"]+".tar to "+os.environ["variab_dir"]+".tar_old"
-      os.system("mv -f "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"]+".tar_old")
-      os.chdir(os.environ["WORKING_DIR"])
 
-   print "Creating "+os.environ["variab_dir"]+".tar "
-   status = os.system(
-      "tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf " + variab_dir + ".tar " + variab_dir)
-   if not status == 0:
-      print("ERROR $0")
-      print("trying to do:     tar -cf "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"])
-      exit()
 
 print "Exiting normally from ",__file__
 exit()

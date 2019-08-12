@@ -2,7 +2,18 @@
 
 import os
 import sys
+import yaml
 
+def read_mdtf_config_file(namelist_file, verbose=0):
+   assert(os.path.exists(namelist_file)), "Input file does not exist "+str(namelist_file)
+
+   file_object = open(namelist_file, 'r')
+   file_contents = yaml.safe_load(file_object)
+   file_object.close()
+
+   if (verbose > 1):
+      print yaml.dump(file_contents)  #print it to stdout 
+   return file_contents
 
 def get_available_programs(verbose=0):
    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
@@ -58,4 +69,41 @@ def translate_varname(varname_in,verbose=0):
    return varname
 
 
+def check_required_envvar(verbose=0,*varlist):
+   varlist = varlist[0]   #unpack tuple
+   for n in range(len(varlist)):
+      if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
+      try:
+         test = os.environ[varlist[n]]
+      except:
+         print "ERROR: Required environment variable ",varlist[n]," not found "
+         print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
+         exit()
+
+
+def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
+   # arguments can be envvar name or just the paths
+   filestr = __file__+":check_required_dirs: "
+   errstr = "ERROR "+filestr
+   if verbose > 1: filestr +" starting"
+   for dir_in in already_exist + create_if_nec : 
+      if verbose > 1: "\t looking at "+dir_in
+
+      if dir_in in os.environ:  
+         dir = os.environ[dir_in]
+      else:
+         if verbose>2: print(" envvar "+dir_in+" not defined")    
+         dir = dir_in
+
+      if not os.path.exists(dir):
+         if not dir_in in create_if_nec:
+            if (verbose>0): 
+               print errstr+dir_in+" = "+dir+" directory does not exist"
+               #print "         and not create_if_nec list: "+create_if_nec
+            exit()
+         else:
+            print(dir_in+" = "+dir+" created")
+            os.makedirs(dir)
+      else:
+         print("Found "+dir)
 

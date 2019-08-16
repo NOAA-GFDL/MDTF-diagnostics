@@ -54,11 +54,12 @@ class EnvironmentManager:
                 if (verbose > 0): print "No known missing required input files"
 
             pod.logfile_obj = open(os.path.join(os.environ["WK_DIR"], pod.name+".log"), 'w')
-            command_str = pod.program + ' ' + pod.driver
-            start_time = timeit.default_timer()
+
+            command_str = pod.run_command()            
             if config['envvars']['test_mode']:
-                print("TEST mode: would call :  "+command_str)
-                continue
+                command_str = 'echo "TEST MODE: would call {}"'.format(command_str)
+            
+            start_time = timeit.default_timer()
             try:
                 print("Calling :  "+command_str) # This is where the POD is called #
                 print('Will run in conda env: '+pod.conda_env)
@@ -71,6 +72,7 @@ class EnvironmentManager:
                     'bash', '-c',
                     'source '+os.environ['DIAG_HOME']+'/src/conda_init.sh' \
                     + ' && conda activate ' + pod.conda_env \
+                    + ' && ' + pod.validate_command() \
                     + ' && ' + command_str],
                     env=os.environ, stdout=pod.logfile_obj, stderr=subprocess.STDOUT)
             except OSError as e:

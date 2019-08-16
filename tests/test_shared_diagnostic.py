@@ -159,7 +159,6 @@ class TestDiagnosticSetUp(unittest.TestCase):
         'settings':{'driver':'C.ncl'}, 'varlist':[]
         })
     @mock.patch('os.path.exists', return_value = True)
-    @mock.patch('src.shared_diagnostic.find_executable', return_value = True) 
     def test_check_pod_driver_program(self, mock_find_executable, mock_exists, mock_read_yaml):
         # fill in absolute path and fill in program from driver's extension
         pod = Diagnostic('A')  
@@ -177,15 +176,15 @@ class TestDiagnosticSetUp(unittest.TestCase):
         pod = Diagnostic('A') 
         self.assertRaises(AssertionError, pod._check_pod_driver)
 
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{'driver':'C.ncl', 'program':'nonexistent_program'}, 'varlist':[]
-        })
-    @mock.patch('os.path.exists', return_value = True)
-    def test_check_pod_driver_no_program_2(self, mock_exists, mock_read_yaml):
-        # assertion fail if explicitly specified program not found
-        pod = Diagnostic('A') 
-        self.assertRaises(AssertionError, pod._check_pod_driver)
+    # @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    # @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+    #     'settings':{'driver':'C.ncl', 'program':'nonexistent_program'}, 'varlist':[]
+    #     })
+    # @mock.patch('os.path.exists', return_value = True)
+    # def test_check_pod_driver_no_program_2(self, mock_exists, mock_read_yaml):
+    #     # assertion fail if explicitly specified program not found
+    #     pod = Diagnostic('A') 
+    #     self.assertRaises(AssertionError, pod._check_pod_driver)
 
     # ---------------------------------------------------
 

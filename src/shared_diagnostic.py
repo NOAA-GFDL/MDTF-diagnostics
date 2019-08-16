@@ -2,7 +2,7 @@ import os
 import sys
 import glob
 import shutil
-from distutils.spawn import find_executable #determine if a program is on $PATH
+# from distutils.spawn import find_executable #determine if a program is on $PATH
 import util
 from util import setenv # TODO: fix
 
@@ -27,7 +27,8 @@ class Diagnostic(object):
         for str_attr in ['program', 'driver', 'long_name', 'description', 
             'conda_env']:
             d[str_attr] = ''
-        for list_attr in ['varlist', 'found_files', 'missing_files']:
+        for list_attr in ['varlist', 'found_files', 'missing_files',
+            'programs', 'py_modules', 'ncl_scripts', 'r_pkgs']:
             d[list_attr] = []
         for dict_attr in ['pod_env_vars']:
             d[dict_attr] = {}
@@ -72,7 +73,7 @@ class Diagnostic(object):
         self._setup_pod_directories()
 
         self._check_pod_driver(verbose)
-        var_files = self._check_for_varlist_files(verbose)
+        var_files = self._check_for_varlist_files(self.varlist, verbose)
         self.found_files = var_files['found_files']
         self.missing_files = var_files['missing_files']
 
@@ -149,11 +150,11 @@ class Diagnostic(object):
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
         errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name
-        assert(find_executable(self.program) is not None), errstr     
+        # assert(find_executable(self.program) is not None), errstr     
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         func_name = "\t \t check_for_varlist_files :"
-        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ",varlist
+        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
         found_list = []
         missing_list = []
         for item in varlist:
@@ -192,9 +193,19 @@ class Diagnostic(object):
 
     # -------------------------------------
 
-    def run(self):
-        # TODO: what to do with this? running handled by Environment
-        pass
+    def run_command(self):
+        return self.program + ' ' + self.driver
+    
+    def validate_command(self):
+        command = [
+            os.environ['DIAG_HOME']+'/src/validate_environment.sh',
+            ' -p '.join([''] + self.programs),
+            ' -z '.join([''] + self.pod_env_vars.keys()),
+            ' -a '.join([''] + self.py_modules),
+            ' -b '.join([''] + self.ncl_scripts),
+            ' -c '.join([''] + self.r_pkgs)
+        ]
+        return ''.join(command)
 
     # -------------------------------------
 

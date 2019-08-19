@@ -4,26 +4,25 @@ import glob
 import shutil
 import util
 from util import setenv # fix
+from shared_diagnostic import Diagnostic
 
 class Model:
     # analogue of TestFixture in xUnit
-    def __init__(self, model_name):
-        self.model_name = model_name
-        # this is wrong place for this method - don't want multiple copies of this data
-        self.model_dict = self._read_model_varnames()
-
-    def _read_model_varnames(self, verbose=0):
-        model_dict = {}
-        config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
-        for filename in config_files:
-            file_contents = util.read_yaml(filename)
-
-            if type(file_contents['model_name']) is str:
-                file_contents['model_name'] = [file_contents['model_name']]
-            for model in file_contents['model_name']:
-                if verbose > 0: print "found model "+ model
-                model_dict[model] = file_contents['var_names']
-        return model_dict
+    def __init__(self, case, config, verbose=0):
+        self.case_name = case['CASENAME']
+        self.model_name = case['model']
+        self.pods = []
+        if 'pod_list' in case:
+            pod_list = case['pod_list'] # run a set of PODs specific to this model
+        else:
+            pod_list = config['pod_list'] # use global list of PODs      
+        for pod_name in pod_list:
+            try:
+                pod = Diagnostic(pod_name, self.model_name)
+            except AssertionError as error:  
+                print str(error)
+            if verbose > 0: print "POD long name: ", pod.long_name
+            self.pods.append(pod)
 
     # -------------------------------------
 
@@ -49,16 +48,11 @@ class Model:
             verbose=verbose)
 
     def _set_model_env_vars(self, model_name):
+        translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
-        if model_name in self.model_dict:
-            for key, val in self.model_dict[model_name].items():
-                os.environ[key] = str(val)
-        else:
-            print "ERROR: model ", model_name," Not Found"
-            print "      This is set in namelist "
-            print "      CASE case-name *model* start-year end-year"
-            quit()
+        for key, val in translate.model_dict[model_name].items():
+            os.environ[key] = str(val)
 
     def _setup_html(self):
         if os.path.isfile(os.environ["variab_dir"]+"/index.html"):

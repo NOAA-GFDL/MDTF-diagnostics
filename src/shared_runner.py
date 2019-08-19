@@ -45,7 +45,7 @@ class DiagnosticRunner:
         # parse caselist - foreach model init data, and call prefetch to (possibly) download data
         # for case in caselist:
         case = caselist[0]
-        model = Model(case['model'])
+        model = Model(case, config)
         model.prefetchData()
         model.setUp(config)
         self.models.append(model)
@@ -56,10 +56,12 @@ class DiagnosticRunner:
     def run(self, config):
         # foreach model call in-loop setup
         # for case in caselist:
-        env = CondaEnvironmentManager(config)
-        env.setUp()
-        env.run(config)
-        env.tearDown()
+        for model in self.models:
+            env = CondaEnvironmentManager(config)
+            env.pods = model.pods # best way to do this?
+            env.setUp()
+            env.run()
+            env.tearDown()
 
     # -------------------------------------
 

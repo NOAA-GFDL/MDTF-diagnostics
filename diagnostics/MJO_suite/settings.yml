@@ -3,7 +3,8 @@ settings:
   driver: MJO_suite.py
   long_name: MJO diagnostics suite (from AMWG variability diagnostic package)
   description: MJO CLIVAR suite (NCAR) 
-  conda_env: NCL
+  required_programs: ['python', 'ncl']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm', 'shea_util', 'diagnostics_cam']
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

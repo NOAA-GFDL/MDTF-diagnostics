@@ -9,7 +9,8 @@ settings:
   driver: MJO_prop_amp.py
   long_name: MJO propagation and amplitude in GCMs
   description: Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)
-  conda_env: NCL
+  required_programs: ['python', 'ncl']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm']
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

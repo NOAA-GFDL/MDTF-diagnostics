@@ -89,7 +89,7 @@ else:
 
 print "==== Starting "+__file__
 try:
-    config = util.read_mdtf_config_file(args.config_file, verbose=verbose)
+    config = util.read_yaml(args.config_file)
 except Exception as error:
     print error
     exit()

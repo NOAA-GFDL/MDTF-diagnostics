@@ -1,10 +1,24 @@
 #! /usr/bin/env bash
+# Script that determines whether POD's requested (non-data) dependencies are 
+# present in the current environment. This is called in a subprocess by the 
+# run() method of EnvironmentManager. Exit normally if everything is found, 
+# otherwise exit with code 1 which aborts the subprocess. 
+# It's hacky to do this in a shell script, but didn't want to assume the 
+# current environment has python, etc.
 set -Eeuo pipefail
 
-while getopts "p:a:b:c:z:" opt; do
+verbose=false
+
+while getopts "vp:a:b:c:z:" opt; do
     case $opt in
+        v) # verbose mode: print successfully found dependencies
+            verbose=true
+        ;;
         p) # look for command-line program
             if command -v ${OPTARG} > /dev/null 2>&1; then
+                if [ "$verbose" = true ]; then
+                    echo "Found program ${OPTARG}."
+                fi
                 continue
             else
                 echo "Fatal error: couldn't find program ${OPTARG}."
@@ -12,7 +26,10 @@ while getopts "p:a:b:c:z:" opt; do
             fi
         ;;
         z) # look for environment variable
-            if [ -z ${OPTARG} ]; then
+            if [ ! -z ${OPTARG} ]; then
+                if [ "$verbose" = true ]; then
+                    echo "Environment variable ${OPTARG} is defined."
+                fi
                 continue
             else
                 echo "Fatal error: Environment variable ${OPTARG} undefined."
@@ -23,6 +40,9 @@ while getopts "p:a:b:c:z:" opt; do
            # tail -n necessary to avoid getting broken pipe errors?
            # also can't figure out how to disable pip's python2.7 warning
             if pip list --no-color --disable-pip-version-check | tail -n +1 | grep -qF ${OPTARG}; then
+                if [ "$verbose" = true ]; then
+                    echo "pip list found python module ${OPTARG}."
+                fi
                 continue
             else
                 echo "Fatal error: couldn't find python module ${OPTARG}."
@@ -30,12 +50,16 @@ while getopts "p:a:b:c:z:" opt; do
             fi
         ;;
         b) # look for NCL script
-            if [ -z "$NCARG_ROOT" && -d "$NCARG_ROOT/lib/ncarg/nclscripts" ]; then
-                if find $NCARG_ROOT/lib/ncarg/nclscripts -name ${OPTARG}; then
+            if [ ! -z "$NCARG_ROOT" ] && [ -d "$NCARG_ROOT/lib/ncarg/nclscripts" ]; then
+                if find $NCARG_ROOT/lib/ncarg/nclscripts -name ${OPTARG}.ncl -exec true {} +; then
+                    if [ "$verbose" = true ]; then
+                        echo "Found ${OPTARG}.ncl in $NCARG_ROOT/lib/ncarg/nclscripts."
+                    fi
                     continue
                 else
                     echo "Fatal error: couldn't find NCL script ${OPTARG}."
                     exit 1
+                fi
             else
                 echo "Fatal error: Couldn't find NCL installation directory."
                 exit 1
@@ -43,6 +67,9 @@ while getopts "p:a:b:c:z:" opt; do
         ;;
         c) #look for R package
             if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' | grep -qF ${OPTARG}; then
+                if [ "$verbose" = true ]; then
+                    echo "Found R package ${OPTARG}."
+                fi
                 continue
             else
                 echo "Fatal error: couldn't find R package ${OPTARG}."

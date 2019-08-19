@@ -13,7 +13,9 @@ settings:
   description: >
     MJO Teleconnections Diagnostics, 
     see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017 
-  conda_env: NCL
+  required_programs: ['python', 'ncl']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm', 'shea_util', 'diagnostics_cam']
+
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

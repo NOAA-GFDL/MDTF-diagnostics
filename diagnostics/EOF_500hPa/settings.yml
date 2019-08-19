@@ -8,7 +8,9 @@ settings:
   driver: EOF_500hPa.py
   long_name: EOF of geopotential height anomalies of 500 hPa
   description: EOF of geopotential height anomalies for 500 hPa
-  conda_env: NCL
+  required_programs: ['python', 'ncl']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm']
+
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

@@ -6,7 +6,7 @@ import yaml
 import util
 from util import setenv # fix
 from shared_model import Model
-from shared_environment import EnvironmentManager
+from shared_environment import CondaEnvironmentManager
 
 class DiagnosticRunner:
     # analogue of TestRunner in xUnit
@@ -56,7 +56,7 @@ class DiagnosticRunner:
     def run(self, config):
         # foreach model call in-loop setup
         # for case in caselist:
-        env = EnvironmentManager(config)
+        env = CondaEnvironmentManager(config)
         env.setUp()
         env.run(config)
         env.tearDown()

@@ -32,12 +32,13 @@ class EnvironmentManager(object):
                 print str(error)
             if verbose > 0: print "POD long name: ", pod.long_name
             self.pods.append(pod)
+        self.envs = set()
 
     # -------------------------------------
     # following are specific details that must be implemented in child class 
 
     @abstractmethod
-    def create_environment(self):
+    def create_environment(self, env_name):
         pass 
 
     @abstractmethod
@@ -53,8 +54,17 @@ class EnvironmentManager(object):
         pass 
 
     @abstractmethod
-    def destroy_environment(self):
+    def destroy_environment(self, env_name):
         pass 
+
+    # -------------------------------------
+
+    def setUp(self):
+        for pod in self.pods:
+            self.set_pod_env(pod)
+            self.envs.add(pod.env)
+        for env in self.envs:
+            self.create_environment(env)
 
     # -------------------------------------
 
@@ -112,15 +122,16 @@ class EnvironmentManager(object):
         # call diag's tearDown to clean up
         for pod in self.pods:
             pod.tearDown()
-        self.destroy_environment()
+        for env in self.envs:
+            self.destroy_environment(env)
 
 
 class UnmanagedEnvironment(EnvironmentManager):
     # Do not attempt to switch execution environments for each POD.
-    def create_environment(self):
+    def create_environment(self, env_name):
         pass 
     
-    def destroy_environment(self):
+    def destroy_environment(self, env_name):
         pass 
 
     def set_pod_env(self, pod):
@@ -135,14 +146,14 @@ class UnmanagedEnvironment(EnvironmentManager):
 
 class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
-    def create_environment(self):
+    def create_environment(self, env_name):
         pass 
 
-    def destroy_environment(self):
+    def destroy_environment(self, env_name):
         pass 
 
     def set_pod_env(self, pod):
-        keys = [s.lower() for s in pod.programs]
+        keys = [s.lower() for s in pod.required_programs]
         if ('r' in keys) or ('rscript' in keys):
             pod.env = '_MDTF-diagnostics-R'
         elif 'ncl' in keys:

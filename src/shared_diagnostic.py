@@ -25,10 +25,11 @@ class Diagnostic(object):
         d['pod_name'] = self.name # redundant
         # define empty defaults to avoid having to test existence of attrs
         for str_attr in ['program', 'driver', 'long_name', 'description', 
-            'conda_env']:
+            'env', 'conda_env']:
             d[str_attr] = ''
         for list_attr in ['varlist', 'found_files', 'missing_files',
-            'programs', 'py_modules', 'ncl_scripts', 'r_pkgs']:
+            'required_programs', 'required_python_modules', 
+            'required_ncl_scripts', 'required_r_packages']:
             d[list_attr] = []
         for dict_attr in ['pod_env_vars']:
             d[dict_attr] = {}
@@ -37,10 +38,11 @@ class Diagnostic(object):
 
         # overwrite with contents of settings.yaml file
         d.update(settings)
-        if d['conda_env'] == '':
-            d['conda_env'] = '_MDTF-diagnostics'
-        elif not d['conda_env'].startswith('_MDTF-diagnostics'):
-            d['conda_env'] = '-'.join(['_MDTF-diagnostics', d['conda_env']])
+
+        for list_attr in ['required_programs', 'required_python_modules', 
+            'required_ncl_scripts', 'required_r_packages']:
+            if type(d[list_attr]) != list:
+                d[list_attr] = [d[list_attr]]
         if (verbose > 0): 
             print self.name + " settings: "
             print d
@@ -76,6 +78,11 @@ class Diagnostic(object):
         var_files = self._check_for_varlist_files(self.varlist, verbose)
         self.found_files = var_files['found_files']
         self.missing_files = var_files['missing_files']
+        if self.missing_files != []:
+            print "WARNING: POD ",self.name," missing required input files:"
+            print self.missing_files
+        else:
+            if (verbose > 0): print "No known missing required input files"
 
     def _set_pod_env_vars(self, verbose=0):
         pod_envvars = {}
@@ -198,12 +205,12 @@ class Diagnostic(object):
     
     def validate_command(self):
         command = [
-            os.environ['DIAG_HOME']+'/src/validate_environment.sh',
-            ' -p '.join([''] + self.programs),
+            os.environ['DIAG_HOME']+'/src/validate_environment.sh -v',
+            ' -p '.join([''] + self.required_programs),
             ' -z '.join([''] + self.pod_env_vars.keys()),
-            ' -a '.join([''] + self.py_modules),
-            ' -b '.join([''] + self.ncl_scripts),
-            ' -c '.join([''] + self.r_pkgs)
+            ' -a '.join([''] + self.required_python_modules),
+            ' -b '.join([''] + self.required_ncl_scripts),
+            ' -c '.join([''] + self.required_r_packages)
         ]
         return ''.join(command)
 

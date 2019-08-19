@@ -9,7 +9,8 @@ settings:
   driver: precip_diurnal_cycle.py
   long_name: Diurnal cycle of precipitation 
   description: Diurnal Cycle of Precipitation
-  conda_env: NCL
+  required_programs: ['python', 'ncl']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm', 'shea_util']
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

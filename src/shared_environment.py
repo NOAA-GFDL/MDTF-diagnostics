@@ -146,8 +146,46 @@ class UnmanagedEnvironment(EnvironmentManager):
 
 class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
+
     def create_environment(self, env_name):
-        pass 
+        # check to see if conda env exists, and if not, try to create it
+        test = subprocess.call(
+            'conda env list | grep -qF "{} "'.format(env_name), shell=True
+        )
+        if test != 0:
+            print 'Conda env {} not found; creating it'
+            self._call_conda_create(env_name)
+
+    def _call_conda_create(self, env_name):
+        prefix = '_MDTF-diagnostics'
+        if env_name == prefix:
+            env_name = 'base'
+        else:
+            env_name = env_name[(len(prefix)+1):]
+        path = '{}/src/conda_env_{}.yml'.format(os.environ['DIAG_HOME'], env_name)
+        if not os.path.exists(path):
+            print "Can't find {}".format(path)
+        else:
+            print 'Creating conda env from {}'.format(path)
+        
+        commands = 'source {}/src/conda_init.sh && conda env create --force -q -f {}'.format(
+            os.environ['DIAG_HOME'], path
+        )
+        try: 
+            subprocess.Popen(['bash', '-c', commands])
+        except OSError as e:
+            print('ERROR :',e.errno,e.strerror)
+
+    def create_all_environments(self):
+        envs_to_create = glob.glob('{}/src/conda_env_*.yml'.format(os.environ['DIAG_HOME']))
+        envs_to_create = ['echo Creating conda env from '+env+'\n' \
+                +'conda env create --force -q -f '+ env for env in envs_to_create]
+        command_str = '\n'.join(envs_to_create)
+        command_str = 'source {}/src/conda_init.sh\n'.format(os.environ['DIAG_HOME']) \
+            + command_str
+        process = subprocess.Popen('/usr/bin/env bash', 
+            stdin=subprocess.PIPE, shell=True)
+        process.communicate(command_str)
 
     def destroy_environment(self, env_name):
         pass 

@@ -58,8 +58,8 @@ import sys
 import argparse
 import util
 from shared_runner import DiagnosticRunner
-from shared_model import Model
-from shared_environment import CondaEnvironmentManager
+from data_manager import DataManager
+from environment_manager import CondaEnvironmentManager
 from shared_diagnostic import Diagnostic
 
 
@@ -98,7 +98,7 @@ except Exception as error:
     exit()
 
 runner = DiagnosticRunner(args, config,
-    model=Model, environment=CondaEnvironmentManager, diagnostic=Diagnostic)
+    data_mgr=DataManager, environment_mgr=CondaEnvironmentManager, diagnostic=Diagnostic)
 runner.setUp(config, config['case_list'])
 runner.run(config)
 runner.tearDown(config)

@@ -5,7 +5,7 @@ import shutil
 import util
 from util import setenv # fix
 
-class Model:
+class DataManager:
     # analogue of TestFixture in xUnit
     def __init__(self, case, config, verbose=0):
         self.case_name = case['CASENAME']

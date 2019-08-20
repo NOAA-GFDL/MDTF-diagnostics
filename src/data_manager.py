@@ -58,6 +58,7 @@ class DataManager(object):
         translate = util.VariableTranslator()
         self.data_to_fetch = []
         for pod in self.pods:
+            pod.model = self.model_name
             for idx, var in enumerate(pod.varlist):
                 pod.varlist[idx]['name_in_model'] = translate.fromCF(self.model_name, var['var_name'])
             for var in pod.varlist:

@@ -9,9 +9,8 @@ from util import setenv # TODO: fix
 class Diagnostic(object):
     # analogue of TestCase in xUnit
 
-    def __init__(self, pod_name, model_name, verbose=0):
+    def __init__(self, pod_name, verbose=0):
         self.name = pod_name
-        self.model = model_name
         self.dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', self.name)
         # assert(os.path.isdir(pod_dir))
         file_contents = util.read_yaml(os.path.join(self.dir, 'settings.yml'))

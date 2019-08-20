@@ -21,7 +21,7 @@ class TestDiagnosticInit(unittest.TestCase):
     # @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
     #     'settings':{'conda_env':'B'},'varlist':[]})
     # def test_parse_pod_settings_conda_env(self, mock_read_yaml):
-    #     # fill in conda environment
+    #     # fill in conda environment 
     #     pod = Diagnostic('A')
     #     self.assertEqual(pod.conda_env, '_MDTF-diagnostics-B')
 

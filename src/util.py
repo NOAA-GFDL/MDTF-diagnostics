@@ -95,7 +95,7 @@ class BiDict(dict):
         super(BiDict, self).__delitem__(key)    
 
 class VariableTranslator(Singleton):
-    def __init__(self, verbose=0):
+    def __init__(self, verbose=1):
         self.model_dict = {}
         config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
         for filename in config_files:
@@ -108,7 +108,11 @@ class VariableTranslator(Singleton):
                 self.model_dict[model] = BiDict(file_contents['var_names'])
 
     def toCF(self, model, varname_in):
-        return self.model_dict[model].inverse[varname_in]
+        temp = self.model_dict[model].inverse[varname_in]
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
     
     def fromCF(self, model, varname_in):
         return self.model_dict[model][varname_in]

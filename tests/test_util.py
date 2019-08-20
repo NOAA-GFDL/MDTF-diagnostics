@@ -20,91 +20,155 @@ class TestUtil(unittest.TestCase):
 
 # ---------------------------------------------------
     
+    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
     def test_setenv_overwrite(self):
-        with mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'}):
-            test_d = {'TEST_OVERWRITE': 'A'}
-            util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
-            self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
-            self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
+        test_d = {'TEST_OVERWRITE': 'A'}
+        util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
+        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
+        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
 
+    @mock.patch.dict('os.environ', {})
     def test_setenv_str(self):
-        with mock.patch.dict('os.environ', {}):
-            test_d = {}
-            util.setenv('TEST_STR','B', test_d)
-            self.assertEqual(test_d['TEST_STR'], 'B')
-            self.assertEqual(os.environ['TEST_STR'], 'B')
+        test_d = {}
+        util.setenv('TEST_STR','B', test_d)
+        self.assertEqual(test_d['TEST_STR'], 'B')
+        self.assertEqual(os.environ['TEST_STR'], 'B')
 
+    @mock.patch.dict('os.environ', {})
     def test_setenv_int(self):
-        with mock.patch.dict('os.environ', {}):
-            test_d = {}        
-            util.setenv('TEST_INT',2019, test_d)
-            self.assertEqual(test_d['TEST_INT'], 2019)
-            self.assertEqual(os.environ['TEST_INT'], '2019')
+        test_d = {}        
+        util.setenv('TEST_INT',2019, test_d)
+        self.assertEqual(test_d['TEST_INT'], 2019)
+        self.assertEqual(os.environ['TEST_INT'], '2019')
 
+    @mock.patch.dict('os.environ', {})
     def test_setenv_bool(self):
-        with mock.patch.dict('os.environ', {}):
-            test_d = {}
-            util.setenv('TEST_TRUE',True, test_d)
-            self.assertEqual(test_d['TEST_TRUE'], True)
-            self.assertEqual(os.environ['TEST_TRUE'], '1')
+        test_d = {}
+        util.setenv('TEST_TRUE',True, test_d)
+        self.assertEqual(test_d['TEST_TRUE'], True)
+        self.assertEqual(os.environ['TEST_TRUE'], '1')
 
-            util.setenv('TEST_FALSE',False, test_d)
-            self.assertEqual(test_d['TEST_FALSE'], False)
-            self.assertEqual(os.environ['TEST_FALSE'], '0')
+        util.setenv('TEST_FALSE',False, test_d)
+        self.assertEqual(test_d['TEST_FALSE'], False)
+        self.assertEqual(os.environ['TEST_FALSE'], '0')
 
 # ---------------------------------------------------
 
-    def test_translate_varname(self):
-        with mock.patch.dict('os.environ', {'pr_var': 'PRECT'}):
-            self.assertEqual(util.translate_varname('pr_var'), 'PRECT')
-            self.assertEqual(util.translate_varname('nonexistent_var'), 'nonexistent_var')
+    def test_singleton(self):
+        # Can only be instantiated once
+        class Temp(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp()
+        temp2 = Temp()
+        temp1.foo = 5
+        self.assertEqual(temp2.foo, 5)
+
+    def test_bidict_inverse(self):
+        # test inverse map
+        temp = util.BiDict({'a':1, 'b':2})
+        self.assertIn(1, temp.inverse)
+        self.assertEqual(temp.inverse[2],['b'])
+
+    def test_bidict_setitem(self):
+        # test key addition and handling of duplicate values
+        temp = util.BiDict({'a':1, 'b':2})
+        temp['c'] = 1           
+        self.assertIn(1, temp.inverse)
+        self.assertItemsEqual(temp.inverse[1],['a','c'])
+        temp['b'] = 3
+        self.assertIn(2, temp.inverse)
+        self.assertEqual(temp.inverse[2],[])
+
+    def test_bidict_delitem(self):
+        # test item deletion
+        temp = util.BiDict({'a':1, 'b':2})
+        del temp['b']
+        self.assertNotIn(2, temp.inverse)
+
+    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    @mock.patch('glob.glob', return_value = [''])
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'model_name':'A','var_names':{'B':'D'}})
+    def test_read_model_varnames(self, mock_safe_load, mock_glob):
+        # normal operation - convert string to list
+        temp = util.VariableTranslator()
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+
+    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    @mock.patch('glob.glob', return_value = [''])
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'model_name':['A','C'],'var_names':{'B':'D'}})
+    def test_read_model_varnames_multiple(self, mock_safe_load, mock_glob):
+        # create multiple entries when multiple models specified
+        temp = util.VariableTranslator()
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+        self.assertEqual(temp.fromCF('C','B'), 'D')
+
+    def test_variabletranslator(self):
+        # bypass __init__ method:
+        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
+        temp.model_dict = {}
+        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
+        self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
+
+    def test_variabletranslator_no_key(self):
+        # bypass __init__ method:
+        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
+        temp.model_dict = {}
+        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        self.assertRaises(KeyError, temp.toCF, 'B', 'PRECT')
+        self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.fromCF, 'B', 'PRECT')
+        self.assertRaises(KeyError, temp.fromCF, 'A', 'nonexistent_var')
 
 # ---------------------------------------------------
 
     os_environ_check_required_envvar = {'A':'B', 'C':'D'}
 
+    @mock.patch.dict('os.environ', os_environ_check_required_envvar)
     def test_check_required_envvar_found(self):
         # exit function normally if all variables found
-        with mock.patch.dict('os.environ', self.os_environ_check_required_envvar):
-            try:
-                util.check_required_envvar('A', 'C')
-            except SystemExit:
-                self.fail()
+        try:
+            util.check_required_envvar('A', 'C')
+        except SystemExit:
+            self.fail()
 
+    @mock.patch.dict('os.environ', os_environ_check_required_envvar)
     def test_check_required_envvar_not_found(self):
         # try to exit() if any variables not found
-        with mock.patch.dict('os.environ', self.os_environ_check_required_envvar):
-            self.assertRaises(SystemExit, util.check_required_envvar, 'A', 'E')
+        self.assertRaises(SystemExit, util.check_required_envvar, 'A', 'E')
 
 # ---------------------------------------------------
 
-    def test_check_required_dirs_found(self):
-        # exit function normally if all directories found
-        with mock.patch('os.path.exists', return_value = True):
-            with mock.patch('os.makedirs') as mock_makedirs:    
-                try:
-                    util.check_required_dirs(['DIR1'], [])
-                    util.check_required_dirs([], ['DIR2'])
-                except SystemExit:
-                    self.fail()
-                mock_makedirs.assert_not_called()
+    @mock.patch('os.path.exists', return_value = True)
+    @mock.patch('os.makedirs')
+    def test_check_required_dirs_found(self, mock_makedirs, mock_exists):
+        # exit function normally if all directories found 
+        try:
+            util.check_required_dirs(['DIR1'], [])
+            util.check_required_dirs([], ['DIR2'])
+        except SystemExit:
+            self.fail()
+        mock_makedirs.assert_not_called()
  
-    def test_check_required_dirs_not_found(self):
+    @mock.patch('os.path.exists', return_value = False)
+    @mock.patch('os.makedirs')
+    def test_check_required_dirs_not_found(self, mock_makedirs, mock_exists):
         # try to exit() if any directories not found
-        with mock.patch('os.path.exists', return_value = False):
-            with mock.patch('os.makedirs') as mock_makedirs:    
-                self.assertRaises(SystemExit, util.check_required_dirs, ['DIR1XXX'], [])
-                mock_makedirs.assert_not_called()
+        self.assertRaises(SystemExit, util.check_required_dirs, ['DIR1XXX'], [])
+        mock_makedirs.assert_not_called()
 
-    def test_check_required_dirs_not_found_created(self):      
-        # don't exit() and call os.makedirs if in create_if_nec
-        with mock.patch('os.path.exists', return_value = False):
-            with mock.patch('os.makedirs') as mock_makedirs:              
-                try:
-                    util.check_required_dirs([], ['DIR2'])
-                except SystemExit:
-                    self.fail()
-                mock_makedirs.assert_called_once_with('DIR2')
+    @mock.patch('os.path.exists', return_value = False)
+    @mock.patch('os.makedirs')
+    def test_check_required_dirs_not_found_created(self, mock_makedirs, mock_exists):      
+        # don't exit() and call os.makedirs if in create_if_nec          
+        try:
+            util.check_required_dirs([], ['DIR2'])
+        except SystemExit:
+            self.fail()
+        mock_makedirs.assert_called_once_with('DIR2')
 
 # ---------------------------------------------------
 

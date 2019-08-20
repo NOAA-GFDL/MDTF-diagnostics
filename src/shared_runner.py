@@ -54,7 +54,7 @@ class DiagnosticRunner(object):
                 pod_list = config['pod_list'] # use global list of PODs      
             for pod_name in pod_list:
                 try:
-                    pod = self.Diagnostic(pod_name, case.model_name)
+                    pod = self.Diagnostic(pod_name)
                 except AssertionError as error:  
                     print str(error)
                 if verbose > 0: print "POD long name: ", pod.long_name

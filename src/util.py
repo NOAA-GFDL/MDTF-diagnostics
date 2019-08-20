@@ -2,7 +2,9 @@
 
 import os
 import sys
+import glob
 import yaml
+
 
 def read_yaml(file_path, verbose=0):
     # wrapper to load config files
@@ -58,19 +60,58 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
         if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
     if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
 
+# Singleton pattern parent class
+# Compatible with both python 2 and 3
+# https://stackoverflow.com/a/6798042
+class _Singleton(type):
+    """ A metaclass that creates a Singleton base class when called. """
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
-def translate_varname(varname_in,verbose=0):
-    func_name = " translate_varname "
-    if ( verbose > 2): print func_name+" read in varname: ",varname_in
-    if ( varname_in in os.environ ):
-        varname = os.environ[varname_in]  #gets variable name as imported by set_variables_$modeltype.py
-        if ( verbose > 1): print func_name+" found varname: ",varname
-    else: 
-        varname = varname_in
-        if ( verbose > 1): print func_name+"WARNING: didn't find ",varname, " in environment vars, not substituting"
-        #      print "To do: Modify read_files.main to accept argument of model type and import"
-    if ( verbose > 2): print func_name + "returning ",varname
-    return varname
+class Singleton(_Singleton('SingletonMeta', (object,), {})): pass
+
+# Dict that permits lookups from either keys or values
+# https://stackoverflow.com/a/21894086
+class BiDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(BiDict, self).__init__(*args, **kwargs)
+        self.inverse = {}
+        for key, value in self.items():
+            self.inverse.setdefault(value,[]).append(key) 
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.inverse[self[key]].remove(key) 
+        super(BiDict, self).__setitem__(key, value)
+        self.inverse.setdefault(value,[]).append(key)        
+
+    def __delitem__(self, key):
+        self.inverse.setdefault(self[key],[]).remove(key)
+        if self[key] in self.inverse and not self.inverse[self[key]]: 
+            del self.inverse[self[key]]
+        super(BiDict, self).__delitem__(key)    
+
+class VariableTranslator(Singleton):
+    def __init__(self, verbose=0):
+        self.model_dict = {}
+        config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
+        for filename in config_files:
+            file_contents = read_yaml(filename)
+
+            if type(file_contents['model_name']) is str:
+                file_contents['model_name'] = [file_contents['model_name']]
+            for model in file_contents['model_name']:
+                if verbose > 0: print "found model "+ model
+                self.model_dict[model] = BiDict(file_contents['var_names'])
+
+    def toCF(self, model, varname_in):
+        return self.model_dict[model].inverse[varname_in]
+    
+    def fromCF(self, model, varname_in):
+        return self.model_dict[model][varname_in]
 
 
 def check_required_envvar(verbose=0,*varlist):

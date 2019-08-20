@@ -19,19 +19,8 @@ class EnvironmentManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, config, verbose=0):
-        if 'pod_list' in config['case_list'][0]:
-            # run a set of PODs specific to this model
-            pod_list = config['case_list'][0]['pod_list']
-        else:
-            pod_list = config['pod_list'] # use global list of PODs
+        self.test_mode = config['envvars']['test_mode']
         self.pods = []
-        for pod_name in pod_list: # list of pod names to do here
-            try:
-                pod = Diagnostic(pod_name)
-            except AssertionError as error:  
-                print str(error)
-            if verbose > 0: print "POD long name: ", pod.long_name
-            self.pods.append(pod)
         self.envs = set()
 
     # -------------------------------------
@@ -68,7 +57,7 @@ class EnvironmentManager(object):
 
     # -------------------------------------
 
-    def run(self, config, verbose=0):
+    def run(self, verbose=0):
         os.chdir(os.environ["WORKING_DIR"])
 
         for pod in self.pods:
@@ -84,7 +73,7 @@ class EnvironmentManager(object):
             pod.logfile_obj = open(os.path.join(os.environ["WK_DIR"], pod.name+".log"), 'w')
 
             run_command = pod.run_command()          
-            if config['envvars']['test_mode']:
+            if self.test_mode:
                 run_command = 'echo "TEST MODE: would call {}"'.format(run_command)
             commands = [
                 self.activate_env_command(pod), pod.validate_command(), 

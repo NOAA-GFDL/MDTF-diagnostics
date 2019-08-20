@@ -44,7 +44,7 @@ setup(
             'Programming Language :: Python :: 2.7'
     ],
     scripts=[
-        'mdtf.py'
+        'src/mdtf-local.py'
     ],
     packages=packages,
     cmdclass={ # hook for post-install commands

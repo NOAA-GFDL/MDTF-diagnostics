@@ -58,6 +58,9 @@ import sys
 import argparse
 import util
 from shared_runner import DiagnosticRunner
+from shared_model import Model
+from shared_environment import CondaEnvironmentManager
+from shared_diagnostic import Diagnostic
 
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
@@ -94,7 +97,8 @@ except Exception as error:
     print error
     exit()
 
-runner = DiagnosticRunner(args, config)
+runner = DiagnosticRunner(args, config,
+    model=Model, environment=CondaEnvironmentManager, diagnostic=Diagnostic)
 runner.setUp(config, config['case_list'])
 runner.run(config)
 runner.tearDown(config)

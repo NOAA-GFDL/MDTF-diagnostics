@@ -12,7 +12,6 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import util
-from shared_diagnostic import Diagnostic
 
 class EnvironmentManager(object):
     # analogue of TestSuite in xUnit - abstract base class

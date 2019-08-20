@@ -4,7 +4,6 @@ import glob
 import shutil
 import util
 from util import setenv # fix
-from shared_diagnostic import Diagnostic
 
 class Model:
     # analogue of TestFixture in xUnit
@@ -12,17 +11,6 @@ class Model:
         self.case_name = case['CASENAME']
         self.model_name = case['model']
         self.pods = []
-        if 'pod_list' in case:
-            pod_list = case['pod_list'] # run a set of PODs specific to this model
-        else:
-            pod_list = config['pod_list'] # use global list of PODs      
-        for pod_name in pod_list:
-            try:
-                pod = Diagnostic(pod_name, self.model_name)
-            except AssertionError as error:  
-                print str(error)
-            if verbose > 0: print "POD long name: ", pod.long_name
-            self.pods.append(pod)
 
     # -------------------------------------
 
@@ -64,11 +52,11 @@ class Model:
 
     def planData(self):
         # definitely a cleaner way to write this
-        self.data_to_fetch = set()
+        self.data_to_fetch = []
         for pod in self.pods:
             for var in pod.varlist:
                 if self.queryDataset(var):
-                    self.data_to_fetch.add(var)
+                    self.data_to_fetch.append(var)
                 else:
                     alt_vars = []
                     for v in var['alternates']:
@@ -77,7 +65,7 @@ class Model:
                         alt_vars.append(temp)
                     if all([self.queryDataset(v) for v in alt_vars]):
                         for v in alt_vars:
-                            self.data_to_fetch.add(v)                    
+                            self.data_to_fetch.append(v)                    
 
     def queryDataset(self, dataspec_dict):
         return True

@@ -5,12 +5,11 @@ import shutil
 import yaml
 import util
 from util import setenv # fix
-from shared_model import Model
-from shared_environment import CondaEnvironmentManager
 
-class DiagnosticRunner:
+class DiagnosticRunner(object):
     # analogue of TestRunner in xUnit
-    def __init__(self, args, config):
+    def __init__(self, args, config,
+        model=None, environment=None, diagnostic=None):
         # set up env vars, paths
         self._set_mdtf_env_vars(args, config, verbose=0)
         verbose = config['envvars']['verbose']
@@ -19,6 +18,9 @@ class DiagnosticRunner:
             create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
             verbose=verbose)
         self.models = []
+        self.Model = model
+        self.EnvironmentMgr = environment
+        self.Diagnostic = diagnostic
 
     def _set_mdtf_env_vars(self, args, config, verbose=0):
         config['envvars'] = {}
@@ -41,15 +43,26 @@ class DiagnosticRunner:
 
     # -------------------------------------
 
-    def setUp(self, config, caselist):
+    def setUp(self, config, caselist, verbose=0):
         # parse caselist - foreach model init data, and call prefetch to (possibly) download data
-        # for case in caselist:
-        case = caselist[0]
-        model = Model(case, config)
-        model.fetchData()
-        model.setUp(config)
-        self.models.append(model)
-        
+        for case in caselist:
+            model = self.Model(case, config)
+
+            if 'pod_list' in case:
+                pod_list = case['pod_list'] # run a set of PODs specific to this model
+            else:
+                pod_list = config['pod_list'] # use global list of PODs      
+            for pod_name in pod_list:
+                try:
+                    pod = self.Diagnostic(pod_name, model.model_name)
+                except AssertionError as error:  
+                    print str(error)
+                if verbose > 0: print "POD long name: ", pod.long_name
+                model.pods.append(pod)
+
+            model.fetchData()
+            model.setUp(config)
+            self.models.append(model)
 
     # -------------------------------------
 
@@ -57,7 +70,7 @@ class DiagnosticRunner:
         # foreach model call in-loop setup
         # for case in caselist:
         for model in self.models:
-            env = CondaEnvironmentManager(config)
+            env = self.EnvironmentMgr(config)
             env.pods = model.pods # best way to do this?
             env.setUp()
             env.run()

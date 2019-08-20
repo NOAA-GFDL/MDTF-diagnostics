@@ -26,14 +26,6 @@ class Model:
 
     # -------------------------------------
 
-    def prefetchData(self):
-        pass
-
-    def fetchData(self):
-        pass
-
-    # -------------------------------------
-
     def setUp(self, config):
         self._setup_model_paths(config)
         self._set_model_env_vars(self.model_name)
@@ -61,6 +53,37 @@ class Model:
             html_dir = os.environ["DIAG_HOME"]+"/src/html/"
             os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
             os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
+
+    # -------------------------------------
+
+    def fetchData(self):
+        self.planData()
+        for var in self.data_to_fetch:
+            self.fetchDataset(var)
+        # do translation too
+
+    def planData(self):
+        # definitely a cleaner way to write this
+        self.data_to_fetch = set()
+        for pod in self.pods:
+            for var in pod.varlist:
+                if self.queryDataset(var):
+                    self.data_to_fetch.add(var)
+                else:
+                    alt_vars = []
+                    for v in var['alternates']:
+                        temp = var.copy()
+                        temp['var_name'] = v
+                        alt_vars.append(temp)
+                    if all([self.queryDataset(v) for v in alt_vars]):
+                        for v in alt_vars:
+                            self.data_to_fetch.add(v)                    
+
+    def queryDataset(self, dataspec_dict):
+        return True
+    
+    def fetchDataset(self, dataspec_dict):
+        pass
 
     # -------------------------------------
 

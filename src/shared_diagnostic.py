@@ -62,7 +62,9 @@ class Diagnostic(object):
                 varlist[idx]['required'] = (var['requirement'].lower() == 'required')
             else:
                 varlist[idx]['required'] = default_file_required
-            if ('alternates' in var) and (type(var['alternates']) is not list):
+            if ('alternates' not in var):
+                varlist[idx]['alternates'] = []
+            elif ('alternates' in var) and (type(var['alternates']) is not list):
                 varlist[idx]['alternates'] = [var['alternates']]
         if (verbose > 0): 
             print self.name + " varlist: "

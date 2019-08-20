@@ -46,7 +46,7 @@ class DiagnosticRunner:
         # for case in caselist:
         case = caselist[0]
         model = Model(case, config)
-        model.prefetchData()
+        model.fetchData()
         model.setUp(config)
         self.models.append(model)
         

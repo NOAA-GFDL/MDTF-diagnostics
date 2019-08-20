@@ -2,11 +2,14 @@ import os
 import sys
 import glob
 import shutil
+from abc import ABCMeta, abstractmethod
 import util
 from util import setenv # fix
 
-class DataManager:
+class DataManager(object):
     # analogue of TestFixture in xUnit
+    __metaclass__ = ABCMeta
+
     def __init__(self, case, config, verbose=0):
         self.case_name = case['CASENAME']
         self.model_name = case['model']
@@ -16,7 +19,7 @@ class DataManager:
 
     def setUp(self, config):
         self._setup_model_paths(config)
-        self._set_model_env_vars(self.model_name)
+        self._set_model_env_vars()
         self._setup_html()
 
     def _setup_model_paths(self, config, verbose=0):
@@ -27,11 +30,11 @@ class DataManager:
             already_exist =["DATADIR"], create_if_nec = ["variab_dir"], 
             verbose=verbose)
 
-    def _set_model_env_vars(self, model_name):
+    def _set_model_env_vars(self):
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
-        for key, val in translate.model_dict[model_name].items():
+        for key, val in translate.model_dict[self.model_name].items():
             os.environ[key] = str(val)
 
     def _setup_html(self):
@@ -52,8 +55,11 @@ class DataManager:
 
     def planData(self):
         # definitely a cleaner way to write this
+        translate = util.VariableTranslator()
         self.data_to_fetch = []
         for pod in self.pods:
+            for idx, var in enumerate(pod.varlist):
+                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.model_name, var['var_name'])
             for var in pod.varlist:
                 if self.queryDataset(var):
                     self.data_to_fetch.append(var)
@@ -67,9 +73,11 @@ class DataManager:
                         for v in alt_vars:
                             self.data_to_fetch.append(v)                    
 
+    @abstractmethod
     def queryDataset(self, dataspec_dict):
         return True
     
+    @abstractmethod
     def fetchDataset(self, dataspec_dict):
         pass
 
@@ -77,4 +85,16 @@ class DataManager:
 
     def tearDown(self):
         # delete data if we need to
+        pass
+
+
+class LocalFileData(DataManager):
+    # Assumes data files are already present in required directory structure 
+    def queryDataset(self, dataspec_dict):
+        filepath = util.makefilepath(
+            dataspec_dict['name_in_model'], dataspec_dict['freq'],
+            os.environ['CASENAME'], os.environ['DATADIR'])
+        return os.path.isfile(filepath)
+            
+    def fetchDataset(self, dataspec_dict):
         pass

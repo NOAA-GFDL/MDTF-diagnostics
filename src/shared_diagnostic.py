@@ -50,11 +50,8 @@ class Diagnostic(object):
         return d
 
     def _parse_pod_varlist(self, varlist, verbose=0):
-        translate = util.VariableTranslator()
         default_file_required = False 
         for idx, var in enumerate(varlist):
-            varlist[idx]['name_in_model'] = translate.fromCF(self.model, var['var_name'])
-
             assert(var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon']), \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
@@ -163,6 +160,7 @@ class Diagnostic(object):
         # assert(find_executable(self.program) is not None), errstr     
 
     def _check_for_varlist_files(self, varlist, verbose=0):
+        translate = util.VariableTranslator()
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
         found_list = []
@@ -187,7 +185,7 @@ class Diagnostic(object):
                 for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): print "\t \t examining alternative ",alt_item
                     new_var = item.copy()  # modifyable dict with all settings from original
-                    new_var['name_in_model'] = util.translate_varname(alt_item,verbose=verbose)  # alternative variable name 
+                    new_var['name_in_model'] = translate.fromCF(self.model, alt_item)
                     del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
                     if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
                     new_files = self._check_for_varlist_files([new_var],verbose=verbose)

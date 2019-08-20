@@ -58,7 +58,7 @@ import sys
 import argparse
 import util
 from shared_runner import DiagnosticRunner
-from data_manager import DataManager
+from data_manager import LocalFileData
 from environment_manager import CondaEnvironmentManager
 from shared_diagnostic import Diagnostic
 
@@ -98,7 +98,7 @@ except Exception as error:
     exit()
 
 runner = DiagnosticRunner(args, config,
-    data_mgr=DataManager, environment_mgr=CondaEnvironmentManager, diagnostic=Diagnostic)
+    data_mgr=LocalFileData, environment_mgr=CondaEnvironmentManager, diagnostic=Diagnostic)
 runner.setUp(config, config['case_list'])
 runner.run(config)
 runner.tearDown(config)

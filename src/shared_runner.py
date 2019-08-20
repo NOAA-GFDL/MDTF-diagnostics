@@ -60,8 +60,8 @@ class DiagnosticRunner(object):
                 if verbose > 0: print "POD long name: ", pod.long_name
                 case.pods.append(pod)
 
-            case.fetchData()
             case.setUp(config)
+            case.fetchData()
             self.caselist.append(case)
 
     # -------------------------------------

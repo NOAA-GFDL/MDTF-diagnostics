@@ -14,6 +14,10 @@ class DataManager(object):
         self.case_name = case['CASENAME']
         self.model_name = case['model']
         self.pods = []
+        if 'variable_convention' in case:
+            self.convention = case['variable_convention']
+        else:
+            self.convention = 'CF' # default to assuming CF-compliance
 
     # -------------------------------------
 
@@ -35,9 +39,9 @@ class DataManager(object):
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
-        assert self.model_name in translate.model_dict, \
-            "Variable name translation doesn't recognize {}.".format(self.model_name)
-        for key, val in translate.model_dict[self.model_name].items():
+        assert self.convention in translate.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(self.convention)
+        for key, val in translate.field_dict[self.convention].items():
             os.environ[key] = str(val)
 
     def _setup_html(self):
@@ -51,9 +55,10 @@ class DataManager(object):
     def _setup_pods(self):
         translate = util.VariableTranslator()
         for pod in self.pods:
-            pod.model = self.model_name
             for idx, var in enumerate(pod.varlist):
-                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.model_name, var['var_name'])
+                cf_name = translate.toCF(pod.convention, var['var_name'])
+                pod.varlist[idx]['CF_name'] = cf_name
+                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.convention, cf_name)
 
     # -------------------------------------
 

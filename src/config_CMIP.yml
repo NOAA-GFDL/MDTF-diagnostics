@@ -1,4 +1,4 @@
-model_name: CMIP
+convention_name: CMIP
 var_names:
   hyam_var: hyam
   hybm_var: hybm  

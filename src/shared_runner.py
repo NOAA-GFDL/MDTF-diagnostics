@@ -46,7 +46,7 @@ class DiagnosticRunner(object):
     def setUp(self, config, caselist, verbose=0):
         # parse caselist - foreach model init data, and call prefetch to (possibly) download data
         for case_dict in caselist:
-            case = self.DataMgr(case_dict, config)
+            case = self.DataMgr(case_dict)
 
             if 'pod_list' in case_dict:
                 pod_list = case_dict['pod_list'] # run a set of PODs specific to this model

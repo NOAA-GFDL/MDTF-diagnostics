@@ -1,4 +1,4 @@
-model_name: CESM
+convention_name: CESM
 var_names:
   hyam_var: hyam
   hybm_var: hybm

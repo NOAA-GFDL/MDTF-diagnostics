@@ -1,4 +1,4 @@
-model_name: AM4
+convention_name: AM4
 var_names:
   lat_coord: lat
   lon_coord: lon

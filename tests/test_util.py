@@ -110,7 +110,7 @@ class TestUtil(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
-        return_value = {'model_name':'A','var_names':{'B':'D'}})
+        return_value = {'convention_name':'A','var_names':{'B':'D'}})
     def test_read_model_varnames(self, mock_read_yaml, mock_glob):
         # normal operation - convert string to list
         temp = util.VariableTranslator()
@@ -119,7 +119,7 @@ class TestUtil(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
-        return_value = {'model_name':['A','C'],'var_names':{'B':'D'}})
+        return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
     def test_read_model_varnames_multiple(self, mock_read_yaml, mock_glob):
         # create multiple entries when multiple models specified
         temp = util.VariableTranslator()
@@ -129,24 +129,24 @@ class TestUtil(unittest.TestCase):
     def test_variabletranslator(self):
         # bypass __init__ method:
         temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.model_dict = {}
-        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        temp.field_dict = {}
+        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
         self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
 
     def test_variabletranslator_cf(self):
         # bypass __init__ method:
         temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.model_dict = {}
-        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        temp.field_dict = {}
+        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
         self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
         self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
 
     def test_variabletranslator_no_key(self):
         # bypass __init__ method:
         temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.model_dict = {}
-        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        temp.field_dict = {}
+        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
         self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
         self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')

@@ -12,7 +12,6 @@ class Diagnostic(object):
     def __init__(self, pod_name, verbose=0):
         self.name = pod_name
         self.dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', self.name)
-        # assert(os.path.isdir(self.dir))
         file_contents = util.read_yaml(os.path.join(self.dir, 'settings.yml'))
 
         config = self._parse_pod_settings(file_contents['settings'], verbose)
@@ -25,7 +24,7 @@ class Diagnostic(object):
         d['pod_name'] = self.name # redundant
         # define empty defaults to avoid having to test existence of attrs
         for str_attr in ['program', 'driver', 'long_name', 'description', 
-            'env', 'conda_env']:
+            'env', 'convention']:
             d[str_attr] = ''
         for list_attr in ['varlist', 'found_files', 'missing_files',
             'required_programs', 'required_python_modules', 
@@ -39,6 +38,11 @@ class Diagnostic(object):
         # overwrite with contents of settings.yaml file
         d.update(settings)
 
+        if 'variable_convention' in d:
+            d['convention'] = d['variable_convention']
+            del d['variable_convention']
+        elif d['convention'] == '':
+            d['convention'] = 'CF'
         for list_attr in ['required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:
             if type(d[list_attr]) != list:
@@ -51,7 +55,7 @@ class Diagnostic(object):
     def _parse_pod_varlist(self, varlist, verbose=0):
         default_file_required = False 
         for idx, var in enumerate(varlist):
-            assert(var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon']), \
+            assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
@@ -144,7 +148,7 @@ class Diagnostic(object):
         if not os.path.isabs(self.driver): # expand relative path
             self.driver = os.path.join(self.dir, self.driver)
         errstr = "ERROR: "+func_name+" can't find "+ self.driver+" to run "+self.name
-        assert(os.path.exists(self.driver)), errstr 
+        assert os.path.exists(self.driver), errstr 
 
         if self.program == '':
             # Find ending of filename to determine the program that should be used
@@ -156,7 +160,7 @@ class Diagnostic(object):
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
         errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name
-        # assert(find_executable(self.program) is not None), errstr     
+        # assert find_executable(self.program) is not None, errstr     
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         translate = util.VariableTranslator()
@@ -184,7 +188,7 @@ class Diagnostic(object):
                 for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): print "\t \t examining alternative ",alt_item
                     new_var = item.copy()  # modifyable dict with all settings from original
-                    new_var['name_in_model'] = translate.fromCF(self.model, alt_item)
+                    new_var['name_in_model'] = translate.fromCF(self.convention, alt_item)
                     del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
                     if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
                     new_files = self._check_for_varlist_files([new_var],verbose=verbose)

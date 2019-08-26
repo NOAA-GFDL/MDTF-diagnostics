@@ -103,34 +103,34 @@ class BiDict(dict):
 
 class VariableTranslator(Singleton):
     def __init__(self, verbose=0):
-        self.model_dict = {'CF':{}} # always have CF-compliant option, which does no translation
+        self.field_dict = {'CF':{}} # always have CF-compliant option, which does no translation
         config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
         for filename in config_files:
             file_contents = read_yaml(filename)
 
-            if type(file_contents['model_name']) is str:
-                file_contents['model_name'] = [file_contents['model_name']]
-            for model in file_contents['model_name']:
-                if verbose > 0: print 'XXX found ' + model
-                self.model_dict[model] = BiDict(file_contents['var_names'])
+            if type(file_contents['convention_name']) is str:
+                file_contents['convention_name'] = [file_contents['convention_name']]
+            for conv in file_contents['convention_name']:
+                if verbose > 0: print 'XXX found ' + conv
+                self.field_dict[conv] = BiDict(file_contents['var_names'])
 
-    def toCF(self, model, varname_in):
-        if model == 'CF': 
+    def toCF(self, convention, varname_in):
+        if convention == 'CF': 
             return varname_in
-        assert model in self.model_dict, \
-            "Variable name translation doesn't recognize {}.".format(model)
-        temp = self.model_dict[model].inverse[varname_in]
+        assert convention in self.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(convention)
+        temp = self.field_dict[convention].inverse[varname_in]
         if len(temp) == 1:
             return temp[0]
         else:
             return temp
     
-    def fromCF(self, model, varname_in):
-        if model == 'CF': 
+    def fromCF(self, convention, varname_in):
+        if convention == 'CF': 
             return varname_in
-        assert model in self.model_dict, \
-            "Variable name translation doesn't recognize {}.".format(model)
-        return self.model_dict[model][varname_in]
+        assert convention in self.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(convention)
+        return self.field_dict[convention][varname_in]
 
 
 def check_required_envvar(verbose=0,*varlist):

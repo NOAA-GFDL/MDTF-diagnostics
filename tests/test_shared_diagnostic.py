@@ -58,7 +58,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
-        return_value = {'model_name':'A',
+        return_value = {'convention_name':'A',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
     def setUp(self, mock_read_yaml, mock_glob):
         # set up translation dictionary without calls to filesystem
@@ -237,7 +237,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
             'freq':'mon', 'required': True, 'alternates':['prc_var']}]
         pod = Diagnostic.__new__(Diagnostic) # bypass __init__ 
-        pod.model = 'A'
+        pod.convention = 'A'
         f = pod._check_for_varlist_files(test_vars)
         self.assertEqual(f['found_files'], ['/A/mon/B.PRECC.mon.nc'])
         self.assertEqual(f['missing_files'], [])

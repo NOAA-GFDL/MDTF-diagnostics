@@ -12,7 +12,7 @@ class Diagnostic(object):
     def __init__(self, pod_name, verbose=0):
         self.name = pod_name
         self.dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', self.name)
-        # assert(os.path.isdir(pod_dir))
+        # assert(os.path.isdir(self.dir))
         file_contents = util.read_yaml(os.path.join(self.dir, 'settings.yml'))
 
         config = self._parse_pod_settings(file_contents['settings'], verbose)

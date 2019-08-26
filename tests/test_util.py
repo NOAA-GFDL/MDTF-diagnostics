@@ -6,6 +6,16 @@ import src.util as util
 
 class TestUtil(unittest.TestCase):
 
+    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
+    def tearDown(self):
+        # call _reset method deleting clearing Translator for unit testing, 
+        # otherwise the second, third, .. tests will use the instance created 
+        # in the first test instead of being properly initialized
+        temp = util.VariableTranslator()
+        temp._reset()
+
+    # ---------------------------------------------------
+
     def test_read_yaml(self):
         pass
 
@@ -18,7 +28,7 @@ class TestUtil(unittest.TestCase):
     def test_makefilepath(self):
         pass
 
-# ---------------------------------------------------
+    # ---------------------------------------------------
     
     @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
     def test_setenv_overwrite(self):
@@ -52,7 +62,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(test_d['TEST_FALSE'], False)
         self.assertEqual(os.environ['TEST_FALSE'], '0')
 
-# ---------------------------------------------------
+    # ---------------------------------------------------
 
     def test_singleton(self):
         # Can only be instantiated once
@@ -105,7 +115,6 @@ class TestUtil(unittest.TestCase):
         # normal operation - convert string to list
         temp = util.VariableTranslator()
         self.assertEqual(temp.fromCF('A','B'), 'D')
-        temp._reset()
 
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
@@ -116,7 +125,6 @@ class TestUtil(unittest.TestCase):
         temp = util.VariableTranslator()
         self.assertEqual(temp.fromCF('A','B'), 'D')
         self.assertEqual(temp.fromCF('C','B'), 'D')
-        temp._reset()
 
     def test_variabletranslator(self):
         # bypass __init__ method:
@@ -125,7 +133,6 @@ class TestUtil(unittest.TestCase):
         temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
         self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
-        temp._reset()
 
     def test_variabletranslator_no_key(self):
         # bypass __init__ method:
@@ -136,9 +143,8 @@ class TestUtil(unittest.TestCase):
         self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
         self.assertRaises(KeyError, temp.fromCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.fromCF, 'A', 'nonexistent_var')
-        temp._reset()
 
-# ---------------------------------------------------
+    # ---------------------------------------------------
 
     os_environ_check_required_envvar = {'A':'B', 'C':'D'}
 
@@ -155,7 +161,7 @@ class TestUtil(unittest.TestCase):
         # try to exit() if any variables not found
         self.assertRaises(SystemExit, util.check_required_envvar, 'A', 'E')
 
-# ---------------------------------------------------
+    # ---------------------------------------------------
 
     @mock.patch('os.path.exists', return_value = True)
     @mock.patch('os.makedirs')

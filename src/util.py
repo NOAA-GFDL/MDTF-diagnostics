@@ -71,7 +71,14 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton('SingletonMeta', (object,), {})): pass
+class Singleton(_Singleton('SingletonMeta', (object,), {})): 
+    # add _reset method deleting the instance for unit testing, otherwise the 
+    # second, third, .. tests will use the instance created in the first test 
+    # instead of being properly initialized
+    @classmethod
+    def _reset(cls):
+        if cls in cls._instances:
+            del cls._instances[cls]
 
 # Dict that permits lookups from either keys or values
 # https://stackoverflow.com/a/21894086
@@ -95,7 +102,7 @@ class BiDict(dict):
         super(BiDict, self).__delitem__(key)    
 
 class VariableTranslator(Singleton):
-    def __init__(self, verbose=1):
+    def __init__(self, verbose=0):
         self.model_dict = {}
         config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
         for filename in config_files:
@@ -104,7 +111,7 @@ class VariableTranslator(Singleton):
             if type(file_contents['model_name']) is str:
                 file_contents['model_name'] = [file_contents['model_name']]
             for model in file_contents['model_name']:
-                if verbose > 0: print "found model "+ model
+                if verbose > 0: print 'XXX found ' + model
                 self.model_dict[model] = BiDict(file_contents['var_names'])
 
     def toCF(self, model, varname_in):

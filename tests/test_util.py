@@ -56,13 +56,24 @@ class TestUtil(unittest.TestCase):
 
     def test_singleton(self):
         # Can only be instantiated once
-        class Temp(util.Singleton):
+        class Temp1(util.Singleton):
             def __init__(self):
                 self.foo = 0
-        temp1 = Temp()
-        temp2 = Temp()
+        temp1 = Temp1()
+        temp2 = Temp1()
         temp1.foo = 5
         self.assertEqual(temp2.foo, 5)
+
+    def test_singleton_reset(self):
+        # Verify cleanup works
+        class Temp2(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp2()
+        temp1.foo = 5
+        temp1._reset()
+        temp2 = Temp2()
+        self.assertEqual(temp2.foo, 0)
 
     def test_bidict_inverse(self):
         # test inverse map
@@ -90,20 +101,22 @@ class TestUtil(unittest.TestCase):
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
         return_value = {'model_name':'A','var_names':{'B':'D'}})
-    def test_read_model_varnames(self, mock_safe_load, mock_glob):
+    def test_read_model_varnames(self, mock_read_yaml, mock_glob):
         # normal operation - convert string to list
         temp = util.VariableTranslator()
         self.assertEqual(temp.fromCF('A','B'), 'D')
+        temp._reset()
 
     @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
         return_value = {'model_name':['A','C'],'var_names':{'B':'D'}})
-    def test_read_model_varnames_multiple(self, mock_safe_load, mock_glob):
+    def test_read_model_varnames_multiple(self, mock_read_yaml, mock_glob):
         # create multiple entries when multiple models specified
         temp = util.VariableTranslator()
         self.assertEqual(temp.fromCF('A','B'), 'D')
         self.assertEqual(temp.fromCF('C','B'), 'D')
+        temp._reset()
 
     def test_variabletranslator(self):
         # bypass __init__ method:
@@ -112,6 +125,7 @@ class TestUtil(unittest.TestCase):
         temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
         self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
+        temp._reset()
 
     def test_variabletranslator_no_key(self):
         # bypass __init__ method:
@@ -122,6 +136,7 @@ class TestUtil(unittest.TestCase):
         self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
         self.assertRaises(KeyError, temp.fromCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.fromCF, 'A', 'nonexistent_var')
+        temp._reset()
 
 # ---------------------------------------------------
 

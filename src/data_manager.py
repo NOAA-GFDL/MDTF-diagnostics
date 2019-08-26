@@ -10,7 +10,7 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case, config, verbose=0):
+    def __init__(self, case, verbose=0):
         self.case_name = case['CASENAME']
         self.model_name = case['model']
         self.pods = []
@@ -21,6 +21,7 @@ class DataManager(object):
         self._setup_model_paths(config)
         self._set_model_env_vars()
         self._setup_html()
+        self._setup_pods()
 
     def _setup_model_paths(self, config, verbose=0):
         setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
@@ -34,6 +35,8 @@ class DataManager(object):
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
+        assert self.model_name in translate.model_dict, \
+            "Variable name translation doesn't recognize {}.".format(self.model_name)
         for key, val in translate.model_dict[self.model_name].items():
             os.environ[key] = str(val)
 
@@ -45,22 +48,25 @@ class DataManager(object):
             os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
             os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
+    def _setup_pods(self):
+        translate = util.VariableTranslator()
+        for pod in self.pods:
+            pod.model = self.model_name
+            for idx, var in enumerate(pod.varlist):
+                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.model_name, var['var_name'])
+
     # -------------------------------------
 
     def fetchData(self):
         self.planData()
         for var in self.data_to_fetch:
             self.fetchDataset(var)
-        # do translation too
+        # do translation/ transformation of data too
 
     def planData(self):
         # definitely a cleaner way to write this
-        translate = util.VariableTranslator()
         self.data_to_fetch = []
         for pod in self.pods:
-            pod.model = self.model_name
-            for idx, var in enumerate(pod.varlist):
-                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.model_name, var['var_name'])
             for var in pod.varlist:
                 if self.queryDataset(var):
                     self.data_to_fetch.append(var)
@@ -72,8 +78,9 @@ class DataManager(object):
                         alt_vars.append(temp)
                     if all([self.queryDataset(v) for v in alt_vars]):
                         for v in alt_vars:
-                            self.data_to_fetch.append(v)                    
+                            self.data_to_fetch.append(v)             
 
+    # following are specific details that must be implemented in child class 
     @abstractmethod
     def queryDataset(self, dataspec_dict):
         return True

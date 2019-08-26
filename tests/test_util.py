@@ -134,14 +134,22 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
 
+    def test_variabletranslator_cf(self):
+        # bypass __init__ method:
+        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
+        temp.model_dict = {}
+        temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+        self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
+        self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
+
     def test_variabletranslator_no_key(self):
         # bypass __init__ method:
         temp = util.VariableTranslator.__new__(util.VariableTranslator) 
         temp.model_dict = {}
         temp.model_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
-        self.assertRaises(KeyError, temp.toCF, 'B', 'PRECT')
+        self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
-        self.assertRaises(KeyError, temp.fromCF, 'B', 'PRECT')
+        self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.fromCF, 'A', 'nonexistent_var')
 
     # ---------------------------------------------------

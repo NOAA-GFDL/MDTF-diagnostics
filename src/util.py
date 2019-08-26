@@ -8,7 +8,7 @@ import yaml
 
 def read_yaml(file_path, verbose=0):
     # wrapper to load config files
-    assert(os.path.exists(file_path))
+    assert os.path.exists(file_path)
     with open(file_path, 'r') as file_obj:
         file_contents = yaml.safe_load(file_obj)
 
@@ -103,7 +103,7 @@ class BiDict(dict):
 
 class VariableTranslator(Singleton):
     def __init__(self, verbose=0):
-        self.model_dict = {}
+        self.model_dict = {'CF':{}} # always have CF-compliant option, which does no translation
         config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
         for filename in config_files:
             file_contents = read_yaml(filename)
@@ -115,6 +115,10 @@ class VariableTranslator(Singleton):
                 self.model_dict[model] = BiDict(file_contents['var_names'])
 
     def toCF(self, model, varname_in):
+        if model == 'CF': 
+            return varname_in
+        assert model in self.model_dict, \
+            "Variable name translation doesn't recognize {}.".format(model)
         temp = self.model_dict[model].inverse[varname_in]
         if len(temp) == 1:
             return temp[0]
@@ -122,6 +126,10 @@ class VariableTranslator(Singleton):
             return temp
     
     def fromCF(self, model, varname_in):
+        if model == 'CF': 
+            return varname_in
+        assert model in self.model_dict, \
+            "Variable name translation doesn't recognize {}.".format(model)
         return self.model_dict[model][varname_in]
 
 

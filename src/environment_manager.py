@@ -57,8 +57,6 @@ class EnvironmentManager(object):
     # -------------------------------------
 
     def run(self, verbose=0):
-        os.chdir(os.environ["WORKING_DIR"])
-
         for pod in self.pods:
             # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
             # Each pod could have a settings files giving the name of its driver script and long name
@@ -69,7 +67,7 @@ class EnvironmentManager(object):
             if pod.missing_files != []:
                 continue
 
-            pod.logfile_obj = open(os.path.join(os.environ["WK_DIR"], pod.name+".log"), 'w')
+            pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
 
             run_command = pod.run_command()          
             if self.test_mode:
@@ -89,7 +87,9 @@ class EnvironmentManager(object):
                 # env vars (can't do that in posix sh). tcsh could also work.
                 pod.process_obj = subprocess.Popen(
                     ['bash', '-c', commands],
-                    env=os.environ, stdout=pod.logfile_obj, stderr=subprocess.STDOUT)
+                    env = os.environ, 
+                    cwd = pod.POD_WK_DIR,
+                    stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
             except OSError as e:
                 print('ERROR :',e.errno,e.strerror)
                 print(" occured with call: " +run_command)
@@ -145,31 +145,34 @@ class CondaEnvironmentManager(EnvironmentManager):
             self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
+        paths = util.PathManager()
         prefix = '_MDTF-diagnostics'
         if env_name == prefix:
             env_name = 'base'
         else:
             env_name = env_name[(len(prefix)+1):]
-        path = '{}/src/conda_env_{}.yml'.format(os.environ['DIAG_HOME'], env_name)
+        path = '{}/src/conda_env_{}.yml'.format(paths.CODE_ROOT, env_name)
         if not os.path.exists(path):
             print "Can't find {}".format(path)
         else:
             print 'Creating conda env from {}'.format(path)
         
-        commands = 'source {}/src/conda_init.sh && conda env create --force -q -f {}'.format(
-            os.environ['DIAG_HOME'], path
-        )
+        commands = \
+            'source {}/src/conda_init.sh && conda env create --force -q -f {}'.format(
+                paths.CODE_ROOT, path
+            )
         try: 
             subprocess.Popen(['bash', '-c', commands])
         except OSError as e:
             print('ERROR :',e.errno,e.strerror)
 
     def create_all_environments(self):
-        envs_to_create = glob.glob('{}/src/conda_env_*.yml'.format(os.environ['DIAG_HOME']))
+        paths = util.PathManager()
+        envs_to_create = glob.glob('{}/src/conda_env_*.yml'.format(paths.CODE_ROOT))
         envs_to_create = ['echo Creating conda env from '+env+'\n' \
                 +'conda env create --force -q -f '+ env for env in envs_to_create]
         command_str = '\n'.join(envs_to_create)
-        command_str = 'source {}/src/conda_init.sh\n'.format(os.environ['DIAG_HOME']) \
+        command_str = 'source {}/src/conda_init.sh\n'.format(paths.CODE_ROOT) \
             + command_str
         process = subprocess.Popen('/usr/bin/env bash', 
             stdin=subprocess.PIPE, shell=True)
@@ -189,9 +192,10 @@ class CondaEnvironmentManager(EnvironmentManager):
 
     def activate_env_command(self, pod):
         # Source conda_init.sh to set things that aren't set b/c we aren't 
-        # in an interactive shell. 
+        # in an interactive shell.
+        paths = util.PathManager()
         return 'source {}/src/conda_init.sh && conda activate {}'.format(
-            os.environ['DIAG_HOME'], pod.env
+            paths.CODE_ROOT, pod.env
             )
 
     def deactivate_env_command(self, pod):

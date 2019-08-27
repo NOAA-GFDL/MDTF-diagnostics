@@ -55,21 +55,18 @@ class TestDiagnosticInit(unittest.TestCase):
 
 class TestDiagnosticSetUp(unittest.TestCase):
     
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
-    @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'A',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
-    def setUp(self, mock_read_yaml, mock_glob):
+    def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator()
+        temp = util.VariableTranslator(unittest_flag = True)
 
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator()
+        temp = util.VariableTranslator(unittest_flag = True)
         temp._reset()
 
     # ---------------------------------------------------

@@ -99,23 +99,19 @@ class TestUtil(unittest.TestCase):
         del temp['b']
         self.assertNotIn(2, temp.inverse)
 
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
-    @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'A','var_names':{'B':'D'}})
-    def test_read_model_varnames(self, mock_read_yaml, mock_glob):
+    def test_read_model_varnames(self, mock_read_yaml):
         # normal operation - convert string to list
-        temp = util.VariableTranslator()
+        temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
         temp._reset()
 
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
-    @mock.patch('glob.glob', return_value = [''])
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
-    def test_read_model_varnames_multiple(self, mock_read_yaml, mock_glob):
+    def test_read_model_varnames_multiple(self, mock_read_yaml):
         # create multiple entries when multiple models specified
-        temp = util.VariableTranslator()
+        temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
         self.assertEqual(temp.fromCF('C','B'), 'D')
         temp._reset()
@@ -168,47 +164,44 @@ class TestUtil(unittest.TestCase):
 
 class TestVariableTranslator(unittest.TestCase):
 
-    @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator()
+        temp = util.VariableTranslator(unittest_flag=True)
         temp._reset()
 
     # ---------------------------------------------------
+    default_translation = {
+        'convention_name':'not_CF',
+        'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+        }
 
-    def test_variabletranslator(self):
-        # bypass __init__ method:
-        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.field_dict = {}
-        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
-        self.assertEqual(temp.toCF('A', 'PRECT'), 'pr_var')
-        self.assertEqual(temp.fromCF('A', 'pr_var'), 'PRECT')
+    @mock.patch('src.util.read_yaml', return_value = default_translation)
+    def test_variabletranslator(self, mock_read_yaml):
+        temp = util.VariableTranslator(unittest_flag = True)
+        self.assertEqual(temp.toCF('not_CF', 'PRECT'), 'pr_var')
+        self.assertEqual(temp.fromCF('not_CF', 'pr_var'), 'PRECT')
 
-    def test_variabletranslator_cf(self):
-        # bypass __init__ method:
-        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.field_dict = {}
-        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+    @mock.patch('src.util.read_yaml', return_value = default_translation)
+    def test_variabletranslator_cf(self, mock_read_yaml):
+        temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
         self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
 
-    def test_variabletranslator_no_key(self):
-        # bypass __init__ method:
-        temp = util.VariableTranslator.__new__(util.VariableTranslator) 
-        temp.field_dict = {}
-        temp.field_dict['A'] = util.BiDict({'pr_var': 'PRECT'})
+    @mock.patch('src.util.read_yaml', return_value = default_translation)
+    def test_variabletranslator_no_key(self, mock_read_yaml):
+        temp = util.VariableTranslator(unittest_flag = True)
         self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
-        self.assertRaises(KeyError, temp.toCF, 'A', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.toCF, 'not_CF', 'nonexistent_var')
         self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')
-        self.assertRaises(KeyError, temp.fromCF, 'A', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.fromCF, 'not_CF', 'nonexistent_var')
 
 
 class TestPathManager(unittest.TestCase):
 
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
+        # call _reset method deleting clearing PathManager for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
         temp = util.PathManager()

@@ -79,9 +79,18 @@ class BiDict(dict):
         super(BiDict, self).__delitem__(key)    
 
 class VariableTranslator(Singleton):
-    def __init__(self, verbose=0):
-        self.field_dict = {'CF':{}} # always have CF-compliant option, which does no translation
-        config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
+    def __init__(self, unittest_flag=False, verbose=0):
+        if unittest_flag:
+            # value not used, when we're testing will mock out call to read_yaml
+            # below with actual translation table to use for test
+            config_files = ['dummy_filename']
+        else:
+            paths = PathManager()
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'config_*.yml')
+            config_files = glob.glob(glob_pattern)
+
+        # always have CF-compliant option, which does no translation
+        self.field_dict = {'CF':{}} 
         for filename in config_files:
             file_contents = read_yaml(filename)
 

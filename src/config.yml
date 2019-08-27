@@ -56,7 +56,8 @@ pod_list:
   # These PODS require more resources 
   #- precip_diurnal_cycle #- high memory requirement
 
-# PATHS
+# PATHS 
+# if relative paths are given, they're relative to location of this file.
 paths:
 # Code installation directory.
   CODE_ROOT: '../'
@@ -65,9 +66,9 @@ paths:
 # Parent directory containing observational data used by individual PODs.  
   OBS_DATA_ROOT: '../../inputdata/obs_data/'
 # Working directory.
-  WORKING_DIR: ./wkdir
+  WORKING_DIR: '../wkdir'
 # Directory to write output files. Defaults to working directory.  
-  OUTPUT_DIR: ./wkdir
+  OUTPUT_DIR: '../wkdir'
 
 # SETTINGS
 

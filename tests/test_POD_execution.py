@@ -8,7 +8,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-import yaml
+from src.util import write_yaml
 import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
@@ -30,13 +30,12 @@ if DOING_SETUP:
     temp_config = config.copy()
     temp_config['pod_list'] = []
     temp_config['settings']['make_variab_tar'] = False
-    #temp_config['settings']['test_mode'] = True
+    temp_config['settings']['test_mode'] = True
 
     pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
     for pod in case_list['pods']:
-        temp_config_file = os.path.join(out_path, pod+'_temp.yml')
-        with open(temp_config_file, 'w') as file_object:
-            yaml.dump(pod_configs[pod], file_object)
+        write_yaml(pod_configs[pod], os.path.join(out_path, pod+'_temp.yml'))
+
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
 # the advanced construction presented in https://stackoverflow.com/a/20870875 
@@ -48,7 +47,7 @@ class TestSequenceMeta(type):
             def test(self):
                 temp_config_file = os.path.join(out_path, pod_name+'_temp.yml')
                 self.assertEqual(0, subprocess.check_call(
-                    ['python', 'src/mdtf-local.py', temp_config_file]
+                    ['python', 'src/mdtf.py', temp_config_file]
                 ))
                 # should do better cleanup here
             return test       

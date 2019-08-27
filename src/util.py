@@ -222,16 +222,21 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
-def parse_mdtf_args(args, config, verbose=0):
+def parse_mdtf_args(args, config, config_path='', verbose=0):
     # overwrite default args in config file with command-line options.
-    for section in ['paths', 'settings']:
-        for key in config[section]:
-            if (key in args.__dict__) and (args.__getattribute__(key) != None):
-                config[section][key] = args.__getattribute__(key)
+    if args is not None:
+        for section in ['paths', 'settings']:
+            for key in config[section]:
+                if (key in args.__dict__) and (args.__getattribute__(key) != None):
+                    config[section][key] = args.__getattribute__(key)
+        config_path = os.path.dirname(args.config_file)
 
+    cwd = os.getcwd()
+    os.chdir(config_path)
     for key, val in config['paths'].items():
         # convert relative to absolute paths
         config['paths'][key] = os.path.realpath(val)
+    os.chdir(cwd)
 
     paths = PathManager(config['paths']) # initialize
     check_required_dirs(

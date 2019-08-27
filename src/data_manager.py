@@ -86,6 +86,7 @@ class DataManager(object):
         translate = util.VariableTranslator()
         for pod in self.pods:
             pod.__dict__.update(paths.modelPaths(self))
+            pod.__dict__.update(paths.podPaths(pod))
             for idx, var in enumerate(pod.varlist):
                 cf_name = translate.toCF(pod.convention, var['var_name'])
                 pod.varlist[idx]['CF_name'] = cf_name

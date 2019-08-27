@@ -29,7 +29,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 class PathManager(Singleton):
     _root_pathnames = [
         'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WK_DIR_ROOT', 'OUT_DIR_ROOT'
+        'WORKING_DIR', 'OUTPUT_DIR'
     ]
 
     def __init__(self, arg_dict={}, unittest_flag=False):
@@ -45,7 +45,7 @@ class PathManager(Singleton):
         d = {}
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
-        d['MODEL_WK_DIR'] = os.path.join(self.WK_DIR_ROOT, case_wk_dir)
+        d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         return d
 
     def podPaths(self, pod):

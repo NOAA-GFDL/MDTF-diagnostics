@@ -212,16 +212,16 @@ class TestPathManager(unittest.TestCase):
     def test_pathmgr_global(self):
         d = {
             'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
-            'WK_DIR_ROOT':'D', 'OUT_DIR_ROOT':'E'
+            'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
         }
         paths = util.PathManager(d)
         self.assertEqual(paths.CODE_ROOT, 'A')
-        self.assertEqual(paths.OUT_DIR_ROOT, 'E')
+        self.assertEqual(paths.OUTPUT_DIR, 'E')
 
     def test_pathmgr_global_asserterror(self):
         d = {
             'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
-            'WK_DIR_ROOT':'D', 'OUT_DIR_ROOT':'E'
+            'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
         }
         self.assertRaises(AssertionError, util.PathManager, d)
         # initialize successfully so that tearDown doesn't break
@@ -230,7 +230,7 @@ class TestPathManager(unittest.TestCase):
     def test_pathmgr_global_testmode(self):
         paths = util.PathManager(unittest_flag = True)
         self.assertEqual(paths.CODE_ROOT, 'TEST_CODE_ROOT')
-        self.assertEqual(paths.OUT_DIR_ROOT, 'TEST_OUT_DIR_ROOT')
+        self.assertEqual(paths.OUTPUT_DIR, 'TEST_OUTPUT_DIR')
 
     default_os_environ = {'DIAG_HOME':'/HOME'}
     default_case = {
@@ -248,7 +248,7 @@ class TestPathManager(unittest.TestCase):
         case = DataManager(self.default_case)
         d = paths.modelPaths(case)
         self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
-        self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WK_DIR_ROOT/MDTF_A_1900_2100')
+        self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
     @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)

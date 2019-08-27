@@ -13,11 +13,16 @@ class DataManager(object):
     def __init__(self, case, verbose=0):
         self.case_name = case['CASENAME']
         self.model_name = case['model']
+        self.firstyr = case['FIRSTYR']
+        self.lastyr = case['LASTYR']
         self.pods = []
         if 'variable_convention' in case:
             self.convention = case['variable_convention']
         else:
             self.convention = 'CF' # default to assuming CF-compliance
+
+        paths = util.PathManager()
+        self.__dict__.update(paths.modelPaths(self))
 
     # -------------------------------------
 
@@ -53,8 +58,10 @@ class DataManager(object):
             os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
 
     def _setup_pods(self):
+        paths = util.PathManager()
         translate = util.VariableTranslator()
         for pod in self.pods:
+            pod.__dict__.update(paths.modelPaths(self))
             for idx, var in enumerate(pod.varlist):
                 cf_name = translate.toCF(pod.convention, var['var_name'])
                 pod.varlist[idx]['CF_name'] = cf_name

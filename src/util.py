@@ -5,6 +5,111 @@ import sys
 import glob
 import yaml
 
+# Singleton pattern parent class
+# Compatible with both python 2 and 3
+# https://stackoverflow.com/a/6798042
+class _Singleton(type):
+    """ A metaclass that creates a Singleton base class when called. """
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Singleton(_Singleton('SingletonMeta', (object,), {})): 
+    # add _reset method deleting the instance for unit testing, otherwise the 
+    # second, third, .. tests will use the instance created in the first test 
+    # instead of being properly initialized
+    @classmethod
+    def _reset(cls):
+        if cls in cls._instances:
+            del cls._instances[cls]
+
+
+class PathManager(Singleton):
+    _root_pathnames = [
+        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
+        'WK_DIR_ROOT', 'OUT_DIR_ROOT'
+    ]
+
+    def __init__(self, arg_dict={}, unittest_flag=False):
+        for var in self._root_pathnames:
+            if unittest_flag: # use in unit testing only
+                self.__setattr__(var, 'TEST_'+var)
+            else:
+                assert var in arg_dict, \
+                    'Error: {} not initialized.'.format(var)
+                self.__setattr__(var, arg_dict[var])
+
+    def modelPaths(self, case):
+        d = {}
+        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
+        case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
+        d['MODEL_WK_DIR'] = os.path.join(self.WK_DIR_ROOT, case_wk_dir)
+        return d
+
+    def podPaths(self, pod):
+        d = {}
+        d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
+        d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
+        if 'MODEL_WK_DIR' in pod.__dict__:
+            d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
+        return d
+
+
+# Dict that permits lookups from either keys or values
+# https://stackoverflow.com/a/21894086
+class BiDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(BiDict, self).__init__(*args, **kwargs)
+        self.inverse = {}
+        for key, value in self.items():
+            self.inverse.setdefault(value,[]).append(key) 
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.inverse[self[key]].remove(key) 
+        super(BiDict, self).__setitem__(key, value)
+        self.inverse.setdefault(value,[]).append(key)        
+
+    def __delitem__(self, key):
+        self.inverse.setdefault(self[key],[]).remove(key)
+        if self[key] in self.inverse and not self.inverse[self[key]]: 
+            del self.inverse[self[key]]
+        super(BiDict, self).__delitem__(key)    
+
+class VariableTranslator(Singleton):
+    def __init__(self, verbose=0):
+        self.field_dict = {'CF':{}} # always have CF-compliant option, which does no translation
+        config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
+        for filename in config_files:
+            file_contents = read_yaml(filename)
+
+            if type(file_contents['convention_name']) is str:
+                file_contents['convention_name'] = [file_contents['convention_name']]
+            for conv in file_contents['convention_name']:
+                if verbose > 0: print 'XXX found ' + conv
+                self.field_dict[conv] = BiDict(file_contents['var_names'])
+
+    def toCF(self, convention, varname_in):
+        if convention == 'CF': 
+            return varname_in
+        assert convention in self.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(convention)
+        temp = self.field_dict[convention].inverse[varname_in]
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
+    
+    def fromCF(self, convention, varname_in):
+        if convention == 'CF': 
+            return varname_in
+        assert convention in self.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(convention)
+        return self.field_dict[convention][varname_in]
+
+# ------------------------------------
 
 def read_yaml(file_path, verbose=0):
     # wrapper to load config files
@@ -59,79 +164,6 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
 
         if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
     if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
-
-# Singleton pattern parent class
-# Compatible with both python 2 and 3
-# https://stackoverflow.com/a/6798042
-class _Singleton(type):
-    """ A metaclass that creates a Singleton base class when called. """
-    _instances = {}
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-class Singleton(_Singleton('SingletonMeta', (object,), {})): 
-    # add _reset method deleting the instance for unit testing, otherwise the 
-    # second, third, .. tests will use the instance created in the first test 
-    # instead of being properly initialized
-    @classmethod
-    def _reset(cls):
-        if cls in cls._instances:
-            del cls._instances[cls]
-
-# Dict that permits lookups from either keys or values
-# https://stackoverflow.com/a/21894086
-class BiDict(dict):
-    def __init__(self, *args, **kwargs):
-        super(BiDict, self).__init__(*args, **kwargs)
-        self.inverse = {}
-        for key, value in self.items():
-            self.inverse.setdefault(value,[]).append(key) 
-
-    def __setitem__(self, key, value):
-        if key in self:
-            self.inverse[self[key]].remove(key) 
-        super(BiDict, self).__setitem__(key, value)
-        self.inverse.setdefault(value,[]).append(key)        
-
-    def __delitem__(self, key):
-        self.inverse.setdefault(self[key],[]).remove(key)
-        if self[key] in self.inverse and not self.inverse[self[key]]: 
-            del self.inverse[self[key]]
-        super(BiDict, self).__delitem__(key)    
-
-class VariableTranslator(Singleton):
-    def __init__(self, verbose=0):
-        self.field_dict = {'CF':{}} # always have CF-compliant option, which does no translation
-        config_files = glob.glob(os.environ["DIAG_HOME"]+"/src/config_*.yml")
-        for filename in config_files:
-            file_contents = read_yaml(filename)
-
-            if type(file_contents['convention_name']) is str:
-                file_contents['convention_name'] = [file_contents['convention_name']]
-            for conv in file_contents['convention_name']:
-                if verbose > 0: print 'XXX found ' + conv
-                self.field_dict[conv] = BiDict(file_contents['var_names'])
-
-    def toCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        temp = self.field_dict[convention].inverse[varname_in]
-        if len(temp) == 1:
-            return temp[0]
-        else:
-            return temp
-    
-    def fromCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention][varname_in]
-
 
 def check_required_envvar(verbose=0,*varlist):
     varlist = varlist[0]   #unpack tuple

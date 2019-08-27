@@ -80,35 +80,4 @@ class DiagnosticRunner(object):
 
     def tearDown(self, config):
         for case in self.caselist:
-            case.tearDown()
-        self._backupConfigFile(config)
-        self._makeTarFile()
-
-    def _backupConfigFile(self, config, verbose = 0):
-        # Record settings in file variab_dir/config_save.yml for rerunning
-        out_file = os.environ["variab_dir"]+'/config_save.yml'
-        if os.path.isfile(out_file):
-            out_fileold = os.environ["variab_dir"]+'/config_save_OLD.yml'
-            if ( verbose > 1 ): print "WARNING: moving existing namelist file to ",out_fileold
-            shutil.move(out_file,out_fileold)
-        util.write_yaml(config, out_file)
-
-    def _makeTarFile(self):
-        # Make tar file
-        variab_dir = os.environ["variab_dir"]
-        if ( ( os.environ["make_variab_tar"] == "0" ) ):
-            print "Not making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
-        else:
-            print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
-            if os.path.isfile( os.environ["variab_dir"]+".tar" ):
-                print "Moving existing "+os.environ["variab_dir"]+".tar to "+os.environ["variab_dir"]+".tar_old"
-                os.system("mv -f "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"]+".tar_old")
-                os.chdir(os.environ["WORKING_DIR"])
-
-        print "Creating "+os.environ["variab_dir"]+".tar "
-        status = os.system(
-            "tar --exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS' -cf " + variab_dir + ".tar " + variab_dir)
-        if not status == 0:
-            print("ERROR $0")
-            print("trying to do:     tar -cf "+os.environ["variab_dir"]+".tar "+os.environ["variab_dir"])
-            exit()
+            case.tearDown(config)

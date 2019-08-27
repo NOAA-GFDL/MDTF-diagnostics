@@ -112,9 +112,36 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def tearDown(self):
-        # delete data if we need to
-        pass
+    def tearDown(self, config):
+        self._backupConfigFile(config)
+        self._makeTarFile()
+
+    def _backupConfigFile(self, config, verbose=0):
+        # Record settings in file variab_dir/config_save.yml for rerunning
+        out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.yml')
+        if os.path.isfile(out_file):
+            out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.yml.old')
+            if verbose > 1: 
+                print "WARNING: moving existing namelist file to ", out_fileold
+            shutil.move(out_file, out_fileold)
+        util.write_yaml(config, out_file)
+
+    def _makeTarFile(self):
+        # Make tar file
+        if os.environ["make_variab_tar"] == "0":
+            print "Not making tar file because make_variab_tar = 0"
+            return
+
+        print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
+        if os.path.isfile(self.MODEL_WK_DIR+'.tar'):
+            print "Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR)
+            shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
+
+        print "Creating {}.tar".format(self.MODEL_WK_DIR)
+        tar_flags = "--exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS'"
+        status = os.system("tar {0} -cf {1}.tar {1}".format(tar_flags, self.MODEL_WK_DIR))
+        if not status == 0:
+            print("ERROR in assembling tar file for {}".format(self.case_name))
 
 
 class LocalFileData(DataManager):

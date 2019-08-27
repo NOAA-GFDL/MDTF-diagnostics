@@ -174,7 +174,8 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
         if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
     if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
 
-def check_required_envvar(verbose=0,*varlist):
+def check_required_envvar(*varlist):
+    verbose=0
     varlist = varlist[0]   #unpack tuple
     for n in range(len(varlist)):
         if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
@@ -212,3 +213,22 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
+def set_mdtf_env_vars(args, config, verbose=0):
+    config['envvars'] = {}
+    # need to expand ./ and ../ in paths
+    for key, val in config['paths'].items():
+        if (key in args.__dict__) and (args.__getattribute__(key) != None):
+            val = args.__getattribute__(key)
+        val = os.path.realpath(val)
+        setenv(key, val, config['envvars'], verbose=verbose)
+
+    # following are redundant but used by PODs
+    paths = PathManager()
+    setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'],overwrite=False,verbose=verbose)
+
+    vars_to_set = config['settings'].copy()
+    vars_to_set.update(config['case_list'][0])
+    for key, val in vars_to_set.items():
+        if (key in args.__dict__) and (args.__getattribute__(key) != None):
+            val = args.__getattribute__(key)
+        setenv(key, val, config['envvars'], verbose=verbose)

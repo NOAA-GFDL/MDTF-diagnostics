@@ -50,18 +50,14 @@
 #     os, glob, json, dataset, numpy, scipy, matplotlib, 
 #     networkx, warnings, numba, netcdf4
 # ======================================================================
-#
-
 
 import os
 import sys
 import argparse
 import util
-from shared_runner import DiagnosticRunner
-from data_manager import LocalFileData
-from environment_manager import CondaEnvironmentManager
+from data_manager import LocalFileData as DataMgr
+from environment_manager import CondaEnvironmentManager as EnvironmentMgr
 from shared_diagnostic import Diagnostic
-
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
 parser = argparse.ArgumentParser()
@@ -97,11 +93,41 @@ except Exception as error:
     print error
     exit()
 
-runner = DiagnosticRunner(args, config,
-    data_mgr=LocalFileData, environment_mgr=CondaEnvironmentManager, diagnostic=Diagnostic)
-runner.setUp(config, config['case_list'])
-runner.run(config)
-runner.tearDown(config)
+
+paths = PathManager(config['paths']) # initialize
+util.set_mdtf_env_vars(args, config, verbose)
+util.check_required_dirs(
+    already_exist =["CODE_ROOT","MODEL_DATA_ROOT","OBS_DATA_ROOT","RGB"], 
+    create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
+    verbose=verbose)
+
+caselist = []
+for case_dict in config['case_list']:
+    case = DataMgr(case_dict)
+    if 'pod_list' in case_dict:
+        pod_list = case_dict['pod_list'] # run a set of PODs specific to this model
+    else:
+        pod_list = config['pod_list'] # use global list of PODs      
+    for pod_name in pod_list:
+        try:
+            pod = Diagnostic(pod_name)
+        except AssertionError as error:  
+            print str(error)
+        if verbose > 0: print "POD long name: ", pod.long_name
+        case.pods.append(pod)
+    case.setUp(config)
+    case.fetchData()
+    caselist.append(case)
+
+for case in caselist:
+    env = EnvironmentMgr(config)
+    env.pods = case.pods # best way to do this?
+    env.setUp()
+    env.run()
+    env.tearDown()
+
+for case in caselist:
+    case.tearDown(config)
 
 print "Exiting normally from ",__file__
 exit()

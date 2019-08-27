@@ -28,7 +28,6 @@ class TestDataManagerSetup(unittest.TestCase):
 
     # ---------------------------------------------------
 
-    default_os_environ = {'DIAG_HOME':'/HOME'}
     default_case = {
         'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100
     }
@@ -44,28 +43,27 @@ class TestDataManagerSetup(unittest.TestCase):
     def test_setup_model_paths(self):
         pass
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     def test_set_model_env_vars(self):
         # set env vars for model
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
-        case._set_model_env_vars()
+        dummy = {'envvars':{}}
+        case._set_model_env_vars(dummy)
         self.assertEqual(os.environ['pr_var'], 'PRECT')
         self.assertEqual(os.environ['prc_var'], 'PRECC')
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     def test_set_model_env_vars_no_model(self):
         # exit if can't find model
         case = DataManager(self.default_case)
         case.convention = 'nonexistent'
-        self.assertRaises(AssertionError, case._set_model_env_vars)
+        dummy = {'envvars':{}}
+        self.assertRaises(AssertionError, case._set_model_env_vars, dummy)
 
     def test_setup_html(self):
         pass
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
@@ -77,7 +75,6 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'pr_var')
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
@@ -90,7 +87,6 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'PRECT')
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
@@ -102,7 +98,6 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'pr_var')
 
-    @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
@@ -115,7 +110,6 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'PRECT')
 
-    # @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
     # @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
     #     'settings':{'conda_env':'B'},'varlist':[]})
     # def test_parse_pod_settings_conda_env(self, mock_read_yaml):

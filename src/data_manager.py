@@ -27,20 +27,23 @@ class DataManager(object):
     # -------------------------------------
 
     def setUp(self, config):
-        self._setup_model_paths(config)
-        self._set_model_env_vars()
+        self._setup_model_paths()
+        self._set_model_env_vars(config)
         self._setup_html()
         self._setup_pods()
 
-    def _setup_model_paths(self, config, verbose=0):
-        setenv("DATADIR",os.path.join(os.environ['MODEL_ROOT_DIR'], os.environ["CASENAME"]),config['envvars'],overwrite=False,verbose=verbose)
-        variab_dir = "MDTF_"+os.environ["CASENAME"]+"_"+os.environ["FIRSTYR"]+"_"+os.environ["LASTYR"]
-        setenv("variab_dir",os.path.join(os.environ['WORKING_DIR'], variab_dir),config['envvars'],overwrite=False,verbose=verbose)
+    def _setup_model_paths(self, verbose=0):
         util.check_required_dirs(
-            already_exist =["DATADIR"], create_if_nec = ["variab_dir"], 
+            already_exist =[self.MODEL_DATA_DIR], 
+            create_if_nec = [self.MODEL_WK_DIR], 
             verbose=verbose)
 
-    def _set_model_env_vars(self):
+    def _set_model_env_vars(self, config, verbose=0):
+        setenv("DATADIR", self.MODEL_DATA_DIR, config['envvars'],
+            overwrite=False,verbose=verbose)
+        setenv("variab_dir", self.MODEL_WK_DIR, config['envvars'],
+            overwrite=False,verbose=verbose)
+
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
@@ -50,12 +53,18 @@ class DataManager(object):
             os.environ[key] = str(val)
 
     def _setup_html(self):
-        if os.path.isfile(os.environ["variab_dir"]+"/index.html"):
+        if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
             print("WARNING: index.html exists, not re-creating.")
         else: 
-            html_dir = os.environ["DIAG_HOME"]+"/src/html/"
-            os.system("cp "+html_dir+"mdtf_diag_banner.png "+os.environ["variab_dir"])
-            os.system("cp "+html_dir+"mdtf1.html "+os.environ["variab_dir"]+"/index.html")
+            paths = util.PathManager()
+            html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+            shutil.copy2(
+                os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+            )
+            shutil.copy2(
+                os.path.join(html_dir, 'mdtf1.html'), 
+                os.path.join(self.MODEL_WK_DIR, 'index.html')
+            )
 
     def _setup_pods(self):
         paths = util.PathManager()

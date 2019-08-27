@@ -87,28 +87,14 @@ else:
     verbose = args.verbosity + 1 # fix for case  verb = 0
 
 print "==== Starting "+__file__
-try:
-    config = util.read_yaml(args.config_file)
-except Exception as error:
-    print error
-    exit()
-
-
-paths = PathManager(config['paths']) # initialize
-util.set_mdtf_env_vars(args, config, verbose)
-util.check_required_dirs(
-    already_exist =["CODE_ROOT","MODEL_DATA_ROOT","OBS_DATA_ROOT","RGB"], 
-    create_if_nec = ["WORKING_DIR","OUTPUT_DIR"], 
-    verbose=verbose)
+config = util.read_yaml(args.config_file)
+config = util.parse_mdtf_args(args, config)
+util.set_mdtf_env_vars(config, verbose)
 
 caselist = []
 for case_dict in config['case_list']:
-    case = DataMgr(case_dict)
-    if 'pod_list' in case_dict:
-        pod_list = case_dict['pod_list'] # run a set of PODs specific to this model
-    else:
-        pod_list = config['pod_list'] # use global list of PODs      
-    for pod_name in pod_list:
+    case = DataMgr(case_dict, config)
+    for pod_name in case.pod_list:
         try:
             pod = Diagnostic(pod_name)
         except AssertionError as error:  

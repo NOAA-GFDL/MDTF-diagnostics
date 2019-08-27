@@ -29,7 +29,8 @@ class TestDataManagerSetup(unittest.TestCase):
     # ---------------------------------------------------
 
     default_case = {
-        'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100
+        'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
+        'pod_list': []
     }
     default_pod_CF = {
         'settings':{}, 

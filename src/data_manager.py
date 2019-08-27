@@ -10,16 +10,22 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case, verbose=0):
-        self.case_name = case['CASENAME']
-        self.model_name = case['model']
-        self.firstyr = case['FIRSTYR']
-        self.lastyr = case['LASTYR']
-        self.pods = []
-        if 'variable_convention' in case:
-            self.convention = case['variable_convention']
+    def __init__(self, case_dict, config={}, verbose=0):
+        self.case_name = case_dict['CASENAME']
+        self.model_name = case_dict['model']
+        self.firstyr = case_dict['FIRSTYR']
+        self.lastyr = case_dict['LASTYR']
+
+        if 'variable_convention' in case_dict:
+            self.convention = case_dict['variable_convention']
         else:
             self.convention = 'CF' # default to assuming CF-compliance
+        if 'pod_list' in case_dict:
+            # run a set of PODs specific to this model
+            self.pod_list = case_dict['pod_list'] 
+        else:
+            self.pod_list = config['pod_list'] # use global list of PODs      
+        self.pods = []
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
@@ -44,13 +50,22 @@ class DataManager(object):
         setenv("variab_dir", self.MODEL_WK_DIR, config['envvars'],
             overwrite=False,verbose=verbose)
 
+        setenv("CASENAME", self.case_name, config['envvars'],
+            overwrite=False,verbose=verbose)
+        setenv("model", self.model_name, config['envvars'],
+            overwrite=False,verbose=verbose)
+        setenv("FIRSTYR", self.firstyr, config['envvars'],
+            overwrite=False,verbose=verbose)
+        setenv("LASTYR", self.lastyr, config['envvars'],
+            overwrite=False,verbose=verbose)
+
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
         # verify all vars requested by PODs have been set
         assert self.convention in translate.field_dict, \
             "Variable name translation doesn't recognize {}.".format(self.convention)
         for key, val in translate.field_dict[self.convention].items():
-            os.environ[key] = str(val)
+            setenv(key, val, config['envvars'], overwrite=False,verbose=verbose)
 
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):

@@ -122,9 +122,14 @@ class VariableTranslator(Singleton):
 
 def read_yaml(file_path, verbose=0):
     # wrapper to load config files
-    assert os.path.exists(file_path)
-    with open(file_path, 'r') as file_obj:
-        file_contents = yaml.safe_load(file_obj)
+    assert os.path.exists(file_path), \
+        "Couldn't find file {}.".format(file_path)
+    try:    
+        with open(file_path, 'r') as file_obj:
+            file_contents = yaml.safe_load(file_obj)
+    except IOError:
+        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        exit()
 
     if (verbose > 2):
         print yaml.dump(file_contents)  #print it to stdout 
@@ -132,8 +137,12 @@ def read_yaml(file_path, verbose=0):
 
 def write_yaml(struct, file_path, verbose=0):
     # wrapper to write config files
-    with open(file_path, 'w') as file_obj:
-        yaml.dump(struct, file_obj)
+    try:
+        with open(file_path, 'w') as file_obj:
+            yaml.dump(struct, file_obj)
+    except IOError:
+        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
+        exit()
 
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
@@ -213,22 +222,32 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
-def set_mdtf_env_vars(args, config, verbose=0):
-    config['envvars'] = {}
-    # need to expand ./ and ../ in paths
+def parse_mdtf_args(args, config, verbose=0):
+    # overwrite default args in config file with command-line options.
+    for section in ['paths', 'settings']:
+        for key in config[section]:
+            if (key in args.__dict__) and (args.__getattribute__(key) != None):
+                config[section][key] = args.__getattribute__(key)
+
     for key, val in config['paths'].items():
-        if (key in args.__dict__) and (args.__getattribute__(key) != None):
-            val = args.__getattribute__(key)
-        val = os.path.realpath(val)
+        # convert relative to absolute paths
+        config['paths'][key] = os.path.realpath(val)
+
+    paths = PathManager(config['paths']) # initialize
+    check_required_dirs(
+        already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
+        create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
+        verbose=verbose
+        )
+    return config
+
+def set_mdtf_env_vars(config, verbose=0):
+    config['envvars'] = {}
+    for key, val in config['paths'].items():
+        setenv(key, val, config['envvars'], verbose=verbose)
+    for key, val in config['settings'].items():
         setenv(key, val, config['envvars'], verbose=verbose)
 
     # following are redundant but used by PODs
     paths = PathManager()
     setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'],overwrite=False,verbose=verbose)
-
-    vars_to_set = config['settings'].copy()
-    vars_to_set.update(config['case_list'][0])
-    for key, val in vars_to_set.items():
-        if (key in args.__dict__) and (args.__getattribute__(key) != None):
-            val = args.__getattribute__(key)
-        setenv(key, val, config['envvars'], verbose=verbose)

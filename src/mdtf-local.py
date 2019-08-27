@@ -70,12 +70,12 @@ parser.add_argument("-v", "--verbosity", action="count",
 parser.add_argument("--test_mode", action="store_const", const=True,
                     help="Set flag to not call PODs, just say what would be called")
 # default paths set in config.yml/paths
-parser.add_argument('--DIAG_HOME', nargs='?', type=str, 
+parser.add_argument('--CODE_ROOT', nargs='?', type=str, 
                     default=os.path.realpath(os.path.join(cwd, '..')),
                     help="Code installation directory.")
-parser.add_argument('--MODEL_ROOT_DIR', nargs='?', type=str, 
+parser.add_argument('--MODEL_DATA_ROOT', nargs='?', type=str, 
                     help="Parent directory containing results from different models.")
-parser.add_argument('--OBS_ROOT_DIR', nargs='?', type=str, 
+parser.add_argument('--OBS_DATA_ROOT', nargs='?', type=str, 
                     help="Parent directory containing observational data used by individual PODs.")
 parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
                     help="Working directory.")

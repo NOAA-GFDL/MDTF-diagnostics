@@ -59,11 +59,11 @@ pod_list:
 # PATHS
 paths:
 # Code installation directory.
-  DIAG_HOME: '.'
+  CODE_ROOT: '../'
 # Parent directory containing results from different models.
-  MODEL_ROOT_DIR: ../inputdata/model/
+  MODEL_DATA_ROOT: '../../inputdata/model/'
 # Parent directory containing observational data used by individual PODs.  
-  OBS_ROOT_DIR: ../inputdata/obs_data/
+  OBS_DATA_ROOT: '../../inputdata/obs_data/'
 # Working directory.
   WORKING_DIR: ./wkdir
 # Directory to write output files. Defaults to working directory.  

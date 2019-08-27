@@ -2,7 +2,6 @@ import os
 import sys
 import glob
 import shutil
-# from distutils.spawn import find_executable #determine if a program is on $PATH
 import util
 from util import setenv # TODO: fix
 
@@ -10,9 +9,12 @@ class Diagnostic(object):
     # analogue of TestCase in xUnit
 
     def __init__(self, pod_name, verbose=0):
+        paths = util.PathManager()
+
         self.name = pod_name
-        self.dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', self.name)
-        file_contents = util.read_yaml(os.path.join(self.dir, 'settings.yml'))
+        self.__dict__.update(paths.podPaths(self))
+        file_contents = util.read_yaml(
+            os.path.join(self.POD_CODE_DIR, 'settings.yml'))
 
         config = self._parse_pod_settings(file_contents['settings'], verbose)
         self.__dict__.update(config)
@@ -90,33 +92,29 @@ class Diagnostic(object):
     def _set_pod_env_vars(self, verbose=0):
         pod_envvars = {}
         # location of POD's code
-        setenv("POD_HOME", 
-            os.path.join(os.environ["DIAG_HOME"], 'diagnostics', self.name),
+        setenv("POD_HOME", self.POD_CODE_DIR,
             pod_envvars, overwrite=False, verbose=verbose)
         # POD's observational data
-        setenv("OBS_DATA",
-            os.path.join(os.environ["OBS_ROOT_DIR"], self.name),
+        setenv("OBS_DATA", self.POD_OBS_DATA,
             pod_envvars, overwrite=False, verbose=verbose)
         # POD's subdir within working directory
-        setenv("WK_DIR", 
-            os.path.join(os.environ['variab_dir'], self.name),
+        setenv("WK_DIR", self.POD_WK_DIR,
             pod_envvars,overwrite=False,verbose=verbose)
-        util.check_required_dirs(
-            already_exist =["POD_HOME", 'OBS_DATA'], create_if_nec = ["WK_DIR"], 
-            verbose=verbose)
 
         # optional POD-specific env vars defined in settings.yml
         for key, val in self.pod_env_vars.items():
-            setenv(key, val, pod_envvars, overwrite=False, verbose=verbose)
-        
+            setenv(key, val, pod_envvars, overwrite=False, verbose=verbose) 
         return pod_envvars
 
-    def _setup_pod_directories(self):
-        pod_wk_dir = os.path.join(os.environ['variab_dir'], self.name)
+    def _setup_pod_directories(self, verbose =0):
+        util.check_required_dirs(
+            already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
+            create_if_nec = [self.POD_WK_DIR], 
+            verbose=verbose)
         dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
         for d in dirs:
-            if not os.path.exists(os.path.join(pod_wk_dir, d)):
-                os.makedirs(os.path.join(pod_wk_dir, d))
+            if not os.path.exists(os.path.join(self.POD_WK_DIR, d)):
+                os.makedirs(os.path.join(self.POD_WK_DIR, d))
 
     def _check_pod_driver(self, verbose=0):
         func_name = "check_pod_driver "
@@ -129,9 +127,9 @@ class Diagnostic(object):
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root in try_filenames for ext in programs.keys()]
             if verbose > 1: 
-                print "Checking for possible driver names in ",self.dir," ",file_combos
+                print "Checking for possible driver names in ",self.POD_CODE_DIR," ",file_combos
             for try_file in file_combos:
-                try_path = os.path.join(self.dir, try_file)
+                try_path = os.path.join(self.POD_CODE_DIR, try_file)
                 if verbose > 1: print " looking for driver file "+try_path
                 if os.path.exists(try_path):
                     self.driver = try_path
@@ -140,13 +138,13 @@ class Diagnostic(object):
                 else:
                     if (verbose > 1 ): print "\t "+try_path+" not found..."
         errstr_nodriver = "No driver script found for package "+self.name +"\n\t"\
-            +"Looked in "+self.dir+" for pod_name.* or driver.* \n\t"\
+            +"Looked in "+self.POD_CODE_DIR+" for pod_name.* or driver.* \n\t"\
             +"To specify otherwise, add a line to "+self.name+"/settings file containing:  driver driver_script_name \n\t" \
             +"\n\t"+func_name
         assert (self.driver != ''), errstr_nodriver
 
         if not os.path.isabs(self.driver): # expand relative path
-            self.driver = os.path.join(self.dir, self.driver)
+            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
         errstr = "ERROR: "+func_name+" can't find "+ self.driver+" to run "+self.name
         assert os.path.exists(self.driver), errstr 
 
@@ -159,8 +157,7 @@ class Diagnostic(object):
             assert (driver_ext in programs), errstr_badext
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
-        errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name
-        # assert find_executable(self.program) is not None, errstr     
+        errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name    
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         translate = util.VariableTranslator()
@@ -208,8 +205,11 @@ class Diagnostic(object):
         return self.program + ' ' + self.driver
     
     def validate_command(self):
+        paths = util.PathManager()
+        command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [
-            os.environ['DIAG_HOME']+'/src/validate_environment.sh -v',
+            command_path,
+            ' -v',
             ' -p '.join([''] + self.required_programs),
             ' -z '.join([''] + self.pod_env_vars.keys()),
             ' -a '.join([''] + self.required_python_modules),
@@ -236,21 +236,19 @@ class Diagnostic(object):
 
     def _make_pod_html(self):
         # do templating on POD's html file
-        pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', self.name)
-        pod_wk_dir = os.path.join(os.environ['variab_dir'], self.name)
-        html_file = os.path.join(pod_wk_dir, self.name+'.html')
-        temp_file = os.path.join(pod_wk_dir, 'tmp.html')
+        html_file = os.path.join(self.POD_WK_DIR, self.name+'.html')
+        temp_file = os.path.join(self.POD_WK_DIR, 'tmp.html')
 
         if os.path.exists(html_file):
             os.remove(html_file)
-        shutil.copy2(os.path.join(pod_code_dir, self.name+'.html'), pod_wk_dir)
+        shutil.copy2(os.path.join(self.POD_CODE_DIR, self.name+'.html'), self.POD_WK_DIR)
         os.system("cat "+ html_file \
             + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
             + temp_file)
         # following two substitutions are specific to convective_transition_diag
         # need to find a more elegant way to handle this
         if self.name == 'convective_transition_diag':
-            temp_file2 = os.path.join(pod_wk_dir, 'tmp2.html')
+            temp_file2 = os.path.join(self.POD_WK_DIR, 'tmp2.html')
             if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
                 and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
                 os.system("cat " + temp_file \
@@ -265,7 +263,7 @@ class Diagnostic(object):
         os.remove(temp_file)
 
         # add link and description to main html page
-        html_file = os.path.join(os.environ["variab_dir"], 'index.html')
+        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
         a = os.system("cat " + html_file + " | grep " + self.name)
         if a != 0:
             os.system("echo '<H3><font color=navy>" + self.description \
@@ -274,48 +272,45 @@ class Diagnostic(object):
 
     def _convert_pod_figures(self):
         # Convert PS to png
-        pod_wk_dir = os.path.join(os.environ['variab_dir'], self.name)
-        dirs = ['figures', 'model/PS', 'obs/PS']
+        dirs = ['model/PS', 'obs/PS']
+        exts = ['ps', 'eps']
+        files = []
         for d in dirs:
-            full_path = os.path.join(pod_wk_dir, d)
-            files = glob.glob(full_path+"/*.ps")
-            files.extend(glob.glob(full_path+"/*.eps"))
-            for f in files:
-                (dd, ff) = os.path.split(os.path.splitext(f)[0])
-                ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
-                command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
-                    + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
-                os.system(command_str)   
+            for ext in exts:
+                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
+                files.extend(glob.glob(pattern))
+        for f in files:
+            (dd, ff) = os.path.split(os.path.splitext(f)[0])
+            ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
+            command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
+                + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
+            os.system(command_str)
 
     def _cleanup_pod_files(self):
-        pod_name = self.name
-        pod_code_dir = os.path.join(os.environ['DIAG_HOME'], 'diagnostics', pod_name)
-        pod_data_dir = os.path.join(os.environ['OBS_ROOT_DIR'], pod_name)
-        pod_wk_dir = os.path.join(os.environ['variab_dir'], pod_name)
-
         # copy PDF documentation (if any) to output
-        files = glob.glob(pod_code_dir+"/*.pdf")
+        files = glob.glob(os.path.join(self.POD_CODE_DIR, '*.pdf'))
         for file in files:
-            shutil.copy2(file, pod_wk_dir)
+            shutil.copy2(file, self.POD_WK_DIR)
 
         # copy premade figures (if any) to output 
-        files = glob.glob(pod_data_dir+"/*.gif")
-        files.extend(glob.glob(pod_data_dir+"/*.png"))
-        files.extend(glob.glob(pod_data_dir+"/*.jpg"))
-        files.extend(glob.glob(pod_data_dir+"/*.jpeg"))
+        exts = ['gif', 'png', 'jpg', 'jpeg']
+        globs = [os.path.join(self.POD_OBS_DATA, '*.'+ext) for ext in exts]
+        files = []
+        for pattern in globs:
+            files.extend(glob.glob(pattern))
         for file in files:
-            shutil.copy2(file, pod_wk_dir+"/obs")
+            shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested
         if os.environ["save_ps"] == "0":
             dirs = ['model/PS', 'obs/PS']
             for d in dirs:
-                if os.path.exists(os.path.join(pod_wk_dir, d)):
-                    shutil.rmtree(os.path.join(pod_wk_dir, d))
+                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
+                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
 
         # delete netCDF files if requested
         if os.environ["save_nc"] == "0":    
             dirs = ['model/netCDF', 'obs/netCDF']
             for d in dirs:
-                if os.path.exists(os.path.join(pod_wk_dir, d)):
-                    shutil.rmtree(os.path.join(pod_wk_dir, d))
+                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
+                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))

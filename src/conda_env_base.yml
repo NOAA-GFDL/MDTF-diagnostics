@@ -1,4 +1,4 @@
-name: _MDTF-diagnostics
+name: _MDTF-diagnostics-base
 channels:
 - conda-forge
 - defaults
@@ -7,9 +7,4 @@ dependencies:
 - subprocess32
 - pyyaml
 - mock
-- numpy
-- scipy
-- matplotlib
 - netCDF4
-- networkx
-- numba

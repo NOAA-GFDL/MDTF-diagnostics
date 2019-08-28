@@ -168,15 +168,11 @@ class CondaEnvironmentManager(EnvironmentManager):
 
     def create_all_environments(self):
         paths = util.PathManager()
-        envs_to_create = glob.glob('{}/src/conda_env_*.yml'.format(paths.CODE_ROOT))
-        envs_to_create = ['echo Creating conda env from '+env+'\n' \
-                +'conda env create --force -q -f '+ env for env in envs_to_create]
-        command_str = '\n'.join(envs_to_create)
-        command_str = 'source {}/src/conda_init.sh\n'.format(paths.CODE_ROOT) \
-            + command_str
-        process = subprocess.Popen('/usr/bin/env bash', 
-            stdin=subprocess.PIPE, shell=True)
-        process.communicate(command_str)
+        command = '{}/src/conda_env_setup.sh'.format(paths.CODE_ROOT)
+        try: 
+            subprocess.Popen(['bash', '-c', command])
+        except OSError as e:
+            print('ERROR :',e.errno,e.strerror)
 
     def destroy_environment(self, env_name):
         pass 
@@ -188,7 +184,7 @@ class CondaEnvironmentManager(EnvironmentManager):
         elif 'ncl' in keys:
             pod.env = '_MDTF-diagnostics-NCL'
         else:
-            pod.env = '_MDTF-diagnostics'
+            pod.env = '_MDTF-diagnostics-python'
 
     def activate_env_command(self, pod):
         # Source conda_init.sh to set things that aren't set b/c we aren't 

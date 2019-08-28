@@ -34,7 +34,12 @@ install:
   # MDTF-specific setup
   - pip install -v . 
   - source ./src/conda_env_setup.sh # sets up all conda environments
+  - echo "done sourcing, and envs in ${_CONDA_ENV_ROOT}"
+  - sleep 10
+  - echo "OK"
   - conda activate "${_CONDA_ENV_ROOT}/_MDTF-diagnostics-base"
+  - echo "OK, should be starting"
+  - sleep 10
 
 script:
   - python -m unittest discover

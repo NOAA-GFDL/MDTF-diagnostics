@@ -7,32 +7,33 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-import yaml
+from src.util import read_yaml, parse_mdtf_args
 
 def get_configuration(config_file='', check_input=False, check_output=False):
     # Redundant with code in util; need to fix this
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script   
     if config_file == '':
-        config_file = os.path.join(cwd,'..','config.yml') # default
-    with open(config_file, 'r') as file_object:
-        config = yaml.safe_load(file_object)
-    config['paths']['OBS_ROOT_DIR'] = os.path.realpath(config['paths']['OBS_ROOT_DIR'])
-    config['paths']['MODEL_ROOT_DIR'] = os.path.realpath(config['paths']['MODEL_ROOT_DIR'])
-    config['paths']['OUTPUT_DIR'] = os.path.realpath(config['paths']['OUTPUT_DIR'])
+        config_file = os.path.join(cwd,'..','src','config.yml') # default
+    config = read_yaml(config_file)
+    config = parse_mdtf_args(None, config, config_path=os.path.dirname(config_file))
     config['paths']['md5_path'] = os.path.join(cwd,'checksums')
 
-    assert os.path.isdir(config['paths']['md5_path'])
-    if check_input:
-        assert os.path.isdir(config['paths']['OBS_ROOT_DIR'])
-        assert os.path.isdir(config['paths']['MODEL_ROOT_DIR'])
-    if check_output:
-        assert os.path.isdir(config['paths']['OUTPUT_DIR'])        
+    # config['paths']['OBS_ROOT_DIR'] = os.path.realpath(config['paths']['OBS_ROOT_DIR'])
+    # config['paths']['MODEL_ROOT_DIR'] = os.path.realpath(config['paths']['MODEL_ROOT_DIR'])
+    # config['paths']['OUTPUT_DIR'] = os.path.realpath(config['paths']['OUTPUT_DIR'])
+    
+
+    # assert os.path.isdir(config['paths']['md5_path'])
+    # if check_input:
+    #     assert os.path.isdir(config['paths']['OBS_ROOT_DIR'])
+    #     assert os.path.isdir(config['paths']['MODEL_ROOT_DIR'])
+    # if check_output:
+    #     assert os.path.isdir(config['paths']['OUTPUT_DIR'])        
     return config
 
 def get_test_data_configuration():
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    with open(os.path.join(cwd,'pod_test_configs.yml'), 'r') as file_object:
-        case_list = yaml.safe_load(file_object)
+    case_list = read_yaml(os.path.join(cwd,'pod_test_configs.yml'))
     models = []
     pods = []
     for i, case in enumerate(case_list['case_list']):

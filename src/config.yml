@@ -87,3 +87,9 @@ settings:
 
   convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion
   convert_output_fmt: 'png' # default bitmap figure output (for html)
+
+  # This setting is only used if the Anaconda package manager is used to manage
+  # the POD runtime environments (CondaEnvironmentManager.) It specifies the 
+  # base directory for Conda environment installs.
+  # Set this equal to '' to install in your system's default location.
+  conda_env_root: '../envs'

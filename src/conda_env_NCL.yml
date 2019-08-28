@@ -4,12 +4,6 @@ channels:
 - defaults
 dependencies:
 - python=2.7
-- numpy
-- scipy
-- matplotlib
-- netCDF4
-- networkx
-- numba
 - subprocess32
 - pyyaml
 - ncl=6.5

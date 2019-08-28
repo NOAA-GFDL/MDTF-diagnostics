@@ -3,6 +3,7 @@
 case_list:
   - CASENAME: QBOi.EXP1.AMIP.001
     model: CESM
+    variable_convention: CESM
     FIRSTYR: 1977
     LASTYR: 1981
     pod_list:
@@ -14,12 +15,14 @@ case_list:
       - precip_diurnal_cycle 
   - CASENAME: GFDL.CM4.c96L32.am4g10r8
     model: AM4
+    variable_convention: AM4
     FIRSTYR: 1977
     LASTYR: 1981
     pod_list:
       - MJO_prop_amp
   - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
     model: CMIP
+    variable_convention: CMIP
     FIRSTYR: 1951
     LASTYR: 2005
     pod_list:

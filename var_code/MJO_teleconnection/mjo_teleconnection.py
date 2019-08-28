@@ -185,6 +185,17 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
       os.system("convert "+file1+" "+file2[:-3]+"jpeg")
       a = a+1
 
+# remove .eps files if requested
+if os.environ["save_ps"] == "0":    
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/figures")   
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/PS")
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/PS")
+
+# delete netCDF files if requested
+if os.environ["save_nc"] == "0":    
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/obs/netCDF")
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_teleconnection/model/netCDF")
+
 #============================================================
    print("-----------------------------------------------------------------------------")
    print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")

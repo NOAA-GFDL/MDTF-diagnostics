@@ -69,6 +69,7 @@ prvar = getenv("pr_var")
 
     pr = a->$prvar$(iStrt:iLast,:,:)     ;time,lat,lon
     pr@_FillValue = -999
+    printMinMax(pr,0)
 
      print("convert to mm/day")
      pr = pr * pr_conv
@@ -109,7 +110,6 @@ prvar = getenv("pr_var")
 
   print("First doy: " + min(time) + "  last doy: " + max(time))
   print("time indices "+iStrt+" "+iLast+" "+ymd(iStrt)+" "+ymd(iLast))
-  printVarSummary(pr)
 
   H_all = pr(:,:,:)
   H_all@_FillValue = -999

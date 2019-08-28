@@ -11,9 +11,12 @@ begin
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
+print("Starting...")
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
+level = getenv("lev_coord")
+file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
 file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"
@@ -21,6 +24,7 @@ file_v200 = datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"
 file_u850 = datadir+"/day/"+casename+"."+getenv("u850_var")+".day.nc"
 file_rlut = datadir+"/day/"+casename+"."+getenv("rlut_var")+".day.nc"
 file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
+;file_pr = "/archive/wnd/MDTF-GFDL/inputdata/model/CM4_historical/day/CM4_historical.pr.day.nc"
 
 
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
@@ -93,6 +97,7 @@ do i=0,dimsizes(date_all)-1
 end do
 
 date = date_all(i1:i2)
+print(date(0:9))
 ndays = dimsizes(date)
 time = ispan(0,ndays-1,1)
 
@@ -134,8 +139,8 @@ pr = (/pr*pr_conversion_factor*0.001/)            ; m/s
 pr@units = "m/s"
 ;prEq = pr($time_coord$ | :,{$lat_coord$ | -40 : 40 }, {$lon_coord$ | : })
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".pr.day.nc","c")
+print("writing "+file_dir+casename+".pr.day.nc")
+fo = addfile(file_dir+casename+".pr.day.nc","c")
 fo->gw = gwEq
 fo->date = date
 fo->pr = pr
@@ -159,6 +164,8 @@ delete_existing = False  ;overwrite
 
 plevs = (/850,200/)       ;this package expects new files to be written with these names
 var_names = (/"u","v"/)
+source = (/datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc",datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"/)
+print("             AAAAAA")
 
 do i=0,dimsizes(plevs)-1
    plev = plevs(i)
@@ -173,9 +180,15 @@ do i=0,dimsizes(plevs)-1
 
       var_name_plev_package = var_names(j)+tostring(plev)      ; new file name & varname in file
       print(" var_name_plev_package "+var_name_plev_package)
+      LEV = tostring(plevs(i)*100)+"." 
+      src = source(j)
+      dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
+      NCKS = "ncks -d "+level+","+LEV+","+LEV+"  "+src+" "+dst
+      print(NCKS)
+      system(NCKS)
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
-      file_out = wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+"."+var_name_plev_package+".day.nc"
+      file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv
 
@@ -198,8 +211,8 @@ rlut_var = getenv("rlut_var")
 
 rlut = f_rlut->$rlut_var$($time_coord$|i1:i2,{$lat_coord$|-40:40},$lon_coord$|:)
 
-print("writing "+wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.nc")
-fo = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".rlut.day.nc","c")
+print("writing "+file_dir+casename+".rlut.day.nc")
+fo = addfile(file_dir+casename+".rlut.day.nc","c")
 fo->gw = gwEq
 fo->date = date
 fo->rlut = rlut

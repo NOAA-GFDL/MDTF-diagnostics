@@ -14,6 +14,7 @@ begin
 varcode = getenv("VARCODE")
 wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
+file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 
@@ -21,7 +22,7 @@ firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
 ndays = (lastyr-firstyr+1)*365  ; noleap years in model
 
-f = addfile(wkdir+"/MDTF_"+casename+"/MJO_suite/model/netCDF/"+casename+".u200.day.nc","r")
+f = addfile(file_dir+casename+".u200.day.nc","r")
 gw = f->gw
 date = f->date
 maxdays = dimsizes(date)
@@ -58,7 +59,7 @@ do n = 50,nfil-51
 end do
 
 ; MAKE PLOTS
-psplot = wkdir+"/MDTF_"+casename+"/MJO_suite/model/PS/"+casename+".MJO"
+psplot = getenv("variab_dir")+"/MJO_suite/model/PS/"+casename+".MJO"
 wks = gsn_open_wks("ps",psplot)
 plot = new(3,graphic)
 res = True

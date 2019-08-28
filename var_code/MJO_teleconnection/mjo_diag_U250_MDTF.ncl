@@ -93,7 +93,7 @@ print("Reading Model 250hPa zonal wind data")
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
 
 
- Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
+ Ut  = tofloat(b->$u250var$(iStrt:iLast,{25000},:,:))	 	;type: double orig.
  Ut@_FillValue=-999
 
 

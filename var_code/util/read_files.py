@@ -81,6 +81,7 @@ def pprint_list(list_in,title=""):
 
 import re 
 import os
+import sys
 
 
 #==========================================================================
@@ -102,7 +103,7 @@ class Namelist:
       
 
 def get_available_programs(verbose=0):
-   return {'py': 'python', 'ncl': 'ncl'}  
+   return {'py': sys.executable, 'ncl': 'ncl'}  
 
 def print_namelist_podlist(namelist,verbose=0):
    print "POD LIST : "
@@ -343,7 +344,8 @@ def check_for_varlist_files(varlist,verbose=0):
    missing_list = []
    for item in varlist:
       if (verbose > 2 ): print func_name +" "+item
-      filepath = makefilepath(item['varname'],item['varfreq'],os.environ['CASENAME'],os.environ['DATADIR'])
+      #filepath = makefilepath(item['varname'],item['varfreq'],os.environ['CASENAME'],os.environ['DATADIR'])
+      filepath = makefilepath(item['varname'],item['varfreq'],os.environ['model'].os.environ['CASENAME'],os.environ['DATADIR'])
 
       if ( os.path.isfile(filepath) ):
          print "found ",filepath

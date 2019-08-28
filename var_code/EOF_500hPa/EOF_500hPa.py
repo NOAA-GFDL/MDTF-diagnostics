@@ -32,17 +32,39 @@ def generate_ncl_plots(nclPlotFile):
 
 print "Entered "+__file__
 filename1 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["zg_var"]+".mon.nc"
-filename2 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["ps_var"]+".mon.nc"
+#filename2 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["ps_var"]+".mon.nc"
 print "Looking for"+filename1
 if not os.path.isfile( filename1 ):
    print ("ERROR missing file "+filename1)
-print "Looking for"+filename2
-if not os.path.isfile( filename2 ):
-   print ("ERROR missing file "+filename2)
+#print "Looking for"+filename2
+#if not os.path.isfile( filename2 ):
+#   print ("ERROR missing file "+filename2)
 
 
-if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
-      print("height and surface pressure files found") 
+#if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
+#      print("height and surface pressure files found") 
+if os.path.isfile( filename1): 
+      print("geopotential height files found") 
+      print("computing EOF of geopotential height anomalies of 500 hPa")
+#============================================================
+# Set up directories
+#============================================================
+      print("MAKE EOF PLOTS FROM MODEL MONTHLY DATA ")
+      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model"):
+         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model")
+
+      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model/PS"):
+         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model/PS")
+
+      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF"):
+         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
+
+      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/obs"):
+         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/obs")
+
+      if not os.path.exists(os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF"):
+         os.makedirs(os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
+
       print("computing EOF of geopotential height anomalies of 500 hPa")
 #============================================================
 # Set up directories
@@ -106,8 +128,13 @@ if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
          file2 = os.environ["variab_dir"]+"/EOF_500hPa/model/"+files[a]
          os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
          a = a+1
-      if os.environ["CLEAN"] == "1":
+      if os.environ["save_ps"] == "0":
          os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
+
+      # delete netCDF files if requested
+      if os.environ["save_nc"] == "0":    
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/obs/netCDF")
+         os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/netCDF")
 
 #============================================================
 # Copy obs gifs into the expected location

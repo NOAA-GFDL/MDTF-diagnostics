@@ -39,7 +39,7 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/EOF_500hPa/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["CLEAN"] == "1":
+if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/EOF_500hPa/model/PS/")
 os.system("cp "+os.environ["VARDATA"]+"/EOF_500hPa/*.gif "+os.environ["variab_dir"]+"/EOF_500hPa/obs/.")
 
@@ -106,7 +106,7 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/Wheeler_Kiladis/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["CLEAN"] == "1":
+if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/Wheeler_Kiladis/model/PS")
 os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.gif "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
 os.system("cp "+os.environ["VARDATA"]+"/Wheeler_Kiladis/*.png "+os.environ["variab_dir"]+"/Wheeler_Kiladis/obs/.")
@@ -145,7 +145,7 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/precip_diurnal_cycle/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["CLEAN"] == "1":
+if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/precip_diurnal_cycle/model/PS/")
 os.system("cp "+os.environ["VARDATA"]+"/precip_diurnal_cycle/*.png "+os.environ["variab_dir"]+"/precip_diurnal_cycle/obs/.")
 
@@ -189,7 +189,7 @@ if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/model"):
       file2 = os.environ["variab_dir"]+"/convective_transition_diag/model/"+files[a]
       os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
       a = a+1
-   if os.environ["CLEAN"] == "1":
+   if os.environ["save_ps"] == "0":
       os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/model/PS")
 if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
    files = os.listdir(os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")
@@ -199,5 +199,5 @@ if os.path.exists(os.environ["variab_dir"]+"/convective_transition_diag/obs"):
       file2 = os.environ["variab_dir"]+"/convective_transition_diag/obs/"+files[a]
       os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
       a = a+1
-   if os.environ["CLEAN"] == "1":
+   if os.environ["save_ps"] == "0":
       os.system("rm -rf "+os.environ["variab_dir"]+"/convective_transition_diag/obs/PS")

@@ -7,16 +7,20 @@
 
 import os
 import subprocess
+# ------------------------------------------------------------------------
+# Variables for mjo_diag (MJO propogation)
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
+print("Let us get started!!!")
 def generate_ncl_plots(nclPlotFile):
    """generate_plots_call - call a nclPlotFile via subprocess call
    
    Arguments:
    nclPlotFile (string) - full path to ncl plotting file name
    """
+   print("calling NCL")
    # check if the nclPlotFile exists - 
    # don't exit if it does not exists just print a warning.
    try:
@@ -110,7 +114,12 @@ while a < len(files):
    file2 = os.environ["variab_dir"]+"/MJO_suite/model/"+files[a]
    os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
    a = a+1
-if os.environ["CLEAN"] == "1":
+if os.environ["save_ps"] == "0":
    os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/PS/")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.gif "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
 os.system("cp "+os.environ["VARDATA"]+"/MJO_suite/*.png "+os.environ["variab_dir"]+"/MJO_suite/obs/.")
+
+# delete netCDF files if requested
+if os.environ["save_nc"] == "0":    
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/obs/netCDF")
+   os.system("rm -rf "+os.environ["variab_dir"]+"/MJO_suite/model/netCDF")

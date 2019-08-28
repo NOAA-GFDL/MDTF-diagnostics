@@ -1,0 +1,22 @@
+#One filelist should be placed in each suite directory
+#
+# USAGE
+# #optional comments need to begin with #
+# # 2 or three fields:
+# var_name      time-frequency     required [optional]
+# 
+# - var_name: as found in var_code/util/set_variables_*
+# - time-frequency: mon (monthly), day, 6hr, 3hr, 1hr
+#   nb. if a variable is required at multiple time frequencies,
+#       list it separately for each one
+# - required: 
+#          True = the file is required to run the package
+#                 (package will abort if file not found)
+#          False = the file is optional (package continues regardless)
+#          Clearly the developer can just leave out optional files
+#          However, it is always nice to get an upfront warning of missing files
+#
+
+zg_var     mon required
+ps_var mon required
+

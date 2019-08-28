@@ -92,7 +92,8 @@ config = util.parse_mdtf_args(args, config)
 util.set_mdtf_env_vars(config, verbose)
 
 caselist = []
-for case_dict in config['case_list']:
+# only run first case in list until dependence on env vars cleaned up
+for case_dict in config['case_list'][0:1]: 
     case = DataMgr(case_dict, config)
     for pod_name in case.pod_list:
         try:

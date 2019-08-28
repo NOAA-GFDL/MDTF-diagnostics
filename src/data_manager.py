@@ -46,18 +46,18 @@ class DataManager(object):
 
     def _set_model_env_vars(self, config, verbose=0):
         setenv("DATADIR", self.MODEL_DATA_DIR, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
         setenv("variab_dir", self.MODEL_WK_DIR, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
 
         setenv("CASENAME", self.case_name, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
         setenv("model", self.model_name, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
         setenv("FIRSTYR", self.firstyr, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
         setenv("LASTYR", self.lastyr, config['envvars'],
-            overwrite=False,verbose=verbose)
+            verbose=verbose)
 
         translate = util.VariableTranslator()
         # todo: set/unset for multiple models
@@ -65,7 +65,7 @@ class DataManager(object):
         assert self.convention in translate.field_dict, \
             "Variable name translation doesn't recognize {}.".format(self.convention)
         for key, val in translate.field_dict[self.convention].items():
-            setenv(key, val, config['envvars'], overwrite=False,verbose=verbose)
+            setenv(key, val, config['envvars'], verbose=verbose)
 
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):

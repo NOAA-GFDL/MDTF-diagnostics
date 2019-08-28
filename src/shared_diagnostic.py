@@ -92,18 +92,15 @@ class Diagnostic(object):
     def _set_pod_env_vars(self, verbose=0):
         pod_envvars = {}
         # location of POD's code
-        setenv("POD_HOME", self.POD_CODE_DIR,
-            pod_envvars, overwrite=False, verbose=verbose)
+        setenv("POD_HOME", self.POD_CODE_DIR, pod_envvars, verbose=verbose)
         # POD's observational data
-        setenv("OBS_DATA", self.POD_OBS_DATA,
-            pod_envvars, overwrite=False, verbose=verbose)
+        setenv("OBS_DATA", self.POD_OBS_DATA, pod_envvars, verbose=verbose)
         # POD's subdir within working directory
-        setenv("WK_DIR", self.POD_WK_DIR,
-            pod_envvars,overwrite=False,verbose=verbose)
+        setenv("WK_DIR", self.POD_WK_DIR, pod_envvars, verbose=verbose)
 
         # optional POD-specific env vars defined in settings.yml
         for key, val in self.pod_env_vars.items():
-            setenv(key, val, pod_envvars, overwrite=False, verbose=verbose) 
+            setenv(key, val, pod_envvars, verbose=verbose) 
         return pod_envvars
 
     def _setup_pod_directories(self, verbose =0):

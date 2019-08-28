@@ -229,10 +229,12 @@ def parse_mdtf_args(args, config, config_path='', verbose=0):
             for key in config[section]:
                 if (key in args.__dict__) and (args.__getattribute__(key) != None):
                     config[section][key] = args.__getattribute__(key)
-        config_path = os.path.dirname(args.config_file)
+        if 'config_path' in args.__dict__:
+            config_path = os.path.dirname(args.config_file)
 
     cwd = os.getcwd()
-    os.chdir(config_path)
+    if config_path != '':
+        os.chdir(config_path)
     for key, val in config['paths'].items():
         # convert relative to absolute paths
         config['paths'][key] = os.path.realpath(val)
@@ -255,4 +257,4 @@ def set_mdtf_env_vars(config, verbose=0):
 
     # following are redundant but used by PODs
     paths = PathManager()
-    setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'],overwrite=False,verbose=verbose)
+    setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'], verbose=verbose)

@@ -33,9 +33,8 @@ install:
 
   # MDTF-specific setup
   - pip install -v . 
-  - source ./src/conda_init.sh # workaround for conda init
-  - ./src/conda_env_setup.sh # sets up all conda environments
-  - conda activate _MDTF-diagnostics-base
+  - source ./src/conda_env_setup.sh # sets up all conda environments
+  - conda activate "${_CONDA_ENV_ROOT}/_MDTF-diagnostics-base"
 
 script:
   - python -m unittest discover

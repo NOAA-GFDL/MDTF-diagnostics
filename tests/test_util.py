@@ -306,7 +306,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['paths']['C'], '/D')
         self.assertEqual(config['settings']['E'], 'F')
 
-    @mock.patch('src.shared_runner.util.check_required_dirs')
+    @mock.patch('src.util.check_required_dirs')
     def test_parse_mdtf_args_config_cmdline(self, mock_check_required_dirs):
         # override config file with command line arguments
         args = self.MockArgs(C='/X', E='Y')

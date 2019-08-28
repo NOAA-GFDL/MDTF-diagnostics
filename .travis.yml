@@ -32,8 +32,9 @@ install:
   - conda info -a
 
   # MDTF-specific setup
-  - source $(conda info --root)/etc/profile.d/conda.sh # workaround for conda init
-  - pip install -v . # sets up conda environments as well
+  - pip install -v . 
+  - source ./src/conda_init.sh # workaround for conda init
+  - ./src/conda_env_setup.sh # sets up all conda environments
   - conda activate _MDTF-diagnostics
 
 script:

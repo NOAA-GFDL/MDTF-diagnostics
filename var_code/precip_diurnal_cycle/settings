@@ -1,0 +1,8 @@
+# ==================================================================================================
+# 3.  Diurnal cycle of precipitation 
+#     see Gervais et al., J. Climate, 5219-5239, 2014.
+#     This requires 3 hourly precipitation. 
+#     the code is in NCL
+# ==================================================================================================
+driver precip_diurnal_cycle.py
+long_name Diurnal cycle of precipitation 

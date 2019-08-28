@@ -1,0 +1,15 @@
+name: _MDTF-diagnostics-NCL
+channels:
+- conda-forge # NOTE: critical to give highest priority to conda-forge
+- defaults
+dependencies:
+- python=2.7
+- numpy
+- scipy
+- matplotlib
+- netCDF4
+- networkx
+- numba
+- subprocess32
+- pyyaml
+- ncl=6.5

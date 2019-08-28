@@ -32,18 +32,20 @@ and a link to the full documentation for each diagnostic.
 
 
 ## Downloading and Running
-- [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf) [under revision]
+- [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf)
 
-- Observational and sample model data can be downloaded as .tar files from ftp://ftp.cgd.ucar.edu/archive/mdtf/ :
+- [Latest code](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.var_code.tar) (2 MB) 
 
-    - Pre-digested observational data: [MDTF_v2.0.obs_data.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (160 MB) 
+- [Pre-digested observational data](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (300 MB) 
 
-    - NCAR-CESM-CAM: [model.QBOi.EXP1.AMIP.001.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
+- Sample model data
 
-    - NOAA-GFDL-CM4 for MJO_prop_amp: [model.GFDL.CM4.c96L32.am4g10r8.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G)
+    - [NCAR-CESM-CAM](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
+
+    - [NOAA-GFDL-CM4](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G) For MJO_prop_amp module
 
 ## Developer's Information
-[Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf) [under revision]
+[Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf)
 
 ## Disclaimer
 The United States Department of Commerce (DOC) GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. DOC has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any claims against the Department of Commerce stemming from the use of its GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

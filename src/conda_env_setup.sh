@@ -45,4 +45,3 @@ for env_file in "${script_dir}"/conda_env_*.yml; do
         conda env create --force -q -f="$env_file"
     fi
 done
-exit 0

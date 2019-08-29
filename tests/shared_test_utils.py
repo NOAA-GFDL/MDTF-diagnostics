@@ -11,11 +11,12 @@ from src.util import read_yaml, parse_mdtf_args
 
 def get_configuration(config_file='', check_input=False, check_output=False):
     # Redundant with code in util; need to fix this
-    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script   
+    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
+    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
     if config_file == '':
         config_file = os.path.join(cwd,'..','src','config.yml') # default
     config = read_yaml(config_file)
-    config = parse_mdtf_args(None, config, config_path=os.path.dirname(config_file))
+    config = parse_mdtf_args(None, config, rel_paths_root=code_root)
     config['paths']['md5_path'] = os.path.join(cwd,'checksums')
 
     # config['paths']['OBS_ROOT_DIR'] = os.path.realpath(config['paths']['OBS_ROOT_DIR'])

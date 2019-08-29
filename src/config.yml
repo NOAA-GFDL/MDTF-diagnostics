@@ -84,7 +84,7 @@ settings:
   save_ps: False        # True to retain output .ps plots
   save_nc: True         # True to retain output netcdf files
   make_variab_tar: True # True to save output in .tar file
-  test_mode: True   #True = script just reports what it would do, doesn't call actual packages
+  test_mode: False   #True = script just reports what it would do, doesn't call actual packages
 
   convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion
   convert_output_fmt: 'png' # default bitmap figure output (for html)

@@ -182,7 +182,7 @@ class Diagnostic(object):
                 for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): print "\t \t examining alternative ",alt_item
                     new_var = item.copy()  # modifyable dict with all settings from original
-                    new_var['name_in_model'] = translate.fromCF(self.convention, alt_item)
+                    new_var['name_in_model'] = alt_item # translation done in DataManager._setup_pod()
                     del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
                     if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
                     new_files = self._check_for_varlist_files([new_var],verbose=verbose)

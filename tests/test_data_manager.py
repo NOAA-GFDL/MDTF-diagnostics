@@ -68,46 +68,43 @@ class TestDataManagerSetup(unittest.TestCase):
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pods_cf_cf(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_cf_cf(self, mock_exists, mock_read_yaml):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
-        case.pods = [pod]
-        case._setup_pods()
+        case._setup_pod(pod)
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'pr_var')
 
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pods_cf_custom(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_cf_custom(self, mock_exists, mock_read_yaml):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')
-        case.pods = [pod]
-        case._setup_pods()
+        case._setup_pod(pod)
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'PRECT')
 
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pods_custom_cf(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_custom_cf(self, mock_exists, mock_read_yaml):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
-        case.pods = [pod]
-        case._setup_pods()
+        case._setup_pod(pod)
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'pr_var')
 
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pods_custom_custom(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_custom_custom(self, mock_exists, mock_read_yaml):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')
         case.pods = [pod]
-        case._setup_pods()
+        case._setup_pod(pod)
         self.assertEqual(pod.varlist[0]['CF_name'], 'pr_var')
         self.assertEqual(pod.varlist[0]['name_in_model'], 'PRECT')
 

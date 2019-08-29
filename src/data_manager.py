@@ -36,7 +36,8 @@ class DataManager(object):
         self._setup_model_paths()
         self._set_model_env_vars(config)
         self._setup_html()
-        self._setup_pods()
+        for pod in self.pods:
+            self._setup_pod(pod)
 
     def _setup_model_paths(self, verbose=0):
         util.check_required_dirs(
@@ -81,16 +82,21 @@ class DataManager(object):
                 os.path.join(self.MODEL_WK_DIR, 'index.html')
             )
 
-    def _setup_pods(self):
+    def _setup_pod(self, pod):
         paths = util.PathManager()
         translate = util.VariableTranslator()
-        for pod in self.pods:
-            pod.__dict__.update(paths.modelPaths(self))
-            pod.__dict__.update(paths.podPaths(pod))
-            for idx, var in enumerate(pod.varlist):
-                cf_name = translate.toCF(pod.convention, var['var_name'])
-                pod.varlist[idx]['CF_name'] = cf_name
-                pod.varlist[idx]['name_in_model'] = translate.fromCF(self.convention, cf_name)
+        pod.__dict__.update(paths.modelPaths(self))
+        pod.__dict__.update(paths.podPaths(pod))
+        for idx, var in enumerate(pod.varlist):
+            cf_name = translate.toCF(pod.convention, var['var_name'])
+            pod.varlist[idx]['CF_name'] = cf_name
+            pod.varlist[idx]['name_in_model'] = translate.fromCF(self.convention, cf_name)
+            if 'alternates' in pod.varlist[idx]:
+                pod.varlist[idx]['alternates'] = [
+                    translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
+                        for var2 in pod.varlist[idx]['alternates']
+                ]
+
 
     # -------------------------------------
 

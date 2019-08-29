@@ -222,19 +222,20 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
-def parse_mdtf_args(args, config, config_path='', verbose=0):
+def parse_mdtf_args(args, config, rel_paths_root='', verbose=0):
     # overwrite default args in config file with command-line options.
     if args is not None:
         for section in ['paths', 'settings']:
             for key in config[section]:
                 if (key in args.__dict__) and (args.__getattribute__(key) != None):
                     config[section][key] = args.__getattribute__(key)
-        if 'config_path' in args.__dict__:
-            config_path = os.path.dirname(args.config_file)
+        if 'CODE_ROOT' in args.__dict__ and (args.CODE_ROOT != None):
+            # only let this be overridden if we're in a unit test
+            rel_paths_root = args.CODE_ROOT
 
     cwd = os.getcwd()
-    if config_path != '':
-        os.chdir(config_path)
+    if rel_paths_root != '':
+        os.chdir(rel_paths_root)
     for key, val in config['paths'].items():
         # convert relative to absolute paths
         config['paths'][key] = os.path.realpath(val)
@@ -244,7 +245,7 @@ def parse_mdtf_args(args, config, config_path='', verbose=0):
     check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
         create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
-        verbose=verbose
+        verbose=3
         )
     return config
 

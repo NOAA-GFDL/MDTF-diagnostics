@@ -229,10 +229,11 @@ class TestDiagnosticSetUp(unittest.TestCase):
     def test_check_for_varlist_files_alternate(self, mock_isfile):
         # case alternate variable is specified and found
         test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True, 'alternates':['prc_var']}]
+            'freq':'mon', 'required': True, 'alternates':['PRECC']}]
         pod = Diagnostic.__new__(Diagnostic) # bypass __init__ 
         pod.convention = 'not_CF'
         f = pod._check_for_varlist_files(test_vars)
+        # name_in_model translation now done in DataManager._setup_pod
         self.assertEqual(f['found_files'], ['/A/mon/B.PRECC.mon.nc'])
         self.assertEqual(f['missing_files'], [])
 

@@ -21,6 +21,7 @@ and a link to the full documentation for each diagnostic.
 | [Wavenumber-Frequency Spectra](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html) | CESM/AMWG (NCAR) |
 | [MJO Spectra and Phasing](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_suite/MJO_suite.html)  | CESM/AMWG (NCAR)  |
 | [Diurnal Cycle of Precipitation](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html)  | Rich Neale (NCAR)   |
+| Soil Moisture-Evapotranspiration coupling | Eric Wood (Princeton) |
 | [MJO Propagation and Amplitude ](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html) (example with GFDL CM4 data)  | Xianan Jiang (UCLA)  |
 | [AMOC 3D structure ](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html) (implementation in progress, example with GFDL CM2 model data)  | Xiaobiao Xu (FSU/COAPS)   |
 | [ENSO Moist Static Energy budget](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_CCSM4/MSE_diag/MSE_diag.html) (implementation in progress, example with CCSM4 data)  | Hariharasubramanian Annamalai (U. Hawaii)  |
@@ -32,20 +33,18 @@ and a link to the full documentation for each diagnostic.
 
 
 ## Downloading and Running
-- [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf)
+- [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf) (in the process of being updated)
 
-- [Latest code](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.var_code.tar) (2 MB) 
+- Observational and sample model data can be obtained by FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf/ :
 
-- [Pre-digested observational data](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (300 MB) 
+    - Pre-digested observational data: [MDTF_v2.0.obs_data.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (160 MB) 
 
-- Sample model data
+    - NCAR-CESM-CAM sample data: [model.QBOi.EXP1.AMIP.001.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
 
-    - [NCAR-CESM-CAM](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
-
-    - [NOAA-GFDL-CM4](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G) For MJO_prop_amp module
+    - NOAA-GFDL-CM4 sample data: [model.GFDL.CM4.c96L32.am4g10r8.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G)
 
 ## Developer's Information
-[Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf)
+[Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf) (in the process of being updated)
 
 ## Disclaimer
 The United States Department of Commerce (DOC) GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. DOC has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any claims against the Department of Commerce stemming from the use of its GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

@@ -160,7 +160,7 @@ class DataManager(object):
             print("ERROR in assembling tar file for {}".format(self.case_name))
 
 
-class LocalFileData(DataManager):
+class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
     def queryDataset(self, dataspec_dict):
         filepath = util.makefilepath(

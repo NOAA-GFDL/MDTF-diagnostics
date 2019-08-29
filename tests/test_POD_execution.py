@@ -12,7 +12,7 @@ from src.util import write_yaml
 import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
-DOING_MDTF_DATA_TESTS = True #('--data_tests' in sys.argv)
+DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
 DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 # All this is a workaround because tests are programmatically generated at 
 # import time, but the tests are skipped at runtime. We're skipping tests 

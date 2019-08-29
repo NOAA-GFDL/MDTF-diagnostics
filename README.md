@@ -33,6 +33,9 @@ and a link to the full documentation for each diagnostic.
 
 
 ## Downloading and Running
+
+- See the wiki for [installation instructions](https://github.com/NOAA-GFDL/MDTF-diagnostics/wiki/Detailed-installation-instructions).
+
 - [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf) (in the process of being updated)
 
 - Observational and sample model data can be obtained by FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf/ :

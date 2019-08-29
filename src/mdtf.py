@@ -60,6 +60,7 @@ from environment_manager import CondaEnvironmentManager as EnvironmentMgr
 from shared_diagnostic import Diagnostic
 
 cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
+code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbosity", action="count",
                     help="Increase output verbosity")
@@ -67,7 +68,7 @@ parser.add_argument("--test_mode", action="store_const", const=True,
                     help="Set flag to not call PODs, just say what would be called")
 # default paths set in config.yml/paths
 parser.add_argument('--CODE_ROOT', nargs='?', type=str, 
-                    default=os.path.realpath(os.path.join(cwd, '..')),
+                    default=code_root,
                     help="Code installation directory.")
 parser.add_argument('--MODEL_DATA_ROOT', nargs='?', type=str, 
                     help="Parent directory containing results from different models.")

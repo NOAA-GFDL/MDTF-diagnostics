@@ -245,7 +245,7 @@ def parse_mdtf_args(args, config, rel_paths_root='', verbose=0):
     check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
         create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
-        verbose=3
+        verbose=verbose
         )
     return config
 

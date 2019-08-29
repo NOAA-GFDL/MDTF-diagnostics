@@ -114,7 +114,7 @@ class EnvironmentManager(object):
             self.destroy_environment(env)
 
 
-class UnmanagedEnvironment(EnvironmentManager):
+class NoneEnvironmentManager(EnvironmentManager):
     # Do not attempt to switch execution environments for each POD.
     def create_environment(self, env_name):
         pass 

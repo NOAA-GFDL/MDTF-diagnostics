@@ -33,15 +33,13 @@ and a link to the full documentation for each diagnostic.
 ## Downloading and Running
 - [Getting Started](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Getting_started_v2.0.pdf)
 
-- [Latest code](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.var_code.tar) (2 MB) 
+- Observational and sample model data can be obtained by FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf/ :
 
-- [Pre-digested observational data](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (300 MB) 
+    - Pre-digested observational data: [MDTF_v2.0.obs_data.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.0.obs_data.tar) (160 MB) 
 
-- Sample model data
+    - NCAR-CESM-CAM sample data: [model.QBOi.EXP1.AMIP.001.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
 
-    - [NCAR-CESM-CAM](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar) (13G)
-
-    - [NOAA-GFDL-CM4](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G) For MJO_prop_amp module
+    - NOAA-GFDL-CM4 sample data: [model.GFDL.CM4.c96L32.am4g10r8.tar](ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar) (5G)
 
 ## Developer's Information
 [Developer's Walk-through (v2.0)](http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/Developers_walkthrough_v2.0.pdf)

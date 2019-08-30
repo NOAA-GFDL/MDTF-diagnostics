@@ -8,12 +8,13 @@ Welcome to MDTF-diagnostics's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+   sphinx/diagnostics
+   sphinx/code_autodoc
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

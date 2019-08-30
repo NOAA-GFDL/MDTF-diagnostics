@@ -1,1 +1,0 @@
-.. include:: ../../../diagnostics/convective_transition_diag/convecTransBasic.py

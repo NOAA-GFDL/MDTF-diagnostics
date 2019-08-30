@@ -6,9 +6,38 @@ import util
 from util import setenv # TODO: fix
 
 class Diagnostic(object):
-    # analogue of TestCase in xUnit
+    """Class holding configuration for a diagnostic script.
+
+    This is the analogue of TestCase in the xUnit analogy.
+
+    Object attributes are read from entries in the settings section of the POD's
+    settings.yml file upon initialization.
+
+    Attributes:
+        driver (str): Filename of the top-level driver script for the POD.
+        long_name (str): POD's name used for display purposes. May contain spaces.
+        description (str): Short description of POD inserted by the link in the
+            top-level index.html file.
+        required_programs (:obj:`list` of :obj:`str`, optional): List of 
+            executables required by the POD (typically language interpreters). 
+            validate_environment.sh will make sure these are on the environment's
+            $PATH before the POD is run.
+        required_ncl_scripts (:obj:`list` of :obj:`str`, optional): List of NCL 
+            scripts required by the POD, if any.  
+            validate_environment.sh will make sure these are on the environment's
+            $PATH before the POD is run.
+    """
 
     def __init__(self, pod_name, verbose=0):
+        """POD initializer.
+
+        Given a POD name, we attempt to read its settings.yml file.
+
+        Args:
+            pod_name (str): Name of the POD to initialize. This must match one 
+                of the directories in /diagnostics.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        """
         paths = util.PathManager()
 
         self.name = pod_name

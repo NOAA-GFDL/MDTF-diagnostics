@@ -37,6 +37,9 @@ wheels/
 *.tmp
 MANIFEST
 
+# Sphinx intermediate files
+doc/_build
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

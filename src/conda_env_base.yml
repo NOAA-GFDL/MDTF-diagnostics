@@ -8,3 +8,4 @@ dependencies:
 - pyyaml
 - mock
 - netCDF4
+- sphinx

@@ -47,8 +47,8 @@ Required input data to the module:
 References
 ----------
 
-None
+None
 
 More About the Diagnostic
 -------------------------
-
+

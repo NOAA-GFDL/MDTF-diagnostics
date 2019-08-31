@@ -11,7 +11,7 @@ source "${script_dir}/conda_init.sh"
 
 # determine if conda_env_root is defined in conda.yml settings
 conda_root=$( conda info --root )
-conda_env_root=$( sed -n "s/^\s*conda_env_root: '\(.*\)'.*/\1/p" "${script_dir}/config.yml" )
+conda_env_root=$( sed -n "s/^[[:space:]]*conda_env_root:[[:space:]]*'\(.*\)'.*/\1/p" "${script_dir}/config.yml" )
 if [ -z "$conda_env_root" ]; then
     # not set, create conda env without --prefix
     use_prefix=false
@@ -35,7 +35,7 @@ fi
 
 for env_file in "${script_dir}"/conda_env_*.yml; do
     [ -e "$env_file" ] || continue # catch the case where nothing matches
-    env_name=$( sed -n "s/^\s*name: \([\w-]*\)\s*/\1/p" "$env_file" )
+    env_name=$( sed -n "s/^[[:space:]]*name:[[:space:]]*\([[:alnum:]_\-]*\)[[:space:]]*/\1/p" "$env_file" )
     if [ "$use_prefix" = true ]; then
         conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
         echo "Creating conda env ${env_name} in ${conda_prefix}"

@@ -82,7 +82,7 @@ References
 .. [14] Peters, O. and J. D. Neelin, 2006: Critical phenomena in atmospheric precipitation. *Nat Phys*, **2**, 393‐396.
 .. [15] Sobel, A. and E. Maloney, 2013: Moisture Modes and the Eastward Propagation of the MJO. *J. Atmos. Sci.*, **70**, https://doi.org/10.1175/Jas‐D‐12‐0189.1, 187‐192.
 .. [16] Sobel, A., S. Wang, and D. Kim, 2014: Moist Static Energy Budget of the MJO during DYNAMO. *J. Atmos. Sci.*, **71**, https://doi.org/10.1175/JAS‐D‐14‐0052.1, 4276‐4291.
-
+
 .. |^2| replace:: \ :sup:`2`\ 
 .. |^3| replace:: \ :sup:`3`\ 
 .. |^-1| replace:: \ :sup:`-1`\ 

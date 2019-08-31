@@ -34,7 +34,7 @@ All scripts can be found at: ``mdtf/MDTF_$ver/var_code/MJO_teleconnection``
 | Keep your input data at: ``mdtf/MDTF__$ver/$model_name/day``
 | Index.html can be found at: ``mdtf/MDTF_$ver/ wkdir/MDTF_$model_name``
 
-Required Programing Language and libraries
+Required Programing Language and libraries
 ------------------------------------------
 
 | All these scripts required NCAR Command Language Version 6.3.0 or higher in addition to ncl
@@ -71,7 +71,7 @@ The first diagnostic in this POD presents MJO composite 250 hPa geopotential hei
     :align: center
     :width: 50 %
 
-    Figure 1. MJO phase 1 pentad composites of anomalous 250-hPa geopotential height, where a pentad denotes a 5-day mean, in this case the average of lag days 0 - 4 following an MJO phase. ERA-I is shown in the upper left, and the candidate model in the upper right. Positive geopotential height anomalies are in red solid contours, and negative anomalies are in blue dashed contours. Contours are plotted every 10 m, and the zero contour is omitted. Anomalies found to be 95% significantly different from zero are dotted. The color shading shows the anomalous tropical precipitation composite during MJO phase 1.
+    Figure 1. MJO phase 1 pentad composites of anomalous 250-hPa geopotential height, where a pentad denotes a 5-day mean, in this case the average of lag days 0 - 4 following an MJO phase. ERA-I is shown in the upper left, and the candidate model in the upper right. Positive geopotential height anomalies are in red solid contours, and negative anomalies are in blue dashed contours. Contours are plotted every 10 m, and the zero contour is omitted. Anomalies found to be 95% significantly different from zero are dotted. The color shading shows the anomalous tropical precipitation composite during MJO phase 1.
 
 The diagnostic next assesses teleconnection performance versus measures of basic state fidelity and MJO skill. Figure 2 from Henderson et al. (2017) contains two panels, each having MJO teleconnection performance during December-February on the y-axis. In Figure 2a, the xaxis represents an MJO skill metric. While Figure 2a shows a relationship between MJO skill and teleconnection performance, even models with a good MJO can have poor teleconnection performance. For only the models assessed to have a sufficiently good MJO, Figure 2b assesses the relationship between teleconnection performance and biases in the North Pacific zonal flow. Plus signs are a measure of the total root mean squared (RMS) error of the 250 hPa zonal flow over the region 15°N – 60°N, 110°E – 120°W, and the filled circle provides a measure of the RMS error in the length of the North Pacific subtropical jet. Both measures are correlated with MJO teleconnection performance, although biases in the jet provides a somewhat better metric (r =-0.7 versus -0.6 for the total RMS). Subsequent analysis showed that models with a jet that extends too far east tend to have degraded teleconnection performance. Model physics appears to play a key role in the extent of the Pacific jet, as was demonstrated by Neelin et al. (2016) in diagnosing projected California precipitation changes between CMIP3 and CMIP5 models into the late 21st Century. The Pod developed here places the candidate model in question into the cloud of other models on Figure 2, with separate links on the POD site for left and right panels of Figure 2.
 
@@ -81,7 +81,7 @@ The diagnostic next assesses teleconnection performance versus measures of basic
 
     Figure 2. From Henderson et al. (2017). December-February teleconnection performance averaged across all MJO phases (y-axis) versus (a) MJO skill (MJO E/W ratio) and (b) the RMS error of the 250-hPa December-February zonal wind. The observed E/W precipitation (GPCP) ratio is provided (dashed line, left panel). The MJO skill is derived as the ratio of eastward to westward power of equatorial precipitation in the 30-60 day, zonal wavenumbers 1-3 band (e.g. Ahn et al. 2017). Teleconnection performance was determined as pattern correlation of North Pacific and North America (15°S - 80°N, 130°E - 60°W) MJO composite 250 hPa geopotential height anomalies between CMIP models and ERA-i reanalysis averaged over all MJO phases. In panel (b), the crosses show the model 250hPa zonal wind RMS error over the full Pacific basin, while the closed circles indicate the longitudinal RMS error of the subtropical jet.
 
-.. |^2| replace:: \ :sup:`2`\ 
+.. |^2| replace:: \ :sup:`2`\ 
 .. |^3| replace:: \ :sup:`3`\ 
 .. |^-1| replace:: \ :sup:`-1`\ 
 .. |^-2| replace:: \ :sup:`-2`\ 

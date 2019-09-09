@@ -10,7 +10,7 @@ Welcome to MDTF-diagnostics's documentation!
    :maxdepth: 2
 
    sphinx/diagnostics
-   sphinx/code_autodoc
+   sphinx/src_autodoc
 
 
 Indices and tables

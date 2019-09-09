@@ -1,12 +1,23 @@
+#!/usr/bin/env bash
 # This is a workaround to permit switching conda environments in a 
 # non-interactive shell.
 # The script is what's placed in ~/.bashrc by 'conda init bash'; 
 # this doesn't get sourced by bash in non-interactive mode so we have to 
 # do it manually.
 
-# NOTE this has only been tested with conda 4.7.10; I know earlier 
+# NOTE this has only been tested with conda 4.7.10 and later; I know earlier 
 # versions had things in different places.
 
+if [ ! -n "$( command -v conda)" ]; then
+    echo "Conda not found on \$PATH, sourcing .bashrc"
+    if [ -f $HOME/.bashrc ]; then
+        source $HOME/.bashrc
+    fi
+fi
+if [ ! -n "$( command -v conda)" ]; then
+    echo "Conda still not found; aborting"
+    exit 1
+fi
 export _CONDA_ROOT=$(conda info --root)
 
 __conda_path="$_CONDA_ROOT"'/bin/conda'

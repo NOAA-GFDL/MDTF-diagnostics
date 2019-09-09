@@ -14,9 +14,9 @@ class Diagnostic(object):
     settings.yml file upon initialization.
 
     Attributes:
-        driver (str): Filename of the top-level driver script for the POD.
-        long_name (str): POD's name used for display purposes. May contain spaces.
-        description (str): Short description of POD inserted by the link in the
+        driver (:obj:`str`): Filename of the top-level driver script for the POD.
+        long_name (:obj:`str`): POD's name used for display purposes. May contain spaces.
+        description (:obj:`str`): Short description of POD inserted by the link in the
             top-level index.html file.
         required_programs (:obj:`list` of :obj:`str`, optional): List of 
             executables required by the POD (typically language interpreters). 
@@ -29,13 +29,12 @@ class Diagnostic(object):
     """
 
     def __init__(self, pod_name, verbose=0):
-        """POD initializer.
-
-        Given a POD name, we attempt to read its settings.yml file.
+        """POD initializer. Given a POD name, we attempt to read a settings.yml 
+        file in a subdirectory of ``/diagnostics`` by that name and parse the
+        contents.
 
         Args:
-            pod_name (str): Name of the POD to initialize. This must match one 
-                of the directories in /diagnostics.
+            pod_name (:obj:`str`): Name of the POD to initialize.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         paths = util.PathManager()
@@ -51,6 +50,16 @@ class Diagnostic(object):
         self.varlist = config
 
     def _parse_pod_settings(self, settings, verbose=0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
+
+        Args:
+            settings (:obj:`dict`): Contents of the settings portion of the POD's
+                settings.yml file.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns:
+            Dict of parsed settings.
+        """
         d = {}
         d['pod_name'] = self.name # redundant
         # define empty defaults to avoid having to test existence of attrs
@@ -84,6 +93,16 @@ class Diagnostic(object):
         return d
 
     def _parse_pod_varlist(self, varlist, verbose=0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
+
+        Args:
+            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+                of the POD's settings.yml file.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns:
+            varlist
+        """
         default_file_required = False 
         for idx, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
@@ -105,6 +124,21 @@ class Diagnostic(object):
     # -------------------------------------
 
     def setUp(self, verbose=0):
+        """Perform filesystem operations and checks prior to running the POD. 
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script and requested data files.
+
+        Note:
+            The existence of data files is checked here, with 
+            :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files`,
+            but the runtime environment is validated separately as a function of
+            :meth:`environment_manager.EnvironmentManager.run`. This is because 
+            each POD is run in a subprocess (due to the necessity of supporting
+            multiple languages) so the validation must take place in that 
+            subprocess.
+        """
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
 
@@ -119,6 +153,14 @@ class Diagnostic(object):
             if (verbose > 0): print "No known missing required input files"
 
     def _set_pod_env_vars(self, verbose=0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+
+        Args:
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns:
+            Dict of POD-specific environment variables that were set.
+        """
         pod_envvars = {}
         # location of POD's code
         setenv("POD_HOME", self.POD_CODE_DIR, pod_envvars, verbose=verbose)
@@ -133,6 +175,11 @@ class Diagnostic(object):
         return pod_envvars
 
     def _setup_pod_directories(self, verbose =0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+
+        Args:
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        """
         util.check_required_dirs(
             already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
             create_if_nec = [self.POD_WK_DIR], 
@@ -143,6 +190,11 @@ class Diagnostic(object):
                 os.makedirs(os.path.join(self.POD_WK_DIR, d))
 
     def _check_pod_driver(self, verbose=0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+
+        Args:
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        """
         func_name = "check_pod_driver "
         if (verbose > 1):  print func_name," received POD settings: ", self.__dict__
         programs = util.get_available_programs()
@@ -186,6 +238,17 @@ class Diagnostic(object):
         errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name    
 
     def _check_for_varlist_files(self, varlist, verbose=0):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+
+        Args:
+            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+                of the POD's settings.yml file.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns:
+            Dict with two entries, ``found_files`` and ``missing_files``, containing
+                lists of paths to found and missing data files, respectively.
+        """
         translate = util.VariableTranslator()
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
@@ -228,9 +291,26 @@ class Diagnostic(object):
     # -------------------------------------
 
     def run_command(self):
+        """Produces the shell command to run the POD. Called by 
+        :meth:`environment_manager.EnvironmentManager.run`.
+
+        Returns:
+            (:obj:`str`) Command-line invocation to run the POD.
+        """
         return self.program + ' ' + self.driver
     
     def validate_command(self):
+        """Produces the shell command to validate the POD's runtime environment 
+        (ie, check for all requested third-party module dependencies.)
+
+        Called by :meth:`environment_manager.EnvironmentManager.run`. 
+        Dependencies are passed as arguments to the shell script 
+        ``src/validate_environment.sh``, which is invoked in the POD's subprocess
+        before the POD is run.
+
+        Returns:
+            (:obj:`str`) Command-line invocation to validate the POD's runtime environment.
+        """
         paths = util.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [
@@ -247,6 +327,18 @@ class Diagnostic(object):
     # -------------------------------------
 
     def tearDown(self, verbose=0):
+        """Performs cleanup tasks when the POD has finished running.
+
+        In order, this 1) creates the POD's HTML output page from its included
+        template, replacing ``CASENAME`` and other template variables with their
+        current values, and adds a link to the POD's page from the top-level HTML
+        report; 2) converts the POD's output plots (in PS or EPS vector format) 
+        to a bitmap format for webpage display; 3) Copies all requested files to
+        the output directory and deletes temporary files.
+
+        Args:
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        """
         # shouldn't need to re-set env vars, but used by 
         # convective_transition_diag to set filename info 
         self._set_pod_env_vars(verbose=verbose)
@@ -261,7 +353,8 @@ class Diagnostic(object):
             # print(pod+" Elapsed time ",elapsed)
 
     def _make_pod_html(self):
-        # do templating on POD's html file
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
+        """
         html_file = os.path.join(self.POD_WK_DIR, self.name+'.html')
         temp_file = os.path.join(self.POD_WK_DIR, 'tmp.html')
 
@@ -297,7 +390,8 @@ class Diagnostic(object):
                 + html_file)
 
     def _convert_pod_figures(self):
-        # Convert PS to png
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+        """
         dirs = ['model/PS', 'obs/PS']
         exts = ['ps', 'eps']
         files = []
@@ -313,6 +407,8 @@ class Diagnostic(object):
             os.system(command_str)
 
     def _cleanup_pod_files(self):
+        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+        """
         # copy PDF documentation (if any) to output
         files = glob.glob(os.path.join(self.POD_CODE_DIR, '*.pdf'))
         for file in files:

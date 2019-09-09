@@ -3,7 +3,11 @@ Code reference
 
 .. autosummary::
 
-   src
+   src.mdtf
+   src.data_manager
+   src.environment_manager
+   src.shared_diagnostic
+   src.util
 
 .. toctree::
    :maxdepth: 4

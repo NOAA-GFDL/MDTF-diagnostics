@@ -6,6 +6,8 @@
 Welcome to MDTF-diagnostics's documentation!
 ============================================
 
+Also see documentation on the `wiki <https://github.com/NOAA-GFDL/MDTF-diagnostics/wiki>`_.
+
 .. toctree::
    :maxdepth: 2
 

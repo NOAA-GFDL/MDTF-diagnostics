@@ -17,7 +17,6 @@ import sys
 cwd = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
-print sys.path
 
 autodoc_mock_imports = ['yaml', 'subprocess32']
 import mock # do this twice just to be safe

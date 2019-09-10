@@ -59,80 +59,89 @@ import data_manager
 import environment_manager
 from shared_diagnostic import Diagnostic
 
-cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
-parser = argparse.ArgumentParser()
-parser.add_argument("-v", "--verbosity", action="count",
-                    help="Increase output verbosity")
-# default paths set in config.yml/paths
-parser.add_argument('--CODE_ROOT', nargs='?', type=str, 
-                    default=code_root,
-                    help="Code installation directory.")
-parser.add_argument('--MODEL_DATA_ROOT', nargs='?', type=str, 
-                    help="Parent directory containing results from different models.")
-parser.add_argument('--OBS_DATA_ROOT', nargs='?', type=str, 
-                    help="Parent directory containing observational data used by individual PODs.")
-parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
-                    help="Working directory.")
-parser.add_argument('--OUTPUT_DIR', nargs='?', type=str, 
-                    help="Directory to write output files. Defaults to working directory.")
-# defaults set in config.yml/settings
-parser.add_argument("--test_mode", action="store_const", const=True,
-                    help="Set flag to do a dry run, disabling calls to PODs")
-parser.add_argument('--data_manager', nargs='?', type=str, 
-                    help="Method to fetch model data. Currently supported options are {'Localfile'}.")
-parser.add_argument('--environment_manager', nargs='?', type=str, 
-                    help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")
-# non-flag arguments                                        
-parser.add_argument('config_file', nargs='?', type=str, 
-                    default=os.path.join(cwd, 'config.yml'),
-                    help="Configuration file.")
-args = parser.parse_args()
-if args.verbosity == None:
-    verbose = 1
-else:
-    verbose = args.verbosity + 1 # fix for case  verb = 0
+def argparse_wrapper():
+    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
+    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbosity", action="count",
+                        help="Increase output verbosity")
+    # default paths set in config.yml/paths
+    parser.add_argument('--CODE_ROOT', nargs='?', type=str, 
+                        default=code_root,
+                        help="Code installation directory.")
+    parser.add_argument('--MODEL_DATA_ROOT', nargs='?', type=str, 
+                        help="Parent directory containing results from different models.")
+    parser.add_argument('--OBS_DATA_ROOT', nargs='?', type=str, 
+                        help="Parent directory containing observational data used by individual PODs.")
+    parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
+                        help="Working directory.")
+    parser.add_argument('--OUTPUT_DIR', nargs='?', type=str, 
+                        help="Directory to write output files. Defaults to working directory.")
+    # defaults set in config.yml/settings
+    parser.add_argument("--test_mode", action="store_const", const=True,
+                        help="Set flag to do a dry run, disabling calls to PODs")
+    parser.add_argument('--data_manager', nargs='?', type=str, 
+                        help="Method to fetch model data. Currently supported options are {'Localfile'}.")
+    parser.add_argument('--environment_manager', nargs='?', type=str, 
+                        help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")
+    # non-flag arguments                                        
+    parser.add_argument('config_file', nargs='?', type=str, 
+                        default=os.path.join(cwd, 'config.yml'),
+                        help="Configuration file.")
+    args = parser.parse_args()
+    if args.verbosity == None:
+        verbose = 1
+    else:
+        verbose = args.verbosity + 1 # fix for case  verb = 0
 
-print "==== Starting "+__file__
-config = util.read_yaml(args.config_file)
-config = util.parse_mdtf_args(args, config)
-util.set_mdtf_env_vars(config, verbose)
+    config = util.read_yaml(args.config_file)
+    config = util.parse_mdtf_args(args, config)
+    config.verbose = verbose
+    return config
 
-class_name = config['settings']['data_manager'].title()+'DataManager'
-try:
-    DataMgr = getattr(data_manager, class_name)
-except:
-    print "No class named {}.".format(class_name)
-class_name = config['settings']['environment_manager'].title()+'EnvironmentManager'
-try:
-    EnvironmentMgr = getattr(environment_manager, class_name)
-except:
-    print "No class named {}.".format(class_name)
 
-caselist = []
-# only run first case in list until dependence on env vars cleaned up
-for case_dict in config['case_list'][0:1]: 
-    case = DataMgr(case_dict, config)
-    for pod_name in case.pod_list:
-        try:
-            pod = Diagnostic(pod_name)
-        except AssertionError as error:  
-            print str(error)
-        if verbose > 0: print "POD long name: ", pod.long_name
-        case.pods.append(pod)
-    case.setUp(config)
-    case.fetchData()
-    caselist.append(case)
+if __name__ == '__main__':
+    print "==== Starting "+__file__
 
-for case in caselist:
-    env = EnvironmentMgr(config)
-    env.pods = case.pods # best way to do this?
-    env.setUp()
-    env.run()
-    env.tearDown()
+    config = argparse_wrapper()
+    verbose = config.verbose
+    util.set_mdtf_env_vars(config, verbose)
 
-for case in caselist:
-    case.tearDown(config)
+    class_name = config['settings']['data_manager'].title()+'DataManager'
+    try:
+        DataMgr = getattr(data_manager, class_name)
+    except:
+        print "No class named {}.".format(class_name)
+    class_name = config['settings']['environment_manager'].title()+'EnvironmentManager'
+    try:
+        EnvironmentMgr = getattr(environment_manager, class_name)
+    except:
+        print "No class named {}.".format(class_name)
 
-print "Exiting normally from ",__file__
-exit()
+    caselist = []
+    # only run first case in list until dependence on env vars cleaned up
+    for case_dict in config['case_list'][0:1]: 
+        case = DataMgr(case_dict, config)
+        for pod_name in case.pod_list:
+            try:
+                pod = Diagnostic(pod_name)
+            except AssertionError as error:  
+                print str(error)
+            if verbose > 0: print "POD long name: ", pod.long_name
+            case.pods.append(pod)
+        case.setUp(config)
+        case.fetchData()
+        caselist.append(case)
+
+    for case in caselist:
+        env = EnvironmentMgr(config)
+        env.pods = case.pods # best way to do this?
+        env.setUp()
+        env.run()
+        env.tearDown()
+
+    for case in caselist:
+        case.tearDown(config)
+
+    print "Exiting normally from ",__file__
+    exit()

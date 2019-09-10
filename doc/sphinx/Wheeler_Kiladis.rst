@@ -39,7 +39,9 @@ Daily U200, U850, OMEGA500, OLR, PRECT
 References
 ----------
 
-.. [1] Wheeler, Matthew, and George N. Kiladis. “Convectively Coupled Equatorial Waves: Analysis of Clouds and Temperature in the Wavenumber–Frequency Domain.” ​*Journal of the Atmospheric Sciences​* **56**, no. 3 (February 1, 1999): 374–99. https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2​.
+   .. _1:
+
+1. Wheeler, Matthew, and George N. Kiladis. “Convectively Coupled Equatorial Waves: Analysis of Clouds and Temperature in the Wavenumber–Frequency Domain.” ​*Journal of the Atmospheric Sciences​* **56**, no. 3 (February 1, 1999): 374–99. https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2​.
 
 
 More About the Diagnostic

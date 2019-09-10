@@ -53,7 +53,9 @@ The following five 3-D (lat-lon-time) model fields are required with a daily tim
 References
 ----------
 
-.. [1] MJO Simulation Diagnostics, Waliser et al, 2009, *J.Clim.*, **​22**:​ 3006-3030, https://doi.org/10.1175/2008JCLI2731.1
+   .. _1:
+
+1. MJO Simulation Diagnostics, Waliser et al, 2009, *J.Clim.*, **​22**:​ 3006-3030, https://doi.org/10.1175/2008JCLI2731.1
 
 More About the Diagnostic
 -------------------------

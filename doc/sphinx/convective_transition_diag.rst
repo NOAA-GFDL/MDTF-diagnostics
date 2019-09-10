@@ -55,14 +55,20 @@ The following three 3-D (lat-lon-time) high-frequency model fields are required\
 References
 ----------
 
-.. [1] Kuo, Y.-H., K. A. Schiro, and J. D. Neelin, 2018: Convective transition statistics over tropical oceans for climate model diagnostics: Observational baseline. *J. Atmos. Sci.*, **75**, 1553-1570, https://doi.org/10.1175/JAS-D-17-0287.1.
-.. [2] Kuo, Y.-H., and Coauthors: Convective transition statistics over tropical oceans for climate model diagnostics: GCM performance. In preparation. 
+   .. _1: 
+   
+1. Kuo, Y.-H., K. A. Schiro, and J. D. Neelin, 2018: Convective transition statistics over tropical oceans for climate model diagnostics: Observational baseline. *J. Atmos. Sci.*, **75**, 1553-1570, https://doi.org/10.1175/JAS-D-17-0287.1.
+
+   .. _2: 
+   
+2. Kuo, Y.-H., and Coauthors: Convective transition statistics over tropical oceans for climate model diagnostics: GCM performance. In preparation. 
+
 See http://research.atmos.ucla.edu/csi//REF/pub.html for updates.
 
 More about this diagnostic
 --------------------------
 
-The current version of the convective transition diagnostic package produces three sets of figures for both pre-digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; `Zhao et al., 2018a <5>`_, `2018b <6>`_; see also `Kuo et al., in prep <2>`_) that are produced by the package.
+The current version of the convective transition diagnostic package produces three sets of figures for both pre-digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; :ref:`Zhao et al., 2018a <5>`, :ref:`2018b <6>`; see also :ref:`Kuo et al., in prep <2>`) that are produced by the package.
 
 1) Basic statistics
 ^^^^^^^^^^^^^^^^^^^
@@ -75,7 +81,7 @@ The current version of the convective transition diagnostic package produces thr
 
 The observed (small markers) and simulated precipitation (large markers) in panel (a) sharply picks up as CWV exceeds a certain threshold, known as the critical CWV [see panel (e) below for how it is defined, and panel (i) for the values]. Here, the column integrated saturation humidity :math:`\widehat{q_{sat}}` (units: mm) is used as a bulk measure of the tropospheric temperature. As the bulk tropospheric temperature increases, the pickup of precipitation occurs at higher CWV. The probability of precipitation in panel (b) exhibits a similar pickup behavior. The AM4 model examined here can reasonably simulate the observed pickup of precipitation, with slightly higher probability than observed.
 
-In panel (c), the observed PDFs of CWV display characteristic shapes that depend on the bulk tropospheric temperature. At low temperature, the PDF peaks at a low CWV value, below which the PDF drops rapidly, and above which the PDF decreases slowly until reaching a cutoff . As temperature increases, another peak around critical develops with the low-CWV peak diminishing. The rapid drop of PDF for CWV above critical [see panel (g) below] is consistent with the pickup of precipitation, i.e., precipitation becomes an effective moisture sink in this regime. It has been noted that low-level convergence tends to be associated with high-CWV events, while low-level divergence is associated with low-CWV events. The AM4 model reasonably reproduces the observed CWV PDF with noticeably more above-critical events. However, given the uncertainty associated with the CWV retrievals used here (RSS TMI data products, version 7.1; `Wentz et al. 2015 <4>`_), especially at high values, we cannot conclude that the model misbehaves in the high-CWV regime.
+In panel (c), the observed PDFs of CWV display characteristic shapes that depend on the bulk tropospheric temperature. At low temperature, the PDF peaks at a low CWV value, below which the PDF drops rapidly, and above which the PDF decreases slowly until reaching a cutoff . As temperature increases, another peak around critical develops with the low-CWV peak diminishing. The rapid drop of PDF for CWV above critical [see panel (g) below] is consistent with the pickup of precipitation, i.e., precipitation becomes an effective moisture sink in this regime. It has been noted that low-level convergence tends to be associated with high-CWV events, while low-level divergence is associated with low-CWV events. The AM4 model reasonably reproduces the observed CWV PDF with noticeably more above-critical events. However, given the uncertainty associated with the CWV retrievals used here (RSS TMI data products, version 7.1; :ref:`Wentz et al. 2015 <4>`), especially at high values, we cannot conclude that the model misbehaves in the high-CWV regime.
 
 2) Collapsed statistics
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,15 +100,26 @@ In practice, we define the critical CWV to be value at which the best-fit line t
 
     \(i\) Critical CWV :math:`w_{c}` and (j) the corresponding critical column relative humidity :math:`w_{c}/\widehat{q_{sat}}`. The colored markers represent the results simulated by the AM4 model and observed values in gray.
 
-Compared to the observations, the slope of the best-fit line simulated by the AM4 model is slightly higher than observed [0.76 vs. 0.62 in panel (e); `Kuo et al., in prep <2>`_], but within the uncertainty range of observations (`Kuo et al. 2018 <1>`_). The simulated statistics are more sensitive to the tropospheric temperature and ocean basin and indicate that there are more above critical events for highest temperature bins in the model. The functional form of the PDFs for precipitating events deviates from Gaussian. The simulated critical values are consistent with the observed values [panels (i)-(j)]. It has been noted that the dependence of critical values on tropospheric temperature (i.e., critical CWV increases with tropospheric temperature but the corresponding critical column RH :math:`w_{c}/\widehat{q_{sat}}` decreases) is a generic consequence of including entrainment in the buoyancy/conditional instability calculation (`Sahany et al. 2012 <3>`_).
+Compared to the observations, the slope of the best-fit line simulated by the AM4 model is slightly higher than observed [0.76 vs. 0.62 in panel (e); :ref:`Kuo et al., in prep <2>`], but within the uncertainty range of observations (:ref:`Kuo et al. 2018 <1>`). The simulated statistics are more sensitive to the tropospheric temperature and ocean basin and indicate that there are more above critical events for highest temperature bins in the model. The functional form of the PDFs for precipitating events deviates from Gaussian. The simulated critical values are consistent with the observed values [panels (i)-(j)]. It has been noted that the dependence of critical values on tropospheric temperature (i.e., critical CWV increases with tropospheric temperature but the corresponding critical column RH :math:`w_{c}/\widehat{q_{sat}}` decreases) is a generic consequence of including entrainment in the buoyancy/conditional instability calculation (:ref:`Sahany et al. 2012 <3>`).
 
 Additional references
 ---------------------
 
-.. [3] Sahany, S., J. D. Neelin, K. Hales, and R. B. Neale, 2012: Temperature–moisture dependence of the deep convective transition as a constraint on entrainment in climate models. *J. Atmos. Sci.*, **69**, 1340–1358, https://doi.org/10.1175/JAS-D-11-0164.1.
-.. [4] Wentz, F.J., C. Gentemann, K.A. Hilburn, 2015: Remote Sensing Systems TRMM TMI Daily, 3-Day Environmental Suite on 0.25 deg grid, Version 7.1. Remote Sensing Systems, Santa Rosa, CA. Available online at https://www.remss.com/missions/tmi.
-.. [5] Zhao., M., and Coauthors, 2018a: The GFDL Global Atmosphere and Land Model AM4.0/LM4.0 - Part I: Simulation Characteristics with Prescribed SSTs. *Journal of Advances in Modeling Earth Systems*, **10(3)**, https://doi.org/10.1002/2017MS001208.
-.. [6] Zhao., M., and Coauthors, 2018b: The GFDL Global Atmosphere and Land Model AM4.0/LM4.0 - Part II: Model Description, Sensitivity Studies, and Tuning Strategies. *Journal of Advances in Modeling Earth Systems*, **10(3)**, https://doi.org/10.1002/2017MS001209.
+   .. _3: 
+   
+3. Sahany, S., J. D. Neelin, K. Hales, and R. B. Neale, 2012: Temperature–moisture dependence of the deep convective transition as a constraint on entrainment in climate models. *J. Atmos. Sci.*, **69**, 1340–1358, https://doi.org/10.1175/JAS-D-11-0164.1.
+
+   .. _4: 
+   
+4. Wentz, F.J., C. Gentemann, K.A. Hilburn, 2015: Remote Sensing Systems TRMM TMI Daily, 3-Day Environmental Suite on 0.25 deg grid, Version 7.1. Remote Sensing Systems, Santa Rosa, CA. Available online at https://www.remss.com/missions/tmi.
+
+   .. _5: 
+   
+5. Zhao., M., and Coauthors, 2018a: The GFDL Global Atmosphere and Land Model AM4.0/LM4.0 - Part I: Simulation Characteristics with Prescribed SSTs. *Journal of Advances in Modeling Earth Systems*, **10(3)**, https://doi.org/10.1002/2017MS001208.
+
+   .. _6: 
+   
+6. Zhao., M., and Coauthors, 2018b: The GFDL Global Atmosphere and Land Model AM4.0/LM4.0 - Part II: Model Description, Sensitivity Studies, and Tuning Strategies. *Journal of Advances in Modeling Earth Systems*, **10(3)**, https://doi.org/10.1002/2017MS001209.
 
 .. |^2| replace:: \ :sup:`2`\ 
 .. |^3| replace:: \ :sup:`3`\ 

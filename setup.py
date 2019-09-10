@@ -23,7 +23,6 @@ class PostInstallCommand(install):
         _post_install()
         install.run(self)
 
-
 with open("README.md", 'r') as f:
     long_description = f.read()
 packages = find_packages()

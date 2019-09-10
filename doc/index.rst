@@ -11,6 +11,7 @@ Also see documentation on the `wiki <https://github.com/NOAA-GFDL/MDTF-diagnosti
 .. toctree::
    :maxdepth: 2
 
+   sphinx/configuration
    sphinx/diagnostics
    sphinx/src_autodoc
 

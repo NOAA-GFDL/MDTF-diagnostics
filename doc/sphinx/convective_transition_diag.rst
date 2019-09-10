@@ -74,10 +74,10 @@ The current version of the convective transition diagnostic package produces thr
 ^^^^^^^^^^^^^^^^^^^
 
 .. figure:: convective_transition_diag_fig1.png
-    :align: center
-    :width: 99 %
+   :align: center
+   :width: 100 %
 
-    Basic statistics computed using events over tropical western Pacific (20°S-20°N, west to 180°), including (a) conditionally averaged precipitation rate, (b) conditional probability of precipitation > 0.25 mm hr\ |^-1|, (c) PDF of CWV, and (d) PDF of CWV for precipitating events, all as a function of CWV. Here the large markers represent results simulated by the model, and small markers represent the corresponding observations at 1°. The colors indicate the column-integrated saturation humidity which is used as a bulk measure of tropospheric temperature (also shown as triangles). The PDFs in (c) together represent the normalized joint PDF of CWV and bulk temperature. Multiplying (b) and (c) results in PDFs in (d) (not normalized).
+   Basic statistics computed using events over tropical western Pacific (20°S-20°N, west to 180°), including (a) conditionally averaged precipitation rate, (b) conditional probability of precipitation > 0.25 mm hr\ |^-1|, (c) PDF of CWV, and (d) PDF of CWV for precipitating events, all as a function of CWV. Here the large markers represent results simulated by the model, and small markers represent the corresponding observations at 1°. The colors indicate the column-integrated saturation humidity which is used as a bulk measure of tropospheric temperature (also shown as triangles). The PDFs in (c) together represent the normalized joint PDF of CWV and bulk temperature. Multiplying (b) and (c) results in PDFs in (d) (not normalized).
 
 The observed (small markers) and simulated precipitation (large markers) in panel (a) sharply picks up as CWV exceeds a certain threshold, known as the critical CWV [see panel (e) below for how it is defined, and panel (i) for the values]. Here, the column integrated saturation humidity :math:`\widehat{q_{sat}}` (units: mm) is used as a bulk measure of the tropospheric temperature. As the bulk tropospheric temperature increases, the pickup of precipitation occurs at higher CWV. The probability of precipitation in panel (b) exhibits a similar pickup behavior. The AM4 model examined here can reasonably simulate the observed pickup of precipitation, with slightly higher probability than observed.
 
@@ -87,18 +87,18 @@ In panel (c), the observed PDFs of CWV display characteristic shapes that depend
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: convective_transition_diag_fig2.png
-    :align: center
-    :width: 99 %
+   :align: center
+   :width: 100 %
 
-    Same as the statistics in panels (a)-(d), respectively, but for each bulk tropospheric temperature, shift the CWV by the corresponding critical CWV :math:`w_{c}`. Here, only the results from observations are presented. In panels (g)-(h), the PDF values are rescaled.
+   Same as the statistics in panels (a)-(d), respectively, but for each bulk tropospheric temperature, shift the CWV by the corresponding critical CWV :math:`w_{c}`. Here, only the results from observations are presented. In panels (g)-(h), the PDF values are rescaled.
 
 In practice, we define the critical CWV to be value at which the best-fit line to the conditionally averaged precipitation intersects with the CWV axis, as shown in panel (e) [see panels (i)-(j) below for the observed and simulated critical values]. When expressed as a function of CWV − :math:`w_{c}`, the conditional average and probability of precipitation [panels (e)-(f)] collapse without exhibiting dependence on the bulk temperature (and ocean basin). The rescaled PDFs in panel (g) also collapse for CWV above critical. For the most relevant temperature bins in the tropics (:math:`\widehat{q_{sat}}` ≥ 70 mm or the mass-weighted column average temperature ≥ 271 K), the PDF of CWV for precipitating events share a common near-Gaussian core near the critical CWV.
 
 .. figure:: convective_transition_diag_fig3.png
-    :align: center
-    :width: 50 %
+   :align: center
+   :width: 80 %
 
-    \(i\) Critical CWV :math:`w_{c}` and (j) the corresponding critical column relative humidity :math:`w_{c}/\widehat{q_{sat}}`. The colored markers represent the results simulated by the AM4 model and observed values in gray.
+   \(i\) Critical CWV :math:`w_{c}` and (j) the corresponding critical column relative humidity :math:`w_{c}/\widehat{q_{sat}}`. The colored markers represent the results simulated by the AM4 model and observed values in gray.
 
 Compared to the observations, the slope of the best-fit line simulated by the AM4 model is slightly higher than observed [0.76 vs. 0.62 in panel (e); :ref:`Kuo et al., in prep <2>`], but within the uncertainty range of observations (:ref:`Kuo et al. 2018 <1>`). The simulated statistics are more sensitive to the tropospheric temperature and ocean basin and indicate that there are more above critical events for highest temperature bins in the model. The functional form of the PDFs for precipitating events deviates from Gaussian. The simulated critical values are consistent with the observed values [panels (i)-(j)]. It has been noted that the dependence of critical values on tropospheric temperature (i.e., critical CWV increases with tropospheric temperature but the corresponding critical column RH :math:`w_{c}/\widehat{q_{sat}}` decreases) is a generic consequence of including entrainment in the buoyancy/conditional instability calculation (:ref:`Sahany et al. 2012 <3>`).
 

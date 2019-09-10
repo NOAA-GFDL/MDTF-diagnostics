@@ -41,6 +41,7 @@ release = u'2.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
@@ -183,7 +184,46 @@ epub_exclude_files = ['search.html']
 
 # -- Extension configuration -------------------------------------------------
 
+autodoc_member_order = 'bysource'
+autodoc_default_options = {
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'private-members': True,
+    'undoc-members': True,
+    'show-inheritance': True
+}
+
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+# -- Extensions to the Napoleon GoogleDocstring class ---------------------
+# copied from: https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
+# purpose: provide correct formatting of class attributes when documented 
+# with Google-style docstrings.
+
+from sphinx.ext.napoleon.docstring import GoogleDocstring
+
+# first, we define new methods for any new sections and add them to the class
+def parse_keys_section(self, section):
+    return self._format_fields('Keys', self._consume_fields())
+GoogleDocstring._parse_keys_section = parse_keys_section
+
+def parse_attributes_section(self, section):
+    return self._format_fields('Attributes', self._consume_fields())
+GoogleDocstring._parse_attributes_section = parse_attributes_section
+
+def parse_class_attributes_section(self, section):
+    return self._format_fields('Class Attributes', self._consume_fields())
+GoogleDocstring._parse_class_attributes_section = parse_class_attributes_section
+
+# we now patch the parse method to guarantee that the the above methods are
+# assigned to the _section dict
+def patched_parse(self):
+    self._sections['keys'] = self._parse_keys_section
+    self._sections['class attributes'] = self._parse_class_attributes_section
+    self._unpatched_parse()
+GoogleDocstring._unpatched_parse = GoogleDocstring._parse
+GoogleDocstring._parse = patched_parse

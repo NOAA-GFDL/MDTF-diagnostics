@@ -4,11 +4,11 @@ Diagnostics
 .. toctree::
     :maxdepth: 2
 
-    diagnostics/convective_transition_diag
-    diagnostics/EOF_500hPa
-    diagnostics/MJO_prop_amp
-    diagnostics/MJO_suite
-    diagnostics/MJO_teleconnection
-    diagnostics/precip_diurnal_cycle
-    diagnostics/SM_ET_coupling
-    diagnostics/Wheeler_Kiladis
+    convective_transition_diag
+    EOF_500hPa
+    MJO_prop_amp
+    MJO_suite
+    MJO_teleconnection
+    precip_diurnal_cycle
+    SM_ET_coupling
+    Wheeler_Kiladis

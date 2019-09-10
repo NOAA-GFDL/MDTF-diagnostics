@@ -1,15 +1,16 @@
-# This file is part of the util module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+"""Common functions and classes used in multiple places in the MDTF code.
+"""
 
 import os
 import sys
 import glob
 import yaml
 
-# Singleton pattern parent class
-# Compatible with both python 2 and 3
-# https://stackoverflow.com/a/6798042
 class _Singleton(type):
-    """ A metaclass that creates a Singleton base class when called. """
+    """Private metaclass that creates a :class:`~util.Singleton` base class when
+    called. This version is copied from <https://stackoverflow.com/a/6798042>_ and
+    should be compatible with both Python 2 and 3.
+    """
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -17,16 +18,31 @@ class _Singleton(type):
         return cls._instances[cls]
 
 class Singleton(_Singleton('SingletonMeta', (object,), {})): 
-    # add _reset method deleting the instance for unit testing, otherwise the 
-    # second, third, .. tests will use the instance created in the first test 
-    # instead of being properly initialized
+    """Parent class defining the 
+    `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
+    use this as safer way to pass around global state.
+
+    Note:
+        All child classes, :class:`~util.PathManager` and :class:`~util.VariableTranslator`,
+        are read-only, although this is not enforced. This eliminates most of the
+        danger in using Singletons or global state in general.
+    """
     @classmethod
     def _reset(cls):
+        """Private method of all :class:`~util.Singleton`-derived classes added
+        for use in unit testing only. Calling this method on test teardown 
+        deletes the instance, so that tests coming afterward will initialize the 
+        :class:`~util.Singleton` correctly, instead of getting the state set 
+        during previous tests.
+        """
         if cls in cls._instances:
             del cls._instances[cls]
 
 
 class PathManager(Singleton):
+    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
+    set in the ``paths`` section of ``config.yml``.
+    """
     _root_pathnames = [
         'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
         'WORKING_DIR', 'OUTPUT_DIR'
@@ -57,10 +73,18 @@ class PathManager(Singleton):
         return d
 
 
-# Dict that permits lookups from either keys or values
-# https://stackoverflow.com/a/21894086
 class BiDict(dict):
+    """Extension of the :obj:`dict` class that allows doing dictionary lookups 
+    from either keys or values. 
+    
+    Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
+    from values is done on the `inverse` attribute and returns a list of matching
+    keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
+    See <https://stackoverflow.com/a/21894086>_.
+    """
     def __init__(self, *args, **kwargs):
+        """Initialize :class:`~util.BiDict` by passing an ordinary :obj:`dict`.
+        """
         super(BiDict, self).__init__(*args, **kwargs)
         self.inverse = {}
         for key, value in self.items():
@@ -121,7 +145,16 @@ class VariableTranslator(Singleton):
 # ------------------------------------
 
 def read_yaml(file_path, verbose=0):
-    # wrapper to load config files
+    """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 
+    module. Wrapping file I/O simplifies unit testing.
+
+    Args:
+        file_path (:obj:`str`): path of the YAML file to read.
+        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+    Returns:
+        :obj:`dict` containing the parsed contents of the file.
+    """
     assert os.path.exists(file_path), \
         "Couldn't find file {}.".format(file_path)
     try:    
@@ -136,7 +169,14 @@ def read_yaml(file_path, verbose=0):
     return file_contents
 
 def write_yaml(struct, file_path, verbose=0):
-    # wrapper to write config files
+    """Wrapper to the ``dump`` function of the `PyYAML <https://pyyaml.org/>`_ 
+    module. Wrapping file I/O simplifies unit testing.
+
+    Args:
+        struct (:obj:`dict`)
+        file_path (:obj:`str`): path of the YAML file to write.
+        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+    """
     try:
         with open(file_path, 'w') as file_obj:
             yaml.dump(struct, file_obj)
@@ -159,10 +199,16 @@ def makefilepath(varname,timefreq,casename,datadir):
     return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
-    # env_dict: a dictionary to be dumped once file is created
-    # This is a wrapper to os.environ so any new env vars 
-    # automatically get written to the file
-   
+    """Wrapper to set environment variables.
+
+    Args:
+        varname (:obj:`str`): Variable name to define
+        varvalue: Value to assign. Coerced to type :obj:`str` before being set.
+        env_dict (:obj:`dict`): Copy of 
+        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        overwrite (:obj:`bool`): If set to `False`, do not overwrite the values
+            of previously-set variables. 
+    """
     if (not overwrite) and (varname in env_dict): 
         if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
     else:

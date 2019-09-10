@@ -18,6 +18,7 @@ cwd = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
+# mock out imports of non-standard library modules
 autodoc_mock_imports = ['yaml', 'subprocess32']
 import mock # do this twice just to be safe
 for module in autodoc_mock_imports:
@@ -186,8 +187,11 @@ epub_title = project
 epub_exclude_files = ['search.html']
 
 
-# -- Extension configuration -------------------------------------------------
+# == Extension configuration ==================================================
 
+# -- Autodoc configuration
+
+# set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
     'member-order': 'bysource',
@@ -196,6 +200,26 @@ autodoc_default_options = {
     'undoc-members': True,
     'show-inheritance': True
 }
+
+# generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
+# source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
+def run_apidoc(_):
+    ignore_paths = []
+    argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
+        ] + ignore_paths
+
+    try:
+        # Sphinx 1.7+
+        from sphinx.ext import apidoc
+        apidoc.main(argv)
+    except ImportError:
+        # Sphinx 1.6 (and earlier)
+        from sphinx import apidoc
+        argv.insert(0, apidoc.__file__)
+        apidoc.main(argv)
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
 
 # -- Options for todo extension ----------------------------------------------
 

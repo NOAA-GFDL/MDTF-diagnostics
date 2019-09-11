@@ -116,6 +116,12 @@ def argparse_wrapper():
     args = parser.parse_args()
     
     d = args.__dict__
+
+    if args.verbosity == None:
+        d['verbose'] = 1
+    else:
+        d['verbose'] = args.verbosity + 1 # fix for case  verb = 0
+
     # remove entries that weren't set
     del_keys = [key for key in d if d[key] is None]
     for key in del_keys:
@@ -132,7 +138,7 @@ if __name__ == '__main__':
     default_args = util.read_yaml(cmdline_args['config_file'])
     config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
     
-    verbose = config.verbose
+    verbose = config['settings']['verbose'] 
     util.set_mdtf_env_vars(config, verbose)
 
     class_name = config['settings']['data_manager'].title()+'DataManager'

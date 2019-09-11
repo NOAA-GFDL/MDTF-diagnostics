@@ -293,8 +293,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         temp = util.PathManager(unittest_flag = True)
         temp._reset()
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_config(self, mock_check_required_dirs):
+    def test_parse_mdtf_args_config(self):
         # set paths from config file
         args = {}
         config = self.config_test.copy()
@@ -302,8 +301,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['paths']['C'], '/D')
         self.assertEqual(config['settings']['E'], 'F')
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_config_cmdline(self, mock_check_required_dirs):
+    def test_parse_mdtf_args_config_cmdline(self):
         # override config file with command line arguments
         args = {'C':'/X', 'E':'Y'}
         config = self.config_test.copy()
@@ -312,7 +310,8 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['settings']['E'], 'Y')
 
     @mock.patch.dict('os.environ', {})
-    def test_set_mdtf_env_vars_config_settings(self):
+    @mock.patch('src.util.check_required_dirs')
+    def test_set_mdtf_env_vars_config_settings(self, mock_check_required_dirs):
         # set settings from config file
         config = self.config_test.copy()
         util.set_mdtf_env_vars(config)
@@ -320,7 +319,8 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(os.environ['E'], 'F')        
 
     @mock.patch.dict('os.environ', {})
-    def test_sset_mdtf_env_vars_config_rgb(self):
+    @mock.patch('src.util.check_required_dirs')
+    def test_sset_mdtf_env_vars_config_rgb(self, mock_check_required_dirs):
         # set path to /RGB from os.environ
         config = self.config_test.copy()
         util.set_mdtf_env_vars(config)
@@ -330,7 +330,6 @@ class TestMDTFArgParsing(unittest.TestCase):
 class TestFreppArgParsing(unittest.TestCase):
 
     def setUp(self):
-        temp = util.PathManager(unittest_flag = True)
         self.config_test = {
             'case_list':[{'CASENAME':'B'}],
             'paths':{'MODEL_DATA_ROOT':'/D'},
@@ -343,13 +342,6 @@ class TestFreppArgParsing(unittest.TestCase):
             set yr2 = 1981
             set make_variab_tar = 1
         """
-
-    def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
-        # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
-        temp._reset()
 
     def test_parse_frepp_stub_regex(self):
         frepp_stub = """
@@ -389,8 +381,7 @@ class TestFreppArgParsing(unittest.TestCase):
         d = util.parse_frepp_stub(frepp_stub)
         self.assertEqual(d['frepp_mode'], False)
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_frepp_overwrite(self, mock_check_required_dirs):
+    def test_parse_mdtf_args_frepp_overwrite(self):
         # overwrite defaults
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = util.parse_frepp_stub(frepp_stub)
@@ -401,8 +392,7 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'F')
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_frepp_overwrite_both(self, mock_check_required_dirs):
+    def test_parse_mdtf_args_frepp_overwrite_both(self):
         # overwrite defaults and command-line
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = util.parse_frepp_stub(frepp_stub)
@@ -413,8 +403,7 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'Y')
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_frepp_caselist(self, mock_check_required_dirs):
+    def test_parse_mdtf_args_frepp_caselist(self):
         # overwrite defaults and command-line
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = util.parse_frepp_stub(frepp_stub)

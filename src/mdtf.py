@@ -138,7 +138,8 @@ if __name__ == '__main__':
     default_args = util.read_yaml(cmdline_args['config_file'])
     config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
     
-    verbose = config['settings']['verbose'] 
+    verbose = config['settings']['verbose']
+    PathManager(config['paths']) # initialize
     util.set_mdtf_env_vars(config, verbose)
 
     class_name = config['settings']['data_manager'].title()+'DataManager'

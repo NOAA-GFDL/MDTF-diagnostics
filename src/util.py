@@ -364,15 +364,16 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         default_args['paths'][key] = os.path.realpath(val)
     os.chdir(cwd)
 
-    paths = PathManager(default_args['paths']) # initialize
+    return default_args
+
+def set_mdtf_env_vars(config, verbose=0):
+    paths = PathManager()
     check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
         create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
         verbose=verbose
         )
-    return default_args
 
-def set_mdtf_env_vars(config, verbose=0):
     config['envvars'] = {}
     for key, val in config['paths'].items():
         setenv(key, val, config['envvars'], verbose=verbose)
@@ -380,5 +381,4 @@ def set_mdtf_env_vars(config, verbose=0):
         setenv(key, val, config['envvars'], verbose=verbose)
 
     # following are redundant but used by PODs
-    paths = PathManager()
     setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'], verbose=verbose)

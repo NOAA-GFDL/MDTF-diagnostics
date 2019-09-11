@@ -3,6 +3,7 @@
 
 import os
 import sys
+import re
 import glob
 import yaml
 
@@ -268,32 +269,108 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
-def parse_mdtf_args(args, config, rel_paths_root='', verbose=0):
-    # overwrite default args in config file with command-line options.
-    if args is not None:
-        for section in ['paths', 'settings']:
-            for key in config[section]:
-                if (key in args.__dict__) and (args.__getattribute__(key) != None):
-                    config[section][key] = args.__getattribute__(key)
-        if 'CODE_ROOT' in args.__dict__ and (args.CODE_ROOT != None):
-            # only let this be overridden if we're in a unit test
-            rel_paths_root = args.CODE_ROOT
+def parse_frepp_stub(frepp_stub):
+    """Converts the frepp arguments to a Python dictionary.
 
+    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+
+    Returns: :obj:`dict` of frepp parameters.
+    """
+    frepp_translate = {
+        'in_data_dir': 'MODEL_DATA_ROOT',
+        'descriptor': 'CASENAME',
+        'out_dir': 'OUTPUT_DIR',
+        'WORKDIR': 'WORKING_DIR',
+        'yr1': 'FIRSTYR',
+        'yr2': 'LASTYR'
+    }
+    # parse arguments and relabel keys
+    d = {}
+    # look for "set ", match token, skip spaces or "=", then match string of 
+    # characters to end of line
+    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
+    for line in frepp_stub.splitlines():
+        print "line = '{}'".format(line)
+        match = re.match(regex, line)
+        if match:
+            if match.group(1) in frepp_translate:
+                key = frepp_translate[match.group(1)]
+            else:
+                key = match.group(1)
+            d[key] = match.group(2)
+
+    # cast from string
+    for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:
+        if int_key in d:
+            d[int_key] = int(d[int_key])
+    for bool_key in ['make_variab_tar', 'test_mode']:
+        if bool_key in d:
+            d[bool_key] = bool(d[bool_key])
+
+    d['frepp_mode'] = ('MODEL_DATA_ROOT' in d)
+    return d
+
+def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
+    """Parse script options.
+
+    We provide three ways to configure the script. In order of precendence,
+    they are:
+
+    1. Parameter substitution via GFDL's internal `frepp` utility; see
+       `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation`_.
+
+    2. Through command-line arguments.
+
+    3. Through default values set in a YAML configuration file, by default
+       in src/config.yml.
+
+    This function applies the precendence and returns a single dict of the
+    actual configuration.
+
+    Args:
+
+    Returns: :obj:`dict` of configuration settings.
+    """
+    # overwrite defaults with command-line args.
+    for section in ['paths', 'settings']:
+        for key in default_args[section]:
+            if key in cmdline_args:
+                default_args[section][key] = cmdline_args[key]
+    if 'CODE_ROOT' in cmdline_args:
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = cmdline_args['CODE_ROOT']
+
+    # If we're running under frepp, overwrite with that
+    if (frepp_args is not None) and frepp_args['frepp_mode']:
+        for section in ['paths', 'settings']:
+            for key in default_args[section]:
+                if key in frepp_args:
+                    default_args[section][key] = frepp_args[key]
+        
+        # also set up caselist with frepp data
+        default_args['case_list'] = [{
+            'CASENAME': frepp_args['CASENAME'],
+            'model': 'CMIP',
+            'variable_convention': 'CMIP',
+            'FIRSTYR': frepp_args['FIRSTYR'],
+            'LASTYR': frepp_args['LASTYR']
+        }]
+
+    # convert relative to absolute paths
     cwd = os.getcwd()
     if rel_paths_root != '':
         os.chdir(rel_paths_root)
-    for key, val in config['paths'].items():
-        # convert relative to absolute paths
-        config['paths'][key] = os.path.realpath(val)
+    for key, val in default_args['paths'].items():
+        default_args['paths'][key] = os.path.realpath(val)
     os.chdir(cwd)
 
-    paths = PathManager(config['paths']) # initialize
+    paths = PathManager(default_args['paths']) # initialize
     check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
         create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
         verbose=verbose
         )
-    return config
+    return default_args
 
 def set_mdtf_env_vars(config, verbose=0):
     config['envvars'] = {}

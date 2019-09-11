@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 # ======================================================================
 # NOAA Model Diagnotics Task Force (MDTF) Diagnostic Driver
@@ -59,7 +59,32 @@ import data_manager
 import environment_manager
 from shared_diagnostic import Diagnostic
 
+def process_frepp_stub():
+    """Converts the frepp arguments to a Python dictionary.
+
+    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+
+    Returns: :obj:`dict` of frepp parameters.
+    """
+    frepp_stub = str("""
+        set in_data_dir     #pp directory containing files to be analyzed
+        set descriptor      #experiment name
+        set out_dir         #directory to write output files
+        set WORKDIR         #working directory for script execution
+        set frexml          #path to xml file
+        set yr1             #start year of analysis
+        set yr2             #ending year
+        set make_variab_tar 1
+        set test_mode       True
+        set verbose         0
+    """)
+    return util.parse_frepp_stub(frepp_stub)
+
 def argparse_wrapper():
+    """Wraps command-line arguments to script.
+
+    Returns: :obj:`dict` of command-line parameters.
+    """
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
     parser = argparse.ArgumentParser()
@@ -89,21 +114,24 @@ def argparse_wrapper():
                         default=os.path.join(cwd, 'config.yml'),
                         help="Configuration file.")
     args = parser.parse_args()
-    if args.verbosity == None:
-        verbose = 1
-    else:
-        verbose = args.verbosity + 1 # fix for case  verb = 0
-
-    config = util.read_yaml(args.config_file)
-    config = util.parse_mdtf_args(args, config)
-    config.verbose = verbose
-    return config
-
+    
+    d = args.__dict__
+    # remove entries that weren't set
+    del_keys = [key for key in d if d[key] is None]
+    for key in del_keys:
+        del d[key]
+    return d
 
 if __name__ == '__main__':
     print "==== Starting "+__file__
 
-    config = argparse_wrapper()
+    cmdline_args = argparse_wrapper()
+    print cmdline_args
+    frepp_args = process_frepp_stub()
+    print frepp_args
+    default_args = util.read_yaml(cmdline_args['config_file'])
+    config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
+    
     verbose = config.verbose
     util.set_mdtf_env_vars(config, verbose)
 

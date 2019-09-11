@@ -218,3 +218,53 @@ class CondaEnvironmentManager(EnvironmentManager):
 
     def deactivate_env_command(self, pod):
         return '' 
+
+
+class GfdlmoduleEnvironmentManager(EnvironmentManager):
+    # Use module files to switch execution environments, as defined on 
+    # GFDL workstations and PP/AN cluster.
+
+    def __init__(self, config, verbose=0):
+        super(GfdlmoduleEnvironmentManager, self).__init__(config, verbose)
+
+        if config['settings']['ignore_sysmodules'] is False:
+            if 'MODULESHOME' in os.environ:
+                execfile(
+                    os.path.join(os.environ['MODULESHOME'],'init','python.py'))
+                module(['load','gcp'])
+                module(['load','nco'])
+            else:
+                raise OSError('Unable to determine how modules are handled on this host.')
+        else:
+            warnings.warn('Ignoring system modules',RuntimeWarning)
+
+    def create_environment(self, env_name):
+        pass
+
+    def destroy_environment(self, env_name):
+        pass 
+
+    def set_pod_env(self, pod):
+        # need to fix
+        # 1) what if env's python isn't current python
+        # 2) 3rd-party modules, etc.
+        keys = [s.lower() for s in pod.required_programs]
+        if ('r' in keys) or ('rscript' in keys):
+            pod.env = ['R/3.4.4']
+        elif 'ncl' in keys:
+            pod.env = ['ncarg/6.5.0']
+        else:
+            pod.env = ['python/2.7.12']
+
+    def activate_env_command(self, pod):
+        if pod.env == []:
+            return ''
+        else:
+            return 'module load {}'.format(' '.join(pod.env))
+
+    def deactivate_env_command(self, pod):
+        if pod.env == []:
+            return ''
+        else:
+            return 'module unload {}'.format(' '.join(pod.env))
+

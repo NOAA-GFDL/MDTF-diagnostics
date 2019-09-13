@@ -131,6 +131,73 @@ class NoneEnvironmentManager(EnvironmentManager):
     def deactivate_env_command(self, pod):
         return '' 
 
+class VirtualenvEnvironmentManager(EnvironmentManager):
+    # create Python virtualenv to manage environments.
+    # for R, use xxx.
+    # Do not attempt management for NCL.
+
+    def __init__(self, config, verbose=0):
+        super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
+
+    def create_environment(self, env_name):
+        if env_name == 'python':
+            self._create_py_venv(env_name)
+        elif env_name == 'r':
+            self._create_r_venv(env_name)
+        else:
+            pass
+
+    def _create_py_venv(self, env_name):
+        py_pkgs = set()
+        for pod in self.pods: 
+            if pod.env == env_name:
+                py_pkgs.update(set(pod.required_python_modules))
+        
+        'python -m pip install --user --upgrade pip'
+        'python -m pip install --user --install virtualenv'
+        'python -m virtualenv {}'.format(env_name)
+        'source {}/bin/activate'.format(env_name)
+        'pip install {}'.format(' '.join(py_pkgs))
+        'deactivate'
+    
+    def _create_r_venv(self, env_name):
+        r_pkgs = set()
+        for pod in self.pods: 
+            if pod.env == env_name:
+                r_pkgs.update(set(pod.required_r_packages))
+
+        'install.packages("packrat")'
+        'packrat::init("..dir..")'
+        'install.packages({})'.format(' '.join(r_pkgs))
+
+    def destroy_environment(self, env_name):
+        pass 
+
+    def set_pod_env(self, pod):
+        keys = [s.lower() for s in pod.required_programs]
+        if ('r' in keys) or ('rscript' in keys):
+            pod.env = 'r'
+        elif 'ncl' in keys:
+            pod.env = 'ncl'
+        else:
+            pod.env = 'python'
+
+    def activate_env_command(self, pod):
+        if env_name == 'python':
+            'source {}/bin/activate'.format(env_name)
+        elif env_name == 'r':
+            pass #TBD
+        else:
+            return ''
+
+    def deactivate_env_command(self, pod):
+        if env_name == 'python':
+            '{}/bin/deactivate'.format(env_name)
+        elif env_name == 'r':
+            pass #TBD
+        else:
+            return ''
+
 
 class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
@@ -254,7 +321,7 @@ class GfdlmoduleEnvironmentManager(EnvironmentManager):
         elif 'ncl' in keys:
             pod.env = ['ncarg/6.5.0']
         else:
-            pod.env = ['python/2.7.12']
+            pod.env = ['anaconda2/5.1']
 
     def activate_env_command(self, pod):
         if pod.env == []:

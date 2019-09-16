@@ -5,6 +5,14 @@ import os
 import sys
 import re
 import glob
+import shlex
+if os.name == 'posix' and sys.version_info[0] < 3:
+    try:
+        import subprocess32 as subprocess
+    except (ImportError, ModuleNotFoundError):
+        import subprocess
+else:
+    import subprocess
 import yaml
 
 class _Singleton(type):
@@ -184,6 +192,74 @@ def write_yaml(struct, file_path, verbose=0):
     except IOError:
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()
+
+def poll_command(command, shell=False, env=None):
+    """Runs a shell command and prints stdout in real-time.
+    
+    Optional ability to pass a different environment to the subprocess. See
+    documentation for the Python2 `subprocess 
+    <https://docs.python.org/2/library/subprocess.html>`_ module.
+
+    Args:
+        command: list of command + arguments, or the same as a single string. 
+            See `subprocess` syntax. Note this interacts with the `shell` setting.
+        shell (:obj:`bool`, optional): shell flag, passed to Popen, 
+            default `False`.
+        env (:obj:`dict`, optional): environment variables to set, passed to 
+            Popen, default `None`.
+    """
+    process = subprocess.Popen(
+        command, shell=shell, env=env, stdout=subprocess.PIPE)
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print output.strip()
+    rc = process.poll()
+    return rc
+
+def run_commands(commands, env=None, cwd=None):
+    """Subprocess wrapper to facilitate running multiple shell commands.
+
+    See documentation for the Python2 `subprocess 
+    <https://docs.python.org/2/library/subprocess.html>`_ module.
+
+    Args:
+        commands (list of :obj:`str`): List of commands to execute
+        env (:obj:`dict`, optional): environment variables to set, passed to 
+            `Popen`, default `None`.
+        cwd (:obj:`str`, optional): child processes' working directory, passed
+            to `Popen`. Default is `None`, which uses parent processes' directory.
+
+    Returns:
+        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        by each command. Note: this is split on newlines after the fact, so if 
+        commands give != 1 lines of output this will not map to the list of commands
+        given.
+
+    Raises:
+        CalledProcessError: If any commands return with nonzero exit code.
+            Stderr for that command is stored in `output` attribute.
+    """
+    proc = subprocess.Popen(
+        ['/usr/bin/env', 'bash'],
+        shell=False, env=env, cwd=cwd,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, bufsize=0
+    )
+    if type(commands) == str:
+        commands = [commands]
+    # Tried many scenarios for executing commands sequentially 
+    # (eg with stdin.write()) but couldn't find a solution that wasn't 
+    # susceptible to deadlocks. Instead just hand over all commands at once.
+    # Only disadvantage is that we lose the ability to assign output to a specfic
+    # command.
+    (stdout, stderr) = proc.communicate(' && '.join(commands))
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(
+            returncode=proc.returncode, cmd=' && '.join(commands), output=stderr)
+    return stdout.splitlines()
 
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}

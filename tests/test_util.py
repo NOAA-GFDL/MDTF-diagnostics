@@ -5,7 +5,7 @@ import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 from src.data_manager import DataManager
 from src.shared_diagnostic import Diagnostic
-
+from subprocess import CalledProcessError
 
 class TestUtil(unittest.TestCase):
 
@@ -416,6 +416,48 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['case_list'][0]['variable_convention'], 'CMIP')
         self.assertEqual(config['case_list'][0]['FIRSTYR'], 1977)
         self.assertEqual(config['case_list'][0]['LASTYR'], 1981)
+
+# ---------------------------------------------------
+
+class TestSubprocessInteraction(unittest.TestCase):
+    def test_run_commands_stdout1(self):
+        input = 'echo "foo"'
+        out = util.run_commands(input)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], 'foo')
+
+    def test_run_commands_stdout2(self):
+        input = ['echo "foo"', 'echo "bar"']
+        out = util.run_commands(input)
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'foo')
+        self.assertEqual(out[1], 'bar')
+        
+    def test_run_commands_exitcode(self):
+        input = ['echo "foo"', 'false']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_commands(input)
+
+    def test_run_commands_envvars(self):
+        input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
+        out = util.run_commands(input, env={'FOO':'bar'})
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'bar')
+        self.assertEqual(out[1], 'baz')
+
+    def test_poll_command_shell_true(self):
+        rc = util.poll_command('echo "foo"', shell=True)
+        self.assertEqual(rc, 0)
+
+    def test_poll_command_shell_false(self):
+        rc = util.poll_command(['echo', 'foo'], shell=False)
+        self.assertEqual(rc, 0)
+    
+    def test_poll_command_error(self):
+        rc = util.poll_command(['false'], shell=False)
+        self.assertEqual(rc, 1)
 
 # ---------------------------------------------------
 

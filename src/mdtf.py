@@ -58,6 +58,10 @@ import util
 import data_manager
 import environment_manager
 from shared_diagnostic import Diagnostic
+try:
+    import gfdl
+except (ImportError, ModuleNotFoundError):
+    print  
 
 def process_frepp_stub():
     """Converts the frepp arguments to a Python dictionary.
@@ -128,6 +132,14 @@ def argparse_wrapper():
         del d[key]
     return d
 
+def manual_dispatch(module_name, class_name):
+    try:
+        return getattr(module_name, class_name)
+    except:
+        return getattr(gfdl, class_name) # also look in GFDL-specific classes
+    except:
+        print "No class named {}.".format(class_name)
+
 if __name__ == '__main__':
     print "==== Starting "+__file__
 
@@ -141,17 +153,12 @@ if __name__ == '__main__':
     verbose = config['settings']['verbose']
     PathManager(config['paths']) # initialize
     util.set_mdtf_env_vars(config, verbose)
-
-    class_name = config['settings']['data_manager'].title()+'DataManager'
-    try:
-        DataMgr = getattr(data_manager, class_name)
-    except:
-        print "No class named {}.".format(class_name)
-    class_name = config['settings']['environment_manager'].title()+'EnvironmentManager'
-    try:
-        EnvironmentMgr = getattr(environment_manager, class_name)
-    except:
-        print "No class named {}.".format(class_name)
+    DataMgr = manual_dispatch(
+        config['settings']['data_manager'].title()+'DataManager'
+    )
+    EnvironmentMgr = manual_dispatch(
+        config['settings']['environment_manager'].title()+'EnvironmentManager'
+    )
 
     caselist = []
     # only run first case in list until dependence on env vars cleaned up

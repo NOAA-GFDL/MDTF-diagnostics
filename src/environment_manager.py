@@ -139,6 +139,21 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
     def __init__(self, config, verbose=0):
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
+        paths = util.PathManager()
+        src_path = os.path.join(paths.CODE_ROOT, 'src')
+        assert ('venv_root' in config['settings'])
+        # need to resolve relative path
+        self.venv_root = util.resolve_path(
+            config['settings']['venv_root'], src_path
+        )
+        if ('r_lib_root' in config['settings']) and
+            config['settings']['r_lib_root'] != '':
+            self.r_lib_root = util.resolve_path(
+                config['settings']['r_lib_root'], src_path
+            )
+        else:
+            self.r_lib_root = ''
+
     def create_environment(self, env_name):
         if env_name == 'python':
             self._create_py_venv(env_name)
@@ -153,22 +168,39 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             if pod.env == env_name:
                 py_pkgs.update(set(pod.required_python_modules))
         
-        'python -m pip install --user --upgrade pip'
-        'python -m pip install --user --install virtualenv'
-        'python -m virtualenv {}'.format(env_name)
-        'source {}/bin/activate'.format(env_name)
-        'pip install {}'.format(' '.join(py_pkgs))
-        'deactivate'
+        env_path = os.path.join(self.venv_root, env_name)
+        if not os.path.isdir(env_path):
+            os.makedirs(env_path) # recursive mkdir if needed
+        cmds = [
+            'pip install --user virtualenv',
+            'virtualenv {}'.format(env_path),
+            'source {}/bin/activate'.format(env_path),
+            'pip install {}'.format(' '.join(py_pkgs)),
+            'deactivate'
+        ]
+        util.run_commands(cmds)
     
     def _create_r_venv(self, env_name):
         r_pkgs = set()
         for pod in self.pods: 
             if pod.env == env_name:
                 r_pkgs.update(set(pod.required_r_packages))
+        r_pkg_str = ', '.join(['"'+x+'"' for x in r_pkgs])
 
-        'install.packages("packrat")'
-        'packrat::init("..dir..")'
-        'install.packages({})'.format(' '.join(r_pkgs))
+        if self.r_lib_root != '':
+            env_path = os.path.join(self.r_lib_root, env_name)
+            if not os.path.isdir(env_path):
+                os.makedirs(env_path) # recursive mkdir if needed
+            cmds = [
+                'export R_LIBS_USER="{}"'.format(env_path),
+                'Rscript -e \'install.packages(c({}), '.format(r_pkg_str) \
+                    + 'lib=Sys.getenv("R_LIBS_USER"))\''
+            ]
+        else:
+            cmds = [
+                'Rscript -e \'install.packages(c({}))\''.format(r_pkg_str)
+            ]
+        util.run_commands(cmds)
 
     def destroy_environment(self, env_name):
         pass 
@@ -183,18 +215,22 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             pod.env = 'python'
 
     def activate_env_command(self, pod):
+        env_name = pod.env
         if env_name == 'python':
-            'source {}/bin/activate'.format(env_name)
+            env_path = os.path.join(self.venv_root, pod.env)
+            return 'source {}/bin/activate'.format(env_path)
         elif env_name == 'r':
-            pass #TBD
+            env_path = os.path.join(self.r_lib_root, pod.env)
+            return 'export R_LIBS_USER="{}"'.format(env_path)
         else:
             return ''
 
     def deactivate_env_command(self, pod):
+        env_name = pod.env
         if env_name == 'python':
-            '{}/bin/deactivate'.format(env_name)
+            return 'deactivate'
         elif env_name == 'r':
-            pass #TBD
+            return 'unset R_LIBS_USER'
         else:
             return ''
 
@@ -205,18 +241,20 @@ class CondaEnvironmentManager(EnvironmentManager):
     def __init__(self, config, verbose=0):
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
-        if ('conda_env_root' in config['settings']) and \
-            (os.path.isdir(config['settings']['conda_env_root'])):
+        if ('conda_env_root' in config['settings']) and
+            config['settings']['conda_env_root'] != '':
             # need to resolve relative path
-            cwd = os.getcwd()
             paths = util.PathManager()
-            os.chdir(os.path.join(paths.CODE_ROOT, 'src'))
-            self.conda_env_root = os.path.realpath(config['settings']['conda_env_root'])
-            os.chdir(cwd)
+            self.conda_env_root = util.resolve_path(
+                config['settings']['conda_env_root'],
+                os.path.join(paths.CODE_ROOT, 'src')
+            )
+            if not os.path.isdir(self.conda_env_root):
+                os.makedirs(self.conda_env_root) # recursive mkdir if needed
         else:
             self.conda_env_root = os.path.join(
                 subprocess.check_output('conda info --root', shell=True),
-                'envs' # only true in default install, need to fix
+                'envs' # only true in default anaconda install, need to fix
             ) 
 
     def create_environment(self, env_name):

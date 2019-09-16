@@ -193,6 +193,26 @@ def write_yaml(struct, file_path, verbose=0):
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()
 
+def resolve_path(path, root_path=''):
+    """Abbreviation to resolve relative paths.
+
+    Args:
+        path (:obj:`str`): path to resolve.
+        root_path (:obj:`str`, optional): root path to resolve `path` with. If
+            not given, resolves relative to `cwd`.
+
+    Returns: Absolute version of `path`, relative to `root_path` if given, 
+        otherwise relative to `os.getcwd`.
+    """
+    if os.path.isabs(path):
+        return path
+    else:
+        if root_path == '':
+            root_path = os.getcwd()
+        else:
+            assert os.path.isabs(root_path)
+        return os.path.normpath(os.path.join(root_path, path))
+
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.
     
@@ -433,12 +453,8 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         }]
 
     # convert relative to absolute paths
-    cwd = os.getcwd()
-    if rel_paths_root != '':
-        os.chdir(rel_paths_root)
     for key, val in default_args['paths'].items():
-        default_args['paths'][key] = os.path.realpath(val)
-    os.chdir(cwd)
+        default_args['paths'][key] = resolve_path(val, rel_paths_root)
 
     return default_args
 

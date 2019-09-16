@@ -3,6 +3,8 @@ import sys
 import glob
 import shutil
 import timeit
+import atexit
+import signal
 from abc import ABCMeta, abstractmethod
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -112,6 +114,17 @@ class EnvironmentManager(object):
             pod.tearDown()
         for env in self.envs:
             self.destroy_environment(env)
+
+    def abortHandler(self):
+        # kill child processes if we're killed
+        # normal operation should call tearDown for organized cleanup
+        for pod in self.pods:
+            if pod.process_obj is not None:
+                pod.process_obj.kill()
+
+    atexit.register(abortHandler)
+    signal.signal(signal.SIGTERM, abortHandler)
+    signal.signal(signal.SIGINT, abortHandler)
 
 
 class NoneEnvironmentManager(EnvironmentManager):

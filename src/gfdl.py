@@ -40,13 +40,16 @@ class ModuleManager(Singleton):
     def unload(self, module_name):
         """Wrapper for module unload.
         """
-        self.modules_i_loaded.add(module_name)
+        self.modules_i_loaded.discard(module_name)
         self._module(['unload', module_name])
     
     def unload_all(self):
         mods_to_unload = self.modules_i_loaded.difference(self.user_modules)
         for mod in mods_to_unload:
             self._module(['unload', mod])
+        # User's modules may have been unloaded if we loaded a different version
+        for mod in self.user_modules:
+            self._module(['load'], mod)
 
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):

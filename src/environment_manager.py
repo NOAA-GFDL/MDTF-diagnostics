@@ -24,6 +24,11 @@ class EnvironmentManager(object):
         self.pods = []
         self.envs = set()
 
+        # kill child processes if we're killed
+        atexit.register(self.abortHandler)
+        signal.signal(signal.SIGTERM, self.abortHandler)
+        signal.signal(signal.SIGINT, self.abortHandler)
+
     # -------------------------------------
     # following are specific details that must be implemented in child class 
 
@@ -122,10 +127,6 @@ class EnvironmentManager(object):
             if pod.process_obj is not None:
                 pod.process_obj.kill()
 
-    atexit.register(abortHandler)
-    signal.signal(signal.SIGTERM, abortHandler)
-    signal.signal(signal.SIGINT, abortHandler)
-
 
 class NoneEnvironmentManager(EnvironmentManager):
     # Do not attempt to switch execution environments for each POD.
@@ -159,7 +160,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         self.venv_root = util.resolve_path(
             config['settings']['venv_root'], src_path
         )
-        if ('r_lib_root' in config['settings']) and
+        if ('r_lib_root' in config['settings']) and \
             config['settings']['r_lib_root'] != '':
             self.r_lib_root = util.resolve_path(
                 config['settings']['r_lib_root'], src_path
@@ -254,7 +255,7 @@ class CondaEnvironmentManager(EnvironmentManager):
     def __init__(self, config, verbose=0):
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
-        if ('conda_env_root' in config['settings']) and
+        if ('conda_env_root' in config['settings']) and \
             config['settings']['conda_env_root'] != '':
             # need to resolve relative path
             paths = util.PathManager()

@@ -1,4 +1,5 @@
 import os
+import sys
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -15,20 +16,27 @@ class ModuleManager(Singleton):
         if 'MODULESHOME' not in os.environ:
             # could set from module --version
             raise OSError('Unable to determine how modules are handled on this host.')
+        if not os.environ.has_key('LOADEDMODULES'):
+            os.environ['LOADEDMODULES'] = ''
 
-        self.user_modules = self._module(['list'])
+        # capture the modules the user has already loaded once, when we start up,
+        # so that we can restore back to this state in revert_state()
+        self.user_modules = set(self.list())
         self.modules_i_loaded = set()
 
-    def _module(*args):
+    def _module(self, *args):
         # based on $MODULESHOME/init/python.py
         if type(args[0]) == type([]):
             args = args[0]
         else:
             args = list(args)
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
-        (output, error) = subprocess.Popen(
-            [cmd, 'python'] + args, stdout=subprocess.PIPE
-        ).communicate()
+        proc = subprocess.Popen([cmd, 'python'] + args, stdout=subprocess.PIPE)
+        (output, error) = proc.communicate()
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(
+                returncode=proc.returncode, 
+                cmd=' '.join([cmd, 'python'] + args), output=error)
         exec output
 
     def load(self, module_name):
@@ -42,14 +50,20 @@ class ModuleManager(Singleton):
         """
         self.modules_i_loaded.discard(module_name)
         self._module(['unload', module_name])
+
+    def list(self):
+        """Wrapper for module list.
+        """
+        return os.environ['LOADEDMODULES'].split(':')
     
-    def unload_all(self):
+    def revert_state(self):
         mods_to_unload = self.modules_i_loaded.difference(self.user_modules)
         for mod in mods_to_unload:
             self._module(['unload', mod])
         # User's modules may have been unloaded if we loaded a different version
         for mod in self.user_modules:
             self._module(['load'], mod)
+        assert set(self.list()) == self.user_modules
 
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
@@ -86,7 +100,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     def tearDown(self):
         super(GfdlvirtualenvEnvironmentManager, self).tearDown()
         modMgr = ModuleManager()
-        modMgr.unload_all()
+        modMgr.revert_state()
 
 
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
@@ -101,4 +115,4 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
     def tearDown(self):
         super(GfdlcondaEnvironmentManager, self).tearDown()
         modMgr = ModuleManager()
-        modMgr.unload_all()
+        modMgr.revert_state()

@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -120,3 +121,45 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         super(GfdlcondaEnvironmentManager, self).tearDown()
         modMgr = ModuleManager()
         modMgr.revert_state()
+
+
+def parse_frepp_stub(frepp_stub):
+    """Converts the frepp arguments to a Python dictionary.
+
+    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+
+    Returns: :obj:`dict` of frepp parameters.
+    """
+    frepp_translate = {
+        'in_data_dir': 'MODEL_DATA_ROOT',
+        'descriptor': 'CASENAME',
+        'out_dir': 'OUTPUT_DIR',
+        'WORKDIR': 'WORKING_DIR',
+        'yr1': 'FIRSTYR',
+        'yr2': 'LASTYR'
+    }
+    # parse arguments and relabel keys
+    d = {}
+    # look for "set ", match token, skip spaces or "=", then match string of 
+    # characters to end of line
+    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
+    for line in frepp_stub.splitlines():
+        print "line = '{}'".format(line)
+        match = re.match(regex, line)
+        if match:
+            if match.group(1) in frepp_translate:
+                key = frepp_translate[match.group(1)]
+            else:
+                key = match.group(1)
+            d[key] = match.group(2)
+
+    # cast from string
+    for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:
+        if int_key in d:
+            d[int_key] = int(d[int_key])
+    for bool_key in ['make_variab_tar', 'test_mode']:
+        if bool_key in d:
+            d[bool_key] = bool(d[bool_key])
+
+    d['frepp_mode'] = ('MODEL_DATA_ROOT' in d)
+    return d

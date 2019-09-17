@@ -82,7 +82,8 @@ def process_frepp_stub():
         set test_mode       True
         set verbose         0
     """)
-    return util.parse_frepp_stub(frepp_stub)
+    # handle case if gfdl module not present
+    return gfdl.parse_frepp_stub(frepp_stub)
 
 def argparse_wrapper():
     """Wraps command-line arguments to script.

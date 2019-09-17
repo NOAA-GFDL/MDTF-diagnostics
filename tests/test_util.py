@@ -420,29 +420,29 @@ class TestFreppArgParsing(unittest.TestCase):
 # ---------------------------------------------------
 
 class TestSubprocessInteraction(unittest.TestCase):
-    def test_run_commands_stdout1(self):
+    def test_run_shell_commands_stdout1(self):
         input = 'echo "foo"'
-        out = util.run_commands(input)
+        out = util.run_shell_commands(input)
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], 'foo')
 
-    def test_run_commands_stdout2(self):
+    def test_run_shell_commands_stdout2(self):
         input = ['echo "foo"', 'echo "bar"']
-        out = util.run_commands(input)
+        out = util.run_shell_commands(input)
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'foo')
         self.assertEqual(out[1], 'bar')
         
-    def test_run_commands_exitcode(self):
+    def test_run_shell_commands_exitcode(self):
         input = ['echo "foo"', 'false']
         with self.assertRaises(Exception):
             # I couldn't get this to catch CalledProcessError specifically,
             # maybe because it takes args?
-            util.run_commands(input)
+            util.run_shell_commands(input)
 
-    def test_run_commands_envvars(self):
+    def test_run_shell_commands_envvars(self):
         input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
-        out = util.run_commands(input, env={'FOO':'bar'})
+        out = util.run_shell_commands(input, env={'FOO':'bar'})
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'bar')
         self.assertEqual(out[1], 'baz')
@@ -458,6 +458,18 @@ class TestSubprocessInteraction(unittest.TestCase):
     def test_poll_command_error(self):
         rc = util.poll_command(['false'], shell=False)
         self.assertEqual(rc, 1)
+
+    def test_run_command_stdout1(self):
+        out = util.run_command(['echo', '"foo"'])
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '"foo"')
+
+    def test_run_command_exitcode(self):
+        input = ['exit', '1']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_command(input)
 
 # ---------------------------------------------------
 

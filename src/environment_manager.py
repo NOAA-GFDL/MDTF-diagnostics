@@ -192,7 +192,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             'pip install {}'.format(' '.join(py_pkgs)),
             'deactivate'
         ]
-        util.run_commands(cmds)
+        util.run_shell_commands(cmds)
     
     def _create_r_venv(self, env_name):
         r_pkgs = set()
@@ -214,7 +214,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             cmds = [
                 'Rscript -e \'install.packages(c({}))\''.format(r_pkg_str)
             ]
-        util.run_commands(cmds)
+        util.run_shell_commands(cmds)
 
     def destroy_environment(self, env_name):
         pass 

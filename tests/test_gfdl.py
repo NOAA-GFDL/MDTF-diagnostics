@@ -8,7 +8,6 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-from src.util import write_yaml, run_commands
 import shared_test_utils as shared
 import src.gfdl as gfdl
 

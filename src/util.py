@@ -239,7 +239,47 @@ def poll_command(command, shell=False, env=None):
     rc = process.poll()
     return rc
 
-def run_commands(commands, env=None, cwd=None):
+def run_command(command, env=None, cwd=None):
+    """Subprocess wrapper to facilitate running single command without starting
+    a shell.
+
+    Note:
+        We hope to save some process overhead by not running the command in a
+        shell, but this means the command can't use piping, quoting, environment 
+        variables, or filename globbing etc.
+
+    See documentation for the Python2 `subprocess 
+    <https://docs.python.org/2/library/subprocess.html>`_ module.
+
+    Args:
+        command (list of :obj:`str`): List of commands to execute
+        env (:obj:`dict`, optional): environment variables to set, passed to 
+            `Popen`, default `None`.
+        cwd (:obj:`str`, optional): child processes' working directory, passed
+            to `Popen`. Default is `None`, which uses parent processes' directory.
+
+    Returns:
+        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        by each command. Note: this is split on newlines after the fact.
+
+    Raises:
+        CalledProcessError: If any commands return with nonzero exit code.
+            Stderr for that command is stored in `output` attribute.
+    """
+    if type(command) == str:
+        command = shlex.split(command)
+    proc = subprocess.Popen(
+        command, shell=False, env=env, cwd=cwd,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, bufsize=0
+    )
+    (stdout, stderr) = proc.communicate()
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(
+            returncode=proc.returncode, cmd=' '.join(command), output=stderr)
+    return stdout.splitlines()
+
+def run_shell_commands(commands, env=None, cwd=None):
     """Subprocess wrapper to facilitate running multiple shell commands.
 
     See documentation for the Python2 `subprocess 

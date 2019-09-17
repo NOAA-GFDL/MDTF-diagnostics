@@ -65,6 +65,16 @@ class TestModuleManager(unittest.TestCase):
             os.environ['MODULESHOME']
         )
 
+    def test_module_avail(self):
+        cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
+        for mod in gfdl._current_module_versions.values():
+            # module list writes to stderr, because all module user output does
+            list1 = subprocess.check_output([cmd, 'python', 'avail', '-t', mod], 
+                stderr=subprocess.STDOUT).splitlines()
+            list1 = [s for s in list1 if not s.endswith(':')]
+            self.assertNotEqual(list1, [],
+                msg='No module {}'.format(mod))
+
     def test_module_list(self):
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         # module list writes to stderr, because all module user output does

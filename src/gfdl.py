@@ -10,6 +10,15 @@ else:
 from util import Singleton
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
+_current_module_versions = {
+    'python':   'python/2.7.12',
+    'ncl':      'ncarg/6.5.0',
+    'r':        'R/3.4.4',
+    'anaconda': 'anaconda2/5.1',
+    'gcp':      'gcp/2.3',
+    'nco':      'nco/4.7.6',
+    'netcdf':   'netcdf/4.2'
+}
 
 class ModuleManager(Singleton):
     def __init__(self):
@@ -62,7 +71,7 @@ class ModuleManager(Singleton):
             self._module(['unload', mod])
         # User's modules may have been unloaded if we loaded a different version
         for mod in self.user_modules:
-            self._module(['load'], mod)
+            self._module(['load', mod])
         assert set(self.list()) == self.user_modules
 
 
@@ -72,27 +81,22 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
     def __init__(self, config, verbose=0):
         modMgr = ModuleManager()
-        self.interpreter_modules = {
-            'python': 'python/2.7.12',
-            'ncl': 'ncarg/6.5.0',
-            'r': 'R/3.4.4'
-        }
         super(GfdlvirtualenvEnvironmentManager, self).__init__(config, verbose)
 
     def create_environment(self, env_name):
         modMgr = ModuleManager()
-        modMgr.load(self.interpreter_modules[env_name])
+        modMgr.load(_current_module_versions[env_name])
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
     def activate_env_command(self, pod):
-        mod_name = self.interpreter_modules[pod.env]
+        mod_name = _current_module_versions[pod.env]
         parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
             self).activate_env_command(pod)
         return 'module load {} && {}'.format(mod_name, parent_cmd)
 
     def deactivate_env_command(self, pod):
-        mod_name = self.interpreter_modules[pod.env]
+        mod_name = _current_module_versions[pod.env]
         parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
             self).deactivate_env_command(pod)
         return '{} && module unload {}'.format(parent_cmd, mod_name)
@@ -109,7 +113,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
     def __init__(self, config, verbose=0):
         modMgr = ModuleManager()
-        modMgr.load('anaconda2/5.1')
+        modMgr.load(_current_module_versions['anaconda'])
         super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
 
     def tearDown(self):

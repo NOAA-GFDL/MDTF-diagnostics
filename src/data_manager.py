@@ -281,10 +281,10 @@ class DataManager(object):
             shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
 
         print "Creating {}.tar".format(self.MODEL_WK_DIR)
-        tar_flags = "--exclude='*netCDF' --exclude='*nc' --exclude='*ps' --exclude='*PS'"
-        status = os.system("tar {0} -cf {1}.tar {1}".format(tar_flags, self.MODEL_WK_DIR))
-        if not status == 0:
-            print("ERROR in assembling tar file for {}".format(self.case_name))
+        tar_flags = ["--exclude='*.{}'".format(s) for s in ['netCDF','nc','ps','PS']]
+        util.run_command(['tar', '-cf'] + tar_flags \
+            + ['{}.tar'.format(self.MODEL_WK_DIR), self.MODEL_WK_DIR]
+        )
 
 
 class LocalfileDataManager(DataManager):

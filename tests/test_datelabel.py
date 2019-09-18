@@ -1,11 +1,11 @@
 import os
 import unittest
 import datetime
-from src.datelabel import DateLabel as dt
-from src.datelabel import DateLabelRange as dt_range
-from src.datelabel import DateLabelFrequency as dt_freq
+from src.datelabel import Date as dt
+from src.datelabel import DateRange as dt_range
+from src.datelabel import DateFrequency as dt_freq
 
-class TestDateLabel(unittest.TestCase):
+class TestDate(unittest.TestCase):
     def test_init(self):
         self.assertEqual(dt(2019), datetime.datetime(2019,1,1))
         self.assertEqual(dt(2019).precision, 1)
@@ -19,8 +19,8 @@ class TestDateLabel(unittest.TestCase):
         self.assertEqual(dt('2019091814').precision, 4)
 
     def test_string_output(self):
-        self.assertEqual(dt('2019').label_format(), '2019')
-        self.assertEqual(dt('20190918').label_format(), '20190918')
+        self.assertEqual('{}'.format(dt('2019')), '2019')
+        self.assertEqual('{}'.format(dt('20190918')), '20190918')
 
     def test_comparisons_same(self):
         self.assertTrue(dt(2018) < dt(2019))
@@ -43,7 +43,7 @@ class TestDateLabel(unittest.TestCase):
         self.assertEqual(max(test), dt(2019,9))
         self.assertEqual(min(test), dt(2018))
 
-class TestDateLabelRange(unittest.TestCase):
+class TestDateRange(unittest.TestCase):
     def test_string_parsing(self):
         self.assertEqual(dt_range('2010-2019'), 
             dt_range(dt(2010), dt(2019)))
@@ -80,7 +80,7 @@ class TestDateLabelRange(unittest.TestCase):
         self.assertFalse(r1.contains(dt_range('2015-2021')))
         self.assertFalse(r1.contains(dt_range('2020-2021')))
 
-class TestDateLabelFrequency(unittest.TestCase):
+class TestDateFrequency(unittest.TestCase):
     def test_string_parsing(self):
         self.assertEqual(dt_freq('1hr'), dt_freq(1, 'hr'))
         self.assertEqual(dt_freq('5yr'), dt_freq(5, 'yr'))

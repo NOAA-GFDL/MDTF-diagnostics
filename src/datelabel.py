@@ -9,7 +9,7 @@ Note:
 import re
 import datetime
 
-class DateLabel(datetime.datetime):
+class Date(datetime.datetime):
     """Define a date with variable level precision.
     """
     # define __new__, not __init__, because datetime is immutable
@@ -21,7 +21,7 @@ class DateLabel(datetime.datetime):
             args = (args[0], 1, 1) # missing month & day
         elif precision == 2:
             args = (args[0], args[1], 1) # missing day
-        obj = super(DateLabel, cls).__new__(cls, *args, **kwargs) 
+        obj = super(Date, cls).__new__(cls, *args, **kwargs) 
         obj.precision = precision
         return obj
 
@@ -40,7 +40,7 @@ class DateLabel(datetime.datetime):
         else:
             raise ValueError("Malformed input {}".format(s))
 
-    def label_format(self):
+    def format(self):
         """Print date in YYYYMMDDHH format, with length being set automatically
         from precision. 
         
@@ -56,13 +56,17 @@ class DateLabel(datetime.datetime):
             return self.strftime('%Y%m%d%H')
         else:
             raise ValueError("Malformed input")
+    __str__ = format
+    
+    def __repr__(self):
+        return "Date('{}')".format(self)   
 
     def __lt__(self, other):
         """Overload datetime.datetime's __lt__. Coerce to datetime.date if we're
         comparing with a datetime.date.
         """
         if isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__lt__(other)
+            return super(Date, self).__lt__(other)
         else:
             return (self.date() < other)
 
@@ -71,7 +75,7 @@ class DateLabel(datetime.datetime):
         comparing with a datetime.date.
         """
         if isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__le__(other)
+            return super(Date, self).__le__(other)
         else:
             return (self.date() <= other)
 
@@ -80,7 +84,7 @@ class DateLabel(datetime.datetime):
         comparing with a datetime.date.
         """
         if isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__gt__(other)
+            return super(Date, self).__gt__(other)
         else:
             return (self.date() > other)
 
@@ -89,7 +93,7 @@ class DateLabel(datetime.datetime):
         comparing with a datetime.date.
         """
         if isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__ge__(other)
+            return super(Date, self).__ge__(other)
         else:
             return (self.date() >= other)
 
@@ -97,10 +101,10 @@ class DateLabel(datetime.datetime):
         """Overload datetime.datetime's __eq__. Require precision to match as
         well as date. Coerce to datetime.date if we're comparing with a datetime.date.
         """
-        if isinstance(other, DateLabel):
-            return (self.precision == other.precision) and super(DateLabel, self).__eq__(other)
+        if isinstance(other, Date):
+            return (self.precision == other.precision) and super(Date, self).__eq__(other)
         elif isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__eq__(other)
+            return super(Date, self).__eq__(other)
         else:
             return (self.date() == other)
 
@@ -108,15 +112,15 @@ class DateLabel(datetime.datetime):
         """Overload datetime.datetime's __ne__. Require precision to match as
         well as date. Coerce to datetime.date if we're comparing with a datetime.date.
         """
-        if isinstance(other, DateLabel):
-            return (self.precision != other.precision) or super(DateLabel, self).__ne__(other)
+        if isinstance(other, Date):
+            return (self.precision != other.precision) or super(Date, self).__ne__(other)
         elif isinstance(other, datetime.datetime):
-            return super(DateLabel, self).__ne__(other)
+            return super(Date, self).__ne__(other)
         else:
             return (self.date() != other)
 
 
-class DateLabelRange(object):
+class DateRange(object):
     """Class representing a range of dates. 
 
     This is defined as a closed interval (containing both endpoints).
@@ -125,10 +129,10 @@ class DateLabelRange(object):
         if type(start) is str and (end is None):
             (start, end) = self._parse_input_string(start)
 
-        if not isinstance(start, DateLabel):
-            start = DateLabel(start)
-        if not isinstance(end, DateLabel):
-            end = DateLabel(end)
+        if not isinstance(start, Date):
+            start = Date(start)
+        if not isinstance(end, Date):
+            end = Date(end)
         assert start < end
 
         self.start = start
@@ -138,7 +142,7 @@ class DateLabelRange(object):
     def _parse_input_string(cls, s):
         s2 = s.split('-')
         assert len(s2) == 2
-        return tuple([DateLabel(ss) for ss in s2])
+        return tuple([Date(ss) for ss in s2])
     
     def __eq__(self, other):
         return (self.start == other.start) and (self.end == other.end)
@@ -153,10 +157,10 @@ class DateLabelRange(object):
         date range.
 
         This method overrides the `__contains__` method, so, e.g., 
-        datetime.date('2019-09-18') in DateLabelRange('2018-2019') will give
+        datetime.date('2019-09-18') in DateRange('2018-2019') will give
         `True`.
         """
-        if isinstance(item, DateLabelRange):
+        if isinstance(item, DateRange):
             return (self.start <= item.end) and (item.start <= self.end)
         else:
             return (self.start <= item) and (self.end >= item)
@@ -165,16 +169,19 @@ class DateLabelRange(object):
         """Comparison returning `True` if `item` is strictly contained within 
         the range.
         """
-        if isinstance(item, DateLabelRange):
+        if isinstance(item, DateRange):
             return (self.start <= item.start) and (self.end >= item.end)
         else:
             return (self.start <= item) and (self.end >= item)
     
-    def label_format(self):
+    def format(self):
         return self.start.label_format() + '-' + self.end.label_format()
-        
+    __str__ = format
 
-class DateLabelFrequency(datetime.timedelta):
+    def __repr__(self):
+        return "DateRange('{}')".format(self)        
+
+class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 
     Note:
@@ -210,7 +217,7 @@ class DateLabelFrequency(datetime.timedelta):
             unit = 'hr'
         else:
             raise ValueError("Malformed input")
-        obj = super(DateLabelFrequency, cls).__new__(cls, **kwargs) 
+        obj = super(DateFrequency, cls).__new__(cls, **kwargs) 
         obj.quantity = quantity
         obj.unit = unit
         return obj
@@ -239,7 +246,18 @@ class DateLabelFrequency(datetime.timedelta):
                 raise ValueError("Malformed input {}".format(s))
         return (quantity, unit)
 
-    def format_adj(self):
+    def format_local(self):
+        if self.unit == 'hr':
+            return self.format()
+        else:
+            assert self.quantity == 1
+            _local_dict = {
+                'mo': 'mon',
+                'da': 'day',
+            }
+            return _local_dict[self.unit]
+
+    def format_frepp(self):
         # weekly not used in frepp
         assert self.quantity == 1
         _frepp_dict = {
@@ -254,17 +272,21 @@ class DateLabelFrequency(datetime.timedelta):
     def format(self):
         # conversion? only hr and yr used
         return "{}{}".format(self.quantity, self.unit)
+    __str__ = format
+
+    def __repr__(self):
+        return "DateFrequency('{}')".format(self)
 
     def __eq__(self, other):
         # Note: only want to match labels, don't want '24hr' == '1day'
-        if isinstance(other, DateLabelFrequency):
+        if isinstance(other, DateFrequency):
             return (self.quantity == other.quantity) and (self.unit == other.unit)
         else:
-            return super(DateLabelFrequency, self).__eq__(other)
+            return super(DateFrequency, self).__eq__(other)
 
     def __ne__(self, other):
         # Note: only want to match labels, don't want '24hr' == '1day'
-        if isinstance(other, DateLabelFrequency):
+        if isinstance(other, DateFrequency):
             return (self.quantity != other.quantity) or (self.unit != other.unit)
         else:
-            return super(DateLabelFrequency, self).__ne__(other)
+            return super(DateFrequency, self).__ne__(other)

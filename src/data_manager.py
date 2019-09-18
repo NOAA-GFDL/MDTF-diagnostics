@@ -4,6 +4,7 @@ import glob
 import shutil
 from abc import ABCMeta, abstractmethod
 import util
+import datelabel
 from util import setenv # fix
 
 class DataSet(dict):
@@ -21,7 +22,7 @@ class DataSet(dict):
         if 'var_name' in kwargs and 'name' not in kwargs:
             self.name = kwargs['var_name']
         if 'freq' in kwargs and 'date_freq' not in kwargs:
-            self.date_freq = kwargs['freq']
+            self.date_freq = datelabel.DateFrequency(kwargs['freq'])
 
     def __setitem__(self, key, value):
         super(DataSet, self).__setitem__(key, value)
@@ -51,8 +52,10 @@ class DataManager(object):
     def __init__(self, case_dict, config={}, verbose=0):
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
-        self.firstyr = case_dict['FIRSTYR']
-        self.lastyr = case_dict['LASTYR']
+        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
+        self.lastyr = datelabel.Date(case_dict['LASTYR'])
+        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+
 
         if 'variable_convention' in case_dict:
             self.convention = case_dict['variable_convention']
@@ -137,7 +140,7 @@ class DataManager(object):
                     translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
                         for var2 in var['alternates']
                 ]
-            var['date_range'] = (self.firstyr, self.lastyr)
+            var['date_range'] = self.date_range
             ds_list.append(DataSet(**var))
         pod.varlist = ds_list
 
@@ -150,10 +153,11 @@ class DataManager(object):
         `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
         Files not following this convention won't be found.
         """
+        freq = dataset.date_freq.format_local()
         return os.path.join(
-            self.MODEL_DATA_DIR, dataset.date_freq, 
+            self.MODEL_DATA_DIR, freq,
             "{}.{}.{}.nc".format(
-                self.case_name, dataset.name_in_model, dataset.date_freq)
+                self.case_name, dataset.name_in_model, freq)
         )
 
     def fetchData(self, verbose=0):

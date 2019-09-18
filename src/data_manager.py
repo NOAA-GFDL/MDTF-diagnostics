@@ -6,6 +6,44 @@ from abc import ABCMeta, abstractmethod
 import util
 from util import setenv # fix
 
+class DataSet(dict):
+    """Class to describe datasets.
+
+    `https://stackoverflow.com/a/48806603`_ for implementation.
+    """
+    def __init__(self, **kwargs):
+        super(DataSet, self).__init__()
+        self.name = ''
+        self.units = None # not implemented yet
+        self.date_range = ''
+        self.date_freq = ''
+        self.__dict__.update(kwargs)
+        if 'var_name' in kwargs and 'name' not in kwargs:
+            self.name = kwargs['var_name']
+        if 'freq' in kwargs and 'date_freq' not in kwargs:
+            self.date_freq = kwargs['freq']
+
+    def __setitem__(self, key, value):
+        super(DataSet, self).__setitem__(key, value)
+        self.__dict__[key] = value  # for code completion in editors
+
+    def __getattr__(self, item):
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            raise AttributeError(item)
+
+    __setattr__ = __setitem__
+
+    def copy(self):
+        # https://stackoverflow.com/a/15774013
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result  
+    __copy__ = copy
+
+
 class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
@@ -87,18 +125,36 @@ class DataManager(object):
         translate = util.VariableTranslator()
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
-        for idx, var in enumerate(pod.varlist):
-            cf_name = translate.toCF(pod.convention, var['var_name'])
-            pod.varlist[idx]['CF_name'] = cf_name
-            pod.varlist[idx]['name_in_model'] = translate.fromCF(self.convention, cf_name)
-            if 'alternates' in pod.varlist[idx]:
-                pod.varlist[idx]['alternates'] = [
-                    translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
-                        for var2 in pod.varlist[idx]['alternates']
-                ]
 
+        # express varlist as DataSet objects
+        ds_list = []
+        for var in pod.varlist:
+            cf_name = translate.toCF(pod.convention, var['var_name'])
+            var['CF_name'] = cf_name
+            var['name_in_model'] = translate.fromCF(self.convention, cf_name)
+            if 'alternates' in var:
+                var['alternates'] = [
+                    translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
+                        for var2 in var['alternates']
+                ]
+            var['date_range'] = (self.firstyr, self.lastyr)
+            ds_list.append(DataSet(**var))
+        pod.varlist = ds_list
 
     # -------------------------------------
+
+    def local_path(self, dataset):
+        """Returns the absolute path of the local copy of the file for dataset.
+
+        This determines the local model data directory structure, which is
+        `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
+        Files not following this convention won't be found.
+        """
+        return os.path.join(
+            self.MODEL_DATA_DIR, dataset.date_freq, 
+            "{}.{}.{}.nc".format(
+                self.case_name, dataset.name_in_model, dataset.date_freq)
+        )
 
     def fetchData(self, verbose=0):
         self.planData()
@@ -130,26 +186,15 @@ class DataManager(object):
                         for v in alt_vars:
                             self.data_to_fetch.append(v)             
 
-    def local_path(self, dataspec_dict):
-        """Returns the absolute path of the local copy of the file for dataset.
 
-        This determines the local model data directory structure, which is
-        `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
-        Files not following this convention won't be found.
-        """
-        return os.path.join(
-            self.MODEL_DATA_DIR, dataspec_dict['freq'], 
-            "{}.{}.{}.nc".format(
-                self.case_name, dataspec_dict['name_in_model'], dataspec_dict['freq'])
-        )
 
     # following are specific details that must be implemented in child class 
     @abstractmethod
-    def queryDataset(self, dataspec_dict):
+    def queryDataset(self, dataset):
         return True
     
     @abstractmethod
-    def fetchDataset(self, dataspec_dict):
+    def fetchDataset(self, dataset):
         pass
 
     def _check_for_varlist_files(self, varlist, verbose=0):
@@ -166,35 +211,34 @@ class DataManager(object):
             Dict with two entries, ``found_files`` and ``missing_files``, containing
                 lists of paths to found and missing data files, respectively.
         """
-        translate = util.VariableTranslator()
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
         found_list = []
         missing_list = []
-        for item in varlist:
-            if (verbose > 2 ): print func_name +" "+item
-            filepath = self.local_path(item)
+        for ds in varlist:
+            if (verbose > 2 ): print func_name +" "+ds.name
+            filepath = self.local_path(ds)
 
             if (os.path.isfile(filepath)):
                 print "found ",filepath
                 found_list.append(filepath)
                 continue
-            if (not item['required']):
+            if (not ds.required):
                 print "WARNING: optional file not found ",filepath
                 continue
-            if not (('alternates' in item) and (len(item['alternates'])>0)):
+            if not (('alternates' in ds.__dict__) and (len(ds.alternates)>0)):
                 print "ERROR: missing required file ",filepath,". No alternatives found"
                 missing_list.append(filepath)
             else:
-                alt_list = item['alternates']
+                alt_list = ds.alternates
                 print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
                 for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): print "\t \t examining alternative ",alt_item
-                    new_var = item.copy()  # modifyable dict with all settings from original
-                    new_var['name_in_model'] = alt_item # translation done in DataManager._setup_pod()
-                    del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
-                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
-                    new_files = self._check_for_varlist_files([new_var],verbose=verbose)
+                    new_ds = ds.copy()  # modifyable dict with all settings from original
+                    new_ds.name_in_model = alt_item # translation done in DataManager._setup_pod()
+                    del ds.alternates    # remove alternatives (could use this to implement multiple options)
+                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files"
+                    new_files = self._check_for_varlist_files([new_ds],verbose=verbose)
                     found_list.extend(new_files['found_files'])
                     missing_list.extend(new_files['missing_files'])
 
@@ -241,8 +285,8 @@ class DataManager(object):
 
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
-    def queryDataset(self, dataspec_dict):
-        return os.path.isfile(self.local_path(dataspec_dict))
+    def queryDataset(self, dataset):
+        return os.path.isfile(self.local_path(dataset))
             
-    def fetchDataset(self, dataspec_dict):
+    def fetchDataset(self, dataset):
         pass

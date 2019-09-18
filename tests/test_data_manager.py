@@ -116,5 +116,77 @@ class TestDataManagerSetup(unittest.TestCase):
     #     self.assertEqual(pod.conda_env, '_MDTF-diagnostics-B')
 
 
+class TestDataManagerFetchData(unittest.TestCase):    
+    @mock.patch('src.util.read_yaml', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.PathManager(unittest_flag = True)
+
+    def tearDown(self):
+        # call _reset method deleting clearing Translator for unit testing, 
+        # otherwise the second, third, .. tests will use the instance created 
+        # in the first test instead of being properly initialized
+        temp = util.VariableTranslator(unittest_flag = True)
+        temp._reset()
+        temp = util.PathManager(unittest_flag = True)
+        temp._reset()
+
+    # ---------------------------------------------------
+    default_case = {
+        'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
+        'pod_list': []
+    }
+
+    @mock.patch.multiple(DataManager, __abstractmethods__=set())
+    @mock.patch('os.path.isfile', return_value = True)
+    def test_check_for_varlist_files_found(self, mock_isfile):
+        # case file is found
+        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon'}]
+        case = DataManager(self.default_case)
+        f = case._check_for_varlist_files(test_vars)
+        self.assertEqual(f['found_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+        self.assertEqual(f['missing_files'], [])
+
+    @mock.patch.multiple(DataManager, __abstractmethods__=set())
+    @mock.patch('os.path.isfile', return_value = False)
+    def test_check_for_varlist_files_not_found(self, mock_isfile):
+        # case file is required and not found
+        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': True}]
+        case = DataManager(self.default_case)
+        f = case._check_for_varlist_files(test_vars)
+        self.assertEqual(f['found_files'], [])
+        self.assertEqual(f['missing_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+
+    @mock.patch.multiple(DataManager, __abstractmethods__=set())
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_optional(self, mock_isfile):
+        # case file is optional and not found
+        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': False}]
+        case = DataManager(self.default_case)
+        f = case._check_for_varlist_files(test_vars)
+        self.assertEqual(f['found_files'], [])
+        self.assertEqual(f['missing_files'], [])
+
+    @mock.patch.multiple(DataManager, __abstractmethods__=set())
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_alternate(self, mock_isfile):
+        # case alternate variable is specified and found
+        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': True, 'alternates':['PRECC']}]
+        case = DataManager(self.default_case)
+        f = case._check_for_varlist_files(test_vars)
+        # name_in_model translation now done in DataManager._setup_pod
+        self.assertEqual(f['found_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
+        self.assertEqual(f['missing_files'], [])
+
+
 if __name__ == '__main__':
     unittest.main()

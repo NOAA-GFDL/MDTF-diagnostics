@@ -18,9 +18,6 @@ class TestUtil(unittest.TestCase):
     def test_get_available_programs(self):
         pass
 
-    def test_makefilepath(self):
-        pass
-
     # ---------------------------------------------------
     
     @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})

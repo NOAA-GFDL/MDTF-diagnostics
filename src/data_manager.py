@@ -100,11 +100,18 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def fetchData(self):
+    def fetchData(self, verbose=0):
         self.planData()
         for var in self.data_to_fetch:
             self.fetchDataset(var)
         # do translation/ transformation of data too
+        for pod in self.pods:
+            var_files = self._check_for_varlist_files(pod.varlist, verbose)
+            if var_files['missing_files'] != []:
+                print "WARNING: POD ",pod.name," missing required input files:"
+                print var_files['missing_files']
+            else:
+                if (verbose > 0): print "No known missing required input files"
 
     def planData(self):
         # definitely a cleaner way to write this
@@ -123,6 +130,19 @@ class DataManager(object):
                         for v in alt_vars:
                             self.data_to_fetch.append(v)             
 
+    def local_path(self, dataspec_dict):
+        """Returns the absolute path of the local copy of the file for dataset.
+
+        This determines the local model data directory structure, which is
+        `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
+        Files not following this convention won't be found.
+        """
+        return os.path.join(
+            self.MODEL_DATA_DIR, dataspec_dict['freq'], 
+            "{}.{}.{}.nc".format(
+                self.case_name, dataspec_dict['name_in_model'], dataspec_dict['freq'])
+        )
+
     # following are specific details that must be implemented in child class 
     @abstractmethod
     def queryDataset(self, dataspec_dict):
@@ -131,6 +151,59 @@ class DataManager(object):
     @abstractmethod
     def fetchDataset(self, dataspec_dict):
         pass
+
+    def _check_for_varlist_files(self, varlist, verbose=0):
+        """Verify that all data files needed by a POD exist locally.
+        
+        Private method called by :meth:`~data_manager.DataManager.fetchData`.
+
+        Args:
+            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+                of the POD's settings.yml file.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns:
+            Dict with two entries, ``found_files`` and ``missing_files``, containing
+                lists of paths to found and missing data files, respectively.
+        """
+        translate = util.VariableTranslator()
+        func_name = "\t \t check_for_varlist_files :"
+        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
+        found_list = []
+        missing_list = []
+        for item in varlist:
+            if (verbose > 2 ): print func_name +" "+item
+            filepath = self.local_path(item)
+
+            if (os.path.isfile(filepath)):
+                print "found ",filepath
+                found_list.append(filepath)
+                continue
+            if (not item['required']):
+                print "WARNING: optional file not found ",filepath
+                continue
+            if not (('alternates' in item) and (len(item['alternates'])>0)):
+                print "ERROR: missing required file ",filepath,". No alternatives found"
+                missing_list.append(filepath)
+            else:
+                alt_list = item['alternates']
+                print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
+                for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
+                    if (verbose > 1): print "\t \t examining alternative ",alt_item
+                    new_var = item.copy()  # modifyable dict with all settings from original
+                    new_var['name_in_model'] = alt_item # translation done in DataManager._setup_pod()
+                    del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
+                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
+                    new_files = self._check_for_varlist_files([new_var],verbose=verbose)
+                    found_list.extend(new_files['found_files'])
+                    missing_list.extend(new_files['missing_files'])
+
+        if (verbose > 2): print "check_for_varlist_files returning ",missing_list
+        # remove empty list entries
+        files = {}
+        files['found_files'] = [x for x in found_list if x]
+        files['missing_files'] = [x for x in missing_list if x]
+        return files
 
     # -------------------------------------
 
@@ -169,10 +242,7 @@ class DataManager(object):
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
     def queryDataset(self, dataspec_dict):
-        filepath = util.makefilepath(
-            dataspec_dict['name_in_model'], dataspec_dict['freq'],
-            os.environ['CASENAME'], os.environ['DATADIR'])
-        return os.path.isfile(filepath)
+        return os.path.isfile(self.local_path(dataspec_dict))
             
     def fetchDataset(self, dataspec_dict):
         pass

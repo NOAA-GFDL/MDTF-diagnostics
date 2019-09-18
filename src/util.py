@@ -325,16 +325,6 @@ def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
-def makefilepath(varname,timefreq,casename,datadir):
-    """ 
-    USAGE (varname, timefreq, casename, datadir )
-        str varname  (as set by src/config_*.yml.py)
-        str timefreq "mon","day","6hr","3hr","1hr"
-        str datadir directory where model data lives
-
-    """
-    return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
-
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.
 

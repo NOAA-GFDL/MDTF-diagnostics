@@ -109,15 +109,7 @@ class Date(datetime.datetime):
             return (self.date() == other)
 
     def __ne__(self, other):
-        """Overload datetime.datetime's __ne__. Require precision to match as
-        well as date. Coerce to datetime.date if we're comparing with a datetime.date.
-        """
-        if isinstance(other, Date):
-            return (self.precision != other.precision) or super(Date, self).__ne__(other)
-        elif isinstance(other, datetime.datetime):
-            return super(Date, self).__ne__(other)
-        else:
-            return (self.date() != other)
+        return (not self.__eq__(other)) # more foolproof
 
 
 class DateRange(object):
@@ -148,7 +140,7 @@ class DateRange(object):
         return (self.start == other.start) and (self.end == other.end)
 
     def __ne__(self, other):
-        return (self.start != other.start) or (self.end != other.end)
+        return (not self.__eq__(other)) # more foolproof
 
     def __contains__(self, item): 
         return self.overlaps(item)
@@ -285,8 +277,4 @@ class DateFrequency(datetime.timedelta):
             return super(DateFrequency, self).__eq__(other)
 
     def __ne__(self, other):
-        # Note: only want to match labels, don't want '24hr' == '1day'
-        if isinstance(other, DateFrequency):
-            return (self.quantity != other.quantity) or (self.unit != other.unit)
-        else:
-            return super(DateFrequency, self).__ne__(other)
+        return (not self.__eq__(other)) # more foolproof

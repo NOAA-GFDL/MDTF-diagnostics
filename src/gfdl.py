@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -7,10 +8,12 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
-from util import Singleton
+import datelabel
+from util import Singleton, FrozenDict
+from data_manager import DataManager
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
-_current_module_versions = {
+_current_module_versions = FrozenDict({
     'python':   'python/2.7.12',
     'ncl':      'ncarg/6.5.0',
     'r':        'R/3.4.4',
@@ -18,7 +21,7 @@ _current_module_versions = {
     'gcp':      'gcp/2.3',
     'nco':      'nco/4.7.6',
     'netcdf':   'netcdf/4.2'
-}
+})
 
 class ModuleManager(Singleton):
     def __init__(self):
@@ -108,8 +111,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
 
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
-    # Use module files to switch execution environments, as defined on 
-    # GFDL workstations and PP/AN cluster.
+    # Use anaconda -- NOTE module not available on analysis
 
     def __init__(self, config, verbose=0):
         modMgr = ModuleManager()
@@ -120,3 +122,69 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         super(GfdlcondaEnvironmentManager, self).tearDown()
         modMgr = ModuleManager()
         modMgr.revert_state()
+
+
+class GfdlppDataManager(DataManager):
+    def __init__(self, root_dir, case_dict, config={}, verbose=0):
+        super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
+        assert os.path.isdir(root_dir)
+        self.root_dir = root_dir
+
+        # load required modules
+        modMgr = ModuleManager()
+        modMgr.load(_current_module_versions['gcp'])
+        modMgr.load(_current_module_versions['nco'])
+
+    def file_locate(root_dir, pattern):
+        """Find files in root_dir matching pattern. Return list of file paths
+        relative to root_dir.
+        """
+        # /home/gfdl/bin/dmlocate would be nice, but it's not maintained
+        # instead use 'find' -- Tim said 'dmfind' isn't an improvement
+        if os.sep in pattern:
+            pattern_flag = '-path' # searching whole path
+        else:
+            pattern_flag = '-name' # search filename only 
+        return util.run_command([
+            'find', '"'+root_dir+'"', '-depth', '-type', 'f', 
+            pattern_flag, '"'+pattern+'"', '-printf "%P\0"'
+            ])
+
+    def parse_pp_path(self, path):
+        ts_regex = re.compile(r"""
+            (?P<component>\w+)/        # component name
+            ts/                     
+            (?P<date_freq>\w+)/        # ts freq
+            (?P<chunk_freq>\w+)/        
+            (?P<component2>\w+)\.        # component name (again)
+            (?P<start_date>\d+)-(?P<end_date>\d+)\.   # d ate range
+            (?P<field_name>\w+)\.       # field name
+            nc       
+        """, re.VERBOSE)
+        # TODO: handle time averages (not needed now)
+        match = re.match(ts_regex, path)
+        if match:
+            assert match.group('component') == match.group('component2')
+            d = match.groupdict()
+            del d['component2']
+            d['date_freq'] = datelabel.DateFrequency(d['date_freq'])
+            d['chunk_freq'] = datelabel.DateFrequency(d['chunk_freq'])
+            d['date_range'] = datelabel.DateRange(d['start_date'], d['end_date'])
+            return d
+        else:
+            return {} # error
+
+    def decompose_path(self, path):   
+        d = {}
+        (head, tail) = os.path.split(path)
+        d['basename'] = head
+        d['dirs'] = [s for s in head.split(os.sep) if s != '']
+        d['filename'] = tail
+        d['ext'] = ''
+
+    def queryDataset(self, dataset):
+        pattern = '*/ts/{}/*.{}.nc'.format(
+            dataset.date_freq.format_frepp(), dataset.name
+        )
+        files = file_locate(self.root_dir, pattern)
+        return [self.parse_pp_path(f) for f in files]

@@ -51,6 +51,27 @@ class DataSet(dict):
         return self.rename_copy(new_name=None)
     __copy__ = copy
 
+    def _freeze(self):
+        """Return immutable copy of dict of (current) attributes.
+
+        We do this to enable comparison of two Datasets, which otherwise would 
+        be done by the default method of testing if the two objects refer to the
+        same location in memory.
+        See `https://stackoverflow.com/a/45170549`_.
+        """
+        return util.FrozenDict(self.__dict__)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self._freeze() == other._freeze()
+        else:
+            return False
+    def __ne__(self, other):
+        return (not self.__eq__(other)) # more foolproof
+
+    def __hash__(self):
+        return hash(self._freeze())
+
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -200,7 +221,7 @@ class DataManager(object):
                     data_to_fetch.extend(self._query_dataset_and_alts(var))
                 except DataQueryFailure as exc:
                     print "Data query failed on pod {}".format(pod.name)
-        return data_to_fetch
+        return set(data_to_fetch)
 
 
     def _query_dataset_and_alts(self, dataset):

@@ -7,6 +7,71 @@ from src.data_manager import DataManager
 from src.shared_diagnostic import Diagnostic
 from subprocess import CalledProcessError
 
+class TestBasicClasses(unittest.TestCase):
+    def test_singleton(self):
+        # Can only be instantiated once
+        class Temp1(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp1()
+        temp2 = Temp1()
+        temp1.foo = 5
+        self.assertEqual(temp2.foo, 5)
+
+    def test_singleton_reset(self):
+        # Verify cleanup works
+        class Temp2(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp2()
+        temp1.foo = 5
+        temp1._reset()
+        temp2 = Temp2()
+        self.assertEqual(temp2.foo, 0)
+
+    def test_bidict_inverse(self):
+        # test inverse map
+        temp = util.BiDict({'a':1, 'b':2})
+        self.assertIn(1, temp.inverse)
+        self.assertEqual(temp.inverse[2],['b'])
+
+    def test_bidict_setitem(self):
+        # test key addition and handling of duplicate values
+        temp = util.BiDict({'a':1, 'b':2})
+        temp['c'] = 1           
+        self.assertIn(1, temp.inverse)
+        self.assertItemsEqual(temp.inverse[1],['a','c'])
+        temp['b'] = 3
+        self.assertIn(2, temp.inverse)
+        self.assertEqual(temp.inverse[2],[])
+
+    def test_bidict_delitem(self):
+        # test item deletion
+        temp = util.BiDict({'a':1, 'b':2})
+        del temp['b']
+        self.assertNotIn(2, temp.inverse)
+
+    def test_frozendict_dict(self):
+        d = util.FrozenDict({'a':1, 'b':2})
+        self.assertEqual(d['a'], 1)
+        self.assertEqual(d['b'], 2)
+        with self.assertRaises(KeyError):
+            temp = d['c']
+        self.assertEqual(d.values().sort(), [1, 2])
+
+    def test_frozendict_readonly(self):
+        d = util.FrozenDict({'a':1, 'b':2})
+        with self.assertRaises(NotImplementedError):
+            d['a'] = 3
+        self.assertEqual(d['a'], 1)
+        with self.assertRaises(NotImplementedError):
+            del d['b']
+        self.assertEqual(d['b'], 2)
+        with self.assertRaises(NotImplementedError):
+            d.update({'c': 5})
+        with self.assertRaises(KeyError):
+            temp = d['c']
+
 class TestUtil(unittest.TestCase):
 
     def test_read_yaml(self):
@@ -53,49 +118,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(os.environ['TEST_FALSE'], '0')
 
     # ---------------------------------------------------
-
-    def test_singleton(self):
-        # Can only be instantiated once
-        class Temp1(util.Singleton):
-            def __init__(self):
-                self.foo = 0
-        temp1 = Temp1()
-        temp2 = Temp1()
-        temp1.foo = 5
-        self.assertEqual(temp2.foo, 5)
-
-    def test_singleton_reset(self):
-        # Verify cleanup works
-        class Temp2(util.Singleton):
-            def __init__(self):
-                self.foo = 0
-        temp1 = Temp2()
-        temp1.foo = 5
-        temp1._reset()
-        temp2 = Temp2()
-        self.assertEqual(temp2.foo, 0)
-
-    def test_bidict_inverse(self):
-        # test inverse map
-        temp = util.BiDict({'a':1, 'b':2})
-        self.assertIn(1, temp.inverse)
-        self.assertEqual(temp.inverse[2],['b'])
-
-    def test_bidict_setitem(self):
-        # test key addition and handling of duplicate values
-        temp = util.BiDict({'a':1, 'b':2})
-        temp['c'] = 1           
-        self.assertIn(1, temp.inverse)
-        self.assertItemsEqual(temp.inverse[1],['a','c'])
-        temp['b'] = 3
-        self.assertIn(2, temp.inverse)
-        self.assertEqual(temp.inverse[2],[])
-
-    def test_bidict_delitem(self):
-        # test item deletion
-        temp = util.BiDict({'a':1, 'b':2})
-        del temp['b']
-        self.assertNotIn(2, temp.inverse)
 
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'A','var_names':{'B':'D'}})

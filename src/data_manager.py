@@ -23,6 +23,8 @@ class DataSet(dict):
             self.name = kwargs['var_name']
         if 'freq' in kwargs and 'date_freq' not in kwargs:
             self.date_freq = datelabel.DateFrequency(kwargs['freq'])
+        self.remote_resource = None
+        self.local_resource = None
 
     def __setitem__(self, key, value):
         super(DataSet, self).__setitem__(key, value)
@@ -36,14 +38,31 @@ class DataSet(dict):
 
     __setattr__ = __setitem__
 
-    def copy(self):
+    def rename_copy(self, new_name=None):
         # https://stackoverflow.com/a/15774013
         cls = self.__class__
         result = cls.__new__(cls)
         result.__dict__.update(self.__dict__)
+        if new_name is not None:
+            result.name = new_name
         return result  
+
+    def copy(self):
+        return self.rename_copy(new_name=None)
     __copy__ = copy
 
+class DataQueryFailure(Exception):
+    """Exception signaling a failure to find requested data in the remote location. 
+    
+    Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
+    data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
+    or :meth:`~data_manager.DataManager.fetchData`.
+    """
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __str__(self):
+        return 'Query failure for {}.'.format(self.dataset.name)
 
 class DataManager(object):
     # analogue of TestFixture in xUnit
@@ -139,7 +158,7 @@ class DataManager(object):
                 var['alternates'] = [
                     translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
                         for var2 in var['alternates']
-                ]
+                ] # only list of translated names, not full DataSets
             var['date_range'] = self.date_range
             ds_list.append(DataSet(**var))
         pod.varlist = ds_list
@@ -161,10 +180,10 @@ class DataManager(object):
         )
 
     def fetchData(self, verbose=0):
-        self.planData()
-        for var in self.data_to_fetch:
+        data_to_fetch = planData()
+        for var in data_to_fetch:
             self.fetchDataset(var)
-        # do translation/ transformation of data too
+        # do translation/ transformations of data here
         for pod in self.pods:
             var_files = self._check_for_varlist_files(pod.varlist, verbose)
             if var_files['missing_files'] != []:
@@ -174,23 +193,36 @@ class DataManager(object):
                 if (verbose > 0): print "No known missing required input files"
 
     def planData(self):
-        # definitely a cleaner way to write this
-        self.data_to_fetch = []
+        data_to_fetch = []
         for pod in self.pods:
             for var in pod.varlist:
-                if self.queryDataset(var):
-                    self.data_to_fetch.append(var)
-                else:
-                    alt_vars = []
-                    for v in var['alternates']:
-                        temp = var.copy()
-                        temp['var_name'] = v
-                        alt_vars.append(temp)
-                    if all([self.queryDataset(v) for v in alt_vars]):
-                        for v in alt_vars:
-                            self.data_to_fetch.append(v)             
+                try:
+                    data_to_fetch.extend(self._query_dataset_and_alts(var))
+                except DataQueryFailure as exc:
+                    print "Data query failed on pod {}".format(pod.name)
+        return data_to_fetch
 
 
+    def _query_dataset_and_alts(self, dataset):
+        """Wrapper for queryDataset that attempts querying for alternate variables.
+        """
+        try:
+            self.queryDataset(dataset)
+            return dataset
+        except DataQueryFailure:
+            print "Couldn't find {}, trying alternates".format(dataset.name)
+            if len(dataset.alternates) == 0:
+                print "Couldn't find {}& no alternates".format(dataset.name)
+                raise
+            # check for all alternates
+            alt_vars = [dataset.rename_copy(var_name) for var_name in dataset.alternates]
+            for alt_data in alt_vars:
+                try: 
+                    self.queryDataset(alt_data)
+                except DataQueryFailure:
+                    print "Couldn't find alternate data {}".format(alt_data.name)
+                    raise
+            return alt_vars
 
     # following are specific details that must be implemented in child class 
     @abstractmethod
@@ -290,7 +322,11 @@ class DataManager(object):
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
     def queryDataset(self, dataset):
-        return os.path.isfile(self.local_path(dataset))
+        path = self.local_path(dataset)
+        if os.path.isfile(path):
+            dataset.remote_resource = path
+        else:
+            raise DataQueryFailure(dataset)
             
     def fetchDataset(self, dataset):
-        pass
+        dataset.local_resource = dataset.remote_resource

@@ -223,7 +223,7 @@ class DataManager(object):
                     data_to_fetch.extend(self._query_dataset_and_alts(var))
                 except DataQueryFailure as exc:
                     print "Data query failed on pod {}".format(pod.name)
-        return set(data_to_fetch)
+        return self._optimize_data_fetching(data_to_fetch)
 
 
     def _query_dataset_and_alts(self, dataset):
@@ -247,14 +247,43 @@ class DataManager(object):
                     raise
             return alt_vars
 
+    def _optimize_data_fetching(self, datasets):
+        """Process list of requested data to make data fetching efficient.
+
+        This is intended as a hook to be used by subclasses. Default behavior is
+        to delete from the list duplicate datasets and datasets where a local
+        copy of the data already exists and is current (as determined by 
+        :meth:`~data_manager.DataManager.local_data_is_current`).
+
+        Args:
+            datasets: collection of :class:`~data_manager.DataManager.DataSet`
+                objects.
+        
+        Returns: collection of :class:`~data_manager.DataManager.DataSet`
+            objects.
+        """
+        return [d for d in set(datasets) if not self.local_data_is_current(d)]
+    
+    def local_data_is_current(self, dataset):
+        """Determine if local copy of data needs to be refreshed.
+
+        This is intended as a hook to be used by subclasses. Default is to always
+        return `False`, ie always fetch remote data.
+
+        Returns: `True` if local copy of data exists and remote copy hasn't been
+            updated.
+        """
+        return False
+
     # following are specific details that must be implemented in child class 
     @abstractmethod
     def query_dataset(self, dataset):
-        return True
-    
+        pass
+
     @abstractmethod
     def fetch_dataset(self, dataset):
         pass
+
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Verify that all data files needed by a POD exist locally.
@@ -350,6 +379,9 @@ class LocalfileDataManager(DataManager):
             dataset.remote_resource = path
         else:
             raise DataQueryFailure(dataset)
-            
+    
+    def local_data_is_current(self, dataset):
+        return True 
+
     def fetch_dataset(self, dataset):
         dataset.local_resource = dataset.remote_resource

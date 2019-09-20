@@ -5,7 +5,6 @@ import os
 import sys
 import re
 import glob
-import collections
 import shlex
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -82,52 +81,6 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
-
-class FrozenDict(collections.Mapping):
-    """Read-only version of :obj:`dict`, supporting all its methods.
-
-    Drop-in replacement for :obj:`dict`, which raises a `NotImplementedError` if
-    code attempts to modify it after creation.
-
-    See `https://stackoverflow.com/q/19022868`_ and `https://stackoverflow.com/a/8752824`_.
-    """
-    def __init__(self, *args, **kwargs):
-        self._dict = dict(*args, **kwargs)
-        self._hash = None
-
-    def __getitem__(self, key):
-        return self._dict[key]
-
-    def __setitem__(self, key, value):
-        raise NotImplementedError(
-            "Tried to assign {}={} to a FrozenDict.".format(key,value))
-
-    def __delitem__(self, key):
-        raise NotImplementedError(
-            "Tried to delete {} from a FrozenDict.".format(key))
-
-    def __contains__(self, key):
-        return key in self._dict
-
-    def copy(self, **add_or_replace):
-        return self.__class__(self, **add_or_replace)
-
-    def __iter__(self):
-        return iter(self._dict)
-
-    def __len__(self):
-        return len(self._dict)
-
-    def __repr__(self):
-        return '<%s %r>' % (self.__class__.__name__, self._dict)
-
-    def __hash__(self):
-        if self._hash is None:
-            h = 0
-            for key, value in iteritems(self._dict):
-                h ^= hash((key, value))
-            self._hash = h
-        return self._hash
 
 class BiDict(dict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 

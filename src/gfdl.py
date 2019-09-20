@@ -9,11 +9,11 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import datelabel
-from util import Singleton, FrozenDict
+from util import Singleton
 from data_manager import DataManager
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
-_current_module_versions = FrozenDict({
+_current_module_versions = {
     'python':   'python/2.7.12',
     'ncl':      'ncarg/6.5.0',
     'r':        'R/3.4.4',
@@ -21,7 +21,7 @@ _current_module_versions = FrozenDict({
     'gcp':      'gcp/2.3',
     'nco':      'nco/4.7.6',
     'netcdf':   'netcdf/4.2'
-})
+}
 
 class ModuleManager(Singleton):
     def __init__(self):

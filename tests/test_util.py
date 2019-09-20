@@ -51,27 +51,6 @@ class TestBasicClasses(unittest.TestCase):
         del temp['b']
         self.assertNotIn(2, temp.inverse)
 
-    def test_frozendict_dict(self):
-        d = util.FrozenDict({'a':1, 'b':2})
-        self.assertEqual(d['a'], 1)
-        self.assertEqual(d['b'], 2)
-        with self.assertRaises(KeyError):
-            temp = d['c']
-        self.assertEqual(d.values().sort(), [1, 2])
-
-    def test_frozendict_readonly(self):
-        d = util.FrozenDict({'a':1, 'b':2})
-        with self.assertRaises(NotImplementedError):
-            d['a'] = 3
-        self.assertEqual(d['a'], 1)
-        with self.assertRaises(NotImplementedError):
-            del d['b']
-        self.assertEqual(d['b'], 2)
-        with self.assertRaises(NotImplementedError):
-            d.update({'c': 5})
-        with self.assertRaises(KeyError):
-            temp = d['c']
-
 class TestUtil(unittest.TestCase):
 
     def test_read_yaml(self):

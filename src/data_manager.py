@@ -83,11 +83,15 @@ class DataQueryFailure(Exception):
     data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
     or :meth:`~data_manager.DataManager.fetchData`.
     """
-    def __init__(self, dataset):
+    def __init__(self, dataset, msg=None):
         self.dataset = dataset
+        self.msg = msg
 
     def __str__(self):
-        return 'Query failure for {}.'.format(self.dataset.name)
+        if msg is not None:
+            return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+        else:
+            return 'Query failure for {}.'.format(self.dataset.name)
 
 class DataManager(object):
     # analogue of TestFixture in xUnit
@@ -380,7 +384,7 @@ class LocalfileDataManager(DataManager):
         if os.path.isfile(path):
             dataset.remote_resource = path
         else:
-            raise DataQueryFailure(dataset)
+            raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
     def local_data_is_current(self, dataset):
         return True 

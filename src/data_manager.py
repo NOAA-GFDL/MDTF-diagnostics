@@ -29,6 +29,7 @@ class DataSet(dict):
     def __setitem__(self, key, value):
         super(DataSet, self).__setitem__(key, value)
         self.__dict__[key] = value  # for code completion in editors
+    __setattr__ = __setitem__
 
     def __getattr__(self, item):
         try:
@@ -36,7 +37,8 @@ class DataSet(dict):
         except KeyError:
             raise AttributeError(item)
 
-    __setattr__ = __setitem__
+    def __contains__(self, item):
+        return (item in self.__dict__)
 
     def rename_copy(self, new_name=None):
         # shallow copy

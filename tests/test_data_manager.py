@@ -15,6 +15,11 @@ class TestDataSet(unittest.TestCase):
         test.B = 'D'
         self.assertEqual(test.B, 'D')
 
+    def test_dataset_dict_ops(self):
+        test = DataSet(name='A', B='C')
+        self.assertIn('B', test)
+        self.assertNotIn('D', test)
+
     def test_dataset_copy(self):
         test = DataSet(name='A', B='C')
         test2 = test.rename_copy(new_name = 'A2')

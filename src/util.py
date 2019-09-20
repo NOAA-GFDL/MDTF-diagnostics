@@ -213,6 +213,31 @@ def resolve_path(path, root_path=''):
             assert os.path.isabs(root_path)
         return os.path.normpath(os.path.join(root_path, path))
 
+def find_files(root_dir, pattern):
+    """Return list of files in `root_dir` matching `pattern`. 
+
+    Wraps the unix `find` command (`locate` would be much faster but there's no
+    way to query if its DB is current). 
+
+    Args:
+        root_dir (:obj:`str`): Directory to search for files in.
+        pattern (:obj:`str`): Patterrn to match. This is a shell globbing pattern,
+            not a full regex. Default is to match filenames only, unless the
+            pattern contains a directory separator, in which case the match will
+            be done on the entire path relative to `root_dir`.
+
+    Returns: :obj:`list` of relative paths to files matching `pattern`. Paths are
+        relative to `root_dir`. If no files are found, the list is empty.
+    """
+    if os.sep in pattern:
+        pattern_flag = '-path' # searching whole path
+    else:
+        pattern_flag = '-name' # search filename only 
+    return util.run_command([
+        'find', '"'+root_dir+'"', '-depth', '-type', 'f', 
+        pattern_flag, '"'+pattern+'"', '-printf "%P\0"'
+        ])
+
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.
     
@@ -397,47 +422,6 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
                 os.makedirs(dir)
         else:
             print("Found "+dir)
-
-def parse_frepp_stub(frepp_stub):
-    """Converts the frepp arguments to a Python dictionary.
-
-    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
-
-    Returns: :obj:`dict` of frepp parameters.
-    """
-    frepp_translate = {
-        'in_data_dir': 'MODEL_DATA_ROOT',
-        'descriptor': 'CASENAME',
-        'out_dir': 'OUTPUT_DIR',
-        'WORKDIR': 'WORKING_DIR',
-        'yr1': 'FIRSTYR',
-        'yr2': 'LASTYR'
-    }
-    # parse arguments and relabel keys
-    d = {}
-    # look for "set ", match token, skip spaces or "=", then match string of 
-    # characters to end of line
-    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
-    for line in frepp_stub.splitlines():
-        print "line = '{}'".format(line)
-        match = re.match(regex, line)
-        if match:
-            if match.group(1) in frepp_translate:
-                key = frepp_translate[match.group(1)]
-            else:
-                key = match.group(1)
-            d[key] = match.group(2)
-
-    # cast from string
-    for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:
-        if int_key in d:
-            d[int_key] = int(d[int_key])
-    for bool_key in ['make_variab_tar', 'test_mode']:
-        if bool_key in d:
-            d[bool_key] = bool(d[bool_key])
-
-    d['frepp_mode'] = ('MODEL_DATA_ROOT' in d)
-    return d
 
 def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
     """Parse script options.

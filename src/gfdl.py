@@ -9,7 +9,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import datelabel
-from util import Singleton
+from util import Singleton, find_files
 from data_manager import DataManager
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
@@ -135,21 +135,6 @@ class GfdlppDataManager(DataManager):
         modMgr.load(_current_module_versions['gcp'])
         modMgr.load(_current_module_versions['nco'])
 
-    def file_locate(root_dir, pattern):
-        """Find files in root_dir matching pattern. Return list of file paths
-        relative to root_dir.
-        """
-        # /home/gfdl/bin/dmlocate would be nice, but it's not maintained
-        # instead use 'find' -- Tim said 'dmfind' isn't an improvement
-        if os.sep in pattern:
-            pattern_flag = '-path' # searching whole path
-        else:
-            pattern_flag = '-name' # search filename only 
-        return util.run_command([
-            'find', '"'+root_dir+'"', '-depth', '-type', 'f', 
-            pattern_flag, '"'+pattern+'"', '-printf "%P\0"'
-            ])
-
     def parse_pp_path(self, path):
         ts_regex = re.compile(r"""
             (?P<component>\w+)/        # component name
@@ -186,5 +171,47 @@ class GfdlppDataManager(DataManager):
         pattern = '*/ts/{}/*.{}.nc'.format(
             dataset.date_freq.format_frepp(), dataset.name
         )
-        files = file_locate(self.root_dir, pattern)
+        files = find_files(self.root_dir, pattern)
         return [self.parse_pp_path(f) for f in files]
+
+
+def parse_frepp_stub(frepp_stub):
+    """Converts the frepp arguments to a Python dictionary.
+
+    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+
+    Returns: :obj:`dict` of frepp parameters.
+    """
+    frepp_translate = {
+        'in_data_dir': 'MODEL_DATA_ROOT',
+        'descriptor': 'CASENAME',
+        'out_dir': 'OUTPUT_DIR',
+        'WORKDIR': 'WORKING_DIR',
+        'yr1': 'FIRSTYR',
+        'yr2': 'LASTYR'
+    }
+    # parse arguments and relabel keys
+    d = {}
+    # look for "set ", match token, skip spaces or "=", then match string of 
+    # characters to end of line
+    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
+    for line in frepp_stub.splitlines():
+        print "line = '{}'".format(line)
+        match = re.match(regex, line)
+        if match:
+            if match.group(1) in frepp_translate:
+                key = frepp_translate[match.group(1)]
+            else:
+                key = match.group(1)
+            d[key] = match.group(2)
+
+    # cast from string
+    for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:
+        if int_key in d:
+            d[int_key] = int(d[int_key])
+    for bool_key in ['make_variab_tar', 'test_mode']:
+        if bool_key in d:
+            d[bool_key] = bool(d[bool_key])
+
+    d['frepp_mode'] = ('MODEL_DATA_ROOT' in d)
+    return d

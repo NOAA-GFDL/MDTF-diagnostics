@@ -39,6 +39,7 @@ class DataSet(dict):
     __setattr__ = __setitem__
 
     def rename_copy(self, new_name=None):
+        # shallow copy
         # https://stackoverflow.com/a/15774013
         cls = self.__class__
         result = cls.__new__(cls)
@@ -52,14 +53,15 @@ class DataSet(dict):
     __copy__ = copy
 
     def _freeze(self):
-        """Return immutable copy of dict of (current) attributes.
+        """Return immutable representation of (current) attributes.
 
         We do this to enable comparison of two Datasets, which otherwise would 
         be done by the default method of testing if the two objects refer to the
         same location in memory.
         See `https://stackoverflow.com/a/45170549`_.
         """
-        return util.FrozenDict(self.__dict__)
+        d = self.__dict__
+        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
 
     def __eq__(self, other):
         if type(other) is type(self):

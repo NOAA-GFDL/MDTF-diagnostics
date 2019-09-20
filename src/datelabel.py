@@ -27,9 +27,11 @@ class Date(datetime.datetime):
 
     @classmethod
     def _parse_input_string(cls, s):
-        """Define a date and precision level from a string in YYYYMMDDHH format.
+        """Parse date strings in `YYYY-MM-DD` or `YYYYMMDDHH` formats.
         """
-        if len(s) == 4:
+        if '-' in s:
+            return tuple([int(ss) for ss in s.split('-')])
+        elif len(s) == 4:
             return (int(s[0:4]), )
         elif len(s) == 6: 
             return (int(s[0:4]), int(s[4:6]))
@@ -111,6 +113,46 @@ class Date(datetime.datetime):
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
 
+    def increment(self):
+        """Return a copy of Date advanced by one time unit as specified by
+        the `precision` attribute.
+        """
+        if self.precision == 1:
+            return Date(self.year + 1)
+        elif self.precision == 2:
+            if self.month == 12:
+                return Date(self.year + 1, 1)
+            else:
+                return Date(self.year, self.month + 1)
+        elif self.precision == 3:
+            dt = self.__add__(datetime.timedelta(days = 1))
+            return Date(dt.year, dt.month, dt.day)
+        elif self.precision == 4:
+            dt = self.__add__(datetime.timedelta(hours = 1))
+            return Date(dt.year, dt.month, dt.day, dt.hour)
+        else:
+            raise ValueError("Malformed input")
+
+    def decrement(self):
+        """Return a copy of Date moved back by one time unit as specified by
+        the `precision` attribute.
+        """
+        if self.precision == 1:
+            return Date(self.year - 1)
+        elif self.precision == 2:
+            if self.month == 1:
+                return Date(self.year - 1, 12)
+            else:
+                return Date(self.year, self.month - 1)
+        elif self.precision == 3:
+            dt = self.__add__(datetime.timedelta(days = -1))
+            return Date(dt.year, dt.month, dt.day)
+        elif self.precision == 4:
+            dt = self.__add__(datetime.timedelta(hours = -1))
+            return Date(dt.year, dt.month, dt.day, dt.hour)
+        else:
+            raise ValueError("Malformed input")
+
 
 class DateRange(object):
     """Class representing a range of dates. 
@@ -120,6 +162,8 @@ class DateRange(object):
     def __init__(self, start, end=None):
         if type(start) is str and (end is None):
             (start, end) = self._parse_input_string(start)
+        elif isinstance(start, (list, tuple, set)) and (end is None):
+            (start, end) = self._parse_input_collection(start)
 
         if not isinstance(start, Date):
             start = Date(start)
@@ -135,6 +179,27 @@ class DateRange(object):
         s2 = s.split('-')
         assert len(s2) == 2
         return tuple([Date(ss) for ss in s2])
+
+    @classmethod
+    def _parse_input_collection(cls, coll):
+        if all(isinstance(item, DateRange) for item in coll):
+            # given a bunch of DateRanges, return interval containing them
+            # ONLY IF ranges are continguous and nonoverlapping
+            dt_ranges = sorted(coll, key=lambda dtr: dtr.start)
+            print dt_ranges
+            for i in range(0, len(dt_ranges) - 1):
+                if (dt_ranges[i].end.increment() != dt_ranges[i+1].start) \
+                    or (dt_ranges[i+1].start.decrement() != dt_ranges[i].end):
+                    raise ValueError("Date Ranges not contiguous and nonoverlapping.")
+            return (dt_ranges[0].start, dt_ranges[-1].end)
+        elif all(isinstance(item, Date) for item in coll):
+            # given a bunch of Dates, return interval containing them
+            return (min(coll), max(coll))
+        elif len(coll) == 2 and (type(coll) is not set):
+            # assume two entries meant to be start and end
+            return tuple([Date(item) for item in coll])
+        else:
+            raise ValueError("Malformed input")
     
     def __eq__(self, other):
         return (self.start == other.start) and (self.end == other.end)
@@ -167,7 +232,7 @@ class DateRange(object):
             return (self.start <= item) and (self.end >= item)
     
     def format(self):
-        return self.start.label_format() + '-' + self.end.label_format()
+        return '{}-{}'.format(self.start, self.end)
     __str__ = format
 
     def __repr__(self):

@@ -8,8 +8,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
+from collections import defaultdict
 import datelabel
-from util import Singleton, find_files
+from util import Singleton, find_files, BiDict
 from data_manager import DataManager
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
@@ -150,31 +151,118 @@ class GfdlppDataManager(DataManager):
         match = re.match(ts_regex, path)
         if match:
             assert match.group('component') == match.group('component2')
-            d = match.groupdict()
-            del d['component2']
-            d['date_freq'] = datelabel.DateFrequency(d['date_freq'])
-            d['chunk_freq'] = datelabel.DateFrequency(d['chunk_freq'])
-            d['date_range'] = datelabel.DateRange(d['start_date'], d['end_date'])
-            return d
+            ds = DataSet(**match.groupdict())
+            ds.remote_resource = path
+            (ds.dir, ds.file) = os.path.split(path)
+            ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
+            ds.date_freq = datelabel.DateFrequency(ds.date_freq)
+            ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
+            return ds
         else:
-            return {} # error
-
-    def decompose_path(self, path):   
-        d = {}
-        (head, tail) = os.path.split(path)
-        d['basename'] = head
-        d['dirs'] = [s for s in head.split(os.sep) if s != '']
-        d['filename'] = tail
-        d['ext'] = ''
+            raise ValueError
 
     def query_dataset(self, dataset):
-        pattern = '*/ts/{}/*.{}.nc'.format(
-            dataset.date_freq.format_frepp(), dataset.name
+        if 'component' in dataset:
+            component = dataset.component
+        else:
+            component = '*'
+        pattern = '{}/ts/{}/*.{}.nc'.format(
+            component, dataset.date_freq.format_frepp(), dataset.name
         )
         files = find_files(self.root_dir, pattern)
         if not files:
-            raise DataQueryFailure(dataset)
-        dataset.remote_resource = [self.parse_pp_path(f) for f in files]
+            raise DataQueryFailure(dataset, 'No files found in {}'.format(self.root_dir))
+        
+        dataset.remote_resource = []
+        dir_dict = defaultdict(list)
+        for f in files:
+            ds = self.parse_pp_path(f)
+            dir_dict[ds.dir].append(ds)
+        for ds_dir in dir_dict.values():
+            try:
+                remote_range = datelabel.DateRange([ds.date_range for ds in ds_dir])
+            except ValueError:
+                # Something's messed up with remote files if we get here
+                # should probably log an error
+                continue
+            if remote_range.contains(dataset.date_range):
+                dataset.remote_resource.extend(
+                    [ds for ds in ds_dir if (ds.date_range in dataset.date_range)]
+                )
+        
+        if not dataset.remote_resource:
+            raise DataQueryFailure(dataset, 
+                "Couldn't cover date range {} with files in {}".format(
+                    datset.date_range, self.root_dir))
+
+    def _optimize_data_fetching(self, datasets):
+        cmpts = self._select_model_component(datasets):
+        for ds in datasets:
+            ds_list = [d for d in ds.remote_resource if (d.component in cmpts)]
+            # take longest chunk frequency (revisit?)
+            chunk_freq = max({d.chunk_freq for d in ds_list})
+            ds.remote_resource = [d for d in ds_list if (d.chunk_freq == chunk_freq)]
+            assert ds.remote_resource # shouldn't have eliminated everything
+
+    def _select_model_component(self, datasets):
+        """Determine experiment component(s) from heuristics.
+
+        1. Pick all data from the same component if possible, and from as few
+            components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
+            and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
+
+        2. If multiple components satisfy (1) equally well, select those
+            containing 'cmip'.
+
+        3. If we still have multiple components satisfying (1) and (2), break the
+            tie by selecting the one with the fewest words (separated by '_'), 
+            or, failing that, the shortest overall name.
+
+        Args:
+            dataset (:obj:`list` of :class:`~data_manager.DataManager.DataSet`):
+
+        Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
+
+        Raises: AssertionError if problem is unsatisfiable. This indicates some
+            error in the input data.
+        """
+        def _heuristic_tiebreaker(str_list):
+            cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+            if cmip_list:
+                return _heuristic_tiebreaker_sub(cmip_list)
+            else:
+                return _heuristic_tiebreaker_sub(str_list)
+
+        def _heuristic_tiebreaker_sub(str_list):
+            min_len = min(len(s.split('_')) for s in str_list)
+            str_list2 = [s for s in str_list if (len(s.split('_')) == min_len)]
+            if len(str_list2) == 1:
+                return str_list2
+            else:
+                return min(str_list2, key=len)
+
+        d = defaultdict(set)
+        for idx, ds in enumerate(datasets):
+            d[ds.component].add(idx)
+        all_idx = set(range(len(datasets)))
+        assert set(e for s in d.values() for e in s) == all_idx
+
+        covered_idx = set()
+        cover = []
+        while covered_idx != all_idx:
+            # max() with key=... only returns one entry if there are duplicates
+            # so we need to do two passes in order to call our tiebreaker logic
+            max_uncovered = max(len(val - covered_idx) for val in d.values())
+            cmpt_to_add = _heuristic_tiebreaker(
+                [key for key,val in d.iteritems() \
+                    if (len(val - covered_idx) == max_uncovered)]
+            )
+            cover.append(cmpt_to_add)
+            covered_idx.update(d[cmpt_to_add])
+        assert cover # is not empty
+        return cover
+
+
 
 
 def parse_frepp_stub(frepp_stub):

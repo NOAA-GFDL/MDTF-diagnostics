@@ -167,12 +167,14 @@ class GfdlppDataManager(DataManager):
         d['filename'] = tail
         d['ext'] = ''
 
-    def queryDataset(self, dataset):
+    def query_dataset(self, dataset):
         pattern = '*/ts/{}/*.{}.nc'.format(
             dataset.date_freq.format_frepp(), dataset.name
         )
         files = find_files(self.root_dir, pattern)
-        return [self.parse_pp_path(f) for f in files]
+        if not files:
+            raise DataQueryFailure(dataset)
+        dataset.remote_resource = [self.parse_pp_path(f) for f in files]
 
 
 def parse_frepp_stub(frepp_stub):

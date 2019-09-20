@@ -202,10 +202,10 @@ class DataManager(object):
                 self.case_name, dataset.name_in_model, freq)
         )
 
-    def fetchData(self, verbose=0):
-        data_to_fetch = planData()
+    def fetch_data(self, verbose=0):
+        data_to_fetch = plan_data()
         for var in data_to_fetch:
-            self.fetchDataset(var)
+            self.fetch_dataset(var)
         # do translation/ transformations of data here
         for pod in self.pods:
             var_files = self._check_for_varlist_files(pod.varlist, verbose)
@@ -215,7 +215,7 @@ class DataManager(object):
             else:
                 if (verbose > 0): print "No known missing required input files"
 
-    def planData(self):
+    def plan_data(self):
         data_to_fetch = []
         for pod in self.pods:
             for var in pod.varlist:
@@ -230,7 +230,7 @@ class DataManager(object):
         """Wrapper for queryDataset that attempts querying for alternate variables.
         """
         try:
-            self.queryDataset(dataset)
+            self.query_dataset(dataset)
             return dataset
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
@@ -241,7 +241,7 @@ class DataManager(object):
             alt_vars = [dataset.rename_copy(var_name) for var_name in dataset.alternates]
             for alt_data in alt_vars:
                 try: 
-                    self.queryDataset(alt_data)
+                    self.query_dataset(alt_data)
                 except DataQueryFailure:
                     print "Couldn't find alternate data {}".format(alt_data.name)
                     raise
@@ -249,11 +249,11 @@ class DataManager(object):
 
     # following are specific details that must be implemented in child class 
     @abstractmethod
-    def queryDataset(self, dataset):
+    def query_dataset(self, dataset):
         return True
     
     @abstractmethod
-    def fetchDataset(self, dataset):
+    def fetch_dataset(self, dataset):
         pass
 
     def _check_for_varlist_files(self, varlist, verbose=0):
@@ -311,10 +311,10 @@ class DataManager(object):
     # -------------------------------------
 
     def tearDown(self, config):
-        self._backupConfigFile(config)
-        self._makeTarFile()
+        self._backup_config_file(config)
+        self._make_tar_file()
 
-    def _backupConfigFile(self, config, verbose=0):
+    def _backup_config_file(self, config, verbose=0):
         # Record settings in file variab_dir/config_save.yml for rerunning
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.yml')
         if os.path.isfile(out_file):
@@ -324,7 +324,7 @@ class DataManager(object):
             shutil.move(out_file, out_fileold)
         util.write_yaml(config, out_file)
 
-    def _makeTarFile(self):
+    def _make_tar_file(self):
         # Make tar file
         if os.environ["make_variab_tar"] == "0":
             print "Not making tar file because make_variab_tar = 0"
@@ -344,12 +344,12 @@ class DataManager(object):
 
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
-    def queryDataset(self, dataset):
+    def query_dataset(self, dataset):
         path = self.local_path(dataset)
         if os.path.isfile(path):
             dataset.remote_resource = path
         else:
             raise DataQueryFailure(dataset)
             
-    def fetchDataset(self, dataset):
+    def fetch_dataset(self, dataset):
         dataset.local_resource = dataset.remote_resource

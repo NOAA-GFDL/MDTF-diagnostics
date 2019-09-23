@@ -19,9 +19,9 @@ class DataSet(util.Namespace):
             if key not in self:
                 self[key] = None
 
-        if 'var_name' in self and 'name' not in self:
+        if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
-        if 'freq' in self and 'date_freq' not in self:
+        if ('freq' in self) and (self.date_freq is None):
             self.date_freq = datelabel.DateFrequency(self.freq)
 
     def copy(self, new_name=None):

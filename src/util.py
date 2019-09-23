@@ -260,9 +260,9 @@ class Namespace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return Namespace((k, Namespace._fromDict(v)) for k, v in x.iteritems())
+            return Namespace((k, Namespace.fromDict(v)) for k, v in x.iteritems())
         elif isinstance(x, (list, tuple)):
-            return type(x)(Namespace._fromDict(v) for v in x)
+            return type(x)(Namespace.fromDict(v) for v in x)
         else:
             return x
 

@@ -262,6 +262,18 @@ class GfdlppDataManager(DataManager):
         assert cover # is not empty
         return cover
 
+    def local_data_is_current(self, dataset):
+        """Test whether data is current based on filesystem modification dates.
+
+        TODO:
+        - Throw an error if local copy has been modified after remote copy. 
+        - Handle case where local data involves processing of remote data, like
+            ncrcat'ing. Copy raw remote files to temp directory if we need to 
+            process?
+        """
+        return os.path.getmtime(dataset.local_resource) \
+            >= os.path.getmtime(dataset.remote_resource)
+
 
 
 def parse_frepp_stub(frepp_stub):

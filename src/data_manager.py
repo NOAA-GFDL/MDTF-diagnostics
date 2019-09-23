@@ -2,6 +2,8 @@ import os
 import sys
 import glob
 import shutil
+import atexit
+import signal
 from abc import ABCMeta, abstractmethod
 import util
 import datelabel
@@ -72,6 +74,11 @@ class DataManager(object):
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
+
+        # delete temp files if we're killed
+        atexit.register(self.abortHandler)
+        signal.signal(signal.SIGTERM, self.abortHandler)
+        signal.signal(signal.SIGINT, self.abortHandler)
 
     # -------------------------------------
 
@@ -302,6 +309,8 @@ class DataManager(object):
     def tearDown(self, config):
         self._backup_config_file(config)
         self._make_tar_file()
+        paths = util.PathManager()
+        paths.cleanup()
 
     def _backup_config_file(self, config, verbose=0):
         # Record settings in file variab_dir/config_save.yml for rerunning
@@ -329,6 +338,12 @@ class DataManager(object):
         util.run_command(['tar', '-cf'] + tar_flags \
             + ['{}.tar'.format(self.MODEL_WK_DIR), self.MODEL_WK_DIR]
         )
+
+    def abortHandler(self):
+        # delete any temp files if we're killed
+        # normal operation should call tearDown for organized cleanup
+        paths = util.PathManager()
+        paths.cleanup()
 
 
 class LocalfileDataManager(DataManager):

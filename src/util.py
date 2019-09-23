@@ -6,6 +6,8 @@ import sys
 import re
 import glob
 import shlex
+import shutil
+import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -66,6 +68,8 @@ class PathManager(Singleton):
                     'Error: {} not initialized.'.format(var)
                 self.__setattr__(var, arg_dict[var])
 
+        self._temp_dirs = []
+
     def modelPaths(self, case):
         d = {}
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
@@ -81,6 +85,20 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
+    def make_tempdir(self):
+        new_dir = tempfile.mkdtemp(prefix='MDTF_temp_')
+        assert new_dir not in self._temp_dirs
+        self._temp_dirs.append(new_dir)
+        return new_dir
+
+    def rm_tempdir(self, path):
+        assert path in self._temp_dirs
+        self._temp_dirs.remove(path)
+        shutil.rmtree(path)
+
+    def cleanup(self)
+        for d in self._temp_dirs:
+            self.rm_tempdir(d)
 
 class BiDict(dict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 

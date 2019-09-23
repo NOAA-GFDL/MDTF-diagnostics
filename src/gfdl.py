@@ -284,7 +284,21 @@ class GfdlppDataManager(DataManager):
             >= os.path.getmtime(dataset.remote_resource)
 
     def fetch_dataset(self, dataset):
-        pass
+        if any([self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']]):
+            cp_command = ['gcp','--sync']
+        else:
+            cp_command = ['ln', '-fs']
+        dataset.nohash_tempdir = dataset.tempdir()
+        paths = util.PathManager()
+        paths.make_tempdir(new_dir=dataset.nohash_tempdir) + os.sep 
+        # TODO: Do something intelligent with logging, caught OSErrors
+        for f in dataset.remote_resource:
+            util.run_command( \
+                cp_command + [os.path.join(self.root_dir, f.remote_resource), 
+                dataset.nohash_tempdir + os.sep] # GCP requires trailing slash
+            ) 
+        util.run_command(['ncrcat', '*.nc', dataset.local_resource], 
+            cwd=dataset.nohash_tempdir)
 
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.

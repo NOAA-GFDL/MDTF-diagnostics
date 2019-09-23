@@ -151,6 +151,147 @@ class VariableTranslator(Singleton):
             "Variable name translation doesn't recognize {}.".format(convention)
         return self.field_dict[convention][varname_in]
 
+
+class Namespace(dict):
+    """ A dictionary that provides attribute-style access.
+
+    For example, `d['key'] = value` becomes `d.key = value`. All methods of 
+    :obj:`dict` are supported.
+
+    Note: recursive access (`d.key.subkey`, as in C-style languages) is not
+        supported.
+
+    Implementation is based on `https://github.com/Infinidat/munch`_.
+    """
+
+    # only called if k not found in normal places
+    def __getattr__(self, k):
+        """ Gets key if it exists, otherwise throws AttributeError.
+            nb. __getattr__ is only called if key is not found in normal places.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            return object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                return self[k]
+            except KeyError:
+                raise AttributeError(k)
+
+    def __setattr__(self, k, v):
+        """ Sets attribute k if it exists, otherwise sets key k. A KeyError
+            raised by set-item (only likely if you subclass Namespace) will
+            propagate as an AttributeError instead.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                self[k] = v
+            except:
+                raise AttributeError(k)
+        else:
+            object.__setattr__(self, k, v)
+
+    def __delattr__(self, k):
+        """ Deletes attribute k if it exists, otherwise deletes key k. A KeyError
+            raised by deleting the key--such as when the key is missing--will
+            propagate as an AttributeError instead.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                del self[k]
+            except KeyError:
+                raise AttributeError(k)
+        else:
+            object.__delattr__(self, k)
+
+    def __dir__(self):
+        return self.keys()
+    __members__ = __dir__  # for python2.x compatibility
+
+    def __repr__(self):
+        """ Invertible* string-form of a Munch.
+            (*) Invertible so long as collection contents are each repr-invertible.
+        """
+        return '{0}({1})'.format(self.__class__.__name__, dict.__repr__(self))
+
+    def __getstate__(self):
+        """ Implement a serializable interface used for pickling.
+        See https://docs.python.org/3.6/library/pickle.html.
+        """
+        return {k: v for k, v in self.items()}
+
+    def __setstate__(self, state):
+        """ Implement a serializable interface used for pickling.
+        See https://docs.python.org/3.6/library/pickle.html.
+        """
+        self.clear()
+        self.update(state)
+
+    def toDict(self):
+        """ Recursively converts a Namespace back into a dictionary.
+        """
+        return Namespace._toDict(self)
+
+    @staticmethod
+    def _toDict(x):
+        """ Recursively converts a Namespace back into a dictionary.
+            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        """
+        if isinstance(x, dict):
+            return dict((k, Namespace._toDict(v)) for k, v in x.iteritems())
+        elif isinstance(x, (list, tuple)):
+            return type(x)(Namespace._toDict(v) for v in x)
+        else:
+            return x
+
+    @property
+    def __dict__(self):
+        return self.toDict()
+
+    @staticmethod
+    def fromDict(x):
+        """ Recursively transforms a dictionary into a Namespace via copy.
+            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        """
+        if isinstance(x, dict):
+            return Namespace((k, Namespace._fromDict(v)) for k, v in x.iteritems())
+        elif isinstance(x, (list, tuple)):
+            return type(x)(Namespace._fromDict(v) for v in x)
+        else:
+            return x
+
+    def copy(self):
+        return Namespace.fromDict(self)
+    __copy__ = copy
+
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        We do this to enable comparison of two Namespaces, which otherwise would 
+        be done by the default method of testing if the two objects refer to the
+        same location in memory.
+        See `https://stackoverflow.com/a/45170549`_.
+        """
+        d = self.toDict()
+        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return (self._freeze() == other._freeze())
+        else:
+            return False
+    def __ne__(self, other):
+        return (not self.__eq__(other)) # more foolproof
+
+    def __hash__(self):
+        return hash(self._freeze())
+
 # ------------------------------------
 
 def read_yaml(file_path, verbose=0):

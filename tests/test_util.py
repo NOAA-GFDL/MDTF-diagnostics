@@ -51,6 +51,54 @@ class TestBasicClasses(unittest.TestCase):
         del temp['b']
         self.assertNotIn(2, temp.inverse)
 
+    def test_namespace_basic(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertEqual(test.name, 'A')
+        self.assertEqual(test.B, 'C')
+        with self.assertRaises(AttributeError):
+            temp = test.D
+        test.B = 'D'
+        self.assertEqual(test.B, 'D')
+
+    def test_namespace_dict_ops(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertIn('B', test)
+        self.assertNotIn('D', test)
+
+    def test_namespace_tofrom_dict(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.toDict()
+        self.assertEqual(test2['name'], 'A')
+        self.assertEqual(test2['B'], 'C')
+        test3 = util.Namespace.fromDict(test2)
+        self.assertEqual(test3.name, 'A')
+        self.assertEqual(test3.B, 'C')
+
+    def test_namespace_copy(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.copy()
+        self.assertEqual(test2.name, 'A')
+        self.assertEqual(test2.B, 'C')
+        test2.B = 'D'
+        self.assertEqual(test.B, 'C')
+        self.assertEqual(test2.B, 'D')
+
+    def test_namespace_hash(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test
+        test3 = test.copy()
+        test4 = test.copy()
+        test4.name = 'not_the_same'
+        test5 = util.Namespace(name='A', B='C')
+        self.assertEqual(test, test2)
+        self.assertEqual(test, test3)
+        self.assertNotEqual(test, test4)
+        self.assertEqual(test, test5)
+        set_test = set([test, test2, test3, test4, test5])
+        self.assertEqual(len(set_test), 2)
+        self.assertIn(test, set_test)
+        self.assertIn(test4, set_test)
+
 class TestUtil(unittest.TestCase):
 
     def test_read_yaml(self):

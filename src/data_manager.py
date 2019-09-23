@@ -7,74 +7,30 @@ import util
 import datelabel
 from util import setenv # fix
 
-class DataSet(dict):
+class DataSet(util.Namespace):
     """Class to describe datasets.
 
     `https://stackoverflow.com/a/48806603`_ for implementation.
     """
-    def __init__(self, **kwargs):
-        super(DataSet, self).__init__()
-        self.name = ''
-        self.units = None # not implemented yet
-        self.date_range = ''
-        self.date_freq = ''
-        self.__dict__.update(kwargs)
-        if 'var_name' in kwargs and 'name' not in kwargs:
-            self.name = kwargs['var_name']
-        if 'freq' in kwargs and 'date_freq' not in kwargs:
-            self.date_freq = datelabel.DateFrequency(kwargs['freq'])
-        self.remote_resource = None
-        self.local_resource = None
+    def __init__(self, *args, **kwargs):
+        super(DataSet, self).__init__(*args, **kwargs)
+        for key in ['name', 'units', 'date_range', 'date_freq', 
+            'remote_resource', 'local_resource']:
+            if key not in self:
+                self[key] = None
 
-    def __setitem__(self, key, value):
-        super(DataSet, self).__setitem__(key, value)
-        self.__dict__[key] = value  # for code completion in editors
-    __setattr__ = __setitem__
+        if 'var_name' in self and 'name' not in self:
+            self.name = self.var_name
+        if 'freq' in self and 'date_freq' not in self:
+            self.date_freq = self.freq
+        self.date_range = datelabel.DateRange(self.date_range)
+        self.date_freq = datelabel.DateFrequency(self.date_freq)
 
-    def __getattr__(self, item):
-        try:
-            return self.__getitem__(item)
-        except KeyError:
-            raise AttributeError(item)
-
-    def __contains__(self, item):
-        return (item in self.__dict__)
-
-    def rename_copy(self, new_name=None):
-        # shallow copy
-        # https://stackoverflow.com/a/15774013
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
+    def copy(self, new_name=None):
+        temp = super(DataSet, self).copy()
         if new_name is not None:
-            result.name = new_name
-        return result  
-
-    def copy(self):
-        return self.rename_copy(new_name=None)
-    __copy__ = copy
-
-    def _freeze(self):
-        """Return immutable representation of (current) attributes.
-
-        We do this to enable comparison of two Datasets, which otherwise would 
-        be done by the default method of testing if the two objects refer to the
-        same location in memory.
-        See `https://stackoverflow.com/a/45170549`_.
-        """
-        d = self.__dict__
-        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self._freeze() == other._freeze()
-        else:
-            return False
-    def __ne__(self, other):
-        return (not self.__eq__(other)) # more foolproof
-
-    def __hash__(self):
-        return hash(self._freeze())
+            temp.name = new_name
+        return temp  
 
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
@@ -244,7 +200,7 @@ class DataManager(object):
                 print "Couldn't find {}& no alternates".format(dataset.name)
                 raise
             # check for all alternates
-            alt_vars = [dataset.rename_copy(var_name) for var_name in dataset.alternates]
+            alt_vars = [dataset.copy(new_name=var_name) for var_name in dataset.alternates]
             for alt_data in alt_vars:
                 try: 
                     self.query_dataset(alt_data)

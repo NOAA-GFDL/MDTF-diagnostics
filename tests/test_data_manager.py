@@ -6,44 +6,7 @@ from src.shared_diagnostic import Diagnostic
 from src.data_manager import DataManager, DataSet
 
 class TestDataSet(unittest.TestCase):
-    def test_dataset_basic(self):
-        test = DataSet(name='A', B='C')
-        self.assertEqual(test.name, 'A')
-        self.assertEqual(test.B, 'C')
-        with self.assertRaises(AttributeError):
-            temp = test.D
-        test.B = 'D'
-        self.assertEqual(test.B, 'D')
-
-    def test_dataset_dict_ops(self):
-        test = DataSet(name='A', B='C')
-        self.assertIn('B', test)
-        self.assertNotIn('D', test)
-
-    def test_dataset_copy(self):
-        test = DataSet(name='A', B='C')
-        test2 = test.rename_copy(new_name = 'A2')
-        self.assertEqual(test.name, 'A')
-        self.assertEqual(test2.name, 'A2')
-        self.assertEqual(test2.B, 'C')
-        test2.B = 'D'
-        self.assertEqual(test.B, 'C')
-        self.assertEqual(test2.B, 'D')
-
-    def test_dataset_hash(self):
-        test = DataSet(name='A', B='C')
-        test2 = test
-        test3 = test.copy()
-        test4 = test.rename_copy(new_name = 'not_the_same')
-        test5 = DataSet(name='A', B='C')
-        self.assertEqual(test, test2)
-        self.assertEqual(test, test3)
-        self.assertNotEqual(test, test4)
-        self.assertEqual(test, test5)
-        set_test = set([test, test2, test3, test4, test5])
-        self.assertEqual(len(set_test), 2)
-        self.assertIn(test, set_test)
-        self.assertIn(test4, set_test)
+    pass
 
 class TestDataManagerSetup(unittest.TestCase):
     

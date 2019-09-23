@@ -66,9 +66,9 @@ for env_file in "${script_dir}/"${env_glob}; do
     if [[ "$use_prefix" = true ]]; then
         conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
         echo "Creating conda env ${env_name} in ${conda_prefix}"
-        #conda env create --force -q -p="$conda_prefix" -f="$env_file"
+        conda env create --force -q -p="$conda_prefix" -f="$env_file"
     else
         echo "Creating conda env ${env_name}"
-        #conda env create --force -q -f="$env_file"
+        conda env create --force -q -f="$env_file"
     fi
 done

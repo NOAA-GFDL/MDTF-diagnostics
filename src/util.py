@@ -233,7 +233,7 @@ def find_files(root_dir, pattern):
         pattern_flag = '-path' # searching whole path
     else:
         pattern_flag = '-name' # search filename only 
-    return util.run_command([
+    return run_command([
         'find', '"'+root_dir+'"', '-depth', '-type', 'f', 
         pattern_flag, '"'+pattern+'"', '-printf "%P\0"'
         ])

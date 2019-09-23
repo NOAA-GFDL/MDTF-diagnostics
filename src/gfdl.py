@@ -10,8 +10,8 @@ else:
     import subprocess
 from collections import defaultdict
 import datelabel
-from util import Singleton, find_files, BiDict
-from data_manager import DataManager
+from util import Singleton, find_files
+from data_manager import DataManager, DataSet, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
 _current_module_versions = {
@@ -193,10 +193,10 @@ class GfdlppDataManager(DataManager):
         if not dataset.remote_resource:
             raise DataQueryFailure(dataset, 
                 "Couldn't cover date range {} with files in {}".format(
-                    datset.date_range, self.root_dir))
+                    dataset.date_range, self.root_dir))
 
     def _optimize_data_fetching(self, datasets):
-        cmpts = self._select_model_component(datasets):
+        cmpts = self._select_model_component(datasets)
         for ds in datasets:
             ds_list = [d for d in ds.remote_resource if (d.component in cmpts)]
             # take longest chunk frequency (revisit?)
@@ -261,7 +261,6 @@ class GfdlppDataManager(DataManager):
             covered_idx.update(d[cmpt_to_add])
         assert cover # is not empty
         return cover
-
 
 
 

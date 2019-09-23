@@ -255,17 +255,17 @@ class Namespace(dict):
     def toDict(self):
         """ Recursively converts a Namespace back into a dictionary.
         """
-        return Namespace._toDict(self)
+        return type(self)._toDict(self)
 
-    @staticmethod
-    def _toDict(x):
+    @classmethod
+    def _toDict(cls, x):
         """ Recursively converts a Namespace back into a dictionary.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return dict((k, Namespace._toDict(v)) for k, v in x.iteritems())
+            return dict((k, cls._toDict(v)) for k, v in x.iteritems())
         elif isinstance(x, (list, tuple)):
-            return type(x)(Namespace._toDict(v) for v in x)
+            return type(x)(cls._toDict(v) for v in x)
         else:
             return x
 
@@ -273,20 +273,20 @@ class Namespace(dict):
     def __dict__(self):
         return self.toDict()
 
-    @staticmethod
-    def fromDict(x):
+    @classmethod
+    def fromDict(cls, x):
         """ Recursively transforms a dictionary into a Namespace via copy.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return Namespace((k, Namespace.fromDict(v)) for k, v in x.iteritems())
+            return cls((k, cls.fromDict(v)) for k, v in x.iteritems())
         elif isinstance(x, (list, tuple)):
-            return type(x)(Namespace.fromDict(v) for v in x)
+            return type(x)(cls.fromDict(v) for v in x)
         else:
             return x
 
     def copy(self):
-        return Namespace.fromDict(self)
+        return type(self).fromDict(self)
     __copy__ = copy
 
     def _freeze(self):

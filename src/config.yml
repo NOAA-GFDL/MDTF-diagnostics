@@ -104,4 +104,4 @@ settings:
   # the POD runtime environments (CondaEnvironmentManager.) It specifies the 
   # base directory for Conda environment installs.
   # Set this equal to '' to install in your system's default location.
-  conda_env_root: '../envs'
+  conda_env_root: './envs/conda'

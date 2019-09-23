@@ -173,7 +173,7 @@ class GfdlppDataManager(DataManager):
         else:
             component = '*'
         pattern = '{}/ts/{}/*.{}.nc'.format(
-            component, dataset.date_freq.format_frepp(), dataset.name
+            component, dataset.date_freq.format_frepp(), dataset.name_in_model
         )
         files = util.find_files(self.root_dir, pattern)
         if not files:

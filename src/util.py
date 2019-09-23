@@ -85,8 +85,9 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
-    def make_tempdir(self):
-        new_dir = tempfile.mkdtemp(prefix='MDTF_temp_')
+    def make_tempdir(self, new_dir=None):
+        if new_dir is None:
+            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_')
         assert new_dir not in self._temp_dirs
         self._temp_dirs.append(new_dir)
         return new_dir

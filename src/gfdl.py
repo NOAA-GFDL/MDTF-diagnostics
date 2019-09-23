@@ -11,7 +11,7 @@ else:
     import subprocess
 from collections import defaultdict
 import datelabel
-from util import Singleton, find_files
+import util
 from data_manager import DataManager, DataSet, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
@@ -25,7 +25,7 @@ _current_module_versions = {
     'netcdf':   'netcdf/4.2'
 }
 
-class ModuleManager(Singleton):
+class ModuleManager(util.Singleton):
     def __init__(self):
         if 'MODULESHOME' not in os.environ:
             # could set from module --version
@@ -175,7 +175,7 @@ class GfdlppDataManager(DataManager):
         pattern = '{}/ts/{}/*.{}.nc'.format(
             component, dataset.date_freq.format_frepp(), dataset.name
         )
-        files = find_files(self.root_dir, pattern)
+        files = util.find_files(self.root_dir, pattern)
         if not files:
             raise DataQueryFailure(dataset, 'No files found in {}'.format(self.root_dir))
         
@@ -203,17 +203,13 @@ class GfdlppDataManager(DataManager):
 
     def _optimize_data_fetching(self, datasets):
         cmpts = self._select_model_component(datasets)
-        files_to_fetch = []
         for ds in datasets:
-            ds_list = [d for d in ds.remote_resource if (d.component in cmpts)]
+            files = [f for f in ds.remote_resource if (f.component in cmpts)]
             # take longest chunk frequency (revisit?)
-            chunk_freq = max({d.chunk_freq for d in ds_list})
-            ds.remote_resource = [d for d in ds_list if (d.chunk_freq == chunk_freq)]
+            chunk_freq = max({f.chunk_freq for f in files})
+            ds.remote_resource = [f for f in files if (f.chunk_freq == chunk_freq)]
             assert ds.remote_resource # shouldn't have eliminated everything
-            files_to_fetch.extend(ds.remote_resource)
-        for f in files_to_fetch:
-            f.local_resource = self.local_path(f)
-        return [f for f in set(files_to_fetch) if not self.local_data_is_current(f)]
+        return datasets
 
     def _select_model_component(self, datasets):
         """Determine experiment component(s) from heuristics.
@@ -282,12 +278,10 @@ class GfdlppDataManager(DataManager):
         - Handle case where local data involves processing of remote data, like
             ncrcat'ing. Copy raw remote files to temp directory if we need to 
             process?
-        - gcp -sync does this already.
+        - gcp --sync does this already.
         """
         return os.path.getmtime(dataset.local_resource) \
             >= os.path.getmtime(dataset.remote_resource)
-
-    
 
     def fetch_dataset(self, dataset):
         pass

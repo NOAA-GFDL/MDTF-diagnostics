@@ -32,6 +32,22 @@ class DataSet(util.Namespace):
             temp.name = new_name
         return temp  
 
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        Exclude attributes starting with 'nohash_' from the comparison, in case 
+        we want DataSets with different timestamps, temporary directories, etc.
+        to compare as equal.
+        """
+        d = self.toDict()
+        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
+        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
+
+    def tempdir(self):
+        """Set temporary directory deterministically.
+        """
+        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
+
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -150,7 +166,9 @@ class DataManager(object):
                         for var2 in var['alternates']
                 ] # only list of translated names, not full DataSets
             var['date_range'] = self.date_range
-            ds_list.append(DataSet(**var))
+            ds = DataSet(**var)
+            ds.local_resource = self.local_path(ds)
+            ds_list.append(ds)
         pod.varlist = ds_list
 
     # -------------------------------------

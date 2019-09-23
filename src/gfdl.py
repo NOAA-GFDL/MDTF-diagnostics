@@ -160,46 +160,57 @@ class GfdlppDataManager(DataManager):
             ds = DataSet(**(match.groupdict()))
             ds.remote_resource = path
             (ds.dir, ds.file) = os.path.split(path)
+            del ds.component2
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = datelabel.DateFrequency(ds.date_freq)
             ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
             return ds
         else:
-            raise ValueError
+            raise ValueError("Can't parse {}.".format(path))
 
     def query_dataset(self, dataset):
+        """Return set of candidate directories for data files.
+        """
         if 'component' in dataset:
-            component = dataset.component
+            cmpts = [dataset.component]
         else:
-            component = '*'
-        pattern = '{}/ts/{}/*.{}.nc'.format(
-            component, dataset.date_freq.format_frepp(), dataset.name_in_model
-        )
-        files = util.find_files(self.root_dir, pattern)
-        if not files:
+            cmpts = [d for d in os.listdir(self.root_dir) if not d.startswith('.')]
+        candidate_dirs = []
+        suffix_query = '.{}.nc'.format(dataset.name_in_model)
+        for component in cmpts:
+            subdir_rel = os.path.join(component, 'ts', dataset.date_freq.format_frepp())
+            subdir_abs = os.path.join(self.root_dir, subdir_rel)
+            if not os.path.exists(subdir_abs):
+                continue
+            chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            for freq in chunk_freqs:
+                paths = util.run_command([
+                    'find', os.path.join(subdir_abs, freq), '-name', \
+                        '*'+suffix_query, '-print', '-quit'
+                ])
+                if paths:
+                    candidate_dirs.append(os.path.join(subdir_rel, freq))
+        if not candidate_dirs:
             raise DataQueryFailure(dataset, 'No files found in {}'.format(self.root_dir))
-        
-        dataset.remote_resource = []
-        dir_dict = defaultdict(list)
-        for f in files:
-            ds = self.parse_pp_path(f)
-            dir_dict[ds.dir].append(ds)
-        for ds_dir in dir_dict.values():
+
+        for d in candidate_dirs:
+            files = [dm.parse_pp_path(f) for f in os.listdir(os.path.join(root_dir,d)) \
+                if f.endswith(suffix_query)]
             try:
-                remote_range = datelabel.DateRange([ds.date_range for ds in ds_dir])
+                remote_range = datelabel.DateRange([ds.date_range for ds in files])
             except ValueError:
                 # Something's messed up with remote files if we get here
                 # should probably log an error
                 continue
             if remote_range.contains(dataset.date_range):
                 dataset.remote_resource.extend(
-                    [ds for ds in ds_dir if (ds.date_range in dataset.date_range)]
+                    [ds for ds in files if (ds.date_range in dataset.date_range)]
                 )
-        
         if not dataset.remote_resource:
             raise DataQueryFailure(dataset, 
                 "Couldn't cover date range {} with files in {}".format(
                     dataset.date_range, self.root_dir))
+
 
     def _optimize_data_fetching(self, datasets):
         cmpts = self._select_model_component(datasets)

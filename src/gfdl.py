@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -127,6 +128,11 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 class GfdlppDataManager(DataManager):
     def __init__(self, root_dir, case_dict, config={}, verbose=0):
+        # if we're running on Analysis, recommended practice is to use $FTMPDIR
+        # for scratch work. Setting tempfile.tempdir causes all temp directories
+        # returned by util.PathManager to be in that location.
+        if 'FTMPDIR' in os.environ:
+            tempfile.tempdir = os.environ['FTMPDIR']
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
         assert os.path.isdir(root_dir)
         self.root_dir = root_dir
@@ -276,9 +282,12 @@ class GfdlppDataManager(DataManager):
         - Handle case where local data involves processing of remote data, like
             ncrcat'ing. Copy raw remote files to temp directory if we need to 
             process?
+        - gcp -sync does this already.
         """
         return os.path.getmtime(dataset.local_resource) \
             >= os.path.getmtime(dataset.remote_resource)
+
+    
 
     def fetch_dataset(self, dataset):
         pass

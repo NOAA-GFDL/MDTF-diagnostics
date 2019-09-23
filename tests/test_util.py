@@ -5,58 +5,9 @@ import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 from src.data_manager import DataManager
 from src.shared_diagnostic import Diagnostic
+from subprocess import CalledProcessError
 
-
-class TestUtil(unittest.TestCase):
-
-    def test_read_yaml(self):
-        pass
-
-    def test_write_yaml(self):
-        pass
-
-    def test_get_available_programs(self):
-        pass
-
-    def test_makefilepath(self):
-        pass
-
-    # ---------------------------------------------------
-    
-    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
-    def test_setenv_overwrite(self):
-        test_d = {'TEST_OVERWRITE': 'A'}
-        util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
-        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
-        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_str(self):
-        test_d = {}
-        util.setenv('TEST_STR','B', test_d)
-        self.assertEqual(test_d['TEST_STR'], 'B')
-        self.assertEqual(os.environ['TEST_STR'], 'B')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_int(self):
-        test_d = {}        
-        util.setenv('TEST_INT',2019, test_d)
-        self.assertEqual(test_d['TEST_INT'], 2019)
-        self.assertEqual(os.environ['TEST_INT'], '2019')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_bool(self):
-        test_d = {}
-        util.setenv('TEST_TRUE',True, test_d)
-        self.assertEqual(test_d['TEST_TRUE'], True)
-        self.assertEqual(os.environ['TEST_TRUE'], '1')
-
-        util.setenv('TEST_FALSE',False, test_d)
-        self.assertEqual(test_d['TEST_FALSE'], False)
-        self.assertEqual(os.environ['TEST_FALSE'], '0')
-
-    # ---------------------------------------------------
-
+class TestBasicClasses(unittest.TestCase):
     def test_singleton(self):
         # Can only be instantiated once
         class Temp1(util.Singleton):
@@ -99,6 +50,101 @@ class TestUtil(unittest.TestCase):
         temp = util.BiDict({'a':1, 'b':2})
         del temp['b']
         self.assertNotIn(2, temp.inverse)
+
+    def test_namespace_basic(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertEqual(test.name, 'A')
+        self.assertEqual(test.B, 'C')
+        with self.assertRaises(AttributeError):
+            temp = test.D
+        test.B = 'D'
+        self.assertEqual(test.B, 'D')
+
+    def test_namespace_dict_ops(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertIn('B', test)
+        self.assertNotIn('D', test)
+
+    def test_namespace_tofrom_dict(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.toDict()
+        self.assertEqual(test2['name'], 'A')
+        self.assertEqual(test2['B'], 'C')
+        test3 = util.Namespace.fromDict(test2)
+        self.assertEqual(test3.name, 'A')
+        self.assertEqual(test3.B, 'C')
+
+    def test_namespace_copy(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.copy()
+        self.assertEqual(test2.name, 'A')
+        self.assertEqual(test2.B, 'C')
+        test2.B = 'D'
+        self.assertEqual(test.B, 'C')
+        self.assertEqual(test2.B, 'D')
+
+    def test_namespace_hash(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test
+        test3 = test.copy()
+        test4 = test.copy()
+        test4.name = 'not_the_same'
+        test5 = util.Namespace(name='A', B='C')
+        self.assertEqual(test, test2)
+        self.assertEqual(test, test3)
+        self.assertNotEqual(test, test4)
+        self.assertEqual(test, test5)
+        set_test = set([test, test2, test3, test4, test5])
+        self.assertEqual(len(set_test), 2)
+        self.assertIn(test, set_test)
+        self.assertIn(test4, set_test)
+
+class TestUtil(unittest.TestCase):
+
+    def test_read_yaml(self):
+        pass
+
+    def test_write_yaml(self):
+        pass
+
+    def test_get_available_programs(self):
+        pass
+
+    # ---------------------------------------------------
+    
+    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
+    def test_setenv_overwrite(self):
+        test_d = {'TEST_OVERWRITE': 'A'}
+        util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
+        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
+        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_str(self):
+        test_d = {}
+        util.setenv('TEST_STR','B', test_d)
+        self.assertEqual(test_d['TEST_STR'], 'B')
+        self.assertEqual(os.environ['TEST_STR'], 'B')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_int(self):
+        test_d = {}        
+        util.setenv('TEST_INT',2019, test_d)
+        self.assertEqual(test_d['TEST_INT'], 2019)
+        self.assertEqual(os.environ['TEST_INT'], '2019')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_bool(self):
+        test_d = {}
+        util.setenv('TEST_TRUE',True, test_d)
+        self.assertEqual(test_d['TEST_TRUE'], True)
+        self.assertEqual(os.environ['TEST_TRUE'], '1')
+
+        util.setenv('TEST_FALSE',False, test_d)
+        self.assertEqual(test_d['TEST_FALSE'], False)
+        self.assertEqual(os.environ['TEST_FALSE'], '0')
+
+    # ---------------------------------------------------
 
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'A','var_names':{'B':'D'}})
@@ -327,95 +373,61 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
         self.assertEqual(os.environ['RGB'], 'TEST_CODE_ROOT/src/rgb')
 
-class TestFreppArgParsing(unittest.TestCase):
 
-    def setUp(self):
-        self.config_test = {
-            'case_list':[{'CASENAME':'B'}],
-            'paths':{'MODEL_DATA_ROOT':'/D'},
-            'settings':{'E':'F', 'verbose':0, 'make_variab_tar': False}
-        }
-        self.frepp_stub = """
-            set in_data_dir = /foo/bar
-            set descriptor = baz.r1i1p1f1
-            set yr1 = 1977
-            set yr2 = 1981
-            set make_variab_tar = 1
-        """
 
-    def test_parse_frepp_stub_regex(self):
-        frepp_stub = """
-            set foo1 = bar
-            set foo2 = /complicated/path_name/1-2.3
-            set foo3 = "./relative path/with spaces.txt"
-            set foo4 = 1
-            set foo5 = # comment
-            set foo6 = not a #comment
-        """
-        d = util.parse_frepp_stub(frepp_stub)
-        self.assertEqual(d['foo1'], 'bar')
-        self.assertEqual(d['foo2'], '/complicated/path_name/1-2.3')
-        self.assertEqual(d['foo3'], '"./relative path/with spaces.txt"')
-        self.assertEqual(d['foo4'], '1')
-        self.assertNotIn('foo5', d)
-        self.assertEqual(d['foo6'], 'not a #comment')
+# ---------------------------------------------------
 
-    def test_parse_frepp_stub_substitution(self):
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = util.parse_frepp_stub(frepp_stub)
-        self.assertNotIn('in_data_dir', d)
-        self.assertEqual(d['MODEL_DATA_ROOT'], '/foo/bar')
-        self.assertEqual(d['CASENAME'], 'baz.r1i1p1f1')
-        self.assertNotIn('yr1', d)
-        self.assertEqual(d['FIRSTYR'], 1977)
-        self.assertEqual(d['make_variab_tar'], True)
+class TestSubprocessInteraction(unittest.TestCase):
+    def test_run_shell_commands_stdout1(self):
+        input = 'echo "foo"'
+        out = util.run_shell_commands(input)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], 'foo')
 
-    def test_parse_frepp_stub_mode(self):
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = util.parse_frepp_stub(frepp_stub)
-        self.assertEqual(d['frepp_mode'], True)
-        frepp_stub = """
-            set yr1 = 1981
-            set make_variab_tar = 1
-        """
-        d = util.parse_frepp_stub(frepp_stub)
-        self.assertEqual(d['frepp_mode'], False)
+    def test_run_shell_commands_stdout2(self):
+        input = ['echo "foo"', 'echo "bar"']
+        out = util.run_shell_commands(input)
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'foo')
+        self.assertEqual(out[1], 'bar')
+        
+    def test_run_shell_commands_exitcode(self):
+        input = ['echo "foo"', 'false']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_shell_commands(input)
 
-    def test_parse_mdtf_args_frepp_overwrite(self):
-        # overwrite defaults
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = util.parse_frepp_stub(frepp_stub)
-        args = {}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(d, args, config)
-        self.assertEqual(config['paths']['MODEL_DATA_ROOT'], '/foo/bar')
-        self.assertEqual(config['settings']['make_variab_tar'], True)
-        self.assertEqual(config['settings']['E'], 'F')
+    def test_run_shell_commands_envvars(self):
+        input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
+        out = util.run_shell_commands(input, env={'FOO':'bar'})
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'bar')
+        self.assertEqual(out[1], 'baz')
 
-    def test_parse_mdtf_args_frepp_overwrite_both(self):
-        # overwrite defaults and command-line
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = util.parse_frepp_stub(frepp_stub)
-        args = {'MODEL_DATA_ROOT':'/X', 'E':'Y'}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(d, args, config)
-        self.assertEqual(config['paths']['MODEL_DATA_ROOT'], '/foo/bar')
-        self.assertEqual(config['settings']['make_variab_tar'], True)
-        self.assertEqual(config['settings']['E'], 'Y')
+    def test_poll_command_shell_true(self):
+        rc = util.poll_command('echo "foo"', shell=True)
+        self.assertEqual(rc, 0)
 
-    def test_parse_mdtf_args_frepp_caselist(self):
-        # overwrite defaults and command-line
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = util.parse_frepp_stub(frepp_stub)
-        args = {}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(d, args, config)
-        self.assertEqual(len(config['case_list']), 1)
-        self.assertEqual(config['case_list'][0]['CASENAME'], 'baz.r1i1p1f1')
-        self.assertEqual(config['case_list'][0]['model'], 'CMIP')
-        self.assertEqual(config['case_list'][0]['variable_convention'], 'CMIP')
-        self.assertEqual(config['case_list'][0]['FIRSTYR'], 1977)
-        self.assertEqual(config['case_list'][0]['LASTYR'], 1981)
+    def test_poll_command_shell_false(self):
+        rc = util.poll_command(['echo', 'foo'], shell=False)
+        self.assertEqual(rc, 0)
+    
+    def test_poll_command_error(self):
+        rc = util.poll_command(['false'], shell=False)
+        self.assertEqual(rc, 1)
+
+    def test_run_command_stdout1(self):
+        out = util.run_command(['echo', '"foo"'])
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '"foo"')
+
+    def test_run_command_exitcode(self):
+        input = ['exit', '1']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_command(input)
 
 # ---------------------------------------------------
 

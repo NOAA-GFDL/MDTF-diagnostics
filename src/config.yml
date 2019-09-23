@@ -100,8 +100,16 @@ settings:
   # - 'Conda' (use the Anaconda package manager)
   environment_manager: 'Conda'
 
-  # This setting is only used if the Anaconda package manager is used to manage
-  # the POD runtime environments (CondaEnvironmentManager.) It specifies the 
-  # base directory for Conda environment installs.
+  # This sets the root directory for python virtual environments. It is only used
+  # if environment_manager is set to 'Virtualenv'.
+  venv_root: './envs/venv'
+
+  # This sets the root directory for R packages requested by PODs. It is only used
+  # if environment_manager is set to 'Virtualenv'.
+  # Set this equal to '' to install in your system library.
+  r_lib_root: './envs/r_libs'
+
+  # This sets the root directory for Anaconda environment installs. It is only
+  # used if environment_manager is set to 'Conda'.
   # Set this equal to '' to install in your system's default location.
-  conda_env_root: '../envs'
+  conda_env_root: './envs/conda'

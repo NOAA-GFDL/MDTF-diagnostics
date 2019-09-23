@@ -267,7 +267,7 @@ class DateFrequency(datetime.timedelta):
             unit = 'wk'
         elif unit[0] == 'd':
             kwargs = {'days': quantity}
-            unit = 'dy'
+            unit = 'da'
         elif unit[0] == 'h':
             kwargs = {'hours': quantity}
             unit = 'hr'
@@ -295,7 +295,7 @@ class DateFrequency(datetime.timedelta):
             elif s in ['weekly', 'week', 'wk', 'w']:
                 unit = 'wk'
             elif s in ['daily', 'day', 'd', 'diurnal', 'diurnally']:
-                unit = 'dy' 
+                unit = 'da' 
             elif s in ['hourly', 'hour', 'hr', 'h']:
                 unit = 'hr' 
             else:

@@ -233,10 +233,15 @@ def find_files(root_dir, pattern):
         pattern_flag = '-path' # searching whole path
     else:
         pattern_flag = '-name' # search filename only 
-    return run_command([
-        'find', '"'+root_dir+'"', '-depth', '-type', 'f', 
-        pattern_flag, '"'+pattern+'"', '-printf "%P\0"'
+    paths = run_command([
+        'find', os.path.normpath(root_dir), '-depth', '-type', 'f', 
+        pattern_flag, pattern
         ])
+    # strip out root_dir part of path: get # of chars in root_dir (plus terminating
+    # separator) and return remainder. Could do this with '-printf %P' in GNU find
+    # but BSD find (mac os) doesn't have that.
+    prefix_length = len(os.path.normpath(root_dir)) + 1 
+    return [p[prefix_length:] for p in paths]
 
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.

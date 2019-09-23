@@ -60,7 +60,7 @@ class DataQueryFailure(Exception):
         self.msg = msg
 
     def __str__(self):
-        if msg is not None:
+        if self.msg is not None:
             return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
         else:
             return 'Query failure for {}.'.format(self.dataset.name)
@@ -206,7 +206,7 @@ class DataManager(object):
             for var in pod.varlist:
                 try:
                     data_to_fetch.extend(self._query_dataset_and_alts(var))
-                except DataQueryFailure as exc:
+                except DataQueryFailure:
                     print "Data query failed on pod {}".format(pod.name)
         return self._optimize_data_fetching(data_to_fetch)
 

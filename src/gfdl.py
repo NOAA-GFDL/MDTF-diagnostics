@@ -286,17 +286,21 @@ class GfdlppDataManager(DataManager):
     def fetch_dataset(self, dataset):
         if any([self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']]):
             cp_command = ['gcp','--sync']
+            smartsite = 'gfdl:'
         else:
             cp_command = ['ln', '-fs']
+            smartsite = ''
         dataset.nohash_tempdir = dataset.tempdir()
         paths = util.PathManager()
         paths.make_tempdir(new_dir=dataset.nohash_tempdir) + os.sep 
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in dataset.remote_resource:
             util.run_command( \
-                cp_command + [os.path.join(self.root_dir, f.remote_resource), 
-                dataset.nohash_tempdir + os.sep] # GCP requires trailing slash
-            ) 
+                cp_command + [
+                    smartsite + os.path.join(self.root_dir, f.remote_resource), 
+                    # gcp requires trailing slash, ln ignores it
+                    smartsite + dataset.nohash_tempdir + os.sep
+            ]) 
         util.run_command(['ncrcat', '*.nc', dataset.local_resource], 
             cwd=dataset.nohash_tempdir)
 

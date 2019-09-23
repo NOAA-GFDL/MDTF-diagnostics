@@ -22,9 +22,7 @@ class DataSet(util.Namespace):
         if 'var_name' in self and 'name' not in self:
             self.name = self.var_name
         if 'freq' in self and 'date_freq' not in self:
-            self.date_freq = self.freq
-        self.date_range = datelabel.DateRange(self.date_range)
-        self.date_freq = datelabel.DateFrequency(self.date_freq)
+            self.date_freq = datelabel.DateFrequency(self.freq)
 
     def copy(self, new_name=None):
         temp = super(DataSet, self).copy()
@@ -165,7 +163,7 @@ class DataManager(object):
         )
 
     def fetch_data(self, verbose=0):
-        data_to_fetch = plan_data()
+        data_to_fetch = self.plan_data()
         for var in data_to_fetch:
             self.fetch_dataset(var)
         # do translation/ transformations of data here

@@ -151,7 +151,7 @@ class GfdlppDataManager(DataManager):
         match = re.match(ts_regex, path)
         if match:
             assert match.group('component') == match.group('component2')
-            ds = DataSet(**match.groupdict())
+            ds = DataSet(**(match.groupdict()))
             ds.remote_resource = path
             (ds.dir, ds.file) = os.path.split(path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
@@ -197,12 +197,17 @@ class GfdlppDataManager(DataManager):
 
     def _optimize_data_fetching(self, datasets):
         cmpts = self._select_model_component(datasets)
+        files_to_fetch = []
         for ds in datasets:
             ds_list = [d for d in ds.remote_resource if (d.component in cmpts)]
             # take longest chunk frequency (revisit?)
             chunk_freq = max({d.chunk_freq for d in ds_list})
             ds.remote_resource = [d for d in ds_list if (d.chunk_freq == chunk_freq)]
             assert ds.remote_resource # shouldn't have eliminated everything
+            files_to_fetch.extend(ds.remote_resource)
+        for f in files_to_fetch:
+            f.local_resource = self.local_path(f)
+        return [f for f in set(files_to_fetch) if not self.local_data_is_current(f)]
 
     def _select_model_component(self, datasets):
         """Determine experiment component(s) from heuristics.
@@ -237,13 +242,14 @@ class GfdlppDataManager(DataManager):
             min_len = min(len(s.split('_')) for s in str_list)
             str_list2 = [s for s in str_list if (len(s.split('_')) == min_len)]
             if len(str_list2) == 1:
-                return str_list2
+                return str_list2[0]
             else:
                 return min(str_list2, key=len)
 
         d = defaultdict(set)
         for idx, ds in enumerate(datasets):
-            d[ds.component].add(idx)
+            for ds_file in ds.remote_resource:
+                d[ds_file.component].add(idx)
         all_idx = set(range(len(datasets)))
         assert set(e for s in d.values() for e in s) == all_idx
 
@@ -274,7 +280,8 @@ class GfdlppDataManager(DataManager):
         return os.path.getmtime(dataset.local_resource) \
             >= os.path.getmtime(dataset.remote_resource)
 
-
+    def fetch_dataset(self, dataset):
+        pass
 
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.

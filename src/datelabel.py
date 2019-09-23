@@ -186,7 +186,6 @@ class DateRange(object):
             # given a bunch of DateRanges, return interval containing them
             # ONLY IF ranges are continguous and nonoverlapping
             dt_ranges = sorted(coll, key=lambda dtr: dtr.start)
-            print dt_ranges
             for i in range(0, len(dt_ranges) - 1):
                 if (dt_ranges[i].end.increment() != dt_ranges[i+1].start) \
                     or (dt_ranges[i+1].start.decrement() != dt_ranges[i].end):

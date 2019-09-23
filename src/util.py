@@ -97,7 +97,7 @@ class PathManager(Singleton):
         self._temp_dirs.remove(path)
         shutil.rmtree(path)
 
-    def cleanup(self)
+    def cleanup(self):
         for d in self._temp_dirs:
             self.rm_tempdir(d)
 

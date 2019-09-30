@@ -1,0 +1,10 @@
+name: _MDTF-diagnostics-base
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=2.7
+- subprocess32
+- pyyaml
+- mock
+- netCDF4

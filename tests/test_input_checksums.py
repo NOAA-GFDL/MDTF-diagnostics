@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-import yaml
+from src.util import read_yaml
 import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
@@ -16,15 +16,13 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 if DOING_SETUP:
     config = shared.get_configuration('', check_input=True)
     md5_path = config['paths']['md5_path']
-    obs_path = config['paths']['OBS_ROOT_DIR']
-    model_path = config['paths']['MODEL_ROOT_DIR']
+    obs_path = config['paths']['OBS_DATA_ROOT']
+    model_path = config['paths']['MODEL_DATA_ROOT']
 
     case_list = shared.get_test_data_configuration()
 
-    with open(os.path.join(md5_path, 'checksum_obs_data.yml'), 'r') as file_obj:
-        obs_data_checksums = yaml.safe_load(file_obj)
-    with open(os.path.join(md5_path, 'checksum_model_data.yml'), 'r') as file_obj:
-        model_data_checksums = yaml.safe_load(file_obj)
+    obs_data_checksums = read_yaml(os.path.join(md5_path, 'checksum_obs_data.yml'))
+    model_data_checksums = read_yaml(os.path.join(md5_path, 'checksum_model_data.yml'))
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
 # the advanced construction presented in https://stackoverflow.com/a/20870875 

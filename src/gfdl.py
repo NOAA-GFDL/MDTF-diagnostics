@@ -168,22 +168,42 @@ class GfdlppDataManager(DataManager):
         else:
             raise ValueError("Can't parse {}.".format(path))
 
-    def query_dataset(self, dataset):
-        """Return set of candidate directories for data files.
+    def search_pp_path(self, name_in_model, date_freq, component=None):
+        """Search a /pp/ directory for files containing a variable.
+
+        At GFDL, data may be archived on a slow tape filesystem, so we attempt
+        to speed up the search process relative to :func:`util.find_files`. The 
+        only unknowns are the <component> the variable is assigned to and its 
+        <chunk_freq> (which will differ from experiment to experiment). 
+
+        Args:
+            name_in_model (:obj:`str`): Name of variable to search for, in model's
+                naming convention.
+            date_freq (:obj:`str`): Desired output frequency.
+            component (:obj:`str`, optional): Model component for vairable, if
+                known ahead of time.
+
+        Returns: :obj:`list` of :obj:`str`: paths of files found matching search
+            criteria. Paths are relative to /pp/ root directory.
+
+        Raises: :exception:`~data_manager.DataManager.DataQueryFailure` if 
+            no files matching criteria are found.
         """
-        if 'component' in dataset:
-            cmpts = [dataset.component]
-        else:
-            cmpts = [d for d in os.listdir(self.root_dir) if not d.startswith('.')]
         candidate_dirs = []
-        suffix_query = '.{}.nc'.format(dataset.name_in_model)
+        if not component:
+            cmpts = [d for d in os.listdir(self.root_dir) if not d.startswith('.')]
+        else:
+            cmpts = [component]
+        suffix_query = '.{}.nc'.format(name_in_model)
         for component in cmpts:
-            subdir_rel = os.path.join(component, 'ts', dataset.date_freq.format_frepp())
+            subdir_rel = os.path.join(component, 'ts', date_freq)
             subdir_abs = os.path.join(self.root_dir, subdir_rel)
             if not os.path.exists(subdir_abs):
                 continue
             chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
             for freq in chunk_freqs:
+                # '-quit' means we return immediately when first file is found. 
+                # Arguments compatible with BSD (=macs) 'find'.
                 paths = util.run_command([
                     'find', os.path.join(subdir_abs, freq), '-name', \
                         '*'+suffix_query, '-print', '-quit'
@@ -191,20 +211,47 @@ class GfdlppDataManager(DataManager):
                 if paths:
                     candidate_dirs.append(os.path.join(subdir_rel, freq))
         if not candidate_dirs:
-            raise DataQueryFailure(dataset, 'No files found in {}'.format(self.root_dir))
+            raise Exception('No {} files with freq={} found in {}'.format(
+                name_in_model, date_freq, self.root_dir))
 
+        files = []
         for d in candidate_dirs:
-            files = [dm.parse_pp_path(f) for f in os.listdir(os.path.join(root_dir,d)) \
-                if f.endswith(suffix_query)]
+            files.extend( \
+                [os.path.join(d, f) \
+                for f in os.listdir(os.path.join(self.root_dir, d)) \
+                if f.endswith(suffix_query)] \
+            )
+        return files
+
+    def query_dataset(self, dataset):
+        """Return set of candidate directories for data files.
+        """
+        dataset.remote_resource = []
+        try:
+            if 'component' in dataset:
+                files = self.search_pp_path( \
+                    dataset.name_in_model, dataset.date_freq.format_frepp(), \
+                    dataset.component)
+            else:
+                files = self.search_pp_path( \
+                    dataset.name_in_model, dataset.date_freq.format_frepp())
+        except Exception as exc:
+            raise DataQueryFailure(dataset, exc.args[0]) # reraise with full dataset
+        files = [self.parse_pp_path(f) for f in files]
+
+        candidate_dirs = {f.dir for f in files}
+        for d in candidate_dirs:
             try:
-                remote_range = datelabel.DateRange([ds.date_range for ds in files])
+                remote_range = datelabel.DateRange( \
+                    [f.date_range for f in files if (f.dir == d)])
             except ValueError:
-                # Something's messed up with remote files if we get here
-                # should probably log an error
+                # Date range of remote files doesn't contain analysis range or 
+                # is noncontiguous; should probably log an error
                 continue
             if remote_range.contains(dataset.date_range):
                 dataset.remote_resource.extend(
-                    [ds for ds in files if (ds.date_range in dataset.date_range)]
+                    [f for f in files \
+                    if (f.dir == d and f.date_range in dataset.date_range)]
                 )
         if not dataset.remote_resource:
             raise DataQueryFailure(dataset, 

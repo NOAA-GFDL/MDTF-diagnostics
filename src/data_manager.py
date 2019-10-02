@@ -214,8 +214,8 @@ class DataManager(object):
             pod.varlist = new_varlist
 
         data_to_fetch = self.plan_data_fetching()
-        for var in data_to_fetch:
-            self.fetch_dataset(var)
+        for file_ in data_to_fetch:
+            self.fetch_dataset(file_)
         # do translation/ transformations of data here
         for pod in self.pods:
             var_files = self._check_for_varlist_files(pod.varlist, verbose)
@@ -382,10 +382,10 @@ class DataManager(object):
             + ['{}.tar'.format(self.MODEL_WK_DIR), self.MODEL_WK_DIR]
         )
 
-    def abortHandler(self):
+    def abortHandler(self, unittest_flag=False):
         # delete any temp files if we're killed
         # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager()
+        paths = util.PathManager(unittest_flag=unittest_flag)
         paths.cleanup()
 
 

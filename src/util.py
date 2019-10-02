@@ -86,8 +86,13 @@ class PathManager(Singleton):
         return d
 
     def make_tempdir(self, new_dir=None):
+        temp_root = tempfile.gettempdir()
         if new_dir is None:
-            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_')
+            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_', dir=temp_root)
+        else:
+            new_dir = os.path.join(temp_root, new_dir)
+            if not os.path.isdir(new_dir):
+                os.makedirs(new_dir)
         assert new_dir not in self._temp_dirs
         self._temp_dirs.append(new_dir)
         return new_dir

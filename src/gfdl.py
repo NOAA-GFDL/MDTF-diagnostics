@@ -131,8 +131,14 @@ class GfdlppDataManager(DataManager):
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
+        # If we're not, assume we're on a workstation. gcp won't copy to the 
+        # usual /tmp, so put temp files in a directory on /net2.
         if 'FTMPDIR' in os.environ:
             tempfile.tempdir = os.environ['FTMPDIR']
+        elif os.path.isdir('/net2'):
+            tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
+            if not os.path.isdir(tempfile.tempdir):
+                os.makedirs(tempfile.tempdir)
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
         assert os.path.isdir(root_dir)
         self.root_dir = root_dir
@@ -365,26 +371,48 @@ class GfdlppDataManager(DataManager):
         # return os.path.getmtime(dataset.local_resource) \
         #     >= os.path.getmtime(dataset.remote_resource)
 
-    def fetch_dataset(self, dataset):
-        if any([self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']]):
-            cp_command = ['gcp','--sync']
-            smartsite = 'gfdl:'
-        else:
-            cp_command = ['ln', '-fs']
-            smartsite = ''
-        dataset.nohash_tempdir = dataset.tempdir()
-        paths = util.PathManager()
-        paths.make_tempdir(new_dir=dataset.nohash_tempdir) + os.sep 
-        # TODO: Do something intelligent with logging, caught OSErrors
-        for f in dataset.remote_resource:
+    def fetch_dataset(self, dataset, method='auto', dry_run=False):
+        """Copy files to temporary directory and combine chunks.
+        """
+        (cp_command, smartsite) = self._determine_fetch_method(method)
+        
+        if len(dataset.remote_resource) == 1:
+            # one chunk, no need to ncrcat
             util.run_command( \
                 cp_command + [
+                    smartsite + os.path.join(self.root_dir, dataset.remote_resource), 
+                    dataset.local_resource
+            ])
+        else:
+            paths = util.PathManager()
+            dataset.nohash_tempdir = paths.make_tempdir(new_dir=dataset.tempdir())
+            chunks = []
+            # TODO: Do something intelligent with logging, caught OSErrors
+            for f in dataset.remote_resource:
+                util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f.remote_resource), 
                     # gcp requires trailing slash, ln ignores it
                     smartsite + dataset.nohash_tempdir + os.sep
-            ]) 
-        util.run_command(['ncrcat', '*.nc', dataset.local_resource], 
-            cwd=dataset.nohash_tempdir)
+                ]) 
+                chunks.append(f.file)
+            # not running in shell, so can't use glob expansion.
+            util.run_command(['ncrcat'] + chunks + [dataset.local_resource], 
+                cwd=dataset.nohash_tempdir)
+            # TODO: trim ncrcat'ed files to actual time period
+            # temp files cleaned up by data_manager.tearDown
+
+    def _determine_fetch_method(self, method='auto'):
+        _methods = {
+            'gcp': {'command': ['gcp', '--sync'], 'site':'gfdl:'},
+            'cp':  {'command': ['cp'], 'site':''},
+            'ln':  {'command': ['ln', '-fs'], 'site':''}
+        }
+        if method not in _methods:
+            if any(self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']):
+                method = 'gcp' # use GCP for DMF filesystems
+            else:
+                method = 'ln' # symlink for local files
+        return (_methods[method]['command'], _methods[method]['site'])
 
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.

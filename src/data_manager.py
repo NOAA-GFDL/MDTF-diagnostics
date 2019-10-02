@@ -96,6 +96,21 @@ class DataManager(object):
         signal.signal(signal.SIGTERM, self.abortHandler)
         signal.signal(signal.SIGINT, self.abortHandler)
 
+    def iter_vars(self):
+        """Generator iterating over all variables in all pods.
+        """
+        for p in self.pods:
+            for var in p.varlist:
+                yield var
+
+    def iter_remotes(self):
+        """Generator iterating over remote_resource attributes of pods' variables.
+        """
+        for var in self.iter_vars():
+            for file_ in var.remote_resource:
+                yield file_
+
+
     # -------------------------------------
 
     def setUp(self, config):
@@ -188,7 +203,17 @@ class DataManager(object):
         )
 
     def fetch_data(self, verbose=0):
-        data_to_fetch = self.plan_data()
+        for pod in self.pods:
+            new_varlist = []
+            for var in pod.varlist:
+                try:
+                    new_varlist.extend(self._query_dataset_and_alts(var))
+                except DataQueryFailure:
+                    print "Data query failed on pod {}".format(pod.name)
+                    raise
+            pod.varlist = new_varlist
+
+        data_to_fetch = self.plan_data_fetching()
         for var in data_to_fetch:
             self.fetch_dataset(var)
         # do translation/ transformations of data here
@@ -200,23 +225,24 @@ class DataManager(object):
             else:
                 if (verbose > 0): print "No known missing required input files"
 
-    def plan_data(self):
-        data_to_fetch = []
-        for pod in self.pods:
-            for var in pod.varlist:
-                try:
-                    data_to_fetch.extend(self._query_dataset_and_alts(var))
-                except DataQueryFailure:
-                    print "Data query failed on pod {}".format(pod.name)
-        return self._optimize_data_fetching(data_to_fetch)
-
-
     def _query_dataset_and_alts(self, dataset):
-        """Wrapper for queryDataset that attempts querying for alternate variables.
+        """Wrapper for query_dataset that looks for alternate variables.
+
+        Note: 
+            This has a different interface than 
+            :meth:`~data_manager.DataManager.query_dataset`. That method returns
+            nothing but populates the remote_resource attribute of its argument.
+            This method returns a list of :obj:`~data_manager.DataManager.DataSet`s.
+
+        Args:
+            dataset (:obj:`~data_manager.DataManager.DataSet`): Requested variable
+                to search for.
+        
+        Returns: :obj:`list` of :obj:`~data_manager.DataManager.DataSet`.
         """
         try:
             self.query_dataset(dataset)
-            return dataset
+            return [dataset]
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
             if len(dataset.alternates) == 0:
@@ -232,22 +258,21 @@ class DataManager(object):
                     raise
             return alt_vars
 
-    def _optimize_data_fetching(self, datasets):
+    def plan_data_fetching(self):
         """Process list of requested data to make data fetching efficient.
 
         This is intended as a hook to be used by subclasses. Default behavior is
         to delete from the list duplicate datasets and datasets where a local
         copy of the data already exists and is current (as determined by 
         :meth:`~data_manager.DataManager.local_data_is_current`).
-
-        Args:
-            datasets: collection of :class:`~data_manager.DataManager.DataSet`
-                objects.
         
         Returns: collection of :class:`~data_manager.DataManager.DataSet`
             objects.
         """
-        return [d for d in set(datasets) if not self.local_data_is_current(d)]
+        # remove duplicates from list of all remote_resources
+        unique_data = set(self.iter_remotes())
+        # filter out any data we've previously fetched that's up to date
+        return [d for d in unique_data if not self.local_data_is_current(d)]
     
     def local_data_is_current(self, dataset):
         """Determine if local copy of data needs to be refreshed.
@@ -316,10 +341,10 @@ class DataManager(object):
                     missing_list.extend(new_files['missing_files'])
 
         if (verbose > 2): print "check_for_varlist_files returning ",missing_list
-        # remove empty list entries
         files = {}
-        files['found_files'] = [x for x in found_list if x]
-        files['missing_files'] = [x for x in missing_list if x]
+        # remove empty list entries in found_list, missing_list
+        files['found_files'] = filter(None, found_list)
+        files['missing_files'] = filter(None, missing_list)
         return files
 
     # -------------------------------------

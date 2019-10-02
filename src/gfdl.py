@@ -224,7 +224,13 @@ class GfdlppDataManager(DataManager):
         return files
 
     def query_dataset(self, dataset):
-        """Return set of candidate directories for data files.
+        """Populate remote_resource attribute with list of candidate files.
+
+        Specifically, if a <component> and <chunk_freq> subdirectory has all the
+        requested data, return paths to all files we *would* need in that 
+        subdirectory. The decision of which <component> and <chunk_freq> to use
+        is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
+        because it requires comparing the files found for *all* requested datasets.
         """
         dataset.remote_resource = []
         try:
@@ -258,16 +264,50 @@ class GfdlppDataManager(DataManager):
                 "Couldn't cover date range {} with files in {}".format(
                     dataset.date_range, self.root_dir))
 
+    def plan_data_fetching(self):
+        """Filter files on model component and chunk frequency.
+        """
+        cmpts = self._select_model_component(self.iter_vars())
+        for var in self.iter_vars():
+            cmpt = self._heuristic_component_tiebreaker( \
+                {f.component for f in var.remote_resource if (f.component in cmpts)} \
+            )
+            # take shortest chunk frequency (revisit?)
+            chunk_freq = min(f.chunk_freq \
+                for f in var.remote_resource if (f.component == cmpt))
+            var.remote_resource = [f for f in var.remote_resource \
+                if (f.chunk_freq == chunk_freq and f.component == cmpt)]
+            assert var.remote_resource # shouldn't have eliminated everything
+        return super(GfdlppDataManager, self).plan_data_fetching()
 
-    def _optimize_data_fetching(self, datasets):
-        cmpts = self._select_model_component(datasets)
-        for ds in datasets:
-            files = [f for f in ds.remote_resource if (f.component in cmpts)]
-            # take longest chunk frequency (revisit?)
-            chunk_freq = max({f.chunk_freq for f in files})
-            ds.remote_resource = [f for f in files if (f.chunk_freq == chunk_freq)]
-            assert ds.remote_resource # shouldn't have eliminated everything
-        return datasets
+    @staticmethod
+    def _heuristic_component_tiebreaker(str_list):
+        """Determine experiment component(s) from heuristics.
+
+        1. If we're passed multiple components, select those containing 'cmip'.
+
+        2. If that selects multiple components, break the tie by selecting the 
+            component with the fewest words (separated by '_'), or, failing that, 
+            the shortest overall name.
+
+        Args:
+            str_list (:obj:`list` of :obj:`str`:): list of component names.
+
+        Returns: :obj:`str`: name of component that breaks the tie.
+        """
+        def _heuristic_tiebreaker_sub(strs):
+            min_len = min(len(s.split('_')) for s in strs)
+            strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
+            if len(strs2) == 1:
+                return strs2[0]
+            else:
+                return min(strs2, key=len)
+
+        cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+        if cmip_list:
+            return _heuristic_tiebreaker_sub(cmip_list)
+        else:
+            return _heuristic_tiebreaker_sub(str_list)
 
     def _select_model_component(self, datasets):
         """Determine experiment component(s) from heuristics.
@@ -276,41 +316,24 @@ class GfdlppDataManager(DataManager):
             components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
             and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
 
-        2. If multiple components satisfy (1) equally well, select those
-            containing 'cmip'.
-
-        3. If we still have multiple components satisfying (1) and (2), break the
-            tie by selecting the one with the fewest words (separated by '_'), 
-            or, failing that, the shortest overall name.
+        2. If multiple components satisfy (1) equally well, use a tie-breaking 
+            heuristic (:meth:`~gfdl.GfdlppDataManager._heuristic_component_tiebreaker`). 
 
         Args:
-            dataset (:obj:`list` of :class:`~data_manager.DataManager.DataSet`):
+            datasets (iterable of :class:`~data_manager.DataManager.DataSet`): 
+                Collection of all variables being requested in this DataManager.
 
         Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
 
         Raises: AssertionError if problem is unsatisfiable. This indicates some
             error in the input data.
         """
-        def _heuristic_tiebreaker(str_list):
-            cmip_list = [s for s in str_list if ('cmip' in s.lower())]
-            if cmip_list:
-                return _heuristic_tiebreaker_sub(cmip_list)
-            else:
-                return _heuristic_tiebreaker_sub(str_list)
-
-        def _heuristic_tiebreaker_sub(str_list):
-            min_len = min(len(s.split('_')) for s in str_list)
-            str_list2 = [s for s in str_list if (len(s.split('_')) == min_len)]
-            if len(str_list2) == 1:
-                return str_list2[0]
-            else:
-                return min(str_list2, key=len)
-
+        all_idx = set()
         d = defaultdict(set)
         for idx, ds in enumerate(datasets):
             for ds_file in ds.remote_resource:
                 d[ds_file.component].add(idx)
-        all_idx = set(range(len(datasets)))
+            all_idx.add(idx)
         assert set(e for s in d.values() for e in s) == all_idx
 
         covered_idx = set()
@@ -319,7 +342,7 @@ class GfdlppDataManager(DataManager):
             # max() with key=... only returns one entry if there are duplicates
             # so we need to do two passes in order to call our tiebreaker logic
             max_uncovered = max(len(val - covered_idx) for val in d.values())
-            cmpt_to_add = _heuristic_tiebreaker(
+            cmpt_to_add = self._heuristic_component_tiebreaker(
                 [key for key,val in d.iteritems() \
                     if (len(val - covered_idx) == max_uncovered)]
             )
@@ -338,8 +361,9 @@ class GfdlppDataManager(DataManager):
             process?
         - gcp --sync does this already.
         """
-        return os.path.getmtime(dataset.local_resource) \
-            >= os.path.getmtime(dataset.remote_resource)
+        return False
+        # return os.path.getmtime(dataset.local_resource) \
+        #     >= os.path.getmtime(dataset.remote_resource)
 
     def fetch_dataset(self, dataset):
         if any([self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']]):

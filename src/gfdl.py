@@ -413,6 +413,7 @@ class GfdlppDataManager(DataManager):
             else:
                 method = 'ln' # symlink for local files
         return (_methods[method]['command'], _methods[method]['site'])
+
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.
 
@@ -430,18 +431,26 @@ def parse_frepp_stub(frepp_stub):
     }
     # parse arguments and relabel keys
     d = {}
-    # look for "set ", match token, skip spaces or "=", then match string of 
-    # characters to end of line
-    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
+    regex = re.compile(r"""
+        \s*set[ ]     # initial whitespace, then 'set' followed by 1 space
+        (?P<key>\w+)  # key is simple token, no problem
+        \s+=?\s*      # separator is any whitespace, with 0 or 1 "=" signs
+        (?P<value>    # want to capture all characters to end of line, so:
+            [^=#\s]   # first character = any non-separator, or '#' for comments
+            .*        # capture everything between first and last chars
+            [^\s]     # last char = non-whitespace.
+            |[^=#\s]\b) # separate case for when value is a single character.
+        \s*$          # remainder of line must be whitespace.
+        """, re.VERBOSE)
     for line in frepp_stub.splitlines():
         print "line = '{}'".format(line)
         match = re.match(regex, line)
         if match:
-            if match.group(1) in frepp_translate:
-                key = frepp_translate[match.group(1)]
+            if match.group('key') in frepp_translate:
+                key = frepp_translate[match.group('key')]
             else:
-                key = match.group(1)
-            d[key] = match.group(2)
+                key = match.group('key')
+            d[key] = match.group('value')
 
     # cast from string
     for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:

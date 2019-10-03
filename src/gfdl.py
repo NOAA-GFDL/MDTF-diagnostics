@@ -131,8 +131,14 @@ class GfdlppDataManager(DataManager):
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
+        # If we're not, assume we're on a workstation. gcp won't copy to the 
+        # usual /tmp, so put temp files in a directory on /net2.
         if 'FTMPDIR' in os.environ:
             tempfile.tempdir = os.environ['FTMPDIR']
+        elif os.path.isdir('/net2'):
+            tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
+            if not os.path.isdir(tempfile.tempdir):
+                os.makedirs(tempfile.tempdir)
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
         assert os.path.isdir(root_dir)
         self.root_dir = root_dir
@@ -160,56 +166,154 @@ class GfdlppDataManager(DataManager):
             ds = DataSet(**(match.groupdict()))
             ds.remote_resource = path
             (ds.dir, ds.file) = os.path.split(path)
+            del ds.component2
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = datelabel.DateFrequency(ds.date_freq)
             ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
             return ds
         else:
-            raise ValueError
+            raise ValueError("Can't parse {}.".format(path))
+
+    def search_pp_path(self, name_in_model, date_freq, component=None):
+        """Search a /pp/ directory for files containing a variable.
+
+        At GFDL, data may be archived on a slow tape filesystem, so we attempt
+        to speed up the search process relative to :func:`util.find_files`. The 
+        only unknowns are the <component> the variable is assigned to and its 
+        <chunk_freq> (which will differ from experiment to experiment). 
+
+        Args:
+            name_in_model (:obj:`str`): Name of variable to search for, in model's
+                naming convention.
+            date_freq (:obj:`str`): Desired output frequency.
+            component (:obj:`str`, optional): Model component for vairable, if
+                known ahead of time.
+
+        Returns: :obj:`list` of :obj:`str`: paths of files found matching search
+            criteria. Paths are relative to /pp/ root directory.
+
+        Raises: :exception:`~data_manager.DataManager.DataQueryFailure` if 
+            no files matching criteria are found.
+        """
+        candidate_dirs = []
+        if not component:
+            cmpts = [d for d in os.listdir(self.root_dir) if not d.startswith('.')]
+        else:
+            cmpts = [component]
+        suffix_query = '.{}.nc'.format(name_in_model)
+        for component in cmpts:
+            subdir_rel = os.path.join(component, 'ts', date_freq)
+            subdir_abs = os.path.join(self.root_dir, subdir_rel)
+            if not os.path.exists(subdir_abs):
+                continue
+            chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            for freq in chunk_freqs:
+                # '-quit' means we return immediately when first file is found. 
+                # Arguments compatible with BSD (=macs) 'find'.
+                paths = util.run_command([
+                    'find', os.path.join(subdir_abs, freq), '-name', \
+                        '*'+suffix_query, '-print', '-quit'
+                ])
+                if paths:
+                    candidate_dirs.append(os.path.join(subdir_rel, freq))
+        if not candidate_dirs:
+            raise Exception('No {} files with freq={} found in {}'.format(
+                name_in_model, date_freq, self.root_dir))
+
+        files = []
+        for d in candidate_dirs:
+            files.extend( \
+                [os.path.join(d, f) \
+                for f in os.listdir(os.path.join(self.root_dir, d)) \
+                if f.endswith(suffix_query)] \
+            )
+        return files
 
     def query_dataset(self, dataset):
-        if 'component' in dataset:
-            component = dataset.component
-        else:
-            component = '*'
-        pattern = '{}/ts/{}/*.{}.nc'.format(
-            component, dataset.date_freq.format_frepp(), dataset.name_in_model
-        )
-        files = util.find_files(self.root_dir, pattern)
-        if not files:
-            raise DataQueryFailure(dataset, 'No files found in {}'.format(self.root_dir))
-        
+        """Populate remote_resource attribute with list of candidate files.
+
+        Specifically, if a <component> and <chunk_freq> subdirectory has all the
+        requested data, return paths to all files we *would* need in that 
+        subdirectory. The decision of which <component> and <chunk_freq> to use
+        is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
+        because it requires comparing the files found for *all* requested datasets.
+        """
         dataset.remote_resource = []
-        dir_dict = defaultdict(list)
-        for f in files:
-            ds = self.parse_pp_path(f)
-            dir_dict[ds.dir].append(ds)
-        for ds_dir in dir_dict.values():
+        try:
+            if 'component' in dataset:
+                files = self.search_pp_path( \
+                    dataset.name_in_model, dataset.date_freq.format_frepp(), \
+                    dataset.component)
+            else:
+                files = self.search_pp_path( \
+                    dataset.name_in_model, dataset.date_freq.format_frepp())
+        except Exception as exc:
+            raise DataQueryFailure(dataset, exc.args[0]) # reraise with full dataset
+        files = [self.parse_pp_path(f) for f in files]
+
+        candidate_dirs = {f.dir for f in files}
+        for d in candidate_dirs:
             try:
-                remote_range = datelabel.DateRange([ds.date_range for ds in ds_dir])
+                remote_range = datelabel.DateRange( \
+                    [f.date_range for f in files if (f.dir == d)])
             except ValueError:
-                # Something's messed up with remote files if we get here
-                # should probably log an error
+                # Date range of remote files doesn't contain analysis range or 
+                # is noncontiguous; should probably log an error
                 continue
             if remote_range.contains(dataset.date_range):
                 dataset.remote_resource.extend(
-                    [ds for ds in ds_dir if (ds.date_range in dataset.date_range)]
+                    [f for f in files \
+                    if (f.dir == d and f.date_range in dataset.date_range)]
                 )
-        
         if not dataset.remote_resource:
             raise DataQueryFailure(dataset, 
                 "Couldn't cover date range {} with files in {}".format(
                     dataset.date_range, self.root_dir))
 
-    def _optimize_data_fetching(self, datasets):
-        cmpts = self._select_model_component(datasets)
-        for ds in datasets:
-            files = [f for f in ds.remote_resource if (f.component in cmpts)]
-            # take longest chunk frequency (revisit?)
-            chunk_freq = max({f.chunk_freq for f in files})
-            ds.remote_resource = [f for f in files if (f.chunk_freq == chunk_freq)]
-            assert ds.remote_resource # shouldn't have eliminated everything
-        return datasets
+    def plan_data_fetching(self):
+        """Filter files on model component and chunk frequency.
+        """
+        cmpts = self._select_model_component(self.iter_vars())
+        for var in self.iter_vars():
+            cmpt = self._heuristic_component_tiebreaker( \
+                {f.component for f in var.remote_resource if (f.component in cmpts)} \
+            )
+            # take shortest chunk frequency (revisit?)
+            chunk_freq = min(f.chunk_freq \
+                for f in var.remote_resource if (f.component == cmpt))
+            var.remote_resource = [f for f in var.remote_resource \
+                if (f.chunk_freq == chunk_freq and f.component == cmpt)]
+            assert var.remote_resource # shouldn't have eliminated everything
+        return super(GfdlppDataManager, self).plan_data_fetching()
+
+    @staticmethod
+    def _heuristic_component_tiebreaker(str_list):
+        """Determine experiment component(s) from heuristics.
+
+        1. If we're passed multiple components, select those containing 'cmip'.
+
+        2. If that selects multiple components, break the tie by selecting the 
+            component with the fewest words (separated by '_'), or, failing that, 
+            the shortest overall name.
+
+        Args:
+            str_list (:obj:`list` of :obj:`str`:): list of component names.
+
+        Returns: :obj:`str`: name of component that breaks the tie.
+        """
+        def _heuristic_tiebreaker_sub(strs):
+            min_len = min(len(s.split('_')) for s in strs)
+            strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
+            if len(strs2) == 1:
+                return strs2[0]
+            else:
+                return min(strs2, key=len)
+
+        cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+        if cmip_list:
+            return _heuristic_tiebreaker_sub(cmip_list)
+        else:
+            return _heuristic_tiebreaker_sub(str_list)
 
     def _select_model_component(self, datasets):
         """Determine experiment component(s) from heuristics.
@@ -218,41 +322,24 @@ class GfdlppDataManager(DataManager):
             components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
             and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
 
-        2. If multiple components satisfy (1) equally well, select those
-            containing 'cmip'.
-
-        3. If we still have multiple components satisfying (1) and (2), break the
-            tie by selecting the one with the fewest words (separated by '_'), 
-            or, failing that, the shortest overall name.
+        2. If multiple components satisfy (1) equally well, use a tie-breaking 
+            heuristic (:meth:`~gfdl.GfdlppDataManager._heuristic_component_tiebreaker`). 
 
         Args:
-            dataset (:obj:`list` of :class:`~data_manager.DataManager.DataSet`):
+            datasets (iterable of :class:`~data_manager.DataManager.DataSet`): 
+                Collection of all variables being requested in this DataManager.
 
         Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
 
         Raises: AssertionError if problem is unsatisfiable. This indicates some
             error in the input data.
         """
-        def _heuristic_tiebreaker(str_list):
-            cmip_list = [s for s in str_list if ('cmip' in s.lower())]
-            if cmip_list:
-                return _heuristic_tiebreaker_sub(cmip_list)
-            else:
-                return _heuristic_tiebreaker_sub(str_list)
-
-        def _heuristic_tiebreaker_sub(str_list):
-            min_len = min(len(s.split('_')) for s in str_list)
-            str_list2 = [s for s in str_list if (len(s.split('_')) == min_len)]
-            if len(str_list2) == 1:
-                return str_list2[0]
-            else:
-                return min(str_list2, key=len)
-
+        all_idx = set()
         d = defaultdict(set)
         for idx, ds in enumerate(datasets):
             for ds_file in ds.remote_resource:
                 d[ds_file.component].add(idx)
-        all_idx = set(range(len(datasets)))
+            all_idx.add(idx)
         assert set(e for s in d.values() for e in s) == all_idx
 
         covered_idx = set()
@@ -261,7 +348,7 @@ class GfdlppDataManager(DataManager):
             # max() with key=... only returns one entry if there are duplicates
             # so we need to do two passes in order to call our tiebreaker logic
             max_uncovered = max(len(val - covered_idx) for val in d.values())
-            cmpt_to_add = _heuristic_tiebreaker(
+            cmpt_to_add = self._heuristic_component_tiebreaker(
                 [key for key,val in d.iteritems() \
                     if (len(val - covered_idx) == max_uncovered)]
             )
@@ -280,29 +367,52 @@ class GfdlppDataManager(DataManager):
             process?
         - gcp --sync does this already.
         """
-        return os.path.getmtime(dataset.local_resource) \
-            >= os.path.getmtime(dataset.remote_resource)
+        return False
+        # return os.path.getmtime(dataset.local_resource) \
+        #     >= os.path.getmtime(dataset.remote_resource)
 
-    def fetch_dataset(self, dataset):
-        if any([self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']]):
-            cp_command = ['gcp','--sync']
-            smartsite = 'gfdl:'
-        else:
-            cp_command = ['ln', '-fs']
-            smartsite = ''
-        dataset.nohash_tempdir = dataset.tempdir()
-        paths = util.PathManager()
-        paths.make_tempdir(new_dir=dataset.nohash_tempdir) + os.sep 
-        # TODO: Do something intelligent with logging, caught OSErrors
-        for f in dataset.remote_resource:
+    def fetch_dataset(self, dataset, method='auto', dry_run=False):
+        """Copy files to temporary directory and combine chunks.
+        """
+        (cp_command, smartsite) = self._determine_fetch_method(method)
+        
+        if len(dataset.remote_resource) == 1:
+            # one chunk, no need to ncrcat
             util.run_command( \
                 cp_command + [
+                    smartsite + os.path.join(self.root_dir, dataset.remote_resource), 
+                    dataset.local_resource
+            ])
+        else:
+            paths = util.PathManager()
+            dataset.nohash_tempdir = paths.make_tempdir(new_dir=dataset.tempdir())
+            chunks = []
+            # TODO: Do something intelligent with logging, caught OSErrors
+            for f in dataset.remote_resource:
+                util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f.remote_resource), 
                     # gcp requires trailing slash, ln ignores it
                     smartsite + dataset.nohash_tempdir + os.sep
-            ]) 
-        util.run_command(['ncrcat', '*.nc', dataset.local_resource], 
-            cwd=dataset.nohash_tempdir)
+                ]) 
+                chunks.append(f.file)
+            # not running in shell, so can't use glob expansion.
+            util.run_command(['ncrcat'] + chunks + [dataset.local_resource], 
+                cwd=dataset.nohash_tempdir)
+            # TODO: trim ncrcat'ed files to actual time period
+            # temp files cleaned up by data_manager.tearDown
+
+    def _determine_fetch_method(self, method='auto'):
+        _methods = {
+            'gcp': {'command': ['gcp', '--sync'], 'site':'gfdl:'},
+            'cp':  {'command': ['cp'], 'site':''},
+            'ln':  {'command': ['ln', '-fs'], 'site':''}
+        }
+        if method not in _methods:
+            if any(self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']):
+                method = 'gcp' # use GCP for DMF filesystems
+            else:
+                method = 'ln' # symlink for local files
+        return (_methods[method]['command'], _methods[method]['site'])
 
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.

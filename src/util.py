@@ -6,6 +6,8 @@ import sys
 import re
 import glob
 import shlex
+import shutil
+import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -66,6 +68,8 @@ class PathManager(Singleton):
                     'Error: {} not initialized.'.format(var)
                 self.__setattr__(var, arg_dict[var])
 
+        self._temp_dirs = []
+
     def modelPaths(self, case):
         d = {}
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
@@ -81,6 +85,26 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
+    def make_tempdir(self, new_dir=None):
+        temp_root = tempfile.gettempdir()
+        if new_dir is None:
+            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_', dir=temp_root)
+        else:
+            new_dir = os.path.join(temp_root, new_dir)
+            if not os.path.isdir(new_dir):
+                os.makedirs(new_dir)
+        assert new_dir not in self._temp_dirs
+        self._temp_dirs.append(new_dir)
+        return new_dir
+
+    def rm_tempdir(self, path):
+        assert path in self._temp_dirs
+        self._temp_dirs.remove(path)
+        shutil.rmtree(path)
+
+    def cleanup(self):
+        for d in self._temp_dirs:
+            self.rm_tempdir(d)
 
 class BiDict(dict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
@@ -151,6 +175,147 @@ class VariableTranslator(Singleton):
             "Variable name translation doesn't recognize {}.".format(convention)
         return self.field_dict[convention][varname_in]
 
+
+class Namespace(dict):
+    """ A dictionary that provides attribute-style access.
+
+    For example, `d['key'] = value` becomes `d.key = value`. All methods of 
+    :obj:`dict` are supported.
+
+    Note: recursive access (`d.key.subkey`, as in C-style languages) is not
+        supported.
+
+    Implementation is based on `https://github.com/Infinidat/munch`_.
+    """
+
+    # only called if k not found in normal places
+    def __getattr__(self, k):
+        """ Gets key if it exists, otherwise throws AttributeError.
+            nb. __getattr__ is only called if key is not found in normal places.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            return object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                return self[k]
+            except KeyError:
+                raise AttributeError(k)
+
+    def __setattr__(self, k, v):
+        """ Sets attribute k if it exists, otherwise sets key k. A KeyError
+            raised by set-item (only likely if you subclass Namespace) will
+            propagate as an AttributeError instead.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                self[k] = v
+            except:
+                raise AttributeError(k)
+        else:
+            object.__setattr__(self, k, v)
+
+    def __delattr__(self, k):
+        """ Deletes attribute k if it exists, otherwise deletes key k. A KeyError
+            raised by deleting the key--such as when the key is missing--will
+            propagate as an AttributeError instead.
+        """
+        try:
+            # Throws exception if not in prototype chain
+            object.__getattribute__(self, k)
+        except AttributeError:
+            try:
+                del self[k]
+            except KeyError:
+                raise AttributeError(k)
+        else:
+            object.__delattr__(self, k)
+
+    def __dir__(self):
+        return self.keys()
+    __members__ = __dir__  # for python2.x compatibility
+
+    def __repr__(self):
+        """ Invertible* string-form of a Munch.
+            (*) Invertible so long as collection contents are each repr-invertible.
+        """
+        return '{0}({1})'.format(self.__class__.__name__, dict.__repr__(self))
+
+    def __getstate__(self):
+        """ Implement a serializable interface used for pickling.
+        See https://docs.python.org/3.6/library/pickle.html.
+        """
+        return {k: v for k, v in self.items()}
+
+    def __setstate__(self, state):
+        """ Implement a serializable interface used for pickling.
+        See https://docs.python.org/3.6/library/pickle.html.
+        """
+        self.clear()
+        self.update(state)
+
+    def toDict(self):
+        """ Recursively converts a Namespace back into a dictionary.
+        """
+        return type(self)._toDict(self)
+
+    @classmethod
+    def _toDict(cls, x):
+        """ Recursively converts a Namespace back into a dictionary.
+            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        """
+        if isinstance(x, dict):
+            return dict((k, cls._toDict(v)) for k, v in x.iteritems())
+        elif isinstance(x, (list, tuple)):
+            return type(x)(cls._toDict(v) for v in x)
+        else:
+            return x
+
+    @property
+    def __dict__(self):
+        return self.toDict()
+
+    @classmethod
+    def fromDict(cls, x):
+        """ Recursively transforms a dictionary into a Namespace via copy.
+            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        """
+        if isinstance(x, dict):
+            return cls((k, cls.fromDict(v)) for k, v in x.iteritems())
+        elif isinstance(x, (list, tuple)):
+            return type(x)(cls.fromDict(v) for v in x)
+        else:
+            return x
+
+    def copy(self):
+        return type(self).fromDict(self)
+    __copy__ = copy
+
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        We do this to enable comparison of two Namespaces, which otherwise would 
+        be done by the default method of testing if the two objects refer to the
+        same location in memory.
+        See `https://stackoverflow.com/a/45170549`_.
+        """
+        d = self.toDict()
+        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return (self._freeze() == other._freeze())
+        else:
+            return False
+    def __ne__(self, other):
+        return (not self.__eq__(other)) # more foolproof
+
+    def __hash__(self):
+        return hash(self._freeze())
+
 # ------------------------------------
 
 def read_yaml(file_path, verbose=0):
@@ -213,6 +378,36 @@ def resolve_path(path, root_path=''):
             assert os.path.isabs(root_path)
         return os.path.normpath(os.path.join(root_path, path))
 
+def find_files(root_dir, pattern):
+    """Return list of files in `root_dir` matching `pattern`. 
+
+    Wraps the unix `find` command (`locate` would be much faster but there's no
+    way to query if its DB is current). 
+
+    Args:
+        root_dir (:obj:`str`): Directory to search for files in.
+        pattern (:obj:`str`): Patterrn to match. This is a shell globbing pattern,
+            not a full regex. Default is to match filenames only, unless the
+            pattern contains a directory separator, in which case the match will
+            be done on the entire path relative to `root_dir`.
+
+    Returns: :obj:`list` of relative paths to files matching `pattern`. Paths are
+        relative to `root_dir`. If no files are found, the list is empty.
+    """
+    if os.sep in pattern:
+        pattern_flag = '-path' # searching whole path
+    else:
+        pattern_flag = '-name' # search filename only 
+    paths = run_command([
+        'find', os.path.normpath(root_dir), '-depth', '-type', 'f', 
+        pattern_flag, pattern
+        ])
+    # strip out root_dir part of path: get # of chars in root_dir (plus terminating
+    # separator) and return remainder. Could do this with '-printf %P' in GNU find
+    # but BSD find (mac os) doesn't have that.
+    prefix_length = len(os.path.normpath(root_dir)) + 1 
+    return [p[prefix_length:] for p in paths]
+
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.
     
@@ -239,7 +434,50 @@ def poll_command(command, shell=False, env=None):
     rc = process.poll()
     return rc
 
-def run_commands(commands, env=None, cwd=None):
+def run_command(command, env=None, cwd=None):
+    """Subprocess wrapper to facilitate running single command without starting
+    a shell.
+
+    Note:
+        We hope to save some process overhead by not running the command in a
+        shell, but this means the command can't use piping, quoting, environment 
+        variables, or filename globbing etc.
+
+    See documentation for the Python2 `subprocess 
+    <https://docs.python.org/2/library/subprocess.html>`_ module.
+
+    Args:
+        command (list of :obj:`str`): List of commands to execute
+        env (:obj:`dict`, optional): environment variables to set, passed to 
+            `Popen`, default `None`.
+        cwd (:obj:`str`, optional): child processes' working directory, passed
+            to `Popen`. Default is `None`, which uses parent processes' directory.
+
+    Returns:
+        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        by each command. Note: this is split on newlines after the fact.
+
+    Raises:
+        CalledProcessError: If any commands return with nonzero exit code.
+            Stderr for that command is stored in `output` attribute.
+    """
+    if type(command) == str:
+        command = shlex.split(command)
+    proc = subprocess.Popen(
+        command, shell=False, env=env, cwd=cwd,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, bufsize=0
+    )
+    (stdout, stderr) = proc.communicate()
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(
+            returncode=proc.returncode, cmd=' '.join(command), output=stderr)
+    if '\0' in stdout:
+        return stdout.split('\0')
+    else:
+        return stdout.splitlines()
+
+def run_shell_commands(commands, env=None, cwd=None):
     """Subprocess wrapper to facilitate running multiple shell commands.
 
     See documentation for the Python2 `subprocess 
@@ -284,16 +522,6 @@ def run_commands(commands, env=None, cwd=None):
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def makefilepath(varname,timefreq,casename,datadir):
-    """ 
-    USAGE (varname, timefreq, casename, datadir )
-        str varname  (as set by src/config_*.yml.py)
-        str timefreq "mon","day","6hr","3hr","1hr"
-        str datadir directory where model data lives
-
-    """
-    return datadir+"/"+timefreq+"/"+casename+"."+varname+"."+timefreq+".nc"
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

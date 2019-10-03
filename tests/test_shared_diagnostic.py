@@ -182,61 +182,6 @@ class TestDiagnosticSetUp(unittest.TestCase):
         pod = Diagnostic('A') 
         self.assertRaises(AssertionError, pod._check_pod_driver)
 
-    # ---------------------------------------------------
-
-    os_environ_check_for_varlist_files = {
-        'DIAG_HOME':'/HOME',
-        'DATADIR':'/A', 'CASENAME': 'B', 'prc_var':'PRECC'}
-
-    @mock.patch.dict('os.environ', os_environ_check_for_varlist_files)
-    @mock.patch('os.path.isfile', return_value = True)
-    def test_check_for_varlist_files_found(self, mock_isfile):
-        # case file is found
-        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon'}]
-        pod = Diagnostic.__new__(Diagnostic) # bypass __init__
-        pod.model = 'A'
-        f = pod._check_for_varlist_files(test_vars)
-        self.assertEqual(f['found_files'], ['/A/mon/B.PRECT.mon.nc'])
-        self.assertEqual(f['missing_files'], [])
-
-    @mock.patch.dict('os.environ', os_environ_check_for_varlist_files)
-    @mock.patch('os.path.isfile', return_value = False)
-    def test_check_for_varlist_files_not_found(self, mock_isfile):
-        # case file is required and not found
-        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True}]
-        pod = Diagnostic.__new__(Diagnostic) # bypass __init__
-        pod.model = 'A'
-        f = pod._check_for_varlist_files(test_vars)
-        self.assertEqual(f['found_files'], [])
-        self.assertEqual(f['missing_files'], ['/A/mon/B.PRECT.mon.nc'])
-
-    @mock.patch.dict('os.environ', os_environ_check_for_varlist_files)
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_optional(self, mock_isfile):
-        # case file is optional and not found
-        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': False}]
-        pod = Diagnostic.__new__(Diagnostic) # bypass __init__ 
-        pod.model = 'A'
-        f = pod._check_for_varlist_files(test_vars)
-        self.assertEqual(f['found_files'], [])
-        self.assertEqual(f['missing_files'], [])
-
-    @mock.patch.dict('os.environ', os_environ_check_for_varlist_files)
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_alternate(self, mock_isfile):
-        # case alternate variable is specified and found
-        test_vars = [{'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True, 'alternates':['PRECC']}]
-        pod = Diagnostic.__new__(Diagnostic) # bypass __init__ 
-        pod.convention = 'not_CF'
-        f = pod._check_for_varlist_files(test_vars)
-        # name_in_model translation now done in DataManager._setup_pod
-        self.assertEqual(f['found_files'], ['/A/mon/B.PRECC.mon.nc'])
-        self.assertEqual(f['missing_files'], [])
-
 class TestDiagnosticTearDown(unittest.TestCase):
 
     def setUp(self):

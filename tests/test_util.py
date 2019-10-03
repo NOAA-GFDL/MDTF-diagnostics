@@ -7,56 +7,7 @@ from src.data_manager import DataManager
 from src.shared_diagnostic import Diagnostic
 from subprocess import CalledProcessError
 
-class TestUtil(unittest.TestCase):
-
-    def test_read_yaml(self):
-        pass
-
-    def test_write_yaml(self):
-        pass
-
-    def test_get_available_programs(self):
-        pass
-
-    def test_makefilepath(self):
-        pass
-
-    # ---------------------------------------------------
-    
-    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
-    def test_setenv_overwrite(self):
-        test_d = {'TEST_OVERWRITE': 'A'}
-        util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
-        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
-        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_str(self):
-        test_d = {}
-        util.setenv('TEST_STR','B', test_d)
-        self.assertEqual(test_d['TEST_STR'], 'B')
-        self.assertEqual(os.environ['TEST_STR'], 'B')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_int(self):
-        test_d = {}        
-        util.setenv('TEST_INT',2019, test_d)
-        self.assertEqual(test_d['TEST_INT'], 2019)
-        self.assertEqual(os.environ['TEST_INT'], '2019')
-
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_bool(self):
-        test_d = {}
-        util.setenv('TEST_TRUE',True, test_d)
-        self.assertEqual(test_d['TEST_TRUE'], True)
-        self.assertEqual(os.environ['TEST_TRUE'], '1')
-
-        util.setenv('TEST_FALSE',False, test_d)
-        self.assertEqual(test_d['TEST_FALSE'], False)
-        self.assertEqual(os.environ['TEST_FALSE'], '0')
-
-    # ---------------------------------------------------
-
+class TestBasicClasses(unittest.TestCase):
     def test_singleton(self):
         # Can only be instantiated once
         class Temp1(util.Singleton):
@@ -99,6 +50,101 @@ class TestUtil(unittest.TestCase):
         temp = util.BiDict({'a':1, 'b':2})
         del temp['b']
         self.assertNotIn(2, temp.inverse)
+
+    def test_namespace_basic(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertEqual(test.name, 'A')
+        self.assertEqual(test.B, 'C')
+        with self.assertRaises(AttributeError):
+            temp = test.D
+        test.B = 'D'
+        self.assertEqual(test.B, 'D')
+
+    def test_namespace_dict_ops(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertIn('B', test)
+        self.assertNotIn('D', test)
+
+    def test_namespace_tofrom_dict(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.toDict()
+        self.assertEqual(test2['name'], 'A')
+        self.assertEqual(test2['B'], 'C')
+        test3 = util.Namespace.fromDict(test2)
+        self.assertEqual(test3.name, 'A')
+        self.assertEqual(test3.B, 'C')
+
+    def test_namespace_copy(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.copy()
+        self.assertEqual(test2.name, 'A')
+        self.assertEqual(test2.B, 'C')
+        test2.B = 'D'
+        self.assertEqual(test.B, 'C')
+        self.assertEqual(test2.B, 'D')
+
+    def test_namespace_hash(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test
+        test3 = test.copy()
+        test4 = test.copy()
+        test4.name = 'not_the_same'
+        test5 = util.Namespace(name='A', B='C')
+        self.assertEqual(test, test2)
+        self.assertEqual(test, test3)
+        self.assertNotEqual(test, test4)
+        self.assertEqual(test, test5)
+        set_test = set([test, test2, test3, test4, test5])
+        self.assertEqual(len(set_test), 2)
+        self.assertIn(test, set_test)
+        self.assertIn(test4, set_test)
+
+class TestUtil(unittest.TestCase):
+
+    def test_read_yaml(self):
+        pass
+
+    def test_write_yaml(self):
+        pass
+
+    def test_get_available_programs(self):
+        pass
+
+    # ---------------------------------------------------
+    
+    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
+    def test_setenv_overwrite(self):
+        test_d = {'TEST_OVERWRITE': 'A'}
+        util.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
+        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
+        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_str(self):
+        test_d = {}
+        util.setenv('TEST_STR','B', test_d)
+        self.assertEqual(test_d['TEST_STR'], 'B')
+        self.assertEqual(os.environ['TEST_STR'], 'B')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_int(self):
+        test_d = {}        
+        util.setenv('TEST_INT',2019, test_d)
+        self.assertEqual(test_d['TEST_INT'], 2019)
+        self.assertEqual(os.environ['TEST_INT'], '2019')
+
+    @mock.patch.dict('os.environ', {})
+    def test_setenv_bool(self):
+        test_d = {}
+        util.setenv('TEST_TRUE',True, test_d)
+        self.assertEqual(test_d['TEST_TRUE'], True)
+        self.assertEqual(os.environ['TEST_TRUE'], '1')
+
+        util.setenv('TEST_FALSE',False, test_d)
+        self.assertEqual(test_d['TEST_FALSE'], False)
+        self.assertEqual(os.environ['TEST_FALSE'], '0')
+
+    # ---------------------------------------------------
 
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'A','var_names':{'B':'D'}})
@@ -327,30 +373,31 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
         self.assertEqual(os.environ['RGB'], 'TEST_CODE_ROOT/src/rgb')
 
+# ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):
-    def test_run_commands_stdout1(self):
+    def test_run_shell_commands_stdout1(self):
         input = 'echo "foo"'
-        out = util.run_commands(input)
+        out = util.run_shell_commands(input)
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], 'foo')
 
-    def test_run_commands_stdout2(self):
+    def test_run_shell_commands_stdout2(self):
         input = ['echo "foo"', 'echo "bar"']
-        out = util.run_commands(input)
+        out = util.run_shell_commands(input)
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'foo')
         self.assertEqual(out[1], 'bar')
         
-    def test_run_commands_exitcode(self):
+    def test_run_shell_commands_exitcode(self):
         input = ['echo "foo"', 'false']
         with self.assertRaises(Exception):
             # I couldn't get this to catch CalledProcessError specifically,
             # maybe because it takes args?
-            util.run_commands(input)
+            util.run_shell_commands(input)
 
-    def test_run_commands_envvars(self):
+    def test_run_shell_commands_envvars(self):
         input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
-        out = util.run_commands(input, env={'FOO':'bar'})
+        out = util.run_shell_commands(input, env={'FOO':'bar'})
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'bar')
         self.assertEqual(out[1], 'baz')
@@ -366,6 +413,18 @@ class TestSubprocessInteraction(unittest.TestCase):
     def test_poll_command_error(self):
         rc = util.poll_command(['false'], shell=False)
         self.assertEqual(rc, 1)
+
+    def test_run_command_stdout1(self):
+        out = util.run_command(['echo', '"foo"'])
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '"foo"')
+
+    def test_run_command_exitcode(self):
+        input = ['exit', '1']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_command(input)
 
 # ---------------------------------------------------
 

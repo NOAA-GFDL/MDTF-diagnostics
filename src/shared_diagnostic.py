@@ -66,7 +66,7 @@ class Diagnostic(object):
         for str_attr in ['program', 'driver', 'long_name', 'description', 
             'env', 'convention']:
             d[str_attr] = ''
-        for list_attr in ['varlist', 'found_files', 'missing_files',
+        for list_attr in ['varlist',
             'required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:
             d[list_attr] = []
@@ -128,12 +128,12 @@ class Diagnostic(object):
 
         In order, this 1) sets environment variables specific to the POD, 2)
         creates POD-specific working directories, and 3) checks for the existence
-        of the POD's driver script and requested data files.
+        of the POD's driver script.
 
         Note:
-            The existence of data files is checked here, with 
-            :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files`,
-            but the runtime environment is validated separately as a function of
+            The existence of data files is checked with 
+            :meth:`data_manager.DataManager.fetchData`
+            and the runtime environment is validated separately as a function of
             :meth:`environment_manager.EnvironmentManager.run`. This is because 
             each POD is run in a subprocess (due to the necessity of supporting
             multiple languages) so the validation must take place in that 
@@ -141,16 +141,7 @@ class Diagnostic(object):
         """
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
-
         self._check_pod_driver(verbose)
-        var_files = self._check_for_varlist_files(self.varlist, verbose)
-        self.found_files = var_files['found_files']
-        self.missing_files = var_files['missing_files']
-        if self.missing_files != []:
-            print "WARNING: POD ",self.name," missing required input files:"
-            print self.missing_files
-        else:
-            if (verbose > 0): print "No known missing required input files"
 
     def _set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
@@ -236,57 +227,6 @@ class Diagnostic(object):
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
         errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name    
-
-    def _check_for_varlist_files(self, varlist, verbose=0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
-
-        Args:
-            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.yml file.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns:
-            Dict with two entries, ``found_files`` and ``missing_files``, containing
-                lists of paths to found and missing data files, respectively.
-        """
-        translate = util.VariableTranslator()
-        func_name = "\t \t check_for_varlist_files :"
-        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
-        found_list = []
-        missing_list = []
-        for item in varlist:
-            if (verbose > 2 ): print func_name +" "+item
-            filepath = util.makefilepath(item['name_in_model'],item['freq'],os.environ['CASENAME'],os.environ['DATADIR'])
-
-            if (os.path.isfile(filepath)):
-                print "found ",filepath
-                found_list.append(filepath)
-                continue
-            if (not item['required']):
-                print "WARNING: optional file not found ",filepath
-                continue
-            if not (('alternates' in item) and (len(item['alternates'])>0)):
-                print "ERROR: missing required file ",filepath,". No alternatives found"
-                missing_list.append(filepath)
-            else:
-                alt_list = item['alternates']
-                print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
-                for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
-                    if (verbose > 1): print "\t \t examining alternative ",alt_item
-                    new_var = item.copy()  # modifyable dict with all settings from original
-                    new_var['name_in_model'] = alt_item # translation done in DataManager._setup_pod()
-                    del new_var['alternates']    # remove alternatives (could use this to implement multiple options)
-                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files",new_var
-                    new_files = self._check_for_varlist_files([new_var],verbose=verbose)
-                    found_list.extend(new_files['found_files'])
-                    missing_list.extend(new_files['missing_files'])
-
-        if (verbose > 2): print "check_for_varlist_files returning ",missing_list
-        # remove empty list entries
-        files = {}
-        files['found_files'] = [x for x in found_list if x]
-        files['missing_files'] = [x for x in missing_list if x]
-        return files
 
     # -------------------------------------
 

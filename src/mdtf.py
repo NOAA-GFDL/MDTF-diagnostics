@@ -133,13 +133,14 @@ def argparse_wrapper():
         del d[key]
     return d
 
-def manual_dispatch(module_name, class_name):
-    try:
-        return getattr(module_name, class_name)
-    except:
-        return getattr(gfdl, class_name) # also look in GFDL-specific classes
-    except:
-        print "No class named {}.".format(class_name)
+def manual_dispatch(class_name):
+    for mod in [data_manager, environment_manager, gfdl]:
+        try:
+            return getattr(mod, class_name)
+        except:
+            continue
+    print "No class named {}.".format(class_name)
+    raise Exception('no_class')
 
 if __name__ == '__main__':
     print "==== Starting "+__file__
@@ -152,7 +153,7 @@ if __name__ == '__main__':
     config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
     
     verbose = config['settings']['verbose']
-    PathManager(config['paths']) # initialize
+    util.PathManager(config['paths']) # initialize
     util.set_mdtf_env_vars(config, verbose)
     DataMgr = manual_dispatch(
         config['settings']['data_manager'].title()+'DataManager'

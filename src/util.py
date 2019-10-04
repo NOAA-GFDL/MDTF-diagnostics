@@ -11,7 +11,7 @@ import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
-    except (ImportError, ModuleNotFoundError):
+    except ImportError:
         import subprocess
 else:
     import subprocess

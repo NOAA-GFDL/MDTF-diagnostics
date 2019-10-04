@@ -60,7 +60,7 @@ import environment_manager
 from shared_diagnostic import Diagnostic
 try:
     import gfdl
-except (ImportError, ModuleNotFoundError):
+except ImportError:
     print  
 
 def process_frepp_stub():

@@ -127,7 +127,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 
 class GfdlppDataManager(DataManager):
-    def __init__(self, root_dir, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, verbose=0):
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
@@ -140,8 +140,9 @@ class GfdlppDataManager(DataManager):
             if not os.path.isdir(tempfile.tempdir):
                 os.makedirs(tempfile.tempdir)
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
-        assert os.path.isdir(root_dir)
-        self.root_dir = root_dir
+        assert ('root_dir' in case_dict)
+        assert os.path.isdir(case_dict['root_dir'])
+        self.root_dir = case_dict['root_dir']
 
         # load required modules
         modMgr = ModuleManager()

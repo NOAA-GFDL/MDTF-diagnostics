@@ -39,7 +39,7 @@ while getopts "vp:a:b:c:z:" opt; do
         a) # look for python module
            # tail -n necessary to avoid getting broken pipe errors?
            # also can't figure out how to disable pip's python2.7 warning
-            if pip list --no-color --disable-pip-version-check | tail -n +1 | grep -qF ${OPTARG}; then
+            if pip list --disable-pip-version-check | tail -n +1 | grep -qF ${OPTARG}; then
                 if [ "$verbose" = true ]; then
                     echo "pip list found python module ${OPTARG}."
                 fi

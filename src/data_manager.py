@@ -213,12 +213,24 @@ class DataManager(object):
                     raise
             pod.varlist = new_varlist
 
+        # TODO: better way to handle these two options
         data_to_fetch = self.plan_data_fetching()
-        for file_ in data_to_fetch:
-            self.fetch_dataset(file_)
+        if data_to_fetch is not None:
+            # explicit list of files/resources
+            for file_ in data_to_fetch:
+                self.fetch_dataset(file_)
+        else:
+            # fetch_dataset will figure out files from info in vars
+            for var in self.iter_vars():
+                self.fetch_dataset(var)
+
         # do translation/ transformations of data here
+        self.process_fetched_data()
+
         for pod in self.pods:
             var_files = self._check_for_varlist_files(pod.varlist, verbose)
+            # TODO: raise exception here instead
+            pod.missing_files = var_files['missing_files']
             if var_files['missing_files'] != []:
                 print "WARNING: POD ",pod.name," missing required input files:"
                 print var_files['missing_files']
@@ -294,6 +306,9 @@ class DataManager(object):
     def fetch_dataset(self, dataset):
         pass
 
+    @abstractmethod
+    def process_fetched_data(self):
+        pass
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Verify that all data files needed by a POD exist locally.
@@ -403,3 +418,6 @@ class LocalfileDataManager(DataManager):
 
     def fetch_dataset(self, dataset):
         dataset.local_resource = dataset.remote_resource
+
+    def process_fetched_data(self):
+        pass

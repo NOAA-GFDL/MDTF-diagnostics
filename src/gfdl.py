@@ -165,7 +165,7 @@ class GfdlppDataManager(DataManager):
         if match:
             assert match.group('component') == match.group('component2')
             ds = DataSet(**(match.groupdict()))
-            ds.remote_resource = path
+            ds.remote_resource = os.path.join(self.root_dir, path)
             (ds.dir, ds.file) = os.path.split(path)
             del ds.component2
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
@@ -287,7 +287,9 @@ class GfdlppDataManager(DataManager):
             var.remote_resource = [f for f in var.remote_resource \
                 if (f.chunk_freq == chunk_freq and f.component == cmpt)]
             assert var.remote_resource # shouldn't have eliminated everything
-        return super(GfdlppDataManager, self).plan_data_fetching()
+        # don't return files, instead fetch_dataset iterates through vars
+        return None
+        # return super(GfdlppDataManager, self).plan_data_fetching()
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
@@ -374,34 +376,37 @@ class GfdlppDataManager(DataManager):
         # return os.path.getmtime(dataset.local_resource) \
         #     >= os.path.getmtime(dataset.remote_resource)
 
-    def fetch_dataset(self, dataset, method='auto', dry_run=False):
+    def fetch_dataset(self, ds_var, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """
         (cp_command, smartsite) = self._determine_fetch_method(method)
-        
-        if len(dataset.remote_resource) == 1:
+        if len(ds_var.remote_resource) == 1:
             # one chunk, no need to ncrcat
             util.run_command( \
                 cp_command + [
-                    smartsite + os.path.join(self.root_dir, dataset.remote_resource), 
-                    dataset.local_resource
+                    smartsite + os.path.join(self.root_dir, ds_var.remote_resource), 
+                    ds_var.local_resource
             ])
         else:
             paths = util.PathManager()
-            dataset.nohash_tempdir = paths.make_tempdir(new_dir=dataset.tempdir())
+            ds_var.nohash_tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
-            for f in dataset.remote_resource:
-                print "copying {} to {}".format(f.remote_resource, dataset.nohash_tempdir)
+            for f in ds_var.remote_resource:
+                print "copying {} to {}".format(f.remote_resource, ds_var.nohash_tempdir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f.remote_resource), 
                     # gcp requires trailing slash, ln ignores it
-                    smartsite + dataset.nohash_tempdir + os.sep
+                    smartsite + ds_var.nohash_tempdir + os.sep
                 ]) 
                 chunks.append(f.file)
+            # ncrcat will error instead of creating destination directories
+            dest_dir, _ = os.path.split(ds_var.local_resource)
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            util.run_command(['ncrcat'] + chunks + [dataset.local_resource], 
-                cwd=dataset.nohash_tempdir)
+            util.run_command(['ncrcat', '-O'] + chunks + [ds_var.local_resource], 
+                cwd=ds_var.nohash_tempdir)
             # TODO: trim ncrcat'ed files to actual time period
             # temp files cleaned up by data_manager.tearDown
 
@@ -417,6 +422,9 @@ class GfdlppDataManager(DataManager):
             else:
                 method = 'ln' # symlink for local files
         return (_methods[method]['command'], _methods[method]['site'])
+
+    def process_fetched_data(self):
+        pass
 
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.

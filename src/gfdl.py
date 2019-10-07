@@ -94,17 +94,16 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
-    def activate_env_command(self, pod):
+    def activate_env_commands(self, pod):
         mod_name = _current_module_versions[pod.env]
-        parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
-            self).activate_env_command(pod)
-        return 'module load {} && {}'.format(mod_name, parent_cmd)
+        return ['source $MODULESHOME/init/bash',
+            'module load {}'.format(mod_name)] \
+            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(pod)
 
-    def deactivate_env_command(self, pod):
+    def deactivate_env_commands(self, pod):
         mod_name = _current_module_versions[pod.env]
-        parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
-            self).deactivate_env_command(pod)
-        return '{} && module unload {}'.format(parent_cmd, mod_name)
+        return super(GfdlvirtualenvEnvironmentManager, \
+            self).deactivate_env_commands(pod) + ['module unload {}'.format(mod_name)]
 
     def tearDown(self):
         super(GfdlvirtualenvEnvironmentManager, self).tearDown()

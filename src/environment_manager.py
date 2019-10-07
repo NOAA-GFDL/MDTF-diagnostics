@@ -41,11 +41,11 @@ class EnvironmentManager(object):
         pass 
 
     @abstractmethod
-    def activate_env_command(self, pod):
+    def activate_env_commands(self, pod):
         pass 
 
     @abstractmethod
-    def deactivate_env_command(self, pod):
+    def deactivate_env_commands(self, pod):
         pass 
 
     @abstractmethod
@@ -76,18 +76,18 @@ class EnvironmentManager(object):
 
             pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
 
-            run_command = pod.run_command()          
+            run_command = pod.run_commands()          
             if self.test_mode:
-                run_command = 'echo "TEST MODE: would call {}"'.format(run_command)
-            commands = [
-                self.activate_env_command(pod), pod.validate_command(), 
-                run_command, self.deactivate_env_command(pod)
-                ]
+                run_command = ['echo "TEST MODE: would call {}"'.format(run_command)]
+            commands = self.activate_env_commands(pod) \
+                + pod.validate_commands() \
+                + run_command \
+                + self.deactivate_env_commands(pod)
             # '&&' so we abort if any command in the sequence fails.
             commands = ' && '.join([s for s in commands if s])
  
-            print("Calling :  "+run_command) # This is where the POD is called #
-            print('Will run in env: '+pod.env)
+            print "Calling : {}".format(run_command)
+            print "Will run in env: {}".format(pod.env)
             start_time = timeit.default_timer()
             try:
                 # Need to run bash explicitly because 'conda activate' sources 
@@ -98,8 +98,8 @@ class EnvironmentManager(object):
                     cwd = pod.POD_WK_DIR,
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
             except OSError as e:
-                print('ERROR :',e.errno,e.strerror)
-                print(" occured with call: " +run_command)
+                print 'ERROR :', e.errno, e.strerror
+                print " occured with call: {}".format(run_command)
 
         # if this were python3 we'd have asyncio, instead wait for each process
         # to terminate and close all log files
@@ -139,11 +139,11 @@ class NoneEnvironmentManager(EnvironmentManager):
     def set_pod_env(self, pod):
         pass
 
-    def activate_env_command(self, pod):
-        return ''
+    def activate_env_commands(self, pod):
+        return []
 
-    def deactivate_env_command(self, pod):
-        return '' 
+    def deactivate_env_commands(self, pod):
+        return []
 
 class VirtualenvEnvironmentManager(EnvironmentManager):
     # create Python virtualenv to manage environments.
@@ -228,25 +228,25 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         else:
             pod.env = 'python'
 
-    def activate_env_command(self, pod):
+    def activate_env_commands(self, pod):
         env_name = pod.env
         if env_name == 'python':
             env_path = os.path.join(self.venv_root, pod.env)
-            return 'source {}/bin/activate'.format(env_path)
+            return ['source {}/bin/activate'.format(env_path)]
         elif env_name == 'r':
             env_path = os.path.join(self.r_lib_root, pod.env)
-            return 'export R_LIBS_USER="{}"'.format(env_path)
+            return ['export R_LIBS_USER="{}"'.format(env_path)]
         else:
-            return ''
+            return []
 
-    def deactivate_env_command(self, pod):
+    def deactivate_env_commands(self, pod):
         env_name = pod.env
         if env_name == 'python':
-            return 'deactivate'
+            return ['deactivate']
         elif env_name == 'r':
-            return 'unset R_LIBS_USER'
+            return ['unset R_LIBS_USER']
         else:
-            return ''
+            return []
 
 
 class CondaEnvironmentManager(EnvironmentManager):
@@ -326,15 +326,15 @@ class CondaEnvironmentManager(EnvironmentManager):
         else:
             pod.env = '_MDTF-diagnostics-python'
 
-    def activate_env_command(self, pod):
+    def activate_env_commands(self, pod):
         # Source conda_init.sh to set things that aren't set b/c we aren't 
         # in an interactive shell.
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
-        return 'source {}/src/conda_init.sh && conda activate {}'.format(
+        return ['source {}/src/conda_init.sh && conda activate {}'.format(
             paths.CODE_ROOT, conda_prefix
-            )
+            )]
 
-    def deactivate_env_command(self, pod):
-        return '' 
+    def deactivate_env_commands(self, pod):
+        return [] 
 

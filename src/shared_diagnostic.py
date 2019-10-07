@@ -230,17 +230,17 @@ class Diagnostic(object):
 
     # -------------------------------------
 
-    def run_command(self):
-        """Produces the shell command to run the POD. Called by 
+    def run_commands(self):
+        """Produces the shell command(s) to run the POD. Called by 
         :meth:`environment_manager.EnvironmentManager.run`.
 
         Returns:
-            (:obj:`str`) Command-line invocation to run the POD.
+            (:obj:`list` of :obj:`str`): Command-line invocation to run the POD.
         """
-        return self.program + ' ' + self.driver
+        return [self.program + ' ' + self.driver]
     
-    def validate_command(self):
-        """Produces the shell command to validate the POD's runtime environment 
+    def validate_commands(self):
+        """Produces the shell command(s) to validate the POD's runtime environment 
         (ie, check for all requested third-party module dependencies.)
 
         Called by :meth:`environment_manager.EnvironmentManager.run`. 
@@ -249,7 +249,8 @@ class Diagnostic(object):
         before the POD is run.
 
         Returns:
-            (:obj:`str`) Command-line invocation to validate the POD's runtime environment.
+            (:obj:`list` of :obj:`str`): Command-line invocation to validate 
+                the POD's runtime environment.
         """
         paths = util.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
@@ -262,7 +263,7 @@ class Diagnostic(object):
             ' -b '.join([''] + self.required_ncl_scripts),
             ' -c '.join([''] + self.required_r_packages)
         ]
-        return ''.join(command)
+        return [''.join(command)]
 
     # -------------------------------------
 

@@ -239,6 +239,7 @@ class GfdlppDataManager(DataManager):
         is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
         because it requires comparing the files found for *all* requested datasets.
         """
+        print "query for ",dataset.name_in_model
         dataset.remote_resource = []
         try:
             if 'component' in dataset:
@@ -248,8 +249,8 @@ class GfdlppDataManager(DataManager):
             else:
                 files = self.search_pp_path( \
                     dataset.name_in_model, dataset.date_freq.format_frepp())
-        except Exception as exc:
-            raise DataQueryFailure(dataset, exc.args[0]) # reraise with full dataset
+        except Exception as ex:
+            raise DataQueryFailure(dataset, str(ex)) # reraise with full dataset
         files = [self.parse_pp_path(f) for f in files]
 
         candidate_dirs = {f.dir for f in files}
@@ -275,6 +276,7 @@ class GfdlppDataManager(DataManager):
         """Filter files on model component and chunk frequency.
         """
         cmpts = self._select_model_component(self.iter_vars())
+        print "Components selected: ", cmpts
         for var in self.iter_vars():
             cmpt = self._heuristic_component_tiebreaker( \
                 {f.component for f in var.remote_resource if (f.component in cmpts)} \
@@ -390,6 +392,7 @@ class GfdlppDataManager(DataManager):
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
             for f in dataset.remote_resource:
+                print "copying {} to {}".format(f.remote_resource, dataset.nohash_tempdir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f.remote_resource), 
                     # gcp requires trailing slash, ln ignores it

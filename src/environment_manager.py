@@ -120,7 +120,7 @@ class EnvironmentManager(object):
         for env in self.envs:
             self.destroy_environment(env)
 
-    def abortHandler(self):
+    def abortHandler(self, *args):
         # kill child processes if we're killed
         # normal operation should call tearDown for organized cleanup
         for pod in self.pods:

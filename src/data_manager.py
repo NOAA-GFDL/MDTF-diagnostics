@@ -122,8 +122,8 @@ class DataManager(object):
 
     def _setup_model_paths(self, verbose=0):
         util.check_required_dirs(
-            already_exist =[self.MODEL_DATA_DIR], 
-            create_if_nec = [self.MODEL_WK_DIR], 
+            already_exist =[], 
+            create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
 
     def _set_model_env_vars(self, config, verbose=0):
@@ -382,10 +382,10 @@ class DataManager(object):
             + ['{}.tar'.format(self.MODEL_WK_DIR), self.MODEL_WK_DIR]
         )
 
-    def abortHandler(self, unittest_flag=False):
+    def abortHandler(self, *args):
         # delete any temp files if we're killed
         # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager(unittest_flag=unittest_flag)
+        paths = util.PathManager()
         paths.cleanup()
 
 

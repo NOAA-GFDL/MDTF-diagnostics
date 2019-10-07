@@ -16,14 +16,25 @@ set fremodule
 set freanalysismodule
 
 # actually run
-set mods="python/2.7.12"
-if ( `where module` != "" ) then
-	module load $mods
+if (! $?MODULESHOME) then       
+	echo "\$MODULESHOME is undefined"
+	exit 1
 else
-	echo 'Module command not found'
-	echo $MODULE_VERSION
-	/usr/local/Modules/$MODULE_VERSION/bin/modulecmd tcsh load $mods
-endif	
+	if ("$MODULESHOME" == "")  then
+		echo "\$MODULESHOME is empty"
+		exit 1
+	else 
+		source $MODULESHOME/init/csh
+		# should probably 'module purge'
+		if ( `where module` == "" ) then
+			echo "Still can't load modules"
+			exit 1
+		endif
+  	endif
+endif
+
+set mods="python/2.7.12"
+module load $mods	
 
 set REPO_DIR=/home/tsj/mdtf/MDTF-diagnostics
 
@@ -40,5 +51,6 @@ else
 endif
 
 echo 'script start'
-python "${REPO_DIR}/src/mdtf.py" "${REPO_DIR}/src/config_frepp.yml" >&! "${REPO_DIR}/frepp_run.log"
+python "${REPO_DIR}/src/mdtf.py" "${REPO_DIR}/src/frepp_config.yml"
+# python "${REPO_DIR}/src/mdtf.py" "${REPO_DIR}/src/frepp_config.yml" >&! "${REPO_DIR}/frepp_run.log"
 echo 'script exit'

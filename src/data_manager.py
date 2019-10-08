@@ -261,12 +261,13 @@ class DataManager(object):
                 print "Couldn't find {}& no alternates".format(dataset.name)
                 raise
             # check for all alternates
-            alt_vars = [dataset.copy(new_name=var_name) for var_name in dataset.alternates]
-            for alt_data in alt_vars:
+            alt_vars = [dataset.copy(new_name=alt_var) for alt_var in dataset.alternates]
+            for alt_var in alt_vars:
+                alt_var.name_in_model = alt_var.name
                 try: 
-                    self.query_dataset(alt_data)
+                    self.query_dataset(alt_var)
                 except DataQueryFailure:
-                    print "Couldn't find alternate data {}".format(alt_data.name)
+                    print "Couldn't find alternate data {}".format(alt_var.name)
                     raise
             return alt_vars
 

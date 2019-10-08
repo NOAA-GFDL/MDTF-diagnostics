@@ -132,8 +132,8 @@ class GfdlppDataManager(DataManager):
         # returned by util.PathManager to be in that location.
         # If we're not, assume we're on a workstation. gcp won't copy to the 
         # usual /tmp, so put temp files in a directory on /net2.
-        if 'FTMPDIR' in os.environ:
-            tempfile.tempdir = os.environ['FTMPDIR']
+        if 'TMPDIR' in os.environ:
+            tempfile.tempdir = os.environ['TMPDIR']
         elif os.path.isdir('/net2'):
             tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
             if not os.path.isdir(tempfile.tempdir):

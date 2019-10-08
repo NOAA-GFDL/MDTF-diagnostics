@@ -1,0 +1,10 @@
+# ==================================================================================================
+# 2.  Wheeler Kiladas plots 
+#     see Wheeler and Kiladis, JAS, vol 56, 374-399, 1999
+#     This uses daily field of U200, U850, OMEGA500, OLR, PRECT to produce wave spectra plots
+#     Each variable should store in a single file. 
+#     the code is in NCL
+# ==================================================================================================
+
+driver Wheeler_Kiladis.py
+long_name Wheeler Kiladas plots 

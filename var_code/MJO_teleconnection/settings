@@ -1,0 +1,10 @@
+# ==================================================================================================
+# 7. MJO teleconnection Diagnostic 
+#   This requires daily-timescale precipitation rate(mm/day), OLR (w/m2), zonal wind (m/s) at 850 and 250-hPa levels and
+#   geopotential height(m) at 250-hPa
+#   For further details see comments section of /var_code/MJO_teleconnection/mjo_teleconnection.py
+#   Each variable should store in a single file. 
+#   The codes are in NCL
+# ==================================================================================================
+driver mjo_teleconnection.py
+long_name MJO teleconnection Diagnostic 

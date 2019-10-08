@@ -1,0 +1,10 @@
+# ==================================================================================================
+# 4.  Convection Transition 
+#   This requires sub-daily-timescale precipitation rate, precipitable water vapor, air temperature
+#     For further documentation & user options, see comments in convective_transition_diag_v1r3.py 
+#   This also requires the following Python modules: 
+#     os, glob, json, dataset, numpy, scipy, matplotlib, networkx, warnings, numba, netcdf4
+#   The code is in Python (2.7)
+# ==================================================================================================
+driver convective_transition_diag_v1r3.py
+long_name Convection Transition 

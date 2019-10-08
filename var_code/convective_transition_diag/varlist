@@ -1,0 +1,23 @@
+# USAGE varlist
+# var_name      time-frequency     [requirement]
+#
+#
+# comments denoted by #
+# - var_name: as found in var_code/util/set_variables_*
+# - time-frequency: mon (monthly), day, 6hr, 3hr, 1hr
+# - requirement = blank  (default = optional)                                          
+#                      required (package cannot run without this)                           
+#                      required unless field_name field_name2 ...
+#
+#   nb. if a variable is required at multiple time frequencies,
+#       list it separately for each one
+#
+#          Clearly the developer can just leave out optional files
+#          However, it is always nice to get an upfront warning of missing files
+#
+
+pr_var       1hr required
+ta_var       1hr required or tave_var
+prw_var      1hr required or ta_var qa_var
+tave_var     1hr required or ta_var qa_var
+qsat_int_var 1hr required or ta_var qa_var

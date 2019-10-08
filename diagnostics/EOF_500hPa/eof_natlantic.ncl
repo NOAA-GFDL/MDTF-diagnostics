@@ -10,8 +10,7 @@ begin
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 rgb = getenv("RGB")
-wkdir = getenv("WKDIR")
-variab_dir = getenv("variab_dir")
+wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
 
 firstyr = stringtointeger(yr1)
@@ -19,7 +18,7 @@ lastyr = stringtointeger(yr2)
 nyrs = lastyr-firstyr
 
 ; get pointer to netcdf file  
- f = addfile (variab_dir+"/EOF_500hPa/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
+ f = addfile (wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
  tmp = f->Z500_ANOM   ; year,lat,lon
  z500 = lonFlip(tmp)
  delete(tmp)
@@ -89,7 +88,7 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
 
 ;************ plots of EOFs *******************
 
- wks = gsn_open_wks ("ps",variab_dir+"/EOF_500hPa/model/PS/"+casename+".natl.eof1")
+ wks = gsn_open_wks ("ps",wk_dir+"/model/PS/"+casename+".natl.eof1")
    
 ; define colormap
  cmap = RGBtoCmap(rgb+"/blueyellowred.rgb")

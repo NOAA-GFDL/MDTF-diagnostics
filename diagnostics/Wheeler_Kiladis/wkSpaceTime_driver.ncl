@@ -4,7 +4,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
-load "$VARCODE/Wheeler_Kiladis/getVarSlice.ncl"
+load "$POD_HOME/getVarSlice.ncl"
 
 ;==================================================================
 ;                     USER INTERFACE 
@@ -31,7 +31,7 @@ print("In wkSpaceTime_driver")
 ;  latBound = stringtointeger(getenv("LATBND"))
   tstride = 1
 ;  tstride = stringtointeger(getenv("TSTRIDE"))
-  diro     = getenv("variab_dir")+"/Wheeler_Kiladis/model/PS/"     ; output dir: location of plots
+  diro     = getenv("WK_DIR")+"/model/PS/"     ; output dir: location of plots
   print ("writing to "+diro)
 ;-------------------------------------------------------------------
 ; spectral input params for wkSpaceTime

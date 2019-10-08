@@ -71,7 +71,7 @@ print("**************************************************")
 
 # ======================================================================
 # Load user-specified parameters (usp) for BINNING and PLOTTING
-# This is in the /var_code/convective_transition_diag folder under
+# This is in the /diagnostics/convective_transition_diag folder under
 #  convecTransBasic_usp_calc.py
 #  & convecTransBasic_usp_plot.py
 print("**************************************************")
@@ -97,20 +97,20 @@ def generate_ncl_plots(nclPlotFile):
       print('WARNING',e.errno,e.strerror)
 
    return 0
-   generate_ncl_plots(os.environ["VARCODE"]+"/convective_transition_diag/interpolate.ncl")
+   generate_ncl_plots(os.environ["POD_HOME"]+"/interpolate.ncl")
 
 
 print("Load user-specified binning parameters..."),
 
 # Create and read user-specified parameters
-os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_usp_calc.py")
-with open(os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_calc_parameters.json") as outfile:
+os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic_usp_calc.py")
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_calc_parameters.json") as outfile:
     bin_data=json.load(outfile)
 print("...Loaded!")
 
 print("Load user-specified plotting parameters..."),
-os.system("python "+os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_usp_plot.py")
-with open(os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_plot_parameters.json") as outfile:
+os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic_usp_plot.py")
+with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_plot_parameters.json") as outfile:
     plot_data=json.load(outfile)
 print("...Loaded!")
 

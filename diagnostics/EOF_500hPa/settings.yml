@@ -32,6 +32,4 @@ varlist:
   - var_name: zg_var
     freq: mon
     requirement: required
-  - var_name: ps_var
-    freq: mon
-    requirement: required
+

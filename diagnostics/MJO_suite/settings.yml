@@ -27,17 +27,19 @@ varlist:
   - var_name: v200_var
     freq: day
     requirement: required
-    alternates: [v_var]
+    alternates: [va_var]
   - var_name: u200_var
     freq: day
     requirement: required
-    alternates: [u_var]   
+    alternates: [ua_var]   
   - var_name: u850_var
     freq: day
     requirement: required
+    alternates: [ua_var] 
   - var_name: v850_var
     freq: day
     requirement: required
+    alternates: [va_var] 
   - var_name: rlut_var
     freq: day
     requirement: required

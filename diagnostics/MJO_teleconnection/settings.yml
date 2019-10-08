@@ -43,9 +43,12 @@ varlist:
   - var_name: u850_var
     freq: day
     requirement: required
+    alternates: [ua_var] 
   - var_name: u250_var
     freq: day
     requirement: required
+    alternates: [ua_var] 
   - var_name: z250_var
     freq: day
     requirement: required
+    alternates: [] 

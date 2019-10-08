@@ -122,8 +122,8 @@ class DataManager(object):
 
     def _setup_model_paths(self, verbose=0):
         util.check_required_dirs(
-            already_exist =[self.MODEL_DATA_DIR], 
-            create_if_nec = [self.MODEL_WK_DIR], 
+            already_exist =[], 
+            create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
 
     def _set_model_env_vars(self, config, verbose=0):
@@ -213,12 +213,24 @@ class DataManager(object):
                     raise
             pod.varlist = new_varlist
 
+        # TODO: better way to handle these two options
         data_to_fetch = self.plan_data_fetching()
-        for file_ in data_to_fetch:
-            self.fetch_dataset(file_)
+        if data_to_fetch is not None:
+            # explicit list of files/resources
+            for file_ in data_to_fetch:
+                self.fetch_dataset(file_)
+        else:
+            # fetch_dataset will figure out files from info in vars
+            for var in self.iter_vars():
+                self.fetch_dataset(var)
+
         # do translation/ transformations of data here
+        self.process_fetched_data()
+
         for pod in self.pods:
             var_files = self._check_for_varlist_files(pod.varlist, verbose)
+            # TODO: raise exception here instead
+            pod.missing_files = var_files['missing_files']
             if var_files['missing_files'] != []:
                 print "WARNING: POD ",pod.name," missing required input files:"
                 print var_files['missing_files']
@@ -294,6 +306,9 @@ class DataManager(object):
     def fetch_dataset(self, dataset):
         pass
 
+    @abstractmethod
+    def process_fetched_data(self):
+        pass
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Verify that all data files needed by a POD exist locally.
@@ -350,8 +365,10 @@ class DataManager(object):
     # -------------------------------------
 
     def tearDown(self, config):
+        # TODO: handle OSErrors in all of these
         self._backup_config_file(config)
         self._make_tar_file()
+        self._copy_to_output()
         paths = util.PathManager()
         paths.cleanup()
 
@@ -377,15 +394,23 @@ class DataManager(object):
             shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
 
         print "Creating {}.tar".format(self.MODEL_WK_DIR)
-        tar_flags = ["--exclude='*.{}'".format(s) for s in ['netCDF','nc','ps','PS']]
-        util.run_command(['tar', '-cf'] + tar_flags \
-            + ['{}.tar'.format(self.MODEL_WK_DIR), self.MODEL_WK_DIR]
+        # not running in shell, so don't need to quote globs
+        tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
+        util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
+            self.MODEL_WK_DIR ] + tar_flags
         )
 
-    def abortHandler(self, unittest_flag=False):
+    def _copy_to_output(self):
+        paths = util.PathManager()
+        if paths.OUTPUT_DIR != paths.WORKING_DIR:
+            if os.path.exists(self.MODEL_OUT_DIR):
+                shutil.rmtree(self.MODEL_OUT_DIR)
+            shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
+
+    def abortHandler(self, *args):
         # delete any temp files if we're killed
         # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager(unittest_flag=unittest_flag)
+        paths = util.PathManager()
         paths.cleanup()
 
 
@@ -403,3 +428,6 @@ class LocalfileDataManager(DataManager):
 
     def fetch_dataset(self, dataset):
         dataset.local_resource = dataset.remote_resource
+
+    def process_fetched_data(self):
+        pass

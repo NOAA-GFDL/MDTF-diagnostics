@@ -11,7 +11,7 @@ import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
-    except (ImportError, ModuleNotFoundError):
+    except ImportError:
         import subprocess
 else:
     import subprocess
@@ -75,6 +75,7 @@ class PathManager(Singleton):
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
+        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         return d
 
     def podPaths(self, pod):
@@ -470,6 +471,7 @@ def run_command(command, env=None, cwd=None):
     )
     (stdout, stderr) = proc.communicate()
     if proc.returncode != 0:
+        print 'Run_command error:', stderr
         raise subprocess.CalledProcessError(
             returncode=proc.returncode, cmd=' '.join(command), output=stderr)
     if '\0' in stdout:
@@ -586,6 +588,7 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
                 if (verbose>0): 
                     print errstr+dir_in+" = "+dir+" directory does not exist"
                     #print "         and not create_if_nec list: "+create_if_nec
+                raise OSError(dir+" directory does not exist")
                 exit()
             else:
                 print(dir_in+" = "+dir+" created")
@@ -624,19 +627,21 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         rel_paths_root = cmdline_args['CODE_ROOT']
 
     # If we're running under frepp, overwrite with that
-    if (frepp_args is not None) and frepp_args['frepp_mode']:
+    if cmdline_args['frepp'] and (frepp_args is not None):
         for section in ['paths', 'settings']:
             for key in default_args[section]:
                 if key in frepp_args:
                     default_args[section][key] = frepp_args[key]
         
+    if 'CASENAME'  in cmdline_args:
         # also set up caselist with frepp data
         default_args['case_list'] = [{
-            'CASENAME': frepp_args['CASENAME'],
+            'CASENAME': cmdline_args['CASENAME'],
             'model': 'CMIP',
             'variable_convention': 'CMIP',
-            'FIRSTYR': frepp_args['FIRSTYR'],
-            'LASTYR': frepp_args['LASTYR']
+            'FIRSTYR': cmdline_args['FIRSTYR'],
+            'LASTYR': cmdline_args['LASTYR'],
+            'root_dir': cmdline_args['CASE_ROOT_DIR']
         }]
 
     # convert relative to absolute paths

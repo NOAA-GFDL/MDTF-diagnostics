@@ -31,7 +31,7 @@ LON_VAR=os.environ["lon_coord"]
 
 # ======================================================================
 # Region mask directory & filename
-REGION_MASK_DIR=os.environ["OBS_DATA"]
+REGION_MASK_DIR=os.environ["VARDATA"]+"/convective_transition_diag"
 REGION_MASK_FILENAME="region_0.25x0.25_costal2.5degExcluded.mat"
 # Number of regions
 #  Use grids with 1<=region<=NUMBER_OF_REGIONS in the mask
@@ -59,7 +59,7 @@ BULK_TROPOSPHERIC_TEMPERATURE_MEASURE=int(os.environ["BULK_TROPOSPHERIC_TEMPERAT
 # ======================================================================
 # Directory & Filename for saving binned results (netCDF4)
 #  tave or qsat_int will be appended to BIN_OUTPUT_FILENAME
-BIN_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/netCDF"
+BIN_OUTPUT_DIR=os.environ["variab_dir"]+"/convective_transition_diag/model/netCDF"
 BIN_OUTPUT_FILENAME=os.environ["CASENAME"]+".convecTransBasic"
 
 # ======================================================================
@@ -227,5 +227,5 @@ TAVE_VAR,\
 QSAT_INT_VAR,\
 BULK_TROPOSPHERIC_TEMPERATURE_MEASURE ]
 
-with open(os.environ["WK_DIR"]+"/"+"convecTransBasic_calc_parameters.json", "w") as outfile:
+with open(os.environ["VARCODE"]+"/convective_transition_diag/"+"convecTransBasic_calc_parameters.json", "w") as outfile:
     json.dump(data, outfile)

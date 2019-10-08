@@ -43,8 +43,8 @@ print("Reading DJF mean ERA-I(1979-2016) zonal wind data .....")
 ;--directory for output files--
 ;---------------------------------------------------------------------------------
 diri    = getenv("DATADIR")+"/day/"                               ;Input data directory
-dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
-diro    = getenv("WK_DIR")+"/model/netCDF/" 
+dirobs  = getenv("VARDATA")+"/"+"MJO_teleconnection/"         ;Output data directory
+diro    = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
 filobsU = "ERAi.1979_2016.DJF.mean.nc"
 filu250   = getenv("u250_file")                   ; input file
 
@@ -93,7 +93,7 @@ print("Reading Model 250hPa zonal wind data")
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
 
 
- Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
+ Ut  = tofloat(b->$u250var$(iStrt:iLast,{25000},:,:))	 	;type: double orig.
  Ut@_FillValue=-999
 
 

@@ -8,9 +8,6 @@ begin
 
 print_clock("Starting model data inteperation")
 
-
-wk_dir = getenv("WK_DIR")
-
 pr_name  = getenv("pr_var")
 prw_name = getenv("prw_var")
 hus_name = getenv("qa_var")
@@ -43,9 +40,9 @@ newpr&time=newtime
 newpr2 = calculate_daily_values (newpr, "avg", 0, False)  
 newtime2=newpr2&time
 
-print("Writing $wk_dir/model/netCDF/model_pr.nc")
-system("rm -f $wk_dir/model/netCDF/model_pr.nc")
-fout = addfile("$wk_dir/model/netCDF/model_pr.nc","c") 
+print("Writing $variab_dir/MJO_prop_amp/model_pr.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model_pr.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model_pr.nc","c") 
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_pr"
@@ -78,9 +75,9 @@ newprw&time=newtime
 newprw2 = calculate_daily_values (newprw, "avg", 0, False)
 newtime2=newprw2&time
 
-print("Writing fout "+"$wk_dir/model/netCDF/model_prw.nc")
-system("rm -f $wk_dir/model/netCDF/model_prw.nc")
-fout = addfile("$wk_dir/model/netCDF/model_prw.nc","c")
+print("Writing fout "+"$variab_dir/MJO_prop_amp/model_prw.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model_prw.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model_prw.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_prw"
@@ -113,9 +110,13 @@ xxm&lon=lon
 
 do itim=0,ntim-1
 hus= filein_hus->$hus_name$(itim,:,:,:)
-ps = hus(1,:,:)*0+1000.       ; surface pressure "Pa"
-opt = (/ 1, 650, 900 /)
-xxm = wgt_vert_avg_beta(lev,hus,ps,0,opt)
+poisson_grid_fill(hus,True,1,1000,1e-2,0.6,0)
+
+ps = hus(1,:,:)*0+100000.       ; surface pressure "Pa"
+;opt = (/ 1, 650, 900 /)
+opt = (/ 1, 60000, 92500 /)
+;xxm = wgt_vert_avg_beta(lev,hus,ps,0,opt)
+xxm = wgt_vert_avg_beta(lev,hus,ps,1,opt)
 husm(itim,:,:)= linint2_Wrap(lon,lat,xxm,True,newlon,newlat,0)
 end do
 
@@ -125,10 +126,11 @@ husm!2="lon"
 husm&time=time
 husm&lat=newlat
 husm&lon=newlon
+printMinMax(husm,0)
 
-print("Writing $wk_dir/model/netCDF/model_hus_900_650_avg.nc")
-system("rm -f $wk_dir/model/netCDF/model_hus_900_650_avg.nc")
-fout = addfile("$wk_dir/model/netCDF/model_hus_900_650_avg.nc","c")
+print("Writing $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")
+system("rm -f $variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc")
+fout = addfile("$variab_dir/MJO_prop_amp/model_hus_900_650_avg.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated model 900-650hPa averaged specific humidity"
 fAtt@source_file   =  "$file_hus"

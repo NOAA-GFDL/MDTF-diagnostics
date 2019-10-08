@@ -37,8 +37,8 @@ old_model = True
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
 diri     = getenv("DATADIR")+"/day/"                                           ;Input data directory
-dirobs   = getenv("OBS_DATA")+"/"                      ;Obs input directory
-diro     = getenv("WK_DIR")+"/model/netCDF/"        ;Output data directory
+dirobs   = getenv("VARDATA")+"/"+"MJO_teleconnection/"                      ;Obs input directory
+diro     = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"        ;Output data directory
 filz250  = getenv("z250_file")                                              ; input file
 tfile    = "t_table_data.txt"
 print("Input data path :" + diri)
@@ -71,7 +71,7 @@ print("data table for t stat is read in ")
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
    
 
-    zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
+    zgt = a->$z250var$(iStrt:iLast,{25000},:,:)     ;time,lat,lon
     zgt@_FillValue = -999
 
     lon = tofloat(a->lon)

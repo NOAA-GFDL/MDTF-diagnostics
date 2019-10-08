@@ -10,8 +10,9 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
 begin
 
-      casename = getenv("CASENAME")
-   file_dir = getenv("WK_DIR")+"/model/netCDF/"
+   wkdir = getenv("WKDIR")
+   casename = getenv("CASENAME")
+   file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
 
    latS    = -20
    latN    =  20
@@ -24,7 +25,7 @@ begin
 
    pltSubTitle = "Anomalous: OLR, U850, V850"
 
-   pltDir  = getenv("WK_DIR")+"/model/PS/"                           ; plot directory
+   pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS/"                           ; plot directory
    pltType = "ps"  
    pltName = casename+".MJO.life.cycle"                      ; yrStrt+"_"+yrLast
   

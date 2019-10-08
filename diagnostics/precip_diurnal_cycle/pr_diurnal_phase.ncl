@@ -10,8 +10,8 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$POD_HOME/calc_utils.ncl"
-load "$POD_HOME/evans_plot.ncl"
+load "$VARCODE/precip_diurnal_cycle/calc_utils.ncl"
+load "$VARCODE/precip_diurnal_cycle/evans_plot.ncl"
 
 begin
 ; Set variables for two runs.
@@ -27,11 +27,9 @@ begin
   phase_only = False ; Set true iff not amplitude color saturation is required.
   
 ;  ps_dir = "/datalocal/haystack/cchen/dcycle/"
-  ps_dir = getenv("WK_DIR")+"/model/PS/"
+  ps_dir = getenv("variab_dir")+"/precip_diurnal_cycle/model/PS/"
   firstyr = stringtoint(getenv("FIRSTYR"))
   lastyr = stringtoint(getenv("LASTYR"))
-  print(firstyr)
-  print(lastyr)
 ;;;;; For model only   ;;;;;
   model_fstruc = 0 ; Model file structure; 0 = single files; 1 = many files.
 
@@ -44,7 +42,6 @@ begin
   obs = (/False/)   ; True-obs, False-model. (TRMM-3B42-3HRLY assumed for obs. in separate monthly files.)
 ;  mrun_years = (/2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010/)
    mrun_years = ispan(firstyr,lastyr,1)
-   print(mrun_years)
 ;  orun_years = (/2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010/)
 
 
@@ -511,7 +508,8 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
          end if
  
 ; Requested start time and index in data
-          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
+          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*101) 
+          print(tstart)
           
 ; Adjust for ut_calendar problems in cam/climo runs as the first year is usually 0000 and
 ; ut_calendar changes this to 0001 !! So adjust tstart forward by 1 year.
@@ -520,8 +518,8 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
             print("- Adjusting start date for CAM standalone runs which begin 0000 and ut_calendar switches in to 0001")
           end if
 
-         ; print(t_utc)
-         ; print(tstart)
+          printMinMax(t_utc,0)
+          print(tstart)
 ; Where in alll of input data is tstart?
           itm0 = ind(t_utc.eq.tstart)
           if (ismissing(itm0)) then

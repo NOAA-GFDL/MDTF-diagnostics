@@ -9,7 +9,8 @@ begin
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 rgb = getenv("RGB")
-wk_dir = getenv("WK_DIR")
+wkdir = getenv("WKDIR")
+variab_dir = getenv("variab_dir")
 casename = getenv("CASENAME")
 
 firstyr = stringtointeger(yr1)
@@ -17,7 +18,7 @@ lastyr = stringtointeger(yr2)
 nyrs = lastyr-firstyr
 
 ; get pointer to netcdf file  
- f = addfile (wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
+ f = addfile (variab_dir+"/EOF_500hPa/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
  z500 = f->Z500_ANOM   ; year,lat,lon
 
  lat = f->lat
@@ -60,6 +61,7 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
 
  evec = eofunc(anom(lat|:,lon|:,year|:),2,optEOF)
  printVarSummary(evec)
+ printMinMax(evec,0)
 
  if ( min(evec) .lt. 0 ) then
     print("WARNING: changing sign of eofs because of negative evec (see above)")
@@ -73,7 +75,7 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
 
 ;************ plots of EOFs *******************
 
- wks = gsn_open_wks ("ps",wk_dir+"/model/PS/"+casename+".npac.eof1")
+ wks = gsn_open_wks ("ps",variab_dir+"/EOF_500hPa/model/PS/"+casename+".npac.eof1")
    
 ; define colormap
  cmap = RGBtoCmap(rgb+"/blueyellowred.rgb")
@@ -115,8 +117,10 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
    res@tiMainFontHeightF = 0.018
 ; EOF 1
    res@cnLevels = (/-55,-45,-35,-25,-15,-10,-5,0,5,10,15,25,35,45,55/)
+   ;res@cnLevels = fspan(-0.03,0.03,11)
    res@gsnLeftString="EOF 1"
    res@gsnRightString=sprintf("%4.1f",evec@pcvar(0))+" %"
    plot = gsn_csm_contour_map_ce (wks,evectors(0,:,:),res) 
+   ;plot = gsn_csm_contour_map_ce (wks,evec(0,:,:),res) 
    
 end

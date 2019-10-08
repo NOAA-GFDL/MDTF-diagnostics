@@ -45,8 +45,8 @@ print("Model: " + Model)
 ;------------ Read in zonal wind and olr --------------------
 
 diri    = getenv("DATADIR")+"/day/"     ;Input data directory
-diri1   = getenv("OBS_DATA")+"/"         ;Observed Input data directory
-diro    = getenv("WK_DIR")+"/model/netCDF/" 
+diri1   = getenv("VARDATA")+"/"+"MJO_teleconnection/"         ;Observed Input data directory
+diro    = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
 filolr  = getenv("olr_file")          ; input file
 filu850 = getenv("u850_file")          ; input file
 filu250 = getenv("u250_file")          ; input file
@@ -61,7 +61,6 @@ print("Output data path :" + diro)
 print("Input data file for OLR :" + filolr)
 print("Input data file for U850:" + filu850)
 print("Input data file for U250:" + filu250)
-print(u250var)
 print("---------------------------------------------------------------------------------")
 
    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
@@ -111,7 +110,7 @@ print("-------------------------------------------------------------------------
     
     print("Date range from year "+yeart(iStrt)+" to "+yeart(iLast))
 
-    u250t = a->$u250var$(iStrt:iLast,lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
+    u250t = a->$u250var$(iStrt:iLast,{25000},lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
     u250t@_FillValue = -999
 
     delete(temp_time)
@@ -155,7 +154,7 @@ print("Reading data for 250mb wind")
 
   u250 = u250t(:,:,:); Reading data over the all avaliable time period
   u250@_FillValue = -999
-printVarSummary(u250)
+  poisson_grid_fill(u250,True,1,1000,1e-2,0.6,0)
   delete(u250t)
 print("U250 data has been read")
 ;----------- 850mb wind --------------
@@ -169,10 +168,10 @@ print("Reading data for 850mb wind")
   latt2 = b->lat
   lont2 = b->lon
   time2 = b->time(iStrt:iLast)
-print(dimsizes(time2))
-print(dimsizes(time))
-print(time2(0))
-print(time(0))
+;print(dimsizes(time2))
+;print(dimsizes(time))
+;print(time2(0))
+;print(time(0))
 
   if(latt2(0) .eq. latt(0) .and. (dimsizes(latt2) .eq. dimsizes(latt)))
     print("850mb wind: latitudes match")
@@ -197,7 +196,8 @@ print(time(0))
   delete(time2)
  
  ;-read in data-
-    u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
+    u850 = b->$u850var$(iStrt:iLast,{85000},lat_ind,:)     ;time,lat,lon , 15N - 15S
+    poisson_grid_fill(u850,True,1,1000,1e-2,0.6,0)
     u850@_FillValue = -999
 print("U850 data has been read")
 print("-------------------------------------------")

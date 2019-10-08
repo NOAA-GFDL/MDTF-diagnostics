@@ -36,8 +36,8 @@ print("Model: " + Model)
 ;--directory for output files--
 ;-------------------------------------------------------------------------------------
 diri  = getenv("DATADIR")+"/day/"                               ;Input data directory
-dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
-diro  = getenv("WK_DIR")+"/model/netCDF/" 
+dirobs  = getenv("VARDATA")+"/"+"MJO_teleconnection/"         ;Output data directory
+diro  = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/" 
 filpr = getenv("prec_file")                   ; input file
 
 print("Input data path :" + diri)
@@ -69,6 +69,7 @@ prvar = getenv("pr_var")
 
     pr = a->$prvar$(iStrt:iLast,:,:)     ;time,lat,lon
     pr@_FillValue = -999
+    printMinMax(pr,0)
 
      print("convert to mm/day")
      pr = pr * pr_conv
@@ -109,7 +110,6 @@ prvar = getenv("pr_var")
 
   print("First doy: " + min(time) + "  last doy: " + max(time))
   print("time indices "+iStrt+" "+iLast+" "+ymd(iStrt)+" "+ymd(iLast))
-  printVarSummary(pr)
 
   H_all = pr(:,:,:)
   H_all@_FillValue = -999

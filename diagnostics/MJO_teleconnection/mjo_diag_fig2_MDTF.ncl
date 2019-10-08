@@ -32,9 +32,10 @@ pentad = 0
 ;---------------------------------------------------------------------------------------------------------|
 ;                                    Input and output data directories
 ;---------------------------------------------------------------------------------------------------------|
-dirobs   = getenv("OBS_DATA")+"/" 
-dirm     = getenv("WK_DIR")+"/model/netCDF/"
-dirfig   = getenv("WK_DIR")+"/model/PS/"
+dirobs   = getenv("VARDATA")+"/"+"MJO_teleconnection/" 
+dirm     = getenv("variab_dir")+"/"+"MJO_teleconnection/model/netCDF/"
+dirfig   = getenv("variab_dir")+"/"+"MJO_teleconnection/figures/"
+dirindex     = getenv("variab_dir")
 ;==============================================================================================
 print("read in pattern correlation data")
 ;----------------------------------------------------------------------------------------------

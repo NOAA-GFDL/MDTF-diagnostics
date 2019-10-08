@@ -10,7 +10,8 @@ begin
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 rgb = getenv("RGB")
-wk_dir = getenv("WK_DIR")
+wkdir = getenv("WKDIR")
+variab_dir = getenv("variab_dir")
 casename = getenv("CASENAME")
 
 firstyr = stringtointeger(yr1)
@@ -18,7 +19,7 @@ lastyr = stringtointeger(yr2)
 nyrs = lastyr-firstyr
 
 ; get pointer to netcdf file  
- f = addfile (wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
+ f = addfile (variab_dir+"/EOF_500hPa/model/netCDF/"+casename+".Z500.ANOMS.nc","r") 
  tmp = f->Z500_ANOM   ; year,lat,lon
  z500 = lonFlip(tmp)
  delete(tmp)
@@ -76,18 +77,19 @@ optEOF = True  ; makes available some options, see http://www.ncl.ucar.edu/Docum
 
  evec = eofunc(anom(lat|:,lon|:,year|:),2,optEOF)
  printVarSummary(evec)
+ printMinMax(evec,0)
 
  if ( min(evec) .lt. 0 ) then
     print("WARNING: changing sign of eofs because of negative evec (see above)")
     evec = evec * -1  
- end if	 
+ end if 
 
  evectors(0,:,:) = (/evec(0,:,:)*sqrt(evec@eval(0))/)
  evectors(1,:,:) = (/evec(1,:,:)*sqrt(evec@eval(1))/)
 
 ;************ plots of EOFs *******************
 
- wks = gsn_open_wks ("ps",wk_dir+"/model/PS/"+casename+".natl.eof1")
+ wks = gsn_open_wks ("ps",variab_dir+"/EOF_500hPa/model/PS/"+casename+".natl.eof1")
    
 ; define colormap
  cmap = RGBtoCmap(rgb+"/blueyellowred.rgb")

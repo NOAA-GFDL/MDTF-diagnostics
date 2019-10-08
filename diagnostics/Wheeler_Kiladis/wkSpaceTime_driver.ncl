@@ -4,7 +4,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
-load "$POD_HOME/getVarSlice.ncl"
+load "$VARCODE/Wheeler_Kiladis/getVarSlice.ncl"
 
 ;==================================================================
 ;                     USER INTERFACE 
@@ -19,6 +19,9 @@ print("In wkSpaceTime_driver")
   diri = getenv("DATADIR")+"/day/"
   case = getenv("CASENAME")
   varName = getenv("MVAR")
+  level = getenv("LEV") 
+  FileName = varName+"-"+level
+  print("level: "+level)
   print("varName:" +varName)
   print("diri:" +diri)
   print("case:" +case)
@@ -28,7 +31,7 @@ print("In wkSpaceTime_driver")
 ;  latBound = stringtointeger(getenv("LATBND"))
   tstride = 1
 ;  tstride = stringtointeger(getenv("TSTRIDE"))
-  diro     = getenv("WK_DIR")+"/model/PS/"     ; output dir: location of plots
+  diro     = getenv("variab_dir")+"/Wheeler_Kiladis/model/PS/"     ; output dir: location of plots
   print ("writing to "+diro)
 ;-------------------------------------------------------------------
 ; spectral input params for wkSpaceTime
@@ -52,7 +55,6 @@ print("In wkSpaceTime_driver")
 
   lonL    = 0        ; -180
   lonR    = 360      ;  180
-  level    = -999    ; only used for 4D [set -999 otherwise]
 
 ; Read in files from file list created by script
 
@@ -101,12 +103,12 @@ print("In wkSpaceTime_driver")
   new_spd   = spd/tstride ; SPD *actual* "samples per day" 
 
   if ((ntim%new_spd).eq.0) then
-     wkSpaceTime (x, diro, case, varName,latBound, \
+     wkSpaceTime (x, diro, case, FileName,latBound, \
                   new_spd, nDayWin, nDaySkip, opt  )
   else
      nExtra = ntim%new_spd
      NTIM = ntim - nExtra
-     wkSpaceTime (x(:NTIM-1,:,:), diro, case, varName,latBound, \
+     wkSpaceTime (x(:NTIM-1,:,:), diro, case, FileName,latBound, \
                   new_spd, nDayWin, nDaySkip, opt  )
   end if
 

@@ -425,6 +425,15 @@ class GfdlppDataManager(DataManager):
     def process_fetched_data(self):
         pass
 
+    def _copy_to_output(self):
+        # use gcp, since OUTPUT_DIR might be mounted read-only
+        paths = util.PathManager()
+        if paths.OUTPUT_DIR != paths.WORKING_DIR:
+            util.run_command(['gcp','-r','-v','--sync',
+                'gfdl:' + self.MODEL_WK_DIR + os.sep,
+                'gfdl:' + self.MODEL_OUT_DIR + os.sep
+            ])
+
 frepp_translate = {
     'in_data_dir': 'root_dir', # /pp/ directory
     'descriptor': 'CASENAME',

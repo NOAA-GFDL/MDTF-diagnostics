@@ -75,6 +75,7 @@ class PathManager(Singleton):
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
+        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         return d
 
     def podPaths(self, pod):

@@ -365,8 +365,10 @@ class DataManager(object):
     # -------------------------------------
 
     def tearDown(self, config):
+        # TODO: handle OSErrors in all of these
         self._backup_config_file(config)
         self._make_tar_file()
+        self._copy_to_output()
         paths = util.PathManager()
         paths.cleanup()
 
@@ -397,6 +399,13 @@ class DataManager(object):
         util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
             self.MODEL_WK_DIR ] + tar_flags
         )
+
+    def _copy_to_output(self):
+        paths = util.PathManager()
+        if paths.OUTPUT_DIR != paths.WORKING_DIR:
+            if os.path.exists(self.MODEL_OUT_DIR):
+                shutil.rmtree(self.MODEL_OUT_DIR)
+            shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
 
     def abortHandler(self, *args):
         # delete any temp files if we're killed

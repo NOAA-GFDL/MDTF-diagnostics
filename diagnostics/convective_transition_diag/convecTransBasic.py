@@ -58,7 +58,16 @@
 # Import standard Python packages
 import glob
 import os
+import sys
 import json
+import time
+if os.name == 'posix' and sys.version_info[0] < 3:
+    try:
+        import subprocess32 as subprocess
+    except ImportError:
+        import subprocess
+else:
+    import subprocess
 
 # Import Python functions specific to Convective Transition Basic Statistics
 from convecTransBasic_util import generate_region_mask
@@ -79,25 +88,25 @@ print("Preparing hourly datasets......")
 print("daily 2 hourly interpolation for pr, prw, and ta......")
 print("**************************************************")
 def generate_ncl_plots(nclPlotFile):
-   """generate_plots_call - call a nclPlotFile via subprocess call
+    """generate_plots_call - call a nclPlotFile via subprocess call
    
-   Arguments:
-   nclPlotFile (string) - full path to ncl plotting file name
-   """
-   # check if the nclPlotFile exists - 
-   # don't exit if it does not exists just print a warning.
-   try:
-      print("Calling ",nclPlotFile)
-      pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-      output = pipe.communicate()[0]
-      print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
-      while pipe.poll() is None:
-         time.sleep(0.5)
-   except OSError as e:
-      print('WARNING',e.errno,e.strerror)
+    Arguments:
+    nclPlotFile (string) - full path to ncl plotting file name
+    """
+    # check if the nclPlotFile exists - 
+    # don't exit if it does not exists just print a warning.
+    try:
+        print("Calling ",nclPlotFile)
+        pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
 
-   return 0
-   generate_ncl_plots(os.environ["POD_HOME"]+"/interpolate.ncl")
+    return 0
+generate_ncl_plots(os.environ["POD_HOME"]+"/interpolate.ncl")
 
 
 print("Load user-specified binning parameters..."),

@@ -4,10 +4,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin
 
-    ;datadir = getenv("DATADIR")
-    ;casename = getenv("CASENAME")
-    datadir = "/archive/wnd/MDTF-GFDL/inputdata/model/CM4_historical"
-    casename = "CM4_historical"
+    datadir = getenv("DATADIR")
+    casename = getenv("CASENAME")
+    ;datadir = "/archive/wnd/MDTF-GFDL/inputdata/model/CM4_historical"
+    ;casename = "CM4_historical"
     varname = (/"ta","hus","prw"/)
     do i=1,1;dimsizes(varname)-1
     filein  = datadir+"/day/"+casename+"."+varname(i)+".day.nc"

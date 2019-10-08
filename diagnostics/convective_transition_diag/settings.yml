@@ -16,8 +16,9 @@ settings:
     # Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure 
     BULK_TROPOSPHERIC_TEMPERATURE_MEASURE: "2"
     RES: "1.00" # Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00)
-  required_programs: ['python']
+  required_programs: ['python', 'ncl']
   required_python_modules: ['numpy', 'scipy', 'matplotlib', 'netCDF4', 'numba', 'networkx']
+  required_ncl_scripts: ['contributed', 'gsn_code', 'gsn_csm', 'shea_util']
 
 # USAGE varlist
 # var_name      time-frequency     [requirement]

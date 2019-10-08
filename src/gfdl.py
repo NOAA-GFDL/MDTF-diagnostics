@@ -425,6 +425,15 @@ class GfdlppDataManager(DataManager):
     def process_fetched_data(self):
         pass
 
+frepp_translate = {
+    'in_data_dir': 'root_dir', # /pp/ directory
+    'descriptor': 'CASENAME',
+    'out_dir': 'OUTPUT_DIR',
+    'WORKDIR': 'WORKING_DIR',
+    'yr1': 'FIRSTYR',
+    'yr2': 'LASTYR'
+}
+
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.
 
@@ -432,14 +441,6 @@ def parse_frepp_stub(frepp_stub):
 
     Returns: :obj:`dict` of frepp parameters.
     """
-    frepp_translate = {
-        'in_data_dir': 'MODEL_DATA_ROOT',
-        'descriptor': 'CASENAME',
-        'out_dir': 'OUTPUT_DIR',
-        'WORKDIR': 'WORKING_DIR',
-        'yr1': 'FIRSTYR',
-        'yr2': 'LASTYR'
-    }
     # parse arguments and relabel keys
     d = {}
     regex = re.compile(r"""

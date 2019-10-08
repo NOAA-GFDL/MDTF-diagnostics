@@ -6,10 +6,7 @@
 #SBATCH -o /home/tsj/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
 
-## -v PYTHONHOME="/home/Oar.Gfdl.Mdteam/anaconda2/envs/ILAMB-2.2"
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
-
-#source /home/gfdl/init/csh.cshrc
 
 # variables set by frepp
 set in_data_dir
@@ -17,18 +14,24 @@ set out_dir
 set descriptor
 set yr1
 set yr2
+set WORKDIR
 set databegyr
 set dataendyr
 set datachunk
 set staticfile
 set fremodule
 
-# actually run
-if (! $?MODULESHOME) then       
+## set paths
+set REPO_DIR=/home/tsj/mdtf/MDTF-diagnostics
+set INPUT_DIR=${TMPDIR}/inputdata
+set WK_DIR=${TMPDIR}/wkdir
+
+## configure env modules
+if ( ! $?MODULESHOME ) then       
 	echo "\$MODULESHOME is undefined"
 	exit 1
 else
-	if ("$MODULESHOME" == "")  then
+	if ( "$MODULESHOME" == "" )  then
 		echo "\$MODULESHOME is empty"
 		exit 1
 	else 
@@ -44,14 +47,13 @@ endif
 set mods="python/2.7.12 gcp/2.3"
 module load $mods	
 
-echo $TMPDIR
+## fetch obs data from local source
+mkdir -p "${INPUT_DIR}"
+mkdir -p "${WK_DIR}"
+mkdir "${INPUT_DIR}/model"
+gcp -v -r gfdl:/home/tsj/mdtf/obs_data/ gfdl:${INPUT_DIR}/obs_data/
 
-mkdir -p ${TMPDIR}/inputdata
-mkdir -p ${TMPDIR}/inputdata/model
-gcp -v -r gfdl:/home/tsj/mdtf/obs_data/ gfdl:${TMPDIR}/inputdata/obs_data/
-
-set REPO_DIR=/home/tsj/mdtf/MDTF-diagnostics
-
+## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
 if ( $status != 0 ) then
 	echo 'Installing required modules'
@@ -64,7 +66,17 @@ else
 	echo 'Found required modules'
 endif
 
+## run the command!
 echo 'script start'
-python "${REPO_DIR}/src/mdtf.py" "${REPO_DIR}/src/frepp_config.yml"
-# python "${REPO_DIR}/src/mdtf.py" "${REPO_DIR}/src/frepp_config.yml" >&! "${REPO_DIR}/frepp_run.log"
+"${REPO_DIR}/src/mdtf.py" --frepp \
+--environment_manager "GfdlVirtualenv" \
+--MODEL_DATA_ROOT "${INPUT_DIR}/model" \
+--OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
+--WORKING_DIR "$WK_DIR" \
+--OUTPUT_DIR "$out_dir" \
+--data_manager "GfdlPP" \
+--CASENAME "$descriptor" \
+--CASE_ROOT_DIR "$in_data_dir" \
+--FIRSTYR $yr1 \
+--LASTYR $yr2
 echo 'script exit'

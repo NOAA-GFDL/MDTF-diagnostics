@@ -11,10 +11,9 @@ begin
 ; each daily file has 30 days of data
 ; U200(time,lat,lon)
 
-varcode = getenv("VARCODE")
-wkdir = getenv("WKDIR")
+pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
 
@@ -39,7 +38,7 @@ data!0 = "u200"
 data = wgt_areaave(u200,gw({-10:10}),1.,0)
 
 ; read the 20-100 day filter weights
-weights = asciiread(varcode+"/MJO_suite/bp_filter_20-100",-1,"float")
+weights = asciiread(pod_home+"/bp_filter_20-100",-1,"float")
 nwgts = dimsizes(weights)
 
 ; filter the U200 data
@@ -59,7 +58,7 @@ do n = 50,nfil-51
 end do
 
 ; MAKE PLOTS
-psplot = getenv("variab_dir")+"/MJO_suite/model/PS/"+casename+".MJO"
+psplot = getenv("WK_DIR")+"/model/PS/"+casename+".MJO"
 wks = gsn_open_wks("ps",psplot)
 plot = new(3,graphic)
 res = True

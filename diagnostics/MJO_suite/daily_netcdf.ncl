@@ -4,19 +4,17 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$VARCODE/MJO_suite/utils.ncl"
+load "$POD_HOME/utils.ncl"
 
 begin
 ; read daily output files from CAM2 and process the data
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
-print("Starting...")
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
 level = getenv("lev_coord")
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
 file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"
@@ -24,8 +22,6 @@ file_v200 = datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"
 file_u850 = datadir+"/day/"+casename+"."+getenv("u850_var")+".day.nc"
 file_rlut = datadir+"/day/"+casename+"."+getenv("rlut_var")+".day.nc"
 file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
-;file_pr = "/archive/wnd/MDTF-GFDL/inputdata/model/CM4_historical/day/CM4_historical.pr.day.nc"
-
 
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
 f = addfile(file_pr,"r")

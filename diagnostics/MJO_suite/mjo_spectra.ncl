@@ -4,16 +4,15 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
-load "$VARCODE/MJO_suite/my_cam_diags.ncl"
+load "$POD_HOME/my_cam_diags.ncl"
    
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 vars = (/"pr","rlut","u200","u850","v200","v200"/)
 
-wkdir = getenv("WKDIR")
 casename = getenv("CASENAME")
 
-file_dir = getenv("variab_dir")+"/MJO_suite/model/netCDF/"
+file_dir = getenv("WK_DIR")+"/model/netCDF/"
 filename_pr = file_dir+casename+".pr.day.anom.nc"
 filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"
@@ -35,7 +34,7 @@ filename_v850 = file_dir+casename+".v200.day.anom.nc"
 ;  fili   = "uwnd.day.850.anomalies.1980-2005.nc"
 ;  f      = addfile(diri+fili, "r")  
 
-  pltDir  = getenv("variab_dir")+"/MJO_suite/model/PS"
+  pltDir  = getenv("WK_DIR")+"/model/PS"
   pltType = "ps"
   
 

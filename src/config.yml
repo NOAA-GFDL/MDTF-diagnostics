@@ -55,9 +55,9 @@ pod_list:
   - convective_transition_diag
   - MJO_suite
   - MJO_teleconnection
-  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
   # These PODS require more resources 
-  #- precip_diurnal_cycle #- high memory requirement
+  - precip_diurnal_cycle #- high memory requirement
 
 # PATHS 
 # Relative paths are resolved relative to $CODE_ROOT 

@@ -36,21 +36,3 @@ class NcoNetcdfHelper(NetcdfHelper):
 
 class CdoNetcdfHelper(NetcdfHelper):
 	pass
-
-
-class DataQueryFailure(Exception):
-    """Exception signaling a failure to find requested data in the remote location. 
-    
-    Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
-    data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
-    or :meth:`~data_manager.DataManager.fetchData`.
-    """
-    def __init__(self, pod, msg=None):
-        self.pod = pod
-        self.msg = msg
-
-    def __str__(self):
-        if self.msg is not None:
-            return 'Requirements not met for {}. Skipping. ({}).'.format(self.pod.name, self.msg)
-        else:
-            return 'Requirements not met for {}. Skipping.'.format(self.pod.name)

@@ -167,7 +167,7 @@ class Diagnostic(object):
             self.found_files = found_files
             self.missing_files = missing_files
             if missing_files:
-                raise PodRequirementFailure(
+                raise PodRequirementFailure(self,
                     "Couldn't find required model data files:\n\t{}".format(
                         "\n\t".join(missing_files)
                     ))

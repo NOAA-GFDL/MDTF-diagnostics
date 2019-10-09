@@ -145,51 +145,6 @@ class TestDataManagerFetchData(unittest.TestCase):
         'pod_list': []
     }
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('os.path.isfile', return_value = True)
-    def test_check_for_varlist_files_found(self, mock_isfile):
-        # case file is found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon'}
-        case = DataManager(self.default_case)
-        f = case._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(f['found_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
-        self.assertEqual(f['missing_files'], [])
-
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('os.path.isfile', return_value = False)
-    def test_check_for_varlist_files_not_found(self, mock_isfile):
-        # case file is required and not found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True}
-        case = DataManager(self.default_case)
-        f = case._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(f['found_files'], [])
-        self.assertEqual(f['missing_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
-
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_optional(self, mock_isfile):
-        # case file is optional and not found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': False}
-        case = DataManager(self.default_case)
-        f = case._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(f['found_files'], [])
-        self.assertEqual(f['missing_files'], [])
-
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_alternate(self, mock_isfile):
-        # case alternate variable is specified and found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True, 'alternates':['PRECC']}
-        case = DataManager(self.default_case)
-        f = case._check_for_varlist_files([DataSet(**test_var)])
-        # name_in_model translation now done in DataManager._setup_pod
-        self.assertEqual(f['found_files'], ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
-        self.assertEqual(f['missing_files'], [])
-
 
 if __name__ == '__main__':
     unittest.main()

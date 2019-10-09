@@ -66,19 +66,24 @@ class EnvironmentManager(object):
 
     def run(self, verbose=0):
         for pod in self.pods:
-            # Find and confirm POD driver script , program (Default = {pod_name,driver}.{program} options)
-            # Each pod could have a settings files giving the name of its driver script and long name
-            if verbose > 0: print("--- MDTF.py Starting POD "+pod.name+"\n")
+            pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
+            log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
+            pod.logfile_obj.write(log_str)
+            if verbose > 0: print log_str
 
             try:
                 pod.setUp()
             except PodRequirementFailure as exc:
-                print "Skipping execution of {}.".format(exc.pod.name)
-                pod.skipped = True
-                pod.make_pod_html_error_log(exc)
+                log_str = "Skipping execution of {}.\n\tReason: {}\n".format(
+                    exc.pod.name, str(exc))
+                pod.logfile_obj.write(log_str)
+                pod.logfile_obj.close()
+                pod.logfile_obj = None
+                print log_str
+                pod.skipped = exc
                 continue
-
-            pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
+            pod.logfile_obj.write("Found files:\n")
+            pod.logfile_obj.write("\n".join(pod.found_files))
 
             run_command = pod.run_commands()          
             if self.test_mode:
@@ -102,10 +107,11 @@ class EnvironmentManager(object):
                     cwd = pod.POD_WK_DIR,
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
             except OSError as exc:
-                print('ERROR :',exc.errno,exc.strerror)
-                print(" occured with call: " +run_command)
-                pod.skipped = True
-                pod.make_pod_html_error_log(exc)
+                print('ERROR :', exc.errno, exc.strerror)
+                print " occured with call: {}".format(run_command)
+                pod.skipped = exc
+                pod.logfile_obj.close()
+                pod.logfile_obj = None
                 continue
 
         # if this were python3 we'd have asyncio, instead wait for each process
@@ -123,7 +129,9 @@ class EnvironmentManager(object):
     def tearDown(self):
         # call diag's tearDown to clean up
         for pod in self.pods:
-            if not pod.skipped:
+            if isinstance(pod.skipped, Exception):
+                pod.append_error_link(pod.skipped)
+            else:
                 pod.tearDown()
         for env in self.envs:
             self.destroy_environment(env)

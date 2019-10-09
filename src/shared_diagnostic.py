@@ -5,6 +5,20 @@ import shutil
 import util
 from util import setenv # TODO: fix
 
+class PodRequirementFailure(Exception):
+    """Exception raised if POD doesn't have required resoruces to run. 
+    """
+    def __init__(self, pod, msg=None):
+        self.pod = pod
+        self.msg = msg
+
+    def __str__(self):
+        if self.msg is not None:
+            return """Requirements not met for {}.\n\t 
+                Reason: {}.""".format(self.pod.name, self.msg)
+        else:
+            return 'Requirements not met for {}.'.format(self.pod.name)
+
 class Diagnostic(object):
     """Class holding configuration for a diagnostic script.
 
@@ -138,19 +152,22 @@ class Diagnostic(object):
             each POD is run in a subprocess (due to the necessity of supporting
             multiple languages) so the validation must take place in that 
             subprocess.
+
+        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if requirements
+            aren't met. This is re-raised from the 
+            :meth:`~shared_diagnostic.Diagnostic._check_pod_driver` and
+            :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files` 
+            subroutines.
         """
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
 
-        self._check_pod_driver(verbose)
-        var_files = self._check_for_varlist_files(self.varlist, verbose)
-        self.found_files = var_files['found_files']
-        self.missing_files = var_files['missing_files']
-        if self.missing_files != []:
-            print "WARNING: POD ",self.name," missing required input files:"
-            print self.missing_files
-        else:
-            if (verbose > 0): print "No known missing required input files"
+        try:
+            self._check_pod_driver(verbose)
+            self._check_for_varlist_files(self.varlist, verbose)
+        except PodRequirementFailure as exc:
+            print exc
+            raise exc
 
     def _set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
@@ -194,6 +211,9 @@ class Diagnostic(object):
 
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if driver script
+            can't be found.
         """
         func_name = "check_pod_driver "
         if (verbose > 1):  print func_name," received POD settings: ", self.__dict__
@@ -215,27 +235,30 @@ class Diagnostic(object):
                     break    #go with the first one found
                 else:
                     if (verbose > 1 ): print "\t "+try_path+" not found..."
-        errstr_nodriver = "No driver script found for package "+self.name +"\n\t"\
-            +"Looked in "+self.POD_CODE_DIR+" for pod_name.* or driver.* \n\t"\
-            +"To specify otherwise, add a line to "+self.name+"/settings file containing:  driver driver_script_name \n\t" \
-            +"\n\t"+func_name
-        assert (self.driver != ''), errstr_nodriver
+        if self.driver == '':
+            raise PodRequirementFailure(self, 
+                """No driver script found in {}. Specify 'driver' in 
+                settings.yml.""".format(self.POD_CODE_DIR)
+                )
 
         if not os.path.isabs(self.driver): # expand relative path
             self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
-        errstr = "ERROR: "+func_name+" can't find "+ self.driver+" to run "+self.name
-        assert os.path.exists(self.driver), errstr 
+        if not os.path.exists(self.driver):
+            raise PodRequirementFailure(self, 
+                "Unable to locate driver script {}.".format(self.driver)
+                )
 
         if self.program == '':
             # Find ending of filename to determine the program that should be used
             driver_ext  = self.driver.split('.')[-1]
             # Possible error: Driver file type unrecognized
-            errstr_badext = func_name+" does not know how to call a ."+driver_ext+" file \n\t"\
-                +"Available programs: "+str(programs.keys())
-            assert (driver_ext in programs), errstr_badext
+            if driver_ext not in programs:
+                raise PodRequirementFailure(self, 
+                    """{} doesn't know how to call a .{} file. \n
+                    Supported programs: {}""".format(func_name, driver_ext, programs.keys())
+                )
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
-        errstr = "ERROR: "+func_name+" can't find "+ self.program+" to run "+self.name    
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
@@ -245,11 +268,9 @@ class Diagnostic(object):
                 of the POD's settings.yml file.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
 
-        Returns:
-            Dict with two entries, ``found_files`` and ``missing_files``, containing
-                lists of paths to found and missing data files, respectively.
+        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if all required
+            files aren't found.
         """
-        translate = util.VariableTranslator()
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
         found_list = []
@@ -280,13 +301,17 @@ class Diagnostic(object):
                     new_files = self._check_for_varlist_files([new_var],verbose=verbose)
                     found_list.extend(new_files['found_files'])
                     missing_list.extend(new_files['missing_files'])
-
-        if (verbose > 2): print "check_for_varlist_files returning ",missing_list
         # remove empty list entries
-        files = {}
-        files['found_files'] = [x for x in found_list if x]
-        files['missing_files'] = [x for x in missing_list if x]
-        return files
+        found_list = [x for x in found_list if x]
+        missing_list = [x for x in missing_list if x]
+        if (verbose > 2): print "check_for_varlist_files returning ",missing_list
+        if missing_list:
+            raise PodRequirementFailure(self, 
+                "Couldn't find required model data files:\n\t{}".format(
+                    "\n\t".join(missing_list)
+                ))
+        else:
+            if (verbose > 0): print "No known missing required input files"
 
     # -------------------------------------
 

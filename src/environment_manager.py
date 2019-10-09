@@ -2,7 +2,6 @@ import os
 import sys
 import glob
 import shutil
-import timeit
 import atexit
 import signal
 from abc import ABCMeta, abstractmethod
@@ -21,7 +20,7 @@ class EnvironmentManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, config, verbose=0):
-        self.test_mode = config['envvars']['test_mode']
+        self.test_mode = config['settings']['test_mode']
         self.pods = []
         self.envs = set()
 
@@ -86,6 +85,7 @@ class EnvironmentManager(object):
                 continue
             pod.logfile_obj.write("Found files:\n")
             pod.logfile_obj.write("\n".join(pod.found_files))
+            pod.logfile_obj.write("\n")
 
             run_command = pod.run_commands()          
             if self.test_mode:
@@ -99,7 +99,8 @@ class EnvironmentManager(object):
  
             print "Calling : {}".format(run_command)
             print "Will run in env: {}".format(pod.env)
-            start_time = timeit.default_timer()
+            pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
+            pod.logfile_obj.flush()
             try:
                 # Need to run bash explicitly because 'conda activate' sources 
                 # env vars (can't do that in posix sh). tcsh could also work.

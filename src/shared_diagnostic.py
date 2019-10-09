@@ -159,6 +159,9 @@ class Diagnostic(object):
             :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files` 
             subroutines.
         """
+        if isinstance(pod.skipped, Exception):
+            # hack to catch data errors raised in data_manager.fetch_data
+            raise pod.skipped
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
         try:

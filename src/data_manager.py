@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import util
 import datelabel
 from util import setenv # fix
+from shared_diagnostic import PodRequirementFailure
 
 class DataSet(util.Namespace):
     """Class to describe datasets.
@@ -210,7 +211,7 @@ class DataManager(object):
                     new_varlist.extend(self._query_dataset_and_alts(var))
                 except DataQueryFailure:
                     print "Data query failed on pod {}".format(pod.name)
-                    raise
+                    continue
             pod.varlist = new_varlist
 
         data_to_fetch = self.plan_data_fetching()
@@ -218,12 +219,15 @@ class DataManager(object):
             self.fetch_dataset(file_)
         # do translation/ transformations of data here
         for pod in self.pods:
-            var_files = self._check_for_varlist_files(pod.varlist, verbose)
-            if var_files['missing_files'] != []:
-                print "WARNING: POD ",pod.name," missing required input files:"
-                print var_files['missing_files']
-            else:
+            try:
+                self._check_for_varlist_files(pod.varlist, verbose)
                 if (verbose > 0): print "No known missing required input files"
+            except PodRequirementFailure as exc:
+                # will re-raise inside pod.setUp -- a hack for now; should really
+                # move _check_for_varlist_files back to pod.setUp
+                print exc
+                pod.skipped = exc
+                continue
 
     def _query_dataset_and_alts(self, dataset):
         """Wrapper for query_dataset that looks for alternate variables.
@@ -305,9 +309,8 @@ class DataManager(object):
                 of the POD's settings.yml file.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
 
-        Returns:
-            Dict with two entries, ``found_files`` and ``missing_files``, containing
-                lists of paths to found and missing data files, respectively.
+        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if all required
+            files aren't found.
         """
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
@@ -339,13 +342,17 @@ class DataManager(object):
                     new_files = self._check_for_varlist_files([new_ds],verbose=verbose)
                     found_list.extend(new_files['found_files'])
                     missing_list.extend(new_files['missing_files'])
-
+        # remove empty list entries
+        found_list = filter(None, found_list)
+        missing_list = filter(None, missing_list)
         if (verbose > 2): print "check_for_varlist_files returning ",missing_list
-        files = {}
-        # remove empty list entries in found_list, missing_list
-        files['found_files'] = filter(None, found_list)
-        files['missing_files'] = filter(None, missing_list)
-        return files
+        if missing_list:
+            raise PodRequirementFailure(self, 
+                "Couldn't find required model data files:\n\t{}".format(
+                    "\n\t".join(missing_list)
+                ))
+        else:
+            if (verbose > 0): print "No known missing required input files"
 
     # -------------------------------------
 

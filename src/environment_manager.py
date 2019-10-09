@@ -66,6 +66,8 @@ class EnvironmentManager(object):
 
     def run(self, verbose=0):
         for pod in self.pods:
+            pod._setup_pod_directories() # should refactor setUp
+
             pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
             log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
             pod.logfile_obj.write(log_str)

@@ -14,34 +14,20 @@
 # entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
 
 case_list:
-  - CASENAME: QBOi.EXP1.AMIP.001
-    model: CESM
-    variable_convention: CESM
+  - CASENAME: ESM4_historical_D1
+    model: ESM4
+    variable_convention: CMIP
     FIRSTYR: 1977
     LASTYR: 1981
+    root_dir: '/archive/Thomas.Jackson/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp'
     pod_list:  # Optional: PODs to run for this model only
       - Wheeler_Kiladis
       - EOF_500hPa
+      - MJO_prop_amp
       - convective_transition_diag
       - MJO_suite
       - MJO_teleconnection
-      #- precip_diurnal_cycle #- high memory requirement
-  # formerly namelist_ABerg:
-  - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
-    model: CMIP
-    variable_convention: CMIP
-    FIRSTYR: 1951
-    LASTYR: 2005
-    pod_list:
-      - SM_ET_coupling
-  # formerly namelist_mjo_prop_amp:
-  - CASENAME: GFDL.CM4.c96L32.am4g10r8
-    model: AM4
-    variable_convention: AM4
-    FIRSTYR: 1977
-    LASTYR: 1981
-    pod_list: # Optional: PODs to run for this model only
-      - MJO_prop_amp
+      - precip_diurnal_cycle #- high memory requirement
 
 
 # DIAGNOSTICS
@@ -55,9 +41,9 @@ pod_list:
   - convective_transition_diag
   - MJO_suite
   - MJO_teleconnection
-  - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  #- MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
   # These PODS require more resources 
-  - precip_diurnal_cycle #- high memory requirement
+  #- precip_diurnal_cycle #- high memory requirement
 
 # PATHS 
 # Relative paths are resolved relative to $CODE_ROOT 
@@ -66,13 +52,13 @@ paths:
 # Code installation directory.
   CODE_ROOT: '.'
 # Parent directory containing results from different models.
-  MODEL_DATA_ROOT: '../inputdata/model/'
+  MODEL_DATA_ROOT: '/vftmp/Thomas.Jackson/inputdata/model'
 # Parent directory containing observational data used by individual PODs.  
-  OBS_DATA_ROOT: '../inputdata/obs_data/'
+  OBS_DATA_ROOT: '/vftmp/Thomas.Jackson/inputdata/obs_data'
 # Working directory.
-  WORKING_DIR: './wkdir'
+  WORKING_DIR: '/vftmp/Thomas.Jackson/wkdir'
 # Directory to write output files. Defaults to working directory.  
-  OUTPUT_DIR: './wkdir'
+  OUTPUT_DIR: '/home/tsj/mdtf/MDTF-diagnostics/out_dir'
 
 # SETTINGS
 
@@ -93,12 +79,12 @@ settings:
   # Currently supported options are
   # - 'Localfile': Do not attempt to fetch data; read from pre-existing files 
   #   at $MODEL_DATA_ROOT (set above).
-  data_manager: 'Localfile'
+  data_manager: 'GfdlPP'
   # Specify the method the code uses to manage diagnostic's dependencies. 
   # Currently supported options are 
   # - 'None' (use whatever modules are found in system)
   # - 'Conda' (use the Anaconda package manager)
-  environment_manager: 'Conda'
+  environment_manager: 'Gfdlvirtualenv'
 
   # This sets the root directory for python virtual environments. It is only used
   # if environment_manager is set to 'Virtualenv'.

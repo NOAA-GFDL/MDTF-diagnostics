@@ -86,7 +86,7 @@ class Diagnostic(object):
             d[list_attr] = []
         for dict_attr in ['pod_env_vars']:
             d[dict_attr] = {}
-        for obj_attr in ['process_obj', 'logfile_obj']:
+        for obj_attr in ['process_obj', 'logfile_obj', 'skipped']:
             d[obj_attr] = None
 
         # overwrite with contents of settings.yaml file
@@ -413,6 +413,18 @@ class Diagnostic(object):
             os.system("echo '<H3><font color=navy>" + self.description \
                 + " <A HREF=\""+ self.name+"/"+self.name+".html\">plots</A></H3>' >> " \
                 + html_file)
+
+    def make_pod_html_error_log(self, error):
+        paths = util.PathManager()
+        html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', 'mdtf_pod_error.html')
+        assert os.path.exists(html_file)
+        with open(html_file, 'r') as f:
+            html_str = f.read()
+            html_str = html_str.format(description=self.description, error_text=error)
+        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        assert os.path.exists(html_file)
+        with open(html_file, 'a') as f:
+            f.write(html_str)
 
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

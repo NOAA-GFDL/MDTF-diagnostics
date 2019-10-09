@@ -67,6 +67,8 @@ class EnvironmentManager(object):
                 pod.setUp()
             except PodRequirementFailure as exc:
                 print "Skipping execution of {}.".format(exc.pod.name)
+                pod.skipped = True
+                pod.make_pod_html_error_log(exc)
                 continue
 
             pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
@@ -92,9 +94,11 @@ class EnvironmentManager(object):
                     env = os.environ, 
                     cwd = pod.POD_WK_DIR,
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
-            except OSError as e:
-                print('ERROR :',e.errno,e.strerror)
+            except OSError as exc:
+                print('ERROR :',exc.errno,exc.strerror)
                 print(" occured with call: " +run_command)
+                pod.skipped = True
+                pod.make_pod_html_error_log(exc)
                 continue
 
         # if this were python3 we'd have asyncio, instead wait for each process
@@ -112,7 +116,8 @@ class EnvironmentManager(object):
     def tearDown(self):
         # call diag's tearDown to clean up
         for pod in self.pods:
-            pod.tearDown()
+            if not pod.skipped:
+                pod.tearDown()
         for env in self.envs:
             self.destroy_environment(env)
 

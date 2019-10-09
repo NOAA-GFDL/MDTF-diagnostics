@@ -14,6 +14,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import util
+from shared_diagnostic import PodRequirementFailure
 
 class EnvironmentManager(object):
     # analogue of TestSuite in xUnit - abstract base class
@@ -69,9 +70,12 @@ class EnvironmentManager(object):
             # Each pod could have a settings files giving the name of its driver script and long name
             if verbose > 0: print("--- MDTF.py Starting POD "+pod.name+"\n")
 
-            pod.setUp()
-            # skip this pod if missing data
-            if pod.missing_files != []:
+            try:
+                pod.setUp()
+            except PodRequirementFailure as exc:
+                print "Skipping execution of {}.".format(exc.pod.name)
+                pod.skipped = True
+                pod.make_pod_html_error_log(exc)
                 continue
 
             pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
@@ -97,9 +101,12 @@ class EnvironmentManager(object):
                     env = os.environ, 
                     cwd = pod.POD_WK_DIR,
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
-            except OSError as e:
-                print('ERROR :',e.errno,e.strerror)
+            except OSError as exc:
+                print('ERROR :',exc.errno,exc.strerror)
                 print(" occured with call: " +run_command)
+                pod.skipped = True
+                pod.make_pod_html_error_log(exc)
+                continue
 
         # if this were python3 we'd have asyncio, instead wait for each process
         # to terminate and close all log files
@@ -116,7 +123,8 @@ class EnvironmentManager(object):
     def tearDown(self):
         # call diag's tearDown to clean up
         for pod in self.pods:
-            pod.tearDown()
+            if not pod.skipped:
+                pod.tearDown()
         for env in self.envs:
             self.destroy_environment(env)
 

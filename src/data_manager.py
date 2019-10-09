@@ -228,16 +228,6 @@ class DataManager(object):
         # do translation/ transformations of data here
         self.process_fetched_data()
 
-        for pod in self.pods:
-            try:
-                self._check_for_varlist_files(pod.varlist, verbose)
-                if (verbose > 0): print "No known missing required input files"
-            except Exception as exc:
-                # will re-raise inside pod.setUp -- a hack for now; should really
-                # move _check_for_varlist_files back to pod.setUp
-                pod.skipped = PodRequirementFailure(pod, str(exc))
-                continue
-
     def _query_dataset_and_alts(self, dataset):
         """Wrapper for query_dataset that looks for alternate variables.
 
@@ -312,61 +302,6 @@ class DataManager(object):
     @abstractmethod
     def process_fetched_data(self):
         pass
-
-    def _check_for_varlist_files(self, varlist, verbose=0):
-        """Verify that all data files needed by a POD exist locally.
-        
-        Private method called by :meth:`~data_manager.DataManager.fetchData`.
-
-        Args:
-            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.yml file.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if all required
-            files aren't found.
-        """
-        func_name = "\t \t check_for_varlist_files :"
-        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
-        found_list = []
-        missing_list = []
-        for ds in varlist:
-            if (verbose > 2 ): print func_name +" "+ds.name
-            filepath = self.local_path(ds)
-
-            if (os.path.isfile(filepath)):
-                print "found ",filepath
-                found_list.append(filepath)
-                continue
-            if (not ds.required):
-                print "WARNING: optional file not found ",filepath
-                continue
-            if not (('alternates' in ds.__dict__) and (len(ds.alternates)>0)):
-                print "ERROR: missing required file ",filepath,". No alternatives found"
-                missing_list.append(filepath)
-            else:
-                alt_list = ds.alternates
-                print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
-                for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
-                    if (verbose > 1): print "\t \t examining alternative ",alt_item
-                    new_ds = ds.copy()  # modifyable dict with all settings from original
-                    new_ds.name_in_model = alt_item # translation done in DataManager._setup_pod()
-                    del ds.alternates    # remove alternatives (could use this to implement multiple options)
-                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files"
-                    new_files = self._check_for_varlist_files([new_ds],verbose=verbose)
-                    found_list.extend(new_files['found_files'])
-                    missing_list.extend(new_files['missing_files'])
-        # remove empty list entries
-        found_list = filter(None, found_list)
-        missing_list = filter(None, missing_list)
-        if (verbose > 2): print "check_for_varlist_files returning ",missing_list
-        if missing_list:
-            raise Exception(
-                "Couldn't find required model data files:\n\t{}".format(
-                    "\n\t".join(missing_list)
-                ))
-        else:
-            if (verbose > 0): print "No known missing required input files"
 
     # -------------------------------------
 

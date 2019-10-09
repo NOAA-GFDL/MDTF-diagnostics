@@ -74,14 +74,16 @@ class EnvironmentManager(object):
             try:
                 pod.setUp()
             except PodRequirementFailure as exc:
-                pod.logfile_obj.write(str(exc))
-                log_str = "Skipping execution of {}.".format(exc.pod.name)
+                log_str = "Skipping execution of {}.\n\tReason: {}\n".format(
+                    exc.pod.name, str(exc))
                 pod.logfile_obj.write(log_str)
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
                 print log_str
                 pod.skipped = exc
                 continue
+            pod.logfile_obj.write("Found files:\n")
+            pod.logfile_obj.write("\n".join(pod.found_files))
 
             run_command = pod.run_commands()          
             if self.test_mode:

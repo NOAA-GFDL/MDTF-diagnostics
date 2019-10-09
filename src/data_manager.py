@@ -258,12 +258,13 @@ class DataManager(object):
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
             if len(dataset.alternates) == 0:
-                print "Couldn't find {}& no alternates".format(dataset.name)
+                print "Couldn't find {} & no alternates".format(dataset.name)
                 raise
             # check for all alternates
             alt_vars = [dataset.copy(new_name=alt_var) for alt_var in dataset.alternates]
             for alt_var in alt_vars:
                 alt_var.name_in_model = alt_var.name
+                alt_var.alternates = []
                 try: 
                     self.query_dataset(alt_var)
                 except DataQueryFailure:

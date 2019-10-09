@@ -232,11 +232,10 @@ class DataManager(object):
             try:
                 self._check_for_varlist_files(pod.varlist, verbose)
                 if (verbose > 0): print "No known missing required input files"
-            except PodRequirementFailure as exc:
+            except Exception as exc:
                 # will re-raise inside pod.setUp -- a hack for now; should really
                 # move _check_for_varlist_files back to pod.setUp
-                print exc
-                pod.skipped = exc
+                pod.skipped = PodRequirementFailure(pod, str(exc))
                 continue
 
     def _query_dataset_and_alts(self, dataset):
@@ -362,7 +361,7 @@ class DataManager(object):
         missing_list = filter(None, missing_list)
         if (verbose > 2): print "check_for_varlist_files returning ",missing_list
         if missing_list:
-            raise PodRequirementFailure(self, 
+            raise Exception(
                 "Couldn't find required model data files:\n\t{}".format(
                     "\n\t".join(missing_list)
                 ))

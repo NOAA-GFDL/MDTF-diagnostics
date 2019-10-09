@@ -16,7 +16,8 @@ var_names:
   ta_var: ta # 3D temperature, units = K
   qa_var: hus
   omega_var: wap
-
+  wap_var: wap
+  
   ts_var: ts
   pr_var: pr  
 

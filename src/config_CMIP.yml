@@ -10,13 +10,14 @@ var_names:
   lon_var: lon
   time_var: time  
 
-  ua_var: ua   
+  ua_var: ua
   va_var: va
   zg_var: zg
   ta_var: ta # 3D temperature, units = K
   qa_var: hus
   omega_var: wap
-
+  wap_var: wap
+  
   ts_var: ts
   pr_var: pr  
 
@@ -49,10 +50,12 @@ var_names:
   v_var: va
   u200_var: U200
   v200_var: V200
+  u250_var: U250
+  v250_var: V250
   u850_var: U850
   v850_var: V850
   omega500_var: OMEGA500
-
+  z250_var: Z250
   # ------------------------------------------------------------------------
   # Variables for AMOC_3D_Structure module:
   vo_var: vo

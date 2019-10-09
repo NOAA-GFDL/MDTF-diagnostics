@@ -25,6 +25,7 @@ set fremodule
 set REPO_DIR=/home/tsj/mdtf/MDTF-diagnostics
 set INPUT_DIR=${TMPDIR}/inputdata
 set WK_DIR=${TMPDIR}/wkdir
+set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then       
@@ -76,7 +77,7 @@ echo 'script start'
 --OUTPUT_DIR "$out_dir" \
 --data_manager "GfdlPP" \
 --CASENAME "$descriptor" \
---CASE_ROOT_DIR "$in_data_dir" \
+--CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
 --LASTYR $yr2
 echo 'script exit'

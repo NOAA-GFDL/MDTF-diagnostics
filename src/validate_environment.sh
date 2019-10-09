@@ -37,10 +37,9 @@ while getopts "vp:a:b:c:z:" opt; do
             fi
         ;;
         a) # look for python module
-           # tail -n necessary to avoid getting broken pipe errors?
            # also can't figure out how to disable pip's python2.7 warning
-           # case insensitive search (-i) required, eg to match 'PyYAML' and 'pyyaml'
-            if pip list --disable-pip-version-check | tail -n +1 | grep -qiF ${OPTARG}; then
+            if pip list --disable-pip-version-check \
+                | awk -v pattern="${OPTARG}" 'tolower($0) ~ pattern {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "pip list found python module ${OPTARG}."
                 fi
@@ -67,7 +66,8 @@ while getopts "vp:a:b:c:z:" opt; do
             fi
         ;;
         c) #look for R package
-            if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' | grep -qF ${OPTARG}; then
+            if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' \
+                | awk -v pattern="${OPTARG}" 'tolower($0) ~ pattern {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "Found R package ${OPTARG}."
                 fi

@@ -51,4 +51,4 @@ varlist:
   - var_name: z250_var
     freq: day
     requirement: required
-    alternates: [] 
+    alternates: [zg_var] 

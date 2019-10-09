@@ -21,13 +21,13 @@ case_list:
     LASTYR: 1981
     root_dir: '/archive/Thomas.Jackson/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp'
     pod_list:  # Optional: PODs to run for this model only
-      # - Wheeler_Kiladis
-      ## - EOF_500hPa
+      - Wheeler_Kiladis
+      - EOF_500hPa
       - MJO_prop_amp
-      #- convective_transition_diag
-      #- MJO_suite
-      # - MJO_teleconnection
-      #- precip_diurnal_cycle #- high memory requirement
+      - convective_transition_diag
+      - MJO_suite
+      - MJO_teleconnection
+      - precip_diurnal_cycle #- high memory requirement
 
 
 # DIAGNOSTICS

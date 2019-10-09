@@ -39,7 +39,7 @@ varlist:
   - var_name: omega500_var
     freq: day
     requirement: required
-    alternates: [] 
+    alternates: [wap_var] 
   - var_name: u200_var
     freq: day
     requirement: required

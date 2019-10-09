@@ -182,6 +182,49 @@ class TestDiagnosticSetUp(unittest.TestCase):
         pod = Diagnostic('A') 
         self.assertRaises(AssertionError, pod._check_pod_driver)
 
+    # -----------------------------------------
+
+    @mock.patch('os.path.isfile', return_value = True)
+    def test_check_for_varlist_files_found(self, mock_isfile):
+        # case file is found
+        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon'}
+        pod = Diagnostic('A') 
+        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
+        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+        self.assertEqual(missing, [])
+        
+    @mock.patch('os.path.isfile', return_value = False)
+    def test_check_for_varlist_files_not_found(self, mock_isfile):
+        # case file is required and not found
+        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': True}
+        pod = Diagnostic('A') 
+        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
+        self.assertEqual(found, [])
+        self.assertEqual(missing, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_optional(self, mock_isfile):
+        # case file is optional and not found
+        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': False}
+        pod = Diagnostic('A') 
+        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
+        self.assertEqual(found, [])
+        self.assertEqual(missing, [])
+
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_alternate(self, mock_isfile):
+        # case alternate variable is specified and found
+        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
+            'freq':'mon', 'required': True, 'alternates':['PRECC']}
+        pod = Diagnostic('A') 
+        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
+        # name_in_model translation now done in DataManager._setup_pod
+        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
+        self.assertEqual(missing, [])
+
 class TestDiagnosticTearDown(unittest.TestCase):
 
     def setUp(self):

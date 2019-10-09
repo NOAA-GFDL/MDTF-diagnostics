@@ -159,13 +159,20 @@ class Diagnostic(object):
             :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files` 
             subroutines.
         """
-        if isinstance(self.skipped, Exception):
-            # hack to catch data errors raised in data_manager.fetch_data
-            raise self.skipped
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
         try:
             self._check_pod_driver(verbose)
+            (found_files, missing_files) = self._check_for_varlist_files(self.varlist, verbose)
+            self.found_files = found_files
+            self.missing_files = missing_files
+            if missing_files:
+                raise PodRequirementFailure(
+                    "Couldn't find required model data files:\n\t{}".format(
+                        "\n\t".join(missing_files)
+                    ))
+            else:
+                if (verbose > 0): print "No known missing required input files"
         except PodRequirementFailure as exc:
             print exc
             raise exc
@@ -260,6 +267,54 @@ class Diagnostic(object):
                 )
             self.program = programs[driver_ext]
             if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
+
+    def _check_for_varlist_files(self, varlist, verbose=0):
+        """Verify that all data files needed by a POD exist locally.
+        
+        Private method called by :meth:`~data_manager.DataManager.fetchData`.
+
+        Args:
+            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+                of the POD's settings.yml file.
+            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+
+        Returns: :obj:`tuple` of found and missing file lists. Note that this is called
+            recursively.
+        """
+        func_name = "\t \t check_for_varlist_files :"
+        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
+        found_list = []
+        missing_list = []
+        for ds in varlist:
+            if (verbose > 2 ): print func_name +" "+ds.name
+            filepath = ds.local_resource
+            if os.path.isfile(filepath):
+                found_list.append(filepath)
+                continue
+            if (not ds.required):
+                print "WARNING: optional file not found ",filepath
+                continue
+            if not (('alternates' in ds.__dict__) and (len(ds.alternates)>0)):
+                print "ERROR: missing required file ",filepath,". No alternatives found"
+                missing_list.append(filepath)
+            else:
+                alt_list = ds.alternates
+                print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
+                for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
+                    if (verbose > 1): print "\t \t examining alternative ",alt_item
+                    new_ds = ds.copy()  # modifyable dict with all settings from original
+                    new_ds.name_in_model = alt_item # translation done in DataManager._setup_pod()
+                    del ds.alternates    # remove alternatives (could use this to implement multiple options)
+                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files"
+                    (new_found, new_missing) = self._check_for_varlist_files([new_ds],verbose=verbose)
+                    found_list.extend(new_found)
+                    missing_list.extend(new_missing)
+        # remove empty list entries
+        found_list = filter(None, found_list)
+        missing_list = filter(None, missing_list)
+        # nb, need to return due to recursive call
+        if (verbose > 2): print "check_for_varlist_files returning ", missing_list
+        return (found_list, missing_list)
 
     # -------------------------------------
 

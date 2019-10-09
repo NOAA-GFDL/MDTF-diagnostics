@@ -76,14 +76,16 @@ class EnvironmentManager(object):
             try:
                 pod.setUp()
             except PodRequirementFailure as exc:
-                pod.logfile_obj.write(str(exc))
-                log_str = "Skipping execution of {}.".format(exc.pod.name)
+                log_str = "Skipping execution of {}.\n\tReason: {}\n".format(
+                    exc.pod.name, str(exc))
                 pod.logfile_obj.write(log_str)
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
                 print log_str
                 pod.skipped = exc
                 continue
+            pod.logfile_obj.write("Found files:\n")
+            pod.logfile_obj.write("\n".join(pod.found_files))
 
             run_command = pod.run_commands()          
             if self.test_mode:
@@ -170,16 +172,15 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
-        src_path = os.path.join(paths.CODE_ROOT, 'src')
         assert ('venv_root' in config['settings'])
         # need to resolve relative path
         self.venv_root = util.resolve_path(
-            config['settings']['venv_root'], src_path
+            config['settings']['venv_root'], paths.CODE_ROOT
         )
         if ('r_lib_root' in config['settings']) and \
             config['settings']['r_lib_root'] != '':
             self.r_lib_root = util.resolve_path(
-                config['settings']['r_lib_root'], src_path
+                config['settings']['r_lib_root'], paths.CODE_ROOT
             )
         else:
             self.r_lib_root = ''
@@ -276,8 +277,8 @@ class CondaEnvironmentManager(EnvironmentManager):
             # need to resolve relative path
             paths = util.PathManager()
             self.conda_env_root = util.resolve_path(
-                config['settings']['conda_env_root'],
-                os.path.join(paths.CODE_ROOT, 'src')
+                config['settings']['conda_env_root'], 
+                paths.CODE_ROOT
             )
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed

@@ -414,13 +414,13 @@ class Diagnostic(object):
         self.append_result_link()
 
     def _append_template_to_main(self, template_file, template_dict={}):
-        template_dict = template_dict.update(self.__dict__)
+        template_dict.update(self.__dict__)
         paths = util.PathManager()
         html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', template_file)
         assert os.path.exists(html_file)
         with open(html_file, 'r') as f:
             html_str = f.read()
-            html_str = html_str.format(template_dict)
+            html_str = html_str.format(**template_dict)
         html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
         assert os.path.exists(html_file)
         with open(html_file, 'a') as f:

@@ -60,29 +60,8 @@ import environment_manager
 from shared_diagnostic import Diagnostic
 try:
     import gfdl
-except (ImportError, ModuleNotFoundError):
-    print  
-
-def process_frepp_stub():
-    """Converts the frepp arguments to a Python dictionary.
-
-    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
-
-    Returns: :obj:`dict` of frepp parameters.
-    """
-    frepp_stub = str("""
-        set in_data_dir     #pp directory containing files to be analyzed
-        set descriptor      #experiment name
-        set out_dir         #directory to write output files
-        set WORKDIR         #working directory for script execution
-        set frexml          #path to xml file
-        set yr1             #start year of analysis
-        set yr2             #ending year
-        set make_variab_tar 1
-        set test_mode       True
-        set verbose         0
-    """)
-    return gfdl.parse_frepp_stub(frepp_stub)
+except ImportError:
+    pass  
 
 def argparse_wrapper():
     """Wraps command-line arguments to script.
@@ -91,67 +70,91 @@ def argparse_wrapper():
     """
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbosity", action="count",
-                        help="Increase output verbosity")
+    parser = argparse.ArgumentParser(
+        epilog="All command-line arguments override defaults set in src/config.yml."
+    )
+    parser.add_argument("-v", "--verbosity", 
+        action="count",
+        help="Increase output verbosity")
+    parser.add_argument("--frepp", 
+        action="store_true", # so default to False
+        help="Set flag to take configuration info from env vars set by frepp.")
     # default paths set in config.yml/paths
-    parser.add_argument('--CODE_ROOT', nargs='?', type=str, 
-                        default=code_root,
-                        help="Code installation directory.")
-    parser.add_argument('--MODEL_DATA_ROOT', nargs='?', type=str, 
-                        help="Parent directory containing results from different models.")
-    parser.add_argument('--OBS_DATA_ROOT', nargs='?', type=str, 
-                        help="Parent directory containing observational data used by individual PODs.")
-    parser.add_argument('--WORKING_DIR', nargs='?', type=str, 
-                        help="Working directory.")
-    parser.add_argument('--OUTPUT_DIR', nargs='?', type=str, 
-                        help="Directory to write output files. Defaults to working directory.")
+    parser.add_argument('--CODE_ROOT', 
+        nargs='?', default=code_root,
+        help="Code installation directory.")
+    parser.add_argument('--MODEL_DATA_ROOT', 
+        nargs='?',
+        help="Parent directory containing results from different models.")
+    parser.add_argument('--OBS_DATA_ROOT', 
+        nargs='?', 
+        help="Parent directory containing observational data used by individual PODs.")
+    parser.add_argument('--WORKING_DIR', 
+        nargs='?',
+        help="Working directory.")
+    parser.add_argument('--OUTPUT_DIR', 
+        nargs='?',
+        help="Directory to write output files. Defaults to working directory.")
     # defaults set in config.yml/settings
-    parser.add_argument("--test_mode", action="store_const", const=True,
-                        help="Set flag to do a dry run, disabling calls to PODs")
-    parser.add_argument('--data_manager', nargs='?', type=str, 
-                        help="Method to fetch model data. Currently supported options are {'Localfile'}.")
-    parser.add_argument('--environment_manager', nargs='?', type=str, 
-                        help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")
-    # non-flag arguments                                        
-    parser.add_argument('config_file', nargs='?', type=str, 
-                        default=os.path.join(cwd, 'config.yml'),
-                        help="Configuration file.")
+    parser.add_argument("--test_mode", 
+        action="store_true", # so default to False
+        help="Set flag to do a dry run, disabling calls to PODs")
+    parser.add_argument('--data_manager', 
+        nargs='?',
+        help="Method to fetch model data. Currently supported options are {'Localfile'}.")
+    parser.add_argument('--environment_manager', 
+        nargs='?',
+        help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")                                      
+    # casename args, set by frepp
+    parser.add_argument('--CASENAME', 
+        nargs='?')
+    parser.add_argument('--CASE_ROOT_DIR', 
+        nargs='?')
+    parser.add_argument('--FIRSTYR', 
+        nargs='?', type=int)
+    parser.add_argument('--LASTYR', 
+        nargs='?', type=int)
+    parser.add_argument('--config_file', 
+        nargs='?', default=os.path.join(cwd, 'config.yml'),
+        help="Configuration file.")
     args = parser.parse_args()
     
     d = args.__dict__
-
     if args.verbosity == None:
         d['verbose'] = 1
     else:
         d['verbose'] = args.verbosity + 1 # fix for case  verb = 0
-
     # remove entries that weren't set
     del_keys = [key for key in d if d[key] is None]
     for key in del_keys:
         del d[key]
     return d
 
-def manual_dispatch(module_name, class_name):
-    try:
-        return getattr(module_name, class_name)
-    except:
-        return getattr(gfdl, class_name) # also look in GFDL-specific classes
-    except:
-        print "No class named {}.".format(class_name)
+def manual_dispatch(class_name):
+    for mod in [data_manager, environment_manager, gfdl]:
+        try:
+            return getattr(mod, class_name)
+        except:
+            continue
+    print "No class named {}.".format(class_name)
+    raise Exception('no_class')
 
 if __name__ == '__main__':
     print "==== Starting "+__file__
 
     cmdline_args = argparse_wrapper()
     print cmdline_args
-    frepp_args = process_frepp_stub()
+    if cmdline_args['frepp']:
+        frepp_args = gfdl.parse_frepp_env_vars()
+    else:
+        frepp_args = None
     print frepp_args
     default_args = util.read_yaml(cmdline_args['config_file'])
     config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
+    print config #debug
     
     verbose = config['settings']['verbose']
-    PathManager(config['paths']) # initialize
+    util.PathManager(config['paths']) # initialize
     util.set_mdtf_env_vars(config, verbose)
     DataMgr = manual_dispatch(
         config['settings']['data_manager'].title()+'DataManager'
@@ -172,7 +175,7 @@ if __name__ == '__main__':
             if verbose > 0: print "POD long name: ", pod.long_name
             case.pods.append(pod)
         case.setUp(config)
-        case.fetchData()
+        case.fetch_data()
         caselist.append(case)
 
     for case in caselist:

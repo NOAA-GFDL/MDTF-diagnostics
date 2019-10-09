@@ -5,7 +5,7 @@ import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
-    except (ImportError, ModuleNotFoundError):
+    except ImportError:
         import subprocess
 else:
     import subprocess
@@ -94,17 +94,16 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
-    def activate_env_command(self, pod):
+    def activate_env_commands(self, pod):
         mod_name = _current_module_versions[pod.env]
-        parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
-            self).activate_env_command(pod)
-        return 'module load {} && {}'.format(mod_name, parent_cmd)
+        return ['source $MODULESHOME/init/bash',
+            'module load {}'.format(mod_name)] \
+            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(pod)
 
-    def deactivate_env_command(self, pod):
+    def deactivate_env_commands(self, pod):
         mod_name = _current_module_versions[pod.env]
-        parent_cmd = super(GfdlvirtualenvEnvironmentManager, \
-            self).deactivate_env_command(pod)
-        return '{} && module unload {}'.format(parent_cmd, mod_name)
+        return super(GfdlvirtualenvEnvironmentManager, \
+            self).deactivate_env_commands(pod) + ['module unload {}'.format(mod_name)]
 
     def tearDown(self):
         super(GfdlvirtualenvEnvironmentManager, self).tearDown()
@@ -127,21 +126,22 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 
 class GfdlppDataManager(DataManager):
-    def __init__(self, root_dir, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, verbose=0):
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
         # If we're not, assume we're on a workstation. gcp won't copy to the 
         # usual /tmp, so put temp files in a directory on /net2.
-        if 'FTMPDIR' in os.environ:
-            tempfile.tempdir = os.environ['FTMPDIR']
+        if 'TMPDIR' in os.environ:
+            tempfile.tempdir = os.environ['TMPDIR']
         elif os.path.isdir('/net2'):
             tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
             if not os.path.isdir(tempfile.tempdir):
                 os.makedirs(tempfile.tempdir)
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
-        assert os.path.isdir(root_dir)
-        self.root_dir = root_dir
+        assert ('root_dir' in case_dict)
+        assert os.path.isdir(case_dict['root_dir'])
+        self.root_dir = case_dict['root_dir']
 
         # load required modules
         modMgr = ModuleManager()
@@ -164,7 +164,7 @@ class GfdlppDataManager(DataManager):
         if match:
             assert match.group('component') == match.group('component2')
             ds = DataSet(**(match.groupdict()))
-            ds.remote_resource = path
+            ds.remote_resource = os.path.join(self.root_dir, path)
             (ds.dir, ds.file) = os.path.split(path)
             del ds.component2
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
@@ -238,6 +238,7 @@ class GfdlppDataManager(DataManager):
         is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
         because it requires comparing the files found for *all* requested datasets.
         """
+        print "query for ",dataset.name_in_model
         dataset.remote_resource = []
         try:
             if 'component' in dataset:
@@ -247,8 +248,8 @@ class GfdlppDataManager(DataManager):
             else:
                 files = self.search_pp_path( \
                     dataset.name_in_model, dataset.date_freq.format_frepp())
-        except Exception as exc:
-            raise DataQueryFailure(dataset, exc.args[0]) # reraise with full dataset
+        except Exception as ex:
+            raise DataQueryFailure(dataset, str(ex)) # reraise with full dataset
         files = [self.parse_pp_path(f) for f in files]
 
         candidate_dirs = {f.dir for f in files}
@@ -274,6 +275,7 @@ class GfdlppDataManager(DataManager):
         """Filter files on model component and chunk frequency.
         """
         cmpts = self._select_model_component(self.iter_vars())
+        print "Components selected: ", cmpts
         for var in self.iter_vars():
             cmpt = self._heuristic_component_tiebreaker( \
                 {f.component for f in var.remote_resource if (f.component in cmpts)} \
@@ -284,7 +286,9 @@ class GfdlppDataManager(DataManager):
             var.remote_resource = [f for f in var.remote_resource \
                 if (f.chunk_freq == chunk_freq and f.component == cmpt)]
             assert var.remote_resource # shouldn't have eliminated everything
-        return super(GfdlppDataManager, self).plan_data_fetching()
+        # don't return files, instead fetch_dataset iterates through vars
+        return None
+        # return super(GfdlppDataManager, self).plan_data_fetching()
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
@@ -371,33 +375,37 @@ class GfdlppDataManager(DataManager):
         # return os.path.getmtime(dataset.local_resource) \
         #     >= os.path.getmtime(dataset.remote_resource)
 
-    def fetch_dataset(self, dataset, method='auto', dry_run=False):
+    def fetch_dataset(self, ds_var, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """
         (cp_command, smartsite) = self._determine_fetch_method(method)
-        
-        if len(dataset.remote_resource) == 1:
+        if len(ds_var.remote_resource) == 1:
             # one chunk, no need to ncrcat
             util.run_command( \
                 cp_command + [
-                    smartsite + os.path.join(self.root_dir, dataset.remote_resource), 
-                    dataset.local_resource
+                    smartsite + os.path.join(self.root_dir, ds_var.remote_resource), 
+                    ds_var.local_resource
             ])
         else:
             paths = util.PathManager()
-            dataset.nohash_tempdir = paths.make_tempdir(new_dir=dataset.tempdir())
+            ds_var.nohash_tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
-            for f in dataset.remote_resource:
+            for f in ds_var.remote_resource:
+                print "copying {} to {}".format(f.remote_resource, ds_var.nohash_tempdir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f.remote_resource), 
                     # gcp requires trailing slash, ln ignores it
-                    smartsite + dataset.nohash_tempdir + os.sep
+                    smartsite + ds_var.nohash_tempdir + os.sep
                 ]) 
                 chunks.append(f.file)
+            # ncrcat will error instead of creating destination directories
+            dest_dir, _ = os.path.split(ds_var.local_resource)
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            util.run_command(['ncrcat'] + chunks + [dataset.local_resource], 
-                cwd=dataset.nohash_tempdir)
+            util.run_command(['ncrcat', '-O'] + chunks + [ds_var.local_resource], 
+                cwd=ds_var.nohash_tempdir)
             # TODO: trim ncrcat'ed files to actual time period
             # temp files cleaned up by data_manager.tearDown
 
@@ -414,6 +422,27 @@ class GfdlppDataManager(DataManager):
                 method = 'ln' # symlink for local files
         return (_methods[method]['command'], _methods[method]['site'])
 
+    def process_fetched_data(self):
+        pass
+
+    def _copy_to_output(self):
+        # use gcp, since OUTPUT_DIR might be mounted read-only
+        paths = util.PathManager()
+        if paths.OUTPUT_DIR != paths.WORKING_DIR:
+            util.run_command(['gcp','-r','-v','--sync',
+                'gfdl:' + self.MODEL_WK_DIR + os.sep,
+                'gfdl:' + self.MODEL_OUT_DIR + os.sep
+            ])
+
+frepp_translate = {
+    'in_data_dir': 'root_dir', # /pp/ directory
+    'descriptor': 'CASENAME',
+    'out_dir': 'OUTPUT_DIR',
+    'WORKDIR': 'WORKING_DIR',
+    'yr1': 'FIRSTYR',
+    'yr2': 'LASTYR'
+}
+
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.
 
@@ -421,28 +450,28 @@ def parse_frepp_stub(frepp_stub):
 
     Returns: :obj:`dict` of frepp parameters.
     """
-    frepp_translate = {
-        'in_data_dir': 'MODEL_DATA_ROOT',
-        'descriptor': 'CASENAME',
-        'out_dir': 'OUTPUT_DIR',
-        'WORKDIR': 'WORKING_DIR',
-        'yr1': 'FIRSTYR',
-        'yr2': 'LASTYR'
-    }
     # parse arguments and relabel keys
     d = {}
-    # look for "set ", match token, skip spaces or "=", then match string of 
-    # characters to end of line
-    regex = r"\s*set (\w+)\s+=?\s*([^=#\s]\b|[^=#\s].*[^\s])\s*$"
+    regex = re.compile(r"""
+        \s*set[ ]     # initial whitespace, then 'set' followed by 1 space
+        (?P<key>\w+)  # key is simple token, no problem
+        \s+=?\s*      # separator is any whitespace, with 0 or 1 "=" signs
+        (?P<value>    # want to capture all characters to end of line, so:
+            [^=#\s]   # first character = any non-separator, or '#' for comments
+            .*        # capture everything between first and last chars
+            [^\s]     # last char = non-whitespace.
+            |[^=#\s]\b) # separate case for when value is a single character.
+        \s*$          # remainder of line must be whitespace.
+        """, re.VERBOSE)
     for line in frepp_stub.splitlines():
         print "line = '{}'".format(line)
         match = re.match(regex, line)
         if match:
-            if match.group(1) in frepp_translate:
-                key = frepp_translate[match.group(1)]
+            if match.group('key') in frepp_translate:
+                key = frepp_translate[match.group('key')]
             else:
-                key = match.group(1)
-            d[key] = match.group(2)
+                key = match.group('key')
+            d[key] = match.group('value')
 
     # cast from string
     for int_key in ['FIRSTYR', 'LASTYR', 'verbose']:

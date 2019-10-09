@@ -373,10 +373,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
         self.assertEqual(os.environ['RGB'], 'TEST_CODE_ROOT/src/rgb')
 
-
-
 # ---------------------------------------------------
-
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):
         input = 'echo "foo"'

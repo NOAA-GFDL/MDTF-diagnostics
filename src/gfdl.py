@@ -238,7 +238,8 @@ class GfdlppDataManager(DataManager):
         is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
         because it requires comparing the files found for *all* requested datasets.
         """
-        print "query for ",dataset.name_in_model
+        print "query for {} @ {}".format(dataset.name_in_model, 
+            dataset.date_freq.format_frepp())
         dataset.remote_resource = []
         try:
             if 'component' in dataset:
@@ -381,11 +382,12 @@ class GfdlppDataManager(DataManager):
         (cp_command, smartsite) = self._determine_fetch_method(method)
         if len(ds_var.remote_resource) == 1:
             # one chunk, no need to ncrcat
-            util.run_command( \
-                cp_command + [
-                    smartsite + os.path.join(self.root_dir, ds_var.remote_resource), 
-                    ds_var.local_resource
-            ])
+            for f in ds_var.remote_resource:
+                util.run_command( \
+                    cp_command + [
+                        smartsite + os.path.join(self.root_dir, f.remote_resource), 
+                        ds_var.local_resource
+                ])
         else:
             paths = util.PathManager()
             ds_var.nohash_tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
@@ -411,12 +413,12 @@ class GfdlppDataManager(DataManager):
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {
-            'gcp': {'command': ['gcp', '--sync'], 'site':'gfdl:'},
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
         if method not in _methods:
-            if any(self.root_dir.startswith(s) for s in ['/archive', '/ptmp', '/work']):
+            if any(self.root_dir.startswith(s) for s in ['/arch', '/ptmp', '/work']):
                 method = 'gcp' # use GCP for DMF filesystems
             else:
                 method = 'ln' # symlink for local files

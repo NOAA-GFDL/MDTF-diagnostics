@@ -144,13 +144,8 @@ if __name__ == '__main__':
 
     cmdline_args = argparse_wrapper()
     print cmdline_args
-    if cmdline_args['frepp']:
-        frepp_args = gfdl.parse_frepp_env_vars()
-    else:
-        frepp_args = None
-    print frepp_args
     default_args = util.read_yaml(cmdline_args['config_file'])
-    config = util.parse_mdtf_args(frepp_args, cmdline_args, default_args)
+    config = util.parse_mdtf_args(None, cmdline_args, default_args)
     print config #debug
     
     verbose = config['settings']['verbose']

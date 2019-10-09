@@ -232,11 +232,10 @@ class DataManager(object):
             try:
                 self._check_for_varlist_files(pod.varlist, verbose)
                 if (verbose > 0): print "No known missing required input files"
-            except PodRequirementFailure as exc:
+            except Exception as exc:
                 # will re-raise inside pod.setUp -- a hack for now; should really
                 # move _check_for_varlist_files back to pod.setUp
-                print exc
-                pod.skipped = exc
+                pod.skipped = PodRequirementFailure(pod, str(exc))
                 continue
 
     def _query_dataset_and_alts(self, dataset):
@@ -260,15 +259,17 @@ class DataManager(object):
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
             if len(dataset.alternates) == 0:
-                print "Couldn't find {}& no alternates".format(dataset.name)
+                print "Couldn't find {} & no alternates".format(dataset.name)
                 raise
             # check for all alternates
-            alt_vars = [dataset.copy(new_name=var_name) for var_name in dataset.alternates]
-            for alt_data in alt_vars:
+            alt_vars = [dataset.copy(new_name=alt_var) for alt_var in dataset.alternates]
+            for alt_var in alt_vars:
+                alt_var.name_in_model = alt_var.name
+                alt_var.alternates = []
                 try: 
-                    self.query_dataset(alt_data)
+                    self.query_dataset(alt_var)
                 except DataQueryFailure:
-                    print "Couldn't find alternate data {}".format(alt_data.name)
+                    print "Couldn't find alternate data {}".format(alt_var.name)
                     raise
             return alt_vars
 
@@ -360,7 +361,7 @@ class DataManager(object):
         missing_list = filter(None, missing_list)
         if (verbose > 2): print "check_for_varlist_files returning ",missing_list
         if missing_list:
-            raise PodRequirementFailure(self, 
+            raise Exception(
                 "Couldn't find required model data files:\n\t{}".format(
                     "\n\t".join(missing_list)
                 ))

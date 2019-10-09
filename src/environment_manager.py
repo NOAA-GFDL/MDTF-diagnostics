@@ -170,16 +170,15 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
-        src_path = os.path.join(paths.CODE_ROOT, 'src')
         assert ('venv_root' in config['settings'])
         # need to resolve relative path
         self.venv_root = util.resolve_path(
-            config['settings']['venv_root'], src_path
+            config['settings']['venv_root'], paths.CODE_ROOT
         )
         if ('r_lib_root' in config['settings']) and \
             config['settings']['r_lib_root'] != '':
             self.r_lib_root = util.resolve_path(
-                config['settings']['r_lib_root'], src_path
+                config['settings']['r_lib_root'], paths.CODE_ROOT
             )
         else:
             self.r_lib_root = ''
@@ -276,8 +275,8 @@ class CondaEnvironmentManager(EnvironmentManager):
             # need to resolve relative path
             paths = util.PathManager()
             self.conda_env_root = util.resolve_path(
-                config['settings']['conda_env_root'],
-                os.path.join(paths.CODE_ROOT, 'src')
+                config['settings']['conda_env_root'], 
+                paths.CODE_ROOT
             )
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed

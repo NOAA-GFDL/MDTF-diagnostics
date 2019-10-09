@@ -356,12 +356,23 @@ class Diagnostic(object):
         os.remove(temp_file)
 
         # add link and description to main html page
+        self.append_result_link()
+
+    def _append_template_to_main(self, template_file, template_dict={}):
+        template_dict = template_dict.update(self.__dict__)
+        paths = util.PathManager()
+        html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', template_file)
+        assert os.path.exists(html_file)
+        with open(html_file, 'r') as f:
+            html_str = f.read()
+            html_str = html_str.format(template_dict)
         html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        a = os.system("cat " + html_file + " | grep " + self.name)
-        if a != 0:
-            os.system("echo '<H3><font color=navy>" + self.description \
-                + " <A HREF=\""+ self.name+"/"+self.name+".html\">plots</A></H3>' >> " \
-                + html_file)
+        assert os.path.exists(html_file)
+        with open(html_file, 'a') as f:
+            f.write(html_str)
+
+    def append_result_link(self):
+        self._append_template_to_main('pod_result_snippet.html')
 
     def make_pod_html_error_log(self, error):
         paths = util.PathManager()

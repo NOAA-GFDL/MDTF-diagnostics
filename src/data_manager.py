@@ -154,12 +154,13 @@ class DataManager(object):
     def fetch_data(self, verbose=0):
         for pod in self.pods:
             new_varlist = []
-            for var in pod.varlist:
-                try:
+            try:
+                for var in pod.varlist:
                     new_varlist.extend(self._query_dataset_and_alts(var))
-                except DataQueryFailure:
-                    print "Data query failed on pod {}".format(pod.name)
-                    continue
+            except DataQueryFailure:
+                print "Data query failed on pod {}; skipping.".format(pod.name)
+                # count on _check_for_varlist_files to throw error that gets logged..
+                continue
             pod.varlist = new_varlist
 
         # TODO: better way to handle these two options

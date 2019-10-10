@@ -42,14 +42,16 @@ newpr2 = calculate_daily_values (newpr, "avg", 0, False)
 newtime2=newpr2&time
 
 print("Writing $wk_dir/model/netCDF/model_pr.nc")
-system("rm -f $wk_dir/model/netCDF/model_pr.nc")
+system("/usr/bin/rm -f $wk_dir/model/netCDF/model_pr.nc")
 fout = addfile("$wk_dir/model/netCDF/model_pr.nc","c") 
+print("wrote $wk_dir/model/netCDF/model_pr.nc")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_pr"
 fAtt@Conventions   = "None"
 fAtt@creation_date = systemfunc ("date")
 fileattdef( fout, fAtt )
+print("set atts on $wk_dir/model/netCDF/model_pr.nc")
 filedimdef(fout,"time",-1,True)
 newpr2&time@calendar="noleap"
 fout->pr = newpr2
@@ -77,14 +79,16 @@ newprw2 = calculate_daily_values (newprw, "avg", 0, False)
 newtime2=newprw2&time
 
 print("Writing fout "+"$wk_dir/model/netCDF/model_prw.nc")
-system("rm -f $wk_dir/model/netCDF/model_prw.nc")
+system("/usr/bin/rm -f $wk_dir/model/netCDF/model_prw.nc")
 fout = addfile("$wk_dir/model/netCDF/model_prw.nc","c")
+print("wrote fout "+"$wk_dir/model/netCDF/model_prw.nc")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
 fAtt@source_file   =  "$file_prw"
 fAtt@Conventions   = "None"
 fAtt@creation_date = systemfunc ("date")
 fileattdef( fout, fAtt )
+print("wrote atts to "+"$wk_dir/model/netCDF/model_prw.nc")
 filedimdef(fout,"time",-1,True)
 newprw2&time@calendar="noleap"
 fout->prw = newprw2

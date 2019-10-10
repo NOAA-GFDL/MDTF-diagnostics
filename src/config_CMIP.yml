@@ -4,7 +4,7 @@ var_names:
   hybm_var: hybm  
   lat_coord: lat   
   lon_coord: lon
-  lev_coord: lev
+  lev_coord: plev19 # used by multiple PODs
   time_coord: time   
   lat_var: lat 
   lon_var: lon
@@ -63,7 +63,7 @@ var_names:
   vmo_var: vmo
   thetao_var: thetao
   bas_var: ind
-  lev_var: lev
+  lev_var: plev19 # only used by EOF_500hPa
   deptho_var: deptho
   thkcello_var: thkcello 
   time_bnds_var: time_bnds 

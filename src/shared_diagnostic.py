@@ -145,13 +145,13 @@ class Diagnostic(object):
         ds_list = []
         for var in varlist:
             ds = util.DataSet(**var)
-            ds.original_name = ds.var_name
-            ds.CF_name = translate.toCF(self.convention, ds.var_name)
+            ds.original_name = ds.name
+            ds.CF_name = translate.toCF(self.convention, ds.name)
             alt_ds_list = []
             for alt_var in ds.alternates:
                 alt_ds = ds.copy(new_name=alt_var)
-                alt_ds.original_name = ds.var_name
-                alt_ds.CF_name = translate.toCF(self.convention, alt_ds.var_name)
+                alt_ds.original_name = ds.original_name
+                alt_ds.CF_name = translate.toCF(self.convention, alt_ds.name)
                 alt_ds.alternates = []
                 alt_ds_list.append(alt_ds)
             ds.alternates = alt_ds_list

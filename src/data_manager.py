@@ -100,19 +100,28 @@ class DataManager(object):
             "LASTYR": self.lastyr
         })
 
+        translate = util.VariableTranslator()
+        # Silently set env vars for *all* model variables, because it contains
+        # things like axis mappings etc. Relevant variable names will get 
+        # overridden when POD sets its variables.
+        assert self.convention in translate.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(self.convention)
+        for key, val in translate.field_dict[self.convention].items():
+            util.setenv(key, val, self.envvars, verbose=verbose)
+
     def _setup_html(self):
-        if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
-            print("WARNING: index.html exists, not re-creating.")
-        else: 
-            paths = util.PathManager()
-            html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
-            )
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf1.html'), 
-                os.path.join(self.MODEL_WK_DIR, 'index.html')
-            )
+        paths = util.PathManager()
+        html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        if os.path.isfile(html_file):
+            print("WARNING: index.html exists, deleting.")
+            os.remove(html_file)
+        shutil.copy2(
+            os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+        )
+        shutil.copy2(
+            os.path.join(html_dir, 'mdtf1.html'), html_file
+        )
 
     def _setup_pod(self, pod):
         paths = util.PathManager()
@@ -145,12 +154,13 @@ class DataManager(object):
     def fetch_data(self, verbose=0):
         for pod in self.pods:
             new_varlist = []
-            for var in pod.varlist:
-                try:
+            try:
+                for var in pod.varlist:
                     new_varlist.extend(self._query_dataset_and_alts(var))
-                except DataQueryFailure:
-                    print "Data query failed on pod {}".format(pod.name)
-                    continue
+            except DataQueryFailure:
+                print "Data query failed on pod {}; skipping.".format(pod.name)
+                # count on _check_for_varlist_files to throw error that gets logged..
+                continue
             pod.varlist = new_varlist
 
         # TODO: better way to handle these two options

@@ -111,7 +111,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
             'py_convective_transition_diag': ['python', 'ncl'],
             'ncl_MJO_suite': ['ncl', 'nco']
         }
-        return _current_module_versions[_lookup[env_name]]
+        return [_current_module_versions[m] for m in _lookup[env_name]]
 
     def create_environment(self, env_name):
         modMgr = ModuleManager()

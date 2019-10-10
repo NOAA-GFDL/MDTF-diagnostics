@@ -28,7 +28,8 @@ while getopts "vp:a:b:c:z:" opt; do
         z) # look for environment variable
             if [ ! -z ${OPTARG} ]; then
                 if [ "$verbose" = true ]; then
-                    echo "Environment variable ${OPTARG} is defined."
+                    # echo "Environment variable ${OPTARG} is defined."
+                    true
                 fi
                 continue
             else

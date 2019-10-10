@@ -3,7 +3,6 @@ import sys
 import glob
 import shutil
 import util
-from util import setenv # TODO: fix
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
@@ -62,6 +61,14 @@ class Diagnostic(object):
         self.__dict__.update(config)
         config = self._parse_pod_varlist(file_contents['varlist'], verbose)
         self.varlist = config
+
+    def iter_vars_and_alts(self):
+        """Generator iterating over all variables and alternates in POD's varlist.
+        """
+        for var in self.varlist:
+            yield var
+            for alt_var in var.alternates:
+                yield alt_var
 
     def _parse_pod_settings(self, settings, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
@@ -133,7 +140,23 @@ class Diagnostic(object):
         if (verbose > 0): 
             print self.name + " varlist: "
             print varlist
-        return varlist
+        # express varlist as DataSet objects
+        translate = util.VariableTranslator()
+        ds_list = []
+        for var in varlist:
+            ds = util.DataSet(**var)
+            ds.original_name = ds.var_name
+            ds.CF_name = translate.toCF(self.convention, ds.var_name)
+            alt_ds_list = []
+            for alt_var in ds.alternates:
+                alt_ds = ds.copy(new_name=alt_var)
+                alt_ds.original_name = ds.var_name
+                alt_ds.CF_name = translate.toCF(self.convention, alt_ds.var_name)
+                alt_ds.alternates = []
+                alt_ds_list.append(alt_ds)
+            ds.alternates = alt_ds_list
+            ds_list.append(ds)
+        return ds_list
 
     # -------------------------------------
 
@@ -179,25 +202,25 @@ class Diagnostic(object):
 
     def _set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+        Sets all environment variables for POD.
 
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns:
-            Dict of POD-specific environment variables that were set.
         """
-        pod_envvars = {}
-        # location of POD's code
-        setenv("POD_HOME", self.POD_CODE_DIR, pod_envvars, verbose=verbose)
-        # POD's observational data
-        setenv("OBS_DATA", self.POD_OBS_DATA, pod_envvars, verbose=verbose)
-        # POD's subdir within working directory
-        setenv("WK_DIR", self.POD_WK_DIR, pod_envvars, verbose=verbose)
-
-        # optional POD-specific env vars defined in settings.yml
+        self.pod_env_vars.update({
+            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
+            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
+            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+        })
+        # set all env vars: POD has inherited vars from case (DataManager._setup_pod)
+        # and global.
         for key, val in self.pod_env_vars.items():
-            setenv(key, val, pod_envvars, verbose=verbose) 
-        return pod_envvars
+            util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
+
+        # pod variable mappings:
+        for var in self.iter_vars_and_alts():
+            util.setenv(var.original_name, var.name_in_model, self.pod_env_vars, 
+                verbose=verbose) 
 
     def _setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
@@ -300,13 +323,9 @@ class Diagnostic(object):
             else:
                 alt_list = ds.alternates
                 print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
-                for alt_item in alt_list: # maybe some way to do this w/o loop since check_ takes a list
-                    if (verbose > 1): print "\t \t examining alternative ",alt_item
-                    new_ds = ds.copy()  # modifyable dict with all settings from original
-                    new_ds.name_in_model = alt_item # translation done in DataManager._setup_pod()
-                    del ds.alternates    # remove alternatives (could use this to implement multiple options)
-                    if ( verbose > 2): print "created new_var for input to check_for_varlist_files"
-                    (new_found, new_missing) = self._check_for_varlist_files([new_ds],verbose=verbose)
+                for alt_var in alt_list: # maybe some way to do this w/o loop since check_ takes a list
+                    if (verbose > 1): print "\t \t examining alternative ",alt_var
+                    (new_found, new_missing) = self._check_for_varlist_files([alt_var],verbose=verbose)
                     found_list.extend(new_found)
                     missing_list.extend(new_missing)
         # remove empty list entries

@@ -204,8 +204,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         if not os.path.isdir(env_path):
             os.makedirs(env_path) # recursive mkdir if needed
         cmds = [
-            'pip install --user virtualenv',
-            'virtualenv {}'.format(env_path),
+            'python -m virtualenv {}'.format(env_path),
             'source {}/bin/activate'.format(env_path),
             'pip install {}'.format(' '.join(py_pkgs)),
             'deactivate'

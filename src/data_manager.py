@@ -100,6 +100,15 @@ class DataManager(object):
             "LASTYR": self.lastyr
         })
 
+        translate = util.VariableTranslator()
+        # Silently set env vars for *all* model variables, because it contains
+        # things like axis mappings etc. Relevant variable names will get 
+        # overridden when POD sets its variables.
+        assert self.convention in translate.field_dict, \
+            "Variable name translation doesn't recognize {}.".format(self.convention)
+        for key, val in translate.field_dict[self.convention].items():
+            util.setenv(key, val, _, verbose=verbose)
+
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
             print("WARNING: index.html exists, not re-creating.")

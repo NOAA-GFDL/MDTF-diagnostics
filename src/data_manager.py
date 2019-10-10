@@ -7,47 +7,7 @@ import signal
 from abc import ABCMeta, abstractmethod
 import util
 import datelabel
-from util import setenv # fix
 from shared_diagnostic import PodRequirementFailure
-
-class DataSet(util.Namespace):
-    """Class to describe datasets.
-
-    `https://stackoverflow.com/a/48806603`_ for implementation.
-    """
-    def __init__(self, *args, **kwargs):
-        super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', 
-            'remote_resource', 'local_resource']:
-            if key not in self:
-                self[key] = None
-
-        if ('var_name' in self) and (self.name is None):
-            self.name = self.var_name
-        if ('freq' in self) and (self.date_freq is None):
-            self.date_freq = datelabel.DateFrequency(self.freq)
-
-    def copy(self, new_name=None):
-        temp = super(DataSet, self).copy()
-        if new_name is not None:
-            temp.name = new_name
-        return temp  
-
-    def _freeze(self):
-        """Return immutable representation of (current) attributes.
-
-        Exclude attributes starting with 'nohash_' from the comparison, in case 
-        we want DataSets with different timestamps, temporary directories, etc.
-        to compare as equal.
-        """
-        d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
-        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
-
-    def tempdir(self):
-        """Set temporary directory deterministically.
-        """
-        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
 
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
@@ -76,7 +36,10 @@ class DataManager(object):
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
         self.lastyr = datelabel.Date(case_dict['LASTYR'])
         self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
-
+        if 'envvars' in config:
+            self.envvars = config['envvars'].copy() # gets appended to
+        else:
+            self.envvars = {}
 
         if 'variable_convention' in case_dict:
             self.convention = case_dict['variable_convention']
@@ -114,9 +77,9 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def setUp(self, config):
+    def setUp(self):
         self._setup_model_paths()
-        self._set_model_env_vars(config)
+        self._set_model_env_vars()
         self._setup_html()
         for pod in self.pods:
             self._setup_pod(pod)
@@ -127,28 +90,15 @@ class DataManager(object):
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
 
-    def _set_model_env_vars(self, config, verbose=0):
-        setenv("DATADIR", self.MODEL_DATA_DIR, config['envvars'],
-            verbose=verbose)
-        setenv("variab_dir", self.MODEL_WK_DIR, config['envvars'],
-            verbose=verbose)
-
-        setenv("CASENAME", self.case_name, config['envvars'],
-            verbose=verbose)
-        setenv("model", self.model_name, config['envvars'],
-            verbose=verbose)
-        setenv("FIRSTYR", self.firstyr, config['envvars'],
-            verbose=verbose)
-        setenv("LASTYR", self.lastyr, config['envvars'],
-            verbose=verbose)
-
-        translate = util.VariableTranslator()
-        # todo: set/unset for multiple models
-        # verify all vars requested by PODs have been set
-        assert self.convention in translate.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(self.convention)
-        for key, val in translate.field_dict[self.convention].items():
-            setenv(key, val, config['envvars'], verbose=verbose)
+    def _set_model_env_vars(self, verbose=0):
+        self.envvars.update({
+            "DATADIR": self.MODEL_DATA_DIR,
+            "variab_dir": self.MODEL_WK_DIR,
+            "CASENAME": self.case_name,
+            "model": self.model_name,
+            "FIRSTYR": self.firstyr,
+            "LASTYR": self.lastyr
+        })
 
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
@@ -169,23 +119,12 @@ class DataManager(object):
         translate = util.VariableTranslator()
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
+        pod.pod_env_vars.update(self.envvars)
 
-        # express varlist as DataSet objects
-        ds_list = []
-        for var in pod.varlist:
-            cf_name = translate.toCF(pod.convention, var['var_name'])
-            var['CF_name'] = cf_name
-            var['name_in_model'] = translate.fromCF(self.convention, cf_name)
-            if 'alternates' in var:
-                var['alternates'] = [
-                    translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
-                        for var2 in var['alternates']
-                ] # only list of translated names, not full DataSets
-            var['date_range'] = self.date_range
-            ds = DataSet(**var)
-            ds.local_resource = self.local_path(ds)
-            ds_list.append(ds)
-        pod.varlist = ds_list
+        for var in pod.iter_vars_and_alts():
+            var.name_in_model = translate.fromCF(self.convention, var.CF_name)
+            var.date_range = self.date_range
+            var.local_resource = self.local_path(var)
 
     # -------------------------------------
 
@@ -235,16 +174,17 @@ class DataManager(object):
             This has a different interface than 
             :meth:`~data_manager.DataManager.query_dataset`. That method returns
             nothing but populates the remote_resource attribute of its argument.
-            This method returns a list of :obj:`~data_manager.DataManager.DataSet`s.
+            This method returns a list of :obj:`~util.DataSet`s.
 
         Args:
-            dataset (:obj:`~data_manager.DataManager.DataSet`): Requested variable
+            dataset (:obj:`~util.DataSet`): Requested variable
                 to search for.
         
-        Returns: :obj:`list` of :obj:`~data_manager.DataManager.DataSet`.
+        Returns: :obj:`list` of :obj:`~util.DataSet`.
         """
         try:
             self.query_dataset(dataset)
+            dataset.alternates = []
             return [dataset]
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
@@ -252,16 +192,13 @@ class DataManager(object):
                 print "Couldn't find {} & no alternates".format(dataset.name)
                 raise
             # check for all alternates
-            alt_vars = [dataset.copy(new_name=alt_var) for alt_var in dataset.alternates]
-            for alt_var in alt_vars:
-                alt_var.name_in_model = alt_var.name
-                alt_var.alternates = []
+            for alt_var in dataset.alternates:
                 try: 
                     self.query_dataset(alt_var)
                 except DataQueryFailure:
                     print "Couldn't find alternate data {}".format(alt_var.name)
                     raise
-            return alt_vars
+            return dataset.alternates
 
     def plan_data_fetching(self):
         """Process list of requested data to make data fetching efficient.
@@ -271,7 +208,7 @@ class DataManager(object):
         copy of the data already exists and is current (as determined by 
         :meth:`~data_manager.DataManager.local_data_is_current`).
         
-        Returns: collection of :class:`~data_manager.DataManager.DataSet`
+        Returns: collection of :class:`~util.DataSet`
             objects.
         """
         # remove duplicates from list of all remote_resources

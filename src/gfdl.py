@@ -12,7 +12,7 @@ else:
 from collections import defaultdict
 import datelabel
 import util
-from data_manager import DataManager, DataSet, DataQueryFailure
+from data_manager import DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
 _current_module_versions = {
@@ -163,7 +163,7 @@ class GfdlppDataManager(DataManager):
         match = re.match(ts_regex, path)
         if match:
             assert match.group('component') == match.group('component2')
-            ds = DataSet(**(match.groupdict()))
+            ds = util.DataSet(**(match.groupdict()))
             ds.remote_resource = os.path.join(self.root_dir, path)
             (ds.dir, ds.file) = os.path.split(path)
             del ds.component2
@@ -331,7 +331,7 @@ class GfdlppDataManager(DataManager):
             heuristic (:meth:`~gfdl.GfdlppDataManager._heuristic_component_tiebreaker`). 
 
         Args:
-            datasets (iterable of :class:`~data_manager.DataManager.DataSet`): 
+            datasets (iterable of :class:`~util.DataSet`): 
                 Collection of all variables being requested in this DataManager.
 
         Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.

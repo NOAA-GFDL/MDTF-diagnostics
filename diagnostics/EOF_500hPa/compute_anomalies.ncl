@@ -29,7 +29,6 @@ lev_var = getenv("lev_var")
 file_path = getenv("DATADIR")
 
 zg_var = getenv("zg_var")
-ps_var = getenv("ps_var")
 
 ; Z500 
 if( fileexists(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then

@@ -107,7 +107,7 @@ class DataManager(object):
         assert self.convention in translate.field_dict, \
             "Variable name translation doesn't recognize {}.".format(self.convention)
         for key, val in translate.field_dict[self.convention].items():
-            util.setenv(key, val, _, verbose=verbose)
+            util.setenv(key, val, self.envvars, verbose=verbose)
 
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):

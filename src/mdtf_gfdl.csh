@@ -62,7 +62,8 @@ if ( $status != 0 ) then
 	python -m pip install --user virtualenv
 	python -m virtualenv "${REPO_DIR}/envs/venv/base"
 	source "${REPO_DIR}/envs/venv/base/bin/activate"
-	pip install --disable-pip-version-check --user subprocess32 pyyaml
+	# pip --user redundant/not valid in a virtualenv
+	pip install --disable-pip-version-check subprocess32 pyyaml
 else
 	echo 'Found required modules'
 endif

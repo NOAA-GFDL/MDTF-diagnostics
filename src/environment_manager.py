@@ -83,9 +83,11 @@ class EnvironmentManager(object):
                 print log_str
                 pod.skipped = exc
                 continue
-            pod.logfile_obj.write("Found files:\n")
-            pod.logfile_obj.write("\n".join(pod.found_files))
-            pod.logfile_obj.write("\n")
+            pod.logfile_obj.write("\n".join(
+                ["Found files: "] + pod.found_files + [" "]))
+            env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
+            pod.logfile_obj.write("\n".join(
+                ["Env vars: "] + sorted(env_list) + [" "]))
 
             run_command = pod.run_commands()          
             if self.test_mode:
@@ -204,8 +206,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         if not os.path.isdir(env_path):
             os.makedirs(env_path) # recursive mkdir if needed
         cmds = [
-            'pip install --user virtualenv',
-            'virtualenv {}'.format(env_path),
+            'python -m virtualenv {}'.format(env_path),
             'source {}/bin/activate'.format(env_path),
             'pip install {}'.format(' '.join(py_pkgs)),
             'deactivate'

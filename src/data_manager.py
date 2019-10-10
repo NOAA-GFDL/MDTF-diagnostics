@@ -142,14 +142,6 @@ class DataManager(object):
         setenv("LASTYR", self.lastyr, config['envvars'],
             verbose=verbose)
 
-        translate = util.VariableTranslator()
-        # todo: set/unset for multiple models
-        # verify all vars requested by PODs have been set
-        assert self.convention in translate.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(self.convention)
-        for key, val in translate.field_dict[self.convention].items():
-            setenv(key, val, config['envvars'], verbose=verbose)
-
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
             print("WARNING: index.html exists, not re-creating.")
@@ -170,22 +162,10 @@ class DataManager(object):
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
 
-        # express varlist as DataSet objects
-        ds_list = []
-        for var in pod.varlist:
-            cf_name = translate.toCF(pod.convention, var['var_name'])
-            var['CF_name'] = cf_name
-            var['name_in_model'] = translate.fromCF(self.convention, cf_name)
-            if 'alternates' in var:
-                var['alternates'] = [
-                    translate.fromCF(self.convention, translate.toCF(pod.convention, var2)) \
-                        for var2 in var['alternates']
-                ] # only list of translated names, not full DataSets
-            var['date_range'] = self.date_range
-            ds = DataSet(**var)
-            ds.local_resource = self.local_path(ds)
-            ds_list.append(ds)
-        pod.varlist = ds_list
+        for var in pod.iter_vars_and_alts():
+            var.name_in_model = translate.fromCF(self.convention, var.CF_name)
+            var.date_range = self.date_range
+            var.local_resource = self.local_path(var)
 
     # -------------------------------------
 
@@ -245,6 +225,7 @@ class DataManager(object):
         """
         try:
             self.query_dataset(dataset)
+            dataset.alternates = []
             return [dataset]
         except DataQueryFailure:
             print "Couldn't find {}, trying alternates".format(dataset.name)
@@ -252,16 +233,13 @@ class DataManager(object):
                 print "Couldn't find {} & no alternates".format(dataset.name)
                 raise
             # check for all alternates
-            alt_vars = [dataset.copy(new_name=alt_var) for alt_var in dataset.alternates]
-            for alt_var in alt_vars:
-                alt_var.name_in_model = alt_var.name
-                alt_var.alternates = []
+            for alt_var in dataset.alternates:
                 try: 
                     self.query_dataset(alt_var)
                 except DataQueryFailure:
                     print "Couldn't find alternate data {}".format(alt_var.name)
                     raise
-            return alt_vars
+            return dataset.alternates
 
     def plan_data_fetching(self):
         """Process list of requested data to make data fetching efficient.

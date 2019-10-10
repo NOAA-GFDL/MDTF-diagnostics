@@ -16,6 +16,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import yaml
+import datelabel
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
@@ -316,6 +317,45 @@ class Namespace(dict):
 
     def __hash__(self):
         return hash(self._freeze())
+
+class DataSet(Namespace):
+    """Class to describe datasets.
+
+    `https://stackoverflow.com/a/48806603`_ for implementation.
+    """
+    def __init__(self, *args, **kwargs):
+        super(DataSet, self).__init__(*args, **kwargs)
+        for key in ['name', 'units', 'date_range', 'date_freq', 
+            'remote_resource', 'local_resource']:
+            if key not in self:
+                self[key] = None
+
+        if ('var_name' in self) and (self.name is None):
+            self.name = self.var_name
+        if ('freq' in self) and (self.date_freq is None):
+            self.date_freq = datelabel.DateFrequency(self.freq)
+
+    def copy(self, new_name=None):
+        temp = super(DataSet, self).copy()
+        if new_name is not None:
+            temp.name = new_name
+        return temp  
+
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        Exclude attributes starting with 'nohash_' from the comparison, in case 
+        we want DataSets with different timestamps, temporary directories, etc.
+        to compare as equal.
+        """
+        d = self.toDict()
+        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
+        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
+
+    def tempdir(self):
+        """Set temporary directory deterministically.
+        """
+        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
 
 # ------------------------------------
 

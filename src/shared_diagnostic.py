@@ -4,7 +4,6 @@ import glob
 import shutil
 import util
 from util import setenv # TODO: fix
-from data_manager import DataSet
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
@@ -146,7 +145,7 @@ class Diagnostic(object):
         translate = util.VariableTranslator()
         ds_list = []
         for var in varlist:
-            ds = DataSet(**var)
+            ds = util.DataSet(**var)
             ds.original_name = ds.var_name
             ds.CF_name = translate.toCF(self.convention, ds.var_name)
             alt_ds_list = []

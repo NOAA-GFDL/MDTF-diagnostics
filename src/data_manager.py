@@ -10,45 +10,6 @@ import datelabel
 from util import setenv # fix
 from shared_diagnostic import PodRequirementFailure
 
-class DataSet(util.Namespace):
-    """Class to describe datasets.
-
-    `https://stackoverflow.com/a/48806603`_ for implementation.
-    """
-    def __init__(self, *args, **kwargs):
-        super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', 
-            'remote_resource', 'local_resource']:
-            if key not in self:
-                self[key] = None
-
-        if ('var_name' in self) and (self.name is None):
-            self.name = self.var_name
-        if ('freq' in self) and (self.date_freq is None):
-            self.date_freq = datelabel.DateFrequency(self.freq)
-
-    def copy(self, new_name=None):
-        temp = super(DataSet, self).copy()
-        if new_name is not None:
-            temp.name = new_name
-        return temp  
-
-    def _freeze(self):
-        """Return immutable representation of (current) attributes.
-
-        Exclude attributes starting with 'nohash_' from the comparison, in case 
-        we want DataSets with different timestamps, temporary directories, etc.
-        to compare as equal.
-        """
-        d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
-        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
-
-    def tempdir(self):
-        """Set temporary directory deterministically.
-        """
-        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
-
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -215,13 +176,13 @@ class DataManager(object):
             This has a different interface than 
             :meth:`~data_manager.DataManager.query_dataset`. That method returns
             nothing but populates the remote_resource attribute of its argument.
-            This method returns a list of :obj:`~data_manager.DataManager.DataSet`s.
+            This method returns a list of :obj:`~util.DataSet`s.
 
         Args:
-            dataset (:obj:`~data_manager.DataManager.DataSet`): Requested variable
+            dataset (:obj:`~util.DataSet`): Requested variable
                 to search for.
         
-        Returns: :obj:`list` of :obj:`~data_manager.DataManager.DataSet`.
+        Returns: :obj:`list` of :obj:`~util.DataSet`.
         """
         try:
             self.query_dataset(dataset)
@@ -249,7 +210,7 @@ class DataManager(object):
         copy of the data already exists and is current (as determined by 
         :meth:`~data_manager.DataManager.local_data_is_current`).
         
-        Returns: collection of :class:`~data_manager.DataManager.DataSet`
+        Returns: collection of :class:`~util.DataSet`
             objects.
         """
         # remove duplicates from list of all remote_resources

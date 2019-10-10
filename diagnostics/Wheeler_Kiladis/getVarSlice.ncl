@@ -41,6 +41,8 @@ begin
               x  = tmpx(::tstride,:,:)
               delete(tmpx)
         end if
+    else
+        print(varName+" not found in "+fili(0))
     end if
    return(x)
 

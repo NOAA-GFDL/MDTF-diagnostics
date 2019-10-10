@@ -93,6 +93,8 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         keys = [s.lower() for s in pod.required_programs]
         if pod.name == 'convective_transition_diag':
             pod.env = 'py_convective_transition_diag'
+        elif pod.name == 'MJO_suite':
+            pod.env = 'ncl_MJO_suite'
         elif ('r' in keys) or ('rscript' in keys):
             pod.env = 'r_default'
         elif 'ncl' in keys:
@@ -106,7 +108,8 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
             'ncl': ['ncl'],
             'r_default': ['r'],
             'py_default': ['python'],
-            'py_convective_transition_diag': ['python', 'ncl']
+            'py_convective_transition_diag': ['python', 'ncl'],
+            'ncl_MJO_suite': ['ncl', 'nco']
         }
         return _current_module_versions[_lookup[env_name]]
 

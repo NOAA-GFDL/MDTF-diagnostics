@@ -39,7 +39,7 @@ while getopts "vp:a:b:c:z:" opt; do
         a) # look for python module
            # also can't figure out how to disable pip's python2.7 warning
             if pip list --disable-pip-version-check \
-                | awk -v pattern="${OPTARG}" 'tolower($0) ~ pattern {rc = 1}; END { exit !rc }'; then
+                | awk -v p="${OPTARG}" 'tolower($0) ~ tolower(p) {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "pip list found python module ${OPTARG}."
                 fi
@@ -67,7 +67,7 @@ while getopts "vp:a:b:c:z:" opt; do
         ;;
         c) #look for R package
             if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' \
-                | awk -v pattern="${OPTARG}" 'tolower($0) ~ pattern {rc = 1}; END { exit !rc }'; then
+                | awk -v p="${OPTARG}" 'tolower($0) ~ tolower(p) {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "Found R package ${OPTARG}."
                 fi

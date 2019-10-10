@@ -87,7 +87,7 @@ class EnvironmentManager(object):
                 ["Found files: "] + pod.found_files + [" "]))
             env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
             pod.logfile_obj.write("\n".join(
-                ["Env vars: "] + env_list + [" "]))
+                ["Env vars: "] + sorted(env_list) + [" "]))
 
             run_command = pod.run_commands()          
             if self.test_mode:

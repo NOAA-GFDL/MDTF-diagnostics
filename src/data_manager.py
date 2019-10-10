@@ -110,19 +110,18 @@ class DataManager(object):
             util.setenv(key, val, self.envvars, verbose=verbose)
 
     def _setup_html(self):
+        paths = util.PathManager()
+        html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(html_file):
             print("WARNING: index.html exists, deleting.")
             os.remove(html_file)
-        else: 
-            paths = util.PathManager()
-            html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
-            )
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf1.html'), html_file
-            )
+        shutil.copy2(
+            os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+        )
+        shutil.copy2(
+            os.path.join(html_dir, 'mdtf1.html'), html_file
+        )
 
     def _setup_pod(self, pod):
         paths = util.PathManager()

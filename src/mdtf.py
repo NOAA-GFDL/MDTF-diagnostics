@@ -169,7 +169,7 @@ if __name__ == '__main__':
                 print str(error)
             if verbose > 0: print "POD long name: ", pod.long_name
             case.pods.append(pod)
-        case.setUp(config)
+        case.setUp()
         case.fetch_data()
         caselist.append(case)
 

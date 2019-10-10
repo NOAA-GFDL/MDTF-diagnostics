@@ -20,7 +20,8 @@ print("In wkSpaceTime_driver")
   case = getenv("CASENAME")
   varName = getenv("MVAR")
   level = getenv("LEV") 
-  FileName = varName+"-"+level
+  cesmVarName = getenv("CESM_VAR")
+  ;FileName = varName+"-"+level
   print("level: "+level)
   print("varName:" +varName)
   print("diri:" +diri)
@@ -103,12 +104,12 @@ print("In wkSpaceTime_driver")
   new_spd   = spd/tstride ; SPD *actual* "samples per day" 
 
   if ((ntim%new_spd).eq.0) then
-     wkSpaceTime (x, diro, case, FileName,latBound, \
+     wkSpaceTime (x, diro, case, cesmVarName,latBound, \
                   new_spd, nDayWin, nDaySkip, opt  )
   else
      nExtra = ntim%new_spd
      NTIM = ntim - nExtra
-     wkSpaceTime (x(:NTIM-1,:,:), diro, case, FileName,latBound, \
+     wkSpaceTime (x(:NTIM-1,:,:), diro, case, cesmVarName,latBound, \
                   new_spd, nDayWin, nDaySkip, opt  )
   end if
 

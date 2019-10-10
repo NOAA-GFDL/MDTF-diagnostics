@@ -7,7 +7,6 @@ import signal
 from abc import ABCMeta, abstractmethod
 import util
 import datelabel
-from util import setenv # fix
 from shared_diagnostic import PodRequirementFailure
 
 class DataQueryFailure(Exception):
@@ -37,7 +36,10 @@ class DataManager(object):
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
         self.lastyr = datelabel.Date(case_dict['LASTYR'])
         self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
-
+        if 'envvars' in config:
+            self.envvars = config['envvars'].copy() # gets appended to
+        else:
+            self.envvars = {}
 
         if 'variable_convention' in case_dict:
             self.convention = case_dict['variable_convention']
@@ -75,9 +77,9 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def setUp(self, config):
+    def setUp(self):
         self._setup_model_paths()
-        self._set_model_env_vars(config)
+        self._set_model_env_vars()
         self._setup_html()
         for pod in self.pods:
             self._setup_pod(pod)
@@ -88,20 +90,15 @@ class DataManager(object):
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
 
-    def _set_model_env_vars(self, config, verbose=0):
-        setenv("DATADIR", self.MODEL_DATA_DIR, config['envvars'],
-            verbose=verbose)
-        setenv("variab_dir", self.MODEL_WK_DIR, config['envvars'],
-            verbose=verbose)
-
-        setenv("CASENAME", self.case_name, config['envvars'],
-            verbose=verbose)
-        setenv("model", self.model_name, config['envvars'],
-            verbose=verbose)
-        setenv("FIRSTYR", self.firstyr, config['envvars'],
-            verbose=verbose)
-        setenv("LASTYR", self.lastyr, config['envvars'],
-            verbose=verbose)
+    def _set_model_env_vars(self, verbose=0):
+        self.envvars.update({
+            "DATADIR": self.MODEL_DATA_DIR,
+            "variab_dir": self.MODEL_WK_DIR,
+            "CASENAME": self.case_name,
+            "model": self.model_name,
+            "FIRSTYR": self.firstyr,
+            "LASTYR": self.lastyr
+        })
 
     def _setup_html(self):
         if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
@@ -122,6 +119,7 @@ class DataManager(object):
         translate = util.VariableTranslator()
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
+        pod.pod_env_vars.update(self.envvars)
 
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)

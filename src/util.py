@@ -698,11 +698,7 @@ def set_mdtf_env_vars(config, verbose=0):
         verbose=verbose
         )
 
-    config['envvars'] = {}
-    for key, val in config['paths'].items():
-        setenv(key, val, config['envvars'], verbose=verbose)
-    for key, val in config['settings'].items():
-        setenv(key, val, config['envvars'], verbose=verbose)
-
+    config["envvars"] = config['settings'].copy()
+    config["envvars"].update(config['paths'])
     # following are redundant but used by PODs
-    setenv("RGB",paths.CODE_ROOT+"/src/rgb",config['envvars'], verbose=verbose)
+    config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"

@@ -3,7 +3,6 @@ import sys
 import glob
 import shutil
 import util
-from util import setenv # TODO: fix
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
@@ -149,7 +148,7 @@ class Diagnostic(object):
             ds.original_name = ds.var_name
             ds.CF_name = translate.toCF(self.convention, ds.var_name)
             alt_ds_list = []
-            for alt_var in var.alternates:
+            for alt_var in ds.alternates:
                 alt_ds = ds.copy(new_name=alt_var)
                 alt_ds.original_name = ds.var_name
                 alt_ds.CF_name = translate.toCF(self.convention, alt_ds.var_name)
@@ -203,29 +202,25 @@ class Diagnostic(object):
 
     def _set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+        Sets all environment variables for POD.
 
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns:
-            Dict of POD-specific environment variables that were set.
         """
-        pod_envvars = {}
-        # location of POD's code
-        setenv("POD_HOME", self.POD_CODE_DIR, pod_envvars, verbose=verbose)
-        # POD's observational data
-        setenv("OBS_DATA", self.POD_OBS_DATA, pod_envvars, verbose=verbose)
-        # POD's subdir within working directory
-        setenv("WK_DIR", self.POD_WK_DIR, pod_envvars, verbose=verbose)
+        self.pod_env_vars.update({
+            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
+            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
+            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+        })
+        # set all env vars: POD has inherited vars from case (DataManager._setup_pod)
+        # and global.
+        for key, val in self.pod_env_vars.items():
+            util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
         # pod variable mappings:
         for var in self.iter_vars_and_alts():
-            setenv(var.original_name, var.name_in_model, pod_envvars, verbose=verbose) 
-
-        # optional POD-specific env vars defined in settings.yml
-        for key, val in self.pod_env_vars.items():
-            setenv(key, val, pod_envvars, verbose=verbose) 
-        return pod_envvars
+            util.setenv(var.original_name, var.name_in_model, self.pod_env_vars, 
+                verbose=verbose) 
 
     def _setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.

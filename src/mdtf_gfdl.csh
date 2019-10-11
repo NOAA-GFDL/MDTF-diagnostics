@@ -2,8 +2,8 @@
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
-#SBATCH --chdir=/home/tsj/mdtf/MDTF-diagnostics
-#SBATCH -o /home/tsj/mdtf/MDTF-diagnostics/%x.o%j
+#SBATCH --chdir=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
+#SBATCH -o /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
 
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
@@ -22,9 +22,11 @@ set staticfile
 set fremodule
 
 ## set paths
-set REPO_DIR=/home/tsj/mdtf/MDTF-diagnostics
+set REPO_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
+set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
 set INPUT_DIR=${TMPDIR}/inputdata
 set WK_DIR=${TMPDIR}/wkdir
+# for now ignore timeseries and component and scan entire /pp/ dir
 set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
 
 ## configure env modules
@@ -52,7 +54,7 @@ module load $mods
 mkdir -p "${INPUT_DIR}"
 mkdir -p "${WK_DIR}"
 mkdir "${INPUT_DIR}/model"
-gcp -v -r gfdl:/home/tsj/mdtf/obs_data/ gfdl:${INPUT_DIR}/obs_data/
+gcp -v -r gfdl:${OBS_DATA_DIR}/ gfdl:${INPUT_DIR}/obs_data/
 
 ## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
@@ -68,7 +70,7 @@ else
 	echo 'Found required modules'
 endif
 
-## run the command!
+## run the command
 echo 'script start'
 "${REPO_DIR}/src/mdtf.py" --frepp \
 --environment_manager "GfdlVirtualenv" \

@@ -52,12 +52,13 @@ case_list:
 pod_list: 
   - Wheeler_Kiladis
   - EOF_500hPa
-  - convective_transition_diag
+  # - convective_transition_diag # obtain modules behind firewall
   - MJO_suite
   - MJO_teleconnection
   - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
   # These PODS require more resources 
   - precip_diurnal_cycle #- high memory requirement
+  # - SM_ET_coupling             # obtain modules behind firewall
 
 # PATHS 
 # Relative paths are resolved relative to $CODE_ROOT 

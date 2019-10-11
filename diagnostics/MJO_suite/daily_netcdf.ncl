@@ -161,7 +161,6 @@ delete_existing = False  ;overwrite
 plevs = (/850,200/)       ;this package expects new files to be written with these names
 var_names = (/"u","v"/)
 source = (/datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc",datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"/)
-print("             AAAAAA")
 
 do i=0,dimsizes(plevs)-1
    plev = plevs(i)
@@ -178,10 +177,16 @@ do i=0,dimsizes(plevs)-1
       print(" var_name_plev_package "+var_name_plev_package)
       LEV = tostring(plevs(i)*100)+"." 
       src = source(j)
+      temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
       dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
-      NCKS = "ncks -d "+level+","+LEV+","+LEV+"  "+src+" "+dst
-      print(NCKS)
-      system(NCKS)
+      ; extract level
+      nco_call = "ncks -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
+      print(nco_call)
+      system(nco_call)
+      ; flatten to 3D
+      nco_call = "ncwa -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
+      print(nco_call)
+      system(nco_call)
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"

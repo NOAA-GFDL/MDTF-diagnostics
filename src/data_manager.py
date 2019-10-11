@@ -307,11 +307,23 @@ class DataManager(object):
 
     def tearDown(self, config):
         # TODO: handle OSErrors in all of these
+        self._finalize_html()
         self._backup_config_file(config)
         self._make_tar_file()
         self._copy_to_output()
         paths = util.PathManager()
         paths.cleanup()
+
+    def _finalize_html(self):
+        paths = util.PathManager()
+        html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', "mdtf2.html")
+        assert os.path.exists(html_file)
+        with open(html_file, 'r') as f:
+            html_str = f.read()
+        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        assert os.path.exists(html_file)
+        with open(html_file, 'a') as f:
+            f.write(html_str)
 
     def _backup_config_file(self, config, verbose=0):
         # Record settings in file variab_dir/config_save.yml for rerunning

@@ -83,8 +83,8 @@ paths:
 settings:
   verbose: 2         # 0-minimal,1-normal,2-copious,3-debug
   save_ps: False        # True to retain output .ps plots
-  save_nc: True         # True to retain output netcdf files
-  make_variab_tar: True # True to save output in .tar file
+  save_nc: False         # True to retain output netcdf files
+  make_variab_tar: False # True to save output in .tar file
   test_mode: False   #True = script just reports what it would do, doesn't call actual packages
 
   convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion

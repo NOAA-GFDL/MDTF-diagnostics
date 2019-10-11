@@ -5,10 +5,15 @@
 #SBATCH --chdir=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
 #SBATCH -o /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
-
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
 
+# ------------------------------------------------------------------------------
+# Wrapper script to call the MDTF Diagnostics package from the FRE pipeline.
+# ------------------------------------------------------------------------------
+
 # variables set by frepp
+set argu
+set mode
 set in_data_dir
 set out_dir
 set descriptor
@@ -20,10 +25,14 @@ set dataendyr
 set datachunk
 set staticfile
 set fremodule
+set script_path
 
 ## set paths
 set REPO_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
 set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
+# output always written to $out_dir; unset below to skip copy/linking to 
+# MDteam experiment directory.
+set OUTPUT_HTML_DIR=/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output
 set INPUT_DIR=${TMPDIR}/inputdata
 set WK_DIR=${TMPDIR}/wkdir
 # for now ignore timeseries and component and scan entire /pp/ dir
@@ -47,14 +56,17 @@ else
   	endif
 endif
 
-set mods="python/2.7.12 gcp/2.3"
+set mods="python/2.7.12 gcp/2.3 perlbrew"
 module load $mods	
+
+## clean up tmpdir
+wipetmp
 
 ## fetch obs data from local source
 mkdir -p "${INPUT_DIR}"
 mkdir -p "${WK_DIR}"
 mkdir "${INPUT_DIR}/model"
-gcp -v -r gfdl:${OBS_DATA_DIR}/ gfdl:${INPUT_DIR}/obs_data/
+gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
 
 ## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
@@ -68,6 +80,13 @@ if ( $status != 0 ) then
 	pip install --disable-pip-version-check subprocess32 pyyaml
 else
 	echo 'Found required modules'
+endif
+
+## Clean output subdirectory
+set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
+if ( -d "${out_dir}/${mdtf_dir}" ) then
+	echo "${out_dir}/${mdtf_dir} already exists; deleting"
+	rm -rf "${out_dir}/${mdtf_dir}"
 endif
 
 ## run the command
@@ -84,3 +103,32 @@ echo 'script start'
 --FIRSTYR $yr1 \
 --LASTYR $yr2
 echo 'script exit'
+
+## copy/link output files
+if ( ! $?OUTPUT_HTML_DIR ) then       
+	echo "Complete -- Exiting"
+	exit 0
+else
+	if ( "$OUTPUT_HTML_DIR" == "" ) then
+		echo "Complete -- Exiting"
+		exit 0
+	else 
+		echo "Configuring data for experiments website"
+
+		set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
+		set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
+		
+		if ( ! -d ${mdteamDir} ) then
+			mkdir -p "${mdteamDir}"
+			echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+			ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+		else
+			echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+			gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+		endif
+
+		echo "Complete -- Exiting"
+		exit 0
+  	endif
+endif
+## 

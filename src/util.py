@@ -596,6 +596,22 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
         else:
             print("Found "+dir)
 
+def append_html_template(template_file, target_file, template_dict={}, 
+    create=False):
+    assert os.path.exists(template_file)
+    with open(template_file, 'r') as f:
+        html_str = f.read()
+        html_str = html_str.format(**template_dict)
+    if not os.path.exists(target_file):
+        if create:
+            mode = 'w'
+        else:
+            raise OSError("Can't find {}".format(target_file))
+    else:
+        mode = 'a'
+    with open(target_file, mode) as f:
+        f.write(html_str)
+
 def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
     """Parse script options.
 

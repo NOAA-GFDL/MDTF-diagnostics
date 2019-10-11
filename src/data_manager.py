@@ -5,6 +5,7 @@ import shutil
 import atexit
 import signal
 from abc import ABCMeta, abstractmethod
+import datetime
 import util
 import datelabel
 from util import setenv # fix
@@ -150,19 +151,18 @@ class DataManager(object):
         for key, val in translate.field_dict[self.convention].items():
             setenv(key, val, config['envvars'], verbose=verbose)
 
-    def _setup_html(self):
-        if os.path.isfile(os.path.join(self.MODEL_WK_DIR, 'index.html')):
-            print("WARNING: index.html exists, not re-creating.")
-        else: 
-            paths = util.PathManager()
-            html_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
-            )
-            shutil.copy2(
-                os.path.join(html_dir, 'mdtf1.html'), 
-                os.path.join(self.MODEL_WK_DIR, 'index.html')
-            )
+    def _setup_html(self, config):
+        paths = util.PathManager()
+        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        src = os.path.join(src_dir, 'mdtf1.html')
+        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        if os.path.isfile(dest):
+            print("WARNING: index.html exists, deleting.")
+            os.remove(dest)
+        util.append_html_template(src, dest, config['envvars'], create=True)
+        shutil.copy2(
+            os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+        )
 
     def _setup_pod(self, pod):
         paths = util.PathManager()
@@ -316,14 +316,13 @@ class DataManager(object):
 
     def _finalize_html(self):
         paths = util.PathManager()
-        html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', "mdtf2.html")
-        assert os.path.exists(html_file)
-        with open(html_file, 'r') as f:
-            html_str = f.read()
-        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        assert os.path.exists(html_file)
-        with open(html_file, 'a') as f:
-            f.write(html_str)
+        src = os.path.join(paths.CODE_ROOT, 'src', 'html', 'mdtf2.html')
+        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        dt = datetime.datetime.utcnow()
+        template_dict = {
+            'DATE_TIME': dt.strftime("%A, %d %B %Y %I:%M%p (UTC)")
+        }
+        util.append_html_template(src, dest, template_dict)
 
     def _backup_config_file(self, config, verbose=0):
         # Record settings in file variab_dir/config_save.yml for rerunning

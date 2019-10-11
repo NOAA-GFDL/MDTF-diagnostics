@@ -1,4 +1,5 @@
 # Output files specific to this project
+envs/
 wkdir/
 *.log
 
@@ -35,6 +36,9 @@ wheels/
 *.orig
 *.tmp
 MANIFEST
+
+# Sphinx intermediate files
+doc/_build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

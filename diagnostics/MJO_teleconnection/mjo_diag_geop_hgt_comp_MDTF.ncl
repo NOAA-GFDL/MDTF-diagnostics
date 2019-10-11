@@ -487,11 +487,11 @@ geop_composites_PSIt(lg,7,:,:) = dim_avg_n(phase8_hgt,0)
 geop_composites_PSIt@_FillValue = -999
 
 ;--test null hypothesis that anomalies are not significantly different from zero--
-;print("significance testing")
+print("significance testing")
 
   MJO_daysn = 5.
   
-;print("MJO average # of days: " + MJO_daysn)
+print("MJO average # of days: " + MJO_daysn)
  n(lg,0) = kphase1/MJO_daysn
  n(lg,1) = kphase2/MJO_daysn
  n(lg,2) = kphase3/MJO_daysn
@@ -501,7 +501,7 @@ geop_composites_PSIt@_FillValue = -999
  n(lg,6) = kphase7/MJO_daysn
  n(lg,7) = kphase8/MJO_daysn
 
-;print(n(lg,:))
+print(n(lg,:))
 
 ;clean up
 delete(kphase1)
@@ -544,7 +544,7 @@ stddv@_FillValue = -999
 
 tstat = new((/dimsizes(stddv)/),typeof(phase1_hgt))
 do i = 0,7
-  tstat(i,:,:) = abs(geop_composites_PSIt(lg,i,:,:)/(stddv(i,:,:)/sqrt(n(lg,i)-1.)))
+  tstat(i,:,:) = abs(sqrt(n(lg,i)-1.)) * abs(geop_composites_PSIt(lg,i,:,:)/stddv(i,:,:))
 end do
 
 tstat@_FillValue = -999

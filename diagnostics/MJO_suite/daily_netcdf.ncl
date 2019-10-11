@@ -188,7 +188,7 @@ do i=0,dimsizes(plevs)-1
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv
 
-      read_model_file (var_name_plev_model,file_in,\
+      read_model_file (var_name_plev_model, dst,\
       		      var_name_plev_package,file_out,\
 		      delete_existing, \
       		      i1,i2,time_coord,lat_coord,lon_coord,gwEq,date,\  ; better moved to another function for slicing

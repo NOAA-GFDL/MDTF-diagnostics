@@ -49,7 +49,7 @@ procedure read_model_file (\
 	  var_name_in_3d:string,plev:integer,file_3d:string,file_ps:string)  ; optional args for pressure interp
 begin
 
-print("START "+get_script_name()+":read_model_file() with var_name_in "+var_name_in)
+print("START read_model_file() with file_in = "+file_in+", var_name_in ="+var_name_in)
 ;print("      var_name_in_3d "+var_name_in)
 ;print("      var_name_out "+var_name_out)
 

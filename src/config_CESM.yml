@@ -55,7 +55,7 @@ var_names:
   #u850_var: u850 #Zonal wind at 850-hPa level(m/s)
   #u250_var: u250 # Zonal wind at 250-hPa level(m/s)
   #z250_var: z3250 #Geopotential height at 250-hPa level(m)
-  pr_conversion_mm/day: 86400000 # units in CAM (m/s), convert to (mm/day) required for plotting
+  pr_conversion_mm_day: 86400000 # units in CAM (m/s), convert to (mm/day) required for plotting
 
 
   # ------------------------------------------------------------------------

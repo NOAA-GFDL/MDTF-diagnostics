@@ -23,7 +23,7 @@ begin
 print("--------------------------------------------------------------------------")  
 
 Model = getenv("CASENAME") 
-pr_conv=stringtointeger(getenv("pr_conversion_mm/day"))
+pr_conv=stringtointeger(getenv("pr_conversion_mm_day"))
 
 print("Model: " + Model)
 ;-------------------------------------------------------------------------------------

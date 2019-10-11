@@ -13,10 +13,13 @@ pr_name  = getenv("pr_var")
 prw_name = getenv("prw_var")
 hus_name = getenv("qa_var")
 pres_level_name = getenv("lev_coord")
+file_pr = getenv("file_pr")
+file_prw = getenv("file_prw")
+file_hus = getenv("file_hus")
 
 print_clock("Precipitation ...")
-print("   Opening file_pr "+getenv("file_pr"))
-filein_pr = addfile("$file_pr","r")
+print("   Opening file_pr = "+file_pr)
+filein_pr = addfile(file_pr,"r")
 
 newlon = fspan(0.,357.5,144)
 newlat = fspan(-60.,60,49) 
@@ -41,24 +44,24 @@ newpr&time=newtime
 newpr2 = calculate_daily_values (newpr, "avg", 0, False)  
 newtime2=newpr2&time
 
-print("Writing $wk_dir/model/netCDF/model_pr.nc")
-system("/usr/bin/rm -f $wk_dir/model/netCDF/model_pr.nc")
-fout = addfile("$wk_dir/model/netCDF/model_pr.nc","c") 
-print("wrote $wk_dir/model/netCDF/model_pr.nc")
+print("Writing "+wk_dir+"/model/netCDF/model_pr.nc")
+system("rm -f "+wk_dir+"/model/netCDF/model_pr.nc")
+fout = addfile(wk_dir+"/model/netCDF/model_pr.nc","c") 
+print("wrote "+wk_dir+"/model/netCDF/model_pr.nc")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
-fAtt@source_file   =  "$file_pr"
+fAtt@source_file   = file_pr
 fAtt@Conventions   = "None"
 fAtt@creation_date = systemfunc ("date")
-fileattdef( fout, fAtt )
-print("set atts on $wk_dir/model/netCDF/model_pr.nc")
+fileattdef(fout, fAtt )
+print("set atts on "+wk_dir+"/model/netCDF/model_pr.nc")
 filedimdef(fout,"time",-1,True)
 newpr2&time@calendar="noleap"
 fout->pr = newpr2
 
 print_clock("Precipitatable water ...")
-print("   Opening file_prw "+getenv("file_prw"))
-filein_prw = addfile("$file_prw","r")
+print("   Opening file_prw "+file_prw)
+filein_prw = addfile(file_prw,"r")
 
 newprw = linint2(filein_prw->$prw_name$&lon,filein_prw->$prw_name$&lat,filein_prw->$prw_name$,True,newlon,newlat,0)
 newprw!0="time"
@@ -78,24 +81,24 @@ newprw&time=newtime
 newprw2 = calculate_daily_values (newprw, "avg", 0, False)
 newtime2=newprw2&time
 
-print("Writing fout "+"$wk_dir/model/netCDF/model_prw.nc")
-system("/usr/bin/rm -f $wk_dir/model/netCDF/model_prw.nc")
-fout = addfile("$wk_dir/model/netCDF/model_prw.nc","c")
-print("wrote fout "+"$wk_dir/model/netCDF/model_prw.nc")
+print("Writing "+ wk_dir+"/model/netCDF/model_prw.nc")
+system("rm -f "+wk_dir+"/model/netCDF/model_prw.nc")
+fout = addfile(wk_dir+"/model/netCDF/model_prw.nc","c")
+print("wrote "+wk_dir+"/model/netCDF/model_prw.nc")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated rainfall"
-fAtt@source_file   =  "$file_prw"
+fAtt@source_file   = file_prw
 fAtt@Conventions   = "None"
 fAtt@creation_date = systemfunc ("date")
-fileattdef( fout, fAtt )
-print("wrote atts to "+"$wk_dir/model/netCDF/model_prw.nc")
+fileattdef(fout, fAtt )
+print("wrote atts to "+wk_dir+"/model/netCDF/model_prw.nc")
 filedimdef(fout,"time",-1,True)
 newprw2&time@calendar="noleap"
 fout->prw = newprw2
 
 print_clock("Specific humidity ...")
-print("   Opening file_hus "+getenv("file_hus"))
-filein_hus = addfile("$file_hus","r")
+print("   Opening file_hus "+file_hus)
+filein_hus = addfile(file_hus,"r")
 
 time = filein_hus->time 
 lev = filein_hus->$pres_level_name$
@@ -133,12 +136,12 @@ husm&lat=newlat
 husm&lon=newlon
 printMinMax(husm,0)
 
-print("Writing $wk_dir/model/netCDF/model_hus_900_650_avg.nc")
-system("rm -f $wk_dir/model/netCDF/model_hus_900_650_avg.nc")
-fout = addfile("$wk_dir/model/netCDF/model_hus_900_650_avg.nc","c")
+print("Writing "+wk_dir+"/model/netCDF/model_hus_900_650_avg.nc")
+system("rm -f "+wk_dir+"/model/netCDF/model_hus_900_650_avg.nc")
+fout = addfile(wk_dir+"/model/netCDF/model_hus_900_650_avg.nc","c")
 fAtt               = True            ; assign file attributes
 fAtt@title         = "Interpolated model 900-650hPa averaged specific humidity"
-fAtt@source_file   =  "$file_hus"
+fAtt@source_file   = file_hus
 fAtt@Conventions   = "None"
 fAtt@creation_date = systemfunc ("date")
 fileattdef( fout, fAtt )

@@ -432,25 +432,19 @@ class Diagnostic(object):
         # add link and description to main html page
         self.append_result_link()
 
-    def _append_template_to_main(self, template_file, template_dict={}):
-        template_dict.update(self.__dict__)
+    def append_result_link(self, error=None):
         paths = util.PathManager()
-        html_file = os.path.join(paths.CODE_ROOT, 'src', 'html', template_file)
-        assert os.path.exists(html_file)
-        with open(html_file, 'r') as f:
-            html_str = f.read()
-            html_str = html_str.format(**template_dict)
-        html_file = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        assert os.path.exists(html_file)
-        with open(html_file, 'a') as f:
-            f.write(html_str)
-
-    def append_result_link(self):
-        self._append_template_to_main('pod_result_snippet.html')
-
-    def append_error_link(self, error):
-        self._append_template_to_main('pod_error_snippet.html',
-            {'error_text': str(error)})
+        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        template_dict = self.__dict__.copy()
+        if error is None:
+            # normal exit
+            src = os.path.join(src_dir, 'pod_result_snippet.html')
+        else:
+            # report error
+            src = os.path.join(src_dir, 'pod_error_snippet.html')
+            template_dict['error_text'] = str(error)
+        util.append_html_template(src, dest, template_dict)
 
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

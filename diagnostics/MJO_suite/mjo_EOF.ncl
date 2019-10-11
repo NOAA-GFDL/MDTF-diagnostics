@@ -320,7 +320,7 @@ end if
        end if
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
-       system("/bin/rm -f "+pltPath+".eps")
+       system("rm -f "+pltPath+".eps")
    end if
 
 delete(pltName)

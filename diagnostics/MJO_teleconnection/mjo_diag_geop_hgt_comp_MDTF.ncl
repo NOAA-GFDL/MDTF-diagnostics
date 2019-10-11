@@ -606,7 +606,7 @@ geop_composites_hgt&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF files")
 
-;  system("/bin/rm -f geop_compositesDly_hgt_"+Model_long+".nc")
+;  system("rm -f geop_compositesDly_hgt_"+Model_long+".nc")
 ;  ncdf = addfile("geop_compositesDly_hgt_"+Model_long+".nc" , "c")
 
 ;make time and unlimited dimension
@@ -699,7 +699,7 @@ geop_composites&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF file for composite of geopotential height for each phase")
 
-  system("/bin/rm -f " + diro + "geop_compositesP_hgt250_"+Model+".nc")
+  system("rm -f " + diro + "geop_compositesP_hgt250_"+Model+".nc")
   ncdf = addfile(diro + "geop_compositesP_hgt250_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension
@@ -728,7 +728,7 @@ tstat_hgt&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF file for t-statistic values")
 
-  system("/bin/rm -f " + diro + "tstatP_hgt250_"+Model+".nc")
+  system("rm -f " + diro + "tstatP_hgt250_"+Model+".nc")
   ncdf = addfile(diro + "tstatP_hgt250_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension

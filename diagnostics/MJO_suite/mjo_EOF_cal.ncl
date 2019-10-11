@@ -234,7 +234,7 @@ begin
 
 ;  diro = "./"
   filo = file_dir+"MJO_PC_INDEX.nc"
-  system("/bin/rm -f "+filo)   ; remove any pre-existing file
+  system("rm -f "+filo)   ; remove any pre-existing file
   ncdf = addfile(filo,"c")     ; open output netCDF file
                                     ; make time an UNLIMITED dimension 
   filedimdef(ncdf,"time",-1,True)   ; recommended  for most applications

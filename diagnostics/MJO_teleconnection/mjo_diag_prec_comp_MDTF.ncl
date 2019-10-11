@@ -554,7 +554,7 @@ pr_composites&lon = lon
 ;write out a 3D netcdf file
 
 
-  system("/bin/rm -f " + diro + "PR_composites_"+Model+".nc")
+  system("rm -f " + diro + "PR_composites_"+Model+".nc")
   ncdf = addfile(diro + "PR_composites_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension

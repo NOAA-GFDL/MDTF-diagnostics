@@ -312,7 +312,7 @@ class Namespace(dict):
             return (self._freeze() == other._freeze())
         else:
             return False
-            
+
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
 
@@ -685,14 +685,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         # only let this be overridden if we're in a unit test
         rel_paths_root = cmdline_args['CODE_ROOT']
 
-    # If we're running under frepp, overwrite with that
-    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
-        for section in ['paths', 'settings']:
-            for key in default_args[section]:
-                if key in frepp_args:
-                    default_args[section][key] = frepp_args[key]
-        
-    if 'CASENAME'  in cmdline_args:
+    if 'CASENAME' in cmdline_args:
         # also set up caselist with frepp data
         default_args['case_list'] = [{
             'CASENAME': cmdline_args['CASENAME'],
@@ -702,6 +695,24 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
             'LASTYR': cmdline_args['LASTYR'],
             'root_dir': cmdline_args['CASE_ROOT_DIR']
         }]
+
+    # If we're running under frepp, overwrite with that
+    # NOTE: this code path currently usued (frepp_args is always None)
+    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
+        for section in ['paths', 'settings']:
+            for key in default_args[section]:
+                if key in frepp_args:
+                    default_args[section][key] = frepp_args[key]
+        if 'CASENAME' in frepp_args:
+            # also set up caselist with frepp data
+            default_args['case_list'] = [{
+                'CASENAME': frepp_args['CASENAME'],
+                'model': 'CMIP_GFDL',
+                'variable_convention': 'CMIP_GFDL',
+                'FIRSTYR': frepp_args['FIRSTYR'],
+                'LASTYR': frepp_args['LASTYR'],
+                'root_dir': frepp_args['root_dir']
+            }]
 
     # convert relative to absolute paths
     for key, val in default_args['paths'].items():

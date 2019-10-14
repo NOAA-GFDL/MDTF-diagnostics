@@ -312,6 +312,7 @@ class Namespace(dict):
             return (self._freeze() == other._freeze())
         else:
             return False
+            
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
 
@@ -332,8 +333,10 @@ class DataSet(Namespace):
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
+            del self.var_name
         if ('freq' in self) and (self.date_freq is None):
             self.date_freq = datelabel.DateFrequency(self.freq)
+            del self.freq
 
     def copy(self, new_name=None):
         temp = super(DataSet, self).copy()

@@ -3,7 +3,7 @@ import sys
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
-from src.shared_diagnostic import Diagnostic
+from src.shared_diagnostic import Diagnostic, PodRequirementFailure
 
 class TestDiagnosticInit(unittest.TestCase):
     @mock.patch('src.util.read_yaml', 
@@ -53,9 +53,15 @@ class TestDiagnosticInit(unittest.TestCase):
         })
     def test_parse_pod_varlist_defaults(self, mock_read_yaml):
         # fill in defaults
+        test_ds = util.DataSet({
+                'name':'foo', 'freq':'mon', 
+                'CF_name':'foo', 'required': True,
+                'original_name':'pr_var', 'alternates':[]
+                })
         pod = Diagnostic('A')
-        self.assertEqual(pod.varlist[0]['required'], False)
-        self.assertEqual(pod.varlist[0]['alternates'], ['foo'])
+        self.assertEqual(pod.varlist[0]['required'], True)
+        self.assertEqual(len(pod.varlist[0]['alternates']), 1)
+        self.assertDictEqual(pod.varlist[0]['alternates'][0].__dict__, test_ds.__dict__)
 
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
         'settings':{},'varlist':[{
@@ -65,8 +71,170 @@ class TestDiagnosticInit(unittest.TestCase):
     def test_parse_pod_varlist_freq(self, mock_read_yaml):
         self.assertRaises(AssertionError, Diagnostic, 'A')
 
+@mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+    'settings':{}, 'varlist':[]
+    })
 class TestDiagnosticSetUp(unittest.TestCase):
-    
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
+
+    def tearDown(self):
+        # call _reset method deleting clearing Translator for unit testing, 
+        # otherwise the second, third, .. tests will use the instance created 
+        # in the first test instead of being properly initialized
+        temp = util.VariableTranslator(unittest_flag = True)
+        temp._reset()
+        temp = util.PathManager(unittest_flag = True)
+        temp._reset()
+
+    # ---------------------------------------------------
+
+    @mock.patch('os.path.exists', return_value = True)
+    def test_set_pod_env_vars_paths(self, mock_exists, mock_read_yaml):
+        # check definition of pod paths
+        pod = Diagnostic('C')
+        pod.POD_WK_DIR = 'A'
+        pod._set_pod_env_vars()
+        self.assertEqual(os.environ['POD_HOME'], 'TEST_CODE_ROOT/diagnostics/C')
+        self.assertEqual(pod.pod_env_vars['POD_HOME'], 'TEST_CODE_ROOT/diagnostics/C')
+        self.assertEqual(os.environ['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
+        self.assertEqual(pod.pod_env_vars['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
+        self.assertEqual(os.environ['WK_DIR'], 'A')
+        self.assertEqual(pod.pod_env_vars['WK_DIR'], 'A')  
+
+    @mock.patch('src.util.check_required_dirs')
+    @mock.patch('os.path.exists', return_value = False)
+    @mock.patch('os.makedirs')
+    def test_setup_pod_directories_mkdir(self, mock_makedirs, mock_exists, \
+        mock_check_required_dirs, mock_read_yaml): 
+        # create output dirs if not present    
+        pod = Diagnostic('B')
+        pod.POD_WK_DIR = 'A/B'
+        pod._setup_pod_directories()
+        mock_makedirs.assert_has_calls([
+            mock.call('A/B/'+ s) for s in [
+                '','model','model/PS','model/netCDF','obs','obs/PS','obs/netCDF'
+            ]
+        ], any_order = True)
+
+    @mock.patch('os.path.exists', return_value = True)
+    @mock.patch('os.makedirs')
+    def test_setup_pod_directories_no_mkdir(self, mock_makedirs, mock_exists, \
+        mock_read_yaml):
+        # don't create output dirs if already present       
+        pod = Diagnostic('B')
+        pod.POD_WK_DIR = 'A'
+        pod._setup_pod_directories()
+        mock_makedirs.assert_not_called()     
+
+    @mock.patch('os.path.exists', return_value = True) 
+    def test_check_pod_driver_no_driver_1(self, mock_exists, mock_read_yaml):
+        # fill in driver from pod name
+        programs = util.get_available_programs()
+        pod = Diagnostic('A')  
+        pod._check_pod_driver()
+        ext = os.path.splitext(pod.driver)[1][1:]
+        self.assertTrue(ext in programs)
+        self.assertEqual(pod.program, programs[ext])
+
+    @mock.patch('os.path.exists', return_value = False)
+    def test_check_pod_driver_no_driver_2(self, mock_exists, mock_read_yaml):
+        # assertion fails if no driver found
+        pod = Diagnostic('A')  
+        self.assertRaises(PodRequirementFailure, pod._check_pod_driver)
+
+class TestDiagnosticCheckVarlist(unittest.TestCase):
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
+
+    def tearDown(self):
+        # call _reset method deleting clearing Translator for unit testing, 
+        # otherwise the second, third, .. tests will use the instance created 
+        # in the first test instead of being properly initialized
+        temp = util.VariableTranslator(unittest_flag = True)
+        temp._reset()
+        temp = util.PathManager(unittest_flag = True)
+        temp._reset()
+
+    def _populate_pod_local_resource(self, pod):
+        # reproduce logic in DataManager._setup_pod rather than invoke it here
+        paths = util.PathManager(unittest_flag = True)
+        translate = util.VariableTranslator(unittest_flag = True)
+        case_name = 'A'
+        for var in pod.iter_vars_and_alts():
+            var.name_in_model = translate.fromCF('not_CF', var.CF_name)
+            freq = var.date_freq.format_local()
+            var.local_resource = os.path.join(
+                paths.MODEL_DATA_ROOT, case_name, freq,
+                "{}.{}.{}.nc".format(
+                    case_name, var.name_in_model, freq)
+            )
+
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+        'settings':{}, 'varlist':[
+            {'var_name': 'pr_var', 'freq':'mon'}
+        ]})
+    @mock.patch('os.path.isfile', return_value = True)
+    def test_check_for_varlist_files_found(self, mock_isfile, mock_read_yaml):
+        # case file is found
+        pod = Diagnostic('A') 
+        self._populate_pod_local_resource(pod)
+        (found, missing) = pod._check_for_varlist_files(pod.varlist)
+        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+        self.assertEqual(missing, [])
+
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+        'settings':{}, 'varlist':[
+            {'var_name': 'pr_var', 'freq':'mon', 'required': True}
+        ]})        
+    @mock.patch('os.path.isfile', return_value = False)
+    def test_check_for_varlist_files_not_found(self, mock_isfile, mock_read_yaml):
+        # case file is required and not found
+        pod = Diagnostic('A') 
+        self._populate_pod_local_resource(pod)
+        (found, missing) = pod._check_for_varlist_files(pod.varlist)
+        self.assertEqual(found, [])
+        self.assertEqual(missing, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
+
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+        'settings':{}, 'varlist':[
+            {'var_name': 'pr_var', 'freq':'mon', 'required': False}
+        ]})   
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_optional(self, mock_isfile, mock_read_yaml):
+        # case file is optional and not found
+        pod = Diagnostic('A') 
+        self._populate_pod_local_resource(pod)
+        (found, missing) = pod._check_for_varlist_files(pod.varlist)
+        self.assertEqual(found, [])
+        self.assertEqual(missing, [])
+
+    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+        'settings':{}, 'varlist':[
+            {'var_name': 'pr_var', 'freq':'mon', 
+            'required': True, 'alternates':['prc_var']}
+        ]})   
+    @mock.patch('os.path.isfile', side_effect = [False, True])
+    def test_check_for_varlist_files_alternate(self, mock_isfile, mock_read_yaml):
+        # case alternate variable is specified and found
+        pod = Diagnostic('A') 
+        self._populate_pod_local_resource(pod)
+        (found, missing) = pod._check_for_varlist_files(pod.varlist)
+        # name_in_model translation now done in DataManager._setup_pod
+        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
+        self.assertEqual(missing, [])
+
+class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
@@ -87,22 +255,6 @@ class TestDiagnosticSetUp(unittest.TestCase):
     # ---------------------------------------------------
 
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{}, 'varlist':[]
-        })
-    @mock.patch('os.path.exists', return_value = True)
-    def test_set_pod_env_vars_paths(self, mock_exists, mock_read_yaml):
-        # check definition of pod paths
-        pod = Diagnostic('C')
-        pod.POD_WK_DIR = 'A'
-        env = pod._set_pod_env_vars()
-        self.assertEqual(os.environ['POD_HOME'], 'TEST_CODE_ROOT/diagnostics/C')
-        self.assertEqual(env['POD_HOME'], 'TEST_CODE_ROOT/diagnostics/C')
-        self.assertEqual(os.environ['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
-        self.assertEqual(env['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
-        self.assertEqual(os.environ['WK_DIR'], 'A')
-        self.assertEqual(env['WK_DIR'], 'A')
-
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
         'settings':{'pod_env_vars':{'D':'E'}}, 'varlist':[]
         })
     @mock.patch('os.path.exists', return_value = True)
@@ -110,64 +262,9 @@ class TestDiagnosticSetUp(unittest.TestCase):
             # check definition of additional env vars
         pod = Diagnostic('C')
         pod.POD_WK_DIR = 'A'
-        env = pod._set_pod_env_vars()
+        pod._set_pod_env_vars()
         self.assertEqual(os.environ['D'], 'E')
-        self.assertEqual(env['D'], 'E')
-
-    # ---------------------------------------------------      
-
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{}, 'varlist':[]
-        })
-    @mock.patch('src.util.check_required_dirs')
-    @mock.patch('os.path.exists', return_value = False)
-    @mock.patch('os.makedirs')
-    def test_setup_pod_directories_mkdir(self, mock_makedirs, mock_exists, mock_check_required_dirs, mock_read_yaml): 
-        # create output dirs if not present    
-        pod = Diagnostic('B')
-        pod.POD_WK_DIR = 'A/B'
-        pod._setup_pod_directories()
-        mock_makedirs.assert_has_calls([
-            mock.call('A/B/'+ s) for s in [
-                '','model','model/PS','model/netCDF','obs','obs/PS','obs/netCDF'
-            ]
-        ], any_order = True)
-
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{}, 'varlist':[]
-        })
-    @mock.patch('os.path.exists', return_value = True)
-    @mock.patch('os.makedirs')
-    def test_setup_pod_directories_no_mkdir(self, mock_makedirs, mock_exists, mock_read_yaml):
-        # don't create output dirs if already present       
-        pod = Diagnostic('B')
-        pod.POD_WK_DIR = 'A'
-        pod._setup_pod_directories()
-        mock_makedirs.assert_not_called()  
-
-    # ---------------------------------------------------    
-
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{}, 'varlist':[]
-        })
-    @mock.patch('os.path.exists', return_value = True) 
-    def test_check_pod_driver_no_driver_1(self, mock_exists, mock_read_yaml):
-        # fill in driver from pod name
-        programs = util.get_available_programs()
-        pod = Diagnostic('A')  
-        pod._check_pod_driver()
-        ext = os.path.splitext(pod.driver)[1][1:]
-        self.assertTrue(ext in programs)
-        self.assertEqual(pod.program, programs[ext])
-
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
-        'settings':{}, 'varlist':[]
-        })
-    @mock.patch('os.path.exists', return_value = False)
-    def test_check_pod_driver_no_driver_2(self, mock_exists, mock_read_yaml):
-        # assertion fails if no driver found
-        pod = Diagnostic('A')  
-        self.assertRaises(AssertionError, pod._check_pod_driver)
+        self.assertEqual(pod.pod_env_vars['D'], 'E')
 
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
         'settings':{'driver':'C.ncl'}, 'varlist':[]
@@ -187,50 +284,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
     def test_check_pod_driver_no_program_1(self, mock_exists, mock_read_yaml):
         # assertion fail if can't recognize driver's extension
         pod = Diagnostic('A') 
-        self.assertRaises(AssertionError, pod._check_pod_driver)
-
-    # -----------------------------------------
-
-    @mock.patch('os.path.isfile', return_value = True)
-    def test_check_for_varlist_files_found(self, mock_isfile):
-        # case file is found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon'}
-        pod = Diagnostic('A') 
-        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
-        self.assertEqual(missing, [])
-        
-    @mock.patch('os.path.isfile', return_value = False)
-    def test_check_for_varlist_files_not_found(self, mock_isfile):
-        # case file is required and not found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True}
-        pod = Diagnostic('A') 
-        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(found, [])
-        self.assertEqual(missing, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
-
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_optional(self, mock_isfile):
-        # case file is optional and not found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': False}
-        pod = Diagnostic('A') 
-        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
-        self.assertEqual(found, [])
-        self.assertEqual(missing, [])
-
-    @mock.patch('os.path.isfile', side_effect = [False, True])
-    def test_check_for_varlist_files_alternate(self, mock_isfile):
-        # case alternate variable is specified and found
-        test_var = {'var_name': 'pr_var', 'name_in_model':'PRECT', 
-            'freq':'mon', 'required': True, 'alternates':['PRECC']}
-        pod = Diagnostic('A') 
-        (found, missing) = pod._check_for_varlist_files([DataSet(**test_var)])
-        # name_in_model translation now done in DataManager._setup_pod
-        self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
-        self.assertEqual(missing, [])
+        self.assertRaises(PodRequirementFailure, pod._check_pod_driver)
 
 class TestDiagnosticTearDown(unittest.TestCase):
     @mock.patch('src.util.read_yaml', 
@@ -260,7 +314,9 @@ class TestDiagnosticTearDown(unittest.TestCase):
     @mock.patch('shutil.copy2')
     @mock.patch('os.system')
     @mock.patch('os.remove')
-    def test_make_pod_html(self, mock_remove, mock_system, mock_copy2, mock_exists, mock_read_yaml): 
+    @mock.patch('src.util.append_html_template')
+    def test_make_pod_html(self, mock_append_html_template, mock_remove, \
+        mock_system, mock_copy2, mock_exists, mock_read_yaml): 
         pod = Diagnostic('A')
         pod.MODEL_WK_DIR = '/B'
         pod.POD_WK_DIR = '/B/A'

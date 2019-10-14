@@ -56,7 +56,7 @@ class TestBasicClasses(unittest.TestCase):
         self.assertEqual(test.name, 'A')
         self.assertEqual(test.B, 'C')
         with self.assertRaises(AttributeError):
-            temp = test.D
+            _ = test.D
         test.B = 'D'
         self.assertEqual(test.B, 'D')
 
@@ -98,6 +98,9 @@ class TestBasicClasses(unittest.TestCase):
         self.assertEqual(len(set_test), 2)
         self.assertIn(test, set_test)
         self.assertIn(test4, set_test)
+
+class TestDataSet(unittest.TestCase):
+    pass
 
 class TestUtil(unittest.TestCase):
 
@@ -144,25 +147,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(test_d['TEST_FALSE'], False)
         self.assertEqual(os.environ['TEST_FALSE'], '0')
 
-    # ---------------------------------------------------
-
-    @mock.patch('src.util.read_yaml', 
-        return_value = {'convention_name':'A','var_names':{'B':'D'}})
-    def test_read_model_varnames(self, mock_read_yaml):
-        # normal operation - convert string to list
-        temp = util.VariableTranslator(unittest_flag = True)
-        self.assertEqual(temp.fromCF('A','B'), 'D')
-        temp._reset()
-
-    @mock.patch('src.util.read_yaml', 
-        return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
-    def test_read_model_varnames_multiple(self, mock_read_yaml):
-        # create multiple entries when multiple models specified
-        temp = util.VariableTranslator(unittest_flag = True)
-        self.assertEqual(temp.fromCF('A','B'), 'D')
-        self.assertEqual(temp.fromCF('C','B'), 'D')
-        temp._reset()
-
     os_environ_check_required_envvar = {'A':'B', 'C':'D'}
 
     @mock.patch.dict('os.environ', os_environ_check_required_envvar)
@@ -196,7 +180,7 @@ class TestUtil(unittest.TestCase):
     @mock.patch('os.makedirs')
     def test_check_required_dirs_not_found(self, mock_makedirs, mock_exists):
         # try to exit() if any directories not found
-        self.assertRaises(SystemExit, util.check_required_dirs, ['DIR1XXX'], [])
+        self.assertRaises(OSError, util.check_required_dirs, ['DIR1XXX'], [])
         mock_makedirs.assert_not_called()
 
     @mock.patch('os.path.exists', return_value = False)
@@ -209,8 +193,15 @@ class TestUtil(unittest.TestCase):
             self.fail()
         mock_makedirs.assert_called_once_with('DIR2')
 
-
 class TestVariableTranslator(unittest.TestCase):
+    @mock.patch('src.util.read_yaml', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
@@ -219,39 +210,57 @@ class TestVariableTranslator(unittest.TestCase):
         temp = util.VariableTranslator(unittest_flag=True)
         temp._reset()
 
-    # ---------------------------------------------------
-    default_translation = {
-        'convention_name':'not_CF',
-        'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
-        }
-
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator(self, mock_read_yaml):
+    def test_variabletranslator(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.toCF('not_CF', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('not_CF', 'pr_var'), 'PRECT')
 
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator_cf(self, mock_read_yaml):
+    def test_variabletranslator_cf(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
         self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
 
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator_no_key(self, mock_read_yaml):
+    def test_variabletranslator_no_key(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.toCF, 'not_CF', 'nonexistent_var')
         self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.fromCF, 'not_CF', 'nonexistent_var')
 
+class TestVariableTranslatorReadFiles(unittest.TestCase):
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'convention_name':'A','var_names':{'B':'D'}})
+    def test_read_model_varnames(self, mock_read_yaml):
+        # normal operation - convert string to list
+        temp = util.VariableTranslator(unittest_flag = True)
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+        temp._reset()
+
+    @mock.patch('src.util.read_yaml', 
+        return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
+    def test_read_model_varnames_multiple(self, mock_read_yaml):
+        # create multiple entries when multiple models specified
+        temp = util.VariableTranslator(unittest_flag = True)
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+        self.assertEqual(temp.fromCF('C','B'), 'D')
+        temp._reset()
 
 class TestPathManager(unittest.TestCase):
+    @mock.patch('src.util.read_yaml', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
 
     def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
+        # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
+        temp = util.VariableTranslator(unittest_flag=True)
+        temp._reset()
         temp = util.PathManager()
         temp._reset()
 
@@ -273,7 +282,7 @@ class TestPathManager(unittest.TestCase):
         }
         self.assertRaises(AssertionError, util.PathManager, d)
         # initialize successfully so that tearDown doesn't break
-        paths = util.PathManager(unittest_flag = True) 
+        _ = util.PathManager(unittest_flag = True) 
 
     def test_pathmgr_global_testmode(self):
         paths = util.PathManager(unittest_flag = True)
@@ -292,7 +301,8 @@ class TestPathManager(unittest.TestCase):
 
     @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    def test_pathmgr_model(self):
+    @mock.patch('src.data_manager.atexit.register')
+    def test_pathmgr_model(self, mock_register):
         paths = util.PathManager(unittest_flag = True)
         case = DataManager(self.default_case)
         d = paths.modelPaths(case)
@@ -325,7 +335,7 @@ class TestPathManager(unittest.TestCase):
 class TestMDTFArgParsing(unittest.TestCase):
 
     def setUp(self):
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
         self.config_test = {
             'case_list':[{'A':'B'}],
             'paths':{'C':'/D'},
@@ -355,23 +365,21 @@ class TestMDTFArgParsing(unittest.TestCase):
         self.assertEqual(config['paths']['C'], '/X')
         self.assertEqual(config['settings']['E'], 'Y')
 
-    @mock.patch.dict('os.environ', {})
     @mock.patch('src.util.check_required_dirs')
     def test_set_mdtf_env_vars_config_settings(self, mock_check_required_dirs):
+        # NB env vars now only written to OS by pod's setUp (not here)
         # set settings from config file
         config = self.config_test.copy()
         util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['E'], 'F')
-        self.assertEqual(os.environ['E'], 'F')        
+        self.assertEqual(config['envvars']['E'], 'F')      
 
-    @mock.patch.dict('os.environ', {})
     @mock.patch('src.util.check_required_dirs')
     def test_sset_mdtf_env_vars_config_rgb(self, mock_check_required_dirs):
+        # NB env vars now only written to OS by pod's setUp (not here)
         # set path to /RGB from os.environ
         config = self.config_test.copy()
         util.set_mdtf_env_vars(config)
         self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
-        self.assertEqual(os.environ['RGB'], 'TEST_CODE_ROOT/src/rgb')
 
 # ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):

@@ -509,5 +509,5 @@ def parse_frepp_stub(frepp_stub):
         if bool_key in d:
             d[bool_key] = bool(d[bool_key])
 
-    d['frepp_mode'] = ('MODEL_DATA_ROOT' in d)
+    d['frepp'] = (d != {})
     return d

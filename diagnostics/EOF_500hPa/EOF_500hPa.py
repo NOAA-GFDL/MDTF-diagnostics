@@ -7,6 +7,7 @@
 
 import os
 import subprocess
+import time
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call

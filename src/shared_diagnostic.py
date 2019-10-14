@@ -124,14 +124,14 @@ class Diagnostic(object):
         Returns:
             varlist
         """
-        default_file_required = False 
+        default_file_required = True 
         for idx, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
                 varlist[idx]['required'] = (var['requirement'].lower() == 'required')
-            else:
+            elif 'required' not in varlist[idx]:
                 varlist[idx]['required'] = default_file_required
             if ('alternates' not in var):
                 varlist[idx]['alternates'] = []

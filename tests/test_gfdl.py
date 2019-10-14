@@ -46,7 +46,7 @@ class TestModuleManager(unittest.TestCase):
     test_mod_name = 'latexdiff/1.2.0' # least likely to cause side effects?
 
     def setUp(self):
-        temp = gfdl.ModuleManager()
+        _ = gfdl.ModuleManager()
 
     def tearDown(self):
         # call _reset method clearing ModuleManager for unit testing, 
@@ -106,11 +106,12 @@ class TestFreppArgParsing(unittest.TestCase):
     def setUp(self):
         self.config_test = {
             'case_list':[{'CASENAME':'B'}],
-            'paths':{'MODEL_DATA_ROOT':'/D'},
+            'paths':{'OUTPUT_DIR':'/D'},
             'settings':{'E':'F', 'verbose':0, 'make_variab_tar': False}
         }
         self.frepp_stub = """
-            set in_data_dir = /foo/bar
+            set in_data_dir = /foo2/bar2
+            set out_dir = /foo/bar
             set descriptor = baz.r1i1p1f1
             set yr1 = 1977
             set yr2 = 1981
@@ -138,7 +139,7 @@ class TestFreppArgParsing(unittest.TestCase):
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
         self.assertNotIn('in_data_dir', d)
-        self.assertEqual(d['MODEL_DATA_ROOT'], '/foo/bar')
+        self.assertEqual(d['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(d['CASENAME'], 'baz.r1i1p1f1')
         self.assertNotIn('yr1', d)
         self.assertEqual(d['FIRSTYR'], 1977)
@@ -147,22 +148,16 @@ class TestFreppArgParsing(unittest.TestCase):
     def test_parse_frepp_stub_mode(self):
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
-        self.assertEqual(d['frepp_mode'], True)
-        frepp_stub = """
-            set yr1 = 1981
-            set make_variab_tar = 1
-        """
-        d = gfdl.parse_frepp_stub(frepp_stub)
-        self.assertEqual(d['frepp_mode'], False)
+        self.assertEqual(d['frepp'], True)
 
     def test_parse_mdtf_args_frepp_overwrite(self):
         # overwrite defaults
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
-        args = {}
+        args = {'frepp': True}
         config = self.config_test.copy()
         config = parse_mdtf_args(d, args, config)
-        self.assertEqual(config['paths']['MODEL_DATA_ROOT'], '/foo/bar')
+        self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'F')
 
@@ -170,10 +165,10 @@ class TestFreppArgParsing(unittest.TestCase):
         # overwrite defaults and command-line
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
-        args = {'MODEL_DATA_ROOT':'/X', 'E':'Y'}
+        args = {'frepp': True, 'OUTPUT_DIR':'/X', 'E':'Y'}
         config = self.config_test.copy()
         config = parse_mdtf_args(d, args, config)
-        self.assertEqual(config['paths']['MODEL_DATA_ROOT'], '/foo/bar')
+        self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'Y')
 
@@ -181,13 +176,13 @@ class TestFreppArgParsing(unittest.TestCase):
         # overwrite defaults and command-line
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
-        args = {}
+        args = {'frepp': True}
         config = self.config_test.copy()
         config = parse_mdtf_args(d, args, config)
         self.assertEqual(len(config['case_list']), 1)
         self.assertEqual(config['case_list'][0]['CASENAME'], 'baz.r1i1p1f1')
-        self.assertEqual(config['case_list'][0]['model'], 'CMIP')
-        self.assertEqual(config['case_list'][0]['variable_convention'], 'CMIP')
+        self.assertEqual(config['case_list'][0]['model'], 'CMIP_GFDL')
+        self.assertEqual(config['case_list'][0]['variable_convention'], 'CMIP_GFDL')
         self.assertEqual(config['case_list'][0]['FIRSTYR'], 1977)
         self.assertEqual(config['case_list'][0]['LASTYR'], 1981)
 

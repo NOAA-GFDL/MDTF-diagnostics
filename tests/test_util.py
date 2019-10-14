@@ -99,6 +99,9 @@ class TestBasicClasses(unittest.TestCase):
         self.assertIn(test, set_test)
         self.assertIn(test4, set_test)
 
+class TestDataSet(unittest.TestCase):
+    pass
+
 class TestUtil(unittest.TestCase):
 
     def test_read_yaml(self):
@@ -292,7 +295,8 @@ class TestPathManager(unittest.TestCase):
 
     @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    def test_pathmgr_model(self):
+    @mock.patch('src.data_manager.atexit.register')
+    def test_pathmgr_model(self, mock_register):
         paths = util.PathManager(unittest_flag = True)
         case = DataManager(self.default_case)
         d = paths.modelPaths(case)

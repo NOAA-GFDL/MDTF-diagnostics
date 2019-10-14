@@ -3,13 +3,13 @@ import unittest
 import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 from src.shared_diagnostic import Diagnostic
-from src.data_manager import DataManager, DataSet
+from src.data_manager import DataManager
 
-class TestDataSet(unittest.TestCase):
-    pass
-
+# patch atexit to prevent PathManager initialization errors from triggering
+# when tests exit
+@mock.patch('src.data_manager.atexit.register')
+@mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):
-    
     @mock.patch('src.util.read_yaml', 
         return_value = {
             'convention_name':'not_CF',
@@ -44,11 +44,10 @@ class TestDataManagerSetup(unittest.TestCase):
         'varlist': [{'var_name': 'PRECT', 'freq':'mon'}]
         }
 
-    def test_setup_model_paths(self):
+    def test_setup_model_paths(self, mock_register):
         pass
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    def test_set_model_env_vars(self):
+    def test_set_model_env_vars(self, mock_register):
         # set env vars for model
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
@@ -57,31 +56,28 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(os.environ['pr_var'], 'PRECT')
         self.assertEqual(os.environ['prc_var'], 'PRECC')
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    def test_set_model_env_vars_no_model(self):
+    def test_set_model_env_vars_no_model(self, mock_register):
         # exit if can't find model
         case = DataManager(self.default_case)
         case.convention = 'nonexistent'
         dummy = {'envvars':{}}
         self.assertRaises(AssertionError, case._set_model_env_vars, dummy)
 
-    def test_setup_html(self):
+    def test_setup_html(self, mock_register):
         pass
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_cf_cf(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_cf_cf(self, mock_exists, mock_read_yaml, mock_register):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
         case._setup_pod(pod)
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'pr_var')
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_cf_custom(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_cf_custom(self, mock_exists, mock_read_yaml, mock_register):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')
@@ -89,20 +85,18 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'PRECT')
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_custom_cf(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_custom_cf(self, mock_exists, mock_read_yaml, mock_register):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
         case._setup_pod(pod)
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'pr_var')
 
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_custom_custom(self, mock_exists, mock_read_yaml):
+    def test_setup_pod_custom_custom(self, mock_exists, mock_read_yaml, mock_register):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')

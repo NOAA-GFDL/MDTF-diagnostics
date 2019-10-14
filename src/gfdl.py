@@ -88,22 +88,48 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         modMgr = ModuleManager()
         super(GfdlvirtualenvEnvironmentManager, self).__init__(config, verbose)
 
+    # manual-coded logic like this is not scalable
+    def set_pod_env(self, pod):
+        keys = [s.lower() for s in pod.required_programs]
+        if pod.name == 'convective_transition_diag':
+            pod.env = 'py_convective_transition_diag'
+        elif pod.name == 'MJO_suite':
+            pod.env = 'ncl_MJO_suite'
+        elif ('r' in keys) or ('rscript' in keys):
+            pod.env = 'r_default'
+        elif 'ncl' in keys:
+            pod.env = 'ncl'
+        else:
+            pod.env = 'py_default'
+
+    # this is totally not scalable
+    def _module_lookup(self, env_name):
+        _lookup = {
+            'ncl': ['ncl'],
+            'r_default': ['r'],
+            'py_default': ['python'],
+            'py_convective_transition_diag': ['python', 'ncl'],
+            'ncl_MJO_suite': ['ncl', 'nco']
+        }
+        return [_current_module_versions[m] for m in _lookup[env_name]]
+
     def create_environment(self, env_name):
         modMgr = ModuleManager()
-        modMgr.load(_current_module_versions[env_name])
+        for mod in self._module_lookup(env_name):
+            modMgr.load(mod)
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
     def activate_env_commands(self, pod):
-        mod_name = _current_module_versions[pod.env]
-        return ['source $MODULESHOME/init/bash',
-            'module load {}'.format(mod_name)] \
+        mod_list = ['module load {}'.format(m) for m in self._module_lookup(pod.env)]
+        return ['source $MODULESHOME/init/bash'] \
+            + mod_list \
             + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(pod)
 
     def deactivate_env_commands(self, pod):
-        mod_name = _current_module_versions[pod.env]
+        mod_list = ['module unload {}'.format(m) for m in self._module_lookup(pod.env)]
         return super(GfdlvirtualenvEnvironmentManager, \
-            self).deactivate_env_commands(pod) + ['module unload {}'.format(mod_name)]
+            self).deactivate_env_commands(pod) + mod_list
 
     def tearDown(self):
         super(GfdlvirtualenvEnvironmentManager, self).tearDown()

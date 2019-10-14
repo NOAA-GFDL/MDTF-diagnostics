@@ -693,8 +693,8 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         # also set up caselist with frepp data
         default_args['case_list'] = [{
             'CASENAME': cmdline_args['CASENAME'],
-            'model': 'CMIP',
-            'variable_convention': 'CMIP',
+            'model': 'CMIP_GFDL',
+            'variable_convention': 'CMIP_GFDL',
             'FIRSTYR': cmdline_args['FIRSTYR'],
             'LASTYR': cmdline_args['LASTYR'],
             'root_dir': cmdline_args['CASE_ROOT_DIR']

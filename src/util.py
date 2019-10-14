@@ -683,7 +683,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         rel_paths_root = cmdline_args['CODE_ROOT']
 
     # If we're running under frepp, overwrite with that
-    if cmdline_args['frepp'] and (frepp_args is not None):
+    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
         for section in ['paths', 'settings']:
             for key in default_args[section]:
                 if key in frepp_args:

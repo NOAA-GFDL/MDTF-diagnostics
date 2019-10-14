@@ -6,16 +6,23 @@ import src.util as util
 from src.shared_diagnostic import Diagnostic
 
 class TestDiagnosticInit(unittest.TestCase):
-
-    def setUp(self):
-        # set up paths without calls to filesystem
-        temp = util.PathManager(unittest_flag = True)
+    @mock.patch('src.util.read_yaml', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
         temp = util.PathManager(unittest_flag = True)
+        temp._reset()
+        temp = util.VariableTranslator(unittest_flag = True)
         temp._reset()
 
     # ---------------------------------------------------  
@@ -65,8 +72,8 @@ class TestDiagnosticSetUp(unittest.TestCase):
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
     def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator(unittest_flag = True)
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
@@ -226,16 +233,23 @@ class TestDiagnosticSetUp(unittest.TestCase):
         self.assertEqual(missing, [])
 
 class TestDiagnosticTearDown(unittest.TestCase):
-
-    def setUp(self):
-        # set up paths without calls to filesystem
-        temp = util.PathManager(unittest_flag = True)
+    @mock.patch('src.util.read_yaml', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_yaml):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
         temp = util.PathManager(unittest_flag = True)
+        temp._reset()
+        temp = util.VariableTranslator(unittest_flag = True)
         temp._reset()
 
     @mock.patch.dict('os.environ', {'CASENAME':'C'})

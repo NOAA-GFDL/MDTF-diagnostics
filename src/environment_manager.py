@@ -189,9 +189,9 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             self.r_lib_root = ''
 
     def create_environment(self, env_name):
-        if env_name == 'python':
+        if env_name.startswith('py_'):
             self._create_py_venv(env_name)
-        elif env_name == 'r':
+        elif env_name.startswith('r_'):
             self._create_r_venv(env_name)
         else:
             pass
@@ -241,28 +241,26 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
     def set_pod_env(self, pod):
         keys = [s.lower() for s in pod.required_programs]
         if ('r' in keys) or ('rscript' in keys):
-            pod.env = 'r'
+            pod.env = 'r_' + pod.name
         elif 'ncl' in keys:
             pod.env = 'ncl'
         else:
-            pod.env = 'python'
+            pod.env = 'py_' + pod.name
 
     def activate_env_commands(self, pod):
-        env_name = pod.env
-        if env_name == 'python':
+        if pod.env.startswith('py_'):
             env_path = os.path.join(self.venv_root, pod.env)
             return ['source {}/bin/activate'.format(env_path)]
-        elif env_name == 'r':
+        elif pod.env.startswith('r_'):
             env_path = os.path.join(self.r_lib_root, pod.env)
             return ['export R_LIBS_USER="{}"'.format(env_path)]
         else:
             return []
 
     def deactivate_env_commands(self, pod):
-        env_name = pod.env
-        if env_name == 'python':
+        if pod.env.startswith('py_'):
             return ['deactivate']
-        elif env_name == 'r':
+        elif pod.env.startswith('r_'):
             return ['unset R_LIBS_USER']
         else:
             return []

@@ -302,6 +302,7 @@ class DataManager(object):
     def _copy_to_output(self):
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
+            print "copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
             if os.path.exists(self.MODEL_OUT_DIR):
                 shutil.rmtree(self.MODEL_OUT_DIR)
             shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)

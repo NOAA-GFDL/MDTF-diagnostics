@@ -13,31 +13,32 @@
 
 import os
 import subprocess
+import time
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
 def generate_R_plots(RPlotFile):
-   """generate_plots_call - call a RPlotFile via subprocess call
+    """generate_plots_call - call a RPlotFile via subprocess call
    
-   Arguments:
-   RPlotFile (string) - full path to R plotting file name
-   """
-   # check if the RPlotFile exists - 
-   # don't exit if it does not exists just print a warning.
-   try:
-      pipe = subprocess.Popen(['Rscript ' '--verbose ' '--vanilla {0}' .format(RPlotFile)]  , shell=True)#, stdout=subprocess.PIPE)
-      output = pipe.communicate()[0]
-      print('R routine {0} \n {1}'.format(RPlotFile,output))            
-      while pipe.poll() is None:
-         time.sleep(0.5)
-   except OSError as e:
-      print('WARNING',e.errno,e.strerror)
+    Arguments:
+    RPlotFile (string) - full path to R plotting file name
+    """
+    # check if the RPlotFile exists - 
+    # don't exit if it does not exists just print a warning.
+    try:
+        pipe = subprocess.Popen(['Rscript ' '--verbose ' '--vanilla {0}' .format(RPlotFile)]  , shell=True)#, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        print('R routine {0} \n {1}'.format(RPlotFile,output))            
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
 
-   return 0
+    return 0
 
 if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
-      print("monthly soil moisture file found")
+    print("monthly soil moisture file found")
 
 #if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
 #      print("monthly soil moisture file found")
@@ -45,19 +46,19 @@ if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.e
 #if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["evspsbl_var"]+".mon.nc"):
 #      print("monthly evapotranspiration file found")
 
-      print("computing SM-ET coupling")
+    print("computing SM-ET coupling")
 
 
 #============================================================
 # Call R code here
 #============================================================
-      print("--------- Starting SM_ET coupling generate figures (using R)----------------------------")
-      if ( True ):
-         generate_R_plots(os.environ["POD_HOME"]+"/SM_ET_coupling.R")
-      else:
-         print("WARNING: For testing purposes, skipping SM_ET coupling figure generation")
+    print("--------- Starting SM_ET coupling generate figures (using R)----------------------------")
+    if ( True ):
+        generate_R_plots(os.environ["POD_HOME"]+"/SM_ET_coupling.R")
+    else:
+        print("WARNING: For testing purposes, skipping SM_ET coupling figure generation")
 
-      print("--------- Finished SM_ET coupling generate figures----------------------------")
+    print("--------- Finished SM_ET coupling generate figures----------------------------")
 
 else:
-      print("Monthly precipitation file NOT found, skip SM-ET coupling")            
+    print("Monthly precipitation file NOT found, skip SM-ET coupling")            

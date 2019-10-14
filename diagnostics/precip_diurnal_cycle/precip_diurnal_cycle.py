@@ -20,45 +20,46 @@
 
 import os
 import subprocess
+import time
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
 def generate_ncl_plots(nclPlotFile):
-   """generate_plots_call - call a nclPlotFile via subprocess call
+    """generate_plots_call - call a nclPlotFile via subprocess call
    
-   Arguments:
-   nclPlotFile (string) - full path to ncl plotting file name
-   """
-   # check if the nclPlotFile exists - 
-   # don't exit if it does not exists just print a warning.
-   try:
-      pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-      output = pipe.communicate()[0]
-      print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
-      while pipe.poll() is None:
-         time.sleep(0.5)
-   except OSError as e:
-      print('WARNING',e.errno,e.strerror)
+    Arguments:
+    nclPlotFile (string) - full path to ncl plotting file name
+    """
+    # check if the nclPlotFile exists - 
+    # don't exit if it does not exists just print a warning.
+    try:
+        pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
 
-   return 0
+    return 0
 
 if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".3hr.nc"):
-      print("3 hourly precipitation rate file found")
-      print("computing diurnal cycle of precipitation")
+    print("3 hourly precipitation rate file found")
+    print("computing diurnal cycle of precipitation")
 
 #============================================================
 # Call NCL code here
 #============================================================
-      print("--------- Starting DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
-      if ( True ):
-         generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_cycle.ncl")
+    print("--------- Starting DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
+    if ( True ):
+        generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_cycle.ncl")
 
-         generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_phase.ncl")
-      else:
-         print("WARNING: For testing purposes, skipping diurnal cycle figure generation")
+        generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_phase.ncl")
+    else:
+        print("WARNING: For testing purposes, skipping diurnal cycle figure generation")
 
-      print("--------- Finished DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
+    print("--------- Finished DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
 
 else:
-      print("3 hourly precipitation rate file NOT found, skip diurnal cycle of precipitation")            
+    print("3 hourly precipitation rate file NOT found, skip diurnal cycle of precipitation")            

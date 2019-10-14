@@ -7,28 +7,29 @@
 
 import os
 import subprocess
+import time
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
 def generate_ncl_plots(nclPlotFile):
-   """generate_plots_call - call a nclPlotFile via subprocess call
+    """generate_plots_call - call a nclPlotFile via subprocess call
    
-   Arguments:
-   nclPlotFile (string) - full path to ncl plotting file name
-   """
-   # check if the nclPlotFile exists - 
-   # don't exit if it does not exists just print a warning.
-   try:
-      pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-      output = pipe.communicate()[0]
-      print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
-      while pipe.poll() is None:
-         time.sleep(0.5)
-   except OSError as e:
-      print('WARNING',e.errno,e.strerror)
+    Arguments:
+    nclPlotFile (string) - full path to ncl plotting file name
+    """
+    # check if the nclPlotFile exists - 
+    # don't exit if it does not exists just print a warning.
+    try:
+        pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
 
-   return 0
+    return 0
 
 #============================================================
 # Call NCL code here
@@ -49,9 +50,9 @@ print("MJO spectra")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
 if os.path.isfile( os.environ["WK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
-   print("WARNING: MJO_PC_INDEX.nc already exists!")
+    print("WARNING: MJO_PC_INDEX.nc already exists!")
 else:
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")
    
 print("MJO life cycle composite")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle.ncl")

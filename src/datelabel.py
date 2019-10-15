@@ -8,20 +8,33 @@ Note:
 """
 import re
 import datetime
+import time
 
 class Date(datetime.datetime):
     """Define a date with variable level precision.
+
+    Note: 
+        Date objects are mapped to datetimes representing the start of the 
+        interval implied by their precision, eg. DateTime('2000-05') maps to 
+        0:00 on 1 May 2000.
     """
     # define __new__, not __init__, because datetime is immutable
     def __new__(cls, *args, **kwargs):
-        if len(args) == 1 and type(args[0]) is str:
-            args = cls._parse_input_string(args[0])
-        precision = len(args)
-        if precision == 1:
-            args = (args[0], 1, 1) # missing month & day
-        elif precision == 2:
-            args = (args[0], args[1], 1) # missing day
-        obj = super(Date, cls).__new__(cls, *args, **kwargs) 
+        if len(args) == 2 and isinstance(args[0], datetime.datetime):
+            # new obj from coercing a datetime. A bit hacky, but need to copy
+            # the input datetime using one of its class methods.
+            timestamp = time.mktime(args[0].timetuple())
+            obj = super(Date, cls).fromtimestamp(timestamp)
+            precision = args[1]
+        else:
+            if len(args) == 1 and type(args[0]) is str:
+                args = cls._parse_input_string(args[0])
+            precision = len(args)
+            if precision == 1:
+                args = (args[0], 1, 1) # missing month & day
+            elif precision == 2:
+                args = (args[0], args[1], 1) # missing day
+            obj = super(Date, cls).__new__(cls, *args, **kwargs) 
         obj.precision = precision
         return obj
 
@@ -101,12 +114,14 @@ class Date(datetime.datetime):
 
     def __eq__(self, other):
         """Overload datetime.datetime's __eq__. Require precision to match as
-        well as date. Coerce to datetime.date if we're comparing with a datetime.date.
+        well as date, but *only up to stated precision*, eg Date(2019,5) will == 
+        datetime.datetime(2019,05,18).
         """
-        if isinstance(other, Date):
-            return (self.precision == other.precision) and super(Date, self).__eq__(other)
-        elif isinstance(other, datetime.datetime):
-            return super(Date, self).__eq__(other)
+        if isinstance(other, Date) and (self.precision != other.precision):
+            return False
+        if isinstance(other, datetime.datetime):
+            # only compare most signifcant fields of tuple representation
+            return (self.timetuple()[:self.precision] == other.timetuple()[:self.precision])
         else:
             return (self.date() == other)
 
@@ -133,6 +148,16 @@ class Date(datetime.datetime):
         else:
             raise ValueError("Malformed input")
 
+    def _to_interval_end(self):
+        """Return a copy of Date advanced by one time unit as specified by
+        the `precision` attribute.
+        """
+        temp = self.increment()
+        return Date(
+            temp.__add__(datetime.timedelta(seconds = -1)),
+            self.precision
+        )
+
     def decrement(self):
         """Return a copy of Date moved back by one time unit as specified by
         the `precision` attribute.
@@ -157,7 +182,10 @@ class Date(datetime.datetime):
 class DateRange(object):
     """Class representing a range of dates. 
 
-    This is defined as a closed interval (containing both endpoints).
+    Note:
+        This is defined as a *closed* interval (containing both endpoints). 
+        Eg, DateRange('1990-1999') starts at 0:00 on 1 Jan 1990 and 
+        ends at 23:59 on 31 Dec 1999.
     """
     def __init__(self, start, end=None):
         if type(start) is str and (end is None):
@@ -169,6 +197,7 @@ class DateRange(object):
             start = Date(start)
         if not isinstance(end, Date):
             end = Date(end)
+        end = end._to_interval_end()
         assert start < end
 
         self.start = start

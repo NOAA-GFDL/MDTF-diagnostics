@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import datetime
 import util
 import datelabel
+import netcdf_helper
 from shared_diagnostic import PodRequirementFailure
 
 class DataQueryFailure(Exception):
@@ -49,12 +50,27 @@ class DataManager(object):
         if 'pod_list' in case_dict:
             # run a set of PODs specific to this model
             self.pod_list = case_dict['pod_list'] 
+        elif 'pod_list' in config:
+            self.pod_list = config['pod_list'] # use global list of PODs  
         else:
-            self.pod_list = config['pod_list'] # use global list of PODs      
+            self.pod_list = [] # should raise warning    
         self.pods = []
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
+
+        # dynamic inheritance to add netcdf manipulation functions
+        # source: https://stackoverflow.com/a/8545134
+        if ('settings' not in config) or ('netcdf_helper' not in config['settings']):
+            mixin = 'NetcdfHelper' # default
+        else:
+            mixin = config['settings']['netcdf_helper']
+        mixin = getattr(netcdf_helper, mixin)
+        self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
+        try:
+            self.nc_check_environ() # make sure we have dependencies
+        except Exception:
+            raise
 
         # delete temp files if we're killed
         atexit.register(self.abortHandler)

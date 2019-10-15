@@ -35,8 +35,50 @@ set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
 set OUTPUT_HTML_DIR=/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output
 set INPUT_DIR=${TMPDIR}/inputdata
 set WK_DIR=${TMPDIR}/wkdir
-# for now ignore timeseries and component and scan entire /pp/ dir
+
+# End of user-configurable paramters
+# ----------------------------------------------------
+
+## parse command line arguments
+
 set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
+# component = 5th directory from the end
+set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
+# chunk frequency = 2nd directory from the end
+set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
+set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
+
+# NB analysis doesn't have getopts
+# reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
+set temp=(`getopt -s csh -o I:Y:Z: --long ignore-component,yr1:,yr2: $argv:q`)
+if ($? != 0) then 
+	echo "Command line parse error 1" >/dev/stderr
+	exit 1
+endif
+
+eval set argv=\($temp:q\)
+while (1)
+	switch($1:q)
+	case -I:
+	case --ignore-component:
+		set cmpt_args = ( '--ignore-component' ) ; shift 
+		breaksw;
+	case -Y:
+	case --yr1:
+		set yr1="$2:q" ; shift ; shift
+		breaksw
+	case -Z:
+	case --yr2:
+		set yr2="$2:q" ; shift ; shift
+		breaksw
+	default:
+		echo "Command line parse error 2" ; exit 1
+	endsw
+end
+# trim leading zeros
+set yr1 = `echo ${yr1} | sed 's/^0*//g'`
+set yr2 = `echo ${yr2} | sed 's/^0*//g'`
+
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then       
@@ -92,16 +134,17 @@ endif
 ## run the command
 echo 'script start'
 "${REPO_DIR}/src/mdtf.py" --frepp \
---environment_manager "GfdlVirtualenv" \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
 --OUTPUT_DIR "$out_dir" \
 --data_manager "GfdlPP" \
+--environment_manager "GfdlVirtualenv" \
 --CASENAME "$descriptor" \
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
---LASTYR $yr2
+--LASTYR $yr2 \
+$cmpt_args:q
 echo 'script exit'
 
 ## copy/link output files

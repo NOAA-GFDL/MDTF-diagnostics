@@ -63,8 +63,10 @@ class NcoNetcdfHelper(NetcdfHelper):
         if working_dir is None:
             working_dir = os.getcwd()
         ncks_time_format = '%Y-%m-%d %H:%M:%S'
+        # don't need to quote time strings in args to ncks because it's not 
+        # being called by a shell
         run_command(
-            ['ncks', '-O', '-d', "{},'{}','{}'".format(
+            ['ncks', '-O', '-d', "{},{},{}".format(
                 time_var_name, 
                 date_range.start.strftime(ncks_time_format),
                 date_range.end.strftime(ncks_time_format)

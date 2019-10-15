@@ -435,12 +435,14 @@ class GfdlppDataManager(DataManager):
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
+            print 'catting files to ',ds_var.local_resource
             self.nc_cat_chunks(chunks, ds_var.local_resource, 
                 working_dir=ds_var.nohash_tempdir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
+        print 'trimming file at ',ds_var.local_resource
         self.nc_crop_time_axis(time_var_name, self.date_range,
             ds_var.local_resource, 
             working_dir=dest_dir)

@@ -14,6 +14,7 @@ import datelabel
 import util
 from data_manager import DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
+from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 _current_module_versions = {
     'python':   'python/2.7.12',
@@ -153,6 +154,13 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 class GfdlppDataManager(DataManager):
     def __init__(self, case_dict, config={}, verbose=0):
+        # load required modules
+        modMgr = ModuleManager()
+        modMgr.load(_current_module_versions['gcp'])
+        modMgr.load(_current_module_versions['nco']) # should refactor
+
+        config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
+
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
@@ -168,11 +176,6 @@ class GfdlppDataManager(DataManager):
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
-
-        # load required modules
-        modMgr = ModuleManager()
-        modMgr.load(_current_module_versions['gcp'])
-        modMgr.load(_current_module_versions['nco'])
 
     def parse_pp_path(self, path):
         ts_regex = re.compile(r"""
@@ -432,10 +435,16 @@ class GfdlppDataManager(DataManager):
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            util.run_command(['ncrcat', '-O'] + chunks + [ds_var.local_resource], 
-                cwd=ds_var.nohash_tempdir)
-            # TODO: trim ncrcat'ed files to actual time period
-            # temp files cleaned up by data_manager.tearDown
+            self.nc_cat_chunks(chunks, ds_var.local_resource, 
+                working_dir=ds_var.nohash_tempdir)
+
+        # crop time axis to requested range
+        translate = util.VariableTranslator()
+        time_var_name = translate.fromCF(self.convention, 'time_coord')
+        self.nc_crop_time_axis(time_var_name, self.date_range,
+            ds_var.local_resource, 
+            working_dir=dest_dir)
+        # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {

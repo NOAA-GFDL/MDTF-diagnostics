@@ -666,6 +666,17 @@ def append_html_template(template_file, target_file, template_dict={},
     with open(target_file, mode) as f:
         f.write(html_str)
 
+def caselist_from_args(args):
+    d = {}
+    for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
+        'chunk_freq', 'model', 'variable_convention']:
+        if k in args:
+            d[k] = args[k]
+    for k in ['model', 'variable_convention']:
+        if k not in d:
+            d[k] = 'CMIP_GFDL'
+    return [d]
+
 def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
     """Parse script options.
 
@@ -698,14 +709,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
 
     if 'CASENAME' in cmdline_args:
         # also set up caselist with frepp data
-        default_args['case_list'] = [{
-            'CASENAME': cmdline_args['CASENAME'],
-            'model': 'CMIP_GFDL',
-            'variable_convention': 'CMIP_GFDL',
-            'FIRSTYR': cmdline_args['FIRSTYR'],
-            'LASTYR': cmdline_args['LASTYR'],
-            'root_dir': cmdline_args['CASE_ROOT_DIR']
-        }]
+        default_args['case_list'] = caselist_from_args(cmdline_args)
 
     # If we're running under frepp, overwrite with that
     # NOTE: this code path currently usued (frepp_args is always None)
@@ -716,14 +720,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
                     default_args[section][key] = frepp_args[key]
         if 'CASENAME' in frepp_args:
             # also set up caselist with frepp data
-            default_args['case_list'] = [{
-                'CASENAME': frepp_args['CASENAME'],
-                'model': 'CMIP_GFDL',
-                'variable_convention': 'CMIP_GFDL',
-                'FIRSTYR': frepp_args['FIRSTYR'],
-                'LASTYR': frepp_args['LASTYR'],
-                'root_dir': frepp_args['root_dir']
-            }]
+            default_args['case_list'] = caselist_from_args(frepp_args)
 
     # convert relative to absolute paths
     for key, val in default_args['paths'].items():

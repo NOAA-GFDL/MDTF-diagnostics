@@ -203,7 +203,7 @@ class GfdlppDataManager(DataManager):
         else:
             raise ValueError("Can't parse {}.".format(path))
 
-    def search_pp_path(self, name_in_model, date_freq, component=None):
+    def search_pp_path(self, name_in_model, date_freq, component=None, chunk_freq=None):
         """Search a /pp/ directory for files containing a variable.
 
         At GFDL, data may be archived on a slow tape filesystem, so we attempt
@@ -235,7 +235,10 @@ class GfdlppDataManager(DataManager):
             subdir_abs = os.path.join(self.root_dir, subdir_rel)
             if not os.path.exists(subdir_abs):
                 continue
-            chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            if not chunk_freq:
+                chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            else:
+                chunk_freqs = [chunk_freq]
             for freq in chunk_freqs:
                 # '-quit' means we return immediately when first file is found. 
                 # Arguments compatible with BSD (=macs) 'find'.
@@ -270,14 +273,14 @@ class GfdlppDataManager(DataManager):
         print "query for {} @ {}".format(dataset.name_in_model, 
             dataset.date_freq.format_frepp())
         dataset.remote_resource = []
+        if 'component' not in dataset:
+            dataset.component = None
+        if 'chunk_freq' not in dataset:
+            dataset.chunk_freq = None
         try:
-            if 'component' in dataset:
-                files = self.search_pp_path( \
-                    dataset.name_in_model, dataset.date_freq.format_frepp(), \
-                    dataset.component)
-            else:
-                files = self.search_pp_path( \
-                    dataset.name_in_model, dataset.date_freq.format_frepp())
+            files = self.search_pp_path( \
+                dataset.name_in_model, dataset.date_freq.format_frepp(), \
+                dataset.component, dataset.chunk_freq)
         except Exception as ex:
             raise DataQueryFailure(dataset, str(ex)) # reraise with full dataset
         files = [self.parse_pp_path(f) for f in files]

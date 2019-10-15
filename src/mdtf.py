@@ -114,6 +114,13 @@ def argparse_wrapper():
         nargs='?', type=int)
     parser.add_argument('--LASTYR', 
         nargs='?', type=int)
+    parser.add_argument("--ignore-component", 
+        action="store_true", # so default to False
+        help="Set flag to ignore model component passed by frepp and search entire /pp/ directory.")
+    parser.add_argument("--component", 
+        nargs='?')
+    parser.add_argument("--chunk_freq", 
+        nargs='?')       
     parser.add_argument('--config_file', 
         nargs='?', default=os.path.join(cwd, 'config.yml'),
         help="Configuration file.")

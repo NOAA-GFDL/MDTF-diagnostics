@@ -8,6 +8,7 @@ import glob
 import shlex
 import shutil
 import tempfile
+from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -451,6 +452,16 @@ def find_files(root_dir, pattern):
     # but BSD find (mac os) doesn't have that.
     prefix_length = len(os.path.normpath(root_dir)) + 1 
     return [p[prefix_length:] for p in paths]
+
+def check_executable(exec_name):
+    """Tests if <exec_name> is found on the current $PATH.
+
+    Args:
+        exec_name (:obj:`str`): Name of the executable to search for.
+
+    Returns: :obj:`bool` True/false if executable was found on $PATH.
+    """
+    return (find_executable(exec_name) is not None)
 
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.

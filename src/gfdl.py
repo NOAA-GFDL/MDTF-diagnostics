@@ -14,6 +14,7 @@ import datelabel
 import util
 from data_manager import DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
+from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 _current_module_versions = {
     'python':   'python/2.7.12',
@@ -153,6 +154,13 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 class GfdlppDataManager(DataManager):
     def __init__(self, case_dict, config={}, verbose=0):
+        # load required modules
+        modMgr = ModuleManager()
+        modMgr.load(_current_module_versions['gcp'])
+        modMgr.load(_current_module_versions['nco']) # should refactor
+
+        config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
+
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
         # for scratch work. Setting tempfile.tempdir causes all temp directories
         # returned by util.PathManager to be in that location.
@@ -168,11 +176,6 @@ class GfdlppDataManager(DataManager):
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
-
-        # load required modules
-        modMgr = ModuleManager()
-        modMgr.load(_current_module_versions['gcp'])
-        modMgr.load(_current_module_versions['nco'])
 
     def parse_pp_path(self, path):
         ts_regex = re.compile(r"""
@@ -200,7 +203,7 @@ class GfdlppDataManager(DataManager):
         else:
             raise ValueError("Can't parse {}.".format(path))
 
-    def search_pp_path(self, name_in_model, date_freq, component=None):
+    def search_pp_path(self, name_in_model, date_freq, component=None, chunk_freq=None):
         """Search a /pp/ directory for files containing a variable.
 
         At GFDL, data may be archived on a slow tape filesystem, so we attempt
@@ -232,7 +235,10 @@ class GfdlppDataManager(DataManager):
             subdir_abs = os.path.join(self.root_dir, subdir_rel)
             if not os.path.exists(subdir_abs):
                 continue
-            chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            if not chunk_freq:
+                chunk_freqs = [d for d in os.listdir(subdir_abs) if not d.startswith('.')]
+            else:
+                chunk_freqs = [chunk_freq]
             for freq in chunk_freqs:
                 # '-quit' means we return immediately when first file is found. 
                 # Arguments compatible with BSD (=macs) 'find'.
@@ -267,14 +273,14 @@ class GfdlppDataManager(DataManager):
         print "query for {} @ {}".format(dataset.name_in_model, 
             dataset.date_freq.format_frepp())
         dataset.remote_resource = []
+        if 'component' not in dataset:
+            dataset.component = None
+        if 'chunk_freq' not in dataset:
+            dataset.chunk_freq = None
         try:
-            if 'component' in dataset:
-                files = self.search_pp_path( \
-                    dataset.name_in_model, dataset.date_freq.format_frepp(), \
-                    dataset.component)
-            else:
-                files = self.search_pp_path( \
-                    dataset.name_in_model, dataset.date_freq.format_frepp())
+            files = self.search_pp_path( \
+                dataset.name_in_model, dataset.date_freq.format_frepp(), \
+                dataset.component, dataset.chunk_freq)
         except Exception as ex:
             raise DataQueryFailure(dataset, str(ex)) # reraise with full dataset
         files = [self.parse_pp_path(f) for f in files]
@@ -432,10 +438,18 @@ class GfdlppDataManager(DataManager):
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            util.run_command(['ncrcat', '-O'] + chunks + [ds_var.local_resource], 
-                cwd=ds_var.nohash_tempdir)
-            # TODO: trim ncrcat'ed files to actual time period
-            # temp files cleaned up by data_manager.tearDown
+            print 'catting files to ',ds_var.local_resource
+            self.nc_cat_chunks(chunks, ds_var.local_resource, 
+                working_dir=ds_var.nohash_tempdir)
+
+        # crop time axis to requested range
+        translate = util.VariableTranslator()
+        time_var_name = translate.fromCF(self.convention, 'time_coord')
+        print 'trimming file at ',ds_var.local_resource
+        self.nc_crop_time_axis(time_var_name, self.date_range,
+            ds_var.local_resource, 
+            working_dir=dest_dir)
+        # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {

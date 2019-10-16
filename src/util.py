@@ -669,7 +669,7 @@ def append_html_template(template_file, target_file, template_dict={},
 def caselist_from_args(args):
     d = {}
     for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-        'chunk_freq', 'model', 'variable_convention']:
+        'chunk_freq', 'data_freq', 'model', 'variable_convention']:
         if k in args:
             d[k] = args[k]
     for k in ['model', 'variable_convention']:

@@ -119,6 +119,8 @@ def argparse_wrapper():
         help="Set flag to ignore model component passed by frepp and search entire /pp/ directory.")
     parser.add_argument("--component", 
         nargs='?')
+    parser.add_argument("--data_freq", 
+        nargs='?')   
     parser.add_argument("--chunk_freq", 
         nargs='?')       
     parser.add_argument('--config_file', 

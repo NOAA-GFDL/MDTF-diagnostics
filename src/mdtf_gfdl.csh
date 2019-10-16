@@ -48,12 +48,20 @@ set WK_DIR=${TMPDIR}/wkdir
 # 	echo "${USER} doesn't have write access to ${out_dir}"
 # 	exit 1
 # endif
+
+# counts in the following depend on in_data_dir being terminated with a '/'
+set last_char=`echo "$in_data_dir" | rev | cut -c -1`
+if ( "$last_char" != "/" ) then
+    set in_data_dir="${in_data_dir}/"
+endif
 set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
-# component = 5th directory from the end
-set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
 # chunk frequency = 2nd directory from the end
 set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
-set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
+# data frequency = 3rd directory from the end
+set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
+# component = 5th directory from the end
+set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
+set cmpt_args = ( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
 
 ## parse command line arguments
 # NB analysis doesn't have getopts
@@ -106,7 +114,7 @@ else
             echo "Still can't load modules"
             exit 1
         endif
-      endif
+    endif
 endif
 
 # modules may load other modules of different versions as dependencies,
@@ -118,8 +126,7 @@ foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
         module load $mod
     endif
 end	
-echo "Loaded Environment modules:"
-( module list -t ) |& cat
+( module list -t ) |& cat # log modules being used
 
 ## clean up tmpdir
 wipetmp
@@ -176,10 +183,10 @@ if ( "$OUTPUT_HTML_DIR" == "" ) then
     echo "Complete -- Exiting"
     exit 0
 endif
-if ( ! -w "$OUTPUT_HTML_DIR" ) then
-    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-    exit 0
-endif
+# if ( ! -w "$OUTPUT_HTML_DIR" ) then
+#    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+#    exit 0
+# endif
 
 echo "Configuring data for experiments website"
 

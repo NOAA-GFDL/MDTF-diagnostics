@@ -1,4 +1,4 @@
-#!/bin/tcsh -f
+#!/usr/bin/env tcsh -f
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
@@ -157,31 +157,34 @@ echo 'script start'
 $cmpt_args:q
 echo 'script exit'
 
-## copy/link output files
+## copy/link output files, if requested
 if ( ! $?OUTPUT_HTML_DIR ) then       
 	echo "Complete -- Exiting"
 	exit 0
-else
-	if ( "$OUTPUT_HTML_DIR" == "" ) then
-		echo "Complete -- Exiting"
-		exit 0
-	else 
-		echo "Configuring data for experiments website"
-
-		set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-		set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
-		
-		if ( ! -d ${mdteamDir} ) then
-			mkdir -p "${mdteamDir}"
-			echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-			ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
-		else
-			echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-			gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
-		endif
-
-		echo "Complete -- Exiting"
-		exit 0
-  	endif
 endif
+if ( "$OUTPUT_HTML_DIR" == "" ) then
+	echo "Complete -- Exiting"
+	exit 0
+endif
+if ( -w "$OUTPUT_HTML_DIR" ) then
+	echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+	exit 0
+endif
+
+echo "Configuring data for experiments website"
+
+set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
+set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
+
+if ( ! -d ${mdteamDir} ) then
+	mkdir -p "${mdteamDir}"
+	echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+	ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+else
+	echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+	gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+endif
+
+echo "Complete -- Exiting"
+exit 0
 ## 

@@ -64,7 +64,7 @@ if ($? != 0) then
 	exit 1
 endif
 
-eval set argu=\($temp:q\)
+eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
 	switch($1:q)
 	case -I:

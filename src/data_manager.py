@@ -81,10 +81,19 @@ class DataManager(object):
         signal.signal(signal.SIGTERM, self.abortHandler)
         signal.signal(signal.SIGINT, self.abortHandler)
 
-    def iter_vars(self):
-        """Generator iterating over all variables in all pods.
+    def iter_pods(self):
+        """Generator iterating over all pods which haven't been
+        skipped due to requirement errors.
         """
         for p in self.pods:
+            if p.skipped is None:
+                yield p
+
+    def iter_vars(self):
+        """Generator iterating over all variables in all pods which haven't been
+        skipped due to requirement errors.
+        """
+        for p in self.iter_pods():
             for var in p.varlist:
                 yield var
 
@@ -102,7 +111,7 @@ class DataManager(object):
         self._setup_model_paths()
         self._set_model_env_vars()
         self._setup_html()
-        for pod in self.pods:
+        for pod in self.iter_pods():
             self._setup_pod(pod)
 
     def _setup_model_paths(self, verbose=0):
@@ -183,9 +192,7 @@ class DataManager(object):
         )
 
     def fetch_data(self, verbose=0):
-        for pod in self.pods:
-            if pod.skipped is not None:
-                continue # skip PODs that have incompatible requirements
+        for pod in self.iter_pods():
             new_varlist = []
             try:
                 for var in pod.varlist:

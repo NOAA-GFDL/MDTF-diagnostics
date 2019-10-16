@@ -39,8 +39,15 @@ set WK_DIR=${TMPDIR}/wkdir
 # End of user-configurable paramters
 # ----------------------------------------------------
 
-## parse command line arguments
-
+## parse paths and check access
+if ( ! -w "$WK_DIR" ) then
+	echo "${USER} doesn't have write access to ${WK_DIR}"
+	exit 1
+endif
+if ( ! -w "$out_dir" ) then
+	echo "${USER} doesn't have write access to ${out_dir}"
+	exit 1
+endif
 set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
@@ -48,6 +55,7 @@ set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
 set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
 
+## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
 set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argu:q`)
@@ -110,6 +118,8 @@ foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
 		module load $mod
 	endif
 end	
+echo "Loaded Environment modules:"
+( module list -t ) |& cat
 
 ## clean up tmpdir
 wipetmp
@@ -166,7 +176,7 @@ if ( "$OUTPUT_HTML_DIR" == "" ) then
 	echo "Complete -- Exiting"
 	exit 0
 endif
-if ( -w "$OUTPUT_HTML_DIR" ) then
+if ( ! -w "$OUTPUT_HTML_DIR" ) then
 	echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
 	exit 0
 endif

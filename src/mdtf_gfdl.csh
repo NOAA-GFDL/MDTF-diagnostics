@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/usr/bin/env tcsh -f
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
@@ -50,7 +50,7 @@ set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
 
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s csh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argv:q`)
+set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argv:q`)
 if ($? != 0) then 
 	echo "Command line parse error 1" >/dev/stderr
 	exit 1
@@ -92,7 +92,7 @@ else
 		echo "\$MODULESHOME is empty"
 		exit 1
 	else 
-		source $MODULESHOME/init/csh
+		source $MODULESHOME/init/tcsh
 		# should probably 'module purge'
 		if ( `where module` == "" ) then
 			echo "Still can't load modules"
@@ -101,8 +101,15 @@ else
   	endif
 endif
 
-set mods="python/2.7.12 gcp/2.3 perlbrew"
-module load $mods	
+# modules may load other modules of different versions as dependencies,
+# so if any version of a version-unspecified module is already loaded skip it
+foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
+	# () needed for csh quoting, also remember `module` only writes to stderr
+	( module list -t ) |& grep -qiF "$mod"
+	if ( $status != 0 ) then
+		module load $mod
+	endif
+end	
 
 ## clean up tmpdir
 wipetmp
@@ -150,31 +157,34 @@ echo 'script start'
 $cmpt_args:q
 echo 'script exit'
 
-## copy/link output files
+## copy/link output files, if requested
 if ( ! $?OUTPUT_HTML_DIR ) then       
 	echo "Complete -- Exiting"
 	exit 0
-else
-	if ( "$OUTPUT_HTML_DIR" == "" ) then
-		echo "Complete -- Exiting"
-		exit 0
-	else 
-		echo "Configuring data for experiments website"
-
-		set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-		set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
-		
-		if ( ! -d ${mdteamDir} ) then
-			mkdir -p "${mdteamDir}"
-			echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-			ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
-		else
-			echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-			gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
-		endif
-
-		echo "Complete -- Exiting"
-		exit 0
-  	endif
 endif
+if ( "$OUTPUT_HTML_DIR" == "" ) then
+	echo "Complete -- Exiting"
+	exit 0
+endif
+if ( -w "$OUTPUT_HTML_DIR" ) then
+	echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+	exit 0
+endif
+
+echo "Configuring data for experiments website"
+
+set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
+set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
+
+if ( ! -d ${mdteamDir} ) then
+	mkdir -p "${mdteamDir}"
+	echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+	ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+else
+	echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+	gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+endif
+
+echo "Complete -- Exiting"
+exit 0
 ## 

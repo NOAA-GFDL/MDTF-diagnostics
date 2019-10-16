@@ -17,6 +17,20 @@ class TestDate(unittest.TestCase):
         self.assertEqual(dt(datetime.datetime(2019,5,1), 2), dt(2019, 5))
         self.assertEqual(dt(datetime.datetime(2019,5,18), 2), dt(2019, 5))
 
+    def test_init_epoch(self):
+        # Make sure we're not doing platform-dependent stuff that breaks
+        # outside of 1970-2038
+        self.assertEqual(dt(1850), datetime.datetime(1850,1,1))
+        self.assertEqual(dt(1850).precision, 1)
+        self.assertEqual(dt(2112,9,18), datetime.datetime(2112,9,18))
+        self.assertEqual(dt(2112,9,18).precision, 3)
+        self.assertEqual(dt(datetime.datetime(1850,1,1), 1), dt(1850))
+        self.assertEqual(dt(datetime.datetime(1850,5,1), 2), dt(1850, 5))
+        self.assertEqual(dt(datetime.datetime(1850,5,18), 2), dt(1850, 5))
+        self.assertEqual(dt(datetime.datetime(2112,1,1), 1), dt(2112))
+        self.assertEqual(dt(datetime.datetime(2112,5,1), 2), dt(2112, 5))
+        self.assertEqual(dt(datetime.datetime(2112,5,18), 2), dt(2112, 5))
+
     def test_string_parsing(self):
         self.assertEqual(dt('2019'), datetime.datetime(2019,1,1))
         self.assertEqual(dt('2019').precision, 1)

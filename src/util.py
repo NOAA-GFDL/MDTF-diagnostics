@@ -675,6 +675,8 @@ def caselist_from_args(args):
     for k in ['model', 'variable_convention']:
         if k not in d:
             d[k] = 'CMIP_GFDL'
+    if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
+        d['root_dir'] = args['CASE_ROOT_DIR']
     return [d]
 
 def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):

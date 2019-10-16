@@ -21,11 +21,12 @@ class Date(datetime.datetime):
     # define __new__, not __init__, because datetime is immutable
     def __new__(cls, *args, **kwargs):
         if len(args) == 2 and isinstance(args[0], datetime.datetime):
-            # new obj from coercing a datetime. A bit hacky, but need to copy
-            # the input datetime using one of its class methods.
-            timestamp = time.mktime(args[0].timetuple())
-            obj = super(Date, cls).fromtimestamp(timestamp)
+            # new obj from coercing a datetime. A bit hacky, but no other 
+            # portable way to copy the input datetime using one of its class 
+            # methods in py2.7.
             precision = args[1]
+            args = (args[0].year, args[0].month, args[0].day, args[0].hour,
+                args[0].minute, args[0].second, args[0].microsecond)
         else:
             if len(args) == 1 and type(args[0]) is str:
                 args = cls._parse_input_string(args[0])
@@ -34,7 +35,7 @@ class Date(datetime.datetime):
                 args = (args[0], 1, 1) # missing month & day
             elif precision == 2:
                 args = (args[0], args[1], 1) # missing day
-            obj = super(Date, cls).__new__(cls, *args, **kwargs) 
+        obj = super(Date, cls).__new__(cls, *args, **kwargs) 
         obj.precision = precision
         return obj
 

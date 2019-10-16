@@ -54,6 +54,10 @@ class DataManager(object):
             self.pod_list = config['pod_list'] # use global list of PODs  
         else:
             self.pod_list = [] # should raise warning    
+        if 'data_freq' in case_dict:
+            self.data_freq = datelabel.DateFrequency(case_dict['data_freq'])
+        else:
+            self.data_freq = None
         self.pods = []
 
         paths = util.PathManager()
@@ -151,6 +155,17 @@ class DataManager(object):
             var.date_range = self.date_range
             var.local_resource = self.local_path(var)
 
+        if self.data_freq is not None:
+            for var in pod.iter_vars_and_alts():
+                if var.date_freq != self.data_freq:
+                    pod.skipped = PodRequirementFailure(pod,
+                        """{} requests {} (= {}) at {} frequency, which isn't compatible
+                        with case {} providing data at {} frequency only.""".format(
+                        pod.name, var.name_in_model, var.name, var.date_freq,
+                        self.name, self.data_freq
+                    ))
+                    break
+
     # -------------------------------------
 
     def local_path(self, dataset):
@@ -169,6 +184,8 @@ class DataManager(object):
 
     def fetch_data(self, verbose=0):
         for pod in self.pods:
+            if pod.skipped is not None:
+                continue # skip PODs that have incompatible requirements
             new_varlist = []
             try:
                 for var in pod.varlist:

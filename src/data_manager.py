@@ -162,7 +162,7 @@ class DataManager(object):
                         """{} requests {} (= {}) at {} frequency, which isn't compatible
                         with case {} providing data at {} frequency only.""".format(
                         pod.name, var.name_in_model, var.name, var.date_freq,
-                        self.name, self.data_freq
+                        self.case_name, self.data_freq
                     ))
                     break
 

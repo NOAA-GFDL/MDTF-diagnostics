@@ -40,14 +40,14 @@ set WK_DIR=${TMPDIR}/wkdir
 # ----------------------------------------------------
 
 ## parse paths and check access
-if ( ! -w "$WK_DIR" ) then
-	echo "${USER} doesn't have write access to ${WK_DIR}"
-	exit 1
-endif
-if ( ! -w "$out_dir" ) then
-	echo "${USER} doesn't have write access to ${out_dir}"
-	exit 1
-endif
+# if ( ! -w "$WK_DIR" ) then
+# 	echo "${USER} doesn't have write access to ${WK_DIR}"
+#	exit 1
+# endif
+# if ( ! -w "$out_dir" ) then
+# 	echo "${USER} doesn't have write access to ${out_dir}"
+# 	exit 1
+# endif
 set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
@@ -60,31 +60,31 @@ set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
 set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
-	echo "Command line parse error 1" >/dev/stderr
-	exit 1
+    echo "Command line parse error 1" >/dev/stderr
+    exit 1
 endif
 
 eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
-	switch($1:q)
-	case -I:
-	case --ignore-component:
-		set cmpt_args = ( '--ignore-component' ) ; shift 
-		breaksw;
-	case -Y:
-	case --yr1:
-		set yr1="$2:q" ; shift ; shift
-		breaksw
-	case -Z:
-	case --yr2:
-		set yr2="$2:q" ; shift ; shift
-		breaksw
-	case --:
-		shift
-		break
-	default:
-		echo "Command line parse error 2" ; exit 1
-	endsw
+    switch($1:q)
+    case -I:
+    case --ignore-component:
+        set cmpt_args = ( '--ignore-component' ) ; shift 
+        breaksw;
+    case -Y:
+    case --yr1:
+        set yr1="$2:q" ; shift ; shift
+        breaksw
+    case -Z:
+    case --yr2:
+        set yr2="$2:q" ; shift ; shift
+        breaksw
+    case --:
+        shift
+        break
+    default:
+        echo "Command line parse error 2" ; exit 1
+    endsw
 end
 # trim leading zeros
 set yr1 = `echo ${yr1} | sed 's/^0*//g'`
@@ -93,33 +93,32 @@ set yr2 = `echo ${yr2} | sed 's/^0*//g'`
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then       
-	echo "\$MODULESHOME is undefined"
-	exit 1
+    echo "\$MODULESHOME is undefined"
+    exit 1
 else
-	if ( "$MODULESHOME" == "" )  then
-		echo "\$MODULESHOME is empty"
-		exit 1
-	else 
-		source $MODULESHOME/init/tcsh
-		# should probably 'module purge'
-		if ( `where module` == "" ) then
-			echo "Still can't load modules"
-			exit 1
-		endif
-  	endif
+    if ( "$MODULESHOME" == "" )  then
+        echo "\$MODULESHOME is empty"
+        exit 1
+    else 
+        source $MODULESHOME/init/tcsh
+        # should probably 'module purge'
+        if ( `where module` == "" ) then
+            echo "Still can't load modules"
+            exit 1
+        endif
+    endif
 endif
 
 # modules may load other modules of different versions as dependencies,
 # so if any version of a version-unspecified module is already loaded skip it
 foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
-	# () needed for csh quoting, also remember `module` only writes to stderr
-	( module list -t ) |& grep -qiF "$mod"
-	if ( $status != 0 ) then
-		module load $mod
-	endif
+    # () needed for csh quoting, also remember `module` only writes to stderr
+    ( module list -t ) |& grep -qiF "$mod"
+    if ( $status != 0 ) then
+        module load $mod
+    endif
 end	
-echo "Loaded Environment modules:"
-( module list -t ) |& cat
+( module list -t ) |& cat # log modules being used
 
 ## clean up tmpdir
 wipetmp
@@ -133,22 +132,22 @@ gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
 ## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
 if ( $status != 0 ) then
-	echo 'Installing required modules'
-	mkdir -p "${REPO_DIR}/envs/venv"
-	python -m pip install --user virtualenv
-	python -m virtualenv "${REPO_DIR}/envs/venv/base"
-	source "${REPO_DIR}/envs/venv/base/bin/activate"
-	# pip --user redundant/not valid in a virtualenv
-	pip install --disable-pip-version-check subprocess32 pyyaml
+    echo 'Installing required modules'
+    mkdir -p "${REPO_DIR}/envs/venv"
+    python -m pip install --user virtualenv
+    python -m virtualenv "${REPO_DIR}/envs/venv/base"
+    source "${REPO_DIR}/envs/venv/base/bin/activate"
+    # pip --user redundant/not valid in a virtualenv
+    pip install --disable-pip-version-check subprocess32 pyyaml
 else
-	echo 'Found required modules'
+    echo 'Found required modules'
 endif
 
 ## Clean output subdirectory
 set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
 if ( -d "${out_dir}/${mdtf_dir}" ) then
-	echo "${out_dir}/${mdtf_dir} already exists; deleting"
-	rm -rf "${out_dir}/${mdtf_dir}"
+    echo "${out_dir}/${mdtf_dir} already exists; deleting"
+    rm -rf "${out_dir}/${mdtf_dir}"
 endif
 
 ## run the command
@@ -169,16 +168,16 @@ echo 'script exit'
 
 ## copy/link output files, if requested
 if ( ! $?OUTPUT_HTML_DIR ) then       
-	echo "Complete -- Exiting"
-	exit 0
+    echo "Complete -- Exiting"
+    exit 0
 endif
 if ( "$OUTPUT_HTML_DIR" == "" ) then
-	echo "Complete -- Exiting"
-	exit 0
+    echo "Complete -- Exiting"
+    exit 0
 endif
 if ( ! -w "$OUTPUT_HTML_DIR" ) then
-	echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-	exit 0
+    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+    exit 0
 endif
 
 echo "Configuring data for experiments website"
@@ -187,12 +186,12 @@ set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}'
 set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
 
 if ( ! -d ${mdteamDir} ) then
-	mkdir -p "${mdteamDir}"
-	echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-	ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    mkdir -p "${mdteamDir}"
+    echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+    ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
 else
-	echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-	gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+    echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+    gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
 endif
 
 echo "Complete -- Exiting"

@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/bin/tcsh -f
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
@@ -50,7 +50,7 @@ set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
 
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s csh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argv:q`)
+set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argv:q`)
 if ($? != 0) then 
 	echo "Command line parse error 1" >/dev/stderr
 	exit 1
@@ -92,7 +92,7 @@ else
 		echo "\$MODULESHOME is empty"
 		exit 1
 	else 
-		source $MODULESHOME/init/csh
+		source $MODULESHOME/init/tcsh
 		# should probably 'module purge'
 		if ( `where module` == "" ) then
 			echo "Still can't load modules"

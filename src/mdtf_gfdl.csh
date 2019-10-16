@@ -50,13 +50,13 @@ set cmpt_args = ( '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
 
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argv:q`)
+set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
 	echo "Command line parse error 1" >/dev/stderr
 	exit 1
 endif
 
-eval set argv=\($temp:q\)
+eval set argu=\($temp:q\)
 while (1)
 	switch($1:q)
 	case -I:

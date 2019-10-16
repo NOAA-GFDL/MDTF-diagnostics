@@ -1,4 +1,4 @@
-#!/usr/bin/env tcsh -f
+#!/bin/tcsh -f
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1

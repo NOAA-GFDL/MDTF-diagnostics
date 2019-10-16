@@ -101,8 +101,15 @@ else
   	endif
 endif
 
-set mods="python/2.7.12 gcp/2.3 perlbrew"
-module load $mods	
+# modules may load other modules of different versions as dependencies,
+# so if any version of a version-unspecified module is already loaded skip it
+foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
+	# () needed for csh quoting, also remember `module` only writes to stderr
+	( module list -t ) |& grep -qiF "$mod"
+	if ( $status != 0 ) then
+		module load $mod
+	endif
+end	
 
 ## clean up tmpdir
 wipetmp

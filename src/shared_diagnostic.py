@@ -417,7 +417,7 @@ class Diagnostic(object):
             os.remove(html_file)
         shutil.copy2(os.path.join(self.POD_CODE_DIR, self.name+'.html'), self.POD_WK_DIR)
         os.system("cat "+ html_file \
-            + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
+            + r" | sed -e s/casename/" + os.environ["CASENAME"] + r"/g > " \
             + temp_file)
         # following two substitutions are specific to convective_transition_diag
         # need to find a more elegant way to handle this
@@ -426,11 +426,11 @@ class Diagnostic(object):
             if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
                 and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
                 os.system("cat " + temp_file \
-                    + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
+                    + r" | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
                 shutil.move(temp_file2, temp_file)
             if ("RES" in os.environ) and os.environ["RES"] != "1.00":
                 os.system("cat " + temp_file \
-                    + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
+                    + r" | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + r"_/g > " \
                     + temp_file2)
                 shutil.move(temp_file2, temp_file)
         shutil.copy2(temp_file, html_file) 

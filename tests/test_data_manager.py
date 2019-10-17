@@ -10,6 +10,7 @@ from src.data_manager import DataManager
 @mock.patch('src.data_manager.atexit.register')
 @mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):
+    # pylint: disable=abstract-class-instantiated
     @mock.patch('src.util.read_yaml', 
         return_value = {
             'convention_name':'not_CF',
@@ -17,8 +18,8 @@ class TestDataManagerSetup(unittest.TestCase):
             })
     def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator(unittest_flag = True)
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
@@ -121,8 +122,8 @@ class TestDataManagerFetchData(unittest.TestCase):
             })
     def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator(unittest_flag = True)
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 

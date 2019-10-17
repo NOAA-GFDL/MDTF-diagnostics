@@ -246,6 +246,7 @@ class TestVariableTranslatorReadFiles(unittest.TestCase):
         temp._reset()
 
 class TestPathManager(unittest.TestCase):
+    # pylint: disable=maybe-no-member
     @mock.patch('src.util.read_yaml', 
         return_value = {
             'convention_name':'not_CF',
@@ -276,6 +277,7 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(paths.OUTPUT_DIR, 'E')
 
     def test_pathmgr_global_asserterror(self):
+
         d = {
             'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
             'WORKING_DIR':'D', 'OUTPUT_DIR':'E'

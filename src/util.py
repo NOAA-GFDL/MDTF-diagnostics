@@ -609,7 +609,7 @@ def check_required_envvar(*varlist):
     for n in range(len(varlist)):
         if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
         try:
-            test = os.environ[varlist[n]]
+            _ = os.environ[varlist[n]]
         except:
             print "ERROR: Required environment variable ",varlist[n]," not found "
             print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
@@ -636,7 +636,6 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
                     print errstr+dir_in+" = "+dir+" directory does not exist"
                     #print "         and not create_if_nec list: "+create_if_nec
                 raise OSError(dir+" directory does not exist")
-                exit()
             else:
                 print(dir_in+" = "+dir+" created")
                 os.makedirs(dir)

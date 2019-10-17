@@ -18,8 +18,8 @@ class TestDataManagerSetup(unittest.TestCase):
             })
     def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator(unittest_flag = True)
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
@@ -122,8 +122,8 @@ class TestDataManagerFetchData(unittest.TestCase):
             })
     def setUp(self, mock_read_yaml):
         # set up translation dictionary without calls to filesystem
-        temp = util.VariableTranslator(unittest_flag = True)
-        temp = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.PathManager(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 

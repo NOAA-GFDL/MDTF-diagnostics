@@ -136,7 +136,8 @@ class DataManager(object):
         # overridden when POD sets its variables.
         assert self.convention in translate.field_dict, \
             "Variable name translation doesn't recognize {}.".format(self.convention)
-        for key, val in translate.field_dict[self.convention].items():
+        temp = translate.field_dict[self.convention].to_dict()
+        for key, val in temp.items():
             util.setenv(key, val, self.envvars, verbose=verbose)
 
     def _setup_html(self):

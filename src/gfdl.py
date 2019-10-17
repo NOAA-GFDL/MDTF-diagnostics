@@ -193,7 +193,7 @@ class GfdlppDataManager(DataManager):
         if match:
             assert match.group('component') == match.group('component2')
             ds = util.DataSet(**(match.groupdict()))
-            ds.remote_resource = os.path.join(self.root_dir, path)
+            ds._remote_data = os.path.join(self.root_dir, path)
             (ds.dir, ds.file) = os.path.split(path)
             del ds.component2
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
@@ -262,7 +262,7 @@ class GfdlppDataManager(DataManager):
         return files
 
     def query_dataset(self, dataset):
-        """Populate remote_resource attribute with list of candidate files.
+        """Populate _remote_data attribute with list of candidate files.
 
         Specifically, if a <component> and <chunk_freq> subdirectory has all the
         requested data, return paths to all files we *would* need in that 
@@ -272,7 +272,7 @@ class GfdlppDataManager(DataManager):
         """
         print "query for {} @ {}".format(dataset.name_in_model, 
             dataset.date_freq.format_frepp())
-        dataset.remote_resource = []
+        dataset._remote_data = []
         if 'component' not in dataset:
             dataset.component = None
         if 'chunk_freq' not in dataset:
@@ -295,11 +295,11 @@ class GfdlppDataManager(DataManager):
                 # is noncontiguous; should probably log an error
                 continue
             if remote_range.contains(dataset.date_range):
-                dataset.remote_resource.extend(
+                dataset._remote_data.extend(
                     [f for f in files \
                     if (f.dir == d and f.date_range in dataset.date_range)]
                 )
-        if not dataset.remote_resource:
+        if not dataset._remote_data:
             raise DataQueryFailure(dataset, 
                 "Couldn't cover date range {} with files in {}".format(
                     dataset.date_range, self.root_dir))
@@ -311,14 +311,14 @@ class GfdlppDataManager(DataManager):
         print "Components selected: ", cmpts
         for var in self.iter_vars():
             cmpt = self._heuristic_component_tiebreaker( \
-                {f.component for f in var.remote_resource if (f.component in cmpts)} \
+                {f.component for f in var._remote_data if (f.component in cmpts)} \
             )
             # take shortest chunk frequency (revisit?)
             chunk_freq = min(f.chunk_freq \
-                for f in var.remote_resource if (f.component == cmpt))
-            var.remote_resource = [f for f in var.remote_resource \
+                for f in var._remote_data if (f.component == cmpt))
+            var._remote_data = [f for f in var._remote_data \
                 if (f.chunk_freq == chunk_freq and f.component == cmpt)]
-            assert var.remote_resource # shouldn't have eliminated everything
+            assert var._remote_data # shouldn't have eliminated everything
         # don't return files, instead fetch_dataset iterates through vars
         return None
         # return super(GfdlppDataManager, self).plan_data_fetching()
@@ -374,7 +374,7 @@ class GfdlppDataManager(DataManager):
         all_idx = set()
         d = defaultdict(set)
         for idx, ds in enumerate(datasets):
-            for ds_file in ds.remote_resource:
+            for ds_file in ds._remote_data:
                 d[ds_file.component].add(idx)
             all_idx.add(idx)
         assert set(e for s in d.values() for e in s) == all_idx
@@ -405,49 +405,49 @@ class GfdlppDataManager(DataManager):
         - gcp --sync does this already.
         """
         return False
-        # return os.path.getmtime(dataset.local_resource) \
-        #     >= os.path.getmtime(dataset.remote_resource)
+        # return os.path.getmtime(dataset._local_data) \
+        #     >= os.path.getmtime(dataset._remote_data)
 
     def fetch_dataset(self, ds_var, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """
         (cp_command, smartsite) = self._determine_fetch_method(method)
-        if len(ds_var.remote_resource) == 1:
+        if len(ds_var._remote_data) == 1:
             # one chunk, no need to ncrcat
-            for f in ds_var.remote_resource:
+            for f in ds_var._remote_data:
                 util.run_command( \
                     cp_command + [
-                        smartsite + os.path.join(self.root_dir, f.remote_resource), 
-                        ds_var.local_resource
+                        smartsite + os.path.join(self.root_dir, f._remote_data), 
+                        ds_var._local_data
                 ])
         else:
             paths = util.PathManager()
-            ds_var.nohash_tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
+            ds_var._tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
-            for f in ds_var.remote_resource:
-                print "copying {} to {}".format(f.remote_resource, ds_var.nohash_tempdir)
+            for f in ds_var._remote_data:
+                print "copying {} to {}".format(f._remote_data, ds_var._tempdir)
                 util.run_command(cp_command + [
-                    smartsite + os.path.join(self.root_dir, f.remote_resource), 
+                    smartsite + os.path.join(self.root_dir, f._remote_data), 
                     # gcp requires trailing slash, ln ignores it
-                    smartsite + ds_var.nohash_tempdir + os.sep
+                    smartsite + ds_var._tempdir + os.sep
                 ]) 
                 chunks.append(f.file)
             # ncrcat will error instead of creating destination directories
-            dest_dir, _ = os.path.split(ds_var.local_resource)
+            dest_dir, _ = os.path.split(ds_var._local_data)
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            print 'catting files to ',ds_var.local_resource
-            self.nc_cat_chunks(chunks, ds_var.local_resource, 
-                working_dir=ds_var.nohash_tempdir)
+            print 'catting files to ',ds_var._local_data
+            self.nc_cat_chunks(chunks, ds_var._local_data, 
+                working_dir=ds_var._tempdir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
-        print 'trimming file at ',ds_var.local_resource
+        print 'trimming file at ',ds_var._local_data
         self.nc_crop_time_axis(time_var_name, self.date_range,
-            ds_var.local_resource, 
+            ds_var._local_data, 
             working_dir=dest_dir)
         # temp files cleaned up by data_manager.tearDown
 

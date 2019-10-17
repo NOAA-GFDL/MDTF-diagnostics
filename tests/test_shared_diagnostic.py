@@ -166,7 +166,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         temp = util.PathManager(unittest_flag = True)
         temp._reset()
 
-    def _populate_pod_local_resource(self, pod):
+    def _populate_pod__local_data(self, pod):
         # reproduce logic in DataManager._setup_pod rather than invoke it here
         paths = util.PathManager(unittest_flag = True)
         translate = util.VariableTranslator(unittest_flag = True)
@@ -174,7 +174,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF('not_CF', var.CF_name)
             freq = var.date_freq.format_local()
-            var.local_resource = os.path.join(
+            var._local_data = os.path.join(
                 paths.MODEL_DATA_ROOT, case_name, freq,
                 "{}.{}.{}.nc".format(
                     case_name, var.name_in_model, freq)
@@ -188,7 +188,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     def test_check_for_varlist_files_found(self, mock_isfile, mock_read_yaml):
         # case file is found
         pod = Diagnostic('A') 
-        self._populate_pod_local_resource(pod)
+        self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
         self.assertEqual(missing, [])
@@ -201,7 +201,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     def test_check_for_varlist_files_not_found(self, mock_isfile, mock_read_yaml):
         # case file is required and not found
         pod = Diagnostic('A') 
-        self._populate_pod_local_resource(pod)
+        self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, [])
         self.assertEqual(missing, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
@@ -214,7 +214,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     def test_check_for_varlist_files_optional(self, mock_isfile, mock_read_yaml):
         # case file is optional and not found
         pod = Diagnostic('A') 
-        self._populate_pod_local_resource(pod)
+        self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, [])
         self.assertEqual(missing, [])
@@ -228,7 +228,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     def test_check_for_varlist_files_alternate(self, mock_isfile, mock_read_yaml):
         # case alternate variable is specified and found
         pod = Diagnostic('A') 
-        self._populate_pod_local_resource(pod)
+        self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         # name_in_model translation now done in DataManager._setup_pod
         self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])

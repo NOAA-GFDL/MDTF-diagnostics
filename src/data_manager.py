@@ -98,10 +98,10 @@ class DataManager(object):
                 yield var
 
     def iter_remotes(self):
-        """Generator iterating over remote_resource attributes of pods' variables.
+        """Generator iterating over _remote_data attributes of pods' variables.
         """
         for var in self.iter_vars():
-            for file_ in var.remote_resource:
+            for file_ in var._remote_data:
                 yield file_
 
 
@@ -163,7 +163,7 @@ class DataManager(object):
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
-            var.local_resource = self.local_path(var)
+            var._local_data = self.local_path(var)
 
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
@@ -175,8 +175,6 @@ class DataManager(object):
                         self.case_name, self.data_freq
                     ))
                     break
-
-    # -------------------------------------
 
     def local_path(self, dataset):
         """Returns the absolute path of the local copy of the file for dataset.
@@ -191,6 +189,8 @@ class DataManager(object):
             "{}.{}.{}.nc".format(
                 self.case_name, dataset.name_in_model, freq)
         )
+    
+    # -------------------------------------
 
     def fetch_data(self, verbose=0):
         for pod in self.iter_pods():
@@ -224,7 +224,7 @@ class DataManager(object):
         Note: 
             This has a different interface than 
             :meth:`~data_manager.DataManager.query_dataset`. That method returns
-            nothing but populates the remote_resource attribute of its argument.
+            nothing but populates the _remote_data attribute of its argument.
             This method returns a list of :obj:`~util.DataSet`s.
 
         Args:
@@ -262,7 +262,7 @@ class DataManager(object):
         Returns: collection of :class:`~util.DataSet`
             objects.
         """
-        # remove duplicates from list of all remote_resources
+        # remove duplicates from list of all _remote_datas
         unique_data = set(self.iter_remotes())
         # filter out any data we've previously fetched that's up to date
         return [d for d in unique_data if not self.local_data_is_current(d)]
@@ -360,7 +360,7 @@ class LocalfileDataManager(DataManager):
     def query_dataset(self, dataset):
         path = self.local_path(dataset)
         if os.path.isfile(path):
-            dataset.remote_resource = path
+            dataset._remote_data = path
         else:
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
@@ -368,7 +368,7 @@ class LocalfileDataManager(DataManager):
         return True 
 
     def fetch_dataset(self, dataset):
-        dataset.local_resource = dataset.remote_resource
+        dataset._local_data = dataset._remote_data
 
     def process_fetched_data(self):
         pass

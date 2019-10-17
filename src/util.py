@@ -355,7 +355,7 @@ class DataSet(Namespace):
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
         for key in ['name', 'units', 'date_range', 'date_freq', 
-            'remote_resource', 'local_resource']:
+            '_remote_data', '_local_data']:
             if key not in self:
                 self[key] = None
 
@@ -375,12 +375,12 @@ class DataSet(Namespace):
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
-        Exclude attributes starting with 'nohash_' from the comparison, in case 
+        Exclude attributes starting with '_' from the comparison, in case 
         we want DataSets with different timestamps, temporary directories, etc.
         to compare as equal.
         """
         d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
+        keys_to_hash = [k for k in d.keys() if not k.startswith('_')]
         return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
 
     def tempdir(self):

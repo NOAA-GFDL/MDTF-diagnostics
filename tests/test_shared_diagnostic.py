@@ -6,6 +6,7 @@ import src.util as util
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
 
 class TestDiagnosticInit(unittest.TestCase):
+    # pylint: disable=maybe-no-member
     @mock.patch('src.util.read_yaml', 
         return_value = {
             'convention_name':'not_CF',
@@ -75,6 +76,7 @@ class TestDiagnosticInit(unittest.TestCase):
     'settings':{}, 'varlist':[]
     })
 class TestDiagnosticSetUp(unittest.TestCase):
+    # pylint: disable=maybe-no-member
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
@@ -149,6 +151,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         self.assertRaises(PodRequirementFailure, pod._check_pod_driver)
 
 class TestDiagnosticCheckVarlist(unittest.TestCase):
+    # pylint: disable=maybe-no-member
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
@@ -235,6 +238,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         self.assertEqual(missing, [])
 
 class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
+    # pylint: disable=maybe-no-member
     @mock.patch('src.util.read_yaml', 
         return_value = {'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})

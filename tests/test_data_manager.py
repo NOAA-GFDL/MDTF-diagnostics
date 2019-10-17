@@ -10,6 +10,7 @@ from src.data_manager import DataManager
 @mock.patch('src.data_manager.atexit.register')
 @mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):
+    # pylint: disable=abstract-class-instantiated
     @mock.patch('src.util.read_yaml', 
         return_value = {
             'convention_name':'not_CF',

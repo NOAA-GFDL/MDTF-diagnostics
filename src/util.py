@@ -47,6 +47,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
         :class:`~util.Singleton` correctly, instead of getting the state set 
         during previous tests.
         """
+        # pylint: disable=maybe-no-member
         if cls in cls._instances:
             del cls._instances[cls]
 
@@ -72,6 +73,7 @@ class PathManager(Singleton):
         self._temp_dirs = []
 
     def modelPaths(self, case):
+        # pylint: disable=maybe-no-member
         d = {}
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
@@ -80,6 +82,7 @@ class PathManager(Singleton):
         return d
 
     def podPaths(self, pod):
+        # pylint: disable=maybe-no-member
         d = {}
         d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
@@ -139,6 +142,7 @@ class BiDict(dict):
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
+        # pylint: disable=maybe-no-member
         if unittest_flag:
             # value not used, when we're testing will mock out call to read_yaml
             # below with actual translation table to use for test
@@ -721,6 +725,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
     return default_args
 
 def set_mdtf_env_vars(config, verbose=0):
+    # pylint: disable=maybe-no-member
     paths = PathManager()
     check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 

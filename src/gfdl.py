@@ -454,6 +454,7 @@ class GfdlppDataManager(DataManager):
         pass
 
     def _copy_to_output(self):
+        # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:

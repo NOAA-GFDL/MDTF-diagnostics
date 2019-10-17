@@ -86,12 +86,14 @@ class DataManager(object):
             self._setup_pod(pod)
 
     def _setup_model_paths(self, verbose=0):
+        # pylint: disable=maybe-no-member
         util.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
 
     def _set_model_env_vars(self, verbose=0):
+        # pylint: disable=maybe-no-member
         self.envvars.update({
             "DATADIR": self.MODEL_DATA_DIR,
             "variab_dir": self.MODEL_WK_DIR,
@@ -111,6 +113,7 @@ class DataManager(object):
             util.setenv(key, val, self.envvars, verbose=verbose)
 
     def _setup_html(self):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         src = os.path.join(src_dir, 'mdtf1.html')
@@ -144,6 +147,7 @@ class DataManager(object):
         `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
         Files not following this convention won't be found.
         """
+        # pylint: disable=maybe-no-member
         freq = dataset.date_freq.format_local()
         return os.path.join(
             self.MODEL_DATA_DIR, freq,
@@ -262,6 +266,7 @@ class DataManager(object):
         paths.cleanup()
 
     def _finalize_html(self):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src = os.path.join(paths.CODE_ROOT, 'src', 'html', 'mdtf2.html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
@@ -272,7 +277,9 @@ class DataManager(object):
         util.append_html_template(src, dest, template_dict)
 
     def _backup_config_file(self, config, verbose=0):
-        # Record settings in file variab_dir/config_save.yml for rerunning
+        """Record settings in file variab_dir/config_save.yml for rerunning
+        """
+        # pylint: disable=maybe-no-member
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.yml')
         if os.path.isfile(out_file):
             out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.yml.old')
@@ -282,7 +289,9 @@ class DataManager(object):
         util.write_yaml(config, out_file)
 
     def _make_tar_file(self):
-        # Make tar file
+        """Make tar file
+        """
+        # pylint: disable=maybe-no-member
         if os.environ["make_variab_tar"] == "0":
             print "Not making tar file because make_variab_tar = 0"
             return
@@ -300,6 +309,7 @@ class DataManager(object):
         )
 
     def _copy_to_output(self):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
             print "copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)

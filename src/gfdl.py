@@ -86,7 +86,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # GFDL workstations and PP/AN cluster.
 
     def __init__(self, config, verbose=0):
-        modMgr = ModuleManager()
+        _ = ModuleManager()
         super(GfdlvirtualenvEnvironmentManager, self).__init__(config, verbose)
 
     # manual-coded logic like this is not scalable
@@ -468,6 +468,7 @@ class GfdlppDataManager(DataManager):
         pass
 
     def _copy_to_output(self):
+        # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:

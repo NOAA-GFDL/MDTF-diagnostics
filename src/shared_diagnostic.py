@@ -50,6 +50,7 @@ class Diagnostic(object):
             pod_name (:obj:`str`): Name of the POD to initialize.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
 
         self.name = pod_name
@@ -124,6 +125,7 @@ class Diagnostic(object):
         Returns:
             varlist
         """
+        # pylint: disable=maybe-no-member
         default_file_required = True 
         for idx, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
@@ -211,6 +213,7 @@ class Diagnostic(object):
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
+        # pylint: disable=maybe-no-member
         self.pod_env_vars.update({
             "POD_HOME": self.POD_CODE_DIR, # location of POD's code
             "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
@@ -232,6 +235,7 @@ class Diagnostic(object):
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
+        # pylint: disable=maybe-no-member
         util.check_required_dirs(
             already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
             create_if_nec = [self.POD_WK_DIR], 
@@ -250,6 +254,7 @@ class Diagnostic(object):
         Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if driver script
             can't be found.
         """
+        # pylint: disable=maybe-no-member
         func_name = "check_pod_driver "
         if (verbose > 1):  print func_name," received POD settings: ", self.__dict__
         programs = util.get_available_programs()
@@ -363,6 +368,7 @@ class Diagnostic(object):
             (:obj:`list` of :obj:`str`): Command-line invocation to validate 
                 the POD's runtime environment.
         """
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [
@@ -407,6 +413,7 @@ class Diagnostic(object):
     def _make_pod_html(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
         """
+        # pylint: disable=maybe-no-member
         html_file = os.path.join(self.POD_WK_DIR, self.name+'.html')
         temp_file = os.path.join(self.POD_WK_DIR, 'tmp.html')
 
@@ -414,7 +421,7 @@ class Diagnostic(object):
             os.remove(html_file)
         shutil.copy2(os.path.join(self.POD_CODE_DIR, self.name+'.html'), self.POD_WK_DIR)
         os.system("cat "+ html_file \
-            + " | sed -e s/casename/" + os.environ["CASENAME"] + "/g > " \
+            + r" | sed -e s/casename/" + os.environ["CASENAME"] + r"/g > " \
             + temp_file)
         # following two substitutions are specific to convective_transition_diag
         # need to find a more elegant way to handle this
@@ -423,11 +430,11 @@ class Diagnostic(object):
             if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
                 and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
                 os.system("cat " + temp_file \
-                    + " | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
+                    + r" | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
                 shutil.move(temp_file2, temp_file)
             if ("RES" in os.environ) and os.environ["RES"] != "1.00":
                 os.system("cat " + temp_file \
-                    + " | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + "_/g > " \
+                    + r" | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + r"_/g > " \
                     + temp_file2)
                 shutil.move(temp_file2, temp_file)
         shutil.copy2(temp_file, html_file) 
@@ -437,6 +444,7 @@ class Diagnostic(object):
         self.append_result_link()
 
     def append_result_link(self, error=None):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
@@ -453,6 +461,7 @@ class Diagnostic(object):
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
+        # pylint: disable=maybe-no-member
         dirs = ['model/PS', 'obs/PS']
         exts = ['ps', 'eps']
         files = []
@@ -470,6 +479,7 @@ class Diagnostic(object):
     def _cleanup_pod_files(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
+        # pylint: disable=maybe-no-member
         # copy PDF documentation (if any) to output
         files = glob.glob(os.path.join(self.POD_CODE_DIR, '*.pdf'))
         for file in files:

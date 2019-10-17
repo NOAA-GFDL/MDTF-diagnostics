@@ -172,6 +172,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
     # Do not attempt management for NCL.
 
     def __init__(self, config, verbose=0):
+        # pylint: disable=maybe-no-member
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
@@ -270,6 +271,7 @@ class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
 
     def __init__(self, config, verbose=0):
+        # pylint: disable=maybe-no-member
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
         if ('conda_env_root' in config['settings']) and \
@@ -300,6 +302,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         prefix = '_MDTF-diagnostics'
         if env_name == prefix:
@@ -324,6 +327,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             print('ERROR :',e.errno,e.strerror)
 
     def create_all_environments(self):
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         command = '{}/src/conda_env_setup.sh'.format(paths.CODE_ROOT)
         try: 
@@ -344,8 +348,10 @@ class CondaEnvironmentManager(EnvironmentManager):
             pod.env = '_MDTF-diagnostics-python'
 
     def activate_env_commands(self, pod):
-        # Source conda_init.sh to set things that aren't set b/c we aren't 
-        # in an interactive shell.
+        """Source conda_init.sh to set things that aren't set b/c we aren't 
+        in an interactive shell.
+        """
+        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
         return ['source {}/src/conda_init.sh && conda activate {}'.format(

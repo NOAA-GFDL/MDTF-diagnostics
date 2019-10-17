@@ -4,6 +4,7 @@ import glob
 import shutil
 import atexit
 import signal
+from collections import defaultdict
 from abc import ABCMeta, abstractmethod
 import datetime
 import util
@@ -97,14 +98,6 @@ class DataManager(object):
             for var in p.varlist:
                 yield var
 
-    def iter_remotes(self):
-        """Generator iterating over _remote_data attributes of pods' variables.
-        """
-        for var in self.iter_vars():
-            for file_ in var._remote_data:
-                yield file_
-
-
     # -------------------------------------
 
     def setUp(self):
@@ -113,6 +106,7 @@ class DataManager(object):
         self._setup_html()
         for pod in self.iter_pods():
             self._setup_pod(pod)
+        self._build_data_dicts()
 
     def _setup_model_paths(self, verbose=0):
         util.check_required_dirs(
@@ -189,69 +183,89 @@ class DataManager(object):
             "{}.{}.{}.nc".format(
                 self.case_name, dataset.name_in_model, freq)
         )
+
+    @staticmethod
+    def dataset_key(dataset):
+        """Return immutable representation of DataSet. Two DataSets should have 
+        the same key 
+        """
+        return dataset._freeze()
+
+    def _build_data_dicts(self):
+        self.data_keys = defaultdict(list)
+        self.data_files = util.MultiMap()
+        for pod in self.iter_pods():
+            for var in pod.iter_vars_and_alts():
+                key = self.dataset_key(var)
+                self.data_keys[key].append(var)
+                self.data_files[key].update(var._remote_data)
     
     # -------------------------------------
 
     def fetch_data(self, verbose=0):
+        self._query_data()
+        # populate vars with found files
+        for data_key in self.data_keys:
+            for var in self.data_keys[data_key]:
+                var._remote_data.extend(list(self.data_files[data_key]))
+        
         for pod in self.iter_pods():
-            new_varlist = []
             try:
-                for var in pod.varlist:
-                    new_varlist.extend(self._query_dataset_and_alts(var))
-            except DataQueryFailure:
+                new_varlist = [var for var \
+                    in self._iter_populated_varlist(pod.varlist, pod.name)]
+            except DataQueryFailure as exc:
                 print "Data query failed on pod {}; skipping.".format(pod.name)
-                # count on _check_for_varlist_files to throw error that gets logged..
-                continue
+                pod.skipped = exc
+                new_varlist = []
             pod.varlist = new_varlist
+        # revise DataManager's to-do list, now that we've marked some PODs as
+        # being skipped due to data inavailability
+        self._build_data_dicts()
 
-        # TODO: better way to handle these two options
-        data_to_fetch = self.plan_data_fetching()
-        if data_to_fetch is not None:
-            # explicit list of files/resources
-            for file_ in data_to_fetch:
-                self.fetch_dataset(file_)
-        else:
-            # fetch_dataset will figure out files from info in vars
-            for var in self.iter_vars():
-                self.fetch_dataset(var)
+        self.plan_data_fetch_hook()
+
+        for file_ in self.iter_remote_data():
+            print "Fetching {}".format(file_)
+            self.fetch_dataset(file_)
 
         # do translation/ transformations of data here
-        self.process_fetched_data()
+        self.process_fetched_data_hook()
 
-    def _query_dataset_and_alts(self, dataset):
-        """Wrapper for query_dataset that looks for alternate variables.
+    def _query_data(self):
+        for data_key in self.data_keys:
+            try:
+                var = self.data_keys[data_key][0]
+                print "Calling query_dataset on {} @ {}".format(
+                    var.name_in_model, var.date_freq)
+                files = self.query_dataset(var)
+                self.data_files[data_key].update(files)
+            except DataQueryFailure:
+                continue
 
-        Note: 
-            This has a different interface than 
-            :meth:`~data_manager.DataManager.query_dataset`. That method returns
-            nothing but populates the _remote_data attribute of its argument.
-            This method returns a list of :obj:`~util.DataSet`s.
-
-        Args:
-            dataset (:obj:`~util.DataSet`): Requested variable
-                to search for.
-        
-        Returns: :obj:`list` of :obj:`~util.DataSet`.
+    def _iter_populated_varlist(self, var_iter, pod_name):
+        """Generator function yielding either a variable, its alternates if the
+        variable was not found in the data query, or DataQueryFailure if the
+        variable request can't be satisfied with found data.
         """
-        try:
-            self.query_dataset(dataset)
-            dataset.alternates = []
-            return [dataset]
-        except DataQueryFailure:
-            print "Couldn't find {}, trying alternates".format(dataset.name)
-            if len(dataset.alternates) == 0:
-                print "Couldn't find {} & no alternates".format(dataset.name)
-                raise
-            # check for all alternates
-            for alt_var in dataset.alternates:
-                try: 
-                    self.query_dataset(alt_var)
-                except DataQueryFailure:
-                    print "Couldn't find alternate data {}".format(alt_var.name)
-                    raise
-            return dataset.alternates
+        for var in var_iter:
+            if var._remote_data:
+                print "Found {} (= {}) @ {} for {}".format(
+                    var.name_in_model, var.name, var.date_freq, pod_name)
+                var.alternates = []
+                yield var
+            elif not var.alternates:
+                raise DataQueryFailure(
+                    var,
+                    "Couldn't find {} (= {}) @ {} for {} & no other alternates".format(
+                    var.name_in_model, var.name, var.date_freq, pod_name)
+                )
+            else:
+                print "Couldn't find {} (= {}) @ {} for {}, trying alternates".format(
+                    var.name_in_model, var.name, var.date_freq, pod_name)
+                for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
+                    yield alt_var  # no 'yield from' in py2.7
 
-    def plan_data_fetching(self):
+    def iter_remote_data(self):
         """Process list of requested data to make data fetching efficient.
 
         This is intended as a hook to be used by subclasses. Default behavior is
@@ -262,10 +276,13 @@ class DataManager(object):
         Returns: collection of :class:`~util.DataSet`
             objects.
         """
+        print self.data_files.values()
         # remove duplicates from list of all _remote_datas
-        unique_data = set(self.iter_remotes())
+        unique_files = set(f for sublist in self.data_files.values() for f in sublist)
         # filter out any data we've previously fetched that's up to date
-        return [d for d in unique_data if not self.local_data_is_current(d)]
+        for file_ in unique_files:
+            if not self.local_data_is_current(file_):
+                yield file_
     
     def local_data_is_current(self, dataset):
         """Determine if local copy of data needs to be refreshed.
@@ -278,6 +295,14 @@ class DataManager(object):
         """
         return False
 
+    def plan_data_fetch_hook(self):
+        pass
+
+    def process_fetched_data_hook(self):
+        pass
+
+    # -------------------------------------
+
     # following are specific details that must be implemented in child class 
     @abstractmethod
     def query_dataset(self, dataset):
@@ -285,10 +310,6 @@ class DataManager(object):
 
     @abstractmethod
     def fetch_dataset(self, dataset):
-        pass
-
-    @abstractmethod
-    def process_fetched_data(self):
         pass
 
     # -------------------------------------
@@ -357,10 +378,15 @@ class DataManager(object):
 
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
+
+    @staticmethod
+    def dataset_key(dataset):
+        return (dataset.name_in_model, str(dataset.date_freq))
+
     def query_dataset(self, dataset):
         path = self.local_path(dataset)
         if os.path.isfile(path):
-            dataset._remote_data = path
+            return [path]
         else:
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
@@ -368,7 +394,5 @@ class LocalfileDataManager(DataManager):
         return True 
 
     def fetch_dataset(self, dataset):
-        dataset._local_data = dataset._remote_data
-
-    def process_fetched_data(self):
         pass
+

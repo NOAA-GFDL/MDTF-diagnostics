@@ -354,10 +354,12 @@ class DataSet(Namespace):
     """
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', 
-            '_remote_data', '_local_data']:
+        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
             if key not in self:
                 self[key] = None
+        
+        if '_remote_data' not in self:
+            self['_remote_data'] = []
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name

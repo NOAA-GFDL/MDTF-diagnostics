@@ -212,7 +212,8 @@ class GfdlppDataManager(DataManager):
             nc                      # netCDF file extension
         """, rel_path, re.VERBOSE)
         if match:
-            assert match.group('component') == match.group('component2')
+            #if match.group('component') != match.group('component2'):
+            #    raise ValueError("Can't parse {}.".format(rel_path))
             ds = util.DataSet(**(match.groupdict()))
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
@@ -224,7 +225,7 @@ class GfdlppDataManager(DataManager):
             raise ValueError("Can't parse {}.".format(rel_path))
 
     def _listdir(self, dir_):
-        print "\t\tDEBUG: listdir on {}".format(dir_[len(self.root_dir):])
+        print "\t\tDEBUG: listdir on pp{}".format(dir_[len(self.root_dir):])
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
@@ -268,10 +269,14 @@ class GfdlppDataManager(DataManager):
         )
         for dir_ in paths:
             file_lookup = defaultdict(list)
-            files = [self.parse_pp_path(dir_, f) for f \
-                in self._listdir(os.path.join(self.root_dir, dir_)) \
-                if f.endswith('.nc')
-            ]
+            files = []
+            for f in self._listdir(os.path.join(self.root_dir, dir_)):
+                if f.endswith('.nc'):
+                    try:
+                        files.append(self.parse_pp_path(dir_, f))
+                    except ValueError as exc:
+                        print exc
+                        continue
             for ds in files:
                 (data_key, cpt_key) = self.keys_from_dataset(ds)
                 file_lookup[data_key].append(ds)
@@ -302,20 +307,21 @@ class GfdlppDataManager(DataManager):
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
-        cmpts = self._select_model_component(self.iter_vars())
+        cmpts = self._select_model_component()
         print "Components selected: ", cmpts
-        for var in self.iter_vars():
+        for data_key in self.data_keys:
             cmpt = self._heuristic_component_tiebreaker( \
-                {f.component for f in var._remote_data if (f.component in cmpts)} \
+                {cpt_key.component for cpt_key in self.data_files[data_key] \
+                if (cpt_key.component in cmpts)} \
             )
             # take shortest chunk frequency (revisit?)
-            chunk_freq = min(f.chunk_freq \
-                for f in var._remote_data if (f.component == cmpt))
-            var._remote_data = [f for f in var._remote_data \
-                if (f.chunk_freq == chunk_freq and f.component == cmpt)]
-            assert var._remote_data # shouldn't have eliminated everything
-        # don't return files, instead fetch_dataset iterates through vars
-        return None
+            chunk_freq = min(cpt_key.chunk_freq \
+                for cpt_key in self.data_files[data_key] \
+                if cpt_key.component == cmpt)
+            cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
+            print "Selected {},{} for {}".format(cmpt, chunk_freq, data_key)
+            assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
+            self.data_files[data_key] = self._component_map[cpt_key, data_key]
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
@@ -346,7 +352,7 @@ class GfdlppDataManager(DataManager):
         else:
             return _heuristic_tiebreaker_sub(str_list)
 
-    def _select_model_component(self, datasets):
+    def _select_model_component(self):
         """Determine experiment component(s) from heuristics.
 
         1. Pick all data from the same component if possible, and from as few
@@ -367,9 +373,9 @@ class GfdlppDataManager(DataManager):
         """
         all_idx = set()
         d = defaultdict(set)
-        for idx, ds in enumerate(datasets):
-            for ds_file in ds._remote_data:
-                d[ds_file.component].add(idx)
+        for idx, data_key in enumerate(self.data_files.keys()):
+            for cpt_key in self.data_files[data_key]:
+                d[cpt_key.component].add(idx)
             all_idx.add(idx)
         assert set(e for s in d.values() for e in s) == all_idx
 

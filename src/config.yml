@@ -113,3 +113,7 @@ settings:
   # used if environment_manager is set to 'Conda'.
   # Set this equal to '' to install in your system's default location.
   conda_env_root: './envs/conda'
+
+  # amount of time (in seconds) to wait before giving up on transferring a data
+  # file to the local filesystem. Set to zero to disable.
+  file_transfer_timeout: 600

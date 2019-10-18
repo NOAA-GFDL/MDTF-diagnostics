@@ -21,15 +21,23 @@ class DataQueryFailure(Exception):
     data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
     or :meth:`~data_manager.DataManager.fetchData`.
     """
-    def __init__(self, dataset, msg=None):
+    def __init__(self, dataset, msg=''):
         self.dataset = dataset
         self.msg = msg
 
     def __str__(self):
-        if self.msg is not None:
-            return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
-        else:
-            return 'Query failure for {}.'.format(self.dataset.name)
+        return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+
+class DataAccessError(Exception):
+    """Exception signaling a failure to obtain data from the remote location.
+    """
+    def __init__(self, dataset, msg=''):
+        self.dataset = dataset
+        self.msg = msg
+
+    def __str__(self):
+        return 'Data access error for {}: {}.'.format(
+            self.dataset._remote_data, self.msg)
 
 class DataManager(object):
     # analogue of TestFixture in xUnit
@@ -78,6 +86,11 @@ class DataManager(object):
             self.nc_check_environ() # make sure we have dependencies
         except Exception:
             raise
+
+        if ('settings' not in config) or ('file_transfer_timeout' not in config['settings']):
+            self.file_transfer_timeout = 0 # syntax for no timeout
+        else:
+            self.file_transfer_timeout = config['settings']['file_transfer_timeout']
 
         # delete temp files if we're killed
         atexit.register(self.abortHandler)
@@ -231,7 +244,13 @@ class DataManager(object):
         self.plan_data_fetch_hook()
 
         for file_ in self.remote_data_list():
-            self.fetch_dataset(file_)
+            try:
+                self.fetch_dataset(file_)
+            except Exception as exc:
+                # TODO: reraise as DataAccessError, retry fetch, disqualify PODs
+                # that needed this data, log error.
+                print exc
+                continue
 
         # do translation/ transformations of data here
         self.process_fetched_data_hook()

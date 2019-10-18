@@ -198,6 +198,17 @@ class GfdlppDataManager(DataManager):
             )
         )
 
+    @staticmethod
+    def fetch_ordering_function(dataset):
+        # key function for ordering data to fetch
+        return (
+            dataset.component,
+            str(dataset.date_freq),
+            str(dataset.chunk_freq),
+            dataset.name_in_model,
+            str(dataset.date_range)
+        )
+
     def parse_pp_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         match = re.match(r"""

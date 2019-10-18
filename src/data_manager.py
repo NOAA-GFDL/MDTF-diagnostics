@@ -5,6 +5,8 @@ import shutil
 import atexit
 import signal
 from collections import defaultdict
+from itertools import chain
+from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datetime
 import util
@@ -265,7 +267,7 @@ class DataManager(object):
                 for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
                     yield alt_var  # no 'yield from' in py2.7
 
-    def iter_remote_data(self):
+    def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
 
         This is intended as a hook to be used by subclasses. Default behavior is
@@ -276,13 +278,19 @@ class DataManager(object):
         Returns: collection of :class:`~util.DataSet`
             objects.
         """
-        print self.data_files.values()
-        # remove duplicates from list of all _remote_datas
-        unique_files = set(f for sublist in self.data_files.values() for f in sublist)
+        # flatten list of all _remote_datas and remove duplicates
+        unique_files = set(f for f in chain.from_iterable(self.data_files.values()))
         # filter out any data we've previously fetched that's up to date
-        for file_ in unique_files:
-            if not self.local_data_is_current(file_):
-                yield file_
+        unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
+        # fetch data in sorted order to make interpreting logs easier
+        if hasattr(self, 'fetch_ordering_function'):
+            sort_key = self.fetch_ordering_function
+        if hasattr(unique_files[0], '_remote_data'):
+            sort_key = attrgetter('_remote_data')
+        else:
+            sort_key = None
+        unique_files.sort(key=sort_key)
+        return unique_files
     
     def local_data_is_current(self, dataset):
         """Determine if local copy of data needs to be refreshed.

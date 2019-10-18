@@ -564,32 +564,38 @@ def run_command(command, env=None, cwd=None, timeout=0):
     if type(command) == str:
         command = shlex.split(command)
     cmd_str = ' '.join(command)
-    proc = subprocess.Popen(
-        command, shell=False, env=env, cwd=cwd,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, bufsize=0
-    )
-    pid = proc.pid
-    # py3 has timeout built into subprocess; this is a workaround
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(int(timeout))
+    proc = None
+    pid = None
+    retcode = 1
+    stderr = ''
     try:
+        proc = subprocess.Popen(
+            command, shell=False, env=env, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, bufsize=0
+        )
+        pid = proc.pid
+        # py3 has timeout built into subprocess; this is a workaround
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(int(timeout))
         (stdout, stderr) = proc.communicate()
         signal.alarm(0)  # cancel the alarm
+        retcode = proc.returncode
     except TimeoutAlarm:
-        proc.kill()
-        stderr = "run_command (pid {}) timeout (>{}sec): {}".format(
-            pid, timeout, cmd_str)
-        print stderr
+        if proc:
+            proc.kill()
+        retcode = errno.ETIME
+        stderr = stderr+"\nKilled by timeout (>{}sec).".format(timeout)
+    except Exception as exc:
+        if proc:
+            proc.kill()
+        stderr = stderr+"\nCaught exception {0}({1!r})".format(
+            type(exc).__name__, exc.args)
+    if retcode != 0:
+        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
-            returncode=errno.ETIME, cmd=cmd_str, output=stderr)
-    except:
-        proc.kill()
-        raise
-    if proc.returncode != 0:
-        print 'run_command (pid {}) error:\n{}\n'.format(pid, stderr)
-        raise subprocess.CalledProcessError(
-            returncode=proc.returncode, cmd=cmd_str, output=stderr)
+            returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
         return stdout.split('\0')
     else:

@@ -437,7 +437,8 @@ class GfdlppDataManager(DataManager):
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
             for f in ds_var._remote_data:
-                print "copying {} to {}".format(f._remote_data, ds_var._tempdir)
+                print "\tcopying pp{} to {}".format(
+                    f._remote_data[len(self.root_dir):], ds_var._tempdir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f._remote_data), 
                     # gcp requires trailing slash, ln ignores it
@@ -449,14 +450,16 @@ class GfdlppDataManager(DataManager):
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
-            print 'catting files to ',ds_var._local_data
+            print "\tcatting {} chunks to {}".format(
+                ds_var.name_in_model, ds_var._local_data)
             self.nc_cat_chunks(chunks, ds_var._local_data, 
                 working_dir=ds_var._tempdir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
-        print 'trimming file at ',ds_var._local_data
+        print "\ttrimming dates of {} file at {}".format(
+                ds_var.name_in_model, ds_var._local_data)
         self.nc_crop_time_axis(time_var_name, self.date_range,
             ds_var._local_data, 
             working_dir=dest_dir)

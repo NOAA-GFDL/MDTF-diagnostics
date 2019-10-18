@@ -226,8 +226,7 @@ class DataManager(object):
 
         self.plan_data_fetch_hook()
 
-        for file_ in self.iter_remote_data():
-            print "Fetching {}".format(file_)
+        for file_ in self.remote_data_list():
             self.fetch_dataset(file_)
 
         # do translation/ transformations of data here

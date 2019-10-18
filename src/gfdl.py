@@ -430,7 +430,7 @@ class GfdlppDataManager(DataManager):
                     cp_command + [
                         smartsite + os.path.join(self.root_dir, f._remote_data), 
                         ds_var._local_data
-                ])
+                ], timeout=self.file_transfer_timeout)
         else:
             paths = util.PathManager()
             ds_var._tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
@@ -443,7 +443,7 @@ class GfdlppDataManager(DataManager):
                     smartsite + os.path.join(self.root_dir, f._remote_data), 
                     # gcp requires trailing slash, ln ignores it
                     smartsite + ds_var._tempdir + os.sep
-                ]) 
+                ], timeout=self.file_transfer_timeout)
                 chunks.append(f.file)
             # ncrcat will error instead of creating destination directories
             dest_dir, _ = os.path.split(ds_var._local_data)

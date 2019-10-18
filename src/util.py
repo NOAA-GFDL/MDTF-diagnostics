@@ -17,6 +17,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
+import signal
+import errno
 import yaml
 import datelabel
 
@@ -522,7 +524,11 @@ def poll_command(command, shell=False, env=None):
     rc = process.poll()
     return rc
 
-def run_command(command, env=None, cwd=None):
+class TimeoutAlarm(Exception):
+    # dummy exception for signal handling in run_command
+    pass
+
+def run_command(command, env=None, cwd=None, timeout=0):
     """Subprocess wrapper to facilitate running single command without starting
     a shell.
 
@@ -540,6 +546,9 @@ def run_command(command, env=None, cwd=None):
             `Popen`, default `None`.
         cwd (:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
+        timeout (:obj:`int`, optional): Optionally, kill the command's subprocess
+            and raise a CalledProcessError if the command doesn't finish in 
+            `timeout` seconds.
 
     Returns:
         :obj:`list` of :obj:`str` containing output that was written to stdout  
@@ -549,18 +558,44 @@ def run_command(command, env=None, cwd=None):
         CalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
+    def _timeout_handler(signum, frame):
+        raise TimeoutAlarm
+
     if type(command) == str:
         command = shlex.split(command)
-    proc = subprocess.Popen(
-        command, shell=False, env=env, cwd=cwd,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, bufsize=0
-    )
-    (stdout, stderr) = proc.communicate()
-    if proc.returncode != 0:
-        print 'Run_command error:', stderr
+    cmd_str = ' '.join(command)
+    proc = None
+    pid = None
+    retcode = 1
+    stderr = ''
+    try:
+        proc = subprocess.Popen(
+            command, shell=False, env=env, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, bufsize=0
+        )
+        pid = proc.pid
+        # py3 has timeout built into subprocess; this is a workaround
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(int(timeout))
+        (stdout, stderr) = proc.communicate()
+        signal.alarm(0)  # cancel the alarm
+        retcode = proc.returncode
+    except TimeoutAlarm:
+        if proc:
+            proc.kill()
+        retcode = errno.ETIME
+        stderr = stderr+"\nKilled by timeout (>{}sec).".format(timeout)
+    except Exception as exc:
+        if proc:
+            proc.kill()
+        stderr = stderr+"\nCaught exception {0}({1!r})".format(
+            type(exc).__name__, exc.args)
+    if retcode != 0:
+        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
-            returncode=proc.returncode, cmd=' '.join(command), output=stderr)
+            returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
         return stdout.split('\0')
     else:

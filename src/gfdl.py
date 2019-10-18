@@ -276,7 +276,8 @@ class GfdlppDataManager(DataManager):
         self._component_map = defaultdict(list)
 
         paths = self.filtered_os_walk(
-            [self.component, 'ts', self.data_freq, self.chunk_freq]
+            [self.component, 'ts', frepp_freq(self.data_freq), 
+                frepp_freq(self.chunk_freq)]
         )
         for dir_ in paths:
             file_lookup = defaultdict(list)
@@ -489,6 +490,24 @@ class GfdlppDataManager(DataManager):
                 'gfdl:' + self.MODEL_WK_DIR + os.sep,
                 'gfdl:' + self.MODEL_OUT_DIR + os.sep
             ])
+
+def frepp_freq(date_freq):
+    # logic as written would give errors for 1yr chunks (?)
+    if date_freq is None:
+        return date_freq
+    assert isinstance(date_freq, datelabel.DateFrequency)
+    if date_freq.unit == 'hr' or date_freq.quantity != 1:
+        return date_freq.format()
+    else:
+        # weekly not used in frepp
+        _frepp_dict = {
+            'yr': 'annual',
+            'se': 'seasonal',
+            'mo': 'monthly',
+            'da': 'daily',
+            'hr': 'hourly'
+        }
+        return _frepp_dict[date_freq.unit]
 
 frepp_translate = {
     'in_data_dir': 'root_dir', # /pp/ directory

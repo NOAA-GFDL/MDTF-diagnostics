@@ -8,6 +8,7 @@ import glob
 import shlex
 import shutil
 import tempfile
+from collections import defaultdict
 from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -112,34 +113,65 @@ class PathManager(Singleton):
         for d in self._temp_dirs:
             self.rm_tempdir(d)
 
-class BiDict(dict):
+class MultiMap(defaultdict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
     from either keys or values. 
     
     Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
-    from values is done on the `inverse` attribute and returns a list of matching
+    from values is done on the `inverse` attribute and returns a set of matching
     keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
     See <https://stackoverflow.com/a/21894086>_.
     """
     def __init__(self, *args, **kwargs):
-        """Initialize :class:`~util.BiDict` by passing an ordinary :obj:`dict`.
+        """Initialize :class:`~util.MultiMap` by passing an ordinary :obj:`dict`.
         """
-        super(BiDict, self).__init__(*args, **kwargs)
-        self.inverse = {}
-        for key, value in self.items():
-            self.inverse.setdefault(value,[]).append(key) 
+        super(MultiMap, self).__init__(set, *args, **kwargs)
+        for key in self.keys():
+            if type(self[key]) is not set:
+                if hasattr(self[key], '__iter__'):
+                    super(MultiMap, self).__setitem__(key, set(self[key]))
+                else:
+                    super(MultiMap, self).__setitem__(key, set([self[key]]))
 
     def __setitem__(self, key, value):
-        if key in self:
-            self.inverse[self[key]].remove(key) 
-        super(BiDict, self).__setitem__(key, value)
-        self.inverse.setdefault(value,[]).append(key)        
+        if type(value) is not set:
+            if hasattr(value, '__iter__'):
+                value = set(value)
+            else:
+                value = set([value])
+        super(MultiMap, self).__setitem__(key, value)
 
-    def __delitem__(self, key):
-        self.inverse.setdefault(self[key],[]).remove(key)
-        if self[key] in self.inverse and not self.inverse[self[key]]: 
-            del self.inverse[self[key]]
-        super(BiDict, self).__delitem__(key)    
+    def get_(self, key):
+        if key not in self.keys():
+            raise KeyError(key)
+        temp = list(self[key])
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
+    
+    def to_dict(self):
+        d = {}
+        for key in self.keys():
+            d[key] = self.get_(key)
+        return d
+
+    def inverse(self):
+        d = defaultdict(set)
+        for key, val_set in self.items():
+            for v in val_set:
+                d[v].add(key)
+        return dict(d)
+
+    def inverse_get_(self, val):
+        # if val not in self.values():
+        #     raise KeyError(val)
+        temp = self.inverse()
+        temp = list(temp[val])
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -162,26 +194,21 @@ class VariableTranslator(Singleton):
                 file_contents['convention_name'] = [file_contents['convention_name']]
             for conv in file_contents['convention_name']:
                 if verbose > 0: print 'XXX found ' + conv
-                self.field_dict[conv] = BiDict(file_contents['var_names'])
+                self.field_dict[conv] = MultiMap(file_contents['var_names'])
 
     def toCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
         assert convention in self.field_dict, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        temp = self.field_dict[convention].inverse[varname_in]
-        if len(temp) == 1:
-            return temp[0]
-        else:
-            return temp
+        return self.field_dict[convention].inverse_get_(varname_in)
     
     def fromCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
         assert convention in self.field_dict, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention][varname_in]
-
+        return self.field_dict[convention].get_(varname_in)
 
 class Namespace(dict):
     """ A dictionary that provides attribute-style access.
@@ -331,10 +358,12 @@ class DataSet(Namespace):
     """
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', 
-            'remote_resource', 'local_resource']:
+        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
             if key not in self:
                 self[key] = None
+        
+        if '_remote_data' not in self:
+            self['_remote_data'] = []
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
@@ -352,12 +381,12 @@ class DataSet(Namespace):
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
-        Exclude attributes starting with 'nohash_' from the comparison, in case 
+        Exclude attributes starting with '_' from the comparison, in case 
         we want DataSets with different timestamps, temporary directories, etc.
         to compare as equal.
         """
         d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
+        keys_to_hash = [k for k in d.keys() if not k.startswith('_')]
         return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
 
     def tempdir(self):

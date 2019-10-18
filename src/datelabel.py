@@ -343,21 +343,6 @@ class DateFrequency(datetime.timedelta):
             }
             return _local_dict[self.unit]
 
-    def format_frepp(self):
-        if self.unit == 'hr':
-            return self.format()
-        else:
-            # weekly not used in frepp
-            assert self.quantity == 1
-            _frepp_dict = {
-                'yr': 'annual',
-                'se': 'seasonal',
-                'mo': 'monthly',
-                'da': 'daily',
-                'hr': 'hourly'
-            }
-            return _frepp_dict[self.unit]
-
     def format(self):
         # conversion? only hr and yr used
         return "{}{}".format(self.quantity, self.unit)

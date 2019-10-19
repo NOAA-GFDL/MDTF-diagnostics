@@ -435,11 +435,9 @@ class GfdlppDataManager(DataManager):
                 print "\tcopying pp{} to {}".format(
                         f._remote_data[len(self.root_dir):], dest_path)
                 if not dry_run:
-                    util.run_command( \
-                        cp_command + [
-                            smartsite + os.path.join(self.root_dir, f._remote_data), 
-                            dest_path
-                    ])
+                    util.run_command(
+                        cp_command + [smartsite + f._remote_data, dest_path]
+                    )
         else:
             paths = util.PathManager()
             temp_dir = paths.make_tempdir(hash_obj = d_key)
@@ -450,7 +448,7 @@ class GfdlppDataManager(DataManager):
                     f._remote_data[len(self.root_dir):], temp_dir)
                 if not dry_run:
                     util.run_command(cp_command + [
-                        smartsite + os.path.join(self.root_dir, f._remote_data), 
+                        smartsite + f._remote_data, 
                         # gcp requires trailing slash, ln ignores it
                         smartsite + temp_dir + os.sep
                     ]) 

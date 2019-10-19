@@ -89,14 +89,24 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
-    def make_tempdir(self, new_dir=None):
+    def make_tempdir(self, hash_obj=None):
+        tempdir_prefix = 'MDTF_temp_'
+
         temp_root = tempfile.gettempdir()
-        if new_dir is None:
-            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_', dir=temp_root)
+        if hash_obj is None:
+            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
+        elif isinstance(hash_obj, str):
+            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
         else:
-            new_dir = os.path.join(temp_root, new_dir)
-            if not os.path.isdir(new_dir):
-                os.makedirs(new_dir)
+            # nicer-looking hash representation
+            hash_ = hex(hash(hash_obj))
+            if hash_ < 0:
+                new_dir = 'Y'+str(hash_)[3:]
+            else:
+                new_dir = 'X'+str(hash_)[3:]
+            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
+        if not os.path.isdir(new_dir):
+            os.makedirs(new_dir)
         assert new_dir not in self._temp_dirs
         self._temp_dirs.append(new_dir)
         return new_dir
@@ -388,18 +398,6 @@ class DataSet(Namespace):
         d2 = {k: repr(d[k]) for k in keys_to_hash}
         FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
         return FrozenDataSet(**d2)
-
-    def tempdir(self):
-        """Set temporary directory deterministically.
-        """
-        def _prettier_hex(int_):
-            hex_str = str(hex(int_))
-            if int_ < 0:
-                return 'Y'+hex_str[3:]
-            else:
-                return 'X'+hex_str[3:]
-
-        return 'MDTF_temp_{}'.format(_prettier_hex(self.__hash__()))
 
 # ------------------------------------
 

@@ -198,17 +198,6 @@ class GfdlppDataManager(DataManager):
             )
         )
 
-    @staticmethod
-    def fetch_ordering_function(dataset):
-        # key function for ordering data to fetch
-        return (
-            dataset.component,
-            str(dataset.date_freq),
-            str(dataset.chunk_freq),
-            dataset.name_in_model,
-            str(dataset.date_range)
-        )
-
     def parse_pp_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         match = re.match(r"""
@@ -335,7 +324,10 @@ class GfdlppDataManager(DataManager):
                 cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
 
             assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
-            self.data_files[data_key] = self._component_map[cpt_key, data_key]
+            self.data_files[data_key] = sorted(
+                self._component_map[cpt_key, data_key], 
+                key=lambda ds: ds.date_range.start
+            )
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):

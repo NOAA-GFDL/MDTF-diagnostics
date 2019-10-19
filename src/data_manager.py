@@ -190,7 +190,12 @@ class DataManager(object):
         assert 'date_freq' in data_key._fields
         # values in key are repr strings by default, so need to instantiate the
         # datelabel object to use its formatting method
-        freq = eval('datelabel.'+data_key.date_freq)
+        try:
+            # value in key is from __str__
+            freq = datelabel.DateFrequency(data_key.date_freq)
+        except ValueError:
+            # value in key is from __repr__
+            freq = eval('datelabel.'+data_key.date_freq)
         freq = freq.format_local()
         return os.path.join(
             self.MODEL_DATA_DIR, freq,

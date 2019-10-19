@@ -8,7 +8,7 @@ import glob
 import shlex
 import shutil
 import tempfile
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -333,7 +333,9 @@ class Namespace(dict):
         See `https://stackoverflow.com/a/45170549`_.
         """
         d = self.toDict()
-        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
+        d2 = {k: repr(d[k]) for k in d}
+        FrozenNameSpace = namedtuple('FrozenNameSpace', sorted(d.keys()))
+        return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -382,13 +384,22 @@ class DataSet(Namespace):
         to compare as equal.
         """
         d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('_')]
-        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
+        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
+        d2 = {k: repr(d[k]) for k in keys_to_hash}
+        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
+        return FrozenDataSet(**d2)
 
     def tempdir(self):
         """Set temporary directory deterministically.
         """
-        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
+        def _prettier_hex(int_):
+            hex_str = str(hex(int_))
+            if int_ < 0:
+                return 'Y'+hex_str[3:]
+            else:
+                return 'X'+hex_str[3:]
+
+        return 'MDTF_temp_{}'.format(_prettier_hex(self.__hash__()))
 
 # ------------------------------------
 

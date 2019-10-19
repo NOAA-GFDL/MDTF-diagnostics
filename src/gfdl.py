@@ -432,11 +432,14 @@ class GfdlppDataManager(DataManager):
         if len(self.data_files[d_key]) == 1:
             # one chunk, no need to ncrcat
             for f in self.data_files[d_key]:
-                util.run_command( \
-                    cp_command + [
-                        smartsite + os.path.join(self.root_dir, f._remote_data), 
-                        dest_path
-                ])
+                print "\tcopying pp{} to {}".format(
+                        f._remote_data[len(self.root_dir):], dest_path)
+                if not dry_run:
+                    util.run_command( \
+                        cp_command + [
+                            smartsite + os.path.join(self.root_dir, f._remote_data), 
+                            dest_path
+                    ])
         else:
             paths = util.PathManager()
             temp_dir = paths.make_tempdir(hash_obj = d_key)
@@ -445,25 +448,28 @@ class GfdlppDataManager(DataManager):
             for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
                     f._remote_data[len(self.root_dir):], temp_dir)
-                util.run_command(cp_command + [
-                    smartsite + os.path.join(self.root_dir, f._remote_data), 
-                    # gcp requires trailing slash, ln ignores it
-                    smartsite + temp_dir + os.sep
-                ]) 
+                if not dry_run:
+                    util.run_command(cp_command + [
+                        smartsite + os.path.join(self.root_dir, f._remote_data), 
+                        # gcp requires trailing slash, ln ignores it
+                        smartsite + temp_dir + os.sep
+                    ]) 
                 chunks.append(f.file)
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)
-            self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
+            if not dry_run:
+                self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         print "\ttrimming dates of {} file at {}".format(
                 d_key.name_in_model, dest_path)
-        self.nc_crop_time_axis(
-            time_var_name, self.date_range, dest_path, 
-            working_dir=dest_dir)
+        if not dry_run:
+            self.nc_crop_time_axis(
+                time_var_name, self.date_range, dest_path, 
+                working_dir=dest_dir)
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):

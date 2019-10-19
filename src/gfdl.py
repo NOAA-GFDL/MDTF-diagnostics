@@ -198,17 +198,6 @@ class GfdlppDataManager(DataManager):
             )
         )
 
-    @staticmethod
-    def fetch_ordering_function(dataset):
-        # key function for ordering data to fetch
-        return (
-            dataset.component,
-            str(dataset.date_freq),
-            str(dataset.chunk_freq),
-            dataset.name_in_model,
-            str(dataset.date_range)
-        )
-
     def parse_pp_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         match = re.match(r"""
@@ -335,7 +324,10 @@ class GfdlppDataManager(DataManager):
                 cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
 
             assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
-            self.data_files[data_key] = self._component_map[cpt_key, data_key]
+            self.data_files[data_key] = sorted(
+                self._component_map[cpt_key, data_key], 
+                key=lambda ds: ds.date_range.start
+            )
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
@@ -440,11 +432,13 @@ class GfdlppDataManager(DataManager):
         if len(self.data_files[d_key]) == 1:
             # one chunk, no need to ncrcat
             for f in self.data_files[d_key]:
-                util.run_command( \
-                    cp_command + [
-                        smartsite + os.path.join(self.root_dir, f._remote_data), 
-                        dest_path
-                ], timeout=self.file_transfer_timeout)
+                print "\tcopying pp{} to {}".format(
+                        f._remote_data[len(self.root_dir):], dest_path)
+                if not dry_run:
+                    util.run_command(
+                        cp_command + [smartsite + f._remote_data, dest_path],
+                        timeout=self.file_transfer_timeout
+                    )
         else:
             paths = util.PathManager()
             temp_dir = paths.make_tempdir(hash_obj = d_key)
@@ -453,25 +447,28 @@ class GfdlppDataManager(DataManager):
             for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
                     f._remote_data[len(self.root_dir):], temp_dir)
-                util.run_command(cp_command + [
-                    smartsite + os.path.join(self.root_dir, f._remote_data), 
-                    # gcp requires trailing slash, ln ignores it
-                    smartsite + temp_dir + os.sep
-                ], timeout=self.file_transfer_timeout)
+                if not dry_run:
+                    util.run_command(cp_command + [
+                        smartsite + f._remote_data, 
+                        # gcp requires trailing slash, ln ignores it
+                        smartsite + temp_dir + os.sep
+                    ], timeout=self.file_transfer_timeout) 
                 chunks.append(f.file)
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)
-            self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
+            if not dry_run:
+                self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         print "\ttrimming dates of {} file at {}".format(
                 d_key.name_in_model, dest_path)
-        self.nc_crop_time_axis(
-            time_var_name, self.date_range, dest_path, 
-            working_dir=dest_dir)
+        if not dry_run:
+            self.nc_crop_time_axis(
+                time_var_name, self.date_range, dest_path, 
+                working_dir=dest_dir)
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):

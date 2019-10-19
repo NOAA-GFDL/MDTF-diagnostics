@@ -331,7 +331,9 @@ class GfdlppDataManager(DataManager):
                 for cpt_key in self.data_files[data_key] \
                 if cpt_key.component == cmpt)
             cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
-            print "Selected {},{} for {}".format(cmpt, chunk_freq, data_key)
+            print "Selected (component, chunk) = ({}, {}) for {} @ {}".format(
+                cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
+
             assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
             self.data_files[data_key] = self._component_map[cpt_key, data_key]
 
@@ -420,49 +422,55 @@ class GfdlppDataManager(DataManager):
         # return os.path.getmtime(dataset._local_data) \
         #     >= os.path.getmtime(dataset._remote_data)
 
-    def fetch_dataset(self, ds_var, method='auto', dry_run=False):
+    def remote_data_list(self):
+        """Process list of requested data to make data fetching efficient.
+        """
+        return sorted(self.data_keys.keys())
+
+    def fetch_dataset(self, d_key, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """
         (cp_command, smartsite) = self._determine_fetch_method(method)
-        if len(ds_var._remote_data) == 1:
+        dest_path = self.local_path(d_key)
+        dest_dir, _ = os.path.split(dest_path)
+        # ncrcat will error instead of creating destination directories
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        if len(self.data_files[d_key]) == 1:
             # one chunk, no need to ncrcat
-            for f in ds_var._remote_data:
+            for f in self.data_files[d_key]:
                 util.run_command( \
                     cp_command + [
                         smartsite + os.path.join(self.root_dir, f._remote_data), 
-                        ds_var._local_data
+                        dest_path
                 ])
         else:
             paths = util.PathManager()
-            ds_var._tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
+            temp_dir = paths.make_tempdir(hash_obj = d_key)
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
-            for f in ds_var._remote_data:
+            for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
-                    f._remote_data[len(self.root_dir):], ds_var._tempdir)
+                    f._remote_data[len(self.root_dir):], temp_dir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f._remote_data), 
                     # gcp requires trailing slash, ln ignores it
-                    smartsite + ds_var._tempdir + os.sep
+                    smartsite + temp_dir + os.sep
                 ]) 
                 chunks.append(f.file)
-            # ncrcat will error instead of creating destination directories
-            dest_dir, _ = os.path.split(ds_var._local_data)
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
-                ds_var.name_in_model, ds_var._local_data)
-            self.nc_cat_chunks(chunks, ds_var._local_data, 
-                working_dir=ds_var._tempdir)
+                d_key.name_in_model, dest_path)
+            self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         print "\ttrimming dates of {} file at {}".format(
-                ds_var.name_in_model, ds_var._local_data)
-        self.nc_crop_time_axis(time_var_name, self.date_range,
-            ds_var._local_data, 
+                d_key.name_in_model, dest_path)
+        self.nc_crop_time_axis(
+            time_var_name, self.date_range, dest_path, 
             working_dir=dest_dir)
         # temp files cleaned up by data_manager.tearDown
 

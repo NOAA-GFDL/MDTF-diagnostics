@@ -436,22 +436,14 @@ class GfdlppDataManager(DataManager):
 
         if len(self.data_files[d_key]) == 1:
             # one chunk, no need to ncrcat
-<<<<<<< HEAD
-            for f in ds_var._remote_data:
-                util.run_command( \
-                    cp_command + [
-                        smartsite + os.path.join(self.root_dir, f._remote_data), 
-                        ds_var._local_data
-                ], timeout=self.file_transfer_timeout)
-=======
             for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
                         f._remote_data[len(self.root_dir):], dest_path)
                 if not dry_run:
                     util.run_command(
-                        cp_command + [smartsite + f._remote_data, dest_path]
+                        cp_command + [smartsite + f._remote_data, dest_path],
+                        timeout=self.file_transfer_timeout
                     )
->>>>>>> feature/gfdl-faster-search
         else:
             paths = util.PathManager()
             temp_dir = paths.make_tempdir(hash_obj = d_key)
@@ -459,29 +451,15 @@ class GfdlppDataManager(DataManager):
             # TODO: Do something intelligent with logging, caught OSErrors
             for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
-<<<<<<< HEAD
-                    f._remote_data[len(self.root_dir):], ds_var._tempdir)
-                util.run_command(cp_command + [
-                    smartsite + os.path.join(self.root_dir, f._remote_data), 
-                    # gcp requires trailing slash, ln ignores it
-                    smartsite + ds_var._tempdir + os.sep
-                ], timeout=self.file_transfer_timeout)
-                chunks.append(f.file)
-            # ncrcat will error instead of creating destination directories
-            dest_dir, _ = os.path.split(ds_var._local_data)
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
-=======
                     f._remote_data[len(self.root_dir):], temp_dir)
                 if not dry_run:
                     util.run_command(cp_command + [
                         smartsite + f._remote_data, 
                         # gcp requires trailing slash, ln ignores it
                         smartsite + temp_dir + os.sep
-                    ]) 
+                    ], timeout=self.file_transfer_timeout) 
                 _, file_name = os.path.split(f._remote_data)
                 chunks.append(file_name)
->>>>>>> feature/gfdl-faster-search
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)

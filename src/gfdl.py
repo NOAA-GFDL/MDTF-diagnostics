@@ -198,17 +198,6 @@ class GfdlppDataManager(DataManager):
             )
         )
 
-    @staticmethod
-    def fetch_ordering_function(dataset):
-        # key function for ordering data to fetch
-        return (
-            dataset.component,
-            str(dataset.date_freq),
-            str(dataset.chunk_freq),
-            dataset.name_in_model,
-            str(dataset.date_range)
-        )
-
     def parse_pp_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         match = re.match(r"""
@@ -233,7 +222,7 @@ class GfdlppDataManager(DataManager):
             ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
             return ds
         else:
-            raise ValueError("Can't parse {}.".format(rel_path))
+            raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def _listdir(self, dir_):
         print "\t\tDEBUG: listdir on pp{}".format(dir_[len(self.root_dir):])
@@ -275,19 +264,25 @@ class GfdlppDataManager(DataManager):
         """
         self._component_map = defaultdict(list)
 
+        # match files ending in .nc only if they aren't of the form .tile#.nc
+        # (negative lookback) 
+        regex_no_tiles = re.compile(r".*(?<!\.tile\d)\.nc$")
+
         paths = self.filtered_os_walk(
-            [self.component, 'ts', self.data_freq, self.chunk_freq]
+            [self.component, 'ts', frepp_freq(self.data_freq), 
+                frepp_freq(self.chunk_freq)]
         )
         for dir_ in paths:
             file_lookup = defaultdict(list)
+            dir_contents = self._listdir(os.path.join(self.root_dir, dir_))
+            dir_contents = list(filter(regex_no_tiles.search, dir_contents))
             files = []
-            for f in self._listdir(os.path.join(self.root_dir, dir_)):
-                if f.endswith('.nc'):
-                    try:
-                        files.append(self.parse_pp_path(dir_, f))
-                    except ValueError as exc:
-                        print exc
-                        continue
+            for f in dir_contents:
+                try:
+                    files.append(self.parse_pp_path(dir_, f))
+                except ValueError as exc:
+                    print '\t\tDEBUG: ', exc
+                    continue
             for ds in files:
                 (data_key, cpt_key) = self.keys_from_dataset(ds)
                 file_lookup[data_key].append(ds)
@@ -330,9 +325,14 @@ class GfdlppDataManager(DataManager):
                 for cpt_key in self.data_files[data_key] \
                 if cpt_key.component == cmpt)
             cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
-            print "Selected {},{} for {}".format(cmpt, chunk_freq, data_key)
+            print "Selected (component, chunk) = ({}, {}) for {} @ {}".format(
+                cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
+
             assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
-            self.data_files[data_key] = self._component_map[cpt_key, data_key]
+            self.data_files[data_key] = sorted(
+                self._component_map[cpt_key, data_key], 
+                key=lambda ds: ds.date_range.start
+            )
 
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
@@ -419,25 +419,47 @@ class GfdlppDataManager(DataManager):
         # return os.path.getmtime(dataset._local_data) \
         #     >= os.path.getmtime(dataset._remote_data)
 
-    def fetch_dataset(self, ds_var, method='auto', dry_run=False):
+    def remote_data_list(self):
+        """Process list of requested data to make data fetching efficient.
+        """
+        return sorted(self.data_keys.keys())
+
+    def fetch_dataset(self, d_key, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """
         (cp_command, smartsite) = self._determine_fetch_method(method)
-        if len(ds_var._remote_data) == 1:
+        dest_path = self.local_path(d_key)
+        dest_dir, _ = os.path.split(dest_path)
+        # ncrcat will error instead of creating destination directories
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        if len(self.data_files[d_key]) == 1:
             # one chunk, no need to ncrcat
+<<<<<<< HEAD
             for f in ds_var._remote_data:
                 util.run_command( \
                     cp_command + [
                         smartsite + os.path.join(self.root_dir, f._remote_data), 
                         ds_var._local_data
                 ], timeout=self.file_transfer_timeout)
+=======
+            for f in self.data_files[d_key]:
+                print "\tcopying pp{} to {}".format(
+                        f._remote_data[len(self.root_dir):], dest_path)
+                if not dry_run:
+                    util.run_command(
+                        cp_command + [smartsite + f._remote_data, dest_path]
+                    )
+>>>>>>> feature/gfdl-faster-search
         else:
             paths = util.PathManager()
-            ds_var._tempdir = paths.make_tempdir(new_dir=ds_var.tempdir())
+            temp_dir = paths.make_tempdir(hash_obj = d_key)
             chunks = []
             # TODO: Do something intelligent with logging, caught OSErrors
-            for f in ds_var._remote_data:
+            for f in self.data_files[d_key]:
                 print "\tcopying pp{} to {}".format(
+<<<<<<< HEAD
                     f._remote_data[len(self.root_dir):], ds_var._tempdir)
                 util.run_command(cp_command + [
                     smartsite + os.path.join(self.root_dir, f._remote_data), 
@@ -449,20 +471,32 @@ class GfdlppDataManager(DataManager):
             dest_dir, _ = os.path.split(ds_var._local_data)
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
+=======
+                    f._remote_data[len(self.root_dir):], temp_dir)
+                if not dry_run:
+                    util.run_command(cp_command + [
+                        smartsite + f._remote_data, 
+                        # gcp requires trailing slash, ln ignores it
+                        smartsite + temp_dir + os.sep
+                    ]) 
+                _, file_name = os.path.split(f._remote_data)
+                chunks.append(file_name)
+>>>>>>> feature/gfdl-faster-search
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
-                ds_var.name_in_model, ds_var._local_data)
-            self.nc_cat_chunks(chunks, ds_var._local_data, 
-                working_dir=ds_var._tempdir)
+                d_key.name_in_model, dest_path)
+            if not dry_run:
+                self.nc_cat_chunks(chunks, dest_path, working_dir=temp_dir)
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         print "\ttrimming dates of {} file at {}".format(
-                ds_var.name_in_model, ds_var._local_data)
-        self.nc_crop_time_axis(time_var_name, self.date_range,
-            ds_var._local_data, 
-            working_dir=dest_dir)
+                d_key.name_in_model, dest_path)
+        if not dry_run:
+            self.nc_crop_time_axis(
+                time_var_name, self.date_range, dest_path, 
+                working_dir=dest_dir)
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):
@@ -490,6 +524,24 @@ class GfdlppDataManager(DataManager):
                 'gfdl:' + self.MODEL_WK_DIR + os.sep,
                 'gfdl:' + self.MODEL_OUT_DIR + os.sep
             ])
+
+def frepp_freq(date_freq):
+    # logic as written would give errors for 1yr chunks (?)
+    if date_freq is None:
+        return date_freq
+    assert isinstance(date_freq, datelabel.DateFrequency)
+    if date_freq.unit == 'hr' or date_freq.quantity != 1:
+        return date_freq.format()
+    else:
+        # weekly not used in frepp
+        _frepp_dict = {
+            'yr': 'annual',
+            'se': 'seasonal',
+            'mo': 'monthly',
+            'da': 'daily',
+            'hr': 'hourly'
+        }
+        return _frepp_dict[date_freq.unit]
 
 frepp_translate = {
     'in_data_dir': 'root_dir', # /pp/ directory

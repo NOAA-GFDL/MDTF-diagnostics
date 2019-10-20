@@ -8,7 +8,7 @@ import glob
 import shlex
 import shutil
 import tempfile
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -94,14 +94,24 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
-    def make_tempdir(self, new_dir=None):
+    def make_tempdir(self, hash_obj=None):
+        tempdir_prefix = 'MDTF_temp_'
+
         temp_root = tempfile.gettempdir()
-        if new_dir is None:
-            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_', dir=temp_root)
+        if hash_obj is None:
+            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
+        elif isinstance(hash_obj, str):
+            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
         else:
-            new_dir = os.path.join(temp_root, new_dir)
-            if not os.path.isdir(new_dir):
-                os.makedirs(new_dir)
+            # nicer-looking hash representation
+            hash_ = hex(hash(hash_obj))
+            if hash_ < 0:
+                new_dir = 'Y'+str(hash_)[3:]
+            else:
+                new_dir = 'X'+str(hash_)[3:]
+            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
+        if not os.path.isdir(new_dir):
+            os.makedirs(new_dir)
         assert new_dir not in self._temp_dirs
         self._temp_dirs.append(new_dir)
         return new_dir
@@ -339,7 +349,9 @@ class Namespace(dict):
         See `https://stackoverflow.com/a/45170549`_.
         """
         d = self.toDict()
-        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
+        d2 = {k: repr(d[k]) for k in d}
+        FrozenNameSpace = namedtuple('FrozenNameSpace', sorted(d.keys()))
+        return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -364,8 +376,9 @@ class DataSet(Namespace):
             if key not in self:
                 self[key] = None
         
-        if '_remote_data' not in self:
-            self['_remote_data'] = []
+        for key in ['_remote_data', 'alternates']:
+            if key not in self:
+                self[key] = []
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
@@ -388,13 +401,10 @@ class DataSet(Namespace):
         to compare as equal.
         """
         d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('_')]
-        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
-
-    def tempdir(self):
-        """Set temporary directory deterministically.
-        """
-        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
+        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
+        d2 = {k: repr(d[k]) for k in keys_to_hash}
+        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
+        return FrozenDataSet(**d2)
 
 # ------------------------------------
 

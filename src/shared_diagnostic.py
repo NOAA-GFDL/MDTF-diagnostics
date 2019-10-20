@@ -326,7 +326,7 @@ class Diagnostic(object):
             if (not ds.required):
                 print "WARNING: optional file not found ",filepath
                 continue
-            if not (('alternates' in ds.__dict__) and (len(ds.alternates)>0)):
+            if not ds.alternates:
                 print "ERROR: missing required file ",filepath,". No alternatives found"
                 missing_list.append(filepath)
             else:

@@ -222,7 +222,7 @@ class GfdlppDataManager(DataManager):
             ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
             return ds
         else:
-            raise ValueError("Can't parse {}.".format(rel_path))
+            raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def _listdir(self, dir_):
         print "\t\tDEBUG: listdir on pp{}".format(dir_[len(self.root_dir):])
@@ -264,20 +264,25 @@ class GfdlppDataManager(DataManager):
         """
         self._component_map = defaultdict(list)
 
+        # match files ending in .nc only if they aren't of the form .tile#.nc
+        # (negative lookback) 
+        regex_no_tiles = re.compile(r".*(?<!\.tile\d)\.nc$")
+
         paths = self.filtered_os_walk(
             [self.component, 'ts', frepp_freq(self.data_freq), 
                 frepp_freq(self.chunk_freq)]
         )
         for dir_ in paths:
             file_lookup = defaultdict(list)
+            dir_contents = self._listdir(os.path.join(self.root_dir, dir_))
+            dir_contents = list(filter(regex_no_tiles.search, dir_contents))
             files = []
-            for f in self._listdir(os.path.join(self.root_dir, dir_)):
-                if f.endswith('.nc'):
-                    try:
-                        files.append(self.parse_pp_path(dir_, f))
-                    except ValueError as exc:
-                        print exc
-                        continue
+            for f in dir_contents:
+                try:
+                    files.append(self.parse_pp_path(dir_, f))
+                except ValueError as exc:
+                    print '\t\tDEBUG: ', exc
+                    continue
             for ds in files:
                 (data_key, cpt_key) = self.keys_from_dataset(ds)
                 file_lookup[data_key].append(ds)

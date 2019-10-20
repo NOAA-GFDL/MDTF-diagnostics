@@ -9,6 +9,13 @@ from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datetime
+if os.name == 'posix' and sys.version_info[0] < 3:
+    try:
+        from subprocess32 import CalledProcessError
+    except ImportError:
+        from subprocess import CalledProcessError
+else:
+    from subprocess import CalledProcessError
 import util
 import datelabel
 import netcdf_helper
@@ -222,13 +229,15 @@ class DataManager(object):
 
     def _build_data_dicts(self):
         self.data_keys = defaultdict(list)
+        self.data_pods = defaultdict(list)
         self.data_files = util.MultiMap()
         for pod in self.iter_pods():
             for var in pod.iter_vars_and_alts():
                 key = self.dataset_key(var)
+                self.data_pods[key].append(pod)
                 self.data_keys[key].append(var)
                 self.data_files[key].update(var._remote_data)
-    
+
     # -------------------------------------
 
     def fetch_data(self, verbose=0):
@@ -257,14 +266,41 @@ class DataManager(object):
         for file_ in self.remote_data_list():
             try:
                 self.fetch_dataset(file_)
-            except Exception as exc:
-                # TODO: reraise as DataAccessError, retry fetch, disqualify PODs
-                # that needed this data, log error.
-                print exc
+            except CalledProcessError as caught_exc:
+                exc = DataAccessError(
+                    file_,
+                    """Running external command {} when fetching {} @ {} 
+                    returned error: {} (status {}). Did not retry.
+                    """.format(
+                        caught_exc.cmd, file_.name_in_model, file_.date_freq,
+                        caught_exc.output, caught_exc.returncode
+                    )
+                )
+                self._fetch_exception_handler(exc)
+                continue
+            except Exception as caught_exc:
+                exc = DataAccessError(
+                    file_,
+                    """Caught exception {0}({1!r}) when fetching {2} @ {3}.
+                    Did not retry.
+                    """.format(
+                        type(caught_exc).__name__, caught_exc.args, 
+                        file_.name_in_model, file_.date_freq
+                    )
+                )
+                self._fetch_exception_handler(exc)
                 continue
 
         # do translation/ transformations of data here
         self.process_fetched_data_hook()
+
+    def _fetch_exception_handler(self, exc):
+        print exc
+        keys_from_file = self.data_files.inverse()
+        for key in keys_from_file[exc.dataset]:
+            for pod in self.data_pods[key]:
+                print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+                pod.skipped = exc
 
     def _query_data(self):
         for data_key in self.data_keys:

@@ -540,6 +540,94 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         return cover
 
 
+class Gfdludacmip6DataManager(GfdlarchiveDataManager):
+    def __init__(self, case_dict, config={}, verbose=0):
+        # set root_dir
+        # from experiment and model, determine institution and mip
+        # set realization code = 'r1i1p1f1' unless specified
+        super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
+        for attr in ['component', 'data_freq', 'chunk_freq']:
+            if attr not in self.__dict__:
+                self.__setattr__(attr, None)
+
+    # also need to determine table?
+    ComponentKey = namedtuple('ComponentKey', ['grid_label', 'revision_date'])
+
+    def keys_from_dataset(self, dataset):
+        return (
+            self.dataset_key(dataset),
+            self.ComponentKey(
+                grid_label=dataset.grid_label, 
+                revision_date=str(dataset.revision_date)
+            )
+        )
+
+    def parse_relative_path(self, subdir, filename):
+        rel_path = os.path.join(subdir, filename)
+        match = re.match(r"""
+            /?                      # maybe initial separator
+            (?P<table>\w+)/       # field name 
+            (?P<name_in_model>\w+)/       # field name
+            (?P<grid_label>\w+)/       # field name
+            v(?P<revision_date>\d+)/        # component name (again)
+            # start filename
+            (?P<name_in_model2>\w+)_       # field name
+            (?P<table2>\w+)_       # field name
+            (?P<model>\w+)_       # field name
+            (?P<experiment>\w+)_       # field name
+            (?P<realization_code>\w+)_       # field name
+            (?P<grid_label2>\w+)_       # field name
+            (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
+            nc                      # netCDF file extension
+        """, rel_path, re.VERBOSE)
+        if match:
+            md = match.groupdict()
+            for field in ['name_in_model', 'grid_label', 'table']:
+                if md[field] != md[field+'2']:
+                    raise ValueError("Can't parse {}.".format(rel_path))
+                del md[field+'2']
+            for field in ['model', 'experiment', 'realization_code']:
+                if md[field] != self.__dict__[field]:
+                    raise ValueError("Can't parse {}.".format(rel_path))
+                del md[field]
+            ds = util.DataSet(**md)
+            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
+            #need to get date_freq from table !
+            ds.date_freq = freq_from_table(ds.table)
+            return ds
+        else:
+            raise ValueError("Can't parse {}, skipping.".format(rel_path))
+
+    def subdirectory_filters(self):
+        # pylint: disable=maybe-no-member
+        return [self.component, 'ts', frepp_freq(self.data_freq), 
+                frepp_freq(self.chunk_freq)]
+                
+    def plan_data_fetch_hook(self):
+        """Filter files on model component and chunk frequency.
+        """
+        cmpts = self._select_model_component()
+        print "Components selected: ", cmpts
+        for data_key in self.data_keys:
+            cmpt = self._heuristic_component_tiebreaker( \
+                {cpt_key.component for cpt_key in self.data_files[data_key] \
+                if (cpt_key.component in cmpts)} \
+            )
+            # take shortest chunk frequency (revisit?)
+            chunk_freq = min(cpt_key.chunk_freq \
+                for cpt_key in self.data_files[data_key] \
+                if cpt_key.component == cmpt)
+            cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
+            print "Selected (component, chunk) = ({}, {}) for {} @ {}".format(
+                cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
+
+            assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
+            self.data_files[data_key] = sorted(
+                self._component_map[cpt_key, data_key], 
+                key=lambda ds: ds.date_range.start
+
+
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)
     if date_freq is None:

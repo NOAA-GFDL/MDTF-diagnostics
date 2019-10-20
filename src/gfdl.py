@@ -445,26 +445,31 @@ class GfdlppDataManager(DataManager):
         for f in self.data_files[d_key]:
             print "\tcopying pp{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
-            if not dry_run:
-                util.run_command(cp_command + [
-                    smartsite + f._remote_data, 
-                    # gcp requires trailing slash, ln ignores it
-                    smartsite + work_dir + os.sep
-                ]) 
+            if dry_run:
+                continue
+            util.run_command(cp_command + [
+                smartsite + f._remote_data, 
+                # gcp requires trailing slash, ln ignores it
+                smartsite + work_dir + os.sep
+            ]) 
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
+        trim_count = 0
         for f in self.data_files[d_key]:
             trimmed_range = f.date_range.intersection(self.date_range)
             if trimmed_range != f.date_range:
                 file_name = os.path.basename(f._remote_data)
                 print "\ttrimming '{}' of {} from {} to {}".format(
                     time_var_name, file_name, f.date_range, trimmed_range)
-                if not dry_run:
-                    self.nc_crop_time_axis(
-                        time_var_name, trimmed_range, file_name, 
-                        working_dir=work_dir)
+                trim_count = trim_count + 1
+                if dry_run:
+                    continue
+                self.nc_crop_time_axis(
+                    time_var_name, trimmed_range, file_name, 
+                    working_dir=work_dir)
+        assert trim_count <= 2
 
         # cat chunks to destination, if more than one
         if len(self.data_files[d_key]) > 1:

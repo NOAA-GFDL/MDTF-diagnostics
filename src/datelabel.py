@@ -229,7 +229,14 @@ class DateRange(object):
             return tuple([Date(item) for item in coll])
         else:
             raise ValueError("Malformed input")
-    
+
+    def format(self):
+        return '{}-{}'.format(self.start, self.end)
+    __str__ = format
+
+    def __repr__(self):
+        return "DateRange('{}')".format(self)
+
     def __eq__(self, other):
         return (self.start == other.start) and (self.end == other.end)
 
@@ -260,12 +267,10 @@ class DateRange(object):
         else:
             return (self.start <= item) and (self.end >= item)
     
-    def format(self):
-        return '{}-{}'.format(self.start, self.end)
-    __str__ = format
-
-    def __repr__(self):
-        return "DateRange('{}')".format(self)        
+    def intersection(self, item):
+        if not self.overlaps(item):
+            raise ValueError("{} and {} have empty intersection".format(self, item))
+        return DateRange(max(self.start, item.start), min(self.end, item.end))
 
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
@@ -342,21 +347,6 @@ class DateFrequency(datetime.timedelta):
                 'da': 'day',
             }
             return _local_dict[self.unit]
-
-    def format_frepp(self):
-        if self.unit == 'hr':
-            return self.format()
-        else:
-            # weekly not used in frepp
-            assert self.quantity == 1
-            _frepp_dict = {
-                'yr': 'annual',
-                'se': 'seasonal',
-                'mo': 'monthly',
-                'da': 'daily',
-                'hr': 'hourly'
-            }
-            return _frepp_dict[self.unit]
 
     def format(self):
         # conversion? only hr and yr used

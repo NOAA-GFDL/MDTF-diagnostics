@@ -175,7 +175,7 @@ class DataManager(object):
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
-            var._local_data = self.local_path(var)
+            var._local_data = self.local_path(self.dataset_key(var))
 
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
@@ -188,7 +188,14 @@ class DataManager(object):
                     ))
                     break
 
-    def local_path(self, dataset):
+    @staticmethod
+    def dataset_key(dataset):
+        """Return immutable representation of DataSet. Two DataSets should have 
+        the same key 
+        """
+        return dataset._freeze()
+
+    def local_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.
 
         This determines the local model data directory structure, which is
@@ -196,19 +203,22 @@ class DataManager(object):
         Files not following this convention won't be found.
         """
         # pylint: disable=maybe-no-member
-        freq = dataset.date_freq.format_local()
+        assert 'name_in_model' in data_key._fields
+        assert 'date_freq' in data_key._fields
+        # values in key are repr strings by default, so need to instantiate the
+        # datelabel object to use its formatting method
+        try:
+            # value in key is from __str__
+            freq = datelabel.DateFrequency(data_key.date_freq)
+        except ValueError:
+            # value in key is from __repr__
+            freq = eval('datelabel.'+data_key.date_freq)
+        freq = freq.format_local()
         return os.path.join(
             self.MODEL_DATA_DIR, freq,
             "{}.{}.{}.nc".format(
-                self.case_name, dataset.name_in_model, freq)
+                self.case_name, data_key.name_in_model, freq)
         )
-
-    @staticmethod
-    def dataset_key(dataset):
-        """Return immutable representation of DataSet. Two DataSets should have 
-        the same key 
-        """
-        return dataset._freeze()
 
     def _build_data_dicts(self):
         self.data_keys = defaultdict(list)
@@ -237,6 +247,7 @@ class DataManager(object):
                 pod.skipped = exc
                 new_varlist = []
             pod.varlist = new_varlist
+            pod.alternates = []
         # revise DataManager's to-do list, now that we've marked some PODs as
         # being skipped due to data inavailability
         self._build_data_dicts()
@@ -275,7 +286,6 @@ class DataManager(object):
             if var._remote_data:
                 print "Found {} (= {}) @ {} for {}".format(
                     var.name_in_model, var.name, var.date_freq, pod_name)
-                var.alternates = []
                 yield var
             elif not var.alternates:
                 raise DataQueryFailure(
@@ -420,7 +430,7 @@ class LocalfileDataManager(DataManager):
         return (dataset.name_in_model, str(dataset.date_freq))
 
     def query_dataset(self, dataset):
-        path = self.local_path(dataset)
+        path = self.local_path(self.dataset_key(dataset))
         if os.path.isfile(path):
             return [path]
         else:

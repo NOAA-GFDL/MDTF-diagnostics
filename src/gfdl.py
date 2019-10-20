@@ -457,7 +457,8 @@ class GfdlppDataManager(DataManager):
                         # gcp requires trailing slash, ln ignores it
                         smartsite + temp_dir + os.sep
                     ]) 
-                chunks.append(f.file)
+                _, file_name = os.path.split(f._remote_data)
+                chunks.append(file_name)
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)

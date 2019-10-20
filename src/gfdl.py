@@ -424,6 +424,14 @@ class GfdlppDataManager(DataManager):
         """
         return sorted(self.data_keys.keys())
 
+    def _fetch_exception_handler(self, exc):
+        print exc
+        # iterating over the keys themselves, so that will be what's passed 
+        # in the exception
+        for pod in self.data_pods[exc.dataset]:
+            print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+            pod.skipped = exc
+
     def fetch_dataset(self, d_key, method='auto', dry_run=False):
         """Copy files to temporary directory and combine chunks.
         """

@@ -370,8 +370,9 @@ class DataSet(Namespace):
             if key not in self:
                 self[key] = None
         
-        if '_remote_data' not in self:
-            self['_remote_data'] = []
+        for key in ['_remote_data', 'alternates']:
+            if key not in self:
+                self[key] = None
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name

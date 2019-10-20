@@ -230,6 +230,7 @@ class DataManager(object):
                 pod.skipped = exc
                 new_varlist = []
             pod.varlist = new_varlist
+            pod.alternates = []
         # revise DataManager's to-do list, now that we've marked some PODs as
         # being skipped due to data inavailability
         self._build_data_dicts()
@@ -262,7 +263,6 @@ class DataManager(object):
             if var._remote_data:
                 print "Found {} (= {}) @ {} for {}".format(
                     var.name_in_model, var.name, var.date_freq, pod_name)
-                var.alternates = []
                 yield var
             elif not var.alternates:
                 raise DataQueryFailure(

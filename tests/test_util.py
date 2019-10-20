@@ -29,27 +29,58 @@ class TestBasicClasses(unittest.TestCase):
         temp2 = Temp2()
         self.assertEqual(temp2.foo, 0)
 
-    def test_bidict_inverse(self):
+    def test_multimap_inverse(self):
         # test inverse map
-        temp = util.BiDict({'a':1, 'b':2})
-        self.assertIn(1, temp.inverse)
-        self.assertEqual(temp.inverse[2],['b'])
+        temp = util.MultiMap({'a':1, 'b':2})
+        temp_inv = temp.inverse()
+        self.assertIn(1, temp_inv)
+        self.assertEqual(temp_inv[2], set(['b']))
 
-    def test_bidict_setitem(self):
+    def test_multimap_setitem(self):
         # test key addition and handling of duplicate values
-        temp = util.BiDict({'a':1, 'b':2})
+        temp = util.MultiMap({'a':1, 'b':2})
         temp['c'] = 1           
-        self.assertIn(1, temp.inverse)
-        self.assertItemsEqual(temp.inverse[1],['a','c'])
+        temp_inv = temp.inverse()
+        self.assertIn(1, temp_inv)
+        self.assertItemsEqual(temp_inv[1], set(['a','c']))
         temp['b'] = 3
-        self.assertIn(2, temp.inverse)
-        self.assertEqual(temp.inverse[2],[])
+        temp_inv = temp.inverse()
+        self.assertNotIn(2, temp_inv)
 
-    def test_bidict_delitem(self):
+    def test_multimap_delitem(self):
         # test item deletion
-        temp = util.BiDict({'a':1, 'b':2})
+        temp = util.MultiMap({'a':1, 'b':2})
         del temp['b']
-        self.assertNotIn(2, temp.inverse)
+        temp_inv = temp.inverse()
+        self.assertNotIn(2, temp_inv)
+
+    def test_multimap_add(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['a'].add(3)
+        temp_inv = temp.inverse()
+        self.assertIn(3, temp_inv)
+        self.assertItemsEqual(temp_inv[3], set(['a']))
+        temp['a'].add(2)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['a','b']))
+
+    def test_multimap_add_new(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['x'].add(2)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['b','x']))
+
+    def test_multimap_remove(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['c'].add(2)
+        temp['c'].remove(1)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['b','c']))
+        self.assertIn(1, temp_inv)
+        self.assertItemsEqual(temp_inv[1], set(['a']))
 
     def test_namespace_basic(self):
         test = util.Namespace(name='A', B='C')

@@ -8,6 +8,8 @@ import glob
 import shlex
 import shutil
 import tempfile
+from collections import defaultdict, namedtuple
+from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -15,6 +17,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
+import signal
+import errno
 import yaml
 import datelabel
 
@@ -90,14 +94,24 @@ class PathManager(Singleton):
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
         return d
 
-    def make_tempdir(self, new_dir=None):
+    def make_tempdir(self, hash_obj=None):
+        tempdir_prefix = 'MDTF_temp_'
+
         temp_root = tempfile.gettempdir()
-        if new_dir is None:
-            new_dir = tempfile.mkdtemp(prefix='MDTF_temp_', dir=temp_root)
+        if hash_obj is None:
+            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
+        elif isinstance(hash_obj, str):
+            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
         else:
-            new_dir = os.path.join(temp_root, new_dir)
-            if not os.path.isdir(new_dir):
-                os.makedirs(new_dir)
+            # nicer-looking hash representation
+            hash_ = hex(hash(hash_obj))
+            if hash_ < 0:
+                new_dir = 'Y'+str(hash_)[3:]
+            else:
+                new_dir = 'X'+str(hash_)[3:]
+            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
+        if not os.path.isdir(new_dir):
+            os.makedirs(new_dir)
         assert new_dir not in self._temp_dirs
         self._temp_dirs.append(new_dir)
         return new_dir
@@ -111,34 +125,65 @@ class PathManager(Singleton):
         for d in self._temp_dirs:
             self.rm_tempdir(d)
 
-class BiDict(dict):
+class MultiMap(defaultdict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
     from either keys or values. 
     
     Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
-    from values is done on the `inverse` attribute and returns a list of matching
+    from values is done on the `inverse` attribute and returns a set of matching
     keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
     See <https://stackoverflow.com/a/21894086>_.
     """
     def __init__(self, *args, **kwargs):
-        """Initialize :class:`~util.BiDict` by passing an ordinary :obj:`dict`.
+        """Initialize :class:`~util.MultiMap` by passing an ordinary :obj:`dict`.
         """
-        super(BiDict, self).__init__(*args, **kwargs)
-        self.inverse = {}
-        for key, value in self.items():
-            self.inverse.setdefault(value,[]).append(key) 
+        super(MultiMap, self).__init__(set, *args, **kwargs)
+        for key in self.keys():
+            if type(self[key]) is not set:
+                if hasattr(self[key], '__iter__'):
+                    super(MultiMap, self).__setitem__(key, set(self[key]))
+                else:
+                    super(MultiMap, self).__setitem__(key, set([self[key]]))
 
     def __setitem__(self, key, value):
-        if key in self:
-            self.inverse[self[key]].remove(key) 
-        super(BiDict, self).__setitem__(key, value)
-        self.inverse.setdefault(value,[]).append(key)        
+        if type(value) is not set:
+            if hasattr(value, '__iter__'):
+                value = set(value)
+            else:
+                value = set([value])
+        super(MultiMap, self).__setitem__(key, value)
 
-    def __delitem__(self, key):
-        self.inverse.setdefault(self[key],[]).remove(key)
-        if self[key] in self.inverse and not self.inverse[self[key]]: 
-            del self.inverse[self[key]]
-        super(BiDict, self).__delitem__(key)    
+    def get_(self, key):
+        if key not in self.keys():
+            raise KeyError(key)
+        temp = list(self[key])
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
+    
+    def to_dict(self):
+        d = {}
+        for key in self.keys():
+            d[key] = self.get_(key)
+        return d
+
+    def inverse(self):
+        d = defaultdict(set)
+        for key, val_set in self.items():
+            for v in val_set:
+                d[v].add(key)
+        return dict(d)
+
+    def inverse_get_(self, val):
+        # if val not in self.values():
+        #     raise KeyError(val)
+        temp = self.inverse()
+        temp = list(temp[val])
+        if len(temp) == 1:
+            return temp[0]
+        else:
+            return temp
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -161,26 +206,21 @@ class VariableTranslator(Singleton):
                 file_contents['convention_name'] = [file_contents['convention_name']]
             for conv in file_contents['convention_name']:
                 if verbose > 0: print 'XXX found ' + conv
-                self.field_dict[conv] = BiDict(file_contents['var_names'])
+                self.field_dict[conv] = MultiMap(file_contents['var_names'])
 
     def toCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
         assert convention in self.field_dict, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        temp = self.field_dict[convention].inverse[varname_in]
-        if len(temp) == 1:
-            return temp[0]
-        else:
-            return temp
+        return self.field_dict[convention].inverse_get_(varname_in)
     
     def fromCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
         assert convention in self.field_dict, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention][varname_in]
-
+        return self.field_dict[convention].get_(varname_in)
 
 class Namespace(dict):
     """ A dictionary that provides attribute-style access.
@@ -309,7 +349,9 @@ class Namespace(dict):
         See `https://stackoverflow.com/a/45170549`_.
         """
         d = self.toDict()
-        return tuple((k, repr(d[k])) for k in sorted(d.keys()))
+        d2 = {k: repr(d[k]) for k in d}
+        FrozenNameSpace = namedtuple('FrozenNameSpace', sorted(d.keys()))
+        return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -330,10 +372,13 @@ class DataSet(Namespace):
     """
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', 
-            'remote_resource', 'local_resource']:
+        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
             if key not in self:
                 self[key] = None
+        
+        for key in ['_remote_data', 'alternates']:
+            if key not in self:
+                self[key] = []
 
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
@@ -351,18 +396,15 @@ class DataSet(Namespace):
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
-        Exclude attributes starting with 'nohash_' from the comparison, in case 
+        Exclude attributes starting with '_' from the comparison, in case 
         we want DataSets with different timestamps, temporary directories, etc.
         to compare as equal.
         """
         d = self.toDict()
-        keys_to_hash = [k for k in d.keys() if not k.startswith('nohash_')]
-        return tuple((k, repr(d[k])) for k in sorted(keys_to_hash))
-
-    def tempdir(self):
-        """Set temporary directory deterministically.
-        """
-        return 'MDTF_temp_{}'.format(hex(self.__hash__()))
+        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
+        d2 = {k: repr(d[k]) for k in keys_to_hash}
+        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
+        return FrozenDataSet(**d2)
 
 # ------------------------------------
 
@@ -456,6 +498,16 @@ def find_files(root_dir, pattern):
     prefix_length = len(os.path.normpath(root_dir)) + 1 
     return [p[prefix_length:] for p in paths]
 
+def check_executable(exec_name):
+    """Tests if <exec_name> is found on the current $PATH.
+
+    Args:
+        exec_name (:obj:`str`): Name of the executable to search for.
+
+    Returns: :obj:`bool` True/false if executable was found on $PATH.
+    """
+    return (find_executable(exec_name) is not None)
+
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.
     
@@ -482,7 +534,11 @@ def poll_command(command, shell=False, env=None):
     rc = process.poll()
     return rc
 
-def run_command(command, env=None, cwd=None):
+class TimeoutAlarm(Exception):
+    # dummy exception for signal handling in run_command
+    pass
+
+def run_command(command, env=None, cwd=None, timeout=0):
     """Subprocess wrapper to facilitate running single command without starting
     a shell.
 
@@ -500,6 +556,9 @@ def run_command(command, env=None, cwd=None):
             `Popen`, default `None`.
         cwd (:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
+        timeout (:obj:`int`, optional): Optionally, kill the command's subprocess
+            and raise a CalledProcessError if the command doesn't finish in 
+            `timeout` seconds.
 
     Returns:
         :obj:`list` of :obj:`str` containing output that was written to stdout  
@@ -509,18 +568,44 @@ def run_command(command, env=None, cwd=None):
         CalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
+    def _timeout_handler(signum, frame):
+        raise TimeoutAlarm
+
     if type(command) == str:
         command = shlex.split(command)
-    proc = subprocess.Popen(
-        command, shell=False, env=env, cwd=cwd,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, bufsize=0
-    )
-    (stdout, stderr) = proc.communicate()
-    if proc.returncode != 0:
-        print 'Run_command error:', stderr
+    cmd_str = ' '.join(command)
+    proc = None
+    pid = None
+    retcode = 1
+    stderr = ''
+    try:
+        proc = subprocess.Popen(
+            command, shell=False, env=env, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, bufsize=0
+        )
+        pid = proc.pid
+        # py3 has timeout built into subprocess; this is a workaround
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(int(timeout))
+        (stdout, stderr) = proc.communicate()
+        signal.alarm(0)  # cancel the alarm
+        retcode = proc.returncode
+    except TimeoutAlarm:
+        if proc:
+            proc.kill()
+        retcode = errno.ETIME
+        stderr = stderr+"\nKilled by timeout (>{}sec).".format(timeout)
+    except Exception as exc:
+        if proc:
+            proc.kill()
+        stderr = stderr+"\nCaught exception {0}({1!r})".format(
+            type(exc).__name__, exc.args)
+    if retcode != 0:
+        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
-            returncode=proc.returncode, cmd=' '.join(command), output=stderr)
+            returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
         return stdout.split('\0')
     else:
@@ -658,6 +743,19 @@ def append_html_template(template_file, target_file, template_dict={},
     with open(target_file, mode) as f:
         f.write(html_str)
 
+def caselist_from_args(args):
+    d = {}
+    for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
+        'chunk_freq', 'data_freq', 'model', 'variable_convention']:
+        if k in args:
+            d[k] = args[k]
+    for k in ['model', 'variable_convention']:
+        if k not in d:
+            d[k] = 'CMIP_GFDL'
+    if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
+        d['root_dir'] = args['CASE_ROOT_DIR']
+    return [d]
+
 def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
     """Parse script options.
 
@@ -690,14 +788,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
 
     if 'CASENAME' in cmdline_args:
         # also set up caselist with frepp data
-        default_args['case_list'] = [{
-            'CASENAME': cmdline_args['CASENAME'],
-            'model': 'CMIP_GFDL',
-            'variable_convention': 'CMIP_GFDL',
-            'FIRSTYR': cmdline_args['FIRSTYR'],
-            'LASTYR': cmdline_args['LASTYR'],
-            'root_dir': cmdline_args['CASE_ROOT_DIR']
-        }]
+        default_args['case_list'] = caselist_from_args(cmdline_args)
 
     # If we're running under frepp, overwrite with that
     # NOTE: this code path currently usued (frepp_args is always None)
@@ -708,14 +799,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
                     default_args[section][key] = frepp_args[key]
         if 'CASENAME' in frepp_args:
             # also set up caselist with frepp data
-            default_args['case_list'] = [{
-                'CASENAME': frepp_args['CASENAME'],
-                'model': 'CMIP_GFDL',
-                'variable_convention': 'CMIP_GFDL',
-                'FIRSTYR': frepp_args['FIRSTYR'],
-                'LASTYR': frepp_args['LASTYR'],
-                'root_dir': frepp_args['root_dir']
-            }]
+            default_args['case_list'] = caselist_from_args(frepp_args)
 
     # convert relative to absolute paths
     for key, val in default_args['paths'].items():

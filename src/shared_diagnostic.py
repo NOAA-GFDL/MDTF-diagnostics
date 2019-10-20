@@ -186,6 +186,10 @@ class Diagnostic(object):
         """
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
+        if isinstance(self.skipped, Exception):
+            # already encountered reason we can't run this, re-raise it here 
+            # to log it
+            raise self.skipped
         try:
             self._check_pod_driver(verbose)
             (found_files, missing_files) = self._check_for_varlist_files(self.varlist, verbose)
@@ -315,14 +319,14 @@ class Diagnostic(object):
         missing_list = []
         for ds in varlist:
             if (verbose > 2 ): print func_name +" "+ds.name
-            filepath = ds.local_resource
+            filepath = ds._local_data
             if os.path.isfile(filepath):
                 found_list.append(filepath)
                 continue
             if (not ds.required):
                 print "WARNING: optional file not found ",filepath
                 continue
-            if not (('alternates' in ds.__dict__) and (len(ds.alternates)>0)):
+            if not ds.alternates:
                 print "ERROR: missing required file ",filepath,". No alternatives found"
                 missing_list.append(filepath)
             else:

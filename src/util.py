@@ -140,19 +140,10 @@ class MultiMap(defaultdict):
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
-            if type(self[key]) is not set:
-                if hasattr(self[key], '__iter__'):
-                    super(MultiMap, self).__setitem__(key, set(self[key]))
-                else:
-                    super(MultiMap, self).__setitem__(key, set([self[key]]))
+            super(MultiMap, self).__setitem__(key, coerce_to_collection(self[key], set))
 
     def __setitem__(self, key, value):
-        if type(value) is not set:
-            if hasattr(value, '__iter__'):
-                value = set(value)
-            else:
-                value = set([value])
-        super(MultiMap, self).__setitem__(key, value)
+        super(MultiMap, self).__setitem__(key, coerce_to_collection(value, set))
 
     def get_(self, key):
         if key not in self.keys():
@@ -696,6 +687,19 @@ def run_shell_commands(commands, env=None, cwd=None):
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
+
+def coerce_to_collection(obj, coll_type):
+    assert coll_type in [list, set] # only supported types for now
+    if obj is None:
+        return coll_type([])
+    elif isinstance(obj, coll_type):
+        return obj
+    elif isinstance(obj, dict):
+        return coll_type(obj.keys())
+    elif hasattr(obj, '__iter__'):
+        return coll_type(obj)
+    else:
+        return coll_type([obj])
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

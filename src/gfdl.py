@@ -229,8 +229,7 @@ class GfdlppDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        if subdir_filter and not hasattr(subdir_filter, '__iter__'):
-            subdir_filter = [subdir_filter]
+        subdir_filter = util.coerce_to_collection(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             if not subdir_filter:

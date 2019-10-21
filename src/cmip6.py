@@ -20,6 +20,11 @@ class CMIP6_CVs(util.Singleton):
             'further_info_url','Conventions','license']:
             del self._contents[k]
 
+        # munge table_ids
+        self._contents['table_id'] = dict.fromkeys(self._contents['table_id'])
+        for tbl in self._contents['table_id']:
+            self._contents['table_id'][tbl] = parse_mip_table_id(tbl)
+
         self.cv = dict()
         self._lookups = dict()
 
@@ -39,18 +44,26 @@ class CMIP6_CVs(util.Singleton):
             return (items in self.cv[category])
 
     def get_lookup(self, source, dest):
-        assert source in self._contents
-        assert dest in self._contents
         if (source, dest) in self._lookups:
             return self._lookups[(source, dest)]
         elif (dest, source) in self._lookups:
             return self._lookups[(dest, source)].inverse()
-        else:
+        elif source in self._contents:
+            k = self._contents[source].keys()[0]
+            if dest not in self._contents[source][k]:
+                raise KeyError(
+                    "Can't find {} in attributes for {}.".format(dest, source))
             mm = util.MultiMap()
             for k in self._contents[source]:
-                mm[k].update(self._contents[source][k][dest])
+                mm[k].update(
+                    util.coerce_to_collection(self._contents[source][k][dest], set)
+                )
             self._lookups[(source, dest)] = mm
             return mm
+        elif dest in self._contents:
+            return self._lookups[(dest, source)].inverse()
+        else:
+            raise KeyError('Neither {} or {} in CV table list.'.format(source, dest))
 
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)

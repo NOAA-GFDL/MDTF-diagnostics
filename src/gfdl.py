@@ -526,9 +526,9 @@ def frepp_freq(date_freq):
         # weekly not used in frepp
         _frepp_dict = {
             'yr': 'annual',
-            'se': 'seasonal',
+            'season': 'seasonal',
             'mo': 'monthly',
-            'da': 'daily',
+            'day': 'daily',
             'hr': 'hourly'
         }
         return _frepp_dict[date_freq.unit]

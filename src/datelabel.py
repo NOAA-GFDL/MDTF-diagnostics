@@ -273,61 +273,60 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if (type(quantity) is str) and (unit is None):
-            (quantity, unit) = cls._parse_input_string(quantity)
-        if (type(quantity) is not int) or (type(unit) is not str):
+        if isinstance(quantity, str) and (unit is None):
+            (quantity, unit, kwargs) = cls._parse_input_string(quantity)
+        if (type(quantity) is not int) or not isinstance(unit, str):
             raise ValueError("Malformed input")
         else:
-            unit = unit.lower()
-
-        if unit[0] == 'y':
-            kwargs = {'days': 365 * quantity}
-            unit = 'yr'
-        elif unit[0] == 's':
-            kwargs = {'days': 91 * quantity}
-            unit = 'se'
-        elif unit[0] == 'm':
-            kwargs = {'days': 30 * quantity}
-            unit = 'mo'
-        elif unit[0] == 'w':
-            kwargs = {'days': 7 * quantity}
-            unit = 'wk'
-        elif unit[0] == 'd':
-            kwargs = {'days': quantity}
-            unit = 'da'
-        elif unit[0] == 'h':
-            kwargs = {'hours': quantity}
-            unit = 'hr'
-        else:
-            raise ValueError("Malformed input")
+            (quantity, unit, kwargs) = cls._parse_quantity_unit(quantity, unit)
         obj = super(DateFrequency, cls).__new__(cls, **kwargs) 
         obj.quantity = quantity
         obj.unit = unit
         return obj
 
-    @classmethod    
-    def _parse_input_string(cls, s):
-        match = re.match(r"(?P<quantity>\d+)[ _]*(?P<unit>[a-zA-Z]+)", s)
-        if match:
-            quantity = int(match.group('quantity'))
-            unit = match.group('unit')
+    @classmethod
+    def _parse_quantity_unit(cls, quantity, s):
+        if s in ['yearly', 'year', 'years', 'yr', 'y', 'annually', 'annual', 'ann']:
+            unit = 'yr'
+            kwargs = {'days': 365 * quantity}
+        elif s in ['seasonally', 'seasonal', 'seasons', 'season', 'se']:      
+            unit = 'season'
+            kwargs = {'days': 91 * quantity}
+        elif s in ['monthly', 'month', 'months', 'mon', 'mo']:      
+            unit = 'mo'
+            kwargs = {'days': 30 * quantity}
+        elif s in ['weekly', 'weeks', 'week', 'wk', 'w']:
+            unit = 'wk'
+            kwargs = {'weeks': quantity}
+        elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
+            unit = 'day'
+            kwargs = {'days': quantity}
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
+            unit = 'hr'
+            kwargs = {'hours': quantity}
+        elif s in ['minutes', 'minute', 'min']:
+            unit = 'min'
+            kwargs = {'minutes': quantity}
         else:
-            quantity = 1
-            if s in ['yearly', 'year', 'y', 'annually', 'annual', 'ann']:
-                unit = 'yr'
-            elif s in ['seasonally', 'seasonal', 'season']:      
-                unit = 'se'
-            elif s in ['monthly', 'month', 'mon', 'mo']:      
-                unit = 'mo'
-            elif s in ['weekly', 'week', 'wk', 'w']:
-                unit = 'wk'
-            elif s in ['daily', 'day', 'd', 'diurnal', 'diurnally']:
-                unit = 'da' 
-            elif s in ['hourly', 'hour', 'hr', 'h']:
-                unit = 'hr' 
+            raise ValueError("Malformed input {} {}".format(quantity, s))
+        return (quantity, unit, kwargs)
+
+    @classmethod    
+    def _parse_input_string(cls, str_):
+        match = re.match(
+            r"(?P<quantity>\d+)[ _]*(?P<unit>[a-z]+)", 
+            str_.lower()
+        )
+        try:
+            if match:
+                return cls._parse_quantity_unit(
+                    int(match.group('quantity')),
+                    match.group('unit')
+                )
             else:
-                raise ValueError("Malformed input {}".format(s))
-        return (quantity, unit)
+                return cls._parse_quantity_unit(1, str_.lower())
+        except ValueError:
+            raise ValueError("Malformed input {}".format(str_))
 
     def format(self):
         # conversion? only hr and yr used
@@ -341,12 +340,12 @@ class DateFrequency(datetime.timedelta):
             assert self.quantity == 1
             _local_dict = {
                 'mo': 'mon',
-                'da': 'day',
+                'day': 'day',
             }
             return _local_dict[self.unit]
 
     def __repr__(self):
-        return "DateFrequency('{}')".format(self)
+        return "{}('{}')".format(type(self).__name__, self)
 
     def __eq__(self, other):
         # Note: only want to match labels, don't want '24hr' == '1day'

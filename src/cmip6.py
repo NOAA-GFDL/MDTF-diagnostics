@@ -84,20 +84,20 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
 # (which doesn't cover all cases)
 mip_table_regex = re.compile(r"""
     ^ # start of line
-    (?P<prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
-    (?P<freq>\d?[a-z]*?)    # maybe a digit, followed by as few lowercase letters as possible
-    (?P<suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
-    (?P<qualifier>(Pt|Z|Off)?)
+    (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
+    (?P<table_freq>\d?[a-z]*?)    # maybe a digit, followed by as few lowercase letters as possible
+    (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
+    (?P<table_qualifier>(Pt|Z|Off)?)
     $ # end of line - necessary for lazy capture to work
 """, re.VERBOSE)
 
-def parse_mip_table(mip_table):
+def parse_mip_table_id(mip_table):
     match = re.match(mip_table_regex, mip_table)
     if match:
         md = match.groupdict()
-        if md['freq'] == 'clim':
-            md['freq'] == 'mon'
-        md['freq'] = datelabel.DateFrequency(md['freq'])
+        if md['table_freq'] == 'clim':
+            md['table_freq'] = 'mon'
+        md['date_freq'] = CMIP6DateFrequency(md['table_freq'])
         return md
     else:
         raise ValueError("Can't parse {}.".format(mip_table))
@@ -113,15 +113,17 @@ drs_directory_regex = re.compile(r"""
     (?P<table_id>\w+)/
     (?P<variable_id>\w+)/
     (?P<grid_label>\w+)/
-    v(?P<version_date>\d+)/
+    v(?P<version_date>\d+)
     /?                      # maybe final separator
 """, re.VERBOSE)
 
+# TODO: parse subexperiments!
 def parse_DRS_directory(dir_):
     match = re.match(drs_directory_regex, dir_)
     if match:
         md = match.groupdict()
         md['version_date'] = datelabel.Date(md['version_date'])
+        md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
         raise ValueError("Can't parse {}.".format(dir_))
@@ -133,8 +135,8 @@ drs_filename_regex = re.compile(r"""
     (?P<experiment_id>\w+)_       # field name
     (?P<realization_code>\w+)_       # field name
     (?P<grid_label>\w+)_       # field name
-    (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
-    nc                      # netCDF file extension
+    (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
+    \.nc                      # netCDF file extension
 """, re.VERBOSE)
 
 def parse_DRS_filename(file_):
@@ -144,6 +146,7 @@ def parse_DRS_filename(file_):
         md['start_date'] = datelabel.Date(md['start_date'])
         md['end_date'] = datelabel.Date(md['end_date'])
         md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
+        md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
         raise ValueError("Can't parse {}.".format(file_))

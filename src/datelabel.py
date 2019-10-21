@@ -274,66 +274,79 @@ class DateFrequency(datetime.timedelta):
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
         if isinstance(quantity, str) and (unit is None):
-            (quantity, unit, kwargs) = cls._parse_input_string(quantity)
-        if (type(quantity) is not int) or not isinstance(unit, str):
+            (kwargs, attrs) = cls._parse_input_string(None, quantity)
+        elif (type(quantity) is not int) or not isinstance(unit, str):
             raise ValueError("Malformed input")
         else:
-            (quantity, unit, kwargs) = cls._parse_quantity_unit(quantity, unit)
-        obj = super(DateFrequency, cls).__new__(cls, **kwargs) 
-        obj.quantity = quantity
-        obj.unit = unit
+            (kwargs, attrs) = cls._parse_input_string(quantity, unit)
+        obj = super(DateFrequency, cls).__new__(cls, **kwargs)
+        for key, val in attrs.items():
+            obj.__setattr__(key, val)
         return obj
 
     @classmethod
-    def _parse_quantity_unit(cls, quantity, s):
-        if s in ['yearly', 'year', 'years', 'yr', 'y', 'annually', 'annual', 'ann']:
-            unit = 'yr'
-            kwargs = {'days': 365 * quantity}
-        elif s in ['seasonally', 'seasonal', 'seasons', 'season', 'se']:      
-            unit = 'season'
-            kwargs = {'days': 91 * quantity}
-        elif s in ['monthly', 'month', 'months', 'mon', 'mo']:      
-            unit = 'mo'
-            kwargs = {'days': 30 * quantity}
-        elif s in ['weekly', 'weeks', 'week', 'wk', 'w']:
-            unit = 'wk'
-            kwargs = {'weeks': quantity}
-        elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
-            unit = 'day'
-            kwargs = {'days': quantity}
-        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
-            unit = 'hr'
-            kwargs = {'hours': quantity}
-        elif s in ['minutes', 'minute', 'min']:
-            unit = 'min'
-            kwargs = {'minutes': quantity}
-        else:
-            raise ValueError("Malformed input {} {}".format(quantity, s))
-        return (quantity, unit, kwargs)
-
-    @classmethod    
-    def _parse_input_string(cls, str_):
-        match = re.match(
-            r"(?P<quantity>\d+)[ _]*(?P<unit>[a-z]+)", 
-            str_.lower()
-        )
-        try:
+    def _parse_input_string(cls, quantity, unit):
+        # don't overwrite input
+        q = quantity
+        s = unit.lower()
+        if q is None:
+            match = re.match(r"(?P<quantity>\d+)[ _]*(?P<unit>[a-zA-Z]+)", s)
             if match:
-                return cls._parse_quantity_unit(
-                    int(match.group('quantity')),
-                    match.group('unit')
-                )
+                q = int(match.group('quantity'))
+                s = match.group('unit')
             else:
-                return cls._parse_quantity_unit(1, str_.lower())
-        except ValueError:
-            raise ValueError("Malformed input {}".format(str_))
+                q = 1
+        
+        if s in ['fx', 'static']:
+            q = 0
+            s = 'fx'
+        elif s in ['yearly', 'year', 'years', 'yr', 'y', 'annually', 'annual', 'ann']:
+            s = 'yr'
+        elif s in ['seasonally', 'seasonal', 'seasons', 'season', 'se']:      
+            s = 'season'
+        elif s in ['monthly', 'month', 'months', 'mon', 'mo']:      
+            s = 'mo'
+        elif s in ['weekly', 'weeks', 'week', 'wk', 'w']:
+            s = 'wk'
+        elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
+            s = 'day'
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
+            s = 'hr'
+        elif s in ['minutes', 'minute', 'min']:
+            s = 'min'
+        else:
+            raise ValueError("Malformed input {} {}".format(quantity, unit))
+        return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
+
+    @classmethod
+    def _get_timedelta_kwargs(cls, q, s):
+        if s == 'fx':
+            return {'seconds': 0}
+        elif s == 'yr':
+            return {'days': 365 * q}
+        elif s == 'season':
+            return {'days': 91 * q}
+        elif s == 'mo':
+            return {'days': 30 * q}
+        elif s == 'wk':
+            return {'weeks': q}
+        elif s == 'day':
+            return {'days': q}
+        elif s == 'hr':
+            return {'hours': q}
+        elif s == 'min':
+            return {'minutes': q}
+        else:
+            raise ValueError("Malformed input {} {}".format(q, s))
 
     def format(self):
+        # pylint: disable=maybe-no-member
         # conversion? only hr and yr used
         return "{}{}".format(self.quantity, self.unit)
     __str__ = format
 
     def format_local(self):
+        # pylint: disable=maybe-no-member
         if self.unit == 'hr':
             return self.format()
         else:
@@ -348,6 +361,7 @@ class DateFrequency(datetime.timedelta):
         return "{}('{}')".format(type(self).__name__, self)
 
     def __eq__(self, other):
+        # pylint: disable=maybe-no-member
         # Note: only want to match labels, don't want '24hr' == '1day'
         if isinstance(other, DateFrequency):
             return (self.quantity == other.quantity) and (self.unit == other.unit)

@@ -1,6 +1,64 @@
 import os
 import re
 import datelabel
+import util
+
+class CMIP6_CVs(util.Singleton):
+    def __init__(self, unittest_flag=False):
+        # pylint: disable=maybe-no-member
+        if unittest_flag:
+            # value not used, when we're testing will mock out call to read_json
+            # below with actual translation table to use for test
+            file_ = 'dummy_filename'
+        else:
+            paths = util.PathManager()
+            file_ = os.path.join(paths.CODE_ROOT, 'src', 
+                'cmip6-cmor-tables','Tables','CMIP6_CV.json')
+        self._contents = util.read_json(file_)
+        self._contents = self._contents['CV']
+        for k in ['product','version_metadata','required_global_attributes',
+            'further_info_url','Conventions','license']:
+            del self._contents[k]
+
+        self.cv = dict()
+        self._lookups = dict()
+
+    def _make_cv(self):
+        # make on-demand
+        if self.cv:
+            return
+        for k in self._contents:
+            self.cv[k] = util.coerce_to_collection(self._contents[k], list)
+
+    def is_in_cv(self, category, items):
+        self._make_cv()
+        assert category in self.cv
+        if hasattr(items, '__iter__'):
+            return [(item in self.cv[category]) for item in items]
+        else:
+            return (items in self.cv[category])
+
+    def get_lookup(self, source, dest):
+        assert source in self._contents
+        assert dest in self._contents
+        if (source, dest) in self._lookups:
+            return self._lookups[(source, dest)]
+        elif (dest, source) in self._lookups:
+            return self._lookups[(dest, source)].inverse()
+        else:
+            mm = util.MultiMap()
+            for k in self._contents[source]:
+                mm[k].update(self._contents[source][k][dest])
+            self._lookups[(source, dest)] = mm
+            return mm
+
+    def lookup(self, source_items, source, dest):
+        _lookup = self.get_lookup(source, dest)
+        if hasattr(source_items, '__iter__'):
+            return [_lookup[item] for item in source_items]
+        else:
+            return _lookup[source_items]
+
 
 class CMIP6DateFrequency(datelabel.DateFrequency):
     # http://goo.gl/v1drZl, page 16

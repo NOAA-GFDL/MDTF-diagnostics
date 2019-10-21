@@ -2,6 +2,84 @@ import os
 import re
 import datelabel
 
+class CMIP6DateFrequency(datelabel.DateFrequency):
+    # http://goo.gl/v1drZl, page 16
+    _precision_lookup = {
+        'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
+        'hr': 5, # includes minutes
+        'min': 6, # = subhr, minutes and seconds
+        }  
+    _regex = re.compile(r"""
+        ^
+        (?P<quantity>(1|3|6)?)
+        (?P<unit>[a-z]*?)
+        (?P<avg>(C|CM|Pt)?)
+        $
+    """, re.VERBOSE)
+
+    @classmethod    
+    def _parse_input_string(cls, quantity, unit):
+        if not quantity:
+            match = re.match(cls._regex, unit)
+        else:
+            match = re.match(cls._regex, str(quantity)+unit)
+        if match:
+            md = match.groupdict()
+            if md['unit'] == 'dec':
+                md['quantity'] = 10
+                md['unit'] = 'yr'
+            elif md['unit'] == 'mon':
+                md['unit'] = 'mo'
+            elif md['unit'] == 'subhr':
+                # questionable assumption
+                md['quantity'] = 15
+                md['unit'] = 'min'
+            elif md['unit'] == 'fx':
+                md['quantity'] = 0
+                md['unit'] = 'fx'
+
+            if not md['quantity']:
+                md['quantity'] = 1
+            else:
+                md['quantity'] = int(md['quantity'])
+            
+            if not md['avg']:
+                md['avg'] = 'Mean'
+            elif md['avg'] in ['C', 'CM']:
+                md['avg'] = 'Clim'
+
+            md['precision'] = cls._precision_lookup[md['unit']]
+            return (cls._get_timedelta_kwargs(md['quantity'], md['unit']), md)
+        else:
+            raise ValueError("Malformed input {} {}".format(quantity, unit))
+
+    def format(self):
+        # pylint: disable=maybe-no-member
+        if self.unit == 'fx':
+            return 'fx'
+        elif self.unit == 'yr' and self.quantity == 10:
+            return 'dec'
+        elif self.unit == 'mo':
+            s = 'mon'
+        elif self.unit == 'hr':
+            s = str(self.quantity) + self.unit
+        elif self.unit == 'min':
+            s = 'subhr'
+        else:
+            s = self.unit
+        if self.avg == 'Mean':
+            return s
+        elif self.avg == 'Pt':
+            return s + self.avg
+        elif self.avg == 'Clim':
+            if self.unit == 'hr':
+                return s + 'CM'
+            else:
+                return s + 'C'
+        else: 
+            raise ValueError("Malformed data {} {}".format(self.quantity, self.unit))
+    __str__ = format
+
 # see https://earthsystemcog.org/projects/wip/mip_table_about
 # (which doesn't cover all cases)
 mip_table_regex = re.compile(r"""

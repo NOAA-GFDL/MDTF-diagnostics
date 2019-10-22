@@ -8,7 +8,6 @@ Note:
 """
 import re
 import datetime
-import time
 
 class Date(datetime.datetime):
     """Define a date with variable level precision.
@@ -36,6 +35,7 @@ class Date(datetime.datetime):
             elif precision == 2:
                 args = (args[0], args[1], 1) # missing day
         obj = super(Date, cls).__new__(cls, *args, **kwargs) 
+        assert precision <= 6 # other values not supported
         obj.precision = precision
         return obj
 
@@ -45,33 +45,21 @@ class Date(datetime.datetime):
         """
         if '-' in s:
             return tuple([int(ss) for ss in s.split('-')])
-        elif len(s) == 4:
-            return (int(s[0:4]), )
-        elif len(s) == 6: 
-            return (int(s[0:4]), int(s[4:6]))
-        elif len(s) == 8: 
-            return (int(s[0:4]), int(s[4:6]), int(s[6:8]))
-        elif len(s) == 10: 
-            return (int(s[0:4]), int(s[4:6]), int(s[6:8]), int(s[8:10]))
-        else:
-            raise ValueError("Malformed input {}".format(s))
+        ans = [int(s[0:4])]
+        for i in range(4, len(s), 2):
+            ans.append(int(s[i:(i+2)]))
+        return tuple(ans)
+
+    _strftimes = ('', '%Y', '%Y%m', '%Y%m%d', '%Y%m%d%H', '%Y%m%d%H%M', '%Y%m%d%H%M%S')
 
     def format(self):
         """Print date in YYYYMMDDHH format, with length being set automatically
         from precision. 
         
-        Other formats can be obtained manually with `strftime`.
+        Other formats can be obtained manually with `strftime`, or by subclassing
+        and changing the _strftimes tuple.
         """
-        if self.precision == 1:
-            return self.strftime('%Y')
-        elif self.precision == 2:
-            return self.strftime('%Y%m')
-        elif self.precision == 3:
-            return self.strftime('%Y%m%d')
-        elif self.precision == 4:
-            return self.strftime('%Y%m%d%H')
-        else:
-            raise ValueError("Malformed input")
+        return self.strftime(self._strftimes[self.precision])
     __str__ = format
     
     def __repr__(self):
@@ -133,21 +121,13 @@ class Date(datetime.datetime):
         """Return a copy of Date advanced by one time unit as specified by
         the `precision` attribute.
         """
-        if self.precision == 1:
-            return Date(self.year + 1)
-        elif self.precision == 2:
+        if self.precision == 2: # nb: can't handle this with timedeltas
             if self.month == 12:
                 return Date(self.year + 1, 1)
             else:
                 return Date(self.year, self.month + 1)
-        elif self.precision == 3:
-            dt = self.__add__(datetime.timedelta(days = 1))
-            return Date(dt.year, dt.month, dt.day)
-        elif self.precision == 4:
-            dt = self.__add__(datetime.timedelta(hours = 1))
-            return Date(dt.year, dt.month, dt.day, dt.hour)
         else:
-            raise ValueError("Malformed input")
+            return self._inc_dec_common(1)
 
     def _to_interval_end(self):
         """Return a copy of Date advanced by one time unit as specified by
@@ -155,7 +135,8 @@ class Date(datetime.datetime):
         """
         temp = self.increment()
         return Date(
-            temp.__add__(datetime.timedelta(seconds = -1)),
+            # Q: does this handle leap seconds correctly?
+            temp.__add__(datetime.timedelta(milliseconds = -100)),
             self.precision
         )
 
@@ -163,21 +144,29 @@ class Date(datetime.datetime):
         """Return a copy of Date moved back by one time unit as specified by
         the `precision` attribute.
         """
-        if self.precision == 1:
-            return Date(self.year - 1)
-        elif self.precision == 2:
+        if self.precision == 2: # nb: can't handle this with timedeltas
             if self.month == 1:
                 return Date(self.year - 1, 12)
             else:
                 return Date(self.year, self.month - 1)
-        elif self.precision == 3:
-            dt = self.__add__(datetime.timedelta(days = -1))
-            return Date(dt.year, dt.month, dt.day)
-        elif self.precision == 4:
-            dt = self.__add__(datetime.timedelta(hours = -1))
-            return Date(dt.year, dt.month, dt.day, dt.hour)
         else:
+            return self._inc_dec_common(-1)
+
+    def _inc_dec_common(self, delta):
+        if self.precision == 1:
+            return Date(self.year + delta) # nb: can't handle this with timedeltas
+        elif self.precision == 3:
+            td = datetime.timedelta(days = delta)
+        elif self.precision == 4:
+            td = datetime.timedelta(hours = delta)
+        elif self.precision == 5:
+            td = datetime.timedelta(minutes = delta)
+        elif self.precision == 6:
+            td = datetime.timedelta(seconds = delta)
+        else:
+            # prec == 2 case handled in calling logic
             raise ValueError("Malformed input")
+        return Date(self.__add__(td), self.precision)
 
 
 class DateRange(object):
@@ -198,11 +187,14 @@ class DateRange(object):
             start = Date(start)
         if not isinstance(end, Date):
             end = Date(end)
-        end = end._to_interval_end()
-        assert start < end
+        if start.precision != end.precision:
+            start.precision = min(start.precision, end.precision)
+            end.precision = min(start.precision, end.precision)
 
         self.start = start
-        self.end = end
+        self._cmp_end = end # version with same precision, for comparisons
+        self.end = end._to_interval_end()
+        assert self.start < self._cmp_end
 
     @classmethod
     def _parse_input_string(cls, s):
@@ -217,10 +209,10 @@ class DateRange(object):
             # ONLY IF ranges are continguous and nonoverlapping
             dt_ranges = sorted(coll, key=lambda dtr: dtr.start)
             for i in range(0, len(dt_ranges) - 1):
-                if (dt_ranges[i].end.increment() != dt_ranges[i+1].start) \
-                    or (dt_ranges[i+1].start.decrement() != dt_ranges[i].end):
+                if (dt_ranges[i]._cmp_end.increment() != dt_ranges[i+1].start) \
+                    or (dt_ranges[i+1].start.decrement() != dt_ranges[i]._cmp_end):
                     raise ValueError("Date Ranges not contiguous and nonoverlapping.")
-            return (dt_ranges[0].start, dt_ranges[-1].end)
+            return (dt_ranges[0].start, dt_ranges[-1]._cmp_end)
         elif all(isinstance(item, Date) for item in coll):
             # given a bunch of Dates, return interval containing them
             return (min(coll), max(coll))
@@ -280,83 +272,96 @@ class DateFrequency(datetime.timedelta):
         365 days and a month is taken as 30 days. 
     """
     # define __new__, not __init__, because timedelta is immutable
-    def __new__(cls, quantity, unit=''):
-        if (type(quantity) is str) and (unit == ''):
-            (quantity, unit) = cls._parse_input_string(quantity)
-        if (type(quantity) is not int) or (type(unit) is not str):
+    def __new__(cls, quantity, unit=None):
+        if isinstance(quantity, str) and (unit is None):
+            (kwargs, attrs) = cls._parse_input_string(None, quantity)
+        elif (type(quantity) is not int) or not isinstance(unit, str):
             raise ValueError("Malformed input")
         else:
-            unit = unit.lower()
-
-        if unit[0] == 'y':
-            kwargs = {'days': 365 * quantity}
-            unit = 'yr'
-        elif unit[0] == 's':
-            kwargs = {'days': 91 * quantity}
-            unit = 'se'
-        elif unit[0] == 'm':
-            kwargs = {'days': 30 * quantity}
-            unit = 'mo'
-        elif unit[0] == 'w':
-            kwargs = {'days': 7 * quantity}
-            unit = 'wk'
-        elif unit[0] == 'd':
-            kwargs = {'days': quantity}
-            unit = 'da'
-        elif unit[0] == 'h':
-            kwargs = {'hours': quantity}
-            unit = 'hr'
-        else:
-            raise ValueError("Malformed input")
-        obj = super(DateFrequency, cls).__new__(cls, **kwargs) 
-        obj.quantity = quantity
-        obj.unit = unit
+            (kwargs, attrs) = cls._parse_input_string(quantity, unit)
+        obj = super(DateFrequency, cls).__new__(cls, **kwargs)
+        for key, val in attrs.items():
+            obj.__setattr__(key, val)
         return obj
-        
-    @classmethod    
-    def _parse_input_string(cls, s):
-        match = re.match(r"(?P<quantity>\d+)[ _]*(?P<unit>[a-zA-Z]+)", s)
-        if match:
-            quantity = int(match.group('quantity'))
-            unit = match.group('unit')
-        else:
-            quantity = 1
-            if s in ['yearly', 'year', 'y', 'annually', 'annual', 'ann']:
-                unit = 'yr'
-            elif s in ['seasonally', 'seasonal', 'season']:      
-                unit = 'se'
-            elif s in ['monthly', 'month', 'mon', 'mo']:      
-                unit = 'mo'
-            elif s in ['weekly', 'week', 'wk', 'w']:
-                unit = 'wk'
-            elif s in ['daily', 'day', 'd', 'diurnal', 'diurnally']:
-                unit = 'da' 
-            elif s in ['hourly', 'hour', 'hr', 'h']:
-                unit = 'hr' 
+
+    @classmethod
+    def _parse_input_string(cls, quantity, unit):
+        # don't overwrite input
+        q = quantity
+        s = unit.lower()
+        if q is None:
+            match = re.match(r"(?P<quantity>\d+)[ _]*(?P<unit>[a-zA-Z]+)", s)
+            if match:
+                q = int(match.group('quantity'))
+                s = match.group('unit')
             else:
-                raise ValueError("Malformed input {}".format(s))
-        return (quantity, unit)
+                q = 1
+        
+        if s in ['fx', 'static']:
+            q = 0
+            s = 'fx'
+        elif s in ['yearly', 'year', 'years', 'yr', 'y', 'annually', 'annual', 'ann']:
+            s = 'yr'
+        elif s in ['seasonally', 'seasonal', 'seasons', 'season', 'se']:      
+            s = 'season'
+        elif s in ['monthly', 'month', 'months', 'mon', 'mo']:      
+            s = 'mo'
+        elif s in ['weekly', 'weeks', 'week', 'wk', 'w']:
+            s = 'wk'
+        elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
+            s = 'day'
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
+            s = 'hr'
+        elif s in ['minutes', 'minute', 'min']:
+            s = 'min'
+        else:
+            raise ValueError("Malformed input {} {}".format(quantity, unit))
+        return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
+
+    @classmethod
+    def _get_timedelta_kwargs(cls, q, s):
+        if s == 'fx':
+            return {'seconds': 0}
+        elif s == 'yr':
+            return {'days': 365 * q}
+        elif s == 'season':
+            return {'days': 91 * q}
+        elif s == 'mo':
+            return {'days': 30 * q}
+        elif s == 'wk':
+            return {'weeks': q}
+        elif s == 'day':
+            return {'days': q}
+        elif s == 'hr':
+            return {'hours': q}
+        elif s == 'min':
+            return {'minutes': q}
+        else:
+            raise ValueError("Malformed input {} {}".format(q, s))
+
+    def format(self):
+        # pylint: disable=maybe-no-member
+        # conversion? only hr and yr used
+        return "{}{}".format(self.quantity, self.unit)
+    __str__ = format
 
     def format_local(self):
+        # pylint: disable=maybe-no-member
         if self.unit == 'hr':
             return self.format()
         else:
             assert self.quantity == 1
             _local_dict = {
                 'mo': 'mon',
-                'da': 'day',
+                'day': 'day',
             }
             return _local_dict[self.unit]
 
-    def format(self):
-        # conversion? only hr and yr used
-        return "{}{}".format(self.quantity, self.unit)
-    __str__ = format
-
     def __repr__(self):
-        return "DateFrequency('{}')".format(self)
+        return "{}('{}')".format(type(self).__name__, self)
 
     def __eq__(self, other):
+        # pylint: disable=maybe-no-member
         # Note: only want to match labels, don't want '24hr' == '1day'
         if isinstance(other, DateFrequency):
             return (self.quantity == other.quantity) and (self.unit == other.unit)

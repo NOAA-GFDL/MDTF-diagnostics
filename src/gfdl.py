@@ -180,10 +180,7 @@ class GfdlarchiveDataManager(DataManager):
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
 
-    DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])
-    class UndecidedKey(ABCMeta):
-        pass
-    
+    DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
         return self.DataKey(
             name_in_model=dataset.name_in_model, 
@@ -191,7 +188,7 @@ class GfdlarchiveDataManager(DataManager):
         )
 
     @abstractmethod
-    def keys_from_dataset(self, dataset):
+    def undecided_key(self, dataset):
         pass
 
     @abstractmethod
@@ -271,8 +268,9 @@ class GfdlarchiveDataManager(DataManager):
                     continue
                 for ds in file_lookup[data_key]:
                     if ds.date_range in self.date_range:
-                        (d_key, u_key) = self.keys_from_dataset(ds)
+                        d_key = self.dataset_key(ds)
                         assert data_key == d_key
+                        u_key = self.undecided_key(ds)
                         self.data_files[data_key].update([u_key])
                         self._component_map[u_key, data_key].append(ds)
 
@@ -473,14 +471,10 @@ class GfdlppDataManager(GfdlarchiveDataManager):
                 self.__setattr__(attr, None)
 
     UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
-
-    def keys_from_dataset(self, dataset):
-        return (
-            self.dataset_key(dataset),
-            self.UndecidedKey(
-                component=dataset.component, 
-                chunk_freq=str(dataset.chunk_freq)
-            )
+    def undecided_key(self, dataset):
+        return self.UndecidedKey(
+            component=dataset.component, 
+            chunk_freq=str(dataset.chunk_freq)
         )
 
     def parse_relative_path(self, subdir, filename):
@@ -561,7 +555,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         chunk_freq = min(u_key.chunk_freq \
             for u_key in self.data_files[data_key] \
             if u_key.component == cmpt)
-        return UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
+        return self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
 
 
 class Gfdludacmip6DataManager(GfdlarchiveDataManager):
@@ -602,15 +596,11 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
     # also need to determine table?
     UndecidedKey = namedtuple('UndecidedKey', 
         ['table_id', 'grid_label', 'revision_date'])
-
-    def keys_from_dataset(self, dataset):
-        return (
-            self.dataset_key(dataset),
-            self.UndecidedKey(
-                table_id=str(dataset.table_id),
-                grid_label=dataset.grid_label, 
-                revision_date=str(dataset.revision_date)
-            )
+    def undecided_key(self, dataset):
+        return self.UndecidedKey(
+            table_id=str(dataset.table_id),
+            grid_label=dataset.grid_label, 
+            revision_date=str(dataset.revision_date)
         )
 
     def parse_relative_path(self, subdir, filename):

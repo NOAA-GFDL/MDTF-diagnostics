@@ -201,8 +201,7 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        if subdir_filter and not hasattr(subdir_filter, '__iter__'):
-            subdir_filter = [subdir_filter]
+        subdir_filter = util.coerce_to_collection(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             if not subdir_filter:
@@ -639,9 +638,9 @@ def frepp_freq(date_freq):
         # weekly not used in frepp
         _frepp_dict = {
             'yr': 'annual',
-            'se': 'seasonal',
+            'season': 'seasonal',
             'mo': 'monthly',
-            'da': 'daily',
+            'day': 'daily',
             'hr': 'hourly'
         }
         return _frepp_dict[date_freq.unit]

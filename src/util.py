@@ -19,6 +19,7 @@ else:
     import subprocess
 import signal
 import errno
+import json
 import yaml
 import datelabel
 
@@ -139,19 +140,10 @@ class MultiMap(defaultdict):
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
-            if type(self[key]) is not set:
-                if hasattr(self[key], '__iter__'):
-                    super(MultiMap, self).__setitem__(key, set(self[key]))
-                else:
-                    super(MultiMap, self).__setitem__(key, set([self[key]]))
+            super(MultiMap, self).__setitem__(key, coerce_to_collection(self[key], set))
 
     def __setitem__(self, key, value):
-        if type(value) is not set:
-            if hasattr(value, '__iter__'):
-                value = set(value)
-            else:
-                value = set([value])
-        super(MultiMap, self).__setitem__(key, value)
+        super(MultiMap, self).__setitem__(key, coerce_to_collection(value, set))
 
     def get_(self, key):
         if key not in self.keys():
@@ -408,6 +400,45 @@ class DataSet(Namespace):
 
 # ------------------------------------
 
+def read_json(file_path):
+    def _utf8_to_ascii(data, ignore_dicts = False):
+        # json returns UTF-8 encoded strings by default, but we're in py2 where 
+        # everything is ascii. Convert strings to ascii using this solution:
+        # https://stackoverflow.com/a/33571117
+
+        # if this is a unicode string, return its string representation
+        if isinstance(data, unicode):
+            # raise UnicodeDecodeError if file contains non-ascii characters
+            return data.encode('ascii', 'strict')
+        # if this is a list of values, return list of byteified values
+        if isinstance(data, list):
+            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+        # if this is a dictionary, return dictionary of byteified keys and values
+        # but only if we haven't already byteified it
+        if isinstance(data, dict) and not ignore_dicts:
+            return {
+                _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
+                for key, value in data.iteritems()
+            }
+        # if it's anything else, return it in its original form
+        return data
+
+    assert os.path.exists(file_path), \
+        "Couldn't find file {}.".format(file_path)
+    try:    
+        with open(file_path, 'r') as file_obj:
+            file_contents = _utf8_to_ascii(
+                json.load(file_obj, object_hook=_utf8_to_ascii),
+                ignore_dicts=True
+            )
+    except UnicodeDecodeError:
+        print '{} contains non-ascii characters. Exiting.'.format(file_path)
+        exit()
+    except IOError:
+        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        exit()
+    return file_contents
+
 def read_yaml(file_path, verbose=0):
     """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 
     module. Wrapping file I/O simplifies unit testing.
@@ -656,6 +687,19 @@ def run_shell_commands(commands, env=None, cwd=None):
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
+
+def coerce_to_collection(obj, coll_type):
+    assert coll_type in [list, set] # only supported types for now
+    if obj is None:
+        return coll_type([])
+    elif isinstance(obj, coll_type):
+        return obj
+    elif isinstance(obj, dict):
+        return coll_type(obj.keys())
+    elif hasattr(obj, '__iter__'):
+        return coll_type(obj)
+    else:
+        return coll_type([obj])
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

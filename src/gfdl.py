@@ -181,7 +181,8 @@ class GfdlarchiveDataManager(DataManager):
         self.root_dir = case_dict['root_dir']
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])
-    # ComponentKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
+    class UndecidedKey(ABCMeta):
+        pass
     
     def dataset_key(self, dataset):
         return self.DataKey(
@@ -202,7 +203,7 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_collection(subdir_filter)
+        subdir_filter = util.coerce_to_collection(subdir_filter, list)
         found_dirs = []
         for dir_ in dirs_in:
             if not subdir_filter:
@@ -253,7 +254,7 @@ class GfdlarchiveDataManager(DataManager):
                     print '\t\tDEBUG: ', exc
                     continue
             for ds in files:
-                (data_key, cpt_key) = self.keys_from_dataset(ds)
+                data_key = self.dataset_key(ds)
                 file_lookup[data_key].append(ds)
             for data_key in self.data_keys:
                 if data_key not in file_lookup:
@@ -270,18 +271,87 @@ class GfdlarchiveDataManager(DataManager):
                     continue
                 for ds in file_lookup[data_key]:
                     if ds.date_range in self.date_range:
-                        (d_key, cpt_key) = self.keys_from_dataset(ds)
+                        (d_key, u_key) = self.keys_from_dataset(ds)
                         assert data_key == d_key
-                        self.data_files[data_key].update([cpt_key])
-                        self._component_map[cpt_key, data_key].append(ds)
+                        self.data_files[data_key].update([u_key])
+                        self._component_map[u_key, data_key].append(ds)
 
     def query_dataset(self, dataset):
         # all the work done by _query_data
         pass
 
+    def _minimum_cover(self, cover_fn, tiebreaker_fn=None):
+        """Determine experiment component(s) from heuristics.
+
+        1. Pick all data from the same component if possible, and from as few
+            components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
+            and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
+
+        2. If multiple components satisfy (1) equally well, use a tie-breaking 
+            heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 
+
+        Args:
+            datasets (iterable of :class:`~util.DataSet`): 
+                Collection of all variables being requested in this DataManager.
+
+        Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
+
+        Raises: AssertionError if problem is unsatisfiable. This indicates some
+            error in the input data.
+        """
+        def _default_tiebreaker(elts):
+            assert len(elts) == 1
+            return elts[0]
+        if tiebreaker_fn is None:
+            tiebreaker_fn = _default_tiebreaker
+
+        all_idx = set()
+        d = defaultdict(set)
+        for idx, data_key in enumerate(self.data_files.keys()):
+            for u_key in self.data_files[data_key]:
+                d[cover_fn(u_key)].add(idx)
+            all_idx.add(idx)
+        assert set(e for s in d.values() for e in s) == all_idx
+
+        covered_idx = set()
+        cover = []
+        while covered_idx != all_idx:
+            # max() with key=... only returns one entry if there are duplicates
+            # so we need to do two passes in order to call our tiebreaker logic
+            max_uncovered = max(len(val - covered_idx) for val in d.values())
+            elt_to_add = tiebreaker_fn(
+                [key for key,val in d.iteritems() \
+                    if (len(val - covered_idx) == max_uncovered)]
+            )
+            cover.append(elt_to_add)
+            covered_idx.update(d[elt_to_add])
+        assert cover # is not empty
+        return cover
+
     @abstractmethod
-    def plan_data_fetch_hook(self):
+    def _decide_allowed_components(self):
         pass
+
+    @abstractmethod
+    def _decide_component_for_file(self, data_key, allowed_u_keys):
+        pass
+
+    def plan_data_fetch_hook(self):
+        """Filter files on model component and chunk frequency.
+        """
+        allowed_u_keys = self._decide_allowed_components()
+        print "Components selected: ", allowed_u_keys
+        for data_key in self.data_keys:
+            u_key = self._decide_component_for_file(data_key, allowed_u_keys)
+            print "Selected {} for {} @ {}".format(
+                u_key, data_key.name_in_model, data_key.date_freq)
+
+            # check we didn't eliminate everything:
+            assert self._component_map[u_key, data_key] 
+            self.data_files[data_key] = sorted(
+                self._component_map[u_key, data_key], 
+                key=lambda ds: ds.date_range.start
+            )
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -402,12 +472,12 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
 
-    ComponentKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
+    UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
 
     def keys_from_dataset(self, dataset):
         return (
             self.dataset_key(dataset),
-            self.ComponentKey(
+            self.UndecidedKey(
                 component=dataset.component, 
                 chunk_freq=str(dataset.chunk_freq)
             )
@@ -444,30 +514,6 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         return [self.component, 'ts', frepp_freq(self.data_freq), 
                 frepp_freq(self.chunk_freq)]
                 
-    def plan_data_fetch_hook(self):
-        """Filter files on model component and chunk frequency.
-        """
-        cmpts = self._select_model_component()
-        print "Components selected: ", cmpts
-        for data_key in self.data_keys:
-            cmpt = self._heuristic_component_tiebreaker( \
-                {cpt_key.component for cpt_key in self.data_files[data_key] \
-                if (cpt_key.component in cmpts)} \
-            )
-            # take shortest chunk frequency (revisit?)
-            chunk_freq = min(cpt_key.chunk_freq \
-                for cpt_key in self.data_files[data_key] \
-                if cpt_key.component == cmpt)
-            cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
-            print "Selected (component, chunk) = ({}, {}) for {} @ {}".format(
-                cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
-
-            assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
-            self.data_files[data_key] = sorted(
-                self._component_map[cpt_key, data_key], 
-                key=lambda ds: ds.date_range.start
-            )
-
     @staticmethod
     def _heuristic_component_tiebreaker(str_list):
         """Determine experiment component(s) from heuristics.
@@ -497,47 +543,25 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         else:
             return _heuristic_tiebreaker_sub(str_list)
 
-    def _select_model_component(self):
-        """Determine experiment component(s) from heuristics.
+    def _decide_allowed_components(self):
+        cmpts = self._minimum_cover(
+            lambda u_key: u_key.component,
+            self._heuristic_component_tiebreaker
+        )
+        return list({u_key for u_key in self.data_files.values()
+            if u_key.component in cmpts})
 
-        1. Pick all data from the same component if possible, and from as few
-            components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
-            and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
-
-        2. If multiple components satisfy (1) equally well, use a tie-breaking 
-            heuristic (:meth:`~gfdl.GfdlppDataManager._heuristic_component_tiebreaker`). 
-
-        Args:
-            datasets (iterable of :class:`~util.DataSet`): 
-                Collection of all variables being requested in this DataManager.
-
-        Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
-
-        Raises: AssertionError if problem is unsatisfiable. This indicates some
-            error in the input data.
-        """
-        all_idx = set()
-        d = defaultdict(set)
-        for idx, data_key in enumerate(self.data_files.keys()):
-            for cpt_key in self.data_files[data_key]:
-                d[cpt_key.component].add(idx)
-            all_idx.add(idx)
-        assert set(e for s in d.values() for e in s) == all_idx
-
-        covered_idx = set()
-        cover = []
-        while covered_idx != all_idx:
-            # max() with key=... only returns one entry if there are duplicates
-            # so we need to do two passes in order to call our tiebreaker logic
-            max_uncovered = max(len(val - covered_idx) for val in d.values())
-            cmpt_to_add = self._heuristic_component_tiebreaker(
-                [key for key,val in d.iteritems() \
-                    if (len(val - covered_idx) == max_uncovered)]
-            )
-            cover.append(cmpt_to_add)
-            covered_idx.update(d[cmpt_to_add])
-        assert cover # is not empty
-        return cover
+    def _decide_component_for_file(self, data_key, allowed_u_keys):
+        allowed_cmpts = {u_key.component for u_key in allowed_u_keys}
+        cmpt = self._heuristic_component_tiebreaker(
+            {u_key for u_key in self.data_files[data_key] \
+                if u_key.component in allowed_cmpts}
+        )
+        # take shortest chunk frequency (revisit?)
+        chunk_freq = min(u_key.chunk_freq \
+            for u_key in self.data_files[data_key] \
+            if u_key.component == cmpt)
+        return UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
 
 
 class Gfdludacmip6DataManager(GfdlarchiveDataManager):
@@ -570,8 +594,8 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         case_dict['root_dir'] = os.path.join(
             self._uda_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
-        for attr in ['date_freq', 'table_id', 'grid_label', 'revision_date']:
+        super(Gfdludacmip6DataManager, self).__init__(case_dict, config, verbose)
+        for attr in ['data_freq', 'table_id', 'grid_label', 'revision_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
 
@@ -600,28 +624,6 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         return [self.table_id, self.variable_id, self.grid_label, 
             self.version_date]
                 
-    def plan_data_fetch_hook(self):
-        """Filter files on model component and chunk frequency.
-        """
-        cmpts = self._select_model_component()
-        print "Components selected: ", cmpts
-        for data_key in self.data_keys:
-            cmpt = self._heuristic_component_tiebreaker( \
-                {cpt_key.component for cpt_key in self.data_files[data_key] \
-                if (cpt_key.component in cmpts)} \
-            )
-            # take shortest chunk frequency (revisit?)
-            chunk_freq = min(cpt_key.chunk_freq \
-                for cpt_key in self.data_files[data_key] \
-                if cpt_key.component == cmpt)
-            cpt_key = self.ComponentKey(component=cmpt, chunk_freq=chunk_freq)
-            print "Selected (component, chunk) = ({}, {}) for {} @ {}".format(
-                cmpt, chunk_freq, data_key.name_in_model, data_key.date_freq)
-
-            assert self._component_map[cpt_key, data_key] # shouldn't have eliminated everything
-            self.data_files[data_key] = sorted(
-                self._component_map[cpt_key, data_key], 
-                key=lambda ds: ds.date_range.start
 
 
 def frepp_freq(date_freq):

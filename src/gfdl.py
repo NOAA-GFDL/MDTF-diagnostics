@@ -13,6 +13,7 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 import datelabel
 import util
+import cmip6
 from data_manager import DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
@@ -544,64 +545,60 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
+        self._uda_root = os.path.join('archive','pcmdi','repo')
+        cmip = cmip6.CMIP6_CVs()
+        if 'activity_id' not in case_dict:
+            if 'expermient_id' in case_dict:
+                key = case_dict['experiment_id']
+            elif 'expermient' in case_dict:
+                key = case_dict['experiment']
+            else:
+                raise Exception("Can't determine experiment.")
+        self.experiment_id = key
+        self.activity_id = cmip.lookup(key, 'experiment_id', 'activity_id')
+        if 'institution_id' not in case_dict:
+            if 'source_id' in case_dict:
+                key = case_dict['source_id']
+            elif 'model' in case_dict:
+                key = case_dict['model']
+            else:
+                raise Exception("Can't determine model/source.")
+        self.source_id = key
+        self.institution_id = cmip.lookup(key, 'source_id', 'institution_id')
+        if 'member_id' not in case_dict:
+            self.member_id = 'r1i1p1f1'
+        case_dict['root_dir'] = os.path.join(
+            self._uda_root, self.activity_id, self.institution_id, 
+            self.source_id, self.experiment_id, self.member_id)
         super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
-        for attr in ['component', 'data_freq', 'chunk_freq']:
+        for attr in ['date_freq', 'table_id', 'grid_label', 'revision_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
 
     # also need to determine table?
-    ComponentKey = namedtuple('ComponentKey', ['grid_label', 'revision_date'])
+    UndecidedKey = namedtuple('UndecidedKey', 
+        ['table_id', 'grid_label', 'revision_date'])
 
     def keys_from_dataset(self, dataset):
         return (
             self.dataset_key(dataset),
-            self.ComponentKey(
+            self.UndecidedKey(
+                table_id=str(dataset.table_id),
                 grid_label=dataset.grid_label, 
                 revision_date=str(dataset.revision_date)
             )
         )
 
     def parse_relative_path(self, subdir, filename):
-        rel_path = os.path.join(subdir, filename)
-        match = re.match(r"""
-            /?                      # maybe initial separator
-            (?P<table>\w+)/       # field name 
-            (?P<name_in_model>\w+)/       # field name
-            (?P<grid_label>\w+)/       # field name
-            v(?P<revision_date>\d+)/        # component name (again)
-            # start filename
-            (?P<name_in_model2>\w+)_       # field name
-            (?P<table2>\w+)_       # field name
-            (?P<model>\w+)_       # field name
-            (?P<experiment>\w+)_       # field name
-            (?P<realization_code>\w+)_       # field name
-            (?P<grid_label2>\w+)_       # field name
-            (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
-            nc                      # netCDF file extension
-        """, rel_path, re.VERBOSE)
-        if match:
-            md = match.groupdict()
-            for field in ['name_in_model', 'grid_label', 'table']:
-                if md[field] != md[field+'2']:
-                    raise ValueError("Can't parse {}.".format(rel_path))
-                del md[field+'2']
-            for field in ['model', 'experiment', 'realization_code']:
-                if md[field] != self.__dict__[field]:
-                    raise ValueError("Can't parse {}.".format(rel_path))
-                del md[field]
-            ds = util.DataSet(**md)
-            ds._remote_data = os.path.join(self.root_dir, rel_path)
-            ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
-            #need to get date_freq from table !
-            ds.date_freq = freq_from_table(ds.table)
-            return ds
-        else:
-            raise ValueError("Can't parse {}, skipping.".format(rel_path))
+        return cmip6.parse_DRS_path(
+            os.path.join(self.root_dir, subdir)[len(self._uda_root):],
+            filename
+        )
 
     def subdirectory_filters(self):
         # pylint: disable=maybe-no-member
-        return [self.component, 'ts', frepp_freq(self.data_freq), 
-                frepp_freq(self.chunk_freq)]
+        return [self.table_id, self.variable_id, self.grid_label, 
+            self.version_date]
                 
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.

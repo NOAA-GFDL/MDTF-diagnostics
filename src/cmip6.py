@@ -222,8 +222,13 @@ def parse_DRS_filename(file_):
     else:
         raise ValueError("Can't parse {}.".format(file_))
 
-def parse_DRS_path(path):
-    dir_, file_ = os.path.split(path)
+def parse_DRS_path(*args):
+    if len(args) == 1:
+        dir_, file_ = os.path.split(path)
+    elif len(args) == 2:
+        dir_, file_ = args
+    else:
+        raise ValueError()
     d1 = parse_DRS_directory(dir_)
     d2 = parse_DRS_filename(file_)
     common_keys = set(d1.keys())

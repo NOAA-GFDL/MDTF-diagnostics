@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 import datelabel
 import util
 import cmip6
-from data_manager import DataManager, DataQueryFailure
+from data_manager import DataSet, DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
@@ -493,7 +493,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = util.DataSet(**(match.groupdict()))
+            ds = DataSet(**(match.groupdict()))
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)

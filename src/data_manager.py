@@ -80,6 +80,24 @@ class DataSet(util.Namespace):
             temp.name = new_name
         return temp  
 
+    @classmethod
+    def from_pod_varlist(cls, var, dm_args):
+        translate = util.VariableTranslator()
+        var_copy = var.copy()
+        var_copy.update(dm_args)
+        ds = cls(**var_copy)
+        ds.original_name = ds.name
+        ds.CF_name = translate.toCF(self.convention, ds.name)
+        alt_ds_list = []
+        for alt_var in ds.alternates:
+            alt_ds = ds.copy(new_name=alt_var)
+            alt_ds.original_name = ds.original_name
+            alt_ds.CF_name = translate.toCF(self.convention, alt_ds.name)
+            alt_ds.alternates = []
+            alt_ds_list.append(alt_ds)
+        ds.alternates = alt_ds_list
+        return ds
+
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
@@ -230,6 +248,13 @@ class DataManager(object):
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
         pod.pod_env_vars.update(self.envvars)
+
+        # express varlist as DataSet objects
+        ds_list = []
+        for var in pod.varlist:
+            ds_list.append(Dataset.from_pod_varlist(var, 
+                {'convention': self.convention, 'DateFreqMixin': self.DateFreq}))
+        pod.varlist = ds_list
 
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)

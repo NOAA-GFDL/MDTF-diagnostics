@@ -351,13 +351,14 @@ class DataManager(object):
         # filter out any data we've previously fetched that's up to date
         unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier
-        if hasattr(self, 'fetch_ordering_function'):
-            sort_key = self.fetch_ordering_function
-        if hasattr(unique_files[0], '_remote_data'):
-            sort_key = attrgetter('_remote_data')
-        else:
-            sort_key = None
-        unique_files.sort(key=sort_key)
+        if unique_files:
+            if hasattr(self, 'fetch_ordering_function'):
+                sort_key = self.fetch_ordering_function
+            if hasattr(unique_files[0], '_remote_data'):
+                sort_key = attrgetter('_remote_data')
+            else:
+                sort_key = None
+            unique_files.sort(key=sort_key)
         return unique_files
     
     def local_data_is_current(self, dataset):

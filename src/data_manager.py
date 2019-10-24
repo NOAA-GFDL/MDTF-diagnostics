@@ -81,18 +81,18 @@ class DataSet(util.Namespace):
         return temp  
 
     @classmethod
-    def from_pod_varlist(cls, var, dm_args):
+    def from_pod_varlist(cls, pod_convention, var, dm_args):
         translate = util.VariableTranslator()
         var_copy = var.copy()
         var_copy.update(dm_args)
         ds = cls(**var_copy)
         ds.original_name = ds.name
-        ds.CF_name = translate.toCF(self.convention, ds.name)
+        ds.CF_name = translate.toCF(pod_convention, ds.name)
         alt_ds_list = []
         for alt_var in ds.alternates:
             alt_ds = ds.copy(new_name=alt_var)
             alt_ds.original_name = ds.original_name
-            alt_ds.CF_name = translate.toCF(self.convention, alt_ds.name)
+            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
             alt_ds.alternates = []
             alt_ds_list.append(alt_ds)
         ds.alternates = alt_ds_list
@@ -115,7 +115,7 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case_dict, config={}, DateFreqMixin=None, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
@@ -252,8 +252,8 @@ class DataManager(object):
         # express varlist as DataSet objects
         ds_list = []
         for var in pod.varlist:
-            ds_list.append(Dataset.from_pod_varlist(var, 
-                {'convention': self.convention, 'DateFreqMixin': self.DateFreq}))
+            ds_list.append(DataSet.from_pod_varlist(
+                pod.convention, var, {'DateFreqMixin': self.DateFreq}))
         pod.varlist = ds_list
 
         for var in pod.iter_vars_and_alts():
@@ -317,7 +317,7 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def fetch_data(self, verbose=0):
+    def fetch_data(self):
         self._query_data()
         # populate vars with found files
         for data_key in self.data_keys:

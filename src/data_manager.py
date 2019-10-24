@@ -4,7 +4,7 @@ import glob
 import shutil
 import atexit
 import signal
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
@@ -45,6 +45,47 @@ class DataAccessError(Exception):
     def __str__(self):
         return 'Data access error for {}: {}.'.format(
             self.dataset._remote_data, self.msg)
+
+class DataSet(util.Namespace):
+    """Class to describe datasets.
+
+    `https://stackoverflow.com/a/48806603`_ for implementation.
+    """
+    def __init__(self, *args, **kwargs):
+        super(DataSet, self).__init__(*args, **kwargs)
+        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
+            if key not in self:
+                self[key] = None
+        
+        for key in ['_remote_data', 'alternates']:
+            if key not in self:
+                self[key] = []
+
+        if ('var_name' in self) and (self.name is None):
+            self.name = self.var_name
+            del self.var_name
+        if ('freq' in self) and (self.date_freq is None):
+            self.date_freq = datelabel.DateFrequency(self.freq)
+            del self.freq
+
+    def copy(self, new_name=None):
+        temp = super(DataSet, self).copy()
+        if new_name is not None:
+            temp.name = new_name
+        return temp  
+
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        Exclude attributes starting with '_' from the comparison, in case 
+        we want DataSets with different timestamps, temporary directories, etc.
+        to compare as equal.
+        """
+        d = self.toDict()
+        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
+        d2 = {k: repr(d[k]) for k in keys_to_hash}
+        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
+        return FrozenDataSet(**d2)
 
 class DataManager(object):
     # analogue of TestFixture in xUnit

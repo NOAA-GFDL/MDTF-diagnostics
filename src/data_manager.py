@@ -4,7 +4,7 @@ import glob
 import shutil
 import atexit
 import signal
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
@@ -461,9 +461,12 @@ class DataManager(object):
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
 
-    @staticmethod
-    def dataset_key(dataset):
-        return (dataset.name_in_model, str(dataset.date_freq))
+    DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
+    def dataset_key(self, dataset):
+        return self.DataKey(
+            name_in_model=dataset.name_in_model, 
+            date_freq=str(dataset.date_freq)
+        )
 
     def query_dataset(self, dataset):
         path = self.local_path(self.dataset_key(dataset))

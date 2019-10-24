@@ -156,7 +156,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 class GfdlarchiveDataManager(DataManager):
     __metaclass__ = ABCMeta
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None, verbose=0):
         # load required modules
         modMgr = ModuleManager()
         modMgr.load(_current_module_versions['gcp'])
@@ -175,7 +175,7 @@ class GfdlarchiveDataManager(DataManager):
             tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
             if not os.path.isdir(tempfile.tempdir):
                 os.makedirs(tempfile.tempdir)
-        super(GfdlarchiveDataManager, self).__init__(case_dict, config, verbose)
+        super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin, verbose)
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
@@ -464,8 +464,8 @@ class GfdlarchiveDataManager(DataManager):
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, verbose=0):
-        super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
+    def __init__(self, case_dict, config={}, DateFreqMixin=None, verbose=0):
+        super(GfdlppDataManager, self).__init__(case_dict, config, DateFreqMixin, verbose)
         for attr in ['component', 'data_freq', 'chunk_freq']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
@@ -497,8 +497,8 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
-            ds.date_freq = datelabel.DateFrequency(ds.date_freq)
-            ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
+            ds.date_freq = self.DateFreq(ds.date_freq)
+            ds.chunk_freq = self.DateFreq(ds.chunk_freq)
             return ds
         else:
             raise ValueError("Can't parse {}, skipping.".format(rel_path))
@@ -559,7 +559,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
 
 
 class Gfdludacmip6DataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None, verbose=0):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
@@ -588,7 +588,8 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         case_dict['root_dir'] = os.path.join(
             self._uda_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        super(Gfdludacmip6DataManager, self).__init__(case_dict, config, verbose)
+        super(Gfdludacmip6DataManager, self).__init__(
+            case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency, verbose)
         for attr in ['data_freq', 'table_id', 'grid_label', 'revision_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)

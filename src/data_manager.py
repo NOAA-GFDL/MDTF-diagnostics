@@ -52,6 +52,12 @@ class DataSet(util.Namespace):
     `https://stackoverflow.com/a/48806603`_ for implementation.
     """
     def __init__(self, *args, **kwargs):
+        if 'DateFreqMixin' not in kwargs:
+            self.DateFreq = datelabel.DateFrequency
+        else:
+            self.DateFreq = kwargs['DateFreqMixin']
+            del kwargs['DateFreqMixin']
+
         super(DataSet, self).__init__(*args, **kwargs)
         for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
             if key not in self:
@@ -65,7 +71,7 @@ class DataSet(util.Namespace):
             self.name = self.var_name
             del self.var_name
         if ('freq' in self) and (self.date_freq is None):
-            self.date_freq = datelabel.DateFrequency(self.freq)
+            self.date_freq = self.DateFreq(self.freq)
             del self.freq
 
     def copy(self, new_name=None):
@@ -91,12 +97,17 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None, verbose=0):
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
         self.lastyr = datelabel.Date(case_dict['LASTYR'])
         self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+        if not DateFreqMixin:
+            self.DateFreq = datelabel.DateFrequency
+        else:
+            self.DateFreq = DateFreqMixin
+
         if 'envvars' in config:
             self.envvars = config['envvars'].copy() # gets appended to
         else:
@@ -114,7 +125,7 @@ class DataManager(object):
         else:
             self.pod_list = [] # should raise warning    
         if 'data_freq' in case_dict:
-            self.data_freq = datelabel.DateFrequency(case_dict['data_freq'])
+            self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
             self.data_freq = None
         self.pods = []
@@ -257,7 +268,7 @@ class DataManager(object):
         # datelabel object to use its formatting method
         try:
             # value in key is from __str__
-            freq = datelabel.DateFrequency(data_key.date_freq)
+            freq = self.DateFreq(data_key.date_freq)
         except ValueError:
             # value in key is from __repr__
             freq = eval('datelabel.'+data_key.date_freq)

@@ -200,18 +200,21 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_collection(subdir_filter, list)
+        subdir_filter = util.coerce_to_collection(subdir_filter, set)
         found_dirs = []
         for dir_ in dirs_in:
-            if not subdir_filter:
-                subdir_list = [d for d \
-                    in self._listdir(os.path.join(self.root_dir, dir_)) \
-                    if not (d.startswith('.') or d.endswith('.nc'))
-                ]
-            else:
-                subdir_list = subdir_filter
+            found_subdirs = {d for d \
+                in self._listdir(os.path.join(self.root_dir, dir_)) \
+                if not (d.startswith('.') or d.endswith('.nc'))
+            }
+            if subdir_filter:
+                found_subdirs = found_subdirs.intersection(subdir_filter)
+            if not found_subdirs:
+                raise Exception("Couldn't find subdirs (in {}) at {}".format(
+                    subdir_filter, os.path.join(self.root_dir, dir_)
+                ))
             found_dirs.extend([
-                os.path.join(dir_, subdir_) for subdir_ in subdir_list \
+                os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
                 if os.path.isdir(os.path.join(self.root_dir, dir_, subdir_))
             ])
         return found_dirs

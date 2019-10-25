@@ -78,7 +78,7 @@ class CMIP6_CVs(util.Singleton):
         self._make_cv()
         assert 'table_id' in self.cv
         return [tbl for tbl in self.cv['table_id'] \
-            if (parse_mip_table_id(tbl).date_freq == date_freq)]
+            if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
 
 
 class CMIP6DateFrequency(datelabel.DateFrequency):

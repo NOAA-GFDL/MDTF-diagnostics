@@ -586,7 +586,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
-        self._uda_root = os.path.join('archive','pcmdi','repo')
+        self._uda_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
             if 'experiment_id' in case_dict:

@@ -10,6 +10,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 from collections import defaultdict, namedtuple
+from itertools import chain
+from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datelabel
 import util
@@ -281,6 +283,27 @@ class GfdlarchiveDataManager(DataManager):
         # all the work done by _query_data
         pass
 
+    @staticmethod
+    def _default_tiebreaker(elts):
+        assert len(elts) == 1
+        return list(elts)[0]
+
+    def _require_all_same(self, value_fn, tiebreaker_fn=None):
+        #if tiebreaker_fn is None:
+        #    tiebreaker_fn = self._default_tiebreaker
+
+        allowed_vals = set(f for f in chain.from_iterable(self.data_files.values()))
+        for data_key in self.data_files:
+            allowed_vals = allowed_vals.intersection(
+                {value_fn(u_key) for u_key in self.data_files[data_key]}
+            )
+        if not allowed_vals:
+            raise AssertionError('Unable to choose the same value for all variables.')
+        if tiebreaker_fn:
+            return tiebreaker_fn(allowed_vals)
+        else:
+            return allowed_vals
+
     def _minimum_cover(self, cover_fn, tiebreaker_fn=None):
         """Determine experiment component(s) from heuristics.
 
@@ -300,11 +323,8 @@ class GfdlarchiveDataManager(DataManager):
         Raises: AssertionError if problem is unsatisfiable. This indicates some
             error in the input data.
         """
-        def _default_tiebreaker(elts):
-            assert len(elts) == 1
-            return elts[0]
         if tiebreaker_fn is None:
-            tiebreaker_fn = _default_tiebreaker
+            tiebreaker_fn = self._default_tiebreaker
 
         all_idx = set()
         d = defaultdict(set)
@@ -591,33 +611,67 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         case_dict['root_dir'] = os.path.join(
             self._uda_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
+
         super(Gfdludacmip6DataManager, self).__init__(case_dict, config, verbose)
-        for attr in ['data_freq', 'table_id', 'grid_label', 'revision_date']:
+
+        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
+        if 'data_freq' in self.__dict__:
+            self.table_id = cmip.table_id_from_freq(self.data_freq)
 
     # also need to determine table?
     UndecidedKey = namedtuple('UndecidedKey', 
-        ['table_id', 'grid_label', 'revision_date'])
+        ['table_id', 'grid_label', 'version_date'])
     def undecided_key(self, dataset):
         return self.UndecidedKey(
             table_id=str(dataset.table_id),
             grid_label=dataset.grid_label, 
-            revision_date=str(dataset.revision_date)
+            version_date=str(dataset.version_date)
         )
 
     def parse_relative_path(self, subdir, filename):
-        return cmip6.parse_DRS_path(
+        ds = cmip6.parse_DRS_path(
             os.path.join(self.root_dir, subdir)[len(self._uda_root):],
             filename
         )
+        ds.name_in_model = ds.variable_id
+        return ds
 
     def subdirectory_filters(self):
         # pylint: disable=maybe-no-member
-        return [self.table_id, self.variable_id, self.grid_label, 
-            self.version_date]
-                
+        return [self.table_id, None, # variable_id
+            self.grid_label, self.version_date]
 
+    @staticmethod
+    def _cmip6_table_tiebreaker(str_list):
+        # no suffix or qualifier, if possible
+        tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
+        tbls2 = [t for t in tbls if not t.table_qualifier]
+
+        pass
+
+    def _decide_allowed_components(self):
+        tables = self._minimum_cover(
+            attrgetter('table_id'), self._cmip6_table_tiebreaker
+        )
+        grid_lbls = self._require_all_same(attrgetter('grid_label'))
+        version_dates = self._require_all_same(attrgetter('version_date'))
+        version_date = str(max(datelabel.Date(dt) for dt in version_dates))
+        assert version_date
+
+        return [self.UndecidedKey(
+            table_id=str(tbl), grid_label=grid_lbl, version_date=version_date
+            ) for tbl in tables]
+
+    def _decide_component_for_file(self, data_key, allowed_u_keys):
+        allowed_tbls = {u_key.table_id for u_key in allowed_u_keys}
+        return allowed_u_keys[0]._replace(
+            table_id = self._cmip6_table_tiebreaker(
+                {u_key for u_key in self.data_files[data_key] \
+                    if u_key.table_id in allowed_tbls}
+        ))
+ 
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

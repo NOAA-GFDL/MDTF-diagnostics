@@ -199,6 +199,42 @@ def parse_mip_table_id(mip_table):
     else:
         raise ValueError("Can't parse {}.".format(mip_table))
 
+grid_label_regex = re.compile(r"""
+    g
+    (?P<global_mean>m?)
+    (?P<regrid>n|r?)
+    (?P<num>\d?)
+    (?P<region>a|g?)
+    (?P<zonal_mean>z?)
+""", re.VERBOSE)
+
+def parse_grid_label(grid_label):
+    match = re.match(grid_label_regex, grid_label)
+    if match:
+        md = match.groupdict()
+        ans = dict()
+        ans['grid_label'] = grid_label
+        if md['global_mean']:
+            ans['spatial_avg'] = 'global_mean'
+        elif md['zonal_mean']:
+            ans['spatial_avg'] = 'zonal_mean'
+        else:
+            ans['spatial_avg'] = None
+        ans['native_grid'] = not (md['regrid'] == 'r')
+        if not md['num']:
+            ans['grid_number'] = 0
+        else:
+            ans['grid_number'] = md['num']
+        if md['region'] == 'a':
+            ans['region'] = 'Antarctica'
+        elif md['region'] == 'g':
+            ans['region'] = 'Greenland'
+        else:
+            ans['region'] = None
+        return ans
+    else:
+        raise ValueError("Can't parse {}.".format(grid_label))
+
 drs_directory_regex = re.compile(r"""
     /?                      # maybe initial separator
     CMIP6/

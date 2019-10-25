@@ -749,12 +749,14 @@ def append_html_template(template_file, target_file, template_dict={},
 def caselist_from_args(args):
     d = {}
     for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-        'chunk_freq', 'data_freq', 'model', 'variable_convention']:
+        'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
         if k in args:
             d[k] = args[k]
     for k in ['model', 'variable_convention']:
         if k not in d:
             d[k] = 'CMIP_GFDL'
+    if 'CASENAME' not in d:
+        d['CASENAME'] = '{}/{}'.format(d['model'], d['experiment'])
     if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
         d['root_dir'] = args['CASE_ROOT_DIR']
     return [d]
@@ -789,7 +791,9 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
         # only let this be overridden if we're in a unit test
         rel_paths_root = cmdline_args['CODE_ROOT']
 
-    if 'CASENAME' in cmdline_args:
+    if ('CASENAME' in cmdline_args) or (
+        'model' in cmdline_args and 'experiment' in cmdline_args
+        ):
         # also set up caselist with frepp data
         default_args['case_list'] = caselist_from_args(cmdline_args)
 

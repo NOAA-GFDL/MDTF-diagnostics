@@ -68,9 +68,9 @@ class CMIP6_CVs(util.Singleton):
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
         if hasattr(source_items, '__iter__'):
-            return [_lookup[item] for item in source_items]
+            return [util.coerce_from_collection(_lookup[item]) for item in source_items]
         else:
-            return _lookup[source_items]
+            return util.coerce_from_collection(_lookup[source_items])
 
     # ----------------------------------
 

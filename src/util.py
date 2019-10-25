@@ -148,11 +148,7 @@ class MultiMap(defaultdict):
     def get_(self, key):
         if key not in self.keys():
             raise KeyError(key)
-        temp = list(self[key])
-        if len(temp) == 1:
-            return temp[0]
-        else:
-            return temp
+        return coerce_from_collection(self[key])
     
     def to_dict(self):
         d = {}
@@ -171,11 +167,7 @@ class MultiMap(defaultdict):
         # if val not in self.values():
         #     raise KeyError(val)
         temp = self.inverse()
-        temp = list(temp[val])
-        if len(temp) == 1:
-            return temp[0]
-        else:
-            return temp
+        return coerce_from_collection(temp[val])
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -659,6 +651,15 @@ def coerce_to_collection(obj, coll_type):
         return coll_type(obj)
     else:
         return coll_type([obj])
+
+def coerce_from_collection(obj):
+    if hasattr(obj, '__iter__'):
+        if len(obj) == 1:
+            return list(obj)[0]
+        else:
+            return list(obj)
+    else:
+        return obj        
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

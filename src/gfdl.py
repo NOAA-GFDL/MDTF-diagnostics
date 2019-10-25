@@ -589,9 +589,9 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         self._uda_root = os.path.join('archive','pcmdi','repo')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
-            if 'expermient_id' in case_dict:
+            if 'experiment_id' in case_dict:
                 key = case_dict['experiment_id']
-            elif 'expermient' in case_dict:
+            elif 'experiment' in case_dict:
                 key = case_dict['experiment']
             else:
                 raise Exception("Can't determine experiment.")

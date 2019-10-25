@@ -647,17 +647,36 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
     def _cmip6_table_tiebreaker(str_list):
         # no suffix or qualifier, if possible
         tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
-        tbls2 = [t for t in tbls if not t.table_qualifier]
+        tbls = [t for t in tbls if (
+            not t['spatial_avg'] and not t['region'] and t['temporal_avg'] == 'interval'
+        )]
+        if not tbls:
+            raise Exception('Need to refine table_id more carefully')
+        return min([t['table_id'] for t in tbls], key=lambda t: len(t['table_prefix']))
 
-        pass
+    @staticmethod
+    def _cmip6_grid_tiebreaker(str_list):
+        # no suffix or qualifier, if possible
+        grids = [cmip6.parse_grid_label(g) for g in str_list]
+        grids = [g for g in grids if (
+            not g['spatial_avg'] and not g['region']
+        )]
+        if not grids:
+            raise Exception('Need to refine grid_label more carefully')
+        return min([g['grid_label'] for g in grids], key=lambda g: g['grid_number'])
 
     def _decide_allowed_components(self):
         tables = self._minimum_cover(
             attrgetter('table_id'), self._cmip6_table_tiebreaker
         )
-        grid_lbls = self._require_all_same(attrgetter('grid_label'))
-        version_dates = self._require_all_same(attrgetter('version_date'))
-        version_date = str(max(datelabel.Date(dt) for dt in version_dates))
+        grid_lbl = self._require_all_same(
+            attrgetter('grid_label'), self._cmip6_grid_tiebreaker
+            )
+        assert grid_lbl
+        version_date = self._require_all_same(
+            attrgetter('version_date'),
+            lambda dates: str(max(datelabel.Date(dt) for dt in dates))
+            )
         assert version_date
 
         return [self.UndecidedKey(

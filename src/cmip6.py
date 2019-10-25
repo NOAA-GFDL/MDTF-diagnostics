@@ -176,7 +176,7 @@ def parse_mip_table_id(mip_table):
     match = re.match(mip_table_regex, mip_table)
     if match:
         md = match.groupdict()
-        md['mip_table'] = mip_table
+        md['table_id'] = mip_table
         if md['table_freq'] == 'clim':
             md['date_freq'] = CMIP6DateFrequency('mon')
         else:

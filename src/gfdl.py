@@ -11,7 +11,7 @@ else:
     import subprocess
 from collections import defaultdict, namedtuple
 from itertools import chain
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod
 import datelabel
 import util
@@ -198,7 +198,7 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        print "\t\tDEBUG: listdir on pp{}".format(dir_[len(self.root_dir):])
+        print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
@@ -253,7 +253,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\t\tDEBUG: ', exc
+                    print '\t\tDEBUG: ', exc, '\n\t\t', \
+                    os.path.join(self.root_dir, dir_)[len(self._uda_root):], f
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -286,18 +287,21 @@ class GfdlarchiveDataManager(DataManager):
     @staticmethod
     def _default_tiebreaker(elts):
         assert len(elts) == 1
-        return list(elts)[0]
+        return util.coerce_from_collection(elts)
 
     def _require_all_same(self, value_fn, tiebreaker_fn=None):
         #if tiebreaker_fn is None:
         #    tiebreaker_fn = self._default_tiebreaker
 
         allowed_vals = set(f for f in chain.from_iterable(self.data_files.values()))
+        print '\t', allowed_vals
         for data_key in self.data_files:
             allowed_vals = allowed_vals.intersection(
                 {value_fn(u_key) for u_key in self.data_files[data_key]}
             )
         if not allowed_vals:
+            print '\t', data_key,':'
+            print '\t\t', [value_fn(u_key) for u_key in self.data_files[data_key]]
             raise AssertionError('Unable to choose the same value for all variables.')
         if tiebreaker_fn:
             return tiebreaker_fn(allowed_vals)
@@ -421,7 +425,7 @@ class GfdlarchiveDataManager(DataManager):
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in self.data_files[d_key]:
-            print "\tcopying pp{} to {}".format(
+            print "\tcopying .../{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
             if dry_run:
                 continue
@@ -586,7 +590,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
-        self._uda_root = os.path.join('archive','pcmdi','repo')
+        self._uda_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
             if 'experiment_id' in case_dict:
@@ -613,7 +617,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             self.source_id, self.experiment_id, self.member_id)
         super(Gfdludacmip6DataManager, self).__init__(
             case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
-        for attr in ['data_freq', 'table_id', 'grid_label', 'revision_date']:
+        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
         if 'data_freq' in self.__dict__:
@@ -630,12 +634,12 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         )
 
     def parse_relative_path(self, subdir, filename):
-        ds = cmip6.parse_DRS_path(
+        d = cmip6.parse_DRS_path(
             os.path.join(self.root_dir, subdir)[len(self._uda_root):],
             filename
         )
-        ds.name_in_model = ds.variable_id
-        return ds
+        d['name_in_model'] = d['variable_id']
+        return DataSet(**d)
 
     def subdirectory_filters(self):
         # pylint: disable=maybe-no-member
@@ -651,7 +655,8 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         )]
         if not tbls:
             raise Exception('Need to refine table_id more carefully')
-        return min([t['table_id'] for t in tbls], key=lambda t: len(t['table_prefix']))
+        tbls = min(tbls, key=lambda t: len(t['table_prefix']))
+        return tbls['table_id']
 
     @staticmethod
     def _cmip6_grid_tiebreaker(str_list):
@@ -662,7 +667,8 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         )]
         if not grids:
             raise Exception('Need to refine grid_label more carefully')
-        return min([g['grid_label'] for g in grids], key=lambda g: g['grid_number'])
+        grids = min(grids, key=itemgetter('grid_number'))
+        return grids['grid_label']
 
     def _decide_allowed_components(self):
         tables = self._minimum_cover(

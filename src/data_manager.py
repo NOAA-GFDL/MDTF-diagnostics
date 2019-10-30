@@ -33,7 +33,10 @@ class DataQueryFailure(Exception):
         self.msg = msg
 
     def __str__(self):
-        return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+        if hasattr(self.dataset, 'name'):
+            return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+        else:
+            return 'Query failure: {}.'.format(self.msg)
 
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
@@ -43,8 +46,11 @@ class DataAccessError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return 'Data access error for {}: {}.'.format(
-            self.dataset._remote_data, self.msg)
+        if hasattr(self.dataset, '_remote_data'):
+            return 'Data access error for {}: {}.'.format(
+                self.dataset._remote_data, self.msg)
+        else:
+            return 'Data access error: {}.'.format(self.msg)
 
 class DataSet(util.Namespace):
     """Class to describe datasets.

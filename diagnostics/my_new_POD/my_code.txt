@@ -1,4 +1,5 @@
 load_model_data();
 do_calculations();
 make_awesome_plot();
+foo();
 

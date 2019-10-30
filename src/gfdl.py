@@ -15,6 +15,7 @@ from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod
 import datelabel
 import util
+import conflict_resolution as choose
 import cmip6
 from data_manager import DataSet, DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
@@ -284,90 +285,17 @@ class GfdlarchiveDataManager(DataManager):
         # all the work done by _query_data
         pass
 
-    @staticmethod
-    def _default_tiebreaker(elts):
-        assert len(elts) == 1
-        return util.coerce_from_collection(elts)
-
-    def _require_all_same(self, value_fn, tiebreaker_fn=None):
-        #if tiebreaker_fn is None:
-        #    tiebreaker_fn = self._default_tiebreaker
-
-        allowed_vals = set(f for f in chain.from_iterable(self.data_files.values()))
-        print '\t', allowed_vals
-        for data_key in self.data_files:
-            allowed_vals = allowed_vals.intersection(
-                {value_fn(u_key) for u_key in self.data_files[data_key]}
-            )
-        if not allowed_vals:
-            print '\t', data_key,':'
-            print '\t\t', [value_fn(u_key) for u_key in self.data_files[data_key]]
-            raise AssertionError('Unable to choose the same value for all variables.')
-        if tiebreaker_fn:
-            return tiebreaker_fn(allowed_vals)
-        else:
-            return allowed_vals
-
-    def _minimum_cover(self, cover_fn, tiebreaker_fn=None):
-        """Determine experiment component(s) from heuristics.
-
-        1. Pick all data from the same component if possible, and from as few
-            components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
-            and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
-
-        2. If multiple components satisfy (1) equally well, use a tie-breaking 
-            heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 
-
-        Args:
-            datasets (iterable of :class:`~util.DataSet`): 
-                Collection of all variables being requested in this DataManager.
-
-        Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
-
-        Raises: AssertionError if problem is unsatisfiable. This indicates some
-            error in the input data.
-        """
-        if tiebreaker_fn is None:
-            tiebreaker_fn = self._default_tiebreaker
-
-        all_idx = set()
-        d = defaultdict(set)
-        for idx, data_key in enumerate(self.data_files.keys()):
-            for u_key in self.data_files[data_key]:
-                d[cover_fn(u_key)].add(idx)
-            all_idx.add(idx)
-        assert set(e for s in d.values() for e in s) == all_idx
-
-        covered_idx = set()
-        cover = []
-        while covered_idx != all_idx:
-            # max() with key=... only returns one entry if there are duplicates
-            # so we need to do two passes in order to call our tiebreaker logic
-            max_uncovered = max(len(val - covered_idx) for val in d.values())
-            elt_to_add = tiebreaker_fn(
-                [key for key,val in d.iteritems() \
-                    if (len(val - covered_idx) == max_uncovered)]
-            )
-            cover.append(elt_to_add)
-            covered_idx.update(d[elt_to_add])
-        assert cover # is not empty
-        return cover
-
     @abstractmethod
     def _decide_allowed_components(self):
-        pass
-
-    @abstractmethod
-    def _decide_component_for_file(self, data_key, allowed_u_keys):
         pass
 
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
-        allowed_u_keys = self._decide_allowed_components()
-        print "Components selected: ", allowed_u_keys
+        d_to_u_dict = self._decide_allowed_components()
+        print "Components selected: ", d_to_u_dict
         for data_key in self.data_keys:
-            u_key = self._decide_component_for_file(data_key, allowed_u_keys)
+            u_key = d_to_u_dict[data_key]
             print "Selected {} for {} @ {}".format(
                 u_key, data_key.name_in_model, data_key.date_freq)
 
@@ -565,25 +493,19 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             return _heuristic_tiebreaker_sub(str_list)
 
     def _decide_allowed_components(self):
-        cmpts = self._minimum_cover(
-            lambda u_key: u_key.component,
+        choices = dict.fromkeys(self.data_files.keys())
+        cmpt_choices = choose.minimum_cover(
+            self.data_files,
+            attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
-        return list({u_key for u_key in self.data_files.values()
-            if u_key.component in cmpts})
-
-    def _decide_component_for_file(self, data_key, allowed_u_keys):
-        allowed_cmpts = {u_key.component for u_key in allowed_u_keys}
-        cmpt = self._heuristic_component_tiebreaker(
-            {u_key for u_key in self.data_files[data_key] \
-                if u_key.component in allowed_cmpts}
-        )
-        # take shortest chunk frequency (revisit?)
-        chunk_freq = min(u_key.chunk_freq \
-            for u_key in self.data_files[data_key] \
-            if u_key.component == cmpt)
-        return self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
-
+        for data_key, cmpt in cmpt_choices.iteritems():
+            # take shortest chunk frequency (revisit?)
+            chunk_freq = min(u_key.chunk_freq \
+                for u_key in self.data_files[data_key] \
+                if u_key.component == cmpt)
+            choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
+        return choices
 
 class Gfdludacmip6DataManager(GfdlarchiveDataManager):
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
@@ -671,31 +593,30 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         return grids['grid_label']
 
     def _decide_allowed_components(self):
-        tables = self._minimum_cover(
-            attrgetter('table_id'), self._cmip6_table_tiebreaker
+        tables = choose.minimum_cover(
+            self.data_files,
+            attrgetter('table_id'), 
+            self._cmip6_table_tiebreaker
         )
-        grid_lbl = self._require_all_same(
-            attrgetter('grid_label'), self._cmip6_grid_tiebreaker
+        grid_lbl = choose.require_all_same(
+            self.data_files,
+            attrgetter('grid_label'), 
+            self._cmip6_grid_tiebreaker
             )
-        assert grid_lbl
-        version_date = self._require_all_same(
+        version_date = choose.require_all_same(
+            self.data_files,
             attrgetter('version_date'),
             lambda dates: str(max(datelabel.Date(dt) for dt in dates))
             )
-        assert version_date
-
-        return [self.UndecidedKey(
-            table_id=str(tbl), grid_label=grid_lbl, version_date=version_date
-            ) for tbl in tables]
-
-    def _decide_component_for_file(self, data_key, allowed_u_keys):
-        allowed_tbls = {u_key.table_id for u_key in allowed_u_keys}
-        return allowed_u_keys[0]._replace(
-            table_id = self._cmip6_table_tiebreaker(
-                {u_key for u_key in self.data_files[data_key] \
-                    if u_key.table_id in allowed_tbls}
-        ))
- 
+        choices = dict.fromkeys(self.data_files.keys())
+        for data_key in choices:
+            choices[data_key] = self.UndecidedKey(
+                table_id=str(tables[data_key]), 
+                grid_label=grid_lbl[data_key], 
+                version_date=version_date[data_key]
+            )
+        return choices
+        
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

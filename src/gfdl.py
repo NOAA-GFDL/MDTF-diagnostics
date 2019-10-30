@@ -275,6 +275,7 @@ class GfdlarchiveDataManager(DataManager):
                     continue
                 for ds in file_lookup[data_key]:
                     if ds.date_range in self.date_range:
+                        print ds, '\n'
                         d_key = self.dataset_key(ds)
                         assert data_key == d_key
                         u_key = self.undecided_key(ds)
@@ -293,7 +294,6 @@ class GfdlarchiveDataManager(DataManager):
         """Filter files on model component and chunk frequency.
         """
         d_to_u_dict = self._decide_allowed_components()
-        print "Components selected: ", d_to_u_dict
         for data_key in self.data_keys:
             u_key = d_to_u_dict[data_key]
             print "Selected {} for {} @ {}".format(
@@ -561,7 +561,9 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             filename
         )
         d['name_in_model'] = d['variable_id']
-        return DataSet(**d)
+        ds = DataSet(**d)
+        ds._remote_data = os.path.join(self.root_dir, subdir, filename)
+        return ds
 
     def subdirectory_filters(self):
         # pylint: disable=maybe-no-member
@@ -598,8 +600,10 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             attrgetter('table_id'), 
             self._cmip6_table_tiebreaker
         )
-        grid_lbl = choose.require_all_same(
+        dkeys_for_each_pod = self.data_pods.inverse().values()
+        grid_lbl = choose.all_same_if_possible(
             self.data_files,
+            dkeys_for_each_pod,
             attrgetter('grid_label'), 
             self._cmip6_grid_tiebreaker
             )
@@ -616,7 +620,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
                 version_date=version_date[data_key]
             )
         return choices
-        
+
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

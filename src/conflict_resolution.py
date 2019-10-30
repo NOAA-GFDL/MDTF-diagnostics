@@ -91,6 +91,6 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     choices = dict.fromkeys(option_dict.keys())
     for key in option_dict:
         choices[key] = tiebreaker_fn(
-            set(val for val in option_dict[key] if option_fn(val) in cover)
+            set(option_fn(val) for val in option_dict[key] if option_fn(val) in cover)
         )
     return choices

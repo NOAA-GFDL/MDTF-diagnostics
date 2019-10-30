@@ -306,12 +306,12 @@ class DataManager(object):
 
     def _build_data_dicts(self):
         self.data_keys = defaultdict(list)
-        self.data_pods = defaultdict(list)
+        self.data_pods = util.MultiMap()
         self.data_files = util.MultiMap()
         for pod in self.iter_pods():
             for var in pod.iter_vars_and_alts():
                 key = self.dataset_key(var)
-                self.data_pods[key].append(pod)
+                self.data_pods[key].update(set([pod]))
                 self.data_keys[key].append(var)
                 self.data_files[key].update(var._remote_data)
 

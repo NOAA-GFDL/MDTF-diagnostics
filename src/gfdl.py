@@ -305,6 +305,14 @@ class GfdlarchiveDataManager(DataManager):
                 self._component_map[u_key, data_key], 
                 key=lambda ds: ds.date_range.start
             )
+        paths = set()
+        for data_key in self.data_keys:
+            for f in self.data_files[data_key]:
+                paths.add(f._remote_data)
+        print "start dmget of {} files".format(len(paths))
+        util.run_command(['dmget','-t','-v'] + list(paths),
+            timeout=self.file_transfer_timeout) 
+        print "end dmget"
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.

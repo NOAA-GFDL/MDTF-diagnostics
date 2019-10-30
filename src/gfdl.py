@@ -339,23 +339,20 @@ class GfdlarchiveDataManager(DataManager):
         # pylint: disable=maybe-no-member
         (cp_command, smartsite) = self._determine_fetch_method(method)
         dest_path = self.local_path(d_key)
-        dest_dir, _ = os.path.split(dest_path)
+        dest_dir = os.path.dirname(dest_path)
         # ncrcat will error instead of creating destination directories
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
-        if len(self.data_files[d_key]) == 1:
-            # one chunk, no need to ncrcat, copy directly
-            work_dir = dest_path
-        else:
-            paths = util.PathManager()
-            work_dir = paths.make_tempdir(hash_obj = d_key)
+        # GCP can't copy to home dir, so always copy to temp
+        paths = util.PathManager()
+        work_dir = paths.make_tempdir(hash_obj = d_key)
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in self.data_files[d_key]:
-            print "\tcopying .../{} to {}".format(
+            print "\tcopying ...{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
-            if dry_run:
+            if dry_run: 
                 continue
             util.run_command(cp_command + [
                 smartsite + f._remote_data, 
@@ -389,6 +386,11 @@ class GfdlarchiveDataManager(DataManager):
             chunks = [os.path.basename(f._remote_data) for f in self.data_files[d_key]]
             if not dry_run:
                 self.nc_cat_chunks(chunks, dest_path, working_dir=work_dir)
+        else:
+            f = os.path.basename(self.data_files[d_key][0])
+            print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
+            if not dry_run:
+                util.run_command(['ln', '-fs', os.path.join(work_dir, f), dest_path]) 
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):

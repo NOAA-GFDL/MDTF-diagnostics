@@ -1,1 +1,4 @@
-# TODO: write amazing code
+load_model_data();
+do_calculations();
+make_awesome_plot();
+

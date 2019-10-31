@@ -116,4 +116,4 @@ settings:
 
   # amount of time (in seconds) to wait before giving up on transferring a data
   # file to the local filesystem. Set to zero to disable.
-  file_transfer_timeout: 600
+  file_transfer_timeout: 300

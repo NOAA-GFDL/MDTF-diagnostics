@@ -197,7 +197,7 @@ def parse_mip_table_id(mip_table):
             md['region'] = None
         return md
     else:
-        raise ValueError("Can't parse {}.".format(mip_table))
+        raise ValueError("Can't parse table {}.".format(mip_table))
 
 grid_label_regex = re.compile(r"""
     g
@@ -233,15 +233,15 @@ def parse_grid_label(grid_label):
             ans['region'] = None
         return ans
     else:
-        raise ValueError("Can't parse {}.".format(grid_label))
+        raise ValueError("Can't parse grid {}.".format(grid_label))
 
 drs_directory_regex = re.compile(r"""
     /?                      # maybe initial separator
-    CMIP6/
+    (CMIP6/)?
     (?P<activity_id>\w+)/
-    (?P<institution_id>\w+)/
-    (?P<source_id>\w+)/
-    (?P<experiment_id>\w+)/
+    (?P<institution_id>[a-zA-Z0-9_-]+)/
+    (?P<source_id>[a-zA-Z0-9_-]+)/
+    (?P<experiment_id>[a-zA-Z0-9_-]+)/
     (?P<member_id>\w+)/
     (?P<table_id>\w+)/
     (?P<variable_id>\w+)/
@@ -259,13 +259,13 @@ def parse_DRS_directory(dir_):
         md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
-        raise ValueError("Can't parse {}.".format(dir_))
+        raise ValueError("Can't parse dir {}.".format(dir_))
 
 drs_filename_regex = re.compile(r"""
     (?P<variable_id>\w+)_       # field name
     (?P<table_id>\w+)_       # field name
-    (?P<source_id>\w+)_       # field name
-    (?P<experiment_id>\w+)_       # field name
+    (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
+    (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
     (?P<realization_code>\w+)_       # field name
     (?P<grid_label>\w+)_       # field name
     (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
@@ -282,7 +282,7 @@ def parse_DRS_filename(file_):
         md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
-        raise ValueError("Can't parse {}.".format(file_))
+        raise ValueError("Can't parse file {}.".format(file_))
 
 def parse_DRS_path(*args):
     if len(args) == 1:
@@ -296,7 +296,9 @@ def parse_DRS_path(*args):
     common_keys = set(d1.keys())
     common_keys = common_keys.intersection(d2.keys())
     for key in common_keys:
-        if d1['key'] != d2['key']:
+        if d1[key] != d2[key]:
             raise ValueError("{} fields inconsistent in parsing {}".format(
                 key, args))
-    return d1.update(d2)
+    d1.update(d2)
+    return d1
+    

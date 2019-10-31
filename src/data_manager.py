@@ -33,7 +33,10 @@ class DataQueryFailure(Exception):
         self.msg = msg
 
     def __str__(self):
-        return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+        if hasattr(self.dataset, 'name'):
+            return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
+        else:
+            return 'Query failure: {}.'.format(self.msg)
 
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
@@ -43,19 +46,92 @@ class DataAccessError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return 'Data access error for {}: {}.'.format(
-            self.dataset._remote_data, self.msg)
+        if hasattr(self.dataset, '_remote_data'):
+            return 'Data access error for {}: {}.'.format(
+                self.dataset._remote_data, self.msg)
+        else:
+            return 'Data access error: {}.'.format(self.msg)
+
+class DataSet(util.Namespace):
+    """Class to describe datasets.
+
+    `https://stackoverflow.com/a/48806603`_ for implementation.
+    """
+    def __init__(self, *args, **kwargs):
+        if 'DateFreqMixin' not in kwargs:
+            self.DateFreq = datelabel.DateFrequency
+        else:
+            self.DateFreq = kwargs['DateFreqMixin']
+            del kwargs['DateFreqMixin']
+
+        super(DataSet, self).__init__(*args, **kwargs)
+        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
+            if key not in self:
+                self[key] = None
+        
+        for key in ['_remote_data', 'alternates']:
+            if key not in self:
+                self[key] = []
+
+        if ('var_name' in self) and (self.name is None):
+            self.name = self.var_name
+            del self.var_name
+        if ('freq' in self) and (self.date_freq is None):
+            self.date_freq = self.DateFreq(self.freq)
+            del self.freq
+
+    def copy(self, new_name=None):
+        temp = super(DataSet, self).copy()
+        if new_name is not None:
+            temp.name = new_name
+        return temp  
+
+    @classmethod
+    def from_pod_varlist(cls, pod_convention, var, dm_args):
+        translate = util.VariableTranslator()
+        var_copy = var.copy()
+        var_copy.update(dm_args)
+        ds = cls(**var_copy)
+        ds.original_name = ds.name
+        ds.CF_name = translate.toCF(pod_convention, ds.name)
+        alt_ds_list = []
+        for alt_var in ds.alternates:
+            alt_ds = ds.copy(new_name=alt_var)
+            alt_ds.original_name = ds.original_name
+            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
+            alt_ds.alternates = []
+            alt_ds_list.append(alt_ds)
+        ds.alternates = alt_ds_list
+        return ds
+
+    def _freeze(self):
+        """Return immutable representation of (current) attributes.
+
+        Exclude attributes starting with '_' from the comparison, in case 
+        we want DataSets with different timestamps, temporary directories, etc.
+        to compare as equal.
+        """
+        d = self.toDict()
+        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
+        d2 = {k: repr(d[k]) for k in keys_to_hash}
+        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
+        return FrozenDataSet(**d2)
 
 class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
         self.lastyr = datelabel.Date(case_dict['LASTYR'])
         self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+        if not DateFreqMixin:
+            self.DateFreq = datelabel.DateFrequency
+        else:
+            self.DateFreq = DateFreqMixin
+
         if 'envvars' in config:
             self.envvars = config['envvars'].copy() # gets appended to
         else:
@@ -73,7 +149,7 @@ class DataManager(object):
         else:
             self.pod_list = [] # should raise warning    
         if 'data_freq' in case_dict:
-            self.data_freq = datelabel.DateFrequency(case_dict['data_freq'])
+            self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
             self.data_freq = None
         self.pods = []
@@ -179,6 +255,13 @@ class DataManager(object):
         pod.__dict__.update(paths.podPaths(pod))
         pod.pod_env_vars.update(self.envvars)
 
+        # express varlist as DataSet objects
+        ds_list = []
+        for var in pod.varlist:
+            ds_list.append(DataSet.from_pod_varlist(
+                pod.convention, var, {'DateFreqMixin': self.DateFreq}))
+        pod.varlist = ds_list
+
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
@@ -216,7 +299,7 @@ class DataManager(object):
         # datelabel object to use its formatting method
         try:
             # value in key is from __str__
-            freq = datelabel.DateFrequency(data_key.date_freq)
+            freq = self.DateFreq(data_key.date_freq)
         except ValueError:
             # value in key is from __repr__
             freq = eval('datelabel.'+data_key.date_freq)
@@ -229,18 +312,18 @@ class DataManager(object):
 
     def _build_data_dicts(self):
         self.data_keys = defaultdict(list)
-        self.data_pods = defaultdict(list)
+        self.data_pods = util.MultiMap()
         self.data_files = util.MultiMap()
         for pod in self.iter_pods():
             for var in pod.iter_vars_and_alts():
                 key = self.dataset_key(var)
-                self.data_pods[key].append(pod)
+                self.data_pods[key].update(set([pod]))
                 self.data_keys[key].append(var)
                 self.data_files[key].update(var._remote_data)
 
     # -------------------------------------
 
-    def fetch_data(self, verbose=0):
+    def fetch_data(self):
         self._query_data()
         # populate vars with found files
         for data_key in self.data_keys:
@@ -281,10 +364,10 @@ class DataManager(object):
             except Exception as caught_exc:
                 exc = DataAccessError(
                     file_,
-                    """Caught exception {0}({1!r}) when fetching {2} @ {3}.
+                    """Caught {} exception ({}) when fetching {} @ {}.
                     Did not retry.
                     """.format(
-                        type(caught_exc).__name__, caught_exc.args, 
+                        type(caught_exc).__name__, caught_exc, 
                         file_.name_in_model, file_.date_freq
                     )
                 )

@@ -13,8 +13,7 @@ class PodRequirementFailure(Exception):
 
     def __str__(self):
         if self.msg is not None:
-            return """Requirements not met for {}.\n\t 
-                Reason: {}.""".format(self.pod.name, self.msg)
+            return "Requirements not met for {}.\nReason: {}.".format(self.pod.name, self.msg)
         else:
             return 'Requirements not met for {}.'.format(self.pod.name)
 
@@ -142,23 +141,7 @@ class Diagnostic(object):
         if (verbose > 0): 
             print self.name + " varlist: "
             print varlist
-        # express varlist as DataSet objects
-        translate = util.VariableTranslator()
-        ds_list = []
-        for var in varlist:
-            ds = util.DataSet(**var)
-            ds.original_name = ds.name
-            ds.CF_name = translate.toCF(self.convention, ds.name)
-            alt_ds_list = []
-            for alt_var in ds.alternates:
-                alt_ds = ds.copy(new_name=alt_var)
-                alt_ds.original_name = ds.original_name
-                alt_ds.CF_name = translate.toCF(self.convention, alt_ds.name)
-                alt_ds.alternates = []
-                alt_ds_list.append(alt_ds)
-            ds.alternates = alt_ds_list
-            ds_list.append(ds)
-        return ds_list
+        return varlist
 
     # -------------------------------------
 
@@ -189,7 +172,10 @@ class Diagnostic(object):
         if isinstance(self.skipped, Exception):
             # already encountered reason we can't run this, re-raise it here 
             # to log it
-            raise self.skipped
+            raise PodRequirementFailure(self,
+                "Caught {} exception:\n{}".format(
+                    type(self.skipped).__name__, self.skipped
+                ))
         try:
             self._check_pod_driver(verbose)
             (found_files, missing_files) = self._check_for_varlist_files(self.varlist, verbose)
@@ -197,8 +183,8 @@ class Diagnostic(object):
             self.missing_files = missing_files
             if missing_files:
                 raise PodRequirementFailure(self,
-                    "Couldn't find required model data files:\n\t{}".format(
-                        "\n\t".join(missing_files)
+                    "Couldn't find required model data files:\n{}".format(
+                        "\n".join(missing_files)
                     ))
             else:
                 if (verbose > 0): print "No known missing required input files"

@@ -108,6 +108,10 @@ def argparse_wrapper():
     # casename args, set by frepp
     parser.add_argument('--CASENAME', 
         nargs='?')
+    parser.add_argument('--model', 
+        nargs='?')
+    parser.add_argument('--experiment', 
+        nargs='?')
     parser.add_argument('--CASE_ROOT_DIR', 
         nargs='?')
     parser.add_argument('--FIRSTYR', 

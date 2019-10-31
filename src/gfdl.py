@@ -310,7 +310,7 @@ class GfdlarchiveDataManager(DataManager):
                 paths.add(f._remote_data)
         print "start dmget of {} files".format(len(paths))
         util.run_command(['dmget','-t','-v'] + list(paths),
-            timeout=self.file_transfer_timeout) 
+            timeout=(len(paths)/2)*self.file_transfer_timeout) 
         print "end dmget"
 
     def local_data_is_current(self, dataset):

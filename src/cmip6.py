@@ -68,9 +68,17 @@ class CMIP6_CVs(util.Singleton):
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
         if hasattr(source_items, '__iter__'):
-            return [_lookup[item] for item in source_items]
+            return [util.coerce_from_collection(_lookup[item]) for item in source_items]
         else:
-            return _lookup[source_items]
+            return util.coerce_from_collection(_lookup[source_items])
+
+    # ----------------------------------
+
+    def table_id_from_freq(self, date_freq):
+        self._make_cv()
+        assert 'table_id' in self.cv
+        return [tbl for tbl in self.cv['table_id'] \
+            if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
 
 
 class CMIP6DateFrequency(datelabel.DateFrequency):
@@ -151,6 +159,8 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
             raise ValueError("Malformed data {} {}".format(self.quantity, self.unit))
     __str__ = format
 
+# --------------------------------------
+
 # see https://earthsystemcog.org/projects/wip/mip_table_about
 # (which doesn't cover all cases)
 mip_table_regex = re.compile(r"""
@@ -166,20 +176,72 @@ def parse_mip_table_id(mip_table):
     match = re.match(mip_table_regex, mip_table)
     if match:
         md = match.groupdict()
+        md['table_id'] = mip_table
         if md['table_freq'] == 'clim':
-            md['table_freq'] = 'mon'
-        md['date_freq'] = CMIP6DateFrequency(md['table_freq'])
+            md['date_freq'] = CMIP6DateFrequency('mon')
+        else:
+            md['date_freq'] = CMIP6DateFrequency(md['table_freq'])
+        if md['table_qualifier'] == 'Z':
+            md['spatial_avg'] = 'zonal_mean'
+        else:
+            md['spatial_avg'] = None
+        if md['table_qualifier'] == 'Pt':
+            md['temporal_avg'] = 'point'
+        else:
+            md['temporal_avg'] = 'interval'
+        if md['table_suffix'] == 'a':
+            md['region'] = 'Antarctica'
+        elif md['table_suffix'] == 'g':
+            md['region'] = 'Greenland'
+        else:
+            md['region'] = None
         return md
     else:
-        raise ValueError("Can't parse {}.".format(mip_table))
+        raise ValueError("Can't parse table {}.".format(mip_table))
+
+grid_label_regex = re.compile(r"""
+    g
+    (?P<global_mean>m?)
+    (?P<regrid>n|r?)
+    (?P<num>\d?)
+    (?P<region>a|g?)
+    (?P<zonal_mean>z?)
+""", re.VERBOSE)
+
+def parse_grid_label(grid_label):
+    match = re.match(grid_label_regex, grid_label)
+    if match:
+        md = match.groupdict()
+        ans = dict()
+        ans['grid_label'] = grid_label
+        if md['global_mean']:
+            ans['spatial_avg'] = 'global_mean'
+        elif md['zonal_mean']:
+            ans['spatial_avg'] = 'zonal_mean'
+        else:
+            ans['spatial_avg'] = None
+        ans['native_grid'] = not (md['regrid'] == 'r')
+        if not md['num']:
+            ans['grid_number'] = 0
+        else:
+            ans['grid_number'] = md['num']
+        if md['region'] == 'a':
+            ans['region'] = 'Antarctica'
+        elif md['region'] == 'g':
+            ans['region'] = 'Greenland'
+        else:
+            ans['region'] = None
+        return ans
+    else:
+        raise ValueError("Can't parse grid {}.".format(grid_label))
 
 drs_directory_regex = re.compile(r"""
     /?                      # maybe initial separator
-    CMIP6/
+    (CMIP6/)?
     (?P<activity_id>\w+)/
-    (?P<institution_id>\w+)/
-    (?P<source_id>\w+)/
-    (?P<experiment_id>\w+)/
+    (?P<institution_id>[a-zA-Z0-9_-]+)/
+    (?P<source_id>[a-zA-Z0-9_-]+)/
+    (?P<experiment_id>[a-zA-Z0-9_-]+)/
     (?P<member_id>\w+)/
     (?P<table_id>\w+)/
     (?P<variable_id>\w+)/
@@ -197,13 +259,13 @@ def parse_DRS_directory(dir_):
         md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
-        raise ValueError("Can't parse {}.".format(dir_))
+        raise ValueError("Can't parse dir {}.".format(dir_))
 
 drs_filename_regex = re.compile(r"""
     (?P<variable_id>\w+)_       # field name
     (?P<table_id>\w+)_       # field name
-    (?P<source_id>\w+)_       # field name
-    (?P<experiment_id>\w+)_       # field name
+    (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
+    (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
     (?P<realization_code>\w+)_       # field name
     (?P<grid_label>\w+)_       # field name
     (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
@@ -220,16 +282,23 @@ def parse_DRS_filename(file_):
         md.update(parse_mip_table_id(md['table_id']))
         return md
     else:
-        raise ValueError("Can't parse {}.".format(file_))
+        raise ValueError("Can't parse file {}.".format(file_))
 
-def parse_DRS_path(path):
-    dir_, file_ = os.path.split(path)
+def parse_DRS_path(*args):
+    if len(args) == 1:
+        dir_, file_ = os.path.split(args[0])
+    elif len(args) == 2:
+        dir_, file_ = args
+    else:
+        raise ValueError()
     d1 = parse_DRS_directory(dir_)
     d2 = parse_DRS_filename(file_)
     common_keys = set(d1.keys())
     common_keys = common_keys.intersection(d2.keys())
     for key in common_keys:
-        if d1['key'] != d2['key']:
+        if d1[key] != d2[key]:
             raise ValueError("{} fields inconsistent in parsing {}".format(
-                key, path))
-    return d1.update(d2)
+                key, args))
+    d1.update(d2)
+    return d1
+    

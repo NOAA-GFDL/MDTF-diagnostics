@@ -364,10 +364,10 @@ class DataManager(object):
             except Exception as caught_exc:
                 exc = DataAccessError(
                     file_,
-                    """Caught exception {0}({1!r}) when fetching {2} @ {3}.
+                    """Caught {} exception ({}) when fetching {} @ {}.
                     Did not retry.
                     """.format(
-                        type(caught_exc).__name__, caught_exc.args, 
+                        type(caught_exc).__name__, caught_exc, 
                         file_.name_in_model, file_.date_freq
                     )
                 )

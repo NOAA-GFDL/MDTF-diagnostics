@@ -13,8 +13,7 @@ class PodRequirementFailure(Exception):
 
     def __str__(self):
         if self.msg is not None:
-            return """Requirements not met for {}.\n\t 
-                Reason: {}.""".format(self.pod.name, self.msg)
+            return "Requirements not met for {}.\nReason: {}.".format(self.pod.name, self.msg)
         else:
             return 'Requirements not met for {}.'.format(self.pod.name)
 
@@ -174,8 +173,8 @@ class Diagnostic(object):
             # already encountered reason we can't run this, re-raise it here 
             # to log it
             raise PodRequirementFailure(self,
-                "Caught exception {0}:\n{1!r}".format(
-                    type(self.skipped).__name__, self.skipped.args
+                "Caught {} exception:\n{}".format(
+                    type(self.skipped).__name__, self.skipped
                 ))
         try:
             self._check_pod_driver(verbose)
@@ -184,8 +183,8 @@ class Diagnostic(object):
             self.missing_files = missing_files
             if missing_files:
                 raise PodRequirementFailure(self,
-                    "Couldn't find required model data files:\n\t{}".format(
-                        "\n\t".join(missing_files)
+                    "Couldn't find required model data files:\n{}".format(
+                        "\n".join(missing_files)
                     ))
             else:
                 if (verbose > 0): print "No known missing required input files"

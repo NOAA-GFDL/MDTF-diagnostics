@@ -27,7 +27,7 @@ _current_module_versions = {
     'r':        'R/3.4.4',
     'anaconda': 'anaconda2/5.1',
     'gcp':      'gcp/2.3',
-    'nco':      'nco/4.7.6',
+    'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
     'netcdf':   'netcdf/4.2'
 }
 
@@ -255,7 +255,7 @@ class GfdlarchiveDataManager(DataManager):
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
                     print '\t\tDEBUG: ', exc, '\n\t\t', \
-                    os.path.join(self.root_dir, dir_)[len(self._uda_root):], f
+                    os.path.join(self.root_dir, dir_), f
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -394,10 +394,12 @@ class GfdlarchiveDataManager(DataManager):
             if not dry_run:
                 self.nc_cat_chunks(chunks, dest_path, working_dir=work_dir)
         else:
-            f = os.path.basename(self.data_files[d_key][0])
+            f = util.coerce_from_collection(self.data_files[d_key])
+            file_name = os.path.basename(f._remote_data)
             print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
             if not dry_run:
-                util.run_command(['ln', '-fs', os.path.join(work_dir, f), dest_path]) 
+                util.run_command(['ln', '-fs', \
+                    os.path.join(work_dir, file_name), dest_path]) 
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):

@@ -173,7 +173,10 @@ class Diagnostic(object):
         if isinstance(self.skipped, Exception):
             # already encountered reason we can't run this, re-raise it here 
             # to log it
-            raise self.skipped
+            raise PodRequirementFailure(self,
+                "Caught exception {0}:\n{1!r}".format(
+                    type(self.skipped).__name__, self.skipped.args
+                ))
         try:
             self._check_pod_driver(verbose)
             (found_files, missing_files) = self._check_for_varlist_files(self.varlist, verbose)

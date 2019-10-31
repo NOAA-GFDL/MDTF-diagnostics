@@ -99,6 +99,9 @@ def argparse_wrapper():
     parser.add_argument("--test_mode", 
         action="store_true", # so default to False
         help="Set flag to do a dry run, disabling calls to PODs")
+    parser.add_argument("--save_nc", 
+        action="store_true", # so default to False
+        help="Set flag to have PODs save netCDF files of processed data.")
     parser.add_argument('--data_manager', 
         nargs='?',
         help="Method to fetch model data. Currently supported options are {'Localfile'}.")

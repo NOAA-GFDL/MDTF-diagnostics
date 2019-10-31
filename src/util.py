@@ -757,7 +757,7 @@ def caselist_from_args(args):
         if k not in d:
             d[k] = 'CMIP_GFDL'
     if 'CASENAME' not in d:
-        d['CASENAME'] = '{}/{}'.format(d['model'], d['experiment'])
+        d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
     if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
         d['root_dir'] = args['CASE_ROOT_DIR']
     return [d]

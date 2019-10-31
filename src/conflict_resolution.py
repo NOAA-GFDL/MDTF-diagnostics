@@ -12,8 +12,6 @@ def require_all_same(option_dict, option_fn, tiebreaker_fn=None):
     allowed_opts = set(option_fn(v) \
         for v in chain.from_iterable(option_dict.values()))
     for key in option_dict:
-        print '\tAllowed:', allowed_opts
-        print '\tNew:', key, ':', {option_fn(val) for val in option_dict[key]}
         allowed_opts = allowed_opts.intersection(
             set(option_fn(val) for val in option_dict[key])
         )

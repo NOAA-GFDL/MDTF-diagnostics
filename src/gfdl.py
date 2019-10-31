@@ -275,7 +275,6 @@ class GfdlarchiveDataManager(DataManager):
                     continue
                 for ds in file_lookup[data_key]:
                     if ds.date_range in self.date_range:
-                        print ds, '\n'
                         d_key = self.dataset_key(ds)
                         assert data_key == d_key
                         u_key = self.undecided_key(ds)

@@ -213,9 +213,10 @@ class GfdlarchiveDataManager(DataManager):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                raise Exception("Couldn't find subdirs (in {}) at {}".format(
+                print "Couldn't find subdirs (in {}) at {}, skipping".format(
                     subdir_filter, os.path.join(self.root_dir, dir_)
-                ))
+                )
+                continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
                 if os.path.isdir(os.path.join(self.root_dir, dir_, subdir_))

@@ -10,11 +10,14 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 from collections import defaultdict, namedtuple
+from itertools import chain
+from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod
 import datelabel
 import util
+import conflict_resolution as choose
 import cmip6
-from data_manager import DataManager, DataQueryFailure
+from data_manager import DataSet, DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
@@ -24,7 +27,7 @@ _current_module_versions = {
     'r':        'R/3.4.4',
     'anaconda': 'anaconda2/5.1',
     'gcp':      'gcp/2.3',
-    'nco':      'nco/4.7.6',
+    'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
     'netcdf':   'netcdf/4.2'
 }
 
@@ -156,7 +159,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
 class GfdlarchiveDataManager(DataManager):
     __metaclass__ = ABCMeta
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
         modMgr.load(_current_module_versions['gcp'])
@@ -175,7 +178,7 @@ class GfdlarchiveDataManager(DataManager):
             tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
             if not os.path.isdir(tempfile.tempdir):
                 os.makedirs(tempfile.tempdir)
-        super(GfdlarchiveDataManager, self).__init__(case_dict, config, verbose)
+        super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
@@ -196,22 +199,26 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        print "\t\tDEBUG: listdir on pp{}".format(dir_[len(self.root_dir):])
+        print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_collection(subdir_filter, list)
+        subdir_filter = util.coerce_to_collection(subdir_filter, set)
         found_dirs = []
         for dir_ in dirs_in:
-            if not subdir_filter:
-                subdir_list = [d for d \
-                    in self._listdir(os.path.join(self.root_dir, dir_)) \
-                    if not (d.startswith('.') or d.endswith('.nc'))
-                ]
-            else:
-                subdir_list = subdir_filter
+            found_subdirs = {d for d \
+                in self._listdir(os.path.join(self.root_dir, dir_)) \
+                if not (d.startswith('.') or d.endswith('.nc'))
+            }
+            if subdir_filter:
+                found_subdirs = found_subdirs.intersection(subdir_filter)
+            if not found_subdirs:
+                print "Couldn't find subdirs (in {}) at {}, skipping".format(
+                    subdir_filter, os.path.join(self.root_dir, dir_)
+                )
+                continue
             found_dirs.extend([
-                os.path.join(dir_, subdir_) for subdir_ in subdir_list \
+                os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
                 if os.path.isdir(os.path.join(self.root_dir, dir_, subdir_))
             ])
         return found_dirs
@@ -248,7 +255,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\t\tDEBUG: ', exc
+                    print '\t\tDEBUG: ', exc, '\n\t\t', \
+                    os.path.join(self.root_dir, dir_), f
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -278,78 +286,30 @@ class GfdlarchiveDataManager(DataManager):
         # all the work done by _query_data
         pass
 
-    def _minimum_cover(self, cover_fn, tiebreaker_fn=None):
-        """Determine experiment component(s) from heuristics.
-
-        1. Pick all data from the same component if possible, and from as few
-            components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
-            and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
-
-        2. If multiple components satisfy (1) equally well, use a tie-breaking 
-            heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 
-
-        Args:
-            datasets (iterable of :class:`~util.DataSet`): 
-                Collection of all variables being requested in this DataManager.
-
-        Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
-
-        Raises: AssertionError if problem is unsatisfiable. This indicates some
-            error in the input data.
-        """
-        def _default_tiebreaker(elts):
-            assert len(elts) == 1
-            return elts[0]
-        if tiebreaker_fn is None:
-            tiebreaker_fn = _default_tiebreaker
-
-        all_idx = set()
-        d = defaultdict(set)
-        for idx, data_key in enumerate(self.data_files.keys()):
-            for u_key in self.data_files[data_key]:
-                d[cover_fn(u_key)].add(idx)
-            all_idx.add(idx)
-        assert set(e for s in d.values() for e in s) == all_idx
-
-        covered_idx = set()
-        cover = []
-        while covered_idx != all_idx:
-            # max() with key=... only returns one entry if there are duplicates
-            # so we need to do two passes in order to call our tiebreaker logic
-            max_uncovered = max(len(val - covered_idx) for val in d.values())
-            elt_to_add = tiebreaker_fn(
-                [key for key,val in d.iteritems() \
-                    if (len(val - covered_idx) == max_uncovered)]
-            )
-            cover.append(elt_to_add)
-            covered_idx.update(d[elt_to_add])
-        assert cover # is not empty
-        return cover
-
     @abstractmethod
     def _decide_allowed_components(self):
-        pass
-
-    @abstractmethod
-    def _decide_component_for_file(self, data_key, allowed_u_keys):
         pass
 
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
-        allowed_u_keys = self._decide_allowed_components()
-        print "Components selected: ", allowed_u_keys
+        d_to_u_dict = self._decide_allowed_components()
         for data_key in self.data_keys:
-            u_key = self._decide_component_for_file(data_key, allowed_u_keys)
+            u_key = d_to_u_dict[data_key]
             print "Selected {} for {} @ {}".format(
                 u_key, data_key.name_in_model, data_key.date_freq)
 
             # check we didn't eliminate everything:
             assert self._component_map[u_key, data_key] 
-            self.data_files[data_key] = sorted(
-                self._component_map[u_key, data_key], 
-                key=lambda ds: ds.date_range.start
-            )
+            self.data_files[data_key] = self._component_map[u_key, data_key]
+        paths = set()
+        for data_key in self.data_keys:
+            for f in self.data_files[data_key]:
+                paths.add(f._remote_data)
+        print "start dmget of {} files".format(len(paths))
+        util.run_command(['dmget','-t','-v'] + list(paths),
+            timeout=(len(paths)/2)*self.file_transfer_timeout) 
+        print "end dmget"
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -384,23 +344,23 @@ class GfdlarchiveDataManager(DataManager):
         # pylint: disable=maybe-no-member
         (cp_command, smartsite) = self._determine_fetch_method(method)
         dest_path = self.local_path(d_key)
-        dest_dir, _ = os.path.split(dest_path)
+        dest_dir = os.path.dirname(dest_path)
         # ncrcat will error instead of creating destination directories
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
-        if len(self.data_files[d_key]) == 1:
-            # one chunk, no need to ncrcat, copy directly
-            work_dir = dest_path
-        else:
-            paths = util.PathManager()
-            work_dir = paths.make_tempdir(hash_obj = d_key)
+        # GCP can't copy to home dir, so always copy to temp
+        paths = util.PathManager()
+        work_dir = paths.make_tempdir(hash_obj = d_key)
+        remote_files = sorted( # cast from set to list so we can go in chrono order
+            list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
+            ) 
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
-        for f in self.data_files[d_key]:
-            print "\tcopying pp{} to {}".format(
+        for f in remote_files:
+            print "\tcopying ...{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
-            if dry_run:
+            if dry_run: 
                 continue
             util.run_command(cp_command + [
                 smartsite + f._remote_data, 
@@ -412,8 +372,11 @@ class GfdlarchiveDataManager(DataManager):
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         trim_count = 0
-        for f in self.data_files[d_key]:
-            trimmed_range = f.date_range.intersection(self.date_range)
+        for f in remote_files:
+            trimmed_range = f.date_range.intersection(
+                self.date_range, 
+                precision=f.date_range.start.precision
+            )
             if trimmed_range != f.date_range:
                 file_name = os.path.basename(f._remote_data)
                 print "\ttrimming '{}' of {} from {} to {}".format(
@@ -427,13 +390,20 @@ class GfdlarchiveDataManager(DataManager):
         assert trim_count <= 2
 
         # cat chunks to destination, if more than one
-        if len(self.data_files[d_key]) > 1:
+        if len(remote_files) > 1:
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)
-            chunks = [os.path.basename(f._remote_data) for f in self.data_files[d_key]]
+            chunks = [os.path.basename(f._remote_data) for f in remote_files]
             if not dry_run:
                 self.nc_cat_chunks(chunks, dest_path, working_dir=work_dir)
+        else:
+            f = util.coerce_from_collection(remote_files)
+            file_name = os.path.basename(f._remote_data)
+            print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
+            if not dry_run:
+                util.run_command(['ln', '-fs', \
+                    os.path.join(work_dir, file_name), dest_path]) 
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):
@@ -464,8 +434,8 @@ class GfdlarchiveDataManager(DataManager):
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, verbose=0):
-        super(GfdlppDataManager, self).__init__(case_dict, config, verbose)
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+        super(GfdlppDataManager, self).__init__(case_dict, config, DateFreqMixin)
         for attr in ['component', 'data_freq', 'chunk_freq']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
@@ -493,12 +463,12 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = util.DataSet(**(match.groupdict()))
+            ds = DataSet(**(match.groupdict()))
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
-            ds.date_freq = datelabel.DateFrequency(ds.date_freq)
-            ds.chunk_freq = datelabel.DateFrequency(ds.chunk_freq)
+            ds.date_freq = self.DateFreq(ds.date_freq)
+            ds.chunk_freq = self.DateFreq(ds.chunk_freq)
             return ds
         else:
             raise ValueError("Can't parse {}, skipping.".format(rel_path))
@@ -538,37 +508,31 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             return _heuristic_tiebreaker_sub(str_list)
 
     def _decide_allowed_components(self):
-        cmpts = self._minimum_cover(
-            lambda u_key: u_key.component,
+        choices = dict.fromkeys(self.data_files.keys())
+        cmpt_choices = choose.minimum_cover(
+            self.data_files,
+            attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
-        return list({u_key for u_key in self.data_files.values()
-            if u_key.component in cmpts})
-
-    def _decide_component_for_file(self, data_key, allowed_u_keys):
-        allowed_cmpts = {u_key.component for u_key in allowed_u_keys}
-        cmpt = self._heuristic_component_tiebreaker(
-            {u_key for u_key in self.data_files[data_key] \
-                if u_key.component in allowed_cmpts}
-        )
-        # take shortest chunk frequency (revisit?)
-        chunk_freq = min(u_key.chunk_freq \
-            for u_key in self.data_files[data_key] \
-            if u_key.component == cmpt)
-        return self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
-
+        for data_key, cmpt in cmpt_choices.iteritems():
+            # take shortest chunk frequency (revisit?)
+            chunk_freq = min(u_key.chunk_freq \
+                for u_key in self.data_files[data_key] \
+                if u_key.component == cmpt)
+            choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
+        return choices
 
 class Gfdludacmip6DataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, verbose=0):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
-        self._uda_root = os.path.join('archive','pcmdi','repo')
+        self._uda_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
-            if 'expermient_id' in case_dict:
+            if 'experiment_id' in case_dict:
                 key = case_dict['experiment_id']
-            elif 'expermient' in case_dict:
+            elif 'experiment' in case_dict:
                 key = case_dict['experiment']
             else:
                 raise Exception("Can't determine experiment.")
@@ -588,32 +552,89 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         case_dict['root_dir'] = os.path.join(
             self._uda_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        super(Gfdludacmip6DataManager, self).__init__(case_dict, config, verbose)
-        for attr in ['data_freq', 'table_id', 'grid_label', 'revision_date']:
+        super(Gfdludacmip6DataManager, self).__init__(
+            case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
+        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
+        if 'data_freq' in self.__dict__:
+            self.table_id = cmip.table_id_from_freq(self.data_freq)
 
     # also need to determine table?
     UndecidedKey = namedtuple('UndecidedKey', 
-        ['table_id', 'grid_label', 'revision_date'])
+        ['table_id', 'grid_label', 'version_date'])
     def undecided_key(self, dataset):
         return self.UndecidedKey(
             table_id=str(dataset.table_id),
             grid_label=dataset.grid_label, 
-            revision_date=str(dataset.revision_date)
+            version_date=str(dataset.version_date)
         )
 
     def parse_relative_path(self, subdir, filename):
-        return cmip6.parse_DRS_path(
+        d = cmip6.parse_DRS_path(
             os.path.join(self.root_dir, subdir)[len(self._uda_root):],
             filename
         )
+        d['name_in_model'] = d['variable_id']
+        ds = DataSet(**d)
+        ds._remote_data = os.path.join(self.root_dir, subdir, filename)
+        return ds
 
     def subdirectory_filters(self):
         # pylint: disable=maybe-no-member
-        return [self.table_id, self.variable_id, self.grid_label, 
-            self.version_date]
-                
+        return [self.table_id, None, # variable_id
+            self.grid_label, self.version_date]
+
+    @staticmethod
+    def _cmip6_table_tiebreaker(str_list):
+        # no suffix or qualifier, if possible
+        tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
+        tbls = [t for t in tbls if (
+            not t['spatial_avg'] and not t['region'] and t['temporal_avg'] == 'interval'
+        )]
+        if not tbls:
+            raise Exception('Need to refine table_id more carefully')
+        tbls = min(tbls, key=lambda t: len(t['table_prefix']))
+        return tbls['table_id']
+
+    @staticmethod
+    def _cmip6_grid_tiebreaker(str_list):
+        # no suffix or qualifier, if possible
+        grids = [cmip6.parse_grid_label(g) for g in str_list]
+        grids = [g for g in grids if (
+            not g['spatial_avg'] and not g['region']
+        )]
+        if not grids:
+            raise Exception('Need to refine grid_label more carefully')
+        grids = min(grids, key=itemgetter('grid_number'))
+        return grids['grid_label']
+
+    def _decide_allowed_components(self):
+        tables = choose.minimum_cover(
+            self.data_files,
+            attrgetter('table_id'), 
+            self._cmip6_table_tiebreaker
+        )
+        dkeys_for_each_pod = self.data_pods.inverse().values()
+        grid_lbl = choose.all_same_if_possible(
+            self.data_files,
+            dkeys_for_each_pod,
+            attrgetter('grid_label'), 
+            self._cmip6_grid_tiebreaker
+            )
+        version_date = choose.require_all_same(
+            self.data_files,
+            attrgetter('version_date'),
+            lambda dates: str(max(datelabel.Date(dt) for dt in dates))
+            )
+        choices = dict.fromkeys(self.data_files.keys())
+        for data_key in choices:
+            choices[data_key] = self.UndecidedKey(
+                table_id=str(tables[data_key]), 
+                grid_label=grid_lbl[data_key], 
+                version_date=version_date[data_key]
+            )
+        return choices
 
 
 def frepp_freq(date_freq):

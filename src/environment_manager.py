@@ -75,7 +75,7 @@ class EnvironmentManager(object):
             try:
                 pod.setUp()
             except PodRequirementFailure as exc:
-                log_str = "Skipping execution of {}.\n\tReason: {}\n".format(
+                log_str = "\nSkipping execution of {}.\nReason: {}\n".format(
                     exc.pod.name, str(exc))
                 pod.logfile_obj.write(log_str)
                 pod.logfile_obj.close()
@@ -298,8 +298,10 @@ class CondaEnvironmentManager(EnvironmentManager):
             shell=True
         )
         if test != 0:
-            print 'Conda env {} not found; creating it'
-            self._call_conda_create(env_name)
+            print 'Conda env {} not found; creating it'.format(env_name)
+            print 'grepped for {}'.format(conda_prefix)
+            print subprocess.check_output('echo $CONDA_EXE',shell=True)
+            #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
         # pylint: disable=maybe-no-member

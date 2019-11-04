@@ -177,7 +177,7 @@ class DateRange(object):
         Eg, DateRange('1990-1999') starts at 0:00 on 1 Jan 1990 and 
         ends at 23:59 on 31 Dec 1999.
     """
-    def __init__(self, start, end=None):
+    def __init__(self, start, end=None, precision=None):
         if type(start) is str and (end is None):
             (start, end) = self._parse_input_string(start)
         elif isinstance(start, (list, tuple, set)) and (end is None):
@@ -187,14 +187,16 @@ class DateRange(object):
             start = Date(start)
         if not isinstance(end, Date):
             end = Date(end)
-        if start.precision != end.precision:
-            start.precision = min(start.precision, end.precision)
-            end.precision = min(start.precision, end.precision)
 
         self.start = start
-        self._cmp_end = end # version with same precision, for comparisons
+        self._orig_end = end # version with same precision, for comparisons
         self.end = end._to_interval_end()
-        assert self.start < self._cmp_end
+        assert self.start < self._orig_end
+
+        if precision is None:
+            precision = min(start.precision, end.precision)
+        self.start.precision = precision
+        self.end.precision = precision
 
     @classmethod
     def _parse_input_string(cls, s):
@@ -209,10 +211,10 @@ class DateRange(object):
             # ONLY IF ranges are continguous and nonoverlapping
             dt_ranges = sorted(coll, key=lambda dtr: dtr.start)
             for i in range(0, len(dt_ranges) - 1):
-                if (dt_ranges[i]._cmp_end.increment() != dt_ranges[i+1].start) \
-                    or (dt_ranges[i+1].start.decrement() != dt_ranges[i]._cmp_end):
+                if (dt_ranges[i]._orig_end.increment() != dt_ranges[i+1].start) \
+                    or (dt_ranges[i+1].start.decrement() != dt_ranges[i]._orig_end):
                     raise ValueError("Date Ranges not contiguous and nonoverlapping.")
-            return (dt_ranges[0].start, dt_ranges[-1]._cmp_end)
+            return (dt_ranges[0].start, dt_ranges[-1]._orig_end)
         elif all(isinstance(item, Date) for item in coll):
             # given a bunch of Dates, return interval containing them
             return (min(coll), max(coll))
@@ -230,7 +232,7 @@ class DateRange(object):
         return "DateRange('{}')".format(self)
 
     def __eq__(self, other):
-        return (self.start == other.start) and (self.end == other.end)
+        return (self.start == other.start) and (self._orig_end == other._orig_end)
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
@@ -259,10 +261,16 @@ class DateRange(object):
         else:
             return (self.start <= item) and (self.end >= item)
     
-    def intersection(self, item):
+    def intersection(self, item, precision=None):
         if not self.overlaps(item):
             raise ValueError("{} and {} have empty intersection".format(self, item))
-        return DateRange(max(self.start, item.start), min(self.end, item.end))
+        if precision is None:
+            precision=min(self.start.precision, item.start.precision)
+        return DateRange(
+            max(self.start, item.start), 
+            min(self._orig_end, item._orig_end),
+            precision=precision
+        )
 
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.

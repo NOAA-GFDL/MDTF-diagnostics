@@ -61,12 +61,13 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args = ( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
+set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
+set flags=()
 
 ## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,yr1:,yr2: -- $argu:q`)
+set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,save_nc,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
     echo "Command line parse error 1" >/dev/stderr
     exit 1
@@ -78,6 +79,9 @@ while (1)
     case -I:
     case --ignore-component:
         set cmpt_args = ( '--ignore-component' ) ; shift 
+        breaksw;
+    case --save_nc:
+        set flags = ( '--save_nc' ) ; shift 
         breaksw;
     case -Y:
     case --yr1:
@@ -158,9 +162,9 @@ if ( -d "${out_dir}/${mdtf_dir}" ) then
     rm -rf "${out_dir}/${mdtf_dir}"
 endif
 
-## run the command
+## run the command (unbuffered output)
 echo 'script start'
-"${REPO_DIR}/src/mdtf.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf.py" --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
@@ -171,7 +175,8 @@ echo 'script start'
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
 --LASTYR $yr2 \
-$cmpt_args:q
+$cmpt_args:q \
+$flags:q
 echo 'script exit'
 
 ## copy/link output files, if requested

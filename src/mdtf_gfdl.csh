@@ -162,9 +162,9 @@ if ( -d "${out_dir}/${mdtf_dir}" ) then
     rm -rf "${out_dir}/${mdtf_dir}"
 endif
 
-## run the command
+## run the command (unbuffered output)
 echo 'script start'
-"${REPO_DIR}/src/mdtf.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf.py" --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \

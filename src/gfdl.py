@@ -301,10 +301,7 @@ class GfdlarchiveDataManager(DataManager):
 
             # check we didn't eliminate everything:
             assert self._component_map[u_key, data_key] 
-            self.data_files[data_key] = sorted(
-                self._component_map[u_key, data_key], 
-                key=lambda ds: ds.date_range.start
-            )
+            self.data_files[data_key] = self._component_map[u_key, data_key]
         paths = set()
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
@@ -354,10 +351,13 @@ class GfdlarchiveDataManager(DataManager):
         # GCP can't copy to home dir, so always copy to temp
         paths = util.PathManager()
         work_dir = paths.make_tempdir(hash_obj = d_key)
+        remote_files = sorted( # cast from set to list so we can go in chrono order
+            list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
+            ) 
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
-        for f in self.data_files[d_key]:
+        for f in remote_files:
             print "\tcopying ...{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
             if dry_run: 
@@ -372,8 +372,11 @@ class GfdlarchiveDataManager(DataManager):
         translate = util.VariableTranslator()
         time_var_name = translate.fromCF(self.convention, 'time_coord')
         trim_count = 0
-        for f in self.data_files[d_key]:
-            trimmed_range = f.date_range.intersection(self.date_range)
+        for f in remote_files:
+            trimmed_range = f.date_range.intersection(
+                self.date_range, 
+                precision=f.date_range.start.precision
+            )
             if trimmed_range != f.date_range:
                 file_name = os.path.basename(f._remote_data)
                 print "\ttrimming '{}' of {} from {} to {}".format(
@@ -387,15 +390,15 @@ class GfdlarchiveDataManager(DataManager):
         assert trim_count <= 2
 
         # cat chunks to destination, if more than one
-        if len(self.data_files[d_key]) > 1:
+        if len(remote_files) > 1:
             # not running in shell, so can't use glob expansion.
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)
-            chunks = [os.path.basename(f._remote_data) for f in self.data_files[d_key]]
+            chunks = [os.path.basename(f._remote_data) for f in remote_files]
             if not dry_run:
                 self.nc_cat_chunks(chunks, dest_path, working_dir=work_dir)
         else:
-            f = util.coerce_from_collection(self.data_files[d_key])
+            f = util.coerce_from_collection(remote_files)
             file_name = os.path.basename(f._remote_data)
             print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
             if not dry_run:

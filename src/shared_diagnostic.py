@@ -339,8 +339,9 @@ class Diagnostic(object):
         Returns:
             (:obj:`list` of :obj:`str`): Command-line invocation to run the POD.
         """
-        return [self.program + ' ' + self.driver]
-    
+        #return [self.program + ' ' + self.driver]
+        return ['/usr/bin/env python -u '+self.driver]
+
     def validate_commands(self):
         """Produces the shell command(s) to validate the POD's runtime environment 
         (ie, check for all requested third-party module dependencies.)

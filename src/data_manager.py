@@ -220,8 +220,8 @@ class DataManager(object):
             "variab_dir": self.MODEL_WK_DIR,
             "CASENAME": self.case_name,
             "model": self.model_name,
-            "FIRSTYR": self.firstyr,
-            "LASTYR": self.lastyr
+            "FIRSTYR": self.firstyr.strftime('%Y'), 
+            "LASTYR": self.lastyr.strftime('%Y')
         })
 
         translate = util.VariableTranslator()

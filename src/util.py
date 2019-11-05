@@ -59,7 +59,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
 class PathManager(Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``config.yml``.
+    set in the ``paths`` section of ``mdtf_settings.json``.
     """
     _root_pathnames = [
         'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
@@ -178,7 +178,7 @@ class VariableTranslator(Singleton):
             config_files = ['dummy_filename']
         else:
             paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'config_*.yml')
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'config_*.json')
             config_files = glob.glob(glob_pattern)
 
         # always have CF-compliant option, which does no translation
@@ -403,7 +403,7 @@ def write_json(struct, file_path, verbose=0):
     """
     try:
         with open(file_path, 'w') as file_obj:
-            json.dumps(struct, file_obj, 
+            json.dump(struct, file_obj, 
                 sort_keys=True, indent=2, separators=(',', ': '))
     except IOError:
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
@@ -793,7 +793,7 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
     2. Through command-line arguments.
 
     3. Through default values set in a YAML configuration file, by default
-       in src/config.yml.
+       in src/mdtf_settings.json.
 
     This function applies the precendence and returns a single dict of the
     actual configuration.

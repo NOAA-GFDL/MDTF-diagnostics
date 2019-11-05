@@ -23,7 +23,7 @@ class Diagnostic(object):
     This is the analogue of TestCase in the xUnit analogy.
 
     Object attributes are read from entries in the settings section of the POD's
-    settings.yml file upon initialization.
+    settings.json file upon initialization.
 
     Attributes:
         driver (:obj:`str`): Filename of the top-level driver script for the POD.
@@ -41,7 +41,7 @@ class Diagnostic(object):
     """
 
     def __init__(self, pod_name, verbose=0):
-        """POD initializer. Given a POD name, we attempt to read a settings.yml 
+        """POD initializer. Given a POD name, we attempt to read a settings.json 
         file in a subdirectory of ``/diagnostics`` by that name and parse the
         contents.
 
@@ -75,7 +75,7 @@ class Diagnostic(object):
 
         Args:
             settings (:obj:`dict`): Contents of the settings portion of the POD's
-                settings.yml file.
+                settings.json file.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
@@ -118,7 +118,7 @@ class Diagnostic(object):
 
         Args:
             varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.yml file.
+                of the POD's settings.json file.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
@@ -264,7 +264,7 @@ class Diagnostic(object):
         if self.driver == '':
             raise PodRequirementFailure(self, 
                 """No driver script found in {}. Specify 'driver' in 
-                settings.yml.""".format(self.POD_CODE_DIR)
+                settings.json.""".format(self.POD_CODE_DIR)
                 )
 
         if not os.path.isabs(self.driver): # expand relative path
@@ -293,7 +293,7 @@ class Diagnostic(object):
 
         Args:
             varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.yml file.
+                of the POD's settings.json file.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns: :obj:`tuple` of found and missing file lists. Note that this is called

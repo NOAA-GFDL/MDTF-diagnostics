@@ -71,7 +71,7 @@ def argparse_wrapper():
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
     parser = argparse.ArgumentParser(
-        epilog="All command-line arguments override defaults set in src/config.yml."
+        epilog="All command-line arguments override defaults set in src/mdtf_settings.json."
     )
     parser.add_argument("-v", "--verbosity", 
         action="count",
@@ -79,7 +79,7 @@ def argparse_wrapper():
     parser.add_argument("--frepp", 
         action="store_true", # so default to False
         help="Set flag to take configuration info from env vars set by frepp.")
-    # default paths set in config.yml/paths
+    # default paths set in mdtf_settings.json/paths
     parser.add_argument('--CODE_ROOT', 
         nargs='?', default=code_root,
         help="Code installation directory.")
@@ -95,7 +95,7 @@ def argparse_wrapper():
     parser.add_argument('--OUTPUT_DIR', 
         nargs='?',
         help="Directory to write output files. Defaults to working directory.")
-    # defaults set in config.yml/settings
+    # defaults set in mdtf_settings.json/settings
     parser.add_argument("--test_mode", 
         action="store_true", # so default to False
         help="Set flag to do a dry run, disabling calls to PODs")

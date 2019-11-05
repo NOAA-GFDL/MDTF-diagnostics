@@ -54,6 +54,7 @@
 import os
 import sys
 import argparse
+from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import util
 import data_manager
 import environment_manager
@@ -161,7 +162,7 @@ def caselist_from_args(args):
         d['root_dir'] = args['CASE_ROOT_DIR']
     return [d]
 
-def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
+def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
     """Parse script options.
 
     We provide three ways to configure the script. In order of precendence,
@@ -182,32 +183,20 @@ def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', v
 
     Returns: :obj:`dict` of configuration settings.
     """
+    user_args = ChainMap(user_args_list)
     # overwrite defaults with command-line args.
     for section in ['paths', 'settings']:
         for key in default_args[section]:
-            if key in cmdline_args:
-                default_args[section][key] = cmdline_args[key]
-    if 'CODE_ROOT' in cmdline_args:
-        # only let this be overridden if we're in a unit test
-        rel_paths_root = cmdline_args['CODE_ROOT']
-
-    if ('CASENAME' in cmdline_args) or (
-        'model' in cmdline_args and 'experiment' in cmdline_args
-        ):
+            if key in user_args:
+                default_args[section][key] = user_args[key]
+    if ('model' in user_args and 'experiment' in user_args) or \
+        'CASENAME' in user_args:
         # also set up caselist with frepp data
-        default_args['case_list'] = caselist_from_args(cmdline_args)
+        default_args['case_list'] = caselist_from_args(user_args)
 
-    # If we're running under frepp, overwrite with that
-    # NOTE: this code path currently usued (frepp_args is always None)
-    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
-        for section in ['paths', 'settings']:
-            for key in default_args[section]:
-                if key in frepp_args:
-                    default_args[section][key] = frepp_args[key]
-        if 'CASENAME' in frepp_args:
-            # also set up caselist with frepp data
-            default_args['case_list'] = caselist_from_args(frepp_args)
-
+    if 'CODE_ROOT' in user_args:
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = user_args['CODE_ROOT']
     # convert relative to absolute paths
     for key, val in default_args['paths'].items():
         default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
@@ -237,13 +226,13 @@ def manual_dispatch(class_name):
     print "No class named {}.".format(class_name)
     raise Exception('no_class')
 
-def main(config, verbose=0):
+def main():
     print "==== Starting "+__file__
 
     cmdline_args = argparse_wrapper()
     print cmdline_args
     default_args = util.read_yaml(cmdline_args['config_file'])
-    config = parse_mdtf_args(None, cmdline_args, default_args)
+    config = parse_mdtf_args([cmdline_args], default_args)
     print config #debug
     
     verbose = config['settings']['verbose']

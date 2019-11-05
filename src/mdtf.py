@@ -131,7 +131,7 @@ def argparse_wrapper():
     parser.add_argument("--chunk_freq", 
         nargs='?')       
     parser.add_argument('--config_file', 
-        nargs='?', default=os.path.join(cwd, 'config.yml'),
+        nargs='?', default=os.path.join(cwd, 'mdtf_settings.json'),
         help="Configuration file.")
     args = parser.parse_args()
     
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
     cmdline_args = argparse_wrapper()
     print cmdline_args
-    default_args = util.read_yaml(cmdline_args['config_file'])
+    default_args = util.read_json(cmdline_args['config_file'])
     config = util.parse_mdtf_args(None, cmdline_args, default_args)
     print config #debug
     

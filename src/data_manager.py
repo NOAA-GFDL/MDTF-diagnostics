@@ -504,7 +504,7 @@ class DataManager(object):
             if verbose > 1: 
                 print "WARNING: moving existing namelist file to ", out_fileold
             shutil.move(out_file, out_fileold)
-        util.write_yaml(config, out_file)
+        util.write_json(config, out_file)
 
     def _make_tar_file(self):
         """Make tar file

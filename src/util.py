@@ -173,7 +173,7 @@ class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
         # pylint: disable=maybe-no-member
         if unittest_flag:
-            # value not used, when we're testing will mock out call to read_yaml
+            # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
@@ -184,7 +184,7 @@ class VariableTranslator(Singleton):
         # always have CF-compliant option, which does no translation
         self.field_dict = {'CF':{}} 
         for filename in config_files:
-            file_contents = read_yaml(filename)
+            file_contents = read_json(filename)
 
             if type(file_contents['convention_name']) is str:
                 file_contents['convention_name'] = [file_contents['convention_name']]
@@ -352,10 +352,11 @@ class Namespace(dict):
 # ------------------------------------
 
 def read_json(file_path):
-    def _utf8_to_ascii(data, ignore_dicts = False):
+    def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
         # https://stackoverflow.com/a/33571117
+        # Also drop any elements beginning with a '#' (convention for comments.)
 
         # if this is a unicode string, return its string representation
         if isinstance(data, unicode):
@@ -363,14 +364,16 @@ def read_json(file_path):
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            return [item for item in ascii_ if not item.startswith('#')]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
-            return {
+            ascii_ = {
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
+            return {key: ascii_[key] for key in ascii_ if not item.startswith('#')}
         # if it's anything else, return it in its original form
         return data
 
@@ -389,6 +392,22 @@ def read_json(file_path):
         print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
         exit()
     return file_contents
+
+def write_json(struct, file_path, verbose=0):
+    """Wrapping file I/O simplifies unit testing.
+
+    Args:
+        struct (:obj:`dict`)
+        file_path (:obj:`str`): path of the JSON file to write.
+        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+    """
+    try:
+        with open(file_path, 'w') as file_obj:
+            json.dumps(struct, file_obj, 
+                sort_keys=True, indent=2, separators=(',', ': '))
+    except IOError:
+        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
+        exit()
 
 def read_yaml(file_path, verbose=0):
     """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 

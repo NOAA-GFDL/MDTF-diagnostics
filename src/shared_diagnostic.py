@@ -54,8 +54,8 @@ class Diagnostic(object):
 
         self.name = pod_name
         self.__dict__.update(paths.podPaths(self))
-        file_contents = util.read_yaml(
-            os.path.join(self.POD_CODE_DIR, 'settings.yml'))
+        file_contents = util.read_json(
+            os.path.join(self.POD_CODE_DIR, 'settings.json'))
 
         config = self._parse_pod_settings(file_contents['settings'], verbose)
         self.__dict__.update(config)
@@ -96,7 +96,7 @@ class Diagnostic(object):
         for obj_attr in ['process_obj', 'logfile_obj', 'skipped']:
             d[obj_attr] = None
 
-        # overwrite with contents of settings.yaml file
+        # overwrite with contents of settings.json file
         d.update(settings)
 
         if 'variable_convention' in d:

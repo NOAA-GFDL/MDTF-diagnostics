@@ -155,18 +155,100 @@ def manual_dispatch(class_name):
     print "No class named {}.".format(class_name)
     raise Exception('no_class')
 
+def caselist_from_args(args):
+    d = {}
+    for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
+        'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
+        if k in args:
+            d[k] = args[k]
+    for k in ['model', 'variable_convention']:
+        if k not in d:
+            d[k] = 'CMIP_GFDL'
+    if 'CASENAME' not in d:
+        d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
+    if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
+        d['root_dir'] = args['CASE_ROOT_DIR']
+    return [d]
+
+def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
+    """Parse script options.
+
+    We provide three ways to configure the script. In order of precendence,
+    they are:
+
+    1. Parameter substitution via GFDL's internal `frepp` utility; see
+       `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation`_.
+
+    2. Through command-line arguments.
+
+    3. Through default values set in a YAML configuration file, by default
+       in src/config.yml.
+
+    This function applies the precendence and returns a single dict of the
+    actual configuration.
+
+    Args:
+
+    Returns: :obj:`dict` of configuration settings.
+    """
+    # overwrite defaults with command-line args.
+    for section in ['paths', 'settings']:
+        for key in default_args[section]:
+            if key in cmdline_args:
+                default_args[section][key] = cmdline_args[key]
+    if 'CODE_ROOT' in cmdline_args:
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = cmdline_args['CODE_ROOT']
+
+    if ('CASENAME' in cmdline_args) or (
+        'model' in cmdline_args and 'experiment' in cmdline_args
+        ):
+        # also set up caselist with frepp data
+        default_args['case_list'] = caselist_from_args(cmdline_args)
+
+    # If we're running under frepp, overwrite with that
+    # NOTE: this code path currently usued (frepp_args is always None)
+    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
+        for section in ['paths', 'settings']:
+            for key in default_args[section]:
+                if key in frepp_args:
+                    default_args[section][key] = frepp_args[key]
+        if 'CASENAME' in frepp_args:
+            # also set up caselist with frepp data
+            default_args['case_list'] = caselist_from_args(frepp_args)
+
+    # convert relative to absolute paths
+    for key, val in default_args['paths'].items():
+        default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
+
+    return default_args
+
+def set_mdtf_env_vars(config, verbose=0):
+    # pylint: disable=maybe-no-member
+    paths = util.PathManager()
+    util.check_required_dirs(
+        already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
+        create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
+        verbose=verbose
+        )
+
+    config["envvars"] = config['settings'].copy()
+    config["envvars"].update(config['paths'])
+    # following are redundant but used by PODs
+    config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"
+
 if __name__ == '__main__':
     print "==== Starting "+__file__
 
     cmdline_args = argparse_wrapper()
     print cmdline_args
     default_args = util.read_yaml(cmdline_args['config_file'])
-    config = util.parse_mdtf_args(None, cmdline_args, default_args)
+    config = parse_mdtf_args(None, cmdline_args, default_args)
     print config #debug
     
     verbose = config['settings']['verbose']
     util.PathManager(config['paths']) # initialize
-    util.set_mdtf_env_vars(config, verbose)
+    set_mdtf_env_vars(config, verbose)
     DataMgr = manual_dispatch(
         config['settings']['data_manager'].title()+'DataManager'
     )

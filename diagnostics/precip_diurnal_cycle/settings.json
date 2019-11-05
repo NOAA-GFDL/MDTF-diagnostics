@@ -17,7 +17,7 @@
   "# block comment (varlist)" : [
     "USAGE varlist                                                            ",
     "var_name      time-frequency     [requirement]                           ",
-    "- var_name: as found in src/config_*.yml                                 ",
+    "- var_name: as found in src/config_*.json                                ",
     "- freq: mon (monthly), day, 6hr, 3hr, 1hr                                ",
     "- requirement = blank  (default = optional),                             ",
     "                required (package cannot run without this)               ",

@@ -20,7 +20,6 @@ else:
 import signal
 import errno
 import json
-import yaml
 import datelabel
 
 class _Singleton(type):
@@ -405,46 +404,6 @@ def write_json(struct, file_path, verbose=0):
         with open(file_path, 'w') as file_obj:
             json.dump(struct, file_obj, 
                 sort_keys=True, indent=2, separators=(',', ': '))
-    except IOError:
-        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
-        exit()
-
-def read_yaml(file_path, verbose=0):
-    """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
-
-    Args:
-        file_path (:obj:`str`): path of the YAML file to read.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-    Returns:
-        :obj:`dict` containing the parsed contents of the file.
-    """
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = yaml.safe_load(file_obj)
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-
-    if (verbose > 2):
-        print yaml.dump(file_contents)  #print it to stdout 
-    return file_contents
-
-def write_yaml(struct, file_path, verbose=0):
-    """Wrapper to the ``dump`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
-
-    Args:
-        struct (:obj:`dict`)
-        file_path (:obj:`str`): path of the YAML file to write.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-    """
-    try:
-        with open(file_path, 'w') as file_obj:
-            yaml.dump(struct, file_obj)
     except IOError:
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()

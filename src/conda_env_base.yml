@@ -5,6 +5,5 @@ channels:
 dependencies:
 - python=2.7
 - subprocess32
-- pyyaml
 - mock
 - netCDF4

@@ -146,15 +146,6 @@ def argparse_wrapper():
         del d[key]
     return d
 
-def manual_dispatch(class_name):
-    for mod in [data_manager, environment_manager, gfdl]:
-        try:
-            return getattr(mod, class_name)
-        except:
-            continue
-    print "No class named {}.".format(class_name)
-    raise Exception('no_class')
-
 def caselist_from_args(args):
     d = {}
     for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
@@ -237,7 +228,16 @@ def set_mdtf_env_vars(config, verbose=0):
     # following are redundant but used by PODs
     config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"
 
-if __name__ == '__main__':
+def manual_dispatch(class_name):
+    for mod in [data_manager, environment_manager, gfdl]:
+        try:
+            return getattr(mod, class_name)
+        except:
+            continue
+    print "No class named {}.".format(class_name)
+    raise Exception('no_class')
+
+def main(config, verbose=0):
     print "==== Starting "+__file__
 
     cmdline_args = argparse_wrapper()
@@ -282,4 +282,7 @@ if __name__ == '__main__':
         case.tearDown(config)
 
     print "Exiting normally from ",__file__
-    exit()
+
+
+if __name__ == '__main__':
+    main()

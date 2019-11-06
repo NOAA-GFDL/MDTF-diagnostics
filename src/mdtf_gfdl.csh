@@ -136,9 +136,7 @@ end
 wipetmp
 
 ## fetch obs data from local source
-mkdir -p "${INPUT_DIR}"
-mkdir -p "${WK_DIR}"
-mkdir "${INPUT_DIR}/model"
+mkdir -p "${INPUT_DIR}/obs_data"
 gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
 
 ## make sure we have python dependencies

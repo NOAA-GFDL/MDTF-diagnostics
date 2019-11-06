@@ -212,8 +212,8 @@ def set_mdtf_env_vars(config, verbose=0):
     # pylint: disable=maybe-no-member
     paths = util.PathManager()
     util.check_required_dirs(
-        already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
-        create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
+        already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 
+        create_if_nec = [paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR], 
         verbose=verbose
         )
 

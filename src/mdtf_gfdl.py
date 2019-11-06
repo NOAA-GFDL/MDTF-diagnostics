@@ -54,7 +54,7 @@ def main():
     # reset default config file
     for action in cmdline_parser._actions:
         if action.dest == 'config_file':
-            action.default = os.path.join(code_root, 'src', 'config_gfdl.yml')
+            action.default = os.path.join(code_root, 'src', 'gfdl_mdtf_settings.json')
 
     cmdline_args = mdtf.filter_argparse(cmdline_parser)
     print cmdline_args

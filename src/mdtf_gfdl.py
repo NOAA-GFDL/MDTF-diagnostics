@@ -20,6 +20,8 @@ def manual_dispatch(class_name):
 def fetch_obs_data(obs_data_source, config):
     obs_data_source = os.path.realpath(obs_data_source)
     dest_dir = config['paths']['OBS_DATA_ROOT']
+    if obs_data_source == dest_dir:
+        return
     if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
         print "Observational data directory at {} is empty.".format(dest_dir)
     if gfdl.running_on_PPAN():
@@ -52,9 +54,7 @@ def main():
     # reset default config file
     for action in cmdline_parser._actions:
         if action.dest == 'config_file':
-            action.default = os.path.join(code_root, 'src', 'config_gfdl.yml'),
-        else:
-            raise AssertionError('config_file setting not found.') 
+            action.default = os.path.join(code_root, 'src', 'config_gfdl.yml')
 
     cmdline_args = mdtf.filter_argparse(cmdline_parser)
     print cmdline_args

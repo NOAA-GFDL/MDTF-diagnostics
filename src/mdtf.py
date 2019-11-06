@@ -135,9 +135,10 @@ def caselist_from_args(args):
         'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
         if k in args:
             d[k] = args[k]
-    for k in ['model', 'variable_convention']:
-        if k not in d:
-            d[k] = 'CMIP_GFDL'
+    if 'model' not in d:
+        d['model'] = 'CMIP_GFDL'
+    if 'variable_convention' not in d:
+        d['variable_convention'] = d['model'] 
     if 'CASENAME' not in d:
         d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
     if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:

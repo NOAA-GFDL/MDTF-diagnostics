@@ -495,16 +495,16 @@ class DataManager(object):
         util.append_html_template(src, dest, template_dict)
 
     def _backup_config_file(self, config, verbose=0):
-        """Record settings in file variab_dir/config_save.yml for rerunning
+        """Record settings in file variab_dir/config_save.json for rerunning
         """
         # pylint: disable=maybe-no-member
-        out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.yml')
+        out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if os.path.isfile(out_file):
-            out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.yml.old')
+            out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.json.old')
             if verbose > 1: 
                 print "WARNING: moving existing namelist file to ", out_fileold
             shutil.move(out_file, out_fileold)
-        util.write_yaml(config, out_file)
+        util.write_json(config, out_file)
 
     def _make_tar_file(self):
         """Make tar file

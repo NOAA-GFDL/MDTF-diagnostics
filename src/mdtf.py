@@ -66,12 +66,12 @@ def argparse_wrapper(code_root):
     Returns: :obj:`dict` of command-line parameters.
     """
     parser = argparse.ArgumentParser(
-        epilog="All command-line arguments override defaults set in src/config.yml."
+        epilog="All command-line arguments override defaults set in src/mdtf_settings.json."
     )
     parser.add_argument("-v", "--verbose", 
         action="count", default = 1,
         help="Increase output verbosity")
-    # default paths set in config.yml/paths
+    # default paths set in mdtf_settings.json/paths
     parser.add_argument('--CODE_ROOT', 
         nargs='?', default=code_root,
         help="Code installation directory.")
@@ -87,7 +87,7 @@ def argparse_wrapper(code_root):
     parser.add_argument('--OUTPUT_DIR', 
         nargs='?',
         help="Directory to write output files. Defaults to working directory.")
-    # defaults set in config.yml/settings
+    # defaults set in mdtf_settings.json/settings
     parser.add_argument("--test_mode", 
         action="store_true", # so default to False
         help="Set flag to do a dry run, disabling calls to PODs")
@@ -120,7 +120,7 @@ def argparse_wrapper(code_root):
     parser.add_argument("--chunk_freq", 
         nargs='?')       
     parser.add_argument('--config_file', 
-        nargs='?', default=os.path.join(code_root, 'src', 'config.yml'),
+        nargs='?', default=os.path.join(code_root, 'src', 'mdtf_settings.json'),
         help="Configuration file.")
     return parser
 

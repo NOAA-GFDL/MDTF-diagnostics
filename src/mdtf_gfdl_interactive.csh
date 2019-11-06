@@ -1,87 +1,50 @@
 #!/bin/tcsh -f
 #SBATCH --job-name=MDTF-diags
-#SBATCH --time=02:00:00
+#SBATCH --time=05:00:00
 #SBATCH --ntasks=1
 #SBATCH --chdir=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
 #SBATCH -o /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
+# Note: increase timeout for long runs
 
 # ------------------------------------------------------------------------------
-# Wrapper script to call the MDTF Diagnostics package from the FRE pipeline.
+# Wrapper script to call the MDTF Diagnostics package interactively from PPAN.
 # ------------------------------------------------------------------------------
-
-# variables set by frepp
-set argu
-set mode
-set in_data_dir
-set out_dir
-set descriptor
-set yr1
-set yr2
-set WORKDIR
-set databegyr
-set dataendyr
-set datachunk
-set staticfile
-set fremodule
-set script_path
 
 ## set paths
 set REPO_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
 set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
-# output always written to $out_dir; unset below to skip copy/linking to 
-# MDteam experiment directory.
-set OUTPUT_HTML_DIR=/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output
 set INPUT_DIR=${TMPDIR}/inputdata
 set WK_DIR=${TMPDIR}/wkdir
-
-# End of user-configurable paramters
-# ----------------------------------------------------
-
-## parse paths and check access
-# if ( ! -w "$WK_DIR" ) then
-# 	echo "${USER} doesn't have write access to ${WK_DIR}"
-#	exit 1
-# endif
-# if ( ! -w "$out_dir" ) then
-# 	echo "${USER} doesn't have write access to ${out_dir}"
-# 	exit 1
-# endif
-
-# counts in the following depend on in_data_dir being terminated with a '/'
-set last_char=`echo "$in_data_dir" | rev | cut -c -1`
-if ( "$last_char" != "/" ) then
-    set in_data_dir="${in_data_dir}/"
-endif
-set PP_DIR=`cd ${in_data_dir}/../../../.. ; pwd`
-# chunk frequency = 2nd directory from the end
-set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
-# data frequency = 3rd directory from the end
-set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
-# component = 5th directory from the end
-set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
-set flags=()
+set out_dir=${HOME}
 
 ## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,save_nc,yr1:,yr2: -- $argu:q`)
+set temp=(`getopt -s tcsh -o E:O:Y:Z: --long save_nc,test_mode,out_dir:,descriptor:,yr1:,yr2: -- $argv:q`)
 if ($? != 0) then 
     echo "Command line parse error 1" >/dev/stderr
     exit 1
 endif
+set flags=()
 
 eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
     switch($1:q)
-    case -I:
-    case --ignore-component:
-        set cmpt_args = ( '--ignore-component' ) ; shift 
+    case -E:
+    case --experiment:
+        set descriptor="$2:q" ; shift ; shift
+        breaksw;
+    case -O:
+    case --out_dir:
+        set out_dir="$2:q" ; shift ; shift
         breaksw;
     case --save_nc:
-        set flags = ( '--save_nc' ) ; shift 
+        set flags = ( $flags:q '--save_nc' ) ; shift 
+        breaksw;
+    case --test_mode:
+        set flags = ( $flags:q '--test_mode' ) ; shift 
         breaksw;
     case -Y:
     case --yr1:
@@ -98,6 +61,14 @@ while (1)
         echo "Command line parse error 2" ; exit 1
     endsw
 end
+
+# foreach el ($argv:q) created problems for some tcsh-versions (at least
+# 6.02). So we use another shift-loop here:
+while ($#argv > 0)
+	set PP_DIR="$1:q"
+	shift
+end
+
 # trim leading zeros
 set yr1 = `echo ${yr1} | sed 's/^0*//g'`
 set yr2 = `echo ${yr2} | sed 's/^0*//g'`
@@ -135,17 +106,37 @@ end
 ## clean up tmpdir
 wipetmp
 
+## fetch obs data from local source
+echo 'Fetching observational data'
+mkdir -p "${INPUT_DIR}"
+mkdir -p "${WK_DIR}"
+mkdir "${INPUT_DIR}/model"
+gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
+
+## make sure we have python dependencies
+${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
+if ( $status != 0 ) then
+    echo 'Installing required modules'
+    mkdir -p "${REPO_DIR}/envs/venv"
+    python -m pip install --user virtualenv
+    python -m virtualenv "${REPO_DIR}/envs/venv/base"
+    source "${REPO_DIR}/envs/venv/base/bin/activate"
+    # pip --user redundant/not valid in a virtualenv
+    pip install --disable-pip-version-check subprocess32 pyyaml
+else
+    echo 'Found required modules'
+endif
+
 ## Clean output subdirectory
 set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
 if ( -d "${out_dir}/${mdtf_dir}" ) then
-    # may be mounted read-only though...
     echo "${out_dir}/${mdtf_dir} already exists; deleting"
     rm -rf "${out_dir}/${mdtf_dir}"
 endif
 
 ## run the command (unbuffered output)
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf.py" \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
@@ -156,37 +147,8 @@ echo 'script start'
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
 --LASTYR $yr2 \
-$cmpt_args:q \
 $flags:q
 echo 'script exit'
-
-## copy/link output files, if requested
-if ( ! $?OUTPUT_HTML_DIR ) then       
-    echo "Complete -- Exiting"
-    exit 0
-endif
-if ( "$OUTPUT_HTML_DIR" == "" ) then
-    echo "Complete -- Exiting"
-    exit 0
-endif
-# if ( ! -w "$OUTPUT_HTML_DIR" ) then
-#    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-#    exit 0
-# endif
-
-echo "Configuring data for experiments website"
-
-set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
-
-if ( ! -d ${mdteamDir} ) then
-    mkdir -p "${mdteamDir}"
-    echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-    ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
-else
-    echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-    gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
-endif
 
 echo "Complete -- Exiting"
 exit 0

@@ -20,7 +20,6 @@ else:
 import signal
 import errno
 import json
-import yaml
 import datelabel
 
 class _Singleton(type):
@@ -59,7 +58,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
 class PathManager(Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``config.yml``.
+    set in the ``paths`` section of ``mdtf_settings.json``.
     """
     _root_pathnames = [
         'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
@@ -173,18 +172,18 @@ class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
         # pylint: disable=maybe-no-member
         if unittest_flag:
-            # value not used, when we're testing will mock out call to read_yaml
+            # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
             paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.yml')
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.json')
             config_files = glob.glob(glob_pattern)
 
         # always have CF-compliant option, which does no translation
         self.field_dict = {'CF':{}} 
         for filename in config_files:
-            file_contents = read_yaml(filename)
+            file_contents = read_json(filename)
 
             if type(file_contents['convention_name']) is str:
                 file_contents['convention_name'] = [file_contents['convention_name']]
@@ -352,10 +351,11 @@ class Namespace(dict):
 # ------------------------------------
 
 def read_json(file_path):
-    def _utf8_to_ascii(data, ignore_dicts = False):
+    def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
         # https://stackoverflow.com/a/33571117
+        # Also drop any elements beginning with a '#' (convention for comments.)
 
         # if this is a unicode string, return its string representation
         if isinstance(data, unicode):
@@ -363,14 +363,18 @@ def read_json(file_path):
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            return [item for item in ascii_ if not (
+                hasattr(item, 'startswith') and item.startswith('#'))]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
-            return {
+            ascii_ = {
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
+            return {key: ascii_[key] for key in ascii_ if not (
+                hasattr(key, 'startswith') and key.startswith('#'))}
         # if it's anything else, return it in its original form
         return data
 
@@ -390,42 +394,18 @@ def read_json(file_path):
         exit()
     return file_contents
 
-def read_yaml(file_path, verbose=0):
-    """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
-
-    Args:
-        file_path (:obj:`str`): path of the YAML file to read.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-    Returns:
-        :obj:`dict` containing the parsed contents of the file.
-    """
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = yaml.safe_load(file_obj)
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-
-    if (verbose > 2):
-        print yaml.dump(file_contents)  #print it to stdout 
-    return file_contents
-
-def write_yaml(struct, file_path, verbose=0):
-    """Wrapper to the ``dump`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
+def write_json(struct, file_path, verbose=0):
+    """Wrapping file I/O simplifies unit testing.
 
     Args:
         struct (:obj:`dict`)
-        file_path (:obj:`str`): path of the YAML file to write.
+        file_path (:obj:`str`): path of the JSON file to write.
         verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
         with open(file_path, 'w') as file_obj:
-            yaml.dump(struct, file_obj)
+            json.dump(struct, file_obj, 
+                sort_keys=True, indent=2, separators=(',', ': '))
     except IOError:
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()

@@ -35,7 +35,7 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 
 #     pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
 #     for pod in case_list['pods']:
-#         write_yaml(pod_configs[pod], os.path.join(out_path, pod+'_temp.yml'))
+#         write_json(pod_configs[pod], os.path.join(out_path, pod+'_temp.json'))
 
 @unittest.skipIf(DOING_TRAVIS,
     "Skipping POD execution tests because running in Travis CI environment")

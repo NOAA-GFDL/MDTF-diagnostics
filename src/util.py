@@ -178,7 +178,7 @@ class VariableTranslator(Singleton):
             config_files = ['dummy_filename']
         else:
             paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'config_*.yml')
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.yml')
             config_files = glob.glob(glob_pattern)
 
         # always have CF-compliant option, which does no translation
@@ -703,7 +703,7 @@ def check_required_envvar(*varlist):
             exit()
 
 
-def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
+def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
     # arguments can be envvar name or just the paths
     filestr = __file__+":check_required_dirs: "
     errstr = "ERROR "+filestr

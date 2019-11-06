@@ -440,10 +440,8 @@ class GfdlarchiveDataManager(DataManager):
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            util.run_command(['gcp','-r','-v','--sync',
-                'gfdl:' + self.MODEL_WK_DIR + os.sep,
-                'gfdl:' + self.MODEL_OUT_DIR + os.sep
-            ])
+            gcp_wrapper(self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
+                timeout=self.file_transfer_timeout)
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
@@ -648,6 +646,20 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
                 version_date=version_date[data_key]
             )
         return choices
+
+def gcp_wrapper(source_path, dest_dir, timeout=0):
+    modMgr = ModuleManager()
+    modMgr.load('gcp')
+    # gcp requires trailing slash, ln ignores it
+    if os.path.isdir(source_path):
+        source = ['-r', 'gfdl:' + os.path.normpath(source_path) + os.sep]
+    else:
+        source = ['gfdl:' + os.path.normpath(source_path)]
+    dest = ['gfdl:' + dest_dir + os.sep]
+    util.run_command(
+        ['gcp', '--sync', '-v', '-cd'] + source + dest,
+        timeout=timeout
+    ) 
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

@@ -212,7 +212,7 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
+        # print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):

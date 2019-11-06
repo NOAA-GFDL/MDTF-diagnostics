@@ -247,7 +247,7 @@ def main():
 
     cmdline_args = filter_argparse(argparse_wrapper(code_root))
     print cmdline_args
-    default_args = util.read_yaml(cmdline_args['config_file'])
+    default_args = util.read_json(cmdline_args['config_file'])
     config = parse_mdtf_args(cmdline_args, default_args)
     print config #debug
     

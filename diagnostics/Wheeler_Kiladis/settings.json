@@ -34,7 +34,7 @@
   "varlist" : [
     {
       "var_name" : "rlut_var",
-      "freq" : " day",
+      "freq" : "day",
       "requirement" : "required"
     },
     {

@@ -364,7 +364,8 @@ def read_json(file_path):
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
             ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-            return [item for item in ascii_ if not item.startswith('#')]
+            return [item for item in ascii_ if not (
+                hasattr(item, 'startswith') and item.startswith('#'))]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
@@ -372,7 +373,8 @@ def read_json(file_path):
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
-            return {key: ascii_[key] for key in ascii_ if not item.startswith('#')}
+            return {key: ascii_[key] for key in ascii_ if not (
+                hasattr(key, 'startswith') and key.startswith('#'))}
         # if it's anything else, return it in its original form
         return data
 

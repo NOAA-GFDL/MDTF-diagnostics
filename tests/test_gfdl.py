@@ -83,22 +83,22 @@ class TestModuleManager(unittest.TestCase):
         del list1[0]
         list1 = set([s.replace('(default)','') for s in list1])
         modMgr = gfdl.ModuleManager()
-        list2 = set(modMgr.list())
+        list2 = set(modMgr._list())
         self.assertEqual(list1, list2)
 
     def test_module_load(self):
         modMgr = gfdl.ModuleManager()
         modMgr.load(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
 
     def test_module_unload(self):
         modMgr = gfdl.ModuleManager()
         modMgr.load(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
         modMgr.unload(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertNotIn(self.test_mod_name, mod_list)
 
 class TestFreppArgParsing(unittest.TestCase):

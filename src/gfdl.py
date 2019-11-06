@@ -71,7 +71,7 @@ class ModuleManager(util.Singleton):
         self.modules_i_loaded.discard(module_name)
         self._module(['unload', module_name])
 
-    def list(self):
+    def _list(self):
         """Wrapper for module list.
         """
         return os.environ['LOADEDMODULES'].split(':')
@@ -83,7 +83,7 @@ class ModuleManager(util.Singleton):
         # User's modules may have been unloaded if we loaded a different version
         for mod in self.user_modules:
             self._module(['load', mod])
-        assert set(self.list()) == self.user_modules
+        assert set(self._list()) == self.user_modules
 
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
@@ -635,7 +635,6 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
                 version_date=version_date[data_key]
             )
         return choices
-
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

@@ -76,9 +76,9 @@
     "# Parent directory containing observational data used by individual PODs.":"",
     "OBS_DATA_ROOT" : "../inputdata/obs_data/",
     "# Working directory.                                                  ":"",
-    "WORKING_DIR" : "./wkdir",
+    "WORKING_DIR" : "../wkdir",
     "# Directory to write output files. Defaults to working directory.     ":"",
-    "OUTPUT_DIR" : "./wkdir"
+    "OUTPUT_DIR" : "../wkdir"
   },
 
   "# SETTINGS -------------------------------------------------------------":"",

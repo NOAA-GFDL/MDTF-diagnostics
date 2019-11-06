@@ -58,28 +58,19 @@ from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import util
 import data_manager
 import environment_manager
-from shared_diagnostic import Diagnostic
-try:
-    import gfdl
-except ImportError:
-    pass  
+from shared_diagnostic import Diagnostic  
 
-def argparse_wrapper():
+def argparse_wrapper(code_root):
     """Wraps command-line arguments to script.
 
     Returns: :obj:`dict` of command-line parameters.
     """
-    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
     parser = argparse.ArgumentParser(
         epilog="All command-line arguments override defaults set in src/config.yml."
     )
-    parser.add_argument("-v", "--verbosity", 
-        action="count",
+    parser.add_argument("-v", "--verbose", 
+        action="count", default = 1,
         help="Increase output verbosity")
-    parser.add_argument("--frepp", 
-        action="store_true", # so default to False
-        help="Set flag to take configuration info from env vars set by frepp.")
     # default paths set in config.yml/paths
     parser.add_argument('--CODE_ROOT', 
         nargs='?', default=code_root,
@@ -122,9 +113,6 @@ def argparse_wrapper():
         nargs='?', type=int)
     parser.add_argument('--LASTYR', 
         nargs='?', type=int)
-    parser.add_argument("--ignore-component", 
-        action="store_true", # so default to False
-        help="Set flag to ignore model component passed by frepp and search entire /pp/ directory.")
     parser.add_argument("--component", 
         nargs='?')
     parser.add_argument("--data_freq", 
@@ -132,20 +120,14 @@ def argparse_wrapper():
     parser.add_argument("--chunk_freq", 
         nargs='?')       
     parser.add_argument('--config_file', 
-        nargs='?', default=os.path.join(cwd, 'config.yml'),
+        nargs='?', default=os.path.join(code_root, 'src', 'config.yml'),
         help="Configuration file.")
-    args = parser.parse_args()
-    
-    d = args.__dict__
-    if args.verbosity == None:
-        d['verbose'] = 1
-    else:
-        d['verbose'] = args.verbosity + 1 # fix for case  verb = 0
+    return parser
+
+def filter_argparse(parser):
+    d = parser.parse_args().__dict__
     # remove entries that weren't set
-    del_keys = [key for key in d if d[key] is None]
-    for key in del_keys:
-        del d[key]
-    return d
+    return {key: val for key, val in d.iteritems() if val is not None}
 
 def caselist_from_args(args):
     d = {}
@@ -189,6 +171,7 @@ def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
         user_args = ChainMap(*user_args_list)
     else:
         user_args = dict()
+
     # overwrite defaults with command-line args.
     for section in ['paths', 'settings']:
         for key in default_args[section]:
@@ -208,13 +191,12 @@ def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
 
     return default_args
 
-def set_mdtf_env_vars(config, verbose=0):
+def set_mdtf_env_vars(config):
     # pylint: disable=maybe-no-member
     paths = util.PathManager()
     util.check_required_dirs(
         already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 
         create_if_nec = [paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR], 
-        verbose=verbose
         )
 
     config["envvars"] = config['settings'].copy()
@@ -223,7 +205,7 @@ def set_mdtf_env_vars(config, verbose=0):
     config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"
 
 def manual_dispatch(class_name):
-    for mod in [data_manager, environment_manager, gfdl]:
+    for mod in [data_manager, environment_manager]:
         try:
             return getattr(mod, class_name)
         except:
@@ -231,25 +213,7 @@ def manual_dispatch(class_name):
     print "No class named {}.".format(class_name)
     raise Exception('no_class')
 
-def main():
-    print "==== Starting "+__file__
-
-    cmdline_args = argparse_wrapper()
-    print cmdline_args
-    default_args = util.read_yaml(cmdline_args['config_file'])
-    config = parse_mdtf_args(cmdline_args, default_args)
-    print config #debug
-    
-    verbose = config['settings']['verbose']
-    util.PathManager(config['paths']) # initialize
-    set_mdtf_env_vars(config, verbose)
-    DataMgr = manual_dispatch(
-        config['settings']['data_manager'].title()+'DataManager'
-    )
-    EnvironmentMgr = manual_dispatch(
-        config['settings']['environment_manager'].title()+'EnvironmentManager'
-    )
-
+def main_case_loop(config, DataMgr, EnvironmentMgr):
     caselist = []
     # only run first case in list until dependence on env vars cleaned up
     for case_dict in config['case_list'][0:1]: 
@@ -259,7 +223,7 @@ def main():
                 pod = Diagnostic(pod_name)
             except AssertionError as error:  
                 print str(error)
-            if verbose > 0: print "POD long name: ", pod.long_name
+            print "POD name: ", pod.long_name
             case.pods.append(pod)
         case.setUp()
         case.fetch_data()
@@ -275,6 +239,26 @@ def main():
     for case in caselist:
         case.tearDown(config)
 
+def main():
+    print "==== Starting "+__file__
+    cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
+    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
+
+    cmdline_args = filter_argparse(argparse_wrapper(code_root))
+    print cmdline_args
+    default_args = util.read_yaml(cmdline_args['config_file'])
+    config = parse_mdtf_args(cmdline_args, default_args)
+    print config #debug
+    
+    util.PathManager(config['paths']) # initialize
+    set_mdtf_env_vars(config)
+    DataMgr = manual_dispatch(
+        config['settings']['data_manager'].title()+'DataManager'
+    )
+    EnvironmentMgr = manual_dispatch(
+        config['settings']['environment_manager'].title()+'EnvironmentManager'
+    )
+    main_case_loop(config, DataMgr, EnvironmentMgr)
     print "Exiting normally from ",__file__
 
 

@@ -661,6 +661,11 @@ def gcp_wrapper(source_path, dest_dir, timeout=0):
         timeout=timeout
     ) 
 
+def running_on_PPAN():
+    """Return true if current host is in the PPAN cluster."""
+    host = os.uname()[1].split('.')[0]
+    return (re.match(r"(pp|an)\d{3}", host) is not None)
+
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)
     if date_freq is None:

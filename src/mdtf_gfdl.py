@@ -15,10 +15,29 @@ def manual_dispatch(class_name):
     print "No class named {}.".format(class_name)
     raise Exception('no_class')
 
+def fetch_obs_data(obs_data_source, config):
+    obs_data_source = os.path.realpath(obs_data_source)
+    dest_dir = config['paths']['OBS_DATA_ROOT']
+    if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
+        print "Observational data directory at {} is empty.".format(dest_dir)
+    if gfdl.running_on_PPAN():
+        print "\tGCPing data from {}.".format(obs_data_source)
+        # giving -cd to GCP, so will create dirs
+        gfdl.gcp_wrapper(obs_data_source, dest_dir)
+    else:
+        print "\tSymlinking obs data dir to {}.".format(obs_data_source)
+        dest_parent = os.path.dirname(dest_dir)
+        if os.path.exists(dest_dir):
+            assert os.path.isdir(dest_dir)
+            os.rmdir(dest_dir)
+        elif not os.path.exists(dest_parent):
+            os.makedirs(dest_parent)
+        util.run_command(['ln', '-fs', obs_data_source, dest_dir])
+
 def main():
     print "==== Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
+    code_root = os.path.dirname(cwd) # parent dir of that
     cmdline_parser = mdtf.argparse_wrapper(code_root)
 
     # add GFDL-specific arguments
@@ -38,8 +57,11 @@ def main():
     cmdline_args = mdtf.filter_argparse(cmdline_parser)
     print cmdline_args
     default_args = util.read_yaml(cmdline_args['config_file'])
+    obs_data_source = default_args['paths']['OBS_DATA_ROOT']
     config = mdtf.parse_mdtf_args(cmdline_args, default_args)
     print config #debug
+
+    fetch_obs_data(obs_data_source, config)
 
     util.PathManager(config['paths']) # initialize
     mdtf.set_mdtf_env_vars(config)

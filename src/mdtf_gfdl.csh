@@ -135,10 +135,6 @@ end
 ## clean up tmpdir
 wipetmp
 
-## fetch obs data from local source
-mkdir -p "${INPUT_DIR}/obs_data"
-gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
-
 ## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
 if ( $status != 0 ) then

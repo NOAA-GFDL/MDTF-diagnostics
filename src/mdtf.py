@@ -242,7 +242,7 @@ def main_case_loop(config, DataMgr, EnvironmentMgr):
 def main():
     print "==== Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
+    code_root = os.path.dirname(cwd) # parent dir of that
 
     cmdline_args = filter_argparse(argparse_wrapper(code_root))
     print cmdline_args

@@ -93,7 +93,7 @@ settings:
   # Currently supported options are
   # - 'Localfile': Do not attempt to fetch data; read from pre-existing files 
   #   at $MODEL_DATA_ROOT (set above).
-  data_manager: 'Localfile'
+  data_manager: 'GfdlPP'
   # Specify the method the code uses to manage diagnostic's dependencies. 
   # Currently supported options are 
   # - 'None' (use whatever modules are found in system)

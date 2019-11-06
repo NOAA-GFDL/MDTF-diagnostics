@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import data_manager
 import environment_manager

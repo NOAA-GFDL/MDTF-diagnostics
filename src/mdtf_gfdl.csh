@@ -149,16 +149,9 @@ else
     echo 'Found required modules'
 endif
 
-## Clean output subdirectory
-set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
-if ( -d "${out_dir}/${mdtf_dir}" ) then
-    echo "${out_dir}/${mdtf_dir} already exists; deleting"
-    rm -rf "${out_dir}/${mdtf_dir}"
-endif
-
 ## run the command (unbuffered output)
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \

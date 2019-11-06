@@ -135,12 +135,6 @@ end
 ## clean up tmpdir
 wipetmp
 
-## fetch obs data from local source
-mkdir -p "${INPUT_DIR}"
-mkdir -p "${WK_DIR}"
-mkdir "${INPUT_DIR}/model"
-gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
-
 ## make sure we have python dependencies
 ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
 if ( $status != 0 ) then
@@ -155,16 +149,9 @@ else
     echo 'Found required modules'
 endif
 
-## Clean output subdirectory
-set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
-if ( -d "${out_dir}/${mdtf_dir}" ) then
-    echo "${out_dir}/${mdtf_dir} already exists; deleting"
-    rm -rf "${out_dir}/${mdtf_dir}"
-endif
-
 ## run the command (unbuffered output)
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \

@@ -7,7 +7,8 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-from src.util import read_yaml, parse_mdtf_args
+from src.util import read_yaml
+from src.mdtf import parse_mdtf_args
 
 def get_configuration(config_file='', check_input=False, check_output=False):
     # Redundant with code in util; need to fix this

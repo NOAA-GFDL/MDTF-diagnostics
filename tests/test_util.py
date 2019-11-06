@@ -364,56 +364,6 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/A')
         self.assertNotIn('POD_WK_DIR', d)
 
-
-class TestMDTFArgParsing(unittest.TestCase):
-
-    def setUp(self):
-        _ = util.PathManager(unittest_flag = True)
-        self.config_test = {
-            'case_list':[{'A':'B'}],
-            'paths':{'C':'/D'},
-            'settings':{'E':'F', 'verbose':0}
-        }
-
-    def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
-        # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
-        temp._reset()
-
-    def test_parse_mdtf_args_config(self):
-        # set paths from config file
-        args = {}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(None, args, config)
-        self.assertEqual(config['paths']['C'], '/D')
-        self.assertEqual(config['settings']['E'], 'F')
-
-    def test_parse_mdtf_args_config_cmdline(self):
-        # override config file with command line arguments
-        args = {'C':'/X', 'E':'Y'}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(None, args, config)
-        self.assertEqual(config['paths']['C'], '/X')
-        self.assertEqual(config['settings']['E'], 'Y')
-
-    @mock.patch('src.util.check_required_dirs')
-    def test_set_mdtf_env_vars_config_settings(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
-        # set settings from config file
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['E'], 'F')      
-
-    @mock.patch('src.util.check_required_dirs')
-    def test_sset_mdtf_env_vars_config_rgb(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
-        # set path to /RGB from os.environ
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
-
 # ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):

@@ -183,7 +183,12 @@ def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
 
     Returns: :obj:`dict` of configuration settings.
     """
-    user_args = ChainMap(user_args_list)
+    if isinstance(user_args_list, dict):
+        user_args = user_args_list
+    elif isinstance(user_args_list, list):
+        user_args = ChainMap(*user_args_list)
+    else:
+        user_args = dict()
     # overwrite defaults with command-line args.
     for section in ['paths', 'settings']:
         for key in default_args[section]:
@@ -232,7 +237,7 @@ def main():
     cmdline_args = argparse_wrapper()
     print cmdline_args
     default_args = util.read_yaml(cmdline_args['config_file'])
-    config = parse_mdtf_args([cmdline_args], default_args)
+    config = parse_mdtf_args(cmdline_args, default_args)
     print config #debug
     
     verbose = config['settings']['verbose']

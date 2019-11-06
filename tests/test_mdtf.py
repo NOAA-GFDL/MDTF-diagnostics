@@ -24,7 +24,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         # set paths from config file
         args = {}
         config = self.config_test.copy()
-        config = mdtf.parse_mdtf_args(None, args, config)
+        config = mdtf.parse_mdtf_args(args, config)
         self.assertEqual(config['paths']['C'], '/D')
         self.assertEqual(config['settings']['E'], 'F')
 
@@ -32,7 +32,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         # override config file with command line arguments
         args = {'C':'/X', 'E':'Y'}
         config = self.config_test.copy()
-        config = mdtf.parse_mdtf_args(None, args, config)
+        config = mdtf.parse_mdtf_args(args, config)
         self.assertEqual(config['paths']['C'], '/X')
         self.assertEqual(config['settings']['E'], 'Y')
 

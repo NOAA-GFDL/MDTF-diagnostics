@@ -645,8 +645,6 @@ def coerce_to_collection(obj, coll_type):
         return coll_type([])
     elif isinstance(obj, coll_type):
         return obj
-    elif isinstance(obj, dict):
-        return coll_type(obj.keys())
     elif hasattr(obj, '__iter__'):
         return coll_type(obj)
     else:

@@ -8,7 +8,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-from src.util import read_yaml
+from src.util import read_json
 import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
@@ -27,7 +27,7 @@ if DOING_SETUP:
 
     case_list = shared.get_test_data_configuration()
 
-    output_checksums = read_yaml(os.path.join(md5_path, 'checksum_output.yml'))
+    output_checksums = read_json(os.path.join(md5_path, 'checksum_output.json'))
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
 # the advanced construction presented in https://stackoverflow.com/a/20870875 

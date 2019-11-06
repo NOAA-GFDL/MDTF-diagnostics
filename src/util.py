@@ -20,7 +20,6 @@ else:
 import signal
 import errno
 import json
-import yaml
 import datelabel
 
 class _Singleton(type):
@@ -59,7 +58,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
 class PathManager(Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``config.yml``.
+    set in the ``paths`` section of ``mdtf_settings.json``.
     """
     _root_pathnames = [
         'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
@@ -173,18 +172,18 @@ class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
         # pylint: disable=maybe-no-member
         if unittest_flag:
-            # value not used, when we're testing will mock out call to read_yaml
+            # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
             paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'config_*.yml')
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.json')
             config_files = glob.glob(glob_pattern)
 
         # always have CF-compliant option, which does no translation
         self.field_dict = {'CF':{}} 
         for filename in config_files:
-            file_contents = read_yaml(filename)
+            file_contents = read_json(filename)
 
             if type(file_contents['convention_name']) is str:
                 file_contents['convention_name'] = [file_contents['convention_name']]
@@ -352,10 +351,11 @@ class Namespace(dict):
 # ------------------------------------
 
 def read_json(file_path):
-    def _utf8_to_ascii(data, ignore_dicts = False):
+    def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
         # https://stackoverflow.com/a/33571117
+        # Also drop any elements beginning with a '#' (convention for comments.)
 
         # if this is a unicode string, return its string representation
         if isinstance(data, unicode):
@@ -363,14 +363,18 @@ def read_json(file_path):
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
+            return [item for item in ascii_ if not (
+                hasattr(item, 'startswith') and item.startswith('#'))]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
-            return {
+            ascii_ = {
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
+            return {key: ascii_[key] for key in ascii_ if not (
+                hasattr(key, 'startswith') and key.startswith('#'))}
         # if it's anything else, return it in its original form
         return data
 
@@ -390,42 +394,18 @@ def read_json(file_path):
         exit()
     return file_contents
 
-def read_yaml(file_path, verbose=0):
-    """Wrapper to the ``safe_load`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
-
-    Args:
-        file_path (:obj:`str`): path of the YAML file to read.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-
-    Returns:
-        :obj:`dict` containing the parsed contents of the file.
-    """
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = yaml.safe_load(file_obj)
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-
-    if (verbose > 2):
-        print yaml.dump(file_contents)  #print it to stdout 
-    return file_contents
-
-def write_yaml(struct, file_path, verbose=0):
-    """Wrapper to the ``dump`` function of the `PyYAML <https://pyyaml.org/>`_ 
-    module. Wrapping file I/O simplifies unit testing.
+def write_json(struct, file_path, verbose=0):
+    """Wrapping file I/O simplifies unit testing.
 
     Args:
         struct (:obj:`dict`)
-        file_path (:obj:`str`): path of the YAML file to write.
+        file_path (:obj:`str`): path of the JSON file to write.
         verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
         with open(file_path, 'w') as file_obj:
-            yaml.dump(struct, file_obj)
+            json.dump(struct, file_obj, 
+                sort_keys=True, indent=2, separators=(',', ': '))
     except IOError:
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()
@@ -645,8 +625,6 @@ def coerce_to_collection(obj, coll_type):
         return coll_type([])
     elif isinstance(obj, coll_type):
         return obj
-    elif isinstance(obj, dict):
-        return coll_type(obj.keys())
     elif hasattr(obj, '__iter__'):
         return coll_type(obj)
     else:
@@ -705,7 +683,7 @@ def check_required_envvar(*varlist):
             exit()
 
 
-def check_required_dirs(already_exist =[], create_if_nec = [], verbose=3):
+def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
     # arguments can be envvar name or just the paths
     filestr = __file__+":check_required_dirs: "
     errstr = "ERROR "+filestr
@@ -746,85 +724,3 @@ def append_html_template(template_file, target_file, template_dict={},
         mode = 'a'
     with open(target_file, mode) as f:
         f.write(html_str)
-
-def caselist_from_args(args):
-    d = {}
-    for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-        'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
-        if k in args:
-            d[k] = args[k]
-    for k in ['model', 'variable_convention']:
-        if k not in d:
-            d[k] = 'CMIP_GFDL'
-    if 'CASENAME' not in d:
-        d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-    if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
-        d['root_dir'] = args['CASE_ROOT_DIR']
-    return [d]
-
-def parse_mdtf_args(frepp_args, cmdline_args, default_args, rel_paths_root='', verbose=0):
-    """Parse script options.
-
-    We provide three ways to configure the script. In order of precendence,
-    they are:
-
-    1. Parameter substitution via GFDL's internal `frepp` utility; see
-       `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation`_.
-
-    2. Through command-line arguments.
-
-    3. Through default values set in a YAML configuration file, by default
-       in src/config.yml.
-
-    This function applies the precendence and returns a single dict of the
-    actual configuration.
-
-    Args:
-
-    Returns: :obj:`dict` of configuration settings.
-    """
-    # overwrite defaults with command-line args.
-    for section in ['paths', 'settings']:
-        for key in default_args[section]:
-            if key in cmdline_args:
-                default_args[section][key] = cmdline_args[key]
-    if 'CODE_ROOT' in cmdline_args:
-        # only let this be overridden if we're in a unit test
-        rel_paths_root = cmdline_args['CODE_ROOT']
-
-    if ('CASENAME' in cmdline_args) or (
-        'model' in cmdline_args and 'experiment' in cmdline_args
-        ):
-        # also set up caselist with frepp data
-        default_args['case_list'] = caselist_from_args(cmdline_args)
-
-    # If we're running under frepp, overwrite with that
-    # NOTE: this code path currently usued (frepp_args is always None)
-    if 'frepp' in cmdline_args and cmdline_args['frepp'] and (frepp_args is not None):
-        for section in ['paths', 'settings']:
-            for key in default_args[section]:
-                if key in frepp_args:
-                    default_args[section][key] = frepp_args[key]
-        if 'CASENAME' in frepp_args:
-            # also set up caselist with frepp data
-            default_args['case_list'] = caselist_from_args(frepp_args)
-
-    # convert relative to absolute paths
-    for key, val in default_args['paths'].items():
-        default_args['paths'][key] = resolve_path(val, rel_paths_root)
-
-    return default_args
-
-def set_mdtf_env_vars(config, verbose=0):
-    # pylint: disable=maybe-no-member
-    paths = PathManager()
-    check_required_dirs(
-        already_exist = [paths.CODE_ROOT, paths.MODEL_DATA_ROOT, paths.OBS_DATA_ROOT], 
-        create_if_nec = [paths.WORKING_DIR, paths.OUTPUT_DIR], 
-        verbose=verbose
-        )
-
-    config["envvars"] = config['settings'].copy()
-    config["envvars"].update(config['paths'])
-    # following are redundant but used by PODs
-    config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"

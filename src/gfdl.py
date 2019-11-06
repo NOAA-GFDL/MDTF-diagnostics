@@ -21,17 +21,17 @@ from data_manager import DataSet, DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
-_current_module_versions = {
-    'python':   'python/2.7.12',
-    'ncl':      'ncarg/6.5.0',
-    'r':        'R/3.4.4',
-    'anaconda': 'anaconda2/5.1',
-    'gcp':      'gcp/2.3',
-    'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
-    'netcdf':   'netcdf/4.2'
-}
-
 class ModuleManager(util.Singleton):
+    _current_module_versions = {
+        'python':   'python/2.7.12',
+        'ncl':      'ncarg/6.5.0',
+        'r':        'R/3.4.4',
+        'anaconda': 'anaconda2/5.1',
+        'gcp':      'gcp/2.3',
+        'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
+        'netcdf':   'netcdf/4.2'
+    }
+
     def __init__(self):
         if 'MODULESHOME' not in os.environ:
             # could set from module --version
@@ -41,7 +41,7 @@ class ModuleManager(util.Singleton):
 
         # capture the modules the user has already loaded once, when we start up,
         # so that we can restore back to this state in revert_state()
-        self.user_modules = set(self.list())
+        self.user_modules = set(self._list())
         self.modules_i_loaded = set()
 
     def _module(self, *args):
@@ -59,19 +59,35 @@ class ModuleManager(util.Singleton):
                 cmd=' '.join([cmd, 'python'] + args), output=error)
         exec output
 
-    def load(self, module_name):
+    def _parse_names(self, *module_names):
+        return [m if ('/' in m) else self._current_module_versions[m] \
+            for m in module_names]
+
+    def load(self, *module_names):
         """Wrapper for module load.
         """
-        self.modules_i_loaded.add(module_name)
-        self._module(['load', module_name])
+        mod_names = self._parse_names(*module_names)
+        for mod_name in mod_names:
+            if mod_name not in self.modules_i_loaded:
+                self.modules_i_loaded.add(mod_name)
+                self._module(['load', mod_name])
 
-    def unload(self, module_name):
+    def load_commands(self, *module_names):
+        return ['module load {}'.format(m) for m in self._parse_names(*module_names)]
+
+    def unload(self, *module_names):
         """Wrapper for module unload.
         """
-        self.modules_i_loaded.discard(module_name)
-        self._module(['unload', module_name])
+        mod_names = self._parse_names(*module_names)
+        for mod_name in mod_names:
+            if mod_name in self.modules_i_loaded:
+                self.modules_i_loaded.discard(mod_name)
+                self._module(['unload', mod_name])
 
-    def list(self):
+    def unload_commands(self, *module_names):
+        return ['module unload {}'.format(m) for m in self._parse_names(*module_names)]
+
+    def _list(self):
         """Wrapper for module list.
         """
         return os.environ['LOADEDMODULES'].split(':')
@@ -83,7 +99,7 @@ class ModuleManager(util.Singleton):
         # User's modules may have been unloaded if we loaded a different version
         for mod in self.user_modules:
             self._module(['load', mod])
-        assert set(self.list()) == self.user_modules
+        assert set(self._list()) == self.user_modules
 
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
@@ -109,31 +125,30 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
             pod.env = 'py_default'
 
     # this is totally not scalable
-    def _module_lookup(self, env_name):
-        _lookup = {
-            'ncl': ['ncl'],
-            'r_default': ['r'],
-            'py_default': ['python'],
-            'py_convective_transition_diag': ['python', 'ncl'],
-            'ncl_MJO_suite': ['ncl', 'nco']
-        }
-        return [_current_module_versions[m] for m in _lookup[env_name]]
+    _module_lookup = {
+        'ncl': ['ncl'],
+        'r_default': ['r'],
+        'py_default': ['python'],
+        'py_convective_transition_diag': ['python', 'ncl'],
+        'ncl_MJO_suite': ['ncl', 'nco']
+    }
 
     def create_environment(self, env_name):
         modMgr = ModuleManager()
-        for mod in self._module_lookup(env_name):
-            modMgr.load(mod)
+        modMgr.load(self._module_lookup[env_name])
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
     def activate_env_commands(self, pod):
-        mod_list = ['module load {}'.format(m) for m in self._module_lookup(pod.env)]
+        modMgr = ModuleManager()
+        mod_list = modMgr.load_commands(self._module_lookup[pod.env])
         return ['source $MODULESHOME/init/bash'] \
             + mod_list \
             + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(pod)
 
     def deactivate_env_commands(self, pod):
-        mod_list = ['module unload {}'.format(m) for m in self._module_lookup(pod.env)]
+        modMgr = ModuleManager()
+        mod_list = modMgr.unload_commands(self._module_lookup[pod.env])
         return super(GfdlvirtualenvEnvironmentManager, \
             self).deactivate_env_commands(pod) + mod_list
 
@@ -148,7 +163,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
 
     def __init__(self, config, verbose=0):
         modMgr = ModuleManager()
-        modMgr.load(_current_module_versions['anaconda'])
+        modMgr.load('anaconda')
         super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
 
     def tearDown(self):
@@ -162,9 +177,7 @@ class GfdlarchiveDataManager(DataManager):
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
-        modMgr.load(_current_module_versions['gcp'])
-        modMgr.load(_current_module_versions['nco']) # should refactor
-
+        modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
 
         # if we're running on Analysis, recommended practice is to use $FTMPDIR
@@ -199,7 +212,7 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
+        # print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
@@ -427,10 +440,8 @@ class GfdlarchiveDataManager(DataManager):
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            util.run_command(['gcp','-r','-v','--sync',
-                'gfdl:' + self.MODEL_WK_DIR + os.sep,
-                'gfdl:' + self.MODEL_OUT_DIR + os.sep
-            ])
+            gcp_wrapper(self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
+                timeout=self.file_transfer_timeout)
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
@@ -636,6 +647,24 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             )
         return choices
 
+def gcp_wrapper(source_path, dest_dir, timeout=0):
+    modMgr = ModuleManager()
+    modMgr.load('gcp')
+    # gcp requires trailing slash, ln ignores it
+    if os.path.isdir(source_path):
+        source = ['-r', 'gfdl:' + os.path.normpath(source_path) + os.sep]
+    else:
+        source = ['gfdl:' + os.path.normpath(source_path)]
+    dest = ['gfdl:' + dest_dir + os.sep]
+    util.run_command(
+        ['gcp', '--sync', '-v', '-cd'] + source + dest,
+        timeout=timeout
+    ) 
+
+def running_on_PPAN():
+    """Return true if current host is in the PPAN cluster."""
+    host = os.uname()[1].split('.')[0]
+    return (re.match(r"(pp|an)\d{3}", host) is not None)
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

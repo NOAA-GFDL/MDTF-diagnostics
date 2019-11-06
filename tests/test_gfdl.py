@@ -10,7 +10,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 import shared_test_utils as shared
 import src.gfdl as gfdl
-from src.util import parse_mdtf_args
+from src.mdtf import parse_mdtf_args
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
@@ -35,7 +35,7 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 
 #     pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
 #     for pod in case_list['pods']:
-#         write_yaml(pod_configs[pod], os.path.join(out_path, pod+'_temp.yml'))
+#         write_json(pod_configs[pod], os.path.join(out_path, pod+'_temp.json'))
 
 @unittest.skipIf(DOING_TRAVIS,
     "Skipping POD execution tests because running in Travis CI environment")
@@ -83,22 +83,22 @@ class TestModuleManager(unittest.TestCase):
         del list1[0]
         list1 = set([s.replace('(default)','') for s in list1])
         modMgr = gfdl.ModuleManager()
-        list2 = set(modMgr.list())
+        list2 = set(modMgr._list())
         self.assertEqual(list1, list2)
 
     def test_module_load(self):
         modMgr = gfdl.ModuleManager()
         modMgr.load(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
 
     def test_module_unload(self):
         modMgr = gfdl.ModuleManager()
         modMgr.load(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
         modMgr.unload(self.test_mod_name)
-        mod_list = modMgr.list()
+        mod_list = modMgr._list()
         self.assertNotIn(self.test_mod_name, mod_list)
 
 class TestFreppArgParsing(unittest.TestCase):
@@ -156,7 +156,7 @@ class TestFreppArgParsing(unittest.TestCase):
         d = gfdl.parse_frepp_stub(frepp_stub)
         args = {'frepp': True}
         config = self.config_test.copy()
-        config = parse_mdtf_args(d, args, config)
+        config = parse_mdtf_args([d, args], config)
         self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'F')
@@ -167,7 +167,7 @@ class TestFreppArgParsing(unittest.TestCase):
         d = gfdl.parse_frepp_stub(frepp_stub)
         args = {'frepp': True, 'OUTPUT_DIR':'/X', 'E':'Y'}
         config = self.config_test.copy()
-        config = parse_mdtf_args(d, args, config)
+        config = parse_mdtf_args([d, args], config)
         self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'Y')
@@ -178,7 +178,7 @@ class TestFreppArgParsing(unittest.TestCase):
         d = gfdl.parse_frepp_stub(frepp_stub)
         args = {'frepp': True}
         config = self.config_test.copy()
-        config = parse_mdtf_args(d, args, config)
+        config = parse_mdtf_args([d, args], config)
         self.assertEqual(len(config['case_list']), 1)
         self.assertEqual(config['case_list'][0]['CASENAME'], 'baz.r1i1p1f1')
         self.assertEqual(config['case_list'][0]['model'], 'CMIP_GFDL')

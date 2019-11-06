@@ -135,10 +135,10 @@ class TestDataSet(unittest.TestCase):
 
 class TestUtil(unittest.TestCase):
 
-    def test_read_yaml(self):
+    def test_read_json(self):
         pass
 
-    def test_write_yaml(self):
+    def test_write_json(self):
         pass
 
     def test_get_available_programs(self):
@@ -225,12 +225,12 @@ class TestUtil(unittest.TestCase):
         mock_makedirs.assert_called_once_with('DIR2')
 
 class TestVariableTranslator(unittest.TestCase):
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {
             'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
             })
-    def setUp(self, mock_read_yaml):
+    def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
         _ = util.VariableTranslator(unittest_flag = True)
 
@@ -259,17 +259,17 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertRaises(KeyError, temp.fromCF, 'not_CF', 'nonexistent_var')
 
 class TestVariableTranslatorReadFiles(unittest.TestCase):
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {'convention_name':'A','var_names':{'B':'D'}})
-    def test_read_model_varnames(self, mock_read_yaml):
+    def test_read_model_varnames(self, mock_read_json):
         # normal operation - convert string to list
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
         temp._reset()
 
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
-    def test_read_model_varnames_multiple(self, mock_read_yaml):
+    def test_read_model_varnames_multiple(self, mock_read_json):
         # create multiple entries when multiple models specified
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
@@ -278,12 +278,12 @@ class TestVariableTranslatorReadFiles(unittest.TestCase):
 
 class TestPathManager(unittest.TestCase):
     # pylint: disable=maybe-no-member
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {
             'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
             })
-    def setUp(self, mock_read_yaml):
+    def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
         _ = util.VariableTranslator(unittest_flag = True)
 
@@ -343,9 +343,9 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
     @mock.patch.dict('os.environ', default_os_environ)
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_pathmgr_pod(self, mock_exists, mock_read_yaml):
+    def test_pathmgr_pod(self, mock_exists, mock_read_json):
         paths = util.PathManager(unittest_flag = True)
         pod = Diagnostic('A')
         pod.MODEL_WK_DIR = 'B'
@@ -355,64 +355,14 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(d['POD_WK_DIR'], 'B/A')
 
     @mock.patch.dict('os.environ', default_os_environ)
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_pathmgr_pod_nomodel(self, mock_exists, mock_read_yaml):
+    def test_pathmgr_pod_nomodel(self, mock_exists, mock_read_json):
         paths = util.PathManager(unittest_flag = True)
         pod = Diagnostic('A')
         d = paths.podPaths(pod)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/A')
         self.assertNotIn('POD_WK_DIR', d)
-
-
-class TestMDTFArgParsing(unittest.TestCase):
-
-    def setUp(self):
-        _ = util.PathManager(unittest_flag = True)
-        self.config_test = {
-            'case_list':[{'A':'B'}],
-            'paths':{'C':'/D'},
-            'settings':{'E':'F', 'verbose':0}
-        }
-
-    def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
-        # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
-        temp._reset()
-
-    def test_parse_mdtf_args_config(self):
-        # set paths from config file
-        args = {}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(None, args, config)
-        self.assertEqual(config['paths']['C'], '/D')
-        self.assertEqual(config['settings']['E'], 'F')
-
-    def test_parse_mdtf_args_config_cmdline(self):
-        # override config file with command line arguments
-        args = {'C':'/X', 'E':'Y'}
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(None, args, config)
-        self.assertEqual(config['paths']['C'], '/X')
-        self.assertEqual(config['settings']['E'], 'Y')
-
-    @mock.patch('src.util.check_required_dirs')
-    def test_set_mdtf_env_vars_config_settings(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
-        # set settings from config file
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['E'], 'F')      
-
-    @mock.patch('src.util.check_required_dirs')
-    def test_sset_mdtf_env_vars_config_rgb(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
-        # set path to /RGB from os.environ
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
 
 # ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):

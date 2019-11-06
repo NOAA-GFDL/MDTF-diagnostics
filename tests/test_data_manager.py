@@ -11,12 +11,12 @@ from src.data_manager import DataManager
 @mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):
     # pylint: disable=abstract-class-instantiated
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {
             'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
             })
-    def setUp(self, mock_read_yaml):
+    def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
         _ = util.VariableTranslator(unittest_flag = True)
         _ = util.PathManager(unittest_flag = True)
@@ -71,18 +71,18 @@ class TestDataManagerSetup(unittest.TestCase):
     def test_setup_html(self, mock_register):
         pass
 
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_cf_cf(self, mock_exists, mock_read_yaml, mock_register):
+    def test_setup_pod_cf_cf(self, mock_exists, mock_read_json, mock_register):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
         case._setup_pod(pod)
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'pr_var')
 
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_cf_custom(self, mock_exists, mock_read_yaml, mock_register):
+    def test_setup_pod_cf_custom(self, mock_exists, mock_read_json, mock_register):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')
@@ -90,18 +90,18 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'PRECT')
 
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_custom_cf(self, mock_exists, mock_read_yaml, mock_register):
+    def test_setup_pod_custom_cf(self, mock_exists, mock_read_json, mock_register):
         case = DataManager(self.default_case)
         pod = Diagnostic('C')
         case._setup_pod(pod)
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'pr_var')
 
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_not_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_not_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_setup_pod_custom_custom(self, mock_exists, mock_read_yaml, mock_register):
+    def test_setup_pod_custom_custom(self, mock_exists, mock_read_json, mock_register):
         case = DataManager(self.default_case)
         case.convention = 'not_CF'
         pod = Diagnostic('C')
@@ -110,21 +110,21 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'PRECT')
 
-    # @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = {
+    # @mock.patch('src.shared_diagnostic.util.read_json', return_value = {
     #     'settings':{'conda_env':'B'},'varlist':[]})
-    # def test_parse_pod_settings_conda_env(self, mock_read_yaml):
+    # def test_parse_pod_settings_conda_env(self, mock_read_json):
     #     # fill in conda environment 
     #     pod = Diagnostic('A')
     #     self.assertEqual(pod.conda_env, '_MDTF-diagnostics-B')
 
 
 class TestDataManagerFetchData(unittest.TestCase):    
-    @mock.patch('src.util.read_yaml', 
+    @mock.patch('src.util.read_json', 
         return_value = {
             'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
             })
-    def setUp(self, mock_read_yaml):
+    def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
         _ = util.VariableTranslator(unittest_flag = True)
         _ = util.PathManager(unittest_flag = True)

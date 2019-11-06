@@ -49,7 +49,7 @@
 #     
 #     Please change the variable names and conversion factor according to your data before running
 #     MJO teleconnection diagnostic at :
-#     src/config_<model name>.yml
+#     src/config_<model name>.json
 #     Please provide each input variable into a single file
 #
 #   -------------------------------------------------------------------------------------------------------
@@ -148,5 +148,5 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
 
 else:
     print("Requested Input data file are not found, Please check input data directory ")
-    print("check data directory and /util/config_XXX.yml to set variable names" )  
+    print("check data directory and /util/config_XXX.json to set variable names" )  
    

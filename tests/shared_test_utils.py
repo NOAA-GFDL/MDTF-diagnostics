@@ -7,15 +7,16 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-from src.util import read_yaml, parse_mdtf_args
+from src.util import read_json
+from src.mdtf import parse_mdtf_args
 
 def get_configuration(config_file='', check_input=False, check_output=False):
     # Redundant with code in util; need to fix this
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.realpath(os.path.join(cwd, '..')) # parent dir of that
     if config_file == '':
-        config_file = os.path.join(cwd,'..','src','config.yml') # default
-    config = read_yaml(config_file)
+        config_file = os.path.join(cwd,'..','src','mdtf_settings.json') # default
+    config = read_json(config_file)
     config = parse_mdtf_args(None, config, rel_paths_root=code_root)
     config['paths']['md5_path'] = os.path.join(cwd,'checksums')
 
@@ -34,7 +35,7 @@ def get_configuration(config_file='', check_input=False, check_output=False):
 
 def get_test_data_configuration():
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
-    case_list = read_yaml(os.path.join(cwd,'pod_test_configs.yml'))
+    case_list = read_json(os.path.join(cwd,'pod_test_configs.json'))
     models = []
     pods = []
     for i, case in enumerate(case_list['case_list']):

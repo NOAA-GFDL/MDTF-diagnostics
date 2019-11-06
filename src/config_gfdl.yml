@@ -1,0 +1,119 @@
+# Configuration for MDTF-diagnostics driver script
+# Note that whitespace (indentation) is significant, 
+# and colons in assignment statments must be followed by a space
+
+# MODEL INPUT
+
+# List all cases below with CASE tag at front of line
+# CASE casename model-type startyr endyr
+# Comment out any with # at start of line
+# Note that the mdtf package does not yet handle multiple cases
+
+# The cases below correspond to the two different test data sets
+# Uncomment the first entry to run NCAR-CESM and the second
+# entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD
+
+case_list:
+  - CASENAME: QBOi.EXP1.AMIP.001
+    model: CESM
+    variable_convention: CESM
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list:  # Optional: PODs to run for this model only
+      - Wheeler_Kiladis
+      - EOF_500hPa
+      - convective_transition_diag
+      - MJO_suite
+      - MJO_teleconnection
+      #- precip_diurnal_cycle #- high memory requirement
+  # formerly namelist_ABerg:
+  - CASENAME: Lmon_GISS-E2-H_historical_r1i1p1
+    model: CMIP
+    variable_convention: CMIP
+    FIRSTYR: 1951
+    LASTYR: 2005
+    pod_list:
+      - SM_ET_coupling
+  # formerly namelist_mjo_prop_amp:
+  - CASENAME: GFDL.CM4.c96L32.am4g10r8
+    model: AM4
+    variable_convention: AM4
+    FIRSTYR: 1977
+    LASTYR: 1981
+    pod_list: # Optional: PODs to run for this model only
+      - MJO_prop_amp
+
+
+# DIAGNOSTICS
+
+# List all desired packages with hyphen at the start of the line
+# Comment out any with # at start of line
+
+pod_list: 
+  - Wheeler_Kiladis
+  - EOF_500hPa
+  - convective_transition_diag
+  - MJO_suite
+  - MJO_teleconnection
+  - MJO_prop_amp     # Use namelist_mjo_prop (different CASE name)
+  # These PODS require more resources 
+  - precip_diurnal_cycle #- high memory requirement
+
+# PATHS 
+# Relative paths are resolved relative to $CODE_ROOT 
+# (= parent directory of the directory this file is in.)
+paths:
+# Code installation directory.
+  CODE_ROOT: '.'
+# Parent directory containing results from different models.
+  MODEL_DATA_ROOT: '../inputdata/model'
+# Parent directory containing observational data used by individual PODs.  
+  OBS_DATA_ROOT: '/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data'
+# Working directory.
+  WORKING_DIR: '../wkdir'
+# Directory to write output files. Defaults to working directory.  
+  OUTPUT_DIR: '../wkdir'
+
+# SETTINGS
+
+# List any envvars to be set here with VAR tag at the start of the line
+# These will override any settings in mdtf.py, but case *must* match script
+
+settings:
+  verbose: 2         # 0-minimal,1-normal,2-copious,3-debug
+  save_ps: False        # True to retain output .ps plots
+  save_nc: False         # True to retain output netcdf files
+  make_variab_tar: False # True to save output in .tar file
+  test_mode: False   #True = script just reports what it would do, doesn't call actual packages
+
+  convert_flags: '-crop 0x0+5+5' # default flags to pass to PS -> bitmap figure conversion
+  convert_output_fmt: 'png' # default bitmap figure output (for html)
+
+  # Specify the method the code uses to fetch model data.
+  # Currently supported options are
+  # - 'Localfile': Do not attempt to fetch data; read from pre-existing files 
+  #   at $MODEL_DATA_ROOT (set above).
+  data_manager: 'Localfile'
+  # Specify the method the code uses to manage diagnostic's dependencies. 
+  # Currently supported options are 
+  # - 'None' (use whatever modules are found in system)
+  # - 'Conda' (use the Anaconda package manager)
+  environment_manager: 'Conda'
+
+  # This sets the root directory for python virtual environments. It is only used
+  # if environment_manager is set to 'Virtualenv'.
+  venv_root: './envs/venv'
+
+  # This sets the root directory for R packages requested by PODs. It is only used
+  # if environment_manager is set to 'Virtualenv'.
+  # Set this equal to '' to install in your system library.
+  r_lib_root: './envs/r_libs'
+
+  # This sets the root directory for Anaconda environment installs. It is only
+  # used if environment_manager is set to 'Conda'.
+  # Set this equal to '' to install in your system's default location.
+  conda_env_root: './envs/conda'
+
+  # amount of time (in seconds) to wait before giving up on transferring a data
+  # file to the local filesystem. Set to zero to disable.
+  file_transfer_timeout: 300

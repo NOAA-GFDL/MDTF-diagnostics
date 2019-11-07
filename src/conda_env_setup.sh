@@ -15,7 +15,8 @@ source "${src_dir}/conda_init.sh"
 
 # determine if conda_env_root is defined in conda.yml settings
 conda_root=$( conda info --root )
-conda_env_root=$( sed -n "s/^[[:space:]]*conda_env_root:[[:space:]]*'\(.*\)'.*/\1/p" "${src_dir}/config.yml" )
+
+conda_env_root=$( sed -n "s/^[[:space:]]*\"conda_env_root\"[[:space:]]*:[[:space:]]*\"\(.*\)\",.*/\1/p" "${src_dir}/mdtf_settings.json" )
 if [[ -z "$conda_env_root" ]]; then
     # not set, create conda env without --prefix
     use_prefix=false

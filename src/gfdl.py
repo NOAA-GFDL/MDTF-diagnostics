@@ -257,7 +257,7 @@ class GfdlarchiveDataManager(DataManager):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                print "Couldn't find subdirs (in {}) at {}, skipping".format(
+                print "\tCouldn't find subdirs (in {}) at {}, skipping".format(
                     subdir_filter, os.path.join(self.root_dir, dir_)
                 )
                 continue
@@ -299,8 +299,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\t\tDEBUG: ', exc, '\n\t\t', \
-                    os.path.join(self.root_dir, dir_), f
+                    print '\tDEBUG:', exc
+                    #print '\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)

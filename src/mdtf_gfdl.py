@@ -48,7 +48,7 @@ def fetch_obs_data(obs_data_source, config):
         util.run_command(['ln', '-fs', obs_data_source, dest_dir])
 
 def main():
-    print "==== Starting "+__file__
+    print "\n======= Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.dirname(cwd) # parent dir of that
     set_tempdir()
@@ -67,11 +67,11 @@ def main():
             action.default = os.path.join(code_root, 'src', 'gfdl_mdtf_settings.json')
 
     cmdline_args = mdtf.filter_argparse(cmdline_parser)
-    print cmdline_args
+    #print cmdline_args
     default_args = util.read_json(cmdline_args['config_file'])
     obs_data_source = default_args['paths']['OBS_DATA_ROOT']
     config = mdtf.parse_mdtf_args(cmdline_args, default_args)
-    print config #debug
+    print 'SETTINGS:\n', util.pretty_print_json(config) #debug
 
     fetch_obs_data(obs_data_source, config)
 

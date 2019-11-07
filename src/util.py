@@ -410,6 +410,15 @@ def write_json(struct, file_path, verbose=0):
         print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
         exit()
 
+def pretty_print_json(struct):
+    """Pseudo-YAML output for human-readbale debugging output only - 
+    not valid JSON"""
+    str_ = json.dumps(struct, sort_keys=True, indent=2)
+    for char in ['"', ',', '{', '}', '[', ']']:
+        str_ = str_.replace(char, '')
+    # remove lines containing only whitespace
+    return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
+
 def resolve_path(in_path, root_path=''):
     """Abbreviation to resolve relative paths.
 

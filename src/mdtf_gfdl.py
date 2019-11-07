@@ -8,16 +8,6 @@ import gfdl
 import util
 import mdtf
 
-def manual_dispatch(class_name):
-    # search GFDL module namespace as well
-    for mod in [data_manager, environment_manager, gfdl]:
-        try:
-            return getattr(mod, class_name)
-        except:
-            continue
-    print "No class named {}.".format(class_name)
-    raise Exception('no_class')
-
 def set_tempdir():
     """Setting tempfile.tempdir causes all temp directories returned by 
     util.PathManager to be in that location.
@@ -87,11 +77,13 @@ def main():
 
     util.PathManager(config['paths']) # initialize
     mdtf.set_mdtf_env_vars(config)
-    DataMgr = manual_dispatch(
-        config['settings']['data_manager'].title()+'DataManager'
+    DataMgr = mdtf.manual_dispatch(
+        config['settings']['data_manager'], 'DataManager', 
+        [data_manager, gfdl]
     )
-    EnvironmentMgr = manual_dispatch(
-        config['settings']['environment_manager'].title()+'EnvironmentManager'
+    EnvironmentMgr = mdtf.manual_dispatch(
+        config['settings']['environment_manager'], 'EnvironmentManager', 
+        [environment_manager, gfdl]
     )
     mdtf.main_case_loop(config, DataMgr, EnvironmentMgr)
     print "Exiting normally from ",__file__

@@ -82,7 +82,7 @@
     "# Currently supported options are                                     ":"",
     "# - 'Localfile': Do not attempt to fetch data; read from pre-existing ":"",
     "#   files at $MODEL_DATA_ROOT (set above).                            ":"",
-    "data_manager": "GfdlPP",
+    "data_manager": "GFDL_PP",
     "# Amount of time (in seconds) to wait before giving up on             ":"",
     "# transferring a data file to the local filesystem.                   ":"",
     "# Set to zero to disable.                                             ":"",

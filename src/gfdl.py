@@ -180,6 +180,40 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
             'conda activate {}'.format(conda_prefix)
         ]
 
+def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
+    """Wrapper for dispatching DataManager based on inputs.
+    """
+    drs_partial_directory_regex = re.compile(r"""
+        .*CMIP6
+        (/(?P<activity_id>\w+))?
+        (/(?P<institution_id>[a-zA-Z0-9_-]+))?
+        (/(?P<source_id>[a-zA-Z0-9_-]+))?
+        (/(?P<experiment_id>[a-zA-Z0-9_-]+))?
+        (/(?P<member_id>\w+))?
+        (/(?P<table_id>\w+))?
+        (/(?P<variable_id>\w+))?
+        (/(?P<grid_label>\w+))?
+        (/v(?P<version_date>\d+))?
+        /?                      # maybe final separator
+    """, re.VERBOSE)
+
+    if 'root_dir' in case_dict \
+        and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
+        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+    elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
+        and ('source_id' in case_dict or 'model' in case_dict):
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+    elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
+        match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
+        if match:
+            case_dict.update(match.groupdict())
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+    elif 'root_dir' in case_dict:
+        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+    else:
+        raise Exception("Don't know how to dispatch DataManager based on input.")
+
+
 class GfdlarchiveDataManager(DataManager):
     __metaclass__ = ABCMeta
     def __init__(self, case_dict, config={}, DateFreqMixin=None):

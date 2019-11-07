@@ -356,9 +356,10 @@ class CondaEnvironmentManager(EnvironmentManager):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
-        return ['source {}/src/conda_init.sh && conda activate {}'.format(
-            paths.CODE_ROOT, conda_prefix
-            )]
+        return [
+            'source {}/src/conda_init.sh'.format(paths.CODE_ROOT),
+            'conda activate {}'.format(conda_prefix)
+        ]
 
     def deactivate_env_commands(self, pod):
         return [] 

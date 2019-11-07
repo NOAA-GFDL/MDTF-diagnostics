@@ -167,18 +167,6 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         raise Exception(
             'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
         )
-    
-    def activate_env_commands(self, pod):
-        """Source conda_init.sh to set things that aren't set b/c we aren't 
-        in an interactive shell.
-        """
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        conda_prefix = os.path.join(self.conda_env_root, pod.env)
-        return [
-            "source {}/src/conda_init.sh '/home/mdteam/anaconda2'".format(paths.CODE_ROOT),
-            'conda activate {}'.format(conda_prefix)
-        ]
 
 def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.

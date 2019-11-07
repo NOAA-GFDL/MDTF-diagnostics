@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import tempfile
 import data_manager
 import environment_manager
 import gfdl
@@ -16,6 +17,24 @@ def manual_dispatch(class_name):
             continue
     print "No class named {}.".format(class_name)
     raise Exception('no_class')
+
+def set_tempdir():
+    """Setting tempfile.tempdir causes all temp directories returned by 
+    util.PathManager to be in that location.
+    If we're running on PPAN, recommended practice is to use $TMPDIR
+    for scratch work. 
+    If we're not, assume we're on a workstation. gcp won't copy to the 
+    usual /tmp, so put temp files in a directory on /net2.
+    """
+    if 'TMPDIR' in os.environ:
+        tempfile.tempdir = os.environ['TMPDIR']
+    elif os.path.isdir('/net2'):
+        tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
+        if not os.path.isdir(tempfile.tempdir):
+            os.makedirs(tempfile.tempdir)
+    else:
+        print "Using default tempdir on this system"
+    os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
 def fetch_obs_data(obs_data_source, config):
     obs_data_source = os.path.realpath(obs_data_source)
@@ -42,8 +61,9 @@ def main():
     print "==== Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.dirname(cwd) # parent dir of that
-    cmdline_parser = mdtf.argparse_wrapper(code_root)
+    set_tempdir()
 
+    cmdline_parser = mdtf.argparse_wrapper(code_root)
     # add GFDL-specific arguments
     cmdline_parser.add_argument("--frepp", 
         action="store_true", # so default to False

@@ -180,17 +180,6 @@ class GfdlarchiveDataManager(DataManager):
         modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
 
-        # if we're running on Analysis, recommended practice is to use $FTMPDIR
-        # for scratch work. Setting tempfile.tempdir causes all temp directories
-        # returned by util.PathManager to be in that location.
-        # If we're not, assume we're on a workstation. gcp won't copy to the 
-        # usual /tmp, so put temp files in a directory on /net2.
-        if 'TMPDIR' in os.environ:
-            tempfile.tempdir = os.environ['TMPDIR']
-        elif os.path.isdir('/net2'):
-            tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
-            if not os.path.isdir(tempfile.tempdir):
-                os.makedirs(tempfile.tempdir)
         super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])

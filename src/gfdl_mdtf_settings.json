@@ -59,13 +59,13 @@
     "# Code installation directory.                                        ":"",
     "CODE_ROOT" : ".",
     "# Parent directory containing results from different models.          ":"",
-    "MODEL_DATA_ROOT" : "../inputdata/model/",
+    "MODEL_DATA_ROOT" : "$MDTF_GFDL_TMPDIR/inputdata/model/",
     "# Parent directory containing observational data used by individual PODs.":"",
     "OBS_DATA_ROOT" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
     "# Working directory.                                                  ":"",
-    "WORKING_DIR" : "../wkdir",
+    "WORKING_DIR" : "$MDTF_GFDL_TMPDIR/wkdir",
     "# Directory to write output files. Defaults to working directory.     ":"",
-    "OUTPUT_DIR" : "../wkdir"
+    "OUTPUT_DIR" : "$HOME/mdtf_out"
   },
 
   "# SETTINGS -------------------------------------------------------------":"",

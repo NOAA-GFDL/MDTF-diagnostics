@@ -26,12 +26,12 @@
           "# (otherwise use pod_list below)",
           "Wheeler_Kiladis",
           "EOF_500hPa",
-          "# convective_transition_diag # TODO: install modules behind firewall",
+          "convective_transition_diag",
           "MJO_suite",
           "MJO_teleconnection",
           "MJO_prop_amp",
           "precip_diurnal_cycle",
-          "# SM_ET_coupling # TODO: install R modules behind firewall"
+          "SM_ET_coupling"
       ]
     }
   ],
@@ -93,11 +93,11 @@
     "# Supported options are                                               ":"",
     "# - 'None' (use whatever modules are found in system)                 ":"",
     "# - 'Conda' (use the Anaconda package manager)                        ":"",
-    "environment_manager" : "Conda",
+    "environment_manager" : "GFDL_conda",
     "# Sets the root directory for Anaconda environment installs. This     ":"",
     "# is only used if environment_manager is set to 'Conda'.              ":"",
     "# Set this equal to '' to install in your system's default location.  ":"",
-    "conda_env_root" : "./envs/conda",
+    "conda_env_root" : "/home/mdteam/anaconda2/envs",
     "# Sets the root directory for python virtual environments. This is    ":"",
     "# only used if environment_manager = 'Virtualenv'.                    ":"",
     "venv_root" : "./envs/venv",

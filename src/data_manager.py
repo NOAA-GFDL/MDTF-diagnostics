@@ -247,9 +247,12 @@ class DataManager(object):
     def _setup_pod(self, pod):
         paths = util.PathManager()
         translate = util.VariableTranslator()
+
+        # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
         pod.pod_env_vars.update(self.envvars)
+        pod.dry_run = self.dry_run
 
         # express varlist as DataSet objects
         ds_list = []

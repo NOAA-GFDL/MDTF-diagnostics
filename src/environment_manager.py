@@ -83,6 +83,7 @@ class EnvironmentManager(object):
                 print log_str
                 pod.skipped = exc
                 continue
+            print "{} will run in env: {}".format(pod.name, pod.env)
             pod.logfile_obj.write("\n".join(
                 ["Found files: "] + pod.found_files + [" "]))
             env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
@@ -91,16 +92,19 @@ class EnvironmentManager(object):
 
             run_command = pod.run_commands()          
             if self.test_mode:
-                run_command = ['echo "TEST MODE: would call {}"'.format(run_command)]
+                run_command = ['echo "TEST MODE: call {}"'.format(run_command)]
             commands = self.activate_env_commands(pod) \
                 + pod.validate_commands() \
                 + run_command \
                 + self.deactivate_env_commands(pod)
             # '&&' so we abort if any command in the sequence fails.
+            if self.test_mode:
+                for cmd in commands:
+                    print 'TEST MODE: call {}'.format(cmd)
+            else:
+                print "Calling : {}".format(run_command)
             commands = ' && '.join([s for s in commands if s])
- 
-            print "Calling : {}".format(run_command)
-            print "Will run in env: {}".format(pod.env)
+            
             pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
             pod.logfile_obj.flush()
             try:

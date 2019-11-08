@@ -3,7 +3,7 @@
     "driver" : "SM_ET_coupling.py",
     "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
-    "required_programs" : ["python", "r"],
+    "required_programs" : ["python", "Rscript"],
     "required_r_packages" : ["colorRamps", "maps", "fields", "akima", "ncdf4"]
   },
 

@@ -138,7 +138,7 @@ def caselist_from_args(args):
     if 'model' not in d:
         d['model'] = 'CMIP_GFDL'
     if 'variable_convention' not in d:
-        d['variable_convention'] = d['model'] 
+        d['variable_convention'] = 'CMIP_GFDL'
     if 'CASENAME' not in d:
         d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
     if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:

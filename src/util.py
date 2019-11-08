@@ -654,6 +654,26 @@ def coerce_from_collection(obj):
     else:
         return obj        
 
+def is_in_config(key, config, section='settings'):
+    # Ugly - should replace with cleaner solution/explicit defaults
+    if (section in config) and (key in config[section]):
+        if type(config[section][key] is bool):
+            return True
+        else:
+            if (config[section][key]): # is not empty
+                return True
+            else:
+                return False
+    else:
+        return False
+
+def get_from_config(key, config, section='settings', default=None):
+    # Ugly - should replace with cleaner solution/explicit defaults
+    if is_in_config(key, config, section=section):
+        return config[section][key]
+    else:
+        return default
+
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.
 

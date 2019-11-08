@@ -132,7 +132,6 @@ class DataManager(object):
         else:
             self.DateFreq = DateFreqMixin
 
-        self.dry_run = config['settings']['dry_run']
         if 'envvars' in config:
             self.envvars = config['envvars'].copy() # gets appended to
         else:
@@ -160,10 +159,7 @@ class DataManager(object):
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        if ('settings' not in config) or ('netcdf_helper' not in config['settings']):
-            mixin = 'NetcdfHelper' # default
-        else:
-            mixin = config['settings']['netcdf_helper']
+        mixin = util.get_from_config('netcdf_helper', config, default='NetcdfHelper')
         mixin = getattr(netcdf_helper, mixin)
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
@@ -171,10 +167,9 @@ class DataManager(object):
         except Exception:
             raise
 
-        if ('settings' not in config) or ('file_transfer_timeout' not in config['settings']):
-            self.file_transfer_timeout = 0 # syntax for no timeout
-        else:
-            self.file_transfer_timeout = config['settings']['file_transfer_timeout']
+        self.dry_run = util.get_from_config('dry_run', config, default=False)
+        self.file_transfer_timeout = util.get_from_config(
+            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
 
         # delete temp files if we're killed
         atexit.register(self.abortHandler)

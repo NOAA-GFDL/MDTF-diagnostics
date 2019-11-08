@@ -193,7 +193,7 @@ def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
     for key, val in default_args['paths'].items():
         default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
 
-    if default_args['settings']['dry_run']:
+    if util.get_from_config('dry_run', default_args, default=False):
         default_args['settings']['test_mode'] = True
 
     return default_args

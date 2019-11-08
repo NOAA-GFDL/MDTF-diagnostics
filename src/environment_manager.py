@@ -20,7 +20,7 @@ class EnvironmentManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, config, verbose=0):
-        self.test_mode = config['settings']['test_mode']
+        self.test_mode = util.get_from_config('test_mode', config, default=False)
         self.pods = []
         self.envs = set()
 
@@ -176,13 +176,12 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
-        assert ('venv_root' in config['settings'])
+        assert util.is_in_config('venv_root', config)
         # need to resolve relative path
         self.venv_root = util.resolve_path(
             config['settings']['venv_root'], paths.CODE_ROOT
         )
-        if ('r_lib_root' in config['settings']) and \
-            config['settings']['r_lib_root'] != '':
+        if util.is_in_config('r_lib_root', config):
             self.r_lib_root = util.resolve_path(
                 config['settings']['r_lib_root'], paths.CODE_ROOT
             )
@@ -274,8 +273,7 @@ class CondaEnvironmentManager(EnvironmentManager):
         # pylint: disable=maybe-no-member
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
-        if ('conda_root' in config['settings']) and \
-            config['settings']['conda_root'] != '':
+        if util.is_in_config('conda_root', config):
             assert os.path.exists(os.path.join(
                 config['settings']['conda_root'], 'bin', 'conda'
             ))
@@ -285,8 +283,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             self.conda_root = ''
             self.conda_exe = 'conda'
 
-        if ('conda_env_root' in config['settings']) and \
-            config['settings']['conda_env_root'] != '':
+        if util.is_in_config('conda_env_root', config):
             # need to resolve relative path
             paths = util.PathManager()
             self.conda_env_root = util.resolve_path(

@@ -159,10 +159,7 @@ class DataManager(object):
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        if ('settings' not in config) or ('netcdf_helper' not in config['settings']):
-            mixin = 'NetcdfHelper' # default
-        else:
-            mixin = config['settings']['netcdf_helper']
+        mixin = util.get_from_config('netcdf_helper', config, default='NetcdfHelper')
         mixin = getattr(netcdf_helper, mixin)
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
@@ -170,10 +167,9 @@ class DataManager(object):
         except Exception:
             raise
 
-        if ('settings' not in config) or ('file_transfer_timeout' not in config['settings']):
-            self.file_transfer_timeout = 0 # syntax for no timeout
-        else:
-            self.file_transfer_timeout = config['settings']['file_transfer_timeout']
+        self.dry_run = util.get_from_config('dry_run', config, default=False)
+        self.file_transfer_timeout = util.get_from_config(
+            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
 
         # delete temp files if we're killed
         atexit.register(self.abortHandler)
@@ -251,9 +247,12 @@ class DataManager(object):
     def _setup_pod(self, pod):
         paths = util.PathManager()
         translate = util.VariableTranslator()
+
+        # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
         pod.pod_env_vars.update(self.envvars)
+        pod.dry_run = self.dry_run
 
         # express varlist as DataSet objects
         ds_list = []
@@ -523,7 +522,8 @@ class DataManager(object):
         # not running in shell, so don't need to quote globs
         tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
         util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
-            self.MODEL_WK_DIR ] + tar_flags
+            self.MODEL_WK_DIR ] + tar_flags,
+            dry_run = self.dry_run
         )
 
     def _copy_to_output(self):

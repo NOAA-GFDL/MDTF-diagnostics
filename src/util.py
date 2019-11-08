@@ -512,7 +512,7 @@ class TimeoutAlarm(Exception):
     # dummy exception for signal handling in run_command
     pass
 
-def run_command(command, env=None, cwd=None, timeout=0):
+def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     """Subprocess wrapper to facilitate running single command without starting
     a shell.
 
@@ -548,6 +548,9 @@ def run_command(command, env=None, cwd=None, timeout=0):
     if type(command) == str:
         command = shlex.split(command)
     cmd_str = ' '.join(command)
+    if dry_run:
+        print 'DRY_RUN: call {}'.format(cmd_str)
+        return
     proc = None
     pid = None
     retcode = 1
@@ -650,6 +653,26 @@ def coerce_from_collection(obj):
             return list(obj)
     else:
         return obj        
+
+def is_in_config(key, config, section='settings'):
+    # Ugly - should replace with cleaner solution/explicit defaults
+    if (section in config) and (key in config[section]):
+        if type(config[section][key] is bool):
+            return True
+        else:
+            if (config[section][key]): # is not empty
+                return True
+            else:
+                return False
+    else:
+        return False
+
+def get_from_config(key, config, section='settings', default=None):
+    # Ugly - should replace with cleaner solution/explicit defaults
+    if is_in_config(key, config, section=section):
+        return config[section][key]
+    else:
+        return default
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

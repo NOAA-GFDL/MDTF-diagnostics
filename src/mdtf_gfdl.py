@@ -27,6 +27,8 @@ def set_tempdir():
     os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
 def fetch_obs_data(obs_data_source, config):
+    dry_run = util.get_from_config('dry_run', config, default=False)
+    
     obs_data_source = os.path.realpath(obs_data_source)
     dest_dir = config['paths']['OBS_DATA_ROOT']
     if obs_data_source == dest_dir:
@@ -36,7 +38,7 @@ def fetch_obs_data(obs_data_source, config):
     if gfdl.running_on_PPAN():
         print "\tGCPing data from {}.".format(obs_data_source)
         # giving -cd to GCP, so will create dirs
-        gfdl.gcp_wrapper(obs_data_source, dest_dir)
+        gfdl.gcp_wrapper(obs_data_source, dest_dir, dry_run=dry_run)
     else:
         print "\tSymlinking obs data dir to {}.".format(obs_data_source)
         dest_parent = os.path.dirname(dest_dir)
@@ -45,7 +47,10 @@ def fetch_obs_data(obs_data_source, config):
             os.rmdir(dest_dir)
         elif not os.path.exists(dest_parent):
             os.makedirs(dest_parent)
-        util.run_command(['ln', '-fs', obs_data_source, dest_dir])
+        util.run_command(
+            ['ln', '-fs', obs_data_source, dest_dir], 
+            dry_run=dry_run
+        )
 
 def main():
     print "\n======= Starting "+__file__

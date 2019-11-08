@@ -274,6 +274,17 @@ class CondaEnvironmentManager(EnvironmentManager):
         # pylint: disable=maybe-no-member
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
+        if ('conda_root' in config['settings']) and \
+            config['settings']['conda_root'] != '':
+            assert os.path.exists(os.path.join(
+                config['settings']['conda_root'], 'bin', 'conda'
+            ))
+            self.conda_root = config['settings']['conda_root']
+            self.conda_exe = os.path.join(self.conda_root, 'bin', 'conda')
+        else:
+            self.conda_root = ''
+            self.conda_exe = 'conda'
+
         if ('conda_env_root' in config['settings']) and \
             config['settings']['conda_env_root'] != '':
             # need to resolve relative path
@@ -285,16 +296,18 @@ class CondaEnvironmentManager(EnvironmentManager):
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed
         else:
+            # only true in default anaconda install, need to fix
             self.conda_env_root = os.path.join(
-                subprocess.check_output('conda info --root', shell=True),
-                'envs' # only true in default anaconda install, need to fix
-            ) 
+                subprocess.check_output(
+                    '{} info --root'.format(self.conda_exe), shell=True),
+                'envs'
+            )
 
     def create_environment(self, env_name):
         # check to see if conda env exists, and if not, try to create it
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         test = subprocess.call(
-            'conda env list | grep -qF "{}"'.format(conda_prefix), 
+            '{} env list | grep -qF "{}"'.format(self.conda_exe, conda_prefix), 
             shell=True
         )
         if test != 0:
@@ -319,9 +332,11 @@ class CondaEnvironmentManager(EnvironmentManager):
             print 'Creating conda env {} in {}'.format(env_name, conda_prefix)
         
         commands = \
-            'source {}/src/conda_init.sh && '.format(paths.CODE_ROOT) \
-                + 'conda env create --force -q -p="{}" -f="{}"'.format(
-                conda_prefix, path
+            'source {}/src/conda_init.sh {} && '.format(
+                paths.CODE_ROOT, self.conda_root
+            ) \
+            + '{} env create --force -q -p="{}" -f="{}"'.format(
+                self.conda_exe, conda_prefix, path
             )
         try: 
             subprocess.Popen(['bash', '-c', commands])
@@ -356,9 +371,10 @@ class CondaEnvironmentManager(EnvironmentManager):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
-        return ['source {}/src/conda_init.sh && conda activate {}'.format(
-            paths.CODE_ROOT, conda_prefix
-            )]
+        return [
+            'source {}/src/conda_init.sh {}'.format(paths.CODE_ROOT, self.conda_root),
+            '{} activate {}'.format(self.conda_exe, conda_prefix)
+        ]
 
     def deactivate_env_commands(self, pod):
         return [] 

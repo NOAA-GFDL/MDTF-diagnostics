@@ -205,13 +205,15 @@ def set_mdtf_env_vars(config):
     # following are redundant but used by PODs
     config["envvars"]["RGB"] = paths.CODE_ROOT+"/src/rgb"
 
-def manual_dispatch(class_name):
-    for mod in [data_manager, environment_manager]:
+def manual_dispatch(class_prefix, class_suffix, modules):
+    # drop '_' and title-case class name
+    class_prefix = ''.join(class_prefix.split('_')).title()
+    for mod in modules:
         try:
-            return getattr(mod, class_name)
+            return getattr(mod, class_prefix+class_suffix)
         except:
             continue
-    print "No class named {}.".format(class_name)
+    print "No class named {}.".format(class_prefix+class_suffix)
     raise Exception('no_class')
 
 def main_case_loop(config, DataMgr, EnvironmentMgr):
@@ -241,23 +243,24 @@ def main_case_loop(config, DataMgr, EnvironmentMgr):
         case.tearDown(config)
 
 def main():
-    print "==== Starting "+__file__
+    print "\n======= Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.dirname(cwd) # parent dir of that
 
     cmdline_args = filter_argparse(argparse_wrapper(code_root))
-    print cmdline_args
+    #print cmdline_args
     default_args = util.read_json(cmdline_args['config_file'])
     config = parse_mdtf_args(cmdline_args, default_args)
-    print config #debug
+    print 'SETTINGS:\n', util.pretty_print_json(config) #debug
     
     util.PathManager(config['paths']) # initialize
     set_mdtf_env_vars(config)
     DataMgr = manual_dispatch(
-        config['settings']['data_manager'].title()+'DataManager'
+        config['settings']['data_manager'], 'DataManager', [data_manager]
     )
     EnvironmentMgr = manual_dispatch(
-        config['settings']['environment_manager'].title()+'EnvironmentManager'
+        config['settings']['environment_manager'], 'EnvironmentManager', 
+        [environment_manager]
     )
     main_case_loop(config, DataMgr, EnvironmentMgr)
     print "Exiting normally from ",__file__

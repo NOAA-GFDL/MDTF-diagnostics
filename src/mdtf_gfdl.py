@@ -1,21 +1,30 @@
 #!/usr/bin/env python
 
 import os
+import tempfile
 import data_manager
 import environment_manager
 import gfdl
 import util
 import mdtf
 
-def manual_dispatch(class_name):
-    # search GFDL module namespace as well
-    for mod in [data_manager, environment_manager, gfdl]:
-        try:
-            return getattr(mod, class_name)
-        except:
-            continue
-    print "No class named {}.".format(class_name)
-    raise Exception('no_class')
+def set_tempdir():
+    """Setting tempfile.tempdir causes all temp directories returned by 
+    util.PathManager to be in that location.
+    If we're running on PPAN, recommended practice is to use $TMPDIR
+    for scratch work. 
+    If we're not, assume we're on a workstation. gcp won't copy to the 
+    usual /tmp, so put temp files in a directory on /net2.
+    """
+    if 'TMPDIR' in os.environ:
+        tempfile.tempdir = os.environ['TMPDIR']
+    elif os.path.isdir('/net2'):
+        tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
+        if not os.path.isdir(tempfile.tempdir):
+            os.makedirs(tempfile.tempdir)
+    else:
+        print "Using default tempdir on this system"
+    os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
 def fetch_obs_data(obs_data_source, config):
     obs_data_source = os.path.realpath(obs_data_source)
@@ -39,11 +48,12 @@ def fetch_obs_data(obs_data_source, config):
         util.run_command(['ln', '-fs', obs_data_source, dest_dir])
 
 def main():
-    print "==== Starting "+__file__
+    print "\n======= Starting "+__file__
     cwd = os.path.dirname(os.path.realpath(__file__)) # gets dir of currently executing script
     code_root = os.path.dirname(cwd) # parent dir of that
-    cmdline_parser = mdtf.argparse_wrapper(code_root)
+    set_tempdir()
 
+    cmdline_parser = mdtf.argparse_wrapper(code_root)
     # add GFDL-specific arguments
     cmdline_parser.add_argument("--frepp", 
         action="store_true", # so default to False
@@ -57,21 +67,23 @@ def main():
             action.default = os.path.join(code_root, 'src', 'gfdl_mdtf_settings.json')
 
     cmdline_args = mdtf.filter_argparse(cmdline_parser)
-    print cmdline_args
+    #print cmdline_args
     default_args = util.read_json(cmdline_args['config_file'])
     obs_data_source = default_args['paths']['OBS_DATA_ROOT']
     config = mdtf.parse_mdtf_args(cmdline_args, default_args)
-    print config #debug
+    print 'SETTINGS:\n', util.pretty_print_json(config) #debug
 
     fetch_obs_data(obs_data_source, config)
 
     util.PathManager(config['paths']) # initialize
     mdtf.set_mdtf_env_vars(config)
-    DataMgr = manual_dispatch(
-        config['settings']['data_manager'].title()+'DataManager'
+    DataMgr = mdtf.manual_dispatch(
+        config['settings']['data_manager'], 'DataManager', 
+        [data_manager, gfdl]
     )
-    EnvironmentMgr = manual_dispatch(
-        config['settings']['environment_manager'].title()+'EnvironmentManager'
+    EnvironmentMgr = mdtf.manual_dispatch(
+        config['settings']['environment_manager'], 'EnvironmentManager', 
+        [environment_manager, gfdl]
     )
     mdtf.main_case_loop(config, DataMgr, EnvironmentMgr)
     print "Exiting normally from ",__file__

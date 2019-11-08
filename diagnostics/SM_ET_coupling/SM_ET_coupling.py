@@ -27,7 +27,9 @@ def generate_R_plots(RPlotFile):
     # check if the RPlotFile exists - 
     # don't exit if it does not exists just print a warning.
     try:
-        pipe = subprocess.Popen(['Rscript ' '--verbose ' '--vanilla {0}' .format(RPlotFile)]  , shell=True)#, stdout=subprocess.PIPE)
+        pipe = subprocess.Popen([
+            'Rscript --verbose --vanilla {}'.format(RPlotFile)
+        ] , shell=True, stdout=subprocess.PIPE)
         output = pipe.communicate()[0]
         print('R routine {0} \n {1}'.format(RPlotFile,output))            
         while pipe.poll() is None:

@@ -157,19 +157,59 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         modMgr = ModuleManager()
         modMgr.revert_state()
 
-
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
-    # Use anaconda -- NOTE module not available on analysis
-
+    # Use mdteam's anaconda2
     def __init__(self, config, verbose=0):
-        modMgr = ModuleManager()
-        modMgr.load('anaconda')
         super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
 
-    def tearDown(self):
-        super(GfdlcondaEnvironmentManager, self).tearDown()
-        modMgr = ModuleManager()
-        modMgr.revert_state()
+    def _call_conda_create(self, env_name):
+        raise Exception(
+            'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
+        )
+
+    def activate_env_commands(self, pod):
+        """Workaround conda activate in non-interactive shell.
+        Ref: 
+        https://github.com/conda/conda/issues/7980#issuecomment-536369736
+        """
+        conda_prefix = os.path.join(self.conda_env_root, pod.env)
+        return [
+            'source {}/bin/activate {}'.format(self.conda_root, conda_prefix)
+        ]
+
+
+def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
+    """Wrapper for dispatching DataManager based on inputs.
+    """
+    drs_partial_directory_regex = re.compile(r"""
+        .*CMIP6
+        (/(?P<activity_id>\w+))?
+        (/(?P<institution_id>[a-zA-Z0-9_-]+))?
+        (/(?P<source_id>[a-zA-Z0-9_-]+))?
+        (/(?P<experiment_id>[a-zA-Z0-9_-]+))?
+        (/(?P<member_id>\w+))?
+        (/(?P<table_id>\w+))?
+        (/(?P<variable_id>\w+))?
+        (/(?P<grid_label>\w+))?
+        (/v(?P<version_date>\d+))?
+        /?                      # maybe final separator
+    """, re.VERBOSE)
+
+    if 'root_dir' in case_dict \
+        and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
+        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+    elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
+        and ('source_id' in case_dict or 'model' in case_dict):
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+    elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
+        match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
+        if match:
+            case_dict.update(match.groupdict())
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+    elif 'root_dir' in case_dict:
+        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+    else:
+        raise Exception("Don't know how to dispatch DataManager based on input.")
 
 
 class GfdlarchiveDataManager(DataManager):
@@ -180,17 +220,6 @@ class GfdlarchiveDataManager(DataManager):
         modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
 
-        # if we're running on Analysis, recommended practice is to use $FTMPDIR
-        # for scratch work. Setting tempfile.tempdir causes all temp directories
-        # returned by util.PathManager to be in that location.
-        # If we're not, assume we're on a workstation. gcp won't copy to the 
-        # usual /tmp, so put temp files in a directory on /net2.
-        if 'TMPDIR' in os.environ:
-            tempfile.tempdir = os.environ['TMPDIR']
-        elif os.path.isdir('/net2'):
-            tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
-            if not os.path.isdir(tempfile.tempdir):
-                os.makedirs(tempfile.tempdir)
         super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
@@ -226,7 +255,7 @@ class GfdlarchiveDataManager(DataManager):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                print "Couldn't find subdirs (in {}) at {}, skipping".format(
+                print "\tCouldn't find subdirs (in {}) at {}, skipping".format(
                     subdir_filter, os.path.join(self.root_dir, dir_)
                 )
                 continue
@@ -268,8 +297,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\t\tDEBUG: ', exc, '\n\t\t', \
-                    os.path.join(self.root_dir, dir_), f
+                    print '\tDEBUG:', exc
+                    #print '\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -421,7 +450,7 @@ class GfdlarchiveDataManager(DataManager):
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {
-            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
+            'gcp': {'command': ['gcp', '-sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
@@ -440,8 +469,11 @@ class GfdlarchiveDataManager(DataManager):
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            gcp_wrapper(self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
-                timeout=self.file_transfer_timeout)
+            gcp_wrapper(
+                self.MODEL_WK_DIR, 
+                os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR)), 
+                timeout=self.file_transfer_timeout
+            )
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
@@ -657,7 +689,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=0):
         source = ['gfdl:' + os.path.normpath(source_path)]
     dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
-        ['gcp', '--sync', '-v', '-cd'] + source + dest,
+        ['gcp', '-sync', '-v', '-cd'] + source + dest,
         timeout=timeout
     ) 
 

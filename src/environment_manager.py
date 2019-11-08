@@ -20,7 +20,7 @@ class EnvironmentManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, config, verbose=0):
-        self.test_mode = config['settings']['test_mode']
+        self.test_mode = util.get_from_config('test_mode', config, default=False)
         self.pods = []
         self.envs = set()
 
@@ -83,6 +83,7 @@ class EnvironmentManager(object):
                 print log_str
                 pod.skipped = exc
                 continue
+            print "{} will run in env: {}".format(pod.name, pod.env)
             pod.logfile_obj.write("\n".join(
                 ["Found files: "] + pod.found_files + [" "]))
             env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
@@ -91,16 +92,19 @@ class EnvironmentManager(object):
 
             run_command = pod.run_commands()          
             if self.test_mode:
-                run_command = ['echo "TEST MODE: would call {}"'.format(run_command)]
+                run_command = ['echo "TEST MODE: call {}"'.format(run_command)]
             commands = self.activate_env_commands(pod) \
                 + pod.validate_commands() \
                 + run_command \
                 + self.deactivate_env_commands(pod)
             # '&&' so we abort if any command in the sequence fails.
+            if self.test_mode:
+                for cmd in commands:
+                    print 'TEST MODE: call {}'.format(cmd)
+            else:
+                print "Calling : {}".format(run_command)
             commands = ' && '.join([s for s in commands if s])
- 
-            print "Calling : {}".format(run_command)
-            print "Will run in env: {}".format(pod.env)
+            
             pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
             pod.logfile_obj.flush()
             try:
@@ -176,13 +180,12 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
-        assert ('venv_root' in config['settings'])
+        assert util.is_in_config('venv_root', config)
         # need to resolve relative path
         self.venv_root = util.resolve_path(
             config['settings']['venv_root'], paths.CODE_ROOT
         )
-        if ('r_lib_root' in config['settings']) and \
-            config['settings']['r_lib_root'] != '':
+        if util.is_in_config('r_lib_root', config):
             self.r_lib_root = util.resolve_path(
                 config['settings']['r_lib_root'], paths.CODE_ROOT
             )
@@ -274,8 +277,7 @@ class CondaEnvironmentManager(EnvironmentManager):
         # pylint: disable=maybe-no-member
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
-        if ('conda_root' in config['settings']) and \
-            config['settings']['conda_root'] != '':
+        if util.is_in_config('conda_root', config):
             assert os.path.exists(os.path.join(
                 config['settings']['conda_root'], 'bin', 'conda'
             ))
@@ -285,8 +287,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             self.conda_root = ''
             self.conda_exe = 'conda'
 
-        if ('conda_env_root' in config['settings']) and \
-            config['settings']['conda_env_root'] != '':
+        if util.is_in_config('conda_env_root', config):
             # need to resolve relative path
             paths = util.PathManager()
             self.conda_env_root = util.resolve_path(

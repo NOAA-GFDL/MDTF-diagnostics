@@ -86,9 +86,11 @@
   "settings" : {
     "# Verbosity levels: # 0-minimal,1-normal,2-copious,3-debug            ":"",
     "verbose" : 2,
-    "# Set to true for dry run:                                            ":"",
+    "# Set to true for framework test:                                     ":"",
     "# (script just reports what it would do, doesn't call actual packages)":"",
     "test_mode": false,
+    "# Set to true for dry run: No data is copied. Implies test_mode.      ":"",
+    "dry_run": false,
 
     "# DATA FETCHING ......................................................":"",
     "# Specify the method the code uses to fetch model data.               ":"",

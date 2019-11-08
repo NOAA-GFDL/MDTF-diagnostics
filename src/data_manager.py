@@ -132,6 +132,7 @@ class DataManager(object):
         else:
             self.DateFreq = DateFreqMixin
 
+        self.dry_run = config['settings']['dry_run']
         if 'envvars' in config:
             self.envvars = config['envvars'].copy() # gets appended to
         else:
@@ -523,7 +524,8 @@ class DataManager(object):
         # not running in shell, so don't need to quote globs
         tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
         util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
-            self.MODEL_WK_DIR ] + tar_flags
+            self.MODEL_WK_DIR ] + tar_flags,
+            dry_run = self.dry_run
         )
 
     def _copy_to_output(self):

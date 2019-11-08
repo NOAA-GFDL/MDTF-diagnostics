@@ -344,13 +344,16 @@ class GfdlarchiveDataManager(DataManager):
             # check we didn't eliminate everything:
             assert self._component_map[u_key, data_key] 
             self.data_files[data_key] = self._component_map[u_key, data_key]
+
         paths = set()
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
                 paths.add(f._remote_data)
         print "start dmget of {} files".format(len(paths))
         util.run_command(['dmget','-t','-v'] + list(paths),
-            timeout=(len(paths)/2)*self.file_transfer_timeout) 
+            timeout=(len(paths)/2)*self.file_transfer_timeout,
+            dry_run=self.dry_run
+        ) 
         print "end dmget"
 
     def local_data_is_current(self, dataset):
@@ -408,7 +411,10 @@ class GfdlarchiveDataManager(DataManager):
                 smartsite + f._remote_data, 
                 # gcp requires trailing slash, ln ignores it
                 smartsite + work_dir + os.sep
-            ], timeout=self.file_transfer_timeout) 
+            ], 
+                timeout=self.file_transfer_timeout, 
+                dry_run=dry_run
+            ) 
 
         # crop time axis to requested range
         translate = util.VariableTranslator()
@@ -428,7 +434,9 @@ class GfdlarchiveDataManager(DataManager):
                     continue
                 self.nc_crop_time_axis(
                     time_var_name, trimmed_range, file_name, 
-                    working_dir=work_dir)
+                    working_dir=work_dir, 
+                    dry_run=dry_run
+                )
         assert trim_count <= 2
 
         # cat chunks to destination, if more than one
@@ -438,14 +446,19 @@ class GfdlarchiveDataManager(DataManager):
                 d_key.name_in_model, dest_path)
             chunks = [os.path.basename(f._remote_data) for f in remote_files]
             if not dry_run:
-                self.nc_cat_chunks(chunks, dest_path, working_dir=work_dir)
+                self.nc_cat_chunks(chunks, dest_path, 
+                    working_dir=work_dir,
+                    dry_run=dry_run
+                )
         else:
             f = util.coerce_from_collection(remote_files)
             file_name = os.path.basename(f._remote_data)
             print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
             if not dry_run:
                 util.run_command(['ln', '-fs', \
-                    os.path.join(work_dir, file_name), dest_path]) 
+                    os.path.join(work_dir, file_name), dest_path],
+                    dry_run=dry_run
+                ) 
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):
@@ -472,7 +485,8 @@ class GfdlarchiveDataManager(DataManager):
             gcp_wrapper(
                 self.MODEL_WK_DIR, 
                 os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR)), 
-                timeout=self.file_transfer_timeout
+                timeout=self.file_transfer_timeout,
+                dry_run=self.dry_run
             )
 
 
@@ -679,7 +693,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             )
         return choices
 
-def gcp_wrapper(source_path, dest_dir, timeout=0):
+def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     modMgr = ModuleManager()
     modMgr.load('gcp')
     # gcp requires trailing slash, ln ignores it
@@ -690,7 +704,8 @@ def gcp_wrapper(source_path, dest_dir, timeout=0):
     dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
         ['gcp', '-sync', '-v', '-cd'] + source + dest,
-        timeout=timeout
+        timeout=timeout, 
+        dry_run=dry_run
     ) 
 
 def running_on_PPAN():

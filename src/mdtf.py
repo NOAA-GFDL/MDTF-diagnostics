@@ -90,7 +90,10 @@ def argparse_wrapper(code_root):
     # defaults set in mdtf_settings.json/settings
     parser.add_argument("--test_mode", 
         action="store_true", # so default to False
-        help="Set flag to do a dry run, disabling calls to PODs")
+        help="Set flag to fetch data but skip calls to PODs")
+    parser.add_argument("--dry_run", 
+        action="store_true", # so default to False
+        help="Set flag to do a dry run, disabling data fetching and calls to PODs")
     parser.add_argument("--save_nc", 
         action="store_true", # so default to False
         help="Set flag to have PODs save netCDF files of processed data.")
@@ -189,6 +192,9 @@ def parse_mdtf_args(user_args_list, default_args, rel_paths_root=''):
     # convert relative to absolute paths
     for key, val in default_args['paths'].items():
         default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
+
+    if default_args['settings']['dry_run']:
+        default_args['settings']['test_mode'] = True
 
     return default_args
 

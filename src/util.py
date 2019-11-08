@@ -512,7 +512,7 @@ class TimeoutAlarm(Exception):
     # dummy exception for signal handling in run_command
     pass
 
-def run_command(command, env=None, cwd=None, timeout=0):
+def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     """Subprocess wrapper to facilitate running single command without starting
     a shell.
 
@@ -548,6 +548,9 @@ def run_command(command, env=None, cwd=None, timeout=0):
     if type(command) == str:
         command = shlex.split(command)
     cmd_str = ' '.join(command)
+    if dry_run:
+        print 'DRY_RUN: call {}'.format(cmd_str)
+        return
     proc = None
     pid = None
     retcode = 1

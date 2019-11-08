@@ -37,13 +37,14 @@ else
 fi
 export _CONDA_ROOT="$_MDTF_CONDA_ROOT"
 export CONDA_EXE="${_CONDA_ROOT}/bin/conda"
+export _CONDA_EXE="$CONDA_EXE"
 echo "Found conda at $CONDA_EXE"
 
 __conda_setup="$($CONDA_EXE 'shell.bash' 'hook' 2> /dev/null)"
-if [[ $? -eq 0 ]]; then
+if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [[ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]]; then
+    if [ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]; then
         . "${_CONDA_ROOT}/etc/profile.d/conda.sh"
     else
         export PATH="${_CONDA_ROOT}/bin:$PATH"

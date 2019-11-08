@@ -157,7 +157,6 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         modMgr = ModuleManager()
         modMgr.revert_state()
 
-
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
     # Use mdteam's anaconda2
     def __init__(self, config, verbose=0):
@@ -167,6 +166,17 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         raise Exception(
             'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
         )
+
+    def activate_env_commands(self, pod):
+        """Workaround conda activate in non-interactive shell.
+        Ref: 
+        https://github.com/conda/conda/issues/7980#issuecomment-536369736
+        """
+        conda_prefix = os.path.join(self.conda_env_root, pod.env)
+        return [
+            'source {}/bin/activate {}'.format(self.conda_root, conda_prefix)
+        ]
+
 
 def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.
@@ -459,8 +469,11 @@ class GfdlarchiveDataManager(DataManager):
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            gcp_wrapper(self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
-                timeout=self.file_transfer_timeout)
+            gcp_wrapper(
+                self.MODEL_WK_DIR, 
+                os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR)), 
+                timeout=self.file_transfer_timeout
+            )
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):

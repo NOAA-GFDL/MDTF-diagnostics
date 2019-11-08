@@ -383,7 +383,7 @@ class GfdlarchiveDataManager(DataManager):
             print "\tSkipping pod {} due to data fetch error.".format(pod.name)
             pod.skipped = exc
 
-    def fetch_dataset(self, d_key, method='auto', dry_run=False):
+    def fetch_dataset(self, d_key, method='auto'):
         """Copy files to temporary directory and combine chunks.
         """
         # pylint: disable=maybe-no-member
@@ -405,15 +405,13 @@ class GfdlarchiveDataManager(DataManager):
         for f in remote_files:
             print "\tcopying ...{} to {}".format(
                 f._remote_data[len(self.root_dir):], work_dir)
-            if dry_run: 
-                continue
             util.run_command(cp_command + [
                 smartsite + f._remote_data, 
                 # gcp requires trailing slash, ln ignores it
                 smartsite + work_dir + os.sep
             ], 
                 timeout=self.file_transfer_timeout, 
-                dry_run=dry_run
+                dry_run=self.dry_run
             ) 
 
         # crop time axis to requested range
@@ -430,12 +428,10 @@ class GfdlarchiveDataManager(DataManager):
                 print "\ttrimming '{}' of {} from {} to {}".format(
                     time_var_name, file_name, f.date_range, trimmed_range)
                 trim_count = trim_count + 1
-                if dry_run:
-                    continue
                 self.nc_crop_time_axis(
                     time_var_name, trimmed_range, file_name, 
                     working_dir=work_dir, 
-                    dry_run=dry_run
+                    dry_run=self.dry_run
                 )
         assert trim_count <= 2
 
@@ -445,20 +441,18 @@ class GfdlarchiveDataManager(DataManager):
             print "\tcatting {} chunks to {}".format(
                 d_key.name_in_model, dest_path)
             chunks = [os.path.basename(f._remote_data) for f in remote_files]
-            if not dry_run:
-                self.nc_cat_chunks(chunks, dest_path, 
-                    working_dir=work_dir,
-                    dry_run=dry_run
-                )
+            self.nc_cat_chunks(chunks, dest_path, 
+                working_dir=work_dir,
+                dry_run=self.dry_run
+            )
         else:
             f = util.coerce_from_collection(remote_files)
             file_name = os.path.basename(f._remote_data)
             print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
-            if not dry_run:
-                util.run_command(['ln', '-fs', \
-                    os.path.join(work_dir, file_name), dest_path],
-                    dry_run=dry_run
-                ) 
+            util.run_command(['ln', '-fs', \
+                os.path.join(work_dir, file_name), dest_path],
+                dry_run=self.dry_run
+            ) 
         # temp files cleaned up by data_manager.tearDown
 
     def _determine_fetch_method(self, method='auto'):

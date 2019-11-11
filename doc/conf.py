@@ -52,7 +52,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -255,3 +256,6 @@ def patched_parse(self):
     self._unpatched_parse()
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
+
+# -- Options for intersphinx extension -----------------------------------------
+intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}

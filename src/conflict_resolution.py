@@ -57,7 +57,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         datasets (iterable of :class:`~util.DataSet`): 
             Collection of all variables being requested in this DataManager.
 
-    Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
+    Returns: :py:obj:`list` of :py:obj:`str`: name(s) of model components to use.
 
     Raises: AssertionError if problem is unsatisfiable. This indicates some
         error in the input data.

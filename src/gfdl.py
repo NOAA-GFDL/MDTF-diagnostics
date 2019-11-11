@@ -718,9 +718,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             the shortest overall name.
 
         Args:
-            str_list (:obj:`list` of :obj:`str`:): list of component names.
+            str_list (:py:obj:`list` of :py:obj:`str`:): list of component names.
 
-        Returns: :obj:`str`: name of component that breaks the tie.
+        Returns: :py:obj:`str`: name of component that breaks the tie.
         """
         def _heuristic_tiebreaker_sub(strs):
             min_len = min(len(s.split('_')) for s in strs)
@@ -958,7 +958,7 @@ def parse_frepp_stub(frepp_stub):
 
     See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
 
-    Returns: :obj:`dict` of frepp parameters.
+    Returns: :py:obj:`dict` of frepp parameters.
     """
     # parse arguments and relabel keys
     d = {}

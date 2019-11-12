@@ -141,17 +141,11 @@ class DataManager(object):
             self.convention = case_dict['variable_convention']
         else:
             self.convention = 'CF' # default to assuming CF-compliance
-        if 'pod_list' in case_dict:
-            # run a set of PODs specific to this model
-            self.pod_list = case_dict['pod_list'] 
-        elif 'pod_list' in config:
-            self.pod_list = config['pod_list'] # use global list of PODs  
-        else:
-            self.pod_list = [] # should raise warning    
         if 'data_freq' in case_dict:
             self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
             self.data_freq = None
+        self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
         paths = util.PathManager()

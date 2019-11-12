@@ -87,6 +87,7 @@ class MDTFFramework(object):
         self.EnvironmentManager = self.manual_dispatch(
             self.config['settings']['environment_manager'], 'EnvironmentManager'
         )
+        self.Diagnostic = Diagnostic
 
     def argparse_setup(self):
         """Wraps command-line arguments to script.
@@ -247,14 +248,25 @@ class MDTFFramework(object):
         print "No class named {}.".format(class_prefix+class_suffix)
         raise Exception('no_class')  
 
+    def set_case_pod_list(self, case_dict):
+        if 'pod_list' in case_dict:
+            # run a set of PODs specific to this model
+            return case_dict['pod_list']
+        elif 'pod_list' in self.config:
+            # use global list of PODs  
+            return self.config['pod_list'] 
+        else:
+            return # should raise warning  
+
     def main_loop(self):
         caselist = []
         # only run first case in list until dependence on env vars cleaned up
         for case_dict in self.config['case_list'][0:1]: 
+            case_dict['pod_list'] = self.set_case_pod_list(case_dict)
             case = self.DataManager(case_dict, self.config)
             for pod_name in case.pod_list:
                 try:
-                    pod = Diagnostic(pod_name)
+                    pod = self.Diagnostic(pod_name)
                 except AssertionError as error:  
                     print str(error)
                 print "POD name: ", pod.long_name

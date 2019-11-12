@@ -59,6 +59,17 @@ class GFDLMDTFFramework(MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr
     _dispatch_search = [data_manager, environment_manager, gfdl]
 
+    def set_case_pod_list(self, case_dict):
+        requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(case_dict)
+        if not self.config['settings']['frepp']:
+            # try to run everything if not in frepp cooperative mode
+            return requested_pods 
+        else:
+            # only attempt PODs other instances haven't already done
+            return [p for p in requested_pods if not \
+                os.path.isdir(os.path.join(self.config['paths']['OUTPUT_DIR'], p))
+            ]
+
     def fetch_obs_data(self):
         dry_run = util.get_from_config('dry_run', self.config, default=False)
         

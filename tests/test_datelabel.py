@@ -43,6 +43,13 @@ class TestDate(unittest.TestCase):
         self.assertEqual('{}'.format(dt('2019')), '2019')
         self.assertEqual('{}'.format(dt('20190918')), '20190918')
 
+    def test_string_output_pre1900(self):
+        self.assertEqual('{}'.format(dt('1850')), '1850')
+        self.assertEqual(dt('185009182359').format(precision=4), '1850091823')
+
+    def test_string_output_iso(self):
+        self.assertEqual(dt('1850').isoformat(), '1850-01-01 00:00:00')
+
     def test_comparisons_same(self):
         self.assertTrue(dt(2018) < dt(2019))
         self.assertTrue(dt(2019,9) > dt(2018))

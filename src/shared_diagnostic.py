@@ -56,6 +56,7 @@ class Diagnostic(object):
         self.__dict__.update(paths.podPaths(self))
         file_contents = util.read_json(
             os.path.join(self.POD_CODE_DIR, 'settings.json'))
+        self.dry_run = False
 
         config = self._parse_pod_settings(file_contents['settings'], verbose)
         self.__dict__.update(config)

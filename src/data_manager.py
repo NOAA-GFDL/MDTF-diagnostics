@@ -191,7 +191,6 @@ class DataManager(object):
     def setUp(self):
         self._setup_model_paths()
         self._set_model_env_vars()
-        self._setup_html()
         for pod in self.iter_pods():
             self._setup_pod(pod)
         self._build_data_dicts()
@@ -223,20 +222,6 @@ class DataManager(object):
         temp = translate.field_dict[self.convention].to_dict()
         for key, val in temp.items():
             util.setenv(key, val, self.envvars, verbose=verbose)
-
-    def _setup_html(self):
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-        src = os.path.join(src_dir, 'mdtf1.html')
-        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        if os.path.isfile(dest):
-            print("WARNING: index.html exists, deleting.")
-            os.remove(dest)
-        util.append_html_template(src, dest, self.envvars, create=True)
-        shutil.copy2(
-            os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
-        )
 
     def _setup_pod(self, pod):
         paths = util.PathManager()
@@ -469,23 +454,42 @@ class DataManager(object):
 
     def tearDown(self, config):
         # TODO: handle OSErrors in all of these
-        self._finalize_html()
+        self._make_html()
         self._backup_config_file(config)
         self._make_tar_file()
         self._copy_to_output()
         paths = util.PathManager()
         paths.cleanup()
 
-    def _finalize_html(self):
+    def _make_html(self):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
-        src = os.path.join(paths.CODE_ROOT, 'src', 'html', 'mdtf2.html')
+        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        dt = datetime.datetime.utcnow()
-        template_dict = {
-            'DATE_TIME': dt.strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        }
-        util.append_html_template(src, dest, template_dict)
+        if os.path.isfile(dest):
+            print("WARNING: index.html exists, deleting.")
+            os.remove(dest)
+
+        template_dict = self.envvars.copy()
+        template_dict['DATE_TIME'] = \
+            datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
+        util.append_html_template(
+            os.path.join(src_dir, 'mdtf1.html'), 
+            dest, template_dict
+        )
+        util.append_html_template(
+            os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html'), 
+            dest, template_dict
+        )
+        util.append_html_template(
+            os.path.join(src_dir, 'mdtf2.html'), 
+            dest, template_dict
+        )
+        os.remove(os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html'))
+
+        shutil.copy2(
+            os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+        )
 
     def _backup_config_file(self, config, verbose=0):
         """Record settings in file variab_dir/config_save.json for rerunning

@@ -440,7 +440,7 @@ class Diagnostic(object):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
+        dest = os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html')
         template_dict = self.__dict__.copy()
         if error is None:
             # normal exit

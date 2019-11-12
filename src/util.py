@@ -745,13 +745,13 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
             print("Found "+dir)
 
 def append_html_template(template_file, target_file, template_dict={}, 
-    create=False):
+    create=True):
     assert os.path.exists(template_file)
     with open(template_file, 'r') as f:
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
-        if create:
+        if create is not False:
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))

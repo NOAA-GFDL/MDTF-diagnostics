@@ -50,17 +50,29 @@ class Date(datetime.datetime):
             ans.append(int(s[i:(i+2)]))
         return tuple(ans)
 
-    _strftimes = ('', '%Y', '%Y%m', '%Y%m%d', '%Y%m%d%H', '%Y%m%d%H%M', '%Y%m%d%H%M%S')
-
-    def format(self):
-        """Print date in YYYYMMDDHH format, with length being set automatically
+    def format(self, precision=None):
+        """Print date in YYYYMMDDHHMMSS format, with length being set automatically
         from precision. 
         
-        Other formats can be obtained manually with `strftime`, or by subclassing
-        and changing the _strftimes tuple.
+        Note:
+            strftime() is broken for dates prior to 1900 in python < 3.3, see
+            https://bugs.python.org/issue1777412 and https://stackoverflow.com/q/10263956.
+            For this reason, the workaround implemented here should be used 
+            instead.
         """
-        return self.strftime(self._strftimes[self.precision])
+        if precision is None:
+            precision = self.precision
+        assert precision > 0 and precision <= 6
+        tup_ = self.timetuple()
+        str_ = '{0.tm_year:04}{0.tm_mon:02}{0.tm_mday:02}'.format(tup_)
+        str_ = str_ + '{0.tm_hour:02}{0.tm_min:02}{0.tm_sec:02}'.format(tup_)
+        return str_[:2*(precision + 1)]
     __str__ = format
+
+    def isoformat(self):
+        tup_ = self.timetuple()
+        str_ = '{0.tm_year:04}-{0.tm_mon:02}-{0.tm_mday:02} '.format(tup_)
+        return str_ + '{0.tm_hour:02}:{0.tm_min:02}:{0.tm_sec:02}'.format(tup_)
     
     def __repr__(self):
         return "Date('{}')".format(self)   

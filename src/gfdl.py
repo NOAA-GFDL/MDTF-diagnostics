@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import tempfile
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -19,6 +18,7 @@ import conflict_resolution as choose
 import cmip6
 from data_manager import DataSet, DataManager, DataQueryFailure
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
+from shared_diagnostic import Diagnostic, PodRequirementFailure
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
@@ -101,6 +101,28 @@ class ModuleManager(util.Singleton):
             self._module(['load', mod])
         assert set(self._list()) == self.user_modules
 
+
+class GfdlDiagnostic(Diagnostic):
+    """Wrapper for Diagnostic that adds writing a placeholder directory to the
+    output as a lockfile if we're running in frepp cooperative mode.
+    """
+    # hack because we can't pass config to init easily
+    _config = None
+
+    def __init__(self, pod_name, verbose=0):
+        super(GfdlDiagnostic, self).__init__(pod_name, verbose)
+
+    def setUp(self, verbose=0):
+        try:
+            super(GfdlDiagnostic, self).setUp(verbose)
+            make_placeholder_dir(
+                self.name, 
+                util.get_from_config('OUTPUT_DIR', self._config, section='paths'),
+                timeout=util.get_from_config('file_transfer_timeout', self._config),
+                dry_run=util.get_from_config('dry_run', self._config)
+            )
+        except PodRequirementFailure:
+            raise
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
@@ -700,7 +722,20 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         ['gcp', '-sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
         dry_run=dry_run
-    ) 
+    )
+
+def make_placeholder_dir(dir_name, dest_root_dir, timeout=0, dry_run=False):
+    try:
+        os.mkdir(os.path.join(dest_root_dir, dir_name))
+    except OSError:
+        # use GCP for this because output dir might be on a read-only filesystem.
+        # apparently trying to test this with os.access is less robust than 
+        # just catching the error
+        paths = util.PathManager()
+        work_dir = paths.make_tempdir()
+        work_dir = os.path.join(work_dir, dir_name)
+        os.makedirs(work_dir)
+        gcp_wrapper(work_dir, dest_root_dir, timeout=timeout, dry_run=dry_run)
 
 def running_on_PPAN():
     """Return true if current host is in the PPAN cluster."""

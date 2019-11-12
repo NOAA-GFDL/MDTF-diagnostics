@@ -12,6 +12,10 @@ class GFDLMDTFFramework(MDTFFramework):
     def __init__(self):
         self.set_tempdir()
         super(GFDLMDTFFramework, self).__init__()
+        if self.config['settings']['frepp']:
+            # set up cooperative mode -- hack to pass config settings
+            gfdl.GfdlDiagnostic._config = self.config
+            self.Diagnostic = gfdl.GfdlDiagnostic
 
     @staticmethod
     def set_tempdir():

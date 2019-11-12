@@ -498,8 +498,9 @@ class GfdlarchiveDataManager(DataManager):
 
     def _make_html(self, cleanup=False):
         paths = util.PathManager()
-        prev_html = os.path.join(paths.OUTPUT_DIR, os.path.basename(self.TEMP_HTML))
-        if self.coop_mode and os.path.exists(prev_html):
+        prev_html = os.path.join(self.MODEL_OUT_DIR, os.path.basename(self.TEMP_HTML))
+        if paths.OUTPUT_DIR == paths.WORKING_DIR \
+            and self.coop_mode and os.path.exists(prev_html):
             # should just run cat in a shell
             with open(prev_html, 'r') as f1:
                 contents = f1.read()
@@ -518,23 +519,28 @@ class GfdlarchiveDataManager(DataManager):
         paths = util.PathManager()
         if paths.OUTPUT_DIR == paths.WORKING_DIR:
             return # no copying needed
-        dest_dir = os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR))
         if self.coop_mode:
             # only copy PODs that ran, whether they succeeded or not
             for pod in self.pods:
                 if pod._has_placeholder:
-                    gcp_wrapper(pod.POD_WK_DIR, dest_dir,
+                    gcp_wrapper(
+                        pod.POD_WK_DIR, 
+                        self.MODEL_OUT_DIR,
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
-            # copy all case level files
+            # copy all case-level files
             for f in os.path.listdir(self.MODEL_WK_DIR):
                 if os.path.isfile(f):
-                    gcp_wrapper(os.path.join(self.MODEL_WK_DIR, f), dest_dir,
+                    gcp_wrapper(
+                        os.path.join(self.MODEL_WK_DIR, f), 
+                        self.MODEL_OUT_DIR,
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
         else:
             # copy everything at once
-            gcp_wrapper(self.MODEL_WK_DIR, dest_dir,
+            gcp_wrapper(
+                self.MODEL_WK_DIR, 
+                paths.OUTPUT_DIR,
                 timeout=self.file_transfer_timeout, dry_run=self.dry_run
             )
 

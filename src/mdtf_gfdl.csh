@@ -67,7 +67,7 @@ set flags=()
 ## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,save_nc,yr1:,yr2: -- $argu:q`)
+set temp=(`getopt -s tcsh -o Y:Z: --long save_nc,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
     echo "Command line parse error 1" >/dev/stderr
     exit 1
@@ -76,10 +76,6 @@ endif
 eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
     switch($1:q)
-    case -I:
-    case --ignore-component:
-        set cmpt_args = ( '--ignore-component' ) ; shift 
-        breaksw;
     case --save_nc:
         set flags = ( '--save_nc' ) ; shift 
         breaksw;
@@ -145,7 +141,8 @@ endif
 
 ## run the command (unbuffered output)
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" \
+--frepp --ignore-component \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \

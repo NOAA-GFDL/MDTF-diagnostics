@@ -526,6 +526,12 @@ class GfdlarchiveDataManager(DataManager):
                     gcp_wrapper(pod.POD_WK_DIR, dest_dir,
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
+            # copy all case level files
+            for f in os.path.listdir(self.MODEL_WK_DIR):
+                if os.path.isfile(f):
+                    gcp_wrapper(os.path.join(self.MODEL_WK_DIR, f), dest_dir,
+                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                    )
         else:
             # copy everything at once
             gcp_wrapper(self.MODEL_WK_DIR, dest_dir,

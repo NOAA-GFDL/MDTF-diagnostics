@@ -111,6 +111,7 @@ class GfdlDiagnostic(Diagnostic):
 
     def __init__(self, pod_name, verbose=0):
         super(GfdlDiagnostic, self).__init__(pod_name, verbose)
+        self._has_placeholder = False
 
     def setUp(self, verbose=0):
         try:
@@ -121,6 +122,7 @@ class GfdlDiagnostic(Diagnostic):
                 timeout=util.get_from_config('file_transfer_timeout', self._config),
                 dry_run=util.get_from_config('dry_run', self._config)
             )
+            self._has_placeholder = True
         except PodRequirementFailure:
             raise
 
@@ -241,6 +243,7 @@ class GfdlarchiveDataManager(DataManager):
         modMgr = ModuleManager()
         modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
+        self.coop_mode = config['settings']['frepp']
 
         super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
         assert ('root_dir' in case_dict)
@@ -497,12 +500,20 @@ class GfdlarchiveDataManager(DataManager):
         # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
         paths = util.PathManager()
-        if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            gcp_wrapper(
-                self.MODEL_WK_DIR, 
-                os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR)), 
-                timeout=self.file_transfer_timeout,
-                dry_run=self.dry_run
+        if paths.OUTPUT_DIR == paths.WORKING_DIR:
+            return # no copying needed
+        dest_dir = os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR))
+        if self.coop_mode:
+            # only copy PODs that ran, whether they succeeded or not
+            for pod in self.pods:
+                if pod._has_placeholder:
+                    gcp_wrapper(pod.POD_WK_DIR, dest_dir,
+                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                    )
+        else:
+            # copy everything at once
+            gcp_wrapper(self.MODEL_WK_DIR, dest_dir,
+                timeout=self.file_transfer_timeout, dry_run=self.dry_run
             )
 
 

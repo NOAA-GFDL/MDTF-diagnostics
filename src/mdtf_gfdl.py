@@ -56,6 +56,9 @@ class GFDLMDTFFramework(MDTFFramework):
         return super(GFDLMDTFFramework, cls).parse_mdtf_args(
             user_args_list, default_args, rel_paths_root)
 
+    # add gfdl to search path for DataMgr, EnvMgr
+    _dispatch_search = [data_manager, environment_manager, gfdl]
+
     def fetch_obs_data(self):
         dry_run = util.get_from_config('dry_run', self.config, default=False)
         

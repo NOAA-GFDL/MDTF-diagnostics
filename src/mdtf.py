@@ -74,7 +74,7 @@ class MDTFFramework(object):
         )
         self.argparse_setup()
         cmdline_args = self.argparse_parse()
-        #print cmdline_args
+        print cmdline_args, '\n'
         default_args = util.read_json(cmdline_args['config_file'])
         self.config = self.parse_mdtf_args(cmdline_args, default_args)
         print 'SETTINGS:\n', util.pretty_print_json(self.config) #debug
@@ -82,12 +82,10 @@ class MDTFFramework(object):
         util.PathManager(self.config['paths']) # initialize
         self.set_mdtf_env_vars()
         self.DataManager = self.manual_dispatch(
-            self.config['settings']['data_manager'], 'DataManager', 
-            [data_manager]
+            self.config['settings']['data_manager'], 'DataManager'
         )
         self.EnvironmentManager = self.manual_dispatch(
-            self.config['settings']['environment_manager'], 'EnvironmentManager', 
-            [environment_manager]
+            self.config['settings']['environment_manager'], 'EnvironmentManager'
         )
 
     def argparse_setup(self):
@@ -236,17 +234,18 @@ class MDTFFramework(object):
         # following are redundant but used by PODs
         self.config["envvars"]["RGB"] = os.path.join(paths.CODE_ROOT,'src','rgb')
 
-    @staticmethod
-    def manual_dispatch(class_prefix, class_suffix, modules):
+    _dispatch_search = [data_manager, environment_manager]
+
+    def manual_dispatch(self, class_prefix, class_suffix):
         # drop '_' and title-case class name
         class_prefix = ''.join(class_prefix.split('_')).title()
-        for mod in modules:
+        for mod in self._dispatch_search:
             try:
                 return getattr(mod, class_prefix+class_suffix)
             except:
                 continue
         print "No class named {}.".format(class_prefix+class_suffix)
-        raise Exception('no_class')
+        raise Exception('no_class')  
 
     def main_loop(self):
         caselist = []

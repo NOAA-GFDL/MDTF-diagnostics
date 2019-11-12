@@ -496,6 +496,22 @@ class GfdlarchiveDataManager(DataManager):
     def process_fetched_data_hook(self):
         pass
 
+    def _make_html(self, cleanup=False):
+        paths = util.PathManager()
+        prev_html = os.path.join(paths.OUTPUT_DIR, os.path.basename(self.TEMP_HTML))
+        if self.coop_mode and os.path.exists(prev_html):
+            # should just run cat in a shell
+            with open(prev_html, 'r') as f1:
+                contents = f1.read()
+                if os.path.exists(self.TEMP_HTML):
+                    with open(self.TEMP_HTML, 'a') as f2:
+                        f2.write(contents)
+                else:
+                    with open(self.TEMP_HTML, 'w') as f2:
+                        f2.write(contents)
+
+        super(GfdlarchiveDataManager, self)._make_html(cleanup)
+
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only

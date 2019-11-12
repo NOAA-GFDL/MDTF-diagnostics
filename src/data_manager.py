@@ -150,6 +150,7 @@ class DataManager(object):
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
+        self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
@@ -230,6 +231,7 @@ class DataManager(object):
         # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
+        pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
 
@@ -461,7 +463,7 @@ class DataManager(object):
         paths = util.PathManager()
         paths.cleanup()
 
-    def _make_html(self):
+    def _make_html(self, cleanup=True):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
@@ -477,15 +479,13 @@ class DataManager(object):
             os.path.join(src_dir, 'mdtf1.html'), 
             dest, template_dict
         )
-        util.append_html_template(
-            os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html'), 
-            dest, template_dict
-        )
+        util.append_html_template(self.TEMP_HTML, dest, {})
         util.append_html_template(
             os.path.join(src_dir, 'mdtf2.html'), 
             dest, template_dict
         )
-        os.remove(os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html'))
+        if cleanup:
+            os.remove(self.TEMP_HTML)
 
         shutil.copy2(
             os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR

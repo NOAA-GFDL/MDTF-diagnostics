@@ -28,13 +28,13 @@ set fremodule
 set script_path
 
 ## set paths
-set REPO_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
-set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
+set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
+set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
 # output always written to $out_dir; unset below to skip copy/linking to 
 # MDteam experiment directory.
-set OUTPUT_HTML_DIR=/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output
-set INPUT_DIR=${TMPDIR}/inputdata
-set WK_DIR=${TMPDIR}/wkdir
+set OUTPUT_HTML_DIR="/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output"
+set INPUT_DIR="${TMPDIR}/inputdata"
+set WK_DIR="${TMPDIR}/wkdir"
 
 # End of user-configurable paramters
 # ----------------------------------------------------

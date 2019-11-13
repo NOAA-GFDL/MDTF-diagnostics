@@ -131,24 +131,16 @@ end
 ## clean up tmpdir
 wipetmp
 
-## Clean output subdirectory
-set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
-if ( -d "${out_dir}/${mdtf_dir}" ) then
-    # may be mounted read-only though...
-    echo "${out_dir}/${mdtf_dir} already exists; deleting"
-    rm -rf "${out_dir}/${mdtf_dir}"
-endif
-
 ## run the command (unbuffered output)
 echo 'script start'
 /usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" \
---frepp --ignore-component \
+--frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
 --OUTPUT_DIR "$out_dir" \
 --data_manager "GfdlPP" \
---environment_manager "GfdlVirtualenv" \
+--environment_manager "GfdlConda" \
 --CASENAME "$descriptor" \
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \

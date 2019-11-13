@@ -158,25 +158,26 @@ if ( "$OUTPUT_HTML_DIR" == "" ) then
     echo "Complete -- Exiting"
     exit 0
 endif
-# if ( ! -w "$OUTPUT_HTML_DIR" ) then
-#    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-#    exit 0
-# endif
 
-echo "Configuring data for experiments website"
+# test for write access -- don't trust -w test
+# OK, but what about gcp read-only?
+( touch ${OUTPUT_HTML_DIR}/test && rm -f ${OUTPUT_HTML_DIR}/test ) >& /dev/null
+if ($? == 0) then
+    echo "Configuring data for experiments website"
 
-set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
-
-if ( ! -d ${mdteamDir} ) then
-    mkdir -p "${mdteamDir}"
-    echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-    ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
+    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"	
+    if ( ! -d ${mdteamDir} ) then
+        mkdir -p "${mdteamDir}"
+        echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+        ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    else
+        echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+    endif
+    echo "Complete -- Exiting"
+    exit 0
 else
-    echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-    gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+   echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+   exit 0
 endif
-
-echo "Complete -- Exiting"
-exit 0
-## 

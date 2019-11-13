@@ -78,7 +78,9 @@ class MDTFFramework(object):
         default_args = util.read_json(cmdline_args['config_file'])
         self.config = self.parse_mdtf_args(cmdline_args, default_args)
         print 'SETTINGS:\n', util.pretty_print_json(self.config) #debug
+        self._post_config_init()
         
+    def _post_config_init(self):
         util.PathManager(self.config['paths']) # initialize
         self.set_mdtf_env_vars()
         self.DataManager = self.manual_dispatch(

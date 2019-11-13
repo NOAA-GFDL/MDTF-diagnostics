@@ -12,10 +12,7 @@ class GFDLMDTFFramework(MDTFFramework):
     def __init__(self):
         self.set_tempdir()
         super(GFDLMDTFFramework, self).__init__()
-        if self.config['settings']['frepp']:
-            # set up cooperative mode -- hack to pass config settings
-            gfdl.GfdlDiagnostic._config = self.config
-            self.Diagnostic = gfdl.GfdlDiagnostic
+
 
     @staticmethod
     def set_tempdir():
@@ -59,6 +56,14 @@ class GFDLMDTFFramework(MDTFFramework):
             rel_paths_root)
         return super(GFDLMDTFFramework, cls).parse_mdtf_args(
             user_args_list, default_args, rel_paths_root)
+
+    def _post_config_init(self):
+        self.fetch_obs_data()
+        super(GFDLMDTFFramework, self)._post_config_init()
+        if self.config['settings']['frepp']:
+            # set up cooperative mode -- hack to pass config settings
+            gfdl.GfdlDiagnostic._config = self.config
+            self.Diagnostic = gfdl.GfdlDiagnostic
 
     # add gfdl to search path for DataMgr, EnvMgr
     _dispatch_search = [data_manager, environment_manager, gfdl]
@@ -104,6 +109,5 @@ class GFDLMDTFFramework(MDTFFramework):
 if __name__ == '__main__':
     print "\n======= Starting "+__file__
     mdtf = GFDLMDTFFramework()
-    mdtf.fetch_obs_data()
     mdtf.main_loop()
     print "Exiting normally from ",__file__

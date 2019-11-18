@@ -197,7 +197,7 @@ autodoc_member_order = 'bysource'
 autodoc_default_options = {
     'member-order': 'bysource',
     'special-members': '__init__',
-    'private-members': True,
+    'private-members': False,
     'undoc-members': True,
     'show-inheritance': True
 }

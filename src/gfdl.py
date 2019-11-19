@@ -214,6 +214,7 @@ class GfdlarchiveDataManager(DataManager):
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
+        self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
@@ -339,12 +340,12 @@ class GfdlarchiveDataManager(DataManager):
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
                 paths.add(f._remote_data)
-        print "start dmget of {} files".format(len(paths))
-        util.run_command(['dmget','-t','-v'] + list(paths),
-            timeout=(len(paths)/2)*self.file_transfer_timeout,
-            dry_run=self.dry_run
-        ) 
-        print "end dmget"
+        if self.tape_filesystem:
+            print "start dmget of {} files".format(len(paths))
+            util.run_command(['dmget','-t','-v'] + list(paths),
+                timeout=(len(paths)/2)*self.file_transfer_timeout,
+                dry_run=self.dry_run)
+            print "end dmget"
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -452,7 +453,7 @@ class GfdlarchiveDataManager(DataManager):
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
         if method not in _methods:
-            if any(self.root_dir.startswith(s) for s in ['/arch', '/ptmp', '/work']):
+            if self.tape_filesystem:
                 method = 'gcp' # use GCP for DMF filesystems
             else:
                 method = 'ln' # symlink for local files
@@ -719,6 +720,10 @@ def running_on_PPAN():
     """Return true if current host is in the PPAN cluster."""
     host = os.uname()[1].split('.')[0]
     return (re.match(r"(pp|an)\d{3}", host) is not None)
+
+def is_on_tape_filesystem(path):
+    # handle eg. /arch0 et al as well as /archive.
+    return any(os.path.realpath(path).startswith(s) for s in ['/arch', '/ptmp', '/work'])
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

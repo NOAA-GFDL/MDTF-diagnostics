@@ -282,10 +282,9 @@ class CondaEnvironmentManager(EnvironmentManager):
                 config['settings']['conda_root'], 'bin', 'conda'
             ))
             self.conda_root = config['settings']['conda_root']
-            self.conda_exe = os.path.join(self.conda_root, 'bin', 'conda')
         else:
             self.conda_root = ''
-            self.conda_exe = 'conda'
+        self.conda_exe = 'conda'
 
         if util.is_in_config('conda_env_root', config):
             # need to resolve relative path

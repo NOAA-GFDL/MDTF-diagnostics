@@ -12,12 +12,12 @@ else:
 from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import datelabel
 import util
 import conflict_resolution as choose
 import cmip6
-from data_manager import DataSet, DataManager, DataQueryFailure
+from data_manager import DataSet, DataManager, DataAccessError
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
@@ -563,12 +563,12 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdludacmip6DataManager(GfdlarchiveDataManager):
+class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
+    __metaclass__ = ABCMeta    
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
-        self._uda_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
             if 'experiment_id' in case_dict:
@@ -591,15 +591,22 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         if 'member_id' not in case_dict:
             self.member_id = 'r1i1p1f1'
         case_dict['root_dir'] = os.path.join(
-            self._uda_root, self.activity_id, self.institution_id, 
+            self._cmip6_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        super(Gfdludacmip6DataManager, self).__init__(
+        if not os.path.exists(case_dict['root_dir']):
+            raise DataAccessError(None, 
+                "Can't access {}".format(case_dict['root_dir']))
+        super(Gfdlcmip6abcDataManager, self).__init__(
             case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
         for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
+
+    @abstractproperty
+    def _cmip6_root(self):
+        pass
 
     # also need to determine table?
     UndecidedKey = namedtuple('UndecidedKey', 
@@ -613,7 +620,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
 
     def parse_relative_path(self, subdir, filename):
         d = cmip6.parse_DRS_path(
-            os.path.join(self.root_dir, subdir)[len(self._uda_root):],
+            os.path.join(self.root_dir, subdir)[len(self._cmip6_root):],
             filename
         )
         d['name_in_model'] = d['variable_id']
@@ -676,6 +683,22 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
                 version_date=version_date[data_key]
             )
         return choices
+
+
+class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
+    def _cmip6_root(self):
+        return os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+
+class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
+    def _cmip6_root(self):
+        return os.sep + os.path.join('data_cmip6','CMIP6')
+
+class Gfdlcmip6DataManager(Gfdlcmip6abcDataManager):
+    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+        try:
+            Gfdldatacmip6DataManager(case_dict, config, DateFreqMixin)
+        except DataAccessError:
+            Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
 
 def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     modMgr = ModuleManager()

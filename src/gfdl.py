@@ -467,8 +467,7 @@ class GfdlarchiveDataManager(DataManager):
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
             gcp_wrapper(
-                self.MODEL_WK_DIR, 
-                os.path.dirname(os.path.normpath(self.MODEL_OUT_DIR)), 
+                self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
                 timeout=self.file_transfer_timeout,
                 dry_run=self.dry_run
             )
@@ -680,12 +679,16 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
 def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     modMgr = ModuleManager()
     modMgr.load('gcp')
+    source_path = os.path.normpath(source_path)
+    dest_dir = os.path.normpath(dest_dir)
     # gcp requires trailing slash, ln ignores it
     if os.path.isdir(source_path):
-        source = ['-r', 'gfdl:' + os.path.normpath(source_path) + os.sep]
+        source = ['-r', 'gfdl:' + source_path + os.sep]
+        # gcp /A/B/ /C/D/ will result in /C/D/B, so need to specify parent dir
+        dest = ['gfdl:' + os.path.dirname(dest_dir) + os.sep]
     else:
-        source = ['gfdl:' + os.path.normpath(source_path)]
-    dest = ['gfdl:' + dest_dir + os.sep]
+        source = ['gfdl:' + source_path]
+        dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
         ['gcp', '-sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 

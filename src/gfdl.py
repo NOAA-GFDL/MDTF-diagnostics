@@ -183,28 +183,18 @@ def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
         (/v(?P<version_date>\d+))?
         /?                      # maybe final separator
     """, re.VERBOSE)
-    def _data_cmip6_check(case_dict, config, DateFreqMixin):
-        # if data found on /data_cmip6, use that, else use UDA
-        if running_on_PPAN():
-            try:
-                return Gfdldatacmip6DataManager(case_dict, config, DateFreqMixin)
-            except DataAccessError as exc:
-                print exc.msg
-                return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
-        else:
-            return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
 
     if 'root_dir' in case_dict \
         and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
         return GfdlppDataManager(case_dict, config, DateFreqMixin)
     elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
         and ('source_id' in case_dict or 'model' in case_dict):
-        return _data_cmip6_check(case_dict, config, DateFreqMixin)
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
     elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
         match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
         if match:
             case_dict.update(match.groupdict())
-        return _data_cmip6_check(case_dict, config, DateFreqMixin)
+        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
     elif 'root_dir' in case_dict:
         return GfdlppDataManager(case_dict, config, DateFreqMixin)
     else:
@@ -699,6 +689,8 @@ class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
         return os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
 
 class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
+    # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
+    # be used as a data source unless explicitly requested by user
     def _cmip6_root(self):
         return os.sep + os.path.join('data_cmip6','CMIP6')
 

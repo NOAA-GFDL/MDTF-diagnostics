@@ -278,13 +278,12 @@ class CondaEnvironmentManager(EnvironmentManager):
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
         if util.is_in_config('conda_root', config):
-            assert os.path.exists(os.path.join(
-                config['settings']['conda_root'], 'bin', 'conda'
-            ))
             self.conda_root = config['settings']['conda_root']
+            self.conda_exe = os.path.join(self.conda_root, 'bin', 'conda')
+            assert os.path.exists(self.conda_exe)          
         else:
             self.conda_root = ''
-        self.conda_exe = 'conda'
+            self.conda_exe = 'conda'
 
         if util.is_in_config('conda_env_root', config):
             # need to resolve relative path
@@ -330,13 +329,14 @@ class CondaEnvironmentManager(EnvironmentManager):
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
             print 'Creating conda env {} in {}'.format(env_name, conda_prefix)
-        
+        # conda_init for bash defines conda as a shell function; will get error
+        # if we try to call the conda executable directly
         commands = \
             'source {}/src/conda_init.sh {} && '.format(
                 paths.CODE_ROOT, self.conda_root
             ) \
-            + '{} env create --force -q -p="{}" -f="{}"'.format(
-                self.conda_exe, conda_prefix, path
+            + 'conda env create --force -q -p="{}" -f="{}"'.format(
+                conda_prefix, path
             )
         try: 
             subprocess.Popen(['bash', '-c', commands])
@@ -369,11 +369,13 @@ class CondaEnvironmentManager(EnvironmentManager):
         in an interactive shell.
         """
         # pylint: disable=maybe-no-member
+        # conda_init for bash defines conda as a shell function; will get error
+        # if we try to call the conda executable directly
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
         return [
             'source {}/src/conda_init.sh {}'.format(paths.CODE_ROOT, self.conda_root),
-            '{} activate {}'.format(self.conda_exe, conda_prefix)
+            'conda activate {}'.format(conda_prefix)
         ]
 
     def deactivate_env_commands(self, pod):

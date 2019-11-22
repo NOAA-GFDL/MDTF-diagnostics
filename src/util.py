@@ -761,11 +761,13 @@ def append_html_template(template_file, target_file, template_dict={},
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
-        if create is not False:
+        if create:
+            print "\tDEBUG: write {} to new {}".format(template_file, target_file)
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
+        print "\tDEBUG: append {} to {}".format(template_file, target_file)
         mode = 'a'
     with open(target_file, mode) as f:
         f.write(html_str)

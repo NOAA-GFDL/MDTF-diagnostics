@@ -259,8 +259,6 @@ class MDTFFramework(object):
             pod_list =  self.config['pod_list'] 
         else:
             pod_list = [] # should raise warning
-        for p in pod_list:
-            print "\tDEBUG: will run {}".format(p)
         return pod_list
 
     def main_loop(self):
@@ -268,6 +266,8 @@ class MDTFFramework(object):
         # only run first case in list until dependence on env vars cleaned up
         for case_dict in self.config['case_list'][0:1]: 
             case_dict['pod_list'] = self.set_case_pod_list(case_dict)
+            for p in case_dict['pod_list']:
+                print "\tDEBUG: will run {}".format(p)
             case = self.DataManager(case_dict, self.config)
             for pod_name in case.pod_list:
                 try:

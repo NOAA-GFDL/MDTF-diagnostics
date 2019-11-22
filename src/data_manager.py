@@ -150,7 +150,7 @@ class DataManager(object):
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
-        self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, '.pod_output_temp.html')
+        self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134

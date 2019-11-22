@@ -100,6 +100,8 @@ class PathManager(Singleton):
         d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
         if 'MODEL_WK_DIR' in pod.__dict__:
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
+        if 'MODEL_OUT_DIR' in pod.__dict__:
+            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
         return d
 
     def make_tempdir(self, hash_obj=None):

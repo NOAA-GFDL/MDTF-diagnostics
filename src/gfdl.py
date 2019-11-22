@@ -117,8 +117,7 @@ class GfdlDiagnostic(Diagnostic):
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
             make_placeholder_dir(
-                self.name, 
-                util.get_from_config('OUTPUT_DIR', self._config, section='paths'),
+                self.POD_OUT_DIR,
                 timeout=util.get_from_config('file_transfer_timeout', self._config),
                 dry_run=util.get_from_config('dry_run', self._config)
             )
@@ -525,7 +524,7 @@ class GfdlarchiveDataManager(DataManager):
                 if pod._has_placeholder:
                     gcp_wrapper(
                         pod.POD_WK_DIR, 
-                        self.MODEL_OUT_DIR,
+                        pod.POD_OUT_DIR,
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
             # copy all case-level files
@@ -763,18 +762,18 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         dry_run=dry_run
     )
 
-def make_placeholder_dir(dir_name, dest_root_dir, timeout=0, dry_run=False):
+def make_placeholder_dir(dest_dir, timeout=0, dry_run=False):
     try:
-        os.mkdir(os.path.join(dest_root_dir, dir_name))
+        os.mkdir(dest_dir)
     except OSError:
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
         paths = util.PathManager()
         work_dir = paths.make_tempdir()
-        work_dir = os.path.join(work_dir, dir_name)
+        work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
-        gcp_wrapper(work_dir, dest_root_dir, timeout=timeout, dry_run=dry_run)
+        gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)
 
 def running_on_PPAN():
     """Return true if current host is in the PPAN cluster."""

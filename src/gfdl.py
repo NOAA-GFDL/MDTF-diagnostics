@@ -125,6 +125,11 @@ class GfdlDiagnostic(Diagnostic):
         except PodRequirementFailure:
             raise
 
+    def tearDown(self, verbose=0):
+        # only run teardown (including logging error on index.html) if POD ran
+        if self._has_placeholder:
+            super(GfdlDiagnostic, self).tearDown(verbose)
+
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.

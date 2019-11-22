@@ -138,10 +138,7 @@ class EnvironmentManager(object):
     def tearDown(self):
         # call diag's tearDown to clean up
         for pod in self.pods:
-            if isinstance(pod.skipped, Exception):
-                pod.append_result_link(pod.skipped)
-            else:
-                pod.tearDown()
+            pod.tearDown()
         for env in self.envs:
             self.destroy_environment(env)
 

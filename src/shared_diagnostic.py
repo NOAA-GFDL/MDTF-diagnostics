@@ -390,13 +390,15 @@ class Diagnostic(object):
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # shouldn't need to re-set env vars, but used by 
-        # convective_transition_diag to set filename info 
-        self._set_pod_env_vars(verbose=verbose)
-
-        self._make_pod_html()
-        self._convert_pod_figures()
-        self._cleanup_pod_files()
+        if isinstance(self.skipped, Exception):
+            self.append_result_link(self.skipped)
+        else:
+            # shouldn't need to re-set env vars, but used by 
+            # convective_transition_diag to set filename info 
+            self._set_pod_env_vars(verbose=verbose)
+            self._make_pod_html()
+            self._convert_pod_figures()
+            self._cleanup_pod_files()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")

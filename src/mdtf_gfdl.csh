@@ -61,13 +61,13 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
+set cmpt_args=( '--ignore_component' )
 set flags=()
 
 ## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o Y:Z: --long save_nc,yr1:,yr2: -- $argu:q`)
+set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
     echo "Command line parse error 1" >/dev/stderr
     exit 1
@@ -76,8 +76,11 @@ endif
 eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
     switch($1:q)
+    case --component_only:
+        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift 
+        breaksw;
     case --save_nc:
-        set flags = ( '--save_nc' ) ; shift 
+        set flags=( '--save_nc' ) ; shift 
         breaksw;
     case -Y:
     case --yr1:

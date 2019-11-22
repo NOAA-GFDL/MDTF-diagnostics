@@ -476,13 +476,11 @@ class DataManager(object):
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         util.append_html_template(
-            os.path.join(src_dir, 'mdtf1.html'), 
-            dest, template_dict
+            os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
         )
         util.append_html_template(self.TEMP_HTML, dest, {})
         util.append_html_template(
-            os.path.join(src_dir, 'mdtf2.html'), 
-            dest, template_dict
+            os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
         )
         if cleanup:
             os.remove(self.TEMP_HTML)

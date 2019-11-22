@@ -77,6 +77,9 @@ class GFDLMDTFFramework(MDTFFramework):
             # only attempt PODs other instances haven't already done
             paths = util.PathManager()
             case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
+            for p in requested_pods:
+                if os.path.isdir(os.path.join(case_outdir, p)):
+                    print "\tDEBUG: preexisting {} in {}; skipping".format(p, case_outdir)
             return [p for p in requested_pods if not \
                 os.path.isdir(os.path.join(case_outdir, p))
             ]

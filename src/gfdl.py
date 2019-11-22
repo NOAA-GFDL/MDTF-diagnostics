@@ -496,21 +496,23 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _make_html(self, cleanup=False):
-        paths = util.PathManager()
-        prev_html = os.path.join(self.MODEL_OUT_DIR, os.path.basename(self.TEMP_HTML))
-        if paths.OUTPUT_DIR == paths.WORKING_DIR \
-            and self.coop_mode and os.path.exists(prev_html):
-            # should just run cat in a shell
+        prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
+        if self.coop_mode and os.path.exists(prev_html):
+            print "\tDEBUG: Appending previous index.html at {}".format(prev_html)
             with open(prev_html, 'r') as f1:
                 contents = f1.read()
-                if os.path.exists(self.TEMP_HTML):
-                    with open(self.TEMP_HTML, 'a') as f2:
-                        f2.write(contents)
-                else:
-                    with open(self.TEMP_HTML, 'w') as f2:
-                        f2.write(contents)
+            contents = contents.split('<!--CUT-->')
+            assert len(contents) == 3
+            contents = contents[1]
 
-        super(GfdlarchiveDataManager, self)._make_html(cleanup)
+            if os.path.exists(self.TEMP_HTML):
+                mode = 'a'
+            else:
+                print "\tWARNING: No file at {}.".format(self.TEMP_HTML)
+                mode = 'w'
+            with open(self.TEMP_HTML, mode) as f2:
+                f2.write(contents)
+        super(GfdlarchiveDataManager, self)._make_html(cleanup=False)
 
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member

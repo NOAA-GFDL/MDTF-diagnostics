@@ -79,8 +79,16 @@ class PathManager(Singleton):
     def modelPaths(self, case):
         # pylint: disable=maybe-no-member
         d = {}
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
+        if isinstance(case, dict):
+            name = case['CASENAME']
+            yr1 = case['FIRSTYR']
+            yr2 = case['LASTYR']
+        else:
+            name = case.case_name
+            yr1 = case.firstyr
+            yr2 = case.lastyr
+        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
+        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         return d

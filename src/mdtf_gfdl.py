@@ -75,8 +75,10 @@ class GFDLMDTFFramework(MDTFFramework):
             return requested_pods 
         else:
             # only attempt PODs other instances haven't already done
+            paths = util.PathManager()
+            case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
             return [p for p in requested_pods if not \
-                os.path.isdir(os.path.join(self.config['paths']['OUTPUT_DIR'], p))
+                os.path.isdir(os.path.join(case_outdir, p))
             ]
 
     def fetch_obs_data(self):

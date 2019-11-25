@@ -28,13 +28,13 @@ set fremodule
 set script_path
 
 ## set paths
-set REPO_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
-set OBS_DATA_DIR=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data
+set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
+set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
 # output always written to $out_dir; unset below to skip copy/linking to 
 # MDteam experiment directory.
-set OUTPUT_HTML_DIR=/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output
-set INPUT_DIR=${TMPDIR}/inputdata
-set WK_DIR=${TMPDIR}/wkdir
+set OUTPUT_HTML_DIR="/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output"
+set INPUT_DIR="${TMPDIR}/inputdata"
+set WK_DIR="${TMPDIR}/wkdir"
 
 # End of user-configurable paramters
 # ----------------------------------------------------
@@ -61,13 +61,13 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" )
+set cmpt_args=( '--ignore_component' )
 set flags=()
 
 ## parse command line arguments
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o IY:Z: --long ignore-component,save_nc,yr1:,yr2: -- $argu:q`)
+set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then 
     echo "Command line parse error 1" >/dev/stderr
     exit 1
@@ -76,12 +76,11 @@ endif
 eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
     switch($1:q)
-    case -I:
-    case --ignore-component:
-        set cmpt_args = ( '--ignore-component' ) ; shift 
+    case --component_only:
+        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift 
         breaksw;
     case --save_nc:
-        set flags = ( '--save_nc' ) ; shift 
+        set flags=( '--save_nc' ) ; shift 
         breaksw;
     case -Y:
     case --yr1:
@@ -135,23 +134,16 @@ end
 ## clean up tmpdir
 wipetmp
 
-## Clean output subdirectory
-set mdtf_dir="MDTF_${descriptor}_${yr1}_${yr2}"
-if ( -d "${out_dir}/${mdtf_dir}" ) then
-    # may be mounted read-only though...
-    echo "${out_dir}/${mdtf_dir} already exists; deleting"
-    rm -rf "${out_dir}/${mdtf_dir}"
-endif
-
 ## run the command (unbuffered output)
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" --frepp \
+/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" \
+--frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
 --OUTPUT_DIR "$out_dir" \
 --data_manager "GfdlPP" \
---environment_manager "GfdlVirtualenv" \
+--environment_manager "GfdlConda" \
 --CASENAME "$descriptor" \
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
@@ -169,25 +161,26 @@ if ( "$OUTPUT_HTML_DIR" == "" ) then
     echo "Complete -- Exiting"
     exit 0
 endif
-# if ( ! -w "$OUTPUT_HTML_DIR" ) then
-#    echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-#    exit 0
-# endif
 
-echo "Configuring data for experiments website"
+# test for write access -- don't trust -w test
+# OK, but what about gcp read-only?
+( touch ${OUTPUT_HTML_DIR}/test && rm -f ${OUTPUT_HTML_DIR}/test ) >& /dev/null
+if ($? == 0) then
+    echo "Configuring data for experiments website"
 
-set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-set mdteamDir = "${OUTPUT_HTML_DIR}/${shaOut}"	
-
-if ( ! -d ${mdteamDir} ) then
-    mkdir -p "${mdteamDir}"
-    echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-    ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
+    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"	
+    if ( ! -d ${mdteamDir} ) then
+        mkdir -p "${mdteamDir}"
+        echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+        ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    else
+        echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+    endif
+    echo "Complete -- Exiting"
+    exit 0
 else
-    echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-    gcp -v -r "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+   echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+   exit 0
 endif
-
-echo "Complete -- Exiting"
-exit 0
-## 

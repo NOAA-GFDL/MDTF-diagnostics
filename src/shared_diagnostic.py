@@ -390,13 +390,15 @@ class Diagnostic(object):
         Args:
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # shouldn't need to re-set env vars, but used by 
-        # convective_transition_diag to set filename info 
-        self._set_pod_env_vars(verbose=verbose)
-
-        self._make_pod_html()
-        self._convert_pod_figures()
-        self._cleanup_pod_files()
+        if isinstance(self.skipped, Exception):
+            self.append_result_link(self.skipped)
+        else:
+            # shouldn't need to re-set env vars, but used by 
+            # convective_transition_diag to set filename info 
+            self._set_pod_env_vars(verbose=verbose)
+            self._make_pod_html()
+            self._convert_pod_figures()
+            self._cleanup_pod_files()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
@@ -440,7 +442,6 @@ class Diagnostic(object):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         template_dict = self.__dict__.copy()
         if error is None:
             # normal exit
@@ -449,7 +450,7 @@ class Diagnostic(object):
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
-        util.append_html_template(src, dest, template_dict)
+        util.append_html_template(src, self.TEMP_HTML, template_dict)
 
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

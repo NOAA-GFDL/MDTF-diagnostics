@@ -78,6 +78,10 @@
     "test_mode": false,
     "# Set to true for dry run: No data is copied. Implies test_mode.      ":"",
     "dry_run": false,
+    "# Set to true if running in cooperative mode from a FRE XML.          ":"",
+    "frepp": false,
+    "# Set to true to ignore XML component and search entire /pp/ directory.":"",
+    "ignore-component": false,
 
     "# DATA FETCHING ......................................................":"",
     "# Specify the method the code uses to fetch model data.               ":"",

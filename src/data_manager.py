@@ -141,21 +141,16 @@ class DataManager(object):
             self.convention = case_dict['variable_convention']
         else:
             self.convention = 'CF' # default to assuming CF-compliance
-        if 'pod_list' in case_dict:
-            # run a set of PODs specific to this model
-            self.pod_list = case_dict['pod_list'] 
-        elif 'pod_list' in config:
-            self.pod_list = config['pod_list'] # use global list of PODs  
-        else:
-            self.pod_list = [] # should raise warning    
         if 'data_freq' in case_dict:
             self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
             self.data_freq = None
+        self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
         paths = util.PathManager()
         self.__dict__.update(paths.modelPaths(self))
+        self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
@@ -197,7 +192,6 @@ class DataManager(object):
     def setUp(self):
         self._setup_model_paths()
         self._set_model_env_vars()
-        self._setup_html()
         for pod in self.iter_pods():
             self._setup_pod(pod)
         self._build_data_dicts()
@@ -230,20 +224,6 @@ class DataManager(object):
         for key, val in temp.items():
             util.setenv(key, val, self.envvars, verbose=verbose)
 
-    def _setup_html(self):
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
-        src = os.path.join(src_dir, 'mdtf1.html')
-        dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        if os.path.isfile(dest):
-            print("WARNING: index.html exists, deleting.")
-            os.remove(dest)
-        util.append_html_template(src, dest, self.envvars, create=True)
-        shutil.copy2(
-            os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
-        )
-
     def _setup_pod(self, pod):
         paths = util.PathManager()
         translate = util.VariableTranslator()
@@ -251,6 +231,7 @@ class DataManager(object):
         # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
         pod.__dict__.update(paths.podPaths(pod))
+        pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
 
@@ -475,23 +456,38 @@ class DataManager(object):
 
     def tearDown(self, config):
         # TODO: handle OSErrors in all of these
-        self._finalize_html()
+        self._make_html()
         self._backup_config_file(config)
         self._make_tar_file()
         self._copy_to_output()
         paths = util.PathManager()
         paths.cleanup()
 
-    def _finalize_html(self):
+    def _make_html(self, cleanup=True):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
-        src = os.path.join(paths.CODE_ROOT, 'src', 'html', 'mdtf2.html')
+        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
-        dt = datetime.datetime.utcnow()
-        template_dict = {
-            'DATE_TIME': dt.strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        }
-        util.append_html_template(src, dest, template_dict)
+        if os.path.isfile(dest):
+            print("WARNING: index.html exists, deleting.")
+            os.remove(dest)
+
+        template_dict = self.envvars.copy()
+        template_dict['DATE_TIME'] = \
+            datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
+        util.append_html_template(
+            os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
+        )
+        util.append_html_template(self.TEMP_HTML, dest, {})
+        util.append_html_template(
+            os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
+        )
+        if cleanup:
+            os.remove(self.TEMP_HTML)
+
+        shutil.copy2(
+            os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
+        )
 
     def _backup_config_file(self, config, verbose=0):
         """Record settings in file variab_dir/config_save.json for rerunning

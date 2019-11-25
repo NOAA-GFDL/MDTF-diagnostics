@@ -10,7 +10,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 import shared_test_utils as shared
 import src.gfdl as gfdl
-from src.mdtf import parse_mdtf_args
+from src.mdtf import MDTFFramework
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
@@ -155,8 +155,9 @@ class TestFreppArgParsing(unittest.TestCase):
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
         args = {'frepp': True}
+        mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
-        config = parse_mdtf_args([d, args], config)
+        config = MDTFFramework.parse_mdtf_args([d, args], config)
         self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'F')
@@ -166,8 +167,9 @@ class TestFreppArgParsing(unittest.TestCase):
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
         args = {'frepp': True, 'OUTPUT_DIR':'/X', 'E':'Y'}
+        mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
-        config = parse_mdtf_args([d, args], config)
+        config = MDTFFramework.parse_mdtf_args([d, args], config)
         self.assertEqual(config['paths']['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'Y')
@@ -176,9 +178,10 @@ class TestFreppArgParsing(unittest.TestCase):
         # overwrite defaults and command-line
         frepp_stub = self.frepp_stub # make a copy to be safe
         d = gfdl.parse_frepp_stub(frepp_stub)
-        args = {'frepp': True}
+        args = {'frepp': True}        
+        mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
-        config = parse_mdtf_args([d, args], config)
+        config = MDTFFramework.parse_mdtf_args([d, args], config)
         self.assertEqual(len(config['case_list']), 1)
         self.assertEqual(config['case_list'][0]['CASENAME'], 'baz.r1i1p1f1')
         self.assertEqual(config['case_list'][0]['model'], 'CMIP_GFDL')

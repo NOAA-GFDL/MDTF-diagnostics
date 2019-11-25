@@ -79,8 +79,16 @@ class PathManager(Singleton):
     def modelPaths(self, case):
         # pylint: disable=maybe-no-member
         d = {}
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, case.case_name)
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(case.case_name, case.firstyr, case.lastyr)
+        if isinstance(case, dict):
+            name = case['CASENAME']
+            yr1 = case['FIRSTYR']
+            yr2 = case['LASTYR']
+        else:
+            name = case.case_name
+            yr1 = case.firstyr
+            yr2 = case.lastyr
+        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
+        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         return d
@@ -92,6 +100,8 @@ class PathManager(Singleton):
         d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
         if 'MODEL_WK_DIR' in pod.__dict__:
             d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
+        if 'MODEL_OUT_DIR' in pod.__dict__:
+            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
         return d
 
     def make_tempdir(self, hash_obj=None):
@@ -745,17 +755,19 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
             print("Found "+dir)
 
 def append_html_template(template_file, target_file, template_dict={}, 
-    create=False):
+    create=True):
     assert os.path.exists(template_file)
     with open(template_file, 'r') as f:
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
         if create:
+            print "\tDEBUG: write {} to new {}".format(template_file, target_file)
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
+        print "\tDEBUG: append {} to {}".format(template_file, target_file)
         mode = 'a'
     with open(target_file, mode) as f:
         f.write(html_str)

@@ -11,12 +11,12 @@ else:
 from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import datelabel
 import util
 import conflict_resolution as choose
 import cmip6
-from data_manager import DataSet, DataManager, DataQueryFailure
+from data_manager import DataSet, DataManager, DataAccessError
 from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from shared_diagnostic import Diagnostic, PodRequirementFailure
 from netcdf_helper import NcoNetcdfHelper # only option currently implemented
@@ -195,7 +195,6 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
             'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
         )
 
-
 def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.
     """
@@ -243,6 +242,7 @@ class GfdlarchiveDataManager(DataManager):
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
+        self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
@@ -368,12 +368,13 @@ class GfdlarchiveDataManager(DataManager):
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
                 paths.add(f._remote_data)
-        print "start dmget of {} files".format(len(paths))
-        util.run_command(['dmget','-t','-v'] + list(paths),
-            timeout= len(paths) * self.file_transfer_timeout,
-            dry_run=self.dry_run
-        ) 
-        print "end dmget"
+        if self.tape_filesystem:
+            print "start dmget of {} files".format(len(paths))
+            util.run_command(['dmget','-t','-v'] + list(paths),
+                timeout= len(paths) * self.file_transfer_timeout,
+                dry_run=self.dry_run
+            ) 
+            print "end dmget"
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -481,7 +482,7 @@ class GfdlarchiveDataManager(DataManager):
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
         if method not in _methods:
-            if any(self.root_dir.startswith(s) for s in ['/arch', '/ptmp', '/work']):
+            if self.tape_filesystem:
                 method = 'gcp' # use GCP for DMF filesystems
             else:
                 method = 'ln' # symlink for local files
@@ -537,9 +538,9 @@ class GfdlarchiveDataManager(DataManager):
         else:
             # copy everything at once
             gcp_wrapper(
-                self.MODEL_WK_DIR, 
-                paths.OUTPUT_DIR,
-                timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
+                timeout=self.file_transfer_timeout,
+                dry_run=self.dry_run
             )
 
 
@@ -632,12 +633,12 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdludacmip6DataManager(GfdlarchiveDataManager):
+class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
+    __metaclass__ = ABCMeta    
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
-        self._uda_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         cmip = cmip6.CMIP6_CVs()
         if 'activity_id' not in case_dict:
             if 'experiment_id' in case_dict:
@@ -660,15 +661,22 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
         if 'member_id' not in case_dict:
             self.member_id = 'r1i1p1f1'
         case_dict['root_dir'] = os.path.join(
-            self._uda_root, self.activity_id, self.institution_id, 
+            self._cmip6_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        super(Gfdludacmip6DataManager, self).__init__(
+        if not os.path.exists(case_dict['root_dir']):
+            raise DataAccessError(None, 
+                "Can't access {}".format(case_dict['root_dir']))
+        super(Gfdlcmip6abcDataManager, self).__init__(
             case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
         for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
             if attr not in self.__dict__:
                 self.__setattr__(attr, None)
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
+
+    @abstractproperty
+    def _cmip6_root(self):
+        pass
 
     # also need to determine table?
     UndecidedKey = namedtuple('UndecidedKey', 
@@ -682,7 +690,7 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
 
     def parse_relative_path(self, subdir, filename):
         d = cmip6.parse_DRS_path(
-            os.path.join(self.root_dir, subdir)[len(self._uda_root):],
+            os.path.join(self.root_dir, subdir)[len(self._cmip6_root):],
             filename
         )
         d['name_in_model'] = d['variable_id']
@@ -746,15 +754,30 @@ class Gfdludacmip6DataManager(GfdlarchiveDataManager):
             )
         return choices
 
+class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
+    def _cmip6_root(self):
+        return os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+
+class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
+    # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
+    # be used as a data source unless explicitly requested by user
+    def _cmip6_root(self):
+        return os.sep + os.path.join('data_cmip6','CMIP6')
+
+
 def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     modMgr = ModuleManager()
     modMgr.load('gcp')
+    source_path = os.path.normpath(source_path)
+    dest_dir = os.path.normpath(dest_dir)
     # gcp requires trailing slash, ln ignores it
     if os.path.isdir(source_path):
-        source = ['-r', 'gfdl:' + os.path.normpath(source_path) + os.sep]
+        source = ['-r', 'gfdl:' + source_path + os.sep]
+        # gcp /A/B/ /C/D/ will result in /C/D/B, so need to specify parent dir
+        dest = ['gfdl:' + os.path.dirname(dest_dir) + os.sep]
     else:
-        source = ['gfdl:' + os.path.normpath(source_path)]
-    dest = ['gfdl:' + dest_dir + os.sep]
+        source = ['gfdl:' + source_path]
+        dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
         ['gcp', '-sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
@@ -778,6 +801,10 @@ def running_on_PPAN():
     """Return true if current host is in the PPAN cluster."""
     host = os.uname()[1].split('.')[0]
     return (re.match(r"(pp|an)\d{3}", host) is not None)
+
+def is_on_tape_filesystem(path):
+    # handle eg. /arch0 et al as well as /archive.
+    return any(os.path.realpath(path).startswith(s) for s in ['/arch', '/ptmp', '/work'])
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

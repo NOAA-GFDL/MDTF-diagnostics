@@ -46,27 +46,27 @@ import datetime
       The top drived for the MSE budget component calculations
       input data are as follows:
       3-dimensional atmospheric variables dimensioned IMAX, JMAX, ZMAX
-	 HGT - geopotential height [m]
-	 UU  - U  wind  [m/s]
-	 VV  - V wind [m/s]
-	 TEMP  - temperature [K]
-	 SHUM - specific humidity [kg/kg]
-	 VVEL - vertical velocity [Pa/s]
+     HGT - geopotential height [m]
+     UU  - U  wind  [m/s]
+     VV  - V wind [m/s]
+     TEMP  - temperature [K]
+     SHUM - specific humidity [kg/kg]
+     VVEL - vertical velocity [Pa/s]
  
-	outputs are 3-dimensional MSE components and its 2-dimensional 
-	  vertical integrals
+    outputs are 3-dimensional MSE components and its 2-dimensional 
+      vertical integrals
 
-	 MSE3 - Moist Static Energy   3-dimensional [J/kg]
-	 MSE2 - vertical integral of MSE  2-dimensional [J/m2]
+     MSE3 - Moist Static Energy   3-dimensional [J/kg]
+     MSE2 - vertical integral of MSE  2-dimensional [J/m2]
 
-	 MSE3_ADV  MSE horizontal advection  3-dimensional [w/kg]
-	 MSE2_ADV  vertical integral of ADV_MSE3 2-dimensional [W/m2]
+     MSE3_ADV  MSE horizontal advection  3-dimensional [w/kg]
+     MSE2_ADV  vertical integral of ADV_MSE3 2-dimensional [W/m2]
 
         MSE3_DIV  MSE horizontal divergence  3-dimensional [w/kg]
         MSE2_DIV  vertical integral of DIV_MSE3 2-dimensional [W/m2]
 
-	 MADV3 -  horizontal advection of moisture  3-dimensional [W/kg]
-	 MADV2 -  vertical integral of MADV3 2-dimensional [W/m2]
+     MADV3 -  horizontal advection of moisture  3-dimensional [W/kg]
+     MADV2 -  vertical integral of MADV3 2-dimensional [W/m2]
 
         MDIV3 -  horizontal  moisture  divergence  3-dimensional [W/kg]
         MDIV2 -  vertical integral of MDIV3 2-dimensional [W/m2]
@@ -77,12 +77,12 @@ import datetime
         OMSE3 -  vertical advection of MSE  3-dimensional [W/kg]
         OMSE2 -  vertical integral of OMSE3 2-dimensional [W/m2]
 
-	 Additionally needed on input :
-	  LON - longitudes [deg.]
-	  LAT - latitudes [deg.]
-	  PLEV - pressure levels [mb]
+     Additionally needed on input :
+      LON - longitudes [deg.]
+      LAT - latitudes [deg.]
+      PLEV - pressure levels [mb]
 
-	 missing values are flagged by UNDEF which is a large number
+     missing values are flagged by UNDEF which is a large number
 
 '''
 imax = 180
@@ -169,13 +169,13 @@ if( flag0 == '1'):
        print " "
 else:
 ### print diagnostic message
-	print "  NOTE  the MSE package requires pre-processed data. " 
-	print "  The pre-processed input data were not preprocessed. "
-	print "  Please, run the COMPOSITE element with COMPOSITE = 1 "
-	print "  in mdtf.py script.                                  "  
-	print "   "
-	print "   "
-	sys.exit()
+    print "  NOTE  the MSE package requires pre-processed data. " 
+    print "  The pre-processed input data were not preprocessed. "
+    print "  Please, run the COMPOSITE element with COMPOSITE = 1 "
+    print "  in mdtf.py script.                                  "  
+    print "   "
+    print "   "
+    sys.exit()
 ###   prepare the directories
 now = datetime.datetime.now()
 print("===============================================================")
@@ -265,79 +265,79 @@ print "  MSE calculation of components end   " + now.strftime("%Y-%m-%d %H:%M")
 
 ### output calculated climatologies
 write_out_mse_clima(imax, jmax, zmax, mse2,  mse2_adv,  mse2_div, mdiv2, madv2,  tadv2,  omse2, prefixout)
-	
+    
 ###    the calculation of  El Nino/La Nina + 24 month evolution  composites
 ##     for El Nino/La Nina cases 
 ##     
 if(  composite == 1):
-	now = datetime.datetime.now()
-	print "  MSE composite calculation begins " + now.strftime("%Y-%m-%d %H:%M")
+    now = datetime.datetime.now()
+    print "  MSE composite calculation begins " + now.strftime("%Y-%m-%d %H:%M")
 
-	uu = np.zeros((imax,jmax,zmax),dtype='float32')
-	vv = np.zeros((imax,jmax,zmax),dtype='float32')
-	temp = np.zeros((imax,jmax,zmax),dtype='float32')
-	hgt = np.zeros((imax,jmax,zmax),dtype='float32')
-	shum = np.zeros((imax,jmax,zmax),dtype='float32')
-	vvel = np.zeros((imax,jmax,zmax),dtype='float32')
+    uu = np.zeros((imax,jmax,zmax),dtype='float32')
+    vv = np.zeros((imax,jmax,zmax),dtype='float32')
+    temp = np.zeros((imax,jmax,zmax),dtype='float32')
+    hgt = np.zeros((imax,jmax,zmax),dtype='float32')
+    shum = np.zeros((imax,jmax,zmax),dtype='float32')
+    vvel = np.zeros((imax,jmax,zmax),dtype='float32')
 
 ##   reading the data in for calculations
-	hgt, uu, vv, temp, shum, vvel = get_data_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix11, undef2)
+    hgt, uu, vv, temp, shum, vvel = get_data_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix11, undef2)
 
 ##    components of MSE composite calculated here :
-	mse2, mse3 = moisture_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2, mse3,  undef2)
+    mse2, mse3 = moisture_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2, mse3,  undef2)
 
-	mse2_adv, mse3_adv = mse_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_adv, mse3_adv, undef2)
+    mse2_adv, mse3_adv = mse_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_adv, mse3_adv, undef2)
 
-	mse2_div, mse3_div = mse_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_div, mse3_div,  undef2)
+    mse2_div, mse3_div = mse_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_div, mse3_div,  undef2)
 
-	mdiv2, mdiv3 = moisture_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mdiv2, mdiv3,  undef2)
+    mdiv2, mdiv3 = moisture_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mdiv2, mdiv3,  undef2)
 
-	madv2, madv3 = moisture_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, madv2, madv3,  undef2)
+    madv2, madv3 = moisture_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, madv2, madv3,  undef2)
 
-	tadv2, tadv3 = temperature_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, tadv2, tadv3,  undef2)
+    tadv2, tadv3 = temperature_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, tadv2, tadv3,  undef2)
 
-	omse2, omse3 = moisture_o_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, vvel, rearth, omse2, omse3,  undef2)
+    omse2, omse3 = moisture_o_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, vvel, rearth, omse2, omse3,  undef2)
 
 ###  writting out the MSE El Nino composites 
-	write_out_mse(imax, jmax, zmax, mse2, mse2_adv, mse2_div, mdiv2, madv2, tadv2, omse2, prefixout1)
+    write_out_mse(imax, jmax, zmax, mse2, mse2_adv, mse2_div, mdiv2, madv2, tadv2, omse2, prefixout1)
 
 ##   the same calculations for La Nina case,  
-	uu = np.zeros((imax,jmax,zmax),dtype='float32')
-	vv = np.zeros((imax,jmax,zmax),dtype='float32')
-	temp = np.zeros((imax,jmax,zmax),dtype='float32')
-	hgt = np.zeros((imax,jmax,zmax),dtype='float32')
-	shum = np.zeros((imax,jmax,zmax),dtype='float32')
-	vvel = np.zeros((imax,jmax,zmax),dtype='float32')
+    uu = np.zeros((imax,jmax,zmax),dtype='float32')
+    vv = np.zeros((imax,jmax,zmax),dtype='float32')
+    temp = np.zeros((imax,jmax,zmax),dtype='float32')
+    hgt = np.zeros((imax,jmax,zmax),dtype='float32')
+    shum = np.zeros((imax,jmax,zmax),dtype='float32')
+    vvel = np.zeros((imax,jmax,zmax),dtype='float32')
 
 ##   reading in  input data - as composites
-	hgt, uu, vv, temp, shum, vvel = get_data_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix22, undef2)
+    hgt, uu, vv, temp, shum, vvel = get_data_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix22, undef2)
 
 ##    MSE components  calculated 
-	mse2, mse3 = moisture_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2, mse3, undef2)
+    mse2, mse3 = moisture_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2, mse3, undef2)
 
-	mse2_adv, mse3_adv = mse_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_adv, mse3_adv, undef2)
+    mse2_adv, mse3_adv = mse_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_adv, mse3_adv, undef2)
 
-	mse2_div, mse3_div = mse_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_div, mse3_div,  undef2)
+    mse2_div, mse3_div = mse_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mse2_div, mse3_div,  undef2)
 
-	mdiv2, mdiv3 = moisture_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mdiv2, mdiv3, undef2)
+    mdiv2, mdiv3 = moisture_div(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, mdiv2, mdiv3, undef2)
 
-	madv2, madv3 = moisture_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, madv2, madv3, undef2)
+    madv2, madv3 = moisture_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, madv2, madv3, undef2)
 
-	tadv2, tadv3 = temperature_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, tadv2, tadv3,  undef2)
+    tadv2, tadv3 = temperature_adv(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, uu, vv, rearth, tadv2, tadv3,  undef2)
 
-	omse2, omse3 = moisture_o_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, vvel, rearth, omse2, omse3,  undef2)
+    omse2, omse3 = moisture_o_energy(imax, jmax, zmax, lon, lat, plevs, hgt, temp, shum, vvel, rearth, omse2, omse3,  undef2)
 
 ###    data written out to file 
-	write_out_mse(imax, jmax, zmax, mse2, mse2_adv,  mse2_div, mdiv2, madv2, tadv2,  omse2, prefixout2)
+    write_out_mse(imax, jmax, zmax, mse2, mse2_adv,  mse2_div, mdiv2, madv2, tadv2,  omse2, prefixout2)
 
 ###     plotting routine for all El Nino/La Nina cases 
-	generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/MSE/NCL/plot_composite_all.ncl")
-	
-	now = datetime.datetime.now()
-	print "   Seasonal ENSO MSE composites completed  " + now.strftime("%Y-%m-%d %H:%M")
-	print "   plots of ENSO seasonal MSE anomalies finished  "
-	print "   resulting plots are located in : " +outdir
-	print "   with prefix composite  + ELNINO/LANINA +  variable name "
+    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/MSE/NCL/plot_composite_all.ncl")
+    
+    now = datetime.datetime.now()
+    print "   Seasonal ENSO MSE composites completed  " + now.strftime("%Y-%m-%d %H:%M")
+    print "   plots of ENSO seasonal MSE anomalies finished  "
+    print "   resulting plots are located in : " +outdir
+    print "   with prefix composite  + ELNINO/LANINA +  variable name "
 print "  " 
 ###########  copy html files 
 html_file = os.environ["ENSO_MSE_WKDIR_MSE"] + "/MSE.html"

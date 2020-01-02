@@ -48,64 +48,64 @@ convert_file = prefix1 + "/preprocess.txt"
 flag0 = -1
 
 if( os.path.isfile( convert_file) ):
-	f = open(convert_file , 'r')
-	flag0  = f.read()
-	print( " preprocessing flag =",  flag0)
-	print( "preprocess.py: read preprocessing flag = "+ flag0+" ,in: "+convert_file)
+    f = open(convert_file , 'r')
+    flag0  = f.read()
+    print( " preprocessing flag =",  flag0)
+    print( "preprocess.py: read preprocessing flag = "+ flag0+" ,in: "+convert_file)
 
-	f.close()
+    f.close()
 
 if( flag0 == '1'):
 ### print diagnostic message
-	print "  The NetCDF data have already been converted (preprocess.py)  "
-	print "   "
-	print " "
+    print "  The NetCDF data have already been converted (preprocess.py)  "
+    print "   "
+    print " "
 else:
 ### print diagnostic message 
-	print "  The NetCDF data are being converted (preprocess.py) "
-	print "   "
-	print " " 
+    print "  The NetCDF data are being converted (preprocess.py) "
+    print "   "
+    print " " 
 ###   prepare the directories 
 
 #os.system("mkdir " +  os.environ["DATADIR"]  + "/DATA/" + " 2> /dev/null") 
 #os.system("mkdir " +  os.environ["DATADIR"]  + "/CLIMA/" + " 2> /dev/null")
 
-#DRB should be done elsewhere	
-#	os.system("mkdir " +  os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/COMPOSITE/model/netCDF/DATA/" + " 2> /dev/null") 
-#	os.system("mkdir " +  os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/COMPOSITE/model/netCDF/CLIMA/" + " 2> /dev/null")
+#DRB should be done elsewhere    
+#    os.system("mkdir " +  os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/COMPOSITE/model/netCDF/DATA/" + " 2> /dev/null") 
+#    os.system("mkdir " +  os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/COMPOSITE/model/netCDF/CLIMA/" + " 2> /dev/null")
 
 ##   need to check for missing input data 
 
-	for iy in range( iy1, iy2+1):
-		 os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
+    for iy in range( iy1, iy2+1):
+         os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
 ## print os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_routine.ncl"
-	print " conversion routine started  "
-	print " 3-D atmospheric variables conversion "
-	print " depending on the data input volume the process can take over 15 minutes "
-	generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_routine.ncl")
-	now = datetime.datetime.now()
-	print"  conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") 
+    print " conversion routine started  "
+    print " 3-D atmospheric variables conversion "
+    print " depending on the data input volume the process can take over 15 minutes "
+    generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_routine.ncl")
+    now = datetime.datetime.now()
+    print"  conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") 
 
-	print " NET radiation routine started "
-	generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_radiation_routine.ncl")
-	now = datetime.datetime.now()
-	print"  NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M")      
+    print " NET radiation routine started "
+    generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_radiation_routine.ncl")
+    now = datetime.datetime.now()
+    print"  NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M")      
 
-	print " clima routine started "
-	generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/clima_routine.ncl")
-	now = datetime.datetime.now()
-	print"  clima routine finished " + now.strftime("%Y-%m-%d %H:%M")
+    print " clima routine started "
+    generate_ncl_call(os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/clima_routine.ncl")
+    now = datetime.datetime.now()
+    print"  clima routine finished " + now.strftime("%Y-%m-%d %H:%M")
 
-### 	print " preprocessing completed "
+###     print " preprocessing completed "
 ##  print the flag to  external file so once preprocess it could be skipped
-	convert_file = prefix1 + "/preprocess.txt"
-	f = open(convert_file , 'w')
-	f.write("1")
-	f.close()
+    convert_file = prefix1 + "/preprocess.txt"
+    f = open(convert_file , 'w')
+    f.write("1")
+    f.close()
 
 ##  os.system("cp +os.environ["DATADIR"]+/COMPOSITE/DATA/* "+os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/COMPOSITE/model/netCDF/DATA/.")
 
-	now = datetime.datetime.now()
-	print " Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M")
-	print " ===========================================  " 
+    now = datetime.datetime.now()
+    print " Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M")
+    print " ===========================================  " 

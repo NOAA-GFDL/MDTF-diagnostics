@@ -38,13 +38,13 @@ vvar[16] = os.environ["rlut_var"]
 obsmodel = "ERA-INTERIM"
 
 for iv in range(0, 16):
-	filevar = os.environ["OBS_DIR"] + "ENSO_MSE/DATA/mon/" + obsmodel  + "." +  vvar[iv] + ".mon.nc"
+    filevar = os.environ["OBS_DIR"] + "ENSO_MSE/DATA/mon/" + obsmodel  + "." +  vvar[iv] + ".mon.nc"
 
-	if not os.path.exists(filevar):
-		print "============================================="
-		print ("===  MISSING OBSERVATIONAL DATA FILE " + filevar  )
-		print ("====  EXITING =================== ")
-		sys.exit()
+    if not os.path.exists(filevar):
+        print "============================================="
+        print ("===  MISSING OBSERVATIONAL DATA FILE " + filevar  )
+        print ("====  EXITING =================== ")
+        sys.exit()
         else:
                 print ("L49 Found "+filevar)
 

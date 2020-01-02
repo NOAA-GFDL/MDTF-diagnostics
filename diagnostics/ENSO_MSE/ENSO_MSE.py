@@ -97,16 +97,16 @@ if os.environ["ENSO_COMPOSITE"] == "1":
    if os.environ["ENSO_OBS"] == "1":
         print("=================================================================")
         print(" Starting Observational COMPOSITE module                         ")
-	os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/check_input_files_OBS.py")
+    os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/check_input_files_OBS.py")
         print("        Finished check_input_files_OBS.py")
-	os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/get_directories_OBS.py")
+    os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/get_directories_OBS.py")
         print("        Finished get_directories_OBS.py")
-	os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/preprocess_OBS.py")
+    os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/preprocess_OBS.py")
         print("        Finished preprocess_OBS.py")
-	os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/COMPOSITE_OBS.py")
+    os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/COMPOSITE_OBS.py")
         print("        Finished COMPOSITE_OBS.py")
-	print(" Finished Observational COMPOSITE module                         ")
-	print("=================================================================")
+    print(" Finished Observational COMPOSITE module                         ")
+    print("=================================================================")
 
    
 

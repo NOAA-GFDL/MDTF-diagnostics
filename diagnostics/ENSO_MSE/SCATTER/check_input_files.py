@@ -27,15 +27,15 @@ vvar2[1]  = "MSE_madv"
 
 ### checking the output direcories and create if missing 
 if not os.path.exists( wkdir + "/MDTF_SCATTER/" ):
-	os.makedirs( wkdir + "/MDTF_SCATTER/" )
+    os.makedirs( wkdir + "/MDTF_SCATTER/" )
 
 ######  check for each input model data .. 
 namein =  os.environ["OBS_DIR"]  + "/ENSO_MSE/SCATTER/central_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
-	print "============================================="
-	print ("===  MISSING FILE for SCATTER  =====" )
-	print ( namein )
-	exit()
+    print "============================================="
+    print ("===  MISSING FILE for SCATTER  =====" )
+    print ( namein )
+    exit()
 namein =  os.environ["OBS_DIR"] + "/ENSO_MSE/SCATTER/eastern_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
        print "============================================="

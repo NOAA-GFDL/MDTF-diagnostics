@@ -12,7 +12,7 @@
 #
 #       programming :  Jan Hafner,  jhafner@hawaii.edu
 #
-#	This package is distributed under the LGPLv3 license (see LICENSE.txt)
+#    This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
 
 import numpy as np
@@ -34,21 +34,21 @@ from get_ncl_data import get_ncl_data
 
         input data are as follows:
  
- 	 2-dimensional variables  (fluxes)
-	 vertical integrals
+      2-dimensional variables  (fluxes)
+     vertical integrals
 
-	  PR -precip. kg/m2/sec
+      PR -precip. kg/m2/sec
          moisture advection  W/m2
          net radiative flux  W/m2
          vertical MSE advection W/m2
          total heat flux (LHF + SHF) W/m2
 
-	 Additionally needed on input :
-	  LON - longitudes [deg.]
-	  LAT - latitudes [deg.]
-	  PLEV - pressure levels [mb]
+     Additionally needed on input :
+      LON - longitudes [deg.]
+      LAT - latitudes [deg.]
+      PLEV - pressure levels [mb]
 
-	 missing values are flagged by UNDEF which is a large number
+     missing values are flagged by UNDEF which is a large number
 
 '''
 

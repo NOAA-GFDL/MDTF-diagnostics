@@ -34,13 +34,13 @@ vvar[16] = os.environ["rlut_var"]
 ## check for missing files 
 
 for iv in range(0, 16):
-	filevar = os.environ["DATADIR"] + "/mon/" +os.environ["CASENAME"] + "." + vvar[iv] + ".mon.nc"
+    filevar = os.environ["DATADIR"] + "/mon/" +os.environ["CASENAME"] + "." + vvar[iv] + ".mon.nc"
 
-	if not os.path.exists(filevar):
-		print "============================================="
-		print ("===  MISSING INPUT FILE " + filevar  )
-		print ("====  EXITING =================== ")
-		sys.exit()
+    if not os.path.exists(filevar):
+        print "============================================="
+        print ("===  MISSING INPUT FILE " + filevar  )
+        print ("====  EXITING =================== ")
+        sys.exit()
 
 print  " ========================================================="
 print " =========================================================="

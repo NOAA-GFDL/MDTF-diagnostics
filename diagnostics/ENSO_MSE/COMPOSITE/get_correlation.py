@@ -90,7 +90,7 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                                 correl[i,j] =  correl[i,j] + (vvar1[i,j] -  clima1[i,j, imm-1])*sst_anom
 
                                 ss2[i,j] = ss2[i,j] + 1.
-                     f1.close()
+                    f1.close()
                     f2.close()
                 else:
                     print "    missing file 1 " + namein1
@@ -115,5 +115,5 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
             else:    
                 correl[i,j] = undef2
 
-     return correl
+    return correl
 

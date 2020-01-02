@@ -357,7 +357,7 @@ if(  composite == 1):
 ##                reading the ENSO selected seasons in based on  
 ###                   output from get_nino_index  routine 
     now = datetime.datetime.now()
-     print "  Starting Seasonal ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
+    print "  Starting Seasonal ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
     
     hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Z",  hgt, prefix1, undef, undef2)
     uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "U",  uu, prefix1, undef, undef2)
@@ -445,7 +445,7 @@ if(  composite == 1):
 ####  make the plots
     print( "finished composite calculation  ")
     
-        generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_composite_all.ncl")
+    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_composite_all.ncl")
 
     now = datetime.datetime.now()
     print "   Seasonal ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M")
@@ -653,7 +653,7 @@ if( regression == 1):
     write_out_2D( imax, jmax,  "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
-        print("DRBDBG calling ",os.environ["VARCODE"],"/ENSO_MSE/COMPOSITE/NCL/plot_regression_all.ncl")
+    print("DRBDBG calling ",os.environ["VARCODE"],"/ENSO_MSE/COMPOSITE/NCL/plot_regression_all.ncl")
     generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_regression_all.ncl")
 
     print "   Seasonal SST  regressions completed  " + now.strftime("%Y-%m-%d %H:%M")
@@ -661,7 +661,7 @@ if( regression == 1):
     print "   resulting plots are located in : " + wkdir_model
     print "     with prefix  regression  +  variable name "
 
-        print(os.system("ls "+wkdir_model))
+    print(os.system("ls "+wkdir_model))
 
 ###    copy the html files for to create webpages  
 #if os.path.isfile( os.environ["variab_dir"]+"/index.html" ):

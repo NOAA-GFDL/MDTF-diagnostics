@@ -1,5 +1,6 @@
 import numpy as np
 import os.path
+import sys
 
 def get_dimensions(imax, jmax,  zmax, prefix):
 ##  read in  all the domain dimensions and the actual values lon/lat/plevs

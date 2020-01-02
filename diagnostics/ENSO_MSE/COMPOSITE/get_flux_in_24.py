@@ -17,11 +17,11 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
     nameclima = prefix2 +  variable + "_clim.grd"
 
     if (os.path.exists( nameclima)):
-              f = open( nameclima)
-              clima = np.fromfile(f, dtype='float32')
-              clima = clima.reshape( tmax12, jmax, imax)
-              clima = np.swapaxes(clima, 0, 2)
-              f.close()
+        f = open( nameclima)
+        clima = np.fromfile(f, dtype='float32')
+        clima = clima.reshape( tmax12, jmax, imax)
+        clima = np.swapaxes(clima, 0, 2)
+        f.close()
     else:
         print " missing file " + nameclima
         print " exiting get_flux_in_24.py "
@@ -70,5 +70,5 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
                 else:
                     dataout[i,j,im] = undef2
 
-     return dataout
+    return dataout
 

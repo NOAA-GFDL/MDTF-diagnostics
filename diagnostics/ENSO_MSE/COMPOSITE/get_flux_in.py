@@ -46,5 +46,5 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                 dataout[i,j] = dataout[i,j]/ss[i,j]
             else:
                 dataout[i,j] = undef2
-     return dataout
+    return dataout
 

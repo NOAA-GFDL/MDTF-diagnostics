@@ -30,9 +30,9 @@ def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim, und
                             dataout[i,j,k] =  dataout[i,j,k]  + vvar[i,j,k, imm-1]    
                             ss[i,j,k] = ss[i,j,k] + 1.
     else:
-              print " missing file " +  namein
-              print " exiting  get_clima_in.py"
-              sys.exit()
+        print " missing file " +  namein
+        print " exiting  get_clima_in.py"
+        sys.exit()
 
 
 ##############   now average 
@@ -45,5 +45,5 @@ def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim, und
                     dataout[i,j,k] = undef2
 
 ###    dataout = dataout/ss
-     return dataout
+    return dataout
 

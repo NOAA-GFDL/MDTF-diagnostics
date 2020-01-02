@@ -129,5 +129,5 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
             else:
                 aregress[i,j] = undef2
     
-     return aregress
+    return aregress
 

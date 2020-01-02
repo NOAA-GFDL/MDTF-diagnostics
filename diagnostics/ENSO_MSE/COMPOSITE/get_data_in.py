@@ -34,7 +34,7 @@ def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datou
                                 if( vvar[i,j,k] < undef):
                                     dataout[i,j,k] =  dataout[i,j,k] + vvar[i,j,k]
                                     ss[i,j,k] = ss[i,j,k] + 1.
-                     f.close()
+                    f.close()
                 else:
                     print " missing file " + namein
                     print " exiting get_data_in.py "
@@ -47,5 +47,5 @@ def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datou
                     dataout[i,j,k] = dataout[i,j,k]/ss[i,j,k]
                 else:    
                     dataout[i,j,k] = undef2
-     return dataout
+    return dataout
 

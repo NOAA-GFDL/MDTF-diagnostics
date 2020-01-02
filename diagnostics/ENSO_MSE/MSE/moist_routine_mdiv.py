@@ -2,17 +2,17 @@ import numpy as np
 import sys
 
 '''
-  routine to calculate the horizontal moisture advection and its
+    routine to calculate the horizontal moisture advection and its
     vertical integral
     
-  INPUT: 3 dimensional atmospheric variables:
+    INPUT: 3 dimensional atmospheric variables:
    dimensions:  IMAX, JMAX, ZMAX
    variables : HGT: geopotential height [m]
                TA : temperature [K]
                HUS:  specific humidity [kg/kg]
                UA:  U wind compoment [m/s]
                VA:  V wind component [m/s]
-   1 dimensional INPUT:
+    1 dimensional INPUT:
          LON(IMAX) - longitude deg.
          LAT(JMAX) - latitude deg.
          PLEV(ZMAX) - pressure levels [mb]
@@ -21,7 +21,7 @@ import sys
 OUTPUT: MDIV3  3 dimensional horizontal moisture divergence [W/kg]
         MDIV1  2 dimensional vertical integral of
                       horizontal moisture divergence  [W/m2]
-  missing data are flaged by UNDEF which is a very large number
+missing data are flaged by UNDEF which is a very large number
 '''
 
 def moisture_div(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mdiv1, mdiv3, undef):

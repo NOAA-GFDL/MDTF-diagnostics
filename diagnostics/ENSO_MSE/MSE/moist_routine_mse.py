@@ -1,17 +1,17 @@
 import numpy as np
 
 '''
-  routine to calculate the horizontal moisture advection and its
+    routine to calculate the horizontal moisture advection and its
     vertical integral
     
-  INPUT: 3 dimensional atmospheric variables:
-   dimensions:  IMAX, JMAX, ZMAX
-   variables : HGT: geopotential height [m]
+    INPUT: 3 dimensional atmospheric variables:
+    dimensions:  IMAX, JMAX, ZMAX
+    variables : HGT: geopotential height [m]
                TA : temperature [K]
                HUS:  specific humidity [kg/kg]
                UA:  U wind compoment [m/s]
                VA:  V wind component [m/s]
-   1 dimensional INPUT:
+    1 dimensional INPUT:
          LON(IMAX) - longitude deg.
          LAT(JMAX) - latitude deg.
          PLEV(ZMAX) - pressure levels [mb]
@@ -20,7 +20,7 @@ import numpy as np
 OUTPUT: MSE3  3 dimensional MSE [J/kg]
         MSE1  2 dimensional vertical integral of MSE [J/m2]
 
-  missing data are flaged by UNDEF which is a very large number
+missing data are flaged by UNDEF which is a very large number
 '''
 
 def moisture_energy(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mse1, mse3, undef):

@@ -38,7 +38,7 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
         line = file.readline()
         line = line.strip()
         column = line.split()
-         imindx1 = int( column[2])
+        imindx1 = int( column[2])
 
         line = file.readline()
         line = line.strip()
@@ -87,7 +87,7 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
 
         line = file.readline()
 ####         regression /correlation 
-            line = file.readline()
+        line = file.readline()
         line = line.strip()
         column = line.split()
         regression = int( column[2])

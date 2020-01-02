@@ -3,7 +3,7 @@ import os.path
 import sys
 
 def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
-        print("DRBDBG prefix ",prefix)
+    print("DRBDBG prefix ",prefix)
     if (os.path.exists(prefix+"/PR.grd")):
         f = open(prefix+'/PR.grd', 'rb')
         pr = np.fromfile(f, dtype='float32')
@@ -54,7 +54,7 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
         print " exiting get_flux_in.py "
         sys.exit()
 
-     if (os.path.exists(prefix+"/SW.grd")):
+    if (os.path.exists(prefix+"/SW.grd")):
         f = open(prefix+'/SW.grd', 'rb')
         sw = np.fromfile(f, dtype='float32')
               # reshape to t, y, x    

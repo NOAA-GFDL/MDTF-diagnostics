@@ -12,10 +12,10 @@ import os
 from util import check_required_dirs
 
 '''
-      to pre-process the data for the diagnostic package 
-      the code extract the necessary variables from NetCDF files
-      and constructs monthly climatologies and anomalies needed 
-      for further processing
+    to pre-process the data for the diagnostic package 
+    the code extract the necessary variables from NetCDF files
+    and constructs monthly climatologies and anomalies needed 
+    for further processing
 
 '''
 
@@ -52,7 +52,7 @@ if( os.path.isfile( convert_file) ):
 ##        print("preprocess_OBS.py found existing "+convert_file)
     f = open(convert_file , 'r')
     flag0  = f.read()
-        print( "preprocess_OBS.py preprocessing flag ="+ flag0+" , "+convert_file)
+    print( "preprocess_OBS.py preprocessing flag ="+ flag0+" , "+convert_file)
     f.close()
         
 if( flag0 == '1'):
@@ -75,7 +75,7 @@ else:
 #    os.system("mkdir " +  os.environ["OBS_DIR"] + "ENSO_MSE/" + "/COMPOSITE/netCDF/CLIMA/"  + " 2> /dev/null") 
 
     for iy in range( iy1, iy2+1):
-         os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
+        os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
 ## print os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_routine.ncl"
     print " Observational Data conversion routine started  "

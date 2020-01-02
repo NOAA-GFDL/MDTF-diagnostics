@@ -54,7 +54,7 @@ def get_clima_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
         print " exiting get_clima_flux_in.py "
         sys.exit()
 
-     if (os.path.exists(prefix+"/SW_clim.grd")):
+    if (os.path.exists(prefix+"/SW_clim.grd")):
         f = open(prefix+'/SW_clim.grd', 'rb')
         sw = np.fromfile(f, dtype='float32')
               # reshape to t, y, x    

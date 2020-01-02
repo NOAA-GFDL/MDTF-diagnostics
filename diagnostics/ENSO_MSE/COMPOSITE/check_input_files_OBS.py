@@ -45,8 +45,8 @@ for iv in range(0, 16):
         print ("===  MISSING OBSERVATIONAL DATA FILE " + filevar  )
         print ("====  EXITING =================== ")
         sys.exit()
-        else:
-                print ("L49 Found "+filevar)
+    else:
+        print ("L49 Found "+filevar)
 
 print  " ========================================================="
 print " =========================================================="

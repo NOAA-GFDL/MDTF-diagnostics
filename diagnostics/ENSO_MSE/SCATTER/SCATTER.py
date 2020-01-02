@@ -76,7 +76,7 @@ generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/SCATTER/NCL/scatter_04.ncl"
 
 ###    copy the html files for to create webpages
 if os.path.isfile( os.environ["WKDIR"]+"/MDTF_SCATTER/SCATTER.html" ):
-       os.system("rm -f "+os.environ["WKDIR"]+"/MDTF_SCATTER/SCATTER.html")
+    os.system("rm -f "+os.environ["WKDIR"]+"/MDTF_SCATTER/SCATTER.html")
 
 os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/SCATTER/SCATTER.html "+os.environ["WKDIR"]+"/MDTF_SCATTER/." )
 os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/html/mdtf_diag_banner.png "+os.environ["WKDIR"]+"/MDTF_SCATTER/." )

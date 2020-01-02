@@ -12,10 +12,10 @@ import os
 from util import check_required_dirs
 
 '''
-      to pre-process the data for the diagnostic package 
-      the code extract the necessary variables from NetCDF files
-      and constructs monthly climatologies and anomalies needed 
-      for further processing
+    to pre-process the data for the diagnostic package 
+    the code extract the necessary variables from NetCDF files
+    and constructs monthly climatologies and anomalies needed 
+    for further processing
 
 '''
 
@@ -77,7 +77,7 @@ else:
 ##   need to check for missing input data 
 
     for iy in range( iy1, iy2+1):
-         os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
+        os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
 ## print os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/NCL_CONVERT/data_routine.ncl"
     print " conversion routine started  "

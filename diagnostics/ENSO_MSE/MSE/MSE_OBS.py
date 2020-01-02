@@ -156,16 +156,16 @@ correlation = 0
 flag0  = 0
 ##############  check for preprocessed data 
 if( os.path.isfile( convert_file) ):
-       f = open(convert_file , 'r')
-       flag0  = f.read()
-       print( " MSE_OBS.py preprocessing flag =",  flag0," ",convert_file)
-       f.close()
+    f = open(convert_file , 'r')
+    flag0  = f.read()
+    print( " MSE_OBS.py preprocessing flag =",  flag0," ",convert_file)
+    f.close()
 #############################################3 
 if( flag0 == '1'):
 ### print diagnostic message
-       print "  The NetCDF data have already been converted (MSE_OBS.py) "
-       print "   "
-       print " "
+    print "  The NetCDF data have already been converted (MSE_OBS.py) "
+    print "   "
+    print " "
 else:
 ### print diagnostic message
     print "  NOTE  the MSE package requires pre-processed data. " 
@@ -185,31 +185,31 @@ season = get_season( season, prefix)
 season_file = outdir + "/season.txt"
 
 if( os.path.isfile( season_file) ):
-       f = open(season_file , 'r')
-       line = f.readline()
-       line = line.strip()
-       column = line.split()
-       season_obs = column[0]
-       f.close()
-       ##print( season_obs ,  season)
-       ## print( " preprocessing flag =",  flag0)
-       if( season_obs == season ):
-              flag0 = 1
+    f = open(season_file , 'r')
+    line = f.readline()
+    line = line.strip()
+    column = line.split()
+    season_obs = column[0]
+    f.close()
+    ##print( season_obs ,  season)
+    ## print( " preprocessing flag =",  flag0)
+    if( season_obs == season ):
+        flag0 = 1
 else:
-       print("MSE_OBS.py missing season_file: "+season_file)
+    print("MSE_OBS.py missing season_file: "+season_file)
 
 if( flag0 == 1):
 ### print diagnostic message
-       print "  The Observational MSE Composites have been already completed  "
-       print "  for  ", season, " season"
-       print "   "
-       exit()
-       #### exit the routine
+    print "  The Observational MSE Composites have been already completed  "
+    print "  for  ", season, " season"
+    print "   "
+    exit()
+    #### exit the routine
 else:
 ### print diagnostic message
-       print "  The Observational MSE Composites to be processed "
-       print "    for  ", season, " season"
-       print " "
+    print "  The Observational MSE Composites to be processed "
+    print "    for  ", season, " season"
+    print " "
 
 
 ############################################

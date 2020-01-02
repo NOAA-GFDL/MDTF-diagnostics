@@ -22,13 +22,13 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
             jj2 = j
             break
 ###    define  full 12 month climatology 
-     im12 = 12
+    im12 = 12
 
     clima = np.zeros((imax,jmax, im12),dtype='float32')
 
     nameclima = prefix+"/../CLIMA/TS_clim.grd"
     if ( os.path.exists(nameclima)):
-                print("get_nino_index.py reading "+nameclima)
+        print("get_nino_index.py reading "+nameclima)
         f = open(nameclima)
         clima1 = np.fromfile(f, dtype='float32')
         #reshape to t, y, x

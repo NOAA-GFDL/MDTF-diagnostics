@@ -150,29 +150,29 @@ season = "XXX"
 season = get_season( season, prefix) 
 
 if( os.path.isfile( season_file) ):
-       print(" \t opening "+season_file)
-       f = open(season_file , 'r')
-       line = f.readline()
-       line = line.strip()
-       column = line.split()
-       season_obs = column[0]
-       f.close()
-       ## print( season_obs ,  season) 
-       if( season_obs == season ):
-           flag0 = 1
+    print(" \t opening "+season_file)
+    f = open(season_file , 'r')
+    line = f.readline()
+    line = line.strip()
+    column = line.split()
+    season_obs = column[0]
+    f.close()
+    ## print( season_obs ,  season) 
+    if( season_obs == season ):
+        flag0 = 1
 
 if( flag0 == 1):
 ### print diagnostic message
-       print "  The Observational Composites have been already completed  "
-       print "  for  ", season, " season"
-       print "   "
-       exit()
-       #### exit the routine 
+    print "  The Observational Composites have been already completed  "
+    print "  for  ", season, " season"
+    print "   "
+    exit()
+    #### exit the routine 
 else:
 ### print diagnostic message
-       print "  The Observational Composites to be processed "
-       print "    for  ", season, " season" 
-       print " "
+    print "  The Observational Composites to be processed "
+    print "    for  ", season, " season" 
+    print " "
 ###   prepare the directories
 
 ### already checked in get_directories_OBS.py
@@ -376,7 +376,7 @@ if(  composite == 1):
 ##                reading the ENSO selected seasons in based on  
 ###                   output from get_nino_index  routine 
     now = datetime.datetime.now()
-     print "  Starting Seasonal Observational ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
+    print "  Starting Seasonal Observational ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
     
     hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Z",  hgt, prefix1, undef, undef2)
     uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "U",  uu, prefix1, undef, undef2)

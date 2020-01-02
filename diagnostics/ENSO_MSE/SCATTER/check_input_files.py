@@ -38,10 +38,10 @@ if not os.path.exists( namein):
     exit()
 namein =  os.environ["OBS_DIR"] + "/ENSO_MSE/SCATTER/eastern_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
-       print "============================================="
-       print ("===  MISSING FILE for SCATTER  =====" )
-       print ( namein )
-       exit()
+    print "============================================="
+    print ("===  MISSING FILE for SCATTER  =====" )
+    print ( namein )
+    exit()
 
 print "============================================="
 print( " SCATTER input file check COMPLETED  ") 

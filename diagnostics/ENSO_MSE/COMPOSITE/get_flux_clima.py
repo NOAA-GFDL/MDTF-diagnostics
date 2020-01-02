@@ -30,9 +30,9 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef, 
                         ss[i,j] = ss[i,j] + 1.
 
     else:
-              print " missing file " +  namein
-              print " exiting get_flux_clima.py "
-              sys.exit()
+        print " missing file " +  namein
+        print " exiting get_flux_clima.py "
+        sys.exit()
 
 ###  
     for j in range(0, jmax):
@@ -41,5 +41,5 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef, 
                 dataout[i,j] = dataout[i,j]/ss[i,j]
             else:
                 dataout[i,j] = undef2
-     return dataout
+    return dataout
 

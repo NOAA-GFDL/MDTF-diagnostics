@@ -1,5 +1,6 @@
 import numpy as np
 import os.path
+import sys
 
 def get_data_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef):
 ##    print prefix

@@ -157,16 +157,16 @@ model = os.environ["CASENAME"]
 flag0  = 0
 ##############  check for preprocessed data 
 if( os.path.isfile( convert_file) ):
-       f = open(convert_file , 'r')
-       flag0  = f.read()
-       print( " MSE.py preprocessing flag ="+ flag0+" , "+convert_file)
-       f.close()
+    f = open(convert_file , 'r')
+    flag0  = f.read()
+    print( " MSE.py preprocessing flag ="+ flag0+" , "+convert_file)
+    f.close()
 #############################################3 
 if( flag0 == '1'):
 ### print diagnostic message
-       print "  The NetCDF data have already been converted (MSE.py) "
-       print "   "
-       print " "
+    print "  The NetCDF data have already been converted (MSE.py) "
+    print "   "
+    print " "
 else:
 ### print diagnostic message
     print "  NOTE  the MSE package requires pre-processed data. " 
@@ -342,7 +342,7 @@ print "  "
 ###########  copy html files 
 html_file = os.environ["ENSO_MSE_WKDIR_MSE"] + "/MSE.html"
 if os.path.isfile( html_file ):
-       os.system("rm -rf "+html_file)
+    os.system("rm -rf "+html_file)
 
 os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/MSE/MSE.html "+html_file)
 ############  end 

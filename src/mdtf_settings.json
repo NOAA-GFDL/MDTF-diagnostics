@@ -46,6 +46,14 @@
       "FIRSTYR" : 1951,
       "LASTYR" : 2005,
       "pod_list" : ["SM_ET_coupling"]
+    },
+    {
+      "CASENAME" : "CCSM4",
+      "model" : "CMIP",
+      "variable_convention" : "CMIP",
+      "FIRSTYR" : 1982,
+      "LASTYR" : 2005,
+      "pod_list" : ["ENSO_MSE"]
     }
   ],
 

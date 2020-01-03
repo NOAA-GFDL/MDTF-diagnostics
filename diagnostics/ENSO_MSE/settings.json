@@ -1,0 +1,129 @@
+{
+  "settings" : {
+    "driver" : "ENSO_MSE.py",
+    "long_name" : "ENSO moist static energy budget",
+    "description" : "ENSO moist static energy budget",
+    "required_programs" : ["python", "ncl"],
+    "required_python_modules": ["numpy"],
+    "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm", 
+        "shea_util", "calendar_decode2"],
+    "pod_env_vars" : {
+        "# Pod-specific shell environment variables:                         ":"",
+        "# User-selectable rectangular domain for MSE variance plots (MSE_VAR):":"",
+        "slon1" : "160",
+        "slon2" : "200",
+        "slat1" : "-10",
+        "slat2" :   "5",
+        "# Set the following to 0 to disable components of the POD:          ":"",
+        "ENSO_OBS" : "1",
+        "ENSO_COMPOSITE" : "1",
+        "ENSO_MSE" : "1",
+        "ENSO_MSE_VAR" : "1",
+        "ENSO_SCATTER" : "1"
+      }
+  },
+
+  "# block comment (varlist)" : [
+    "USAGE varlist                                                            ",
+    "var_name      time-frequency     [requirement]                           ",
+    "- var_name: as found in src/config_*.json                                ",
+    "- freq: mon (monthly), day, 6hr, 3hr, 1hr                                ",
+    "- requirement = blank  (default = optional),                             ",
+    "                required (package cannot run without this)               ",
+    "                required unless field_name field_name2 ...               ",
+    "- alternates:                                                            ",
+    "                                                                         ",
+    "nb. if a variable is required at multiple time frequencies, list it      ",
+    "separately for each one. Clearly the developer can just leave out        ",
+    "optional files. However, it is always nice to get an upfront warning of  ",
+    "missing files.                                                           "
+  ],
+
+  "varlist" : [
+    {
+      "var_name" : "zg_var",
+      "freq" : "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "ua_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "va_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "ta_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "qa_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "omega_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "pr_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "ts_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "hfss_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "hfls_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rsus_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rsds_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rsdt_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rsut_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rlus_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rlds_var",
+      "freq": "mon",
+      "requirement": "required"
+    },
+    {
+      "var_name": "rlut_var",
+      "freq": "mon",
+      "requirement": "required"
+    }
+  ]
+}

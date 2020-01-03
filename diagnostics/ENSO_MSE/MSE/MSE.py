@@ -96,7 +96,7 @@ undef2 = 1.1E+20
 
 ### declaration and set up of relavant directories 
 ## code
-prefix = os.environ["POD_CODE_DIR"] + "/MSE/"    
+prefix = os.environ["POD_HOME"] + "/MSE/"    
 
 
 ## base path of all input files (created by COMPOSITE package)
@@ -331,7 +331,7 @@ if(  composite == 1):
     write_out_mse(imax, jmax, zmax, mse2, mse2_adv,  mse2_div, mdiv2, madv2, tadv2,  omse2, prefixout2)
 
 ###     plotting routine for all El Nino/La Nina cases 
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/MSE/NCL/plot_composite_all.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/MSE/NCL/plot_composite_all.ncl")
     
     now = datetime.datetime.now()
     print "   Seasonal ENSO MSE composites completed  " + now.strftime("%Y-%m-%d %H:%M")
@@ -344,5 +344,5 @@ html_file = os.environ["ENSO_MSE_WKDIR_MSE"] + "/MSE.html"
 if os.path.isfile( html_file ):
     os.system("rm -rf "+html_file)
 
-os.system("cp "+os.environ["POD_CODE_DIR"]+"/MSE/MSE.html "+html_file)
+os.system("cp "+os.environ["POD_HOME"]+"/MSE/MSE.html "+html_file)
 ############  end 

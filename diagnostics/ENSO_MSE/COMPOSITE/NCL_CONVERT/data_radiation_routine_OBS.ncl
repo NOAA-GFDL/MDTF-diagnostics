@@ -13,10 +13,10 @@ begin
 
 ;;  read  in the data from  NetCDF directory : 
 
-      obsdata  = getenv("POD_OBS_DATA")
+      obsdata  = getenv("OBS_DATA")
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE")  ; set in ENSO_MSE.py
       case = "ERA-INTERIM"
-      codedata = getenv ("POD_CODE_DIR")  ;; not used
+      codedata = getenv ("POD_HOME")  ;; not used
 
 ;;;    years set for Era-Interim
        iy1 = 1982

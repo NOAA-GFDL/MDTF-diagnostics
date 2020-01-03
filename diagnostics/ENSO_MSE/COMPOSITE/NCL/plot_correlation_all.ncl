@@ -7,7 +7,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_CODE_DIR/COMPOSITE/NCL/gsnColorRange.ncl"
+;load "$POD_HOME/COMPOSITE/NCL/gsnColorRange.ncl"
 
 begin 
 
@@ -22,7 +22,7 @@ begin
    varinames = (/ "PRECIP" , "SW~B~net~N", "LW~B~net~N", "LHF", "SHF" /)
 
 ;;  read  in the data 
-      varcode  = getenv("POD_CODE_DIR")
+      varcode  = getenv("POD_HOME")
       outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/"  ; set in ENSO_MSE.py
       model = getenv( "CASENAME")
 

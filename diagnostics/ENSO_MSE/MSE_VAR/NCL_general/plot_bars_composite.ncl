@@ -27,7 +27,7 @@ begin
        slat1 = tofloat( lat1)
        slat2 = tofloat( lat2)
 
-       varcode  = getenv("POD_CODE_DIR")
+       varcode  = getenv("POD_HOME")
        model = getenv( "CASENAME")
 
 

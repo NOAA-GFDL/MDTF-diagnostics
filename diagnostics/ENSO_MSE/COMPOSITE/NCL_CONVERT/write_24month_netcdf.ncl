@@ -6,10 +6,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
 begin
 
-      vardata  = getenv("MODEL_DATA_DIR")
+      vardata  = getenv("DATADIR")
       case     =  getenv( "CASENAME")
-      varcode = getenv ("POD_CODE_DIR")
-      wkdir = getenv("POD_WK_DIR")
+      varcode = getenv ("POD_HOME")
+      wkdir = getenv("WK_DIR")
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)

@@ -21,7 +21,7 @@ begin
        title_modes = (/ "El Nino", "La Nina" /)
 
       composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/netCDF/DATA/"
-      varcode  = getenv("POD_CODE_DIR")
+      varcode  = getenv("POD_HOME")
        model = getenv( "CASENAME")
 
 

@@ -28,7 +28,7 @@ begin
        slat2 = tofloat( lat2)
 
       composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/netCDF/DATA/"
-      varcode  = getenv("POD_CODE_DIR")
+      varcode  = getenv("POD_HOME")
        model =  "  " ;   leave  blank for OBS
 
       parameter_name = varcode + "/MSE_VAR/parameters.txt"

@@ -6,7 +6,7 @@ import os
 
 ##  from util import check_required_dirs
 ###   
-###  check  the input data in inputdata/model  directories MODEL_DATA_DIR + mon
+###  check  the input data in inputdata/model  directories DATADIR + mon
 ## 3D
 size = 17
 vvar =  np.chararray( size, 5) 
@@ -34,7 +34,7 @@ vvar[16] = os.environ["rlut_var"]
 ## check for missing files 
 
 for iv in range(0, 16):
-    filevar = os.environ["MODEL_DATA_DIR"] + "/mon/" +os.environ["CASENAME"] + "." + vvar[iv] + ".mon.nc"
+    filevar = os.environ["DATADIR"] + "/mon/" +os.environ["CASENAME"] + "." + vvar[iv] + ".mon.nc"
 
     if not os.path.exists(filevar):
         print "============================================="

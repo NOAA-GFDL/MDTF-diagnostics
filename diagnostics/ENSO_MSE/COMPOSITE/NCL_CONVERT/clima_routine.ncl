@@ -15,7 +15,7 @@ begin
   
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/"  ; set in ENSO_MSE.py
       case =  getenv( "CASENAME")
-      codedata = getenv ("POD_CODE_DIR") ;; [not used]
+      codedata = getenv ("POD_HOME") ;; [not used]
         iy11 =  getenv("FIRSTYR")
         iy22 =  getenv("LASTYR") 
 

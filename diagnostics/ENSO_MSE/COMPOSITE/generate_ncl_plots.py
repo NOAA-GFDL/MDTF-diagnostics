@@ -24,4 +24,4 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
-## print os.environ["POD_CODE_DIR"]
+## print os.environ["POD_HOME"]

@@ -121,7 +121,7 @@ undef2 = float(1.1e+20)
 iundef = -9999.
 
 ##   the pointer to code directory 
-prefix = os.environ["POD_CODE_DIR"] + "/COMPOSITE/"
+prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
 
 ## base path of all the files written/read here
 wkdir_model = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/model"
@@ -445,7 +445,7 @@ if(  composite == 1):
 ####  make the plots
     print( "finished composite calculation  ")
     
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_composite_all.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all.ncl")
 
     now = datetime.datetime.now()
     print "   Seasonal ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M")
@@ -522,7 +522,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout111)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout111)
 ###   copy the grads control files 
-###    os.system("cp " + os.environ["POD_CODE_DIR"]+"/COMPOSITE/CTL/*.ctl "+ prefixout11  )
+###    os.system("cp " + os.environ["POD_HOME"]+"/COMPOSITE/CTL/*.ctl "+ prefixout11  )
 
 ##########################
 ####    La Nina 4 evolution :
@@ -573,7 +573,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout222)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout222)
 ###    convert binaries to NetCDF 
-    generate_ncl_call(os.environ["POD_CODE_DIR"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
 
     print "   calculation of 2 year  ENSO evolution completed  "
     print "   resulting  data are   located in : " + wkdir_model + "/netCDF/24MONTH_ELNINO/"
@@ -613,7 +613,7 @@ if( correlation == 1):
 ## output   correlation data 
     write_out_2D( imax, jmax,  "CORR_SW",  correl,   prefixout)
 ###   plot correlations 
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_correlation_all.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all.ncl")
 
     print "   Seasonal  SST  correlations completed  " + now.strftime("%Y-%m-%d %H:%M")
     print "   plots of  seasonal correlations  finished  "
@@ -653,8 +653,8 @@ if( regression == 1):
     write_out_2D( imax, jmax,  "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
-    print("DRBDBG calling ",os.environ["POD_CODE_DIR"],"/COMPOSITE/NCL/plot_regression_all.ncl")
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_regression_all.ncl")
+    print("DRBDBG calling ",os.environ["POD_HOME"],"/COMPOSITE/NCL/plot_regression_all.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_regression_all.ncl")
 
     print "   Seasonal SST  regressions completed  " + now.strftime("%Y-%m-%d %H:%M")
     print "   plots of seasonal regressions  finished  "
@@ -666,11 +666,11 @@ if( regression == 1):
 ###    copy the html files for to create webpages  
 #if os.path.isfile( os.environ["MODEL_WK_DIR"]+"/index.html" ):
 #    os.system("rm -f "+os.environ["MODEL_WK_DIR"]+"/index.html")
-# os.system("cp "+os.environ["POD_CODE_DIR"]+"/index.html "+os.environ["MODEL_WK_DIR"]+"/." )
-# os.system("cp "+os.environ["POD_CODE_DIR"]+"/mdtf_diag_banner.png "+os.environ["MODEL_WK_DIR"]+"/." )
+# os.system("cp "+os.environ["POD_HOME"]+"/index.html "+os.environ["MODEL_WK_DIR"]+"/." )
+# os.system("cp "+os.environ["POD_HOME"]+"/mdtf_diag_banner.png "+os.environ["MODEL_WK_DIR"]+"/." )
 
 print("what is going on here")
-file_src  = os.environ["POD_CODE_DIR"]+"/COMPOSITE/COMPOSITE.html"
+file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]+"/COMPOSITE.html" 
 if os.path.isfile( file_dest ):
     os.system("rm -f "+file_dest)

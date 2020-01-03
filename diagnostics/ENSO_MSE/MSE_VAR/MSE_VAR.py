@@ -124,7 +124,7 @@ elat2 = 5.
 ### first get the system parameters   prefix = ~/obs_data/MSE
 ###                                   prefix2 = ~/wkdir/MSE  - input MSE data from MSE run
 ##    nameout = ~/wkdir/MSE_VAR    prefix  top dir.
-prefix = os.environ["POD_CODE_DIR"] + "/MSE_VAR/"
+prefix = os.environ["POD_HOME"] + "/MSE_VAR/"
 
 ###   input data   prefix1 = fluxes   prefix2 = MSE data
 prefix1 =  composite_dir + "/netCDF/DATA/"
@@ -343,10 +343,10 @@ if( composite == 1):
     write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
 
 ###########  plot the default domain NINO3.4 bar plots  
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/MSE_VAR/NCL/plot_bars_composite.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/MSE_VAR/NCL/plot_bars_composite.ncl")
 
 ##      plotting for the  user selected domain :
-    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/MSE_VAR/NCL_general/plot_bars_composite.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+ "/MSE_VAR/NCL_general/plot_bars_composite.ncl")
 
 ############
 ##################################
@@ -362,7 +362,7 @@ print " "
 file = mse_var_dir+"/../MSE_VAR.html"
 if os.path.isfile( file ):
     os.system("rm -f "+file)
-os.system("cp "+os.environ["POD_CODE_DIR"]+"/MSE_VAR/MSE_VAR.html "+file)
+os.system("cp "+os.environ["POD_HOME"]+"/MSE_VAR/MSE_VAR.html "+file)
 
 
 #============================================================

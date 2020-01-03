@@ -15,10 +15,10 @@ begin
 ;;     to avoid loading too much into memory 
 
 
-      vardata  = getenv("MODEL_DATA_DIR")                   ; model input
+      vardata  = getenv("DATADIR")                   ; model input
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ; envvar set in ENSO_MSE.py
       case =  getenv( "CASENAME")
-      codedata = getenv ("POD_CODE_DIR")
+      codedata = getenv ("POD_HOME")
 
 	 iy1 = getenv("FIRSTYR")
         iy2 = getenv("LASTYR")

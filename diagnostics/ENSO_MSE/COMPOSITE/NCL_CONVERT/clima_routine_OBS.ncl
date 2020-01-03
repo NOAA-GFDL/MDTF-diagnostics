@@ -12,10 +12,10 @@ begin
 
 ;;  read  in the data from   regridded binaried 
 
-      obsdata  = getenv("POD_OBS_DATA")    ;;  input directory [not used]
+      obsdata  = getenv("OBS_DATA")    ;;  input directory [not used]
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE")  ; set in ENSO_MSE.py
       case = "ERA-INTERIM"
-      codedata = getenv ("POD_CODE_DIR") ;; [not used]
+      codedata = getenv ("POD_HOME") ;; [not used]
  
 ;;;    years set for Era-Interim
        iy1 = 1982

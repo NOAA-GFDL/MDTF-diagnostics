@@ -13,10 +13,10 @@ begin
 
 ;;  read  in the data from  NetCDF directory :  one month at the time 
 ;;     to avoid loading too much into memory 
-      obsdata  = getenv("POD_OBS_DATA")    ;;  input directory 
+      obsdata  = getenv("OBS_DATA")    ;;  input directory 
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py
       case = "ERA-INTERIM"
-      codedata = getenv ("POD_CODE_DIR")
+      codedata = getenv ("POD_HOME")
 
 ;;;    years set for Era-Interim 
 	iy1 = 1982

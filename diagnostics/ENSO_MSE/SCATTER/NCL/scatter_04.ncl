@@ -25,9 +25,9 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
-      varcode = getenv("POD_CODE_DIR")
-      wkdir = getenv("POD_WK_DIR")
-      obsdir = getenv("POD_OBS_DATA")
+      varcode = getenv("POD_HOME")
+      wkdir = getenv("WK_DIR")
+      obsdir = getenv("OBS_DATA")
 
       prefix = obsdir + "/SCATTER/"
 

@@ -7,7 +7,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_CODE_DIR/COMPOSITE/NCL/gsnColorRange.ncl"
+;load "$POD_HOME/COMPOSITE/NCL/gsnColorRange.ncl"
 
 begin 
 
@@ -28,7 +28,7 @@ begin
    title_mode = (/ "El Nino",  "La Nina" /)
 
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py
-      varcode  = getenv("POD_CODE_DIR")
+      varcode  = getenv("POD_HOME")
       model = getenv( "CASENAME")
 
       parameter_name = varcode + "/COMPOSITE/parameters.txt"

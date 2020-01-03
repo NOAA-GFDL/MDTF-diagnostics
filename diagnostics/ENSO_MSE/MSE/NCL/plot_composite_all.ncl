@@ -11,12 +11,12 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;;load "$POD_CODE_DIR/MSE/NCL/gsnColorRange.ncl"
+;;load "$POD_HOME/MSE/NCL/gsnColorRange.ncl"
 
 begin 
 
 ;;  read  in the data from MSE
-        varcode  = getenv("POD_CODE_DIR")
+        varcode  = getenv("POD_HOME")
         composite_dir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model/"
         mse_dir  = getenv("ENSO_MSE_WKDIR_MSE") +"/model/"
         model = getenv( "CASENAME")

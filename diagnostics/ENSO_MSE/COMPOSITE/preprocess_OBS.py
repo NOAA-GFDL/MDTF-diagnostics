@@ -29,7 +29,7 @@ print("      in some cases up to 20-30  minutes.                       ")
 print("===============================================================")
 
 ### 
-prefix = os.environ["POD_CODE_DIR"] + "/COMPOSITE/"
+prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
 
 ###  output directory 
 this_wrk_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]
@@ -67,31 +67,31 @@ else:
     print " " 
 ###   prepare the directories 
 
-#os.system("mkdir " +  os.environ["MODEL_DATA_DIR"]  + "/DATA/" + " 2> /dev/null") 
-#os.system("mkdir " +  os.environ["MODEL_DATA_DIR"]  + "/CLIMA/" + " 2> /dev/null")
+#os.system("mkdir " +  os.environ["DATADIR"]  + "/DATA/" + " 2> /dev/null") 
+#os.system("mkdir " +  os.environ["DATADIR"]  + "/CLIMA/" + " 2> /dev/null")
     
 
-#    os.system("mkdir " +  os.environ["POD_OBS_DATA"] + "/COMPOSITE/netCDF/DATA/"  + " 2> /dev/null") 
-#    os.system("mkdir " +  os.environ["POD_OBS_DATA"] + "/COMPOSITE/netCDF/CLIMA/"  + " 2> /dev/null") 
+#    os.system("mkdir " +  os.environ["OBS_DATA"] + "/COMPOSITE/netCDF/DATA/"  + " 2> /dev/null") 
+#    os.system("mkdir " +  os.environ["OBS_DATA"] + "/COMPOSITE/netCDF/CLIMA/"  + " 2> /dev/null") 
 
     for iy in range( iy1, iy2+1):
         os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
-## print os.environ["POD_CODE_DIR"] + "/COMPOSITE/NCL_CONVERT/data_routine.ncl"
+## print os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine.ncl"
     print " Observational Data conversion routine started  "
     print " 3-D atmospheric variables conversion "
     print " depending on the data input volume the process can take over 15 minutes "
-    generate_ncl_call(os.environ["POD_CODE_DIR"] + "/COMPOSITE/NCL_CONVERT/data_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine_OBS.ncl")
     now = datetime.datetime.now()
     print"  Observational Data conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") 
     print " Observational Data NET radiation routine started "
-    generate_ncl_call(os.environ["POD_CODE_DIR"] + "/COMPOSITE/NCL_CONVERT/data_radiation_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_radiation_routine_OBS.ncl")
     now = datetime.datetime.now()
     print" Observational Data NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M")      
 
     now = datetime.datetime.now()
     print " Observational Data  Clima routine started " + now.strftime("%Y-%m-%d %H:%M")
-    generate_ncl_call(os.environ["POD_CODE_DIR"] + "/COMPOSITE/NCL_CONVERT/clima_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/clima_routine_OBS.ncl")
     now = datetime.datetime.now()
     print" Observational Data  clima routine finished " + now.strftime("%Y-%m-%d %H:%M")
 
@@ -102,7 +102,7 @@ else:
     f.write("1")
     f.close()
 
-##  os.system("cp +os.environ["MODEL_DATA_DIR"]+/COMPOSITE/DATA/* "+os.environ["POD_WK_DIR"]+"/COMPOSITE/model/netCDF/DATA/.")
+##  os.system("cp +os.environ["DATADIR"]+/COMPOSITE/DATA/* "+os.environ["WK_DIR"]+"/COMPOSITE/model/netCDF/DATA/.")
 
     now = datetime.datetime.now()
     print " Observational Data Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M")

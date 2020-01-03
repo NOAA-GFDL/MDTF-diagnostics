@@ -8,7 +8,7 @@ begin
 
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py, 
                                 ;processed output from other scripts in this package
-      varcode = getenv ("POD_CODE_DIR")
+      varcode = getenv ("POD_HOME")
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)

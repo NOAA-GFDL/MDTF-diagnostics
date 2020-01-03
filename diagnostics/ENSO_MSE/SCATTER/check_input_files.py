@@ -10,8 +10,8 @@ import os
 ## 
 
 
-wkdir =  os.environ["POD_WK_DIR"]
-vardir = os.environ["POD_CODE_DIR"]
+wkdir =  os.environ["WK_DIR"]
+vardir = os.environ["POD_HOME"]
 
 size = 4
 vvar =  np.chararray( size, 5)
@@ -30,13 +30,13 @@ if not os.path.exists( wkdir + "/MDTF_SCATTER/" ):
     os.makedirs( wkdir + "/MDTF_SCATTER/" )
 
 ######  check for each input model data .. 
-namein =  os.environ["POD_OBS_DATA"]  + "/SCATTER/central_pacific_MSE_terms.txt"
+namein =  os.environ["OBS_DATA"]  + "/SCATTER/central_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
     print "============================================="
     print ("===  MISSING FILE for SCATTER  =====" )
     print ( namein )
     exit()
-namein =  os.environ["POD_OBS_DATA"] + "/SCATTER/eastern_pacific_MSE_terms.txt"
+namein =  os.environ["OBS_DATA"] + "/SCATTER/eastern_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
     print "============================================="
     print ("===  MISSING FILE for SCATTER  =====" )

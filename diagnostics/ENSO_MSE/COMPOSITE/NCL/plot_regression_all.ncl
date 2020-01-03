@@ -7,7 +7,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_CODE_DIR/COMPOSITE/NCL/gsnColorRange.ncl"
+;load "$POD_HOME/COMPOSITE/NCL/gsnColorRange.ncl"
 
 begin 
 
@@ -26,7 +26,7 @@ print("Starting plot_regression_all.ncl")
 
 ;;  read  in the data from 
 
-      varcode  = getenv("POD_CODE_DIR")
+      varcode  = getenv("POD_HOME")
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py
       model = getenv( "CASENAME")
 

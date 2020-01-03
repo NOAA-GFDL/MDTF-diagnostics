@@ -27,6 +27,6 @@ check_required_dirs( already_exist =[], create_if_nec = dirs_to_create, verbose=
        
 ###   copy  obs file to respective run directory 
 #DRB taken out because it is now written to the wkdir
-#obs_dir = os.environ["VARDATA"] + "/COMPOSITE/"
+#obs_dir = os.environ["POD_OBS_DATA"] + "/COMPOSITE/"
 #os.system("cp "+  obs_dir + "/*.png " +  obs_dir01 + "/." + " 2> /dev/null")
 ####

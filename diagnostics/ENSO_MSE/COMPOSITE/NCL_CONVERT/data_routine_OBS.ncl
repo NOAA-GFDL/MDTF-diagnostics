@@ -13,10 +13,10 @@ begin
 
 ;;  read  in the data from  NetCDF directory :  one month at the time 
 ;;     to avoid loading too much into memory 
-      obsdata  = getenv("OBS_DIR")    ;;  input directory 
+      obsdata  = getenv("POD_OBS_DATA")    ;;  input directory 
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py
       case = "ERA-INTERIM"
-      codedata = getenv ("VARCODE")
+      codedata = getenv ("POD_CODE_DIR")
 
 ;;;    years set for Era-Interim 
 	iy1 = 1982
@@ -26,9 +26,9 @@ begin
 
  
 ;;;           need this file just  in a case it is on hybrid levels 
-	plevels_name  =  codedata + "/ENSO_MSE/COMPOSITE/plevs.txt"
+	plevels_name  =  codedata + "/COMPOSITE/plevs.txt"
 
-	namein1 = obsdata + "/ENSO_MSE/DATA/mon/" + case + "." 
+	namein1 = obsdata + "/DATA/mon/" + case + "." 
 
 	nameout = outdir + "/netCDF/DATA/" 
       

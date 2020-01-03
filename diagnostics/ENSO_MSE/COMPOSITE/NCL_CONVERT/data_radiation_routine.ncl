@@ -13,10 +13,10 @@ begin
 
 ;;  read  in the data from  NetCDF directory : 
 
-      vardata  = getenv("DATADIR")  ; model data
+      vardata  = getenv("MODEL_DATA_DIR")  ; model data
       outdata =  getenv("ENSO_MSE_WKDIR_COMPOSITE")
       case =  getenv( "CASENAME")
-      codedata = getenv ("VARCODE")   
+      codedata = getenv ("POD_CODE_DIR")  ;; not used
 
       iy1 = getenv("FIRSTYR")
       iy2 = getenv("LASTYR")

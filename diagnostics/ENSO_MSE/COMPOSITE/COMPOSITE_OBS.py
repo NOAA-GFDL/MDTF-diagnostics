@@ -113,7 +113,7 @@ undef2 = float(1.1e+20)
 iundef = -9999.
 
 ##   the pointer to code directory 
-prefix = os.environ["VARCODE"] + "/ENSO_MSE/COMPOSITE/"
+prefix = os.environ["POD_CODE_DIR"] + "/COMPOSITE/"
 
 ## base path of all the files written/ready here
 wkdir_obs = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs"
@@ -124,7 +124,7 @@ prefix1 = wkdir_obs  + "/netCDF/DATA/"
 prefix2 = wkdir_obs + "/netCDF/CLIMA/"
 
 ###  output  
-#old prefixout = os.environ["OBS_DIR"] + "/ENSO_MSE/COMPOSITE/netCDF/"
+#old prefixout = os.environ["POD_OBS_DATA"] + "/COMPOSITE/netCDF/"
 #primary 
 prefixout    =  wkdir_obs + "/netCDF/"
 #if needed to share
@@ -464,7 +464,7 @@ if(  composite == 1):
 ####  make the plots
     print( "finished Observational composite calculation  ")
     
-    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_composite_all_OBS.ncl")
+    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_composite_all_OBS.ncl")
 
     now = datetime.datetime.now()
     print "   Seasonal Observational ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M")
@@ -536,7 +536,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout11)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout11)
 ###   copy the grads control files 
-##    os.system("cp " + os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/CTL/*.ctl "+ prefixout11  )
+##    os.system("cp " + os.environ["POD_CODE_DIR"]+"/COMPOSITE/CTL/*.ctl "+ prefixout11  )
 
 ##########################
 ####    La Nina 4 evolution :
@@ -587,7 +587,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout22)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout22)
 ###    convert binaries to NetCDF
-    generate_ncl_call(os.environ["VARCODE"] +  "/ENSO_MSE/COMPOSITE/NCL_CONVERT/write_24month_netcdf_OBS.ncl")
+    generate_ncl_call(os.environ["POD_CODE_DIR"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf_OBS.ncl")
 
     print "  Calculation of observational data 2 year ENSO evolution completed  "
     print "  Resulting  data are located in : " + wkdir_obs +"/netCDF/24MONTH_ELNINO/"
@@ -622,7 +622,7 @@ if( correlation == 1):
 ## output   correlation data 
     write_out_2D( imax, jmax,  "CORR_SW",  correl,   prefixout)
 ###   plot correlations 
-    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
+    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
 
     print "   Seasonal Observational SST  correlations completed  "
     print "   plots of  seasonal correlations  finished  "
@@ -661,7 +661,7 @@ if( regression == 1):
     write_out_2D( imax, jmax,  "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
-    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/COMPOSITE/NCL/plot_regression_all_OBS.ncl")
+    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/COMPOSITE/NCL/plot_regression_all_OBS.ncl")
 
     print "   Seasonal Observational SST  regressions completed  "
     print "   plots of seasonal regressions  finished  "

@@ -20,7 +20,7 @@ import os.path
 
 print( "Starting ENSO_MSE.py ") 
 
-os.environ["ENSO_MSE_WKDIR"] = os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+ "/ENSO_MSE/"
+os.environ["ENSO_MSE_WKDIR"] = os.environ["POD_WK_DIR"]
 
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
@@ -38,17 +38,17 @@ for subpack in subpackages:
 
 #DRB: unfortunately these don't get copied to namelist_save, which means
 #debugging requires starting from this script. To add them here requires
-#adding the varcode/util path (easy, see mdtf.py) and getting the envvars
+#adding the POD_CODE_DIR/util path (easy, see mdtf.py) and getting the envvars
 #dict here, but currently the file is written before the pods are called.
 
 # ==================================================================================================
 
 ####   check the html :
 #DRB: This is the top level index.html. Package shouldn't mess with it
-#if os.path.isfile( os.environ["variab_dir"]+"/index.html" ):         
-#       os.system("rm -f "+os.environ["variab_dir"]+"/index.html")
-os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/index.html "+os.environ["variab_dir"]+"/." )
-os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/mdtf_diag_banner.png "+os.environ["variab_dir"]+"/." )
+#if os.path.isfile( os.environ["MODEL_WK_DIR"]+"/index.html" ):         
+#       os.system("rm -f "+os.environ["MODEL_WK_DIR"]+"/index.html")
+os.system("cp "+os.environ["POD_CODE_DIR"]+"/index.html "+os.environ["MODEL_WK_DIR"]+"/." )
+os.system("cp "+os.environ["POD_CODE_DIR"]+"/mdtf_diag_banner.png "+os.environ["MODEL_WK_DIR"]+"/." )
 
 
 #### 1.  COMPOSITE  
@@ -97,13 +97,13 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
             print(" Starting Observational COMPOSITE module                         ")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/check_input_files_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/check_input_files_OBS.py")
             print("        Finished check_input_files_OBS.py")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/get_directories_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/get_directories_OBS.py")
             print("        Finished get_directories_OBS.py")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/preprocess_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/preprocess_OBS.py")
             print("        Finished preprocess_OBS.py")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/COMPOSITE_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/COMPOSITE_OBS.py")
             print("        Finished COMPOSITE_OBS.py")
             print(" Finished Observational COMPOSITE module                         ")
             print("=================================================================")
@@ -111,10 +111,10 @@ if os.environ["ENSO_COMPOSITE"] == "1":
    
 
 ###  check for model input dat
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/check_input_files.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/get_directories.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/preprocess.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/COMPOSITE/COMPOSITE.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/check_input_files.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/get_directories.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/preprocess.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/COMPOSITE/COMPOSITE.py")
 
         print("=================================================================")
         print("                         COMPOSITES FINISHED                     ")
@@ -142,11 +142,11 @@ if os.environ["ENSO_MSE"] == "1":
             print("=================================================================")
             print("   Starting Observational Moist Static Energy calculations       ")
             print("=================================================================")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE/get_directories_OBS.py")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE/MSE_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE/get_directories_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE/MSE_OBS.py")
       
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE/get_directories.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE/MSE.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE/get_directories.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE/MSE.py")
 
         print("=================================================================")
         print("         Moist Static Energy calculations  FINISHED              ")
@@ -187,11 +187,11 @@ if os.environ["ENSO_MSE_VAR"] == "1":
             print("=================================================================")
             print("  Calculation of Observational  Moist Static Energy Variances    ")
             print("=================================================================")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE_VAR/get_directories_OBS.py")
-            os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE_VAR/MSE_VAR_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE_VAR/get_directories_OBS.py")
+            os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE_VAR/MSE_VAR_OBS.py")
           
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE_VAR/get_directories.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/MSE_VAR/MSE_VAR.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE_VAR/get_directories.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/MSE_VAR/MSE_VAR.py")
 
         print("=================================================================")
         print("         Moist Static Energy Variances  FINISHED                 ")
@@ -217,8 +217,8 @@ if os.environ["ENSO_SCATTER"] == "1":
         print(" ~/var_code/ENSO_MSE/SCATTER/                                    ")
         print("=================================================================")
       
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/SCATTER/check_input_files.py")
-        os.system("python "+os.environ["VARCODE"]+"/ENSO_MSE/SCATTER/SCATTER.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/SCATTER/check_input_files.py")
+        os.system("python "+os.environ["POD_CODE_DIR"]+"/SCATTER/SCATTER.py")
 
         print("=================================================================")
         print("        Scatter Plot Routine   FINISHED                          ")

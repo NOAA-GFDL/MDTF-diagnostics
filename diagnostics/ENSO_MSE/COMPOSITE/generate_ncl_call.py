@@ -24,4 +24,4 @@ def generate_ncl_call( nclroutine):
 
     return 0
 
-## print os.environ["VARCODE"]
+## print os.environ["POD_CODE_DIR"]

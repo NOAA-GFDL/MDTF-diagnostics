@@ -21,10 +21,10 @@ begin
        title_modes = (/ "El Nino", "La Nina" /)
 
       composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/netCDF/DATA/"
-      varcode  = getenv("VARCODE")
+      varcode  = getenv("POD_CODE_DIR")
        model =  "  " ;   leave  blank for OBS 
 
-      parameter_name = varcode + "/ENSO_MSE/MSE_VAR/parameters.txt"
+      parameter_name = varcode + "/MSE_VAR/parameters.txt"
       season = "XXX"
 
       lon1 = -9999.

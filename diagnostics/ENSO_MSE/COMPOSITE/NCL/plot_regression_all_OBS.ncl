@@ -7,7 +7,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$VARDATA/../var_code/COMPOSITE/NCL/gsnColorRange.ncl"
+;load "$POD_CODE_DIR/COMPOSITE/NCL/gsnColorRange.ncl"
 
 begin 
 
@@ -26,12 +26,12 @@ print("Starting plot_regression_all_OBS.ncl")
 
 ;;  read  in the data from 
 
-      varcode  = getenv("VARCODE")
+      varcode  = getenv("POD_CODE_DIR")
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py
       print("plot_regression_all_OBS.ncl writing to "+outdir)
       model = "  "   ;;; leave blank for OBS
 
-      parameter_name = varcode + "/ENSO_MSE/COMPOSITE/parameters.txt"
+      parameter_name = varcode + "/COMPOSITE/parameters.txt"
       name_dimensions =  outdir + "/netCDF/DATA/xyz_dimensions.txt"
       name_lon = outdir + "/netCDF/DATA/longitude.out"
       name_lat = outdir + "/netCDF/DATA/latitude.out"

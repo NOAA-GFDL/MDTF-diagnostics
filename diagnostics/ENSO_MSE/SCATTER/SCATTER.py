@@ -61,7 +61,7 @@ undef = float(99999999999.)
 undef2 = float(1.1e+20)
 
 ###  first prefix for data   + other variables passed to the code 
-wkdir =  os.environ["WKDIR"]
+wkdir =  os.environ["POD_WK_DIR"]
 
 ####    reading in the data for scatter plots   from ~/inputdata/obs_data/ENSO_MSE/SCATTER
 
@@ -69,23 +69,23 @@ time.sleep(6.)
 
 ###  make the plots  in NCL  
 ####     default domain plotting   
-generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/SCATTER/NCL/scatter_01.ncl")
-generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/SCATTER/NCL/scatter_02.ncl")
-generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/SCATTER/NCL/scatter_03.ncl")
-generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/SCATTER/NCL/scatter_04.ncl")
+generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/SCATTER/NCL/scatter_01.ncl")
+generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/SCATTER/NCL/scatter_02.ncl")
+generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/SCATTER/NCL/scatter_03.ncl")
+generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/SCATTER/NCL/scatter_04.ncl")
 
 ###    copy the html files for to create webpages
-if os.path.isfile( os.environ["WKDIR"]+"/MDTF_SCATTER/SCATTER.html" ):
-    os.system("rm -f "+os.environ["WKDIR"]+"/MDTF_SCATTER/SCATTER.html")
+if os.path.isfile( os.environ["POD_WK_DIR"]+"/MDTF_SCATTER/SCATTER.html" ):
+    os.system("rm -f "+os.environ["POD_WK_DIR"]+"/MDTF_SCATTER/SCATTER.html")
 
-os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/SCATTER/SCATTER.html "+os.environ["WKDIR"]+"/MDTF_SCATTER/." )
-os.system("cp "+os.environ["VARCODE"]+"/ENSO_MSE/html/mdtf_diag_banner.png "+os.environ["WKDIR"]+"/MDTF_SCATTER/." )
+os.system("cp "+os.environ["POD_CODE_DIR"]+"/SCATTER/SCATTER.html "+os.environ["POD_WK_DIR"]+"/MDTF_SCATTER/." )
+os.system("cp "+os.environ["POD_CODE_DIR"]+"/html/mdtf_diag_banner.png "+os.environ["POD_WK_DIR"]+"/MDTF_SCATTER/." )
 
 ###  the end 
 now = datetime.datetime.now()
 print"   " 
 print " ==================================================================="
 print "  Scatter  Module Finished    " + now.strftime("%Y-%m-%d %H:%M")
-print "  resulting plots are located in : " +os.environ["WKDIR"],"/MDTF_SCATTER/"
+print "  resulting plots are located in : " +os.environ["POD_WK_DIR"],"/MDTF_SCATTER/"
 print " ==================================================================="
 ### 

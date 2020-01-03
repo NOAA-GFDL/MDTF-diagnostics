@@ -81,7 +81,7 @@ import datetime
 ####  check the preprocessing
 flag0  = 0
 ##############  get the parameters 
-prefix = os.environ["VARCODE"] + "/ENSO_MSE/MSE_VAR/"
+prefix = os.environ["POD_CODE_DIR"] + "/MSE_VAR/"
 
 ##############  check for preprocessed data in OBS directory  
 composite_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs/"
@@ -164,7 +164,7 @@ elat2 = 5.
 ##    nameout = ~/wkdir/MSE_VAR    prefix  top dir.
 
 # Source code
-prefix = os.environ["VARCODE"] + "/ENSO_MSE/MSE_VAR/"
+prefix = os.environ["POD_CODE_DIR"] + "/MSE_VAR/"
 
 
 composite_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs/"
@@ -387,17 +387,17 @@ if( composite == 1):
     write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
 
 ###########  plot the default domain NINO3.4 bar plots  
-    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/MSE_VAR/NCL/plot_bars_composite_OBS.ncl")
+    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/MSE_VAR/NCL/plot_bars_composite_OBS.ncl")
 
 ##      plotting for the  user selected domain :
-    generate_ncl_plots(os.environ["VARCODE"]+ "/ENSO_MSE/MSE_VAR/NCL_general/plot_bars_composite_OBS.ncl")
+    generate_ncl_plots(os.environ["POD_CODE_DIR"]+ "/MSE_VAR/NCL_general/plot_bars_composite_OBS.ncl")
 
 ############
 ##################################
     now = datetime.datetime.now()
     print "   Seasonal OBS ENSO MSE Variance composites finished  " + now.strftime("%Y-%m-%d %H:%M")
 
-    print "   resulting plots are located in : " +os.environ["variab_dir"],"/MSE_VAR/model"
+    print "   resulting plots are located in : " +os.environ["POD_WK_DIR"],"/MSE_VAR/model"
 
 print " " 
 ##########################

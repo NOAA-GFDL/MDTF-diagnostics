@@ -20,4 +20,4 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
-## print os.environ["VARCODE"]
+## print os.environ["POD_CODE_DIR"]

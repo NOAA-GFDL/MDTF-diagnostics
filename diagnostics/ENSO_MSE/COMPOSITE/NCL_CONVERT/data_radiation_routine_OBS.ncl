@@ -13,10 +13,10 @@ begin
 
 ;;  read  in the data from  NetCDF directory : 
 
-      obsdata  = getenv("OBS_DIR")
+      obsdata  = getenv("POD_OBS_DATA")
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE")  ; set in ENSO_MSE.py
       case = "ERA-INTERIM"
-      codedata = getenv ("VARCODE")   
+      codedata = getenv ("POD_CODE_DIR")  ;; not used
 
 ;;;    years set for Era-Interim
        iy1 = 1982
@@ -34,7 +34,7 @@ begin
 
         undef2 = 1.1E+20
 
-       namein0 =  obsdata + "ENSO_MSE/DATA/mon/" + case + "."
+       namein0 =  obsdata + "/DATA/mon/" + case + "."
        nameout =  outdir + "/obs/netCDF/DATA/"
 
 

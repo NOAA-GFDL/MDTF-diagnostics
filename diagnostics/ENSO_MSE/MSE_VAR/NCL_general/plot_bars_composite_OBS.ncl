@@ -28,10 +28,10 @@ begin
        slat2 = tofloat( lat2)
 
       composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/netCDF/DATA/"
-      varcode  = getenv("VARCODE")
+      varcode  = getenv("POD_CODE_DIR")
        model =  "  " ;   leave  blank for OBS
 
-      parameter_name = varcode + "/ENSO_MSE/MSE_VAR/parameters.txt"
+      parameter_name = varcode + "/MSE_VAR/parameters.txt"
       datamode = "Anomaly"
       data  = asciiread(parameter_name,-1,"string")
       season = str_get_field(data(12), 3," ")

@@ -25,11 +25,11 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
-      varcode = getenv("VARCODE")
-      wkdir = getenv("WKDIR")
-      obsdir = getenv("OBS_DIR")
+      varcode = getenv("POD_CODE_DIR")
+      wkdir = getenv("POD_WK_DIR")
+      obsdir = getenv("POD_OBS_DATA")
 
-      prefix = obsdir + "/ENSO_MSE/SCATTER/"
+      prefix = obsdir + "/SCATTER/"
  
 ;;---Tickmark resources
     dxx = (/  50., 50. /)
@@ -63,7 +63,7 @@ begin
    ydim = 6
 
 ;; read in the models:
-     namemodel = varcode +  "/ENSO_MSE/SCATTER/list-models-historical-obs"
+     namemodel = varcode +  "/SCATTER/list-models-historical-obs"
      models = readAsciiTable ( namemodel, 1, "string", 0)
 
 ;;  the order of datain is the order of variables  SST first , RR second

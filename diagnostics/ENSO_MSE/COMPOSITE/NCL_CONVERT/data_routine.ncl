@@ -15,17 +15,17 @@ begin
 ;;     to avoid loading too much into memory 
 
 
-      vardata  = getenv("DATADIR")                   ; model input
+      vardata  = getenv("MODEL_DATA_DIR")                   ; model input
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ; envvar set in ENSO_MSE.py
       case =  getenv( "CASENAME")
-      codedata = getenv ("VARCODE")
+      codedata = getenv ("POD_CODE_DIR")
 
 	 iy1 = getenv("FIRSTYR")
         iy2 = getenv("LASTYR")
 
  
 ;;;           need this file just  in a case it is on hybrid levels 
-	plevels_name  =  codedata + "/ENSO_MSE/COMPOSITE/plevs.txt"
+	plevels_name  =  codedata + "/COMPOSITE/plevs.txt"
 
 	namein1 = vardata + "/mon/" +  case + "."
 

@@ -8,7 +8,7 @@ begin
 
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py, 
                                 ;processed output from other scripts in this package
-      varcode = getenv ("VARCODE")
+      varcode = getenv ("POD_CODE_DIR")
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)
@@ -28,7 +28,7 @@ begin
 
      mode = (/ "ELNINO", "LANINA" /)
 
-      parameter_name = varcode + "/ENSO_MSE/COMPOSITE/parameters.txt"
+      parameter_name = varcode + "/COMPOSITE/parameters.txt"
       name_dimensions = outdir  + "/netCDF/DATA/xyz_dimensions.txt"
       name_lon = outdir + "/netCDF/DATA/longitude.out"
       name_lat = outdir + "/netCDF/DATA/latitude.out"

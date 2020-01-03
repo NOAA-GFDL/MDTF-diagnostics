@@ -6,10 +6,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
 begin
 
-      vardata  = getenv("DATADIR")
+      vardata  = getenv("MODEL_DATA_DIR")
       case     =  getenv( "CASENAME")
-      varcode = getenv ("VARCODE")
-      wkdir = getenv("WKDIR")  + "MDTF_" + case  
+      varcode = getenv ("POD_CODE_DIR")
+      wkdir = getenv("POD_WK_DIR")
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)
@@ -28,7 +28,7 @@ begin
      pr_conversion = 24.*60.*60.
      mode = (/ "ELNINO", "LANINA" /)
 
-      parameter_name = varcode + "/ENSO_MSE/COMPOSITE/parameters.txt"
+      parameter_name = varcode + "/COMPOSITE/parameters.txt"
       name_dimensions = wkdir  + "/COMPOSITE/model/netCDF/DATA/xyz_dimensions.txt"
       name_lon = wkdir + "/COMPOSITE/model/netCDF/DATA/longitude.out"
       name_lat = wkdir + "/COMPOSITE/model/netCDF/DATA/latitude.out"

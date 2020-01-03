@@ -43,14 +43,6 @@ for subpack in subpackages:
 
 # ==================================================================================================
 
-####   check the html :
-#DRB: This is the top level index.html. Package shouldn't mess with it
-#if os.path.isfile( os.environ["MODEL_WK_DIR"]+"/index.html" ):         
-#       os.system("rm -f "+os.environ["MODEL_WK_DIR"]+"/index.html")
-os.system("cp "+os.environ["POD_HOME"]+"/index.html "+os.environ["MODEL_WK_DIR"]+"/." )
-os.system("cp "+os.environ["POD_HOME"]+"/mdtf_diag_banner.png "+os.environ["MODEL_WK_DIR"]+"/." )
-
-
 #### 1.  COMPOSITE  
 if os.environ["ENSO_COMPOSITE"] == "1":
     try:

@@ -79,7 +79,6 @@ if os.path.isfile( os.environ["WK_DIR"]+"/MDTF_SCATTER/SCATTER.html" ):
     os.system("rm -f "+os.environ["WK_DIR"]+"/MDTF_SCATTER/SCATTER.html")
 
 os.system("cp "+os.environ["POD_HOME"]+"/SCATTER/SCATTER.html "+os.environ["WK_DIR"]+"/MDTF_SCATTER/." )
-os.system("cp "+os.environ["POD_HOME"]+"/html/mdtf_diag_banner.png "+os.environ["WK_DIR"]+"/MDTF_SCATTER/." )
 
 ###  the end 
 now = datetime.datetime.now()

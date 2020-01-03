@@ -663,12 +663,6 @@ if( regression == 1):
 
     print(os.system("ls "+wkdir_model))
 
-###    copy the html files for to create webpages  
-#if os.path.isfile( os.environ["MODEL_WK_DIR"]+"/index.html" ):
-#    os.system("rm -f "+os.environ["MODEL_WK_DIR"]+"/index.html")
-# os.system("cp "+os.environ["POD_HOME"]+"/index.html "+os.environ["MODEL_WK_DIR"]+"/." )
-# os.system("cp "+os.environ["POD_HOME"]+"/mdtf_diag_banner.png "+os.environ["MODEL_WK_DIR"]+"/." )
-
 print("what is going on here")
 file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]+"/COMPOSITE.html" 

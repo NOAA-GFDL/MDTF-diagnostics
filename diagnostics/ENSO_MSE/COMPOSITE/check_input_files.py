@@ -1,10 +1,14 @@
 import numpy as np
-import os.path
+import os
 import math
 import sys
-import os
 
-##  from util import check_required_dirs
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+os.sys.path.insert(0, shared_dir)
+from util import check_required_dirs
 ###   
 ###  check  the input data in inputdata/model  directories DATADIR + mon
 ## 3D

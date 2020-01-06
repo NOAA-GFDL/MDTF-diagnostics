@@ -8,8 +8,8 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
     undef = 1100000000.
     undef = float(99999999999.)
 
-    if (os.path.exists(prefix+"parameters.txt")):
-        file = open(prefix+'parameters.txt', 'r')
+    if (os.path.exists(prefix+"../shared/parameters.txt")):
+        file = open(prefix+'../shared/parameters.txt', 'r')
         line = file.readline()
         line = line.strip()
         column = line.split()
@@ -100,8 +100,8 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
         file.close()
 
     else:
-        ffile = prefix + "parameters.txt"
-        print " missing file: "  + prefix + "parameters.txt"
+        ffile = prefix + "../shared/parameters.txt"
+        print " missing file: "  + prefix + "../shared/parameters.txt"
         print " exiting get_parameters_in.py "
         sys.exit()
     return lon1, lon2, lat1, lat2, sigma, imindx1, imindx2, composite, im1, im2, season,  composite24, regression, correlation,  undef, undef2

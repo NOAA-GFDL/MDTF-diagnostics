@@ -11,7 +11,7 @@
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;;load "$POD_HOME/MSE/NCL/gsnColorRange.ncl"
+;;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -22,7 +22,7 @@ begin
         model = getenv( "CASENAME")
 
 
-       parameter_name = varcode + "/MSE/parameters.txt"
+       parameter_name = varcode + "/shared/parameters.txt"
        name_dimensions =  composite_dir + "netCDF/DATA/xyz_dimensions.txt"
        name_lon = composite_dir + "netCDF/DATA/longitude.out"
        name_lat = composite_dir + "netCDF/DATA/latitude.out"

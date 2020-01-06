@@ -4,5 +4,6 @@ channels:
 - defaults
 dependencies:
 - python=2.7
+- numpy
 - subprocess32
 - ncl=6.5

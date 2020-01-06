@@ -24,7 +24,7 @@ begin
       varcode  = getenv("POD_HOME")
        model =  "  " ;   leave  blank for OBS 
 
-      parameter_name = varcode + "/MSE_VAR/parameters.txt"
+      parameter_name = varcode + "/shared/parameters.txt"
       season = "XXX"
 
       lon1 = -9999.

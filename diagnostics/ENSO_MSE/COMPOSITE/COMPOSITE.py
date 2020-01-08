@@ -27,6 +27,8 @@ import sys
 import math
 
 from get_parameters_in import get_parameters_in
+from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
+from get_dimensions import get_dimensions
 from get_nino_index import get_nino_index
 from get_data_in import get_data_in
 from get_flux_in import get_flux_in
@@ -38,6 +40,8 @@ from get_data_in_24 import get_data_in_24
 from write_out_4D import write_out_4D
 from write_out_3D import write_out_3D
 from write_out_2D import write_out_2D
+from generate_ncl_plots import generate_ncl_plots
+from generate_ncl_call import generate_ncl_call
 
 from get_correlation import get_correlation
 from get_regression import get_regression
@@ -45,15 +49,7 @@ from get_regression import get_regression
 import datetime
 
 import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
 from util import check_required_dirs
-from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
-from get_dimensions import get_dimensions
-from generate_ncl_plots import generate_ncl_plots
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -577,7 +573,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout222)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout222)
 ###    convert binaries to NetCDF 
-    generate_ncl_plots(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
 
     print "   calculation of 2 year  ENSO evolution completed  "
     print "   resulting  data are   located in : " + wkdir_model + "/netCDF/24MONTH_ELNINO/"

@@ -31,7 +31,7 @@ begin
        model = getenv( "CASENAME")
 
 
-      parameter_name = varcode + "/shared/parameters.txt"
+      parameter_name = varcode + "/MSE_VAR/parameters.txt"
       datamode = "Anomaly"
        data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(12), 3," ")

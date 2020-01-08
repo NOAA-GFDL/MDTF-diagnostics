@@ -23,24 +23,21 @@ from get_clima_flux_in import get_clima_flux_in
 from write_out import write_out
 from write_out_general import write_out_general
 from moist_routine_variance import moisture_variance
+
 from get_parameters_in import get_parameters_in
+from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
+from get_dimensions import get_dimensions
+
+from generate_ncl_plots import generate_ncl_plots
 from get_anomaly import get_anomaly
 
 import sys
+import os
 import subprocess
 import commands
 
 import datetime
- 
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
-from get_dimensions import get_dimensions
-from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
-from generate_ncl_plots import generate_ncl_plots
+
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
 

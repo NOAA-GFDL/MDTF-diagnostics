@@ -22,13 +22,10 @@ import subprocess
 import commands
 import time
 
-import datetime
 import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
+
+import datetime
+
 from generate_ncl_plots import generate_ncl_plots
 from get_ncl_data import get_ncl_data
 

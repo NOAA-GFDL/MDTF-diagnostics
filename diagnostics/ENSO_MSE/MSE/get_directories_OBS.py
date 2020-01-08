@@ -1,13 +1,8 @@
 import numpy as np
-import os
+import os.path
 import math
 import sys
 
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
 from util import check_required_dirs
 
 ###   

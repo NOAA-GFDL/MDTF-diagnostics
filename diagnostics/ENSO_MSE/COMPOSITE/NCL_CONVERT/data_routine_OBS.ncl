@@ -26,7 +26,7 @@ begin
 
  
 ;;;           need this file just  in a case it is on hybrid levels 
-	plevels_name  =  codedata + "/shared/plevs.txt"
+	plevels_name  =  codedata + "/COMPOSITE/plevs.txt"
 
 	namein1 = obsdata + "/DATA/mon/" + case + "." 
 

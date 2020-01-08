@@ -28,7 +28,7 @@ begin
 
      mode = (/ "ELNINO", "LANINA" /)
 
-      parameter_name = varcode + "/shared/parameters.txt"
+      parameter_name = varcode + "/COMPOSITE/parameters.txt"
       name_dimensions = outdir  + "/netCDF/DATA/xyz_dimensions.txt"
       name_lon = outdir + "/netCDF/DATA/longitude.out"
       name_lat = outdir + "/netCDF/DATA/latitude.out"

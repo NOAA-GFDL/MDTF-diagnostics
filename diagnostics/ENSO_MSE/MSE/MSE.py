@@ -32,18 +32,13 @@ from moist_routine_madv import moisture_adv
 from moist_routine_tadv import temperature_adv
 from moist_routine_omse import moisture_o_energy
 from get_parameters_in import get_parameters_in
-
-import datetime
- 
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
 from get_dimensions import get_dimensions
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
+
 from generate_ncl_plots import generate_ncl_plots
+
+import os
+import datetime
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)

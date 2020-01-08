@@ -28,7 +28,7 @@ begin
      pr_conversion = 24.*60.*60.
      mode = (/ "ELNINO", "LANINA" /)
 
-      parameter_name = varcode + "/shared/parameters.txt"
+      parameter_name = varcode + "/COMPOSITE/parameters.txt"
       name_dimensions = wkdir  + "/COMPOSITE/model/netCDF/DATA/xyz_dimensions.txt"
       name_lon = wkdir + "/COMPOSITE/model/netCDF/DATA/longitude.out"
       name_lat = wkdir + "/COMPOSITE/model/netCDF/DATA/latitude.out"

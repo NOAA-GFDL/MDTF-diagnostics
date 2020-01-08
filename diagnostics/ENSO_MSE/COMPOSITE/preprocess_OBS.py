@@ -1,16 +1,15 @@
 import numpy as np
 import sys
 import math
+
+from generate_ncl_plots import generate_ncl_plots
+from generate_ncl_call import generate_ncl_call
+
 import datetime
  
 import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-os.sys.path.insert(0, shared_dir)
+
 from util import check_required_dirs
-from generate_ncl_plots import generate_ncl_plots
 
 '''
     to pre-process the data for the diagnostic package 
@@ -82,17 +81,17 @@ else:
     print " Observational Data conversion routine started  "
     print " 3-D atmospheric variables conversion "
     print " depending on the data input volume the process can take over 15 minutes "
-    generate_ncl_plots(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine_OBS.ncl")
     now = datetime.datetime.now()
     print"  Observational Data conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") 
     print " Observational Data NET radiation routine started "
-    generate_ncl_plots(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_radiation_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_radiation_routine_OBS.ncl")
     now = datetime.datetime.now()
     print" Observational Data NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M")      
 
     now = datetime.datetime.now()
     print " Observational Data  Clima routine started " + now.strftime("%Y-%m-%d %H:%M")
-    generate_ncl_plots(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/clima_routine_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/clima_routine_OBS.ncl")
     now = datetime.datetime.now()
     print" Observational Data  clima routine finished " + now.strftime("%Y-%m-%d %H:%M")
 

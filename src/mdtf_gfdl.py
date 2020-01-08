@@ -28,7 +28,7 @@ class GFDLMDTFFramework(MDTFFramework):
         elif os.path.isdir('/net2'):
             tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
             if not os.path.isdir(tempfile.tempdir):
-                os.makedirs(tempfile.tempdir)
+                gfdl.make_remote_dir(tempfile.tempdir)
         else:
             print "Using default tempdir on this system"
         os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
@@ -59,6 +59,10 @@ class GFDLMDTFFramework(MDTFFramework):
 
     def _post_config_init(self):
         self.fetch_obs_data()
+        if not os.path.exists(self.config['paths']['OUTPUT_DIR']):
+            # otherwise mdtf.set_mdtf_env_vars will throw error when trying to 
+            # create it on a read-only volume
+            gfdl.make_remote_dir(self.config['paths']['OUTPUT_DIR'])
         super(GFDLMDTFFramework, self)._post_config_init()
         if self.config['settings']['frepp']:
             # set up cooperative mode -- hack to pass config settings

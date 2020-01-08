@@ -116,7 +116,7 @@ class GfdlDiagnostic(Diagnostic):
     def setUp(self, verbose=0):
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
-            make_placeholder_dir(
+            make_remote_dir(
                 self.POD_OUT_DIR,
                 timeout=util.get_from_config('file_transfer_timeout', self._config),
                 dry_run=util.get_from_config('dry_run', self._config)
@@ -782,9 +782,9 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         dry_run=dry_run
     )
 
-def make_placeholder_dir(dest_dir, timeout=0, dry_run=False):
+def make_remote_dir(dest_dir, timeout=0, dry_run=False):
     try:
-        os.mkdir(dest_dir)
+        os.makedirs(dest_dir)
     except OSError:
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 

@@ -105,16 +105,25 @@ begin
          plevels = stringtofloat( pdata)
          pnew = plevels
          else
-           if (isfilevar(fin, "lev")) then
-           dlev = fin->lev
-           plevels =   tofloat ( dlev)
+           ; not on hybrid levels
+           lev_coord_name = getenv("lev_coord")
+           if (.not.isfilevar(fin, lev_coord_name)) then
+             print("data_routine.ncl ERROR: no axis named "+lev_coord_name)
            end if
-
-           if (isfilevar(fin, "plev")) then
-           dlev = fin->plev
-           plevels =  0.01 * tofloat ( dlev)
+           dlev = fin->lev_coord_name
+           i = str_index_of_substr(lev_coord_name, "plev", 1) ; should compare units instead
+           if (i.eq.0) then
+             ; assume pressure axis in hPa (allow for eg "plev19" as in CMIP)
+             plevels = 0.01 * tofloat ( dlev)
+           else
+             i = str_index_of_substr(lev_coord_name, "lev", 1)
+             if (i.eq.0) then
+               ; assume pressure axis in Pa
+               plevels = tofloat ( dlev)
+             else
+               print("data_routine.ncl ERROR: can't guess units for "+lev_coord_name)
+             end if
            end if
-
 	end if 
 ;;;;  get the dimensions and write out 
        dlat = fin->lat

@@ -19,7 +19,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
 ##  read in the clima values
     nameclima = prefix2 +  variable + "_clim.grd"
     if (os.path.exists( nameclima)):
-        print(this_func," reading ",nameclima)
+        print(this_func+" reading "+nameclima)
         f = open( nameclima)
         clima = np.fromfile(f, dtype='float32')
         clima = clima.reshape(tmax12, zmax,jmax,imax)
@@ -46,7 +46,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                 year = str(yy)
 
                 namein = prefix+"/"+year+"/"+variable+"_"+year+"-"+month+".grd"
-                print(this_func," reading ",namein)
+                print(this_func+" reading "+namein)
                 if (os.path.exists( namein)):
                     f = open( namein)
                     vvar = np.fromfile(f, dtype='float32')
@@ -77,6 +77,6 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                         dataout[i,j,k,im] = dataout[i,j,k,im] - clima[i, j, k, imm]
                     else:
                         dataout[i,j,k,im] = undef2
-        print(this_func," returning ")
+        print(this_func+" returning ")
     return dataout
 

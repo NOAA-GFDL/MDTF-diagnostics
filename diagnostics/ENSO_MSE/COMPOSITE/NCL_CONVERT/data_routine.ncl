@@ -106,24 +106,17 @@ begin
          pnew = plevels
          else
            ; not on hybrid levels
-           lev_coord_name = getenv("lev_coord")
-           if (.not.isfilevar(fin, lev_coord_name)) then
-             print("data_routine.ncl ERROR: no axis named "+lev_coord_name)
-           end if
-           dlev = fin->lev_coord_name
-           i = str_index_of_substr(lev_coord_name, "plev", 1) ; should compare units instead
+           lev_unit_conversion = 1.0
+           i = str_index_of_substr(lev, "plev", 1) 
+           ; allows for eg "plev19" as in CMIP, but should compare units instead
            if (i.eq.0) then
-             ; assume pressure axis in hPa (allow for eg "plev19" as in CMIP)
-             plevels = 0.01 * tofloat ( dlev)
+             print ("found plev axis, assuming hPa")
+             lev_unit_conversion = 0.01
            else
-             i = str_index_of_substr(lev_coord_name, "lev", 1)
-             if (i.eq.0) then
-               ; assume pressure axis in Pa
-               plevels = tofloat ( dlev)
-             else
-               print("data_routine.ncl ERROR: can't guess units for "+lev_coord_name)
-             end if
+             print ("Assuming levels in Pa")
            end if
+           dlev = fin->lev
+           plevels = lev_unit_conversion * tofloat ( dlev)
 	end if 
 ;;;;  get the dimensions and write out 
        dlat = fin->lat
@@ -138,7 +131,7 @@ begin
        nlev  = dimsizes(plevels)
        nlat  = dimsizes(lat2)
        nlon  = dimsizes(lon2)
-       
+
        nameout2 = nameout + "longitude.out"
        n = systemfunc( " rm " +  nameout2 + " 2> /dev/null")
        fbindirwrite (nameout2, lon2) 
@@ -213,15 +206,8 @@ begin
        
        time2 = calendar_decode2 ( time0 ,  -5)
 
-        if (isfilevar(fin, "lev")) then
          dlev = fin->lev
-         lev2 =   tofloat ( dlev)
-        end if
-
-       if (isfilevar(fin, "plev")) then
-        dlev = fin->plev
- 	 lev2 =  0.01 * tofloat ( dlev)
-       end if
+         lev2 = lev_unit_conversion * tofloat ( dlev)
 
        dlat = fin->lat
  	lat2 =  tofloat ( dlat)

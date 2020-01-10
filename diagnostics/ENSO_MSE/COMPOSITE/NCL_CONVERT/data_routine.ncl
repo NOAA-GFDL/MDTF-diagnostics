@@ -87,13 +87,13 @@ begin
 ;;;      check if the data are on hybrid levels - if  hyam and hybm define
          ihyam = 0
          ihybm = 0
-        if (isfilevar(fin, "hyam")) then
-         hyam4 = fin->hyam
+        if (isfilevar(fin, hyam)) then
+         hyam4 = fin->$hyam$
          hyam2 = tofloat(hyam4)
          ihyam = 1
         end if
-        if (isfilevar(fin, "hybm")) then
-         hybm4 = fin->hybm
+        if (isfilevar(fin, hybm)) then
+         hybm4 = fin->$hybm$
          hybm2 = tofloat(hybm4)
          ihybm = 1
         end if
@@ -115,17 +115,17 @@ begin
            else
              print ("Assuming levels in Pa")
            end if
-           dlev = fin->lev
+           dlev = fin->$lev$
            plevels = lev_unit_conversion * tofloat ( dlev)
 	end if 
 ;;;;  get the dimensions and write out 
-       dlat = fin->lat
+       dlat = fin->$lat$
        lat2 =  tofloat ( dlat)
  
-       dlon = fin->lon
+       dlon = fin->$lon$
        lon2 =  tofloat ( dlon)
 
-       time0 = fin->time
+       time0 = fin->$time$
        time2 = calendar_decode2 ( time0 ,  -5)
        ntim  = dimsizes(time0)     ; get dimension sizes
        nlev  = dimsizes(plevels)
@@ -173,14 +173,14 @@ begin
 ;;;     check if the data are on hybrid levels - if  hyam and hybm define
          ihyam = 0
          ihybm = 0
-	 if (isfilevar(fin, "hyam")) then
-         hyam4 = fin->hyam
+	 if (isfilevar(fin, hyam)) then
+         hyam4 = fin->$hyam$
          hyam2 = tofloat(hyam4)
          ihyam = 1
         end if
 
-	 if (isfilevar(fin, "hybm")) then
-         hybm4 = fin->hybm
+	 if (isfilevar(fin, hybm)) then
+         hybm4 = fin->$hybm$
          hybm2 = tofloat(hybm4)
          ihybm = 1
         end if
@@ -202,17 +202,17 @@ begin
        end if
 ;;         vNames = getfilevarnames (fin)
 ;;   the time attribute here :
-       time0 = fin->time
+       time0 = fin->$time$
        
        time2 = calendar_decode2 ( time0 ,  -5)
 
-         dlev = fin->lev
+         dlev = fin->$lev$
          lev2 = lev_unit_conversion * tofloat ( dlev)
 
-       dlat = fin->lat
+       dlat = fin->$lat$
  	lat2 =  tofloat ( dlat)
  
-       dlon = fin->lon
+       dlon = fin->$lon$
 	lon2 =  tofloat ( dlon)
 
 ;;        tdate = fin->date
@@ -302,20 +302,20 @@ begin
 
        ;;   the time attribute here :
 
-       time20 = fin->time
+       time20 = fin->$time$
        time22 = calendar_decode2 ( time20 ,  -5)
 
-       dlat = fin->lat
+       dlat = fin->$lat$
        lat2 =  tofloat ( dlat)
 
-       dlon = fin->lon
+       dlon = fin->$lon$
        lon2 =  tofloat ( dlon)
 
 ;;        tdate = fin->date
 ;;	 conversion - needed for PR
 	ff = 1.
-       if( Varname .eq. "PR") then
-	  ff = pr_conversion
+       if( Varname .eq. pr) then
+	  ff = tofloat(pr_conversion)
        end if 
 
        ntim  = dimsizes(time20)      ; get dimension sizes

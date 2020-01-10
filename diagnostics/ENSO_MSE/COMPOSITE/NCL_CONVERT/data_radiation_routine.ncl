@@ -128,13 +128,13 @@ begin
                          monthchar + ".grd"
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
        fbindirwrite(fileout , SWout )
-	 print (fileout) 
+	 print ("fileout: "+fileout) 
  
         fileout  = nameout + yearchar + "/" + Varout2 + "_" + yearchar + "-" +  \
                          monthchar + ".grd"
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
        fbindirwrite(fileout , LWout )
-        print( fileout ) 
+        print("fileout: "+fileout ) 
         print( "   "  ) 
 
 	delete( LWout)

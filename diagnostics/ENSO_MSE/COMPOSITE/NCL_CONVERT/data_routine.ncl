@@ -166,7 +166,7 @@ begin
 ;;;;   print( " Started preprocessing variable : " + Varname + "  " +  ivv1 + "/" + ivar32 )
 
         namein = namein1 + Varname + ".mon.nc"
-        print( namein)           
+        print("namein: "+ namein)           
         fin = addfile( namein, "r")
         setfileoption("nc", "Format",  "NetCDF4")  ;   "NetCDF4Classic"
 
@@ -265,7 +265,7 @@ begin
        n =  systemfunc( " mkdir " + nameout + yearchar  + " 2> /dev/null")
        fileout  = nameout + yearchar + "/" + Varout + "_" + yearchar + "-" +  \
                          monthchar + ".grd"
-      ;;   print( fileout )
+      ;;   print("fileout: "+fileout )
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
        fbindirwrite(fileout , Vout )
       ;;  print( yearchar )
@@ -348,7 +348,7 @@ begin
 
        fileout  = nameout + yearchar + "/" + Varout + "_" + yearchar + "-" +  \
                          monthchar + ".grd"
-       print( fileout)
+       print("fileout: "+fileout)
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
        fbindirwrite(fileout , Vout20 )
 	 

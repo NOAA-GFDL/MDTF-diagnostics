@@ -41,7 +41,7 @@ os.sys.path.insert(0, shared_dir)
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
 from get_season import get_season
-from generate_ncl_plots import generate_ncl_plots
+from generate_ncl_call import generate_ncl_call
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -391,10 +391,10 @@ if( composite == 1):
     write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
 
 ###########  plot the default domain NINO3.4 bar plots  
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/MSE_VAR/NCL/plot_bars_composite_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/MSE_VAR/NCL/plot_bars_composite_OBS.ncl")
 
 ##      plotting for the  user selected domain :
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/MSE_VAR/NCL_general/plot_bars_composite_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/MSE_VAR/NCL_general/plot_bars_composite_OBS.ncl")
 
 ############
 ##################################

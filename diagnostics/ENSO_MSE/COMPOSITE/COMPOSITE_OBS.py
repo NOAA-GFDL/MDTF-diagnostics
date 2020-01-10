@@ -53,7 +53,7 @@ from util import check_required_dirs
 from get_season import get_season
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
-from generate_ncl_plots import generate_ncl_plots
+from generate_ncl_call import generate_ncl_call
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -467,7 +467,7 @@ if(  composite == 1):
 ####  make the plots
     print( "finished Observational composite calculation  ")
     
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all_OBS.ncl")
 
     now = datetime.datetime.now()
     print "   Seasonal Observational ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M")
@@ -590,7 +590,7 @@ if( composite24 == 1):
     write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout22)
     write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout22)
 ###    convert binaries to NetCDF
-    generate_ncl_plots(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf_OBS.ncl")
 
     print "  Calculation of observational data 2 year ENSO evolution completed  "
     print "  Resulting  data are located in : " + wkdir_obs +"/netCDF/24MONTH_ELNINO/"
@@ -625,7 +625,7 @@ if( correlation == 1):
 ## output   correlation data 
     write_out_2D( imax, jmax,  "CORR_SW",  correl,   prefixout)
 ###   plot correlations 
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
 
     print "   Seasonal Observational SST  correlations completed  "
     print "   plots of  seasonal correlations  finished  "
@@ -664,7 +664,7 @@ if( regression == 1):
     write_out_2D( imax, jmax,  "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_regression_all_OBS.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_regression_all_OBS.ncl")
 
     print "   Seasonal Observational SST  regressions completed  "
     print "   plots of seasonal regressions  finished  "

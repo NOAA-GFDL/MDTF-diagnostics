@@ -29,8 +29,7 @@ shared_dir = os.path.join(
     'shared'
 )
 os.sys.path.insert(0, shared_dir)
-from generate_ncl_plots import generate_ncl_plots
-from get_ncl_data import get_ncl_data
+from generate_ncl_call import generate_ncl_call
 
 '''
        This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -72,10 +71,10 @@ time.sleep(6.)
 
 ###  make the plots  in NCL  
 ####     default domain plotting   
-generate_ncl_plots(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_01.ncl")
-generate_ncl_plots(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_02.ncl")
-generate_ncl_plots(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_03.ncl")
-generate_ncl_plots(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_04.ncl")
+generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_01.ncl")
+generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_02.ncl")
+generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_03.ncl")
+generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_04.ncl")
 
 ###    copy the html files for to create webpages
 if os.path.isfile( os.environ["WK_DIR"]+"/MDTF_SCATTER/SCATTER.html" ):

@@ -69,7 +69,8 @@
     "MJO_teleconnection",
     "MJO_prop_amp",
     "precip_diurnal_cycle",
-    "SM_ET_coupling"
+    "SM_ET_coupling",
+    "ENSO_MSE"
   ],
 
   "# PATHS ----------------------------------------------------------------":"",

@@ -11,21 +11,24 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     im1 = 1
     im2 = 24
     tmax12 = 12
-    ss    = np.zeros((imax,jmax,zmax,tmax24),dtype='float32')      
-    vvar  = np.zeros((imax,jmax,zmax),dtype='float32')
-    dataout = np.zeros((imax,jmax,zmax,tmax24),dtype='float32')
-    clima = np.zeros((imax,jmax,zmax,tmax12),dtype='float32')
+    # create masked arrays, initialized to all zeros
+    # use fortran index order to match arrays read in from files
+    ss    = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
+    dataout = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
+    # not necessary to preallocate memory for arrays that are read in from files
 
 ##  read in the clima values
     nameclima = prefix2 +  variable + "_clim.grd"
     if (os.path.exists( nameclima)):
         print(this_func+" reading "+nameclima)
-        f = open( nameclima)
-        clima = np.fromfile(f, dtype='float32')
-        clima = clima.reshape(tmax12, zmax,jmax,imax)
-        clima = np.swapaxes(clima, 0, 3)
-        clima = np.swapaxes(clima, 1, 2)
-        f.close()
+        # np.fromfile handles file open/close, memory allocation
+        clima = np.fromfile(nameclima, dtype='float32')
+        # specify array was written in fortran index order, instead of manually
+        # swapping axes
+        clima = clima.reshape(imax,jmax,zmax,tmax12, order='F')
+        # mark entries of clima >= undef as invalid (through boolean mask)
+        # valid/invalid status is propagated through all subsequent calculations
+        clima = np.ma.masked_greater_equal(clima, undef, copy=False)
     else:
         print " missing file " + nameclima
         print " exiting get_data_in_24.py "
@@ -46,37 +49,42 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                 year = str(yy)
 
                 namein = prefix+"/"+year+"/"+variable+"_"+year+"-"+month+".grd"
-                print(this_func+" reading "+namein)
                 if (os.path.exists( namein)):
-                    f = open( namein)
-                    vvar = np.fromfile(f, dtype='float32')
-                    vvar = vvar.reshape(zmax,jmax,imax)
-                    vvar = np.swapaxes(vvar, 0, 2)
-                    for k in range(0, zmax):
-                        for j in range(0, jmax):
-                            for i in range (0, imax):
-                                if( vvar[i,j,k] < undef):
-                                    dataout[i,j,k,im-1] = dataout[i,j,k,im-1] + vvar[i,j,k]
-                                    ss[i,j,k,im-1] = ss[i,j,k,im-1] + 1.
-
-                    f.close()
+                    print(this_func+" reading "+namein)
+                    # np.fromfile handles file open/close, memory allocation
+                    vvar = np.fromfile(namein, dtype='float32')
+                    # specify array was written in fortran index order, instead 
+                    # of manually swapping axes
+                    vvar = vvar.reshape(imax,jmax,zmax, order='F')
+                    # create boolean array equal to True for invalid entries of
+                    # vvar (value >= undef)
+                    vvar_invalid = (vvar >= undef)
+                    # set invalid entries of vvar to zero so they don't contribute
+                    # to the running sum in dataout (modifies in-place)
+                    vvar[vvar_invalid] = 0.
+                    # add 3D vvar to the 3D slice of 4D dataout corresponding to 
+                    # current month (im)
+                    dataout[:,:,:, im-1] += vvar
+                    # increment entries of ss where entries of vvar were valid;
+                    # note we can combine multi-dimensional masking and slicing 
+                    ss[~vvar_invalid, im-1] += 1.
                 else:
                     print " missing file " + namein
                     print " exiting  get_data_in_24.py" 
                     sys.exit()
 
-    for im in range( im1-1, im2):
-        imm = im 
-        if( imm > 11 ):
-            imm = imm - 12
-        for k in range(0, zmax):
-            for j in range(0, jmax):
-                for i in range (0, imax):
-                    if( ss[i,j,k, im] > 0. and clima[i,j,k,imm] < undef):
-                        dataout[i,j,k,im] = dataout[i,j,k,im]/ss[i,j,k, im] 
-                        dataout[i,j,k,im] = dataout[i,j,k,im] - clima[i, j, k, imm]
-                    else:
-                        dataout[i,j,k,im] = undef2
-        print(this_func+" returning ")
-    return dataout
+    # element-wise division
+    # all occurrences of division by zero are converted to a masked (invalid) 
+    # element - no errors are raised
+    dataout = dataout/ss
+    # assign to 12-mo hyperslab instead of looping over month index
+    # subtraction by invalid entries in clima produces invalid entries in dataout
+    dataout[:,:,:, 0:tmax12] -= clima
+    dataout[:,:,:, tmax12:(2*tmax12)] -= clima
+
+    print(this_func+" returning ")
+    # fill in masked (invalid) entries with value undef2
+    # convert from maskedarray to ordinary numpy array for compatibility with 
+    # rest of code
+    return dataout.filled(fill_value = undef2)
 

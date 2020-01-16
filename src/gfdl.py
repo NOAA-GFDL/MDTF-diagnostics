@@ -28,7 +28,7 @@ class ModuleManager(util.Singleton):
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',
         'gcp':      'gcp/2.3',
-        'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
+        'nco':      'nco/4.7.6', # most recent version common to PPAN and workstations
         'netcdf':   'netcdf/4.2'
     }
 

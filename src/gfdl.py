@@ -449,7 +449,8 @@ class GfdlarchiveDataManager(DataManager):
                     time_var_name, file_name, f.date_range, trimmed_range)
                 trim_count = trim_count + 1
                 self.nc_crop_time_axis(
-                    time_var_name, trimmed_range, file_name, 
+                    time_var_name, trimmed_range, 
+                    in_file=file_name, 
                     working_dir=work_dir, 
                     dry_run=self.dry_run
                 )

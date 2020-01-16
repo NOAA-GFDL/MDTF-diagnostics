@@ -361,6 +361,17 @@ class Namespace(dict):
 # ------------------------------------
 
 def read_json(file_path):
+    assert os.path.exists(file_path), \
+        "Couldn't find JSON file {}.".format(file_path)
+    try:    
+        with open(file_path, 'r') as file_:
+            str_ = file_.read()
+    except IOError:
+        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        exit()
+    return parse_json(str_)
+
+def parse_json(str_):
     def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
@@ -388,21 +399,14 @@ def read_json(file_path):
         # if it's anything else, return it in its original form
         return data
 
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = _utf8_to_ascii(
-                json.load(file_obj, object_hook=_utf8_to_ascii),
-                ignore_dicts=True
-            )
+    try:
+        parsed_json = _utf8_to_ascii(
+            json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
+        )
     except UnicodeDecodeError:
-        print '{} contains non-ascii characters. Exiting.'.format(file_path)
+        print '{} contains non-ascii characters. Exiting.'.format(str_)
         exit()
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-    return file_contents
+    return parsed_json
 
 def write_json(struct, file_path, verbose=0):
     """Wrapping file I/O simplifies unit testing.

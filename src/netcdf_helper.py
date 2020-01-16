@@ -1,7 +1,7 @@
 import os
 import shutil
 import datelabel
-from util import run_command, check_executable
+import util
 
 class NetcdfHelper(object):
     def __init__(self):
@@ -42,7 +42,7 @@ class NcoNetcdfHelper(NetcdfHelper):
     @staticmethod
     def nc_check_environ():
         # check nco exists
-        if not check_executable('ncks'):
+        if not util.check_executable('ncks'):
             raise OSError('NCO utilities not found on $PATH.')
 
     @staticmethod
@@ -50,7 +50,7 @@ class NcoNetcdfHelper(NetcdfHelper):
         if working_dir is None:
             working_dir = os.getcwd()
         # not running in shell, so can't use glob expansion.
-        run_command(['ncrcat', '--no_tmp_fl', '-O'] + chunk_list + [out_file], 
+        util.run_command(['ncrcat', '--no_tmp_fl', '-O'] + chunk_list + [out_file], 
             cwd=working_dir, 
             dry_run=dry_run
         )
@@ -67,7 +67,7 @@ class NcoNetcdfHelper(NetcdfHelper):
             working_dir = os.getcwd()
         # don't need to quote time strings in args to ncks because it's not 
         # being called by a shell
-        run_command(
+        util.run_command(
             ['ncks', '--no_tmp_fl', '-O', '-d', "{},{},{}".format(
                 time_var_name, 
                 date_range.start.isoformat(),
@@ -87,6 +87,18 @@ class NcoNetcdfHelper(NetcdfHelper):
                 shutil.move(out_file, in_file)
                 os.chdir(cwd)
 
+    @staticmethod
+    def ncdump_h(in_file, dry_run=False):
+        # JSON output for -m is malformed in NCO <=4.5.4, verified OK for 4.7.6
+        json_str = util.run_command(
+            ['ncks', '--jsn', '-m', in_file],
+            dry_run=dry_run
+        )
+        if dry_run:
+            # dummy answer
+            return {'dimensions': dict(), 'variables':dict()}
+        else:
+            return util.parse_json('\n'.join(json_str))
 
 class CdoNetcdfHelper(NetcdfHelper):
     pass

@@ -1,3 +1,13 @@
+# Eulerian Storm Tracker Readme 
+Code created by: Jeyavinoth Jeyaratnam (The City College of New York, CUNY)
+
+Last Modified: 01/17/2020
+
+Extra python modules needed: 
+
+1. cython, cartopy - which needs libgeos to be installed (Ubuntu: sudo apt install libgeos-dev libgeos++-dev libproj-dev proj-data proj-bin)
+
+
 # Changes made to the code outside of the "eulerian-storm-track" folder
 
 These changes were necessary to get the code running from the "develop" branch from MDTF-diagnostics github repo.
@@ -28,4 +38,9 @@ So in order to avoid the above error, I use the develop branch, even though it i
 2. In the same **src/mdtf_settings.json** file, I change the **pod_list** in **case_list** to only run for **Wheeler_Kiladis** and **eulerian-strom-track** (my code). This is just for testing purposes.
 3. In addition, I turn off **CASENAME: "Lmon_GISS...."**
 4. There may be additional changes to the code, just revert back to the original if needed and add in **eulerian-storm-track** to your **pod_list**.
+
+
+## Changes inferred from other modules being editted. 
+
+1. It looks like the way we write out varlist and namelist has changed to json formatting. Therefore, I copy the style provided in Wheeler_Khiladis pod. 
 

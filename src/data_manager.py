@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import copy
 import shutil
 import atexit
 import signal
@@ -241,6 +242,7 @@ class DataManager(object):
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
+            var.axes = copy.deepcopy(translate.axes[self.convention])
 
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():

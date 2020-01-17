@@ -218,7 +218,7 @@ class Diagnostic(object):
         for var in self.iter_vars_and_alts():
             util.setenv(var.original_name, var.name_in_model, 
                 self.pod_env_vars, verbose=verbose)
-            for ax in var.axes:
+            for ax in var.axes.values():
                 if ax['envvar'] not in axes:
                     axes[ax['envvar']] = ax['name']
                 elif axes[ax['envvar']] != ax['name']:

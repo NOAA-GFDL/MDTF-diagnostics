@@ -14,7 +14,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
 begin
 
   Model = getenv("CASENAME") 
-  pr_conv=stringtointeger(getenv("pr_conversion_mm/day"))
+  pr_conv=stringtointeger(getenv("pr_conversion_mm_day"))
   latS   = -10.
   latN   =  10.
 print("----------------------------------------------------------------------------------")

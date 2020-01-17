@@ -5,20 +5,143 @@ import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 from src.data_manager import DataManager
 from src.shared_diagnostic import Diagnostic
+from subprocess import CalledProcessError
 
+class TestBasicClasses(unittest.TestCase):
+    def test_singleton(self):
+        # Can only be instantiated once
+        class Temp1(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp1()
+        temp2 = Temp1()
+        temp1.foo = 5
+        self.assertEqual(temp2.foo, 5)
+
+    def test_singleton_reset(self):
+        # Verify cleanup works
+        class Temp2(util.Singleton):
+            def __init__(self):
+                self.foo = 0
+        temp1 = Temp2()
+        temp1.foo = 5
+        temp1._reset()
+        temp2 = Temp2()
+        self.assertEqual(temp2.foo, 0)
+
+    def test_multimap_inverse(self):
+        # test inverse map
+        temp = util.MultiMap({'a':1, 'b':2})
+        temp_inv = temp.inverse()
+        self.assertIn(1, temp_inv)
+        self.assertEqual(temp_inv[2], set(['b']))
+
+    def test_multimap_setitem(self):
+        # test key addition and handling of duplicate values
+        temp = util.MultiMap({'a':1, 'b':2})
+        temp['c'] = 1           
+        temp_inv = temp.inverse()
+        self.assertIn(1, temp_inv)
+        self.assertItemsEqual(temp_inv[1], set(['a','c']))
+        temp['b'] = 3
+        temp_inv = temp.inverse()
+        self.assertNotIn(2, temp_inv)
+
+    def test_multimap_delitem(self):
+        # test item deletion
+        temp = util.MultiMap({'a':1, 'b':2})
+        del temp['b']
+        temp_inv = temp.inverse()
+        self.assertNotIn(2, temp_inv)
+
+    def test_multimap_add(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['a'].add(3)
+        temp_inv = temp.inverse()
+        self.assertIn(3, temp_inv)
+        self.assertItemsEqual(temp_inv[3], set(['a']))
+        temp['a'].add(2)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['a','b']))
+
+    def test_multimap_add_new(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['x'].add(2)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['b','x']))
+
+    def test_multimap_remove(self):
+        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp['c'].add(2)
+        temp['c'].remove(1)
+        temp_inv = temp.inverse()
+        self.assertIn(2, temp_inv)
+        self.assertItemsEqual(temp_inv[2], set(['b','c']))
+        self.assertIn(1, temp_inv)
+        self.assertItemsEqual(temp_inv[1], set(['a']))
+
+    def test_namespace_basic(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertEqual(test.name, 'A')
+        self.assertEqual(test.B, 'C')
+        with self.assertRaises(AttributeError):
+            _ = test.D
+        test.B = 'D'
+        self.assertEqual(test.B, 'D')
+
+    def test_namespace_dict_ops(self):
+        test = util.Namespace(name='A', B='C')
+        self.assertIn('B', test)
+        self.assertNotIn('D', test)
+
+    def test_namespace_tofrom_dict(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.toDict()
+        self.assertEqual(test2['name'], 'A')
+        self.assertEqual(test2['B'], 'C')
+        test3 = util.Namespace.fromDict(test2)
+        self.assertEqual(test3.name, 'A')
+        self.assertEqual(test3.B, 'C')
+
+    def test_namespace_copy(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test.copy()
+        self.assertEqual(test2.name, 'A')
+        self.assertEqual(test2.B, 'C')
+        test2.B = 'D'
+        self.assertEqual(test.B, 'C')
+        self.assertEqual(test2.B, 'D')
+
+    def test_namespace_hash(self):
+        test = util.Namespace(name='A', B='C')
+        test2 = test
+        test3 = test.copy()
+        test4 = test.copy()
+        test4.name = 'not_the_same'
+        test5 = util.Namespace(name='A', B='C')
+        self.assertEqual(test, test2)
+        self.assertEqual(test, test3)
+        self.assertNotEqual(test, test4)
+        self.assertEqual(test, test5)
+        set_test = set([test, test2, test3, test4, test5])
+        self.assertEqual(len(set_test), 2)
+        self.assertIn(test, set_test)
+        self.assertIn(test4, set_test)
+
+class TestDataSet(unittest.TestCase):
+    pass
 
 class TestUtil(unittest.TestCase):
 
-    def test_read_yaml(self):
+    def test_read_json(self):
         pass
 
-    def test_write_yaml(self):
+    def test_write_json(self):
         pass
 
     def test_get_available_programs(self):
-        pass
-
-    def test_makefilepath(self):
         pass
 
     # ---------------------------------------------------
@@ -55,68 +178,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(test_d['TEST_FALSE'], False)
         self.assertEqual(os.environ['TEST_FALSE'], '0')
 
-    # ---------------------------------------------------
-
-    def test_singleton(self):
-        # Can only be instantiated once
-        class Temp1(util.Singleton):
-            def __init__(self):
-                self.foo = 0
-        temp1 = Temp1()
-        temp2 = Temp1()
-        temp1.foo = 5
-        self.assertEqual(temp2.foo, 5)
-
-    def test_singleton_reset(self):
-        # Verify cleanup works
-        class Temp2(util.Singleton):
-            def __init__(self):
-                self.foo = 0
-        temp1 = Temp2()
-        temp1.foo = 5
-        temp1._reset()
-        temp2 = Temp2()
-        self.assertEqual(temp2.foo, 0)
-
-    def test_bidict_inverse(self):
-        # test inverse map
-        temp = util.BiDict({'a':1, 'b':2})
-        self.assertIn(1, temp.inverse)
-        self.assertEqual(temp.inverse[2],['b'])
-
-    def test_bidict_setitem(self):
-        # test key addition and handling of duplicate values
-        temp = util.BiDict({'a':1, 'b':2})
-        temp['c'] = 1           
-        self.assertIn(1, temp.inverse)
-        self.assertItemsEqual(temp.inverse[1],['a','c'])
-        temp['b'] = 3
-        self.assertIn(2, temp.inverse)
-        self.assertEqual(temp.inverse[2],[])
-
-    def test_bidict_delitem(self):
-        # test item deletion
-        temp = util.BiDict({'a':1, 'b':2})
-        del temp['b']
-        self.assertNotIn(2, temp.inverse)
-
-    @mock.patch('src.util.read_yaml', 
-        return_value = {'convention_name':'A','var_names':{'B':'D'}})
-    def test_read_model_varnames(self, mock_read_yaml):
-        # normal operation - convert string to list
-        temp = util.VariableTranslator(unittest_flag = True)
-        self.assertEqual(temp.fromCF('A','B'), 'D')
-        temp._reset()
-
-    @mock.patch('src.util.read_yaml', 
-        return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
-    def test_read_model_varnames_multiple(self, mock_read_yaml):
-        # create multiple entries when multiple models specified
-        temp = util.VariableTranslator(unittest_flag = True)
-        self.assertEqual(temp.fromCF('A','B'), 'D')
-        self.assertEqual(temp.fromCF('C','B'), 'D')
-        temp._reset()
-
     os_environ_check_required_envvar = {'A':'B', 'C':'D'}
 
     @mock.patch.dict('os.environ', os_environ_check_required_envvar)
@@ -150,7 +211,7 @@ class TestUtil(unittest.TestCase):
     @mock.patch('os.makedirs')
     def test_check_required_dirs_not_found(self, mock_makedirs, mock_exists):
         # try to exit() if any directories not found
-        self.assertRaises(SystemExit, util.check_required_dirs, ['DIR1XXX'], [])
+        self.assertRaises(OSError, util.check_required_dirs, ['DIR1XXX'], [])
         mock_makedirs.assert_not_called()
 
     @mock.patch('os.path.exists', return_value = False)
@@ -163,8 +224,15 @@ class TestUtil(unittest.TestCase):
             self.fail()
         mock_makedirs.assert_called_once_with('DIR2')
 
-
 class TestVariableTranslator(unittest.TestCase):
+    @mock.patch('src.util.read_json', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_json):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
@@ -173,39 +241,58 @@ class TestVariableTranslator(unittest.TestCase):
         temp = util.VariableTranslator(unittest_flag=True)
         temp._reset()
 
-    # ---------------------------------------------------
-    default_translation = {
-        'convention_name':'not_CF',
-        'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
-        }
-
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator(self, mock_read_yaml):
+    def test_variabletranslator(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.toCF('not_CF', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('not_CF', 'pr_var'), 'PRECT')
 
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator_cf(self, mock_read_yaml):
+    def test_variabletranslator_cf(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
         self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
 
-    @mock.patch('src.util.read_yaml', return_value = default_translation)
-    def test_variabletranslator_no_key(self, mock_read_yaml):
+    def test_variabletranslator_no_key(self):
         temp = util.VariableTranslator(unittest_flag = True)
         self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.toCF, 'not_CF', 'nonexistent_var')
         self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.fromCF, 'not_CF', 'nonexistent_var')
 
+class TestVariableTranslatorReadFiles(unittest.TestCase):
+    @mock.patch('src.util.read_json', 
+        return_value = {'convention_name':'A','var_names':{'B':'D'}})
+    def test_read_model_varnames(self, mock_read_json):
+        # normal operation - convert string to list
+        temp = util.VariableTranslator(unittest_flag = True)
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+        temp._reset()
+
+    @mock.patch('src.util.read_json', 
+        return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
+    def test_read_model_varnames_multiple(self, mock_read_json):
+        # create multiple entries when multiple models specified
+        temp = util.VariableTranslator(unittest_flag = True)
+        self.assertEqual(temp.fromCF('A','B'), 'D')
+        self.assertEqual(temp.fromCF('C','B'), 'D')
+        temp._reset()
 
 class TestPathManager(unittest.TestCase):
+    # pylint: disable=maybe-no-member
+    @mock.patch('src.util.read_json', 
+        return_value = {
+            'convention_name':'not_CF',
+            'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
+            })
+    def setUp(self, mock_read_json):
+        # set up translation dictionary without calls to filesystem
+        _ = util.VariableTranslator(unittest_flag = True)
 
     def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
+        # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
+        temp = util.VariableTranslator(unittest_flag=True)
+        temp._reset()
         temp = util.PathManager()
         temp._reset()
 
@@ -221,13 +308,14 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(paths.OUTPUT_DIR, 'E')
 
     def test_pathmgr_global_asserterror(self):
+
         d = {
             'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
             'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
         }
         self.assertRaises(AssertionError, util.PathManager, d)
         # initialize successfully so that tearDown doesn't break
-        paths = util.PathManager(unittest_flag = True) 
+        _ = util.PathManager(unittest_flag = True) 
 
     def test_pathmgr_global_testmode(self):
         paths = util.PathManager(unittest_flag = True)
@@ -246,7 +334,8 @@ class TestPathManager(unittest.TestCase):
 
     @mock.patch.dict('os.environ', default_os_environ)
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    def test_pathmgr_model(self):
+    @mock.patch('src.data_manager.atexit.register')
+    def test_pathmgr_model(self, mock_register):
         paths = util.PathManager(unittest_flag = True)
         case = DataManager(self.default_case)
         d = paths.modelPaths(case)
@@ -254,9 +343,9 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
     @mock.patch.dict('os.environ', default_os_environ)
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_pathmgr_pod(self, mock_exists, mock_read_yaml):
+    def test_pathmgr_pod(self, mock_exists, mock_read_json):
         paths = util.PathManager(unittest_flag = True)
         pod = Diagnostic('A')
         pod.MODEL_WK_DIR = 'B'
@@ -266,71 +355,67 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(d['POD_WK_DIR'], 'B/A')
 
     @mock.patch.dict('os.environ', default_os_environ)
-    @mock.patch('src.shared_diagnostic.util.read_yaml', return_value = default_pod_CF)
+    @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
-    def test_pathmgr_pod_nomodel(self, mock_exists, mock_read_yaml):
+    def test_pathmgr_pod_nomodel(self, mock_exists, mock_read_json):
         paths = util.PathManager(unittest_flag = True)
         pod = Diagnostic('A')
         d = paths.podPaths(pod)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/A')
         self.assertNotIn('POD_WK_DIR', d)
 
+# ---------------------------------------------------
+class TestSubprocessInteraction(unittest.TestCase):
+    def test_run_shell_commands_stdout1(self):
+        input = 'echo "foo"'
+        out = util.run_shell_commands(input)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], 'foo')
 
-class TestMDTFArgParsing(unittest.TestCase):
+    def test_run_shell_commands_stdout2(self):
+        input = ['echo "foo"', 'echo "bar"']
+        out = util.run_shell_commands(input)
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'foo')
+        self.assertEqual(out[1], 'bar')
+        
+    def test_run_shell_commands_exitcode(self):
+        input = ['echo "foo"', 'false']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_shell_commands(input)
 
-    def setUp(self):
-        temp = util.PathManager(unittest_flag = True)
-        self.config_test = {
-            'case_list':[{'A':'B'}],
-            'paths':{'C':'/D'},
-            'settings':{'E':'F', 'verbose':0}
-        }
+    def test_run_shell_commands_envvars(self):
+        input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
+        out = util.run_shell_commands(input, env={'FOO':'bar'})
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0], 'bar')
+        self.assertEqual(out[1], 'baz')
 
-    def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
-        # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
-        temp._reset()
+    def test_poll_command_shell_true(self):
+        rc = util.poll_command('echo "foo"', shell=True)
+        self.assertEqual(rc, 0)
 
-    # # do this because 1st argument to set_mdtf_env_vars is object containing
-    # # parsed command-line arguments, accessed via its attributes
-    MockArgs = namedtuple('MockArgs', ['C', 'E'])
+    def test_poll_command_shell_false(self):
+        rc = util.poll_command(['echo', 'foo'], shell=False)
+        self.assertEqual(rc, 0)
+    
+    def test_poll_command_error(self):
+        rc = util.poll_command(['false'], shell=False)
+        self.assertEqual(rc, 1)
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_config(self, mock_check_required_dirs):
-        # set paths from config file
-        args = self.MockArgs(C=None, E=None)
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(args, config)
-        self.assertEqual(config['paths']['C'], '/D')
-        self.assertEqual(config['settings']['E'], 'F')
+    def test_run_command_stdout1(self):
+        out = util.run_command(['echo', '"foo"'])
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '"foo"')
 
-    @mock.patch('src.util.check_required_dirs')
-    def test_parse_mdtf_args_config_cmdline(self, mock_check_required_dirs):
-        # override config file with command line arguments
-        args = self.MockArgs(C='/X', E='Y')
-        self.assertEqual(args.C, '/X')
-        self.assertEqual(args.E, 'Y')
-        config = self.config_test.copy()
-        config = util.parse_mdtf_args(args, config)
-        self.assertEqual(config['paths']['C'], '/X')
-        self.assertEqual(config['settings']['E'], 'Y')
-
-    def test_parse_mdtf_args_config_settings(self):
-        # set settings from config file
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['E'], 'F')
-        self.assertEqual(os.environ['E'], 'F')        
-
-    def test_sparse_mdtf_args_config_rgb(self):
-        # set path to /RGB from os.environ
-        config = self.config_test.copy()
-        util.set_mdtf_env_vars(config)
-        self.assertEqual(config['envvars']['RGB'], 'TEST_CODE_ROOT/src/rgb')
-        self.assertEqual(os.environ['RGB'], 'TEST_CODE_ROOT/src/rgb')
-
+    def test_run_command_exitcode(self):
+        input = ['exit', '1']
+        with self.assertRaises(Exception):
+            # I couldn't get this to catch CalledProcessError specifically,
+            # maybe because it takes args?
+            util.run_command(input)
 
 # ---------------------------------------------------
 

@@ -28,7 +28,8 @@ while getopts "vp:a:b:c:z:" opt; do
         z) # look for environment variable
             if [ ! -z ${OPTARG} ]; then
                 if [ "$verbose" = true ]; then
-                    echo "Environment variable ${OPTARG} is defined."
+                    # echo "Environment variable ${OPTARG} is defined."
+                    true
                 fi
                 continue
             else
@@ -37,9 +38,9 @@ while getopts "vp:a:b:c:z:" opt; do
             fi
         ;;
         a) # look for python module
-           # tail -n necessary to avoid getting broken pipe errors?
            # also can't figure out how to disable pip's python2.7 warning
-            if pip list --no-color --disable-pip-version-check | tail -n +1 | grep -qF ${OPTARG}; then
+            if pip list --disable-pip-version-check \
+                | awk -v p="${OPTARG}" 'tolower($0) ~ tolower(p) {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "pip list found python module ${OPTARG}."
                 fi
@@ -66,7 +67,8 @@ while getopts "vp:a:b:c:z:" opt; do
             fi
         ;;
         c) #look for R package
-            if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' | grep -qF ${OPTARG}; then
+            if Rscript -e 'cat(c(.libPaths(), installed.packages()[,1]), sep = "\n")' \
+                | awk -v p="${OPTARG}" 'tolower($0) ~ tolower(p) {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
                     echo "Found R package ${OPTARG}."
                 fi

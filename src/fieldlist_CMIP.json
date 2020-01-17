@@ -1,15 +1,15 @@
 {
   "convention_name" : "CMIP",
+  "axes" : {
+    "X" : {"name" : "lon", "envvar" : "lon_coord"},
+    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
+    "# TODO: Z should be plev, set here for compatibility w/CMORized CESM2 ":"",
+    "Z" : {"name" : "lev", "envvar" : "lev_coord"},
+    "T" : {"name" : "time", "envvar" : "time_coord"}
+  },
   "var_names" : {
     "hyam_var" : "hyam",
     "hybm_var" : "hybm",
-    "lat_coord" : "lat",
-    "lon_coord" : "lon",
-    "lev_coord" : "lev",
-    "time_coord" : "time",
-    "lat_var" : "lat ",
-    "lon_var" : "lon",
-    "time_var" : "time",
     "ua_var" : "ua",
     "va_var" : "va",
     "zg_var" : "zg",
@@ -57,14 +57,6 @@
     "lev_var" : "lev",
     "deptho_var" : "deptho",
     "thkcello_var" : "thkcello",
-    "time_bnds_var" : "time_bnds",
-    "lev_bnds_var" : "lev_bnds",
-    "lat_bnds_var" : "lat_bnds",
-    "lon_bnds_var" : "lon_bnds",
-    "# units for conversion factors are m/s: ______________________________":"",
-    "pr_conversion_factor" : 1,
-    "prc_conversion_factor" : 1,
-    "prls_conversion_factor" : 1,
     "# Variables for Convective Transition Diagnostics module: ____________":"",
     "# ta: 3D temperature, units = K:                                      ":"",
     "ta_var" : "ta",
@@ -77,5 +69,12 @@
     "# Variables for SM_ET_coupling module ________________________________":"",
     "mrsos_var" : "mrsos",
     "evspsbl_var" : "evspsbl"
+  },
+  "units" : {
+    "# TODO: assign to variables; do honest unit conversion                ":"",
+    "# units for conversion factors are m/s: ______________________________":"",
+    "pr_conversion_factor" : 1,
+    "prc_conversion_factor" : 1,
+    "prls_conversion_factor" : 1
   }
 }

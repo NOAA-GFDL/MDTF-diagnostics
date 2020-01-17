@@ -1,15 +1,14 @@
 {
   "convention_name" : "CESM",
+  "axes" : {
+    "X" : {"name" : "lon", "envvar" : "lon_coord"},
+    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
+    "Z" : {"name" : "lev", "envvar" : "lev_coord"},
+    "T" : {"name" : "time", "envvar" : "time_coord"}
+  },
   "var_names" : {
     "hyam_var" : "hyam",
     "hybm_var" : "hybm",
-    "lat_coord" : "lat",
-    "lon_coord" : "lon",
-    "lev_coord" : "lev",
-    "time_coord" : "time",
-    "lat_var" : "lat",
-    "lon_var" : "lon",
-    "time_var" : "time",
     "ua_var" : "U",
     "zg_var" : "Z3",
     "pr_var" : "PRECT",
@@ -36,10 +35,6 @@
     "v850_var" : "V850",
     "omega500_var" : "OMEGA500",
     "z250_var" : "Z250",
-    "# conversion factors: units in CAM (m/s), convert to kg/m2/s (mm/s)   ":"",
-    "pr_conversion_factor" : 1000,
-    "prc_conversion_factor" : 1000,
-    "prls_conversion_factor" : 1000,
     "# Variables for Convective Transition Diagnostics module: ____________":"",
     "# ta: 3D temperature, units = K:                                      ":"",
     "ta_var" : "ta",
@@ -57,7 +52,14 @@
     "#u850_var" : "u850",
     "#u250_var" : "u250",
     "#Geopotential height at 250-hPa level(m)                              ":"",
-    "#z250_var" : "z3250",
+    "#z250_var" : "z3250"
+  },
+  "units" : {
+    "# TODO: assign to variables; do honest unit conversion                ":"",
+    "# conversion factors: units in CAM (m/s), convert to kg/m2/s (mm/s)   ":"",
+    "pr_conversion_factor" : 1000,
+    "prc_conversion_factor" : 1000,
+    "prls_conversion_factor" : 1000,
     "# units in CAM (m/s), convert to (mm/day) required for plotting:      ":"",
     "pr_conversion_mm_day" : 86400000
   }

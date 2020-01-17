@@ -1,19 +1,14 @@
 {
   "convention_name" : "AM4",
-  "var_names" : {
-    "lat_coord" : "lat",
-    "lon_coord" : "lon",
+  "axes" : {
+    "X" : {"name" : "lon", "envvar" : "lon_coord"},
+    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
     "# pfull must be on pressure levels (hPa)                              ":"",
-    "lev_coord" : "pfull",
-    "time_coord" : "time",
-    "lat_var" : "lat",
-    "lon_var" : "lon",
-    "time_var" : "time",
+    "Z" : {"name" : "pfull", "envvar" : "lev_coord"},
+    "T" : {"name" : "time", "envvar" : "time_coord"}
+  },
+  "var_names" : {
     "ps_var" : "PS",
-    "# units for conversion factors are m/s: ______________________________":"",
-    "pr_conversion_factor" : 1,
-    "prc_conversion_factor" : 1,
-    "prls_conversion_factor" : 1,
     "# Variables for Convective Transition Diagnostics module: ____________":"",
     "# ta: 3D temperature, units = K:                                      ":"",
     "ta_var" : "ta",
@@ -26,5 +21,12 @@
     "# Variables for Xianan Jiang mjo diagnostic: _________________________":"",
     "pr_var" : "precip",
     "qa_var" : "sphum"
+  },
+  "units" : {
+    "# TODO: assign to variables; do honest unit conversion                ":"",
+    "# units for conversion factors are m/s: ______________________________":"",
+    "pr_conversion_factor" : 1,
+    "prc_conversion_factor" : 1,
+    "prls_conversion_factor" : 1,
   }
 }

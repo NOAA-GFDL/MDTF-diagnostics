@@ -1,14 +1,12 @@
 {
   "convention_name" : "CMIP_GFDL",
+  "axes" : {
+    "X" : {"name" : "lon", "envvar" : "lon_coord"},
+    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
+    "Z" : {"name" : "plev19", "envvar" : "lev_coord"},
+    "T" : {"name" : "time", "envvar" : "time_coord"}
+  },
   "var_names" : {
-    "lat_coord" : "lat",
-    "lon_coord" : "lon",
-    "lev_coord" : "plev19",
-    "time_coord" : "time",
-    "lat_var" : "lat",
-    "lon_var" : "lon",
-    "time_var" : "time",
-    "lev_var" : "plev19",
     "ua_var" : "ua",
     "va_var" : "va",
     "zg_var" : "zg",
@@ -46,10 +44,6 @@
     "rlut_var" : "rlut",
     "hfss_var" : "hfss",
     "hfls_var" : "hfls",
-    "# units for conversion factors are m/s: ______________________________":"",
-    "pr_conversion_factor" : 1,
-    "prc_conversion_factor" : 1,
-    "prls_conversion_factor" : 1,
     "# Variables for Convective Transition Diagnostics module:             ":"",
     "# ta: 3D temperature, units = K:                                      ":"",
     "ta_var" : "ta",
@@ -71,5 +65,12 @@
     "# Variables for SM_ET_coupling module ________________________________":"",
     "mrsos_var" : "mrsos",
     "evspsbl_var" : "evspsbl"
+  },
+  "units" : {
+    "# TODO: assign to variables; do honest unit conversion                ":"",
+    "# units for conversion factors are m/s: ______________________________":"",
+    "pr_conversion_factor" : 1,
+    "prc_conversion_factor" : 1,
+    "prls_conversion_factor" : 1
   }
 }

@@ -9,11 +9,6 @@ load "$POD_HOME/calc_utils.ncl"
 begin
 
 casename = getenv("CASENAME")
-
-lat_var = getenv("lat_var")
-lon_var = getenv("lon_var")
-time_var = getenv("time_var")
-
 time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
@@ -47,7 +42,7 @@ else
     if( isfilepresent(file_dir+file_pr) ) then
     	print("reading "+file_dir+file_pr)
 	f = addfile(file_dir+file_pr,"r")
-	time = f->$time_var$
+	time = f->$time_coord$
 	date = ut_calendar(time,-2)
 
 	print(getfilevarnames(f))
@@ -60,8 +55,8 @@ else
 	var!1 = "lat"
 	var!2 = "lon"
 	var&time = time
-	var&lat = f->$lat_var$
-	var&lon = f->$lon_var$
+	var&lat = f->$lat_coord$
+	var&lon = f->$lon_coord$
 
 	var = (/var*1000.0*86400.0/) ; mm/day
 	var@units = "mm/day"
@@ -94,7 +89,7 @@ else
 if( isfilepresent(file_dir+file_u200) ) then
 
 f = addfile(file_dir+file_u200,"r")
-time = f->$time_var$
+time = f->$time_coord$
 date = ut_calendar(time,-2)
 
 
@@ -105,8 +100,8 @@ var!0 = "time"
 var!1 = "lat"
 var!2 = "lon"
 var&time = time
-var&lat = f->$lat_var$
-var&lon = f->$lon_var$
+var&lat = f->$lat_coord$
+var&lon = f->$lon_coord$
 
 print("writing "+file_dir+casename+".u200.day.anom.nc")
 fo = addfile(file_dir+casename+".u200.day.anom.nc","c")
@@ -135,7 +130,7 @@ if( isfilepresent(file_dir+file_u850) ) then
 
 print("reading "+file_u850)
 f = addfile(file_dir+file_u850,"r")
-time = f->$time_var$
+time = f->$time_coord$
 date = ut_calendar(time,-2)
 
 
@@ -146,8 +141,8 @@ var!0 = "time"
 var!1 = "lat"
 var!2 = "lon"
 var&time = time
-var&lat = f->$lat_var$
-var&lon = f->$lon_var$
+var&lat = f->$lat_coord$
+var&lon = f->$lon_coord$
 
 print("writing "+file_dir+casename+".u850.day.anom.nc")
 fo = addfile(file_dir+casename+".u850.day.anom.nc","c")
@@ -175,7 +170,7 @@ if( isfilepresent(file_dir+file_v200) ) then
     print(get_script_name()+"Creating "+file_dir+casename+".v200.daily.anom.nc")
     print("reading "+file_v200)
     f = addfile(file_dir+file_v200,"r")
-    time = f->$time_var$
+    time = f->$time_coord$
     date = ut_calendar(time,-2)
 
     invar = f->v200($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
@@ -185,8 +180,8 @@ if( isfilepresent(file_dir+file_v200) ) then
     var!1 = "lat"
     var!2 = "lon"
     var&time = time
-    var&lat = f->$lat_var$
-    var&lon = f->$lon_var$
+    var&lat = f->$lat_coord$
+    var&lon = f->$lon_coord$
 
     print("writing "+file_dir+casename+".v200.day.anom.nc")
     fo = addfile(file_dir+casename+".v200.day.anom.nc","c")
@@ -217,7 +212,7 @@ if( isfilepresent(file_dir+file_v850) ) then
 print(get_script_name()+"Creating "+file_dir+casename+".v850.daily.anom.nc")
 print("reading "+file_v850)
 f = addfile(file_dir+file_v850,"r")
-time = f->$time_var$
+time = f->$time_coord$
 date = ut_calendar(time,-2)
 
 invar = f->v850($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
@@ -227,8 +222,8 @@ var!0 = "time"
 var!1 = "lat"
 var!2 = "lon"
 var&time = time
-var&lat = f->$lat_var$
-var&lon = f->$lon_var$
+var&lat = f->$lat_coord$
+var&lon = f->$lon_coord$
 
 print("writing "+file_dir+casename+".v850.day.anom.nc")
 fo = addfile(file_dir+casename+".v850.day.anom.nc","c")
@@ -258,7 +253,7 @@ if( isfilepresent(file_dir+file_rlut) ) then
 
 print("reading "+file_rlut)
 f = addfile(file_dir+file_rlut,"r")
-time = f->$time_var$
+time = f->$time_coord$
 date = ut_calendar(time,-2)
 
 invar = f->rlut($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
@@ -268,8 +263,8 @@ var!0 = "time"
 var!1 = "lat"
 var!2 = "lon"
 var&time = time
-var&lat = f->$lat_var$
-var&lon = f->$lon_var$
+var&lat = f->$lat_coord$
+var&lon = f->$lon_coord$
 
 print("writing "+file_dir+casename+".rlut.day.anom.nc")
 fo = addfile(file_dir+casename+".rlut.day.anom.nc","c")

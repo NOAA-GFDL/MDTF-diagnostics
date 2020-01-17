@@ -26,11 +26,11 @@ file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
 
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
 f = addfile(file_pr,"r")
-lat_var = getenv("lat_var")
-lat = f->$lat_var$
+lat_coord = getenv("lat_coord")
+lat = f->$lat_coord$
 nlat = dimsizes(lat)
-lon_var = getenv("lon_var")
-lon = f->$lon_var$
+lon_coord = getenv("lon_coord")
+lon = f->$lon_coord$
 nlon = dimsizes(lon)
 if(isfilevar(f,"gw")) then
    gw = f->gw
@@ -64,8 +64,8 @@ gwEq = gw({-40:40})
 yr1 = stringtointeger(getenv("FIRSTYR"))
 yr2 = stringtointeger(getenv("LASTYR"))
 
-time_var = getenv("time_var")
-time_all = f->$time_var$
+time_coord = getenv("time_coord")
+time_all = f->$time_coord$
 date_all = ut_calendar(time_all,-2)
 date_all!0 = "time"
 date_all&time = time_all

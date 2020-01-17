@@ -54,7 +54,6 @@
     "vmo_var" : "vmo",
     "thetao_var" : "thetao",
     "bas_var" : "ind",
-    "lev_var" : "lev",
     "deptho_var" : "deptho",
     "thkcello_var" : "thkcello",
     "# Variables for Convective Transition Diagnostics module: ____________":"",

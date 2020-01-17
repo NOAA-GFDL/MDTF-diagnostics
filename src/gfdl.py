@@ -443,8 +443,7 @@ class GfdlarchiveDataManager(DataManager):
         # raise error when we try to concat them
         file_name = os.path.basename(remote_files[0]._remote_data)
         file_axes = self.nc_get_attribute(
-            'axis', in_file=file_name, 
-            working_dir=work_dir, dry_run=self.dry_run
+            'axis', in_file=file_name, cwd=work_dir, dry_run=self.dry_run
         )
         file_axes = util.MultiMap(file_axes).inverse() # lookup names from attrs
         for var in self.data_keys[d_key]: # update DataSets with axis info
@@ -477,9 +476,7 @@ class GfdlarchiveDataManager(DataManager):
                 trim_count = trim_count + 1
                 self.nc_crop_time_axis(
                     time_var_name, trimmed_range, 
-                    in_file=file_name, 
-                    working_dir=work_dir, 
-                    dry_run=self.dry_run
+                    in_file=file_name, cwd=work_dir, dry_run=self.dry_run
                 )
         assert trim_count <= 2
 
@@ -490,8 +487,7 @@ class GfdlarchiveDataManager(DataManager):
                 d_key.name_in_model, dest_path)
             chunks = [os.path.basename(f._remote_data) for f in remote_files]
             self.nc_cat_chunks(chunks, dest_path, 
-                working_dir=work_dir,
-                dry_run=self.dry_run
+                cwd=work_dir, dry_run=self.dry_run
             )
         else:
             f = util.coerce_from_collection(remote_files)

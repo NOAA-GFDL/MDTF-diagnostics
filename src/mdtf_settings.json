@@ -23,7 +23,7 @@
       "pod_list": [
           "# Optional: PODs to run for this model only",
           "# (otherwise use pod_list below)",
-          "#Wheeler_Kiladis",
+          "Wheeler_Kiladis",
           "eulerian_storm_track",
           "#EOF_500hPa",
           "#cionvective_transition_diag",

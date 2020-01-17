@@ -174,18 +174,6 @@ class NcoNetcdfHelper(NetcdfHelper):
                 cwd=cwd, dry_run=dry_run
             )
 
-    @classmethod
-    def nc_get_axis_name(cls, ax_attr, in_file=None, cwd=None, dry_run=False):
-        """Return variable name corresponding to an axis attribute.
-
-        Axes attributes are usually X,Y,Z,T etc.
-        """
-        d = cls.ncdump_h(in_file=in_file, cwd=cwd, dry_run=dry_run)
-        for ax in set(d['dimensions']).intersection(d['variables']):
-            if d['variables'][ax].get('axis', '').lower() == ax_attr.lower():
-                return ax
-        return None
-
     @staticmethod
     def nc_dump_axis(ax_name, in_file=None, cwd=None, dry_run=False):
         # OK for 4.7.6, works on 4.5.4 if "--trd" flag removed

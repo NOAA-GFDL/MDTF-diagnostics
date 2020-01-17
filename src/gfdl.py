@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import copy
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -432,11 +433,41 @@ class GfdlarchiveDataManager(DataManager):
             ], 
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
-            ) 
+            )
+
+        # ----------------------------------------
+        # Processing of copied files: TODO: refactor individual steps into 
+        # separate functions 
+
+        translate = util.VariableTranslator()
+        # set axis names from header info
+        ax_defaults = copy.deepcopy(translate.axes[self.convention])
+        # only look at first file; if other chunks for same var differ, NCO will
+        # raise error when we try to concat them
+        file_name = os.path.basename(remote_files[0]._remote_data)
+        file_axes = self.nc_get_attribute(
+            'axis', in_file=file_name, 
+            working_dir=work_dir, dry_run=self.dry_run
+        )
+        file_axes = util.MultiMap(file_axes).inverse() # lookup names from attrs
+        for ax in ax_defaults:
+            if ax not in file_axes:
+                continue # if ax not found in file, use default value
+            else:
+                file_ax = util.coerce_from_collection(file_axes[ax])
+                if ax_defaults[ax]['name'] != file_ax:
+                    # if ax named differently than expected, log warning & change
+                    print "\tWarning: {} axis named {} in {} ({} convention is {})".format(
+                        ax, file_ax, file_name, self.convention, 
+                        ax_defaults[ax]['name']
+                    )
+                    ax_defaults[ax]['name'] = file_ax
+        for var in self.data_keys[d_key]: # update DataSets with axis info
+            var.axes = ax_defaults
 
         # crop time axis to requested range
-        translate = util.VariableTranslator()
-        time_var_name = translate.fromCF(self.convention, 'time_coord')
+        # do this *before* combining chunks to reduce disk activity
+        time_var_name = var.axes['T']['name']
         trim_count = 0
         for f in remote_files:
             trimmed_range = f.date_range.intersection(

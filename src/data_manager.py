@@ -73,6 +73,10 @@ class DataSet(util.Namespace):
             if key not in self:
                 self[key] = []
 
+        for key in ['axes']:
+            if key not in self:
+                self[key] = dict()
+                
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
             del self.var_name

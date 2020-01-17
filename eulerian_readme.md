@@ -5,7 +5,7 @@ Last Modified: 01/17/2020
 
 Extra python modules needed: 
 
-1. cython, cartopy - which needs libgeos to be installed (Ubuntu: sudo apt install libgeos-dev libgeos++-dev libproj-dev proj-data proj-bin)
+1. basemap, for plotting world maps.
 
 
 # Changes made to the code outside of the "eulerian-storm-track" folder
@@ -43,4 +43,5 @@ So in order to avoid the above error, I use the develop branch, even though it i
 ## Changes inferred from other modules being editted. 
 
 1. It looks like the way we write out varlist and namelist has changed to json formatting. Therefore, I copy the style provided in Wheeler_Khiladis pod. 
+2. **VARDATA** has been changed to **OBS_DATA_DIR**
 

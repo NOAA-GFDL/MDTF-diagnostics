@@ -1,5 +1,6 @@
 #/usr/bin/env python
-import eulerian_storm_track as est
+import eulerian_storm_track_util as est
+import eulerian_storm_track_functions as est_func
 import numpy as np 
 from netCDF4 import Dataset
 import plotter
@@ -41,13 +42,13 @@ for i_year in range(year[0], year[1]+1):
 lonGrid, latGrid = np.meshgrid(in_lon, in_lat)
 
 # converting hourly data into daily, and converting Pascals to hectoPascals
-data_daily, time_daily = est.six_hrly_to_daily(data, year[0], time)
+data_daily, time_daily = est_func.six_hrly_to_daily(data, year[0], time)
 
 # getting the daily difference X(t+1) - X(t)
-diff = est.daily_diff(data_daily)
+diff = est_func.daily_diff(data_daily)
 
 # getting the all year standard deviation average
-std_dev, time_std = est.std_dev(diff, year[0], time_daily, time_period='all')
+std_dev, time_std = est_func.old_std_dev(diff, year[0], time_daily, time_period='all')
 #std_dev, time_std = est.std_dev(diff, year[0], time_daily, time_period='yearly')
 # std_dev, time_std = est.std_dev(diff, year[0], time_daily, time_period='seasonally', season='djf')
 

@@ -1,7 +1,7 @@
 {
   "# block comment" : [
     "Eulerian Storm Track Plots                                               ",
-    "                                                                         ",
+    " Eulerian Storm Track Plots                                              ",
     "This uses daily field of U200, U850, OMEGA500, OLR, PRECT                ",
     "to produce wave spectra plots.                                           ",
     "Each variable should store in a single file.                             "
@@ -10,7 +10,7 @@
   "settings" : {
     "driver" : "eulerian_storm_track.py",
     "long_name" : "Eulerian Storm Track",
-    "description" : "",
+    "description" : "Eulerian Storm Track",
     "required_programs" : ["python"],
     "required_ncl_scripts" : []
   },

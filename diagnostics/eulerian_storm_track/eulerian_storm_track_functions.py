@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 ############# EULERIAN STROM TRACKER ############
+############# Necessary Functions ###############
 ###### Created by: Jeyavinoth Jeyaratnam     ####
 ###### Created Date: 03/29/2019              ####
-###### Last Modified: 10/29/2019             ####
+###### Last Modified: 01/17/2020             ####
 #################################################
 
 # Importing standard libraries

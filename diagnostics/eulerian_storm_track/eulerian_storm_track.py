@@ -1,4 +1,9 @@
-# Code created by Jeyavinoth Jeyaratnam, to be implemented in MDTF 
+############# EULERIAN STROM TRACKER ############
+#############  Main Code  #######################
+###### Created by: Jeyavinoth Jeyaratnam     ####
+###### Created Date: 03/29/2019              ####
+###### Last Modified: 01/17/2020             ####
+#################################################
 
 # Import standarad Python packages 
 import numpy as np 

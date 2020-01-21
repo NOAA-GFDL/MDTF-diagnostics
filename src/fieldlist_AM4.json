@@ -1,11 +1,11 @@
 {
   "convention_name" : "AM4",
   "axes" : {
-    "X" : {"name" : "lon", "envvar" : "lon_coord"},
-    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
+    "lon" : {"axis" : "X", "envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "envvar" : "lat_coord"},
     "# pfull must be on pressure levels (hPa)                              ":"",
-    "Z" : {"name" : "pfull", "envvar" : "lev_coord"},
-    "T" : {"name" : "time", "envvar" : "time_coord"}
+    "pfull" : {"axis" : "Z", "envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "envvar" : "time_coord"}
   },
   "var_names" : {
     "ps_var" : "PS",
@@ -27,6 +27,6 @@
     "# units for conversion factors are m/s: ______________________________":"",
     "pr_conversion_factor" : 1,
     "prc_conversion_factor" : 1,
-    "prls_conversion_factor" : 1,
+    "prls_conversion_factor" : 1
   }
 }

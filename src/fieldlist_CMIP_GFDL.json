@@ -1,10 +1,10 @@
 {
   "convention_name" : "CMIP_GFDL",
   "axes" : {
-    "X" : {"name" : "lon", "envvar" : "lon_coord"},
-    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
-    "Z" : {"name" : "plev19", "envvar" : "lev_coord"},
-    "T" : {"name" : "time", "envvar" : "time_coord"}
+    "lon" : {"axis" : "X", "envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "envvar" : "lat_coord"},
+    "plev19" : {"axis" : "Z", "envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "envvar" : "time_coord"}
   },
   "var_names" : {
     "ua_var" : "ua",

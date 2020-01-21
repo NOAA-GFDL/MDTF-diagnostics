@@ -1,10 +1,10 @@
 {
   "convention_name" : "CESM",
   "axes" : {
-    "X" : {"name" : "lon", "envvar" : "lon_coord"},
-    "Y" : {"name" : "lat", "envvar" : "lat_coord"},
-    "Z" : {"name" : "lev", "envvar" : "lev_coord"},
-    "T" : {"name" : "time", "envvar" : "time_coord"}
+    "lon" : {"axis" : "X", "envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "envvar" : "lat_coord"},
+    "lev" : {"axis" : "Z", "envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "envvar" : "time_coord"}
   },
   "var_names" : {
     "hyam_var" : "hyam",
@@ -52,7 +52,10 @@
     "#u850_var" : "u850",
     "#u250_var" : "u250",
     "#Geopotential height at 250-hPa level(m)                              ":"",
-    "#z250_var" : "z3250"
+    "#z250_var" : "z3250",
+    "# Variables for SM_ET_coupling module ________________________________":"",
+    "mrsos_var" : "mrsos",
+    "evspsbl_var" : "evspsbl"
   },
   "units" : {
     "# TODO: assign to variables; do honest unit conversion                ":"",

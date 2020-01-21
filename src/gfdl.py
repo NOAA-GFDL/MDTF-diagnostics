@@ -476,7 +476,8 @@ class GfdlarchiveDataManager(DataManager):
                                     )
                                 error_flag = 2
                             del var.axes[vax]
-                            var.axes[fax] = fax_attrs.copy()
+                            # only update so we don't overwrite the envvar name
+                            var.axes[fax] = vax_attrs.update(fax_attrs)
                             break
                     else:
                         # get here if we didn't hit 'break' above -- give up

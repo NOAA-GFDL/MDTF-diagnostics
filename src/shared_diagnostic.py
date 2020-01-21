@@ -219,7 +219,11 @@ class Diagnostic(object):
             util.setenv(var.original_name, var.name_in_model, 
                 self.pod_env_vars, verbose=verbose)
             for ax_name, ax_attrs in var.axes.iteritems():
-                envvar_name = ax_attrs.get('envvar', ax_name+'_coord') # should raise warning
+                if 'envvar' not in ax_attrs:
+                    print "\tWarning: don't know env var to set for axis name {}".format(ax_name)
+                    envvar_name = ax_name+'_coord'
+                else:
+                    envvar_name = ax_attrs['envvar']
                 if envvar_name not in axes:
                     axes[envvar_name] = ax_name
                 elif axes[envvar_name] != ax_name:

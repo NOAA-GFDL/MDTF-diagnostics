@@ -442,27 +442,53 @@ class GfdlarchiveDataManager(DataManager):
         # only look at first file; if other chunks for same var differ, NCO will
         # raise error when we try to concat them
         file_name = os.path.basename(remote_files[0]._remote_data)
-        file_axes = self.nc_get_attribute(
-            'axis', in_file=file_name, cwd=work_dir, dry_run=self.dry_run
+        var_name = remote_files[0].name_in_model
+        file_axes = self.nc_get_axes_attributes(
+            var_name,
+            in_file=file_name, cwd=work_dir, dry_run=self.dry_run
         )
-        file_axes = util.MultiMap(file_axes).inverse() # lookup names from attrs
-        for var in self.data_keys[d_key]: # update DataSets with axis info
-            for ax in var.axes:
-                if ax not in file_axes:
-                    continue # if ax not found in file, use default value
-                else:
-                    var_ax = var.axes[ax]['name']
-                    file_ax = util.coerce_from_collection(file_axes[ax])
-                    if var_ax != file_ax:
-                        # if ax named differently than expected, log warning & change
-                        print "\tWarning: {} axis named {} in {} ({} convention is {})".format(
-                            ax, file_ax, file_name, self.convention, var_ax
-                        )
-                        var.axes[ax]['name'] = file_ax
+        for fax, fax_attrs in file_axes.iteritems():
+            # update DataSets with axis info - need to loop since multiple PODs
+            # may reference this file (warning will be repeated; TODO fix that)
+            for var in self.data_keys[d_key]: 
+                if fax in var.axes:
+                    # file's axis in list of case's axis names; check their
+                    # axis attributes match if they're both defined
+                    if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
+                        and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower():
+                        print """\tWarning: unexpected axis attribute for {} in {} (found {}, {} convention is {})""".format(
+                                fax, file_name, fax_attrs['axis'], 
+                                self.convention, var.axes[fax]['axis']
+                            )
+                else: 
+                    # file has different axis name, try to match by attribute
+                    for vax, vax_attrs in var.axes.iteritems():
+                        if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
+                            continue
+                        elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
+                            # log warning & reassign
+                            print """\tWarning: unexpected {} axis name in {} (found {}, {} convention is {})""".format(
+                                    fax_attrs['axis'], file_name, fax, self.convention, vax
+                                )
+                            del var.axes[vax]
+                            var.axes[fax] = fax_attrs.copy()
+                            break
+                    else:
+                        # get here if we didn't hit 'break' above -- give up
+                        print "\tWarning: unable to assign {} axis in {}.".format(
+                            fax, file_name)
 
         # crop time axis to requested range
         # do this *before* combining chunks to reduce disk activity
-        time_var_name = var.axes['T']['name']
+        for vax, vax_attrs in var.axes.iteritems():
+            if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
+                continue
+            else:
+                time_var_name = vax
+                break
+        else:
+            print "\tCan't determine time axis for {}.".format(file_name)
+            time_var_name = 'time' # will probably give KeyError
         trim_count = 0
         for f in remote_files:
             trimmed_range = f.date_range.intersection(

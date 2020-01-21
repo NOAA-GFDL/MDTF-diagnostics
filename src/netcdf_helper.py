@@ -118,6 +118,8 @@ class NcoNetcdfHelper(NetcdfHelper):
             return {'dimensions': dict(), 'variables':dict()}
         else:
             d = util.parse_json('\n'.join(json_str))
+            assert 'dimensions' in d
+            assert 'variables' in d
             # remove 'attributes' level of nesting
             for var in d['variables']:
                 if 'attributes' in d['variables'][var]:
@@ -141,11 +143,21 @@ class NcoNetcdfHelper(NetcdfHelper):
         return dd
 
     @classmethod
-    def nc_get_variable_units(cls, var_name, in_file=None, cwd=None, dry_run=False):
-        """Return units attribute of a given variable.
+    def nc_get_axes_attributes(cls, var, in_file=None, cwd=None, dry_run=False):
+        """Return variable names corresponding to an axis attribute.
         """
-        d = cls.nc_get_attribute('units', in_file=in_file, cwd=cwd, dry_run=dry_run)
-        return d.get(var_name, None)
+        d = cls.ncdump_h(in_file=in_file, cwd=cwd, dry_run=dry_run)
+        dd = dict()
+        if var not in d['variables']:
+            print "Can't find variable {} in {}.".format(var, in_file)
+            return dd
+        if 'shape' not in d['variables'][var]:
+            print "Can't find shape attribute for {} in {}.".format(var, in_file)
+            return dd
+        for ax in d['variables'][var]['shape']:
+            assert ax in d['variables']
+            dd[ax] = d['variables'][ax].copy() # copy dict of all attributes
+        return dd
 
     @classmethod
     @_outfile_decorator

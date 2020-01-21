@@ -218,13 +218,14 @@ class Diagnostic(object):
         for var in self.iter_vars_and_alts():
             util.setenv(var.original_name, var.name_in_model, 
                 self.pod_env_vars, verbose=verbose)
-            for ax in var.axes.values():
-                if ax['envvar'] not in axes:
-                    axes[ax['envvar']] = ax['name']
-                elif axes[ax['envvar']] != ax['name']:
+            for ax_name, ax_attrs in var.axes.iteritems():
+                envvar_name = ax_attrs.get('envvar', ax_name+'_coord') # should raise warning
+                if envvar_name not in axes:
+                    axes[envvar_name] = ax_name
+                elif axes[envvar_name] != ax_name:
                     raise PodRequirementFailure(self,
-                        "Two variables have conflicting axis names ({}!={})".format(
-                        axes[ax['envvar']], ax['name']
+                        "Two variables have conflicting axis names {}:({}!={})".format(
+                        envvar_name, axes[envvar_name], ax_name
                     ))
         for key, val in axes.iteritems(): 
             util.setenv(key, val, self.pod_env_vars, verbose=verbose)

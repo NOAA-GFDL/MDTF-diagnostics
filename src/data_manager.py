@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import copy
 import shutil
 import atexit
 import signal
@@ -73,6 +74,10 @@ class DataSet(util.Namespace):
             if key not in self:
                 self[key] = []
 
+        for key in ['axes']:
+            if key not in self:
+                self[key] = dict()
+                
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
             del self.var_name
@@ -189,22 +194,12 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def setUp(self):
-        self._setup_model_paths()
-        self._set_model_env_vars()
-        for pod in self.iter_pods():
-            self._setup_pod(pod)
-        self._build_data_dicts()
-
-    def _setup_model_paths(self, verbose=0):
+    def setUp(self, verbose=0):
         # pylint: disable=maybe-no-member
         util.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
-
-    def _set_model_env_vars(self, verbose=0):
-        # pylint: disable=maybe-no-member
         self.envvars.update({
             "DATADIR": self.MODEL_DATA_DIR,
             "variab_dir": self.MODEL_WK_DIR,
@@ -213,16 +208,17 @@ class DataManager(object):
             "FIRSTYR": self.firstyr.format(precision=1), 
             "LASTYR": self.lastyr.format(precision=1)
         })
-
+        # set env vars for unit conversion factors (TODO: honest unit conversion)
         translate = util.VariableTranslator()
-        # Silently set env vars for *all* model variables, because it contains
-        # things like axis mappings etc. Relevant variable names will get 
-        # overridden when POD sets its variables.
-        assert self.convention in translate.field_dict, \
+        assert self.convention in translate.units, \
             "Variable name translation doesn't recognize {}.".format(self.convention)
-        temp = translate.field_dict[self.convention].to_dict()
+        temp = translate.units[self.convention].to_dict()
         for key, val in temp.items():
             util.setenv(key, val, self.envvars, verbose=verbose)
+
+        for pod in self.iter_pods():
+            self._setup_pod(pod)
+        self._build_data_dicts()
 
     def _setup_pod(self, pod):
         paths = util.PathManager()
@@ -246,6 +242,7 @@ class DataManager(object):
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
+            var.axes = copy.deepcopy(translate.axes[self.convention])
 
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():

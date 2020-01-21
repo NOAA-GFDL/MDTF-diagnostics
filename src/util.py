@@ -187,33 +187,35 @@ class VariableTranslator(Singleton):
             config_files = ['dummy_filename']
         else:
             paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.json')
+            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
             config_files = glob.glob(glob_pattern)
 
+        self.axes = dict()
         # always have CF-compliant option, which does no translation
-        self.field_dict = {'CF':{}} 
+        self.variables = {'CF': dict()}
+        self.units = {'CF': dict()}
         for filename in config_files:
-            file_contents = read_json(filename)
-
-            if type(file_contents['convention_name']) is str:
-                file_contents['convention_name'] = [file_contents['convention_name']]
-            for conv in file_contents['convention_name']:
-                if verbose > 0: print 'XXX found ' + conv
-                self.field_dict[conv] = MultiMap(file_contents['var_names'])
+            d = read_json(filename)
+            for conv in coerce_to_collection(d['convention_name'], list):
+                if verbose > 0: 
+                    print 'XXX found ' + conv
+                self.axes[conv] = d.get('axes', dict())
+                self.variables[conv] = MultiMap(d.get('var_names', dict()))
+                self.units[conv] = MultiMap(d.get('units', dict()))
 
     def toCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
-        assert convention in self.field_dict, \
+        assert convention in self.variables, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention].inverse_get_(varname_in)
+        return self.variables[convention].inverse_get_(varname_in)
     
     def fromCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
-        assert convention in self.field_dict, \
+        assert convention in self.variables, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention].get_(varname_in)
+        return self.variables[convention].get_(varname_in)
 
 class Namespace(dict):
     """ A dictionary that provides attribute-style access.
@@ -361,6 +363,17 @@ class Namespace(dict):
 # ------------------------------------
 
 def read_json(file_path):
+    assert os.path.exists(file_path), \
+        "Couldn't find JSON file {}.".format(file_path)
+    try:    
+        with open(file_path, 'r') as file_:
+            str_ = file_.read()
+    except IOError:
+        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        exit()
+    return parse_json(str_)
+
+def parse_json(str_):
     def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
@@ -388,21 +401,14 @@ def read_json(file_path):
         # if it's anything else, return it in its original form
         return data
 
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = _utf8_to_ascii(
-                json.load(file_obj, object_hook=_utf8_to_ascii),
-                ignore_dicts=True
-            )
+    try:
+        parsed_json = _utf8_to_ascii(
+            json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
+        )
     except UnicodeDecodeError:
-        print '{} contains non-ascii characters. Exiting.'.format(file_path)
+        print '{} contains non-ascii characters. Exiting.'.format(str_)
         exit()
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-    return file_contents
+    return parsed_json
 
 def write_json(struct, file_path, verbose=0):
     """Wrapping file I/O simplifies unit testing.

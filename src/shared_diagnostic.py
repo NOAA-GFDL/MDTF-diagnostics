@@ -208,15 +208,43 @@ class Diagnostic(object):
             "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
         })
-        # set all env vars: POD has inherited vars from case (DataManager._setup_pod)
-        # and global.
+        # Set env vars POD has inherited globally and from current case 
+        # (set in DataManager._setup_pod).
         for key, val in self.pod_env_vars.items():
             util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
-        # pod variable mappings:
+        # Set env vars for variable and axis names:
+        axes = dict()
+        ax_status = dict()
         for var in self.iter_vars_and_alts():
-            util.setenv(var.original_name, var.name_in_model, self.pod_env_vars, 
-                verbose=verbose) 
+            util.setenv(var.original_name, var.name_in_model, 
+                self.pod_env_vars, verbose=verbose)
+            # make sure axes found for different vars are consistent
+            for ax_name, ax_attrs in var.axes.iteritems():
+                if 'MDTF_envvar' not in ax_attrs:
+                    print "\tWarning: don't know env var to set for axis name {}".format(ax_name)
+                    envvar_name = ax_name+'_coord'
+                else:
+                    envvar_name = ax_attrs['MDTF_envvar']
+                set_from_axis = ax_attrs.get('MDTF_set_from_axis', None)
+                if envvar_name not in axes:
+                    # populate dict
+                    axes[envvar_name] = ax_name
+                    ax_status[envvar_name] = set_from_axis
+                elif axes[envvar_name] != ax_name and ax_status[envvar_name] is None:
+                    # populated with defaults, but now overwrite with name that
+                    # was confirmed from file
+                    axes[envvar_name] = ax_name
+                    ax_status[envvar_name] = set_from_axis
+                elif axes[envvar_name] != ax_name \
+                    and ax_status[envvar_name] == set_from_axis:
+                    # names found in two different files disagree - raise error
+                    raise PodRequirementFailure(self,
+                        "Two variables have conflicting axis names {}:({}!={})".format(
+                        envvar_name, axes[envvar_name], ax_name
+                    ))
+        for key, val in axes.iteritems(): 
+            util.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.

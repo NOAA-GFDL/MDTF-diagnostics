@@ -226,14 +226,19 @@ class Diagnostic(object):
                     envvar_name = ax_name+'_coord'
                 else:
                     envvar_name = ax_attrs['MDTF_envvar']
+                set_from_axis = ax_attrs.get('MDTF_set_from_axis', None)
                 if envvar_name not in axes:
+                    # populate dict
                     axes[envvar_name] = ax_name
-                    ax_status[envvar_name] = ax_attrs.get('MDTF_set_from_axis', None)
+                    ax_status[envvar_name] = set_from_axis
+                elif axes[envvar_name] != ax_name and ax_status[envvar_name] is None:
+                    # populated with defaults, but now overwrite with name that
+                    # was confirmed from file
+                    axes[envvar_name] = ax_name
+                    ax_status[envvar_name] = set_from_axis
                 elif axes[envvar_name] != ax_name \
-                    and ax_status[envvar_name] == ax_attrs.get('MDTF_set_from_axis', None):
-                    # match "status" in case we have a mix of 3D and 4D vars: 
-                    # would get false disagreement if one var changed an axis
-                    # that another var doesn't use.
+                    and ax_status[envvar_name] == set_from_axis:
+                    # names found in two different files disagree - raise error
                     raise PodRequirementFailure(self,
                         "Two variables have conflicting axis names {}:({}!={})".format(
                         envvar_name, axes[envvar_name], ax_name

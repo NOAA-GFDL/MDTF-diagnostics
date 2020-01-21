@@ -450,8 +450,8 @@ class GfdlarchiveDataManager(DataManager):
         for fax, fax_attrs in file_axes.iteritems():
             # update DataSets with axis info - need to loop since multiple PODs
             # may reference this file (warning will be repeated; TODO fix that)
+            error_flag = 0
             for var in self.data_keys[d_key]: 
-                error_flag = 0
                 if fax in var.axes:
                     # file's axis in list of case's axis names; check their
                     # axis attributes match if they're both defined
@@ -463,6 +463,7 @@ class GfdlarchiveDataManager(DataManager):
                                 self.convention, var.axes[fax]['axis']
                             )
                         error_flag = 1
+                    var.axes[fax]['MDTF_set_from_axis'] = False
                 else: 
                     # file has different axis name, try to match by attribute
                     for vax, vax_attrs in var.axes.iteritems():
@@ -475,9 +476,11 @@ class GfdlarchiveDataManager(DataManager):
                                         fax_attrs['axis'], file_name, fax, self.convention, vax
                                     )
                                 error_flag = 2
-                            del var.axes[vax]
                             # only update so we don't overwrite the envvar name
-                            var.axes[fax] = vax_attrs.update(fax_attrs)
+                            var.axes[fax] = vax_attrs.copy()
+                            var.axes[fax].update(fax_attrs)
+                            var.axes[fax]['MDTF_set_from_axis'] = True
+                            del var.axes[vax]
                             break
                     else:
                         # get here if we didn't hit 'break' above -- give up

@@ -1,10 +1,10 @@
 {
   "convention_name" : "CESM",
   "axes" : {
-    "lon" : {"axis" : "X", "envvar" : "lon_coord"},
-    "lat" : {"axis" : "Y", "envvar" : "lat_coord"},
-    "lev" : {"axis" : "Z", "envvar" : "lev_coord"},
-    "time" : {"axis" : "T", "envvar" : "time_coord"}
+    "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
+    "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
   },
   "var_names" : {
     "hyam_var" : "hyam",

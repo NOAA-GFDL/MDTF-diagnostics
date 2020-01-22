@@ -149,15 +149,15 @@ class MultiMap(defaultdict):
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
-            super(MultiMap, self).__setitem__(key, coerce_to_collection(self[key], set))
+            super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
-        super(MultiMap, self).__setitem__(key, coerce_to_collection(value, set))
+        super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
         if key not in self.keys():
             raise KeyError(key)
-        return coerce_from_collection(self[key])
+        return coerce_from_iter(self[key])
     
     def to_dict(self):
         d = {}
@@ -176,7 +176,7 @@ class MultiMap(defaultdict):
         # if val not in self.values():
         #     raise KeyError(val)
         temp = self.inverse()
-        return coerce_from_collection(temp[val])
+        return coerce_from_iter(temp[val])
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -196,7 +196,7 @@ class VariableTranslator(Singleton):
         self.units = {'CF': dict()}
         for filename in config_files:
             d = read_json(filename)
-            for conv in coerce_to_collection(d['convention_name'], list):
+            for conv in coerce_to_iter(d['convention_name'], list):
                 if verbose > 0: 
                     print 'XXX found ' + conv
                 self.axes[conv] = d.get('axes', dict())
@@ -650,7 +650,7 @@ def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
-def coerce_to_collection(obj, coll_type):
+def coerce_to_iter(obj, coll_type):
     assert coll_type in [list, set] # only supported types for now
     if obj is None:
         return coll_type([])
@@ -661,14 +661,14 @@ def coerce_to_collection(obj, coll_type):
     else:
         return coll_type([obj])
 
-def coerce_from_collection(obj):
+def coerce_from_iter(obj):
     if hasattr(obj, '__iter__'):
         if len(obj) == 1:
             return list(obj)[0]
         else:
             return list(obj)
     else:
-        return obj        
+        return obj
 
 def is_in_config(key, config, section='settings'):
     # Ugly - should replace with cleaner solution/explicit defaults

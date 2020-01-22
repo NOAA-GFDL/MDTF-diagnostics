@@ -268,7 +268,7 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_collection(subdir_filter, set)
+        subdir_filter = util.coerce_to_iter(subdir_filter, set)
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \
@@ -534,7 +534,7 @@ class GfdlarchiveDataManager(DataManager):
                 cwd=work_dir, dry_run=self.dry_run
             )
         else:
-            f = util.coerce_from_collection(remote_files)
+            f = util.coerce_from_iter(remote_files)
             file_name = os.path.basename(f._remote_data)
             print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
             util.run_command(['ln', '-fs', \

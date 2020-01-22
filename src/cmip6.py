@@ -33,7 +33,7 @@ class CMIP6_CVs(util.Singleton):
         if self.cv:
             return
         for k in self._contents:
-            self.cv[k] = util.coerce_to_collection(self._contents[k], list)
+            self.cv[k] = util.coerce_to_iter(self._contents[k], list)
 
     def is_in_cv(self, category, items):
         self._make_cv()
@@ -56,7 +56,7 @@ class CMIP6_CVs(util.Singleton):
             mm = util.MultiMap()
             for k in self._contents[source]:
                 mm[k].update(
-                    util.coerce_to_collection(self._contents[source][k][dest], set)
+                    util.coerce_to_iter(self._contents[source][k][dest], set)
                 )
             self._lookups[(source, dest)] = mm
             return mm
@@ -68,9 +68,9 @@ class CMIP6_CVs(util.Singleton):
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
         if hasattr(source_items, '__iter__'):
-            return [util.coerce_from_collection(_lookup[item]) for item in source_items]
+            return [util.coerce_from_iter(_lookup[item]) for item in source_items]
         else:
-            return util.coerce_from_collection(_lookup[source_items])
+            return util.coerce_from_iter(_lookup[source_items])
 
     # ----------------------------------
 

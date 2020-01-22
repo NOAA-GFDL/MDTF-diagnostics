@@ -9,9 +9,11 @@ wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
+date_off = getenv("date_int_offset")
 
 firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
+date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
 nyrs = lastyr-firstyr+1
 nmons = nyrs*12
 

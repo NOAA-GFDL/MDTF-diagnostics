@@ -16,6 +16,10 @@ load "$POD_HOME/evans_plot.ncl"
 begin
 ; Set variables for two runs.
 
+
+  date_off = getenv("date_int_offset")
+  date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+
   setfileoption("nc", "SuppressClose", False)
 
   var_name = getenv("pr_var")

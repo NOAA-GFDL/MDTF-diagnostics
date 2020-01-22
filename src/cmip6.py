@@ -166,7 +166,8 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
 mip_table_regex = re.compile(r"""
     ^ # start of line
     (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
-    (?P<table_freq>\d?[a-z]*?)    # maybe a digit, followed by as few lowercase letters as possible
+    # maybe a digit, followed by as few lowercase letters as possible:
+    (?P<table_freq>\d?[a-z]*?)
     (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
     (?P<table_qualifier>(Pt|Z|Off)?)
     $ # end of line - necessary for lazy capture to work

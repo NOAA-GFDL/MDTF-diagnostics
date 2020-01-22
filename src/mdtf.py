@@ -106,7 +106,8 @@ class MDTFFramework(object):
             help="Parent directory containing results from different models.")
         self.parser.add_argument('--OBS_DATA_ROOT', 
             nargs='?', 
-            help="Parent directory containing observational data used by individual PODs.")
+            help=("Parent directory containing observational data "
+                "used by individual PODs."))
         self.parser.add_argument('--WORKING_DIR', 
             nargs='?',
             help="Working directory.")
@@ -119,16 +120,19 @@ class MDTFFramework(object):
             help="Set flag to fetch data but skip calls to PODs")
         self.parser.add_argument("--dry_run", 
             action="store_true", # so default to False
-            help="Set flag to do a dry run, disabling data fetching and calls to PODs")
+            help=("Set flag to do a dry run, "
+                "disabling data fetching and calls to PODs"))
         self.parser.add_argument("--save_nc", 
             action="store_true", # so default to False
             help="Set flag to have PODs save netCDF files of processed data.")
         self.parser.add_argument('--data_manager', 
             nargs='?',
-            help="Method to fetch model data. Currently supported options are {'Localfile'}.")
+            help=("Method to fetch model data. "
+                "Currently supported options are {'Localfile'}."))
         self.parser.add_argument('--environment_manager', 
             nargs='?',
-            help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")                                      
+            help=("Method to manage POD runtime dependencies. "
+                "Currently supported options are {'None', 'Conda'}."))
         # casename args, set by frepp
         self.parser.add_argument('--CASENAME', 
             nargs='?')
@@ -149,8 +153,10 @@ class MDTFFramework(object):
         self.parser.add_argument("--chunk_freq", 
             nargs='?')       
         self.parser.add_argument('--config_file', 
-            nargs='?', default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
-            help="Configuration file.")
+            nargs='?', 
+            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
+            help="Configuration file."
+        )
 
     def argparse_parse(self):
         d = self.parser.parse_args().__dict__
@@ -161,7 +167,8 @@ class MDTFFramework(object):
     def caselist_from_args(args):
         d = {}
         for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-            'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
+            'chunk_freq', 'data_freq', 'model', 'experiment', 
+            'variable_convention']:
             if k in args:
                 d[k] = args[k]
         if 'model' not in d:
@@ -230,8 +237,9 @@ class MDTFFramework(object):
         paths = util.PathManager()
         util.check_required_dirs(
             already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 
-            create_if_nec = [paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR], 
-            )
+            create_if_nec = [
+                paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR
+        ])
         self.config["envvars"] = self.config['settings'].copy()
         self.config["envvars"].update(self.config['paths'])
         # following are redundant but used by PODs

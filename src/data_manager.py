@@ -59,6 +59,7 @@ class DataSet(util.Namespace):
     `https://stackoverflow.com/a/48806603`_ for implementation.
     """
     def __init__(self, *args, **kwargs):
+        # pylint: disable=maybe-no-member
         if 'DateFreqMixin' not in kwargs:
             self.DateFreq = datelabel.DateFrequency
         else:
@@ -127,6 +128,7 @@ class DataManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
+        # pylint: disable=maybe-no-member
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
@@ -210,8 +212,9 @@ class DataManager(object):
         })
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         translate = util.VariableTranslator()
-        assert self.convention in translate.units, \
-            "Variable name translation doesn't recognize {}.".format(self.convention)
+        if self.convention not in translate.units:
+            raise AssertionError(("Variable name translation doesn't recognize "
+                "{}.").format(self.convention))
         temp = translate.units[self.convention].to_dict()
         for key, val in temp.items():
             util.setenv(key, val, self.envvars, verbose=verbose)
@@ -247,11 +250,13 @@ class DataManager(object):
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
                 if var.date_freq != self.data_freq:
-                    pod.skipped = PodRequirementFailure(pod,
-                        """{} requests {} (= {}) at {} frequency, which isn't compatible
-                        with case {} providing data at {} frequency only.""".format(
-                        pod.name, var.name_in_model, var.name, var.date_freq,
-                        self.case_name, self.data_freq
+                    pod.skipped = PodRequirementFailure(
+                        pod,
+                        ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
+                        "compatible with case {4} providing data at {5} frequency "
+                        "only.").format(
+                            pod.name, var.name_in_model, var.name, 
+                            var.date_freq, self.case_name, self.data_freq
                     ))
                     break
 
@@ -359,7 +364,8 @@ class DataManager(object):
         keys_from_file = self.data_files.inverse()
         for key in keys_from_file[exc.dataset]:
             for pod in self.data_pods[key]:
-                print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+                print ("\tSkipping pod {} due to data fetch error."
+                    "").format(pod.name)
                 pod.skipped = exc
 
     def _query_data(self):
@@ -386,12 +392,15 @@ class DataManager(object):
             elif not var.alternates:
                 raise DataQueryFailure(
                     var,
-                    "Couldn't find {} (= {}) @ {} for {} & no other alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
-                )
+                    ("Couldn't find {} (= {}) @ {} for {} & no other ")
+                        "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                ))
             else:
-                print "Couldn't find {} (= {}) @ {} for {}, trying alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
+                print ("Couldn't find {} (= {}) @ {} for {}, trying "
+                    "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                    )
                 for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
                     yield alt_var  # no 'yield from' in py2.7
 
@@ -505,8 +514,9 @@ class DataManager(object):
         if os.environ["make_variab_tar"] == "0":
             print "Not making tar file because make_variab_tar = 0"
             return
-
-        print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
+        print "Making tar file because make_variab_tar = {}".format(
+            os.environ["make_variab_tar"]
+        )
         if os.path.isfile(self.MODEL_WK_DIR+'.tar'):
             print "Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR)
             shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')

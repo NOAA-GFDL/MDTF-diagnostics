@@ -175,7 +175,8 @@ class NcoNetcdfHelper(NetcdfHelper):
         dd = dict()
         for var, unit in new_units_dict.iteritems():
             if var not in d:
-                print "Warning: no unit attribute for {} in {}. Skipping unit conversion".format(var, in_file)
+                print ("Warning: no unit attribute for {} in {}."
+                    " Skipping unit conversion").format(var, in_file)
             elif d[var] != unit:
                 dd[var] = unit
         cmd_string = '{var}=udunits({var},"{unit}");{var}@units="{unit}";'

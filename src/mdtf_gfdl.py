@@ -42,7 +42,8 @@ class GFDLMDTFFramework(MDTFFramework):
             help="Set flag to take configuration info from env vars set by frepp.")
         self.parser.add_argument("--ignore-component", 
             action="store_true", # so default to False
-            help="Set flag to ignore model component passed by frepp and search entire /pp/ directory.")
+            help=("Set flag to ignore model component passed by frepp "
+                "and search entire /pp/ directory."))
         # reset default config file
         for action in self.parser._actions:
             if action.dest == 'config_file':
@@ -79,7 +80,8 @@ class GFDLMDTFFramework(MDTFFramework):
             case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
-                    print "\tDEBUG: preexisting {} in {}; skipping".format(p, case_outdir)
+                    print ("\tDEBUG: preexisting {} in {}; "
+                        "skipping").format(p, case_outdir)
             return [p for p in requested_pods if not \
                 os.path.isdir(os.path.join(case_outdir, p))
             ]

@@ -35,7 +35,8 @@ class ModuleManager(util.Singleton):
     def __init__(self):
         if 'MODULESHOME' not in os.environ:
             # could set from module --version
-            raise OSError('Unable to determine how modules are handled on this host.')
+            raise OSError(("Unable to determine how modules are handled "
+                "on this host."))
         if not os.environ.has_key('LOADEDMODULES'):
             os.environ['LOADEDMODULES'] = ''
 
@@ -73,7 +74,8 @@ class ModuleManager(util.Singleton):
                 self._module(['load', mod_name])
 
     def load_commands(self, *module_names):
-        return ['module load {}'.format(m) for m in self._parse_names(*module_names)]
+        return ['module load {}'.format(m) \
+            for m in self._parse_names(*module_names)]
 
     def unload(self, *module_names):
         """Wrapper for module unload.
@@ -85,7 +87,8 @@ class ModuleManager(util.Singleton):
                 self._module(['unload', mod_name])
 
     def unload_commands(self, *module_names):
-        return ['module unload {}'.format(m) for m in self._parse_names(*module_names)]
+        return ['module unload {}'.format(m) \
+            for m in self._parse_names(*module_names)]
 
     def _list(self):
         """Wrapper for module list.
@@ -114,6 +117,7 @@ class GfdlDiagnostic(Diagnostic):
         self._has_placeholder = False
 
     def setUp(self, verbose=0):
+        # pylint: disable=maybe-no-member
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
             make_placeholder_dir(
@@ -191,8 +195,8 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
 
     def _call_conda_create(self, env_name):
-        raise Exception(
-            'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
+        raise Exception(("Trying to create conda env {} "
+            "in read-only mdteam account.").format(env_name)
         )
 
 def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
@@ -458,7 +462,8 @@ class GfdlarchiveDataManager(DataManager):
                     if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
                         and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower() \
                         and error_flag != 1:
-                        print "\tWarning: unexpected axis attribute for {} in {} (found {}, {} convention is {})".format(
+                        print ("\tWarning: unexpected axis attribute for {0} in "
+                            "{1} (found {2}, {3} convention is {4})").format(
                                 fax, file_name, fax_attrs['axis'], 
                                 self.convention, var.axes[fax]['axis']
                             )
@@ -472,8 +477,10 @@ class GfdlarchiveDataManager(DataManager):
                         elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
                             # matched axis attributes: log warning & reassign
                             if error_flag != 2:
-                                print "\tWarning: unexpected {} axis name in {} (found {}, {} convention is {})".format(
-                                        fax_attrs['axis'], file_name, fax, self.convention, vax
+                                print ("\tWarning: unexpected {0} axis name in {1} "
+                                    "(found {2}, {3} convention is {4})").format(
+                                        fax_attrs['axis'], file_name, fax, 
+                                        self.convention, vax
                                     )
                                 error_flag = 2
                             # only update so we don't overwrite the envvar name
@@ -485,8 +492,8 @@ class GfdlarchiveDataManager(DataManager):
                     else:
                         # get here if we didn't hit 'break' above -- give up
                         if error_flag != 3:
-                            print "\tWarning: unable to assign {} axis in {}.".format(
-                                fax, file_name)
+                            print ("\tWarning: unable to assign {0} axis "
+                                "in {1}.").format(fax, file_name)
                             error_flag = 3
 
         # crop time axis to requested range
@@ -553,6 +560,7 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _make_html(self, cleanup=False):
+        # pylint: disable=maybe-no-member
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.coop_mode and os.path.exists(prev_html):
             print "\tDEBUG: Appending previous index.html at {}".format(prev_html)
@@ -736,7 +744,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
     @abstractmethod # note: only using this as a property
-    def _cmip6_root():
+    def _cmip6_root(self):
         pass
 
     # also need to determine table?
@@ -768,9 +776,8 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
     def _cmip6_table_tiebreaker(str_list):
         # no suffix or qualifier, if possible
         tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
-        tbls = [t for t in tbls if (
-            not t['spatial_avg'] and not t['region'] and t['temporal_avg'] == 'interval'
-        )]
+        tbls = [t for t in tbls if (not t['spatial_avg'] and not t['region'] \
+            and t['temporal_avg'] == 'interval')]
         if not tbls:
             raise Exception('Need to refine table_id more carefully')
         tbls = min(tbls, key=lambda t: len(t['table_prefix']))
@@ -863,7 +870,8 @@ def running_on_PPAN():
 
 def is_on_tape_filesystem(path):
     # handle eg. /arch0 et al as well as /archive.
-    return any(os.path.realpath(path).startswith(s) for s in ['/arch', '/ptmp', '/work'])
+    return any(os.path.realpath(path).startswith(s) \
+        for s in ['/arch', '/ptmp', '/work'])
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

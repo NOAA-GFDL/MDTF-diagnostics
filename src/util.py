@@ -702,10 +702,14 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
             of previously-set variables. 
     """
     if (not overwrite) and (varname in env_dict): 
-        if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
+        if (verbose > 0): 
+            print "Not overwriting ENV {}={}".format(varname,env_dict[varname])
     else:
-        if ('varname' in env_dict) and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print "WARNING: setenv ",varname," = ",varvalue," overriding previous setting ",env_dict[varname]
+        if ('varname' in env_dict) \
+            and (env_dict[varname] != varvalue) and (verbose > 0): 
+            print "WARNING: setenv {}={} overriding previous setting {}".format(
+                varname, varvalue, env_dict[varname]
+            )
         env_dict[varname] = varvalue
 
         # environment variables must be strings
@@ -729,8 +733,9 @@ def check_required_envvar(*varlist):
         try:
             _ = os.environ[varlist[n]]
         except:
-            print "ERROR: Required environment variable ",varlist[n]," not found "
-            print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
+            print "ERROR: Required environment variable {} not found.".format(
+                varlist[n]
+            )
             exit()
 
 

@@ -371,7 +371,9 @@ class CondaEnvironmentManager(EnvironmentManager):
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
         return [
-            'source {}/src/conda_init.sh {}'.format(paths.CODE_ROOT, self.conda_root),
+            'source {}/src/conda_init.sh {}'.format(
+                paths.CODE_ROOT, self.conda_root
+            ),
             'conda activate {}'.format(conda_prefix)
         ]
 

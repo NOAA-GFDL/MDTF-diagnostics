@@ -8,47 +8,8 @@
 # Chih-Chieh (Jack) Chen, NCAR, 
 # Yi-Hung Kuo, UCLA
 #
-# ======================================================================
-# Usage
-#
-# USAGE: python mdtf.py input_file (default=namelist)
-# The input file sets all model case/dates and which modules to run
-# This file (mdtf.py) should NOT be modified
-#
-# Please see Getting Started [link] and Developer's Walk-Through
-# for full description of how to run
-# ======================================================================
-# What's Included
-#
-# The input file (namelist) provided in the distribution will run
-# the following diagnostic modules (PODs) by default:
-#    Convective Transition Diagnostics   from J. David Neelin (UCLA)
-#    MJO Teleconnections                 from Eric Maloney (CSU)
-#    Extratropical Variance (EOF 500hPa) from CESM/AMWG (NCAR)
-#    Wavenumber-Frequency Spectra        from CESM/AMWG (NCAR)
-#    MJO Spectra and Phasing             from CESM/AMWG (NCAR)
-#
-# In addition, the following package is provided in full but does not run
-# by default because of higher memory requirements
-#    Diurnal Cycle of Precipitation      from Rich Neale (NCAR)
-#
-# The following modules are under development. Future releases will be
-# available on the  MDTF main page
-# http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/index.html
-#    MJO Propagation and Amplitude        from Xianan Jiang, UCLA
-#    ENSO Moist Static Energy budget      from Hariharasubramanian Annamalai, U. Hawaii
-#    Warm Rain Microphysics               from Kentaroh Suzuki (AORI, U. Tokyo
-#    AMOC 3D structure                    from Xiaobiao Xu (FSU/COAPS)
-#
 # The MDTF code package and the participating PODs are distributed under
 # the LGPLv3 license (see LICENSE.txt).
-# ======================================================================
-# Requirements
-#
-# As well as Ncar Command Language (NCL),
-# this release uses the following Python modules: 
-#     os, glob, json, dataset, numpy, scipy, matplotlib, 
-#     networkx, warnings, numba, netcdf4
 # ======================================================================
 
 from __future__ import print_function

@@ -28,7 +28,7 @@
           "convective_transition_diag",
           "MJO_suite",
           "MJO_teleconnection",
-          "# precip_diurnal_cycle #- high memory requirement"
+          "precip_diurnal_cycle"
       ]
     },
     {

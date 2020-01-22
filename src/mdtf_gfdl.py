@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
 import tempfile
 import data_manager
@@ -30,7 +31,7 @@ class GFDLMDTFFramework(MDTFFramework):
             if not os.path.isdir(tempfile.tempdir):
                 os.makedirs(tempfile.tempdir)
         else:
-            print "Using default tempdir on this system"
+            print("Using default tempdir on this system")
         os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
     def argparse_setup(self):
@@ -80,8 +81,8 @@ class GFDLMDTFFramework(MDTFFramework):
             case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
-                    print ("\tDEBUG: preexisting {} in {}; "
-                        "skipping").format(p, case_outdir)
+                    print(("\tDEBUG: preexisting {} in {}; "
+                        "skipping").format(p, case_outdir))
             return [p for p in requested_pods if not \
                 os.path.isdir(os.path.join(case_outdir, p))
             ]
@@ -94,13 +95,13 @@ class GFDLMDTFFramework(MDTFFramework):
         if source_dir == dest_dir:
             return
         if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
-            print "Observational data directory at {} is empty.".format(dest_dir)
+            print("Observational data directory at {} is empty.".format(dest_dir))
         if gfdl.running_on_PPAN():
-            print "\tGCPing data from {}.".format(source_dir)
+            print("\tGCPing data from {}.".format(source_dir))
             # giving -cd to GCP, so will create dirs
             gfdl.gcp_wrapper(source_dir, dest_dir, dry_run=dry_run)
         else:
-            print "\tSymlinking obs data dir to {}.".format(source_dir)
+            print("\tSymlinking obs data dir to {}.".format(source_dir))
             dest_parent = os.path.dirname(dest_dir)
             if os.path.exists(dest_dir):
                 assert os.path.isdir(dest_dir)
@@ -114,7 +115,7 @@ class GFDLMDTFFramework(MDTFFramework):
 
 
 if __name__ == '__main__':
-    print "\n======= Starting "+__file__
+    print("\n======= Starting "+__file__)
     mdtf = GFDLMDTFFramework()
     mdtf.main_loop()
-    print "Exiting normally from ",__file__
+    print("Exiting normally from ",__file__)

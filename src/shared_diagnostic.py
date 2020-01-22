@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import glob
@@ -111,8 +112,8 @@ class Diagnostic(object):
             if type(d[list_attr]) != list:
                 d[list_attr] = [d[list_attr]]
         if (verbose > 0): 
-            print self.name + " settings: "
-            print d
+            print(self.name + " settings: ")
+            print(d)
         return d
 
     def _parse_pod_varlist(self, varlist, verbose=0):
@@ -141,8 +142,8 @@ class Diagnostic(object):
             elif ('alternates' in var) and (type(var['alternates']) is not list):
                 varlist[idx]['alternates'] = [var['alternates']]
         if (verbose > 0): 
-            print self.name + " varlist: "
-            print varlist
+            print(self.name + " varlist: ")
+            print(varlist)
         return varlist
 
     # -------------------------------------
@@ -192,9 +193,9 @@ class Diagnostic(object):
                         "\n".join(missing_files)
                     ))
             else:
-                if (verbose > 0): print "No known missing required input files"
+                if (verbose > 0): print("No known missing required input files")
         except PodRequirementFailure as exc:
-            print exc
+            print(exc)
             raise exc
 
     def _set_pod_env_vars(self, verbose=0):
@@ -224,8 +225,8 @@ class Diagnostic(object):
             # make sure axes found for different vars are consistent
             for ax_name, ax_attrs in var.axes.iteritems():
                 if 'MDTF_envvar' not in ax_attrs:
-                    print ("\tWarning: don't know env var to set" 
-                        "for axis name {}").format(ax_name)
+                    print(("\tWarning: don't know env var to set" 
+                        "for axis name {}").format(ax_name))
                     envvar_name = ax_name+'_coord'
                 else:
                     envvar_name = ax_attrs['MDTF_envvar']
@@ -279,31 +280,31 @@ class Diagnostic(object):
         # pylint: disable=maybe-no-member
         func_name = "check_pod_driver "
         if (verbose > 1): 
-            print func_name," received POD settings: ", self.__dict__
+            print(func_name," received POD settings: ", self.__dict__)
         programs = util.get_available_programs()
 
         if self.driver == '':  
-            print "WARNING: no valid driver entry found for ", self.name
+            print("WARNING: no valid driver entry found for ", self.name)
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \
                 in try_filenames for ext in programs.keys()]
             if verbose > 1: 
-                print "Checking for possible driver names in {} {}".format(
+                print("Checking for possible driver names in {} {}".format(
                     self.POD_CODE_DIR, file_combos
-                )
+                ))
             for try_file in file_combos:
                 try_path = os.path.join(self.POD_CODE_DIR, try_file)
-                if verbose > 1: print " looking for driver file "+try_path
+                if verbose > 1: print(" looking for driver file "+try_path)
                 if os.path.exists(try_path):
                     self.driver = try_path
                     if (verbose > 0): 
-                        print "Found driver script for {}: {}".format(
+                        print("Found driver script for {}: {}".format(
                             self.name, self.driver
-                        )
+                        ))
                     break    #go with the first one found
                 else:
-                    if (verbose > 1 ): print "\t "+try_path+" not found..."
+                    if (verbose > 1 ): print("\t "+try_path+" not found...")
         if self.driver == '':
             raise PodRequirementFailure(self, 
                 """No driver script found in {}. Specify 'driver' in 
@@ -329,7 +330,7 @@ class Diagnostic(object):
                 ))
             self.program = programs[driver_ext]
             if ( verbose > 1): 
-                print func_name +": Found program "+programs[driver_ext]
+                print(func_name +": Found program "+programs[driver_ext])
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Verify that all data files needed by a POD exist locally.
@@ -346,33 +347,33 @@ class Diagnostic(object):
         """
         func_name = "\t \t check_for_varlist_files :"
         if ( verbose > 2 ): 
-            print func_name+" check_for_varlist_files called with ", varlist
+            print(func_name+" check_for_varlist_files called with ", varlist)
         found_list = []
         missing_list = []
         if self.dry_run:
-            print 'DRY_RUN: Skipping POD file check'
+            print('DRY_RUN: Skipping POD file check')
             return (found_list, missing_list)
         for ds in varlist:
-            if (verbose > 2 ): print func_name +" "+ds.name
+            if (verbose > 2 ): print(func_name +" "+ds.name)
             filepath = ds._local_data
             if os.path.isfile(filepath):
                 found_list.append(filepath)
                 continue
             if (not ds.required):
-                print "WARNING: optional file not found ",filepath
+                print("WARNING: optional file not found ", filepath)
                 continue
             if not ds.alternates:
-                print ("ERROR: missing required file {}. "
-                    "No alternatives found").format(filepath)
+                print(("ERROR: missing required file {}. "
+                    "No alternatives found").format(filepath))
                 missing_list.append(filepath)
             else:
                 alt_list = ds.alternates
-                print ("WARNING: required file not found: {}."
-                    "\n\tLooking for alternatives: ").format(filepath, alt_list)
+                print(("WARNING: required file not found: {}."
+                    "\n\tLooking for alternatives: ").format(filepath, alt_list))
                 for alt_var in alt_list: 
                     # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): 
-                        print "\t \t examining alternative ",alt_var
+                        print("\t\t examining alternative ",alt_var)
                     (new_found, new_missing) = self._check_for_varlist_files(
                         [alt_var], verbose=verbose
                     )
@@ -383,7 +384,7 @@ class Diagnostic(object):
         missing_list = filter(None, missing_list)
         # nb, need to return due to recursive call
         if (verbose > 2): 
-            print "check_for_varlist_files returning ", missing_list
+            print("check_for_varlist_files returning ", missing_list)
         return (found_list, missing_list)
 
     # -------------------------------------

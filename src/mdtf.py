@@ -51,6 +51,7 @@
 #     networkx, warnings, numba, netcdf4
 # ======================================================================
 
+from __future__ import print_function
 import os
 import sys
 import argparse
@@ -74,10 +75,10 @@ class MDTFFramework(object):
         )
         self.argparse_setup()
         cmdline_args = self.argparse_parse()
-        print cmdline_args, '\n'
+        print(cmdline_args, '\n')
         default_args = util.read_json(cmdline_args['config_file'])
         self.config = self.parse_mdtf_args(cmdline_args, default_args)
-        print 'SETTINGS:\n', util.pretty_print_json(self.config) #debug
+        print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
         self._post_config_init()
         
     def _post_config_init(self):
@@ -255,7 +256,7 @@ class MDTFFramework(object):
                 return getattr(mod, class_prefix+class_suffix)
             except:
                 continue
-        print "No class named {}.".format(class_prefix+class_suffix)
+        print("No class named {}.".format(class_prefix+class_suffix))
         raise Exception('no_class')  
 
     def set_case_pod_list(self, case_dict):
@@ -275,13 +276,13 @@ class MDTFFramework(object):
         for case_dict in self.config['case_list'][0:1]: 
             case_dict['pod_list'] = self.set_case_pod_list(case_dict)
             for p in case_dict['pod_list']:
-                print "\tDEBUG: will run {}".format(p)
+                print("\tDEBUG: will run {}".format(p))
             case = self.DataManager(case_dict, self.config)
             for pod_name in case.pod_list:
                 try:
                     pod = self.Diagnostic(pod_name)
                 except AssertionError as error:  
-                    print str(error)
+                    print(str(error))
                 case.pods.append(pod)
             case.setUp()
             case.fetch_data()
@@ -299,7 +300,7 @@ class MDTFFramework(object):
 
 
 if __name__ == '__main__':
-    print "\n======= Starting "+__file__
+    print("\n======= Starting "+__file__)
     mdtf = MDTFFramework()
     mdtf.main_loop()
-    print "Exiting normally from ",__file__
+    print("Exiting normally from ",__file__)

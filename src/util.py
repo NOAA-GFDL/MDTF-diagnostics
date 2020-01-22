@@ -1,6 +1,6 @@
 """Common functions and classes used in multiple places in the MDTF code.
 """
-
+from __future__ import print_function
 import os
 import sys
 import re
@@ -198,7 +198,7 @@ class VariableTranslator(Singleton):
             d = read_json(filename)
             for conv in coerce_to_iter(d['convention_name'], list):
                 if verbose > 0: 
-                    print 'XXX found ' + conv
+                    print('XXX found ', conv)
                 self.axes[conv] = d.get('axes', dict())
                 self.variables[conv] = MultiMap(d.get('var_names', dict()))
                 self.units[conv] = MultiMap(d.get('units', dict()))
@@ -369,7 +369,7 @@ def read_json(file_path):
         with open(file_path, 'r') as file_:
             str_ = file_.read()
     except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
         exit()
     return parse_json(str_)
 
@@ -406,7 +406,7 @@ def parse_json(str_):
             json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
         )
     except UnicodeDecodeError:
-        print '{} contains non-ascii characters. Exiting.'.format(str_)
+        print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
     return parsed_json
 
@@ -423,7 +423,7 @@ def write_json(struct, file_path, verbose=0):
             json.dump(struct, file_obj, 
                 sort_keys=True, indent=2, separators=(',', ': '))
     except IOError:
-        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
+        print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
 def pretty_print_json(struct):
@@ -520,7 +520,7 @@ def poll_command(command, shell=False, env=None):
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
+            print(output.strip())
     rc = process.poll()
     return rc
 
@@ -565,7 +565,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
-        print 'DRY_RUN: call {}'.format(cmd_str)
+        print('DRY_RUN: call {}'.format(cmd_str))
         return
     proc = None
     pid = None
@@ -595,8 +595,9 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         stderr = stderr+"\nCaught exception {0}({1!r})".format(
             type(exc).__name__, exc.args)
     if retcode != 0:
-        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
-            cmd_str, pid, retcode, stderr)
+        print('run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr
+        ))
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
@@ -703,13 +704,13 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """
     if (not overwrite) and (varname in env_dict): 
         if (verbose > 0): 
-            print "Not overwriting ENV {}={}".format(varname,env_dict[varname])
+            print("Not overwriting ENV {}={}".format(varname,env_dict[varname]))
     else:
         if ('varname' in env_dict) \
             and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print "WARNING: setenv {}={} overriding previous setting {}".format(
+            print("WARNING: setenv {}={} overriding previous setting {}".format(
                 varname, varvalue, env_dict[varname]
-            )
+            ))
         env_dict[varname] = varvalue
 
         # environment variables must be strings
@@ -722,20 +723,21 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
-        if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
-    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
+        if (verbose > 0): print("ENV ",varname," = ",env_dict[varname])
+    if ( verbose > 2) : print("Check ",varname," ",env_dict[varname])
 
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
     for n in range(len(varlist)):
-        if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
+        if ( verbose > 2):
+            print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
             _ = os.environ[varlist[n]]
         except:
-            print "ERROR: Required environment variable {} not found.".format(
+            print("ERROR: Required environment variable {} not found.".format(
                 varlist[n]
-            )
+            ))
             exit()
 
 
@@ -756,8 +758,7 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         if not os.path.exists(dir):
             if not dir_in in create_if_nec:
                 if (verbose>0): 
-                    print errstr+dir_in+" = "+dir+" directory does not exist"
-                    #print "         and not create_if_nec list: "+create_if_nec
+                    print(errstr+dir_in+" = "+dir+" directory does not exist")
                 raise OSError(dir+" directory does not exist")
             else:
                 print(dir_in+" = "+dir+" created")
@@ -773,12 +774,12 @@ def append_html_template(template_file, target_file, template_dict={},
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
         if create:
-            print "\tDEBUG: write {} to new {}".format(template_file, target_file)
+            print("\tDEBUG: write {} to new {}".format(template_file, target_file))
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
-        print "\tDEBUG: append {} to {}".format(template_file, target_file)
+        print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
     with open(target_file, mode) as f:
         f.write(html_str)

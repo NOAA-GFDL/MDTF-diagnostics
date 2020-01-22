@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import re
@@ -264,7 +265,7 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        # print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
+        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):]))
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
@@ -278,9 +279,9 @@ class GfdlarchiveDataManager(DataManager):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                print "\tCouldn't find subdirs (in {}) at {}, skipping".format(
+                print("\tCouldn't find subdirs (in {}) at {}, skipping".format(
                     subdir_filter, os.path.join(self.root_dir, dir_)
-                )
+                ))
                 continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
@@ -320,8 +321,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\tDEBUG:', exc
-                    #print '\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f
+                    print('\tDEBUG:', exc)
+                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f)
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -361,9 +362,9 @@ class GfdlarchiveDataManager(DataManager):
         d_to_u_dict = self._decide_allowed_components()
         for data_key in self.data_keys:
             u_key = d_to_u_dict[data_key]
-            print "Selected {} for {} @ {}".format(
+            print("Selected {} for {} @ {}".format(
                 u_key, data_key.name_in_model, data_key.date_freq)
-
+            )
             # check we didn't eliminate everything:
             assert self._component_map[u_key, data_key] 
             self.data_files[data_key] = self._component_map[u_key, data_key]
@@ -373,12 +374,12 @@ class GfdlarchiveDataManager(DataManager):
             for f in self.data_files[data_key]:
                 paths.add(f._remote_data)
         if self.tape_filesystem:
-            print "start dmget of {} files".format(len(paths))
+            print("start dmget of {} files".format(len(paths)))
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.file_transfer_timeout,
                 dry_run=self.dry_run
             ) 
-            print "end dmget"
+            print("end dmget")
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -400,11 +401,11 @@ class GfdlarchiveDataManager(DataManager):
         return sorted(self.data_keys.keys())
 
     def _fetch_exception_handler(self, exc):
-        print exc
+        print(exc)
         # iterating over the keys themselves, so that will be what's passed 
         # in the exception
         for pod in self.data_pods[exc.dataset]:
-            print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
             pod.skipped = exc
 
     def fetch_dataset(self, d_key, method='auto'):
@@ -427,8 +428,9 @@ class GfdlarchiveDataManager(DataManager):
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in remote_files:
-            print "\tcopying ...{} to {}".format(
-                f._remote_data[len(self.root_dir):], work_dir)
+            print("\tcopying ...{} to {}".format(
+                f._remote_data[len(self.root_dir):], work_dir
+            ))
             util.run_command(cp_command + [
                 smartsite + f._remote_data, 
                 # gcp requires trailing slash, ln ignores it
@@ -462,11 +464,11 @@ class GfdlarchiveDataManager(DataManager):
                     if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
                         and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower() \
                         and error_flag != 1:
-                        print ("\tWarning: unexpected axis attribute for {0} in "
+                        print(("\tWarning: unexpected axis attribute for {0} in "
                             "{1} (found {2}, {3} convention is {4})").format(
                                 fax, file_name, fax_attrs['axis'], 
                                 self.convention, var.axes[fax]['axis']
-                            )
+                        ))
                         error_flag = 1
                     var.axes[fax]['MDTF_set_from_axis'] = False
                 else: 
@@ -477,11 +479,11 @@ class GfdlarchiveDataManager(DataManager):
                         elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
                             # matched axis attributes: log warning & reassign
                             if error_flag != 2:
-                                print ("\tWarning: unexpected {0} axis name in {1} "
+                                print(("\tWarning: unexpected {0} axis name in {1} "
                                     "(found {2}, {3} convention is {4})").format(
                                         fax_attrs['axis'], file_name, fax, 
                                         self.convention, vax
-                                    )
+                                ))
                                 error_flag = 2
                             # only update so we don't overwrite the envvar name
                             var.axes[fax] = vax_attrs.copy()
@@ -492,8 +494,8 @@ class GfdlarchiveDataManager(DataManager):
                     else:
                         # get here if we didn't hit 'break' above -- give up
                         if error_flag != 3:
-                            print ("\tWarning: unable to assign {0} axis "
-                                "in {1}.").format(fax, file_name)
+                            print(("\tWarning: unable to assign {0} axis "
+                                "in {1}.").format(fax, file_name))
                             error_flag = 3
 
         # crop time axis to requested range
@@ -505,7 +507,7 @@ class GfdlarchiveDataManager(DataManager):
                 time_var_name = vax
                 break
         else:
-            print "\tCan't determine time axis for {}.".format(file_name)
+            print("\tCan't determine time axis for {}.".format(file_name))
             time_var_name = 'time' # will probably give KeyError
         trim_count = 0
         for f in remote_files:
@@ -515,8 +517,9 @@ class GfdlarchiveDataManager(DataManager):
             )
             if trimmed_range != f.date_range:
                 file_name = os.path.basename(f._remote_data)
-                print "\ttrimming '{}' of {} from {} to {}".format(
-                    time_var_name, file_name, f.date_range, trimmed_range)
+                print("\ttrimming '{}' of {} from {} to {}".format(
+                    time_var_name, file_name, f.date_range, trimmed_range
+                ))
                 trim_count = trim_count + 1
                 self.nc_crop_time_axis(
                     time_var_name, trimmed_range, 
@@ -527,8 +530,9 @@ class GfdlarchiveDataManager(DataManager):
         # cat chunks to destination, if more than one
         if len(remote_files) > 1:
             # not running in shell, so can't use glob expansion.
-            print "\tcatting {} chunks to {}".format(
-                d_key.name_in_model, dest_path)
+            print("\tcatting {} chunks to {}".format(
+                d_key.name_in_model, dest_path
+            ))
             chunks = [os.path.basename(f._remote_data) for f in remote_files]
             self.nc_cat_chunks(chunks, dest_path, 
                 cwd=work_dir, dry_run=self.dry_run
@@ -536,7 +540,7 @@ class GfdlarchiveDataManager(DataManager):
         else:
             f = util.coerce_from_iter(remote_files)
             file_name = os.path.basename(f._remote_data)
-            print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
+            print("\tsymlinking {} to {}".format(d_key.name_in_model, dest_path))
             util.run_command(['ln', '-fs', \
                 os.path.join(work_dir, file_name), dest_path],
                 dry_run=self.dry_run
@@ -563,7 +567,7 @@ class GfdlarchiveDataManager(DataManager):
         # pylint: disable=maybe-no-member
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.coop_mode and os.path.exists(prev_html):
-            print "\tDEBUG: Appending previous index.html at {}".format(prev_html)
+            print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
             with open(prev_html, 'r') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
@@ -573,7 +577,7 @@ class GfdlarchiveDataManager(DataManager):
             if os.path.exists(self.TEMP_HTML):
                 mode = 'a'
             else:
-                print "\tWARNING: No file at {}.".format(self.TEMP_HTML)
+                print("\tWARNING: No file at {}.".format(self.TEMP_HTML))
                 mode = 'w'
             with open(self.TEMP_HTML, mode) as f2:
                 f2.write(contents)
@@ -595,9 +599,9 @@ class GfdlarchiveDataManager(DataManager):
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
             # copy all case-level files
-            print "\tDEBUG: files in {}".format(self.MODEL_WK_DIR)
+            print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
             for f in os.path.listdir(self.MODEL_WK_DIR):
-                print "\t\tDEBUG: found {}".format(f)
+                print("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
                     gcp_wrapper(
                         os.path.join(self.MODEL_WK_DIR, f), 
@@ -921,7 +925,7 @@ def parse_frepp_stub(frepp_stub):
         \s*$          # remainder of line must be whitespace.
         """, re.VERBOSE)
     for line in frepp_stub.splitlines():
-        print "line = '{}'".format(line)
+        print("line = '{}'".format(line))
         match = re.match(regex, line)
         if match:
             if match.group('key') in frepp_translate:

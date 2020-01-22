@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import shutil
 import datelabel
@@ -63,8 +64,8 @@ class NcoNetcdfHelper(NetcdfHelper):
             if move_back:
                 # manually move file back 
                 if kwargs.get('dry_run', False):
-                    print 'DRY_RUN: move {} to {}'.format(
-                        kwargs['out_file'], kwargs['in_file'])
+                    print('DRY_RUN: move {} to {}'.format(
+                        kwargs['out_file'], kwargs['in_file']))
                 else:
                     if kwargs['cwd']:
                         cwd = os.getcwd()
@@ -149,10 +150,10 @@ class NcoNetcdfHelper(NetcdfHelper):
         d = cls.ncdump_h(in_file=in_file, cwd=cwd, dry_run=dry_run)
         dd = dict()
         if var not in d['variables']:
-            print "Can't find variable {} in {}.".format(var, in_file)
+            print("Can't find variable {} in {}.".format(var, in_file))
             return dd
         if 'shape' not in d['variables'][var]:
-            print "Can't find shape attribute for {} in {}.".format(var, in_file)
+            print("Can't find shape attribute for {} in {}.".format(var, in_file))
             return dd
         for ax in d['variables'][var]['shape']:
             assert ax in d['variables']
@@ -175,8 +176,8 @@ class NcoNetcdfHelper(NetcdfHelper):
         dd = dict()
         for var, unit in new_units_dict.iteritems():
             if var not in d:
-                print ("Warning: no unit attribute for {} in {}."
-                    " Skipping unit conversion").format(var, in_file)
+                print(("Warning: no unit attribute for {} in {}."
+                    " Skipping unit conversion").format(var, in_file))
             elif d[var] != unit:
                 dd[var] = unit
         cmd_string = '{var}=udunits({var},"{unit}");{var}@units="{unit}";'

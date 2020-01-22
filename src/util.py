@@ -190,8 +190,15 @@ class VariableTranslator(Singleton):
             glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
             config_files = glob.glob(glob_pattern)
 
-        self.axes = dict()
+
         # always have CF-compliant option, which does no translation
+        self.axes = {
+            'CF': {
+                "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
+                "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
+                "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+                "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+        }}
         self.variables = {'CF': dict()}
         self.units = {'CF': dict()}
         for filename in config_files:

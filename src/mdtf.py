@@ -225,7 +225,7 @@ class MDTFFramework(object):
             # only let this be overridden if we're in a unit test
             rel_paths_root = user_args['CODE_ROOT']
         # convert relative to absolute paths
-        for key, val in default_args['paths'].items():
+        for key, val in default_args['paths'].iteritems():
             default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
 
         if util.get_from_config('dry_run', default_args, default=False):

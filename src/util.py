@@ -167,7 +167,7 @@ class MultiMap(defaultdict):
 
     def inverse(self):
         d = defaultdict(set)
-        for key, val_set in self.items():
+        for key, val_set in self.iteritems():
             for v in val_set:
                 d[v].add(key)
         return dict(d)

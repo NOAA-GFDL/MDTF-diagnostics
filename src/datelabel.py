@@ -300,7 +300,7 @@ class DateFrequency(datetime.timedelta):
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)
         obj = super(DateFrequency, cls).__new__(cls, **kwargs)
-        for key, val in attrs.items():
+        for key, val in attrs.iteritems():
             obj.__setattr__(key, val)
         return obj
 

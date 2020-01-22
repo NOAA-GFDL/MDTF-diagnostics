@@ -213,7 +213,7 @@ class Diagnostic(object):
         })
         # Set env vars POD has inherited globally and from current case 
         # (set in DataManager._setup_pod).
-        for key, val in self.pod_env_vars.items():
+        for key, val in self.pod_env_vars.iteritems():
             util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
         # Set env vars for variable and axis names:

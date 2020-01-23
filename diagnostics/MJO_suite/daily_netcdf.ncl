@@ -176,20 +176,20 @@ do i=0,dimsizes(plevs)-1
 
       var_name_plev_package = var_names(j)+tostring(plev)      ; new file name & varname in file
       print(" var_name_plev_package "+var_name_plev_package)
-      LEV = tostring(plevs(i)*100)+"." 
-      src = source(j)
-      temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
-      dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
-      ; extract level
-      nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
-      print(nco_call)
-      system(nco_call)
-      ; flatten to 3D
-      nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
-      print(nco_call)
-      system(nco_call)
+    ;   LEV = tostring(plevs(i)*100)+"." 
+    ;   src = source(j)
+    ;   temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
+    ;   dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
+    ;   ; extract level
+    ;   nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
+    ;   print(nco_call)
+    ;   system(nco_call)
+    ;   ; flatten to 3D
+    ;   nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
+    ;   print(nco_call)
+    ;   system(nco_call)
 
-      file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
+      dst = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv

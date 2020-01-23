@@ -220,8 +220,8 @@ class Diagnostic(object):
         axes = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
-            util.setenv(var.original_name, var.name_in_model, 
-                self.pod_env_vars, verbose=verbose)
+            # util.setenv(var.original_name, var.name_in_model, 
+            #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
             for ax_name, ax_attrs in var.axes.iteritems():
                 if 'MDTF_envvar' not in ax_attrs:

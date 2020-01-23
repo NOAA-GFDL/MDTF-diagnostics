@@ -216,6 +216,9 @@ class DataManager(object):
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
                 "{}.").format(self.convention))
+        temp = translate.variables[self.convention].to_dict()
+        for key, val in temp.iteritems():
+            util.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
         for key, val in temp.iteritems():
             util.setenv(key, val, self.envvars, verbose=verbose)

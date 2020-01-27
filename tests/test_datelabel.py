@@ -163,6 +163,18 @@ class TestDateRange(unittest.TestCase):
         self.assertFalse(r1.contains(dt_range('2015-2021')))
         self.assertFalse(r1.contains(dt_range('2020-2021')))
 
+    def test_intersect(self):
+        r1 = dt_range('2000-2010')
+        with self.assertRaises(ValueError):
+            _ = r1.intersection(dt_range('1900-1990'))
+        with self.assertRaises(ValueError):
+            _ = r1.intersection(dt_range('2002-2008'))
+        with self.assertRaises(ValueError):
+            _ = r1.intersection(dt_range('1999-2018'))
+        self.assertEqual(r1.intersection(dt_range('2002-2018')), dt_range('2002-2010'))
+        self.assertEqual(r1.intersection(dt_range('1999-2008')), dt_range('2000-2008'))
+        self.assertEqual(r1.intersection(dt_range('2000-2010')), dt_range('2000-2010'))
+
 class TestDateFrequency(unittest.TestCase):
     def test_string_parsing(self):
         self.assertEqual(dt_freq('1hr'), dt_freq(1, 'hr'))

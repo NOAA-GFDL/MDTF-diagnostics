@@ -195,9 +195,9 @@ class AtomicInterval(object):
                 right = self._right if upper == self._upper else other._right
 
             if lower <= upper:
-                return type(self)(left, lower, upper, right)
+                return AtomicInterval(left, lower, upper, right)
             else:
-                return type(self)(self.OPEN, lower, lower, self.OPEN)
+                return AtomicInterval(self.OPEN, lower, lower, self.OPEN)
         else:
             raise TypeError('Only AtomicInterval instances are supported.')
 
@@ -218,7 +218,7 @@ class AtomicInterval(object):
                     upper = max(self._upper, other._upper)
                     right = self._right if upper == self._upper else other._right
 
-                return type(self)(left, lower, upper, right)
+                return AtomicInterval(left, lower, upper, right)
             else:
                 # return Interval(self, other)
                 return ValueError("{} and {} are not contiguous.".format(
@@ -506,10 +506,8 @@ class DateRange(AtomicInterval):
             raise ValueError("Intersection of {} and {} is disjoint".format(self, item))
         interval = super(DateRange, self).intersection(dr_item)
         if not precision:
-            _, prec = self._warning_minmax(self.precision, dr_item.precision)
-        else:
-            prec = precision
-        return DateRange(interval.lower, interval.upper, precision=prec)
+            _, precision = self._warning_minmax(self.precision, dr_item.precision)
+        return DateRange(interval.lower, interval.upper, precision=precision)
 
     # for comparsions, coerce to DateRange first & use inherited interval math
     def __lt__(self, other): 

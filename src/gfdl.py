@@ -328,7 +328,7 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     # method throws ValueError if ranges aren't contiguous
                     files_date_range = datelabel.DateRange.from_contiguous_span(
-                        [f.date_range for f in file_lookup[data_key]]
+                        *[f.date_range for f in file_lookup[data_key]]
                     )
                 except ValueError:
                     # Date range of remote files doesn't contain analysis range or 

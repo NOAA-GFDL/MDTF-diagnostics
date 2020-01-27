@@ -344,7 +344,75 @@ class AtomicInterval(object):
 
 # ===============================================================
 
-class DateRange(AtomicInterval):
+class _DateMixin(object):
+    """Utility methods for dealing with dates.
+    """
+    @staticmethod
+    def date_format(dt, precision=None):
+        """Print date in YYYYMMDDHHMMSS format, with length being set automatically
+        from precision. 
+        
+        Note:
+            strftime() is broken for dates prior to 1900 in python < 3.3, see
+            https://bugs.python.org/issue1777412 and https://stackoverflow.com/q/10263956.
+            For this reason, the workaround implemented here should be used 
+            instead.
+        """
+        tup_ = dt.timetuple()
+        str_ = '{0.tm_year:04}{0.tm_mon:02}{0.tm_mday:02}'.format(tup_)
+        str_ = str_ + '{0.tm_hour:02}{0.tm_min:02}{0.tm_sec:02}'.format(tup_)
+        if precision:
+            assert precision > 0 and precision <= 6
+            return str_[:2*(precision + 1)]
+        else:
+            return str_
+
+    @classmethod
+    def increment(cls, dt, precision):
+        """Return a copy of dt advanced by one time unit as specified by
+        the `precision` attribute.
+        """
+        if precision == 2: # nb: can't handle this with timedeltas
+            if dt.month == 12:
+                return dt.replace(year=(dt.year + 1), month=1)
+            else:
+                return dt.replace(month=(dt.month + 1))
+        else:
+            return cls._inc_dec_common(dt, precision, 1)
+
+    @classmethod
+    def decrement(cls, dt, precision):
+        """Return a copy of Date moved back by one time unit as specified by
+        the `precision` attribute.
+        """
+        if precision == 2: # nb: can't handle this with timedeltas
+            if dt.month == 1:
+                return dt.replace(year=(dt.year - 1), month=12)
+            else:
+                return dt.replace(month=(dt.month - 1))
+        else:
+            return cls._inc_dec_common(dt, precision, -1)
+
+    @staticmethod
+    def _inc_dec_common(dt, precision, delta):
+        if precision == 1:
+            # nb: can't handle this with timedeltas
+            return dt.replace(year=(dt.year + delta)) 
+        elif precision == 3:
+            td = datetime.timedelta(days = delta)
+        elif precision == 4:
+            td = datetime.timedelta(hours = delta)
+        elif precision == 5:
+            td = datetime.timedelta(minutes = delta)
+        elif precision == 6:
+            td = datetime.timedelta(seconds = delta)
+        else:
+            # prec == 2 case handled in calling logic
+            raise ValueError("Malformed input")
+        return dt + td
+
+
+class DateRange(AtomicInterval, _DateMixin):
     """Class representing a range of variable-precision dates. 
 
     Note:
@@ -405,6 +473,14 @@ class DateRange(AtomicInterval):
             else:
                 return (tmp.upper, tmp.precision)
 
+    @classmethod
+    def _coerce_to_self(cls, item):
+        # got to be a better way to write this
+        if isinstance(item, cls):
+            return item
+        else:
+            return cls(item)
+
     @property
     def start(self):
         assert self.precision
@@ -440,8 +516,9 @@ class DateRange(AtomicInterval):
     def format(self, precision=None):
         if not precision:
             precision = self.precision
+        # need to decrement upper bound because interval is open there
         return self.date_format(self.lower, precision) + self._range_sep \
-            + self.date_format(self.upper, precision)
+            + self.date_format(self.decrement(self.upper, precision), precision)
     __str__ = format
 
     def __repr__(self):
@@ -449,34 +526,6 @@ class DateRange(AtomicInterval):
             return "DateRange('{}')".format(self)
         else:
             return "DateRange('{}', precision=None)".format(self)
-
-    @staticmethod
-    def date_format(dt, precision=None):
-        """Print date in YYYYMMDDHHMMSS format, with length being set automatically
-        from precision. 
-        
-        Note:
-            strftime() is broken for dates prior to 1900 in python < 3.3, see
-            https://bugs.python.org/issue1777412 and https://stackoverflow.com/q/10263956.
-            For this reason, the workaround implemented here should be used 
-            instead.
-        """
-        tup_ = dt.timetuple()
-        str_ = '{0.tm_year:04}{0.tm_mon:02}{0.tm_mday:02}'.format(tup_)
-        str_ = str_ + '{0.tm_hour:02}{0.tm_min:02}{0.tm_sec:02}'.format(tup_)
-        if precision:
-            assert precision > 0 and precision <= 6
-            return str_[:2*(precision + 1)]
-        else:
-            return str_
-
-    @classmethod
-    def _coerce_to_self(cls, item):
-        # got to be a better way to write this
-        if isinstance(item, cls):
-            return item
-        else:
-            return cls(item)
 
     def __contains__(self, item):
         """Comparison returning `True` if `item` has any overlap at all with the
@@ -607,50 +656,6 @@ class Date(DateRange):
         tup_ = self.lower.timetuple()
         str_ = '{0.tm_year:04}-{0.tm_mon:02}-{0.tm_mday:02} '.format(tup_)
         return str_ + '{0.tm_hour:02}:{0.tm_min:02}:{0.tm_sec:02}'.format(tup_)
-
-    @classmethod
-    def increment(cls, dt, precision):
-        """Return a copy of dt advanced by one time unit as specified by
-        the `precision` attribute.
-        """
-        if precision == 2: # nb: can't handle this with timedeltas
-            if dt.month == 12:
-                return dt.replace(year=(dt.year + 1), month=1)
-            else:
-                return dt.replace(month=(dt.month + 1))
-        else:
-            return cls._inc_dec_common(dt, precision, 1)
-
-    @classmethod
-    def decrement(cls, dt, precision):
-        """Return a copy of Date moved back by one time unit as specified by
-        the `precision` attribute.
-        """
-        if precision == 2: # nb: can't handle this with timedeltas
-            if dt.month == 1:
-                return dt.replace(year=(dt.year - 1), month=12)
-            else:
-                return dt.replace(month=(dt.month - 1))
-        else:
-            return cls._inc_dec_common(dt, precision, -1)
-
-    @staticmethod
-    def _inc_dec_common(dt, precision, delta):
-        if precision == 1:
-            # nb: can't handle this with timedeltas
-            return dt.replace(year=(dt.year + delta)) 
-        elif precision == 3:
-            td = datetime.timedelta(days = delta)
-        elif precision == 4:
-            td = datetime.timedelta(hours = delta)
-        elif precision == 5:
-            td = datetime.timedelta(minutes = delta)
-        elif precision == 6:
-            td = datetime.timedelta(seconds = delta)
-        else:
-            # prec == 2 case handled in calling logic
-            raise ValueError("Malformed input")
-        return dt + td
 
     def _tuple_compare(self, other, func):
         if not isinstance(other, Date):

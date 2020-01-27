@@ -175,6 +175,15 @@ class TestDateRange(unittest.TestCase):
         self.assertEqual(r1.intersection(dt_range('1999-2008')), dt_range('2000-2008'))
         self.assertEqual(r1.intersection(dt_range('2000-2010')), dt_range('2000-2010'))
 
+    def test_repr(self):
+        globs = {'DateRange': dt_range, 'Date': dt}
+        r1 = dt_range('2000-2010')
+        self.assertEqual(r1, eval(repr(r1), globs))
+        r1 = dt_range('199912-200001')
+        self.assertEqual(r1, eval(repr(r1), globs))
+        r1 = dt_range('20000101-20000201')
+        self.assertEqual(r1, eval(repr(r1), globs))
+
 class TestDateFrequency(unittest.TestCase):
     def test_string_parsing(self):
         self.assertEqual(dt_freq('1hr'), dt_freq(1, 'hr'))

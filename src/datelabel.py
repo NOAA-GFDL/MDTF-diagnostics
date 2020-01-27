@@ -525,13 +525,17 @@ class DateRange(AtomicInterval):
         datetime.date('2019-09-18') in DateRange('2018-2019') will give
         `True`.
         """
-        dr_item = self._coerce_to_self(item)
-        return super(DateRange, self).overlaps(dr_item, adjacent=False)
+        item = self._coerce_to_self(item)
+        return super(DateRange, self).overlaps(item, adjacent=False)
+
+    def overlaps(self, item):
+        item = self._coerce_to_self(item)
+        return super(DateRange, self).overlaps(item, adjacent=False)
 
     def contains(self, item):
         # strict containments
-        dr_item = self._coerce_to_self(item)
-        return super(DateRange, self).__contains__(dr_item)
+        item = self._coerce_to_self(item)
+        return super(DateRange, self).__contains__(item)
     
     def intersection(self, item, precision=None):
         dr_item = self._coerce_to_self(item)
@@ -548,17 +552,17 @@ class DateRange(AtomicInterval):
 
     # for comparsions, coerce to DateRange first & use inherited interval math
     def __lt__(self, other): 
-        dt_other = self._coerce_to_self(other)
-        return super(DateRange, self).__lt__(dt_other)
+        other = self._coerce_to_self(other)
+        return super(DateRange, self).__lt__(other)
     def __le__(self, other):
-        dt_other = self._coerce_to_self(other)
-        return super(DateRange, self).__le__(dt_other)
+        other = self._coerce_to_self(other)
+        return super(DateRange, self).__le__(other)
     def __gt__(self, other):
-        dt_other = self._coerce_to_self(other)
-        return super(DateRange, self).__gt__(dt_other)
+        other = self._coerce_to_self(other)
+        return super(DateRange, self).__gt__(other)
     def __ge__(self, other):
-        dt_other = self._coerce_to_self(other)
-        return super(DateRange, self).__ge__(dt_other)
+        other = self._coerce_to_self(other)
+        return super(DateRange, self).__ge__(other)
 
 
 class Date(DateRange):

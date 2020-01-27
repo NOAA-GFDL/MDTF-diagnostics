@@ -197,6 +197,7 @@ class AtomicInterval(object):
             if lower <= upper:
                 return AtomicInterval(left, lower, upper, right)
             else:
+                # empty set
                 return AtomicInterval(self.OPEN, lower, lower, self.OPEN)
         else:
             raise TypeError('Only AtomicInterval instances are supported.')
@@ -221,7 +222,7 @@ class AtomicInterval(object):
                 return AtomicInterval(left, lower, upper, right)
             else:
                 # return Interval(self, other)
-                return ValueError("{} and {} are not contiguous.".format(
+                return ValueError("{} and {} have multi-component union.".format(
                     self, other))
         else:
             raise TypeError('Only AtomicInterval instances are supported.')
@@ -455,7 +456,7 @@ class DateRange(AtomicInterval, _DateMixin):
         min_ = min(args)
         max_ = max(args)
         if min_ != max_:
-            print('\tWarning: expected arguments {} to be identical'.format(
+            print('\tWarning: expected precisions {} to be identical'.format(
                 args
             ))
         return (min_, max_)
@@ -548,14 +549,12 @@ class DateRange(AtomicInterval, _DateMixin):
         return super(DateRange, self).__contains__(item)
     
     def intersection(self, item, precision=None):
-        dr_item = self._coerce_to_self(item)
-        if not self.overlaps(dr_item):
+        item = self._coerce_to_self(item)
+        if not self.overlaps(item):
             raise ValueError("{} and {} have empty intersection".format(self, item))
-        elif (self != dr_item and (self.contains(dr_item) or dr_item.contains(self))):
-            raise ValueError("Intersection of {} and {} is disjoint".format(self, item))
-        interval = super(DateRange, self).intersection(dr_item)
+        interval = super(DateRange, self).intersection(item)
         if not precision:
-            _, precision = self._warning_minmax(self.precision, dr_item.precision)
+            _, precision = self._warning_minmax(self.precision, item.precision)
         return DateRange(interval.lower, interval.upper, precision=precision)
 
     # for comparsions, coerce to DateRange first & use inherited interval math

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import glob
@@ -59,6 +60,7 @@ class DataSet(util.Namespace):
     `https://stackoverflow.com/a/48806603`_ for implementation.
     """
     def __init__(self, *args, **kwargs):
+        # pylint: disable=maybe-no-member
         if 'DateFreqMixin' not in kwargs:
             self.DateFreq = datelabel.DateFrequency
         else:
@@ -127,6 +129,7 @@ class DataManager(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, case_dict, config={}, DateFreqMixin=None):
+        # pylint: disable=maybe-no-member
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
@@ -210,10 +213,14 @@ class DataManager(object):
         })
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         translate = util.VariableTranslator()
-        assert self.convention in translate.units, \
-            "Variable name translation doesn't recognize {}.".format(self.convention)
+        if self.convention not in translate.units:
+            raise AssertionError(("Variable name translation doesn't recognize "
+                "{}.").format(self.convention))
+        temp = translate.variables[self.convention].to_dict()
+        for key, val in temp.iteritems():
+            util.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
-        for key, val in temp.items():
+        for key, val in temp.iteritems():
             util.setenv(key, val, self.envvars, verbose=verbose)
 
         for pod in self.iter_pods():
@@ -247,11 +254,13 @@ class DataManager(object):
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
                 if var.date_freq != self.data_freq:
-                    pod.skipped = PodRequirementFailure(pod,
-                        """{} requests {} (= {}) at {} frequency, which isn't compatible
-                        with case {} providing data at {} frequency only.""".format(
-                        pod.name, var.name_in_model, var.name, var.date_freq,
-                        self.case_name, self.data_freq
+                    pod.skipped = PodRequirementFailure(
+                        pod,
+                        ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
+                        "compatible with case {4} providing data at {5} frequency "
+                        "only.").format(
+                            pod.name, var.name_in_model, var.name, 
+                            var.date_freq, self.case_name, self.data_freq
                     ))
                     break
 
@@ -312,7 +321,7 @@ class DataManager(object):
                 new_varlist = [var for var \
                     in self._iter_populated_varlist(pod.varlist, pod.name)]
             except DataQueryFailure as exc:
-                print "Data query failed on pod {}; skipping.".format(pod.name)
+                print("Data query failed on pod {}; skipping.".format(pod.name))
                 pod.skipped = exc
                 new_varlist = []
             pod.varlist = new_varlist
@@ -355,19 +364,20 @@ class DataManager(object):
         self.process_fetched_data_hook()
 
     def _fetch_exception_handler(self, exc):
-        print exc
+        print(exc)
         keys_from_file = self.data_files.inverse()
         for key in keys_from_file[exc.dataset]:
             for pod in self.data_pods[key]:
-                print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+                print(("\tSkipping pod {} due to data fetch error."
+                    "").format(pod.name))
                 pod.skipped = exc
 
     def _query_data(self):
         for data_key in self.data_keys:
             try:
                 var = self.data_keys[data_key][0]
-                print "Calling query_dataset on {} @ {}".format(
-                    var.name_in_model, var.date_freq)
+                print("Calling query_dataset on {} @ {}".format(
+                    var.name_in_model, var.date_freq))
                 files = self.query_dataset(var)
                 self.data_files[data_key].update(files)
             except DataQueryFailure:
@@ -380,18 +390,22 @@ class DataManager(object):
         """
         for var in var_iter:
             if var._remote_data:
-                print "Found {} (= {}) @ {} for {}".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
+                print("Found {} (= {}) @ {} for {}".format(
+                    var.name_in_model, var.name, var.date_freq, pod_name
+                ))
                 yield var
             elif not var.alternates:
                 raise DataQueryFailure(
                     var,
-                    "Couldn't find {} (= {}) @ {} for {} & no other alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
-                )
+                    ("Couldn't find {} (= {}) @ {} for {} & no other "
+                        "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                ))
             else:
-                print "Couldn't find {} (= {}) @ {} for {}, trying alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
+                print(("Couldn't find {} (= {}) @ {} for {}, trying "
+                    "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                ))
                 for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
                     yield alt_var  # no 'yield from' in py2.7
 
@@ -494,7 +508,7 @@ class DataManager(object):
         if os.path.isfile(out_file):
             out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.json.old')
             if verbose > 1: 
-                print "WARNING: moving existing namelist file to ", out_fileold
+                print("WARNING: moving existing namelist file to ", out_fileold)
             shutil.move(out_file, out_fileold)
         util.write_json(config, out_file)
 
@@ -503,15 +517,16 @@ class DataManager(object):
         """
         # pylint: disable=maybe-no-member
         if os.environ["make_variab_tar"] == "0":
-            print "Not making tar file because make_variab_tar = 0"
+            print("Not making tar file because make_variab_tar = 0")
             return
-
-        print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
+        print("Making tar file because make_variab_tar = {}".format(
+            os.environ["make_variab_tar"]
+        ))
         if os.path.isfile(self.MODEL_WK_DIR+'.tar'):
-            print "Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR)
+            print("Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR))
             shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
 
-        print "Creating {}.tar".format(self.MODEL_WK_DIR)
+        print("Creating {}.tar".format(self.MODEL_WK_DIR))
         # not running in shell, so don't need to quote globs
         tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
         util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
@@ -523,7 +538,7 @@ class DataManager(object):
         # pylint: disable=maybe-no-member
         paths = util.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            print "copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
+            print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
             if os.path.exists(self.MODEL_OUT_DIR):
                 shutil.rmtree(self.MODEL_OUT_DIR)
             shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)

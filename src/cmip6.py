@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import re
 import datelabel
@@ -33,7 +34,7 @@ class CMIP6_CVs(util.Singleton):
         if self.cv:
             return
         for k in self._contents:
-            self.cv[k] = util.coerce_to_collection(self._contents[k], list)
+            self.cv[k] = util.coerce_to_iter(self._contents[k], list)
 
     def is_in_cv(self, category, items):
         self._make_cv()
@@ -56,7 +57,7 @@ class CMIP6_CVs(util.Singleton):
             mm = util.MultiMap()
             for k in self._contents[source]:
                 mm[k].update(
-                    util.coerce_to_collection(self._contents[source][k][dest], set)
+                    util.coerce_to_iter(self._contents[source][k][dest], set)
                 )
             self._lookups[(source, dest)] = mm
             return mm
@@ -68,9 +69,9 @@ class CMIP6_CVs(util.Singleton):
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
         if hasattr(source_items, '__iter__'):
-            return [util.coerce_from_collection(_lookup[item]) for item in source_items]
+            return [util.coerce_from_iter(_lookup[item]) for item in source_items]
         else:
-            return util.coerce_from_collection(_lookup[source_items])
+            return util.coerce_from_iter(_lookup[source_items])
 
     # ----------------------------------
 
@@ -166,7 +167,8 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
 mip_table_regex = re.compile(r"""
     ^ # start of line
     (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
-    (?P<table_freq>\d?[a-z]*?)    # maybe a digit, followed by as few lowercase letters as possible
+    # maybe a digit, followed by as few lowercase letters as possible:
+    (?P<table_freq>\d?[a-z]*?)
     (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
     (?P<table_qualifier>(Pt|Z|Off)?)
     $ # end of line - necessary for lazy capture to work

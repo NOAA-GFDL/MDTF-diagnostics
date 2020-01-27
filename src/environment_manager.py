@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import glob
@@ -70,7 +71,7 @@ class EnvironmentManager(object):
             pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
             log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
             pod.logfile_obj.write(log_str)
-            if verbose > 0: print log_str
+            if verbose > 0: print(log_str)
 
             try:
                 pod.setUp()
@@ -80,10 +81,10 @@ class EnvironmentManager(object):
                 pod.logfile_obj.write(log_str)
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
-                print log_str
+                print(log_str)
                 pod.skipped = exc
                 continue
-            print "{} will run in env: {}".format(pod.name, pod.env)
+            print("{} will run in env: {}".format(pod.name, pod.env))
             pod.logfile_obj.write("\n".join(
                 ["Found files: "] + pod.found_files + [" "]))
             env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
@@ -100,9 +101,9 @@ class EnvironmentManager(object):
             # '&&' so we abort if any command in the sequence fails.
             if self.test_mode:
                 for cmd in commands:
-                    print 'TEST MODE: call {}'.format(cmd)
+                    print('TEST MODE: call {}'.format(cmd))
             else:
-                print "Calling : {}".format(run_command)
+                print("Calling : {}".format(run_command))
             commands = ' && '.join([s for s in commands if s])
             
             pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
@@ -117,7 +118,7 @@ class EnvironmentManager(object):
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT)
             except OSError as exc:
                 print('ERROR :', exc.errno, exc.strerror)
-                print " occured with call: {}".format(run_command)
+                print(" occured with call: {}".format(run_command))
                 pod.skipped = exc
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
@@ -307,9 +308,9 @@ class CondaEnvironmentManager(EnvironmentManager):
             shell=True
         )
         if test != 0:
-            print 'Conda env {} not found; creating it'.format(env_name)
-            print 'grepped for {}'.format(conda_prefix)
-            print subprocess.check_output('echo $CONDA_EXE',shell=True)
+            print('Conda env {} not found; creating it'.format(env_name))
+            print('grepped for {}'.format(conda_prefix))
+            print(subprocess.check_output('echo $CONDA_EXE',shell=True))
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
@@ -322,10 +323,10 @@ class CondaEnvironmentManager(EnvironmentManager):
             short_name = env_name[(len(prefix)+1):]
         path = '{}/src/conda_env_{}.yml'.format(paths.CODE_ROOT, short_name)
         if not os.path.exists(path):
-            print "Can't find {}".format(path)
+            print("Can't find {}".format(path))
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
-            print 'Creating conda env {} in {}'.format(env_name, conda_prefix)
+            print('Creating conda env {} in {}'.format(env_name, conda_prefix))
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         commands = \
@@ -371,7 +372,9 @@ class CondaEnvironmentManager(EnvironmentManager):
         paths = util.PathManager()
         conda_prefix = os.path.join(self.conda_env_root, pod.env)
         return [
-            'source {}/src/conda_init.sh {}'.format(paths.CODE_ROOT, self.conda_root),
+            'source {}/src/conda_init.sh {}'.format(
+                paths.CODE_ROOT, self.conda_root
+            ),
             'conda activate {}'.format(conda_prefix)
         ]
 

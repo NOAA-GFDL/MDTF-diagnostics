@@ -8,49 +8,11 @@
 # Chih-Chieh (Jack) Chen, NCAR, 
 # Yi-Hung Kuo, UCLA
 #
-# ======================================================================
-# Usage
-#
-# USAGE: python mdtf.py input_file (default=namelist)
-# The input file sets all model case/dates and which modules to run
-# This file (mdtf.py) should NOT be modified
-#
-# Please see Getting Started [link] and Developer's Walk-Through
-# for full description of how to run
-# ======================================================================
-# What's Included
-#
-# The input file (namelist) provided in the distribution will run
-# the following diagnostic modules (PODs) by default:
-#    Convective Transition Diagnostics   from J. David Neelin (UCLA)
-#    MJO Teleconnections                 from Eric Maloney (CSU)
-#    Extratropical Variance (EOF 500hPa) from CESM/AMWG (NCAR)
-#    Wavenumber-Frequency Spectra        from CESM/AMWG (NCAR)
-#    MJO Spectra and Phasing             from CESM/AMWG (NCAR)
-#
-# In addition, the following package is provided in full but does not run
-# by default because of higher memory requirements
-#    Diurnal Cycle of Precipitation      from Rich Neale (NCAR)
-#
-# The following modules are under development. Future releases will be
-# available on the  MDTF main page
-# http://www.cesm.ucar.edu/working_groups/Atmosphere/mdtf-diagnostics-package/index.html
-#    MJO Propagation and Amplitude        from Xianan Jiang, UCLA
-#    ENSO Moist Static Energy budget      from Hariharasubramanian Annamalai, U. Hawaii
-#    Warm Rain Microphysics               from Kentaroh Suzuki (AORI, U. Tokyo
-#    AMOC 3D structure                    from Xiaobiao Xu (FSU/COAPS)
-#
 # The MDTF code package and the participating PODs are distributed under
 # the LGPLv3 license (see LICENSE.txt).
 # ======================================================================
-# Requirements
-#
-# As well as Ncar Command Language (NCL),
-# this release uses the following Python modules: 
-#     os, glob, json, dataset, numpy, scipy, matplotlib, 
-#     networkx, warnings, numba, netcdf4
-# ======================================================================
 
+from __future__ import print_function
 import os
 import sys
 import argparse
@@ -74,10 +36,10 @@ class MDTFFramework(object):
         )
         self.argparse_setup()
         cmdline_args = self.argparse_parse()
-        print cmdline_args, '\n'
+        print(cmdline_args, '\n')
         default_args = util.read_json(cmdline_args['config_file'])
         self.config = self.parse_mdtf_args(cmdline_args, default_args)
-        print 'SETTINGS:\n', util.pretty_print_json(self.config) #debug
+        print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
         self._post_config_init()
         
     def _post_config_init(self):
@@ -106,7 +68,8 @@ class MDTFFramework(object):
             help="Parent directory containing results from different models.")
         self.parser.add_argument('--OBS_DATA_ROOT', 
             nargs='?', 
-            help="Parent directory containing observational data used by individual PODs.")
+            help=("Parent directory containing observational data "
+                "used by individual PODs."))
         self.parser.add_argument('--WORKING_DIR', 
             nargs='?',
             help="Working directory.")
@@ -119,16 +82,19 @@ class MDTFFramework(object):
             help="Set flag to fetch data but skip calls to PODs")
         self.parser.add_argument("--dry_run", 
             action="store_true", # so default to False
-            help="Set flag to do a dry run, disabling data fetching and calls to PODs")
+            help=("Set flag to do a dry run, "
+                "disabling data fetching and calls to PODs"))
         self.parser.add_argument("--save_nc", 
             action="store_true", # so default to False
             help="Set flag to have PODs save netCDF files of processed data.")
         self.parser.add_argument('--data_manager', 
             nargs='?',
-            help="Method to fetch model data. Currently supported options are {'Localfile'}.")
+            help=("Method to fetch model data. "
+                "Currently supported options are {'Localfile'}."))
         self.parser.add_argument('--environment_manager', 
             nargs='?',
-            help="Method to manage POD runtime dependencies. Currently supported options are {'None', 'Conda'}.")                                      
+            help=("Method to manage POD runtime dependencies. "
+                "Currently supported options are {'None', 'Conda'}."))
         # casename args, set by frepp
         self.parser.add_argument('--CASENAME', 
             nargs='?')
@@ -149,8 +115,10 @@ class MDTFFramework(object):
         self.parser.add_argument("--chunk_freq", 
             nargs='?')       
         self.parser.add_argument('--config_file', 
-            nargs='?', default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
-            help="Configuration file.")
+            nargs='?', 
+            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
+            help="Configuration file."
+        )
 
     def argparse_parse(self):
         d = self.parser.parse_args().__dict__
@@ -161,7 +129,8 @@ class MDTFFramework(object):
     def caselist_from_args(args):
         d = {}
         for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-            'chunk_freq', 'data_freq', 'model', 'experiment', 'variable_convention']:
+            'chunk_freq', 'data_freq', 'model', 'experiment', 
+            'variable_convention']:
             if k in args:
                 d[k] = args[k]
         if 'model' not in d:
@@ -217,7 +186,7 @@ class MDTFFramework(object):
             # only let this be overridden if we're in a unit test
             rel_paths_root = user_args['CODE_ROOT']
         # convert relative to absolute paths
-        for key, val in default_args['paths'].items():
+        for key, val in default_args['paths'].iteritems():
             default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
 
         if util.get_from_config('dry_run', default_args, default=False):
@@ -230,8 +199,9 @@ class MDTFFramework(object):
         paths = util.PathManager()
         util.check_required_dirs(
             already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 
-            create_if_nec = [paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR], 
-            )
+            create_if_nec = [
+                paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR
+        ])
         self.config["envvars"] = self.config['settings'].copy()
         self.config["envvars"].update(self.config['paths'])
         # following are redundant but used by PODs
@@ -247,7 +217,7 @@ class MDTFFramework(object):
                 return getattr(mod, class_prefix+class_suffix)
             except:
                 continue
-        print "No class named {}.".format(class_prefix+class_suffix)
+        print("No class named {}.".format(class_prefix+class_suffix))
         raise Exception('no_class')  
 
     def set_case_pod_list(self, case_dict):
@@ -267,13 +237,13 @@ class MDTFFramework(object):
         for case_dict in self.config['case_list'][0:1]: 
             case_dict['pod_list'] = self.set_case_pod_list(case_dict)
             for p in case_dict['pod_list']:
-                print "\tDEBUG: will run {}".format(p)
+                print("\tDEBUG: will run {}".format(p))
             case = self.DataManager(case_dict, self.config)
             for pod_name in case.pod_list:
                 try:
                     pod = self.Diagnostic(pod_name)
                 except AssertionError as error:  
-                    print str(error)
+                    print(str(error))
                 case.pods.append(pod)
             case.setUp()
             case.fetch_data()
@@ -291,7 +261,7 @@ class MDTFFramework(object):
 
 
 if __name__ == '__main__':
-    print "\n======= Starting "+__file__
+    print("\n======= Starting "+__file__)
     mdtf = MDTFFramework()
     mdtf.main_loop()
-    print "Exiting normally from ",__file__
+    print("Exiting normally from ",__file__)

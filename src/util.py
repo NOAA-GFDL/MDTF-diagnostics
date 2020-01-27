@@ -1,6 +1,6 @@
 """Common functions and classes used in multiple places in the MDTF code.
 """
-
+from __future__ import print_function
 import os
 import sys
 import re
@@ -149,15 +149,15 @@ class MultiMap(defaultdict):
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
-            super(MultiMap, self).__setitem__(key, coerce_to_collection(self[key], set))
+            super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
-        super(MultiMap, self).__setitem__(key, coerce_to_collection(value, set))
+        super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
         if key not in self.keys():
             raise KeyError(key)
-        return coerce_from_collection(self[key])
+        return coerce_from_iter(self[key])
     
     def to_dict(self):
         d = {}
@@ -167,7 +167,7 @@ class MultiMap(defaultdict):
 
     def inverse(self):
         d = defaultdict(set)
-        for key, val_set in self.items():
+        for key, val_set in self.iteritems():
             for v in val_set:
                 d[v].add(key)
         return dict(d)
@@ -176,7 +176,7 @@ class MultiMap(defaultdict):
         # if val not in self.values():
         #     raise KeyError(val)
         temp = self.inverse()
-        return coerce_from_collection(temp[val])
+        return coerce_from_iter(temp[val])
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -190,15 +190,22 @@ class VariableTranslator(Singleton):
             glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
             config_files = glob.glob(glob_pattern)
 
-        self.axes = dict()
+
         # always have CF-compliant option, which does no translation
+        self.axes = {
+            'CF': {
+                "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
+                "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
+                "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+                "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+        }}
         self.variables = {'CF': dict()}
         self.units = {'CF': dict()}
         for filename in config_files:
             d = read_json(filename)
-            for conv in coerce_to_collection(d['convention_name'], list):
+            for conv in coerce_to_iter(d['convention_name'], list):
                 if verbose > 0: 
-                    print 'XXX found ' + conv
+                    print('XXX found ', conv)
                 self.axes[conv] = d.get('axes', dict())
                 self.variables[conv] = MultiMap(d.get('var_names', dict()))
                 self.units[conv] = MultiMap(d.get('units', dict()))
@@ -369,7 +376,7 @@ def read_json(file_path):
         with open(file_path, 'r') as file_:
             str_ = file_.read()
     except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
+        print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
         exit()
     return parse_json(str_)
 
@@ -406,7 +413,7 @@ def parse_json(str_):
             json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
         )
     except UnicodeDecodeError:
-        print '{} contains non-ascii characters. Exiting.'.format(str_)
+        print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
     return parsed_json
 
@@ -423,7 +430,7 @@ def write_json(struct, file_path, verbose=0):
             json.dump(struct, file_obj, 
                 sort_keys=True, indent=2, separators=(',', ': '))
     except IOError:
-        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
+        print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
 def pretty_print_json(struct):
@@ -520,7 +527,7 @@ def poll_command(command, shell=False, env=None):
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
+            print(output.strip())
     rc = process.poll()
     return rc
 
@@ -565,7 +572,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
-        print 'DRY_RUN: call {}'.format(cmd_str)
+        print('DRY_RUN: call {}'.format(cmd_str))
         return
     proc = None
     pid = None
@@ -595,8 +602,9 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         stderr = stderr+"\nCaught exception {0}({1!r})".format(
             type(exc).__name__, exc.args)
     if retcode != 0:
-        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
-            cmd_str, pid, retcode, stderr)
+        print('run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr
+        ))
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
@@ -650,7 +658,7 @@ def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
-def coerce_to_collection(obj, coll_type):
+def coerce_to_iter(obj, coll_type):
     assert coll_type in [list, set] # only supported types for now
     if obj is None:
         return coll_type([])
@@ -661,14 +669,14 @@ def coerce_to_collection(obj, coll_type):
     else:
         return coll_type([obj])
 
-def coerce_from_collection(obj):
+def coerce_from_iter(obj):
     if hasattr(obj, '__iter__'):
         if len(obj) == 1:
             return list(obj)[0]
         else:
             return list(obj)
     else:
-        return obj        
+        return obj
 
 def is_in_config(key, config, section='settings'):
     # Ugly - should replace with cleaner solution/explicit defaults
@@ -702,10 +710,14 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
             of previously-set variables. 
     """
     if (not overwrite) and (varname in env_dict): 
-        if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
+        if (verbose > 0): 
+            print("Not overwriting ENV {}={}".format(varname,env_dict[varname]))
     else:
-        if ('varname' in env_dict) and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print "WARNING: setenv ",varname," = ",varvalue," overriding previous setting ",env_dict[varname]
+        if ('varname' in env_dict) \
+            and (env_dict[varname] != varvalue) and (verbose > 0): 
+            print("WARNING: setenv {}={} overriding previous setting {}".format(
+                varname, varvalue, env_dict[varname]
+            ))
         env_dict[varname] = varvalue
 
         # environment variables must be strings
@@ -718,19 +730,21 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
-        if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
-    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
+        if (verbose > 0): print("ENV ",varname," = ",env_dict[varname])
+    if ( verbose > 2) : print("Check ",varname," ",env_dict[varname])
 
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
     for n in range(len(varlist)):
-        if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
+        if ( verbose > 2):
+            print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
             _ = os.environ[varlist[n]]
         except:
-            print "ERROR: Required environment variable ",varlist[n]," not found "
-            print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
+            print("ERROR: Required environment variable {} not found.".format(
+                varlist[n]
+            ))
             exit()
 
 
@@ -751,8 +765,7 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         if not os.path.exists(dir):
             if not dir_in in create_if_nec:
                 if (verbose>0): 
-                    print errstr+dir_in+" = "+dir+" directory does not exist"
-                    #print "         and not create_if_nec list: "+create_if_nec
+                    print(errstr+dir_in+" = "+dir+" directory does not exist")
                 raise OSError(dir+" directory does not exist")
             else:
                 print(dir_in+" = "+dir+" created")
@@ -768,12 +781,12 @@ def append_html_template(template_file, target_file, template_dict={},
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
         if create:
-            print "\tDEBUG: write {} to new {}".format(template_file, target_file)
+            print("\tDEBUG: write {} to new {}".format(template_file, target_file))
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
-        print "\tDEBUG: append {} to {}".format(template_file, target_file)
+        print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
     with open(target_file, mode) as f:
         f.write(html_str)

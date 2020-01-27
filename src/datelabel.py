@@ -17,37 +17,11 @@ from __future__ import print_function
 import re
 import datetime
 import operator as op
-import util
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
 # https://github.com/AlexandreDecan/python-intervals ; LGPLv3
-# We neglect the case of noncontiguous intervals here
-
-class _PInf(util.Singleton):
-    """Represent positive infinity.
-    """
-    def __neg__(self): return _NInf()
-    def __lt__(self, o): return False
-    def __le__(self, o): return isinstance(o, _PInf)
-    def __gt__(self, o): return not isinstance(o, _PInf)
-    def __ge__(self, o): return True
-    def __eq__(self, o): return isinstance(o, _PInf)
-    def __ne__(self, o): return not self == o  # Required for Python 2
-    def __repr__(self): return '+inf'
-
-
-class _NInf(util.Singleton):
-    """Represent negative infinity.
-    """
-    def __neg__(self): return _PInf()
-    def __lt__(self, o): return not isinstance(o, _NInf)
-    def __le__(self, o): return True
-    def __gt__(self, o): return False
-    def __ge__(self, o): return isinstance(o, _NInf)
-    def __eq__(self, o): return isinstance(o, _NInf)
-    def __ne__(self, o): return not self == o  # Required for Python 2
-    def __repr__(self): return '-inf'
+# We neglect the case of noncontiguous or semi-infinite intervals here
 
 class AtomicInterval(object):
     """
@@ -60,8 +34,6 @@ class AtomicInterval(object):
     # Boundary types (True for inclusive, False for exclusive)
     CLOSED = True
     OPEN = False
-    # Positive infinity
-    inf = _PInf()
 
     def __init__(self, left, lower, upper, right):
         """Create an atomic interval.
@@ -74,16 +46,15 @@ class AtomicInterval(object):
         :param right: Boolean indicating if right boundary is inclusive (True) 
             or exclusive (False).
         """
-        self._left = left if lower not in [self.inf, -self.inf] else self.OPEN
+        self._left = bool(left)
         self._lower = lower
         self._upper = upper
-        self._right = right if upper not in [self.inf, -self.inf] else self.OPEN
+        self._right = bool(right)
 
         if self.is_empty():
-            self._left = self.OPEN
-            self._lower = self.inf
-            self._upper = -self.inf
-            self._right = self.OPEN
+            raise ValueError('Malformed interval ({},{},{},{})'.format(
+                left, lower, upper, right
+            ))
 
     @property
     def left(self):
@@ -140,14 +111,12 @@ class AtomicInterval(object):
             left = self._left if left is None else left
 
         if callable(lower):
-            lower = self._lower if ignore_inf \
-                and self._lower in [-self.inf, self.inf] else lower(self._lower)
+            lower = self._lower if ignore_inf else lower(self._lower)
         else:
             lower = self._lower if lower is None else lower
 
         if callable(upper):
-            upper = self._upper if ignore_inf \
-                and self._upper in [-self.inf, self.inf] else upper(self._upper)
+            upper = self._upper if ignore_inf else upper(self._upper)
         else:
             upper = self._upper if upper is None else upper
 
@@ -269,11 +238,7 @@ class AtomicInterval(object):
             )
             return left and right
         else:
-            left = (item >= self._lower) if self._left == self.CLOSED \
-                else (item > self._lower)
-            right = (item <= self._upper) if self._right == self.CLOSED \
-                else (item < self._upper)
-            return left and right
+            raise TypeError('Only AtomicInterval instances are supported.')
 
     def __eq__(self, other):
         if isinstance(other, AtomicInterval):
@@ -298,8 +263,7 @@ class AtomicInterval(object):
                 return self._upper < other._lower or \
                     (self._upper == other._lower and other._left == self.OPEN)
         else:
-            return self._upper < other \
-                or (self._right == self.OPEN and self._upper == other)
+            raise TypeError('Only AtomicInterval instances are supported.')
 
     def __gt__(self, other):
         # true only if disjoint!
@@ -310,8 +274,7 @@ class AtomicInterval(object):
                 return self._lower > other._upper or \
                     (self._lower == other._upper and other._right == self.OPEN)
         else:
-            return self._lower > other \
-                or (self._left == self.OPEN and self._lower == other)
+            raise TypeError('Only AtomicInterval instances are supported.')
 
     def __le__(self, other):
         if isinstance(other, AtomicInterval):
@@ -321,8 +284,7 @@ class AtomicInterval(object):
                 return self._upper < other._upper or \
                     (self._upper == other._upper and other._right == self.CLOSED)
         else:
-            return self._lower < other \
-                or (self._left == self.CLOSED and self._lower == other)
+            raise TypeError('Only AtomicInterval instances are supported.')
 
     def __ge__(self, other):
         if isinstance(other, AtomicInterval):
@@ -332,8 +294,7 @@ class AtomicInterval(object):
                 return self._lower > other._lower or \
                     (self._lower == other._lower and other._left == self.CLOSED)
         else:
-            return self._upper > other \
-                or (self._right == self.CLOSED and self._upper == other)
+            raise TypeError('Only AtomicInterval instances are supported.')
 
     def __hash__(self):
         try:

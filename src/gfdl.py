@@ -331,8 +331,10 @@ class GfdlarchiveDataManager(DataManager):
                 if data_key not in file_lookup:
                     continue
                 try:
-                    files_date_range = datelabel.DateRange( \
-                        [f.date_range for f in file_lookup[data_key]])
+                    # method throws ValueError if ranges aren't contiguous
+                    files_date_range = datelabel.DateRange.from_contiguous_span(
+                        *[f.date_range for f in file_lookup[data_key]]
+                    )
                 except ValueError:
                     # Date range of remote files doesn't contain analysis range or 
                     # is noncontiguous; should probably log an error
@@ -511,15 +513,20 @@ class GfdlarchiveDataManager(DataManager):
             time_var_name = 'time' # will probably give KeyError
         trim_count = 0
         for f in remote_files:
-            trimmed_range = f.date_range.intersection(
-                self.date_range, 
-                precision=f.date_range.start.precision
-            )
-            if trimmed_range != f.date_range:
-                file_name = os.path.basename(f._remote_data)
+            file_name = os.path.basename(f._remote_data)
+            if not self.date_range.overlaps(f.date_range):
+                print(("\tWarning: {} has dates {} outside of requested "
+                    "range {}.").format(file_name, f.date_range, self.date_range))
+                continue
+            if not self.date_range.contains(f.date_range):
+                # file overlaps analysis range but is not strictly contained
+                # in it means we need to trim either start or end or both
+                trimmed_range = f.date_range.intersection(
+                    self.date_range,
+                    precision=f.date_range.precision
+                )
                 print("\ttrimming '{}' of {} from {} to {}".format(
-                    time_var_name, file_name, f.date_range, trimmed_range
-                ))
+                    time_var_name, file_name, f.date_range, trimmed_range))
                 trim_count = trim_count + 1
                 self.nc_crop_time_axis(
                     time_var_name, trimmed_range, 

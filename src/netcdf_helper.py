@@ -3,6 +3,16 @@ import os
 import shutil
 import datelabel
 import util
+from xml.parsers import expat
+import xml.etree.ElementTree as ET
+
+class DisableXmlNamespaces:
+    def __enter__(self):
+            self.oldcreate = expat.ParserCreate
+            expat.ParserCreate = lambda encoding, sep: self.oldcreate(encoding, None)
+    def __exit__(self, type, value, traceback):
+            expat.ParserCreate = self.oldcreate
+
 
 class NetcdfHelper(object):
     def __init__(self):
@@ -109,25 +119,31 @@ class NcoNetcdfHelper(NetcdfHelper):
     def ncdump_h(in_file=None, cwd=None, dry_run=False):
         """Return header information for all variables in a file.
         """
+        d = {'dimensions': dict(), 'variables':dict()}
+        if dry_run:
+            return d # dummy answer
         # JSON output for -m is malformed in NCO <=4.5.4, verified OK for 4.7.6
-        json_str = util.run_command(
-            ['ncks', '--jsn', '-m', in_file],
+        xml_str = util.run_command(
+            ['ncks', '--xml', '-m', in_file],
             cwd=cwd, dry_run=dry_run
         )
-        if dry_run:
-            # dummy answer
-            return {'dimensions': dict(), 'variables':dict()}
-        else:
-            d = util.parse_json('\n'.join(json_str))
-            assert 'dimensions' in d
-            assert 'variables' in d
-            # remove 'attributes' level of nesting
-            for var in d['variables']:
-                if 'attributes' in d['variables'][var]:
-                    for k,v in d['variables'][var]['attributes'].iteritems():
-                        d['variables'][var][k] = v
-                    del d['variables'][var]['attributes']
-            return d
+        with DisableXmlNamespaces():
+            root = ET.fromstring('\n'.join(xml_str))  # need parser=None?
+        for dim in root.iter('dimension'):
+            d['dimensions'][dim.attrib['name']] = int(dim.attrib['length'])
+        for var in root.iter('variable'):
+            k = var.attrib['name']
+            d['variables'][k] = var.attrib.copy()
+            del d['variables'][k]['name']
+            for att in var:
+                if 'name' not in att.attrib or 'value' not in att.attrib:
+                    continue
+                att_nm = att.attrib['name']
+                if att_nm == 'shape':
+                    d['variables'][k][att_nm] = att.attrib['value'].split(' ')
+                else:
+                    d['variables'][k][att_nm] = att.attrib['value']
+        return d
 
     @classmethod
     def nc_get_attribute(cls, attr_name, in_file=None, cwd=None, dry_run=False):
@@ -192,7 +208,7 @@ class NcoNetcdfHelper(NetcdfHelper):
     def nc_dump_axis(ax_name, in_file=None, cwd=None, dry_run=False):
         # OK for 4.7.6, works on 4.5.4 if "--trd" flag removed
         ax_vals = util.run_command(
-            ['ncks','--trd','-H','-V','-v', ax_name, in_file],
+            ['ncks','-H','-V','-v', ax_name, in_file],
             cwd=cwd, dry_run=dry_run
         )
         return [float(val) for val in ax_vals if val]

@@ -532,7 +532,9 @@ class GfdlarchiveDataManager(DataManager):
                     time_var_name, trimmed_range, 
                     in_file=file_name, cwd=work_dir, dry_run=self.dry_run
                 )
-        assert trim_count <= 2
+        if trim_count > 2:
+            print("trimmed {} files!".format(trim_count))
+            raise AssertionError()
 
         # cat chunks to destination, if more than one
         if len(remote_files) > 1:
@@ -607,7 +609,7 @@ class GfdlarchiveDataManager(DataManager):
                     )
             # copy all case-level files
             print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
-            for f in os.path.listdir(self.MODEL_WK_DIR):
+            for f in os.listdir(self.MODEL_WK_DIR):
                 print("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
                     gcp_wrapper(

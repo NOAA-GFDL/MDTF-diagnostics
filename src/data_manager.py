@@ -162,8 +162,8 @@ class DataManager(object):
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = util.get_from_config('netcdf_helper', config, default='NetcdfHelper')
-        mixin = getattr(netcdf_helper, mixin)
+        mixin = util.get_from_config('netcdf_helper', config, default='NcoNetcdfHelper')
+        mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
             self.nc_check_environ() # make sure we have dependencies

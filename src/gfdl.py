@@ -556,7 +556,7 @@ class GfdlarchiveDataManager(DataManager):
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {
-            'gcp': {'command': ['gcp', '-sync', '-v', '-cd'], 'site':'gfdl:'},
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
@@ -856,7 +856,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
-        ['gcp', '-sync', '-v', '-cd'] + source + dest,
+        ['gcp', '--sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
         dry_run=dry_run
     )

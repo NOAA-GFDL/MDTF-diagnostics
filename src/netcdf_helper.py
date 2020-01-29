@@ -48,45 +48,45 @@ class NetcdfHelper(object):
             )
 
 
+
+def _nco_outfile_decorator(function):
+    """Wrapper handling cleanup for NCO operations that modify files.
+    NB must come between staticmethod and base function definition.
+    See https://stackoverflow.com/a/18732038. 
+    """
+    def wrapper(*args, **kwargs):
+        if 'out_file' not in kwargs or kwargs['out_file'] is None:
+            kwargs['out_file'] = 'MDTF_NCO_temp.nc'
+            move_back = True
+        else:
+            move_back = False
+        if 'cwd' not in kwargs:
+            kwargs['cwd'] = None
+        assert 'in_file' in kwargs
+        
+        # only pass func the keyword arguments it accepts
+        named_args = function.func_code.co_varnames
+        fkwargs = dict((k, kwargs[k]) for k in named_args if k in kwargs)
+        result = function(*args, **fkwargs)
+        
+        if move_back:
+            # manually move file back 
+            if kwargs.get('dry_run', False):
+                print('DRY_RUN: move {} to {}'.format(
+                    kwargs['out_file'], kwargs['in_file']))
+            else:
+                if kwargs['cwd']:
+                    cwd = os.getcwd()
+                    os.chdir(kwargs['cwd'])
+                os.remove(kwargs['in_file'])
+                shutil.move(kwargs['out_file'], kwargs['in_file'])
+                if kwargs['cwd']:
+                    os.chdir(cwd)
+        return result
+    return wrapper
+
 class NcoNetcdfHelper(NetcdfHelper):
     # Just calls command-line utilities, doesn't use PyNCO bindings
-
-    def _outfile_decorator(function):
-        """Wrapper handling cleanup for NCO operations that modify files.
-        NB must come between staticmethod and base function definition.
-        See https://stackoverflow.com/a/18732038. 
-        """
-        def wrapper(*args, **kwargs):
-            if 'out_file' not in kwargs or kwargs['out_file'] is None:
-                kwargs['out_file'] = 'MDTF_NCO_temp.nc'
-                move_back = True
-            else:
-                move_back = False
-            if 'cwd' not in kwargs:
-                kwargs['cwd'] = None
-            assert 'in_file' in kwargs
-            
-            # only pass func the keyword arguments it accepts
-            named_args = function.func_code.co_varnames
-            fkwargs = dict((k, kwargs[k]) for k in named_args if k in kwargs)
-            result = function(*args, **fkwargs)
-            
-            if move_back:
-                # manually move file back 
-                if kwargs.get('dry_run', False):
-                    print('DRY_RUN: move {} to {}'.format(
-                        kwargs['out_file'], kwargs['in_file']))
-                else:
-                    if kwargs['cwd']:
-                        cwd = os.getcwd()
-                        os.chdir(kwargs['cwd'])
-                    os.remove(kwargs['in_file'])
-                    shutil.move(kwargs['out_file'], kwargs['in_file'])
-                    if kwargs['cwd']:
-                        os.chdir(cwd)
-            return result
-        return wrapper
-
     @staticmethod
     def nc_check_environ():
         # check nco exists
@@ -101,7 +101,7 @@ class NcoNetcdfHelper(NetcdfHelper):
         )
 
     @staticmethod
-    @_outfile_decorator
+    @_nco_outfile_decorator
     def nc_crop_time_axis(time_var_name, date_range, 
         in_file=None, out_file=None, cwd=None, dry_run=False):
         # don't need to quote time strings in args to ncks because it's not 
@@ -177,7 +177,7 @@ class NcoNetcdfHelper(NetcdfHelper):
         return dd
 
     @classmethod
-    @_outfile_decorator
+    @_nco_outfile_decorator
     def nc_change_variable_units(cls, new_units_dict,
         in_file=None, out_file=None, cwd=None, dry_run=False):
         """Unit conversion of several variables in a file.

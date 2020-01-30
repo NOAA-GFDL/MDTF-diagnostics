@@ -28,7 +28,14 @@ class MDTFFramework(object):
         cwd = os.path.dirname(os.path.realpath(__file__)) 
         self.code_root = os.path.dirname(cwd) # parent dir of that
 
+        self.parser_groups = dict()
         self.parser = argparse.ArgumentParser(
+            usage='%(prog)s [options]',
+            description="""
+                Driver script for the NOAA Model Diagnotics Task Force (MDTF) 
+                package. This runs process-oriented diagnostics (PODs) on gridded 
+                model data.
+            """,
             epilog="""
                 All command-line arguments override defaults set in 
                 src/mdtf_settings.json.
@@ -53,72 +60,91 @@ class MDTFFramework(object):
         )
         self.Diagnostic = Diagnostic
 
+    def add_group_wrapper(self, group_nm, group_title, group_desc=None):
+        group_obj = self.parser.add_argument_group(
+            title=group_title, description=group_desc
+        )
+        self.parser_groups[group_nm] = group_obj
+        return group_obj
+
     def argparse_setup(self):
         """Wraps command-line arguments to script.
         """
+        self.parser.add_argument('--version', 
+            action='version', version='%(prog)s 2.1')
         self.parser.add_argument("-v", "--verbose", 
             action="count", default = 1,
-            help="Increase output verbosity")
+            help="increase output verbosity")
+        
+        gp = self.add_group_wrapper('case', 'experiment parameters')
+        gp.add_argument('--CASENAME', 
+            nargs='?')
+        gp.add_argument('--model', 
+            nargs='?')
+        gp.add_argument('--experiment', 
+            nargs='?')
+        gp.add_argument('--CASE_ROOT_DIR', 
+            nargs='?')
+        gp.add_argument('-Y', '--FIRSTYR', 
+            nargs='?', type=int,
+            help="Starting year of analysis period.")
+        gp.add_argument('-Z', '--LASTYR', 
+            nargs='?', type=int,
+            help="""Ending year of analysis period (inclusive: -Z 2000 will 
+                include data through 31 Dec 2000).""")
+        gp.add_argument("--component", 
+            nargs='?')
+        gp.add_argument("--data_freq", 
+            nargs='?')
+        gp.add_argument("--chunk_freq", 
+            nargs='?')
+
+        gp = self.add_group_wrapper('paths', 'paths')
         # default paths set in mdtf_settings.json/paths
-        self.parser.add_argument('--CODE_ROOT', 
+        gp.add_argument('--CODE_ROOT', 
             nargs='?', default=self.code_root,
-            help="Code installation directory.")
-        self.parser.add_argument('--MODEL_DATA_ROOT', 
+            help = argparse.SUPPRESS)
+            #help="Code installation directory.")
+        gp.add_argument('--MODEL_DATA_ROOT', 
             nargs='?',
-            help="Parent directory containing results from different models.")
-        self.parser.add_argument('--OBS_DATA_ROOT', 
+            help="""Local directory to store model data. .""")
+        gp.add_argument('--OBS_DATA_ROOT', 
             nargs='?', 
-            help=("Parent directory containing observational data "
-                "used by individual PODs."))
-        self.parser.add_argument('--WORKING_DIR', 
+            help="""Parent directory containing observational data 
+                used by individual PODs.""")
+        gp.add_argument('--WORKING_DIR', 
             nargs='?',
             help="Working directory.")
-        self.parser.add_argument('--OUTPUT_DIR', 
+        gp.add_argument('--OUTPUT_DIR', 
             nargs='?',
             help="Directory to write output files. Defaults to working directory.")
-        # defaults set in mdtf_settings.json/settings
-        self.parser.add_argument("--test_mode", 
+
+        gp = self.add_group_wrapper('config', 'configuration')
+        gp.add_argument('--config_file', 
+            nargs='?', 
+            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
+            help="""JSON file to read configuration from. Any command-line
+            options will override these values. (default: %(default)s)"""
+        )
+        gp.add_argument("--test-mode", "--test_mode", 
             action="store_true", # so default to False
-            help="Set flag to fetch data but skip calls to PODs")
-        self.parser.add_argument("--dry_run", 
+            help="Set flag to fetch data but skip calls to PODs.")
+        gp.add_argument("--dry-run", "--dry_run", 
             action="store_true", # so default to False
-            help=("Set flag to do a dry run, "
-                "disabling data fetching and calls to PODs"))
-        self.parser.add_argument("--save_nc", 
+            help="""Set flag to do a dry run, disabling data fetching and 
+                calls to PODs.""")
+        gp.add_argument("--save-nc", "--save_nc", 
             action="store_true", # so default to False
             help="Set flag to have PODs save netCDF files of processed data.")
-        self.parser.add_argument('--data_manager', 
+        gp.add_argument('--data_manager', 
             nargs='?',
             help=("Method to fetch model data. "
                 "Currently supported options are {'Localfile'}."))
-        self.parser.add_argument('--environment_manager', 
+        gp.add_argument('--environment_manager', 
             nargs='?',
             help=("Method to manage POD runtime dependencies. "
                 "Currently supported options are {'None', 'Conda'}."))
-        # casename args, set by frepp
-        self.parser.add_argument('--CASENAME', 
-            nargs='?')
-        self.parser.add_argument('--model', 
-            nargs='?')
-        self.parser.add_argument('--experiment', 
-            nargs='?')
-        self.parser.add_argument('--CASE_ROOT_DIR', 
-            nargs='?')
-        self.parser.add_argument('--FIRSTYR', 
-            nargs='?', type=int)
-        self.parser.add_argument('--LASTYR', 
-            nargs='?', type=int)
-        self.parser.add_argument("--component", 
-            nargs='?')
-        self.parser.add_argument("--data_freq", 
-            nargs='?')   
-        self.parser.add_argument("--chunk_freq", 
-            nargs='?')       
-        self.parser.add_argument('--config_file', 
-            nargs='?', 
-            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
-            help="Configuration file."
-        )
+ 
 
     def argparse_parse(self):
         d = self.parser.parse_args().__dict__
@@ -261,7 +287,7 @@ class MDTFFramework(object):
 
 
 if __name__ == '__main__':
-    print("\n======= Starting "+__file__)
     mdtf = MDTFFramework()
+    print("\n======= Starting "+__file__)
     mdtf.main_loop()
     print("Exiting normally from ",__file__)

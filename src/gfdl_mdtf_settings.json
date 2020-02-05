@@ -58,7 +58,13 @@
   "paths" : {
     "# Code installation directory.                                        ":"",
     "CODE_ROOT" : ".",
-    "# Parent directory containing results from different models.          ":"",
+    "# Temp directory to use on GFDL PPAN. Must be accessible via gcp.     ":"",
+    "# $MDTF_GFDL_TMPDIR will be set to this when running on PPAN.         ":"",
+    "GFDL_PPAN_TEMP" : "$TMPDIR",
+    "# Temp directory to use on GFDL workstations. Must be accessible via gcp.":"",
+    "# $MDTF_GFDL_TMPDIR will be set to this when running on workstations. ":"",
+    "GFDL_WS_TEMP" : "/net2/$USER/tmp",
+    "# Parent directory for staging processed data from different models.  ":"",
     "MODEL_DATA_ROOT" : "$MDTF_GFDL_TMPDIR/inputdata/model/",
     "# Parent directory containing observational data used by individual PODs.":"",
     "OBS_DATA_ROOT" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
@@ -126,6 +132,11 @@
     "# default bitmap figure output (for html)                             ":"",
     "convert_output_fmt": "png",
     "# Set to true to save output directory in .tar file:                  ":"",
-    "make_variab_tar": false
+    "make_variab_tar": false,
+    "# Set to true to retain local temp directories of downloaded data:    ":"",
+    "keep_temp": false,
+    "# Set to true to not overwrite results in OUTPUT_DIR (will be saved   ":"",
+    "# under a different, unique name instead)                             ":"",
+    "no_overwrite": true
   }
 }

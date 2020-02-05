@@ -41,10 +41,10 @@ class MDTFFramework(object):
         self.config = self.parse_mdtf_args(cmdline_args, default_args)
         print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
 
-        util.PathManager(self.config['paths']) # initialize
         self._post_config_init() # hook to allow inserting other commands
         
     def _post_config_init(self):
+        util.PathManager(self.config['paths']) # initialize
         self.set_mdtf_env_vars()
         self.DataManager = self.manual_dispatch(
             self.config['settings']['data_manager'], 'DataManager'
@@ -87,7 +87,15 @@ class MDTFFramework(object):
                 "disabling data fetching and calls to PODs"))
         self.parser.add_argument("--save_nc", 
             action="store_true", # so default to False
-            help="Set flag to have PODs save netCDF files of processed data.")
+            help="Set flag to have PODs save netCDF files of processed data.") 
+        self.parser.add_argument("--keep_temp", 
+            action="store_true", # so default to False
+            help=("Set flag to reuse local temporary directories of downloaded "
+                "model data (else delete them on exit.)"))
+        self.parser.add_argument("--no_overwrite", 
+            action="store_false", # so default to True
+            help=("Set flag to never overwrite results in OUTPUT_DIR (will be "
+                "saved under a different, unique name instead.)"))
         self.parser.add_argument('--data_manager', 
             nargs='?',
             help=("Method to fetch model data. "

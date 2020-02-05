@@ -10,9 +10,6 @@ import util
 from mdtf import MDTFFramework
 
 class GFDLMDTFFramework(MDTFFramework):
-    def __init__(self):
-        self.set_tempdir()
-        super(GFDLMDTFFramework, self).__init__()
 
     @staticmethod
     def set_tempdir():
@@ -37,6 +34,12 @@ class GFDLMDTFFramework(MDTFFramework):
         """Add GFDL-specific command-line options to those set in mdtf.py.
         """
         super(GFDLMDTFFramework, self).argparse_setup()
+        self.parser.add_argument('--GFDL_PPAN_TEMP', 
+            nargs='?',
+            help="Temp directory to use on GFDL PPAN. Must be accessible via gcp.")
+        self.parser.add_argument('--GFDL_WS_TEMP', 
+            nargs='?',
+            help="Temp directory to use on GFDL workstations. Must be accessible via gcp.")
         self.parser.add_argument("--frepp", 
             action="store_true", # so default to False
             help="Set flag to take configuration info from env vars set by frepp.")

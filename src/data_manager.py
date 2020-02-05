@@ -4,8 +4,6 @@ import sys
 import glob
 import copy
 import shutil
-import atexit
-import signal
 from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter
@@ -173,11 +171,6 @@ class DataManager(object):
         self.dry_run = util.get_from_config('dry_run', config, default=False)
         self.file_transfer_timeout = util.get_from_config(
             'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
-
-        # delete temp files if we're killed
-        atexit.register(self.abortHandler)
-        signal.signal(signal.SIGTERM, self.abortHandler)
-        signal.signal(signal.SIGINT, self.abortHandler)
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -542,12 +535,6 @@ class DataManager(object):
             if os.path.exists(self.MODEL_OUT_DIR):
                 shutil.rmtree(self.MODEL_OUT_DIR)
             shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
-
-    def abortHandler(self, *args):
-        # delete any temp files if we're killed
-        # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager()
-        paths.cleanup()
 
 
 class LocalfileDataManager(DataManager):

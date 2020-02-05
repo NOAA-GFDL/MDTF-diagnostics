@@ -17,6 +17,7 @@ import os
 import sys
 import argparse
 from ConfigParser import _Chainmap as ChainMap # in collections in py3
+import signal
 import util
 import data_manager
 import environment_manager
@@ -42,6 +43,10 @@ class MDTFFramework(object):
         print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
 
         self._post_config_init() # hook to allow inserting other commands
+
+        # tell PathManager to delete temp files if we're killed
+        signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
+        signal.signal(signal.SIGINT, self.cleanup_tempdirs)
         
     def _post_config_init(self):
         util.PathManager(self.config['paths']) # initialize
@@ -53,6 +58,14 @@ class MDTFFramework(object):
             self.config['settings']['environment_manager'], 'EnvironmentManager'
         )
         self.Diagnostic = Diagnostic
+
+    def cleanup_tempdirs(self, signum=None, frame=None):
+        # tell PathManager to delete temp files
+        if signum:
+            print("\tDEBUG: {} caught signal {}", self.__class__.__name__, signum)
+        if not self.config['settings']['keep_temp']:
+            paths = util.PathManager()
+            paths.cleanup()
 
     def argparse_setup(self):
         """Wraps command-line arguments to script.
@@ -266,6 +279,7 @@ class MDTFFramework(object):
 
         for case in caselist:
             case.tearDown(self.config)
+        self.cleanup_tempdirs()
 
 
 if __name__ == '__main__':

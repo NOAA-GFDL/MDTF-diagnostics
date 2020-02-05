@@ -25,10 +25,11 @@ class EnvironmentManager(object):
         self.pods = []
         self.envs = set()
 
-        # kill child processes if we're killed
-        atexit.register(self.abortHandler)
-        signal.signal(signal.SIGTERM, self.abortHandler)
-        signal.signal(signal.SIGINT, self.abortHandler)
+        # kill any subprocesses that are still active if we exit normally 
+        # (shouldn't be necessary) or are killed
+        atexit.register(self.subprocess_cleanup)
+        signal.signal(signal.SIGTERM, self.subprocess_cleanup)
+        signal.signal(signal.SIGINT, self.subprocess_cleanup)
 
     # -------------------------------------
     # following are specific details that must be implemented in child class 
@@ -143,9 +144,10 @@ class EnvironmentManager(object):
         for env in self.envs:
             self.destroy_environment(env)
 
-    def abortHandler(self, *args):
-        # kill child processes if we're killed
-        # normal operation should call tearDown for organized cleanup
+    def subprocess_cleanup(self, signum=None, frame=None):
+        # kill any active subprocesses
+        if signum:
+            print("\tDEBUG: {} caught signal {}", self.__class__.__name__, signum)
         for pod in self.pods:
             if pod.process_obj is not None:
                 pod.process_obj.kill()

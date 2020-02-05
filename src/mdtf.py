@@ -204,7 +204,6 @@ class MDTFFramework(object):
         return default_args
 
     def set_mdtf_env_vars(self):
-        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         util.check_required_dirs(
             already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 

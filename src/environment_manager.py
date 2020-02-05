@@ -174,7 +174,6 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
     # Do not attempt management for NCL.
 
     def __init__(self, config, verbose=0):
-        # pylint: disable=maybe-no-member
         super(VirtualenvEnvironmentManager, self).__init__(config, verbose)
 
         paths = util.PathManager()
@@ -272,7 +271,6 @@ class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
 
     def __init__(self, config, verbose=0):
-        # pylint: disable=maybe-no-member
         super(CondaEnvironmentManager, self).__init__(config, verbose)
 
         if util.is_in_config('conda_root', config):
@@ -314,7 +312,6 @@ class CondaEnvironmentManager(EnvironmentManager):
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
-        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         prefix = '_MDTF-diagnostics'
         if env_name == prefix:
@@ -342,7 +339,6 @@ class CondaEnvironmentManager(EnvironmentManager):
             print('ERROR :',e.errno,e.strerror)
 
     def create_all_environments(self):
-        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         command = '{}/src/conda_env_setup.sh'.format(paths.CODE_ROOT)
         try: 
@@ -366,7 +362,6 @@ class CondaEnvironmentManager(EnvironmentManager):
         """Source conda_init.sh to set things that aren't set b/c we aren't 
         in an interactive shell.
         """
-        # pylint: disable=maybe-no-member
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         paths = util.PathManager()

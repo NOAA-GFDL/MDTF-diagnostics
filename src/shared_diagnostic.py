@@ -412,7 +412,6 @@ class Diagnostic(object):
             (:obj:`list` of :obj:`str`): Command-line invocation to validate 
                 the POD's runtime environment.
         """
-        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [

@@ -60,24 +60,23 @@ class PathManager(Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
-    _root_pathnames = [
-        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WORKING_DIR', 'OUTPUT_DIR'
-    ]
-
-    def __init__(self, arg_dict={}, unittest_flag=False):
-        for var in self._root_pathnames:
-            if unittest_flag: # use in unit testing only
-                self.__setattr__(var, 'TEST_'+var)
-            else:
-                assert var in arg_dict, \
-                    'Error: {} not initialized.'.format(var)
-                self.__setattr__(var, arg_dict[var])
-
+    def __init__(self, arg_dict=None, unittest_flag=False):
+        self.CODE_ROOT = self._init_dir('CODE_ROOT', arg_dict, unittest_flag)
+        self.OBS_DATA_ROOT = self._init_dir('OBS_DATA_ROOT', arg_dict, unittest_flag)
+        self.MODEL_DATA_ROOT = self._init_dir('MODEL_DATA_ROOT', arg_dict, unittest_flag)
+        self.WORKING_DIR = self._init_dir('WORKING_DIR', arg_dict, unittest_flag)
+        self.OUTPUT_DIR = self._init_dir('OUTPUT_DIR', arg_dict, unittest_flag)
         self._temp_dirs = []
 
+    @staticmethod
+    def _init_dir(dir_, arg_dict, unittest_flag=False):
+        if unittest_flag: # use in unit testing only
+            return 'TEST_'+dir_
+        else:
+            assert dir_ in arg_dict, 'Error: {} not initialized.'.format(dir_)
+            return arg_dict[dir_]
+
     def modelPaths(self, case):
-        # pylint: disable=maybe-no-member
         d = {}
         if isinstance(case, dict):
             name = case['CASENAME']
@@ -94,7 +93,6 @@ class PathManager(Singleton):
         return d
 
     def podPaths(self, pod):
-        # pylint: disable=maybe-no-member
         d = {}
         d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
@@ -129,6 +127,7 @@ class PathManager(Singleton):
     def rm_tempdir(self, path):
         assert path in self._temp_dirs
         self._temp_dirs.remove(path)
+        print("\tDEBUG: remove temp dir {}".format(path))
         shutil.rmtree(path)
 
     def cleanup(self):
@@ -180,7 +179,6 @@ class MultiMap(defaultdict):
 
 class VariableTranslator(Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
-        # pylint: disable=maybe-no-member
         if unittest_flag:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

@@ -171,6 +171,8 @@ class DataManager(object):
         self.dry_run = util.get_from_config('dry_run', config, default=False)
         self.file_transfer_timeout = util.get_from_config(
             'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
+        self.keep_temp = util.get_from_config('keep_temp', config, default=False)
+        self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -464,8 +466,6 @@ class DataManager(object):
         self._backup_config_file(config)
         self._make_tar_file()
         self._copy_to_output()
-        paths = util.PathManager()
-        paths.cleanup()
 
     def _make_html(self, cleanup=True):
         # pylint: disable=maybe-no-member
@@ -529,12 +529,18 @@ class DataManager(object):
 
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
+        if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
+            return # no copying needed
+        print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
+        try:
             if os.path.exists(self.MODEL_OUT_DIR):
+                if self.no_overwrite:
+                    print('Error: {} exists, overwriting anyway.'.format(
+                        self.MODEL_OUT_DIR))
                 shutil.rmtree(self.MODEL_OUT_DIR)
-            shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
+        except Exception:
+            raise
+        shutil.move(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
 
 
 class LocalfileDataManager(DataManager):

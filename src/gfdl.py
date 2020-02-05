@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import sys
 import re
+import shutil
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -593,8 +594,7 @@ class GfdlarchiveDataManager(DataManager):
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
-        paths = util.PathManager()
-        if paths.OUTPUT_DIR == paths.WORKING_DIR:
+        if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
         if self.coop_mode:
             # only copy PODs that ran, whether they succeeded or not
@@ -608,8 +608,8 @@ class GfdlarchiveDataManager(DataManager):
             # copy all case-level files
             print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
             for f in os.path.listdir(self.MODEL_WK_DIR):
-                print("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
+                    print("\t\tDEBUG: found {}".format(f))
                     gcp_wrapper(
                         os.path.join(self.MODEL_WK_DIR, f), 
                         self.MODEL_OUT_DIR,
@@ -617,11 +617,18 @@ class GfdlarchiveDataManager(DataManager):
                     )
         else:
             # copy everything at once
-            gcp_wrapper(
-                self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
-                timeout=self.file_transfer_timeout,
-                dry_run=self.dry_run
-            )
+            if os.path.exists(self.MODEL_OUT_DIR) and self.no_overwrite:
+                print('Error: {} exists, overwriting anyway.'.format(
+                    self.MODEL_OUT_DIR))
+            try:
+                gcp_wrapper(
+                    self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
+                    timeout=self.file_transfer_timeout,
+                    dry_run=self.dry_run
+                )
+            except Exception:
+                raise # only delete MODEL_WK_DIR if copied successfully
+            shutil.rmtree(self.MODEL_WK_DIR)
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):

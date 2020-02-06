@@ -65,8 +65,7 @@ def _nco_outfile_decorator(function):
         assert 'in_file' in kwargs
         
         # only pass func the keyword arguments it accepts
-        named_args = function.func_code.co_varnames
-        fkwargs = dict((k, kwargs[k]) for k in named_args if k in kwargs)
+        fkwargs = util.filter_kwargs(kwargs, function)
         result = function(*args, **fkwargs)
         
         if move_back:

@@ -599,7 +599,7 @@ class GfdlarchiveDataManager(DataManager):
                 mode = 'w'
             with open(self.TEMP_HTML, mode) as f2:
                 f2.write(contents)
-        super(GfdlarchiveDataManager, self)._make_html(cleanup=False)
+        super(GfdlarchiveDataManager, self)._make_html(cleanup=(not self.frepp_mode))
 
     def _make_tar_file(self, tar_dest_dir):
         # make locally in WORKING_DIR and gcp to destination,

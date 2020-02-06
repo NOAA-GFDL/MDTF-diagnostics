@@ -49,7 +49,7 @@ class MDTFFramework(object):
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
         
     def _post_config_init(self):
-        util.PathManager(self.config['paths']) # initialize
+        util.PathManager(self.config) # initialize
         self.set_mdtf_env_vars()
         self.DataManager = self.manual_dispatch(
             self.config['settings']['data_manager'], 'DataManager'

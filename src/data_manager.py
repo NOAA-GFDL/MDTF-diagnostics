@@ -154,8 +154,22 @@ class DataManager(object):
         self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
+        self.dry_run = util.get_from_config('dry_run', config, default=False)
+        self.file_transfer_timeout = util.get_from_config(
+            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
+        self.make_variab_tar = util.get_from_config('make_variab_tar', 
+            config, default=False)
+        self.keep_temp = util.get_from_config('keep_temp', config, default=False)
+        self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
+        self.no_file_overwrite = self.no_overwrite # overwrite config and .tar
+
         paths = util.PathManager()
-        self.__dict__.update(paths.modelPaths(self))
+        d = paths.modelPaths(self)
+        self.MODEL_DATA_DIR = d['MODEL_DATA_DIR']
+        self.MODEL_WK_DIR = d['MODEL_WK_DIR']
+        self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
+        if self.no_overwrite:
+            self.MODEL_OUT_DIR = util.bump_filename_version(self.MODEL_OUT_DIR)
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
@@ -167,15 +181,6 @@ class DataManager(object):
             self.nc_check_environ() # make sure we have dependencies
         except Exception:
             raise
-
-        self.dry_run = util.get_from_config('dry_run', config, default=False)
-        self.file_transfer_timeout = util.get_from_config(
-            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
-        self.make_variab_tar = util.get_from_config('make_variab_tar', 
-            config, default=False)
-        self.keep_temp = util.get_from_config('keep_temp', config, default=False)
-        self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
-        self.no_file_overwrite = self.no_overwrite # overwrite config and .tar
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -196,7 +201,6 @@ class DataManager(object):
     # -------------------------------------
 
     def setUp(self, verbose=0):
-        # pylint: disable=maybe-no-member
         util.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
@@ -276,7 +280,6 @@ class DataManager(object):
         `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
         Files not following this convention won't be found.
         """
-        # pylint: disable=maybe-no-member
         assert 'name_in_model' in data_key._fields
         assert 'date_freq' in data_key._fields
         # values in key are repr strings by default, so need to instantiate the
@@ -473,7 +476,6 @@ class DataManager(object):
         self._copy_to_output()
 
     def _make_html(self, cleanup=True):
-        # pylint: disable=maybe-no-member
         paths = util.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
@@ -501,7 +503,6 @@ class DataManager(object):
     def _backup_config_file(self, config):
         """Record settings in file variab_dir/config_save.json for rerunning
         """
-        # pylint: disable=maybe-no-member
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if self.no_file_overwrite:
             out_file = util.bump_filename_version(out_file)
@@ -513,7 +514,6 @@ class DataManager(object):
     def _make_tar_file(self, tar_dest_dir):
         """Make tar file of web/bitmap output.
         """
-        # pylint: disable=maybe-no-member
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if self.no_file_overwrite:
             out_file = util.bump_filename_version(out_file)
@@ -529,7 +529,6 @@ class DataManager(object):
         return out_file
 
     def _copy_to_output(self):
-        # pylint: disable=maybe-no-member
         if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
         print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))

@@ -60,21 +60,22 @@ class PathManager(Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
-    def __init__(self, arg_dict=None, unittest_flag=False):
-        self.CODE_ROOT = self._init_dir('CODE_ROOT', arg_dict, unittest_flag)
-        self.OBS_DATA_ROOT = self._init_dir('OBS_DATA_ROOT', arg_dict, unittest_flag)
-        self.MODEL_DATA_ROOT = self._init_dir('MODEL_DATA_ROOT', arg_dict, unittest_flag)
-        self.WORKING_DIR = self._init_dir('WORKING_DIR', arg_dict, unittest_flag)
-        self.OUTPUT_DIR = self._init_dir('OUTPUT_DIR', arg_dict, unittest_flag)
+    def __init__(self, config=None, unittest_flag=False):
+        self.CODE_ROOT = self._init_dir('CODE_ROOT', config, unittest_flag)
+        self.OBS_DATA_ROOT = self._init_dir('OBS_DATA_ROOT', config, unittest_flag)
+        self.MODEL_DATA_ROOT = self._init_dir('MODEL_DATA_ROOT', config, unittest_flag)
+        self.WORKING_DIR = self._init_dir('WORKING_DIR', config, unittest_flag)
+        self.OUTPUT_DIR = self._init_dir('OUTPUT_DIR', config, unittest_flag)
         self._temp_dirs = []
+        self.no_overwrite = get_from_config('no_overwrite', config, default=True)
 
     @staticmethod
-    def _init_dir(dir_, arg_dict, unittest_flag=False):
+    def _init_dir(dir_, config, unittest_flag=False):
         if unittest_flag: # use in unit testing only
             return 'TEST_'+dir_
         else:
-            assert dir_ in arg_dict, 'Error: {} not initialized.'.format(dir_)
-            return arg_dict[dir_]
+            assert dir_ in config['paths'], 'Error: {} not initialized.'.format(dir_)
+            return config['paths'][dir_]
 
     def modelPaths(self, case):
         d = {}

@@ -242,15 +242,23 @@ class GfdlarchiveDataManager(DataManager):
         modMgr = ModuleManager()
         modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
-        self.coop_mode = config['settings']['frepp']
-
         super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
+        
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
-        # flag to not overwrite config and .tar: want overwrite for frepp
-        self.no_file_overwrite = self.no_file_overwrite and not self.coop_mode 
+
+        self.coop_mode = config['settings']['frepp']
+        if self.coop_mode:
+            self.no_overwrite = False
+            # flag to not overwrite config and .tar: want overwrite for frepp
+            self.no_file_overwrite = False
+            # if we had no_overwrite, MODEL_OUT_DIR will have been set to a 
+            # unique name in parent's init. Set it back so it will be overwritten.
+            paths = util.PathManager()
+            d = paths.modelPaths(self)
+            self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):

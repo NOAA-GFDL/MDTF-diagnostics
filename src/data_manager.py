@@ -171,8 +171,11 @@ class DataManager(object):
         self.dry_run = util.get_from_config('dry_run', config, default=False)
         self.file_transfer_timeout = util.get_from_config(
             'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
+        self.make_variab_tar = util.get_from_config('make_variab_tar', 
+            config, default=False)
         self.keep_temp = util.get_from_config('keep_temp', config, default=False)
         self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
+        self.no_file_overwrite = self.no_overwrite # overwrite config and .tar
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -463,8 +466,10 @@ class DataManager(object):
     def tearDown(self, config):
         # TODO: handle OSErrors in all of these
         self._make_html()
-        self._backup_config_file(config)
-        self._make_tar_file()
+        _ = self._backup_config_file(config)
+        if self.make_variab_tar:
+            paths = util.PathManager()
+            _ = self._make_tar_file(paths.OUTPUT_DIR)
         self._copy_to_output()
 
     def _make_html(self, cleanup=True):
@@ -493,39 +498,35 @@ class DataManager(object):
             os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
         )
 
-    def _backup_config_file(self, config, verbose=0):
+    def _backup_config_file(self, config):
         """Record settings in file variab_dir/config_save.json for rerunning
         """
         # pylint: disable=maybe-no-member
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
-        if os.path.isfile(out_file):
-            out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.json.old')
-            if verbose > 1: 
-                print("WARNING: moving existing namelist file to ", out_fileold)
-            shutil.move(out_file, out_fileold)
+        if self.no_file_overwrite:
+            out_file = util.bump_filename_version(out_file)
+        elif os.path.exists(out_file):
+            print('Overwriting {}.'.format(out_file))
         util.write_json(config, out_file)
+        return out_file
 
-    def _make_tar_file(self):
-        """Make tar file
+    def _make_tar_file(self, tar_dest_dir):
+        """Make tar file of web/bitmap output.
         """
         # pylint: disable=maybe-no-member
-        if os.environ["make_variab_tar"] == "0":
-            print("Not making tar file because make_variab_tar = 0")
-            return
-        print("Making tar file because make_variab_tar = {}".format(
-            os.environ["make_variab_tar"]
-        ))
-        if os.path.isfile(self.MODEL_WK_DIR+'.tar'):
-            print("Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR))
-            shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
-
-        print("Creating {}.tar".format(self.MODEL_WK_DIR))
+        out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
+        if self.no_file_overwrite:
+            out_file = util.bump_filename_version(out_file)
+            print("Creating {}.".format(out_file))
+        elif os.path.exists(out_file):
+            print('Overwriting {}.'.format(out_file))
         # not running in shell, so don't need to quote globs
-        tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
-        util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
-            self.MODEL_WK_DIR ] + tar_flags,
+        tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS','eps']]
+        util.run_command(
+            ['tar', '-cf', out_file, self.MODEL_WK_DIR ] + tar_flags,
             dry_run = self.dry_run
         )
+        return out_file
 
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member

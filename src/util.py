@@ -771,6 +771,16 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         else:
             print("Found "+dir)
 
+def bump_filename_version(path):
+    dir_, file_ = os.path.split(path)
+    file_, ext_ = os.path.splitext(file_)
+    version = 0
+    try_path = path
+    while os.path.exists(try_path):
+        version = version + 1
+        try_path = os.path.join(dir_, ''.join([file_, '.', str(version), ext_]))
+    return try_path
+
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):
     assert os.path.exists(template_file)

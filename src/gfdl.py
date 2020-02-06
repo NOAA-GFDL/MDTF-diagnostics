@@ -249,6 +249,8 @@ class GfdlarchiveDataManager(DataManager):
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
+        # flag to not overwrite config and .tar: want overwrite for frepp
+        self.no_file_overwrite = self.no_file_overwrite and not self.coop_mode 
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
@@ -590,6 +592,18 @@ class GfdlarchiveDataManager(DataManager):
             with open(self.TEMP_HTML, mode) as f2:
                 f2.write(contents)
         super(GfdlarchiveDataManager, self)._make_html(cleanup=False)
+
+    def _make_tar_file(self, tar_dest_dir):
+        # make locally in WORKING_DIR and gcp to destination,
+        # since OUTPUT_DIR might be mounted read-only
+        paths = util.PathManager()
+        out_file = super(GfdlarchiveDataManager, self)._make_tar_file(paths.WORKING_DIR)
+        gcp_wrapper(
+            out_file, tar_dest_dir,
+            timeout=self.file_transfer_timeout, dry_run=self.dry_run
+        )
+        _, file_ = os.path.split(out_file)
+        return os.path.join(tar_dest_dir, file_)
 
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member

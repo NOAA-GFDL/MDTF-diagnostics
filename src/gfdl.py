@@ -243,14 +243,14 @@ class GfdlarchiveDataManager(DataManager):
         modMgr.load('gcp', 'nco') # should refactor
         config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
         super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
-        
+
         assert ('root_dir' in case_dict)
         assert os.path.isdir(case_dict['root_dir'])
         self.root_dir = case_dict['root_dir']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
-        self.coop_mode = config['settings']['frepp']
-        if self.coop_mode:
+        self.frepp_mode = config['settings']['frepp']
+        if self.frepp_mode:
             self.no_overwrite = False
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.no_file_overwrite = False
@@ -584,7 +584,7 @@ class GfdlarchiveDataManager(DataManager):
     def _make_html(self, cleanup=False):
         # pylint: disable=maybe-no-member
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
-        if self.coop_mode and os.path.exists(prev_html):
+        if self.frepp_mode and os.path.exists(prev_html):
             print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
             with open(prev_html, 'r') as f1:
                 contents = f1.read()
@@ -618,7 +618,7 @@ class GfdlarchiveDataManager(DataManager):
         # use gcp, since OUTPUT_DIR might be mounted read-only
         if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
-        if self.coop_mode:
+        if self.frepp_mode:
             # only copy PODs that ran, whether they succeeded or not
             for pod in self.pods:
                 if pod._has_placeholder:

@@ -369,6 +369,27 @@ class Namespace(dict):
 
 # ------------------------------------
 
+def strip_comments(str_, delimiter=None):
+    if not delimiter:
+        return str_
+    s = str_.splitlines()
+    for i in range(len(s)):
+        if s[i].startswith(delimiter):
+            s[i] = ''
+            continue
+        # If delimiter appears quoted in a string, don't want to treat it as
+        # a comment. So for each occurrence of delimiter, count number of 
+        # "s to its left and only truncate when that's an even number.
+        # TODO: handle ' as well as ", for non-JSON applications
+        s_parts = s[i].split(delimiter)
+        s_counts = [ss.count('"') for ss in s_parts]
+        j = 1
+        while sum(s_counts[:j]) % 2 != 0:
+            j += 1
+        s[i] = delimiter.join(s_parts[:j])
+    # join lines, stripping blank lines
+    return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
+
 def read_json(file_path):
     assert os.path.exists(file_path), \
         "Couldn't find JSON file {}.".format(file_path)
@@ -381,26 +402,6 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    _comment_delimiter = '//' # JSONC quasi-standard
-
-    def _strip_comments(str_):
-        s = str_.splitlines()
-        for i in range(len(s)):
-            if s[i].startswith(_comment_delimiter):
-                s[i] = ''
-                continue
-            # If delimiter appears quoted in a string, don't want to treat it as
-            # a comment. So for each occurrence of delimiter, count number of 
-            # "s to its left and only truncate when that's an even number.
-            s_parts = s[i].split(_comment_delimiter)
-            s_counts = [ss.count('"') for ss in s_parts]
-            j = 1
-            while sum(s_counts[:j]) % 2 != 0:
-                j += 1
-            s[i] = _comment_delimiter.join(s_parts[:j])
-        # join lines, stripping blank lines
-        return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
-
     def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
@@ -423,7 +424,7 @@ def parse_json(str_):
         # if it's anything else, return it in its original form
         return data
 
-    str_ = _strip_comments(str_)
+    str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
         parsed_json = _utf8_to_ascii(
             json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True

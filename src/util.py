@@ -381,11 +381,30 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
+    _comment_delimiter = '//' # JSONC quasi-standard
+
+    def _strip_comments(str_):
+        s = str_.splitlines()
+        for i in range(len(s)):
+            if s[i].startswith(_comment_delimiter):
+                s[i] = ''
+                continue
+            # If delimiter appears quoted in a string, don't want to treat it as
+            # a comment. So for each occurrence of delimiter, count number of 
+            # "s to its left and only truncate when that's an even number.
+            s_parts = s[i].split(_comment_delimiter)
+            s_counts = [ss.count('"') for ss in s_parts]
+            j = 1
+            while sum(s_counts[:j]) % 2 != 0:
+                j += 1
+            s[i] = _comment_delimiter.join(s_parts[:j])
+        # join lines, stripping blank lines
+        return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
+
     def _utf8_to_ascii(data, ignore_dicts=False):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
         # https://stackoverflow.com/a/33571117
-        # Also drop any elements beginning with a '#' (convention for comments.)
 
         # if this is a unicode string, return its string representation
         if isinstance(data, unicode):
@@ -393,21 +412,18 @@ def parse_json(str_):
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-            return [item for item in ascii_ if not (
-                hasattr(item, 'startswith') and item.startswith('#'))]
+            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
-            ascii_ = {
+            return {
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
-            return {key: ascii_[key] for key in ascii_ if not (
-                hasattr(key, 'startswith') and key.startswith('#'))}
         # if it's anything else, return it in its original form
         return data
 
+    str_ = _strip_comments(str_)
     try:
         parsed_json = _utf8_to_ascii(
             json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True

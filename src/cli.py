@@ -1,0 +1,198 @@
+from __future__ import print_function
+import os
+import sys
+import argparse
+from ConfigParser import _Chainmap as ChainMap # in collections in py3
+import shlex
+import util
+
+class ConfigManager(util.Singleton):
+    def __init__(self, defaults_filename=None):
+        if defaults_filename:
+            # get dir of currently executing script: 
+            cwd = os.path.dirname(os.path.realpath(__file__)) 
+            self.code_root = os.path.dirname(cwd) # parent dir of that
+            defaults_path = os.path.join(cwd, defaults_filename)
+
+            defaults = util.read_json(defaults_path)
+            self.case_list = defaults.pop('case_list', [])
+            self.pod_list = defaults.pop('pod_list', [])
+
+            self.parser_groups = dict()
+            self.parser_args = dict()
+            defaults = self._init_default_parser(defaults, defaults_path)
+            self.parser = self.make_parser(defaults)
+
+    @staticmethod
+    def _append_to_entry(d, key, str_):
+        if key in d:
+            d[key] = d[key] + '\n' + str_
+        else:
+            d[key] = str_
+
+    def _init_default_parser(self, d, config_path):
+        # add more standard options to default parser
+        if 'usage' not in d:
+            d['usage'] = '%(prog)s [options]'
+        d['arguments'] = util.coerce_to_iter(d.get('arguments', None), list)
+        d['arguments'].extend([{
+                'name':'version', 
+                'action':'version', 'version':'%(prog)s 2.2'
+            },{
+                'name': 'config_file',
+                'short_name': 'f',
+                'help': """
+                Path to a user configuration file. This can be a JSON
+                file (a simple list of key:value pairs, or a modified copy of 
+                the defaults file), or a text file containing command-line flags.
+                Other options set via the command line will still override 
+                settings in this file.
+                """,
+                'default' : '',
+            }])
+        self._append_to_entry(d, 'epilog',
+            "Above default values defined in {}.".format(config_path)
+        )
+
+    def make_parser(self, d):
+        args = d.pop('arguments', None)
+        arg_groups = d.pop('argument_groups', None)
+        p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
+        p = argparse.ArgumentParser(**p_kwargs)
+        for arg in args:
+            # add arguments not in any group
+            self.add_parser_argument(arg, p)
+        for group in arg_groups:
+            # add groups and arguments therein
+            self.add_parser_group(group, p)
+        return p
+
+    def add_parser_group(self, d, target_obj):
+        gp_nm = d.pop('name')
+        if 'title' not in d:
+            d['title'] = gp_nm
+        args = d.pop('arguments', None)
+        gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
+        gp_obj = target_obj.add_argument_group(**gp_kwargs)
+        self.parser_groups[gp_nm] = gp_obj
+        for arg in args:
+            self.add_parser_argument(arg, gp_obj)
+    
+    @staticmethod
+    def canonical_arg_name(str_):
+        # convert flag or other specification to destination variable name
+        # canonical identifier/destination always has _s, no -s (PEP8)
+        return str_.lstrip('-').rstrip().replace('-', '_')
+
+    def add_parser_argument(self, d, target_obj):
+        # set flags:
+        arg_nm = self.canonical_arg_name(d.pop('name'))
+        assert arg_nm, "No argument name found in {}".format(d)
+        if 'dest' not in d:
+            d['dest'] = arg_nm
+        arg_flags = [arg_nm]
+        if '_' in arg_nm:
+            # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
+            arg_flags = [arg_nm.replace('_', '-'), arg_nm]
+        arg_flags = ['--'+s for s in arg_flags]
+        if 'short_name' in d:
+            # recognize both --option and -O, if short_name defined
+            arg_flags.append('-' + d.pop('short_name'))
+
+        # type conversion of default value
+        if 'type' in d:
+            d['type'] = eval(d['type'])
+            if 'default' in d:
+                d['default'] = d['type'](d['default'])
+        if d.get('action', '') == 'count' and 'default' in d:
+            d['default'] = int(d['default'])
+        # if d.pop('eval_default', False) and 'default' in d:
+        #     d['default'] = eval(d['default'], XXX)
+
+        # set more technical argparse options based on default value
+        if 'default' in d:
+            if isinstance(d['default'], basestring) and 'nargs' not in d:
+                # unless explicitly specified, 
+                # string-valued options accept 0 or 1 arguments
+                d['nargs'] = '?'
+            elif isinstance(d['default'], bool) and 'action' not in d:
+                if d['default']:
+                    d['action'] = 'store_false' # default true, false if flag set
+                else:
+                    d['action'] = 'store_true' # default false, true if flag set
+
+        # change help string based on default value
+        if d.pop('hidden', False):
+            # do not list argument in "mdtf --help", but recognize it
+            d['help'] = argparse.SUPPRESS
+        elif 'default' in d:
+            # display default value in help string
+            self._append_to_entry(d, 'help', "(default: %(default)s)")
+
+        # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
+        self.parser_args[arg_nm] = target_obj.add_argument(*arg_flags, **d)
+
+    def edit_argument(self, arg_nm, **kwargs):
+        # change aspects of arguments after they're defined.
+        action = self.parser_args[arg_nm]
+        for k,v in kwargs.iteritems():
+            if not hasattr(action, k):
+                print("Warning: didn't find attribute {} for argument {}".format(k, arg_nm))
+                continue
+            setattr(action, k, v)
+
+    def edit_defaults(self, **kwargs):
+        # Change default value of arguments. If a key doesn't correspond to an
+        # argument previously added, its value is still returned when parse_args()
+        # is called.
+        self.parser.set_defaults(**kwargs)
+        
+    def parse_cli(self):
+        # explicitly set cmd-line options, parsed according to default parser
+        cli_opts = vars(self.parser.parse_args())
+        # default values only, from running default parser on empty input
+        defaults = vars(self.parser.parse_args([]))
+
+        # deal with options set in user-specified file, if present
+        config_path = cli_opts.get('config_file', None)
+        file_str = ''
+        file_opts = dict()
+        if config_path:
+            try:
+                with open(config_path, 'r') as f:
+                    file_str = f.read()
+            except Exception:
+                print("ERROR: Can't read config file at {}.".format(config_path))
+        if file_str:
+            try:
+                file_opts = util.parse_json(file_str)
+                # overwrite default case_list and pod_list, if given
+                if 'case_list' in file_opts:
+                    self.case_list = file_opts.pop('case_list')
+                if 'pod_list' in file_opts:
+                    self.pod_list = file_opts.pop('pod_list')
+                if 'argument_groups' in file_opts or 'arguments' in file_opts:
+                    # assume config_file is a modified copy of the defaults,
+                    # with options to define parser. Set up the parser and run 
+                    # CLI arguments through it (instead of default).
+                    custom_parser = self.make_parser(file_opts)
+                    cli_opts = vars(custom_parser.parse_args())
+                    # defaults set in config_file's parser
+                    file_opts = vars(custom_parser.parse_args([]))
+                else:
+                    # assume config_file a JSON dict of option:value pairs.
+                    file_opts = {
+                        self.canonical_arg_name(k): v for k,v in file_opts.iteritems()
+                    }
+            except Exception:
+                if 'json' in os.path.splitext('config_path')[1].lower():
+                    print("ERROR: Couldn't parse JSON in {}.".format(config_path))
+                    raise
+                # assume config_file is a plain text file containing flags, etc.
+                # as they would be passed on the command line.
+                file_str = util.strip_comments(file_str, '#')
+                file_opts = vars(self.parser.parse_args(shlex.split(file_str)))
+
+        # CLI opts override options set from file, which override defaults
+        return ChainMap(cli_opts, file_opts, defaults)
+

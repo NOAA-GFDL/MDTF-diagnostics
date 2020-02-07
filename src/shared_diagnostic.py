@@ -109,8 +109,7 @@ class Diagnostic(object):
             d['convention'] = 'CF'
         for list_attr in ['required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:
-            if type(d[list_attr]) != list:
-                d[list_attr] = [d[list_attr]]
+            d[list_attr] = util.coerce_to_iter(d[list_attr], list)
         if (verbose > 0): 
             print(self.name + " settings: ")
             print(d)
@@ -129,18 +128,18 @@ class Diagnostic(object):
         """
         # pylint: disable=maybe-no-member
         default_file_required = True 
-        for idx, var in enumerate(varlist):
+        for i, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
-                varlist[idx]['required'] = (var['requirement'].lower() == 'required')
-            elif 'required' not in varlist[idx]:
-                varlist[idx]['required'] = default_file_required
-            if ('alternates' not in var):
-                varlist[idx]['alternates'] = []
-            elif ('alternates' in var) and (type(var['alternates']) is not list):
-                varlist[idx]['alternates'] = [var['alternates']]
+                varlist[i]['required'] = (var['requirement'].lower() == 'required')
+            elif 'required' not in varlist[i]:
+                varlist[i]['required'] = default_file_required
+            if 'alternates' not in var:
+                varlist[i]['alternates'] = []
+            else:
+                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'], list)
         if (verbose > 0): 
             print(self.name + " varlist: ")
             print(varlist)

@@ -48,10 +48,8 @@ class ModuleManager(util.Singleton):
 
     def _module(self, *args):
         # based on $MODULESHOME/init/python.py
-        if type(args[0]) == type([]):
+        if isinstance(args[0], list): # if we're passed explicit list, unpack it
             args = args[0]
-        else:
-            args = list(args)
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         proc = subprocess.Popen([cmd, 'python'] + args, stdout=subprocess.PIPE)
         (output, error) = proc.communicate()

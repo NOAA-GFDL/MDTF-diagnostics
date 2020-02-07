@@ -110,7 +110,7 @@ class PathManager(Singleton):
         temp_root = tempfile.gettempdir()
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
-        elif isinstance(hash_obj, str):
+        elif isinstance(hash_obj, basestring):
             new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
         else:
             # nicer-looking hash representation
@@ -584,7 +584,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if type(command) == str:
+    if isinstance(command, basestring):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -657,7 +657,7 @@ def run_shell_commands(commands, env=None, cwd=None):
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, bufsize=0
     )
-    if type(commands) == str:
+    if isinstance(commands, basestring):
         commands = [commands]
     # Tried many scenarios for executing commands sequentially 
     # (eg with stdin.write()) but couldn't find a solution that wasn't 
@@ -706,7 +706,7 @@ def filter_kwargs(kwarg_dict, function):
 def is_in_config(key, config, section='settings'):
     # Ugly - should replace with cleaner solution/explicit defaults
     if (section in config) and (key in config[section]):
-        if type(config[section][key] is bool):
+        if isinstance(config[section][key], bool):
             return True
         else:
             if (config[section][key]): # is not empty
@@ -746,12 +746,12 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
         env_dict[varname] = varvalue
 
         # environment variables must be strings
-        if type(varvalue) is bool:
+        if isinstance(varvalue, bool):
             if varvalue == True:
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif type(varvalue) is not str:
+        elif not isinstance(varvalue, basestring):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 

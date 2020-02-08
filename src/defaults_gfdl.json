@@ -56,31 +56,68 @@
   "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on gridded model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.",
   "argument_groups" : [
     {
-      "name" : "MODEL",
-      "description" : "",
+      "name" : "PATHS",
+      "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
       "arguments" : [
         {
-          "name": "CASENAME",
-          "help": "Identifier used to label the input model dataset.",
-          "default" : ""
+          "name": "CODE_ROOT",
+          "hidden" : true,
+          "help": "Code installation directory. Set automatically except in unit testing.",
+          "default" : ".",
+          "metavar" : "<DIR>"
         },{
-          "name": "model",
-          "help": "Model name (source_id, only used in CMIP6 input).",
-          "default" : ""
+          "name": "MODEL_DATA_ROOT",
+          "help": "Parent directory containing results from different models.",
+          "default" : "$MDTF_GFDL_TMPDIR/inputdata/model",
+          "metavar" : "<DIR>"
         },{
-          "name": "experiment",
-          "help": "Experiment ID (only used in CMIP6 input).",
-          "default" : ""
+          "name": "OBS_DATA_ROOT",
+          "help": "Parent directory containing observational data used by individual PODs.",
+          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+          "metavar" : "<DIR>"
         },{
+          "name": "WORKING_DIR",
+          "help": "Working directory.",
+          "default" : "$MDTF_GFDL_TMPDIR/wkdir",
+          "metavar" : "<DIR>"
+        },{
+          "name": "OUTPUT_DIR",
+          "help": "Directory to write output files. Defaults to working directory.",
+          "default" : "$HOME/mdtf_out",
+          "metavar" : "<DIR>"
+        }
+      ]
+    },{
+      "name" : "MODEL",
+      "description" : "Settings describing the input model data.",
+      "arguments" : [
+        {
           "name": "FIRSTYR",
           "short_name" : "Y",
           "help": "Starting year of analysis period.",
-          "type" : "int"
+          "type" : "int",
+          "metavar" : "<year>"
         },{
           "name": "LASTYR",
           "short_name" : "Z",
           "help": "Ending year of analysis period (inclusive).",
-          "type" : "int"
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": "CASENAME",
+          "help": "Identifier used to label the input model dataset.",
+          "type" : "str",
+          "metavar" : "<name>"
+        },{
+          "name": "model",
+          "help": "Model name (only used in CMIP6 input).",
+          "type": "str",
+          "metavar" : "<source_id>"
+        },{
+          "name": "experiment",
+          "help": "Experiment ID (only used in CMIP6 input).",
+          "type" : "str",
+          "metavar" : "<experiment_id>"
         },{
           "name": "component",
           "hidden" : true,
@@ -113,33 +150,6 @@
         }
       ]
     },{
-      "name" : "PATHS",
-      "description" : "Relative paths are resolved relative to the code's folder (parent directory of the directory this file is in.)",
-      "arguments" : [
-        {
-          "name": "CODE_ROOT",
-          "hidden" : true,
-          "help": "Code installation directory. Set automatically except in unit testing.",
-          "default" : "."
-        },{
-          "name": "MODEL_DATA_ROOT",
-          "help": "Parent directory containing results from different models.",
-          "default" : "$MDTF_GFDL_TMPDIR/inputdata/model/"
-        },{
-          "name": "OBS_DATA_ROOT",
-          "help": "Parent directory containing observational data used by individual PODs.",
-          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
-        },{
-          "name": "WORKING_DIR",
-          "help": "Working directory.",
-          "default" : "$MDTF_GFDL_TMPDIR/wkdir"
-        },{
-          "name": "OUTPUT_DIR",
-          "help": "Directory to write output files. Defaults to working directory.",
-          "default" : "$HOME/mdtf_out"
-        }
-      ]
-    },{
       "name" : "DATA",
       "description" : "Settings affecting the framework's retrieval of model data.",
       "arguments" : [
@@ -151,7 +161,8 @@
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
           "type" : "int",
-          "default" : 300
+          "default" : 300,
+          "metavar" : "<seconds>"
         }
       ]
     },{
@@ -165,19 +176,23 @@
         },{
           "name": "conda_root",
           "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
-          "default" : "/home/mdteam/anaconda"
+          "default" : "/home/mdteam/anaconda",
+          "metavar" : "<DIR>"
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
-          "default" : "/home/mdteam/anaconda/envs"
+          "default" : "/home/mdteam/anaconda/envs",
+          "metavar" : "<DIR>"
         },{
           "name": "venv_root",
           "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
-          "default" : "./envs/venv"
+          "default" : "./envs/venv",
+          "metavar" : "<DIR>"
         },{
           "name": "r_lib_root",
           "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
-          "default" : "./envs/r_libs"
+          "default" : "./envs/r_libs",
+          "metavar" : "<DIR>"
         }
       ]
     },{
@@ -215,7 +230,7 @@
         {
           "name": "verbose",
           "short_name": "v",
-          "help": "Increase log verbosity.",
+          "help": "Increase log verbosity level.",
           "default" : 1, 
           "action": "count" 
         },{

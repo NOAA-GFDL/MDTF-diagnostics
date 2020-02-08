@@ -6,6 +6,39 @@ from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import shlex
 import util
 
+class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    """Modify help text formatter to only display variable placeholder 
+    ("metavar") once, to save space. 
+    Taken from https://stackoverflow.com/a/16969505
+    """
+    def __init__(self, *args, **kwargs):
+        # tweak indentation of help strings
+        if not kwargs.get('indent_increment', None):
+            kwargs['indent_increment'] = 2
+        if not kwargs.get('max_help_position', None):
+            kwargs['max_help_position'] = 10
+        super(SingleMetavarHelpFormatter, self).__init__(*args, **kwargs)
+
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            metavar, = self._metavar_formatter(action, action.dest)(1)
+            return metavar
+        else:
+            parts = []
+            if action.nargs == 0:
+                # if the Optional doesn't take a value, format is: "-s, --long"
+                parts.extend(action.option_strings)
+            else:
+                # if the Optional takes a value, format is: "-s ARGS, --long ARGS"
+                default = action.dest.upper()
+                args_string = self._format_args(action, default)
+                ## NEW CODE:
+                if args_string[0].isalpha():
+                    args_string = '<' + args_string + '>'
+                parts.extend(action.option_strings)
+                parts[-1] += ' %s' % args_string
+            return ', '.join(parts)
+
 class ConfigManager(util.Singleton):
     def __init__(self, defaults_filename=None):
         if defaults_filename:
@@ -32,6 +65,7 @@ class ConfigManager(util.Singleton):
 
     def _init_default_parser(self, d, config_path):
         # add more standard options to default parser
+        d['formatter_class'] = SingleMetavarHelpFormatter
         if 'usage' not in d:
             d['usage'] = '%(prog)s [options]'
         d['arguments'] = util.coerce_to_iter(d.get('arguments', None), list)
@@ -48,11 +82,12 @@ class ConfigManager(util.Singleton):
                 Other options set via the command line will still override 
                 settings in this file.
                 """,
-                'default' : '',
+                'metavar': 'FILE'
             }])
         self._append_to_entry(d, 'epilog',
-            "Above default values defined in {}.".format(config_path)
+            "The default values above are set in {}.".format(config_path)
         )
+        return d
 
     def make_parser(self, d):
         args = d.pop('arguments', None)
@@ -62,6 +97,7 @@ class ConfigManager(util.Singleton):
         for arg in args:
             # add arguments not in any group
             self.add_parser_argument(arg, p)
+        p._optionals.title = None
         for group in arg_groups:
             # add groups and arguments therein
             self.add_parser_group(group, p)
@@ -113,8 +149,8 @@ class ConfigManager(util.Singleton):
         if 'default' in d:
             if isinstance(d['default'], basestring) and 'nargs' not in d:
                 # unless explicitly specified, 
-                # string-valued options accept 0 or 1 arguments
-                d['nargs'] = '?'
+                # string-valued options accept 1 argument
+                d['nargs'] = 1
             elif isinstance(d['default'], bool) and 'action' not in d:
                 if d['default']:
                     d['action'] = 'store_false' # default true, false if flag set
@@ -127,7 +163,8 @@ class ConfigManager(util.Singleton):
             d['help'] = argparse.SUPPRESS
         elif 'default' in d:
             # display default value in help string
-            self._append_to_entry(d, 'help', "(default: %(default)s)")
+            #self._append_to_entry(d, 'help', "(default: %(default)s)")
+            pass
 
         # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
         self.parser_args[arg_nm] = target_obj.add_argument(*arg_flags, **d)
@@ -194,5 +231,6 @@ class ConfigManager(util.Singleton):
                 file_opts = vars(self.parser.parse_args(shlex.split(file_str)))
 
         # CLI opts override options set from file, which override defaults
-        return ChainMap(cli_opts, file_opts, defaults)
+        return dict(ChainMap(cli_opts, file_opts, defaults))
+
 

@@ -10,10 +10,9 @@ import util
 from mdtf import MDTFFramework
 
 class GFDLMDTFFramework(MDTFFramework):
-    def __init__(self):
+    def __init__(self, code_root, defaults_rel_path):
         self.set_tempdir()
-        super(GFDLMDTFFramework, self).__init__()
-
+        super(GFDLMDTFFramework, self).__init__(code_root, defaults_rel_path)
 
     @staticmethod
     def set_tempdir():
@@ -34,30 +33,15 @@ class GFDLMDTFFramework(MDTFFramework):
             print("Using default tempdir on this system")
         os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
-    def argparse_setup(self):
-        """Add GFDL-specific command-line options to those set in mdtf.py.
-        """
-        super(GFDLMDTFFramework, self).argparse_setup()
-        self.parser.add_argument("--frepp", 
-            action="store_true", # so default to False
-            help="Set flag to take configuration info from env vars set by frepp.")
-        self.parser.add_argument("--ignore-component", 
-            action="store_true", # so default to False
-            help=("Set flag to ignore model component passed by frepp "
-                "and search entire /pp/ directory."))
-        # reset default config file
-        for action in self.parser._actions:
-            if action.dest == 'config_file':
-                action.default = os.path.join(self.code_root, 'src', 
-                    'gfdl_mdtf_settings.json')
-
-    @classmethod
-    def parse_mdtf_args(cls, user_args_list, default_args, rel_paths_root=''):
-        default_args['paths']['OBS_DATA_SOURCE'] = util.resolve_path(
-            default_args['paths']['OBS_DATA_ROOT'],
-            rel_paths_root)
-        return super(GFDLMDTFFramework, cls).parse_mdtf_args(
-            user_args_list, default_args, rel_paths_root)
+    def parse_mdtf_args(self):
+        super(GFDLMDTFFramework, self).parse_mdtf_args()
+        rel_paths_root = self.config['paths']['CODE_ROOT']
+        if not rel_paths_root or rel_paths_root == '.':
+            rel_paths_root = self.code_root
+        self.config['settings']['OBS_DATA_SOURCE'] = util.resolve_path(
+            self.config['settings']['OBS_DATA_SOURCE'],
+            rel_paths_root
+        )
 
     def _post_config_init(self):
         self.fetch_obs_data()
@@ -90,7 +74,7 @@ class GFDLMDTFFramework(MDTFFramework):
     def fetch_obs_data(self):
         dry_run = util.get_from_config('dry_run', self.config, default=False)
         
-        source_dir = self.config['paths']['OBS_DATA_SOURCE']
+        source_dir = self.config['settings']['OBS_DATA_SOURCE']
         dest_dir = self.config['paths']['OBS_DATA_ROOT']
         if source_dir == dest_dir:
             return
@@ -115,7 +99,10 @@ class GFDLMDTFFramework(MDTFFramework):
 
 
 if __name__ == '__main__':
+    # get dir of currently executing script: 
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root, src_dir = os.path.split(cwd)
+    mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'defaults_gfdl.json'))
     print("\n======= Starting "+__file__)
-    mdtf = GFDLMDTFFramework()
     mdtf.main_loop()
     print("Exiting normally from ",__file__)

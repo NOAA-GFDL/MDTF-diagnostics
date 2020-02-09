@@ -15,38 +15,22 @@
 from __future__ import print_function
 import os
 import sys
-import argparse
-from ConfigParser import _Chainmap as ChainMap # in collections in py3
+import cli
 import util
 import data_manager
 import environment_manager
 from shared_diagnostic import Diagnostic  
 
 class MDTFFramework(object):
-    def __init__(self):
-        # get dir of currently executing script: 
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
-        self.code_root = os.path.dirname(cwd) # parent dir of that
-
-        self.parser_groups = dict()
-        self.parser = argparse.ArgumentParser(
-            usage='%(prog)s [options]',
-            description="""
-                Driver script for the NOAA Model Diagnotics Task Force (MDTF) 
-                package. This runs process-oriented diagnostics (PODs) on gridded 
-                model data.
-            """,
-            epilog="""
-                All command-line arguments override defaults set in 
-                src/mdtf_settings.json.
-            """
-        )
-        self.argparse_setup()
-        cmdline_args = self.argparse_parse()
-        print(cmdline_args, '\n')
-        default_args = util.read_json(cmdline_args['config_file'])
-        self.config = self.parse_mdtf_args(cmdline_args, default_args)
-        print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
+    def __init__(self, code_root, defaults_rel_path):
+        # set up CLI, parse settings
+        self.code_root = code_root
+        self.config = dict()
+        print('DEBUG: argv = {}'.format(sys.argv[1:]))
+        config = cli.ConfigManager(os.path.join(code_root, defaults_rel_path))
+        config.parse_cli()
+        self.parse_mdtf_args()
+        print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))
         self._post_config_init()
         
     def _post_config_init(self):
@@ -60,165 +44,65 @@ class MDTFFramework(object):
         )
         self.Diagnostic = Diagnostic
 
-    def add_group_wrapper(self, group_nm, group_title, group_desc=None):
-        group_obj = self.parser.add_argument_group(
-            title=group_title, description=group_desc
-        )
-        self.parser_groups[group_nm] = group_obj
-        return group_obj
-
-    def argparse_setup(self):
-        """Wraps command-line arguments to script.
-        """
-        self.parser.add_argument('--version', 
-            action='version', version='%(prog)s 2.1')
-        self.parser.add_argument("-v", "--verbose", 
-            action="count", default = 1,
-            help="increase output verbosity")
-        
-        gp = self.add_group_wrapper('case', 'experiment parameters')
-        gp.add_argument('--CASENAME', 
-            nargs='?')
-        gp.add_argument('--model', 
-            nargs='?')
-        gp.add_argument('--experiment', 
-            nargs='?')
-        gp.add_argument('--CASE_ROOT_DIR', 
-            nargs='?')
-        gp.add_argument('-Y', '--FIRSTYR', 
-            nargs='?', type=int,
-            help="Starting year of analysis period.")
-        gp.add_argument('-Z', '--LASTYR', 
-            nargs='?', type=int,
-            help="""Ending year of analysis period (inclusive: -Z 2000 will 
-                include data through 31 Dec 2000).""")
-        gp.add_argument("--component", 
-            nargs='?')
-        gp.add_argument("--data_freq", 
-            nargs='?')
-        gp.add_argument("--chunk_freq", 
-            nargs='?')
-
-        gp = self.add_group_wrapper('paths', 'paths')
-        # default paths set in mdtf_settings.json/paths
-        gp.add_argument('--CODE_ROOT', 
-            nargs='?', default=self.code_root,
-            help = argparse.SUPPRESS)
-            #help="Code installation directory.")
-        gp.add_argument('--MODEL_DATA_ROOT', 
-            nargs='?',
-            help="""Local directory to store model data. .""")
-        gp.add_argument('--OBS_DATA_ROOT', 
-            nargs='?', 
-            help="""Parent directory containing observational data 
-                used by individual PODs.""")
-        gp.add_argument('--WORKING_DIR', 
-            nargs='?',
-            help="Working directory.")
-        gp.add_argument('--OUTPUT_DIR', 
-            nargs='?',
-            help="Directory to write output files. Defaults to working directory.")
-
-        gp = self.add_group_wrapper('config', 'configuration')
-        gp.add_argument('--config_file', 
-            nargs='?', 
-            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
-            help="""JSON file to read configuration from. Any command-line
-            options will override these values. (default: %(default)s)"""
-        )
-        gp.add_argument("--test-mode", "--test_mode", 
-            action="store_true", # so default to False
-            help="Set flag to fetch data but skip calls to PODs.")
-        gp.add_argument("--dry-run", "--dry_run", 
-            action="store_true", # so default to False
-            help="""Set flag to do a dry run, disabling data fetching and 
-                calls to PODs.""")
-        gp.add_argument("--save-nc", "--save_nc", 
-            action="store_true", # so default to False
-            help="Set flag to have PODs save netCDF files of processed data.")
-        gp.add_argument('--data_manager', 
-            nargs='?',
-            help=("Method to fetch model data. "
-                "Currently supported options are {'Localfile'}."))
-        gp.add_argument('--environment_manager', 
-            nargs='?',
-            help=("Method to manage POD runtime dependencies. "
-                "Currently supported options are {'None', 'Conda'}."))
- 
-
-    def argparse_parse(self):
-        d = self.parser.parse_args().__dict__
-        # remove entries that weren't set
-        return {key: val for key, val in d.iteritems() if val is not None}
-
     @staticmethod
     def caselist_from_args(args):
-        d = {}
-        for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-            'chunk_freq', 'data_freq', 'model', 'experiment', 
-            'variable_convention']:
-            if k in args:
-                d[k] = args[k]
+        # remove empty entries first
+        d = {k:v for k,v in args.iteritems() if v}
         if 'model' not in d:
-            d['model'] = 'CMIP_GFDL'
+            d['model'] = 'CMIP'
+        if 'experiment' not in d:
+            d['experiment'] = ''
         if 'variable_convention' not in d:
-            d['variable_convention'] = 'CMIP_GFDL'
+            d['variable_convention'] = 'CMIP'
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-        if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
-            d['root_dir'] = args['CASE_ROOT_DIR']
+        if 'root_dir' not in d and 'CASE_ROOT_DIR' in d:
+            d['root_dir'] = d['CASE_ROOT_DIR']
         return [d]
 
-    @classmethod
-    def parse_mdtf_args(cls, user_args_list, default_args, rel_paths_root=''):
+    def parse_mdtf_args(self):
         """Parse script options.
-
-        We provide three ways to configure the script. In order of precendence,
-        they are:
-
-        1. Parameter substitution via GFDL's internal `frepp` utility; see
-        `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation`_.
-
-        2. Through command-line arguments.
-
-        3. Through default values set in a YAML configuration file, by default
-        in src/config.yml.
-
-        This function applies the precendence and returns a single dict of the
-        actual configuration.
-
-        Args:
-
-        Returns: :obj:`dict` of configuration settings.
         """
-        if isinstance(user_args_list, dict):
-            user_args = user_args_list
-        elif isinstance(user_args_list, list):
-            user_args = ChainMap(*user_args_list)
+        def _populate_dict(config_obj, group_nm, d):
+            # hacky temp code, for backwards compatibility
+            for action in config_obj.parser_args_from_group[group_nm]:
+                key = action.dest
+                d[key] = config_obj.config[key]
+
+        config = cli.ConfigManager()
+
+        self.config['pod_list'] = config.pod_list
+        if config.config.get('model', None) or config.config.get('experiment', None) \
+            or config.config.get('CASENAME', None):
+            self.config['case_list'] = self.caselist_from_args(config.config)
         else:
-            user_args = dict()
+            self.config['case_list'] = config.case_list
+        for i in range(len(self.config['case_list'])):
+            # remove empty entries
+            self.config['case_list'][i] = {k:v for k,v \
+                in self.config['case_list'][i].iteritems() if v}
+        
+        self.config['paths'] = dict()
+        _populate_dict(config, 'PATHS', self.config['paths'])
+        self.config['settings'] = dict()
+        settings_gps = set(config.parser_groups.keys()).difference(
+            set(['parser','PATHS','MODEL'])
+        )
+        for group in settings_gps:
+            _populate_dict(config, group, self.config['settings'])
 
-        # overwrite defaults with command-line args.
-        for section in ['paths', 'settings']:
-            for key in default_args[section]:
-                if key in user_args:
-                    default_args[section][key] = user_args[key]
-        if ('model' in user_args and 'experiment' in user_args) or \
-            'CASENAME' in user_args:
-            # also set up caselist with frepp data
-            default_args['case_list'] = cls.caselist_from_args(user_args)
-
-        if 'CODE_ROOT' in user_args:
-            # only let this be overridden if we're in a unit test
-            rel_paths_root = user_args['CODE_ROOT']
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = config.config.get('CODE_ROOT', None)
+        if not rel_paths_root or rel_paths_root == '.':
+            rel_paths_root = self.code_root
         # convert relative to absolute paths
-        for key, val in default_args['paths'].iteritems():
-            default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
-
-        if util.get_from_config('dry_run', default_args, default=False):
-            default_args['settings']['test_mode'] = True
-
-        return default_args
+        for key, val in self.config['paths'].iteritems():
+            # print('DEBUG: {},{}'.format(key,val))
+            self.config['paths'][key] = util.resolve_path(
+                util.coerce_from_iter(val), rel_paths_root
+            )
+        if config.config.get('dry_run', False):
+            self.config['settings']['test_mode'] = True
 
     def set_mdtf_env_vars(self):
         # pylint: disable=maybe-no-member
@@ -287,7 +171,10 @@ class MDTFFramework(object):
 
 
 if __name__ == '__main__':
-    mdtf = MDTFFramework()
+    # get dir of currently executing script: 
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root, src_dir = os.path.split(cwd)
+    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'defaults.json'))
     print("\n======= Starting "+__file__)
     mdtf.main_loop()
     print("Exiting normally from ",__file__)

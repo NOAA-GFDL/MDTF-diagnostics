@@ -4,6 +4,7 @@ import sys
 import argparse
 from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import shlex
+import collections
 import util
 
 class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
@@ -51,10 +52,18 @@ class ConfigManager(util.Singleton):
             self.case_list = defaults.pop('case_list', [])
             self.pod_list = defaults.pop('pod_list', [])
 
+            self.config = dict()
             self.parser_groups = dict()
-            self.parser_args = dict()
+            # no way to get this from public interface? _actions of group
+            # contains all actions for entire parser
+            self.parser_args_from_group = collections.defaultdict(list)
             defaults = self._init_default_parser(defaults, defaults_path)
             self.parser = self.make_parser(defaults)
+
+    def iter_actions(self):
+        for arg_list in self.parser_args_from_group:
+            for arg in arg_list:
+                yield arg
 
     @staticmethod
     def _append_to_entry(d, key, str_):
@@ -96,7 +105,7 @@ class ConfigManager(util.Singleton):
         p = argparse.ArgumentParser(**p_kwargs)
         for arg in args:
             # add arguments not in any group
-            self.add_parser_argument(arg, p)
+            self.add_parser_argument(arg, p, 'parser')
         p._optionals.title = None
         for group in arg_groups:
             # add groups and arguments therein
@@ -112,7 +121,7 @@ class ConfigManager(util.Singleton):
         gp_obj = target_obj.add_argument_group(**gp_kwargs)
         self.parser_groups[gp_nm] = gp_obj
         for arg in args:
-            self.add_parser_argument(arg, gp_obj)
+            self.add_parser_argument(arg, gp_obj, gp_nm)
     
     @staticmethod
     def canonical_arg_name(str_):
@@ -120,7 +129,7 @@ class ConfigManager(util.Singleton):
         # canonical identifier/destination always has _s, no -s (PEP8)
         return str_.lstrip('-').rstrip().replace('-', '_')
 
-    def add_parser_argument(self, d, target_obj):
+    def add_parser_argument(self, d, target_obj, target_name):
         # set flags:
         arg_nm = self.canonical_arg_name(d.pop('name'))
         assert arg_nm, "No argument name found in {}".format(d)
@@ -167,16 +176,18 @@ class ConfigManager(util.Singleton):
             pass
 
         # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
-        self.parser_args[arg_nm] = target_obj.add_argument(*arg_flags, **d)
+        self.parser_args_from_group[target_name].append(
+            target_obj.add_argument(*arg_flags, **d)
+        )
 
-    def edit_argument(self, arg_nm, **kwargs):
-        # change aspects of arguments after they're defined.
-        action = self.parser_args[arg_nm]
-        for k,v in kwargs.iteritems():
-            if not hasattr(action, k):
-                print("Warning: didn't find attribute {} for argument {}".format(k, arg_nm))
-                continue
-            setattr(action, k, v)
+    # def edit_argument(self, arg_nm, **kwargs):
+    #     # change aspects of arguments after they're defined.
+    #     action = self.parser_args[arg_nm]
+    #     for k,v in kwargs.iteritems():
+    #         if not hasattr(action, k):
+    #             print("Warning: didn't find attribute {} for argument {}".format(k, arg_nm))
+    #             continue
+    #         setattr(action, k, v)
 
     def edit_defaults(self, **kwargs):
         # Change default value of arguments. If a key doesn't correspond to an
@@ -231,6 +242,6 @@ class ConfigManager(util.Singleton):
                 file_opts = vars(self.parser.parse_args(shlex.split(file_str)))
 
         # CLI opts override options set from file, which override defaults
-        return dict(ChainMap(cli_opts, file_opts, defaults))
+        self.config = dict(ChainMap(cli_opts, file_opts, defaults))
 
 

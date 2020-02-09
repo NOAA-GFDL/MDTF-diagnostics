@@ -101,8 +101,12 @@
     },{
       "name" : "MODEL",
       "description" : "Settings describing the input model data.",
-      "arguments" : [
+      "arguments" : [        
         {
+          "name": "CASE_ROOT_DIR",
+          "help": "Alternate method to specify root directory of model data.",
+          "metavar" : "<DIR>"
+        },{
           "name": "FIRSTYR",
           "short_name" : "Y",
           "help": "Starting year of analysis period.",

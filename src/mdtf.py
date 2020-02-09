@@ -169,8 +169,18 @@ class MDTFFramework(object):
         for case in caselist:
             case.tearDown(self.config)
 
+def version_check():
+    v = sys.version_info
+    if v.major != 2 or v.minor < 7:
+        print("""ERROR: attempted to run with python {}.{}.{}. The MDTF framework
+        currently only supports python 2.7.*. Please check which version of python
+        is on your $PATH (e.g. with `which python`.)""".format(
+            v.major, v.minor, v.micro
+        ))
+        exit()
 
 if __name__ == '__main__':
+    version_check()
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)

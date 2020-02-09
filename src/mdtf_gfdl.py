@@ -7,9 +7,9 @@ import data_manager
 import environment_manager
 import gfdl
 import util
-from mdtf import MDTFFramework
+import mdtf
 
-class GFDLMDTFFramework(MDTFFramework):
+class GFDLMDTFFramework(mdtf.MDTFFramework):
     def __init__(self, code_root, defaults_rel_path):
         self.set_tempdir()
         super(GFDLMDTFFramework, self).__init__(code_root, defaults_rel_path)
@@ -99,6 +99,7 @@ class GFDLMDTFFramework(MDTFFramework):
 
 
 if __name__ == '__main__':
+    mdtf.version_check()
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)

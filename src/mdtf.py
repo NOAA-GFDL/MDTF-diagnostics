@@ -44,10 +44,12 @@ class MDTFFramework(object):
         )
         self.Diagnostic = Diagnostic
 
-    @staticmethod
-    def caselist_from_args(args):
+    def caselist_from_args(self, config_obj):
+        d = dict()
+        d2 = config_obj.config
+        self._populate_dict(config_obj, 'MODEL', d)
         # remove empty entries first
-        d = {k:v for k,v in args.iteritems() if v}
+        d = {k:v for k,v in d.iteritems() if v}
         if 'model' not in d:
             d['model'] = 'CMIP'
         if 'experiment' not in d:
@@ -56,40 +58,52 @@ class MDTFFramework(object):
             d['variable_convention'] = 'CMIP'
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-        if 'root_dir' not in d and 'CASE_ROOT_DIR' in d:
+        if d2.get('root_dir', None):
+            # overwrite flag if both are set
+            d['CASE_ROOT_DIR'] = d2['root_dir']
+            d['root_dir'] = d2['root_dir']
+        elif d.get('CASE_ROOT_DIR', None):
             d['root_dir'] = d['CASE_ROOT_DIR']
+        else:
+            print('ERROR: need to sepcify root directory of model data.')
+            exit()
         return [d]
+
+    @staticmethod
+    def _populate_dict(config_obj, group_nm, d):
+        # hacky temp code, for backwards compatibility
+        for action in config_obj.parser_args_from_group[group_nm]:
+            key = action.dest
+            d[key] = config_obj.config[key]
 
     def parse_mdtf_args(self):
         """Parse script options.
         """
-        def _populate_dict(config_obj, group_nm, d):
-            # hacky temp code, for backwards compatibility
-            for action in config_obj.parser_args_from_group[group_nm]:
-                key = action.dest
-                d[key] = config_obj.config[key]
-
         config = cli.ConfigManager()
 
         self.config['pod_list'] = config.pod_list
         if config.config.get('model', None) or config.config.get('experiment', None) \
             or config.config.get('CASENAME', None):
-            self.config['case_list'] = self.caselist_from_args(config.config)
+            self.config['case_list'] = self.caselist_from_args(config)
         else:
             self.config['case_list'] = config.case_list
         for i in range(len(self.config['case_list'])):
+            d = self.config['case_list'][i]
             # remove empty entries
-            self.config['case_list'][i] = {k:v for k,v \
-                in self.config['case_list'][i].iteritems() if v}
+            d = {k:v for k,v in d.iteritems() if v}
+            if not d.get('CASE_ROOT_DIR', None) and d.get('root_dir', None):
+                d['CASE_ROOT_DIR'] = d['root_dir']
+            elif not d.get('root_dir', None) and d.get('CASE_ROOT_DIR', None):
+                d['root_dir'] = d['CASE_ROOT_DIR']
         
         self.config['paths'] = dict()
-        _populate_dict(config, 'PATHS', self.config['paths'])
+        self._populate_dict(config, 'PATHS', self.config['paths'])
         self.config['settings'] = dict()
         settings_gps = set(config.parser_groups.keys()).difference(
             set(['parser','PATHS','MODEL'])
         )
         for group in settings_gps:
-            _populate_dict(config, group, self.config['settings'])
+            self._populate_dict(config, group, self.config['settings'])
 
         # only let this be overridden if we're in a unit test
         rel_paths_root = config.config.get('CODE_ROOT', None)

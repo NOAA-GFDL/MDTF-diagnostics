@@ -76,9 +76,15 @@ class ConfigManager(util.Singleton):
         # add more standard options to default parser
         d['formatter_class'] = SingleMetavarHelpFormatter
         if 'usage' not in d:
-            d['usage'] = '%(prog)s [options]'
+            d['usage'] = '%(prog)s [options] CASE_ROOT_DIR'
         d['arguments'] = util.coerce_to_iter(d.get('arguments', None), list)
         d['arguments'].extend([{
+                "name": "root_dir",
+                "is_positional": True,
+                "nargs" : "?", # 0 or 1 occurences: might have set this with CASE_ROOT_DIR
+                "help": "Root directory of model data to analyze.",
+                "metavar" : "CASE_ROOT_DIR"
+            },{
                 'name':'version', 
                 'action':'version', 'version':'%(prog)s 2.2'
             },{
@@ -106,7 +112,8 @@ class ConfigManager(util.Singleton):
         for arg in args:
             # add arguments not in any group
             self.add_parser_argument(arg, p, 'parser')
-        p._optionals.title = None
+        p._positionals.title = None
+        p._optionals.title = 'GENERAL OPTIONS'
         for group in arg_groups:
             # add groups and arguments therein
             self.add_parser_group(group, p)
@@ -133,16 +140,21 @@ class ConfigManager(util.Singleton):
         # set flags:
         arg_nm = self.canonical_arg_name(d.pop('name'))
         assert arg_nm, "No argument name found in {}".format(d)
-        if 'dest' not in d:
-            d['dest'] = arg_nm
         arg_flags = [arg_nm]
-        if '_' in arg_nm:
-            # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
-            arg_flags = [arg_nm.replace('_', '-'), arg_nm]
-        arg_flags = ['--'+s for s in arg_flags]
-        if 'short_name' in d:
-            # recognize both --option and -O, if short_name defined
-            arg_flags.append('-' + d.pop('short_name'))
+        if d.pop('is_positional', False):
+            # code to handle positional arguments
+            pass
+        else:
+            # argument is a command-line flag (default)
+            if 'dest' not in d:
+                d['dest'] = arg_nm
+            if '_' in arg_nm:
+                # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
+                arg_flags = [arg_nm.replace('_', '-'), arg_nm]
+            arg_flags = ['--'+s for s in arg_flags]
+            if 'short_name' in d:
+                # recognize both --option and -O, if short_name defined
+                arg_flags.append('-' + d.pop('short_name'))
 
         # type conversion of default value
         if 'type' in d:

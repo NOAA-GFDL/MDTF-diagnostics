@@ -42,23 +42,37 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
 class ConfigManager(util.Singleton):
     def __init__(self, defaults_filename=None):
-        if defaults_filename:
-            # get dir of currently executing script: 
-            cwd = os.path.dirname(os.path.realpath(__file__)) 
-            self.code_root = os.path.dirname(cwd) # parent dir of that
-            defaults_path = os.path.join(cwd, defaults_filename)
+        # get dir of currently executing script: 
+        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        self.code_root = os.path.dirname(cwd) # parent dir of that
+        defaults_path = os.path.join(cwd, defaults_filename)
 
-            defaults = util.read_json(defaults_path)
-            self.case_list = defaults.pop('case_list', [])
-            self.pod_list = defaults.pop('pod_list', [])
+        # poor man's subparser: argparse's subparser doesn't handle this
+        # use case easily, so just dispatch on first argument
+        if len(sys.argv) == 1 or \
+            len(sys.argv) == 2 and sys.argv[1].lower() == 'help':
+            help_and_exit = True # print help and exit
+        elif sys.argv[1].lower() == 'info': 
+            # "subparser" for command-line info
+            _CLIInfoHandler(self.code_root, sys.argv[2:])
+            exit()
+        else:
+            help_and_exit = False
+        # continue to set up default CLI from defaults.json file
+        defaults = util.read_json(defaults_path)
+        self.case_list = defaults.pop('case_list', [])
+        self.pod_list = defaults.pop('pod_list', [])
 
-            self.config = dict()
-            self.parser_groups = dict()
-            # no way to get this from public interface? _actions of group
-            # contains all actions for entire parser
-            self.parser_args_from_group = collections.defaultdict(list)
-            defaults = self._init_default_parser(defaults, defaults_path)
-            self.parser = self.make_parser(defaults)
+        self.config = dict()
+        self.parser_groups = dict()
+        # no way to get this from public interface? _actions of group
+        # contains all actions for entire parser
+        self.parser_args_from_group = collections.defaultdict(list)
+        defaults = self._init_default_parser(defaults, defaults_path)
+        self.parser = self.make_parser(defaults)
+        if help_and_exit:
+            self.parser.print_help()
+            exit()
 
     def iter_actions(self):
         for arg_list in self.parser_args_from_group:
@@ -76,7 +90,11 @@ class ConfigManager(util.Singleton):
         # add more standard options to default parser
         d['formatter_class'] = SingleMetavarHelpFormatter
         if 'usage' not in d:
-            d['usage'] = '%(prog)s [options] CASE_ROOT_DIR'
+            d['usage'] = ("%(prog)s [options] CASE_ROOT_DIR\n"
+                "{}%(prog)s info [INFO_TOPIC]").format(len('usage: ')*' ')
+        self._append_to_entry(d, 'description',
+            ("The second form ('mdtf info') prints information about available "
+                "diagnostics."))
         d['arguments'] = util.coerce_to_iter(d.get('arguments', None), list)
         d['arguments'].extend([{
                 "name": "root_dir",
@@ -256,4 +274,58 @@ class ConfigManager(util.Singleton):
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(cli_opts, file_opts, defaults))
 
+
+class _CLIInfoHandler(object):
+    _pod_dir = 'diagnostics'
+    _settings = 'settings.json'
+
+    def __init__(self, code_root, arg_list):
+        self.code_root = code_root
+        self.pods = get_pod_list(code_root)
+        self.cmds = ['diagnostics', 'PODs'] + self.pods
+        if not arg_list:
+            self.info_cmds()
+        elif arg_list[0] in ['diagnostics', 'PODs']:
+            self.info_diagnostics_all()
+        elif arg_list[0] in self.pods:
+            self.info_diagnostic(arg_list[0])
+        else:
+            print("ERROR: '{}' not a recognized diagnostic.".format(' '.join(arg_list)))
+            self.info_cmds()
+        # return to ConfigManager for program exit
+
+    def info_cmds(self):
+        print('Recognized topics for `mdtf.py info`:')
+        print(', '.join(self.cmds))
+
+    def info_diagnostics_all(self):
+        print('List of installed diagnostics:')
+        print(('Do `mdtf info <diagnostic>` for more info on a specific diagnostic '
+            'or check documentation at github.com/NOAA-GFDL/MDTF-diagnostics.'))
+        for pod in self.pods:
+            try:
+                d = util.read_json(
+                    os.path.join(self.code_root, self._pod_dir, pod, self._settings)
+                )
+            except Exception:
+                continue
+            print('  {}: {}.'.format(pod, d['settings']['long_name']))
+
+    def info_diagnostic(self, pod):
+        d = util.read_json(
+            os.path.join(self.code_root, self._pod_dir, pod, self._settings)
+        )
+        print('{}: {}.'.format(pod, d['settings']['long_name']))
+        print(d['settings']['description'])
+        print('Variables:')
+        for var in d['varlist']:
+            print('  {} ({}) @ {} frequency'.format(
+                var['var_name'].replace('_var',''), 
+                var.get('requirement',''), 
+                var['freq'] 
+            ))
+            if 'alternates' in var:
+                print ('    Alternates: {}'.format(
+                    ', '.join([s.replace('_var','') for s in var['alternates']])
+                ))
 

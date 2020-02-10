@@ -68,13 +68,12 @@ class ConfigManager(util.Singleton):
         # no way to get this from public interface? _actions of group
         # contains all actions for entire parser
         self.parser_args_from_group = collections.defaultdict(list)
-        defaults = self._init_default_parser(defaults, defaults_path)
-        self.parser = self.make_parser(defaults)
+        self.parser = self.make_default_parser(defaults, defaults_path)
         if help_and_exit:
             self.parser.print_help()
             exit()
 
-    def iter_actions(self):
+    def iter_cli_actions(self):
         for arg_list in self.parser_args_from_group:
             for arg in arg_list:
                 yield arg
@@ -86,7 +85,7 @@ class ConfigManager(util.Singleton):
         else:
             d[key] = str_
 
-    def _init_default_parser(self, d, config_path):
+    def make_default_parser(self, d, config_path):
         # add more standard options to default parser
         d['formatter_class'] = SingleMetavarHelpFormatter
         if 'usage' not in d:
@@ -120,7 +119,7 @@ class ConfigManager(util.Singleton):
         self._append_to_entry(d, 'epilog',
             "The default values above are set in {}.".format(config_path)
         )
-        return d
+        return self.make_parser(d)
 
     def make_parser(self, d):
         args = d.pop('arguments', None)
@@ -209,15 +208,6 @@ class ConfigManager(util.Singleton):
         self.parser_args_from_group[target_name].append(
             target_obj.add_argument(*arg_flags, **d)
         )
-
-    # def edit_argument(self, arg_nm, **kwargs):
-    #     # change aspects of arguments after they're defined.
-    #     action = self.parser_args[arg_nm]
-    #     for k,v in kwargs.iteritems():
-    #         if not hasattr(action, k):
-    #             print("Warning: didn't find attribute {} for argument {}".format(k, arg_nm))
-    #             continue
-    #         setattr(action, k, v)
 
     def edit_defaults(self, **kwargs):
         # Change default value of arguments. If a key doesn't correspond to an

@@ -40,31 +40,11 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
                 parts[-1] += ' %s' % args_string
             return ', '.join(parts)
 
-class ConfigManager(util.Singleton):
-    def __init__(self, code_root=None, defaults_rel_path=None):
+
+class CLIHandler(object):
+    def _init_parser(self, code_root, defaults_rel_path):
         self.code_root = code_root
         defaults_path = os.path.join(code_root, defaults_rel_path)
-
-        # poor man's subparser: argparse's subparser doesn't handle this
-        # use case easily, so just dispatch on first argument
-        if len(sys.argv) == 1 or \
-            len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
-            # build CLI, print its help and exit
-            self._init_parser(defaults_path)
-            self.parser.print_help()
-            exit()
-        elif sys.argv[1].lower() == 'info': 
-            # "subparser" for command-line info
-            CLIInfoHandler(self.code_root, sys.argv[2:])
-        else:
-            # not printing help or info, setup CLI normally
-            print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
-            self._init_parser(defaults_path)
-            # load pod info
-            self.all_pods, self.pods, self.realms = load_pod_settings(self.code_root)
-
-    def _init_parser(self, defaults_path):
-        # continue to set up default CLI from defaults.json file
         defaults = util.read_json(defaults_path)
         self.case_list = defaults.pop('case_list', [])
         self.pod_list = defaults.pop('pod_list', [])

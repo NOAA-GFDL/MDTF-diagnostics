@@ -3,6 +3,7 @@ import os
 import re
 import datelabel
 import util
+import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
     def __init__(self, unittest_flag=False):
@@ -12,7 +13,7 @@ class CMIP6_CVs(util.Singleton):
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            paths = util.PathManager()
+            paths = util_mdtf.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'src', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)

@@ -19,6 +19,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     from subprocess import CalledProcessError
 import util
+import util_mdtf
 import datelabel
 import netcdf_helper
 from shared_diagnostic import PodRequirementFailure
@@ -95,7 +96,7 @@ class DataSet(util.Namespace):
 
     @classmethod
     def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util.VariableTranslator()
+        translate = util_mdtf.VariableTranslator()
         var_copy = var.copy()
         var_copy.update(dm_args)
         ds = cls(**var_copy)
@@ -156,13 +157,14 @@ class DataManager(object):
         self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         self.__dict__.update(paths.modelPaths(self))
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = util.get_from_config('netcdf_helper', config, default='NcoNetcdfHelper')
+        mixin = util_mdtf.get_from_config('netcdf_helper', config, 
+            default='NcoNetcdfHelper')
         mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
@@ -170,8 +172,8 @@ class DataManager(object):
         except Exception:
             raise
 
-        self.dry_run = util.get_from_config('dry_run', config, default=False)
-        self.file_transfer_timeout = util.get_from_config(
+        self.dry_run = util_mdtf.get_from_config('dry_run', config, default=False)
+        self.file_transfer_timeout = util_mdtf.get_from_config(
             'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
 
         # delete temp files if we're killed
@@ -199,7 +201,7 @@ class DataManager(object):
 
     def setUp(self, verbose=0):
         # pylint: disable=maybe-no-member
-        util.check_required_dirs(
+        util_mdtf.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
@@ -212,24 +214,24 @@ class DataManager(object):
             "LASTYR": self.lastyr.format(precision=1)
         })
         # set env vars for unit conversion factors (TODO: honest unit conversion)
-        translate = util.VariableTranslator()
+        translate = util_mdtf.VariableTranslator()
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
                 "{}.").format(self.convention))
         temp = translate.variables[self.convention].to_dict()
         for key, val in temp.iteritems():
-            util.setenv(key, val, self.envvars, verbose=verbose)
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
         for key, val in temp.iteritems():
-            util.setenv(key, val, self.envvars, verbose=verbose)
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
 
         for pod in self.iter_pods():
             self._setup_pod(pod)
         self._build_data_dicts()
 
     def _setup_pod(self, pod):
-        paths = util.PathManager()
-        translate = util.VariableTranslator()
+        paths = util_mdtf.PathManager()
+        translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
@@ -471,12 +473,12 @@ class DataManager(object):
         self._backup_config_file(config)
         self._make_tar_file()
         self._copy_to_output()
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         paths.cleanup()
 
     def _make_html(self, cleanup=True):
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(dest):
@@ -536,7 +538,7 @@ class DataManager(object):
 
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         if paths.OUTPUT_DIR != paths.WORKING_DIR:
             print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
             if os.path.exists(self.MODEL_OUT_DIR):
@@ -546,7 +548,7 @@ class DataManager(object):
     def abortHandler(self, *args):
         # delete any temp files if we're killed
         # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         paths.cleanup()
 
 

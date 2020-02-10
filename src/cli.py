@@ -46,15 +46,12 @@ class CLIHandler(object):
         self.code_root = code_root
         defaults_path = os.path.join(code_root, defaults_rel_path)
         defaults = util.read_json(defaults_path)
-        self.case_list = defaults.pop('case_list', [])
-        self.pod_list = defaults.pop('pod_list', [])
-
         self.config = dict()
         self.parser_groups = dict()
         # no way to get this from public interface? _actions of group
         # contains all actions for entire parser
         self.parser_args_from_group = collections.defaultdict(list)
-        self.parser = self.make_default_parser(defaults, defaults_path)
+        self.parser = self.make_parser(defaults)
 
     def iter_cli_actions(self):
         for arg_list in self.parser_args_from_group:
@@ -78,52 +75,15 @@ class CLIHandler(object):
         else:
             d[key] = str_
 
-    def make_default_parser(self, d, config_path):
-        # add more standard options to default parser
-        d['formatter_class'] = SingleMetavarHelpFormatter
-        if 'usage' not in d:
-            d['usage'] = ("%(prog)s [options] CASE_ROOT_DIR\n"
-                "{}%(prog)s info [INFO_TOPIC]").format(len('usage: ')*' ')
-        self._append_to_entry(d, 'description',
-            ("The second form ('mdtf info') prints information about available "
-                "diagnostics."))
-        d['arguments'] = util.coerce_to_iter(d.get('arguments', None))
-        d['arguments'].extend([{
-                "name": "root_dir",
-                "is_positional": True,
-                "nargs" : "?", # 0 or 1 occurences: might have set this with CASE_ROOT_DIR
-                "help": "Root directory of model data to analyze.",
-                "metavar" : "CASE_ROOT_DIR"
-            },{
-                'name':'version', 
-                'action':'version', 'version':'%(prog)s 2.2'
-            },{
-                'name': 'config_file',
-                'short_name': 'f',
-                'help': """
-                Path to a user configuration file. This can be a JSON
-                file (a simple list of key:value pairs, or a modified copy of 
-                the defaults file), or a text file containing command-line flags.
-                Other options set via the command line will still override 
-                settings in this file.
-                """,
-                'metavar': 'FILE'
-            }])
-        self._append_to_entry(d, 'epilog',
-            "The default values above are set in {}.".format(config_path)
-        )
-        return self.make_parser(d)
-
     def make_parser(self, d):
         args = d.pop('arguments', None)
         arg_groups = d.pop('argument_groups', None)
+        d['formatter_class'] = SingleMetavarHelpFormatter
         p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
         p = argparse.ArgumentParser(**p_kwargs)
         for arg in args:
             # add arguments not in any group
             self.add_parser_argument(arg, p, 'parser')
-        p._positionals.title = None
-        p._optionals.title = 'GENERAL OPTIONS'
         for group in arg_groups:
             # add groups and arguments therein
             self.add_parser_group(group, p)
@@ -211,9 +171,73 @@ class CLIHandler(object):
         # is called.
         self.parser.set_defaults(**kwargs)
         
-    def parse_cli(self):
+    def parse_cli(self, args=None):
+        # default will parse sys.argv[1:]
+        if isinstance(args, basestring):
+            args = shlex.split(args, posix=True)
+        self.config = vars(self.parser.parse_args(args))
+
+
+class FrameworkCLIHandler(CLIHandler):
+    def __init__(self, code_root, defaults_rel_path):
+        self.code_root = code_root
+        defaults_path = os.path.join(code_root, defaults_rel_path)
+        defaults = util.read_json(defaults_path)
+        self.case_list = defaults.pop('case_list', [])
+        self.pod_list = defaults.pop('pod_list', [])
+
+        self.config = dict()
+        self.parser_groups = dict()
+        self.parser_args_from_group = collections.defaultdict(list)
+        self.parser = self.make_default_parser(defaults, defaults_path)
+
+    def make_default_parser(self, d, config_path):
+        # add more standard options to top-level parser
+        if 'usage' not in d:
+            d['usage'] = ("%(prog)s [options] CASE_ROOT_DIR\n"
+                "{}%(prog)s info [INFO_TOPIC]").format(len('usage: ')*' ')
+        self._append_to_entry(d, 'description',
+            ("The second form ('mdtf info') prints information about available "
+                "diagnostics."))
+        d['arguments'] = util.coerce_to_iter(d.get('arguments', None))
+        d['arguments'].extend([{
+                "name": "root_dir",
+                "is_positional": True,
+                "nargs" : "?", # 0 or 1 occurences: might have set this with CASE_ROOT_DIR
+                "help": "Root directory of model data to analyze.",
+                "metavar" : "CASE_ROOT_DIR"
+            },{
+                'name':'version', 
+                'action':'version', 'version':'%(prog)s 2.2'
+            },{
+                'name': 'config_file',
+                'short_name': 'f',
+                'help': """
+                Path to a user configuration file. This can be a JSON
+                file (a simple list of key:value pairs, or a modified copy of 
+                the defaults file), or a text file containing command-line flags.
+                Other options set via the command line will still override 
+                settings in this file.
+                """,
+                'metavar': 'FILE'
+            }])
+        self._append_to_entry(d, 'epilog',
+            "The default values above are set in {}.".format(config_path)
+        )
+        return self.make_parser(d)
+
+    def make_parser(self, d):
+        # used for defaults (above) and if we're passed a config file via the CLI
+        # (file_opts, below)
+        p = super(FrameworkCLIHandler, self).make_parser(d)
+        p._positionals.title = None
+        p._optionals.title = 'GENERAL OPTIONS'
+        return p
+
+    def parse_cli(self, args=None):
         # explicitly set cmd-line options, parsed according to default parser
-        cli_opts = vars(self.parser.parse_args())
+        super(FrameworkCLIHandler, self).parse_cli(args)
+        cli_opts = self.config
         # default values only, from running default parser on empty input
         defaults = vars(self.parser.parse_args([]))
 
@@ -314,7 +338,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
         return _load_one_json(pod)
 
 
-class CLIInfoHandler(object):
+class InfoCLIHandler(object):
     def __init__(self, code_root, arg_list):
         def _add_topic_handler(keywords, function):
             # keep cmd_list ordered

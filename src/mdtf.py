@@ -33,12 +33,12 @@ class MDTFFramework(object):
         if len(sys.argv) == 1 or \
             len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
             # build CLI, print its help and exit
-            cli_obj = cli.CLIHandler(code_root, defaults_rel_path)
+            cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
             cli_obj.parser.print_help()
             exit()
         elif sys.argv[1].lower() == 'info': 
             # "subparser" for command-line info
-            cli.CLIInfoHandler(self.code_root, sys.argv[2:])
+            cli.InfoCLIHandler(self.code_root, sys.argv[2:])
         else:
             # not printing help or info, setup CLI normally
             # move into its own function so that child classes can customize
@@ -48,7 +48,7 @@ class MDTFFramework(object):
     def _real_init_hook(self, code_root, defaults_rel_path):
         # set up CLI and parse arguments
         print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
-        cli_obj = cli.CLIHandler(code_root, defaults_rel_path)
+        cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
         self._cli_pre_parse_hook(cli_obj)
         cli_obj.parse_cli()
         # load pod info
@@ -58,6 +58,7 @@ class MDTFFramework(object):
         self.parse_mdtf_args(cli_obj)
         # use final info to initialize ConfigManager
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))
+        exit()
 
     def _cli_pre_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler before parsing

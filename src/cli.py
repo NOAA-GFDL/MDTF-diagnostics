@@ -42,7 +42,7 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
 
 class CLIHandler(object):
-    def _init_parser(self, code_root, defaults_rel_path):
+    def __init__(self, code_root, defaults_rel_path):
         self.code_root = code_root
         defaults_path = os.path.join(code_root, defaults_rel_path)
         defaults = util.read_json(defaults_path)
@@ -60,6 +60,16 @@ class CLIHandler(object):
         for arg_list in self.parser_args_from_group:
             for arg in arg_list:
                 yield arg
+
+    def iteritems_cli(self, group_nm=None):
+        if not group_nm:
+            _groups = self.parser_groups
+        else:
+            _groups = util.coerce_to_iter(group_nm)
+        for group in _groups:
+            for action in self.parser_args_from_group[group]:
+                key = action.dest
+                yield (key, self.config[key])
 
     @staticmethod
     def _append_to_entry(d, key, str_):
@@ -249,29 +259,12 @@ class CLIHandler(object):
 
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(cli_opts, file_opts, defaults))
-        self.parse_pod_list()
-
-    def parse_pod_list(self):
-        args = util.coerce_to_iter(self.config['pods'], set)
-        if 'all' in args:
-            self.pod_list = self.all_pods
-        else:
-            self.pod_list = []
-            # specify pods by realm
-            realms = args.intersection(set(self.realms.keys()))
-            args = args.difference(set(self.realms.keys())) # remainder
-            for realm in realms:
-                self.pod_list.extend(self.realms[realm])
-            # specify pods by name
-            pods = args.intersection(set(self.all_pods))
-            self.pod_list.extend(list(pods))
-            for arg in args.difference(set(self.all_pods)): # remainder:
-                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
 
 
 def load_pod_settings(code_root, pod=None, pod_list=None):
     """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
     """
+    # only place we can put it would be util.py if we want to avoid circular imports
     _pod_dir = 'diagnostics'
     _pod_settings = 'settings.json'
     def _load_one_json(pod):

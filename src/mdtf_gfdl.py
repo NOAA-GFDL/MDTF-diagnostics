@@ -5,8 +5,10 @@ import os
 import tempfile
 import data_manager
 import environment_manager
+import shared_diagnostic
 import gfdl
 import util
+import util_mdtf
 import mdtf
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
@@ -17,7 +19,7 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
     @staticmethod
     def set_tempdir():
         """Setting tempfile.tempdir causes all temp directories returned by 
-        util.PathManager to be in that location.
+        util_mdtf.PathManager to be in that location.
         If we're running on PPAN, recommended practice is to use $TMPDIR
         for scratch work. 
         If we're not, assume we're on a workstation. gcp won't copy to the 
@@ -33,35 +35,25 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             print("Using default tempdir on this system")
         os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
-    def parse_mdtf_args(self):
-        super(GFDLMDTFFramework, self).parse_mdtf_args()
-        rel_paths_root = self.config['paths']['CODE_ROOT']
-        if not rel_paths_root or rel_paths_root == '.':
-            rel_paths_root = self.code_root
-        self.config['settings']['OBS_DATA_SOURCE'] = util.resolve_path(
-            self.config['settings']['OBS_DATA_SOURCE'],
-            rel_paths_root
-        )
-
-    def _post_config_init(self):
+    def parse_mdtf_args(self, cli_obj):
+        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj)
         self.fetch_obs_data()
-        super(GFDLMDTFFramework, self)._post_config_init()
-        if self.config['settings']['frepp']:
+        if self.config['settings'].get('frepp', False):
             # set up cooperative mode -- hack to pass config settings
             gfdl.GfdlDiagnostic._config = self.config
-            self.Diagnostic = gfdl.GfdlDiagnostic
+            self.config['settings']['diagnostic'] = 'Gfdl'
 
     # add gfdl to search path for DataMgr, EnvMgr
-    _dispatch_search = [data_manager, environment_manager, gfdl]
+    _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
 
     def set_case_pod_list(self, case_dict):
         requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(case_dict)
-        if not self.config['settings']['frepp']:
+        if not self.config['settings'].get('frepp', False):
             # try to run everything if not in frepp cooperative mode
-            return requested_pods 
+            return requested_pods
         else:
             # only attempt PODs other instances haven't already done
-            paths = util.PathManager()
+            paths = util_mdtf.PathManager()
             case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
@@ -72,12 +64,13 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             ]
 
     def fetch_obs_data(self):
-        dry_run = util.get_from_config('dry_run', self.config, default=False)
-        
-        source_dir = self.config['settings']['OBS_DATA_SOURCE']
+        dry_run = self.config['settings'].get('dry_run', False)
         dest_dir = self.config['paths']['OBS_DATA_ROOT']
+        source_dir = self.config['paths'].get('OBS_DATA_REMOTE', dest_dir)
         if source_dir == dest_dir:
             return
+        if not os.path.exists(source_dir) or not os.listdir(source_dir):
+            print("Observational data directory at {} is empty.".format(source_dir))
         if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
             print("Observational data directory at {} is empty.".format(dest_dir))
         if gfdl.running_on_PPAN():
@@ -104,6 +97,6 @@ if __name__ == '__main__':
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
     mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'defaults_gfdl.json'))
-    print("\n======= Starting "+__file__)
+    print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
-    print("Exiting normally from ",__file__)
+    print("Exiting normally from {}".format(__file__))

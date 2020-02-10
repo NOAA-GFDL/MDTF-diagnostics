@@ -26,7 +26,7 @@ class MDTFFramework(object):
         # set up CLI, parse settings
         self.code_root = code_root
         self.config = dict()
-        config = cli.ConfigManager(os.path.join(code_root, defaults_rel_path))
+        config = cli.ConfigManager(code_root, defaults_rel_path)
         config.parse_cli()
         self.parse_mdtf_args()
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))

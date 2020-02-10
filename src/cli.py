@@ -41,17 +41,16 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
             return ', '.join(parts)
 
 class ConfigManager(util.Singleton):
-    def __init__(self, defaults_filename=None):
-        # get dir of currently executing script: 
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
-        self.code_root = os.path.dirname(cwd) # parent dir of that
+    def __init__(self, code_root=None, defaults_rel_path=None):
+        self.code_root = code_root
+        defaults_path = os.path.join(code_root, defaults_rel_path)
 
         # poor man's subparser: argparse's subparser doesn't handle this
         # use case easily, so just dispatch on first argument
         if len(sys.argv) == 1 or \
             len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
             # build CLI, print its help and exit
-            self._init_parser(defaults_filename)
+            self._init_parser(defaults_path)
             self.parser.print_help()
             exit()
         elif sys.argv[1].lower() == 'info': 
@@ -60,13 +59,12 @@ class ConfigManager(util.Singleton):
         else:
             # not printing help or info, setup CLI normally
             print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
-            self._init_parser(defaults_filename)
+            self._init_parser(defaults_path)
             # load pod info
             self.all_pods, self.pods, self.realms = load_pod_settings(self.code_root)
 
-    def _init_parser(self, defaults_filename):
+    def _init_parser(self, defaults_path):
         # continue to set up default CLI from defaults.json file
-        defaults_path = os.path.join(self.code_root,'src',defaults_filename)
         defaults = util.read_json(defaults_path)
         self.case_list = defaults.pop('case_list', [])
         self.pod_list = defaults.pop('pod_list', [])
@@ -186,10 +184,10 @@ class ConfigManager(util.Singleton):
         if d.get('action', '') == 'count' and 'default' in d:
             d['default'] = int(d['default'])
         # TODO: what if following require env vars, etc??
-        if d.pop('eval_default', False) and 'default' in d:
-            d['default'] = eval(d['default'])
-        if d.pop('eval_choices', False) and 'choices' in d:
-            d['choices'] = eval(d['choices'])
+        if d.pop('eval', None):
+            for attr in util.coerce_to_iter(d['eval'], list):
+                if attr in d:
+                    d[attr] = eval(d[attr])
 
         # set more technical argparse options based on default value
         if 'default' in d:

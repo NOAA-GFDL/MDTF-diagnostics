@@ -13,6 +13,7 @@
   "settings": {
     "driver": "MJO_prop_amp.py",
     "long_name": "MJO propagation and amplitude in GCMs",
+    "realm" : "atmos",
     "description": "Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)",
     "required_programs" : ["python", "ncl"],
     "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm"]

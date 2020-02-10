@@ -12,6 +12,7 @@
   "settings" : {
     "driver" : "precip_diurnal_cycle.py",
     "long_name": "Diurnal cycle of precipitation",
+    "realm" : "atmos",
     "description": "Diurnal Cycle of Precipitation",
     "required_programs": ["python", "ncl"],
     "required_ncl_scripts": ["contributed", "gsn_code", "gsn_csm", "shea_util"]

@@ -8,6 +8,7 @@
   "settings" : {
     "driver" : "SM_ET_coupling.py",
     "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
+    "realm" : ["atmos", "land"],
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "required_programs" : ["python", "Rscript"],
     "required_r_packages" : ["colorRamps", "maps", "fields", "akima", "ncdf4"]

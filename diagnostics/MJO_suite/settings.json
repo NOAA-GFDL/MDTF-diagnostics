@@ -8,6 +8,7 @@
   "settings" : {
     "driver" : "MJO_suite.py",
     "long_name" : "MJO diagnostics suite (from AMWG variability diagnostic package)",
+    "realm" : "atmos",
     "description" : "MJO CLIVAR suite (NCAR)",
     "required_programs" : ["python", "ncl"],
     "required_ncl_scripts": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]

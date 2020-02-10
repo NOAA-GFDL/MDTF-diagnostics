@@ -16,6 +16,7 @@
   "settings" : {
     "driver" : "convective_transition_diag_v1r3.py",
     "long_name" : "Convection Transition",
+    "realm" : "atmos",
     "description" : "Convective transition diagnostics",
     "pod_env_vars" : {
       // optional pod-specific shell environment variables:

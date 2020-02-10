@@ -45,20 +45,26 @@ class ConfigManager(util.Singleton):
         # get dir of currently executing script: 
         cwd = os.path.dirname(os.path.realpath(__file__)) 
         self.code_root = os.path.dirname(cwd) # parent dir of that
-        defaults_path = os.path.join(cwd, defaults_filename)
 
         # poor man's subparser: argparse's subparser doesn't handle this
         # use case easily, so just dispatch on first argument
         if len(sys.argv) == 1 or \
-            len(sys.argv) == 2 and sys.argv[1].lower() == 'help':
-            help_and_exit = True # print help and exit
+            len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
+            # build CLI, print its help and exit
+            self._init_parser(defaults_filename)
+            self.parser.print_help()
+            exit()
         elif sys.argv[1].lower() == 'info': 
             # "subparser" for command-line info
-            _CLIInfoHandler(self.code_root, sys.argv[2:])
-            exit()
+            CLIInfoHandler(self.code_root, sys.argv[2:])
         else:
-            help_and_exit = False
+            # not printing help or info, setup CLI normally
+            print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
+            self._init_parser(defaults_filename)
+
+    def _init_parser(self, defaults_filename):
         # continue to set up default CLI from defaults.json file
+        defaults_path = os.path.join(self.code_root,'src',defaults_filename)
         defaults = util.read_json(defaults_path)
         self.case_list = defaults.pop('case_list', [])
         self.pod_list = defaults.pop('pod_list', [])
@@ -69,9 +75,6 @@ class ConfigManager(util.Singleton):
         # contains all actions for entire parser
         self.parser_args_from_group = collections.defaultdict(list)
         self.parser = self.make_default_parser(defaults, defaults_path)
-        if help_and_exit:
-            self.parser.print_help()
-            exit()
 
     def iter_cli_actions(self):
         for arg_list in self.parser_args_from_group:
@@ -180,8 +183,11 @@ class ConfigManager(util.Singleton):
                 d['default'] = d['type'](d['default'])
         if d.get('action', '') == 'count' and 'default' in d:
             d['default'] = int(d['default'])
-        # if d.pop('eval_default', False) and 'default' in d:
-        #     d['default'] = eval(d['default'], XXX)
+        # TODO: what if following require env vars, etc??
+        if d.pop('eval_default', False) and 'default' in d:
+            d['default'] = eval(d['default'])
+        if d.pop('eval_choices', False) and 'choices' in d:
+            d['choices'] = eval(d['choices'])
 
         # set more technical argparse options based on default value
         if 'default' in d:
@@ -265,47 +271,107 @@ class ConfigManager(util.Singleton):
         self.config = dict(ChainMap(cli_opts, file_opts, defaults))
 
 
-class _CLIInfoHandler(object):
+def load_pod_settings(code_root, pod=None, pod_list=None):
+    """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
+    """
     _pod_dir = 'diagnostics'
-    _settings = 'settings.json'
+    _pod_settings = 'settings.json'
+    def _load_one_json(pod):
+        d = dict()
+        try:
+            d = util.read_json(
+                os.path.join(code_root, _pod_dir, pod, _pod_settings)
+            )
+            assert 'settings' in d
+        except Exception:
+            pass # better error handling?
+        return d
 
+    # get list of pods
+    if not pod_list:
+        pod_list = os.listdir(os.path.join(code_root, _pod_dir))
+        pod_list = [s for s in pod_list if not s.startswith(('_','.'))]
+        pod_list.sort(key=str.lower)
+    if pod == 'list':
+        return pod_list
+
+    # load JSON files
+    if not pod:
+        # load all of them
+        pods = dict()
+        bad_pods = list()
+        realms = collections.defaultdict(list)
+        for p in pod_list:
+            d = _load_one_json(p)
+            if not d:
+                bad_pods.append(p)
+                continue
+            pods[p] = d
+            d['settings']['realm'] = util.coerce_to_iter(
+                d['settings'].get('realm', None), list
+            )
+            for realm in d['settings']['realm']:
+                realms[realm].append(p)
+        for p in bad_pods:
+            pod_list.remove(p)
+        return (pod_list, pods, realms)
+    else:
+        if pod not in pod_list:
+            print("Couldn't recognize POD {} out of the following diagnostics:".format(pod))
+            print(', '.join(pod_list))
+            return dict()
+        return _load_one_json(pod)
+
+
+class CLIInfoHandler(object):
     def __init__(self, code_root, arg_list):
+        def _add_topic_handler(keywords, function):
+            # keep cmd_list ordered
+            keywords = util.coerce_to_iter(keywords, list)
+            self.cmd_list.extend(keywords)
+            for k in keywords:
+                self.cmds[k] = function
+
         self.code_root = code_root
-        self.pods = get_pod_list(code_root)
-        self.cmds = ['diagnostics', 'PODs'] + self.pods
+        self.pod_list, self.pods, self.realms = load_pod_settings(code_root)
+
+        # build list of recognized topics, in order
+        self.cmds = dict()
+        self.cmd_list = []
+        _add_topic_handler(['diagnostics', 'pods'], self.info_pods_all)
+        _add_topic_handler('realms', self.info_realms_all)
+        _add_topic_handler(self.realms.keys(), self.info_realm)
+        _add_topic_handler(self.pod_list, self.info_pod)
+        # ...
+
+        # dispatch based on topic
         if not arg_list:
             self.info_cmds()
-        elif arg_list[0] in ['diagnostics', 'PODs']:
-            self.info_diagnostics_all()
-        elif arg_list[0] in self.pods:
-            self.info_diagnostic(arg_list[0])
+        elif arg_list[0] in self.cmd_list:
+            self.cmds[arg_list[0]](arg_list[0])
         else:
-            print("ERROR: '{}' not a recognized diagnostic.".format(' '.join(arg_list)))
+            print("ERROR: '{}' not a recognized topic.".format(' '.join(arg_list)))
             self.info_cmds()
-        # return to ConfigManager for program exit
+        # displayed info, now exit
+        exit()
 
     def info_cmds(self):
         print('Recognized topics for `mdtf.py info`:')
-        print(', '.join(self.cmds))
+        print(', '.join(self.cmd_list))
 
-    def info_diagnostics_all(self):
+    def info_pods_all(self, *args):
         print('List of installed diagnostics:')
         print(('Do `mdtf info <diagnostic>` for more info on a specific diagnostic '
             'or check documentation at github.com/NOAA-GFDL/MDTF-diagnostics.'))
-        for pod in self.pods:
-            try:
-                d = util.read_json(
-                    os.path.join(self.code_root, self._pod_dir, pod, self._settings)
-                )
-            except Exception:
-                continue
-            print('  {}: {}.'.format(pod, d['settings']['long_name']))
+        for p in self.pod_list:
+            print('  {}: {}.'.format(
+                p, self.pods[p]['settings']['long_name']
+            ))
 
-    def info_diagnostic(self, pod):
-        d = util.read_json(
-            os.path.join(self.code_root, self._pod_dir, pod, self._settings)
-        )
+    def info_pod(self, pod):
+        d = self.pods[pod]
         print('{}: {}.'.format(pod, d['settings']['long_name']))
+        print('Realm: {}.'.format(', '.join(d['settings']['realm'])))
         print(d['settings']['description'])
         print('Variables:')
         for var in d['varlist']:
@@ -318,4 +384,23 @@ class _CLIInfoHandler(object):
                 print ('    Alternates: {}'.format(
                     ', '.join([s.replace('_var','') for s in var['alternates']])
                 ))
+
+    def info_realms_all(self, *args):
+        print('List of installed diagnostics by realm:')
+        for realm in self.realms:
+            print(realm)
+            for p in self.realms[realm]:
+                print('  {}: {}.'.format(
+                    p, self.pods[p]['settings']['long_name']
+                ))
+
+    def info_realm(self, realm):
+        print('List of installed diagnostics for {}:'.format(realm))
+        for pod in self.realms[realm]:
+            d = self.pods[pod]
+            print('  {}: {}.'.format(pod, d['settings']['long_name']))
+            print('    {}'.format(d['settings']['description']))
+            print('    Variables: {}'.format(
+                ', '.join([v['var_name'].replace('_var','') for v in d['varlist']])
+            ))
 

@@ -267,7 +267,7 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_iter(subdir_filter, set)
+        subdir_filter = util.coerce_to_iter(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \

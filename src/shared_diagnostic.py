@@ -109,7 +109,7 @@ class Diagnostic(object):
             d['convention'] = 'CF'
         for list_attr in ['required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:
-            d[list_attr] = util.coerce_to_iter(d[list_attr], list)
+            d[list_attr] = util.coerce_to_iter(d[list_attr])
         if (verbose > 0): 
             print(self.name + " settings: ")
             print(d)
@@ -139,7 +139,7 @@ class Diagnostic(object):
             if 'alternates' not in var:
                 varlist[i]['alternates'] = []
             else:
-                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'], list)
+                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'])
         if (verbose > 0): 
             print(self.name + " varlist: ")
             print(varlist)

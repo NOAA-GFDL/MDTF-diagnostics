@@ -34,7 +34,7 @@ class CMIP6_CVs(util.Singleton):
         if self.cv:
             return
         for k in self._contents:
-            self.cv[k] = util.coerce_to_iter(self._contents[k], list)
+            self.cv[k] = util.coerce_to_iter(self._contents[k])
 
     def is_in_cv(self, category, items):
         self._make_cv()

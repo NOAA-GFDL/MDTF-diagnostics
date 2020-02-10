@@ -203,7 +203,7 @@ class VariableTranslator(Singleton):
         self.units = {'CF': dict()}
         for filename in config_files:
             d = read_json(filename)
-            for conv in coerce_to_iter(d['convention_name'], list):
+            for conv in coerce_to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
                 self.axes[conv] = d.get('axes', dict())
@@ -675,8 +675,8 @@ def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
-def coerce_to_iter(obj, coll_type):
-    assert coll_type in [list, set] # only supported types for now
+def coerce_to_iter(obj, coll_type=list):
+    assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):

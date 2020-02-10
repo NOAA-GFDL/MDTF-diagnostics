@@ -97,7 +97,7 @@ class ConfigManager(util.Singleton):
         self._append_to_entry(d, 'description',
             ("The second form ('mdtf info') prints information about available "
                 "diagnostics."))
-        d['arguments'] = util.coerce_to_iter(d.get('arguments', None), list)
+        d['arguments'] = util.coerce_to_iter(d.get('arguments', None))
         d['arguments'].extend([{
                 "name": "root_dir",
                 "is_positional": True,
@@ -185,7 +185,7 @@ class ConfigManager(util.Singleton):
             d['default'] = int(d['default'])
         # TODO: what if following require env vars, etc??
         if d.pop('eval', None):
-            for attr in util.coerce_to_iter(d['eval'], list):
+            for attr in util.coerce_to_iter(d['eval']):
                 if attr in d:
                     d[attr] = eval(d[attr])
 
@@ -326,7 +326,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
                 continue
             pods[p] = d
             d['settings']['realm'] = util.coerce_to_iter(
-                d['settings'].get('realm', None), list
+                d['settings'].get('realm', None)
             )
             for realm in d['settings']['realm']:
                 realms[realm].append(p)
@@ -345,7 +345,7 @@ class CLIInfoHandler(object):
     def __init__(self, code_root, arg_list):
         def _add_topic_handler(keywords, function):
             # keep cmd_list ordered
-            keywords = util.coerce_to_iter(keywords, list)
+            keywords = util.coerce_to_iter(keywords)
             self.cmd_list.extend(keywords)
             for k in keywords:
                 self.cmds[k] = function

@@ -46,17 +46,6 @@
       "pod_list" : ["SM_ET_coupling"]
     }
   ],
-  // List of PODs to run by default, if not specified in caselist above.
-  "pod_list" : [
-    "Wheeler_Kiladis",
-    "EOF_500hPa",
-    "convective_transition_diag",
-    "MJO_suite",
-    "MJO_teleconnection",
-    "MJO_prop_amp",
-    "precip_diurnal_cycle",
-    "SM_ET_coupling"
-  ],
   //
   // Define command-line arguments:
   // Entries here are used in src/cli.py to configure command-line options 
@@ -164,6 +153,20 @@
           "type" : "int",
           "default" : 300,
           "metavar" : "<seconds>"
+        }
+      ]
+    },{
+      "name" : "DIAGNOSTICS",
+      "arguments" : [
+        {
+          "name": "pods",
+          "short_name": "p",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values.",
+          "default" : "all",
+          "nargs" : "+",
+          //"choices" : "self.get_pods_for_help_text()",
+          //"eval_choices" : true,
+          "metavar" : ""
         }
       ]
     },{

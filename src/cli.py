@@ -61,6 +61,8 @@ class ConfigManager(util.Singleton):
             # not printing help or info, setup CLI normally
             print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
             self._init_parser(defaults_filename)
+            # load pod info
+            self.all_pods, self.pods, self.realms = load_pod_settings(self.code_root)
 
     def _init_parser(self, defaults_filename):
         # continue to set up default CLI from defaults.json file
@@ -269,6 +271,24 @@ class ConfigManager(util.Singleton):
 
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(cli_opts, file_opts, defaults))
+        self.parse_pod_list()
+
+    def parse_pod_list(self):
+        args = util.coerce_to_iter(self.config['pods'], set)
+        if 'all' in args:
+            self.pod_list = self.all_pods
+        else:
+            self.pod_list = []
+            # specify pods by realm
+            realms = args.intersection(set(self.realms.keys()))
+            args = args.difference(set(self.realms.keys())) # remainder
+            for realm in realms:
+                self.pod_list.extend(self.realms[realm])
+            # specify pods by name
+            pods = args.intersection(set(self.all_pods))
+            self.pod_list.extend(list(pods))
+            for arg in args.difference(set(self.all_pods)): # remainder:
+                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
 
 
 def load_pod_settings(code_root, pod=None, pod_list=None):

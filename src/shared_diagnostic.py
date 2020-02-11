@@ -106,7 +106,7 @@ class Diagnostic(object):
         if 'variable_convention' in d:
             d['convention'] = d['variable_convention']
             del d['variable_convention']
-        elif d['convention'] == '':
+        elif not d.get('convention', None):
             d['convention'] = 'CF'
         for list_attr in ['required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:

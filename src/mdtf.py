@@ -169,8 +169,7 @@ class MDTFFramework(object):
             d['model'] = 'CMIP'
         if 'experiment' not in d:
             d['experiment'] = ''
-        if 'variable_convention' not in d:
-            d['variable_convention'] = 'CMIP'
+        assert 'convention' in d
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
         if d2.get('root_dir', None):

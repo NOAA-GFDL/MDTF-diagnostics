@@ -144,8 +144,8 @@ class DataManager(object):
         else:
             self.envvars = {}
 
-        if 'variable_convention' in case_dict:
-            self.convention = case_dict['variable_convention']
+        if 'convention' in case_dict:
+            self.convention = case_dict['convention']
         else:
             self.convention = 'CF' # default to assuming CF-compliance
         if 'data_freq' in case_dict:

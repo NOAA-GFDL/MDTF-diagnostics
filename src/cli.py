@@ -291,7 +291,8 @@ class FrameworkCLIHandler(CLIHandler):
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(*chained_dict_list))
 
-
+PodDataTuple = collections.namedtuple('PodDataTuple', 
+    'pod_list pod_data realm_list realm_data')
 def load_pod_settings(code_root, pod=None, pod_list=None):
     """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
     """
@@ -321,7 +322,8 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     if not pod:
         # load all of them
         pods = dict()
-        bad_pods = list()
+        realm_list = set()
+        bad_pods = []
         realms = collections.defaultdict(list)
         for p in pod_list:
             d = _load_one_json(p)
@@ -329,14 +331,21 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
                 bad_pods.append(p)
                 continue
             pods[p] = d
-            d['settings']['realm'] = util.coerce_to_iter(
-                d['settings'].get('realm', None)
-            )
-            for realm in d['settings']['realm']:
-                realms[realm].append(p)
+            _realm = util.coerce_to_iter(d['settings'].get('realm', None), tuple)
+            if len(_realm) == 0:
+                continue
+            elif len(_realm) == 1:
+                _realm = _realm[0]
+                realm_list.add(_realm)
+            else:
+                realm_list.update(_realm)
+            realms[_realm].append(p)
         for p in bad_pods:
             pod_list.remove(p)
-        return (pod_list, pods, realms)
+        return PodDataTuple(
+            pod_list=pod_list, pod_data=pods, 
+            realm_list = sorted(list(realm_list), key=str.lower), realm_data=realms
+        )
     else:
         if pod not in pod_list:
             print("Couldn't recognize POD {} out of the following diagnostics:".format(pod))
@@ -355,14 +364,18 @@ class InfoCLIHandler(object):
                 self.cmds[k] = function
 
         self.code_root = code_root
-        self.pod_list, self.pods, self.realms = load_pod_settings(code_root)
+        pod_info_tuple = load_pod_settings(self.code_root)
+        self.pod_list = pod_info_tuple.pod_list
+        self.pods = pod_info_tuple.pod_data
+        self.realm_list = pod_info_tuple.realm_list
+        self.realms = pod_info_tuple.realm_data
 
         # build list of recognized topics, in order
         self.cmds = dict()
         self.cmd_list = []
         _add_topic_handler(['diagnostics', 'pods'], self.info_pods_all)
         _add_topic_handler('realms', self.info_realms_all)
-        _add_topic_handler(self.realms.keys(), self.info_realm)
+        _add_topic_handler(self.realm_list, self.info_realm)
         _add_topic_handler(self.pod_list, self.info_pod)
         # ...
 
@@ -381,48 +394,58 @@ class InfoCLIHandler(object):
         print('Recognized topics for `mdtf.py info`:')
         print(', '.join(self.cmd_list))
 
+    def _print_pod_info(self, pod, verbose):
+        ds = self.pods[pod]['settings']
+        dv = self.pods[pod]['varlist']
+        if verbose == 1:
+            print('  {}: {}.'.format(pod, ds['long_name']))
+        elif verbose == 2:
+            print('  {}: {}.'.format(pod, ds['long_name']))
+            print('    {}'.format(ds['description']))
+            print('    Variables: {}'.format(
+                ', '.join([v['var_name'].replace('_var','') for v in dv])
+            ))
+        elif verbose == 3:
+            print('{}: {}.'.format(pod, ds['long_name']))
+            print('  Realm: {}.'.format(' and '.join(util.coerce_to_iter(ds['realm']))))
+            print('  {}'.format(ds['description']))
+            print('  Variables:')
+            for var in dv:
+                var_str = '    {} ({}) @ {} frequency'.format(
+                    var['var_name'].replace('_var',''), 
+                    var.get('requirement',''), 
+                    var['freq'] 
+                )
+                if 'alternates' in var:
+                    var_str = var_str + '; alternates: {}'.format(
+                        ', '.join([s.replace('_var','') for s in var['alternates']])
+                    )
+                print(var_str)
+
     def info_pods_all(self, *args):
         print('List of installed diagnostics:')
         print(('Do `mdtf info <diagnostic>` for more info on a specific diagnostic '
             'or check documentation at github.com/NOAA-GFDL/MDTF-diagnostics.'))
-        for p in self.pod_list:
-            print('  {}: {}.'.format(
-                p, self.pods[p]['settings']['long_name']
-            ))
+        for pod in self.pod_list:
+            self._print_pod_info(pod, verbose=1)
 
     def info_pod(self, pod):
-        d = self.pods[pod]
-        print('{}: {}.'.format(pod, d['settings']['long_name']))
-        print('Realm: {}.'.format(', '.join(d['settings']['realm'])))
-        print(d['settings']['description'])
-        print('Variables:')
-        for var in d['varlist']:
-            print('  {} ({}) @ {} frequency'.format(
-                var['var_name'].replace('_var',''), 
-                var.get('requirement',''), 
-                var['freq'] 
-            ))
-            if 'alternates' in var:
-                print ('    Alternates: {}'.format(
-                    ', '.join([s.replace('_var','') for s in var['alternates']])
-                ))
+        self._print_pod_info(pod, verbose=3)
 
     def info_realms_all(self, *args):
         print('List of installed diagnostics by realm:')
         for realm in self.realms:
-            print(realm)
-            for p in self.realms[realm]:
-                print('  {}: {}.'.format(
-                    p, self.pods[p]['settings']['long_name']
-                ))
+            if isinstance(realm, basestring):
+                print('{}:'.format(realm))
+            else:
+                # tuple of multiple realms
+                print('{}:'.format(' and '.join(realm)))
+            for pod in self.realms[realm]:
+                self._print_pod_info(pod, verbose=1)
 
     def info_realm(self, realm):
         print('List of installed diagnostics for {}:'.format(realm))
         for pod in self.realms[realm]:
-            d = self.pods[pod]
-            print('  {}: {}.'.format(pod, d['settings']['long_name']))
-            print('    {}'.format(d['settings']['description']))
-            print('    Variables: {}'.format(
-                ', '.join([v['var_name'].replace('_var','') for v in d['varlist']])
-            ))
+            self._print_pod_info(pod, verbose=2)
+
 

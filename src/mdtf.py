@@ -53,7 +53,10 @@ class MDTFFramework(object):
         cli_obj.parse_cli()
         # load pod info
         pod_info_tuple = cli.load_pod_settings(self.code_root)
-        self.all_pods, self.pods, self.pod_realms = pod_info_tuple
+        self.all_pods = pod_info_tuple.pod_list
+        self.pods = pod_info_tuple.pod_data
+        self.all_realms = pod_info_tuple.realm_list
+        self.pod_realms = pod_info_tuple.realm_data
         # do nontrivial parsing
         self.parse_mdtf_args(cli_obj)
         # use final info to initialize ConfigManager
@@ -99,15 +102,16 @@ class MDTFFramework(object):
 
     def parse_pod_list(self, cli_obj):
         self.pod_list = []
-        args = util.coerce_to_iter(cli_obj.config.get('pods', []), set)
+        args = util.coerce_to_iter(cli_obj.config.pop('pods', []), set)
         if 'all' in args:
             self.pod_list = self.all_pods
         else:
             # specify pods by realm
-            realms = args.intersection(set(self.pod_realms.keys()))
-            args = args.difference(set(self.pod_realms.keys())) # remainder
-            for realm in realms:
-                self.pod_list.extend(self.pod_realms[realm])
+            realms = args.intersection(set(self.all_realms))
+            args = args.difference(set(self.all_realms)) # remainder
+            for key in self.pod_realms:
+                if util.coerce_to_iter(key, set).issubset(realms):
+                    self.pod_list.extend(self.pod_realms[key])
             # specify pods by name
             pods = args.intersection(set(self.all_pods))
             self.pod_list.extend(list(pods))

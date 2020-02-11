@@ -504,7 +504,7 @@ class Diagnostic(object):
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
-        util.append_html_template(src, self.TEMP_HTML, template_dict)
+        util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

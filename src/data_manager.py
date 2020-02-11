@@ -324,8 +324,9 @@ class DataManager(object):
                 print("Data query failed on pod {}; skipping.".format(pod.name))
                 pod.skipped = exc
                 new_varlist = []
+            for var in new_varlist:
+                var.alternates = []
             pod.varlist = new_varlist
-            pod.alternates = []
         # revise DataManager's to-do list, now that we've marked some PODs as
         # being skipped due to data inavailability
         self._build_data_dicts()

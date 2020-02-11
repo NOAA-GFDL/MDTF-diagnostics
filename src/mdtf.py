@@ -87,7 +87,7 @@ class MDTFFramework(object):
         util_mdtf.PathManager(self.config['paths']) # initialize
         self.config['settings'] = dict()
         settings_gps = set(cli_obj.parser_groups.keys()).difference(
-            set(['parser','PATHS','MODEL'])
+            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:
             self._populate_dict(cli_obj, group, self.config['settings'])
@@ -125,7 +125,7 @@ class MDTFFramework(object):
             or d.get('CASENAME', None):
             self.case_list = self.caselist_from_args(cli_obj)
         else:
-            self.case_list = d.get('case_list',[])
+            self.case_list = util.coerce_to_iter(cli_obj.case_list)
         for i in range(len(self.case_list)):
             d2 = self.case_list[i]
             # remove empty entries

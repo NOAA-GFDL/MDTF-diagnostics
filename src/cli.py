@@ -76,8 +76,8 @@ class CLIHandler(object):
             d[key] = str_
 
     def make_parser(self, d):
-        args = d.pop('arguments', None)
-        arg_groups = d.pop('argument_groups', None)
+        args = util.coerce_to_iter(d.pop('arguments', None))
+        arg_groups = util.coerce_to_iter(d.pop('argument_groups', None))
         d['formatter_class'] = SingleMetavarHelpFormatter
         p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
         p = argparse.ArgumentParser(**p_kwargs)
@@ -93,7 +93,7 @@ class CLIHandler(object):
         gp_nm = d.pop('name')
         if 'title' not in d:
             d['title'] = gp_nm
-        args = d.pop('arguments', None)
+        args = util.coerce_to_iter(d.pop('arguments', None))
         gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
         gp_obj = target_obj.add_argument_group(**gp_kwargs)
         self.parser_groups[gp_nm] = gp_obj
@@ -240,11 +240,11 @@ class FrameworkCLIHandler(CLIHandler):
         cli_opts = self.config
         # default values only, from running default parser on empty input
         defaults = vars(self.parser.parse_args([]))
+        chained_dict_list = [cli_opts, defaults]
 
         # deal with options set in user-specified file, if present
         config_path = cli_opts.get('config_file', None)
         file_str = ''
-        file_opts = dict()
         if config_path:
             try:
                 with open(config_path, 'r') as f:
@@ -263,15 +263,21 @@ class FrameworkCLIHandler(CLIHandler):
                     # assume config_file is a modified copy of the defaults,
                     # with options to define parser. Set up the parser and run 
                     # CLI arguments through it (instead of default).
+                    # Don't error on unrecognized args here, since those will be
+                    # caught by the default parser.
                     custom_parser = self.make_parser(file_opts)
-                    cli_opts = vars(custom_parser.parse_args())
-                    # defaults set in config_file's parser
-                    file_opts = vars(custom_parser.parse_args([]))
+                    chained_dict_list = [
+                        # CLI parsed with config_file's parser
+                        vars(custom_parser.parse_known_args()[0]),
+                        # defaults set in config_file's parser
+                        vars(custom_parser.parse_known_args([])[0])
+                    ] + chained_dict_list
                 else:
                     # assume config_file a JSON dict of option:value pairs.
                     file_opts = {
                         self.canonical_arg_name(k): v for k,v in file_opts.iteritems()
                     }
+                    chained_dict_list = [cli_opts, file_opts, defaults]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():
                     print("ERROR: Couldn't parse JSON in {}.".format(config_path))
@@ -280,9 +286,10 @@ class FrameworkCLIHandler(CLIHandler):
                 # as they would be passed on the command line.
                 file_str = util.strip_comments(file_str, '#')
                 file_opts = vars(self.parser.parse_args(shlex.split(file_str)))
+                chained_dict_list = [cli_opts, file_opts, defaults]
 
         # CLI opts override options set from file, which override defaults
-        self.config = dict(ChainMap(cli_opts, file_opts, defaults))
+        self.config = dict(ChainMap(*chained_dict_list))
 
 
 def load_pod_settings(code_root, pod=None, pod_list=None):

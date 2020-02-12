@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import os
+import shutil
 import tempfile
 import data_manager
 import environment_manager
@@ -16,20 +17,13 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
     _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
 
     def parse_mdtf_args(self, cli_obj):
-        dry_run = cli_obj.config['settings'].get('dry_run', False)
-        timeout = cli_obj.config['settings'].get('timeout', False)
-        # copy obs data from site install
-        self.fetch_obs_data(timeout=timeout, dry_run=dry_run)
-        # Use GCP to create OUTPUT_DIR otherwise parse_mdtf_args will throw error
-        # when trying to create it on a read-only volume
-        if not os.path.exists(cli_obj.config['paths']['OUTPUT_DIR']):
-            gfdl.make_remote_dir(cli_obj.config['paths']['OUTPUT_DIR'], timeout, dry_run)
-
         ### call parent class method
         super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj)
 
+        # copy obs data from site install
+        self.fetch_obs_data()
+        # set up cooperative mode -- hack to pass config settings
         if self.config['settings'].get('frepp', False):
-            # set up cooperative mode -- hack to pass config settings
             gfdl.GfdlDiagnostic._config = self.config
             self.config['settings']['diagnostic'] = 'Gfdl'
 
@@ -39,11 +33,7 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
         else:
             gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
-        # only let this be overridden if we're in a unit test
-        rel_paths_root = cli_obj.config.get('CODE_ROOT', None)
-        if not rel_paths_root or rel_paths_root == '.':
-            rel_paths_root = self.code_root
-        gfdl_tmp_dir = util.resolve_path(gfdl_tmp_dir, rel_paths_root)
+        gfdl_tmp_dir = mdtf._mdtf_resolve_path(gfdl_tmp_dir, cli_obj)
         if not os.path.isdir(gfdl_tmp_dir):
             gfdl.make_remote_dir(gfdl_tmp_dir)
         tempfile.tempdir = gfdl_tmp_dir
@@ -51,6 +41,30 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
 
         ### call parent class method
         super(GFDLMDTFFramework, self).parse_env_vars(cli_obj)
+
+    def parse_paths(self, cli_obj):
+        self.paths = dict()
+        for key, val in cli_obj.iteritems_cli('PATHS'):
+            val2 = self._mdtf_resolve_path(val, cli_obj)
+            # print('\tDEBUG: {},{},{}'.format(key, val, val2))
+            self.paths[key] = val2
+
+        # clean out WORKING_DIR if we're not keeping temp files
+        if not cli_obj.config.get('keep_temp', False):
+            shutil.rmtree(self.paths['WORKING_DIR'])
+        util_mdtf.check_required_dirs(
+            already_exist = [
+                self.paths['CODE_ROOT'], self.paths['OBS_DATA_REMOTE']
+            ], 
+            create_if_nec = [
+                self.paths['MODEL_DATA_ROOT'], self.paths['WORKING_DIR'],
+                self.paths['OBS_DATA_ROOT']
+        ])
+        # Use GCP to create OUTPUT_DIR on a volume that may be read-only
+        if not os.path.exists(self.paths['OUTPUT_DIR']):
+            gfdl.make_remote_dir(
+                self.paths['OUTPUT_DIR'], self.timeout, self.dry_run
+            )
 
     def set_case_pod_list(self, case_dict):
         ### call parent class method
@@ -71,9 +85,9 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
                 os.path.isdir(os.path.join(case_outdir, p))
             ]
 
-    def fetch_obs_data(self, timeout=0, dry_run=False):
-        dest_dir = self.config['paths']['OBS_DATA_ROOT']
-        source_dir = self.config['paths'].get('OBS_DATA_REMOTE', dest_dir)
+    def fetch_obs_data(self):
+        dest_dir = self.paths['OBS_DATA_ROOT']
+        source_dir = self.paths['OBS_DATA_REMOTE']
         if source_dir == dest_dir:
             return
         if not os.path.exists(source_dir) or not os.listdir(source_dir):
@@ -83,7 +97,9 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
         if gfdl.running_on_PPAN():
             print("\tGCPing data from {}.".format(source_dir))
             # giving -cd to GCP, so will create dirs
-            gfdl.gcp_wrapper(source_dir, dest_dir, timeout=timeout, dry_run=dry_run)
+            gfdl.gcp_wrapper(
+                source_dir, dest_dir, timeout=self.timeout, dry_run=self.dry_run
+            )
         else:
             print("\tSymlinking obs data dir to {}.".format(source_dir))
             dest_parent = os.path.dirname(dest_dir)
@@ -94,7 +110,7 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
                 os.makedirs(dest_parent)
             util.run_command(
                 ['ln', '-fs', source_dir, dest_dir], 
-                dry_run=dry_run
+                dry_run=self.dry_run
             )
 
 

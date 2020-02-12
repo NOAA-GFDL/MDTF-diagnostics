@@ -71,6 +71,8 @@ class MDTFFramework(object):
         self.all_realms = pod_info_tuple.realm_list
         self.pod_realms = pod_info_tuple.realm_data
         # do nontrivial parsing
+        self.dry_run = cli_obj.config.get('dry_run', False)
+        self.timeout = cli_obj.config.get('timeout', False)
         self.parse_mdtf_args(cli_obj)
         # use final info to initialize ConfigManager
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))
@@ -110,7 +112,7 @@ class MDTFFramework(object):
 
     def postparse_cli(self, cli_obj):
         # stuff too cumbersome to do within cli.py 
-        if cli_obj.config.get('dry_run', False):
+        if self.dry_run:
             cli_obj.config['test_mode'] = True
 
     def parse_pod_list(self, cli_obj):
@@ -177,18 +179,19 @@ class MDTFFramework(object):
         self.envvars = dict()
         self.envvars = cli_obj.config.copy()
 
-    def parse_paths(self, cli_obj):
-        self.paths = dict()
-        # only let this be overridden if we're in a unit test
+    def _mdtf_resolve_path(self, path, cli_obj):
+        # wrapper to resolve relative paths and substitute env vars
+        # only let CODE_ROOT be overridden if we're in a unit test
         rel_paths_root = cli_obj.config.get('CODE_ROOT', None)
         if not rel_paths_root or rel_paths_root == '.':
             rel_paths_root = self.code_root
-        # convert relative to absolute paths
+        return util.resolve_path(util.coerce_from_iter(path), rel_paths_root)
+
+    def parse_paths(self, cli_obj):
+        self.paths = dict()
         for key, val in cli_obj.iteritems_cli('PATHS'):
-            val2 = util.resolve_path(
-                util.coerce_from_iter(val), rel_paths_root
-            )
-            print('\tDEBUG: {},{},{}'.format(key, val, val2))
+            val2 = self._mdtf_resolve_path(val, cli_obj)
+            # print('\tDEBUG: {},{},{}'.format(key, val, val2))
             self.paths[key] = val2
         util_mdtf.check_required_dirs(
             already_exist = [

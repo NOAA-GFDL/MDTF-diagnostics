@@ -45,15 +45,24 @@ class MDTFFramework(object):
             # "subparser" for command-line info
             cli.InfoCLIHandler(self.code_root, sys.argv[2:])
         else:
-            # not printing help or info, setup CLI normally
+            # not printing help or info, setup CLI normally 
             # move into its own function so that child classes can customize
             # above options without having to rewrite below
             self._real_init_hook(code_root, defaults_rel_path)
 
     def cleanup_tempdirs(self, signum=None, frame=None):
-        # tell PathManager to delete temp files
+        # tell PathManager to delete temp files if we're killed
+        # This is not called during normal operation and exit.
         if signum:
-            print("\tDEBUG: {} caught signal {}", self.__class__.__name__, signum)
+            # lookup signal name from number; https://stackoverflow.com/a/2549950
+            sig_lookup = {
+                k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+                    if v.startswith('SIG') and not v.startswith('SIG_')
+            }
+            print("\tDEBUG: {} caught signal {} ({})".format(
+                self.__class__.__name__, sig_lookup.get(signum, 'UNKNOWN'), signum
+            ))
+            print("\tDEBUG: {}".format(frame))
         if not self.config['settings']['keep_temp']:
             paths = util_mdtf.PathManager()
             paths.cleanup()

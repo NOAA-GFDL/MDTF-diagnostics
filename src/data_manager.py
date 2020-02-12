@@ -155,13 +155,13 @@ class DataManager(object):
         self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
-        self.dry_run = util.get_from_config('dry_run', config, default=False)
-        self.file_transfer_timeout = util.get_from_config(
+        self.dry_run = util_mdtf.get_from_config('dry_run', config, default=False)
+        self.file_transfer_timeout = util_mdtf.get_from_config(
             'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
-        self.make_variab_tar = util.get_from_config('make_variab_tar', 
+        self.make_variab_tar = util_mdtf.get_from_config('make_variab_tar', 
             config, default=False)
-        self.keep_temp = util.get_from_config('keep_temp', config, default=False)
-        self.overwrite = util.get_from_config('overwrite', config, default=False)
+        self.keep_temp = util_mdtf.get_from_config('keep_temp', config, default=False)
+        self.overwrite = util_mdtf.get_from_config('overwrite', config, default=True)
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
         paths = util_mdtf.PathManager()

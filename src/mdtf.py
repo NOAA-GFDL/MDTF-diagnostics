@@ -86,9 +86,9 @@ class MDTFFramework(object):
         most of the functionality is spun out into sub-methods.
         """
         self.postparse_cli(cli_obj)
+        self.parse_env_vars(cli_obj)
         self.parse_pod_list(cli_obj)
         self.parse_case_list(cli_obj)
-        self.parse_env_vars(cli_obj)
         self.parse_paths(cli_obj)
         
         # make config nested dict for backwards compatibility

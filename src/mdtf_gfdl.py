@@ -12,28 +12,8 @@ import util_mdtf
 import mdtf
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
-    def __init__(self, code_root, defaults_rel_path):
-        self.set_tempdir()
-        super(GFDLMDTFFramework, self).__init__(code_root, defaults_rel_path)
-
-    @staticmethod
-    def set_tempdir():
-        """Setting tempfile.tempdir causes all temp directories returned by 
-        util_mdtf.PathManager to be in that location.
-        If we're running on PPAN, recommended practice is to use $TMPDIR
-        for scratch work. 
-        If we're not, assume we're on a workstation. gcp won't copy to the 
-        usual /tmp, so put temp files in a directory on /net2.
-        """
-        if 'TMPDIR' in os.environ:
-            tempfile.tempdir = os.environ['TMPDIR']
-        elif os.path.isdir('/net2'):
-            tempfile.tempdir = os.path.join('/net2', os.environ['USER'], 'tmp')
-            if not os.path.isdir(tempfile.tempdir):
-                gfdl.make_remote_dir(tempfile.tempdir)
-        else:
-            print("Using default tempdir on this system")
-        os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
+    # add gfdl to search path for DataMgr, EnvMgr
+    _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
 
     def parse_mdtf_args(self, cli_obj):
         dry_run = cli_obj.config['settings'].get('dry_run', False)
@@ -45,6 +25,7 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
         if not os.path.exists(cli_obj.config['paths']['OUTPUT_DIR']):
             gfdl.make_remote_dir(cli_obj.config['paths']['OUTPUT_DIR'], timeout, dry_run)
 
+        ### call parent class method
         super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj)
 
         if self.config['settings'].get('frepp', False):
@@ -52,11 +33,29 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             gfdl.GfdlDiagnostic._config = self.config
             self.config['settings']['diagnostic'] = 'Gfdl'
 
-    # add gfdl to search path for DataMgr, EnvMgr
-    _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
+    def parse_env_vars(self, cli_obj):
+        # set temp directory according to where we're running
+        if gfdl.running_on_PPAN():
+            gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
+        else:
+            gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = cli_obj.config.get('CODE_ROOT', None)
+        if not rel_paths_root or rel_paths_root == '.':
+            rel_paths_root = self.code_root
+        gfdl_tmp_dir = util.resolve_path(gfdl_tmp_dir, rel_paths_root)
+        if not os.path.isdir(gfdl_tmp_dir):
+            gfdl.make_remote_dir(gfdl_tmp_dir)
+        tempfile.tempdir = gfdl_tmp_dir
+        os.environ['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
+
+        ### call parent class method
+        super(GFDLMDTFFramework, self).parse_env_vars(cli_obj)
 
     def set_case_pod_list(self, case_dict):
+        ### call parent class method
         requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(case_dict)
+
         if not self.config['settings'].get('frepp', False):
             # try to run everything if not in frepp cooperative mode
             return requested_pods

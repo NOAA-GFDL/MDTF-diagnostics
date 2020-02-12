@@ -583,7 +583,9 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _make_html(self, cleanup=False):
-        # pylint: disable=maybe-no-member
+        # never cleanup html if we're in frepp_mode, since framework may run 
+        # later when another component finishes. Instead just append current
+        # progress to TEMP_HTML.
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.frepp_mode and os.path.exists(prev_html):
             print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
@@ -603,6 +605,7 @@ class GfdlarchiveDataManager(DataManager):
         super(GfdlarchiveDataManager, self)._make_html(cleanup=(not self.frepp_mode))
 
     def _make_tar_file(self, tar_dest_dir):
+        # pylint: disable=maybe-no-member
         # make locally in WORKING_DIR and gcp to destination,
         # since OUTPUT_DIR might be mounted read-only
         paths = util_mdtf.PathManager()
@@ -615,7 +618,6 @@ class GfdlarchiveDataManager(DataManager):
         return os.path.join(tar_dest_dir, file_)
 
     def _copy_to_output(self):
-        # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
         if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed

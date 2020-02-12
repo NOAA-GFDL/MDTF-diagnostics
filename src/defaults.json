@@ -230,9 +230,9 @@
           "help": "Default format for bitmap figure output.",
           "default" : "png"
         },{
-          "name": "no_overwrite",
-          "help": "Set flag to not overwrite results in OUTPUT_DIR (will be saved under a different, unique name instead)",
-          "default" : true
+          "name": "overwrite",
+          "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",
+          "default" : false
         }
       ]
     },{

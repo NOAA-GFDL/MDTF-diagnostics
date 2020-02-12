@@ -250,10 +250,10 @@ class GfdlarchiveDataManager(DataManager):
 
         self.frepp_mode = config['settings']['frepp']
         if self.frepp_mode:
-            self.no_overwrite = False
+            self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
-            self.no_file_overwrite = False
-            # if we had no_overwrite, MODEL_OUT_DIR will have been set to a 
+            self.file_overwrite = True
+            # if overwrite=False, MODEL_OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
             paths = util_mdtf.PathManager()
             d = paths.modelPaths(self)
@@ -643,7 +643,7 @@ class GfdlarchiveDataManager(DataManager):
                     )
         else:
             # copy everything at once
-            if os.path.exists(self.MODEL_OUT_DIR) and self.no_overwrite:
+            if os.path.exists(self.MODEL_OUT_DIR) and not self.overwrite:
                 print('Error: {} exists, overwriting anyway.'.format(
                     self.MODEL_OUT_DIR))
             try:

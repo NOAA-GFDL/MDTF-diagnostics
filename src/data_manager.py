@@ -161,15 +161,15 @@ class DataManager(object):
         self.make_variab_tar = util.get_from_config('make_variab_tar', 
             config, default=False)
         self.keep_temp = util.get_from_config('keep_temp', config, default=False)
-        self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
-        self.no_file_overwrite = self.no_overwrite # overwrite config and .tar
+        self.overwrite = util.get_from_config('overwrite', config, default=False)
+        self.file_overwrite = self.overwrite # overwrite config and .tar
 
         paths = util_mdtf.PathManager()
         d = paths.modelPaths(self)
         self.MODEL_DATA_DIR = d['MODEL_DATA_DIR']
         self.MODEL_WK_DIR = d['MODEL_WK_DIR']
         self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
-        if self.no_overwrite:
+        if self.overwrite:
             self.MODEL_OUT_DIR = util_mdtf.bump_filename_version(self.MODEL_OUT_DIR)
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
@@ -507,7 +507,7 @@ class DataManager(object):
         """Record settings in file variab_dir/config_save.json for rerunning
         """
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
-        if self.no_file_overwrite:
+        if not self.file_overwrite:
             out_file = util_mdtf.bump_filename_version(out_file)
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))
@@ -518,7 +518,7 @@ class DataManager(object):
         """Make tar file of web/bitmap output.
         """
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
-        if self.no_file_overwrite:
+        if not self.file_overwrite:
             out_file = util_mdtf.bump_filename_version(out_file)
             print("Creating {}.".format(out_file))
         elif os.path.exists(out_file):
@@ -537,7 +537,7 @@ class DataManager(object):
         print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
         try:
             if os.path.exists(self.MODEL_OUT_DIR):
-                if self.no_overwrite:
+                if not self.overwrite:
                     print('Error: {} exists, overwriting anyway.'.format(
                         self.MODEL_OUT_DIR))
                 shutil.rmtree(self.MODEL_OUT_DIR)

@@ -74,13 +74,14 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             # try to run everything if not in frepp cooperative mode
             return requested_pods
         else:
-            # only attempt PODs other instances haven't already done
+            # frepp mode:only attempt PODs other instances haven't already done
             paths = util_mdtf.PathManager()
-            case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
+            case_outdir = paths.modelPaths(case_dict, overwrite=True)
+            case_outdir = case_outdir['MODEL_OUT_DIR']
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
                     print(("\tDEBUG: preexisting {} in {}; "
-                        "skipping").format(p, case_outdir))
+                        "skipping b/c frepp mode").format(p, case_outdir))
             return [p for p in requested_pods if not \
                 os.path.isdir(os.path.join(case_outdir, p))
             ]

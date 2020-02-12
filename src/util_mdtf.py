@@ -27,7 +27,7 @@ class PathManager(util.Singleton):
 
         self._temp_dirs = []
 
-    def modelPaths(self, case):
+    def modelPaths(self, case, overwrite=False):
         # pylint: disable=maybe-no-member
         d = {}
         if isinstance(case, dict):
@@ -42,6 +42,8 @@ class PathManager(util.Singleton):
         d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
+        if not overwrite:
+            d['MODEL_OUT_DIR'] = bump_filename_version(d['MODEL_OUT_DIR'])
         return d
 
     def podPaths(self, pod):

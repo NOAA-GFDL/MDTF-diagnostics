@@ -165,12 +165,10 @@ class DataManager(object):
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
         paths = util_mdtf.PathManager()
-        d = paths.modelPaths(self)
+        d = paths.modelPaths(self, overwrite=self.overwrite)
         self.MODEL_DATA_DIR = d['MODEL_DATA_DIR']
         self.MODEL_WK_DIR = d['MODEL_WK_DIR']
         self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
-        if self.overwrite:
-            self.MODEL_OUT_DIR = util_mdtf.bump_filename_version(self.MODEL_OUT_DIR)
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
@@ -237,7 +235,7 @@ class DataManager(object):
         translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
-        pod.__dict__.update(paths.modelPaths(self))
+        pod.__dict__.update(paths.modelPaths(self, overwrite=self.overwrite))
         pod.__dict__.update(paths.podPaths(pod))
         pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)

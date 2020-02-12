@@ -256,7 +256,7 @@ class GfdlarchiveDataManager(DataManager):
             # if overwrite=False, MODEL_OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
             paths = util_mdtf.PathManager()
-            d = paths.modelPaths(self)
+            d = paths.modelPaths(self, overwrite=True)
             self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  

@@ -506,7 +506,7 @@ class DataManager(object):
         """
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if not self.file_overwrite:
-            out_file = util_mdtf.bump_filename_version(out_file)
+            out_file, _ = util_mdtf.bump_filename_version(out_file)
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))
         util.write_json(config, out_file)
@@ -517,7 +517,7 @@ class DataManager(object):
         """
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if not self.file_overwrite:
-            out_file = util_mdtf.bump_filename_version(out_file)
+            out_file, _ = util_mdtf.bump_filename_version(out_file)
             print("Creating {}.".format(out_file))
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))

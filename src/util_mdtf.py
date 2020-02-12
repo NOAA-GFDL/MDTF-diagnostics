@@ -43,7 +43,11 @@ class PathManager(util.Singleton):
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         if not overwrite:
-            d['MODEL_OUT_DIR'] = bump_filename_version(d['MODEL_OUT_DIR'])
+            # bump both WK_DIR and OUT_DIR becausee name of former may be
+            # preserved when we copy to latter, depending on copy method
+            _, version = bump_filename_version(d['MODEL_OUT_DIR'])
+            d['MODEL_WK_DIR'] = '{}.{}'.format(d['MODEL_WK_DIR'], version)
+            d['MODEL_OUT_DIR'] = '{}.{}'.format(d['MODEL_OUT_DIR'], version)
         return d
 
     def podPaths(self, pod):
@@ -243,7 +247,7 @@ def bump_filename_version(path):
     while os.path.exists(try_path):
         version = version + 1
         try_path = os.path.join(dir_, ''.join([file_, '.', str(version), ext_]))
-    return try_path
+    return try_path, version
 
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):

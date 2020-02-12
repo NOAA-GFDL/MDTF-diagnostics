@@ -1,40 +1,43 @@
+// Coupling between Soil Moisture and Evapotranspiration
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
 {
   "settings" : {
     "driver" : "SM_ET_coupling.py",
     "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
+    "realm" : ["atmos", "land"],
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "required_programs" : ["python", "Rscript"],
     "required_r_packages" : ["colorRamps", "maps", "fields", "akima", "ncdf4"]
   },
-
-  "# block comment (varlist)" : [
-    "USAGE varlist                                                            ",
-    "var_name      time-frequency     [requirement]                           ",
-    "- var_name: as found in src/config_*.json                                ",
-    "- freq: mon (monthly), day, 6hr, 3hr, 1hr                                ",
-    "- requirement = blank  (default = optional),                             ",
-    "                required (package cannot run without this)               ",
-    "                required unless field_name field_name2 ...               ",
-    "- alternates:                                                            ",
-    "                                                                         ",
-    "nb. if a variable is required at multiple time frequencies, list it      ",
-    "separately for each one. Clearly the developer can just leave out        ",
-    "optional files. However, it is always nice to get an upfront warning of  ",
-    "missing files.                                                           "
-  ],
-  
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
   "varlist" : [
     {
       "var_name" : "mrsos_var",
       "freq" : "mon",
       "requirement" : "required"
-    },
-    {
+    },{
       "var_name" : "evspsbl_var",
       "freq" : "mon",
       "requirement" : "required"
-    },
-    {
+    },{
       "var_name" : "pr_var",
       "freq" : "mon",
       "requirement" : "required"

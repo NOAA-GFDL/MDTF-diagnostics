@@ -4,6 +4,7 @@ import sys
 import glob
 import shutil
 import util
+import util_mdtf
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
@@ -52,7 +53,7 @@ class Diagnostic(object):
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
 
         self.name = pod_name
         self.__dict__.update(paths.podPaths(self))
@@ -109,8 +110,7 @@ class Diagnostic(object):
             d['convention'] = 'CF'
         for list_attr in ['required_programs', 'required_python_modules', 
             'required_ncl_scripts', 'required_r_packages']:
-            if type(d[list_attr]) != list:
-                d[list_attr] = [d[list_attr]]
+            d[list_attr] = util.coerce_to_iter(d[list_attr])
         if (verbose > 0): 
             print(self.name + " settings: ")
             print(d)
@@ -129,18 +129,18 @@ class Diagnostic(object):
         """
         # pylint: disable=maybe-no-member
         default_file_required = True 
-        for idx, var in enumerate(varlist):
+        for i, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
-                varlist[idx]['required'] = (var['requirement'].lower() == 'required')
-            elif 'required' not in varlist[idx]:
-                varlist[idx]['required'] = default_file_required
-            if ('alternates' not in var):
-                varlist[idx]['alternates'] = []
-            elif ('alternates' in var) and (type(var['alternates']) is not list):
-                varlist[idx]['alternates'] = [var['alternates']]
+                varlist[i]['required'] = (var['requirement'].lower() == 'required')
+            elif 'required' not in varlist[i]:
+                varlist[i]['required'] = default_file_required
+            if 'alternates' not in var:
+                varlist[i]['alternates'] = []
+            else:
+                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'])
         if (verbose > 0): 
             print(self.name + " varlist: ")
             print(varlist)
@@ -214,13 +214,13 @@ class Diagnostic(object):
         # Set env vars POD has inherited globally and from current case 
         # (set in DataManager._setup_pod).
         for key, val in self.pod_env_vars.iteritems():
-            util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
         # Set env vars for variable and axis names:
         axes = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
-            # util.setenv(var.original_name, var.name_in_model, 
+            # util_mdtf.setenv(var.original_name, var.name_in_model, 
             #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
             for ax_name, ax_attrs in var.axes.iteritems():
@@ -249,7 +249,7 @@ class Diagnostic(object):
                                 envvar_name, axes[envvar_name], ax_name
                     ))
         for key, val in axes.iteritems(): 
-            util.setenv(key, val, self.pod_env_vars, verbose=verbose)
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
@@ -258,7 +258,7 @@ class Diagnostic(object):
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         # pylint: disable=maybe-no-member
-        util.check_required_dirs(
+        util_mdtf.check_required_dirs(
             already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
             create_if_nec = [self.POD_WK_DIR], 
             verbose=verbose)
@@ -281,7 +281,7 @@ class Diagnostic(object):
         func_name = "check_pod_driver "
         if (verbose > 1): 
             print(func_name," received POD settings: ", self.__dict__)
-        programs = util.get_available_programs()
+        programs = util_mdtf.get_available_programs()
 
         if self.driver == '':  
             print("WARNING: no valid driver entry found for ", self.name)
@@ -369,7 +369,7 @@ class Diagnostic(object):
             else:
                 alt_list = ds.alternates
                 print(("WARNING: required file not found: {}."
-                    "\n\tLooking for alternatives: ").format(filepath, alt_list))
+                    "\n\tLooking for alternatives: ").format(filepath))
                 for alt_var in alt_list: 
                     # maybe some way to do this w/o loop since check_ takes a list
                     if (verbose > 1): 
@@ -412,7 +412,8 @@ class Diagnostic(object):
             (:obj:`list` of :obj:`str`): Command-line invocation to validate 
                 the POD's runtime environment.
         """
-        paths = util.PathManager()
+        # pylint: disable=maybe-no-member
+        paths = util_mdtf.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [
             command_path,
@@ -493,7 +494,7 @@ class Diagnostic(object):
 
     def append_result_link(self, error=None):
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
@@ -503,7 +504,7 @@ class Diagnostic(object):
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
-        util.append_html_template(src, self.TEMP_HTML, template_dict)
+        util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
     def _convert_pod_figures(self):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

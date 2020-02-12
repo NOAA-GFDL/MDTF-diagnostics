@@ -2,7 +2,7 @@ import os
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
 from src.mdtf import MDTFFramework
-import src.util as util
+import src.util_mdtf as util
 
 class TestMDTFArgParsing(unittest.TestCase):
     def setUp(self):

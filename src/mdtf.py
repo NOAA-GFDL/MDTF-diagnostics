@@ -15,250 +15,227 @@
 from __future__ import print_function
 import os
 import sys
-import argparse
-from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import signal
+import cli
 import util
+import util_mdtf
 import data_manager
 import environment_manager
-from shared_diagnostic import Diagnostic  
+import shared_diagnostic
 
 class MDTFFramework(object):
-    def __init__(self):
-        # get dir of currently executing script: 
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
-        self.code_root = os.path.dirname(cwd) # parent dir of that
-
-        self.parser = argparse.ArgumentParser(
-            epilog="""
-                All command-line arguments override defaults set in 
-                src/mdtf_settings.json.
-            """
-        )
-        self.argparse_setup()
-        cmdline_args = self.argparse_parse()
-        print(cmdline_args, '\n')
-        default_args = util.read_json(cmdline_args['config_file'])
-        self.config = self.parse_mdtf_args(cmdline_args, default_args)
-        print('SETTINGS:\n', util.pretty_print_json(self.config)) #debug
-
-        self._post_config_init() # hook to allow inserting other commands
-
+    def __init__(self, code_root, defaults_rel_path):
+        """Initial dispatch of CLI args: are we printing help info or running
+        framework. 
+        """
+        self.code_root = code_root
         # tell PathManager to delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
-        
-    def _post_config_init(self):
-        util.PathManager(self.config) # initialize
-        self.set_mdtf_env_vars()
-        self.DataManager = self.manual_dispatch(
-            self.config['settings']['data_manager'], 'DataManager'
-        )
-        self.EnvironmentManager = self.manual_dispatch(
-            self.config['settings']['environment_manager'], 'EnvironmentManager'
-        )
-        self.Diagnostic = Diagnostic
+
+        # poor man's subparser: argparse's subparser doesn't handle this
+        # use case easily, so just dispatch on first argument
+        if len(sys.argv) == 1 or \
+            len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
+            # build CLI, print its help and exit
+            cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
+            cli_obj.parser.print_help()
+            exit()
+        elif sys.argv[1].lower() == 'info': 
+            # "subparser" for command-line info
+            cli.InfoCLIHandler(self.code_root, sys.argv[2:])
+        else:
+            # not printing help or info, setup CLI normally
+            # move into its own function so that child classes can customize
+            # above options without having to rewrite below
+            self._real_init_hook(code_root, defaults_rel_path)
 
     def cleanup_tempdirs(self, signum=None, frame=None):
         # tell PathManager to delete temp files
         if signum:
             print("\tDEBUG: {} caught signal {}", self.__class__.__name__, signum)
         if not self.config['settings']['keep_temp']:
-            paths = util.PathManager()
+            paths = util_mdtf.PathManager()
             paths.cleanup()
 
-    def argparse_setup(self):
-        """Wraps command-line arguments to script.
+    def _real_init_hook(self, code_root, defaults_rel_path):
+        # set up CLI and parse arguments
+        print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
+        cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
+        self._cli_pre_parse_hook(cli_obj)
+        cli_obj.parse_cli()
+        # load pod info
+        pod_info_tuple = cli.load_pod_settings(self.code_root)
+        self.all_pods = pod_info_tuple.pod_list
+        self.pods = pod_info_tuple.pod_data
+        self.all_realms = pod_info_tuple.realm_list
+        self.pod_realms = pod_info_tuple.realm_data
+        # do nontrivial parsing
+        self.parse_mdtf_args(cli_obj)
+        # use final info to initialize ConfigManager
+        print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))
+        exit()
+
+    def _cli_pre_parse_hook(self, cli_obj):
+        # gives subclasses the ability to customize CLI handler before parsing
+        # although most of the work done by parse_mdtf_args
+        pass
+
+    def parse_mdtf_args(self, cli_obj):
+        """Parse script options returned by the CLI. For greater customizability,
+        most of the functionality is spun out into sub-methods.
         """
-        self.parser.add_argument("-v", "--verbose", 
-            action="count", default = 1,
-            help="Increase output verbosity")
-        # default paths set in mdtf_settings.json/paths
-        self.parser.add_argument('--CODE_ROOT', 
-            nargs='?', default=self.code_root,
-            help="Code installation directory.")
-        self.parser.add_argument('--MODEL_DATA_ROOT', 
-            nargs='?',
-            help="Parent directory containing results from different models.")
-        self.parser.add_argument('--OBS_DATA_ROOT', 
-            nargs='?', 
-            help=("Parent directory containing observational data "
-                "used by individual PODs."))
-        self.parser.add_argument('--WORKING_DIR', 
-            nargs='?',
-            help="Working directory.")
-        self.parser.add_argument('--OUTPUT_DIR', 
-            nargs='?',
-            help="Directory to write output files. Defaults to working directory.")
-        # defaults set in mdtf_settings.json/settings
-        self.parser.add_argument("--test_mode", 
-            action="store_true", # so default to False
-            help="Set flag to fetch data but skip calls to PODs")
-        self.parser.add_argument("--dry_run", 
-            action="store_true", # so default to False
-            help=("Set flag to do a dry run, "
-                "disabling data fetching and calls to PODs"))
-        self.parser.add_argument("--save_nc", 
-            action="store_true", # so default to False
-            help="Set flag to have PODs save netCDF files of processed data.") 
-        self.parser.add_argument("--keep_temp", 
-            action="store_true", # so default to False
-            help=("Set flag to reuse local temporary directories of downloaded "
-                "model data (else delete them on exit.)"))
-        self.parser.add_argument("--no_overwrite", 
-            action="store_false", # so default to True
-            help=("Set flag to never overwrite results in OUTPUT_DIR (will be "
-                "saved under a different, unique name instead.)"))
-        self.parser.add_argument('--data_manager', 
-            nargs='?',
-            help=("Method to fetch model data. "
-                "Currently supported options are {'Localfile'}."))
-        self.parser.add_argument('--environment_manager', 
-            nargs='?',
-            help=("Method to manage POD runtime dependencies. "
-                "Currently supported options are {'None', 'Conda'}."))
-        # casename args, set by frepp
-        self.parser.add_argument('--CASENAME', 
-            nargs='?')
-        self.parser.add_argument('--model', 
-            nargs='?')
-        self.parser.add_argument('--experiment', 
-            nargs='?')
-        self.parser.add_argument('--CASE_ROOT_DIR', 
-            nargs='?')
-        self.parser.add_argument('--FIRSTYR', 
-            nargs='?', type=int)
-        self.parser.add_argument('--LASTYR', 
-            nargs='?', type=int)
-        self.parser.add_argument("--component", 
-            nargs='?')
-        self.parser.add_argument("--data_freq", 
-            nargs='?')   
-        self.parser.add_argument("--chunk_freq", 
-            nargs='?')       
-        self.parser.add_argument('--config_file', 
-            nargs='?', 
-            default=os.path.join(self.code_root, 'src', 'mdtf_settings.json'),
-            help="Configuration file."
+        self.postparse_cli(cli_obj)
+        self.parse_pod_list(cli_obj)
+        self.parse_case_list(cli_obj)
+        self.parse_env_vars(cli_obj)
+        self.parse_paths(cli_obj)
+        
+        # make config nested dict for backwards compatibility
+        # this is all temporary
+        self.config = dict()
+        self.config['pod_list'] = self.pod_list
+        self.config['case_list'] = self.case_list
+        self.config['paths'] = self.paths
+        util_mdtf.PathManager(self.config['paths']) # initialize
+        self.config['settings'] = dict()
+        settings_gps = set(cli_obj.parser_groups.keys()).difference(
+            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
+        for group in settings_gps:
+            self._populate_dict(cli_obj, group, self.config['settings'])
+        self.config['envvars'] = self.config['settings'].copy()
+        self.config['envvars'].update(self.config['paths'])
+        self.config['envvars']['RGB'] = os.path.join(self.code_root,'src','rgb')
 
-    def argparse_parse(self):
-        d = self.parser.parse_args().__dict__
-        # remove entries that weren't set
-        return {key: val for key, val in d.iteritems() if val is not None}
+    def postparse_cli(self, cli_obj):
+        # stuff too cumbersome to do within cli.py 
+        if cli_obj.config.get('dry_run', False):
+            cli_obj.config['test_mode'] = True
 
-    @staticmethod
-    def caselist_from_args(args):
-        d = {}
-        for k in ['CASENAME', 'FIRSTYR', 'LASTYR', 'root_dir', 'component', 
-            'chunk_freq', 'data_freq', 'model', 'experiment', 
-            'variable_convention']:
-            if k in args:
-                d[k] = args[k]
+    def parse_pod_list(self, cli_obj):
+        self.pod_list = []
+        args = util.coerce_to_iter(cli_obj.config.pop('pods', []), set)
+        if 'all' in args:
+            self.pod_list = self.all_pods
+        else:
+            # specify pods by realm
+            realms = args.intersection(set(self.all_realms))
+            args = args.difference(set(self.all_realms)) # remainder
+            for key in self.pod_realms:
+                if util.coerce_to_iter(key, set).issubset(realms):
+                    self.pod_list.extend(self.pod_realms[key])
+            # specify pods by name
+            pods = args.intersection(set(self.all_pods))
+            self.pod_list.extend(list(pods))
+            for arg in args.difference(set(self.all_pods)): # remainder:
+                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
+
+    def parse_case_list(self, cli_obj):
+        d = cli_obj.config # abbreviate
+        self.case_list = []
+        if d.get('model', None) or d.get('experiment', None) \
+            or d.get('CASENAME', None):
+            self.case_list = self.caselist_from_args(cli_obj)
+        else:
+            self.case_list = util.coerce_to_iter(cli_obj.case_list)
+        for i in range(len(self.case_list)):
+            d2 = self.case_list[i]
+            # remove empty entries
+            d2 = {k:v for k,v in d2.iteritems() if v}
+            if not d2.get('CASE_ROOT_DIR', None) and d2.get('root_dir', None):
+                d2['CASE_ROOT_DIR'] = d2['root_dir']
+            elif not d2.get('root_dir', None) and d2.get('CASE_ROOT_DIR', None):
+                d2['root_dir'] = d2['CASE_ROOT_DIR']
+
+    def caselist_from_args(self, cli_obj):
+        d = dict()
+        d2 = cli_obj.config # abbreviate
+        self._populate_dict(cli_obj, 'MODEL', d)
+        # remove empty entries first
+        d = {k:v for k,v in d.iteritems() if v}
         if 'model' not in d:
-            d['model'] = 'CMIP_GFDL'
+            d['model'] = 'CMIP'
+        if 'experiment' not in d:
+            d['experiment'] = ''
         if 'variable_convention' not in d:
-            d['variable_convention'] = 'CMIP_GFDL'
+            d['variable_convention'] = 'CMIP'
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-        if 'root_dir' not in d and 'CASE_ROOT_DIR' in args:
-            d['root_dir'] = args['CASE_ROOT_DIR']
+        if d2.get('root_dir', None):
+            # overwrite flag if both are set
+            d['CASE_ROOT_DIR'] = d2['root_dir']
+            d['root_dir'] = d2['root_dir']
+        elif d.get('CASE_ROOT_DIR', None):
+            d['root_dir'] = d['CASE_ROOT_DIR']
+        else:
+            print('ERROR: need to sepcify root directory of model data.')
+            exit()
         return [d]
 
-    @classmethod
-    def parse_mdtf_args(cls, user_args_list, default_args, rel_paths_root=''):
-        """Parse script options.
+    def parse_env_vars(self, cli_obj):
+        self.envvars = dict()
+        self.envvars = cli_obj.config.copy()
 
-        We provide three ways to configure the script. In order of precendence,
-        they are:
-
-        1. Parameter substitution via GFDL's internal `frepp` utility; see
-        `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation`_.
-
-        2. Through command-line arguments.
-
-        3. Through default values set in a YAML configuration file, by default
-        in src/config.yml.
-
-        This function applies the precendence and returns a single dict of the
-        actual configuration.
-
-        Args:
-
-        Returns: :obj:`dict` of configuration settings.
-        """
-        if isinstance(user_args_list, dict):
-            user_args = user_args_list
-        elif isinstance(user_args_list, list):
-            user_args = ChainMap(*user_args_list)
-        else:
-            user_args = dict()
-
-        # overwrite defaults with command-line args.
-        for section in ['paths', 'settings']:
-            for key in default_args[section]:
-                if key in user_args:
-                    default_args[section][key] = user_args[key]
-        if ('model' in user_args and 'experiment' in user_args) or \
-            'CASENAME' in user_args:
-            # also set up caselist with frepp data
-            default_args['case_list'] = cls.caselist_from_args(user_args)
-
-        if 'CODE_ROOT' in user_args:
-            # only let this be overridden if we're in a unit test
-            rel_paths_root = user_args['CODE_ROOT']
+    def parse_paths(self, cli_obj):
+        self.paths = dict()
+        # only let this be overridden if we're in a unit test
+        rel_paths_root = cli_obj.config.get('CODE_ROOT', None)
+        if not rel_paths_root or rel_paths_root == '.':
+            rel_paths_root = self.code_root
         # convert relative to absolute paths
-        for key, val in default_args['paths'].iteritems():
-            default_args['paths'][key] = util.resolve_path(val, rel_paths_root)
-
-        if util.get_from_config('dry_run', default_args, default=False):
-            default_args['settings']['test_mode'] = True
-
-        return default_args
-
-    def set_mdtf_env_vars(self):
-        paths = util.PathManager()
-        util.check_required_dirs(
-            already_exist = [paths.CODE_ROOT, paths.OBS_DATA_ROOT], 
+        for key, val in cli_obj.iteritems_cli('PATHS'):
+            val2 = util.resolve_path(
+                util.coerce_from_iter(val), rel_paths_root
+            )
+            print('\tDEBUG: {},{},{}'.format(key, val, val2))
+            self.paths[key] = val2
+        util_mdtf.check_required_dirs(
+            already_exist = [
+                self.paths['CODE_ROOT'], self.paths['OBS_DATA_ROOT']
+            ], 
             create_if_nec = [
-                paths.MODEL_DATA_ROOT, paths.WORKING_DIR, paths.OUTPUT_DIR
+                self.paths['MODEL_DATA_ROOT'], 
+                self.paths['WORKING_DIR'], 
+                self.paths['OUTPUT_DIR']
         ])
-        self.config["envvars"] = self.config['settings'].copy()
-        self.config["envvars"].update(self.config['paths'])
-        # following are redundant but used by PODs
-        self.config["envvars"]["RGB"] = os.path.join(paths.CODE_ROOT,'src','rgb')
 
-    _dispatch_search = [data_manager, environment_manager]
+    @staticmethod
+    def _populate_dict(cli_obj, group_nm, d):
+        # hacky temp code, for backwards compatibility
+        for key, val in cli_obj.iteritems_cli(group_nm):
+            d[key] = val
 
-    def manual_dispatch(self, class_prefix, class_suffix):
-        # drop '_' and title-case class name
-        class_prefix = ''.join(class_prefix.split('_')).title()
-        for mod in self._dispatch_search:
-            try:
-                return getattr(mod, class_prefix+class_suffix)
-            except:
-                continue
-        print("No class named {}.".format(class_prefix+class_suffix))
-        raise Exception('no_class')  
+    _dispatch_search = [data_manager, environment_manager, shared_diagnostic]
+    def manual_dispatch(self):
+        def _dispatch(setting, class_suffix):
+            class_prefix = self.config['settings'].get(setting, '')
+            # drop '_' and title-case class name
+            class_prefix = ''.join(class_prefix.split('_')).title()
+            for mod in self._dispatch_search:
+                try:
+                    return getattr(mod, class_prefix+class_suffix)
+                except:
+                    continue
+            print("No class named {}.".format(class_prefix+class_suffix))
+            raise Exception('no_class')
+
+        self.DataManager = _dispatch('data_manager', 'DataManager')
+        self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
+        self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
 
     def set_case_pod_list(self, case_dict):
-        if 'pod_list' in case_dict:
-            # run a set of PODs specific to this model
-            pod_list = case_dict['pod_list']
-        elif 'pod_list' in self.config:
-            # use global list of PODs  
-            pod_list =  self.config['pod_list'] 
+        if not case_dict.get('pod_list', None):
+            return self.pod_list # use global list of PODs 
         else:
-            pod_list = [] # should raise warning
-        return pod_list
+            return case_dict['pod_list']
 
     def main_loop(self):
+        self.manual_dispatch()
         caselist = []
         # only run first case in list until dependence on env vars cleaned up
         for case_dict in self.config['case_list'][0:1]: 
             case_dict['pod_list'] = self.set_case_pod_list(case_dict)
-            for p in case_dict['pod_list']:
-                print("\tDEBUG: will run {}".format(p))
             case = self.DataManager(case_dict, self.config)
             for pod_name in case.pod_list:
                 try:
@@ -281,9 +258,22 @@ class MDTFFramework(object):
             case.tearDown(self.config)
         self.cleanup_tempdirs()
 
+def version_check():
+    v = sys.version_info
+    if v.major != 2 or v.minor < 7:
+        print("""ERROR: attempted to run with python {}.{}.{}. The MDTF framework
+        currently only supports python 2.7.*. Please check which version of python
+        is on your $PATH (e.g. with `which python`.)""".format(
+            v.major, v.minor, v.micro
+        ))
+        exit()
 
 if __name__ == '__main__':
-    print("\n======= Starting "+__file__)
-    mdtf = MDTFFramework()
+    version_check()
+    # get dir of currently executing script: 
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root, src_dir = os.path.split(cwd)
+    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'defaults.json'))
+    print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
-    print("Exiting normally from ",__file__)
+    print("Exiting normally from {}".format(__file__))

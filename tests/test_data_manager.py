@@ -1,7 +1,7 @@
 import os
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
-import src.util as util
+import src.util_mdtf as util
 from src.shared_diagnostic import Diagnostic
 from src.data_manager import DataManager
 

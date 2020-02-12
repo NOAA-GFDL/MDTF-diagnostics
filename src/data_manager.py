@@ -17,6 +17,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     from subprocess import CalledProcessError
 import util
+import util_mdtf
 import datelabel
 import netcdf_helper
 from shared_diagnostic import PodRequirementFailure
@@ -93,7 +94,7 @@ class DataSet(util.Namespace):
 
     @classmethod
     def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util.VariableTranslator()
+        translate = util_mdtf.VariableTranslator()
         var_copy = var.copy()
         var_copy.update(dm_args)
         ds = cls(**var_copy)
@@ -163,7 +164,7 @@ class DataManager(object):
         self.no_overwrite = util.get_from_config('no_overwrite', config, default=True)
         self.no_file_overwrite = self.no_overwrite # overwrite config and .tar
 
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         d = paths.modelPaths(self)
         self.MODEL_DATA_DIR = d['MODEL_DATA_DIR']
         self.MODEL_WK_DIR = d['MODEL_WK_DIR']
@@ -174,8 +175,9 @@ class DataManager(object):
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = util.get_from_config('netcdf_helper', config, default='NetcdfHelper')
-        mixin = getattr(netcdf_helper, mixin)
+        mixin = util_mdtf.get_from_config('netcdf_helper', config, 
+            default='NcoNetcdfHelper')
+        mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
             self.nc_check_environ() # make sure we have dependencies
@@ -201,7 +203,8 @@ class DataManager(object):
     # -------------------------------------
 
     def setUp(self, verbose=0):
-        util.check_required_dirs(
+        # pylint: disable=maybe-no-member
+        util_mdtf.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
@@ -214,24 +217,24 @@ class DataManager(object):
             "LASTYR": self.lastyr.format(precision=1)
         })
         # set env vars for unit conversion factors (TODO: honest unit conversion)
-        translate = util.VariableTranslator()
+        translate = util_mdtf.VariableTranslator()
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
                 "{}.").format(self.convention))
         temp = translate.variables[self.convention].to_dict()
         for key, val in temp.iteritems():
-            util.setenv(key, val, self.envvars, verbose=verbose)
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
         for key, val in temp.iteritems():
-            util.setenv(key, val, self.envvars, verbose=verbose)
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
 
         for pod in self.iter_pods():
             self._setup_pod(pod)
         self._build_data_dicts()
 
     def _setup_pod(self, pod):
-        paths = util.PathManager()
-        translate = util.VariableTranslator()
+        paths = util_mdtf.PathManager()
+        translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
         pod.__dict__.update(paths.modelPaths(self))
@@ -471,12 +474,12 @@ class DataManager(object):
         self._make_html()
         _ = self._backup_config_file(config)
         if self.make_variab_tar:
-            paths = util.PathManager()
+            paths = util_mdtf.PathManager()
             _ = self._make_tar_file(paths.OUTPUT_DIR)
         self._copy_to_output()
 
     def _make_html(self, cleanup=True):
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(dest):
@@ -486,11 +489,11 @@ class DataManager(object):
         template_dict = self.envvars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        util.append_html_template(
+        util_mdtf.append_html_template(
             os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
         )
-        util.append_html_template(self.TEMP_HTML, dest, {})
-        util.append_html_template(
+        util_mdtf.append_html_template(self.TEMP_HTML, dest, {})
+        util_mdtf.append_html_template(
             os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
         )
         if cleanup:

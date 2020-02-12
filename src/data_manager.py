@@ -170,7 +170,7 @@ class DataManager(object):
         self.MODEL_WK_DIR = d['MODEL_WK_DIR']
         self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
         if self.no_overwrite:
-            self.MODEL_OUT_DIR = util.bump_filename_version(self.MODEL_OUT_DIR)
+            self.MODEL_OUT_DIR = util_mdtf.bump_filename_version(self.MODEL_OUT_DIR)
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
@@ -508,7 +508,7 @@ class DataManager(object):
         """
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if self.no_file_overwrite:
-            out_file = util.bump_filename_version(out_file)
+            out_file = util_mdtf.bump_filename_version(out_file)
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))
         util.write_json(config, out_file)
@@ -519,7 +519,7 @@ class DataManager(object):
         """
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if self.no_file_overwrite:
-            out_file = util.bump_filename_version(out_file)
+            out_file = util_mdtf.bump_filename_version(out_file)
             print("Creating {}.".format(out_file))
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))

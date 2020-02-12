@@ -253,10 +253,11 @@ class GfdlarchiveDataManager(DataManager):
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
-            # if overwrite=False, MODEL_OUT_DIR will have been set to a 
+            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
             paths = util_mdtf.PathManager()
             d = paths.modelPaths(self, overwrite=True)
+            self.MODEL_WK_DIR = d['MODEL_WK_DIR']
             self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
@@ -643,10 +644,31 @@ class GfdlarchiveDataManager(DataManager):
                     )
         else:
             # copy everything at once
-            if os.path.exists(self.MODEL_OUT_DIR) and not self.overwrite:
-                print('Error: {} exists, overwriting anyway.'.format(
-                    self.MODEL_OUT_DIR))
+            if os.path.exists(self.MODEL_OUT_DIR):
+                if self.overwrite:
+                    try:
+                        print('Error: {} exists, attempting to remove.'.format(
+                            self.MODEL_OUT_DIR))
+                        shutil.rmtree(self.MODEL_OUT_DIR)
+                    except OSError:
+                        # gcp will not overwrite dirs, so forced to save under
+                        # a different name despite overwrite=True
+                        print(("Error: couldn't remove {} (probably mounted read"
+                            "-only); will rename new directory.").format(
+                            self.MODEL_OUT_DIR))
+                else:
+                    print("Error: {} exists; will rename new directory.".format(
+                        self.MODEL_OUT_DIR))
             try:
+                if os.path.exists(self.MODEL_OUT_DIR):
+                    # check again, since rmtree() might have succeeded
+                    self.MODEL_OUT_DIR, version = \
+                        util_mdtf.bump_version(self.MODEL_OUT_DIR)
+                    new_wkdir, _ = \
+                        util_mdtf.bump_version(self.MODEL_WK_DIR, new_v=version)
+                    print("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
+                    shutil.move(self.MODEL_WK_DIR, new_wkdir)
+                    self.MODEL_WK_DIR = new_wkdir
                 gcp_wrapper(
                     self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
                     timeout=self.file_transfer_timeout,

@@ -2,6 +2,7 @@
 """
 from __future__ import print_function
 import os
+import re
 import glob
 import shutil
 import tempfile
@@ -43,11 +44,11 @@ class PathManager(util.Singleton):
         d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
         d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         if not overwrite:
-            # bump both WK_DIR and OUT_DIR becausee name of former may be
-            # preserved when we copy to latter, depending on copy method
-            _, version = bump_filename_version(d['MODEL_OUT_DIR'])
-            d['MODEL_WK_DIR'] = '{}.{}'.format(d['MODEL_WK_DIR'], version)
-            d['MODEL_OUT_DIR'] = '{}.{}'.format(d['MODEL_OUT_DIR'], version)
+            # bump both WK_DIR and OUT_DIR to same version because name of 
+            # former may be preserved when we copy to latter, depending on 
+            # copy method
+            d['MODEL_OUT_DIR'], ver = bump_version(d['MODEL_OUT_DIR'])
+            d['MODEL_WK_DIR'], _ = bump_version(d['MODEL_WK_DIR'], new_v=ver)
         return d
 
     def podPaths(self, pod):
@@ -238,16 +239,56 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         else:
             print("Found "+dir)
 
-def bump_filename_version(path):
+def bump_version(path, new_v=None):
     # return a filename that doesn't conflict with existing files.
+    def _split_version(file_):
+        match = re.match(r"""
+            ^(?P<file_base>.*?)   # arbitrary characters (lazy match)
+            (\.v(?P<version>\d+))  # literal '.v' followed by digits
+            ?                      # previous group may occur 0 or 1 times
+            $                      # end of string
+            """, file_, re.VERBOSE)
+        if match:
+            return (match.group('file_base'), match.group('version'))
+        else:
+            return (file_, '')
+
+    def _reassemble(dir_, file_, version, ext_, final_sep):
+        if version:
+            file_ = ''.join([file_, '.v', str(version), ext_])
+        else:
+            # get here for version == 0, '' or None
+            file_ = ''.join([file_, ext_])
+        return os.path.join(dir_, file_) + final_sep
+
+    if path.endswith(os.sep):
+        # remove any terminating slash on directory
+        path = path.rstrip(os.sep)
+        final_sep = os.sep
+    else:
+        final_sep = ''
     dir_, file_ = os.path.split(path)
-    file_, ext_ = os.path.splitext(file_)
-    version = 0
-    try_path = path
-    while os.path.exists(try_path):
-        version = version + 1
-        try_path = os.path.join(dir_, ''.join([file_, '.', str(version), ext_]))
-    return try_path, version
+    file_, old_v = _split_version(file_)
+    if not old_v:
+        # maybe it has an extension and then a version number
+        file_, ext_ = os.path.splitext(file_)
+        file_, old_v = _split_version(file_)
+    else:
+        ext_ = ''
+
+    if new_v is not None:
+        # removes version if new_v ==0
+        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+    else:
+        if not old_v:
+            new_v = 0
+        else:
+            new_v = int(old_v)
+        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+        while os.path.exists(new_path):
+            new_v = new_v + 1
+            new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+    return (new_path, new_v)
 
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):

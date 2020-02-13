@@ -50,7 +50,8 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             self.paths[key] = val2
 
         # clean out WORKING_DIR if we're not keeping temp files
-        if not cli_obj.config.get('keep_temp', False):
+        if os.path.exists(self.paths['WORKING_DIR']) and \
+            not cli_obj.config.get('keep_temp', False):
             shutil.rmtree(self.paths['WORKING_DIR'])
         util_mdtf.check_required_dirs(
             already_exist = [

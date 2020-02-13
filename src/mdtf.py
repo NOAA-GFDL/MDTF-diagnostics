@@ -16,6 +16,7 @@ from __future__ import print_function
 import os
 import sys
 import signal
+import shutil
 import cli
 import util
 import util_mdtf
@@ -200,6 +201,11 @@ class MDTFFramework(object):
             val2 = self._mdtf_resolve_path(val, cli_obj)
             # print('\tDEBUG: {},{},{}'.format(key, val, val2))
             self.paths[key] = val2
+
+        # clean out WORKING_DIR if we're not keeping temp files
+        if os.path.exists(self.paths['WORKING_DIR']) and \
+            not cli_obj.config.get('keep_temp', False):
+            shutil.rmtree(self.paths['WORKING_DIR'])
         util_mdtf.check_required_dirs(
             already_exist = [
                 self.paths['CODE_ROOT'], self.paths['OBS_DATA_ROOT']

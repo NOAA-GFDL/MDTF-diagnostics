@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
-import src.util as util
+import src.util_mdtf as util
 from src.data_manager import DataSet
 from src.datelabel import DateFrequency
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure

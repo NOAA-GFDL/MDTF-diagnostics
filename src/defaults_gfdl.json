@@ -1,0 +1,260 @@
+// Configuration for MDTF-diagnostics driver script.
+//
+// This version pertains to the GFDL site-specific installation.
+//
+// DO NOT delete entries from this file. Instead, edit a copy and pass it to
+// the script with the --config_file option.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  // The cases below correspond to the different test data sets.
+  //
+  // Note that the mdtf package does not yet handle multiple cases. 
+  //
+  "case_list" : [
+    {
+      "CASENAME" : "ESM4_historical_D1",
+      "model" : "ESM4",
+      "variable_convention" : "CMIP_GFDL",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "CASE_ROOT_DIR" : "/archive/cm6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
+      "pod_list": [
+          // Optional: PODs to run for this model only (otherwise use pod_list below)
+          "Wheeler_Kiladis",
+          "EOF_500hPa",
+          "convective_transition_diag",
+          "MJO_suite",
+          "MJO_teleconnection",
+          "MJO_prop_amp",
+          "precip_diurnal_cycle",
+          "SM_ET_coupling"
+      ]
+    }
+  ],
+  //
+  // Define command-line arguments:
+  // Entries here are used in src/cli.py to configure command-line options 
+  // accepted by the script. Syntax is based on python's argparse library, see
+  // https://docs.python.org/2.7/library/argparse.html or 
+  // https://docs.python.org/2.7/howto/argparse.html. 
+  //
+  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on gridded model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.",
+  "argument_groups" : [
+    {
+      "name" : "PATHS",
+      "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
+      "arguments" : [
+        {
+          "name": "CODE_ROOT",
+          "hidden" : true,
+          "help": "Code installation directory. Set automatically except in unit testing.",
+          "default" : ".",
+          "metavar" : "<DIR>"
+        },{
+          "name": "MODEL_DATA_ROOT",
+          "help": "Parent directory containing results from different models.",
+          "default" : "$MDTF_GFDL_TMPDIR/inputdata/model",
+          "metavar" : "<DIR>"
+        },{
+          "name": "OBS_DATA_REMOTE",
+          "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
+          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+          "metavar" : "<DIR>"
+        },{
+          "name": "OBS_DATA_ROOT",
+          "help": "Local parent directory containing observational data used by individual PODs.",
+          "default" : "$MDTF_GFDL_TMPDIR/inputdata/obs_data",
+          "metavar" : "<DIR>"
+        },{
+          "name": "WORKING_DIR",
+          "help": "Working directory.",
+          "default" : "$MDTF_GFDL_TMPDIR/wkdir",
+          "metavar" : "<DIR>"
+        },{
+          "name": "OUTPUT_DIR",
+          "help": "Directory to write output files. Defaults to working directory.",
+          "default" : "$HOME/mdtf_out",
+          "metavar" : "<DIR>"
+        }
+      ]
+    },{
+      "name" : "MODEL",
+      "description" : "Settings describing the input model data.",
+      "arguments" : [
+        {
+          "name": "CASE_ROOT_DIR",
+          "help": "Alternate method to specify root directory of model data.",
+          "metavar" : "<DIR>"
+        },{
+          "name": "FIRSTYR",
+          "short_name" : "Y",
+          "help": "Starting year of analysis period.",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": "LASTYR",
+          "short_name" : "Z",
+          "help": "Ending year of analysis period (inclusive).",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": "CASENAME",
+          "help": "Identifier used to label the input model dataset.",
+          "type" : "str",
+          "metavar" : "<name>"
+        },{
+          "name": "model",
+          "help": "Model name (only used in CMIP6 input).",
+          "type": "str",
+          "metavar" : "<source_id>"
+        },{
+          "name": "experiment",
+          "help": "Experiment ID (only used in CMIP6 input).",
+          "type" : "str",
+          "metavar" : "<experiment_id>"
+        },{
+          "name": "component",
+          "hidden" : true,
+          "help": "",
+          "default" : ""
+        },{
+          "name": "data_freq",
+          "hidden" : true,
+          "help": "",
+          "default" : ""
+        },{
+          "name": "chunk_freq",
+          "hidden" : true,
+          "help": "",
+          "default" : ""
+        }
+      ]
+    },{
+      "name" : "GFDL",
+      "description" : "Settings specific to operation at GFDL.",
+      "arguments" : [
+        {
+          "name": "frepp",
+          "help": "Set flag to run framework in 'online' mode, processing data as part of the FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper script from the XML.",
+          "default" : false
+        },{
+          "name": "ignore_component",
+          "help": "Set flag search entire /pp/ directory for model data; default is to restrict to model component passed by FRE. Ignored if --frepp is not set.",
+          "default" : false
+        }
+      ]
+    },{
+      "name" : "DATA",
+      "description" : "Settings affecting the framework's retrieval of model data.",
+      "arguments" : [
+        {
+          "name": "data_manager",
+          "help": "Method used to fetch model data.",
+          "default" : "GFDL_auto"
+        },{
+          "name": "file_transfer_timeout",
+          "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
+          "type" : "int",
+          "default" : 300,
+          "metavar" : "<seconds>"
+        }
+      ]
+    },{
+      "name" : "DIAGNOSTICS",
+      "arguments" : [
+        {
+          "name": "pods",
+          "short_name": "p",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values.",
+          "default" : "all",
+          "nargs" : "+",
+          //"choices" : "self.get_pods_for_help_text()",
+          //"eval_choices" : true,
+          "metavar" : ""
+        }
+      ]
+    },{
+      "name" : "RUNTIME",
+      "description" : "Settings affecting the runtime environment of the PODs.",
+      "arguments" : [
+        {
+          "name": "environment_manager",
+          "help": "Method to manage POD runtime dependencies.",
+          "default" : "GFDL_conda"
+        },{
+          "name": "conda_root",
+          "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
+          "default" : "/home/mdteam/anaconda",
+          "metavar" : "<DIR>"
+        },{
+          "name": "conda_env_root",
+          "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
+          "default" : "/home/mdteam/anaconda/envs",
+          "metavar" : "<DIR>"
+        },{
+          "name": "venv_root",
+          "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
+          "default" : "./envs/venv",
+          "metavar" : "<DIR>"
+        },{
+          "name": "r_lib_root",
+          "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
+          "default" : "./envs/r_libs",
+          "metavar" : "<DIR>"
+        }
+      ]
+    },{
+      "name" : "OUTPUT",
+      "description" : "Settings affecting what output is generated.",
+      "arguments" : [
+        {
+          "name": "save_ps",
+          "help": "Set flag to have PODs save postscript figures in addition to bitmaps.",
+          "default" : false
+        },{
+          "name": "save_nc",
+          "help": "Set flag to have PODs save netCDF files of processed data.",
+          "default" : false
+        },{
+          "name": "make_variab_tar",
+          "help": "Set flag to save HTML and bitmap plots in a .tar file.",
+          "default" : false
+        },{
+          "name": "convert_flags",
+          "hidden" : true,
+          "help": "Default flags to pass to PS -> bitmap figure conversion.",
+          "default" : "-crop 0x0+5+5"
+        },{
+          "name": "convert_output_fmt",
+          "hidden" : true,
+          "help": "Default format for bitmap figure output.",
+          "default" : "png"
+        }
+      ]
+    },{
+      "name" : "DEBUG",
+      "description" : "Settings used in debugging.",
+      "arguments" : [
+        {
+          "name": "verbose",
+          "short_name": "v",
+          "help": "Increase log verbosity level.",
+          "default" : 1, 
+          "action": "count" 
+        },{
+          "name": "test_mode",
+          "help": "Set flag for framework test. Data is fetched but PODs are not run.",
+          "default" : false
+        },{
+          "name": "dry_run",
+          "help": "Set flag for framework test. No external commands are run and no remote data is copied. Implies test_mode.",
+          "default" : false
+        }
+      ]
+    }
+  ]
+}

@@ -1,30 +1,34 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
 {
   "convention_name" : "AM4",
   "axes" : {
     "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
     "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
-    "# pfull must be on pressure levels (hPa)                              ":"",
+    // pfull must be on pressure levels (hPa)
     "pfull" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
     "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
   },
   "var_names" : {
     "ps_var" : "PS",
-    "# Variables for Convective Transition Diagnostics module: ____________":"",
-    "# ta: 3D temperature, units = K:                                      ":"",
+    // Variables for Convective Transition Diagnostics module:
+    // ta: 3D temperature, units = K:
     "ta_var" : "ta",
-    "# prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)":"",
+    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw_var" : "prw",
-    "# tave: Mass-Weighted Column Average Tropospheric Temperature, units = K":"",
+    // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K
     "tave_var" : "tave",
-    "# Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)":"",
+    // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
     "qsat_int_var" : "qsat_int",
-    "# Variables for Xianan Jiang mjo diagnostic: _________________________":"",
+    // Variables for Xianan Jiang mjo diagnostic:
     "pr_var" : "precip",
     "qa_var" : "sphum"
   },
   "units" : {
-    "# TODO: assign to variables; do honest unit conversion                ":"",
-    "# units for conversion factors are m/s: ______________________________":"",
+    // TODO: assign to variables; do honest unit conversion
+    // units for conversion factors are m/s:
     "pr_conversion_factor" : 1,
     "prc_conversion_factor" : 1,
     "prls_conversion_factor" : 1

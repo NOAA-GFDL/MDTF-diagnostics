@@ -426,7 +426,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     def __init__(self, start, end=None, precision=None):
         if not end:
-            if type(start) is str:
+            if isinstance(start, basestring):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -587,7 +587,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif type(args[0]) is str:
+        elif isinstance(args[0], basestring):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -697,9 +697,9 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, str) and (unit is None):
+        if isinstance(quantity, basestring) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif (type(quantity) is not int) or not isinstance(unit, str):
+        elif not isinstance(quantity, int) or not isinstance(unit, basestring):
             raise ValueError("Malformed input")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)

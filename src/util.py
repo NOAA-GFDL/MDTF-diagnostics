@@ -1,14 +1,12 @@
 """Common functions and classes used in multiple places in the MDTF code.
+Specifically, util.py implements general functionality that's not MDTF-specific.
 """
 from __future__ import print_function
 import os
 import sys
 import re
-import glob
 import shlex
-import shutil
-import tempfile
-from collections import defaultdict, namedtuple
+import collections
 from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -39,7 +37,8 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
     use this as safer way to pass around global state.
 
     Note:
-        All child classes, :class:`~util.PathManager` and :class:`~util.VariableTranslator`,
+        All child classes, :class:`~util_mdtf.PathManager` and 
+        :class:`~util_mdtf.VariableTranslator`,
         are read-only, although this is not enforced. This eliminates most of the
         danger in using Singletons or global state in general.
     """
@@ -56,86 +55,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
             del cls._instances[cls]
 
 
-class PathManager(Singleton):
-    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``mdtf_settings.json``.
-    """
-    _root_pathnames = [
-        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WORKING_DIR', 'OUTPUT_DIR'
-    ]
-
-    def __init__(self, arg_dict={}, unittest_flag=False):
-        for var in self._root_pathnames:
-            if unittest_flag: # use in unit testing only
-                self.__setattr__(var, 'TEST_'+var)
-            else:
-                assert var in arg_dict, \
-                    'Error: {} not initialized.'.format(var)
-                self.__setattr__(var, arg_dict[var])
-
-        self._temp_dirs = []
-
-    def modelPaths(self, case):
-        # pylint: disable=maybe-no-member
-        d = {}
-        if isinstance(case, dict):
-            name = case['CASENAME']
-            yr1 = case['FIRSTYR']
-            yr2 = case['LASTYR']
-        else:
-            name = case.case_name
-            yr1 = case.firstyr
-            yr2 = case.lastyr
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
-        d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
-        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
-        return d
-
-    def podPaths(self, pod):
-        # pylint: disable=maybe-no-member
-        d = {}
-        d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
-        d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        if 'MODEL_WK_DIR' in pod.__dict__:
-            d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
-        if 'MODEL_OUT_DIR' in pod.__dict__:
-            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
-        return d
-
-    def make_tempdir(self, hash_obj=None):
-        tempdir_prefix = 'MDTF_temp_'
-
-        temp_root = tempfile.gettempdir()
-        if hash_obj is None:
-            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
-        elif isinstance(hash_obj, str):
-            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
-        else:
-            # nicer-looking hash representation
-            hash_ = hex(hash(hash_obj))
-            if hash_ < 0:
-                new_dir = 'Y'+str(hash_)[3:]
-            else:
-                new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
-        if not os.path.isdir(new_dir):
-            os.makedirs(new_dir)
-        assert new_dir not in self._temp_dirs
-        self._temp_dirs.append(new_dir)
-        return new_dir
-
-    def rm_tempdir(self, path):
-        assert path in self._temp_dirs
-        self._temp_dirs.remove(path)
-        shutil.rmtree(path)
-
-    def cleanup(self):
-        for d in self._temp_dirs:
-            self.rm_tempdir(d)
-
-class MultiMap(defaultdict):
+class MultiMap(collections.defaultdict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
     from either keys or values. 
     
@@ -166,7 +86,7 @@ class MultiMap(defaultdict):
         return d
 
     def inverse(self):
-        d = defaultdict(set)
+        d = collections.defaultdict(set)
         for key, val_set in self.iteritems():
             for v in val_set:
                 d[v].add(key)
@@ -178,51 +98,6 @@ class MultiMap(defaultdict):
         temp = self.inverse()
         return coerce_from_iter(temp[val])
 
-class VariableTranslator(Singleton):
-    def __init__(self, unittest_flag=False, verbose=0):
-        # pylint: disable=maybe-no-member
-        if unittest_flag:
-            # value not used, when we're testing will mock out call to read_json
-            # below with actual translation table to use for test
-            config_files = ['dummy_filename']
-        else:
-            paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
-            config_files = glob.glob(glob_pattern)
-
-
-        # always have CF-compliant option, which does no translation
-        self.axes = {
-            'CF': {
-                "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
-                "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
-                "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
-                "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
-        }}
-        self.variables = {'CF': dict()}
-        self.units = {'CF': dict()}
-        for filename in config_files:
-            d = read_json(filename)
-            for conv in coerce_to_iter(d['convention_name'], list):
-                if verbose > 0: 
-                    print('XXX found ', conv)
-                self.axes[conv] = d.get('axes', dict())
-                self.variables[conv] = MultiMap(d.get('var_names', dict()))
-                self.units[conv] = MultiMap(d.get('units', dict()))
-
-    def toCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.variables, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        return self.variables[convention].inverse_get_(varname_in)
-    
-    def fromCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.variables, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        return self.variables[convention].get_(varname_in)
 
 class Namespace(dict):
     """ A dictionary that provides attribute-style access.
@@ -352,7 +227,7 @@ class Namespace(dict):
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
-        FrozenNameSpace = namedtuple('FrozenNameSpace', sorted(d.keys()))
+        FrozenNameSpace = collections.namedtuple('FrozenNameSpace', sorted(d.keys()))
         return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
@@ -368,6 +243,27 @@ class Namespace(dict):
         return hash(self._freeze())
 
 # ------------------------------------
+
+def strip_comments(str_, delimiter=None):
+    if not delimiter:
+        return str_
+    s = str_.splitlines()
+    for i in range(len(s)):
+        if s[i].startswith(delimiter):
+            s[i] = ''
+            continue
+        # If delimiter appears quoted in a string, don't want to treat it as
+        # a comment. So for each occurrence of delimiter, count number of 
+        # "s to its left and only truncate when that's an even number.
+        # TODO: handle ' as well as ", for non-JSON applications
+        s_parts = s[i].split(delimiter)
+        s_counts = [ss.count('"') for ss in s_parts]
+        j = 1
+        while sum(s_counts[:j]) % 2 != 0:
+            j += 1
+        s[i] = delimiter.join(s_parts[:j])
+    # join lines, stripping blank lines
+    return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
 
 def read_json(file_path):
     assert os.path.exists(file_path), \
@@ -385,7 +281,6 @@ def parse_json(str_):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Convert strings to ascii using this solution:
         # https://stackoverflow.com/a/33571117
-        # Also drop any elements beginning with a '#' (convention for comments.)
 
         # if this is a unicode string, return its string representation
         if isinstance(data, unicode):
@@ -393,21 +288,18 @@ def parse_json(str_):
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-            return [item for item in ascii_ if not (
-                hasattr(item, 'startswith') and item.startswith('#'))]
+            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
         # if this is a dictionary, return dictionary of byteified keys and values
         # but only if we haven't already byteified it
         if isinstance(data, dict) and not ignore_dicts:
-            ascii_ = {
+            return {
                 _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
                 for key, value in data.iteritems()
             }
-            return {key: ascii_[key] for key in ascii_ if not (
-                hasattr(key, 'startswith') and key.startswith('#'))}
         # if it's anything else, return it in its original form
         return data
 
+    str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
         parsed_json = _utf8_to_ascii(
             json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
@@ -568,7 +460,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if type(command) == str:
+    if isinstance(command, basestring):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -641,7 +533,7 @@ def run_shell_commands(commands, env=None, cwd=None):
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, bufsize=0
     )
-    if type(commands) == str:
+    if isinstance(commands, basestring):
         commands = [commands]
     # Tried many scenarios for executing commands sequentially 
     # (eg with stdin.write()) but couldn't find a solution that wasn't 
@@ -654,12 +546,8 @@ def run_shell_commands(commands, env=None, cwd=None):
             returncode=proc.returncode, cmd=' && '.join(commands), output=stderr)
     return stdout.splitlines()
 
-def get_available_programs(verbose=0):
-    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
-    #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def coerce_to_iter(obj, coll_type):
-    assert coll_type in [list, set] # only supported types for now
+def coerce_to_iter(obj, coll_type=list):
+    assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
@@ -678,115 +566,11 @@ def coerce_from_iter(obj):
     else:
         return obj
 
-def is_in_config(key, config, section='settings'):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if (section in config) and (key in config[section]):
-        if type(config[section][key] is bool):
-            return True
-        else:
-            if (config[section][key]): # is not empty
-                return True
-            else:
-                return False
-    else:
-        return False
-
-def get_from_config(key, config, section='settings', default=None):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if is_in_config(key, config, section=section):
-        return config[section][key]
-    else:
-        return default
-
-def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
-    """Wrapper to set environment variables.
-
-    Args:
-        varname (:obj:`str`): Variable name to define
-        varvalue: Value to assign. Coerced to type :obj:`str` before being set.
-        env_dict (:obj:`dict`): Copy of 
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-        overwrite (:obj:`bool`): If set to `False`, do not overwrite the values
-            of previously-set variables. 
+def filter_kwargs(kwarg_dict, function):
+    """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    if (not overwrite) and (varname in env_dict): 
-        if (verbose > 0): 
-            print("Not overwriting ENV {}={}".format(varname,env_dict[varname]))
-    else:
-        if ('varname' in env_dict) \
-            and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print("WARNING: setenv {}={} overriding previous setting {}".format(
-                varname, varvalue, env_dict[varname]
-            ))
-        env_dict[varname] = varvalue
-
-        # environment variables must be strings
-        if type(varvalue) is bool:
-            if varvalue == True:
-                varvalue = '1'
-            else:
-                varvalue = '0'
-        elif type(varvalue) is not str:
-            varvalue = str(varvalue)
-        os.environ[varname] = varvalue
-
-        if (verbose > 0): print("ENV ",varname," = ",env_dict[varname])
-    if ( verbose > 2) : print("Check ",varname," ",env_dict[varname])
-
-def check_required_envvar(*varlist):
-    verbose=0
-    varlist = varlist[0]   #unpack tuple
-    for n in range(len(varlist)):
-        if ( verbose > 2):
-            print("checking envvar ", n, varlist[n], str(varlist[n]))
-        try:
-            _ = os.environ[varlist[n]]
-        except:
-            print("ERROR: Required environment variable {} not found.".format(
-                varlist[n]
-            ))
-            exit()
-
-
-def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
-    # arguments can be envvar name or just the paths
-    filestr = __file__+":check_required_dirs: "
-    errstr = "ERROR "+filestr
-    if verbose > 1: filestr +" starting"
-    for dir_in in already_exist + create_if_nec : 
-        if verbose > 1: "\t looking at "+dir_in
- 
-        if dir_in in os.environ:  
-            dir = os.environ[dir_in]
-        else:
-            if verbose>2: print(" envvar "+dir_in+" not defined")    
-            dir = dir_in
-
-        if not os.path.exists(dir):
-            if not dir_in in create_if_nec:
-                if (verbose>0): 
-                    print(errstr+dir_in+" = "+dir+" directory does not exist")
-                raise OSError(dir+" directory does not exist")
-            else:
-                print(dir_in+" = "+dir+" created")
-                os.makedirs(dir)
-        else:
-            print("Found "+dir)
-
-def append_html_template(template_file, target_file, template_dict={}, 
-    create=True):
-    assert os.path.exists(template_file)
-    with open(template_file, 'r') as f:
-        html_str = f.read()
-        html_str = html_str.format(**template_dict)
-    if not os.path.exists(target_file):
-        if create:
-            print("\tDEBUG: write {} to new {}".format(template_file, target_file))
-            mode = 'w'
-        else:
-            raise OSError("Can't find {}".format(target_file))
-    else:
-        print("\tDEBUG: append {} to {}".format(template_file, target_file))
-        mode = 'a'
-    with open(target_file, mode) as f:
-        f.write(html_str)
+    named_args = set(function.func_code.co_varnames)
+    # if 'kwargs' in named_args:
+    #    return kwarg_dict # presumably can handle anything
+    return dict((k, kwarg_dict[k]) for k in named_args \
+        if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])

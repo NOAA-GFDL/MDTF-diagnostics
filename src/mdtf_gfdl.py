@@ -5,19 +5,21 @@ import os
 import tempfile
 import data_manager
 import environment_manager
+import shared_diagnostic
 import gfdl
 import util
-from mdtf import MDTFFramework
+import util_mdtf
+import mdtf
 
-class GFDLMDTFFramework(MDTFFramework):
-    def __init__(self):
+class GFDLMDTFFramework(mdtf.MDTFFramework):
+    def __init__(self, code_root, defaults_rel_path):
         self.set_tempdir()
-        super(GFDLMDTFFramework, self).__init__()
+        super(GFDLMDTFFramework, self).__init__(code_root, defaults_rel_path)
 
     @staticmethod
     def set_tempdir():
         """Setting tempfile.tempdir causes all temp directories returned by 
-        util.PathManager to be in that location.
+        util_mdtf.PathManager to be in that location.
         If we're running on PPAN, recommended practice is to use $TMPDIR
         for scratch work. 
         If we're not, assume we're on a workstation. gcp won't copy to the 
@@ -33,60 +35,25 @@ class GFDLMDTFFramework(MDTFFramework):
             print("Using default tempdir on this system")
         os.environ['MDTF_GFDL_TMPDIR'] = tempfile.gettempdir()
 
-    def argparse_setup(self):
-        """Add GFDL-specific command-line options to those set in mdtf.py.
-        """
-        super(GFDLMDTFFramework, self).argparse_setup()
-        self.parser.add_argument("--frepp", 
-            action="store_true", # so default to False
-            help="Set flag to take configuration info from env vars set by frepp.")
-        self.parser.add_argument("--ignore-component", 
-            action="store_true", # so default to False
-            help=("Set flag to ignore model component passed by frepp "
-                "and search entire /pp/ directory."))
-        # reset default config file
-        for action in self.parser._actions:
-            if action.dest == 'config_file':
-                action.default = os.path.join(self.code_root, 'src', 
-                    'gfdl_mdtf_settings.json')
-
-    @classmethod
-    def parse_mdtf_args(cls, user_args_list, default_args, rel_paths_root=''):
-        default_args['paths']['OBS_DATA_SOURCE'] = util.resolve_path(
-            default_args['paths']['OBS_DATA_ROOT'],
-            rel_paths_root)
-        return super(GFDLMDTFFramework, cls).parse_mdtf_args(
-            user_args_list, default_args, rel_paths_root)
-
-    def _post_config_init(self):
-        timeout = util.get_from_config('file_transfer_timeout', self.config, default=0)
-        dry_run = util.get_from_config('dry_run', self.config, default=False)
-
-        self.fetch_obs_data(timeout, dry_run)
-        paths = util.PathManager()
-        if not os.path.exists(paths.OUTPUT_DIR):
-            # otherwise mdtf.set_mdtf_env_vars will throw error when trying to 
-            # create it on a read-only volume
-            gfdl.make_remote_dir(paths.OUTPUT_DIR, timeout, dry_run)
-
-        super(GFDLMDTFFramework, self)._post_config_init()
-
-        if self.config['settings']['frepp']:
+    def parse_mdtf_args(self, cli_obj):
+        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj)
+        self.fetch_obs_data()
+        if self.config['settings'].get('frepp', False):
             # set up cooperative mode -- hack to pass config settings
             gfdl.GfdlDiagnostic._config = self.config
-            self.Diagnostic = gfdl.GfdlDiagnostic
+            self.config['settings']['diagnostic'] = 'Gfdl'
 
     # add gfdl to search path for DataMgr, EnvMgr
-    _dispatch_search = [data_manager, environment_manager, gfdl]
+    _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
 
     def set_case_pod_list(self, case_dict):
         requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(case_dict)
-        if not self.config['settings']['frepp']:
+        if not self.config['settings'].get('frepp', False):
             # try to run everything if not in frepp cooperative mode
-            return requested_pods 
+            return requested_pods
         else:
             # only attempt PODs other instances haven't already done
-            paths = util.PathManager()
+            paths = util_mdtf.PathManager()
             case_outdir = paths.modelPaths(case_dict)['MODEL_OUT_DIR']
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
@@ -96,11 +63,14 @@ class GFDLMDTFFramework(MDTFFramework):
                 os.path.isdir(os.path.join(case_outdir, p))
             ]
 
-    def fetch_obs_data(self, timeout=0, dry_run=False):
-        source_dir = self.config['paths']['OBS_DATA_SOURCE']
+    def fetch_obs_data(self):
+        dry_run = self.config['settings'].get('dry_run', False)
         dest_dir = self.config['paths']['OBS_DATA_ROOT']
+        source_dir = self.config['paths'].get('OBS_DATA_REMOTE', dest_dir)
         if source_dir == dest_dir:
             return
+        if not os.path.exists(source_dir) or not os.listdir(source_dir):
+            print("Observational data directory at {} is empty.".format(source_dir))
         if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
             print("Observational data directory at {} is empty.".format(dest_dir))
         if gfdl.running_on_PPAN():
@@ -122,7 +92,11 @@ class GFDLMDTFFramework(MDTFFramework):
 
 
 if __name__ == '__main__':
-    print("\n======= Starting "+__file__)
-    mdtf = GFDLMDTFFramework()
+    mdtf.version_check()
+    # get dir of currently executing script: 
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root, src_dir = os.path.split(cwd)
+    mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'defaults_gfdl.json'))
+    print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
-    print("Exiting normally from ",__file__)
+    print("Exiting normally from {}".format(__file__))

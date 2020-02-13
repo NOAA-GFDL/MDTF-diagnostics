@@ -15,6 +15,7 @@ from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod, abstractproperty
 import datelabel
 import util
+import util_mdtf
 import conflict_resolution as choose
 import cmip6
 from data_manager import DataSet, DataManager, DataAccessError
@@ -29,7 +30,7 @@ class ModuleManager(util.Singleton):
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',
         'gcp':      'gcp/2.3',
-        'nco':      'nco/4.7.6', # most recent version common to PPAN and workstations
+        'nco':      'nco/4.5.4', # 4.7.6 still broken on workstations
         'netcdf':   'netcdf/4.2'
     }
 
@@ -48,10 +49,8 @@ class ModuleManager(util.Singleton):
 
     def _module(self, *args):
         # based on $MODULESHOME/init/python.py
-        if type(args[0]) == type([]):
+        if isinstance(args[0], list): # if we're passed explicit list, unpack it
             args = args[0]
-        else:
-            args = list(args)
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         proc = subprocess.Popen([cmd, 'python'] + args, stdout=subprocess.PIPE)
         (output, error) = proc.communicate()
@@ -123,8 +122,8 @@ class GfdlDiagnostic(Diagnostic):
             super(GfdlDiagnostic, self).setUp(verbose)
             make_remote_dir(
                 self.POD_OUT_DIR,
-                timeout=util.get_from_config('file_transfer_timeout', self._config),
-                dry_run=util.get_from_config('dry_run', self._config)
+                timeout=util_mdtf.get_from_config('file_transfer_timeout', self._config),
+                dry_run=util_mdtf.get_from_config('dry_run', self._config)
             )
             self._has_placeholder = True
         except PodRequirementFailure:
@@ -269,7 +268,7 @@ class GfdlarchiveDataManager(DataManager):
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_iter(subdir_filter, set)
+        subdir_filter = util.coerce_to_iter(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \
@@ -421,7 +420,7 @@ class GfdlarchiveDataManager(DataManager):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
         # GCP can't copy to home dir, so always copy to temp
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         work_dir = paths.make_tempdir(hash_obj = d_key)
         remote_files = sorted( # cast from set to list so we can go in chrono order
             list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
@@ -532,7 +531,9 @@ class GfdlarchiveDataManager(DataManager):
                     time_var_name, trimmed_range, 
                     in_file=file_name, cwd=work_dir, dry_run=self.dry_run
                 )
-        assert trim_count <= 2
+        if trim_count > 2:
+            print("trimmed {} files!".format(trim_count))
+            raise AssertionError()
 
         # cat chunks to destination, if more than one
         if len(remote_files) > 1:
@@ -556,7 +557,7 @@ class GfdlarchiveDataManager(DataManager):
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {
-            'gcp': {'command': ['gcp', '-sync', '-v', '-cd'], 'site':'gfdl:'},
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
@@ -593,7 +594,7 @@ class GfdlarchiveDataManager(DataManager):
     def _copy_to_output(self):
         # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         if paths.OUTPUT_DIR == paths.WORKING_DIR:
             return # no copying needed
         if self.coop_mode:
@@ -607,7 +608,7 @@ class GfdlarchiveDataManager(DataManager):
                     )
             # copy all case-level files
             print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
-            for f in os.path.listdir(self.MODEL_WK_DIR):
+            for f in os.listdir(self.MODEL_WK_DIR):
                 print("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
                     gcp_wrapper(
@@ -856,7 +857,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
     util.run_command(
-        ['gcp', '-sync', '-v', '-cd'] + source + dest,
+        ['gcp', '--sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
         dry_run=dry_run
     )
@@ -868,7 +869,7 @@ def make_remote_dir(dest_dir, timeout=0, dry_run=False):
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        paths = util.PathManager()
+        paths = util_mdtf.PathManager()
         work_dir = paths.make_tempdir()
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)

@@ -1,6 +1,7 @@
 import os
 import unittest
 from collections import namedtuple
+import itertools
 import mock # define mock os.environ so we don't mess up real env vars
 import src.util_mdtf as util
 from src.data_manager import DataManager
@@ -85,6 +86,78 @@ class TestUtil(unittest.TestCase):
         except SystemExit:
             self.fail()
         mock_makedirs.assert_called_once_with('DIR2')
+
+    @mock.patch('os.path.exists', return_value=False)
+    def test_bump_version_noexist(self, mock_exists):
+        for f in [
+            'AAA', 'AAA.v1', 'D/C/B/AAA', 'D/C/B/AAAA/', 'D/C/B/AAA.v23', 
+            'D/C/B/AAAA.v23/', 'A.foo', 'A.v23.foo', 'A.v23.bar.v45.foo',
+            'D/C/A.foo', 'D/C/A.v23.foo', 'D/C/A.v23.bar.v45.foo'
+        ]:
+            f2, _ = util.bump_version(f)
+            self.assertEqual(f, f2)
+
+    @mock.patch('os.path.exists', return_value=False)
+    def test_bump_version_getver(self, mock_exists):
+        for f in [
+            'AAA.v42', 'D/C/B/AAA.v42', 'D/C.v7/B/AAAA.v42/', 'A.v42.foo', 
+            'A.v23.bar.v42.foo', 'D/C/A.v42.foo', 'D/C/A.v23.bar.v42.foo'
+        ]:
+            _, ver = util.bump_version(f)
+            self.assertEqual(ver, 42)
+
+    @mock.patch('os.path.exists', return_value=False)
+    def test_bump_version_delver(self, mock_exists):
+        for f in [
+            ('AAA','AAA'), ('AAA.v1','AAA'), ('D/C/B/AA','D/C/B/AA'), 
+            ('D/C.v1/B/AA/','D/C.v1/B/AA/'), ('D/C/B/AA.v23','D/C/B/AA'),
+            ('D/C3/B.v8/AA.v23/','D/C3/B.v8/AA/'), ('A.foo','A.foo'), 
+            ('A.v23.foo','A.foo'), ('A.v23.bar.v45.foo','A.v23.bar.foo'),
+            ('D/C/A.foo','D/C/A.foo'), ('D/C.v1/A234.v3.foo','D/C.v1/A234.foo'),
+            ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.foo')
+        ]:
+            f1, ver = util.bump_version(f[0], new_v=0)
+            self.assertEqual(f1, f[1])
+            self.assertEqual(ver, 0)
+
+    @mock.patch('os.path.exists', return_value=False)
+    def test_bump_version_setver(self, mock_exists):
+        for f in [
+            ('AAA','AAA.v42'), ('AAA.v1','AAA.v42'), ('D/C/B/AA','D/C/B/AA.v42'), 
+            ('D/C.v1/B/AA/','D/C.v1/B/AA.v42/'), ('D/C/B/AA.v23','D/C/B/AA.v42'),
+            ('D/C3/B.v8/AA.v23/','D/C3/B.v8/AA.v42/'), ('A.foo','A.v42.foo'), 
+            ('A.v23.foo','A.v42.foo'), ('A.v23.bar.v45.foo','A.v23.bar.v42.foo'),
+            ('D/C/A.foo','D/C/A.v42.foo'), ('D/C.v1/A.v23.foo','D/C.v1/A.v42.foo'),
+            ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.v42.foo')
+        ]:
+            f1, ver = util.bump_version(f[0], new_v=42)
+            self.assertEqual(f1, f[1])
+            self.assertEqual(ver, 42)
+
+    @mock.patch('os.path.exists', side_effect=itertools.cycle([True,False]))
+    def test_bump_version_dirs(self, mock_exists):
+        for f in [
+            ('AAA','AAA.v1',1), ('AAA.v1','AAA.v2',2), ('D/C/B/AA','D/C/B/AA.v1',1), 
+            ('D/C.v1/B/AA/','D/C.v1/B/AA.v1/',1), ('D/C/B/AA.v23','D/C/B/AA.v24',24),
+            ('D/C3/B.v8/AA.v9/','D/C3/B.v8/AA.v10/',10)
+        ]:
+            f1, ver = util.bump_version(f[0])
+            self.assertEqual(f1, f[1])
+            self.assertEqual(ver, f[2])
+
+    @mock.patch('os.path.exists', side_effect=itertools.cycle([True,False]))
+    def test_bump_version_files(self, mock_exists):
+        for f in [
+            ('A.foo','A.v1.foo',1), ('A.v23.foo','A.v24.foo',24), 
+            ('A.v23.bar.v45.foo','A.v23.bar.v46.foo',46),
+            ('D/C/A.foo','D/C/A.v1.foo',1), 
+            ('D/C.v1/A.v99.foo','D/C.v1/A.v100.foo', 100),
+            ('D/C/A.v23.bar.v78.foo','D/C/A.v23.bar.v79.foo', 79)
+        ]:
+            f1, ver = util.bump_version(f[0])
+            self.assertEqual(f1, f[1])
+            self.assertEqual(ver, f[2])
+
 
 class TestVariableTranslator(unittest.TestCase):
     @mock.patch('src.util.read_json', 

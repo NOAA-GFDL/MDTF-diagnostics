@@ -7,7 +7,6 @@ import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
     def __init__(self, unittest_flag=False):
-        # pylint: disable=maybe-no-member
         if unittest_flag:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

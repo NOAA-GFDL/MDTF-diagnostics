@@ -153,6 +153,10 @@
           "type" : "int",
           "default" : 300,
           "metavar" : "<seconds>"
+        },{
+          "name": "keep_temp",
+          "help": "Set to true to retain local temp directories of downloaded data.",
+          "default" : false
         }
       ]
     },{
@@ -225,6 +229,10 @@
           "hidden" : true,
           "help": "Default format for bitmap figure output.",
           "default" : "png"
+        },{
+          "name": "overwrite",
+          "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",
+          "default" : false
         }
       ]
     },{

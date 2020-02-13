@@ -138,6 +138,16 @@
       "description" : "Settings specific to operation at GFDL.",
       "arguments" : [
         {
+          "name": "GFDL_PPAN_TEMP",
+          "help": "If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "default": "$TMPDIR",
+          "metavar" : "<DIR>"
+        },{
+          "name": "GFDL_WS_TEMP",
+          "help": "If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "default": "/net2/$USER/tmp",
+          "metavar" : "<DIR>"
+        },{
           "name": "frepp",
           "help": "Set flag to run framework in 'online' mode, processing data as part of the FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper script from the XML.",
           "default" : false
@@ -161,6 +171,10 @@
           "type" : "int",
           "default" : 300,
           "metavar" : "<seconds>"
+        },{
+          "name": "keep_temp",
+          "help": "Set to true to retain local temp directories of downloaded data.",
+          "default" : false
         }
       ]
     },{
@@ -233,6 +247,10 @@
           "hidden" : true,
           "help": "Default format for bitmap figure output.",
           "default" : "png"
+        },{
+          "name": "overwrite",
+          "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",
+          "default" : false
         }
       ]
     },{

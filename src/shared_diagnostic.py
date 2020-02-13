@@ -544,14 +544,15 @@ class Diagnostic(object):
 
         # remove .eps files if requested
         if os.environ["save_ps"] == "0":
-            dirs = ['model/PS', 'obs/PS']
-            for d in dirs:
+            for d in ['model/PS', 'obs/PS']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
 
-        # delete netCDF files if requested
-        if os.environ["save_nc"] == "0":    
-            dirs = ['model/netCDF', 'obs/netCDF']
-            for d in dirs:
+        if os.environ["save_non_nc"] != "0":
+            # delete netCDF files, keep everything else
+            os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
+        elif os.environ["save_nc"] == "0":
+            # delete all generated data (flag is a misnomer)
+            for d in ['model/netCDF', 'obs/netCDF']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))

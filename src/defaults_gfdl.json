@@ -236,7 +236,11 @@
           "default" : false
         },{
           "name": "save_nc",
-          "help": "Set flag to have PODs save netCDF files of processed data.",
+          "help": "Set flag to save all processed data, in addition to plots.",
+          "default" : false
+        },{
+          "name": "save_non_nc",
+          "help": "Set flag to save all processed data except netcdf files.",
           "default" : false
         },{
           "name": "make_variab_tar",

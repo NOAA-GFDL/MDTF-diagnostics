@@ -87,6 +87,7 @@ class PathManager(util.Singleton):
     def rm_tempdir(self, path):
         assert path in self._temp_dirs
         self._temp_dirs.remove(path)
+        print("\tDEBUG: cleanup temp dir {}".format(path))
         shutil.rmtree(path)
 
     def cleanup(self):
@@ -234,7 +235,7 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
                     print(errstr+dir_in+" = "+dir+" directory does not exist")
                 raise OSError(dir+" directory does not exist")
             else:
-                print(dir_in+" = "+dir+" created")
+                print(dir+" created")
                 os.makedirs(dir)
         else:
             print("Found "+dir)

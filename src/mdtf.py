@@ -51,8 +51,7 @@ class MDTFFramework(object):
             self._real_init_hook(code_root, defaults_rel_path)
 
     def cleanup_tempdirs(self, signum=None, frame=None):
-        # tell PathManager to delete temp files if we're killed
-        # This is not called during normal operation and exit.
+        # tell PathManager to delete temp files
         if signum:
             # lookup signal name from number; https://stackoverflow.com/a/2549950
             sig_lookup = {

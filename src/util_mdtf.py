@@ -8,27 +8,65 @@ import shutil
 import tempfile
 import util
 
-class PathManager(util.Singleton):
+
+class PathManager(util.Namespace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
-    _root_pathnames = [
-        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WORKING_DIR', 'OUTPUT_DIR'
-    ]
+    def __init__(self, d, code_root=None, unittest_flag=False):
+        self.CODE_ROOT = d.get('CODE_ROOT', None)
+        if not self.CODE_ROOT or self.CODE_ROOT == '.':
+            self.CODE_ROOT = code_root
+        assert os.path.isdir(self.CODE_ROOT)
 
-    def __init__(self, arg_dict={}, unittest_flag=False):
-        for var in self._root_pathnames:
-            if unittest_flag: # use in unit testing only
-                self.__setattr__(var, 'TEST_'+var)
-            else:
-                assert var in arg_dict, \
-                    'Error: {} not initialized.'.format(var)
-                self.__setattr__(var, arg_dict[var])
+        if '_paths_to_parse' in d:
+            # set by CLI settings that have action=PathAction in cli.py
+            for key in d['_paths_to_parse']:
+                if key == 'CODE_ROOT':
+                    continue # just to be safe
+                self[key] = self._init_path(key, d, unittest_flag)
+                if key in d:
+                    d[key] = self[key]
+        else:
+            print("Warning: didn't find CLI's path list.")
 
-    def modelPaths(self, case, overwrite=False):
-        # pylint: disable=maybe-no-member
-        d = {}
+        # set following explictly: redundant, but keeps linter from complaining
+        self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, unittest_flag)
+        self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, unittest_flag)
+        self.WORKING_DIR = self._init_path('WORKING_DIR', d, unittest_flag)
+        self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, unittest_flag)
+
+    def _init_path(self, key, d, unittest_flag=False):
+        if unittest_flag: # use in unit testing only
+            return 'TEST_'+key
+        else:
+            # need to check existence in case we're being called directly
+            assert key in d, 'Error: {} not initialized.'.format(key)
+            return self.resolve_path(util.coerce_from_iter(d[key]), self.CODE_ROOT)
+
+    @staticmethod
+    def resolve_path(path, root_path=''):
+        """Abbreviation to resolve relative paths.
+
+        Args:
+            path (:obj:`str`): path to resolve.
+            root_path (:obj:`str`, optional): root path to resolve `path` with. If
+                not given, resolves relative to `cwd`.
+
+        Returns: Absolute version of `path`, relative to `root_path` if given, 
+            otherwise relative to `os.getcwd`.
+        """
+        for key, val in os.environ.iteritems():
+            path = re.sub(r"\$"+key, val, path)
+        if os.path.isabs(path):
+            return path
+        if not root_path:
+            root_path = os.getcwd()
+        assert os.path.isabs(root_path)
+        return os.path.normpath(os.path.join(root_path, path))
+
+    def model_paths(self, case, overwrite=False):
+        d = util.Namespace()
         if isinstance(case, dict):
             name = case['CASENAME']
             yr1 = case['FIRSTYR']
@@ -38,26 +76,25 @@ class PathManager(util.Singleton):
             yr1 = case.firstyr
             yr2 = case.lastyr
         case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
-        d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
-        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
+        d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
+        d.MODEL_WK_DIR = os.path.join(self.WORKING_DIR, case_wk_dir)
+        d.MODEL_OUT_DIR = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         if not overwrite:
             # bump both WK_DIR and OUT_DIR to same version because name of 
             # former may be preserved when we copy to latter, depending on 
             # copy method
-            d['MODEL_OUT_DIR'], ver = bump_version(d['MODEL_OUT_DIR'])
-            d['MODEL_WK_DIR'], _ = bump_version(d['MODEL_WK_DIR'], new_v=ver)
+            d.MODEL_OUT_DIR, ver = bump_version(d.MODEL_OUT_DIR)
+            d.MODEL_WK_DIR, _ = bump_version(d.MODEL_WK_DIR, new_v=ver)
         return d
 
-    def podPaths(self, pod):
-        # pylint: disable=maybe-no-member
-        d = {}
-        d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
-        d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        if 'MODEL_WK_DIR' in pod.__dict__:
-            d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
-        if 'MODEL_OUT_DIR' in pod.__dict__:
-            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
+    def pod_paths(self, pod):
+        d = util.Namespace()
+        d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
+        d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
+        assert 'MODEL_WK_DIR' in pod.__dict__
+        d.POD_WK_DIR = os.path.join(pod.MODEL_WK_DIR, pod.name)
+        assert 'MODEL_OUT_DIR' in pod.__dict__
+        d.POD_OUT_DIR = os.path.join(pod.MODEL_OUT_DIR, pod.name)
         return d
 
 

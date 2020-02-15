@@ -334,29 +334,6 @@ def pretty_print_json(struct):
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 
-def resolve_path(in_path, root_path=''):
-    """Abbreviation to resolve relative paths.
-
-    Args:
-        path (:obj:`str`): path to resolve.
-        root_path (:obj:`str`, optional): root path to resolve `path` with. If
-            not given, resolves relative to `cwd`.
-
-    Returns: Absolute version of `path`, relative to `root_path` if given, 
-        otherwise relative to `os.getcwd`.
-    """
-    path = in_path
-    for key, val in os.environ.iteritems():
-        path = re.sub(r"\$"+key, val, path)
-    if os.path.isabs(path):
-        return path
-    else:
-        if root_path == '':
-            root_path = os.getcwd()
-        else:
-            assert os.path.isabs(root_path)
-        return os.path.normpath(os.path.join(root_path, path))
-
 def find_files(root_dir, pattern):
     """Return list of files in `root_dir` matching `pattern`. 
 

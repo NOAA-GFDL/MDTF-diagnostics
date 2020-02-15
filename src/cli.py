@@ -41,6 +41,19 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
             return ', '.join(parts)
 
 
+class PathAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Can't resolve paths at CLI parse time, because they might refer to 
+        # framework-specific environment variables that haven't been set yet.
+        # Instead keep track of them in a list for now, so we can parse them later.
+        path_list = getattr(namespace, '_paths_to_parse', [])
+        if self.dest in path_list:
+            print("Warning: duplicate assignment for {}, overwriting.".format(self.dest))
+        path_list.append(self.dest)
+        setattr(namespace, '_paths_to_parse', path_list)
+        setattr(namespace, self.dest, values)
+
+
 class CLIHandler(object):
     def __init__(self, code_root, defaults_rel_path):
         self.code_root = code_root
@@ -133,6 +146,12 @@ class CLIHandler(object):
                 d['default'] = d['type'](d['default'])
         if d.get('action', '') == 'count' and 'default' in d:
             d['default'] = int(d['default'])
+        if d.get('action', '') not in [
+            # built-in actions passed as strings
+            '', 'store', 'store_const', 'store_true', 'store_false', 'append', 
+            'append_const', 'count', 'help', 'version']:
+            # non-built-in actions must be passed as a Class object
+            d['action'] = eval(d['action'])
         # TODO: what if following require env vars, etc??
         if d.pop('eval', None):
             for attr in util.coerce_to_iter(d['eval']):

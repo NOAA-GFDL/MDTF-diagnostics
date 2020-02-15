@@ -26,8 +26,6 @@ class PathManager(util.Singleton):
                     'Error: {} not initialized.'.format(var)
                 self.__setattr__(var, arg_dict[var])
 
-        self._temp_dirs = []
-
     def modelPaths(self, case, overwrite=False):
         # pylint: disable=maybe-no-member
         d = {}
@@ -62,14 +60,22 @@ class PathManager(util.Singleton):
             d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
         return d
 
-    def make_tempdir(self, hash_obj=None):
-        tempdir_prefix = 'MDTF_temp_'
 
-        temp_root = tempfile.gettempdir()
+class TempDirManager(util.Singleton):
+    _prefix = 'MDTF_temp_'
+
+    def __init__(self, temp_root=None):
+        if not temp_root:
+            temp_root = tempfile.gettempdir()
+        assert os.path.isdir(temp_root)
+        self._root = temp_root
+        self._dirs = []
+
+    def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
-            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
+            new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
         elif isinstance(hash_obj, basestring):
-            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
+            new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
             hash_ = hex(hash(hash_obj))
@@ -77,21 +83,21 @@ class PathManager(util.Singleton):
                 new_dir = 'Y'+str(hash_)[3:]
             else:
                 new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
+            new_dir = os.path.join(self._root, self._prefix+new_dir)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
-        assert new_dir not in self._temp_dirs
-        self._temp_dirs.append(new_dir)
+        assert new_dir not in self._dirs
+        self._dirs.append(new_dir)
         return new_dir
 
     def rm_tempdir(self, path):
-        assert path in self._temp_dirs
-        self._temp_dirs.remove(path)
+        assert path in self._dirs
+        self._dirs.remove(path)
         print("\tDEBUG: cleanup temp dir {}".format(path))
         shutil.rmtree(path)
 
     def cleanup(self):
-        for d in self._temp_dirs:
+        for d in self._dirs:
             self.rm_tempdir(d)
 
 

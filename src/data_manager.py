@@ -53,7 +53,7 @@ class DataAccessError(Exception):
         else:
             return 'Data access error: {}.'.format(self.msg)
 
-class DataSet(util.Namespace):
+class DataSet(util.NameSpace):
     """Class to describe datasets.
 
     `https://stackoverflow.com/a/48806603`_ for implementation.

@@ -99,7 +99,7 @@ class MultiMap(collections.defaultdict):
         return coerce_from_iter(temp[val])
 
 
-class Namespace(dict):
+class NameSpace(dict):
     """ A dictionary that provides attribute-style access.
 
     For example, `d['key'] = value` becomes `d.key = value`. All methods of 
@@ -127,7 +127,7 @@ class Namespace(dict):
 
     def __setattr__(self, k, v):
         """ Sets attribute k if it exists, otherwise sets key k. A KeyError
-            raised by set-item (only likely if you subclass Namespace) will
+            raised by set-item (only likely if you subclass NameSpace) will
             propagate as an AttributeError instead.
         """
         try:
@@ -181,13 +181,13 @@ class Namespace(dict):
         self.update(state)
 
     def toDict(self):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)
 
     @classmethod
     def _toDict(cls, x):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
@@ -203,7 +203,7 @@ class Namespace(dict):
 
     @classmethod
     def fromDict(cls, x):
-        """ Recursively transforms a dictionary into a Namespace via copy.
+        """ Recursively transforms a dictionary into a NameSpace via copy.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):

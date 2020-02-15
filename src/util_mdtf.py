@@ -9,7 +9,7 @@ import tempfile
 import util
 
 
-class PathManager(util.Namespace):
+class PathManager(util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
@@ -66,7 +66,7 @@ class PathManager(util.Namespace):
         return os.path.normpath(os.path.join(root_path, path))
 
     def model_paths(self, case, overwrite=False):
-        d = util.Namespace()
+        d = util.NameSpace()
         if isinstance(case, dict):
             name = case['CASENAME']
             yr1 = case['FIRSTYR']
@@ -88,7 +88,7 @@ class PathManager(util.Namespace):
         return d
 
     def pod_paths(self, pod):
-        d = util.Namespace()
+        d = util.NameSpace()
         d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
         assert 'MODEL_WK_DIR' in pod.__dict__

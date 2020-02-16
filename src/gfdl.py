@@ -110,21 +110,18 @@ class GfdlDiagnostic(Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
     """
-    # hack because we can't pass config to init easily
-    _config = None
-
     def __init__(self, pod_name, verbose=0):
         super(GfdlDiagnostic, self).__init__(pod_name, verbose)
         self._has_placeholder = False
 
     def setUp(self, verbose=0):
-        # pylint: disable=maybe-no-member
+        config = util_mdtf.ConfigManager()
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
             make_remote_dir(
                 self.POD_OUT_DIR,
-                timeout=util_mdtf.get_from_config('file_transfer_timeout', self._config),
-                dry_run=util_mdtf.get_from_config('dry_run', self._config)
+                timeout=config.config.get('file_transfer_timeout', 0),
+                dry_run=config.config.get('dry_run', False)
             )
             self._has_placeholder = True
         except PodRequirementFailure:
@@ -139,9 +136,9 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.
 
-    def __init__(self, config, verbose=0):
+    def __init__(self, verbose=0):
         _ = ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__(config, verbose)
+        super(GfdlvirtualenvEnvironmentManager, self).__init__(verbose)
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
@@ -192,15 +189,12 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
     # Use mdteam's anaconda2
-    def __init__(self, config, verbose=0):
-        super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
-
     def _call_conda_create(self, env_name):
         raise Exception(("Trying to create conda env {} "
             "in read-only mdteam account.").format(env_name)
         )
 
-def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
+def GfdlautoDataManager(case_dict, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.
     """
     drs_partial_directory_regex = re.compile(r"""
@@ -219,46 +213,47 @@ def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
 
     if 'root_dir' in case_dict \
         and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
-        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+        return GfdlppDataManager(case_dict, DateFreqMixin)
     elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
         and ('source_id' in case_dict or 'model' in case_dict):
-        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+        return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
     elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
         match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
         if match:
             case_dict.update(match.groupdict())
-        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
+        return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
     elif 'root_dir' in case_dict:
-        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+        return GfdlppDataManager(case_dict, DateFreqMixin)
     else:
         raise Exception("Don't know how to dispatch DataManager based on input.")
 
 
 class GfdlarchiveDataManager(DataManager):
     __metaclass__ = ABCMeta
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+    def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
         modMgr.load('gcp', 'nco') # should refactor
-        config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
-        super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
 
-        assert ('root_dir' in case_dict)
-        assert os.path.isdir(case_dict['root_dir'])
-        self.root_dir = case_dict['root_dir']
+        config = util_mdtf.ConfigManager()
+        config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now
+        super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
+
+        assert ('CASE_ROOT_DIR' in case_dict)
+        assert os.path.isdir(case_dict['CASE_ROOT_DIR'])
+        self.root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
-        self.frepp_mode = config['settings']['frepp']
+        self.frepp_mode = config.config.get('frepp', False)
         if self.frepp_mode:
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
             # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
-            paths = util_mdtf.PathManager()
-            d = paths.modelPaths(self, overwrite=True)
-            self.MODEL_WK_DIR = d['MODEL_WK_DIR']
-            self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
+            d = config.paths.modelPaths(self, overwrite=True)
+            self.MODEL_WK_DIR = d.MODEL_WK_DIR
+            self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
@@ -432,8 +427,8 @@ class GfdlarchiveDataManager(DataManager):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
         # GCP can't copy to home dir, so always copy to temp
-        paths = util_mdtf.PathManager()
-        work_dir = paths.make_tempdir(hash_obj = d_key)
+        tmpdirs = util_mdtf.TempDirManager()
+        work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
         remote_files = sorted( # cast from set to list so we can go in chrono order
             list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
             ) 
@@ -603,14 +598,17 @@ class GfdlarchiveDataManager(DataManager):
                 mode = 'w'
             with open(self.TEMP_HTML, mode) as f2:
                 f2.write(contents)
-        super(GfdlarchiveDataManager, self)._make_html(cleanup=(not self.frepp_mode))
+        super(GfdlarchiveDataManager, self)._make_html(
+            cleanup=(not self.frepp_mode)
+        )
 
     def _make_tar_file(self, tar_dest_dir):
-        # pylint: disable=maybe-no-member
         # make locally in WORKING_DIR and gcp to destination,
         # since OUTPUT_DIR might be mounted read-only
-        paths = util_mdtf.PathManager()
-        out_file = super(GfdlarchiveDataManager, self)._make_tar_file(paths.WORKING_DIR)
+        config = util_mdtf.ConfigManager()
+        out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
+            config.paths.WORKING_DIR
+        )
         gcp_wrapper(
             out_file, tar_dest_dir,
             timeout=self.file_transfer_timeout, dry_run=self.dry_run
@@ -680,11 +678,12 @@ class GfdlarchiveDataManager(DataManager):
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
-        super(GfdlppDataManager, self).__init__(case_dict, config, DateFreqMixin)
-        for attr in ['component', 'data_freq', 'chunk_freq']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
+    def __init__(self, case_dict, DateFreqMixin=None):
+        # assign explicitly else linter complains
+        self.component = None
+        self.data_freq = None
+        self.chunk_freq = None
+        super(GfdlppDataManager, self).__init__(case_dict, DateFreqMixin)
 
     UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
     def undecided_key(self, dataset):
@@ -720,7 +719,6 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.component, 'ts', frepp_freq(self.data_freq), 
                 frepp_freq(self.chunk_freq)]
                 
@@ -770,7 +768,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
 
 class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
     __metaclass__ = ABCMeta    
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+    def __init__(self, case_dict, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
@@ -801,11 +799,14 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         if not os.path.exists(case_dict['root_dir']):
             raise DataAccessError(None, 
                 "Can't access {}".format(case_dict['root_dir']))
+        # assign explicitly else linter complains
+        self.data_freq = None
+        self.table_id = None
+        self.grid_label = None
+        self.version_date = None
         super(Gfdlcmip6abcDataManager, self).__init__(
-            case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
-        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
+            case_dict, DateFreqMixin=cmip6.CMIP6DateFrequency
+        )
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
@@ -834,7 +835,6 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         return ds
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.table_id, None, # variable_id
             self.grid_label, self.version_date]
 
@@ -916,15 +916,20 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
         dry_run=dry_run
     )
 
-def make_remote_dir(dest_dir, timeout=0, dry_run=False):
+def make_remote_dir(dest_dir, timeout=None, dry_run=None):
     try:
         os.makedirs(dest_dir)
     except OSError:
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        paths = util_mdtf.PathManager()
-        work_dir = paths.make_tempdir()
+        config = util_mdtf.ConfigManager()
+        tmpdirs = util_mdtf.TempDirManager()
+        work_dir = tmpdirs.make_tempdir()
+        if timeout is None:
+            timeout = config.config.get('file_transfer_timeout', 0)
+        if dry_run is None:
+            dry_run = config.config.get('dry_run', False)
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
         gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)

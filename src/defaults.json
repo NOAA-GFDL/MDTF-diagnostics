@@ -60,31 +60,29 @@
       "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
       "arguments" : [
         {
-          "name": "CODE_ROOT",
-          "hidden" : true,
-          "help": "Code installation directory. Set automatically except in unit testing.",
-          "default" : ".",
-          "metavar" : "<DIR>"
-        },{
           "name": "MODEL_DATA_ROOT",
           "help": "Parent directory containing results from different models.",
           "default" : "../inputdata/model/",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "OBS_DATA_ROOT",
           "help": "Parent directory containing observational data used by individual PODs.",
           "default" : "../inputdata/obs_data",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "WORKING_DIR",
           "help": "Working directory.",
           "default" : "../wkdir",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "OUTPUT_DIR",
           "help": "Directory to write output files. Defaults to working directory.",
           "default" : "../wkdir",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         }
       ]
     },{
@@ -190,22 +188,26 @@
           "name": "conda_root",
           "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
           "default" : "",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
           "default" : "./envs/conda",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "venv_root",
           "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
           "default" : "./envs/venv",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         },{
           "name": "r_lib_root",
           "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
           "default" : "./envs/r_libs",
-          "metavar" : "<DIR>"
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         }
       ]
     },{

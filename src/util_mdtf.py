@@ -8,29 +8,87 @@ import shutil
 import tempfile
 import util
 
-class PathManager(util.Singleton):
+
+class ConfigManager(util.Singleton):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
-    _root_pathnames = [
-        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WORKING_DIR', 'OUTPUT_DIR'
-    ]
+    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest_flag=False):
+        assert cli_obj # Singleton, so init should only ever be called once
+        # set up paths
+        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest_flag)
+        # load pod info
+        self.pods = pod_info_tuple.pod_data
+        self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
+        self.pod_realms = pod_info_tuple.realm_data
 
-    def __init__(self, arg_dict={}, unittest_flag=False):
-        for var in self._root_pathnames:
-            if unittest_flag: # use in unit testing only
-                self.__setattr__(var, 'TEST_'+var)
-            else:
-                assert var in arg_dict, \
-                    'Error: {} not initialized.'.format(var)
-                self.__setattr__(var, arg_dict[var])
+        self.global_envvars = dict()
+        # copy over all config settings
+        self.config = util.NameSpace.fromDict(cli_obj.config)
 
-        self._temp_dirs = []
 
-    def modelPaths(self, case, overwrite=False):
-        # pylint: disable=maybe-no-member
-        d = {}
+class _PathManager(util.NameSpace):
+    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
+    set in the ``paths`` section of ``mdtf_settings.json``.
+    """
+    def __init__(self, d, code_root=None, unittest_flag=False):
+        self.unittest_flag = unittest_flag
+        self.CODE_ROOT = code_root
+        assert os.path.isdir(self.CODE_ROOT)
+
+    def parse(self, d, env=None):
+        if '_paths_to_parse' in d:
+            # set by CLI settings that have action=PathAction in cli.py
+            for key in d['_paths_to_parse']:
+                if key == 'CODE_ROOT':
+                    continue # just to be safe
+                self[key] = self._init_path(key, d, env=env)
+                if key in d:
+                    d[key] = self[key]
+        else:
+            print("Warning: didn't find CLI's path list.")
+        # set following explictly: redundant, but keeps linter from complaining
+        self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
+        self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
+        self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
+        self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
+
+    def _init_path(self, key, d, env=None):
+        if self.unittest_flag: # use in unit testing only
+            return 'TEST_'+key
+        else:
+            # need to check existence in case we're being called directly
+            assert key in d, 'Error: {} not initialized.'.format(key)
+            return self.resolve_path(
+                util.coerce_from_iter(d[key]), root_path=self.CODE_ROOT, env=env
+            )
+
+    @staticmethod
+    def resolve_path(path, root_path="", env=None):
+        """Abbreviation to resolve relative paths.
+
+        Args:
+            path (:obj:`str`): path to resolve.
+            root_path (:obj:`str`, optional): root path to resolve `path` with. If
+                not given, resolves relative to `cwd`.
+
+        Returns: Absolute version of `path`, relative to `root_path` if given, 
+            otherwise relative to `os.getcwd`.
+        """
+        for key, val in os.environ.iteritems():
+            path = re.sub(r"\$"+key, val, path)
+        if isinstance(env, dict):
+            for key, val in env.iteritems():
+                path = re.sub(r"\$"+key, val, path)
+        if os.path.isabs(path):
+            return path
+        if root_path == "":
+            root_path = os.getcwd()
+        assert os.path.isabs(root_path)
+        return os.path.normpath(os.path.join(root_path, path))
+
+    def model_paths(self, case, overwrite=False):
+        d = util.NameSpace()
         if isinstance(case, dict):
             name = case['CASENAME']
             yr1 = case['FIRSTYR']
@@ -40,36 +98,41 @@ class PathManager(util.Singleton):
             yr1 = case.firstyr
             yr2 = case.lastyr
         case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
-        d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
-        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
+        d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
+        d.MODEL_WK_DIR = os.path.join(self.WORKING_DIR, case_wk_dir)
+        d.MODEL_OUT_DIR = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         if not overwrite:
             # bump both WK_DIR and OUT_DIR to same version because name of 
             # former may be preserved when we copy to latter, depending on 
             # copy method
-            d['MODEL_OUT_DIR'], ver = bump_version(d['MODEL_OUT_DIR'])
-            d['MODEL_WK_DIR'], _ = bump_version(d['MODEL_WK_DIR'], new_v=ver)
+            d.MODEL_OUT_DIR, ver = bump_version(d.MODEL_OUT_DIR)
+            d.MODEL_WK_DIR, _ = bump_version(d.MODEL_WK_DIR, new_v=ver)
         return d
 
-    def podPaths(self, pod):
-        # pylint: disable=maybe-no-member
-        d = {}
-        d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
-        d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        if 'MODEL_WK_DIR' in pod.__dict__:
-            d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
-        if 'MODEL_OUT_DIR' in pod.__dict__:
-            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
+    def pod_paths(self, pod, case):
+        d = util.NameSpace()
+        d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
+        d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
+        d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
+        d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
         return d
+
+
+class TempDirManager(util.Singleton):
+    _prefix = 'MDTF_temp_'
+
+    def __init__(self, temp_root=None):
+        if not temp_root:
+            temp_root = tempfile.gettempdir()
+        assert os.path.isdir(temp_root)
+        self._root = temp_root
+        self._dirs = []
 
     def make_tempdir(self, hash_obj=None):
-        tempdir_prefix = 'MDTF_temp_'
-
-        temp_root = tempfile.gettempdir()
         if hash_obj is None:
-            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
+            new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
         elif isinstance(hash_obj, basestring):
-            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
+            new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
             hash_ = hex(hash(hash_obj))
@@ -77,37 +140,36 @@ class PathManager(util.Singleton):
                 new_dir = 'Y'+str(hash_)[3:]
             else:
                 new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
+            new_dir = os.path.join(self._root, self._prefix+new_dir)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
-        assert new_dir not in self._temp_dirs
-        self._temp_dirs.append(new_dir)
+        assert new_dir not in self._dirs
+        self._dirs.append(new_dir)
         return new_dir
 
     def rm_tempdir(self, path):
-        assert path in self._temp_dirs
-        self._temp_dirs.remove(path)
+        assert path in self._dirs
+        self._dirs.remove(path)
         print("\tDEBUG: cleanup temp dir {}".format(path))
         shutil.rmtree(path)
 
     def cleanup(self):
-        for d in self._temp_dirs:
+        for d in self._dirs:
             self.rm_tempdir(d)
 
 
 class VariableTranslator(util.Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
-        # pylint: disable=maybe-no-member
         if unittest_flag:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
-            paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
+            config = ConfigManager()
+            glob_pattern = os.path.join(
+                config.paths.CODE_ROOT, 'src', 'fieldlist_*.json'
+            )
             config_files = glob.glob(glob_pattern)
-
-
         # always have CF-compliant option, which does no translation
         self.axes = {
             'CF': {
@@ -145,26 +207,6 @@ class VariableTranslator(util.Singleton):
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def is_in_config(key, config, section='settings'):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if (section in config) and (key in config[section]):
-        if isinstance(config[section][key], bool):
-            return True
-        else:
-            if (config[section][key]): # is not empty
-                return True
-            else:
-                return False
-    else:
-        return False
-
-def get_from_config(key, config, section='settings', default=None):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if is_in_config(key, config, section=section):
-        return config[section][key]
-    else:
-        return default
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

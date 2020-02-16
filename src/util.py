@@ -35,12 +35,6 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
-
-    Note:
-        All child classes, :class:`~util_mdtf.PathManager` and 
-        :class:`~util_mdtf.VariableTranslator`,
-        are read-only, although this is not enforced. This eliminates most of the
-        danger in using Singletons or global state in general.
     """
     @classmethod
     def _reset(cls):
@@ -99,7 +93,7 @@ class MultiMap(collections.defaultdict):
         return coerce_from_iter(temp[val])
 
 
-class Namespace(dict):
+class NameSpace(dict):
     """ A dictionary that provides attribute-style access.
 
     For example, `d['key'] = value` becomes `d.key = value`. All methods of 
@@ -127,7 +121,7 @@ class Namespace(dict):
 
     def __setattr__(self, k, v):
         """ Sets attribute k if it exists, otherwise sets key k. A KeyError
-            raised by set-item (only likely if you subclass Namespace) will
+            raised by set-item (only likely if you subclass NameSpace) will
             propagate as an AttributeError instead.
         """
         try:
@@ -181,13 +175,13 @@ class Namespace(dict):
         self.update(state)
 
     def toDict(self):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)
 
     @classmethod
     def _toDict(cls, x):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
@@ -203,7 +197,7 @@ class Namespace(dict):
 
     @classmethod
     def fromDict(cls, x):
-        """ Recursively transforms a dictionary into a Namespace via copy.
+        """ Recursively transforms a dictionary into a NameSpace via copy.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
@@ -333,29 +327,6 @@ def pretty_print_json(struct):
         str_ = str_.replace(char, '')
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
-
-def resolve_path(in_path, root_path=''):
-    """Abbreviation to resolve relative paths.
-
-    Args:
-        path (:obj:`str`): path to resolve.
-        root_path (:obj:`str`, optional): root path to resolve `path` with. If
-            not given, resolves relative to `cwd`.
-
-    Returns: Absolute version of `path`, relative to `root_path` if given, 
-        otherwise relative to `os.getcwd`.
-    """
-    path = in_path
-    for key, val in os.environ.iteritems():
-        path = re.sub(r"\$"+key, val, path)
-    if os.path.isabs(path):
-        return path
-    else:
-        if root_path == '':
-            root_path = os.getcwd()
-        else:
-            assert os.path.isabs(root_path)
-        return os.path.normpath(os.path.join(root_path, path))
 
 def find_files(root_dir, pattern):
     """Return list of files in `root_dir` matching `pattern`. 
@@ -574,3 +545,15 @@ def filter_kwargs(kwarg_dict, function):
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
+
+def signal_logger(caller_name, signum=None, frame=None):
+    if signum:
+        # lookup signal name from number; https://stackoverflow.com/a/2549950
+        sig_lookup = {
+            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+                if v.startswith('SIG') and not v.startswith('SIG_')
+        }
+        print("\tDEBUG: {} caught signal {} ({})".format(
+            caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
+        ))
+        print("\tDEBUG: {}".format(frame))

@@ -310,8 +310,9 @@ class FrameworkCLIHandler(CLIHandler):
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(*chained_dict_list))
 
-PodDataTuple = collections.namedtuple('PodDataTuple', 
-    'pod_list pod_data realm_list realm_data')
+PodDataTuple = collections.namedtuple(
+    'PodDataTuple', 'sorted_lists pod_data realm_data'
+)
 def load_pod_settings(code_root, pod=None, pod_list=None):
     """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
     """
@@ -350,6 +351,8 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
                 bad_pods.append(p)
                 continue
             pods[p] = d
+            # PODs requiring data from multiple realms get stored in the dict
+            # under a tuple of those realms; realms stored indivudally in realm_list
             _realm = util.coerce_to_iter(d['settings'].get('realm', None), tuple)
             if len(_realm) == 0:
                 continue
@@ -362,8 +365,11 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
         for p in bad_pods:
             pod_list.remove(p)
         return PodDataTuple(
-            pod_list=pod_list, pod_data=pods, 
-            realm_list = sorted(list(realm_list), key=str.lower), realm_data=realms
+            pod_data=pods, realm_data=realms,
+            sorted_lists={
+                "pods": pod_list,
+                "realms": sorted(list(realm_list), key=str.lower)
+            }
         )
     else:
         if pod not in pod_list:
@@ -384,9 +390,9 @@ class InfoCLIHandler(object):
 
         self.code_root = code_root
         pod_info_tuple = load_pod_settings(self.code_root)
-        self.pod_list = pod_info_tuple.pod_list
+        self.pod_list = pod_info_tuple.sorted_lists.get('pods', [])
         self.pods = pod_info_tuple.pod_data
-        self.realm_list = pod_info_tuple.realm_list
+        self.realm_list = pod_info_tuple.sorted_lists.get('realms', [])
         self.realms = pod_info_tuple.realm_data
 
         # build list of recognized topics, in order

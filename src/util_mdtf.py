@@ -18,9 +18,8 @@ class ConfigManager(util.Singleton):
         # set up paths
         self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest_flag)
         # load pod info
-        self.all_pods = pod_info_tuple.pod_list
         self.pods = pod_info_tuple.pod_data
-        self.all_realms = pod_info_tuple.realm_list
+        self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
         self.pod_realms = pod_info_tuple.realm_data
 
         self.global_envvars = dict()

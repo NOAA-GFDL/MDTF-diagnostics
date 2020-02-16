@@ -13,8 +13,15 @@
 # ======================================================================
 
 from __future__ import print_function
-import os
 import sys
+# do version check before importing other stuff
+if sys.version_info[0] != 2 or sys.version_info[1] < 7:
+    print(("ERROR: MDTF currently only supports python 2.7.*. Please check "
+    "which version is on your $PATH (e.g. with `which python`.)"))
+    print("Attempted to run with following python version:\n{}".format(sys.version))
+    exit()
+# passed; continue with imports
+import os
 import signal
 import shutil
 import cli
@@ -267,18 +274,8 @@ class MDTFFramework(object):
             case.tearDown()
         self.cleanup_tempdirs()
 
-def version_check():
-    v = sys.version_info
-    if v.major != 2 or v.minor < 7:
-        print("""ERROR: attempted to run with python {}.{}.{}. The MDTF framework
-        currently only supports python 2.7.*. Please check which version of python
-        is on your $PATH (e.g. with `which python`.)""".format(
-            v.major, v.minor, v.micro
-        ))
-        exit()
 
 if __name__ == '__main__':
-    version_check()
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)

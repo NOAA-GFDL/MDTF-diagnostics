@@ -35,12 +35,6 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
-
-    Note:
-        All child classes, :class:`~util_mdtf.PathManager` and 
-        :class:`~util_mdtf.VariableTranslator`,
-        are read-only, although this is not enforced. This eliminates most of the
-        danger in using Singletons or global state in general.
     """
     @classmethod
     def _reset(cls):

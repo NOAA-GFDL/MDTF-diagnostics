@@ -9,43 +9,64 @@ import tempfile
 import util
 
 
-class PathManager(util.NameSpace):
+class ConfigManager(util.Singleton):
+    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
+    set in the ``paths`` section of ``mdtf_settings.json``.
+    """
+    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest_flag=False):
+        assert cli_obj # Singleton, so init should only ever be called once
+        # set up paths
+        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest_flag)
+        # load pod info
+        self.all_pods = pod_info_tuple.pod_list
+        self.pods = pod_info_tuple.pod_data
+        self.all_realms = pod_info_tuple.realm_list
+        self.pod_realms = pod_info_tuple.realm_data
+
+        # copy over all config settings
+        self.config = util.NameSpace.fromDict(cli_obj.config)
+
+
+class _PathManager(util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
     def __init__(self, d, code_root=None, unittest_flag=False):
+        self.unittest_flag = unittest_flag
         self.CODE_ROOT = d.get('CODE_ROOT', None)
         if not self.CODE_ROOT or self.CODE_ROOT == '.':
             self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
+    def parse(self, d, env=None):
         if '_paths_to_parse' in d:
             # set by CLI settings that have action=PathAction in cli.py
             for key in d['_paths_to_parse']:
                 if key == 'CODE_ROOT':
                     continue # just to be safe
-                self[key] = self._init_path(key, d, unittest_flag)
+                self[key] = self._init_path(key, d, env=env)
                 if key in d:
                     d[key] = self[key]
         else:
             print("Warning: didn't find CLI's path list.")
-
         # set following explictly: redundant, but keeps linter from complaining
-        self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, unittest_flag)
-        self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, unittest_flag)
-        self.WORKING_DIR = self._init_path('WORKING_DIR', d, unittest_flag)
-        self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, unittest_flag)
+        self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
+        self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
+        self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
+        self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
-    def _init_path(self, key, d, unittest_flag=False):
-        if unittest_flag: # use in unit testing only
+    def _init_path(self, key, d, env=None):
+        if self.unittest_flag: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
             assert key in d, 'Error: {} not initialized.'.format(key)
-            return self.resolve_path(util.coerce_from_iter(d[key]), self.CODE_ROOT)
+            return self.resolve_path(
+                util.coerce_from_iter(d[key]), root_path=self.CODE_ROOT, env=env
+            )
 
     @staticmethod
-    def resolve_path(path, root_path=''):
+    def resolve_path(path, root_path="", env=None):
         """Abbreviation to resolve relative paths.
 
         Args:
@@ -58,9 +79,12 @@ class PathManager(util.NameSpace):
         """
         for key, val in os.environ.iteritems():
             path = re.sub(r"\$"+key, val, path)
+        if isinstance(env, dict):
+            for key, val in env.iteritems():
+                path = re.sub(r"\$"+key, val, path)
         if os.path.isabs(path):
             return path
-        if not root_path:
+        if root_path == "":
             root_path = os.getcwd()
         assert os.path.isabs(root_path)
         return os.path.normpath(os.path.join(root_path, path))
@@ -146,8 +170,10 @@ class VariableTranslator(util.Singleton):
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
-            paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'fieldlist_*.json')
+            config = ConfigManager()
+            glob_pattern = os.path.join(
+                config.paths.CODE_ROOT, 'src', 'fieldlist_*.json'
+            )
             config_files = glob.glob(glob_pattern)
 
 
@@ -188,26 +214,6 @@ class VariableTranslator(util.Singleton):
 def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def is_in_config(key, config, section='settings'):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if (section in config) and (key in config[section]):
-        if isinstance(config[section][key], bool):
-            return True
-        else:
-            if (config[section][key]): # is not empty
-                return True
-            else:
-                return False
-    else:
-        return False
-
-def get_from_config(key, config, section='settings', default=None):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if is_in_config(key, config, section=section):
-        return config[section][key]
-    else:
-        return default
 
 def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     """Wrapper to set environment variables.

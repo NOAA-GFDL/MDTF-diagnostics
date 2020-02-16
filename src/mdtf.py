@@ -30,7 +30,7 @@ class MDTFFramework(object):
         framework. 
         """
         self.code_root = code_root
-        # tell PathManager to delete temp files if we're killed
+        # delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
 
@@ -49,10 +49,10 @@ class MDTFFramework(object):
             # not printing help or info, setup CLI normally 
             # move into its own function so that child classes can customize
             # above options without having to rewrite below
-            self._real_init_hook(code_root, defaults_rel_path)
+            self._framework_init(code_root, defaults_rel_path)
 
     def cleanup_tempdirs(self, signum=None, frame=None):
-        # tell PathManager to delete temp files
+        # delete temp files
         if signum:
             # lookup signal name from number; https://stackoverflow.com/a/2549950
             sig_lookup = {
@@ -63,87 +63,78 @@ class MDTFFramework(object):
                 self.__class__.__name__, sig_lookup.get(signum, 'UNKNOWN'), signum
             ))
             print("\tDEBUG: {}".format(frame))
-        if not self.config['settings']['keep_temp']:
-            paths = util_mdtf.PathManager()
-            paths.cleanup()
+        config = util_mdtf.ConfigManager()
+        tmpdirs = util_mdtf.TempDirManager()
+        if not config.config.get('keep_temp', False):
+            tmpdirs.cleanup()
 
-    def _real_init_hook(self, code_root, defaults_rel_path):
+    def _framework_init(self, code_root, defaults_rel_path):
         # set up CLI and parse arguments
         print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
         cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
         self._cli_pre_parse_hook(cli_obj)
         cli_obj.parse_cli()
-        # load pod info
-        pod_info_tuple = cli.load_pod_settings(self.code_root)
-        self.all_pods = pod_info_tuple.pod_list
-        self.pods = pod_info_tuple.pod_data
-        self.all_realms = pod_info_tuple.realm_list
-        self.pod_realms = pod_info_tuple.realm_data
+        self._cli_post_parse_hook(cli_obj)
+        # load pod data
+        pod_info_tuple = cli.load_pod_settings(code_root)
         # do nontrivial parsing
-        self.dry_run = cli_obj.config.get('dry_run', False)
-        self.timeout = cli_obj.config.get('timeout', False)
-        self.parse_mdtf_args(cli_obj)
-        # use final info to initialize ConfigManager
-        print('DEBUG: SETTINGS:\n', util.pretty_print_json(self.config))
-        exit()
+        config = util_mdtf.ConfigManager(cli_obj, pod_info_tuple)
+        self.parse_mdtf_args(cli_obj, config)
+        # config should be read-only from here on
+        self._post_parse_hook(cli_obj, config)
+        self._print_config(cli_obj, config)
 
     def _cli_pre_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler before parsing
         # although most of the work done by parse_mdtf_args
         pass
 
-    def parse_mdtf_args(self, cli_obj):
+    def _cli_post_parse_hook(self, cli_obj):
+        # gives subclasses the ability to customize CLI handler after parsing
+        # although most of the work done by parse_mdtf_args
+        if cli_obj.config.get('dry_run', False):
+            cli_obj.config['test_mode'] = True
+
+    @staticmethod
+    def _populate_from_cli(cli_obj, group_nm, d):
+        for key, val in cli_obj.iteritems_cli(group_nm):
+            d[key] = val
+
+    def parse_mdtf_args(self, cli_obj, config):
         """Parse script options returned by the CLI. For greater customizability,
         most of the functionality is spun out into sub-methods.
         """
-        self.postparse_cli(cli_obj)
-        self.parse_env_vars(cli_obj)
-        self.parse_pod_list(cli_obj)
-        self.parse_case_list(cli_obj)
-        self.parse_paths(cli_obj)
-        
-        # make config nested dict for backwards compatibility
-        # this is all temporary
-        self.config = dict()
-        self.config['pod_list'] = self.pod_list
-        self.config['case_list'] = self.case_list
-        self.config['paths'] = self.paths
-        util_mdtf.PathManager(self.config['paths']) # initialize
-        self.config['settings'] = dict()
-        settings_gps = set(cli_obj.parser_groups.keys()).difference(
-            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
-        )
-        for group in settings_gps:
-            self._populate_dict(cli_obj, group, self.config['settings'])
-        self.config['envvars'] = self.config['settings'].copy()
-        self.config['envvars'].update(self.config['paths'])
-        self.config['envvars']['RGB'] = os.path.join(self.code_root,'src','rgb')
+        self.parse_env_vars(cli_obj, config)
+        self.parse_pod_list(cli_obj, config)
+        self.parse_case_list(cli_obj, config)
+        self.parse_paths(cli_obj, config)
 
-    def postparse_cli(self, cli_obj):
-        # stuff too cumbersome to do within cli.py 
-        if self.dry_run:
-            cli_obj.config['test_mode'] = True
+    def parse_env_vars(self, cli_obj, config):
+        config.global_envvars = dict()
+        # don't think PODs use global env vars?
+        # self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
+        config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')
 
-    def parse_pod_list(self, cli_obj):
+    def parse_pod_list(self, cli_obj, config):
         self.pod_list = []
-        args = util.coerce_to_iter(cli_obj.config.pop('pods', []), set)
+        args = util.coerce_to_iter(config.config.pop('pods', []), set)
         if 'all' in args:
-            self.pod_list = self.all_pods
+            self.pod_list = config.all_pods
         else:
             # specify pods by realm
-            realms = args.intersection(set(self.all_realms))
-            args = args.difference(set(self.all_realms)) # remainder
-            for key in self.pod_realms:
+            realms = args.intersection(set(config.all_realms))
+            args = args.difference(set(config.all_realms)) # remainder
+            for key in config.pod_realms:
                 if util.coerce_to_iter(key, set).issubset(realms):
-                    self.pod_list.extend(self.pod_realms[key])
+                    self.pod_list.extend(config.pod_realms[key])
             # specify pods by name
-            pods = args.intersection(set(self.all_pods))
+            pods = args.intersection(set(config.all_pods))
             self.pod_list.extend(list(pods))
-            for arg in args.difference(set(self.all_pods)): # remainder:
+            for arg in args.difference(set(config.all_pods)): # remainder:
                 print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
 
-    def parse_case_list(self, cli_obj):
-        d = cli_obj.config # abbreviate
+    def parse_case_list(self, cli_obj, config):
+        d = config.config # abbreviate
         self.case_list = []
         if d.get('model', None) or d.get('experiment', None) \
             or d.get('CASENAME', None):
@@ -162,7 +153,7 @@ class MDTFFramework(object):
     def caselist_from_args(self, cli_obj):
         d = dict()
         d2 = cli_obj.config # abbreviate
-        self._populate_dict(cli_obj, 'MODEL', d)
+        self._populate_from_cli(cli_obj, 'MODEL', d)
         # remove empty entries first
         d = {k:v for k,v in d.iteritems() if v}
         if 'model' not in d:
@@ -183,49 +174,50 @@ class MDTFFramework(object):
             exit()
         return [d]
 
-    def parse_env_vars(self, cli_obj):
-        self.envvars = dict()
-        self.envvars = cli_obj.config.copy()
+    def parse_paths(self, cli_obj, config):
+        config.paths.parse(cli_obj.config)
 
-    def _mdtf_resolve_path(self, path, cli_obj):
-        # wrapper to resolve relative paths and substitute env vars
-        # only let CODE_ROOT be overridden if we're in a unit test
-        rel_paths_root = cli_obj.config.get('CODE_ROOT', None)
-        if not rel_paths_root or rel_paths_root == '.':
-            rel_paths_root = self.code_root
-        return util.resolve_path(util.coerce_from_iter(path), rel_paths_root)
+    def _post_parse_hook(self, cli_obj, config):
+        # init other services
+        _ = util_mdtf.TempDirManager()
+        _ = util_mdtf.VariableTranslator()
+        self.verify_paths(config)
 
-    def parse_paths(self, cli_obj):
-        self.paths = dict()
-        for key, val in cli_obj.iteritems_cli('PATHS'):
-            val2 = self._mdtf_resolve_path(val, cli_obj)
-            # print('\tDEBUG: {},{},{}'.format(key, val, val2))
-            self.paths[key] = val2
-
+    def verify_paths(self, config):
         # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(self.paths['WORKING_DIR']) and \
-            not cli_obj.config.get('keep_temp', False):
-            shutil.rmtree(self.paths['WORKING_DIR'])
+        if os.path.exists(config.paths.WORKING_DIR) and \
+            not config.config.get('keep_temp', False):
+            shutil.rmtree(config.paths.WORKING_DIR)
         util_mdtf.check_required_dirs(
             already_exist = [
-                self.paths['CODE_ROOT'], self.paths['OBS_DATA_ROOT']
+                config.paths.CODE_ROOT, config.paths.OBS_DATA_ROOT
             ], 
             create_if_nec = [
-                self.paths['MODEL_DATA_ROOT'], 
-                self.paths['WORKING_DIR'], 
-                self.paths['OUTPUT_DIR']
+                config.paths.MODEL_DATA_ROOT, 
+                config.paths.WORKING_DIR, 
+                config.paths.OUTPUT_DIR
         ])
 
-    @staticmethod
-    def _populate_dict(cli_obj, group_nm, d):
-        # hacky temp code, for backwards compatibility
-        for key, val in cli_obj.iteritems_cli(group_nm):
-            d[key] = val
+    def _print_config(self, cli_obj, config):
+        # make config nested dict for backwards compatibility
+        # this is all temporary
+        d = dict()
+        d['pod_list'] = self.pod_list
+        d['case_list'] = self.case_list
+        d['paths'] = config.paths
+        d['settings'] = dict()
+        settings_gps = set(cli_obj.parser_groups.keys()).difference(
+            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
+        )
+        for group in settings_gps:
+            self._populate_from_cli(cli_obj, group, d['settings'])
+        d['envvars'] = config.global_envvars
+        print('DEBUG: SETTINGS:\n', util.pretty_print_json(d))
 
     _dispatch_search = [data_manager, environment_manager, shared_diagnostic]
-    def manual_dispatch(self):
+    def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
-            class_prefix = self.config['settings'].get(setting, '')
+            class_prefix = config.config.get(setting, '')
             # drop '_' and title-case class name
             class_prefix = ''.join(class_prefix.split('_')).title()
             for mod in self._dispatch_search:
@@ -240,19 +232,20 @@ class MDTFFramework(object):
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
 
-    def set_case_pod_list(self, case_dict):
+    def set_case_pod_list(self, case_dict, config):
         if not case_dict.get('pod_list', None):
             return self.pod_list # use global list of PODs 
         else:
             return case_dict['pod_list']
 
     def main_loop(self):
-        self.manual_dispatch()
+        config = util_mdtf.ConfigManager()
+        self.manual_dispatch(config)
         caselist = []
         # only run first case in list until dependence on env vars cleaned up
-        for case_dict in self.config['case_list'][0:1]: 
-            case_dict['pod_list'] = self.set_case_pod_list(case_dict)
-            case = self.DataManager(case_dict, self.config)
+        for case_dict in self.case_list[0:1]: 
+            case_dict['pod_list'] = self.set_case_pod_list(case_dict, config)
+            case = self.DataManager(case_dict)
             for pod_name in case.pod_list:
                 try:
                     pod = self.Diagnostic(pod_name)
@@ -264,14 +257,14 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env = self.EnvironmentManager(self.config)
+            env = self.EnvironmentManager()
             env.pods = case.pods # best way to do this?
             env.setUp()
             env.run()
             env.tearDown()
 
         for case in caselist:
-            case.tearDown(self.config)
+            case.tearDown()
         self.cleanup_tempdirs()
 
 def version_check():

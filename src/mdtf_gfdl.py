@@ -16,69 +16,72 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr
     _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
 
-    def parse_mdtf_args(self, cli_obj):
-        ### call parent class method
-        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj)
-
-        # copy obs data from site install
-        self.fetch_obs_data()
+    def parse_mdtf_args(self, cli_obj, config):
+        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj, config)
         # set up cooperative mode -- hack to pass config settings
-        if self.config['settings'].get('frepp', False):
-            gfdl.GfdlDiagnostic._config = self.config
-            self.config['settings']['diagnostic'] = 'Gfdl'
+        self.frepp_mode = config.config.get('frepp', False)
+        if self.frepp_mode:
+            gfdl.GfdlDiagnostic._config = config.config
+            config.config['diagnostic'] = 'Gfdl'
 
-    def parse_env_vars(self, cli_obj):
+    def parse_env_vars(self, cli_obj, config):
+        super(GFDLMDTFFramework, self).parse_env_vars(cli_obj, config)
         # set temp directory according to where we're running
         if gfdl.running_on_PPAN():
             gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
         else:
             gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
-        gfdl_tmp_dir = mdtf._mdtf_resolve_path(gfdl_tmp_dir, cli_obj)
+        gfdl_tmp_dir = config.paths.resolve_path(
+            gfdl_tmp_dir, root_path=self.code_root, env=config.global_envvars
+        )
         if not os.path.isdir(gfdl_tmp_dir):
             gfdl.make_remote_dir(gfdl_tmp_dir)
         tempfile.tempdir = gfdl_tmp_dir
         os.environ['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
+        config.global_envvars['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
 
+    def _post_parse_hook(self, cli_obj, config):
         ### call parent class method
-        super(GFDLMDTFFramework, self).parse_env_vars(cli_obj)
+        super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config)
 
-    def parse_paths(self, cli_obj):
-        self.paths = dict()
-        for key, val in cli_obj.iteritems_cli('PATHS'):
-            val2 = self._mdtf_resolve_path(val, cli_obj)
-            # print('\tDEBUG: {},{},{}'.format(key, val, val2))
-            self.paths[key] = val2
+        self.dry_run = config.config.get('dry_run', False)
+        self.timeout = config.config.get('file_transfer_timeout', 0)
+        # copy obs data from site install
+        fetch_obs_data(
+            config.paths.OBS_DATA_REMOTE, config.paths.OBS_DATA_ROOT,
+            timeout=self.timeout, dry_run=self.dry_run
+        )
 
+    def verify_paths(self, config):
         # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(self.paths['WORKING_DIR']) and \
-            not cli_obj.config.get('keep_temp', False):
-            shutil.rmtree(self.paths['WORKING_DIR'])
+        if os.path.exists(config.paths.WORKING_DIR) and \
+            not config.config.get('keep_temp', False):
+            shutil.rmtree(config.paths.WORKING_DIR)
         util_mdtf.check_required_dirs(
             already_exist = [
-                self.paths['CODE_ROOT'], self.paths['OBS_DATA_REMOTE']
+                config.paths.CODE_ROOT, config.paths.OBS_DATA_REMOTE
             ], 
             create_if_nec = [
-                self.paths['MODEL_DATA_ROOT'], self.paths['WORKING_DIR'],
-                self.paths['OBS_DATA_ROOT']
+                config.paths.MODEL_DATA_ROOT, config.paths.WORKING_DIR,
+                config.paths.OBS_DATA_ROOT
         ])
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
-        if not os.path.exists(self.paths['OUTPUT_DIR']):
+        if not os.path.exists(config.paths.OUTPUT_DIR):
             gfdl.make_remote_dir(
-                self.paths['OUTPUT_DIR'], self.timeout, self.dry_run
+                config.paths.OUTPUT_DIR, self.timeout, self.dry_run
             )
 
-    def set_case_pod_list(self, case_dict):
-        ### call parent class method
-        requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(case_dict)
-
-        if not self.config['settings'].get('frepp', False):
+    def set_case_pod_list(self, case_dict, config):
+        requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(
+            case_dict, config
+        )
+        if not self.frepp_mode:
             # try to run everything if not in frepp cooperative mode
             return requested_pods
         else:
             # frepp mode:only attempt PODs other instances haven't already done
-            paths = util_mdtf.PathManager()
-            case_outdir = paths.modelPaths(case_dict, overwrite=True)
-            case_outdir = case_outdir['MODEL_OUT_DIR']
+            case_outdir = config.paths.modelPaths(case_dict, overwrite=True)
+            case_outdir = case_outdir.MODEL_OUT_DIR
             for p in requested_pods:
                 if os.path.isdir(os.path.join(case_outdir, p)):
                     print(("\tDEBUG: preexisting {} in {}; "
@@ -87,33 +90,32 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
                 os.path.isdir(os.path.join(case_outdir, p))
             ]
 
-    def fetch_obs_data(self):
-        dest_dir = self.paths['OBS_DATA_ROOT']
-        source_dir = self.paths['OBS_DATA_REMOTE']
-        if source_dir == dest_dir:
-            return
-        if not os.path.exists(source_dir) or not os.listdir(source_dir):
-            print("Observational data directory at {} is empty.".format(source_dir))
-        if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
-            print("Observational data directory at {} is empty.".format(dest_dir))
-        if gfdl.running_on_PPAN():
-            print("\tGCPing data from {}.".format(source_dir))
-            # giving -cd to GCP, so will create dirs
-            gfdl.gcp_wrapper(
-                source_dir, dest_dir, timeout=self.timeout, dry_run=self.dry_run
-            )
-        else:
-            print("\tSymlinking obs data dir to {}.".format(source_dir))
-            dest_parent = os.path.dirname(dest_dir)
-            if os.path.exists(dest_dir):
-                assert os.path.isdir(dest_dir)
-                os.rmdir(dest_dir)
-            elif not os.path.exists(dest_parent):
-                os.makedirs(dest_parent)
-            util.run_command(
-                ['ln', '-fs', source_dir, dest_dir], 
-                dry_run=self.dry_run
-            )
+
+def fetch_obs_data(source_dir, dest_dir, timeout=0, dry_run=False):
+    if source_dir == dest_dir:
+        return
+    if not os.path.exists(source_dir) or not os.listdir(source_dir):
+        print("Observational data directory at {} is empty.".format(source_dir))
+    if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
+        print("Observational data directory at {} is empty.".format(dest_dir))
+    if gfdl.running_on_PPAN():
+        print("\tGCPing data from {}.".format(source_dir))
+        # giving -cd to GCP, so will create dirs
+        gfdl.gcp_wrapper(
+            source_dir, dest_dir, timeout=timeout, dry_run=dry_run
+        )
+    else:
+        print("\tSymlinking obs data dir to {}.".format(source_dir))
+        dest_parent = os.path.dirname(dest_dir)
+        if os.path.exists(dest_dir):
+            assert os.path.isdir(dest_dir)
+            os.rmdir(dest_dir)
+        elif not os.path.exists(dest_parent):
+            os.makedirs(dest_parent)
+        util.run_command(
+            ['ln', '-fs', source_dir, dest_dir], 
+            dry_run=dry_run
+        )
 
 
 if __name__ == '__main__':

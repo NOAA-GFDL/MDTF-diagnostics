@@ -219,8 +219,7 @@ class DataManager(object):
         translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
-        pod.__dict__.update(config.paths.model_paths(self, overwrite=self.overwrite))
-        pod.__dict__.update(config.paths.pod_paths(pod))
+        pod.__dict__.update(config.paths.pod_paths(pod, self))
         pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run

@@ -109,14 +109,12 @@ class _PathManager(util.NameSpace):
             d.MODEL_WK_DIR, _ = bump_version(d.MODEL_WK_DIR, new_v=ver)
         return d
 
-    def pod_paths(self, pod):
+    def pod_paths(self, pod, case):
         d = util.NameSpace()
         d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        assert 'MODEL_WK_DIR' in pod.__dict__
-        d.POD_WK_DIR = os.path.join(pod.MODEL_WK_DIR, pod.name)
-        assert 'MODEL_OUT_DIR' in pod.__dict__
-        d.POD_OUT_DIR = os.path.join(pod.MODEL_OUT_DIR, pod.name)
+        d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
+        d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
         return d
 
 

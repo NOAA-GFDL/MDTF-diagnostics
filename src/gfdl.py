@@ -110,21 +110,19 @@ class GfdlDiagnostic(Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
     """
-    # hack because we can't pass config to init easily
-    _config = None
-
     def __init__(self, pod_name, verbose=0):
         super(GfdlDiagnostic, self).__init__(pod_name, verbose)
         self._has_placeholder = False
 
     def setUp(self, verbose=0):
         # pylint: disable=maybe-no-member
+        config = util_mdtf.ConfigManager()
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
             make_remote_dir(
                 self.POD_OUT_DIR,
-                timeout=util_mdtf.get_from_config('file_transfer_timeout', self._config),
-                dry_run=util_mdtf.get_from_config('dry_run', self._config)
+                timeout=config.config.get('file_transfer_timeout', 0),
+                dry_run=config.config.get('dry_run', False)
             )
             self._has_placeholder = True
         except PodRequirementFailure:

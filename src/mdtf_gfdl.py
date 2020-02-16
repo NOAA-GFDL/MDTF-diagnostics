@@ -29,7 +29,6 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
         # set up cooperative mode -- hack to pass config settings
         self.frepp_mode = config.config.get('frepp', False)
         if self.frepp_mode:
-            gfdl.GfdlDiagnostic._config = config.config
             config.config['diagnostic'] = 'Gfdl'
 
     def parse_env_vars(self, cli_obj, config):

@@ -117,7 +117,6 @@ class MDTFFramework(object):
         self.parse_paths(cli_obj, config)
 
     def parse_env_vars(self, cli_obj, config):
-        config.global_envvars = dict()
         # don't think PODs use global env vars?
         # self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
         config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')

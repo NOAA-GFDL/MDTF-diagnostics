@@ -420,8 +420,8 @@ class DataManager(object):
         unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier
         if unique_files:
-            if hasattr(self, 'fetch_ordering_function'):
-                sort_key = self.fetch_ordering_function
+            if self._fetch_order_function is not None:
+                sort_key = self._fetch_order_function
             if hasattr(unique_files[0], '_remote_data'):
                 sort_key = attrgetter('_remote_data')
             else:
@@ -429,6 +429,8 @@ class DataManager(object):
             unique_files.sort(key=sort_key)
         return unique_files
     
+    _fetch_order_function=None
+
     def local_data_is_current(self, dataset):
         """Determine if local copy of data needs to be refreshed.
 

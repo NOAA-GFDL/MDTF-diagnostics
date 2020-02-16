@@ -33,9 +33,7 @@ class _PathManager(util.NameSpace):
     """
     def __init__(self, d, code_root=None, unittest_flag=False):
         self.unittest_flag = unittest_flag
-        self.CODE_ROOT = d.get('CODE_ROOT', None)
-        if not self.CODE_ROOT or self.CODE_ROOT == '.':
-            self.CODE_ROOT = code_root
+        self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
     def parse(self, d, env=None):

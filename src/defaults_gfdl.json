@@ -49,13 +49,6 @@
       "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
       "arguments" : [
         {
-          "name": "CODE_ROOT",
-          "hidden" : true,
-          "help": "Code installation directory. Set automatically except in unit testing.",
-          "default" : ".",
-          "metavar" : "<DIR>",
-          "action": "PathAction"
-        },{
           "name": "MODEL_DATA_ROOT",
           "help": "Parent directory containing results from different models.",
           "default" : "$MDTF_GFDL_TMPDIR/inputdata/model",

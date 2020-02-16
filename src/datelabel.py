@@ -704,6 +704,9 @@ class DateFrequency(datetime.timedelta):
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)
         obj = super(DateFrequency, cls).__new__(cls, **kwargs)
+        obj.quantity = None
+        obj.unit = None
+        # actually set attributes, as well as any others child classes may add
         for key, val in attrs.iteritems():
             obj.__setattr__(key, val)
         return obj
@@ -764,13 +767,11 @@ class DateFrequency(datetime.timedelta):
             raise ValueError("Malformed input {} {}".format(q, s))
 
     def format(self):
-        # pylint: disable=maybe-no-member
         # conversion? only hr and yr used
         return "{}{}".format(self.quantity, self.unit)
     __str__ = format
 
     def format_local(self):
-        # pylint: disable=maybe-no-member
         if self.unit == 'hr':
             return self.format()
         else:
@@ -785,7 +786,6 @@ class DateFrequency(datetime.timedelta):
         return "{}('{}')".format(type(self).__name__, self)
 
     def __eq__(self, other):
-        # pylint: disable=maybe-no-member
         # Note: only want to match labels, don't want '24hr' == '1day'
         if isinstance(other, DateFrequency):
             return (self.quantity == other.quantity) and (self.unit == other.unit)

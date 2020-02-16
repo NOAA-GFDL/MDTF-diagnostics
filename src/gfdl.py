@@ -115,7 +115,6 @@ class GfdlDiagnostic(Diagnostic):
         self._has_placeholder = False
 
     def setUp(self, verbose=0):
-        # pylint: disable=maybe-no-member
         config = util_mdtf.ConfigManager()
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
@@ -604,7 +603,6 @@ class GfdlarchiveDataManager(DataManager):
         )
 
     def _make_tar_file(self, tar_dest_dir):
-        # pylint: disable=maybe-no-member
         # make locally in WORKING_DIR and gcp to destination,
         # since OUTPUT_DIR might be mounted read-only
         config = util_mdtf.ConfigManager()
@@ -681,10 +679,11 @@ class GfdlarchiveDataManager(DataManager):
 
 class GfdlppDataManager(GfdlarchiveDataManager):
     def __init__(self, case_dict, DateFreqMixin=None):
+        # assign explicitly else linter complains
+        self.component = None
+        self.data_freq = None
+        self.chunk_freq = None
         super(GfdlppDataManager, self).__init__(case_dict, DateFreqMixin)
-        for attr in ['component', 'data_freq', 'chunk_freq']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
 
     UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
     def undecided_key(self, dataset):
@@ -720,7 +719,6 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.component, 'ts', frepp_freq(self.data_freq), 
                 frepp_freq(self.chunk_freq)]
                 
@@ -801,12 +799,14 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         if not os.path.exists(case_dict['root_dir']):
             raise DataAccessError(None, 
                 "Can't access {}".format(case_dict['root_dir']))
+        # assign explicitly else linter complains
+        self.data_freq = None
+        self.table_id = None
+        self.grid_label = None
+        self.version_date = None
         super(Gfdlcmip6abcDataManager, self).__init__(
             case_dict, DateFreqMixin=cmip6.CMIP6DateFrequency
         )
-        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
@@ -835,7 +835,6 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         return ds
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.table_id, None, # variable_id
             self.grid_label, self.version_date]
 

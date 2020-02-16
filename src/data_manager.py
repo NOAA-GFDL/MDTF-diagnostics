@@ -59,26 +59,20 @@ class DataSet(util.NameSpace):
     `https://stackoverflow.com/a/48806603`_ for implementation.
     """
     def __init__(self, *args, **kwargs):
-        # pylint: disable=maybe-no-member
         if 'DateFreqMixin' not in kwargs:
             self.DateFreq = datelabel.DateFrequency
         else:
             self.DateFreq = kwargs['DateFreqMixin']
             del kwargs['DateFreqMixin']
-
+        # assign explicitly else linter complains
+        self.name = None
+        self.date_range = None
+        self.date_freq = None
+        self._local_data = None
+        self._remote_data = []
+        self.alternates = []
+        self.axes = dict()
         super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
-            if key not in self:
-                self[key] = None
-        
-        for key in ['_remote_data', 'alternates']:
-            if key not in self:
-                self[key] = []
-
-        for key in ['axes']:
-            if key not in self:
-                self[key] = dict()
-                
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
             del self.var_name
@@ -192,7 +186,6 @@ class DataManager(object):
     # -------------------------------------
 
     def setUp(self, verbose=0):
-        # pylint: disable=maybe-no-member
         util_mdtf.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 

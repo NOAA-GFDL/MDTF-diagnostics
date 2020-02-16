@@ -162,7 +162,6 @@ class TempDirManager(util.Singleton):
 
 class VariableTranslator(util.Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
-        # pylint: disable=maybe-no-member
         if unittest_flag:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
@@ -173,8 +172,6 @@ class VariableTranslator(util.Singleton):
                 config.paths.CODE_ROOT, 'src', 'fieldlist_*.json'
             )
             config_files = glob.glob(glob_pattern)
-
-
         # always have CF-compliant option, which does no translation
         self.axes = {
             'CF': {

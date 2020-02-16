@@ -147,9 +147,8 @@ class EnvironmentManager(object):
             self.destroy_environment(env)
 
     def subprocess_cleanup(self, signum=None, frame=None):
+        util.signal_logger(self.__class__.__name__, signum, frame)
         # kill any active subprocesses
-        if signum:
-            print("\tDEBUG: {} caught signal {}", self.__class__.__name__, signum)
         for pod in self.pods:
             if pod.process_obj is not None:
                 pod.process_obj.kill()

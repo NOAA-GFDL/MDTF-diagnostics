@@ -60,16 +60,7 @@ class MDTFFramework(object):
 
     def cleanup_tempdirs(self, signum=None, frame=None):
         # delete temp files
-        if signum:
-            # lookup signal name from number; https://stackoverflow.com/a/2549950
-            sig_lookup = {
-                k:v for v, k in reversed(sorted(signal.__dict__.items())) \
-                    if v.startswith('SIG') and not v.startswith('SIG_')
-            }
-            print("\tDEBUG: {} caught signal {} ({})".format(
-                self.__class__.__name__, sig_lookup.get(signum, 'UNKNOWN'), signum
-            ))
-            print("\tDEBUG: {}".format(frame))
+        util.signal_logger(self.__class__.__name__, signum, frame)
         config = util_mdtf.ConfigManager()
         tmpdirs = util_mdtf.TempDirManager()
         if not config.config.get('keep_temp', False):

@@ -545,3 +545,15 @@ def filter_kwargs(kwarg_dict, function):
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
+
+def signal_logger(caller_name, signum=None, frame=None):
+    if signum:
+        # lookup signal name from number; https://stackoverflow.com/a/2549950
+        sig_lookup = {
+            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+                if v.startswith('SIG') and not v.startswith('SIG_')
+        }
+        print("\tDEBUG: {} caught signal {} ({})".format(
+            caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
+        ))
+        print("\tDEBUG: {}".format(frame))

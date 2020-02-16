@@ -127,27 +127,18 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
-        # pylint: disable=maybe-no-member
-        self.case_name = case_dict['CASENAME']
-        self.model_name = case_dict['model']
-        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
-        self.lastyr = datelabel.Date(case_dict['LASTYR'])
-        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+    def __init__(self, case_dict, DateFreqMixin=None):
         if not DateFreqMixin:
             self.DateFreq = datelabel.DateFrequency
         else:
             self.DateFreq = DateFreqMixin
 
-        if 'envvars' in config:
-            self.envvars = config['envvars'].copy() # gets appended to
-        else:
-            self.envvars = {}
-
-        if 'convention' in case_dict:
-            self.convention = case_dict['convention']
-        else:
-            self.convention = 'CF' # default to assuming CF-compliance
+        self.case_name = case_dict['CASENAME']
+        self.model_name = case_dict['model']
+        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
+        self.lastyr = datelabel.Date(case_dict['LASTYR'])
+        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+        self.convention = case_dict.get('convention', 'CF')
         if 'data_freq' in case_dict:
             self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
@@ -155,26 +146,26 @@ class DataManager(object):
         self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
-        self.dry_run = util_mdtf.get_from_config('dry_run', config, default=False)
-        self.file_transfer_timeout = util_mdtf.get_from_config(
-            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
-        self.make_variab_tar = util_mdtf.get_from_config('make_variab_tar', 
-            config, default=False)
-        self.keep_temp = util_mdtf.get_from_config('keep_temp', config, default=False)
-        self.overwrite = util_mdtf.get_from_config('overwrite', config, default=True)
+        config = util_mdtf.ConfigManager()
+        self.envvars = config.global_envvars.copy() # gets appended to
+        # assign explicitly else linter complains
+        self.dry_run = config.config.dry_run
+        self.file_transfer_timeout = config.config.file_transfer_timeout
+        self.make_variab_tar = config.config.make_variab_tar
+        self.keep_temp = config.config.keep_temp
+        self.overwrite = config.config.overwrite
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
-        paths = util_mdtf.PathManager()
-        d = paths.modelPaths(self, overwrite=self.overwrite)
-        self.MODEL_DATA_DIR = d['MODEL_DATA_DIR']
-        self.MODEL_WK_DIR = d['MODEL_WK_DIR']
-        self.MODEL_OUT_DIR = d['MODEL_OUT_DIR']
+        d = config.paths.model_paths(case_dict, overwrite=self.overwrite)
+        self.code_root = config.paths.CODE_ROOT
+        self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
+        self.MODEL_WK_DIR = d.MODEL_WK_DIR
+        self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = util_mdtf.get_from_config('netcdf_helper', config, 
-            default='NcoNetcdfHelper')
+        mixin = config.config.get(netcdf_helper, 'NcoNetcdfHelper')
         mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
@@ -231,12 +222,12 @@ class DataManager(object):
         self._build_data_dicts()
 
     def _setup_pod(self, pod):
-        paths = util_mdtf.PathManager()
+        config = util_mdtf.ConfigManager()
         translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
-        pod.__dict__.update(paths.modelPaths(self, overwrite=self.overwrite))
-        pod.__dict__.update(paths.podPaths(pod))
+        pod.__dict__.update(config.paths.model_paths(self, overwrite=self.overwrite))
+        pod.__dict__.update(config.paths.pod_paths(pod))
         pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
@@ -468,18 +459,17 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def tearDown(self, config):
+    def tearDown(self):
         # TODO: handle OSErrors in all of these
+        config = util_mdtf.ConfigManager()
         self._make_html()
         _ = self._backup_config_file(config)
         if self.make_variab_tar:
-            paths = util_mdtf.PathManager()
-            _ = self._make_tar_file(paths.OUTPUT_DIR)
+            _ = self._make_tar_file(config.paths.OUTPUT_DIR)
         self._copy_to_output()
 
     def _make_html(self, cleanup=True):
-        paths = util_mdtf.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        src_dir = os.path.join(self.code_root, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(dest):
             print("WARNING: index.html exists, deleting.")
@@ -510,7 +500,7 @@ class DataManager(object):
             out_file, _ = util_mdtf.bump_version(out_file)
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))
-        util.write_json(config, out_file)
+        util.write_json(config.config.toDict(), out_file)
         return out_file
 
     def _make_tar_file(self, tar_dest_dir):

@@ -52,19 +52,15 @@ class Diagnostic(object):
             pod_name (:obj:`str`): Name of the POD to initialize.
             verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # pylint: disable=maybe-no-member
-        paths = util_mdtf.PathManager()
+        config = util_mdtf.ConfigManager()
 
         self.name = pod_name
-        self.__dict__.update(paths.podPaths(self))
-        file_contents = util.read_json(
-            os.path.join(self.POD_CODE_DIR, 'settings.json'))
-        self.dry_run = False
-
-        config = self._parse_pod_settings(file_contents['settings'], verbose)
-        self.__dict__.update(config)
-        config = self._parse_pod_varlist(file_contents['varlist'], verbose)
-        self.varlist = config
+        self.code_root = config.paths.CODE_ROOT
+        self.dry_run = config.config.get('dry_run', False)
+        assert pod_name in config.pods
+        d = config.pods[pod_name]
+        self.__dict__.update(self._parse_pod_settings(d['settings']))
+        self.varlist = self._parse_pod_varlist(d['varlist'])
 
     def iter_vars_and_alts(self):
         """Generator iterating over all variables and alternates in POD's varlist.
@@ -413,8 +409,7 @@ class Diagnostic(object):
                 the POD's runtime environment.
         """
         # pylint: disable=maybe-no-member
-        paths = util_mdtf.PathManager()
-        command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
+        command_path = os.path.join(self.code_root, 'src', 'validate_environment.sh')
         command = [
             command_path,
             ' -v',
@@ -494,8 +489,7 @@ class Diagnostic(object):
 
     def append_result_link(self, error=None):
         # pylint: disable=maybe-no-member
-        paths = util_mdtf.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        src_dir = os.path.join(self.code_root, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
             # normal exit

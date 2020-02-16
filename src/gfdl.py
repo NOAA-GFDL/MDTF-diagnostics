@@ -239,9 +239,9 @@ class GfdlarchiveDataManager(DataManager):
         config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now
         super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
 
-        assert ('root_dir' in case_dict)
-        assert os.path.isdir(case_dict['root_dir'])
-        self.root_dir = case_dict['root_dir']
+        assert ('CASE_ROOT_DIR' in case_dict)
+        assert os.path.isdir(case_dict['CASE_ROOT_DIR'])
+        self.root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
         self.frepp_mode = config.config.get('frepp', False)

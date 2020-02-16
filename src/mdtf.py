@@ -139,13 +139,11 @@ class MDTFFramework(object):
         else:
             self.case_list = util.coerce_to_iter(cli_obj.case_list)
         for i in range(len(self.case_list)):
-            d2 = self.case_list[i]
+            d2 = self.case_list[i] # abbreviate
             # remove empty entries
             d2 = {k:v for k,v in d2.iteritems() if v}
             if not d2.get('CASE_ROOT_DIR', None) and d2.get('root_dir', None):
                 d2['CASE_ROOT_DIR'] = d2['root_dir']
-            elif not d2.get('root_dir', None) and d2.get('CASE_ROOT_DIR', None):
-                d2['root_dir'] = d2['CASE_ROOT_DIR']
 
     def caselist_from_args(self, cli_obj):
         d = dict()
@@ -153,6 +151,11 @@ class MDTFFramework(object):
         self._populate_from_cli(cli_obj, 'MODEL', d)
         # remove empty entries first
         d = {k:v for k,v in d.iteritems() if v}
+        if d2.get('root_dir', None): # CASE_ROOT set positionally
+            d['CASE_ROOT_DIR'] = d2['root_dir']
+        if not d.get('CASE_ROOT_DIR', None):
+            print('ERROR: need to sepcify root directory of model data.')
+            exit()
         if 'model' not in d:
             d['model'] = 'CMIP'
         if 'experiment' not in d:
@@ -160,15 +163,6 @@ class MDTFFramework(object):
         assert 'convention' in d
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-        if d2.get('root_dir', None):
-            # overwrite flag if both are set
-            d['CASE_ROOT_DIR'] = d2['root_dir']
-            d['root_dir'] = d2['root_dir']
-        elif d.get('CASE_ROOT_DIR', None):
-            d['root_dir'] = d['CASE_ROOT_DIR']
-        else:
-            print('ERROR: need to sepcify root directory of model data.')
-            exit()
         return [d]
 
     def parse_paths(self, cli_obj, config):

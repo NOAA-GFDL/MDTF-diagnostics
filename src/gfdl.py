@@ -194,38 +194,21 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
             "in read-only mdteam account.").format(env_name)
         )
 
+
 def GfdlautoDataManager(case_dict, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.
     """
-    drs_partial_directory_regex = re.compile(r"""
-        .*CMIP6
-        (/(?P<activity_id>\w+))?
-        (/(?P<institution_id>[a-zA-Z0-9_-]+))?
-        (/(?P<source_id>[a-zA-Z0-9_-]+))?
-        (/(?P<experiment_id>[a-zA-Z0-9_-]+))?
-        (/(?P<member_id>\w+))?
-        (/(?P<table_id>\w+))?
-        (/(?P<variable_id>\w+))?
-        (/(?P<grid_label>\w+))?
-        (/v(?P<version_date>\d+))?
-        /?                      # maybe final separator
-    """, re.VERBOSE)
-
-    if 'root_dir' in case_dict \
-        and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
-        return GfdlppDataManager(case_dict, DateFreqMixin)
-    elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
-        and ('source_id' in case_dict or 'model' in case_dict):
+    test_root = case_dict.get('CASE_ROOT_DIR', None)
+    if not test_root:
         return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
-    elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
-        match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
-        if match:
-            case_dict.update(match.groupdict())
-        return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
-    elif 'root_dir' in case_dict:
+    test_root = os.path.normpath(test_root)
+    if 'pp' in os.path.basename(test_root):
         return GfdlppDataManager(case_dict, DateFreqMixin)
     else:
-        raise Exception("Don't know how to dispatch DataManager based on input.")
+        print(("ERROR: Couldn't determine data fetch method from input."
+            "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
+            "'GFDL_data_cmip6', depending on the source you want."))
+        exit()
 
 
 class GfdlarchiveDataManager(DataManager):
@@ -240,7 +223,9 @@ class GfdlarchiveDataManager(DataManager):
         super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
 
         assert ('CASE_ROOT_DIR' in case_dict)
-        assert os.path.isdir(case_dict['CASE_ROOT_DIR'])
+        if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
+            raise DataAccessError(None, 
+                "Can't access CASE_ROOT_DIR = '{}'".format(case_dict['CASE_ROOT_DIR']))
         self.root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
 
@@ -793,12 +778,9 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         self.institution_id = cmip.lookup(key, 'source_id', 'institution_id')
         if 'member_id' not in case_dict:
             self.member_id = 'r1i1p1f1'
-        case_dict['root_dir'] = os.path.join(
+        case_dict['CASE_ROOT_DIR'] = os.path.join(
             self._cmip6_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        if not os.path.exists(case_dict['root_dir']):
-            raise DataAccessError(None, 
-                "Can't access {}".format(case_dict['root_dir']))
         # assign explicitly else linter complains
         self.data_freq = None
         self.table_id = None

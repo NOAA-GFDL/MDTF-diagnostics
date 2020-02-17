@@ -133,8 +133,8 @@ class MDTFFramework(object):
     def parse_case_list(self, cli_obj, config):
         d = config.config # abbreviate
         self.case_list = []
-        if d.get('model', None) or d.get('experiment', None) \
-            or d.get('CASENAME', None):
+        if d.get('CASENAME', None) \
+            or (d.get('model', None) and d.get('experiment', None)):
             self.case_list = self.caselist_from_args(cli_obj)
         else:
             self.case_list = util.coerce_to_iter(cli_obj.case_list)
@@ -144,6 +144,7 @@ class MDTFFramework(object):
             d2 = {k:v for k,v in d2.iteritems() if v}
             if not d2.get('CASE_ROOT_DIR', None) and d2.get('root_dir', None):
                 d2['CASE_ROOT_DIR'] = d2['root_dir']
+                del d2['root_dir']
 
     def caselist_from_args(self, cli_obj):
         d = dict()
@@ -153,9 +154,6 @@ class MDTFFramework(object):
         d = {k:v for k,v in d.iteritems() if v}
         if d2.get('root_dir', None): # CASE_ROOT set positionally
             d['CASE_ROOT_DIR'] = d2['root_dir']
-        if not d.get('CASE_ROOT_DIR', None):
-            print('ERROR: need to sepcify root directory of model data.')
-            exit()
         if 'model' not in d:
             d['model'] = 'CMIP'
         if 'experiment' not in d:

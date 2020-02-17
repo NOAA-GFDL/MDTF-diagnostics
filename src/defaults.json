@@ -79,6 +79,7 @@
           "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
+          "short_name" : "o",
           "help": "Directory to write output files. Defaults to working directory.",
           "default" : "../wkdir",
           "metavar" : "<DIR>",
@@ -107,21 +108,25 @@
           "metavar" : "<year>"
         },{
           "name": "CASENAME",
+          "short_name" : "n",
           "help": "Identifier used to label the input model dataset.",
           "type" : "str",
           "metavar" : "<name>"
         },{
           "name": "convention",
+          "short_name" : "c",
           "help": "Variable name/unit convention used in model data.",
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
           "name": "model",
+          "short_name" : "m",
           "help": "Model name (only used in CMIP6 input).",
           "type": "str",
           "metavar" : "<source_id>"
         },{
           "name": "experiment",
+          "short_name" : "e",
           "help": "Experiment ID (only used in CMIP6 input).",
           "type" : "str",
           "metavar" : "<experiment_id>"

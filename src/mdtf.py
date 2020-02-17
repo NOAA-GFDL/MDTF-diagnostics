@@ -196,12 +196,15 @@ class MDTFFramework(object):
         d['pod_list'] = self.pod_list
         d['case_list'] = self.case_list
         d['paths'] = config.paths
+        d['paths'].pop('_unittest_flag', None)
         d['settings'] = dict()
         settings_gps = set(cli_obj.parser_groups.keys()).difference(
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:
             self._populate_from_cli(cli_obj, group, d['settings'])
+        d['settings'] = {k:v for k,v in d['settings'].iteritems() \
+            if k not in d['paths']}
         d['envvars'] = config.global_envvars
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(d))
 

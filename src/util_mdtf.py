@@ -32,7 +32,7 @@ class _PathManager(util.NameSpace):
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
     def __init__(self, d, code_root=None, unittest_flag=False):
-        self.unittest_flag = unittest_flag
+        self._unittest_flag = unittest_flag
         self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
@@ -54,7 +54,7 @@ class _PathManager(util.NameSpace):
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
     def _init_path(self, key, d, env=None):
-        if self.unittest_flag: # use in unit testing only
+        if self._unittest_flag: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly

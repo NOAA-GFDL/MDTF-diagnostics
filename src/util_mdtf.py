@@ -75,11 +75,26 @@ class _PathManager(util.NameSpace):
         Returns: Absolute version of `path`, relative to `root_path` if given, 
             otherwise relative to `os.getcwd`.
         """
-        for key, val in os.environ.iteritems():
-            path = re.sub(r"\$"+key, val, path)
+        def _expandvars(path, env_dict):
+            """Expand quoted variables of the form $key and ${key} in path,
+            where key is a key in env_dict, similar to os.path.expandvars.
+
+            See https://stackoverflow.com/a/30777398; specialize to not skipping
+            escaped characters and not changing unrecognized variables.
+            """
+            return re.sub(
+                r'\$(\w+|\{([^}]*)\})', 
+                lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+                path
+            )
+
+        path = os.path.expanduser(path) # resolve '~' to home dir
+        path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
         if isinstance(env, dict):
-            for key, val in env.iteritems():
-                path = re.sub(r"\$"+key, val, path)
+            path = _expandvars(path, env)
+        if '$' in path:
+            print("Warning: couldn't resolve all env vars in '{}'".format(path))
+            return path
         if os.path.isabs(path):
             return path
         if root_path == "":

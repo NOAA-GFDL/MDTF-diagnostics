@@ -53,31 +53,31 @@
           "help": "Parent directory containing results from different models.",
           "default" : "$MDTF_GFDL_TMPDIR/inputdata/model",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "OBS_DATA_REMOTE",
           "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
           "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "OBS_DATA_ROOT",
           "help": "Local parent directory containing observational data used by individual PODs.",
           "default" : "$MDTF_GFDL_TMPDIR/inputdata/obs_data",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "WORKING_DIR",
           "help": "Working directory.",
           "default" : "$MDTF_GFDL_TMPDIR/wkdir",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
           "help": "Directory to write output files. Defaults to working directory.",
           "default" : "$HOME/mdtf_out",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         }
       ]
     },{
@@ -146,13 +146,13 @@
           "help": "If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
           "default": "$TMPDIR",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "GFDL_WS_TEMP",
           "help": "If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
           "default": "/net2/$USER/tmp",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "frepp",
           "help": "Set flag to run framework in 'online' mode, processing data as part of the FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper script from the XML.",
@@ -210,25 +210,25 @@
           "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
           "default" : "/home/mdteam/anaconda",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
           "default" : "/home/mdteam/anaconda/envs",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "venv_root",
           "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
           "default" : "./envs/venv",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "r_lib_root",
           "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
           "default" : "./envs/r_libs",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         }
       ]
     },{

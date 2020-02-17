@@ -166,7 +166,7 @@ class MDTFFramework(object):
         return [d]
 
     def parse_paths(self, cli_obj, config):
-        config.paths.parse(cli_obj.config)
+        config.paths.parse(cli_obj.config, cli_obj.custom_types.get('path', []))
 
     def _post_parse_hook(self, cli_obj, config):
         # init other services

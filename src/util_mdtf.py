@@ -36,17 +36,17 @@ class _PathManager(util.NameSpace):
         self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
-    def parse(self, d, env=None):
-        if '_paths_to_parse' in d:
-            # set by CLI settings that have action=PathAction in cli.py
-            for key in d['_paths_to_parse']:
-                if key == 'CODE_ROOT':
-                    continue # just to be safe
-                self[key] = self._init_path(key, d, env=env)
-                if key in d:
-                    d[key] = self[key]
-        else:
-            print("Warning: didn't find CLI's path list.")
+    def parse(self, d, paths_to_parse=[], env=None):
+        # set by CLI settings that have "parse_type": "path" in JSON entry
+        if not paths_to_parse:
+            print("Warning: didn't get list of paths from CLI.")
+        for key in paths_to_parse:
+            if key == 'CODE_ROOT':
+                continue # just to be safe
+            self[key] = self._init_path(key, d, env=env)
+            if key in d:
+                d[key] = self[key]
+
         # set following explictly: redundant, but keeps linter from complaining
         self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
         self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)

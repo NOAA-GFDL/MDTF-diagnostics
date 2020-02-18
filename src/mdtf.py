@@ -225,7 +225,7 @@ class MDTFFramework(object):
         self.DataManager = _dispatch('data_manager', 'DataManager')
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
-        self.NetCDFHelper = _dispatch('netcdf_helper', 'NetCDFHelper')
+        self.NetCDFHelper = _dispatch('netcdf_helper', 'NetcdfHelper')
 
     def set_case_pod_list(self, case_dict, config):
         if not case_dict.get('pod_list', None):

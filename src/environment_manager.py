@@ -128,9 +128,8 @@ class EnvironmentManager(object):
         if stderr is None:
             stderr = subprocess.STDOUT
         run_cmds = util.coerce_to_iter(cmd_list, list)
-        run_cmd_str = '; '.join(run_cmds) # for logging only
         if self.test_mode:
-            run_cmds = ['echo "TEST MODE: call {}"'.format(run_cmd_str)]
+            run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
         commands = self.activate_env_commands(env_name) \
             + run_cmds \
             + self.deactivate_env_commands(env_name)
@@ -139,7 +138,7 @@ class EnvironmentManager(object):
             for cmd in commands:
                 print('TEST MODE: call {}'.format(cmd))
         else:
-            print("Calling : {}".format(run_cmd_str))
+            print("Calling : {}".format(run_cmds[-1]))
         commands = ' && '.join([s for s in commands if s])
 
         # Need to run bash explicitly because 'conda activate' sources 

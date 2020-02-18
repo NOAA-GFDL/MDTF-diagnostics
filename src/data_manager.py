@@ -346,9 +346,6 @@ class DataManager(object):
                 self._fetch_exception_handler(exc)
                 continue
 
-        # do translation/ transformations of data here
-        self.process_fetched_data_hook()
-
     def _fetch_exception_handler(self, exc):
         print(exc)
         keys_from_file = self.data_files.inverse()
@@ -437,7 +434,8 @@ class DataManager(object):
     def plan_data_fetch_hook(self):
         pass
 
-    def process_fetched_data_hook(self):
+    def preprocess_local_data(self, *args, **kwargs):
+        # do translation/ transformations of data here
         pass
 
     # -------------------------------------

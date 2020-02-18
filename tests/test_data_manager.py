@@ -45,10 +45,6 @@ class TestDataManagerSetup(unittest.TestCase):
         'varlist': [{'var_name': 'PRECT', 'freq':'mon'}]
         }
 
-    def test_netcdf_inheritance(self, mock_register):
-        case = DataManager(self.default_case)
-        self.assertRaises(NotImplementedError, case.nc_cat_chunks, [], [])
-
     def test_setup_model_paths(self, mock_register):
         pass
 

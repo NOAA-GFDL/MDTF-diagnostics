@@ -12,17 +12,20 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
 import os
 import shutil
 import tempfile
-import data_manager
-import environment_manager
-import shared_diagnostic
-import gfdl
 import util
 import util_mdtf
 import mdtf
+import data_manager
+import environment_manager
+import shared_diagnostic
+import netcdf_helper
+import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr
-    _dispatch_search = [data_manager, environment_manager, shared_diagnostic, gfdl]
+    _dispatch_search = [
+        data_manager, environment_manager, shared_diagnostic, netcdf_helper, gfdl
+    ]
 
     def parse_mdtf_args(self, cli_obj, config):
         super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj, config)

@@ -442,12 +442,13 @@ class Diagnostic(object):
         if isinstance(self.skipped, Exception):
             self.append_result_link(self.skipped)
         else:
+            config = util_mdtf.ConfigManager()
             # shouldn't need to re-set env vars, but used by 
             # convective_transition_diag to set filename info 
             self._set_pod_env_vars(verbose=verbose)
             self._make_pod_html()
-            self._convert_pod_figures()
-            self._cleanup_pod_files()
+            self._convert_pod_figures(config)
+            self._cleanup_pod_files(config)
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
@@ -501,7 +502,7 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self):
+    def _convert_pod_figures(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         dirs = ['model/PS', 'obs/PS']
@@ -514,11 +515,11 @@ class Diagnostic(object):
         for f in files:
             (dd, ff) = os.path.split(os.path.splitext(f)[0])
             ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
-            command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
-                + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
-            os.system(command_str)
+            os.system('convert {0} {1} {2}.{3}'.format(
+                config.config.convert_flags, f, ff, config.config.convert_output_fmt
+            ))
 
-    def _cleanup_pod_files(self):
+    def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         # copy PDF documentation (if any) to output
@@ -536,16 +537,15 @@ class Diagnostic(object):
             shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested
-        if os.environ["save_ps"] == "0":
+        if not config.config.save_ps:
             for d in ['model/PS', 'obs/PS']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
-
-        if os.environ["save_non_nc"] != "0":
-            # delete netCDF files, keep everything else
+        # delete netCDF files, keep everything else
+        if config.config.save_non_nc:
             os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
-        elif os.environ["save_nc"] == "0":
-            # delete all generated data (flag is a misnomer)
+        # delete all generated data (flag is a misnomer)
+        elif not config.config.save_nc:
             for d in ['model/netCDF', 'obs/netCDF']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))

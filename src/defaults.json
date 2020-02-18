@@ -64,25 +64,26 @@
           "help": "Parent directory containing results from different models.",
           "default" : "../inputdata/model/",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "OBS_DATA_ROOT",
           "help": "Parent directory containing observational data used by individual PODs.",
           "default" : "../inputdata/obs_data",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "WORKING_DIR",
           "help": "Working directory.",
           "default" : "../wkdir",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
+          "short_name" : "o",
           "help": "Directory to write output files. Defaults to working directory.",
           "default" : "../wkdir",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         }
       ]
     },{
@@ -107,21 +108,25 @@
           "metavar" : "<year>"
         },{
           "name": "CASENAME",
+          "short_name" : "n",
           "help": "Identifier used to label the input model dataset.",
           "type" : "str",
           "metavar" : "<name>"
         },{
           "name": "convention",
+          "short_name" : "c",
           "help": "Variable name/unit convention used in model data.",
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
           "name": "model",
+          "short_name" : "m",
           "help": "Model name (only used in CMIP6 input).",
           "type": "str",
           "metavar" : "<source_id>"
         },{
           "name": "experiment",
+          "short_name" : "e",
           "help": "Experiment ID (only used in CMIP6 input).",
           "type" : "str",
           "metavar" : "<experiment_id>"
@@ -189,25 +194,25 @@
           "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
           "default" : "",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
           "default" : "./envs/conda",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "venv_root",
           "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
           "default" : "./envs/venv",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         },{
           "name": "r_lib_root",
           "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
           "default" : "./envs/r_libs",
           "metavar" : "<DIR>",
-          "action": "PathAction"
+          "parse_type": "path"
         }
       ]
     },{

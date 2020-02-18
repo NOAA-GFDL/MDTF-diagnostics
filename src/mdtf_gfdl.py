@@ -119,14 +119,17 @@ def fetch_obs_data(source_dir, dest_dir, timeout=0, dry_run=False):
         dest_parent = os.path.dirname(dest_dir)
         if os.path.exists(dest_dir):
             assert os.path.isdir(dest_dir)
-            os.rmdir(dest_dir)
+            try:
+                os.remove(dest_dir) # remove symlink only, not source dir
+            except OSError:
+                print('Warning: expected symlink at {}'.format(dest_dir))
+                os.rmdir(dest_dir)
         elif not os.path.exists(dest_parent):
             os.makedirs(dest_parent)
-        util.run_command(
-            ['ln', '-fs', source_dir, dest_dir], 
-            dry_run=dry_run
-        )
-
+        if dry_run:
+            print('DRY_RUN: symlink {} -> {}'.format(source_dir, dest_dir))
+        else:
+            os.symlink(source_dir, dest_dir)
 
 if __name__ == '__main__':
     # get dir of currently executing script: 

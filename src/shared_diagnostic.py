@@ -442,50 +442,40 @@ class Diagnostic(object):
         if isinstance(self.skipped, Exception):
             self.append_result_link(self.skipped)
         else:
-            # shouldn't need to re-set env vars, but used by 
-            # convective_transition_diag to set filename info 
-            self._set_pod_env_vars(verbose=verbose)
-            self._make_pod_html()
-            self._convert_pod_figures()
-            self._cleanup_pod_files()
+            config = util_mdtf.ConfigManager()
+            self._make_pod_html(config)
+            self._convert_pod_figures(config)
+            self._cleanup_pod_files(config)
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
             # elapsed = timeit.default_timer() - start_time
             # print(pod+" Elapsed time ",elapsed)
 
-    def _make_pod_html(self):
+    def _make_pod_html(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
         """
-        html_file = os.path.join(self.POD_WK_DIR, self.name+'.html')
-        temp_file = os.path.join(self.POD_WK_DIR, 'tmp.html')
+        source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
+        dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
 
-        if os.path.exists(html_file):
-            os.remove(html_file)
-        shutil.copy2(
-            os.path.join(self.POD_CODE_DIR, self.name+'.html'), 
-            self.POD_WK_DIR
-        )
-        os.system("cat "+ html_file \
-            + r" | sed -e s/casename/" + os.environ["CASENAME"] + r"/g > " \
-            + temp_file)
-        # following two substitutions are specific to convective_transition_diag
-        # need to find a more elegant way to handle this
+        template = config.global_envvars.copy()
+        template.update(self.pod_env_vars)
         if self.name == 'convective_transition_diag':
-            temp_file2 = os.path.join(self.POD_WK_DIR, 'tmp2.html')
-            if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
-                and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
-                os.system("cat " + temp_file \
-                    + r" | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
-                shutil.move(temp_file2, temp_file)
-            if ("RES" in os.environ) and os.environ["RES"] != "1.00":
-                os.system("cat " + temp_file \
-                    + r" | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + r"_/g > " \
-                    + temp_file2)
-                shutil.move(temp_file2, temp_file)
-        shutil.copy2(temp_file, html_file) 
-        os.remove(temp_file)
+            # change filenames of model and obs figures that get linked
+            # need a more elegant way to handle this
+            tropo_meas = template.get('BULK_TROPOSPHERIC_TEMPERATURE_MEASURE', None)
+            if tropo_meas == '1':
+                template['TROPO_VAR'] = 'tave'
+            elif tropo_meas == '2':
+                template['TROPO_VAR'] = 'qsat_int'
+            else:
+                print(("ERROR in convective_transition_diag's settings.json: "
+                    "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE = {}, expected '1' "
+                    "or '2'").format(tropo_meas))
 
+        if os.path.exists(dest):
+            os.remove(dest)
+        util_mdtf.append_html_template(source, dest, template_dict=template)
         # add link and description to main html page
         self.append_result_link()
 
@@ -501,7 +491,7 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self):
+    def _convert_pod_figures(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         dirs = ['model/PS', 'obs/PS']
@@ -514,11 +504,11 @@ class Diagnostic(object):
         for f in files:
             (dd, ff) = os.path.split(os.path.splitext(f)[0])
             ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
-            command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
-                + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
-            os.system(command_str)
+            os.system('convert {0} {1} {2}.{3}'.format(
+                config.config.convert_flags, f, ff, config.config.convert_output_fmt
+            ))
 
-    def _cleanup_pod_files(self):
+    def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         # copy PDF documentation (if any) to output
@@ -536,16 +526,15 @@ class Diagnostic(object):
             shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested
-        if os.environ["save_ps"] == "0":
+        if not config.config.save_ps:
             for d in ['model/PS', 'obs/PS']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
-
-        if os.environ["save_non_nc"] != "0":
-            # delete netCDF files, keep everything else
+        # delete netCDF files, keep everything else
+        if config.config.save_non_nc:
             os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
-        elif os.environ["save_nc"] == "0":
-            # delete all generated data (flag is a misnomer)
+        # delete all generated data (flag is a misnomer)
+        elif not config.config.save_nc:
             for d in ['model/netCDF', 'obs/netCDF']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))

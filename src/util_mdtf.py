@@ -32,21 +32,21 @@ class _PathManager(util.NameSpace):
     set in the ``paths`` section of ``mdtf_settings.json``.
     """
     def __init__(self, d, code_root=None, unittest_flag=False):
-        self.unittest_flag = unittest_flag
+        self._unittest_flag = unittest_flag
         self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
-    def parse(self, d, env=None):
-        if '_paths_to_parse' in d:
-            # set by CLI settings that have action=PathAction in cli.py
-            for key in d['_paths_to_parse']:
-                if key == 'CODE_ROOT':
-                    continue # just to be safe
-                self[key] = self._init_path(key, d, env=env)
-                if key in d:
-                    d[key] = self[key]
-        else:
-            print("Warning: didn't find CLI's path list.")
+    def parse(self, d, paths_to_parse=[], env=None):
+        # set by CLI settings that have "parse_type": "path" in JSON entry
+        if not paths_to_parse:
+            print("Warning: didn't get list of paths from CLI.")
+        for key in paths_to_parse:
+            if key == 'CODE_ROOT':
+                continue # just to be safe
+            self[key] = self._init_path(key, d, env=env)
+            if key in d:
+                d[key] = self[key]
+
         # set following explictly: redundant, but keeps linter from complaining
         self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
         self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
@@ -54,7 +54,7 @@ class _PathManager(util.NameSpace):
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
     def _init_path(self, key, d, env=None):
-        if self.unittest_flag: # use in unit testing only
+        if self._unittest_flag: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
@@ -75,11 +75,26 @@ class _PathManager(util.NameSpace):
         Returns: Absolute version of `path`, relative to `root_path` if given, 
             otherwise relative to `os.getcwd`.
         """
-        for key, val in os.environ.iteritems():
-            path = re.sub(r"\$"+key, val, path)
+        def _expandvars(path, env_dict):
+            """Expand quoted variables of the form $key and ${key} in path,
+            where key is a key in env_dict, similar to os.path.expandvars.
+
+            See https://stackoverflow.com/a/30777398; specialize to not skipping
+            escaped characters and not changing unrecognized variables.
+            """
+            return re.sub(
+                r'\$(\w+|\{([^}]*)\})', 
+                lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+                path
+            )
+
+        path = os.path.expanduser(path) # resolve '~' to home dir
+        path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
         if isinstance(env, dict):
-            for key, val in env.iteritems():
-                path = re.sub(r"\$"+key, val, path)
+            path = _expandvars(path, env)
+        if '$' in path:
+            print("Warning: couldn't resolve all env vars in '{}'".format(path))
+            return path
         if os.path.isabs(path):
             return path
         if root_path == "":

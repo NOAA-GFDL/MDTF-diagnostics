@@ -134,8 +134,8 @@ class MDTFFramework(object):
     def parse_case_list(self, cli_obj, config):
         d = config.config # abbreviate
         self.case_list = []
-        if d.get('model', None) or d.get('experiment', None) \
-            or d.get('CASENAME', None):
+        if d.get('CASENAME', None) \
+            or (d.get('model', None) and d.get('experiment', None)):
             self.case_list = self.caselist_from_args(cli_obj)
         else:
             self.case_list = util.coerce_to_iter(cli_obj.case_list)
@@ -145,6 +145,7 @@ class MDTFFramework(object):
             d2 = {k:v for k,v in d2.iteritems() if v}
             if not d2.get('CASE_ROOT_DIR', None) and d2.get('root_dir', None):
                 d2['CASE_ROOT_DIR'] = d2['root_dir']
+                del d2['root_dir']
 
     def caselist_from_args(self, cli_obj):
         d = dict()
@@ -154,9 +155,6 @@ class MDTFFramework(object):
         d = {k:v for k,v in d.iteritems() if v}
         if d2.get('root_dir', None): # CASE_ROOT set positionally
             d['CASE_ROOT_DIR'] = d2['root_dir']
-        if not d.get('CASE_ROOT_DIR', None):
-            print('ERROR: need to sepcify root directory of model data.')
-            exit()
         if 'model' not in d:
             d['model'] = 'CMIP'
         if 'experiment' not in d:
@@ -167,7 +165,7 @@ class MDTFFramework(object):
         return [d]
 
     def parse_paths(self, cli_obj, config):
-        config.paths.parse(cli_obj.config)
+        config.paths.parse(cli_obj.config, cli_obj.custom_types.get('path', []))
 
     def _post_parse_hook(self, cli_obj, config):
         # init other services
@@ -197,12 +195,15 @@ class MDTFFramework(object):
         d['pod_list'] = self.pod_list
         d['case_list'] = self.case_list
         d['paths'] = config.paths
+        d['paths'].pop('_unittest_flag', None)
         d['settings'] = dict()
         settings_gps = set(cli_obj.parser_groups.keys()).difference(
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:
             self._populate_from_cli(cli_obj, group, d['settings'])
+        d['settings'] = {k:v for k,v in d['settings'].iteritems() \
+            if k not in d['paths']}
         d['envvars'] = config.global_envvars
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(d))
 
@@ -252,7 +253,7 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager(self.config)
+            env_mgr = self.EnvironmentManager(config)
             env_mgr.pods = case.pods # best way to do this?
             # nc_helper = self.NetCDFHelper()
 

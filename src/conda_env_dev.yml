@@ -6,9 +6,9 @@ channels:
 dependencies:
 - python=2.7
 - subprocess32
-- pyyaml
 - mock
+- jupyter
 - netCDF4
 - sphinx
-- jupyter
 - pylint
+- doc8

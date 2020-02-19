@@ -6,11 +6,13 @@
 Welcome to MDTF-diagnostics's documentation!
 ============================================
 
-Also see documentation on the `wiki <https://github.com/NOAA-GFDL/MDTF-diagnostics/wiki>`_.
+This site contains developer documentation for the MDTF Diagnostics framework, hosted on GitHub at `wiki <https://github.com/NOAA-GFDL/MDTF-diagnostics>`_
+See user documentation on the `wiki <https://github.com/NOAA-GFDL/MDTF-diagnostics/wiki>`_ for installation and usage instructions.
 
 .. toctree::
    :maxdepth: 2
 
+   sphinx/dev_intro
    sphinx/configuration
    sphinx/diagnostics
    sphinx/src_autodoc

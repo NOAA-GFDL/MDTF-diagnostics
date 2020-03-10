@@ -21,9 +21,9 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
 
-# The following command replaces the substrings "{DATA_DIR}", "{CASENAME}", etc.
+# The following command replaces the substrings "{DATADIR}", "{CASENAME}", etc.
 # with the values of the corresponding environment variables:
-input_path = "{DATA_DIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
+input_path = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
 
 # command to load the netcdf file
 model_dataset = xr.open_dataset(input_path)

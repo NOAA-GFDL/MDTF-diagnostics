@@ -18,7 +18,7 @@
     "prc_var" : "prc",
     "prls_var" : "PRECL",
     "FSNTOA_var" : "FSNTOA",
-    "tas_var" : "ta",
+    "tas_var" : "tas",
     "ts_var" : "TS",
     "LANDFRAC_var" : "LANDFRAC",
     "tauu_var" : "TAUX",

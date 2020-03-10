@@ -213,6 +213,7 @@ class MDTFFramework(object):
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
             class_prefix = config.config.get(setting, '')
+            class_prefix = util.coerce_from_iter(class_prefix)
             # drop '_' and title-case class name
             class_prefix = ''.join(class_prefix.split('_')).title()
             for mod in self._dispatch_search:

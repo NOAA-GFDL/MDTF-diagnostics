@@ -42,7 +42,7 @@ input_path = "{OBS_DATA}/example_tas_means.nc".format(**os.environ)
 
 # command to load the netcdf file
 obs_dataset = xr.open_dataset(input_path)
-obs_mean_tas = obs_dataset['tas']
+obs_mean_tas = obs_dataset['mean_tas']
 
 
 ### 3) Doing computations: #####################################################

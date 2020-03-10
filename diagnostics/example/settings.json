@@ -19,12 +19,13 @@
     // this as a list.
     "realm" : "atmos",
 
-    // Short (single-sentence) description of what your diagnostic does. This
+    // Human-readable name of the diagnostic. May contain spaces. This
     // is used to describe your diagnostic on the top-level index.html page.
-    "description" : "Computes mean temperatures as a demonstration.",
+    "description" : "Example diagnostic",
 
-    // (optional) Any diagnostic-specific environment variables. The user can't 
-    // change these at runtime, but 
+    // (optional) Any diagnostic-specific environment variables, given as 
+    // key:value pairs. The user can't change these at runtime, but they can be 
+    // used to set site-specific installation settings for your diagnostic.
     "pod_env_vars" : {
       "EXAMPLE_FAV_COLOR": "blue"
     },
@@ -40,7 +41,8 @@
   },
 
   // In this section, you describe what model data your diagnostic uses. Add one
-  // list entry for each variable.
+  // list entry (the section in curly braces) for each variable, separated by 
+  // commas.
   "varlist" : [
     {
       // Variable identifier. An environment variable with this name will be set
@@ -54,6 +56,6 @@
       "freq" : "mon",
       "requirement" : "required"
     }
-    // If we needed a second variable, we'd list it here
+    // If we needed a second variable, we'd list it here.
   ]
 }

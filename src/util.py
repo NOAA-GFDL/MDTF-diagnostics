@@ -59,7 +59,7 @@ class MultiMap(collections.defaultdict):
     See <https://stackoverflow.com/a/21894086>_.
     """
     def __init__(self, *args, **kwargs):
-        """Initialize :class:`~util.MultiMap` by passing an ordinary :obj:`dict`.
+        """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
@@ -97,7 +97,7 @@ class NameSpace(dict):
     """ A dictionary that provides attribute-style access.
 
     For example, `d['key'] = value` becomes `d.key = value`. All methods of 
-    :obj:`dict` are supported.
+    :py:obj:`dict` are supported.
 
     Note: recursive access (`d.key.subkey`, as in C-style languages) is not
         supported.
@@ -307,9 +307,9 @@ def write_json(struct, file_path, verbose=0):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
-        struct (:obj:`dict`)
-        file_path (:obj:`str`): path of the JSON file to write.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        struct (:py:obj:`dict`)
+        file_path (:py:obj:`str`): path of the JSON file to write.
+        verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
         with open(file_path, 'w') as file_obj:
@@ -335,13 +335,13 @@ def find_files(root_dir, pattern):
     way to query if its DB is current). 
 
     Args:
-        root_dir (:obj:`str`): Directory to search for files in.
-        pattern (:obj:`str`): Patterrn to match. This is a shell globbing pattern,
+        root_dir (:py:obj:`str`): Directory to search for files in.
+        pattern (:py:obj:`str`): Patterrn to match. This is a shell globbing pattern,
             not a full regex. Default is to match filenames only, unless the
             pattern contains a directory separator, in which case the match will
             be done on the entire path relative to `root_dir`.
 
-    Returns: :obj:`list` of relative paths to files matching `pattern`. Paths are
+    Returns: :py:obj:`list` of relative paths to files matching `pattern`. Paths are
         relative to `root_dir`. If no files are found, the list is empty.
     """
     if os.sep in pattern:
@@ -362,9 +362,9 @@ def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 
     Args:
-        exec_name (:obj:`str`): Name of the executable to search for.
+        exec_name (:py:obj:`str`): Name of the executable to search for.
 
-    Returns: :obj:`bool` True/false if executable was found on $PATH.
+    Returns: :py:obj:`bool` True/false if executable was found on $PATH.
     """
     return (find_executable(exec_name) is not None)
 
@@ -378,9 +378,9 @@ def poll_command(command, shell=False, env=None):
     Args:
         command: list of command + arguments, or the same as a single string. 
             See `subprocess` syntax. Note this interacts with the `shell` setting.
-        shell (:obj:`bool`, optional): shell flag, passed to Popen, 
+        shell (:py:obj:`bool`, optional): shell flag, passed to Popen, 
             default `False`.
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             Popen, default `None`.
     """
     process = subprocess.Popen(
@@ -411,17 +411,17 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
-        command (list of :obj:`str`): List of commands to execute
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        command (list of :py:obj:`str`): List of commands to execute
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             `Popen`, default `None`.
-        cwd (:obj:`str`, optional): child processes' working directory, passed
+        cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
-        timeout (:obj:`int`, optional): Optionally, kill the command's subprocess
+        timeout (:py:obj:`int`, optional): Optionally, kill the command's subprocess
             and raise a CalledProcessError if the command doesn't finish in 
             `timeout` seconds.
 
     Returns:
-        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
@@ -482,14 +482,14 @@ def run_shell_commands(commands, env=None, cwd=None):
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
-        commands (list of :obj:`str`): List of commands to execute
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        commands (list of :py:obj:`str`): List of commands to execute
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             `Popen`, default `None`.
-        cwd (:obj:`str`, optional): child processes' working directory, passed
+        cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
 
     Returns:
-        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
         by each command. Note: this is split on newlines after the fact, so if 
         commands give != 1 lines of output this will not map to the list of commands
         given.

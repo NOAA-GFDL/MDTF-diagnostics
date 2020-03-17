@@ -27,7 +27,7 @@ for module in autodoc_mock_imports:
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF-diagnostics'
-copyright = u'2019, Model Diagnostics Task Force'
+copyright = u'2020, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version

@@ -22,7 +22,7 @@ Functionality
 
 The currently package (mjo_diag.py) consists of following functionalities:
 
-1. Model skill scores of MJO eastward propagation versus winter mean low‐level moisture pattern overIndo‐Pacific;
+1. Model skill scores of MJO eastward propagation versus winter mean low‐level moisture pattern over Indo‐Pacific;
 
 2. Model amplitude of MJO over the Indian Ocean versus moisture convective adjustment time‐scale.
 

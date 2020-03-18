@@ -112,7 +112,7 @@ Diagnostic description
   String, **required**. Filename of the top-level driver script the framework should call to run your diagnostic's analysis.
 
 ``realm``: 
-  String or :ref:`array<array>` (list) of strings, **required**. One of the eight CMIP6 modeling `realms <https://github.com/PCMDI/cmip6-cmor-tables/blob/3b802b4e94fc36c5c9d1c9234fcace7d81f769c3/Tables/CMIP6_CV.json#L2411>`_ describing what data your diagnostic uses. If your diagnostic uses data from multiple realms, list them in an array (eg. ``["atmos", "ocean"]``). This information doesn't affect how the framework fetches model data for your diagnostic: it's provided to give the user a shortcut to say, eg., "run all the atmos diagnosics on this output."
+  String or :ref:`array<array>` (list) of strings, **required**. One of the eight CMIP6 modeling `realms <https://github.com/PCMDI/cmip6-cmor-tables/blob/3b802b4e94fc36c5c9d1c9234fcace7d81f769c3/Tables/CMIP6_CV.json#L2411>`_ describing what data your diagnostic uses. If your diagnostic uses data from multiple realms, list them in an array (eg. ``["atmos", "ocean"]``). This information doesn't affect how the framework fetches model data for your diagnostic: it's provided to give the user a shortcut to say, eg., "run all the atmos diagnostics on this output."
 
 Diagnostic runtime
 ^^^^^^^^^^^^^^^^^^
@@ -268,7 +268,7 @@ Latitude and Longitude
   **Required**. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. Currently the framework only supports decimal ``degrees_north`` and ``degrees_east``, respectively.
 
 ``range``: 
-  :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects this dimension to take. For eaxmple, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and the last entry near +180 degrees.
+  :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects this dimension to take. For example, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and the last entry near +180 degrees.
 
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`_: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
@@ -322,7 +322,7 @@ Varlist section
 
 This section is an :ref:`object<object>` contains properties that apply to the model variables your diagnostic needs for its analysis. "Dimensions" are meant in the sense of the netCDF `data model <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcVars.html>`_: informally, they are the "independent variables" whose values are being computed as a function of the values stored in the dimensions.
 
-Each entry corresponds to a distinct data file (or set of files, if ``multi_file_ok`` is ``true``) downloaded by the framework. If your framework needs the same physical quantity samepled with different properties (eg. slices of a variable at multiple pressure levels), specify them as multiple entries.
+Each entry corresponds to a distinct data file (or set of files, if ``multi_file_ok`` is ``true``) downloaded by the framework. If your framework needs the same physical quantity sampled with different properties (eg. slices of a variable at multiple pressure levels), specify them as multiple entries.
 
 Varlist entry example
 ^^^^^^^^^^^^^^^^^^^^^

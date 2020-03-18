@@ -112,7 +112,7 @@ Diagnostic description
   String, **required**. Filename of the top-level driver script the framework should call to run your diagnostic's analysis.
 
 ``realm``: 
-  String or :ref:`array<array>` (list) of strings, **required**. One of the eight CMIP6 modeling `realms <https://github.com/PCMDI/cmip6-cmor-tables/blob/3b802b4e94fc36c5c9d1c9234fcace7d81f769c3/Tables/CMIP6_CV.json#L2411>`_ describing what data your diagnostic uses. If your diagnostic uses data from multiple realms, list them in an array (eg. ``["atmos", "ocean"]``). This information doesn't affect how the framework fetches model data for your diagnostic: it's provided to give the user a shortcut to say, eg., "run all the atmos diagnostics on this output."
+  String or :ref:`array<array>` (list) of strings, **required**. One of the eight CMIP6 modeling realms (aerosol, atmos, atmosChem, land, landIce, ocean, ocnBgchem, seaIce) describing what data your diagnostic uses. If your diagnostic uses data from multiple realms, list them in an array (eg. ``["atmos", "ocean"]``). This information doesn't affect how the framework fetches model data for your diagnostic: it's provided to give the user a shortcut to say, eg., "run all the atmos diagnostics on this output."
 
 Diagnostic runtime
 ^^^^^^^^^^^^^^^^^^
@@ -351,7 +351,7 @@ The *key* in a varlist key-value pair is the name your diagnostic uses to refer 
   String, **required**. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`_ of the variable as defined by the `CF conventions <http://cfconventions.org/>`_, or a commonly used synonym as employed in the CMIP6 MIP tables (eg. "ua" instead of "eastward_wind"). 
 
 ``path_variable``: 
-  String, **required**. Name of the shell environment variable the framework will set with the location of this data. See the environment variable :doc:`documentation <./dev_envvars>` details. 
+  String, **required**. Name of the shell environment variable the framework will set with the location of this data. See the environment variable :doc:`documentation <./dev_envvars>` for details. 
 
   - If ``multi_file_ok`` is ``false``, ``<path_variable>`` will be set to the absolute path to the netcdf file containing this variable's data.
   - If ``multi_file_ok`` is ``true``, ``<path_variable>`` will be a single path *or* a colon-separated list of paths to the files containing this data. Files will be listed in chronological order.

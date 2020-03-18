@@ -245,7 +245,7 @@ Example
     "plev": {
         "standard_name": "air_pressure",
         "units": "hPa",
-        "positive": "up",
+        "positive": "down",
         "need_bounds": false
     },
     "time": {
@@ -265,7 +265,7 @@ Latitude and Longitude
   **Required**, string. Must be ``"latitude"`` and ``"longitude"``, respectively.
 
 ``units``: 
-  **Required**. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. Currently the framework only supports decimal ``degrees_north`` and ``degrees_east``, respectively.
+  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. Currently the framework only supports decimal ``degrees_north`` and ``degrees_east``, respectively.
 
 ``range``: 
   :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects this dimension to take. For example, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and the last entry near +180 degrees.
@@ -280,7 +280,7 @@ Time
   **Required**. Must be ``"time"``.
 
 ``units``: 
-  **Required**. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. Currently the diagnostic only supports time axes of the form "<units> since <reference data>", and the value given here is interpreted in this sense (eg. settings this to "days" would accomodate a dimension of the form "[decimal] days since 1850-01-01".)
+  String. Optional, defaults to "day". Units the diagnostic expects the dimension to be in. Currently the diagnostic only supports time axes of the form "<units> since <reference data>", and the value given here is interpreted in this sense (eg. settings this to "day" would accommodate a dimension of the form "[decimal] days since 1850-01-01".)
 
 ``calendar``: 
   String, Optional. One of the CF convention `calendars <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#calendar>`_ or the string ``"any"``. **Defaults to "any" if not given**. Calendar convention used by your diagnostic. Only affects the number of days per month.
@@ -295,7 +295,7 @@ Z axis (height/depth, pressure, ...)
   **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`_ of the variable as defined by the `CF conventions <http://cfconventions.org/>`_, or a commonly used synonym as employed in the CMIP6 MIP tables.
 
 ``units``: 
-  **Required**. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in.
+  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_.
 
 ``positive``: 
   String, **required**. Must be ``"up"`` or ``"down"``, according to the `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`_. A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set automatically.
@@ -310,7 +310,7 @@ Other dimensions (wavelength, ...)
   **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`_ of the variable as defined by the `CF conventions <http://cfconventions.org/>`_, or a commonly used synonym as employed in the CMIP6 MIP tables.
 
 ``units``: 
-  **Required**. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in.
+  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`_. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_.
 
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`_: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.

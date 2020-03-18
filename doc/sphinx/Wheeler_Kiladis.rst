@@ -2,7 +2,7 @@ Wavenumber Frequency Spectra Diagnostic Module From NCAR
 ========================================================
 Last update: 03/11/2019
 
-Produces wavenumber frequency spectra for OLR, Precipitation, 500hPa Omega, 200hPa wind
+Produces wavenumber-frequency spectra for OLR, Precipitation, 500hPa Omega, 200hPa wind
 and 850hPa Wind.
 
 Contact info

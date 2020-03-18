@@ -31,7 +31,7 @@ d) Computation of the mean precipitation over the analysis period on a gridded l
 Required programming language and libraries
 -------------------------------------------
 
-Requires NCAR Command Language (NCL) and associated numerical and graphical capabilities. License agreement ​https://www.ncl.ucar.edu/Download/NCL_binary_license.shtml​ and licences therewithin.
+Requires NCAR Command Language (NCL) and associated numerical and graphical capabilities. License agreement ​https://www.ncl.ucar.edu/Download/NCL_binary_license.shtml​ and licenses therewithin.
 
 Required model output variables
 -------------------------------

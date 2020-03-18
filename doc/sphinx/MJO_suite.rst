@@ -96,7 +96,7 @@ An extensive explanation of the figures and techniques used to achieve them can 
 
 |clearfloats|
 
-**Composite Life-cycles**: The first and second principle components of the EOF analysis are used to derive the appropriate MJO phase category. The size of the reference anomaly wind vector is in the upper right. The phase (eg P3, means "Phase 3") and the number of days used to create thecomposite are at the lower right.
+**Composite Life-cycles**: The first and second principle components of the EOF analysis are used to derive the appropriate MJO phase category. The size of the reference anomaly wind vector is in the upper right. The phase (eg P3, means "Phase 3") and the number of days used to create the composite are at the lower right.
 
 .. image:: mjo_suite_fig4.png
    :align: center

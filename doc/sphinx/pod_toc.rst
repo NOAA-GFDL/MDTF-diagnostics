@@ -1,10 +1,10 @@
-Diagnostics
------------
+Diagnostics reference
+---------------------
 
 .. toctree::
    :maxdepth: 2
 
-   Description_of_the_PODs
+   pod_summary
    convective_transition_diag
    EOF_500hPa
    MJO_prop_amp

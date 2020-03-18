@@ -146,7 +146,7 @@ References:
 *Alexis M. Berg (Princeton)*
 ab5@princeton.edu
 
-This POD evaluates the relationship between soil mositure and evapotranspiration. It computes the correlation bewteen surface (0~10 cm) soil moisture and evapotranspiration during summertime. It then associates the coupling strength with the simulated precipitation.   
+This POD evaluates the relationship between soil moisture and evapotranspiration. It computes the correlation between surface (0~10 cm) soil moisture and evapotranspiration during summertime. It then associates the coupling strength with the simulated precipitation.   
 
 ==================  ==================
 Variables           Frequency

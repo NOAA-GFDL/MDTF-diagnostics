@@ -116,8 +116,12 @@ class MDTFFramework(object):
     def parse_pod_list(self, cli_obj, config):
         self.pod_list = []
         args = util.coerce_to_iter(config.config.pop('pods', []), set)
-        if 'all' in args:
-            self.pod_list = config.pods.keys()
+        if 'example' in args or 'examples' in args:
+            self.pod_list = [pod for pod in config.pods.keys() \
+                if pod.startswith('example')]
+        elif 'all' in args:
+            self.pod_list = [pod for pod in config.pods.keys() \
+                if not pod.startswith('example')]
         else:
             # specify pods by realm
             realms = args.intersection(set(config.all_realms))
@@ -130,6 +134,9 @@ class MDTFFramework(object):
             self.pod_list.extend(list(pods))
             for arg in args.difference(set(config.pods.keys())): # remainder:
                 print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
+            # exclude examples
+            self.pod_list = [pod for pod in self.pod_list \
+                if not pod.startswith('example')]
 
     def parse_case_list(self, cli_obj, config):
         d = config.config # abbreviate

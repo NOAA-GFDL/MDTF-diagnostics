@@ -1,8 +1,4 @@
-// EOF of geopotential height anomalies of 500 hPa. 
-//
-// This requires two files: 1) monthly averaged surface pressure (ps),
-// 2) monthly averaged geopotential height (zg).
-// The code is in NCL.   
+// Coupling between Soil Moisture and Evapotranspiration
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
@@ -10,12 +6,14 @@
 //
 {
   "settings" : {
-    "driver" : "EOF_500hPa.py",
-    "long_name" : "EOF of geopotential height anomalies of 500 hPa",
-    "realm" : "atmos",
-    "description" : "EOF of geopotential height anomalies for 500 hPa",
-    "required_programs" : ["python", "ncl"],
-    "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm"]
+    "driver" : "SM_ET_coupling.py",
+    "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
+    "realm" : ["atmos", "land"],
+    "description" : "Coupling of Soil Moisture with Evapotranspiration",
+    "runtime_requirements": {
+      "python": [],
+      "Rscript": ["colorRamps", "maps", "fields", "akima", "ncdf4"]
+    }
   },
   //
   // USAGE varlist
@@ -34,13 +32,17 @@
   //
   "varlist" : [
     {
-      "var_name" : "zg_var",
+      "var_name" : "mrsos_var",
       "freq" : "mon",
-      "requirement": "required"
+      "requirement" : "required"
     },{
-      "var_name": "ps_var",
-      "freq": "mon",
-      "requirement": "required"
+      "var_name" : "evspsbl_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "pr_var",
+      "freq" : "mon",
+      "requirement" : "required"
     }
   ]
 }

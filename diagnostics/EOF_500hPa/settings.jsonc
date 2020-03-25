@@ -1,22 +1,23 @@
-// Diagnostic package for MJO propagation and amplitude in GCMs
+// EOF of geopotential height anomalies of 500 hPa. 
 //
-// Version 2.1 September 25, 2018.
-// Alex Gonzalez (UCLA, now at IA State) and Xianan Jiang (UCLA)
-// Contributors: M. Zhao (GFDL), E. Maloney (CSU)
-// PI: Xianan Jiang (UCLA)
+// This requires two files: 1) monthly averaged surface pressure (ps),
+// 2) monthly averaged geopotential height (zg).
+// The code is in NCL.   
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
 // in strings, so you'll want to turn word wrap on in your editor.
 //
 {
-  "settings": {
-    "driver": "MJO_prop_amp.py",
-    "long_name": "MJO propagation and amplitude in GCMs",
+  "settings" : {
+    "driver" : "EOF_500hPa.py",
+    "long_name" : "EOF of geopotential height anomalies of 500 hPa",
     "realm" : "atmos",
-    "description": "Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)",
-    "required_programs" : ["python", "ncl"],
-    "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm"]
+    "description" : "EOF of geopotential height anomalies for 500 hPa",
+    "runtime_requirements": {
+      "python": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm"]
+    }
   },
   //
   // USAGE varlist
@@ -35,16 +36,12 @@
   //
   "varlist" : [
     {
-      "var_name": "pr_var",
-      "freq": "day",
+      "var_name" : "zg_var",
+      "freq" : "mon",
       "requirement": "required"
     },{
-      "var_name": "prw_var",
-      "freq": "day",
-      "requirement": "required"
-    },{
-      "var_name": "qa_var",
-      "freq": "day",
+      "var_name": "ps_var",
+      "freq": "mon",
       "requirement": "required"
     }
   ]

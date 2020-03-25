@@ -1,0 +1,65 @@
+// MJO teleconnection Diagnostic
+//
+// This requires daily-timescale precipitation rate(mm/day), OLR (w/m2), zonal
+// wind (m/s) at 850 and 250-hPa levels and geopotential height(m) at 250-hPa.                    
+// For further details see comments section of /MJO_teleconnection/mjo_teleconnection.py"
+// Each variable should store in a single file.
+// The codes are in NCL. 
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings" : {
+    "driver" : "mjo_teleconnection.py",
+    "long_name" : "MJO teleconnection Diagnostic",
+    "realm" : "atmos",
+    "description": "MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017", 
+    "runtime_requirements": {
+      "python": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]
+    }
+  },
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
+  "varlist" : [
+    {
+      "var_name" : "pr_var",
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "rlut_var",
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "u850_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name" : "u250_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name": "z250_var",
+      "freq": "day",
+      "requirement": "required",
+      "alternates" : ["zg_var"]
+    }
+  ]
+}

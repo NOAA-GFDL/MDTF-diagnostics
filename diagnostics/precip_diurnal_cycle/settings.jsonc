@@ -1,4 +1,8 @@
-// Coupling between Soil Moisture and Evapotranspiration
+// Diurnal cycle of precipitation
+//
+// See Gervais et al., J. Climate, 5219-5239, 2014.
+// This requires 3 hourly precipitation.
+// The code is in NCL. 
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
@@ -6,12 +10,14 @@
 //
 {
   "settings" : {
-    "driver" : "SM_ET_coupling.py",
-    "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
-    "realm" : ["atmos", "land"],
-    "description" : "Coupling of Soil Moisture with Evapotranspiration",
-    "required_programs" : ["python", "Rscript"],
-    "required_r_packages" : ["colorRamps", "maps", "fields", "akima", "ncdf4"]
+    "driver" : "precip_diurnal_cycle.py",
+    "long_name": "Diurnal cycle of precipitation",
+    "realm" : "atmos",
+    "description": "Diurnal Cycle of Precipitation",
+    "runtime_requirements": {
+      "python": [],
+      "ncl":  ["contributed", "gsn_code", "gsn_csm", "shea_util"]
+    }
   },
   //
   // USAGE varlist
@@ -30,16 +36,8 @@
   //
   "varlist" : [
     {
-      "var_name" : "mrsos_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "evspsbl_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
       "var_name" : "pr_var",
-      "freq" : "mon",
+      "freq" : "3hr",
       "requirement" : "required"
     }
   ]

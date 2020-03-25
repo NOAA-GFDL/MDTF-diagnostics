@@ -27,8 +27,9 @@
       // RES: set Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00).
       "RES" : "1.00"
     },
-    "required_programs": ["python"],
-    "required_python_modules": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+    "runtime_requirements": {
+      "python": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+    }
   },
   //
   // USAGE varlist

@@ -1,9 +1,4 @@
-// Wheeler Kiladis plots
-//
-// see Wheeler and Kiladis, JAS, vol 56, 374-399, 1999
-// This uses daily field of U200, U850, OMEGA500, OLR, PRECT to produce wave 
-// spectra plots.
-// Each variable should store in a single file. 
+// MJO diagnostics suite (from AMWG variability diagnostic package)
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
@@ -11,12 +6,14 @@
 //
 {
   "settings" : {
-    "driver" : "Wheeler_Kiladis.py",
-    "long_name" : "Wheeler Kiladis plots",
+    "driver" : "MJO_suite.py",
+    "long_name" : "MJO diagnostics suite (from AMWG variability diagnostic package)",
     "realm" : "atmos",
-    "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
-    "required_programs" : ["python", "ncl"],
-    "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
+    "description" : "MJO CLIVAR suite (NCAR)",
+    "runtime_requirements": {
+      "python": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]
+    }
   },
   //
   // USAGE varlist
@@ -35,23 +32,31 @@
   //
   "varlist" : [
     {
-      "var_name" : "rlut_var",
+      "var_name" : "v200_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["v_var"]
+    },{
+      "var_name" : "u200_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name" : "u850_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name" : "v850_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["v_var"]
+    },{
+      "var_name": "rlut_var",
       "freq" : "day",
       "requirement" : "required"
     },{
       "var_name" : "pr_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-      "var_name" : "omega500_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-      "var_name" : "u200_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-      "var_name" : "u850_var",
       "freq" : "day",
       "requirement" : "required"
     }

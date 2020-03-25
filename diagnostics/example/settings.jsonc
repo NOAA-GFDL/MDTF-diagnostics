@@ -1,27 +1,27 @@
 // Example MDTF diagnostic settings file
 //
-// This should be a text file in JSON format 
+// This should be an ascii text file in JSON format 
 // (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
 // that all text to the  right of a "//" is a comment and ignored (sometimes 
 // called "JSONC" format).
-//
-// See online documentation at 
-// https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_settings_quick.html
-// for details on the purpose and layout of this file.
 // 
 {
   "settings" : {
-    // Human-readable name of the diagnostic. May contain spaces. 
-    "long_name" : "Example diagnostic",
-
     // Name of the driver script. This should be a single script, taking no 
     // command-line arguments, which runs the entire analysis (calling any other
     // scripts or subroutines as needed.)
     "driver" : "example_diag.py",
+
+    // Human-readable name of the diagnostic. May contain spaces. 
+    "long_name" : "Example diagnostic",
     
     // Modeling realm. If your diagnostic uses data from multiple realms, give
     // this as a list.
     "realm" : "atmos",
+
+    // Human-readable name of the diagnostic. May contain spaces. This
+    // is used to describe your diagnostic on the top-level index.html page.
+    "description" : "Example diagnostic",
 
     // (optional) Any diagnostic-specific environment variables, given as 
     // key:value pairs. The user can't change these at runtime, but they can be 
@@ -39,48 +39,23 @@
         "python": ["matplotlib", "xarray", "netCDF4"]
     }
   },
-  // The "data" section is for settings that apply to all the data you request.
-  "data" : { 
-    // Time frequency the data should be sampled at. Currently recognized
-    // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
-    "frequency": "mon"
-  },
-  // The "dimensions" section describes the coordinate axes of your data
-  // (called "dimensions" in a netcdf file.)
-  "dimensions": {
-    "lat": {
-      "standard_name": "latitude"
-    },
-    "lon": {
-      "standard_name": "longitude"
-    },
-    "time": {
-      "standard_name": "time",
-      "units": "day"
-    }
-  },
-  // In the varlist section, you describe what model data your diagnostic uses. 
-  // Add one list entry (the section in curly braces) for each variable, 
-  // separated by commas.
-  "varlist" : {
-    // Variable identifier. An environment variable with this name will be set
-    // to what the corresponding field is called in the model being analyzed.
-    // For example, if this diagnostic were run on CESM2, the shell variable 
-    // $tas_var would be set to "TREFHT" (CESM2's native field name for it.)
-    "tas": {
-      // CF convention standard name of the variable. If units of this variable
-      // aren't explicitly given, the framework assumes you want the data in
-      // CF canonical units.
-      "standard_name": "air_temperature",
 
-      // Environment variable to use to tell your diagnostic the path to the 
-      // file containing this data.
-      "path_variable": "TAS_FILE",
+  // In this section, you describe what model data your diagnostic uses. Add one
+  // list entry (the section in curly braces) for each variable, separated by 
+  // commas.
+  "varlist" : [
+    {
+      // Variable identifier. An environment variable with this name will be set
+      // to what the corresponding field is called in the model being analyzed.
+      // For example, if this diagnostic were run on CESM2, the variable $tas_var
+      // would be set to "TREFHT".
+      "var_name" : "tas_var",
 
-      // Dimensions of this variable (in the netcdf sense). This is a list of
-      // names of entries from the "dimensions" section.
-      "dimensions" : ["time", "lat", "lon"]
+      // Time frequency the data should be sampled at. Currently recognized
+      // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
+      "freq" : "mon",
+      "requirement" : "required"
     }
-    // If we needed a second variable, we'd put its entry here.
-  }
+    // If we needed a second variable, we'd list it here.
+  ]
 }

@@ -1,10 +1,9 @@
-// MJO teleconnection Diagnostic
+// Wheeler Kiladis plots
 //
-// This requires daily-timescale precipitation rate(mm/day), OLR (w/m2), zonal
-// wind (m/s) at 850 and 250-hPa levels and geopotential height(m) at 250-hPa.                    
-// For further details see comments section of /MJO_teleconnection/mjo_teleconnection.py"
-// Each variable should store in a single file.
-// The codes are in NCL. 
+// see Wheeler and Kiladis, JAS, vol 56, 374-399, 1999
+// This uses daily field of U200, U850, OMEGA500, OLR, PRECT to produce wave 
+// spectra plots.
+// Each variable should store in a single file. 
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
@@ -12,12 +11,14 @@
 //
 {
   "settings" : {
-    "driver" : "mjo_teleconnection.py",
-    "long_name" : "MJO teleconnection Diagnostic",
+    "driver" : "Wheeler_Kiladis.py",
+    "long_name" : "Wheeler Kiladis plots",
     "realm" : "atmos",
-    "description": "MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017", 
-    "required_programs": ["python", "ncl"],
-    "required_ncl_scripts": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]
+    "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
+    "runtime_requirements": {
+      "python": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
+    }
   },
   //
   // USAGE varlist
@@ -36,25 +37,28 @@
   //
   "varlist" : [
     {
-      "var_name" : "pr_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
       "var_name" : "rlut_var",
       "freq" : "day",
       "requirement" : "required"
     },{
-      "var_name" : "u850_var",
+      "var_name" : "pr_var",
       "freq" : "day",
       "requirement" : "required"
     },{
-      "var_name" : "u250_var",
+      "var_name" : "omega500_var",
       "freq" : "day",
-      "requirement": "required"
+      "requirement" : "required",
+      "alternates" : ["wap_var"]
     },{
-      "var_name": "z250_var",
-      "freq": "day",
-      "requirement": "required"
+      "var_name" : "u200_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name" : "u850_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
     }
   ]
 }

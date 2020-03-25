@@ -180,7 +180,7 @@
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
           "type" : "int",
-          "default" : 300,
+          "default" : 900,
           "metavar" : "<seconds>"
         },{
           "name": "keep_temp",
@@ -219,7 +219,7 @@
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
-          "default" : "/home/mdteam/anaconda/envs",
+          "default" : "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{

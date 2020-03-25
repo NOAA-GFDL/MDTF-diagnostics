@@ -1,0 +1,13 @@
+name: _MDTF-python_base
+channels:
+- conda-forge # NOTE: critical to give highest priority to conda-forge
+- defaults
+dependencies:
+- python=2.7
+- subprocess32
+- numpy
+- scipy
+- netCDF4
+- xarray
+- matplotlib
+- cartopy

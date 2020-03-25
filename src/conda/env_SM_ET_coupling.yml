@@ -1,4 +1,4 @@
-name: _MDTF-diagnostics-R
+name: _MDTF-SM_ET_coupling
 channels:
 - conda-forge
 - defaults

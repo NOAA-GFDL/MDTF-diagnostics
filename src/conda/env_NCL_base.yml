@@ -1,4 +1,4 @@
-name: _MDTF-diagnostics-NCL
+name: _MDTF-NCL_base
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults
@@ -6,3 +6,4 @@ dependencies:
 - python=2.7
 - subprocess32
 - ncl=6.5
+- nco>=4.7.6,<=4.8.1

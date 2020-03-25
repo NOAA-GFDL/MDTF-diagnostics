@@ -475,8 +475,8 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     else:
         return stdout.splitlines()
 
-def run_shell_commands(commands, env=None, cwd=None):
-    """Subprocess wrapper to facilitate running multiple shell commands.
+def run_shell_command(command, env=None, cwd=None, dry_run=False):
+    """Subprocess wrapper to facilitate running shell commands.
 
     See documentation for the Python2 `subprocess 
     <https://docs.python.org/2/library/subprocess.html>`_ module.
@@ -498,24 +498,47 @@ def run_shell_commands(commands, env=None, cwd=None):
         CalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
-    proc = subprocess.Popen(
-        ['/usr/bin/env', 'bash'],
-        shell=False, env=env, cwd=cwd,
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, bufsize=0
-    )
-    if isinstance(commands, basestring):
-        commands = [commands]
-    # Tried many scenarios for executing commands sequentially 
-    # (eg with stdin.write()) but couldn't find a solution that wasn't 
-    # susceptible to deadlocks. Instead just hand over all commands at once.
-    # Only disadvantage is that we lose the ability to assign output to a specfic
-    # command.
-    (stdout, stderr) = proc.communicate(' && '.join(commands))
-    if proc.returncode != 0:
+    # shouldn't lookup on each invocation, but need abs path to bash in order
+    # to pass as executable argument. Pass executable argument because we want
+    # bash specifically (not default /bin/sh, and we save a bit of overhead by
+    # starting bash directly instead of from sh.)
+    bash_exec = find_executable('bash')
+
+    if not isinstance(command, basestring):
+        command = ' '.join(command)
+    if dry_run:
+        print('DRY_RUN: call {}'.format(command))
+        return
+    proc = None
+    pid = None
+    retcode = 1
+    stderr = ''
+    try:
+        proc = subprocess.Popen(
+            command,
+            shell=True, executable=bash_exec,
+            env=env, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, bufsize=0
+        )
+        pid = proc.pid
+        (stdout, stderr) = proc.communicate()
+        retcode = proc.returncode
+    except Exception as exc:
+        if proc:
+            proc.kill()
+        stderr = stderr+"\nCaught exception {0}({1!r})".format(
+            type(exc).__name__, exc.args)
+    if retcode != 0:
+        print('run_shell_command on {} (pid {}) exit status={}:{}\n'.format(
+            command, pid, retcode, stderr
+        ))
         raise subprocess.CalledProcessError(
-            returncode=proc.returncode, cmd=' && '.join(commands), output=stderr)
-    return stdout.splitlines()
+            returncode=retcode, cmd=command, output=stderr)
+    if '\0' in stdout:
+        return stdout.split('\0')
+    else:
+        return stdout.splitlines()
 
 def coerce_to_iter(obj, coll_type=list):
     assert coll_type in [list, set, tuple] # only supported types for now

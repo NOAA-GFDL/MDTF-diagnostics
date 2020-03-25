@@ -97,10 +97,10 @@ class Diagnostic(object):
         # define empty defaults to avoid having to test existence of attrs
         for str_attr in ['long_name', 'description', 'env', 'convention']:
             d[str_attr] = ''
-        for list_attr in ['varlist',
-            'required_programs', 'required_python_modules', 
-            'required_ncl_scripts', 'required_r_packages']:
+        for list_attr in ['varlist']:
             d[list_attr] = []
+        for dict_attr in ['runtime_requirements']:
+            d[dict_attr] = dict()
         for obj_attr in ['process_obj', 'logfile_obj']:
             d[obj_attr] = None
 
@@ -112,9 +112,8 @@ class Diagnostic(object):
             del d['variable_convention']
         elif not d.get('convention', None):
             d['convention'] = 'CF'
-        for list_attr in ['required_programs', 'required_python_modules', 
-            'required_ncl_scripts', 'required_r_packages']:
-            d[list_attr] = util.coerce_to_iter(d[list_attr])
+        for key, val in d['runtime_requirements'].iteritems():
+            d['runtime_requirements'][key] = util.coerce_to_iter(val)
         if (verbose > 0): 
             print(self.name + " settings: ")
             print(d)
@@ -307,7 +306,7 @@ class Diagnostic(object):
         if self.driver == '':
             raise PodRequirementFailure(self, 
                 """No driver script found in {}. Specify 'driver' in 
-                settings.json.""".format(self.POD_CODE_DIR)
+                settings.jsonc.""".format(self.POD_CODE_DIR)
                 )
 
         if not os.path.isabs(self.driver): # expand relative path
@@ -416,11 +415,11 @@ class Diagnostic(object):
         command = [
             command_path,
             ' -v',
-            ' -p '.join([''] + self.required_programs),
+            ' -p '.join([''] + self.runtime_requirements.keys()),
             ' -z '.join([''] + self.pod_env_vars.keys()),
-            ' -a '.join([''] + self.required_python_modules),
-            ' -b '.join([''] + self.required_ncl_scripts),
-            ' -c '.join([''] + self.required_r_packages)
+            ' -a '.join([''] + self.runtime_requirements.get('python', [])),
+            ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
+            ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))
         ]
         return [''.join(command)]
 
@@ -469,7 +468,7 @@ class Diagnostic(object):
             elif tropo_meas == '2':
                 template['TROPO_VAR'] = 'qsat_int'
             else:
-                print(("ERROR in convective_transition_diag's settings.json: "
+                print(("ERROR in convective_transition_diag's settings.jsonc: "
                     "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE = {}, expected '1' "
                     "or '2'").format(tropo_meas))
 

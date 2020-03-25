@@ -10,9 +10,6 @@ import util
 
 
 class ConfigManager(util.Singleton):
-    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``mdtf_settings.json``.
-    """
     def __init__(self, cli_obj=None, pod_info_tuple=None, unittest_flag=False):
         assert cli_obj # Singleton, so init should only ever be called once
         # set up paths
@@ -29,7 +26,7 @@ class ConfigManager(util.Singleton):
 
 class _PathManager(util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``mdtf_settings.json``.
+    set in the ``paths`` section of ``defaults.jsonc``.
     """
     def __init__(self, d, code_root=None, unittest_flag=False):
         self._unittest_flag = unittest_flag
@@ -182,7 +179,7 @@ class VariableTranslator(util.Singleton):
         else:
             config = ConfigManager()
             glob_pattern = os.path.join(
-                config.paths.CODE_ROOT, 'src', 'fieldlist_*.json'
+                config.paths.CODE_ROOT, 'src', 'fieldlist_*.jsonc'
             )
             config_files = glob.glob(glob_pattern)
         # always have CF-compliant option, which does no translation

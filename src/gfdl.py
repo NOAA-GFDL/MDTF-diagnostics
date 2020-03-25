@@ -142,14 +142,14 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
-        keys = [s.lower() for s in pod.required_programs]
+        langs = [s.lower() for s in pod.runtime_requirements.keys()]
         if pod.name == 'convective_transition_diag':
             pod.env = 'py_convective_transition_diag'
         elif pod.name == 'MJO_suite':
             pod.env = 'ncl_MJO_suite'
-        elif ('r' in keys) or ('rscript' in keys):
+        elif ('r' in langs) or ('rscript' in langs):
             pod.env = 'r_default'
-        elif 'ncl' in keys:
+        elif 'ncl' in langs:
             pod.env = 'ncl'
         else:
             pod.env = 'py_default'
@@ -160,7 +160,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         'r_default': ['r'],
         'py_default': ['python'],
         'py_convective_transition_diag': ['python', 'ncl'],
-        'ncl_MJO_suite': ['ncl', 'nco']
+        'ncl_MJO_suite': ['python', 'ncl']
     }
 
     def create_environment(self, env_name):
@@ -892,6 +892,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     else:
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
+    print('\tDEBUG: GCP {} -> {}'.format(source[-1], dest[-1]))
     util.run_command(
         ['gcp', '--sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 

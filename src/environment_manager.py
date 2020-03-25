@@ -211,13 +211,13 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         env_path = os.path.join(self.venv_root, env_name)
         if not os.path.isdir(env_path):
             os.makedirs(env_path) # recursive mkdir if needed
-        cmds = [
+        for cmd in [
             'python -m virtualenv {}'.format(env_path),
             'source {}/bin/activate'.format(env_path),
             'pip install {}'.format(' '.join(py_pkgs)),
             'deactivate'
-        ]
-        util.run_shell_commands(cmds)
+        ]:
+            util.run_shell_command(cmd)
     
     def _create_r_venv(self, env_name):
         r_pkgs = set()
@@ -239,16 +239,17 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
             cmds = [
                 'Rscript -e \'install.packages(c({}))\''.format(r_pkg_str)
             ]
-        util.run_shell_commands(cmds)
+        for cmd in cmds:
+            util.run_shell_command(cmd)
 
     def destroy_environment(self, env_name):
         pass 
 
     def set_pod_env(self, pod):
-        keys = [s.lower() for s in pod.required_programs]
-        if ('r' in keys) or ('rscript' in keys):
+        langs = [s.lower() for s in pod.runtime_requirements.keys()]
+        if ('r' in langs) or ('rscript' in langs):
             pod.env = 'r_' + pod.name
-        elif 'ncl' in keys:
+        elif 'ncl' in langs:
             pod.env = 'ncl'
         else:
             pod.env = 'py_' + pod.name
@@ -274,89 +275,108 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
 
 class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
+    env_name_prefix = '_MDTF-' # our envs start with this string to avoid conflicts
 
     def __init__(self, verbose=0):
         super(CondaEnvironmentManager, self).__init__(verbose)
 
         config = util_mdtf.ConfigManager()
         self.code_root = config.paths.CODE_ROOT
-        if 'conda_root' in config.paths:
-            self.conda_root = config.paths.conda_root
-            self.conda_exe = os.path.join(self.conda_root, 'bin', 'conda')
-            assert os.path.exists(self.conda_exe)          
-        else:
-            self.conda_root = ''
-            self.conda_exe = 'conda'
+        self.conda_dir = os.path.join(self.code_root, 'src','conda')
+        self.env_list = []
+        for file_ in os.listdir(self.conda_dir):
+            if file_.endswith('.yml'):
+                name, _ = os.path.splitext(file_)
+                self.env_list.append(name.split('env_')[-1])
 
+        # find conda executable
+        # conda_init for bash defines conda as a shell function; will get error
+        # if we try to call the conda executable directly
+        try:
+            conda_info = util.run_shell_command(
+                '{}/conda_init.sh {}'.format(
+                self.conda_dir, config.paths.get('conda_root','')
+            ))
+            for line in conda_info:
+                key, val = line.split('=')
+                if key == '_CONDA_EXE':
+                    self.conda_exe = val
+                    assert os.path.exists(self.conda_exe)
+                elif key == '_CONDA_ROOT':
+                    self.conda_root = val
+        except:
+            print("Error: can't find conda.")
+            raise
+
+        # find where environments are installed
         if 'conda_env_root' in config.paths:
             self.conda_env_root = config.paths.conda_env_root
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed
         else:
-            # only true in default anaconda install, need to fix
-            self.conda_env_root = os.path.join(
-                subprocess.check_output(
-                    '{} info --root'.format(self.conda_exe), shell=True),
-                'envs'
-            )
+            # only true in default anaconda install, may need to fix
+            self.conda_env_root = os.path.join(self.conda_root, 'envs')
 
     def create_environment(self, env_name):
         # check to see if conda env exists, and if not, try to create it
         conda_prefix = os.path.join(self.conda_env_root, env_name)
-        test = subprocess.call(
-            '{} env list | grep -qF "{}"'.format(self.conda_exe, conda_prefix), 
-            shell=True
-        )
-        if test != 0:
-            print('Conda env {} not found; creating it'.format(env_name))
-            print('grepped for {}'.format(conda_prefix))
-            print(subprocess.check_output('echo $CONDA_EXE',shell=True))
+        try:
+            _ = util.run_shell_command(
+                '{} env list | grep -qF "{}"'.format(self.conda_exe, conda_prefix)
+            )
+        except:
+            print('Conda env {} not found (grepped for {})'.format(env_name,conda_prefix))
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
-        prefix = '_MDTF-diagnostics'
-        if env_name == prefix:
-            short_name = 'base'
+        if env_name.startswith(self.env_name_prefix):
+            short_name = env_name[(len(self.env_name_prefix)+1):]
         else:
-            short_name = env_name[(len(prefix)+1):]
-        path = '{}/src/conda_env_{}.yml'.format(self.code_root, short_name)
+            short_name = env_name
+        path = '{}/env_{}.yml'.format(self.conda_dir, short_name)
         if not os.path.exists(path):
             print("Can't find {}".format(path))
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
             print('Creating conda env {} in {}'.format(env_name, conda_prefix))
-        # conda_init for bash defines conda as a shell function; will get error
-        # if we try to call the conda executable directly
-        commands = \
-            'source {}/src/conda_init.sh {} && '.format(
-                self.code_root, self.conda_root
-            ) \
-            + 'conda env create --force -q -p="{}" -f="{}"'.format(
-                conda_prefix, path
+        command = \
+            'source {}/conda_init.sh {} && '.format(
+                self.conda_dir, self.conda_root
+            ) + '{} env create --force -q -p "{}" -f "{}"'.format(
+                self.conda_exe, conda_prefix, path
             )
-        try: 
-            subprocess.Popen(['bash', '-c', commands])
-        except OSError as e:
-            print('ERROR :',e.errno,e.strerror)
+        try:
+            _ = util.run_shell_command(command)
+        except:
+            raise
 
     def create_all_environments(self):
-        command = '{}/src/conda_env_setup.sh'.format(self.code_root)
-        try: 
-            subprocess.Popen(['bash', '-c', command])
-        except OSError as e:
-            print('ERROR :',e.errno,e.strerror)
+        try:
+            _ = util.run_shell_command(
+                '{}/conda_env_setup.sh -c "{}" -d "{}" --all'.format(
+                    self.conda_dir, self.conda_exe, self.conda_env_root
+            ))
+        except:
+            raise
 
     def destroy_environment(self, env_name):
         pass 
 
     def set_pod_env(self, pod):
-        keys = [s.lower() for s in pod.required_programs]
-        if ('r' in keys) or ('rscript' in keys):
-            pod.env = '_MDTF-diagnostics-R'
-        elif 'ncl' in keys:
-            pod.env = '_MDTF-diagnostics-NCL'
+        if pod.name in self.env_list:
+            # env created specifically for this POD
+            pod.env = self.env_name_prefix + pod.name
         else:
-            pod.env = '_MDTF-diagnostics-python'
+            langs = [s.lower() for s in pod.runtime_requirements.keys()]
+            if ('r' in langs) or ('rscript' in langs):
+                pod.env = self.env_name_prefix + 'R_base'
+            elif 'ncl' in langs:
+                pod.env = self.env_name_prefix + 'NCL_base'
+            elif 'python' in langs:
+                pod.env = self.env_name_prefix + 'python_base'
+            else:
+                print("Can't find environment providing {}".format(
+                    pod.runtime_requirements))
 
     def activate_env_commands(self, env_name):
         """Source conda_init.sh to set things that aren't set b/c we aren't 
@@ -366,12 +386,12 @@ class CondaEnvironmentManager(EnvironmentManager):
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         return [
-            'source {}/src/conda_init.sh {}'.format(
-                self.code_root, self.conda_root
+            'source {}/conda_init.sh {}'.format(
+                self.conda_dir, self.conda_root
             ),
             'conda activate {}'.format(conda_prefix)
         ]
 
     def deactivate_env_commands(self, env_name):
         return [] 
-
+    

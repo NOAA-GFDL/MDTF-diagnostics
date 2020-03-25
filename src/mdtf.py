@@ -143,16 +143,24 @@ class MDTFFramework(object):
         self.case_list = []
         if d.get('CASENAME', None) \
             or (d.get('model', None) and d.get('experiment', None)):
-            self.case_list = self.caselist_from_args(cli_obj)
+            case_list = self.caselist_from_args(cli_obj)
         else:
-            self.case_list = util.coerce_to_iter(cli_obj.case_list)
-        for i in range(len(self.case_list)):
-            d2 = self.case_list[i] # abbreviate
+            case_list = util.coerce_to_iter(cli_obj.case_list)
+        for case_dict in case_list:
             # remove empty entries
-            d2 = {k:v for k,v in d2.iteritems() if v}
-            if not d2.get('CASE_ROOT_DIR', None) and d2.get('root_dir', None):
-                d2['CASE_ROOT_DIR'] = d2['root_dir']
-                del d2['root_dir']
+            case = {k:v for k,v in case_dict.iteritems() if v}
+            if not case.get('CASE_ROOT_DIR', None) and case.get('root_dir', None):
+                case['CASE_ROOT_DIR'] = case['root_dir']
+                del case['root_dir']
+            # if dates set on CLI, overwrite dates in case list
+            if d.get('FIRSTYR', None):
+                case['FIRSTYR'] = d['FIRSTYR']
+            if d.get('LASTYR', None):
+                case['LASTYR'] = d['LASTYR']
+            # if pods set from CLI, overwrite pods in case list
+            case['pod_list'] = self.set_case_pod_list(case, cli_obj, config)
+            
+            self.case_list.append(case)
 
     def caselist_from_args(self, cli_obj):
         d = dict()
@@ -170,6 +178,13 @@ class MDTFFramework(object):
         if 'CASENAME' not in d:
             d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
         return [d]
+
+    def set_case_pod_list(self, case, cli_obj, config):
+        # if pods set from CLI, overwrite pods in case list
+        if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
+            return self.pod_list
+        else:
+            return case['pod_list']
 
     def parse_paths(self, cli_obj, config):
         config.paths.parse(cli_obj.config, cli_obj.custom_types.get('path', []))
@@ -215,7 +230,7 @@ class MDTFFramework(object):
         print('DEBUG: SETTINGS:\n', util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, netcdf_helper, shared_diagnostic
+        data_manager, environment_manager, shared_diagnostic, netcdf_helper
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -236,19 +251,12 @@ class MDTFFramework(object):
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
         self.NetCDFHelper = _dispatch('netcdf_helper', 'NetcdfHelper')
 
-    def set_case_pod_list(self, case_dict, config):
-        if not case_dict.get('pod_list', None):
-            return self.pod_list # use global list of PODs 
-        else:
-            return case_dict['pod_list']
-
     def main_loop(self):
         config = util_mdtf.ConfigManager()
         self.manual_dispatch(config)
         caselist = []
         # only run first case in list until dependence on env vars cleaned up
         for case_dict in self.case_list[0:1]: 
-            case_dict['pod_list'] = self.set_case_pod_list(case_dict, config)
             case = self.DataManager(case_dict)
             for pod_name in case.pod_list:
                 try:
@@ -281,7 +289,7 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'defaults.json'))
+    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'defaults.jsonc'))
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

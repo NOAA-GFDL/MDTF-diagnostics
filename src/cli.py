@@ -41,6 +41,41 @@ class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
             return ', '.join(parts)
 
 
+class RecordDefaultsAction(argparse.Action):
+    """Add boolean to record if user actually set argument's value, or if we're
+    using the specified default. From https://stackoverflow.com/a/50936474. This
+    also re-implements the 'store_true' and 'store_false' actions, in order to 
+    give defaults information on boolean flags.
+    """
+    flag_suffix = '_is_default_'
+
+    def __init__(self, option_strings, dest, nargs=None, const=None, 
+        default=None, required=False, **kwargs):
+        assert default is not None
+        required = False
+        if isinstance(default, bool):
+            nargs = 0             # behave like a flag
+            const = (not default) # set flag = store opposite of default
+        elif isinstance(default, basestring) and nargs is None:
+            # unless explicitly specified, string-valued options accept 1 argument
+            nargs = 1
+            const = None
+        super(RecordDefaultsAction, self).__init__(
+            option_strings=option_strings, dest=dest, nargs=nargs, const=const,
+            default=default, required=required, **kwargs
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self.nargs == 0 and self.const is not None:
+            setattr(namespace, self.dest, self.const)
+        elif self.nargs == 1:
+            setattr(namespace, self.dest, util.coerce_from_iter(values))
+        else:
+            setattr(namespace, self.dest, values)
+        # set flag to indicate user has set this argument
+        setattr(namespace, self.dest+self.flag_suffix, False)
+
+
 class CLIHandler(object):
     def __init__(self, code_root, defaults_rel_path):
         self.code_root = code_root
@@ -57,8 +92,8 @@ class CLIHandler(object):
         self.parser = self.make_parser(defaults)
 
     def iter_cli_actions(self):
-        for arg_list in self.parser_args_from_group:
-            for arg in arg_list:
+        for arg_gp in self.parser_args_from_group:
+            for arg in self.parser_args_from_group[arg_gp]:
                 yield arg
 
     def iteritems_cli(self, group_nm=None):
@@ -147,15 +182,11 @@ class CLIHandler(object):
 
         # set more technical argparse options based on default value
         if 'default' in d:
-            if isinstance(d['default'], basestring) and 'nargs' not in d:
-                # unless explicitly specified, 
-                # string-valued options accept 1 argument
+            if 'action' not in d:
+                d['action'] = RecordDefaultsAction
+            elif isinstance(d['default'], basestring) and 'nargs' not in d:
+                # unless explicitly specified, string options accept 1 argument
                 d['nargs'] = 1
-            elif isinstance(d['default'], bool) and 'action' not in d:
-                if d['default']:
-                    d['action'] = 'store_false' # default true, false if flag set
-                else:
-                    d['action'] = 'store_true' # default false, true if flag set
 
         # change help string based on default value
         if d.pop('hidden', False):
@@ -182,6 +213,19 @@ class CLIHandler(object):
         if isinstance(args, basestring):
             args = shlex.split(args, posix=True)
         self.config = vars(self.parser.parse_args(args))
+
+        # set flag for arguments that were left as default values
+        self.is_default = dict()
+        for arg in self.iter_cli_actions():
+            if isinstance(arg, RecordDefaultsAction):
+                flag_name = arg.dest + arg.flag_suffix
+                if flag_name in self.config:
+                    del self.config[flag_name]
+                    self.is_default[arg.dest] = False
+                else:
+                    self.is_default[arg.dest] = True
+            else:
+                self.is_default[arg.dest] = None
 
 
 class FrameworkCLIHandler(CLIHandler):
@@ -306,7 +350,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     """
     # only place we can put it would be util.py if we want to avoid circular imports
     _pod_dir = 'diagnostics'
-    _pod_settings = 'settings.json'
+    _pod_settings = 'settings.jsonc'
     def _load_one_json(pod):
         d = dict()
         try:

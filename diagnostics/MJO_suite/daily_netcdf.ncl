@@ -11,8 +11,10 @@ begin
 ; each daily file has 30 days of data
 ; eg. U200(time,lat,lon)
 
+print("Starting...")
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
+level = getenv("lev_coord")
 file_dir = getenv("WK_DIR")+"/model/netCDF/"
 pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
 
@@ -22,14 +24,13 @@ file_u850 = datadir+"/day/"+casename+"."+getenv("u850_var")+".day.nc"
 file_rlut = datadir+"/day/"+casename+"."+getenv("rlut_var")+".day.nc"
 file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
 
-
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
 f = addfile(file_pr,"r")
-lat_var = getenv("lat_var")
-lat = f->$lat_var$
+lat_coord = getenv("lat_coord")
+lat = f->$lat_coord$
 nlat = dimsizes(lat)
-lon_var = getenv("lon_var")
-lon = f->$lon_var$
+lon_coord = getenv("lon_coord")
+lon = f->$lon_coord$
 nlon = dimsizes(lon)
 if(isfilevar(f,"gw")) then
    gw = f->gw
@@ -63,8 +64,8 @@ gwEq = gw({-40:40})
 yr1 = stringtointeger(getenv("FIRSTYR"))
 yr2 = stringtointeger(getenv("LASTYR"))
 
-time_var = getenv("time_var")
-time_all = f->$time_var$
+time_coord = getenv("time_coord")
+time_all = f->$time_coord$
 date_all = ut_calendar(time_all,-2)
 date_all!0 = "time"
 date_all&time = time_all
@@ -93,6 +94,7 @@ do i=0,dimsizes(date_all)-1
 end do
 
 date = date_all(i1:i2)
+print(date(0:9))
 ndays = dimsizes(date)
 time = ispan(0,ndays-1,1)
 
@@ -159,6 +161,7 @@ delete_existing = False  ;overwrite
 
 plevs = (/850,200/)       ;this package expects new files to be written with these names
 var_names = (/"u","v"/)
+source = (/datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc",datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"/)
 
 do i=0,dimsizes(plevs)-1
    plev = plevs(i)
@@ -173,13 +176,25 @@ do i=0,dimsizes(plevs)-1
 
       var_name_plev_package = var_names(j)+tostring(plev)      ; new file name & varname in file
       print(" var_name_plev_package "+var_name_plev_package)
+    ;   LEV = tostring(plevs(i)*100)+"." 
+    ;   src = source(j)
+    ;   temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
+    ;   dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
+    ;   ; extract level
+    ;   nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
+    ;   print(nco_call)
+    ;   system(nco_call)
+    ;   ; flatten to 3D
+    ;   nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
+    ;   print(nco_call)
+    ;   system(nco_call)
 
-      file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
+      dst = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv
 
-      read_model_file (var_name_plev_model,file_in,\
+      read_model_file (var_name_plev_model, dst,\
       		      var_name_plev_package,file_out,\
 		      delete_existing, \
       		      i1,i2,time_coord,lat_coord,lon_coord,gwEq,date,\  ; better moved to another function for slicing

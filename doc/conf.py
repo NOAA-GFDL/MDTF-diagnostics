@@ -27,7 +27,7 @@ for module in autodoc_mock_imports:
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF-diagnostics'
-copyright = u'2019, Model Diagnostics Task Force'
+copyright = u'2020, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
@@ -52,7 +52,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -196,7 +197,7 @@ autodoc_member_order = 'bysource'
 autodoc_default_options = {
     'member-order': 'bysource',
     'special-members': '__init__',
-    'private-members': True,
+    'private-members': False,
     'undoc-members': True,
     'show-inheritance': True
 }
@@ -255,3 +256,6 @@ def patched_parse(self):
     self._unpatched_parse()
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
+
+# -- Options for intersphinx extension -----------------------------------------
+intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}

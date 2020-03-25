@@ -8,7 +8,7 @@ load "$POD_HOME/my_cam_diags.ncl"
    
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
-vars = (/"pr","rlut","u200","u850","v200","v200"/)
+vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
 
@@ -18,7 +18,7 @@ filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"
 filename_u850 = file_dir+casename+".u850.day.anom.nc"
 filename_v200 = file_dir+casename+".v200.day.anom.nc"
-filename_v850 = file_dir+casename+".v200.day.anom.nc"
+filename_v850 = file_dir+casename+".v850.day.anom.nc"
 
   nameSeason = (/"winter" , "summer"/)
 

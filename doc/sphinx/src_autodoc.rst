@@ -1,5 +1,5 @@
-Code reference
-==============
+Framework code reference
+========================
 
 .. autosummary::
 

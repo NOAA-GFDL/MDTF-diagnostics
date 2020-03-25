@@ -1,0 +1,87 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "convention_name" : "CMIP",
+  "axes" : {
+    "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
+    // TODO: Z should be plev, set here for compatibility w/CMORized CESM2
+    "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+  },
+  "var_names" : {
+    "hyam_var" : "hyam",
+    "hybm_var" : "hybm",
+    "ua_var" : "ua",
+    "va_var" : "va",
+    "zg_var" : "zg",
+    "qa_var" : "hus",
+    "omega_var" : "wap",
+    "wap_var" : "wap",
+    "ts_var" : "ts",
+    "pr_var" : "pr",
+    "prc_var" : "prc",
+    "prls_var" : "prls",
+    "FSNTOA_var" : "FSNTOA",
+    "tas_var" : "tas",
+    "LANDFRAC_var" : "LANDFRAC",
+    "tauu_var" : "tauu",
+    "CLDTOT_var" : "CLDTOT",
+    "ICEFRAC_var" : "ICEFRAC",
+    "ps_var" : "ps",
+    "psl_var" : "psl",
+    "u_var" : "ua",
+    "v_var" : "va",
+    "u200_var" : "U200",
+    "v200_var" : "V200",
+    "u250_var" : "U250",
+    "v250_var" : "V250",
+    "u850_var" : "U850",
+    "v850_var" : "V850",
+    "omega500_var" : "OMEGA500",
+    "z250_var" : "Z250",    
+    // radiative fluxes:
+    "rsus_var" : "rsus",
+    "rsds_var" : "rsds",
+    "rsdt_var" : "rsdt",
+    "rsut_var" : "rsut",
+    "rlus_var" : "rlus",
+    "rlds_var" : "rlds",
+    "rlut_var" : "rlut",
+    "hfss_var" : "hfss",
+    "hfls_var" : "hfls",
+    // Variables for AMOC_3D_Structure module:
+    "vo_var" : "vo",
+    "so_var" : "so",
+    "vmo_var" : "vmo",
+    "thetao_var" : "thetao",
+    "bas_var" : "ind",
+    "deptho_var" : "deptho",
+    "thkcello_var" : "thkcello",
+    // Variables for Convective Transition Diagnostics module:
+    // ta: 3D temperature, units = K:
+    "ta_var" : "ta",
+    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
+    "prw_var" : "prw",
+    // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K
+    "tave_var" : "tave",
+    // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
+    "qsat_int_var" : "qsat_int",
+    // Variables for SM_ET_coupling module 
+    "mrsos_var" : "mrsos",
+    "evspsbl_var" : "evspsbl"
+  },
+  "units" : {
+    // TODO: assign to variables; do honest unit conversion
+    // factor * [model native unit] = flux in kg m-2 s-1
+    "pr_conversion_factor" : 1,
+    "prc_conversion_factor" : 1,
+    "prls_conversion_factor" : 1,
+    // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
+    "date_int_offset" : 0,
+    // pressure axis: factor * [model native unit] = pressure in Pa
+    "pressure_to_Pa_factor" : 1
+  }
+}

@@ -20,7 +20,8 @@ env_glob=""
 while (( "$#" )); do
     case "$1" in
         -a|--all)
-            env_glob="env_*.yml"  # install all envs
+            # install all envs except dev environment
+            env_glob="env_!(dev).yml"
             shift 1
             ;;
         -e|--env)
@@ -35,6 +36,11 @@ while (( "$#" )); do
         --dev-only)
             # dev and base only (for Travis CI/ auto testing)
             env_glob="env_@(base|dev).yml" 
+            shift 1
+            ;;
+        --all-dev)
+            # all envs, including dev
+            env_glob="env_*.yml"
             shift 1
             ;;
         -d|--env_dir)

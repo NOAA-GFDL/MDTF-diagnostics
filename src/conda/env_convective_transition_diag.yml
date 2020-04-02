@@ -1,4 +1,4 @@
-name: _MDTF-convective_transition_diag
+name: _MDTF_convective_transition_diag
 channels:
 - conda-forge
 - defaults

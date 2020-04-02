@@ -1,4 +1,4 @@
-name: _MDTF-base
+name: _MDTF_base
 channels:
 - conda-forge
 - defaults

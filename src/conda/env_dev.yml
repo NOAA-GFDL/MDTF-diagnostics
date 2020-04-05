@@ -1,5 +1,5 @@
 # Conda environment for development work. 
-name: _MDTF-dev
+name: _MDTF_dev
 channels:
 - conda-forge
 - defaults

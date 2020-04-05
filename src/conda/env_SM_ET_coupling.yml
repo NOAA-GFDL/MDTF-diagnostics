@@ -1,4 +1,4 @@
-name: _MDTF-SM_ET_coupling
+name: _MDTF_SM_ET_coupling
 channels:
 - conda-forge
 - defaults

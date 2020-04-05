@@ -1,4 +1,4 @@
-name: _MDTF-NCL_base
+name: _MDTF_NCL_base
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults

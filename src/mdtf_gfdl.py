@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'defaults_gfdl.jsonc'))
+    mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'cli_gfdl.jsonc'))
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

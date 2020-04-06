@@ -14,7 +14,7 @@
 // https://docs.python.org/2.7/howto/argparse.html. 
 //
 {
-  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
+  "description" : "Driver script for the NOAA Model Diagnostics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
   "arguments": [ // Top-level args not in any group
     {
       "name": "version", 
@@ -22,20 +22,20 @@
       "version": "%(prog)s 2.2"
     },{
       "name": "input_file",
-      "help": "Path to a user configuration file that sets options liasted here. This can be a JSON file of the form given in src/input.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
+      "help": "Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in src/input.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
       "is_positional": true,
-      "nargs" : "?", // 0 or 1 occurences: might have set this with --input_file
+      "nargs" : "?", // 0 or 1 occurrences: might have set this with --input_file
       "metavar" : "INPUT_FILE"
     },{
       "name": "root_dir",
       "help": "Root directory of model data to analyze.",
       "is_positional": true,
-      "nargs" : "?", // 0 or 1 occurences: might have set this with --CASE_ROOT_DIR
+      "nargs" : "?", // 0 or 1 occurrences: might have set this with --CASE_ROOT_DIR
       "metavar" : "CASE_ROOT_DIR"
     },{
       "name": "input_file",
       "short_name": "f",
-      "help": "Alternate way to specify user configuration file (with a flag intead of a positional argument.)",
+      "help": "Alternate way to specify user configuration file (with a flag instead of a positional argument.)",
       "type" : "str",
       "metavar" : "INPUT_FILE",
       "dest": "flag_input_file"
@@ -85,7 +85,7 @@
       "arguments" : [
         {
           "name": "CASE_ROOT_DIR",
-          "help": "Alternate way to specify root directory of model data (with a flag intead of a positional argument.)",
+          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
           "metavar" : "<DIR>",
           "type" : "str",
           "dest": "flag_root_dir"

@@ -276,6 +276,7 @@ class FrameworkCLIHandler(CLIHandler):
                 exit()
             else:
                 self.config['INPUT_FILE'] = var_val
+                self.is_default['INPUT_FILE'] = False
         elif is_dir:
             if self.config['CASE_ROOT_DIR'] is not None:
                 print(("Error: trying to set CASE_ROOT_DIR twice (got "
@@ -283,6 +284,7 @@ class FrameworkCLIHandler(CLIHandler):
                 exit()
             else:
                 self.config['CASE_ROOT_DIR'] = var_val
+                self.is_default['CASE_ROOT_DIR'] = False
 
     def parse_cli(self, args=None):
         # explicitly set cmd-line options, parsed according to default parser;
@@ -293,42 +295,47 @@ class FrameworkCLIHandler(CLIHandler):
         self.parse_positionals('input_file')
         self.parse_positionals('root_dir')
 
-        cli_opts = self.config
-        # defaults from cli.jsonc, from running default parser on empty input
-        cli_base = vars(self.parser.parse_args([]))
-        chained_dict_list = [cli_opts, cli_base]
+        # Options explicitly set by user on CLI; is_default = None if no default
+        cli_opts = {k:v for k,v in self.config.iteritems() \
+            if self.is_default.get(k, None) is False}
+        # full set of defaults from cli.jsonc, from running parser on empty input
+        defaults = vars(self.parser.parse_args([]))
+        chained_dict_list = [cli_opts, defaults]
 
         # deal with options set in user-specified defaults file, if present
-        config_path = cli_opts.get('INPUT_FILE', None)
-        file_str = ''
+        config_path = self.config.get('INPUT_FILE', None)
+        config_str = ''
         if config_path:
             try:
                 with open(config_path, 'r') as f:
-                    file_str = f.read()
+                    config_str = f.read()
             except Exception:
                 print("ERROR: Can't read input file at {}.".format(config_path))
-        if file_str:
+        if config_str:
             try:
-                defaults = util.parse_json(file_str)
+                file_input = util.parse_json(config_str)
+                print(cli_opts)
+                print('DEBUG')
+                print(file_input)
                 # overwrite default case_list and pod_list, if given
-                if 'case_list' in defaults:
-                    self.case_list = defaults.pop('case_list')
-                if 'pod_list' in defaults:
-                    self.pod_list = defaults.pop('pod_list')
+                if 'case_list' in file_input:
+                    self.case_list = file_input.pop('case_list')
+                if 'pod_list' in file_input:
+                    self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
-                defaults = {
-                    self.canonical_arg_name(k): v for k,v in defaults.iteritems()
+                file_input = {
+                    self.canonical_arg_name(k): v for k,v in file_input.iteritems()
                 }
-                chained_dict_list = [cli_opts, defaults, cli_base]
+                chained_dict_list = [cli_opts, file_input, defaults]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():
                     print("ERROR: Couldn't parse JSON in {}.".format(config_path))
                     raise
                 # assume config_file is a plain text file containing flags, etc.
                 # as they would be passed on the command line.
-                file_str = util.strip_comments(file_str, '#')
-                defaults = vars(self.parser.parse_args(shlex.split(file_str)))
-                chained_dict_list = [cli_opts, defaults, cli_base]
+                config_str = util.strip_comments(config_str, '#')
+                file_input = vars(self.parser.parse_args(shlex.split(config_str)))
+                chained_dict_list = [cli_opts, file_input, defaults]
 
         # CLI opts override options set from file, which override defaults
         self.config = dict(ChainMap(*chained_dict_list))

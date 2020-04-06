@@ -1,0 +1,132 @@
+// Configuration for MDTF-diagnostics driver script.
+//
+// DO NOT delete entries from this file. Instead, edit a copy and pass it to
+// the script with the --config_file option.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+// The cases below correspond to the different test data sets.
+// Uncomment the first entry to run NCAR-CESM and the second
+// entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD.
+//
+// Note that the mdtf package does not yet handle multiple cases. 
+//
+  "case_list" : [
+    {
+      "CASENAME" : "QBOi.EXP1.AMIP.001",
+      "model" : "CESM",
+      "convention" : "CESM",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "pod_list": [
+          // Optional: PODs to run for this model only (defaults to all)
+          "Wheeler_Kiladis",
+          "EOF_500hPa",
+          "convective_transition_diag",
+          "MJO_suite",
+          "MJO_teleconnection",
+          "precip_diurnal_cycle"
+      ]
+    },{
+      "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
+      "model" : "AM4",
+      "convention" : "AM4",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "pod_list" : ["MJO_prop_amp"]
+    },{
+      "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
+      "model" : "CMIP",
+      "convention" : "CMIP",
+      "FIRSTYR" : 1951,
+      "LASTYR" : 2005,
+      "pod_list" : ["SM_ET_coupling"]
+    }
+  ],
+  // PATHS ---------------------------------------------------------------------
+  // Location of input and output data. If a relative path is given, it's 
+  // resolved relative to the MDTF-diagnostics code directory.
+
+  // Parent directory containing results from different models.
+  "MODEL_DATA_ROOT": "../inputdata/model/",
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
+
+  // Working directory.
+  "WORKING_DIR": "../wkdir",
+
+  // Directory to write output files. Defaults to working directory if blank.
+  "OUTPUT_DIR": "../wkdir",
+
+  // DATA ----------------------------------------------------------------------
+  // Settings affecting the framework's retrieval of model data.
+
+  // Method used to fetch model data.
+  "data_manager": "Local_File",
+
+  // Time (in seconds) to wait before giving up on transferring a data file to 
+  // the local filesystem. Set to zero to disable.
+  "file_transfer_timeout": 300,
+
+  // Set to true to retain local temp directories of downloaded data.
+  "keep_temp": false,
+
+  // RUNTIME -------------------------------------------------------------------
+  // Settings affecting the runtime environment of the PODs.
+  "environment_manager": "Conda",
+
+  // Path to the Anaconda installation. Only used if environment_manager='Conda'. 
+  // Set equal to "" to use conda from your system's $PATH.
+  "conda_root": "",
+
+  // Root directory for Anaconda environment installs. Only used if 
+  // environment_manager = 'Conda'. Set equal to '' to install in your system's 
+  // default location.
+  "conda_env_root": "./envs/conda",
+
+  // Root directory for python virtual environments. Only used if 
+  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
+  // system's default location.
+  "venv_root": "./envs/venv",
+
+  // Root directory for R packages requested by PODs. Only used if 
+  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
+  // system library.
+  "r_lib_root": "./envs/r_libs",
+
+  // OUTPUT --------------------------------------------------------------------
+  // Settings affecting what output is generated.
+
+  // Set flag to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": false,
+
+  // Set flag to have PODs save netCDF files of processed data.
+  "save_nc": false,
+
+  // Set flag to save all processed data except netcdf files.
+  "save_non_nc": false,
+
+  // Set flag to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": false,
+
+  // Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under 
+  // a unique name.
+  "overwrite": false,
+
+  // DEBUG ---------------------------------------------------------------------
+  // Settings used in debugging.
+
+  // Log verbosity level.
+  "verbose": 1, 
+
+  // Set flag for framework test. Data is fetched but PODs are not run.
+  "test_mode": false,
+
+  // Set flag for framework test. No external commands are run and no remote 
+  // data is copied. Implies test_mode.
+  "dry_run": false
+}

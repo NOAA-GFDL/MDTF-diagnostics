@@ -1,0 +1,143 @@
+// Configuration for MDTF-diagnostics driver script.
+//
+// DO NOT delete entries from this file. Instead, edit a copy and pass it to
+// the script with the --config_file option.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  // The cases below correspond to the different test data sets.
+  //
+  // Note that the mdtf package does not yet handle multiple cases. 
+  //
+  "case_list" : [
+    {
+      "CASENAME" : "ESM4_historical_D1",
+      "model" : "ESM4",
+      "convention" : "CMIP_GFDL",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "CASE_ROOT_DIR" : "/archive/cm6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
+      "pod_list": [
+          // Optional: PODs to run for this model only (defaults to all)
+          "Wheeler_Kiladis",
+          "EOF_500hPa",
+          "convective_transition_diag",
+          "MJO_suite",
+          "MJO_teleconnection",
+          "MJO_prop_amp",
+          "precip_diurnal_cycle",
+          "SM_ET_coupling"
+      ]
+    }
+  ],
+  // PATHS ---------------------------------------------------------------------
+  // Location of input and output data. If a relative path is given, it's 
+  // resolved relative to the MDTF-diagnostics code directory.
+
+  // Parent directory containing results from different models.
+  "MODEL_DATA_ROOT": "$MDTF_GFDL_TMPDIR/inputdata/model",
+
+  // Site-specific installation of observational data used by individual PODs.
+  // This will be GCP'ed locally if running on PPAN.
+  "OBS_DATA_REMOTE": "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "$MDTF_GFDL_TMPDIR/inputdata/obs_data",
+
+  // Working directory.
+  "WORKING_DIR": "$MDTF_GFDL_TMPDIR/wkdir",
+
+  // Directory to write output files. Defaults to working directory if blank.
+  "OUTPUT_DIR": "$HOME/mdtf_out",
+
+  // GFDL ----------------------------------------------------------------------
+  // Settings specific to operation at GFDL.
+
+  // If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and 
+  // create temp files here. Must be accessible via gcp.
+  "GFDL_PPAN_TEMP": "$TMPDIR",
+
+  // If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location 
+  // and create temp files here. Must be accessible via gcp.
+  "GFDL_WS_TEMP": "/net2/$USER/tmp",
+  
+  // Set flag to run framework in 'online' mode, processing data as part of the 
+  // FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper 
+  // script from the XML.
+  "frepp": false,
+
+  // Set flag search entire /pp/ directory for model data; default is to 
+  // restrict to model component passed by FRE. Ignored if --frepp is not set.
+  "ignore_component": false,
+
+  // DATA ----------------------------------------------------------------------
+  // Settings affecting the framework's retrieval of model data.
+
+  // Method used to fetch model data.
+  "data_manager": "GFDL_auto",
+
+  // Time (in seconds) to wait before giving up on transferring a data file to 
+  // the local filesystem. Set to zero to disable.
+  "file_transfer_timeout": 900,
+
+  // Set to true to retain local temp directories of downloaded data.
+  "keep_temp": false,
+
+  // RUNTIME -------------------------------------------------------------------
+  // Settings affecting the runtime environment of the PODs.
+  "environment_manager": "GFDL_conda",
+
+  // Path to the Anaconda installation. Only used if environment_manager='Conda'. 
+  // Set equal to "" to use conda from your system's $PATH.
+  "conda_root": "/home/mdteam/anaconda",
+
+  // Root directory for Anaconda environment installs. Only used if 
+  // environment_manager = 'Conda'. Set equal to '' to install in your system's 
+  // default location.
+  "conda_env_root": "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
+
+  // Root directory for python virtual environments. Only used if 
+  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
+  // system's default location.
+  "venv_root": "./envs/venv",
+
+  // Root directory for R packages requested by PODs. Only used if 
+  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
+  // system library.
+  "r_lib_root": "./envs/r_libs",
+
+  // OUTPUT --------------------------------------------------------------------
+  // Settings affecting what output is generated.
+
+  // Set flag to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": false,
+
+  // Set flag to have PODs save netCDF files of processed data.
+  "save_nc": false,
+
+  // Set flag to save all processed data except netcdf files.
+  "save_non_nc": false,
+
+  // Set flag to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": false,
+
+  // Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under 
+  // a unique name.
+  "overwrite": false,
+
+  // DEBUG ---------------------------------------------------------------------
+  // Settings used in debugging.
+
+  // Log verbosity level.
+  "verbose": 1, 
+
+  // Set flag for framework test. Data is fetched but PODs are not run.
+  "test_mode": false,
+
+  // Set flag for framework test. No external commands are run and no remote 
+  // data is copied. Implies test_mode.
+  "dry_run": false
+}

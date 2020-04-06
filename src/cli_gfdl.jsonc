@@ -1,48 +1,46 @@
-// Configuration for MDTF-diagnostics driver script.
+// Configuration for command-line arguments for MDTF-diagnostics driver script.
 //
 // This version pertains to the GFDL site-specific installation.
 //
-// DO NOT delete entries from this file. Instead, edit a copy and pass it to
-// the script with the --config_file option.
-//
 // All text to the right of an unquoted "//" is a comment and ignored, as well
-// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
-// in strings, so you'll want to turn word wrap on in your editor.
+// as blank lines (JSONC quasi-standard.)
+//
+// DO NOT modify this file. Instead, edit a copy of defaults.jsonc 
+// and pass it to the script with the --config_file/-f option.
+//
+// Entries here are used in src/cli.py to configure command-line options 
+// accepted by the script. Syntax is based on python's argparse library, see
+// https://docs.python.org/2.7/library/argparse.html or 
+// https://docs.python.org/2.7/howto/argparse.html. 
 //
 {
-  // The cases below correspond to the different test data sets.
-  //
-  // Note that the mdtf package does not yet handle multiple cases. 
-  //
-  "case_list" : [
+  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using options set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
+  "arguments": [ // Top-level args not in any group
     {
-      "CASENAME" : "ESM4_historical_D1",
-      "model" : "ESM4",
-      "convention" : "CMIP_GFDL",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "CASE_ROOT_DIR" : "/archive/cm6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
-      "pod_list": [
-          // Optional: PODs to run for this model only (otherwise use pod_list below)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "convective_transition_diag",
-          "MJO_suite",
-          "MJO_teleconnection",
-          "MJO_prop_amp",
-          "precip_diurnal_cycle",
-          "SM_ET_coupling"
-      ]
+      "name": "version", 
+      "action": "version", 
+      "version": "%(prog)s 2.2"
+    },{
+      "name": "input_file",
+      "help": "Path to a user configuration file that sets options liasted here. This can be a JSON file of the form given in src/input.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
+      "is_positional": true,
+      "nargs" : "?", // 0 or 1 occurences: might have set this with --input_file
+      "metavar" : "INPUT_FILE"
+    },{
+      "name": "root_dir",
+      "help": "Root directory of model data to analyze.",
+      "is_positional": true,
+      "nargs" : "?", // 0 or 1 occurences: might have set this with --CASE_ROOT_DIR
+      "metavar" : "CASE_ROOT_DIR"
+    },{
+      "name": "input_file",
+      "short_name": "f",
+      "help": "Alternate way to specify user configuration file (as a flag intead of a positional argument.)",
+      "type" : "str",
+      "metavar" : "INPUT_FILE",
+      "dest": "flag_input_file"
     }
   ],
-  //
-  // Define command-line arguments:
-  // Entries here are used in src/cli.py to configure command-line options 
-  // accepted by the script. Syntax is based on python's argparse library, see
-  // https://docs.python.org/2.7/library/argparse.html or 
-  // https://docs.python.org/2.7/howto/argparse.html. 
-  //
-  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on gridded model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.",
   "argument_groups" : [
     {
       "name" : "PATHS",
@@ -87,8 +85,10 @@
       "arguments" : [
         {
           "name": "CASE_ROOT_DIR",
-          "help": "Alternate method to specify root directory of model data.",
-          "metavar" : "<DIR>"
+          "help": "Alternate way to specify root directory of model data (as a flag intead of a positional argument.)",
+          "metavar" : "<DIR>",
+          "type" : "str",
+          "dest": "flag_root_dir"
         },{
           "name": "FIRSTYR",
           "short_name" : "Y",
@@ -194,7 +194,7 @@
         {
           "name": "pods",
           "short_name": "p",
-          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values.",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
           "default" : "all",
           "nargs" : "+",
           //"choices" : "self.get_pods_for_help_text()",

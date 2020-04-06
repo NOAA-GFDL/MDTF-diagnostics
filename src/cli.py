@@ -7,18 +7,23 @@ import shlex
 import collections
 import util
 
-class SingleMetavarHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+class CustomHelpFormatter(
+        argparse.RawDescriptionHelpFormatter, 
+        argparse.ArgumentDefaultsHelpFormatter
+    ):
     """Modify help text formatter to only display variable placeholder 
-    ("metavar") once, to save space. 
-    Taken from https://stackoverflow.com/a/16969505
+    ("metavar") once, to save space. Taken from 
+    https://stackoverflow.com/a/16969505 . Also inherit from 
+    RawDescriptionHelpFormatter in order to preserve line breaks in description
+    only (https://stackoverflow.com/a/18462760).
     """
     def __init__(self, *args, **kwargs):
         # tweak indentation of help strings
         if not kwargs.get('indent_increment', None):
             kwargs['indent_increment'] = 2
         if not kwargs.get('max_help_position', None):
-            kwargs['max_help_position'] = 10
-        super(SingleMetavarHelpFormatter, self).__init__(*args, **kwargs)
+            kwargs['max_help_position'] = 6
+        super(CustomHelpFormatter, self).__init__(*args, **kwargs)
 
     def _format_action_invocation(self, action):
         if not action.option_strings:
@@ -116,7 +121,7 @@ class CLIHandler(object):
     def make_parser(self, d):
         args = util.coerce_to_iter(d.pop('arguments', None))
         arg_groups = util.coerce_to_iter(d.pop('argument_groups', None))
-        d['formatter_class'] = SingleMetavarHelpFormatter
+        d['formatter_class'] = CustomHelpFormatter
         p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
         p = argparse.ArgumentParser(**p_kwargs)
         for arg in args:
@@ -181,22 +186,13 @@ class CLIHandler(object):
                     d[attr] = eval(d[attr])
 
         # set more technical argparse options based on default value
-        if 'default' in d:
-            if 'action' not in d:
-                d['action'] = RecordDefaultsAction
-            elif isinstance(d['default'], basestring) and 'nargs' not in d:
-                # unless explicitly specified, string options accept 1 argument
-                # d['nargs'] = 1
-                pass
+        if 'default' in d and 'action' not in d:
+            d['action'] = RecordDefaultsAction
 
         # change help string based on default value
         if d.pop('hidden', False):
             # do not list argument in "mdtf --help", but recognize it
             d['help'] = argparse.SUPPRESS
-        elif 'default' in d:
-            # display default value in help string
-            #self._append_to_entry(d, 'help', "(default: %(default)s)")
-            pass
 
         # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
         self.parser_args_from_group[target_name].append(
@@ -243,11 +239,10 @@ class FrameworkCLIHandler(CLIHandler):
 
     def make_default_parser(self, d, config_path):
         # add more standard options to top-level parser
-        if 'usage' not in d:
-            d['usage'] = ("%(prog)s [options] [INPUT_FILE] [CASE_ROOT_DIR]\n"
+        _ = d.setdefault(
+            'usage',
+            ("%(prog)s [options] [INPUT_FILE] [CASE_ROOT_DIR]\n"
                 "{}%(prog)s info [TOPIC]").format(len('usage: ')*' ')
-        self._append_to_entry(d, 'epilog',
-            "The default values above are set in {}.".format(config_path)
         )
         return self.make_parser(d)
 
@@ -311,7 +306,7 @@ class FrameworkCLIHandler(CLIHandler):
                 with open(config_path, 'r') as f:
                     file_str = f.read()
             except Exception:
-                print("ERROR: Can't read config file at {}.".format(config_path))
+                print("ERROR: Can't read input file at {}.".format(config_path))
         if file_str:
             try:
                 defaults = util.parse_json(file_str)

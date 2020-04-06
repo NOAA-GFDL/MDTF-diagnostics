@@ -5,7 +5,7 @@
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 //
-// DO NOT modify this file. Instead, edit a copy of defaults.jsonc 
+// DO NOT modify this file. Instead, edit a copy of input_gfdl.jsonc 
 // and pass it to the script with the --config_file/-f option.
 //
 // Entries here are used in src/cli.py to configure command-line options 
@@ -14,7 +14,7 @@
 // https://docs.python.org/2.7/howto/argparse.html. 
 //
 {
-  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using options set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
+  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
   "arguments": [ // Top-level args not in any group
     {
       "name": "version", 
@@ -35,7 +35,7 @@
     },{
       "name": "input_file",
       "short_name": "f",
-      "help": "Alternate way to specify user configuration file (as a flag intead of a positional argument.)",
+      "help": "Alternate way to specify user configuration file (with a flag intead of a positional argument.)",
       "type" : "str",
       "metavar" : "INPUT_FILE",
       "dest": "flag_input_file"
@@ -85,7 +85,7 @@
       "arguments" : [
         {
           "name": "CASE_ROOT_DIR",
-          "help": "Alternate way to specify root directory of model data (as a flag intead of a positional argument.)",
+          "help": "Alternate way to specify root directory of model data (with a flag intead of a positional argument.)",
           "metavar" : "<DIR>",
           "type" : "str",
           "dest": "flag_root_dir"

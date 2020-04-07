@@ -1,11 +1,11 @@
 // Configuration for MDTF-diagnostics driver script.
 //
-// DO NOT delete entries from this file. Instead, edit a copy and pass it to
-// the script with the --config_file option.
-//
 // All text to the right of an unquoted "//" is a comment and ignored, as well
-// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
-// in strings, so you'll want to turn word wrap on in your editor.
+// as blank lines (JSONC quasi-standard.) 
+//
+// Copy this file and customize the setting values as needed. Pass it to the 
+// framework at the end of the command line (positionally) or with the 
+// -f/--config-file flag.
 //
 {
   // The cases below correspond to the different test data sets.

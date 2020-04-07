@@ -1,59 +1,46 @@
-// Configuration for MDTF-diagnostics driver script.
+// Configuration for command-line arguments for MDTF-diagnostics driver script.
 //
-// DO NOT delete entries from this file. Instead, edit a copy and pass it to
-// the script with the --config_file option.
+// This version pertains to the GFDL site-specific installation.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
-// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
-// in strings, so you'll want to turn word wrap on in your editor.
+// as blank lines (JSONC quasi-standard.)
+//
+// DO NOT modify this file. Instead, edit a copy of input_gfdl.jsonc 
+// and pass it to the script with the --config_file/-f option.
+//
+// Entries here are used in src/cli.py to configure command-line options 
+// accepted by the script. Syntax is based on python's argparse library, see
+// https://docs.python.org/2.7/library/argparse.html or 
+// https://docs.python.org/2.7/howto/argparse.html. 
 //
 {
-  // The cases below correspond to the different test data sets.
-  // Uncomment the first entry to run NCAR-CESM and the second
-  // entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD.
-  //
-  // Note that the mdtf package does not yet handle multiple cases. 
-  //
-  "case_list" : [
+  "description" : "Driver script for the NOAA Model Diagnostics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
+  "arguments": [ // Top-level args not in any group
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
-      "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list": [
-          // Optional: PODs to run for this model only (otherwise use pod_list)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "convective_transition_diag",
-          "MJO_suite",
-          "MJO_teleconnection",
-          "precip_diurnal_cycle"
-      ]
+      "name": "version", 
+      "action": "version", 
+      "version": "%(prog)s 3.0 beta 1"
     },{
-      "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
-      "model" : "AM4",
-      "convention" : "AM4",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list" : ["MJO_prop_amp"]
+      "name": "input_file",
+      "help": "Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in src/input.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
+      "is_positional": true,
+      "nargs" : "?", // 0 or 1 occurrences: might have set this with --input_file
+      "metavar" : "INPUT_FILE"
     },{
-      "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
-      "model" : "CMIP",
-      "convention" : "CMIP",
-      "FIRSTYR" : 1951,
-      "LASTYR" : 2005,
-      "pod_list" : ["SM_ET_coupling"]
+      "name": "root_dir",
+      "help": "Root directory of model data to analyze.",
+      "is_positional": true,
+      "nargs" : "?", // 0 or 1 occurrences: might have set this with --CASE_ROOT_DIR
+      "metavar" : "CASE_ROOT_DIR"
+    },{
+      "name": "input_file",
+      "short_name": "f",
+      "help": "Alternate way to specify user configuration file (with a flag instead of a positional argument.)",
+      "type" : "str",
+      "metavar" : "INPUT_FILE",
+      "dest": "flag_input_file"
     }
   ],
-  //
-  // Define command-line arguments:
-  // Entries here are used in src/cli.py to configure command-line options 
-  // accepted by the script. Syntax is based on python's argparse library, see
-  // https://docs.python.org/2.7/library/argparse.html or 
-  // https://docs.python.org/2.7/howto/argparse.html. 
-  //
-  "description" : "Driver script for the NOAA Model Diagnotics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on gridded model data.\nSee documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.",
   "argument_groups" : [
     {
       "name" : "PATHS",
@@ -62,26 +49,32 @@
         {
           "name": "MODEL_DATA_ROOT",
           "help": "Parent directory containing results from different models.",
-          "default" : "../inputdata/model/",
+          "default" : "$MDTF_GFDL_TMPDIR/inputdata/model",
+          "metavar" : "<DIR>",
+          "parse_type": "path"
+        },{
+          "name": "OBS_DATA_REMOTE",
+          "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
+          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OBS_DATA_ROOT",
-          "help": "Parent directory containing observational data used by individual PODs.",
-          "default" : "../inputdata/obs_data",
+          "help": "Local parent directory containing observational data used by individual PODs.",
+          "default" : "$MDTF_GFDL_TMPDIR/inputdata/obs_data",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "WORKING_DIR",
           "help": "Working directory.",
-          "default" : "../wkdir",
+          "default" : "$MDTF_GFDL_TMPDIR/wkdir",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
           "short_name" : "o",
           "help": "Directory to write output files. Defaults to working directory.",
-          "default" : "../wkdir",
+          "default" : "$HOME/mdtf_out",
           "metavar" : "<DIR>",
           "parse_type": "path"
         }
@@ -89,11 +82,13 @@
     },{
       "name" : "MODEL",
       "description" : "Settings describing the input model data.",
-      "arguments" : [        
+      "arguments" : [
         {
           "name": "CASE_ROOT_DIR",
-          "help": "Alternate method to specify root directory of model data.",
-          "metavar" : "<DIR>"
+          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
+          "metavar" : "<DIR>",
+          "type" : "str",
+          "dest": "flag_root_dir"
         },{
           "name": "FIRSTYR",
           "short_name" : "Y",
@@ -116,7 +111,7 @@
           "name": "convention",
           "short_name" : "c",
           "help": "Variable name/unit convention used in model data.",
-          "default": "CMIP",
+          "default": "CMIP_GFDL",
           "metavar" : "<convention>"
         },{
           "name": "model",
@@ -148,18 +143,44 @@
         }
       ]
     },{
+      "name" : "GFDL",
+      "description" : "Settings specific to operation at GFDL.",
+      "arguments" : [
+        {
+          "name": "GFDL_PPAN_TEMP",
+          "help": "If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "default": "$TMPDIR",
+          "metavar" : "<DIR>",
+          "parse_type": "path"
+        },{
+          "name": "GFDL_WS_TEMP",
+          "help": "If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "default": "/net2/$USER/tmp",
+          "metavar" : "<DIR>",
+          "parse_type": "path"
+        },{
+          "name": "frepp",
+          "help": "Set flag to run framework in 'online' mode, processing data as part of the FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper script from the XML.",
+          "default" : false
+        },{
+          "name": "ignore_component",
+          "help": "Set flag search entire /pp/ directory for model data; default is to restrict to model component passed by FRE. Ignored if --frepp is not set.",
+          "default" : false
+        }
+      ]
+    },{
       "name" : "DATA",
       "description" : "Settings affecting the framework's retrieval of model data.",
       "arguments" : [
         {
           "name": "data_manager",
           "help": "Method used to fetch model data.",
-          "default" : "Local_File"
+          "default" : "GFDL_auto"
         },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
           "type" : "int",
-          "default" : 300,
+          "default" : 900,
           "metavar" : "<seconds>"
         },{
           "name": "keep_temp",
@@ -173,7 +194,7 @@
         {
           "name": "pods",
           "short_name": "p",
-          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values.",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
           "default" : "all",
           "nargs" : "+",
           //"choices" : "self.get_pods_for_help_text()",
@@ -188,17 +209,17 @@
         {
           "name": "environment_manager",
           "help": "Method to manage POD runtime dependencies.",
-          "default" : "Conda"
+          "default" : "GFDL_conda"
         },{
           "name": "conda_root",
           "help": "Path to the Anaconda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
-          "default" : "",
+          "default" : "/home/mdteam/anaconda",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "conda_env_root",
           "help": "Root directory for Anaconda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
-          "default" : "./envs/conda",
+          "default" : "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
@@ -225,7 +246,11 @@
           "default" : false
         },{
           "name": "save_nc",
-          "help": "Set flag to have PODs save netCDF files of processed data.",
+          "help": "Set flag to save all processed data, in addition to plots.",
+          "default" : false
+        },{
+          "name": "save_non_nc",
+          "help": "Set flag to save all processed data except netcdf files.",
           "default" : false
         },{
           "name": "make_variab_tar",

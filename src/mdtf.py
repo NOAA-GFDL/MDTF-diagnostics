@@ -168,7 +168,8 @@ class MDTFFramework(object):
         self._populate_from_cli(cli_obj, 'MODEL', d)
         # remove empty entries first
         d = {k:v for k,v in d.iteritems() if v}
-        if d2.get('root_dir', None): # CASE_ROOT set positionally
+        if 'CASE_ROOT_DIR' not in d and d2.get('root_dir', None): 
+            # CASE_ROOT set positionally
             d['CASE_ROOT_DIR'] = d2['root_dir']
         if 'model' not in d:
             d['model'] = 'CMIP'
@@ -289,7 +290,7 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'defaults.jsonc'))
+    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'cli.jsonc'))
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

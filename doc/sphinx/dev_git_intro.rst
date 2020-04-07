@@ -12,8 +12,8 @@ In the interests of making things self-contained we give some step-by-step instr
 Using SSH with Github
 ^^^^^^^^^^^^^^^^^^^^^
 
-- It's highly recommended you generate an `SSH key <https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`_ and `add it <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`_ to your github account. This will save you from having to re-enter your github username and password every time you interact with their servers.
-- The following instructions assume you're doing this. If you're using manual authentication instead, replace the ``git@github.com:`` addresses in what follows with ``https://github.com/``.
+- It's recommended you generate an `SSH key <https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`_ and `add it <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`_ to your github account. This will save you from having to re-enter your github username and password every time you interact with their servers.
+- The following instructions assume you're doing this. If you're using manual authentication instead, replace the "``git@github.com:``" addresses in what follows with "``https://github.com/``".
 
 Getting started
 ^^^^^^^^^^^^^^^
@@ -21,6 +21,7 @@ Getting started
 - Create a *fork* of the project by clicking the button in the upper-right corner of the main `Github page <https://github.com/NOAA-GFDL/MDTF-diagnostics>`_. This will create a copy in your own Github account which you have full control over.
 - *Clone* your fork onto your computer: ``git clone git@github.com:<your_github_account>/MDTF-diagnostics.git``. This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.
 - Enter the project directory: ``cd MDTF-diagnostics``.
+- Clone additional dependencies of the code: ``git submodule update --recursive --init``.
 - Git knows about your fork, but you need to tell it about NOAA's repo if you wish to contribute changes back to the code base. To do this, type ``git remote add upstream git@github.com:NOAA-GFDL/MDTF-diagnostics.git``. Now you have two remote repos: ``origin``, your Github fork which you can read and write to, and ``upstream``, NOAA's code base which you can only read from.
 
 .. (TODO: `pip install -v .`, other installation instructions...)
@@ -29,7 +30,7 @@ Coding a feature
 ^^^^^^^^^^^^^^^^
 
 - Start from the ``develop`` branch: ``git checkout develop``.
-- If it's been a while since you created your fork, other people may have updated NOAA's ``develop`` branch. To make sure you're up-to-date, get these changes with ``git pull upstream develop``.
+- If it's been a while since you created your fork, other people may have updated NOAA's ``develop`` branch. To make sure you're up-to-date, get these changes with ``git pull upstream develop`` and ``git submodule update --recursive --remote``.
 - That command updates the working copy on your computer, but you also need to tell your fork on github about the changes: ``git push origin develop``.
 - Now you're up-to-date and ready to start working on a new feature. ``git checkout -b feature/<my_feature_name>`` will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
 - Write your code! Useful commands are ``git status`` to remind you what branch you're on and what uncommitted changes there are, and ``git branch -a`` to list all branches.

@@ -24,15 +24,32 @@ function find_conda {
     fi
 }
 
+# parse aruments manually
 _MDTF_CONDA_ROOT=""
-if [[ $# -eq 1 ]]; then
-    _MDTF_CONDA_ROOT="$1"  # passed the path to use on command line
-fi
+_quiet=""
+while (( "$#" )); do
+    case "$1" in
+        -q)
+            _quiet="0" # suppress output
+            shift 1
+            ;;
+        -?*)
+            # passed the path to use on command line
+            _MDTF_CONDA_ROOT="$1"
+            shift 1
+            ;;
+        *) # Default case: No more options, so break out of the loop.
+            break
+    esac
+done
+
 if [[ -z "$_MDTF_CONDA_ROOT" ]]; then
     find_conda
 fi
 if [[ -z "$_MDTF_CONDA_ROOT" ]]; then
-    echo "conda not found, sourcing ~/.bashrc"
+    if [[ -z "$_quiet" ]]; then
+        echo "conda not found, sourcing ~/.bashrc"
+    fi
     if [[ -f "$HOME/.bashrc" ]]; then
         source "$HOME/.bashrc"
     fi
@@ -45,8 +62,10 @@ export _CONDA_ROOT="$_MDTF_CONDA_ROOT"
 export CONDA_EXE="${_CONDA_ROOT}/bin/conda"
 export _CONDA_EXE="$CONDA_EXE"
 if [[ -x "$CONDA_EXE" ]]; then
-    echo "_CONDA_EXE=${CONDA_EXE}"
-    echo "_CONDA_ROOT=${_CONDA_ROOT}"
+    if [[ -z "$_quiet" ]]; then
+        echo "_CONDA_EXE=${CONDA_EXE}"
+        echo "_CONDA_ROOT=${_CONDA_ROOT}"
+    fi
 else
     echo "ERROR: no conda executable at $CONDA_EXE"
     exit 1

@@ -31,12 +31,16 @@
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
     "ta_var" : "temp",
+    "tas_var" : "temp",
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw_var" : "WVP",
     // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K
     "tave_var" : "tave",
     // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
-    "qsat_int_var" : "qsat_int"
+    "qsat_int_var" : "qsat_int",
+    // Variables for SM_ET_coupling module
+    "mrsos_var" : "mrsos",
+    "evspsbl_var" : "evspsbl"
   },
   "units" : {
     // TODO: assign to variables; do honest unit conversion

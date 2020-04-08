@@ -13,21 +13,11 @@
   "var_names" : {
     "hyam_var" : "hyam",
     "hybm_var" : "hybm",
-    "ua_var" : "U",
     "zg_var" : "Z3",
     "pr_var" : "PRECT",
-    "prc_var" : "PRECC",
-    "prls_var" : "PRECL",
     "rlut_var" : "FLUT",
-    "FSNTOA_var" : "FSNTOA",
     "tas_var" : "TREFHT",
-    "ts_var" : "TS",
-    "LANDFRAC_var" : "LANDFRAC",
-    "tauu_var" : "TAUX",
-    "CLDTOT_var" : "CLDTOT",
-    "ICEFRAC_var" : "ICEFRAC",
     "ps_var" : "PS",
-    "psl_var" : "PSL",
     "qa_var" : "Q",
     "u_var" : "U",
     "v_var" : "V",
@@ -38,6 +28,7 @@
     "u850_var" : "U850",
     "v850_var" : "V850",
     "omega500_var" : "OMEGA500",
+    "wap_var" : "OMEGA",
     "z250_var" : "Z250",
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
@@ -48,18 +39,19 @@
     "tave_var" : "tave",
     // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
     "qsat_int_var" : "qsat_int",
-    // MJO Teleconnection Diagnostics (for use of SpCCSM4 model):
-    // Total precipitation (mm/day)
-    // "pr_var" : "prec",
-    // Outgoing longwave radiation (w/m2)
-    // "rlut_var" : "olr",
-    // "u850_var" : "u850",
-    // "u250_var" : "u250",
-    // Geopotential height at 250-hPa level(m)
-    // "z250_var" : "z3250",
     // Variables for SM_ET_coupling module
     "mrsos_var" : "mrsos",
-    "evspsbl_var" : "evspsbl"
+    "evspsbl_var" : "evspsbl",
+    // currently unused
+    "prc_var" : "PRECC",
+    "prls_var" : "PRECL",
+    "FSNTOA_var" : "FSNTOA",
+    "ts_var" : "TS",
+    "LANDFRAC_var" : "LANDFRAC",
+    "tauu_var" : "TAUX",
+    "CLDTOT_var" : "CLDTOT",
+    "ICEFRAC_var" : "ICEFRAC",
+    "psl_var" : "PSL"
   },
   "units" : {
     // TODO: assign to variables; do honest unit conversion

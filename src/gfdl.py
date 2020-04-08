@@ -31,7 +31,8 @@ class ModuleManager(util.Singleton):
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',
         'gcp':      'gcp/2.3',
-        'nco':      'nco/4.5.4', # 4.7.6 still broken on workstations
+        # install nco in conda environment, rather than using GFDL module
+        # 'nco':      'nco/4.5.4', # 4.7.6 still broken on workstations
         'netcdf':   'netcdf/4.2'
     }
 
@@ -216,7 +217,7 @@ class GfdlarchiveDataManager(DataManager):
     def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
-        modMgr.load('gcp', 'nco') # should refactor
+        modMgr.load('gcp') # should refactor
 
         config = util_mdtf.ConfigManager()
         config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now

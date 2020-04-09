@@ -38,8 +38,6 @@ class _PathManager(util.NameSpace):
         if not paths_to_parse:
             print("Warning: didn't get list of paths from CLI.")
         for key in paths_to_parse:
-            if key == 'CODE_ROOT':
-                continue # just to be safe
             self[key] = self._init_path(key, d, env=env)
             if key in d:
                 d[key] = self[key]
@@ -49,6 +47,9 @@ class _PathManager(util.NameSpace):
         self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
         self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
+
+        if not self.OUTPUT_DIR:
+            self.OUTPUT_DIR = self.WORKING_DIR
 
     def _init_path(self, key, d, env=None):
         if self._unittest_flag: # use in unit testing only
@@ -85,6 +86,8 @@ class _PathManager(util.NameSpace):
                 path
             )
 
+        if path == '':
+            return path # default value set elsewhere
         path = os.path.expanduser(path) # resolve '~' to home dir
         path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
         if isinstance(env, dict):

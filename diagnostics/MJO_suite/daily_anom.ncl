@@ -43,7 +43,7 @@ else
     	print("reading "+file_dir+file_pr)
 	f = addfile(file_dir+file_pr,"r")
 	time = f->$time_coord$
-	date = ut_calendar(time,-2)
+	date = cd_calendar(time,-2)
 
 	print(getfilevarnames(f))
 
@@ -90,7 +90,7 @@ if( isfilepresent(file_dir+file_u200) ) then
 
 f = addfile(file_dir+file_u200,"r")
 time = f->$time_coord$
-date = ut_calendar(time,-2)
+date = cd_calendar(time,-2)
 
 
 invar = f->u200($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
@@ -131,7 +131,7 @@ if( isfilepresent(file_dir+file_u850) ) then
 print("reading "+file_u850)
 f = addfile(file_dir+file_u850,"r")
 time = f->$time_coord$
-date = ut_calendar(time,-2)
+date = cd_calendar(time,-2)
 
 
 invar = f->u850($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
@@ -171,7 +171,7 @@ if( isfilepresent(file_dir+file_v200) ) then
     print("reading "+file_v200)
     f = addfile(file_dir+file_v200,"r")
     time = f->$time_coord$
-    date = ut_calendar(time,-2)
+    date = cd_calendar(time,-2)
 
     invar = f->v200($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
     
@@ -213,7 +213,7 @@ print(get_script_name()+"Creating "+file_dir+casename+".v850.daily.anom.nc")
 print("reading "+file_v850)
 f = addfile(file_dir+file_v850,"r")
 time = f->$time_coord$
-date = ut_calendar(time,-2)
+date = cd_calendar(time,-2)
 
 invar = f->v850($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
     
@@ -254,7 +254,7 @@ if( isfilepresent(file_dir+file_rlut) ) then
 print("reading "+file_rlut)
 f = addfile(file_dir+file_rlut,"r")
 time = f->$time_coord$
-date = ut_calendar(time,-2)
+date = cd_calendar(time,-2)
 
 invar = f->rlut($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
     

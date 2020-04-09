@@ -12,7 +12,8 @@
     "description" : "MJO CLIVAR suite (NCAR)",
     "runtime_requirements": {
       "python": [],
-      "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"],
+      "ncks": []
     }
   },
   //

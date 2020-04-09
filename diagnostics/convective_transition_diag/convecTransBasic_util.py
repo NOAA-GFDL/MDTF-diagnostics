@@ -23,7 +23,7 @@ import numpy
 import numba
 import glob
 import os
-from numba import jit,autojit
+from numba import jit
 import scipy.io
 from scipy.interpolate import NearestNDInterpolator
 from netCDF4 import Dataset

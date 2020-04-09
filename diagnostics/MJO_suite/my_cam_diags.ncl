@@ -161,7 +161,7 @@ begin
       end if
       
       system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
-      system("/bin/rm -f "+pltPath+".eps")
+      system("rm -f "+pltPath+".eps")
   end if
   
   if (pltType.eq."x11" .and. isatt(opt,"debug") .and. opt@debug) then 
@@ -312,7 +312,7 @@ begin
           pltConvert = " "               ; default
       end if
       system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
-      system("/bin/rm -f "+pltPath+".eps")
+      system("rm -f "+pltPath+".eps")
   end if
 end
 ;***********************************************************

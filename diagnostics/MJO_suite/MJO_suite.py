@@ -31,6 +31,18 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
+# HACK for merging in SPEAR code before we have general level extraction working
+if '200' in os.environ.get('u200_var','') and '200' in os.environ.get('v200_var',''):
+    print('\tDEBUG: assuming 3D u,v ({},{})'.format(
+        os.environ['u200_var'], os.environ['v200_var']
+    ))
+    os.environ['MDTF_3D_UV'] = '1'
+else:
+    print('\tDEBUG: assuming 4D u,v ({},{})'.format(
+        os.environ['u200_var'], os.environ['v200_var']
+    ))
+    os.environ['MDTF_3D_UV'] = '0'
+
 #============================================================
 # Call NCL code here
 #============================================================

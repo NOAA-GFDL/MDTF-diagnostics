@@ -64,8 +64,9 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
 
     def verify_paths(self, config):
         # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(config.paths.WORKING_DIR) and \
-            not config.config.get('keep_temp', False):
+        if os.path.exists(config.paths.WORKING_DIR) and not \
+            (config.config.get('keep_temp', False) \
+            or config.paths.WORKING_DIR == config.paths.OUTPUT_DIR):
             shutil.rmtree(config.paths.WORKING_DIR)
         util_mdtf.check_required_dirs(
             already_exist = [

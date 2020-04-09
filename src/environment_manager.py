@@ -316,7 +316,6 @@ class CondaEnvironmentManager(EnvironmentManager):
         else:
             # only true in default anaconda install, may need to fix
             self.conda_env_root = os.path.join(self.conda_root, 'envs')
-        print('### DEBUG: {}'.format(self.conda_env_root))
 
     def create_environment(self, env_name):
         # check to see if conda env exists, and if not, try to create it

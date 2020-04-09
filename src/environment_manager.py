@@ -275,7 +275,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
 
 class CondaEnvironmentManager(EnvironmentManager):
     # Use Anaconda to switch execution environments.
-    env_name_prefix = '_MDTF-' # our envs start with this string to avoid conflicts
+    env_name_prefix = '_MDTF_' # our envs start with this string to avoid conflicts
 
     def __init__(self, verbose=0):
         super(CondaEnvironmentManager, self).__init__(verbose)
@@ -309,7 +309,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             raise
 
         # find where environments are installed
-        if 'conda_env_root' in config.paths:
+        if 'conda_env_root' in config.paths and config.paths.conda_env_root:
             self.conda_env_root = config.paths.conda_env_root
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed

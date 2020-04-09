@@ -30,6 +30,7 @@
     // Variables for Convective Transition Diagnostics module: 
     // ta: 3D temperature, units = K:
     "ta_var" : "temp",
+    "tas_var" : "temp",
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw_var" : "WVP",
     // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K

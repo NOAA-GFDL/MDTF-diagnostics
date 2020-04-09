@@ -38,8 +38,6 @@ class _PathManager(util.NameSpace):
         if not paths_to_parse:
             print("Warning: didn't get list of paths from CLI.")
         for key in paths_to_parse:
-            if key == 'CODE_ROOT':
-                continue # just to be safe
             self[key] = self._init_path(key, d, env=env)
             if key in d:
                 d[key] = self[key]
@@ -49,6 +47,9 @@ class _PathManager(util.NameSpace):
         self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
         self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
+
+        if not self.OUTPUT_DIR:
+            self.OUTPUT_DIR = self.WORKING_DIR
 
     def _init_path(self, key, d, env=None):
         if self._unittest_flag: # use in unit testing only
@@ -85,6 +86,8 @@ class _PathManager(util.NameSpace):
                 path
             )
 
+        if path == '':
+            return path # default value set elsewhere
         path = os.path.expanduser(path) # resolve '~' to home dir
         path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
         if isinstance(env, dict):
@@ -117,8 +120,8 @@ class _PathManager(util.NameSpace):
             # bump both WK_DIR and OUT_DIR to same version because name of 
             # former may be preserved when we copy to latter, depending on 
             # copy method
-            d.MODEL_OUT_DIR, ver = bump_version(d.MODEL_OUT_DIR)
-            d.MODEL_WK_DIR, _ = bump_version(d.MODEL_WK_DIR, new_v=ver)
+            d.MODEL_WK_DIR, ver = bump_version(d.MODEL_WK_DIR, extra_dirs=[self.OUTPUT_DIR])
+            d.MODEL_OUT_DIR, _ = bump_version(d.MODEL_OUT_DIR, new_v=ver)
         return d
 
     def pod_paths(self, pod, case):
@@ -294,8 +297,10 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         else:
             print("Found "+dir)
 
-def bump_version(path, new_v=None):
+def bump_version(path, new_v=None, extra_dirs=[]):
     # return a filename that doesn't conflict with existing files.
+    # if extra_dirs supplied, make sure path doesn't conflict with pre-existing
+    # files at those locations either.
     def _split_version(file_):
         match = re.match(r"""
             ^(?P<file_base>.*?)   # arbitrary characters (lazy match)
@@ -316,6 +321,10 @@ def bump_version(path, new_v=None):
             file_ = ''.join([file_, ext_])
         return os.path.join(dir_, file_) + final_sep
 
+    def _path_exists(dir_list, file_, new_v, ext_, sep):
+        new_paths = [_reassemble(d, file_, new_v, ext_, sep) for d in dir_list]
+        return any([os.path.exists(p) for p in new_paths])
+
     if path.endswith(os.sep):
         # remove any terminating slash on directory
         path = path.rstrip(os.sep)
@@ -323,6 +332,8 @@ def bump_version(path, new_v=None):
     else:
         final_sep = ''
     dir_, file_ = os.path.split(path)
+    dir_list = util.coerce_to_iter(extra_dirs)
+    dir_list.append(dir_)
     file_, old_v = _split_version(file_)
     if not old_v:
         # maybe it has an extension and then a version number
@@ -339,10 +350,9 @@ def bump_version(path, new_v=None):
             new_v = 0
         else:
             new_v = int(old_v)
-        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
-        while os.path.exists(new_path):
+        while _path_exists(dir_list, file_, new_v, ext_, final_sep):
             new_v = new_v + 1
-            new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
     return (new_path, new_v)
 
 def append_html_template(template_file, target_file, template_dict={}, 

@@ -504,10 +504,10 @@ class DataManager(object):
             print("Creating {}.".format(out_file))
         elif os.path.exists(out_file):
             print('Overwriting {}.'.format(out_file))
-        # not running in shell, so don't need to quote globs
-        tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS','eps']]
-        util.run_command(
-            ['tar', '-cf', out_file, self.MODEL_WK_DIR ] + tar_flags,
+        tar_flags = ["--exclude=.{}".format(s) for s in ['netCDF','nc','ps','PS','eps']]
+        tar_flags = ' '.join(tar_flags)
+        util.run_shell_command(
+            'tar {} -czf {} -C {} .'.format(tar_flags, out_file, self.MODEL_WK_DIR),
             dry_run = self.dry_run
         )
         return out_file

@@ -86,7 +86,7 @@
   // Root directory for Anaconda environment installs. Only used if 
   // environment_manager = 'Conda'. Set equal to '' to install in your system's 
   // default location.
-  "conda_env_root": "./envs/conda",
+  "conda_env_root": "",
 
   // Root directory for python virtual environments. Only used if 
   // environment_manager = 'Virtualenv'. Set equal to '' to install in your 

@@ -111,7 +111,7 @@
   "save_non_nc": false,
 
   // Set flag to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": false,
+  "make_variab_tar": true,
 
   // Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under 
   // a unique name.

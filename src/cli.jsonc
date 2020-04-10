@@ -221,7 +221,7 @@
         },{
           "name": "make_variab_tar",
           "help": "Set flag to save HTML and bitmap plots in a .tar file.",
-          "default" : false
+          "default" : true
         },{
           "name": "convert_flags",
           "hidden" : true,

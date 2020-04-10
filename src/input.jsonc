@@ -6,15 +6,13 @@
 // Copy this file and customize the setting values as needed. Pass it to the 
 // framework at the end of the command line (positionally) or with the 
 // -f/--config-file flag.
-//
 {
-// The cases below correspond to the different test data sets.
-// Uncomment the first entry to run NCAR-CESM and the second
-// entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD.
-//
-// Note that the mdtf package does not yet handle multiple cases. 
-//
   "case_list" : [
+    // The cases below correspond to the different sample model data sets. Note
+    // that the MDTF package does not currently support analyzing multiple 
+    // models in a single invocation. Comment out or delete the first entry and 
+    // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD, 
+    // and likewise for the SM_ET_coupling POD.
     {
       "CASENAME" : "QBOi.EXP1.AMIP.001",
       "model" : "CESM",
@@ -30,21 +28,23 @@
           "MJO_teleconnection",
           "precip_diurnal_cycle"
       ]
-    },{
-      "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
-      "model" : "AM4",
-      "convention" : "AM4",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list" : ["MJO_prop_amp"]
-    },{
-      "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
-      "model" : "CMIP",
-      "convention" : "CMIP",
-      "FIRSTYR" : 1951,
-      "LASTYR" : 2005,
-      "pod_list" : ["SM_ET_coupling"]
     }
+    // {
+    //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
+    //   "model" : "AM4",
+    //   "convention" : "AM4",
+    //   "FIRSTYR" : 1977,
+    //   "LASTYR" : 1981,
+    //   "pod_list" : ["MJO_prop_amp"]
+    // }
+    // {
+    //   "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
+    //   "model" : "CMIP",
+    //   "convention" : "CMIP",
+    //   "FIRSTYR" : 1951,
+    //   "LASTYR" : 2005,
+    //   "pod_list" : ["SM_ET_coupling"]
+    // }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of input and output data. If a relative path is given, it's 

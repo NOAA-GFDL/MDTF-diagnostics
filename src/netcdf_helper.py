@@ -233,8 +233,8 @@ class NcoNetcdfHelper(NetcdfHelper):
     @classmethod
     def nc_dump_axis(cls, ax_name, in_file=None, cwd=None, dry_run=False):
         # OK for 4.7.6, works on 4.5.4 if "--trd" flag removed
-        ax_vals = util.run_command(
-            ['ncks','-H','-V','-v', ax_name, in_file],
+        ax_vals = util.run_shell_command(
+            "ncks --trd -H -V -v '{}' {}".format(ax_name, in_file),
             cwd=cwd, dry_run=dry_run
         )
         return [float(val) for val in ax_vals if val]

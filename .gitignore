@@ -2,6 +2,7 @@
 envs/
 wkdir/
 *.log
+mdtf
 
 # Data files
 *.nc
@@ -39,6 +40,7 @@ MANIFEST
 
 # Sphinx intermediate files
 doc/_build
+doc/sphinx/src.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

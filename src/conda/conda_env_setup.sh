@@ -93,6 +93,7 @@ else
 fi
 
 # create all envs in a loop
+"$CONDA_EXE" clean -i
 for env_file in "${script_dir}/"${env_glob}; do
     [[ -e "$env_file" ]] || continue # catch the case where nothing matches
     # get env name from reading "name:" attribute of yaml file 
@@ -106,6 +107,7 @@ for env_file in "${script_dir}/"${env_glob}; do
         "$CONDA_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
     fi
 done
+"$CONDA_EXE" clean -ay
 
 # create script wrapper to activate base environment
 _CONDA_WRAPPER="${repo_dir}/mdtf"

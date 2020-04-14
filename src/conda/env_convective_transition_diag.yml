@@ -11,4 +11,3 @@ dependencies:
 - netCDF4
 - networkx
 - numba
-- ncl=6.5

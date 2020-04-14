@@ -209,14 +209,25 @@ class VariableTranslator(util.Singleton):
             return varname_in
         assert convention in self.variables, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.variables[convention].inverse_get_(varname_in)
+        inv_lookup = self.variables[convention].inverse()
+        try:
+            return util.coerce_from_iter(inv_lookup[varname_in])
+        except KeyError:
+            print("ERROR: name {} not defined for convention {}.".format(
+                varname_in, convention))
+            raise
     
     def fromCF(self, convention, varname_in):
         if convention == 'CF': 
             return varname_in
         assert convention in self.variables, \
             "Variable name translation doesn't recognize {}.".format(convention)
-        return self.variables[convention].get_(varname_in)
+        try:
+            return self.variables[convention].get_(varname_in)
+        except KeyError:
+            print("ERROR: name {} not defined for convention {}.".format(
+                varname_in, convention))
+            raise
 
 
 def get_available_programs(verbose=0):

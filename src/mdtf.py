@@ -69,7 +69,7 @@ class MDTFFramework(object):
 
     def _framework_init(self, code_root, defaults_rel_path):
         # set up CLI and parse arguments
-        print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
+        # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
         cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
         self._cli_pre_parse_hook(cli_obj)
         cli_obj.parse_cli()
@@ -95,9 +95,13 @@ class MDTFFramework(object):
             cli_obj.config['test_mode'] = True
 
     @staticmethod
-    def _populate_from_cli(cli_obj, group_nm, d):
+    def _populate_from_cli(cli_obj, group_nm, target_d=None):
+        if target_d is None:
+            target_d = dict()
         for key, val in cli_obj.iteritems_cli(group_nm):
-            d[key] = val
+            if val: # assign nonempty items only
+                target_d[key] = val
+        return target_d
 
     def parse_mdtf_args(self, cli_obj, config):
         """Parse script options returned by the CLI. For greater customizability,
@@ -110,7 +114,7 @@ class MDTFFramework(object):
 
     def parse_env_vars(self, cli_obj, config):
         # don't think PODs use global env vars?
-        # self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
+        # self.envvars = self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
         config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')
 
     def parse_pod_list(self, cli_obj, config):
@@ -137,51 +141,56 @@ class MDTFFramework(object):
             # exclude examples
             self.pod_list = [pod for pod in self.pod_list \
                 if not pod.startswith('example')]
+        if not self.pod_list:
+            print(("WARNING: no PODs selected to be run. Do `./mdtf info pods`"
+            " for a list of available PODs, and check your -p/--pods argument."))
+            print('Received --pods = {}'.format(list(args)))
+            exit()
 
     def parse_case_list(self, cli_obj, config):
-        d = config.config # abbreviate
-        self.case_list = []
-        if d.get('CASENAME', None) \
-            or (d.get('model', None) and d.get('experiment', None)):
-            case_list = self.caselist_from_args(cli_obj)
-        else:
-            case_list = util.coerce_to_iter(cli_obj.case_list)
-        for case_dict in case_list:
-            # remove empty entries
-            case = {k:v for k,v in case_dict.iteritems() if v}
-            if not case.get('CASE_ROOT_DIR', None) and case.get('root_dir', None):
-                case['CASE_ROOT_DIR'] = case['root_dir']
-                del case['root_dir']
-            # if dates set on CLI, overwrite dates in case list
-            if d.get('FIRSTYR', None):
-                case['FIRSTYR'] = d['FIRSTYR']
-            if d.get('LASTYR', None):
-                case['LASTYR'] = d['LASTYR']
-            # if pods set from CLI, overwrite pods in case list
-            case['pod_list'] = self.set_case_pod_list(case, cli_obj, config)
-            
-            self.case_list.append(case)
+        case_list_in = util.coerce_to_iter(cli_obj.case_list)
+        cli_d = self._populate_from_cli(cli_obj, 'MODEL')
+        if 'CASE_ROOT_DIR' not in cli_d and cli_obj.config.get('root_dir', None): 
+            # CASE_ROOT was set positionally
+            cli_d['CASE_ROOT_DIR'] = cli_obj.config['root_dir']
+        if not case_list_in:
+            case_list_in = [cli_d]
+        case_list = []
+        for case_tup in enumerate(case_list_in):
+            case_list.append(self.parse_case(case_tup, cli_d, cli_obj, config))
+        self.case_list = [case for case in case_list if case is not None]
+        if not self.case_list:
+            print("ERROR: no valid entries in case_list. Please specify model run information.")
+            print('Received:')
+            print(util.pretty_print_json(case_list_in))
+            exit(1)
 
-    def caselist_from_args(self, cli_obj):
-        d = dict()
-        d2 = cli_obj.config # abbreviate
-        self._populate_from_cli(cli_obj, 'MODEL', d)
-        # remove empty entries first
-        d = {k:v for k,v in d.iteritems() if v}
-        if 'CASE_ROOT_DIR' not in d and d2.get('root_dir', None): 
-            # CASE_ROOT set positionally
-            d['CASE_ROOT_DIR'] = d2['root_dir']
-        if 'model' not in d:
-            d['model'] = 'CMIP'
-        if 'experiment' not in d:
-            d['experiment'] = ''
-        assert 'convention' in d
-        if 'CASENAME' not in d:
-            d['CASENAME'] = '{}_{}'.format(d['model'], d['experiment'])
-        return [d]
+    def parse_case(self, case_tup, cli_d, cli_obj, config):
+        n, d = case_tup
+        if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
+            d['CASE_ROOT_DIR'] = d.pop('root_dir')
+        d.update(cli_d)
+
+        if 'CASENAME' not in d or ('model' not in d and 'experiment' not in d):
+            print(("WARNING: Need to specify either CASENAME or model/experiment "
+                "in caselist entry {}, skipping.").format(n+1))
+            return None
+        _ = d.setdefault('model', d.get('convention', ''))
+        _ = d.setdefault('experiment', '')
+        _ = d.setdefault('CASENAME', '{}_{}'.format(d['model'], d['experiment']))
+
+        for field in ['FIRSTYR', 'LASTYR', 'convention']:
+            if not d.get(field, None):
+                print(("WARNING: No value set for {} in caselist entry {}, "
+                    "skipping.").format(field, n+1))
+                return None
+        # if pods set from CLI, overwrite pods in case list
+        d['pod_list'] = self.set_case_pod_list(d, cli_obj, config)
+        return d
 
     def set_case_pod_list(self, case, cli_obj, config):
         # if pods set from CLI, overwrite pods in case list
+        # already finalized self.pod-list by the time we get here
         if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
             return self.pod_list
         else:
@@ -216,8 +225,10 @@ class MDTFFramework(object):
         # make config nested dict for backwards compatibility
         # this is all temporary
         d = dict()
+        for n, case in enumerate(self.case_list):
+            key = 'case_list({})'.format(n)
+            d[key] = case
         d['pod_list'] = self.pod_list
-        d['case_list'] = self.case_list
         d['paths'] = config.paths
         d['paths'].pop('_unittest_flag', None)
         d['settings'] = dict()
@@ -225,11 +236,12 @@ class MDTFFramework(object):
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:
-            self._populate_from_cli(cli_obj, group, d['settings'])
+            d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
         d['settings'] = {k:v for k,v in d['settings'].iteritems() \
             if k not in d['paths']}
         d['envvars'] = config.global_envvars
-        print('DEBUG: SETTINGS:\n', util.pretty_print_json(d))
+        print('DEBUG: SETTINGS:')
+        print(util.pretty_print_json(d))
 
     _dispatch_search = [
         data_manager, environment_manager, shared_diagnostic, netcdf_helper

@@ -56,8 +56,6 @@ class RecordDefaultsAction(argparse.Action):
 
     def __init__(self, option_strings, dest, nargs=None, const=None, 
         default=None, required=False, **kwargs):
-        assert default is not None
-        required = False
         if isinstance(default, bool):
             nargs = 0             # behave like a flag
             const = (not default) # set flag = store opposite of default
@@ -185,9 +183,7 @@ class CLIHandler(object):
                 if attr in d:
                     d[attr] = eval(d[attr])
 
-        # set more technical argparse options based on default value
-        if 'default' in d and 'action' not in d:
-            d['action'] = RecordDefaultsAction
+        _ = d.setdefault('action', RecordDefaultsAction)
 
         # change help string based on default value
         if d.pop('hidden', False):
@@ -222,7 +218,7 @@ class CLIHandler(object):
                 else:
                     self.is_default[arg.dest] = True
             else:
-                self.is_default[arg.dest] = None
+                self.is_default[arg.dest] = (arg.dest is arg.default)
 
 
 class FrameworkCLIHandler(CLIHandler):
@@ -297,7 +293,7 @@ class FrameworkCLIHandler(CLIHandler):
 
         # Options explicitly set by user on CLI; is_default = None if no default
         cli_opts = {k:v for k,v in self.config.iteritems() \
-            if self.is_default.get(k, None) is False}
+            if not self.is_default.get(k, True)}
         # full set of defaults from cli.jsonc, from running parser on empty input
         defaults = vars(self.parser.parse_args([]))
         chained_dict_list = [cli_opts, defaults]
@@ -314,9 +310,6 @@ class FrameworkCLIHandler(CLIHandler):
         if config_str:
             try:
                 file_input = util.parse_json(config_str)
-                print(cli_opts)
-                print('DEBUG')
-                print(file_input)
                 # overwrite default case_list and pod_list, if given
                 if 'case_list' in file_input:
                     self.case_list = file_input.pop('case_list')

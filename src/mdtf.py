@@ -169,9 +169,12 @@ class MDTFFramework(object):
         n, d = case_tup
         if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
             d['CASE_ROOT_DIR'] = d.pop('root_dir')
+        case_convention = d.get('convention', '')
         d.update(cli_d)
+        if case_convention:
+            d['convention'] = case_convention
 
-        if 'CASENAME' not in d or ('model' not in d and 'experiment' not in d):
+        if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
             print(("WARNING: Need to specify either CASENAME or model/experiment "
                 "in caselist entry {}, skipping.").format(n+1))
             return None

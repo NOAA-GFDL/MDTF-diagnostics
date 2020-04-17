@@ -1,0 +1,29 @@
+name: _MDTF_common
+channels:
+- conda-forge # NOTE: critical to give highest priority to conda-forge
+- defaults
+dependencies:
+- python=2.7
+- cartopy
+- doc8
+- imagemagick
+- r-base
+- r-akima
+- r-colorramps
+- r-fields
+- r-maps
+- r-ncdf4
+- jupyter
+- matplotlib
+- mock
+- ncl=6.6.2
+- nco>=4.7.6,<=4.8.1
+- netCDF4
+- networkx
+- numba
+- numpy
+- pylint
+- scipy
+- sphinx
+- subprocess32
+- xarray

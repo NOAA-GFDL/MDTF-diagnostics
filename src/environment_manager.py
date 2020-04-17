@@ -298,12 +298,14 @@ class CondaEnvironmentManager(EnvironmentManager):
                 self.conda_dir, config.paths.get('conda_root','')
             ))
             for line in conda_info:
-                key, val = line.split('=')
-                if key == '_CONDA_EXE':
-                    self.conda_exe = val
-                    assert os.path.exists(self.conda_exe)
-                elif key == '_CONDA_ROOT':
-                    self.conda_root = val
+                if '=' in line:
+                    if len(line.split('=')) == 2:
+                        key, val = line.split('=')
+                        if key == '_CONDA_EXE':
+                            self.conda_exe = val
+                            assert os.path.exists(self.conda_exe)
+                        elif key == '_CONDA_ROOT':
+                            self.conda_root = val
         except:
             print("Error: can't find conda.")
             raise

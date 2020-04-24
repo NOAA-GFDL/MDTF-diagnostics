@@ -11,6 +11,7 @@ This site contains documentation for developers and contributors to the MDTF Dia
 .. toctree::
    :maxdepth: 2
 
+   sphinx/start_toc
    sphinx/dev_intro
    sphinx/configuration
    sphinx/pod_toc

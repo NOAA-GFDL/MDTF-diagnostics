@@ -5,7 +5,7 @@
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 //
-// DO NOT modify this file. Instead, edit a copy of input_gfdl.jsonc 
+// DO NOT modify this file. Instead, edit a copy of default_gfdl.jsonc 
 // and pass it to the script with the --config_file/-f option.
 //
 // Entries here are used in src/cli.py to configure command-line options 
@@ -22,7 +22,7 @@
       "version": "%(prog)s 3.0 beta 1"
     },{
       "name": "input_file",
-      "help": "Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in src/input.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
+      "help": "Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in src/default_tests.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
       "is_positional": true,
       "nargs" : "?", // 0 or 1 occurrences: might have set this with --input_file
       "metavar" : "INPUT_FILE"

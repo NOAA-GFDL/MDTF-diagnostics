@@ -87,10 +87,9 @@ class MultiMap(collections.defaultdict):
         return dict(d)
 
     def inverse_get_(self, val):
-        # if val not in self.values():
-        #     raise KeyError(val)
-        temp = self.inverse()
-        return coerce_from_iter(temp[val])
+        # don't raise keyerror if empty; could be appropriate result
+        inv_lookup = self.inverse()
+        return coerce_from_iter(inv_lookup[val])
 
 
 class NameSpace(dict):

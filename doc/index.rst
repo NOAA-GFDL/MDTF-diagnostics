@@ -6,7 +6,7 @@
 Welcome to the documentation for the MDTF diagnostics!
 ======================================================
 
-This site contains documentation for developers and contributors to the MDTF Diagnostics framework. The code is fully open-source and hosted on  `GitHub <https://github.com/NOAA-GFDL/MDTF-diagnostics>`_. See user documentation on the `wiki <https://github.com/NOAA-GFDL/MDTF-diagnostics/wiki>`_ for installation and usage instructions.
+This site contains documentation for the MDTF Diagnostics framework. The code is fully open-source and hosted on  `GitHub <https://github.com/NOAA-GFDL/MDTF-diagnostics>`_. 
 
 .. toctree::
    :maxdepth: 2

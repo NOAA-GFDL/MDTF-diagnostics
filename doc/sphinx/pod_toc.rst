@@ -5,11 +5,11 @@ Diagnostics reference
    :maxdepth: 2
 
    pod_summary
-   convective_transition_diag
-   EOF_500hPa
-   MJO_prop_amp
-   MJO_suite
-   MJO_teleconnection
-   precip_diurnal_cycle
-   SM_ET_coupling
-   Wheeler_Kiladis
+   pod_convective_transition_diag
+   pod_EOF_500hPa
+   pod_MJO_prop_amp
+   pod_MJO_suite
+   pod_MJO_teleconnection
+   pod_precip_diurnal_cycle
+   pod_SM_ET_coupling
+   pod_Wheeler_Kiladis

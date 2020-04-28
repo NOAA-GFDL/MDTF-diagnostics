@@ -62,7 +62,7 @@ References
 More details about this diagnostic
 ----------------------------------
 
-.. figure:: mjo_prop_amp_fig1.png
+.. figure:: pod_mjo_prop_amp_fig1.png
    :align: center
    :width: 100 %
 

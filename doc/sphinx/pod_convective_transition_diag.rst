@@ -73,7 +73,7 @@ The current version of the convective transition diagnostic package produces thr
 1) Basic statistics
 ^^^^^^^^^^^^^^^^^^^
 
-.. figure:: convective_transition_diag_fig1.png
+.. figure:: pod_convective_transition_diag_fig1.png
    :align: center
    :width: 100 %
 
@@ -86,7 +86,7 @@ In panel (c), the observed PDFs of CWV display characteristic shapes that depend
 2) Collapsed statistics
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: convective_transition_diag_fig2.png
+.. figure:: pod_convective_transition_diag_fig2.png
    :align: center
    :width: 100 %
 
@@ -94,7 +94,7 @@ In panel (c), the observed PDFs of CWV display characteristic shapes that depend
 
 In practice, we define the critical CWV to be value at which the best-fit line to the conditionally averaged precipitation intersects with the CWV axis, as shown in panel (e) [see panels (i)-(j) below for the observed and simulated critical values]. When expressed as a function of CWV − :math:`w_{c}`, the conditional average and probability of precipitation [panels (e)-(f)] collapse without exhibiting dependence on the bulk temperature (and ocean basin). The rescaled PDFs in panel (g) also collapse for CWV above critical. For the most relevant temperature bins in the tropics (:math:`\widehat{q_{sat}}` ≥ 70 mm or the mass-weighted column average temperature ≥ 271 K), the PDF of CWV for precipitating events share a common near-Gaussian core near the critical CWV.
 
-.. figure:: convective_transition_diag_fig3.png
+.. figure:: pod_convective_transition_diag_fig3.png
    :align: center
    :width: 80 %
 

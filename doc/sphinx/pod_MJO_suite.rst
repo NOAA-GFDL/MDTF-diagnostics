@@ -66,7 +66,7 @@ An extensive explanation of the figures and techniques used to achieve them can 
 
 |clearfloats|
 
-.. image:: pod_mjo_suite_fig1.png
+.. image:: ../img/pod_mjo_suite_fig1.png
    :align: right
    :width: 50 %
 
@@ -76,7 +76,7 @@ An extensive explanation of the figures and techniques used to achieve them can 
 
 |clearfloats|
 
-.. image:: pod_mjo_suite_fig2.png
+.. image:: ../img/pod_mjo_suite_fig2.png
    :align: left
    :width: 50 %
 
@@ -88,7 +88,7 @@ An extensive explanation of the figures and techniques used to achieve them can 
 
 **EOF analysis (univariate)**: Conventional (covariance) univariate EOF analysis for 20-100 day band-pass filtered data of outgoing longwave radiation over 30S to 30N.
 
-.. image:: pod_mjo_suite_fig3.png
+.. image:: ../img/pod_mjo_suite_fig3.png
    :align: center
    :width: 100 %
 
@@ -98,7 +98,7 @@ An extensive explanation of the figures and techniques used to achieve them can 
 
 **Composite Life-cycles**: The first and second principle components of the EOF analysis are used to derive the appropriate MJO phase category. The size of the reference anomaly wind vector is in the upper right. The phase (eg P3, means "Phase 3") and the number of days used to create the composite are at the lower right.
 
-.. image:: pod_mjo_suite_fig4.png
+.. image:: ../img/pod_mjo_suite_fig4.png
    :align: center
    :width: 100 %
 

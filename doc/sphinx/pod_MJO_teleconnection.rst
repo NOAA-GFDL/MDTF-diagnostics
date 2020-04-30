@@ -69,7 +69,7 @@ More About the Diagnostic
 
 The first diagnostic in this POD presents MJO composite 250 hPa geopotential height anomalies for ERA-I, the candidate model (upper right), and six other CMIP5 models assessed to have good MJO performance. All composites are generated as a function of MJO phase as defined according to Wheeler and Hendon (2004). An example of this diagnostic is presented in Figure 1 for phase 1 of the MJO.
 
-.. figure:: pod_mjo_teleconnection_fig1.png
+.. figure:: ../img/pod_mjo_teleconnection_fig1.png
    :align: center
    :width: 100 %
 
@@ -77,7 +77,7 @@ The first diagnostic in this POD presents MJO composite 250 hPa geopotential hei
 
 The diagnostic next assesses teleconnection performance versus measures of basic state fidelity and MJO skill. Figure 2 from :ref:`Henderson et al (2017) <1>` contains two panels, each having MJO teleconnection performance during December-February on the y-axis. In Figure 2a, the x axis represents an MJO skill metric. While Figure 2a shows a relationship between MJO skill and teleconnection performance, even models with a good MJO can have poor teleconnection performance. For only the models assessed to have a sufficiently good MJO, Figure 2b assesses the relationship between teleconnection performance and biases in the North Pacific zonal flow. Plus signs are a measure of the total root mean squared (RMS) error of the 250 hPa zonal flow over the region 15°N – 60°N, 110°E – 120°W, and the filled circle provides a measure of the RMS error in the length of the North Pacific subtropical jet. Both measures are correlated with MJO teleconnection performance, although biases in the jet provides a somewhat better metric (r =-0.7 versus -0.6 for the total RMS). Subsequent analysis showed that models with a jet that extends too far east tend to have degraded teleconnection performance. Model physics appears to play a key role in the extent of the Pacific jet, as was demonstrated by Neelin et al. (2016) in diagnosing projected California precipitation changes between CMIP3 and CMIP5 models into the late 21st Century. The Pod developed here places the candidate model in question into the cloud of other models on Figure 2, with separate links on the POD site for left and right panels of Figure 2.
 
-.. figure:: pod_mjo_teleconnection_fig2.png
+.. figure:: ../img/pod_mjo_teleconnection_fig2.png
    :align: center
    :width: 100 %
 

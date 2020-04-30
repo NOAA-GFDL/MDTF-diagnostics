@@ -126,32 +126,56 @@ htmlhelp_basename = 'MDTF-diagnosticsdoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
+# pdflatex is default, xelatex recommended for better unicode support
+latex_engine = 'xelatex'
+
+# A dictionary that contains LaTeX snippets that override those Sphinx
+# usually puts into the generated .tex files.
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
+    'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
+    'pointsize': '11pt',
+    # fonts
+    'fontpkg': r'''
+        \usepackage{fontspec}
+        \setmainfont{Times New Roman}
+        \setsansfont{Optima}
+    ''',
     # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    'figure_align': 'H',
+    # Additional stuff for the LaTeX preamble.
+    'preamble': r'''
+        %%%add number to subsubsection 2=subsection, 3=subsubsection
+        %\setcounter{secnumdepth}{3}
+        %%%% Table of content upto 2=subsection, 3=subsubsection
+        %\setcounter{tocdepth}{2}
+        \usepackage{graphicx}
+        \usepackage{color}
+        \usepackage{unicode-math}
+    '''
 }
-
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'MDTF-diagnostics.tex', u'MDTF-diagnostics Documentation',
-     u'Model Diagnostics Task Force', 'manual'),
+    ('tex_all', 'MDTF_documentation.tex', u'MDTF Diagnostics Documentation', author, 'manual'),
+    ('tex_user', 'MDTF_userguide.tex', u'MDTF Diagnostics User Guide', author, 'manual')
 ]
 
+latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
+
+# For "manual" documents, if this is true, then top-level headings are
+# parts, not chapters.
+latex_toplevel_sectioning = 'chapter'
+
+# If true, show page references after internal links.
+latex_show_pagerefs = False
+
+# If true, show URL addresses after external links.
+latex_show_urls = 'footnote'
+
+# If false, no module index is generated.
+latex_domain_indices = True
 
 # -- Options for manual page output ------------------------------------------
 

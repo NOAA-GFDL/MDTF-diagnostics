@@ -136,11 +136,11 @@ Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/late
 
 # Acknowledgements
 
+![MDTF_funding_sources](<./doc/img/mdtf_funding.jpg>)
+
 Development of this code framework for process-oriented diagnostics was supported by the [National Oceanic and Atmospheric Administration](https://www.noaa.gov/) (NOAA) Climate Program Office [Modeling, Analysis, Predictions and Projections](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP) (MAPP) Program in a collaboration of [University of California Los Angeles](https://www.ucla.edu/), the [Geophysical Fluid Dynamics Laboratory](https://www.gfdl.noaa.gov/), the [National Center for Atmospheric Research](https://ncar.ucar.edu/), [Colorado State University](https://www.colostate.edu/) and [Lawrence Livermore National Laboratory](https://www.llnl.gov/) (grant # NA18OAR4310280). 
 
 Many of the process-oriented diagnostics modules (PODs) were contributed by members of the NOAA [Model Diagnostics Task Force](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP/MAPP-Task-Forces/Model-Diagnostics-Task-Force) under MAPP support. Statements, findings or recommendations in these documents do not necessarily reflect the views of NOAA or the Department of Commerce.
-
-![MDTF_funding_sources](<./doc/img/mdtf_funding.jpg>)
 
 # Disclaimer
 

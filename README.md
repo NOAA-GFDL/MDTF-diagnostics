@@ -8,6 +8,8 @@ The MDTF Diagnostic Framework consists of multiple modules, each of which is dev
 2. Consists of a set of process-oriented diagnostics
 3. Produces a figures or multiple figures that can be displayed by the html in a browser
 
+![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
+
 ## Diagnostics in Package
 Follow the links in the table below to view sample output, including a brief description 
 and a link to the full documentation for each diagnostic.
@@ -132,5 +134,14 @@ The settings for default test cases are included in `$CODE_ROOT/src/default_test
 
 Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
 
+# Acknowledgements
+
+Development of this code framework for process-oriented diagnostics was supported by the [National Oceanic and Atmospheric Administration](https://www.noaa.gov/) (NOAA) Climate Program Office [Modeling, Analysis, Predictions and Projections](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP) (MAPP) Program in a collaboration of [University of California Los Angeles](https://www.ucla.edu/), the [Geophysical Fluid Dynamics Laboratory](https://www.gfdl.noaa.gov/), the [National Center for Atmospheric Research](https://ncar.ucar.edu/), [Colorado State University](https://www.colostate.edu/) and [Lawrence Livermore National Laboratory](https://www.llnl.gov/) (grant # NA18OAR4310280). 
+
+Many of the process-oriented diagnostics modules (PODs) were contributed by members of the NOAA [Model Diagnostics Task Force](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP/MAPP-Task-Forces/Model-Diagnostics-Task-Force) under MAPP support. Statements, findings or recommendations in these documents do not necessarily reflect the views of NOAA or the Department of Commerce.
+
+![MDTF_funding_sources](<./doc/img/mdtf_funding.jpg>)
+
 # Disclaimer
+
 This repository is a scientific product and is not an official communication of the National Oceanic and Atmospheric Administration, or the United States Department of Commerce. All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

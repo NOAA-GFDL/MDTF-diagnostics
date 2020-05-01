@@ -141,16 +141,12 @@ latex_elements = {
         \setmainfont{Times New Roman}
         \setsansfont{Optima}
     ''',
+    # chapter style
+    'fncychap': '\\usepackage[Bjarne]{fncychap}',
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
     'preamble': r'''
-        %%%add number to subsubsection 2=subsection, 3=subsubsection
-        %\setcounter{secnumdepth}{3}
-        %%%% Table of content upto 2=subsection, 3=subsubsection
-        %\setcounter{tocdepth}{2}
-        \usepackage{graphicx}
-        \usepackage{color}
         \usepackage{unicode-math}
     '''
 }
@@ -159,7 +155,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('tex_all', 'MDTF_documentation.tex', u'MDTF Diagnostics Documentation', author, 'manual'),
-    ('tex_user', 'MDTF_userguide.tex', u'MDTF Diagnostics User Guide', author, 'manual')
+    #('tex_user', 'MDTF_userguide.tex', u'MDTF Diagnostics User Guide', author, 'manual')
 ]
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
@@ -169,7 +165,7 @@ latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 latex_toplevel_sectioning = 'chapter'
 
 # If true, show page references after internal links.
-latex_show_pagerefs = False
+latex_show_pagerefs = True
 
 # If true, show URL addresses after external links.
 latex_show_urls = 'footnote'

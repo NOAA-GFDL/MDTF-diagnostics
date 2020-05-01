@@ -38,12 +38,15 @@ Coding a feature
 .. (TODO: tests ...)
 .. (TODO: adding files...)
 
-- Commit changes with ``git commit -m <your commit message>``. This means you enter a snapshot of the code base into the history in your local repo. 
-    - Don't commit code that you know is buggy or non-functional!
-    - Good commit messages are key to making the project's history useful. To make this easier, instead of using the ``-m`` flag, you can configure git to launch your text editor of choice with ``git config --global core.editor "<command string to launch your editor>"``.
-    - Write in the *present tense*. Commit messages should describe what the commit, when applied, does to the code -- not what you did to the code.
-    - Messages should start with a brief, one-line summary, less than 80 characters. If this is too short, you may want to consider entering your changes as multiple commits.
-    - To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools). Here's an `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b>`__.
+- Commit changes with ``git commit -m <your commit message>``. 
+  This means you enter a snapshot of the code base into the history in your local repo. 
+
+   - Don't commit code that you know is buggy or non-functional!
+   - Good commit messages are key to making the project's history useful. To make this easier, instead of using the ``-m`` flag, you can configure git to launch your text editor of choice with ``git config --global core.editor "<command string to launch your editor>"``.
+   - Write in the *present tense*. Commit messages should describe what the commit, when applied, does to the code -- not what you did to the code.
+   - Messages should start with a brief, one-line summary, less than 80 characters. If this is too short, you may want to consider entering your changes as multiple commits.
+   - To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools). Here's an `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b>`__.
+
 - If you want to let others work on your feature, push its branch to your github fork with ``git push -u origin feature/<my_feature_name>``. The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.
 - When your feature is finished, merge it back into ``develop``: first ``git checkout develop`` then ``git merge --no-ff feature/<my_feature_name>``. **The '--no-ff' flag is important:** it tells git not to compress ("fast-forward") your commit history onto the ``develop`` branch. 
 - ``git push origin``. 

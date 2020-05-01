@@ -6,7 +6,7 @@ Welcome! In this section we'll describe what the MDTF diagnostics framework is, 
 Purpose
 -------
 
-The scientific motivation and content behind the framework was described in E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`_.
+The scientific motivation and content behind the framework was described in E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
 
 Also see the section of this site devoted to documentation of :doc:`individual diagnostics <pod_summary>`.
 
@@ -29,7 +29,7 @@ The rest of the documentation in this section describes next steps for end users
 - We provide instructions on how to :doc:`download and install <start_install>` the framework and run it on some sample data.
 - We describe the most common :doc:`configuration options <start_config>` for running the framework on your own model data.
 - See also the list of :doc:`command-line options <ref_cli>`.
-- Known :doc:`troubleshooting issues <start_troubleshoot>`; also see the GitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`_.
+- Known :doc:`troubleshooting issues <start_troubleshoot>`; also see the GitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`__.
 
 Getting started for developers
 ------------------------------

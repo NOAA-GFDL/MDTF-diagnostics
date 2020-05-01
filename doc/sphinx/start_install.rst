@@ -3,7 +3,7 @@ Quickstart installation instructions
 
 This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
-You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the `documentation site <https://mdtf-diagnostics.readthedocs.io/en/latest/>`_ for how to run the framework on your own data and configure general settings.
+You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the `documentation site <https://mdtf-diagnostics.readthedocs.io/en/latest/>`__ for how to run the framework on your own data and configure general settings.
 
 Download the package code and sample data for testing
 -----------------------------------------------------
@@ -15,9 +15,9 @@ Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and
 Obtaining the code
 ^^^^^^^^^^^^^^^^^^
 
-The official repo for the MDTF code is hosted at the GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`_. We recommend that end users download and test the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1>`_. 
+The official repo for the MDTF code is hosted at the GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. We recommend that end users download and test the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1>`__. 
 
-To install the MDTF package on a local machine, create a directory named ``mdtf``, and unzip the code downloaded from the `release page <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1>`_ there. This will create a directory titled ``MDTF-diagnostics-3.0-beta.1`` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
+To install the MDTF package on a local machine, create a directory named ``mdtf``, and unzip the code downloaded from the `release page <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1>`__ there. This will create a directory titled ``MDTF-diagnostics-3.0-beta.1`` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
 
 - ``diagnostics/``: directories containing source code of individual PODs.
 - ``doc/``: directory containing documentation (a local mirror of the documentation site).
@@ -35,9 +35,9 @@ Obtaining supporting data
 
 Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
 
-- Digested observational data (159 Mb): `MDTF_v2.1.a.20200410.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200410.obs_data.tar>`_.
-- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`_.
-- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`_.
+- Digested observational data (159 Mb): `MDTF_v2.1.a.20200410.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200410.obs_data.tar>`__.
+- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
+- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
 
 Users installing on Mac OS should use the Finder’s Archive Utility instead of the command-line tar command to extract the files. Download these three files and extract the contents in the following hierarchy under the ``mdtf`` directory:
 
@@ -59,7 +59,7 @@ The framework’s environments can co-exist within an existing Conda or Anaconda
 
 Do not install miniconda/Anaconda again if Conda is already installed for this user: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
-If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available `here <https://docs.conda.io/en/latest/miniconda.html>`_, but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., ``~/.bashrc`` or ``~/.cshrc``). 
+If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available `here <https://docs.conda.io/en/latest/miniconda.html>`__, but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., ``~/.bashrc`` or ``~/.cshrc``). 
 
 Conda environment installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -78,11 +78,11 @@ Non-Conda installation
 
 If you're unable to use the Conda-based installation, the framework can use existing dependencies installed without using Conda. Because this mode of operation is dependent on the details of each user’s system, we don't recommend it and can only support it at a secondary priority. The following software is used by the framework and needs to be available on your ``$PATH``:
 
-- `Python <https://www.python.org/>`_ version 2.7: the framework will attempt to create virtualenvs for each POD.
-- `NCO utilities <http://nco.sourceforge.net/>`_ version 4.7.6.
-- `ImageMagick <https://imagemagick.org/index.php>`_.
-- `NCL <https://www.ncl.ucar.edu/>`_, version 6.5.0 or newer.
-- `R <https://www.r-project.org/>`_, for the SM_ET_coupling POD only.
+- `Python <https://www.python.org/>`__ version 2.7: the framework will attempt to create virtualenvs for each POD.
+- `NCO utilities <http://nco.sourceforge.net/>`__ version 4.7.6.
+- `ImageMagick <https://imagemagick.org/index.php>`__.
+- `NCL <https://www.ncl.ucar.edu/>`__, version 6.5.0 or newer.
+- `R <https://www.r-project.org/>`__, for the SM_ET_coupling POD only.
 
 
 Execute the MDTF package with default test settings
@@ -113,4 +113,4 @@ The settings for default test cases are included in ``$CODE_ROOT/src/default_tes
 Next steps
 ----------
 
-Consult the `documentation site <https://mdtf-diagnostics.readthedocs.io/en/latest/>`_ for how to run the framework on your own data and configure general settings.
+Consult the `documentation site <https://mdtf-diagnostics.readthedocs.io/en/latest/>`__ for how to run the framework on your own data and configure general settings.

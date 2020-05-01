@@ -187,5 +187,5 @@ W250                Daily
 References:
 
 - Wheeler, M. and G. N. Kiladis (1999): Convectively Coupled Equatorial Waves: Analysis
-  of Clouds and Temperature in the Wavenumber–Frequency Domain. *J. Atmos. Sci.*, **56**, 3, 374–99. `https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2 <https://doi.org/10.1175/1520-0469(1999)056\<0374:CCEWAO\>2.0.CO;2>`_. 
+  of Clouds and Temperature in the Wavenumber–Frequency Domain. *J. Atmos. Sci.*, **56**, 3, 374–99. `https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2 <https://doi.org/10.1175/1520-0469(1999)056\<0374:CCEWAO\>2.0.CO;2>`__. 
 

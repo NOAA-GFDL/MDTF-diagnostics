@@ -6,7 +6,7 @@ Here we provide a short list of problems the MDTF team had previously encountere
 The error message "convert: not authorized ..." shows up
 --------------------------------------------------------
 
-The MDTF package generates figures in the PostScript (PS) format, and then uses the ``convert`` command (from the `ImageMagick <https://imagemagick.org/index.php>`_ software suite) to convert the PS files to PNG files. The convert error can occur after recent updates and can be solved as follows (requires permission): 
+The MDTF package generates figures in the PostScript (PS) format, and then uses the ``convert`` command (from the `ImageMagick <https://imagemagick.org/index.php>`__ software suite) to convert the PS files to PNG files. The convert error can occur after recent updates and can be solved as follows (requires permission): 
 
 In the file ``/etc/ImageMagick/policy.xml``, change the ``<policy domain="coder" rights="none" pattern="PS" />`` to 
 ``<policy domain="coder" rights="read|write" pattern="PS" />``.
@@ -16,7 +16,7 @@ The folder name ``ImageMagick`` may depend on its version, e.g., ``ImageMagick-6
 Issues with standalone NCL installation
 ---------------------------------------
 
-Many Linux distributions (Ubuntu, Mint, etc.) have offered a way of installing `NCL <https://www.ncl.ucar.edu/>`_ through their system package manager (apt, yum, etc.) This method of installation is not recommended: users may encounter errors when running the example PODs provided by NCAR, even if the environment variables and search path have been added. 
+Many Linux distributions (Ubuntu, Mint, etc.) have offered a way of installing `NCL <https://www.ncl.ucar.edu/>`__ through their system package manager (apt, yum, etc.) This method of installation is not recommended: users may encounter errors when running the example PODs provided by NCAR, even if the environment variables and search path have been added. 
 
 The recommended method to install standalone NCL is by downloading the pre-compiled binaries from https://www.ncl.ucar.edu/Download/install_from_binary.shtml. Choose a download option according to the Linux distribution and hardware, unzip the file (results in 3 folders: ``bin``, ``include``, ``lib``), create a folder ncl under the directory ``/usr/local`` (requires permission) and move the 3 unzipped folders into ``/usr/local/ncl``. Then add the following lines to the ``.bashrc`` script (under the user’s home directory; may be different if using shells other than bash, e.g., ``.cshrc`` for csh): 
 

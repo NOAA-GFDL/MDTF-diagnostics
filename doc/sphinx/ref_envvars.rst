@@ -9,7 +9,7 @@ Overview
 The MDTF framework can be viewed as a "wrapper" for your code that handles data fetching and munging. Your code communicates with this wrapper in two ways:
 
 - The :doc:`settings file <./dev_settings_quick>` is where your code talks to the framework: when you write your code, you document what model data your code uses (not covered on this page, follow the link for details). 
-- When your code is run, the framework talks to it by setting shell `environment variables <https://en.wikipedia.org/wiki/Environment_variable>`_ containing paths to the data files and other information specific to the run. The framework communicates **all** runtime information this way: this is in order to 1) pass information in a language-independent way, and 2) to make writing diagnostics easier (you don't need to parse command-line settings). 
+- When your code is run, the framework talks to it by setting shell `environment variables <https://en.wikipedia.org/wiki/Environment_variable>`__ containing paths to the data files and other information specific to the run. The framework communicates **all** runtime information this way: this is in order to 1) pass information in a language-independent way, and 2) to make writing diagnostics easier (you don't need to parse command-line settings). 
 
 **Note** that environment variables are always strings. Your script will need to cast non-text data to the appropriate type (eg. the bounds of the analysis time period, ``FIRSTYR``, ``LASTYR``, will need to be converted to integers.)
 

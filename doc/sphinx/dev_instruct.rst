@@ -6,14 +6,14 @@ We list several important points to be aware of when developing your POD. This m
 Scope of the analysis your POD conducts
 ---------------------------------------
 
-See the `BAMS article <https://doi.org/10.1175/BAMS-D-18-0042.1>`_ describing version 2.0 of the framework for a description of the project’s scientific goals and what we mean by a “process oriented diagnostic” (POD). We encourage PODs to have a specific, focused scope.
+See the `BAMS article <https://doi.org/10.1175/BAMS-D-18-0042.1>`__ describing version 2.0 of the framework for a description of the project’s scientific goals and what we mean by a “process oriented diagnostic” (POD). We encourage PODs to have a specific, focused scope.
 
 PODs should be relatively lightweight in terms of computation and memory requirements (eg, run time measured in minutes, not hours): this is to enable rapid feedback and iteration cycles to assist users in model development. Bear in mind that your POD may be run on model output of potentially any date range and spatial resolution. Your POD should not require strong assumptions about these quantities, or other details of the model’s operation.
 
 Choice of language(s)
 ---------------------
 
-In order to accomplish our goal of portability, the MDTF **cannot** accept PODs written in closed-source languages (eg `MATLAB <https://www.mathworks.com/products/matlab.html>`_; depending on your use case, it may be feasible to port MATLAB code to `Octave <https://www.gnu.org/software/octave/>`_). 
+In order to accomplish our goal of portability, the MDTF **cannot** accept PODs written in closed-source languages (eg `MATLAB <https://www.mathworks.com/products/matlab.html>`__; depending on your use case, it may be feasible to port MATLAB code to `Octave <https://www.gnu.org/software/octave/>`__). 
 
 We also do not accept PODs written in compiled languages (C or Fortran): installation would rapidly become impractical if the user had to check compilation options for each POD. See below for options if your POD requires the performance of a compiled language.
 

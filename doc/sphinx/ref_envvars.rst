@@ -9,7 +9,7 @@ Overview
 The MDTF framework can be viewed as a "wrapper" for your code that handles data fetching and munging. Your code communicates with this wrapper in two ways:
 
 - The :doc:`settings file <./dev_settings_quick>` is where your code talks to the framework: when you write your code, you document what model data your code uses (not covered on this page, follow the link for details). 
-- When your code is run, the framework talks to it by setting shell `environment variables <https://en.wikipedia.org/wiki/Environment_variable>`_ containing paths to the data files and other information specific to the run. The framework communicates **all** runtime information this way: this is in order to 1) pass information in a language-independent way, and 2) to make writing diagnostics easier (you don't need to parse command-line settings). 
+- When your code is run, the framework talks to it by setting shell `environment variables <https://en.wikipedia.org/wiki/Environment_variable>`__ containing paths to the data files and other information specific to the run. The framework communicates **all** runtime information this way: this is in order to 1) pass information in a language-independent way, and 2) to make writing diagnostics easier (you don't need to parse command-line settings). 
 
 **Note** that environment variables are always strings. Your script will need to cast non-text data to the appropriate type (eg. the bounds of the analysis time period, ``FIRSTYR``, ``LASTYR``, will need to be converted to integers.)
 
@@ -62,20 +62,20 @@ These are set depending on the data your diagnostic requests in its :doc:`settin
 For each dimension:
   If <key> is the name of the key labeling the key:value entry for this dimension, the framework will set an environment variable named ``<key>_dim`` equal to the name that dimension has in the data files it's providing.
   
-    - If ``rename_dimensions`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_dimensions`` is ``false``, this will be whatever the model or data source's native name for this dimension is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <./dev_settings_format>`.
+    - If ``rename_dimensions`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_dimensions`` is ``false``, this will be whatever the model or data source's native name for this dimension is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
 
 For each variable:
   If <key> be the name of the key labeling the key:value entry for this variable in the varlist section, the framework will set an environment variable named ``<key>_var`` equal to the name that variable has in the data files it's providing.
   
-    - If ``rename_variables`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_variables`` is ``false``, this will be whatever the model or data source's native name for this variable is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <./dev_settings_format>`.
+    - If ``rename_variables`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_variables`` is ``false``, this will be whatever the model or data source's native name for this variable is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
 
 
 Simple example
 --------------
 
-We only give the relevant parts of the :doc:`settings file <./dev_settings_format>` below.
+We only give the relevant parts of the :doc:`settings file <ref_settings>` below.
 
-.. code-block:: json
+.. code-block:: js
 
   "data": {
     "rename_dimensions": false,
@@ -104,7 +104,6 @@ We only give the relevant parts of the :doc:`settings file <./dev_settings_forma
     }
   }
 
-::
 
 The framework will set the following environment variables:
 
@@ -120,7 +119,7 @@ More complex example
 
 Let's elaborate on the previous example, and assume that the diagnostic is being called on model that provides precipitation_flux but not convective_precipitation_flux.
 
-.. code-block:: json
+.. code-block:: js
 
   "data": {
     "rename_dimensions": true,
@@ -154,7 +153,6 @@ Let's elaborate on the previous example, and assume that the diagnostic is being
     }
   }
 
-::
 
 Comparing this with the previous example:
 

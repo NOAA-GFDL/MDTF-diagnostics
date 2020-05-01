@@ -11,9 +11,9 @@ The MDTF Diagnostic Framework consists of multiple modules, each of which is dev
 
 - Produces a figures or multiple figures that can be displayed by the html in a browser
 
+Convective Transition Diagnostics
+---------------------------------
 
-1. Convective Transition Diagnostics
---------------------------------------------------------------
 *J. David Neelin (UCLA)*
 neelin@atmos.ucla.edu
 
@@ -32,8 +32,9 @@ References:
   over tropical oceans for climate model diagnostics: Observational baseline. *J. Atmos. Sci.*, **75**, 1553-1570, https://doi.org/10.1175/JAS-D-17-0287.1.
  
 
-2. Extratropical Variance (EOF 500hPa Height)
---------------------------------------------------------------
+Extratropical Variance (EOF 500hPa Height)
+------------------------------------------
+
 *CESM/AMWG (NCAR)*
 bundy@ucar.edu
 
@@ -47,8 +48,9 @@ Geopotential hegiht  Monthly
 ===================  ==================
 
 
-3. MJO Propagation and Amplitude
---------------------------------------------------------------
+MJO Propagation and Amplitude
+-----------------------------
+
 *Xianan Jiang (UCLA)*
 xianan@ucla.ecu
 
@@ -73,8 +75,9 @@ References:
   adjustment time scale as a key factor in regulating model amplitude of the Madden‐Julian Oscillation. *Geophys. Res. Lett.*, **43**, 10412‐10419, https://doi.org/10.1002/2016GL070898. 
 
 
-4. MJO Spectra and Phasing
---------------------------------------------------------------
+MJO Spectra and Phasing
+-----------------------
+
 *CESM/AMWG (NCAR)*
 bundy@ucar.edu
 
@@ -96,8 +99,9 @@ References:
   https://doi.org/10.1175/2008JCLI2731.1.
 
 
-5. MJO Teleconnections 
---------------------------------------------------------------
+MJO Teleconnections 
+-------------------
+
 *Eric Maloney (CSU)*
 eric.maloney@colosate.edu
 
@@ -119,8 +123,9 @@ References:
   Pacific teleconnections: The impact of the basic state and MJO representation in general circulation models. *Journal of Climate*, **30** (12), 4567-4587 https://doi.org/10.1175/JCLI-D-16-0789.1.
 
 
-6. Diurnal Cycle of Precipitation
---------------------------------------------------------------
+Diurnal Cycle of Precipitation
+------------------------------
+
 *Rich Neale (NCAR)*
 bundy@ucar.edu
 
@@ -141,8 +146,8 @@ References:
   Lauritzen, P. A. Bogenschutz, and R. B. Neale, (2018): Regional Climate Simulations With the Community Earth System Model. *Journal of Advances in Modeling Earth Systems*, **10**, 1245–1265, https://doi.org/10.1002/2017MS001227.
 
 
-7. Coupling between Soil Moisture and Evapotranspiration
---------------------------------------------------------------
+Coupling between Soil Moisture and Evapotranspiration
+-----------------------------------------------------
 *Alexis M. Berg (Princeton)*
 ab5@princeton.edu
 
@@ -162,8 +167,8 @@ References:
   CMIP5 Models: Relationship with Simulated Climate and Projections, *J. Climate*, **31** (12), 4865-4878, https://doi.org/10.1175/JCLI-D-17-0757.1. 
 
 
-8. Wavenumber-Frequency Spectra
---------------------------------------------------------------
+Wavenumber-Frequency Spectra
+----------------------------
 *CESM/AMWG (NCAR)*
 bundy@ucar.edu
 
@@ -182,5 +187,5 @@ W250                Daily
 References:
 
 - Wheeler, M. and G. N. Kiladis (1999): Convectively Coupled Equatorial Waves: Analysis
-  of Clouds and Temperature in the Wavenumber–Frequency Domain. *J. Atmos. Sci.*, **56**, 3, 374–99. `https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2 <https://doi.org/10.1175/1520-0469(1999)056\<0374:CCEWAO\>2.0.CO;2>`_. 
+  of Clouds and Temperature in the Wavenumber–Frequency Domain. *J. Atmos. Sci.*, **56**, 3, 374–99. `https://doi.org/10.1175/1520-0469(1999)056<0374:CCEWAO>2.0.CO;2 <https://doi.org/10.1175/1520-0469(1999)056\<0374:CCEWAO\>2.0.CO;2>`__. 
 

@@ -138,8 +138,10 @@ latex_elements = {
     # fonts
     'fontpkg': r'''
         \usepackage{fontspec}
-        \setmainfont{Times New Roman}
-        \setsansfont{Optima}
+        % RTD uses a texlive installation on linux; apparently xelatex can only
+        % find fonts by filename in this situation.
+        \setmainfont{texgyretermes-regular.otf}
+        \setsansfont{Heuristica-Bold.otf}
     ''',
     # chapter style
     'fncychap': '\\usepackage[Bjarne]{fncychap}',

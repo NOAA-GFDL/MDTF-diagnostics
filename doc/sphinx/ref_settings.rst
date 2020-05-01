@@ -35,7 +35,7 @@ Compound expressions may be nested within each other to an arbitrary depth.
 File organization
 -----------------
 
-.. code-block:: json
+.. code-block:: js
 
   {
     "settings" : {
@@ -64,7 +64,6 @@ File organization
     }
   }
 
-::
 
 At the top level, the settings file is an :ref:`object<object>` containing four required entries, described in detail below.
 
@@ -84,7 +83,7 @@ This section is an :ref:`object<object>` containing properties that label the di
 Example
 ^^^^^^^
 
-.. code-block:: jsonc
+.. code-block:: js
 
   "settings" : {
     "long_name" : "Effect of X on Y diagnostic",
@@ -100,7 +99,6 @@ Example
     }
   }
 
-::
 
 Diagnostic description
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -139,7 +137,7 @@ This section is an :ref:`object<object>` containing properties that apply to all
 Example
 ^^^^^^^
 
-.. code-block:: json
+.. code-block:: js
 
   "data": {
     "format": "netcdf4_classic",
@@ -153,7 +151,6 @@ Example
     "max_duration": "any"
   }
 
-::
 
 Example
 ^^^^^^^
@@ -180,10 +177,10 @@ Example
 
 
 ``rename_dimensions``:
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all :ref:`dimensions<sec_dimensions>` in the model data from the model's native value to the string specified in the ``name`` property for that dimension. If set to ``false``, **the diagnostic is responsible for reading dimension names from the environment variable**. See the environment variable :doc:`documentation <./dev_envvars>` for details on how these names are provided.
+  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all :ref:`dimensions<sec_dimensions>` in the model data from the model's native value to the string specified in the ``name`` property for that dimension. If set to ``false``, **the diagnostic is responsible for reading dimension names from the environment variable**. See the environment variable :doc:`documentation <ref_envvars>` for details on how these names are provided.
 
 ``rename_variables``: 
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all :ref:`variables<sec_varlist>` in the model data from the model's native value to the string specified in the ``name`` property for that variable. If set to ``false``, **the diagnostic is responsible for reading dimension names from the environment variable**. See the environment variable :doc:`documentation <./dev_envvars>` for details on how these names are provided.
+  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all :ref:`variables<sec_varlist>` in the model data from the model's native value to the string specified in the ``name`` property for that variable. If set to ``false``, **the diagnostic is responsible for reading dimension names from the environment variable**. See the environment variable :doc:`documentation <ref_envvars>` for details on how these names are provided.
 
 .. _multi_file:
 
@@ -227,7 +224,7 @@ All :ref:`dimensions<item_var_dims>` and :ref:`scalar coordinates<item_var_coord
 Example
 ^^^^^^^
 
-.. code-block:: json
+.. code-block:: js
 
   "dimensions": {
     "lat": {
@@ -256,7 +253,6 @@ Example
     }
   }
 
-::
 
 Latitude and Longitude
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -327,7 +323,7 @@ Each entry corresponds to a distinct data file (or set of files, if ``multi_file
 Varlist entry example
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: json
+.. code-block:: js
 
   "u500": {
       "standard_name": "eastward_wind",
@@ -340,7 +336,6 @@ Varlist entry example
       "alternates": ["another_variable_name", "a_third_variable_name"]
   }
 
-::
 
 Varlist entry properties
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -351,7 +346,7 @@ The *key* in a varlist key-value pair is the name your diagnostic uses to refer 
   String, **required**. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in the CMIP6 MIP tables (eg. "ua" instead of "eastward_wind"). 
 
 ``path_variable``: 
-  String, **required**. Name of the shell environment variable the framework will set with the location of this data. See the environment variable :doc:`documentation <./dev_envvars>` for details. 
+  String, **required**. Name of the shell environment variable the framework will set with the location of this data. See the environment variable :doc:`documentation <ref_envvars>` for details. 
 
   - If ``multi_file_ok`` is ``false``, ``<path_variable>`` will be set to the absolute path to the netcdf file containing this variable's data.
   - If ``multi_file_ok`` is ``true``, ``<path_variable>`` will be a single path *or* a colon-separated list of paths to the files containing this data. Files will be listed in chronological order.

@@ -9,7 +9,7 @@ Overview
 The MDTF framework can be viewed as a "wrapper" for your code that handles data fetching and munging. Your code communicates with this wrapper in two ways:
 
 - The *settings file* is where your code talks to the framework: when you write your code, you document what model data your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here (or tell the user what went wrong).
-- When your code is run, the framework talks to it by setting :doc:`environment variables <./dev_envvars>` containing paths to the data files and other information specific to the run (not covered on this page, follow the link for details). 
+- When your code is run, the framework talks to it by setting :doc:`environment variables <ref_envvars>` containing paths to the data files and other information specific to the run (not covered on this page, follow the link for details). 
 
 In the settings file, you specify what model data your diagnostic uses in a vocabulary you're already familiar with:
 
@@ -20,7 +20,7 @@ In the settings file, you specify what model data your diagnostic uses in a voca
 Example
 -------
 
-.. code-block:: json
+.. code-block:: js
 
   // Any text to the right of a '//' is a comment
   {
@@ -68,7 +68,6 @@ Example
     }
   }
 
-::
 
 Settings section
 ----------------
@@ -124,7 +123,7 @@ This section is where you list the variables your diagnostic uses. Each entry sh
   The CF `standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ for that variable.
 
 ``path_variable``: 
-  Name of the shell environment variable the framework will use to pass the location of the file containing this variable to your diagnostic when it's run. See the environment variable :doc:`documentation <./dev_envvars>` for details. 
+  Name of the shell environment variable the framework will use to pass the location of the file containing this variable to your diagnostic when it's run. See the environment variable :doc:`documentation <ref_envvars>` for details. 
 
 ``units``:
   The units the diagnostic expects the variable to be in (using the syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__). This is optional: if not given, the framework will assume you want CF convention `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.

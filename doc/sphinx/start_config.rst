@@ -9,8 +9,7 @@ As long-form command-line options; you’d run the framework as
 % $CODE_ROOT/mdtf --OUTPUT_DIR $HOME/dir_name [... other options...]
 Editing the configuration defaults. These are set in a commented JSON file in $CODE_ROOT/src/defaults.jsonc (which define the command-line options.)
 If you didn’t clone the git repo, you can edit this file directly. In the example, you’d find the entry containing “name”: “OUTPUT_DIR”, and change the line in that entry beginning with “default” to read “default”: “$HOME/dir_name”. Other lines in the entry shouldn’t be changed.
-If you cloned the git repo, you will have to be careful to not commit the changes to this file. A less fragile way to do this is to make the above changes to a copy of $CODE_ROOT/src/defaults.jsonc, and specify this when running the framework as
- % $CODE_ROOT/mdtf -f my_defaults.jsonc [... other options...]
+If you cloned the git repo, you will have to be careful to not commit the changes to this file. A less fragile way to do this is to make the above changes to a copy of $CODE_ROOT/src/defaults.jsonc, and specify this when running the framework as ``% $CODE_ROOT/mdtf -f my_defaults.jsonc [... other options...]``.
 Options set explicitly on the command line always override those set in a copied defaults file (set with -f above), if present, and options in that file override those in the framework’s defaults.jsonc.
 
 Paths that you should consider configuring are:

@@ -1,7 +1,7 @@
 Diagnostic settings file quickstart
 ===================================
 
-This page gives a quick introduction to how to write the settings file for your diagnostic. See the full :doc:`documentation <./dev_settings_format>` on this file format for a complete list of all the options you can specify.
+This page gives a quick introduction to how to write the settings file for your diagnostic. See the full :doc:`documentation <./ref_settings>` on this file format for a complete list of all the options you can specify.
 
 Overview
 --------

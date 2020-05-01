@@ -28,6 +28,8 @@ For advanced users interested in keeping more up-to-date on project development 
 
 For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in the Developer’s’ Walkthrough.
 
+.. _ref-supporting-data:
+
 Obtaining supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

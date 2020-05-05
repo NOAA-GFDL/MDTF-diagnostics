@@ -238,6 +238,8 @@ class NameSpace(dict):
 # ------------------------------------
 
 def strip_comments(str_, delimiter=None):
+    # would be better to use shlex, but that doesn't support multi-character
+    # comment delimiters like '//'
     if not delimiter:
         return str_
     s = str_.splitlines()
@@ -270,39 +272,26 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    def _utf8_to_ascii(data, ignore_dicts=False):
+    def _to_ascii(data):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Convert strings to ascii using this solution:
-        # https://stackoverflow.com/a/33571117
+        # everything is ascii. Raise UnicodeDecodeError if file contains 
+        # non-ascii characters.
+        return (data.encode('ascii', 'strict') if isinstance(data, unicode) else data)
 
-        # if this is a unicode string, return its string representation
-        if isinstance(data, unicode):
-            # raise UnicodeDecodeError if file contains non-ascii characters
-            return data.encode('ascii', 'strict')
-        # if this is a list of values, return list of byteified values
-        if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-        # if this is a dictionary, return dictionary of byteified keys and values
-        # but only if we haven't already byteified it
-        if isinstance(data, dict) and not ignore_dicts:
-            return {
-                _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
-                for key, value in data.iteritems()
-            }
-        # if it's anything else, return it in its original form
-        return data
+    def _pairs_hook(pairs):
+        return collections.OrderedDict(
+            [(_to_ascii(key), _to_ascii(val)) for key, val in pairs]
+        )
 
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
-        parsed_json = _utf8_to_ascii(
-            json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
-        )
+        parsed_json = json.loads(str_, object_pairs_hook=_pairs_hook)
     except UnicodeDecodeError:
         print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
     return parsed_json
 
-def write_json(struct, file_path, verbose=0):
+def write_json(struct, file_path, verbose=0, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
@@ -313,17 +302,18 @@ def write_json(struct, file_path, verbose=0):
     try:
         with open(file_path, 'w') as file_obj:
             json.dump(struct, file_obj, 
-                sort_keys=True, indent=2, separators=(',', ': '))
+                sort_keys=sort_keys, indent=2, separators=(',', ': '))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
-def pretty_print_json(struct):
-    """Pseudo-YAML output for human-readbale debugging output only - 
+def pretty_print_json(struct, sort_keys=False):
+    """Pseudo-YAML output for human-readable debugging output only - 
     not valid JSON"""
-    str_ = json.dumps(struct, sort_keys=True, indent=2)
-    for char in ['"', ',', '{', '}', '[', ']']:
+    str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
+    for char in ['"', ',', '}', '[', ']']:
         str_ = str_.replace(char, '')
+    str_ = re.sub(r"{\s+", "- ", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 

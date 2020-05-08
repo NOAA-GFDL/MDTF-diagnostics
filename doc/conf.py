@@ -15,6 +15,7 @@
 import os
 import sys
 cwd = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
@@ -46,6 +47,7 @@ release = u'3.0 beta 1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'copy_pod_docs',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
@@ -53,8 +55,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'recommonmark'
+    'sphinx.ext.intersphinx'
+    # 'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

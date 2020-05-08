@@ -41,6 +41,7 @@ MANIFEST
 # Sphinx intermediate files
 doc/_build
 doc/sphinx/src.*
+doc/sphinx_pods
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -40,6 +40,7 @@ MANIFEST
 
 # Sphinx intermediate files
 doc/_build
+doc/sphinx/pod_toc.rst
 doc/sphinx/src.*
 doc/sphinx_pods
 

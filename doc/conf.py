@@ -152,15 +152,44 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     'preamble': r'''
         \usepackage{unicode-math}
-    '''
+    ''',
+    'extraclassoptions': 'openany,oneside'
 }
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('tex_all', 'MDTF_documentation.tex', u'MDTF Diagnostics Documentation', author, 'manual'),
-    #('tex_user', 'MDTF_userguide.tex', u'MDTF Diagnostics User Guide', author, 'manual')
+    (
+        'tex_all', 'MDTF_documentation.tex', 
+        u'MDTF Diagnostics Documentation', author, 'manual'
+    ),
+    (
+        'tex_getting_started', 'MDTF_getting_started.tex', 
+        u"MDTF Getting Started Guide", 
+        r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
+        'howto'
+    ),
+    (
+        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+        u"MDTF Developer's walkthrough", 
+        (
+        r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
+        r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
+        r"\and Andrew Gettelman\textsuperscript{b} \and J.~David Neelin\textsuperscript{a} "
+        r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
+        r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
+        ),
+        'howto'
+    )
 ]
+
+# latex_additional_files = [
+#     '_static/mdtfhowto.cls'
+# ]
+
+# latex_docclass = {
+#     'mdtfhowto': 'mdtfhowto'
+# }
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 

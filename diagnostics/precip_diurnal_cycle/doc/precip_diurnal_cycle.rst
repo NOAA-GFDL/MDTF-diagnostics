@@ -53,7 +53,7 @@ References
 More about this diagnostic
 --------------------------
 
-.. figure:: ../img/pod_precip_diurnal_cycle_fig1.png
+.. figure:: precip_diurnal_cycle_fig1.png
    :align: center
    :width: 100 %
 

@@ -15,6 +15,7 @@
 import os
 import sys
 cwd = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
@@ -46,6 +47,7 @@ release = u'3.0 beta 1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'copy_pod_docs',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
@@ -53,8 +55,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'recommonmark'
+    'sphinx.ext.intersphinx'
+    # 'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -99,7 +101,13 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'extra_nav_links' : {
+        "Getting Started (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_getting_started.pdf",
+        "Developer's Walkthough (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_walkthrough.pdf",
+        "Full documentation (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_documentation.pdf"
+    }
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -115,7 +123,9 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+html_sidebars = {
+    '**': ['about.html', 'navigation.html', 'relations.html', 'searchbox.html']
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -150,15 +160,44 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     'preamble': r'''
         \usepackage{unicode-math}
-    '''
+    ''',
+    'extraclassoptions': 'openany,oneside'
 }
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('tex_all', 'MDTF_documentation.tex', u'MDTF Diagnostics Documentation', author, 'manual'),
-    #('tex_user', 'MDTF_userguide.tex', u'MDTF Diagnostics User Guide', author, 'manual')
+    (
+        'tex_all', 'MDTF_documentation.tex', 
+        u'MDTF Diagnostics Documentation', author, 'manual'
+    ),
+    (
+        'tex_getting_started', 'MDTF_getting_started.tex', 
+        u"MDTF Getting Started Guide", 
+        r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
+        'howto'
+    ),
+    (
+        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+        u"MDTF Developer's walkthrough", 
+        (
+        r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
+        r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
+        r"\and Andrew Gettelman\textsuperscript{b} \and J.~David Neelin\textsuperscript{a} "
+        r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
+        r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
+        ),
+        'howto'
+    )
 ]
+
+# latex_additional_files = [
+#     '_static/mdtfhowto.cls'
+# ]
+
+# latex_docclass = {
+#     'mdtfhowto': 'mdtfhowto'
+# }
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 

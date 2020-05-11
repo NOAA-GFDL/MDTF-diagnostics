@@ -7,10 +7,10 @@ The convective transition diagnostic package computes statistics that relate pre
 Version & Contact info
 ----------------------
 
-| Version 1 revision 3 13-Nov-2017 Yi-Hung Kuo (UCLA)
-| PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
-| Current developer: Yi-Hung Kuo (yhkuo@atmos.ucla.edu)
-| Contributors: K. A. Schiro (UCLA), B. Langenbrunner (UCLA), F. Ahmed (UCLA), C. Martinez (UCLA), and C.-C. (Jack) Chen (NCAR)
+- Version 1 revision 3 13-Nov-2017 Yi-Hung Kuo (UCLA)
+- PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
+- Current developer: Yi-Hung Kuo (yhkuo@atmos.ucla.edu)
+- Contributors: K. A. Schiro (UCLA), B. Langenbrunner (UCLA), F. Ahmed (UCLA), C. Martinez (UCLA), and C.-C. (Jack) Chen (NCAR)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

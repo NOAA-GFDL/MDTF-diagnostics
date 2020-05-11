@@ -8,8 +8,8 @@ and 850hPa Wind.
 Contact info
 ------------
 
-| Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
-| Contributors: Dennis Shea, Andrew Gettleman, Jack Chen, Rich Neale (NCAR)
+- Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
+- Contributors: Dennis Shea, Andrew Gettleman, Jack Chen, Rich Neale (NCAR)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

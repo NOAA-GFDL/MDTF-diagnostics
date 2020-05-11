@@ -4,8 +4,8 @@ Last update: 03/11/2019
 
 Contact info
 ------------
-| Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
-| Contributors: Dennis Shea, Andrew Gettleman, Jack Chen (NCAR)
+- Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
+- Contributors: Dennis Shea, Andrew Gettleman, Jack Chen (NCAR)
 
 This computes the climatological anomalies of 500 hPa geopotential height, then calculates the EOFs using ​NCL's eofunc​. The code is in ​NCL​ and requires model input: 
 

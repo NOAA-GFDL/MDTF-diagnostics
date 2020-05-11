@@ -7,9 +7,9 @@ The Soil moisture-Evapotranspiration (SM-ET) Coupling Diagnostic Package evaluat
 Contact info
 ------------
 
-| PIs of the project: Eric Wood, Princeton University (efwood@princeton.edu);
-| previous PI Justin Sheffield, formerly at Princeton University, now at University of Southampton, UK (justin.sheffield@soton.ac.uk).
-| Current developer: Alexis Berg (ab5@princeton.edu)
+- PIs of the project: Eric Wood, Princeton University (efwood@princeton.edu);
+- previous PI Justin Sheffield, formerly at Princeton University, now at University of Southampton, UK (justin.sheffield@soton.ac.uk).
+- Current developer: Alexis Berg (ab5@princeton.edu)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

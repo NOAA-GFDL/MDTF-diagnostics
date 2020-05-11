@@ -191,9 +191,9 @@ latex_documents = [
     )
 ]
 
-# latex_additional_files = [
-#     '_static/mdtfhowto.cls'
-# ]
+latex_additional_files = [
+    'latex/latexmkrc'
+]
 
 # latex_docclass = {
 #     'mdtfhowto': 'mdtfhowto'

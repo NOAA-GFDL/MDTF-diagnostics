@@ -26,6 +26,7 @@ Diagnostics reference
    :maxdepth: 2
 
    pod_summary
+   ../sphinx_pods/example
 """
 
 def config_inited(app, config):
@@ -66,6 +67,8 @@ def config_inited(app, config):
     pod_toc_path = os.path.join(cwd, 'sphinx', 'pod_toc.rst')
     if os.path.exists(pod_toc_path):
         os.remove(pod_toc_path)
+    if 'example' in pods:
+        pods.remove('example')
     with open(pod_toc_path, 'w') as file_:
         file_.write(_pod_toc_header)
         for pod in pods:

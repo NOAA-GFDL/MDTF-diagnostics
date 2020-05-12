@@ -105,7 +105,7 @@ html_theme_options = {
     'extra_nav_links' : {
         "Getting Started (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_getting_started.pdf",
         "Developer's Walkthough (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_walkthrough.pdf",
-        "Full documentation (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_documentation.pdf"
+        "Full documentation (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/mdtf-diagnostics.pdf"
     }
 }
 
@@ -168,17 +168,17 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
-        'tex_all', 'MDTF_documentation.tex', 
+        'tex_all', 'mdtf-diagnostics.tex', 
         u'MDTF Diagnostics Documentation', author, 'manual'
     ),
     (
-        'tex_getting_started', 'MDTF_getting_started.tex', 
+        'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
         'sphinxmdtfhowto'
     ),
     (
-        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
         u"MDTF Developer's Walkthrough", 
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "

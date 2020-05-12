@@ -7,9 +7,9 @@ The teleconnection diagnostics first generate maps of MJO phase composites of 25
 Contact info
 ------------
 
-| PI: Eric D. Maloney (eric.maloney@colostate.edu), Colorado State University
-| Current Developer: Bohar Singh (bohar.singh@colostate.edu), Colorado State University
-| Contributors: Stephanie Henderson (University of Wisconsin–Madison), Bohar Singh (CSU)
+- PI: Eric D. Maloney (eric.maloney@colostate.edu), Colorado State University
+- Current Developer: Bohar Singh (bohar.singh@colostate.edu), Colorado State University
+- Contributors: Stephanie Henderson (University of Wisconsin–Madison), Bohar Singh (CSU)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

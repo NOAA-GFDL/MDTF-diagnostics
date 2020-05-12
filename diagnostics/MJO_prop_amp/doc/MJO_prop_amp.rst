@@ -7,10 +7,10 @@ This MJO propagation and amplitude diagnostic metrics is mainly motivated by rec
 Version & Contact info
 ----------------------
 
-| Version 2.0.
-| PI and POC: Xianan Jiang (UCLA; xianan@ucla.edu)
-| Developers: Alex Gonzalez (agon@iastate.edu), Xianan Jiang (xianan@ucla.edu)
-| Contributors: E. Maloney (CSU), D. Waliser (JPL), Ming Zhao (GFDL)
+- Version 2.0.
+- PI and POC: Xianan Jiang (UCLA; xianan@ucla.edu)
+- Developers: Alex Gonzalez (agon@iastate.edu), Xianan Jiang (xianan@ucla.edu)
+- Contributors: E. Maloney (CSU), D. Waliser (JPL), Ming Zhao (GFDL)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

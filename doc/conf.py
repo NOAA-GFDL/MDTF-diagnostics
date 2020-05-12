@@ -175,11 +175,11 @@ latex_documents = [
         'tex_getting_started', 'MDTF_getting_started.tex', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
-        'howto'
+        'sphinxmdtfhowto'
     ),
     (
         'tex_walkthrough', 'MDTF_walkthrough.tex', 
-        u"MDTF Developer's walkthrough", 
+        u"MDTF Developer's Walkthrough", 
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
         r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
@@ -187,13 +187,14 @@ latex_documents = [
         r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
         r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
         ),
-        'howto'
+        'sphinxmdtfhowto'
     )
 ]
 
-# latex_additional_files = [
-#     '_static/mdtfhowto.cls'
-# ]
+latex_additional_files = [
+    'latex/latexmkrc', 
+    'latex/sphinxmdtfhowto.cls'
+]
 
 # latex_docclass = {
 #     'mdtfhowto': 'mdtfhowto'
@@ -201,9 +202,9 @@ latex_documents = [
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 
-# For "manual" documents, if this is true, then top-level headings are
-# parts, not chapters.
-latex_toplevel_sectioning = 'chapter'
+# # For "manual" documents, if this is true, then top-level headings are
+# # parts, not chapters.
+# latex_toplevel_sectioning = 'chapter'
 
 # If true, show page references after internal links.
 latex_show_pagerefs = True

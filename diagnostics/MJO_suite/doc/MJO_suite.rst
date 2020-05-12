@@ -7,9 +7,9 @@ This module computes many of the diagnostics described by the the ​US-CLIVAR M
 Contact info
 ------------
 
-| PI: Rich Neale, NCAR
-| Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
-| Contributors: Dennis Shea, Andrew Gettleman, Jack Chen (NCAR)
+- PI: Rich Neale, NCAR
+- Current Developer: Dani Coleman (​bundy@ucar.edu​), NCAR
+- Contributors: Dennis Shea, Andrew Gettleman, Jack Chen (NCAR)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

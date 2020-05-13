@@ -55,8 +55,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx'
-    # 'recommonmark'
+    'sphinx.ext.intersphinx',
+    'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -105,7 +105,7 @@ html_theme_options = {
     'extra_nav_links' : {
         "Getting Started (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_getting_started.pdf",
         "Developer's Walkthough (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_walkthrough.pdf",
-        "Full documentation (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/MDTF_documentation.pdf"
+        "Full documentation (PDF)": "https://buildmedia.readthedocs.org/media/pdf/MDTF-diagnostics/latest/mdtf-diagnostics.pdf"
     }
 }
 
@@ -114,6 +114,11 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 # Sphinx automatically copies referenced image files.
 html_static_path = ['_static']
+
+# # Paths (filenames) here must be relative to (under) html_static_path as above:
+# html_css_files = [
+#     'custom.css',
+# ]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -168,17 +173,17 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
-        'tex_all', 'MDTF_documentation.tex', 
+        'tex_all', 'mdtf-diagnostics.tex', 
         u'MDTF Diagnostics Documentation', author, 'manual'
     ),
     (
-        'tex_getting_started', 'MDTF_getting_started.tex', 
+        'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
         'sphinxmdtfhowto'
     ),
     (
-        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
         u"MDTF Developer's Walkthrough", 
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "

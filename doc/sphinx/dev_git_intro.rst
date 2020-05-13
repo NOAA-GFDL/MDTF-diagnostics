@@ -1,3 +1,5 @@
+.. _ref-dev-git:
+
 Developing for MDTF Diagnostics with git
 ========================================
 

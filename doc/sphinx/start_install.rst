@@ -3,14 +3,14 @@ Quickstart installation instructions
 
 This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
-You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the `documentation site <https://mdtf-diagnostics.readthedocs.io/en/latest/>`__ for how to run the framework on your own data and configure general settings.
+You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (:numref:`ref-download`). Afterwards, we describe how to install necessary Conda environments and languages (:numref:`ref-install`) and run the framework on the default test case (:numref:`ref-execute`). 
+
+.. _ref-download:
 
 Download the package code and sample data for testing
 -----------------------------------------------------
 
-Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``, and ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` in :numref:`test-ref` should be substituted by the actual path to the MDTF-diagnostics directory. 
-
-.. _test-ref:
+Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``, and ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be substituted by the actual path to the MDTF-diagnostics directory. 
 
 Obtaining the code
 ^^^^^^^^^^^^^^^^^^
@@ -26,14 +26,14 @@ To install the MDTF package on a local machine, create a directory named ``mdtf`
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``master`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.  
 
-For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in the Developer’s’ Walkthrough.
+For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in :ref:`ref-dev-git`.
 
 .. _ref-supporting-data:
 
 Obtaining supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
+Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files needed for package installation and default tests are:
 
 - Digested observational data (159 Mb): `MDTF_v2.1.a.20200410.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200410.obs_data.tar>`__.
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
@@ -46,6 +46,8 @@ Users installing on Mac OS should use the Finder’s Archive Utility instead of 
 - ``mdtf/inputdata/model/GFDL.CM4.c96L32.am4g10r8/...``
 
 The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that ``mdtf`` now contains both ``MDTF-diagnostics`` and ``inputdata`` directories. 
+
+.. _ref-install:
 
 Install the necessary programming languages and modules
 -------------------------------------------------------
@@ -60,6 +62,8 @@ The framework’s environments can co-exist within an existing Conda or Anaconda
 Do not install miniconda/Anaconda again if Conda is already installed for this user: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
 If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available `here <https://docs.conda.io/en/latest/miniconda.html>`__, but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., ``~/.bashrc`` or ``~/.cshrc``). 
+
+.. _ref-conda-env-install:
 
 Conda environment installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,13 +89,15 @@ If you're unable to use the Conda-based installation, the framework can use exis
 - `R <https://www.r-project.org/>`__, for the SM_ET_coupling POD only.
 
 
+.. _ref-execute:
+
 Execute the MDTF package with default test settings
 ---------------------------------------------------
 
 Location of the MDTF executable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Following section 2.2, the installation script will have created an executable at ``$CODE_ROOT/mdtf`` which sets the correct Conda environment before running the framework. To test the installation, ``% $CODE_ROOT/mdtf --help`` will print help on the command-line options. Note that, if your current working directory is ``$CODE_ROOT``, you will need to run ``% ./mdtf --help``.
+Following :numref:`ref-conda-env-install`, the installation script will have created an executable at ``$CODE_ROOT/mdtf`` which sets the correct Conda environment before running the framework. To test the installation, ``% $CODE_ROOT/mdtf --help`` will print help on the command-line options. Note that, if your current working directory is ``$CODE_ROOT``, you will need to run ``% ./mdtf --help``.
 
 Run the framework on sample data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

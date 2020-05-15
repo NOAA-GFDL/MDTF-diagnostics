@@ -80,10 +80,8 @@ class RecordDefaultsAction(argparse.Action):
 
 
 class CLIHandler(object):
-    def __init__(self, code_root, defaults_rel_path):
+    def __init__(self, code_root, defaults):
         self.code_root = code_root
-        defaults_path = os.path.join(code_root, defaults_rel_path)
-        defaults = util.read_json(defaults_path)
         self.config = dict()
         self.parser_groups = dict()
         # no way to get this from public interface? _actions of group
@@ -92,6 +90,11 @@ class CLIHandler(object):
         # manually track args requiring custom postprocessing (even if default
         # is used, so can't do with action=.. in argument)
         self.custom_types = collections.defaultdict(list)
+        if isinstance(defaults, basestring):
+            # we were given a path to config file, instead of file's contents
+            if not os.path.isabs(defaults):
+                defaults = os.path.join(code_root, defaults)
+            defaults = util.read_json(defaults)
         self.parser = self.make_parser(defaults)
 
     def iter_cli_actions(self):

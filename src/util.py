@@ -16,6 +16,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import signal
+import threading
 import errno
 import json
 import datelabel
@@ -47,6 +48,29 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
         # pylint: disable=maybe-no-member
         if cls in cls._instances:
             del cls._instances[cls]
+
+
+class ExceptionPropagatingThread(threading.Thread):
+    """Class to propagate exceptions raised in a child thread back to the caller
+    thread when the child is join()ed. 
+    Adapted from `https://stackoverflow.com/a/31614591`__
+    """
+    def run(self):
+        self.exc = None
+        try:
+            if hasattr(self, '_Thread__target'):
+                # Thread uses name mangling prior to Python 3.
+                self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
+            else:
+                self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
+
+    def join(self, *args):
+        super(ExceptionPropagatingThread, self).join(*args)
+        if self.exc:
+            raise self.exc
+        return self.ret
 
 
 class MultiMap(collections.defaultdict):

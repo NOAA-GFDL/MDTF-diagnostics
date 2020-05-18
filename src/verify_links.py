@@ -15,9 +15,6 @@ import itertools
 from HTMLParser import HTMLParser # py3: html.parser
 import urlparse # py3: urllib.parse
 import urllib2
-# get dir of currently executing script: 
-cwd = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 import util
 
 # https://stackoverflow.com/a/41663924
@@ -33,7 +30,7 @@ class LinkParser(HTMLParser):
                     self.links = itertools.chain(self.links, [value])
 
 
-class LinkVerfifier(object):
+class LinkVerifier(object):
     def __init__(self, root, verbose=False):
         """Setup for search. Form a file:// URL if we're given a local path, and
         organize missing links in a dictionary keyed on POD name.

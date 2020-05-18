@@ -11,6 +11,7 @@ import ftplib
 import shutil
 import cli
 import util
+from verify_links import LinkVerifier
 
 # ------------------------------------------------------------------------------
 # Functions that call external programs to do all the work
@@ -356,15 +357,18 @@ def framework_test(code_root, output_dir):
 def framework_verify(code_root, run_output):
     print("Checking linked output files")
     try:
-        _ = shell_command_wrapper(
-            './{verify_script} {run_output}'.format(
-                verify_script=os.path.join('tests', 'verify_links.py'),
-                run_output=run_output
-            ), 
-            cwd=code_root
-        )
+        html_root = os.path.join(run_output, 'index.html')
+        if not os.path.exists(html_root):
+            raise IOError("Can't find framework html output in {}".format(html_root))
+        link_verifier = LinkVerifier(html_root, verbose=False)
+        missing_dict = link_verifier.get_missing_pods()
     except Exception as exc:
-        fatal_exception_handler(exc, "ERROR: some output files are missing.")
+        fatal_exception_handler(exc, "ERROR in link verification.")
+    if missing_dict:
+        print("ERROR: the following files are missing:")
+        print(util.pretty_print_json(missing_dict))
+        exit(1)
+    print("SUCCESS: no missing links found.")
     print("Finished: framework test run successful!")
 
 

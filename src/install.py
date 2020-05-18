@@ -231,6 +231,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
             while t.is_alive():
                 t.join(60)
                 ftp.voidcmd('NOOP') # poll connection in main thread
+            ftp.cwd('/')
             print("Successfully downloaded {}".format(f.file))
         except Exception as exc:
             fatal_exception_handler(exc,

@@ -6,8 +6,10 @@ import os
 import sys
 if sys.version_info[0] == 2:
     _basestring = basestring
+    _unicode = unicode
 else:
     _basestring = str
+    _unicode = str # all strings unicode
 import re
 import shlex
 import collections
@@ -307,7 +309,7 @@ def parse_json(str_):
         # everything is ascii. Raise UnicodeDecodeError if file contains 
         # non-ascii characters. 
         # Originally based on https://stackoverflow.com/a/33571117.
-        if isinstance(data, unicode):
+        if isinstance(data, _unicode):
             # raise UnicodeDecodeError if file contains non-ascii characters
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values

@@ -2,6 +2,11 @@
 """
 from __future__ import print_function
 import os
+import sys
+if sys.version_info[0] == 2:
+    _basestring = basestring
+else:
+    _basestring = str
 import re
 import glob
 import shutil
@@ -105,7 +110,7 @@ class TempDirManager(util.Singleton):
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
-        elif isinstance(hash_obj, basestring):
+        elif isinstance(hash_obj, _basestring):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
@@ -221,7 +226,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif not isinstance(varvalue, basestring):
+        elif not isinstance(varvalue, _basestring):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 

@@ -4,6 +4,10 @@ Specifically, util.py implements general functionality that's not MDTF-specific.
 from __future__ import print_function
 import os
 import sys
+if sys.version_info[0] == 2:
+    _basestring = basestring
+else:
+    _basestring = str
 import re
 import shlex
 import collections
@@ -493,7 +497,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if isinstance(command, basestring):
+    if isinstance(command, _basestring):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -566,7 +570,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     # starting bash directly instead of from sh.)
     bash_exec = find_executable('bash')
 
-    if not isinstance(command, basestring):
+    if not isinstance(command, _basestring):
         command = ' '.join(command)
     if dry_run:
         print('DRY_RUN: call {}'.format(command))

@@ -14,6 +14,11 @@ Note:
     Timezone support is not currently implemented.
 """
 from __future__ import print_function
+import sys
+if sys.version_info[0] == 2:
+    _basestring = basestring
+else:
+    _basestring = str
 import re
 import datetime
 import operator as op
@@ -426,7 +431,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     def __init__(self, start, end=None, precision=None):
         if not end:
-            if isinstance(start, basestring):
+            if isinstance(start, _basestring):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -587,7 +592,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif isinstance(args[0], basestring):
+        elif isinstance(args[0], _basestring):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -697,9 +702,9 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, basestring) and (unit is None):
+        if isinstance(quantity, _basestring) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif not isinstance(quantity, int) or not isinstance(unit, basestring):
+        elif not isinstance(quantity, int) or not isinstance(unit, _basestring):
             raise ValueError("Malformed input")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)

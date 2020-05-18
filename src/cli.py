@@ -1,8 +1,13 @@
 from __future__ import print_function
 import os
 import sys
+if sys.version_info[0] == 2:
+    from ConfigParser import _Chainmap as ChainMap
+    _basestring = basestring
+else:
+    from collections import ChainMap
+    _basestring = str
 import argparse
-from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import shlex
 import collections
 from . import util
@@ -59,7 +64,7 @@ class RecordDefaultsAction(argparse.Action):
         if isinstance(default, bool):
             nargs = 0             # behave like a flag
             const = (not default) # set flag = store opposite of default
-        elif isinstance(default, basestring) and nargs is None:
+        elif isinstance(default, _basestring) and nargs is None:
             # unless explicitly specified, string-valued options accept 1 argument
             nargs = 1
             const = None
@@ -93,7 +98,7 @@ class CLIHandler(object):
         # manually track args requiring custom postprocessing (even if default
         # is used, so can't do with action=.. in argument)
         self.custom_types = collections.defaultdict(list)
-        if isinstance(cli_config, basestring):
+        if isinstance(cli_config, _basestring):
             # we were given a path to config file, instead of file's contents
             if not os.path.isabs(cli_config):
                 cli_config = os.path.join(code_root, cli_config)
@@ -211,7 +216,7 @@ class CLIHandler(object):
     def preparse_cli(self, args=None):
         # "first pass" 
         # if no args are passed, default will parse sys.argv[1:]
-        if isinstance(args, basestring):
+        if isinstance(args, _basestring):
             args = shlex.split(args, posix=True)
         self.config = vars(self.parser.parse_args(args))
 
@@ -492,7 +497,7 @@ class InfoCLIHandler(object):
     def info_realms_all(self, *args):
         print('List of installed diagnostics by realm:')
         for realm in self.realms:
-            if isinstance(realm, basestring):
+            if isinstance(realm, _basestring):
                 print('{}:'.format(realm))
             else:
                 # tuple of multiple realms

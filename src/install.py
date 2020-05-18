@@ -160,6 +160,7 @@ def make_wrapper_script(no_conda, code_root, conda_config):
         '{mdtf_py} "$@"'.format(mdtf_py=os.path.join(code_root, 'src', 'mdtf.py'))
     ]
     out_path = os.path.join(code_root, 'mdtf')
+    print('Creating MDTF wrapper script at {}'.format(out_path))
     try:
         if os.path.exists(out_path):
             print("{} exists; overwriting".format(out_path))
@@ -173,7 +174,6 @@ def make_wrapper_script(no_conda, code_root, conda_config):
         fatal_exception_handler(exc, 
             "ERROR: Couldn't create wrapper script at {}.".format(out_path)
         )
-    print('Created MDTF wrapper script at {}'.format(out_path))
 
 def ftp_download(ftp_config, ftp_data, install_config):
     """Download files via anonymous FTP. Implements solution in 
@@ -205,9 +205,10 @@ def ftp_download(ftp_config, ftp_data, install_config):
         f.close()
     
     try:
+        print("Initiating anonymous FTP connection to {}.".format(ftp_config['host']))
         # constructor only sets client-side timeout
         ftp = ftplib.FTP(**ftp_config)
-        ftp.set_debuglevel(1)
+        ftp.set_debuglevel(0)
         ftp.sendcmd("TYPE i")    # switch to binary mode
     except Exception as exc:
         fatal_exception_handler(exc,
@@ -240,6 +241,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
         # ftp may have closed if we hit an error
         ftp.voidcmd('NOOP')
         ftp.quit()
+        print("Closed connection to {}.".format(ftp_config['host']))
     except:
         pass
 
@@ -263,6 +265,7 @@ def untar_data(ftp_data, install_config):
         tar_cmd = 'tar -xf '
     
     for f in ftp_data.values():
+        print("Extracting {}".format(f.file))
         cwd = install_config[f.target_dir]
         f_subdir_0 = f.contents_subdir.split(os.sep)[0]
         try:
@@ -304,6 +307,8 @@ def set_cli_defaults(code_root, cli_config, install_config):
         raise ValueError(name)
 
     in_path = os.path.join(code_root, cli_config['template'])
+    out_path = os.path.join(code_root, cli_config['dest'])
+    print("Writing default settings to {}".format(out_path))
     try:
         cli_template = util.read_json(in_path)
     except Exception as exc:
@@ -313,7 +318,6 @@ def set_cli_defaults(code_root, cli_config, install_config):
             _set_cli_default(cli_template, key, install_config[key])
         except Exception as exc:
             fatal_exception_handler(exc, "ERROR: {} not set".format(key))
-    out_path = os.path.join(code_root, cli_config['dest'])
     if os.path.exists(out_path):
         print("{} exists; overwriting".format(out_path))
         os.remove(out_path)

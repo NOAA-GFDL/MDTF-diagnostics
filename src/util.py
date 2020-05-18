@@ -16,6 +16,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import signal
+import threading
 import errno
 import json
 import datelabel
@@ -47,6 +48,29 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
         # pylint: disable=maybe-no-member
         if cls in cls._instances:
             del cls._instances[cls]
+
+
+class ExceptionPropagatingThread(threading.Thread):
+    """Class to propagate exceptions raised in a child thread back to the caller
+    thread when the child is join()ed. 
+    Adapted from `https://stackoverflow.com/a/31614591`__
+    """
+    def run(self):
+        self.exc = None
+        try:
+            if hasattr(self, '_Thread__target'):
+                # Thread uses name mangling prior to Python 3.
+                self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
+            else:
+                self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
+
+    def join(self, *args):
+        super(ExceptionPropagatingThread, self).join(*args)
+        if self.exc:
+            raise self.exc
+        return self.ret
 
 
 class MultiMap(collections.defaultdict):
@@ -238,6 +262,8 @@ class NameSpace(dict):
 # ------------------------------------
 
 def strip_comments(str_, delimiter=None):
+    # would be better to use shlex, but that doesn't support multi-character
+    # comment delimiters like '//'
     if not delimiter:
         return str_
     s = str_.splitlines()
@@ -270,39 +296,26 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    def _utf8_to_ascii(data, ignore_dicts=False):
+    def _to_ascii(data):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Convert strings to ascii using this solution:
-        # https://stackoverflow.com/a/33571117
+        # everything is ascii. Raise UnicodeDecodeError if file contains 
+        # non-ascii characters.
+        return (data.encode('ascii', 'strict') if isinstance(data, unicode) else data)
 
-        # if this is a unicode string, return its string representation
-        if isinstance(data, unicode):
-            # raise UnicodeDecodeError if file contains non-ascii characters
-            return data.encode('ascii', 'strict')
-        # if this is a list of values, return list of byteified values
-        if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-        # if this is a dictionary, return dictionary of byteified keys and values
-        # but only if we haven't already byteified it
-        if isinstance(data, dict) and not ignore_dicts:
-            return {
-                _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
-                for key, value in data.iteritems()
-            }
-        # if it's anything else, return it in its original form
-        return data
+    def _pairs_hook(pairs):
+        return collections.OrderedDict(
+            [(_to_ascii(key), _to_ascii(val)) for key, val in pairs]
+        )
 
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
-        parsed_json = _utf8_to_ascii(
-            json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
-        )
+        parsed_json = json.loads(str_, object_pairs_hook=_pairs_hook)
     except UnicodeDecodeError:
         print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
     return parsed_json
 
-def write_json(struct, file_path, verbose=0):
+def write_json(struct, file_path, verbose=0, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
@@ -313,17 +326,18 @@ def write_json(struct, file_path, verbose=0):
     try:
         with open(file_path, 'w') as file_obj:
             json.dump(struct, file_obj, 
-                sort_keys=True, indent=2, separators=(',', ': '))
+                sort_keys=sort_keys, indent=2, separators=(',', ': '))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
-def pretty_print_json(struct):
-    """Pseudo-YAML output for human-readbale debugging output only - 
+def pretty_print_json(struct, sort_keys=False):
+    """Pseudo-YAML output for human-readable debugging output only - 
     not valid JSON"""
-    str_ = json.dumps(struct, sort_keys=True, indent=2)
-    for char in ['"', ',', '{', '}', '[', ']']:
+    str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
+    for char in ['"', ',', '}', '[', ']']:
         str_ = str_.replace(char, '')
+    str_ = re.sub(r"{\s+", "- ", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 
@@ -356,6 +370,46 @@ def find_files(root_dir, pattern):
     # but BSD find (mac os) doesn't have that.
     prefix_length = len(os.path.normpath(root_dir)) + 1 
     return [p[prefix_length:] for p in paths]
+
+def resolve_path(path, root_path="", env=None):
+    """Abbreviation to resolve relative paths.
+
+    Args:
+        path (:obj:`str`): path to resolve.
+        root_path (:obj:`str`, optional): root path to resolve `path` with. If
+            not given, resolves relative to `cwd`.
+
+    Returns: Absolute version of `path`, relative to `root_path` if given, 
+        otherwise relative to `os.getcwd`.
+    """
+    def _expandvars(path, env_dict):
+        """Expand quoted variables of the form $key and ${key} in path,
+        where key is a key in env_dict, similar to os.path.expandvars.
+
+        See https://stackoverflow.com/a/30777398; specialize to not skipping
+        escaped characters and not changing unrecognized variables.
+        """
+        return re.sub(
+            r'\$(\w+|\{([^}]*)\})', 
+            lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+            path
+        )
+
+    if path == '':
+        return path # default value set elsewhere
+    path = os.path.expanduser(path) # resolve '~' to home dir
+    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
+    if isinstance(env, dict):
+        path = _expandvars(path, env)
+    if '$' in path:
+        print("Warning: couldn't resolve all env vars in '{}'".format(path))
+        return path
+    if os.path.isabs(path):
+        return path
+    if root_path == "":
+        root_path = os.getcwd()
+    assert os.path.isabs(root_path)
+    return os.path.normpath(os.path.join(root_path, path))
 
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.

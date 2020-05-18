@@ -88,18 +88,17 @@ def find_conda_envs(code_root, conda_config):
             envs.remove(env)
     return envs
 
-def conda_env_create(env_names, code_root, conda_config):
+def conda_env_create(envs, code_root, conda_config):
     """Create a set of conda environments from yaml files.
     """
-    def _install_one_env(env_name):
-        path = conda_env_to_path(env_name, code_root, conda_config)
+    def _install_one_env(env, env_name):
+        path = conda_env_to_path(env, code_root, conda_config)
         if not os.path.exists(path):
             print("Can't find {} for conda env {}".format(path, env_name))
             exit(1)
         if conda_config.get('conda_env_root', False):
             prefix_flag = '-p "{}" '.format(
-                os.path.join(conda_config['conda_env_root'], 
-                    conda_config['env_prefix']+'_'+env_name)
+                os.path.join(conda_config['conda_env_root'], env_name)
             )
         else:
             prefix_flag = ''
@@ -128,8 +127,9 @@ def conda_env_create(env_names, code_root, conda_config):
             '"{conda_env_root}"`'.format(**conda_config)))
     else: 
         print("Installing envs into system conda")
-    for env in env_names:
-        _install_one_env(env)
+    for env in envs:
+        env_name = conda_config['env_prefix']+'_'+env
+        _install_one_env(env, env_name)
     try:
         _ = shell_command_wrapper('{conda_exe} clean -ayq'.format(**conda_config))
     except Exception as exc:

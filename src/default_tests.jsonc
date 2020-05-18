@@ -26,6 +26,7 @@
           "convective_transition_diag",
           "MJO_suite",
           "MJO_teleconnection"
+          // "convective_transition_diag"
           // "precip_diurnal_cycle"
       ]
     }

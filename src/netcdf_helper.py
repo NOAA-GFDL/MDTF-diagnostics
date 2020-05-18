@@ -12,7 +12,10 @@ else:
 from . import datelabel
 from . import util
 from . import util_mdtf
-import StringIO
+if sys.version_info[0] == 2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 import xml.etree.ElementTree as ET
 
 class NetcdfHelper(object):
@@ -166,7 +169,7 @@ class NcoNetcdfHelper(NetcdfHelper):
             # strips namespaces; https://stackoverflow.com/a/25920989
             # https://stackoverflow.com/a/53738357 would be more robust, but for
             # some reason I can't reproduce it
-            f_obj = StringIO.StringIO(str_)
+            f_obj = StringIO(str_)
             it = ET.iterparse(f_obj)
             for _, el in it:
                 if '}' in el.tag:

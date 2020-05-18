@@ -97,7 +97,8 @@ def conda_env_create(env_names, code_root, conda_config):
             exit(1)
         if conda_config.get('conda_env_root', False):
             prefix_flag = '-p "{}" '.format(
-                os.path.join(conda_config['conda_env_root'], env_name)
+                os.path.join(conda_config['conda_env_root'], 
+                    conda_config['env_prefix']+'_'+env_name)
             )
         else:
             prefix_flag = ''

@@ -227,7 +227,7 @@
           "name": "convert_flags",
           "hidden" : true,
           "help": "Flags to pass to ghostscript PS -> PNG figure conversion.",
-          "default" : "-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 -sDEVICE=pngalpha"
+          "default" : "-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4"
         },{
           "name": "overwrite",
           "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",

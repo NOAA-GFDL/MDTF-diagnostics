@@ -502,12 +502,27 @@ class Diagnostic(object):
                 files.extend(glob.glob(pattern))
         for f in files:
             (dd, f_out) = os.path.split(os.path.splitext(f)[0])
+            path_stem = os.path.join(os.path.dirname(dd), f_out)
             _ = util.run_shell_command(
                 'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
                 flags=config.config.get('convert_flags',''),
                 f_in=f,
-                f_out=os.path.join(os.path.dirname(dd), f_out+'.png')
+                f_out=path_stem+'-%d.png'
             ))
+            # if .ps file was multiple pages, this will generate 1 png per page.
+            # however, page number is included for output from single-page ps 
+            # files, and number starts from 1, not 0. Rename files to fix this.
+            out_files = glob.glob(path_stem+'*.png')
+            if not out_files:
+                print("Error: no png generated for {}".format(f))
+            elif len(out_files) == 1:
+                shutil.move(out_files[0], path_stem+'.png')
+            else:
+                for n in range(len(out_files)):
+                    shutil.move(
+                        path_stem+'-{}.png'.format(n+1),
+                        path_stem+'-{}.png'.format(n)
+                    )
 
     def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

@@ -184,13 +184,6 @@
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "conda_exe",
-          "help": "Path to the conda executable. Only used if environment_manager = 'Conda'. If empty, will assume the default location $conda_root/bin/conda.",
-          "default" : "",
-          "metavar" : "<PATH>",
-          "parse_type": "path",
-          "hidden" : true
-        },{
           "name": "conda_env_root",
           "help": "Root directory for conda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
           "default" : "",

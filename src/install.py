@@ -130,10 +130,10 @@ def conda_env_create(env_names, code_root, conda_config):
     for env in env_names:
         _install_one_env(env)
     try:
-        _ = shell_command_wrapper('{conda_exe} clean -ay'.format(**conda_config))
+        _ = shell_command_wrapper('{conda_exe} clean -ayq'.format(**conda_config))
     except Exception as exc:
         fatal_exception_handler(exc, 
-            "ERROR: final conda cleanup (conda clean -ay) failed."
+            "ERROR: final conda cleanup (conda clean -ayq) failed."
         )
 
 def make_wrapper_script(no_conda, code_root, conda_config):
@@ -153,9 +153,7 @@ def make_wrapper_script(no_conda, code_root, conda_config):
             base_env = os.path.join(conda_config['conda_env_root'], base_env)
         script_mid = [
             "source {init_script} -q {conda_root}".format(**conda_config),
-            "{conda_exe} activate {base_env}".format(
-                base_env=base_env, **conda_config
-            )
+            "conda activate {base_env}".format(base_env=base_env)
         ]
     script_end = [
         '{mdtf_py} "$@"'.format(mdtf_py=os.path.join(code_root, 'src', 'mdtf.py'))

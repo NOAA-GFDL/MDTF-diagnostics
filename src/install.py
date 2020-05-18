@@ -420,8 +420,8 @@ class MDTFInstaller(object):
         
         # determine runtime setup
         d.pods = 'all'
+        d.conda_envmgr = True
         if d.env_setup == 'conda-basic':
-            d.no_conda_install = False
             d.conda_envs = [self.settings.conda['framework_env'], 'NCL_base']
             d.environment_manager = "Conda"
             d.pods = ' '.join([
@@ -431,14 +431,13 @@ class MDTFInstaller(object):
             if 'model_am4' in d.downloads_list:
                 d.downloads_list.remove('model_am4')
         elif d.env_setup == 'conda-full':
-            d.no_conda_install = False
             d.conda_envs = find_conda_envs(self.code_root, self.settings.conda)
             d.environment_manager = "Conda"
         elif d.env_setup == 'no-conda':
-            d.no_conda_install = True
+            d.conda_envmgr = False
             d.conda_envs = []
             d.environment_manager = "VirtualEnv"
-        if d.conda_install_dev and not d.no_conda_install:
+        if d.conda_install_dev and not d.conda_envmgr:
             d.conda_envs.append('dev')
 
         # make settings consistent with config
@@ -478,7 +477,7 @@ class MDTFInstaller(object):
             conda_env_create(d.conda_envs, self.code_root, self.settings.conda)
 
         set_cli_defaults(self.code_root, self.settings.cli_defaults, d)
-        make_wrapper_script(d.no_conda_install, self.code_root, self.settings.conda)
+        make_wrapper_script(d.conda_envmgr, self.code_root, self.settings.conda)
 
         if not d.no_test_run:
             run_output = framework_test(self.code_root, d.OUTPUT_DIR)

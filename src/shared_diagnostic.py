@@ -501,10 +501,12 @@ class Diagnostic(object):
                 pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
                 files.extend(glob.glob(pattern))
         for f in files:
-            (dd, ff) = os.path.split(os.path.splitext(f)[0])
-            ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
-            os.system('convert {0} {1} {2}.{3}'.format(
-                config.config.convert_flags, f, ff, config.config.convert_output_fmt
+            (dd, f_out) = os.path.split(os.path.splitext(f)[0])
+            _ = util.run_shell_command(
+                'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
+                flags=config.config.get('convert_flags',''),
+                f_in=f,
+                f_out=os.path.join(os.path.dirname(dd), f_out+'.png')
             ))
 
     def _cleanup_pod_files(self, config):

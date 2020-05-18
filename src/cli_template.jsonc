@@ -226,13 +226,8 @@
         },{
           "name": "convert_flags",
           "hidden" : true,
-          "help": "Default flags to pass to PS -> bitmap figure conversion.",
-          "default" : "-crop 0x0+5+5"
-        },{
-          "name": "convert_output_fmt",
-          "hidden" : true,
-          "help": "Default format for bitmap figure output.",
-          "default" : "png"
+          "help": "Flags to pass to ghostscript PS -> PNG figure conversion.",
+          "default" : "-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 -sDEVICE=pngalpha"
         },{
           "name": "overwrite",
           "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",

@@ -415,8 +415,8 @@ class Diagnostic(object):
         command = [
             command_path,
             ' -v',
-            ' -p '.join([''] + list(self.runtime_requirements),
-            ' -z '.join([''] + list(self.pod_env_vars),
+            ' -p '.join([''] + list(self.runtime_requirements)),
+            ' -z '.join([''] + list(self.pod_env_vars)),
             ' -a '.join([''] + self.runtime_requirements.get('python', [])),
             ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
             ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))

@@ -300,8 +300,17 @@ def parse_json(str_):
     def _to_ascii(data):
         # json returns UTF-8 encoded strings by default, but we're in py2 where 
         # everything is ascii. Raise UnicodeDecodeError if file contains 
-        # non-ascii characters.
-        return (data.encode('ascii', 'strict') if isinstance(data, unicode) else data)
+        # non-ascii characters. 
+        # Originally based on https://stackoverflow.com/a/33571117.
+        if isinstance(data, unicode):
+            # raise UnicodeDecodeError if file contains non-ascii characters
+            return data.encode('ascii', 'strict')
+        # if this is a list of values, return list of byteified values
+        if isinstance(data, list):
+            return [_to_ascii(item) for item in data]
+        # dicts should be handled by pairs_hook. if it's anything else, return 
+        # it in its original form
+        return data
 
     def _pairs_hook(pairs):
         return collections.OrderedDict(

@@ -25,8 +25,8 @@
           "EOF_500hPa",
           "convective_transition_diag",
           "MJO_suite",
-          "MJO_teleconnection",
-          "precip_diurnal_cycle"
+          "MJO_teleconnection"
+          // "precip_diurnal_cycle"
       ]
     }
     // {
@@ -46,15 +46,14 @@
     //   "pod_list" : ["SM_ET_coupling"]
     // }
   ],
-  // PATHS ---------------------------------------------------------------------
-  // Location of input and output data. If a relative path is given, it's 
-  // resolved relative to the MDTF-diagnostics code directory.
+  // SETTINGS ------------------------------------------------------------------
+  // Any command-line option recognized by the mdtf script (type `mdtf --help`)
+  // can be set here, in the form "<flag name": "desired setting". The correct
+  // default values for most settings should have been set during installation, 
+  // so here we only list settings that you might want to change from run to run.
 
-  // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
-
-  // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  // Output paths: If a relative path is given, it's resolved relative to the 
+  // MDTF-diagnostics code directory.
 
   // Working directory.
   "WORKING_DIR": "../wkdir",
@@ -62,53 +61,18 @@
   // Directory to write output files. Defaults to working directory if blank.
   "OUTPUT_DIR": "../wkdir",
 
-  // DATA ----------------------------------------------------------------------
-  // Settings affecting the framework's retrieval of model data.
+  // Settings affecting the framework's retrieval of model data:
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
 
-  // Time (in seconds) to wait before giving up on transferring a data file to 
-  // the local filesystem. Set to zero to disable.
-  "file_transfer_timeout": 300,
-
-  // Set to true to retain local temp directories of downloaded data.
-  "keep_temp": false,
-
-  // RUNTIME -------------------------------------------------------------------
-  // Settings affecting the runtime environment of the PODs.
-  "environment_manager": "Conda",
-
-  // Path to the Anaconda installation. Only used if environment_manager='Conda'. 
-  // Set equal to "" to use conda from your system's $PATH.
-  "conda_root": "",
-
-  // Root directory for Anaconda environment installs. Only used if 
-  // environment_manager = 'Conda'. Set equal to '' to install in your system's 
-  // default location.
-  "conda_env_root": "",
-
-  // Root directory for python virtual environments. Only used if 
-  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
-  // system's default location.
-  "venv_root": "./envs/venv",
-
-  // Root directory for R packages requested by PODs. Only used if 
-  // environment_manager = 'Virtualenv'. Set equal to '' to install in your 
-  // system library.
-  "r_lib_root": "./envs/r_libs",
-
-  // OUTPUT --------------------------------------------------------------------
-  // Settings affecting what output is generated.
+  // Settings affecting what output is generated:
 
   // Set flag to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
   // Set flag to have PODs save netCDF files of processed data.
   "save_nc": false,
-
-  // Set flag to save all processed data except netcdf files.
-  "save_non_nc": false,
 
   // Set flag to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": true,
@@ -117,8 +81,7 @@
   // a unique name.
   "overwrite": false,
 
-  // DEBUG ---------------------------------------------------------------------
-  // Settings used in debugging.
+  // Settings used in debugging:
 
   // Log verbosity level.
   "verbose": 1, 

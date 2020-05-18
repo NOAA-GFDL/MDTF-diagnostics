@@ -23,7 +23,6 @@
           // Optional: PODs to run for this model only (defaults to all)
           "Wheeler_Kiladis",
           "EOF_500hPa",
-          "convective_transition_diag",
           "MJO_suite",
           "MJO_teleconnection"
           // "convective_transition_diag"

@@ -167,7 +167,7 @@ def make_wrapper_script(no_conda, code_root, conda_config):
             print("{} exists; overwriting".format(out_path))
             os.remove(out_path)
         with open(out_path, 'w') as f:
-            f.write('/n'.join(script_start + script_mid + script_end))
+            f.write('\n'.join(script_start + script_mid + script_end))
         # make executable
         stat_ = os.stat(out_path)
         os.chmod(out_path, stat_.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)

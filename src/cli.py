@@ -198,7 +198,6 @@ class CLIHandler(object):
             # do not list argument in "mdtf --help", but recognize it
             d['help'] = argparse.SUPPRESS
 
-        d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
         self.parser_args_from_group[target_name].append(
             target_obj.add_argument(*arg_flags, **d)
         )

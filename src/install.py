@@ -329,6 +329,9 @@ def set_cli_defaults(code_root, cli_config, install_config):
 
 def framework_test(code_root, output_dir):
     print("Starting framework test run")
+    abs_out_dir = util.resolve_path(
+        output_dir, root_path=code_root, env=os.environ
+    )
     try:
         log_str = shell_command_wrapper(
             './mdtf -w {output_dir} -o {output_dir} {input_file}'.format(
@@ -337,10 +340,13 @@ def framework_test(code_root, output_dir):
             ), 
             cwd=code_root
         )
+        log_str = util.coerce_to_iter(log_str)
         # write to most recent directory in output_dir
-        runs = [d for d in glob.glob(os.path.join(output_dir,'*')) if os.path.isdir(d)]
+        runs = [d for d in glob.glob(os.path.join(abs_out_dir,'*')) if os.path.isdir(d)]
+        if not runs:
+            raise IOError("Can't find framework output in {}".format(abs_out_dir))
         run_output = max(runs, key=os.path.getmtime)
-        with open(os.path.join(run_output, 'mdtf_test.log'), 'r') as f:
+        with open(os.path.join(run_output, 'mdtf_test.log'), 'w') as f:
             f.write('\n'.join(log_str))
     except Exception as exc:
         fatal_exception_handler(exc, "ERROR: framework test run failed.")

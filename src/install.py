@@ -223,6 +223,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
                 f.file, _format_bytes(f_size)
             ))
             socket_ = ftp.transfercmd('RETR ' + f.file)
+            socket_.settimeout(ftp_config['timeout']) # https://bugs.python.org/issue30956
             t = util.ExceptionPropagatingThread(
                 target=_background, args=(local_path, socket_)
             )

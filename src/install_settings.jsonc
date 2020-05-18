@@ -21,7 +21,7 @@
       "user": "anonymous",
       "passwd": "",
       "acct": "anonymous",
-      "timeout": 360
+      "timeout": 1200.0
     },
     "data": {
       "obs": {

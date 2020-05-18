@@ -325,9 +325,9 @@ class FrameworkCLIHandler(CLIHandler):
                 if 'pod_list' in file_input:
                     self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
-                self.partial_defaults = {
+                self.partial_defaults = [{
                     self.canonical_arg_name(k): v for k,v in file_input.iteritems()
-                }
+                }]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():
                     print("ERROR: Couldn't parse JSON in {}.".format(config_path))
@@ -335,9 +335,9 @@ class FrameworkCLIHandler(CLIHandler):
                 # assume config_file is a plain text file containing flags, etc.
                 # as they would be passed on the command line.
                 config_str = util.strip_comments(config_str, '#')
-                self.partial_defaults = vars(
+                self.partial_defaults = [vars(
                     self.parser.parse_args(shlex.split(config_str))
-                )
+                )]
         # CLI opts override options set from file, which override defaults
         super(FrameworkCLIHandler, self).parse_cli(args)
 

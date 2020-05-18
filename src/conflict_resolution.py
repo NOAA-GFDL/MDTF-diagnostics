@@ -18,13 +18,13 @@ def require_all_same(option_dict, option_fn, tiebreaker_fn=None):
         )
     if not allowed_opts:
         raise ValueError('Unable to choose the same value for all variables.')
-    return dict.fromkeys(option_dict.keys(), tiebreaker_fn(allowed_opts))
+    return dict.fromkeys(option_dict, tiebreaker_fn(allowed_opts))
 
 def same_for_subsets(option_dict, subsets, option_fn, tiebreaker_fn=None):
-    if set(option_dict.keys()) != set(k for k in chain.from_iterable(subsets)):
+    if set(option_dict) != set(k for k in chain.from_iterable(subsets)):
         raise AssertionError('Union of subsets is different than set of all keys.')   
 
-    choices = dict.fromkeys(option_dict.keys())
+    choices = dict.fromkeys(option_dict)
     for subset in subsets:
         subset_options = {key: option_dict[key] for key in subset}
         subset_choice = require_all_same(subset_options, option_fn, tiebreaker_fn)
@@ -70,7 +70,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     option_dict = {k:v for k,v in option_dict.iteritems() if v}
     all_idx = set()
     d = defaultdict(set)
-    for idx, key in enumerate(option_dict.keys()):
+    for idx, key in enumerate(list(option_dict)):
         all_idx.add(idx)
         for val in option_dict[key]:
             d[option_fn(val)].add(idx)
@@ -93,7 +93,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     assert cover # is not empty
     print("\tDEBUG min_cover:", cover)
     
-    choices = dict.fromkeys(option_dict.keys())
+    choices = dict.fromkeys(option_dict)
     for key in option_dict:
         choices[key] = tiebreaker_fn(
             set(option_fn(val) for val in option_dict[key] if option_fn(val) in cover)

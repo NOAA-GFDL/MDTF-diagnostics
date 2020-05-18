@@ -121,10 +121,10 @@ class MDTFFramework(object):
         self.pod_list = []
         args = util.coerce_to_iter(config.config.pop('pods', []), set)
         if 'example' in args or 'examples' in args:
-            self.pod_list = [pod for pod in config.pods.keys() \
+            self.pod_list = [pod for pod in config.pods \
                 if pod.startswith('example')]
         elif 'all' in args:
-            self.pod_list = [pod for pod in config.pods.keys() \
+            self.pod_list = [pod for pod in config.pods \
                 if not pod.startswith('example')]
         else:
             # specify pods by realm
@@ -134,9 +134,9 @@ class MDTFFramework(object):
                 if util.coerce_to_iter(key, set).issubset(realms):
                     self.pod_list.extend(config.pod_realms[key])
             # specify pods by name
-            pods = args.intersection(set(config.pods.keys()))
+            pods = args.intersection(set(config.pods))
             self.pod_list.extend(list(pods))
-            for arg in args.difference(set(config.pods.keys())): # remainder:
+            for arg in args.difference(set(config.pods)): # remainder:
                 print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
             # exclude examples
             self.pod_list = [pod for pod in self.pod_list \
@@ -235,7 +235,7 @@ class MDTFFramework(object):
         d['paths'] = config.paths
         d['paths'].pop('_unittest_flag', None)
         d['settings'] = dict()
-        settings_gps = set(cli_obj.parser_groups.keys()).difference(
+        settings_gps = set(cli_obj.parser_groups).difference(
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:

@@ -50,7 +50,7 @@ class CMIP6_CVs(util.Singleton):
         elif (dest, source) in self._lookups:
             return self._lookups[(dest, source)].inverse()
         elif source in self._contents:
-            k = self._contents[source].keys()[0]
+            k = list(self._contents[source])[0]
             if dest not in self._contents[source][k]:
                 raise KeyError(
                     "Can't find {} in attributes for {}.".format(dest, source))
@@ -295,8 +295,8 @@ def parse_DRS_path(*args):
         raise ValueError()
     d1 = parse_DRS_directory(dir_)
     d2 = parse_DRS_filename(file_)
-    common_keys = set(d1.keys())
-    common_keys = common_keys.intersection(d2.keys())
+    common_keys = set(d1)
+    common_keys = common_keys.intersection(list(d2))
     for key in common_keys:
         if d1[key] != d2[key]:
             raise ValueError("{} fields inconsistent in parsing {}".format(

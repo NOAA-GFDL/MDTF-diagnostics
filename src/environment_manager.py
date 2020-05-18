@@ -246,7 +246,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         pass 
 
     def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements.keys()]
+        langs = [s.lower() for s in pod.runtime_requirements]
         if ('r' in langs) or ('rscript' in langs):
             pod.env = 'r_' + pod.name
         elif 'ncl' in langs:
@@ -367,7 +367,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             # env created specifically for this POD
             pod.env = self.env_name_prefix + pod.name
         else:
-            langs = [s.lower() for s in pod.runtime_requirements.keys()]
+            langs = [s.lower() for s in pod.runtime_requirements]
             if ('r' in langs) or ('rscript' in langs):
                 pod.env = self.env_name_prefix + 'R_base'
             elif 'ncl' in langs:

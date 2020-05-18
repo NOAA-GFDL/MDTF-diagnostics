@@ -171,7 +171,7 @@ class NcoNetcdfHelper(NetcdfHelper):
             for _, el in it:
                 if '}' in el.tag:
                     el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
-                for at in el.attrib.keys(): # strip namespaces of attributes too
+                for at in el.attrib: # strip namespaces of attributes too
                     if '}' in at:
                         newat = at.split('}', 1)[1]
                         el.attrib[newat] = el.attrib[at]

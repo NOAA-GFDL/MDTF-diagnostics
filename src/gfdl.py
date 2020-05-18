@@ -143,7 +143,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements.keys()]
+        langs = [s.lower() for s in pod.runtime_requirements]
         if pod.name == 'convective_transition_diag':
             pod.env = 'py_convective_transition_diag'
         elif pod.name == 'MJO_suite':
@@ -392,7 +392,7 @@ class GfdlarchiveDataManager(DataManager):
     def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
         """
-        return sorted(self.data_keys.keys())
+        return sorted(list(self.data_keys))
 
     def _fetch_exception_handler(self, exc):
         print(exc)
@@ -738,7 +738,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             return _heuristic_tiebreaker_sub(str_list)
 
     def _decide_allowed_components(self):
-        choices = dict.fromkeys(self.data_files.keys())
+        choices = dict.fromkeys(self.data_files)
         cmpt_choices = choose.minimum_cover(
             self.data_files,
             attrgetter('component'),
@@ -862,7 +862,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
             attrgetter('version_date'),
             lambda dates: str(max(datelabel.Date(dt) for dt in dates))
             )
-        choices = dict.fromkeys(self.data_files.keys())
+        choices = dict.fromkeys(self.data_files)
         for data_key in choices:
             choices[data_key] = self.UndecidedKey(
                 table_id=str(tables[data_key]), 

@@ -286,7 +286,7 @@ class Diagnostic(object):
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \
-                in try_filenames for ext in programs.keys()]
+                in try_filenames for ext in programs]
             if verbose > 1: 
                 print("Checking for possible driver names in {} {}".format(
                     self.POD_CODE_DIR, file_combos
@@ -324,7 +324,7 @@ class Diagnostic(object):
                 raise PodRequirementFailure(self, 
                     ("{} doesn't know how to call a .{} file.\n"
                     "Supported programs: {}").format(
-                        func_name, driver_ext, programs.keys()
+                        func_name, driver_ext, programs
                 ))
             self.program = programs[driver_ext]
             if ( verbose > 1): 
@@ -415,8 +415,8 @@ class Diagnostic(object):
         command = [
             command_path,
             ' -v',
-            ' -p '.join([''] + self.runtime_requirements.keys()),
-            ' -z '.join([''] + self.pod_env_vars.keys()),
+            ' -p '.join([''] + list(self.runtime_requirements),
+            ' -z '.join([''] + list(self.pod_env_vars),
             ' -a '.join([''] + self.runtime_requirements.get('python', [])),
             ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
             ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))

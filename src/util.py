@@ -90,7 +90,7 @@ class MultiMap(collections.defaultdict):
         """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
-        for key in self.keys():
+        for key in iter(self.keys()):
             super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
@@ -103,7 +103,7 @@ class MultiMap(collections.defaultdict):
     
     def to_dict(self):
         d = {}
-        for key in self.keys():
+        for key in iter(self.keys()):
             d[key] = self.get_(key)
         return d
 
@@ -179,7 +179,7 @@ class NameSpace(dict):
             object.__delattr__(self, k)
 
     def __dir__(self):
-        return self.keys()
+        return list(self.keys())
     __members__ = __dir__  # for python2.x compatibility
 
     def __repr__(self):
@@ -248,7 +248,9 @@ class NameSpace(dict):
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
-        FrozenNameSpace = collections.namedtuple('FrozenNameSpace', sorted(d.keys()))
+        FrozenNameSpace = collections.namedtuple(
+            'FrozenNameSpace', sorted(list(d.keys()))
+        )
         return FrozenNameSpace(**d2)
 
     def __eq__(self, other):

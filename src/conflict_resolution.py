@@ -11,7 +11,7 @@ def require_all_same(option_dict, option_fn, tiebreaker_fn=None):
         tiebreaker_fn = _default_tiebreaker
 
     allowed_opts = set(option_fn(v) \
-        for v in chain.from_iterable(option_dict.values()))
+        for v in chain.from_iterable(iter(option_dict.values())))
     for key in option_dict:
         allowed_opts = allowed_opts.intersection(
             set(option_fn(val) for val in option_dict[key])
@@ -76,14 +76,14 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
             d[option_fn(val)].add(idx)
     # print("\tDEBUG min_cover indices:", all_idx)
     # print("\tDEBUG min_cover sets:", d)
-    assert set(e for s in d.values() for e in s) == all_idx
+    assert set(e for s in iter(d.values()) for e in s) == all_idx
 
     covered_idx = set()
     cover = []
     while covered_idx != all_idx:
         # max() with key=... only returns one entry if there are duplicates
         # so we need to do two passes in order to call our tiebreaker logic
-        max_uncovered = max(len(val - covered_idx) for val in d.values())
+        max_uncovered = max(len(val - covered_idx) for val in iter(d.values()))
         elt_to_add = tiebreaker_fn(
             [key for key, val in d.iteritems() \
                 if (len(val - covered_idx) == max_uncovered)]

@@ -850,7 +850,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
             attrgetter('table_id'), 
             self._cmip6_table_tiebreaker
         )
-        dkeys_for_each_pod = self.data_pods.inverse().values()
+        dkeys_for_each_pod = list(self.data_pods.inverse().values())
         grid_lbl = choose.all_same_if_possible(
             self.data_files,
             dkeys_for_each_pod,

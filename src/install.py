@@ -215,7 +215,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
         fatal_exception_handler(exc,
             "ERROR: could not establish an anonymous FTP connection to {}.".format(ftp_config['host'])
         )
-    for f in ftp_data.values():
+    for f in iter(ftp_data.values()):
         local_path = os.path.join(install_config[f.target_dir], f.file)
         try:
             ftp.cwd(f.source_dir)
@@ -267,7 +267,7 @@ def untar_data(ftp_data, install_config):
     else:
         tar_cmd = 'tar -xf '
     
-    for f in ftp_data.values():
+    for f in iter(ftp_data.values()):
         print("Extracting {}".format(f.file))
         cwd = install_config[f.target_dir]
         f_subdir_0 = f.contents_subdir.split(os.sep)[0]

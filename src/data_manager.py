@@ -404,7 +404,7 @@ class DataManager(object):
             objects.
         """
         # flatten list of all _remote_datas and remove duplicates
-        unique_files = set(f for f in chain.from_iterable(self.data_files.values()))
+        unique_files = set(f for f in chain.from_iterable(iter(self.data_files.values())))
         # filter out any data we've previously fetched that's up to date
         unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier

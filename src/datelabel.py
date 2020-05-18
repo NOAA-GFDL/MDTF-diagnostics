@@ -712,7 +712,7 @@ class DateFrequency(datetime.timedelta):
         obj.quantity = None
         obj.unit = None
         # actually set attributes, as well as any others child classes may add
-        for key, val in attrs.iteritems():
+        for key, val in iter(attrs.items()):
             obj.__setattr__(key, val)
         return obj
 

@@ -109,7 +109,7 @@ class MultiMap(collections.defaultdict):
 
     def inverse(self):
         d = collections.defaultdict(set)
-        for key, val_set in self.iteritems():
+        for key, val_set in iter(self.items()):
             for v in val_set:
                 d[v].add(key)
         return dict(d)
@@ -192,7 +192,7 @@ class NameSpace(dict):
         """ Implement a serializable interface used for pickling.
         See https://docs.python.org/3.6/library/pickle.html.
         """
-        return {k: v for k, v in self.items()}
+        return {k: v for k, v in iter(self.items())}
 
     def __setstate__(self, state):
         """ Implement a serializable interface used for pickling.
@@ -212,7 +212,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return dict((k, cls._toDict(v)) for k, v in x.iteritems())
+            return dict((k, cls._toDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls._toDict(v) for v in x)
         else:
@@ -228,7 +228,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return cls((k, cls.fromDict(v)) for k, v in x.iteritems())
+            return cls((k, cls.fromDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls.fromDict(v) for v in x)
         else:
@@ -641,7 +641,7 @@ def signal_logger(caller_name, signum=None, frame=None):
     if signum:
         # lookup signal name from number; https://stackoverflow.com/a/2549950
         sig_lookup = {
-            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+            k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')
         }
         print("\tDEBUG: {} caught signal {} ({})".format(

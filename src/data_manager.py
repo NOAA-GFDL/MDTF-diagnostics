@@ -204,10 +204,10 @@ class DataManager(object):
             raise AssertionError(("Variable name translation doesn't recognize "
                 "{}.").format(self.convention))
         temp = translate.variables[self.convention].to_dict()
-        for key, val in temp.iteritems():
+        for key, val in iter(temp.items()):
             util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
-        for key, val in temp.iteritems():
+        for key, val in iter(temp.items()):
             util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
 
         for pod in self.iter_pods():

@@ -447,7 +447,7 @@ class GfdlarchiveDataManager(DataManager):
             var_name,
             in_file=file_name, cwd=work_dir, dry_run=self.dry_run
         )
-        for fax, fax_attrs in file_axes.iteritems():
+        for fax, fax_attrs in iter(file_axes.items()):
             # update DataSets with axis info - need to loop since multiple PODs
             # may reference this file (warning will be repeated; TODO fix that)
             error_flag = 0
@@ -467,7 +467,7 @@ class GfdlarchiveDataManager(DataManager):
                     var.axes[fax]['MDTF_set_from_axis'] = False
                 else: 
                     # file has different axis name, try to match by attribute
-                    for vax, vax_attrs in var.axes.iteritems():
+                    for vax, vax_attrs in iter(var.axes.items()):
                         if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
                             continue
                         elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
@@ -494,7 +494,7 @@ class GfdlarchiveDataManager(DataManager):
 
         # crop time axis to requested range
         # do this *before* combining chunks to reduce disk activity
-        for vax, vax_attrs in var.axes.iteritems():
+        for vax, vax_attrs in iter(var.axes.items()):
             if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
                 continue
             else:
@@ -744,7 +744,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
-        for data_key, cmpt in cmpt_choices.iteritems():
+        for data_key, cmpt in iter(cmpt_choices.items()):
             # take shortest chunk frequency (revisit?)
             chunk_freq = min(u_key.chunk_freq \
                 for u_key in self.data_files[data_key] \

@@ -241,7 +241,7 @@ class CLIHandler(object):
 
         if self.partial_defaults:
             # Options explicitly set by user on CLI; is_default = None if no default
-            cli_opts = {k:v for k,v in self.config.iteritems() \
+            cli_opts = {k:v for k,v in iter(self.config.items()) \
                 if not self.is_default.get(k, True)}
             # full set of defaults from cli.jsonc, from running parser on empty input
             defaults = vars(self.parser.parse_args([]))
@@ -331,7 +331,7 @@ class FrameworkCLIHandler(CLIHandler):
                     self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
                 self.partial_defaults = [{
-                    self.canonical_arg_name(k): v for k,v in file_input.iteritems()
+                    self.canonical_arg_name(k): v for k,v in iter(file_input.items())
                 }]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():

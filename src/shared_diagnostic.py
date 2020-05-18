@@ -112,7 +112,7 @@ class Diagnostic(object):
             del d['variable_convention']
         elif not d.get('convention', None):
             d['convention'] = 'CF'
-        for key, val in d['runtime_requirements'].iteritems():
+        for key, val in iter(d['runtime_requirements'].items()):
             d['runtime_requirements'][key] = util.coerce_to_iter(val)
         if (verbose > 0): 
             print(self.name + " settings: ")
@@ -213,7 +213,7 @@ class Diagnostic(object):
         })
         # Set env vars POD has inherited globally and from current case 
         # (set in DataManager._setup_pod).
-        for key, val in self.pod_env_vars.iteritems():
+        for key, val in iter(self.pod_env_vars.items()):
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
         # Set env vars for variable and axis names:
@@ -223,7 +223,7 @@ class Diagnostic(object):
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
             #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
-            for ax_name, ax_attrs in var.axes.iteritems():
+            for ax_name, ax_attrs in iter(var.axes.items()):
                 if 'MDTF_envvar' not in ax_attrs:
                     print(("\tWarning: don't know env var to set" 
                         "for axis name {}").format(ax_name))
@@ -248,7 +248,7 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in axes.iteritems(): 
+        for key, val in iter(axes.items()): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):

@@ -28,7 +28,7 @@ def same_for_subsets(option_dict, subsets, option_fn, tiebreaker_fn=None):
     for subset in subsets:
         subset_options = {key: option_dict[key] for key in subset}
         subset_choice = require_all_same(subset_options, option_fn, tiebreaker_fn)
-        for key, val in subset_choice.iteritems():
+        for key, val in iter(subset_choice.items()):
             if choices[key] not in [None, val]:
                 raise ValueError(
                     'Conflicting assignment for {}: {} != {}'.format(
@@ -67,7 +67,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
 
     # drop empty entries from option_dict, although these shouldn't have been
     # passed in the first place
-    option_dict = {k:v for k,v in option_dict.iteritems() if v}
+    option_dict = {k:v for k,v in iter(option_dict.items()) if v}
     all_idx = set()
     d = defaultdict(set)
     for idx, key in enumerate(list(option_dict)):
@@ -85,7 +85,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         # so we need to do two passes in order to call our tiebreaker logic
         max_uncovered = max(len(val - covered_idx) for val in iter(d.values()))
         elt_to_add = tiebreaker_fn(
-            [key for key, val in d.iteritems() \
+            [key for key, val in iter(d.items()) \
                 if (len(val - covered_idx) == max_uncovered)]
         )
         cover.append(elt_to_add)

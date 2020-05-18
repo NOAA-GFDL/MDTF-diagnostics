@@ -414,7 +414,7 @@ class MDTFInstaller(object):
         cli_dict = util.read_json(
             os.path.join(self.code_root, self.settings.cli_defaults['template'])
         )
-        for key, val in self.cli_settings.iteritems():
+        for key, val in iter(self.cli_settings.items()):
             cli_dict[key] = val
         # filter only the defaults we're setting
         for arg_gp in cli_dict['argument_groups']:
@@ -455,7 +455,7 @@ class MDTFInstaller(object):
             d.conda_envs.append('dev')
 
         # make settings consistent with config
-        self.settings.data = {k:v for k,v in self.settings.data.iteritems() \
+        self.settings.data = {k:v for k,v in iter(self.settings.data.items()) \
             if k in d.downloads_list}
         for k in self._shared_conda_keys:
             self.settings.conda[k] = d[k]
@@ -468,7 +468,7 @@ class MDTFInstaller(object):
 
     def print_config(self):
         _tmp = {'settings': dict(), 'defaults to assign': dict()}
-        for key, val in self.config.iteritems():
+        for key, val in iter(self.config.items()):
             if key in self.settings.cli_defaults['default_keys']:
                 _tmp['defaults to assign'][key] = val
             else:

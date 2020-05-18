@@ -216,14 +216,14 @@ class NcoNetcdfHelper(NetcdfHelper):
         # cases out first.
         d = cls.nc_get_attribute('units', in_file=in_file, cwd=cwd, dry_run=dry_run)
         dd = dict()
-        for var, unit in new_units_dict.iteritems():
+        for var, unit in iter(new_units_dict.items()):
             if var not in d:
                 print(("Warning: no unit attribute for {} in {}."
                     " Skipping unit conversion").format(var, in_file))
             elif d[var] != unit:
                 dd[var] = unit
         cmd_string = '{var}=udunits({var},"{unit}");{var}@units="{unit}";'
-        cmds = [cmd_string.format(var=k, unit=v) for k,v in dd.iteritems()]
+        cmds = [cmd_string.format(var=k, unit=v) for k,v in iter(dd.items())]
         if cmds:
             cls._run_command(
                 ['ncap2', '-O', '-s', ''.join(cmds), in_file, out_file],

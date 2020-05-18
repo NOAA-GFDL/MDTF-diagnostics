@@ -90,7 +90,7 @@ class EnvironmentManager(object):
             print("{} will run in env: {}".format(pod.name, pod.env))
             pod.logfile_obj.write("\n".join(
                 ["Found files: "] + pod.found_files + [" "]))
-            env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
+            env_list = ["{}: {}". format(k,v) for k,v in iter(pod.pod_env_vars.items())]
             pod.logfile_obj.write("\n".join(
                 ["Env vars: "] + sorted(env_list) + [" "]))
 

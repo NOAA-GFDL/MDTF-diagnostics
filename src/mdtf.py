@@ -240,7 +240,7 @@ class MDTFFramework(object):
         )
         for group in settings_gps:
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
-        d['settings'] = {k:v for k,v in d['settings'].iteritems() \
+        d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
             if k not in d['paths']}
         d['envvars'] = config.global_envvars
         print('DEBUG: SETTINGS:')

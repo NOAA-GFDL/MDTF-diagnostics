@@ -376,8 +376,8 @@ def framework_verify(code_root, run_output):
 # classes just handle the configuration logic
 
 class MDTFInstaller(object):
-    _install_paths = ["MODEL_DATA_ROOT", "OBS_DATA_ROOT", "conda_env_root", 
-        "venv_root", "r_lib_root"]
+    _env_paths = ["conda_env_root", "venv_root", "r_lib_root"]
+    _data_paths = ["MODEL_DATA_ROOT", "OBS_DATA_ROOT"]
     _shared_conda_keys = ["conda_exe", "conda_root", "conda_env_root"] #HACK
 
     def __init__(self, code_root, settings_file):
@@ -449,7 +449,7 @@ class MDTFInstaller(object):
         for k in self._shared_conda_keys:
             self.settings.conda[k] = d[k]
         # convert relative paths to absolute
-        for key in self._install_paths:
+        for key in (self._env_paths + self._data_paths):
             if d[key]:
                 d[key] = util.resolve_path(
                     d[key], root_path=self.code_root, env=os.environ
@@ -464,18 +464,23 @@ class MDTFInstaller(object):
                 _tmp['settings'][key] = val
         print(util.pretty_print_json(_tmp, sort_keys=True))
 
-    def makedirs(self):
-        for key in self._install_paths:
+    def makedirs(self, path_keys, delete_existing):
+        path_keys = util.coerce_to_iter(path_keys)
+        for key in path_keys:
             path = self.config[key]
-            if path and not os.path.isdir(path):
-                os.makedirs(path) # recursive mkdir if needed
+            if path:
+                if not os.path.isdir(path):
+                    os.makedirs(path) # recursive mkdir if needed
+                elif delete_existing:
+                    shutil.rmtree(path) # overwrite everything
 
     def install(self):
         d = self.config # abbreviation
-        self.makedirs()
         if not d.no_downloads:
+            self.makedirs(self._data_paths, delete_existing=True)
             ftp_download(self.settings.ftp, self.settings.data, d)
             untar_data(self.settings.data, d)
+        self.makedirs(self._env_paths, delete_existing=False) # both conda and non-conda envs
         if not d.no_conda_install:
             conda_env_create(d.conda_envs, self.code_root, self.settings.conda)
 

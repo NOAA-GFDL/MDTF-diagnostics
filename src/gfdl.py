@@ -41,8 +41,7 @@ class ModuleManager(util.Singleton):
             # could set from module --version
             raise OSError(("Unable to determine how modules are handled "
                 "on this host."))
-        if not os.environ.has_key('LOADEDMODULES'):
-            os.environ['LOADEDMODULES'] = ''
+        _ = os.environ.setdefault('LOADEDMODULES', '')
 
         # capture the modules the user has already loaded once, when we start up,
         # so that we can restore back to this state in revert_state()

@@ -155,8 +155,9 @@ class CLIHandler(object):
 
     def add_parser_argument(self, d, target_obj, target_name):
         # set flags:
+        if 'name' not in d:
+            raise ValueError("No argument name found in {}".format(d))
         arg_nm = self.canonical_arg_name(d.pop('name'))
-        assert arg_nm, "No argument name found in {}".format(d)
         arg_flags = [arg_nm]
         if d.pop('is_positional', False):
             # code to handle positional arguments

@@ -6,7 +6,7 @@ import re
 import glob
 import shutil
 import tempfile
-import util
+from . import util
 
 
 class ConfigManager(util.Singleton):

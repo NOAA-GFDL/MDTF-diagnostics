@@ -9,9 +9,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
-import datelabel
-import util
-import util_mdtf
+from . import datelabel
+from . import util
+from . import util_mdtf
 import StringIO
 import xml.etree.ElementTree as ET
 

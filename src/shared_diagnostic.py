@@ -3,8 +3,8 @@ import os
 import sys
 import glob
 import shutil
-import util
-import util_mdtf
+from . import util
+from . import util_mdtf
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 

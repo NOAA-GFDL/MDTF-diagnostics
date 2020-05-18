@@ -12,14 +12,14 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
 import os
 import shutil
 import tempfile
-import util
-import util_mdtf
-import mdtf
-import data_manager
-import environment_manager
-import shared_diagnostic
-import netcdf_helper
-import gfdl
+from . import util
+from . import util_mdtf
+from . import mdtf
+from . import data_manager
+from . import environment_manager
+from . import shared_diagnostic
+from . import netcdf_helper
+from . import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr

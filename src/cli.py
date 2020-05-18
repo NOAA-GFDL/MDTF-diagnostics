@@ -5,7 +5,7 @@ import argparse
 from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import shlex
 import collections
-import util
+from . import util
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 

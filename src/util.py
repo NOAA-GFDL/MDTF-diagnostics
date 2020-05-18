@@ -19,7 +19,6 @@ import signal
 import threading
 import errno
 import json
-import datelabel
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when

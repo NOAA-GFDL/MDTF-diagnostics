@@ -9,9 +9,10 @@ import platform
 import stat
 import ftplib
 import shutil
-import cli
-import util
-from verify_links import LinkVerifier
+from . import cli
+from . import util
+from .verify_links import LinkVerifier
+
 
 # ------------------------------------------------------------------------------
 # Functions that call external programs to do all the work

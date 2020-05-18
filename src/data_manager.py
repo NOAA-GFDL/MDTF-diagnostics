@@ -16,11 +16,11 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-import util
-import util_mdtf
-import datelabel
-import netcdf_helper
-from shared_diagnostic import PodRequirementFailure
+from . import util
+from . import util_mdtf
+from . import datelabel
+from . import netcdf_helper
+from .shared_diagnostic import PodRequirementFailure
 
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 

@@ -1,9 +1,9 @@
 from __future__ import print_function
 import os
 import re
-import datelabel
-import util
-import util_mdtf
+from . import datelabel
+from . import util
+from . import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
     def __init__(self, unittest_flag=False):

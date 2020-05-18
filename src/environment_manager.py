@@ -13,9 +13,9 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 else:
     import subprocess
-import util
-import util_mdtf
-from shared_diagnostic import PodRequirementFailure
+from . import util
+from . import util_mdtf
+from .shared_diagnostic import PodRequirementFailure
 
 class EnvironmentManager(object):
     # analogue of TestSuite in xUnit - abstract base class

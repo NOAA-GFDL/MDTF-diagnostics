@@ -59,7 +59,7 @@ class ModuleManager(util.Singleton):
             raise subprocess.CalledProcessError(
                 returncode=proc.returncode, 
                 cmd=' '.join([cmd, 'python'] + args), output=error)
-        exec output
+        exec(output)
 
     def _parse_names(self, *module_names):
         return [m if ('/' in m) else self._current_module_versions[m] \

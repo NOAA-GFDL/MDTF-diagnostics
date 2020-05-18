@@ -333,7 +333,7 @@ def framework_test(code_root, output_dir):
     print("Starting framework test run")
     try:
         log_str = shell_command_wrapper(
-            'mdtf -w {output_dir} -o {output_dir} {input_file}'.format(
+            './mdtf -w {output_dir} -o {output_dir} {input_file}'.format(
                 output_dir=output_dir,
                 input_file=os.path.join('src', 'default_tests.jsonc')
             ), 
@@ -353,7 +353,7 @@ def framework_verify(code_root, run_output):
     print("Checking linked output files")
     try:
         _ = shell_command_wrapper(
-            '{verify_script} {run_output}'.format(
+            './{verify_script} {run_output}'.format(
                 verify_script=os.path.join('tests', 'verify_links.py'),
                 run_output=run_output
             ), 

@@ -138,14 +138,15 @@ class CLIHandler(object):
 
     def add_parser_group(self, d, target_obj):
         gp_nm = d.pop('name')
-        if 'title' not in d:
-            d['title'] = gp_nm
+        _ = d.setdefault('title', gp_nm)
         args = util.coerce_to_iter(d.pop('arguments', None))
-        gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
-        gp_obj = target_obj.add_argument_group(**gp_kwargs)
-        self.parser_groups[gp_nm] = gp_obj
-        for arg in args:
-            self.add_parser_argument(arg, gp_obj, gp_nm)
+        if args:
+            # only add group if it has > 0 arguments
+            gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
+            gp_obj = target_obj.add_argument_group(**gp_kwargs)
+            self.parser_groups[gp_nm] = gp_obj
+            for arg in args:
+                self.add_parser_argument(arg, gp_obj, gp_nm)
     
     @staticmethod
     def canonical_arg_name(str_):
@@ -197,7 +198,7 @@ class CLIHandler(object):
             # do not list argument in "mdtf --help", but recognize it
             d['help'] = argparse.SUPPRESS
 
-        # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
+        d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
         self.parser_args_from_group[target_name].append(
             target_obj.add_argument(*arg_flags, **d)
         )

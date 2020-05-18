@@ -375,6 +375,16 @@ def framework_verify(code_root, run_output):
 # ------------------------------------------------------------------------------
 # classes just handle the configuration logic
 
+
+class InstallCLIHandler(cli.CLIHandler):
+    def make_parser(self, d):
+        _ = d.setdefault('usage', "%(prog)s [options] [env_setup]")
+        p = super(InstallCLIHandler, self).make_parser(d)
+        p._positionals.title = None
+        p._optionals.title = 'INSTALLER OPTIONS'
+        return p
+
+
 class MDTFInstaller(object):
     _env_paths = ["conda_env_root", "venv_root", "r_lib_root"]
     _data_paths = ["MODEL_DATA_ROOT", "OBS_DATA_ROOT"]
@@ -411,7 +421,7 @@ class MDTFInstaller(object):
                 arg for arg in arg_gp['arguments'] \
                 if arg['name'] in self.settings.cli_defaults['default_keys']
             ]
-        cli_obj = cli.CLIHandler(self.code_root, cli_dict, partial_defaults=self.config)
+        cli_obj = InstallCLIHandler(self.code_root, cli_dict, partial_defaults=self.config)
         cli_obj.parse_cli(args)
         self.config = util.NameSpace.fromDict(cli_obj.config)
 

@@ -70,7 +70,9 @@
     "arguments": [
       {
         "name": "env_setup",
-        "help": ""
+        "help": "Method to use for runtime dependency management.",
+        "nargs": 1,
+        "choices": ["conda-basic", "conda-full", "no-conda"]
       },{
         "name": "no_conda_install",
         "help": "Set this flag to skip creation of conda environments.",

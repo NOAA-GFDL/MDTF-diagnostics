@@ -384,11 +384,7 @@ class MDTFInstaller(object):
 
     def configure(self, args=None):
         self.config.update(find_conda(self.code_root, self.settings.conda))
-        print('TEST1')
-        print(self.config)
         self.get_config(args)
-        print('TEST2')
-        print(self.config)
         self.parse_config()
         self.print_config()
     

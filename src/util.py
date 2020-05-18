@@ -56,6 +56,7 @@ class ExceptionPropagatingThread(threading.Thread):
     Adapted from `https://stackoverflow.com/a/31614591`__
     """
     def run(self):
+        self.ret = None
         self.exc = None
         try:
             if hasattr(self, '_Thread__target'):
@@ -66,8 +67,8 @@ class ExceptionPropagatingThread(threading.Thread):
         except BaseException as e:
             self.exc = e
 
-    def join(self, *args):
-        super(ExceptionPropagatingThread, self).join(*args)
+    def join(self, timeout=None):
+        super(ExceptionPropagatingThread, self).join(timeout)
         if self.exc:
             raise self.exc
         return self.ret

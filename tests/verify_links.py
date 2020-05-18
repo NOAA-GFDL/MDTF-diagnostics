@@ -32,91 +32,96 @@ class LinkParser(HTMLParser):
                 if name == 'href':
                     self.links = itertools.chain(self.links, [value])
 
-def gen_links(f, parser):
-    """Parse contents of an HTML file f and yield targets of all links.
-    """
-    #encoding = f.headers.get_content_charset() or 'UTF-8'# py3
-    encoding = f.headers.getparam('charset') or 'UTF-8'
-    for line in f:
-        parser.feed(line.decode(encoding))
-        for link in parser.links:
-            yield link
 
-def check_one_url(link_source_url, url):
-    """Given a url, return 1) None if resource can't be accessed (doesn't exist),
-    or 2) a list of all html links appearing in that file (if any).
-    """
-    try:
-        f = urllib2.urlopen(url)
-    except (urllib2.HTTPError, urllib2.URLError):
-        return None
-    if f.info().getsubtype() != 'html':
-        return []
-    else:
-        parser = LinkParser()
-        links = [(url, urlparse.urljoin(url, l)) for l in gen_links(f, parser)]
-        f.close()
-        return links
+class LinkVerfifier(object):
+    def __init__(self, root, verbose=False):
+        """Setup for search. Form a file:// URL if we're given a local path, and
+        organize missing links in a dictionary keyed on POD name.
+        """
+        self.verbose=verbose
+        root_parts = urlparse.urlsplit(root)
+        path_ = root_parts.path
+        if not path_.endswith('index.html'):
+            path_ = os.path.join(path_, 'index.html')
+        if not root_parts.scheme:
+            # given a filesystem path, not a URL
+            path_ = os.path.abspath(path_)
+            root_parts = root_parts._replace(scheme='file')
+        root_parts = root_parts._replace(path=path_)
+        self.root = urlparse.urlunsplit(root_parts)
+        root_parts = root_parts._replace(path=os.path.dirname(path_))
+        self.urlbase = urlparse.urlunsplit(root_parts)
 
-def breadth_first(root_url, url_base, verbose=False):
-    """Do breadth-first search of all files linked from an initial root_url. 
-    Return a list of (link_source, link_target) tuples where the file in 
-    link_target couldn't be found.
-    """
-    missing = []
-    queue = [('', root_url)]
-    known_urls = set([root_url])
-    while queue:
-        current_url = queue.pop(0)
-        if verbose:
-            print("\tChecking {}".format(current_url[1][len(url_base) + 1:]), end="")
-        new_links = check_one_url(*current_url)
-        if new_links is None:
-            if verbose:
-                print('...MISSING!')
-            missing.append(current_url)
+    @staticmethod
+    def gen_links(f, parser):
+        """Parse contents of an HTML file f and yield targets of all links.
+        """
+        #encoding = f.headers.get_content_charset() or 'UTF-8'# py3
+        encoding = f.headers.getparam('charset') or 'UTF-8'
+        for line in f:
+            parser.feed(line.decode(encoding))
+            for link in parser.links:
+                yield link
+
+    def check_one_url(self, link_source_url, url):
+        """Given a url, return 1) None if resource can't be accessed (doesn't exist),
+        or 2) a list of all html links appearing in that file (if any).
+        """
+        try:
+            f = urllib2.urlopen(url)
+        except (urllib2.HTTPError, urllib2.URLError):
+            return None
+        if f.info().getsubtype() != 'html':
+            return []
         else:
-            if verbose:
-                print('...OK')
-            # known_urls so that we don't chase cycles
-            # restrict links to those that start with url_base to avoid trying
-            # to download all of ncar.ucar.edu
-            new_links = [l for l in new_links \
-                if l[1] not in known_urls and l[1].startswith(url_base)]
-            queue.extend(new_links)
-            known_urls.update([l[1] for l in new_links])
-    return missing
+            parser = LinkParser()
+            links = [(url, urlparse.urljoin(url, l)) for l in self.gen_links(f, parser)]
+            f.close()
+            return links
 
-def get_missing_pods(root, verbose=False):
-    """Setup for search. Form a file:// URL if we're given a local path, and
-    organize missing links in a dictionary keyed on POD name.
-    """
-    root_parts = urlparse.urlsplit(root)
-    path_ = root_parts.path
-    if not path_.endswith('index.html'):
-        path_ = os.path.join(path_, 'index.html')
-    if not root_parts.scheme:
-        # given a filesystem path, not a URL
-        path_ = os.path.abspath(path_)
-        root_parts = root_parts._replace(scheme='file')
-    root_parts = root_parts._replace(path=path_)
-    root = urlparse.urlunsplit(root_parts)
-    root_parts = root_parts._replace(path=os.path.dirname(path_))
-    urlbase = urlparse.urlunsplit(root_parts)
-    if verbose:
-        print("Checking {}\n".format(root))
+    def breadth_first(self, root_url, url_base):
+        """Do breadth-first search of all files linked from an initial root_url. 
+        Return a list of (link_source, link_target) tuples where the file in 
+        link_target couldn't be found.
+        """
+        missing = []
+        queue = [('', root_url)]
+        known_urls = set([root_url])
+        while queue:
+            current_url = queue.pop(0)
+            if self.verbose:
+                print("\tChecking {}".format(current_url[1][len(url_base) + 1:]), end="")
+            new_links = self.check_one_url(*current_url)
+            if new_links is None:
+                if self.verbose:
+                    print('...MISSING!')
+                missing.append(current_url)
+            else:
+                if self.verbose:
+                    print('...OK')
+                # known_urls so that we don't chase cycles
+                # restrict links to those that start with url_base to avoid trying
+                # to download all of ncar.ucar.edu
+                new_links = [l for l in new_links \
+                    if l[1] not in known_urls and l[1].startswith(url_base)]
+                queue.extend(new_links)
+                known_urls.update([l[1] for l in new_links])
+        return missing
+
+    def get_missing_pods(self):
+        if self.verbose:
+            print("Checking {}\n".format(root))
+        missing = self.breadth_first(self.root, self.urlbase)
         
-    missing = breadth_first(root, urlbase, verbose)
-    
-    missing_dict = collections.defaultdict(list)
-    for tup in missing:
-        prefix = os.path.commonprefix(tup)
-        dirs = urlparse.urlsplit(prefix).path.split('/')
-        dirs = [d for d in dirs if d]
-        pod = dirs[-1]
-        rel_link = tup[1][len(prefix):]
-        missing_dict[pod].append(rel_link)
-    return missing_dict
+        missing_dict = collections.defaultdict(list)
+        for tup in missing:
+            prefix = os.path.commonprefix(tup)
+            dirs = urlparse.urlsplit(prefix).path.split('/')
+            dirs = [d for d in dirs if d]
+            pod = dirs[-1]
+            rel_link = tup[1][len(prefix):]
+            missing_dict[pod].append(rel_link)
+        return missing_dict
 
 # --------------------------------------------------------------
 
@@ -128,7 +133,8 @@ if __name__ == '__main__':
         help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
     
-    missing_dict = get_missing_pods(args.path_or_url, args.verbose)
+    link_verifier = LinkVerfifier(args.path_or_url, args.verbose)
+    missing_dict = link_verifier.get_missing_pods()
 
     if missing_dict:
         print("ERROR: the following files are missing:")

@@ -70,7 +70,7 @@
     "arguments": [
       {
         "name": "env_setup",
-        "help": "Method to use for runtime dependency management.",
+        "help": "Method to use for runtime dependency management. 'conda-basic' or 'conda-full' will install environments using the conda package manager.",
         "nargs": 1,
         "choices": ["conda-basic", "conda-full", "no-conda"]
       },{

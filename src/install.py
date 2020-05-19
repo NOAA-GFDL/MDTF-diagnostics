@@ -499,7 +499,7 @@ class MDTFInstaller(object):
         d = self.config # abbreviation
         if not d.no_downloads:
             self.makedirs(self._data_paths, delete_existing=True)
-            for file_ in self.settings.data:
+            for file_ in iter(self.settings.data.values()):
                 ftp_download(file_, self.settings.ftp, d)
             untar_data(self.settings.data, d)
         self.makedirs(self._env_paths, delete_existing=False) # both conda and non-conda envs

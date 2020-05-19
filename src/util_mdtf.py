@@ -57,50 +57,9 @@ class _PathManager(util.NameSpace):
         else:
             # need to check existence in case we're being called directly
             assert key in d, 'Error: {} not initialized.'.format(key)
-            return self.resolve_path(
+            return util.resolve_path(
                 util.coerce_from_iter(d[key]), root_path=self.CODE_ROOT, env=env
             )
-
-    @staticmethod
-    def resolve_path(path, root_path="", env=None):
-        """Abbreviation to resolve relative paths.
-
-        Args:
-            path (:obj:`str`): path to resolve.
-            root_path (:obj:`str`, optional): root path to resolve `path` with. If
-                not given, resolves relative to `cwd`.
-
-        Returns: Absolute version of `path`, relative to `root_path` if given, 
-            otherwise relative to `os.getcwd`.
-        """
-        def _expandvars(path, env_dict):
-            """Expand quoted variables of the form $key and ${key} in path,
-            where key is a key in env_dict, similar to os.path.expandvars.
-
-            See https://stackoverflow.com/a/30777398; specialize to not skipping
-            escaped characters and not changing unrecognized variables.
-            """
-            return re.sub(
-                r'\$(\w+|\{([^}]*)\})', 
-                lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
-                path
-            )
-
-        if path == '':
-            return path # default value set elsewhere
-        path = os.path.expanduser(path) # resolve '~' to home dir
-        path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
-        if isinstance(env, dict):
-            path = _expandvars(path, env)
-        if '$' in path:
-            print("Warning: couldn't resolve all env vars in '{}'".format(path))
-            return path
-        if os.path.isabs(path):
-            return path
-        if root_path == "":
-            root_path = os.getcwd()
-        assert os.path.isabs(root_path)
-        return os.path.normpath(os.path.join(root_path, path))
 
     def model_paths(self, case, overwrite=False):
         d = util.NameSpace()

@@ -15,6 +15,7 @@
 import os
 import sys
 cwd = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
@@ -46,6 +47,7 @@ release = u'3.0 beta 1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'copy_pod_docs',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
@@ -99,12 +101,24 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'extra_nav_links' : {
+        "Getting Started (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
+        "Developer's Walkthough (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
+        "Full documentation (PDF)": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
+    }
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
+# Sphinx automatically copies referenced image files.
 html_static_path = ['_static']
+
+# # Paths (filenames) here must be relative to (under) html_static_path as above:
+# html_css_files = [
+#     'custom.css',
+# ]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -114,7 +128,9 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+html_sidebars = {
+    '**': ['about.html', 'navigation.html', 'relations.html', 'searchbox.html']
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -125,32 +141,83 @@ htmlhelp_basename = 'MDTF-diagnosticsdoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
+# pdflatex is default, xelatex recommended for better unicode support
+latex_engine = 'xelatex'
+
+# A dictionary that contains LaTeX snippets that override those Sphinx
+# usually puts into the generated .tex files.
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
+    'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
+    'pointsize': '11pt',
+    # fonts
+    'fontpkg': r'''
+        \usepackage{fontspec}
+        % RTD uses a texlive installation on linux; apparently xelatex can only
+        % find fonts by filename in this situation.
+        \setmainfont{texgyretermes-regular.otf}
+        \setsansfont{Heuristica-Bold.otf}
+    ''',
+    # chapter style
+    'fncychap': '\\usepackage[Bjarne]{fncychap}',
     # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    'figure_align': 'H',
+    # Additional stuff for the LaTeX preamble.
+    'preamble': r'''
+        \usepackage{unicode-math}
+    ''',
+    'extraclassoptions': 'openany,oneside'
 }
-
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'MDTF-diagnostics.tex', u'MDTF-diagnostics Documentation',
-     u'Model Diagnostics Task Force', 'manual'),
+    (
+        'tex_all', 'mdtf-diagnostics.tex', 
+        u'MDTF Diagnostics Documentation', author, 'manual'
+    ),
+    (
+        'tex_getting_started', 'MDTF_getting_started.tex', 
+        u"MDTF Getting Started Guide", 
+        r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
+        'sphinxmdtfhowto'
+    ),
+    (
+        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+        u"MDTF Developer's Walkthrough", 
+        (
+        r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
+        r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
+        r"\and Andrew Gettelman\textsuperscript{b} \and J.~David Neelin\textsuperscript{a} "
+        r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
+        r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
+        ),
+        'sphinxmdtfhowto'
+    )
 ]
 
+latex_additional_files = [
+    'latex/sphinxmdtfhowto.cls'
+]
+
+# latex_docclass = {
+#     'mdtfhowto': 'mdtfhowto'
+# }
+
+latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
+
+# # For "manual" documents, if this is true, then top-level headings are
+# # parts, not chapters.
+# latex_toplevel_sectioning = 'chapter'
+
+# If true, show page references after internal links.
+latex_show_pagerefs = True
+
+# If true, show URL addresses after external links.
+latex_show_urls = 'footnote'
+
+# If false, no module index is generated.
+latex_domain_indices = True
 
 # -- Options for manual page output ------------------------------------------
 

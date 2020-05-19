@@ -518,7 +518,7 @@ class MDTFInstaller(object):
 if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__))
-    code_root = os.path.dirname(cwd)
-    install = MDTFInstaller(code_root, os.path.join(cwd, 'install_settings.jsonc'))
+    code_root, src_dir = os.path.split(cwd)
+    install = MDTFInstaller(code_root, os.path.join(src_dir, 'install_settings.jsonc'))
     install.configure()
     install.install()

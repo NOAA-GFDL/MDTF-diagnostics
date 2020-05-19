@@ -512,7 +512,7 @@ class Diagnostic(object):
             # if .ps file was multiple pages, this will generate 1 png per page.
             # however, page number is included for output from single-page ps 
             # files, and number starts from 1, not 0. Rename files to fix this.
-            out_files = glob.glob(path_stem+'*.png')
+            out_files = glob.glob(path_stem+'-?.png')
             if not out_files:
                 print("Error: no png generated for {}".format(f))
             elif len(out_files) == 1:

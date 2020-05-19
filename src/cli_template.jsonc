@@ -184,13 +184,6 @@
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "conda_exe",
-          "help": "Path to the conda executable. Only used if environment_manager = 'Conda'. If empty, will assume the default location $conda_root/bin/conda.",
-          "default" : "",
-          "metavar" : "<PATH>",
-          "parse_type": "path",
-          "hidden" : true
-        },{
           "name": "conda_env_root",
           "help": "Root directory for conda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
           "default" : "",
@@ -233,13 +226,8 @@
         },{
           "name": "convert_flags",
           "hidden" : true,
-          "help": "Default flags to pass to PS -> bitmap figure conversion.",
-          "default" : "-crop 0x0+5+5"
-        },{
-          "name": "convert_output_fmt",
-          "hidden" : true,
-          "help": "Default format for bitmap figure output.",
-          "default" : "png"
+          "help": "Flags to pass to ghostscript PS -> PNG figure conversion.",
+          "default" : "-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4"
         },{
           "name": "overwrite",
           "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",

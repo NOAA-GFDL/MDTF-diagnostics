@@ -138,14 +138,15 @@ class CLIHandler(object):
 
     def add_parser_group(self, d, target_obj):
         gp_nm = d.pop('name')
-        if 'title' not in d:
-            d['title'] = gp_nm
+        _ = d.setdefault('title', gp_nm)
         args = util.coerce_to_iter(d.pop('arguments', None))
-        gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
-        gp_obj = target_obj.add_argument_group(**gp_kwargs)
-        self.parser_groups[gp_nm] = gp_obj
-        for arg in args:
-            self.add_parser_argument(arg, gp_obj, gp_nm)
+        if args:
+            # only add group if it has > 0 arguments
+            gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
+            gp_obj = target_obj.add_argument_group(**gp_kwargs)
+            self.parser_groups[gp_nm] = gp_obj
+            for arg in args:
+                self.add_parser_argument(arg, gp_obj, gp_nm)
     
     @staticmethod
     def canonical_arg_name(str_):
@@ -197,7 +198,6 @@ class CLIHandler(object):
             # do not list argument in "mdtf --help", but recognize it
             d['help'] = argparse.SUPPRESS
 
-        # d = util.filter_kwargs(d, argparse.ArgumentParser.add_argument)
         self.parser_args_from_group[target_name].append(
             target_obj.add_argument(*arg_flags, **d)
         )
@@ -325,9 +325,9 @@ class FrameworkCLIHandler(CLIHandler):
                 if 'pod_list' in file_input:
                     self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
-                self.partial_defaults = {
+                self.partial_defaults = [{
                     self.canonical_arg_name(k): v for k,v in file_input.iteritems()
-                }
+                }]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():
                     print("ERROR: Couldn't parse JSON in {}.".format(config_path))
@@ -335,9 +335,9 @@ class FrameworkCLIHandler(CLIHandler):
                 # assume config_file is a plain text file containing flags, etc.
                 # as they would be passed on the command line.
                 config_str = util.strip_comments(config_str, '#')
-                self.partial_defaults = vars(
+                self.partial_defaults = [vars(
                     self.parser.parse_args(shlex.split(config_str))
-                )
+                )]
         # CLI opts override options set from file, which override defaults
         super(FrameworkCLIHandler, self).parse_cli(args)
 

@@ -528,7 +528,7 @@ class Diagnostic(object):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         # copy PDF documentation (if any) to output
-        files = glob.glob(os.path.join(self.POD_CODE_DIR, '*.pdf'))
+        files = glob.glob(os.path.join(self.POD_CODE_DIR, 'doc', '*.pdf'))
         for file in files:
             shutil.copy2(file, self.POD_WK_DIR)
 

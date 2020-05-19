@@ -21,7 +21,7 @@
       "user": "anonymous",
       "passwd": "",
       "acct": "anonymous",
-      "timeout": 360
+      "timeout": 1500.0
     },
     "data": {
       "obs": {
@@ -70,7 +70,9 @@
     "arguments": [
       {
         "name": "env_setup",
-        "help": ""
+        "help": "Method to use for runtime dependency management. 'conda-basic' or 'conda-full' will install environments using the conda package manager.",
+        "nargs": 1,
+        "choices": ["conda-basic", "conda-full", "no-conda"]
       },{
         "name": "no_conda_install",
         "help": "Set this flag to skip creation of conda environments.",

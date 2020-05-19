@@ -463,8 +463,10 @@ class MDTFInstaller(object):
             d.conda_envs.append('dev')
 
         # make settings consistent with config
-        self.settings.data = {k:v for k,v in self.settings.data.iteritems() \
-            if k in d.downloads_list}
+        ordered_data = collections.OrderedDict()
+        for k in d.downloads_list:
+            ordered_data[k] = self.settings.data[k]
+        self.settings.data = ordered_data
         for k in self._shared_conda_keys:
             self.settings.conda[k] = d[k]
         # convert relative paths to absolute

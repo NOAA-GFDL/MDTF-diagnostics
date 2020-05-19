@@ -15,6 +15,7 @@ import collections
 import platform
 import stat
 import ftplib
+import socket
 import shutil
 import cli
 import util
@@ -182,80 +183,57 @@ def make_wrapper_script(using_conda, code_root, conda_config):
             "ERROR: Couldn't create wrapper script at {}.".format(out_path)
         )
 
-
-def ftp_download(f, ftp_config, install_config):
-    """Download one file via anonymous FTP. Implements solution in 
-    `https://stackoverflow.com/a/19693709`__ to handle timeouts on server side.
-    Ran into issues in reusing the connection to download multiple files,
-    so we quit and restart each time.
+def ftp_download(ftp_config, ftp_data, install_config):
+    """Download files via anonymous FTP.
     """
     def _format_bytes(num):
         # https://stackoverflow.com/a/52379087
         if not isinstance(num, (int, float)):
-            return "<ERROR>"
+            return ""
         step_unit = 1024.0
         for x in ['bytes', 'Kb', 'Mb', 'Gb', 'Tb']:
             if num < step_unit:
                 return "%3.1f %s" % (num, x)
             num /= step_unit
-            
-    def _background(local_path, socket_):
-        _blocksize = 32*1024*1024
-        f_out = open(local_path, 'wb')
-        while True:
-            try:
-                block = socket_.recv(_blocksize)
-                if not block:
-                    break # transfer finished
-                f_out.write(block)
-            except Exception as exc:
-                # cleanup first
-                socket_.close()
-                f_out.close()
-                raise exc
-        socket_.close()
-        f_out.close()
     
-    local_path = os.path.join(install_config[f.target_dir], f.file)
     try:
         print("Initiating anonymous FTP connection to {}.".format(ftp_config['host']))
-        # constructor only sets client-side timeout
         ftp = ftplib.FTP(**ftp_config)
-        ftp.set_debuglevel(0)
+        ftp.set_debuglevel(1)
+        ftp.set_pasv(True) # should be passive by default, though
         ftp.sendcmd("TYPE i")    # switch to binary mode
-    except Exception as exc:
+        # https://stackoverflow.com/a/5269068 , replacing the multiple-thread
+        # solution from https://stackoverflow.com/a/19693709 tried previously
+        ftp.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        ftp.voidcmd('NOOP') # test connection
+    except Exception as exc:  
         # do whatever we can to cleanup gracefully before exiting
         try: ftp.quit()
         except: pass
         fatal_exception_handler(exc,
             "ERROR: could not establish FTP connection to {}.".format(ftp_config['host'])
         )
-    try:
-        ftp.cwd(f.source_dir)
-        f_size = ftp.size(f.file)
-        print("Starting download of {} ({}), please be patient.".format(
-            f.file, _format_bytes(f_size)
-        ))
-        socket_ = ftp.transfercmd('RETR ' + f.file)
-        socket_.settimeout(ftp_config['timeout']) # https://bugs.python.org/issue30956
-        t = util.ExceptionPropagatingThread(
-            target=_background, args=(local_path, socket_)
-        )
-        t.start()
-        while t.is_alive():
-            t.join(60)
-            ftp.voidcmd('NOOP') # poll connection in main thread
-        print("Successfully downloaded {}".format(f.file))
-    except Exception as exc:
-        try: socket_.close()
-        except: pass
-        ftp.quit()
-        fatal_exception_handler(exc,
-            "ERROR: could not download {} from {}.".format(f.file, ftp_config['host'])
-        )
-    # socket_ may or may not still be defined
-    try: socket_.close()
-    except: pass
+    for f in iter(ftp_data.values()):
+        try:
+            local_path = os.path.join(install_config[f.target_dir], f.file)
+            ftp.cwd(f.source_dir)
+            f_size = ftp.size(f.file)
+            print("Starting download of {} ({}), please be patient.".format(
+                f.file, _format_bytes(f_size)
+            ))
+            with open(local_path, 'wb') as f_out:
+                ftp.retrbinary('RETR ' + f.file, f_out.write)
+            print("Successfully downloaded {}".format(f.file))
+            ftp.cwd('/')
+        except Exception as exc:
+            # do whatever we can to cleanup gracefully before exiting
+            try: f_out.close()
+            except: pass
+            try: ftp.quit()
+            except: pass
+            fatal_exception_handler(exc,
+                "ERROR: could not download {} from {}.".format(f.file, ftp_config['host'])
+            )
     try:
         # ftp may have closed if we hit an error
         ftp.voidcmd('NOOP')
@@ -506,8 +484,7 @@ class MDTFInstaller(object):
         d = self.config # abbreviation
         if not d.no_downloads:
             self.makedirs(self._data_paths, delete_existing=True)
-            for file_ in iter(self.settings.data.values()):
-                ftp_download(file_, self.settings.ftp, d)
+            ftp_download(self.settings.ftp, self.settings.data, d)
             untar_data(self.settings.data, d)
         self.makedirs(self._env_paths, delete_existing=False) # both conda and non-conda envs
         if not d.no_conda_install:

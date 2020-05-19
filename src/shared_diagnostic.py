@@ -518,7 +518,7 @@ class Diagnostic(object):
             elif len(out_files) == 1:
                 shutil.move(out_files[0], path_stem+'.png')
             else:
-                for n in range(len(out_files)):
+                for n in list(range(len(out_files))):
                     shutil.move(
                         path_stem+'-{}.png'.format(n+1),
                         path_stem+'-{}.png'.format(n)

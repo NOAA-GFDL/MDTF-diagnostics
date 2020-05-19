@@ -275,7 +275,7 @@ def strip_comments(str_, delimiter=None):
     if not delimiter:
         return str_
     s = str_.splitlines()
-    for i in range(len(s)):
+    for i in list(range(len(s))):
         if s[i].startswith(delimiter):
             s[i] = ''
             continue

@@ -341,7 +341,7 @@ class AtomicInterval(object):
     @classmethod
     def contiguous_span(cls, *args):
         ints = sorted(args, key=op.attrgetter('lower'))
-        for i in range(0, len(ints) - 1):
+        for i in list(range(0, len(ints) - 1)):
             if not ints[i].adjoins_left(ints[i+1]):
                 raise ValueError(("Intervals {} and {} not contiguous and "
                     "nonoverlapping.").format(ints[i], ints[i+1]))
@@ -607,7 +607,7 @@ class Date(DateRange):
             prec = len(dt_args)
 
         assert prec <= 6 # other values not supported
-        for i in range(prec):
+        for i in list(range(prec)):
             setattr(self, self._datetime_attrs[i], dt_args[i])
         if prec == 1:
             dt_args = (dt_args[0], 1, 1) # missing month & day
@@ -641,7 +641,7 @@ class Date(DateRange):
         if '-' in s:
             return tuple([int(ss) for ss in s.split('-')])
         ans = [int(s[0:4])]
-        for i in range(4, len(s), 2):
+        for i in list(range(4, len(s), 2)):
             ans.append(int(s[i:(i+2)]))
         return tuple(ans)
     

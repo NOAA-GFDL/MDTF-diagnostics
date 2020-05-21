@@ -6,7 +6,7 @@ def write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_va
     fh = open(nameout, "wb")
 
     vmax = 8
-    output = np.zeros((vmax),dtype='float32')
+    output = np.zeros((vmax),dtype='float32', order='F')
  
 ## modified output to match  the bar charts 
     output[0] = mse_var  

@@ -4,31 +4,23 @@ import math
 import sys
 
 ###   read in data and make composite average - full  values (not anomaly !!) 
-def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim, undef, undef2):
+def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim,  undef):
     tmax = 12
-    ss    = np.zeros((imax,jmax,zmax),dtype='float32')      
-    vvar  = np.zeros((imax,jmax,zmax, tmax),dtype='float32')
-    dataout = np.zeros((imax,jmax,zmax),dtype='float32')
+    ss    = np.zeros((imax,jmax,zmax),dtype='float32', order='F')      
+    vvar  = np.zeros((imax,jmax,zmax, tmax),dtype='float32', order='F')
+    dataout = np.zeros((imax,jmax,zmax),dtype='float32', order='F')
 ##  read x, y, z, t dimensioned data 
-    namein = prefixclim + variable + ".grd"
+    namein = prefixclim + variable + ".nc"
     if (os.path.exists( namein)):
-        f = open( namein)
-        vvar = np.fromfile(f, dtype='float32')
-        vvar = vvar.reshape(tmax, zmax,jmax,imax)
-        vvar = np.swapaxes(vvar, 0, 3)
-        vvar = np.swapaxes(vvar, 1, 2)
-        f.close()
-    
+        vvar =  read_netcdf_3D(imax, jmax, zmax, tmax,  variable,  namein, vvar, undef) 
+        vvar1_invalid = (vvar >= undef)
+   
         for im in range (im1, im2+1):
             imm = im
             if( im > 12 ):
                 imm = im - 12
-            for k in range(0, zmax):
-                for j in range(0, jmax):
-                    for i in range(0, imax):
-                        if( vvar[i,j,k,imm-1] < undef) :
-                            dataout[i,j,k] =  dataout[i,j,k]  + vvar[i,j,k, imm-1]    
-                            ss[i,j,k] = ss[i,j,k] + 1.
+            dataout[:,:,:] += vvar[:,:,:, imm-1]
+            ss[~vvar1_invalid, im-1] += 1.
     else:
         print " missing file " +  namein
         print " exiting  get_clima_in.py"
@@ -36,14 +28,7 @@ def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim, und
 
 
 ##############   now average 
-    for k in range(0, zmax):
-        for j in range(0, jmax):
-            for i in range(0, imax):
-                if( ss[i,j,k] > 0.) :
-                    dataout[i,j,k] = dataout[i,j,k]/ss[i,j,k]
-                else:
-                    dataout[i,j,k] = undef2
-
-###    dataout = dataout/ss
-    return dataout
+    dataout = dataout/ss
+###  
+    return dataout.filled(fill_value = undef)
 

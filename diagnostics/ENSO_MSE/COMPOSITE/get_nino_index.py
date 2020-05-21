@@ -2,6 +2,7 @@ import numpy as np
 import os.path
 import math
 import sys
+from scipy.io import netcdf
 
 def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2,  sigma, tmax1, tmax2, years1,  years2, prefix, undef):
 ####   need to select the indexes  ii1, ii2,   jj1, jj2  of the area to calculate the sigmas etc
@@ -24,24 +25,25 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
 ###    define  full 12 month climatology 
     im12 = 12
 
-    clima = np.zeros((imax,jmax, im12),dtype='float32')
+    clima = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
 
-    nameclima = prefix+"/../CLIMA/TS_clim.grd"
+###    read in TS from NetCDF 
+    nameclima = prefix+"/../CLIMA/TS_clim.nc"
     if ( os.path.exists(nameclima)):
         print("get_nino_index.py reading "+nameclima)
-        f = open(nameclima)
-        clima1 = np.fromfile(f, dtype='float32')
-        #reshape to t, y, x
-        clima1 = clima1.reshape(im12,  jmax,imax)
-        clima = np.swapaxes(clima1, 0, 2)
-        f.close()
+        clima1 = read_netcdf_2D(imax, jmax,  zmax, im12,  "TS",  nameclima, clima1, undef)
+        clima1 = np.ma.masked_greater_equal(clima1, undef, copy=False)
+        nc.close()
     else:
         print " missing file " + nameclima
         print " exiting get_nino_index.py "
         sys.exit()
     ssigma = 0.
     ss = 0.
+
+###   read full TS for select months
     for iy in range(iy1, iy2+1):    
+             
         for im in range (im1, im2+1):
             iyy = iy
             imm = im
@@ -49,28 +51,24 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 iyy = iyy + 1
                 imm = im - 12
             if( iyy <= iy2 ):
-                mm = "%02d" % imm
-                month = str(mm)
+                
                 yy = "%04d" % iyy
                 year = str(yy)
-                namein = prefix+"/"+year+"/TS_"+year+"-"+month+".grd"
+                namein = prefix+"/"+year+"/TS_"+year+".nc"
 
                 if ( os.path.exists(namein) ):
-                    f = open(namein)
-                    sst1 = np.fromfile(f, dtype='float32')
-                # reshape to t, y, x
-                    sst1 = sst1.reshape(jmax,imax)
-                    sst = np.swapaxes(sst1, 0, 1)
-                #     do the calculation of SST sigma 
-                    for j in range (jj1, jj2):
+                   sst1 = read_netcdf_2S(imax, jmax, im12,  "TS",  namein, sst1, undef)
+                   sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
+                   nc_fid.close()
+                   			
+                #    do the calculation of SST sigma 
+                   for j in range (jj1, jj2):
                         for i in range (ii1, ii2):
-                            if( (sst[i,j] < undef) & (clima[i, j, imm-1] < undef) ):
-                                ssigma = ssigma +  (sst[i,j]-clima[i, j, imm-1])*(sst[i,j]-clima[i, j, imm-1])
-                                ss = ss + 1.
+                          sigma = ssigma +  (sst[i,j,imm-1]-clima[i, j, imm-1])*(sst[i,j, imm-1]-clima[i, j, imm-1])
+                          ss = ss + 1.
                 #      get corresponding climatology for anomaly calculations
                 #   make the average and swrt to have just SIGMA
             
-                    f.close()
                 else:    
                     print " missing file " + namein 
                     print " exiting get_nino_index.py " 
@@ -101,20 +99,17 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 month = str(mm)
                 yy = "%04d" % iyy
                 year = str(yy)
-                namein = prefix+"/"+year+"/TS_"+year+"-"+month+".grd"
+
+                namein = prefix+"/"+year+"/TS_"+year+".nc"
                 if ( os.path.exists(namein)):
-                    f = open(namein)        
-                    sst1 = np.fromfile(f, dtype='float32')
-                     # reshape to t, y, x
-                    sst1 = sst1.reshape(jmax,imax)
-                    sst = np.swapaxes(sst1, 0, 1)
-                    f.close()
+                    sst1 = read_netcdf_2S(imax, jmax, im12,  "TS",  namein, sst1, undef)      
+                    sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
+                    nc_fid.close()
 #     loop over NINO3.4  and  make anomaly 
                     for j in range (jj1, jj2):
                         for i in range (ii1, ii2):
-                            if( (sst[i,j] < undef) & (clima[i, j, imm-1] < undef) ):
-                                anom = anom +  (sst[i,j] - clima[i, j, imm-1])
-                                ss = ss + 1.
+                          anom = anom +  (sst[i,j, imm-1] - clima[i, j, imm-1])
+                          ss = ss + 1.
                 else: 
                     print " missing file " + namein
                     print " exiting get_nino_index.py " 
@@ -135,7 +130,7 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 anom = undef    
 
     tmax1 = it1 - 1
-    tmax2 = it2 -1
+    tmax2 = it2 - 1
 #####
     
     return ii1, ii2, jj1, jj2,  tmax1, years1, tmax2, years2

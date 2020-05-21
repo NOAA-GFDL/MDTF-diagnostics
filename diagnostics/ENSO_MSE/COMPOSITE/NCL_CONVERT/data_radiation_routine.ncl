@@ -1,7 +1,7 @@
 ;;;*******************************************************
 ;
 ;   to regrid the original NetCDF files to pre-defined 
-;            binaries +  climatologies
+;            data +  climatologies  as netCDF
 ;*******************************************************
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
@@ -14,12 +14,12 @@ begin
 ;;  read  in the data from  NetCDF directory : 
 
       vardata  = getenv("DATADIR")  ; model data
-      outdata =  getenv("ENSO_MSE_WKDIR_COMPOSITE")
+      outdir =  getenv("ENSO_MSE_WKDIR_COMPOSITE")
       case =  getenv( "CASENAME")
       codedata = getenv ("POD_HOME")  ;; not used
 
-      iy1 = getenv("FIRSTYR")
-      iy2 = getenv("LASTYR")
+      iy1 = ( getenv("FIRSTYR"))
+      iy2 = ( getenv("LASTYR"))
 
        Varname1 = getenv("rsus_var") ;;  "rsus"
        Varname2 = getenv("rsds_var") ;;  "rsds"
@@ -30,12 +30,12 @@ begin
        Varname6 = getenv("rlds_var") ;;  "rlds"
        Varname7 = getenv("rlut_var") ;;  "rlut"
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         undef2 = 1.1E+20
 
-       namein0 = vardata + "/mon/" +  case + "."
-       nameout = outdata + "/model/netCDF/DATA/"
-
+       namein0 = vardata + case + "/mon/" +  case + "."
+       nameout = outdir + case +  "/netCDF/DATA/"
+       nameclima = outdir + case + "/netCDF/CLIMA/"
 
        Varout1 =  "SW"
 	Varout2 =  "LW" 
@@ -58,12 +58,12 @@ begin
        fin6 = addfile( namein6, "r")
        fin7 = addfile( namein7, "r")
 
-       setfileoption("nc", "Format",  "NetCDF4")  ;   "NetCDF4Classic"
+       setfileoption("nc", "Format",  "Classic")  ;   "NetCDF4Classic"
 
 ;;      the time attribute here :
-       time = fin1->time
-
-       time2 = calendar_decode2 ( time ,  -5)
+       time0 = fin1->time
+       time2 = calendar_decode2 ( time0 ,  -5)
+       
 
        dlat = fin1->lat
        lat2 =  tofloat ( dlat)
@@ -73,31 +73,70 @@ begin
 
 ;;        tdate = fin->date
 
-       ntim  = dimsizes(time)      ; get dimension sizes
+       ntim  = dimsizes(time0)      ; get dimension sizes
        nlat  = dimsizes(lat2)
        nlon  = dimsizes(lon2)
        dimNames2 = (/"time",  "lat", "lon"/)
        dimSizes2 = (/ 1 ,    nlat,  nlon /)
        dimUnlim2 = (/ True , False, False/)
 
+       dimSizes22 = (/ 12,    nlat,  nlon /)
+;;;  define clima arrays
+        climasw = new( dimSizes22, "float")
+        climasw =  0.
+        climasw@_FillValue = undef2
+        sssw2 = new(  dimSizes22, "float")
+        sssw2@_FillValue = undef2
+        sssw2 = 0.
+	 climalw = new( dimSizes22, "float")
+        climalw =  0.
+        climalw@_FillValue = undef2
+        sslw2 = new(  dimSizes22, "float")
+        sslw2@_FillValue = undef2
+        sslw2 = 0.
+
 ;;;  as in the case of 3D and 2D plain variables go step by step within the year range iy1-iy2
+;;;    make the annual files each with 12 months 
+
+	do year = iy1, iy2
+
+       Vin1 = new(  dimSizes22, "float")
+       Vin2 = new(  dimSizes22, "float")
+       Vin3 = new(  dimSizes22, "float")
+       Vin4 = new(  dimSizes22, "float")
+       Vin5 = new(  dimSizes22, "float")
+       Vin6 = new(  dimSizes22, "float")
+       Vin7 = new(  dimSizes22, "float")
+   
+
+	SW2 = new(  dimSizes2, "float")
+       LW2 = new(  dimSizes2, "float")
+       timeout = new( 12, typeof(time0) )
+       copy_VarAtts (time0, timeout)
+       timeout@calendar = "standard"
+;;	printVarSummary( timeout)
 
        do it = 0, ntim - 1
 
-       year = time2(it,0)
+       year22 = time2(it,0)
        month = time2(it,1)
 
-       if( ( year .ge. iy1 ) .and. ( year .le. iy2 )) then
+       if(  year22 .eq. year)  then
+       it2 = month - 1
 
-       Vin1 = fin1->$Varname1$(it, :,:)
-       Vin2 = fin2->$Varname2$(it, :,:)
-       Vin3 = fin3->$Varname3$(it, :,:)
-       Vin4 = fin4->$Varname4$(it, :,:)
+       Vin1(it2, :,:) = fin1->$Varname1$(it, :,:)
+       Vin2(it2, :,:) = fin2->$Varname2$(it, :,:)
+       Vin3(it2, :,:) = fin3->$Varname3$(it, :,:)
+       Vin4(it2, :,:) = fin4->$Varname4$(it, :,:)
  
-       Vin5 = fin5->$Varname5$(it, :,:)
-       Vin6 = fin6->$Varname6$(it, :,:)
-       Vin7 = fin7->$Varname7$(it, :,:)
+       Vin5(it2, :,:) = fin5->$Varname5$(it, :,:)
+       Vin6(it2, :,:) = fin6->$Varname6$(it, :,:)
+       Vin7(it2, :,:) = fin7->$Varname7$(it, :,:)
+       timeout(it2)  = time0(it)
 
+	end if
+	 end do   ;;  over all time steps in the file
+	timeout@calendar = "standard"
 ;;;  make the net first then remap 
        SWin  = (  Vin1 - Vin2 + Vin3 - Vin4)
        LWin  = (  Vin5 - Vin6 - Vin7  )
@@ -112,6 +151,7 @@ begin
         SWout = onedtond( SW1D, dimsizes( SWin))
         SWout@_FillValue = undef2
 	 delete( indices) 
+	 delete( SW1D)
 
 	 LW1D      = ndtooned (LWin )
         indices = ind(ismissing(LW1D))
@@ -121,32 +161,154 @@ begin
         LWout = onedtond( LW1D, dimsizes( LWin))
         LWout@_FillValue = undef2
         delete( indices) 
+        delete( LW1D)
+;;;;    fill clima arrays 
+        climasw =  where( .not. ismissing(SWout), climasw + SWout, climasw )
+        sssw2   =  where( .not. ismissing(SWout),  sssw2 + 1., sssw2)
+        climalw =  where( .not. ismissing(LWout), climalw + LWout, climalw )
+        sslw2   =  where( .not. ismissing(LWout),  sslw2 + 1., sslw2)
+
+      
 ;;;  output to file
         yearchar =  sprinti("%0.4i", year)
-        monthchar =  sprinti("%0.2i", month)
-        fileout  = nameout + yearchar + "/" + Varout1 + "_" + yearchar + "-" +  \
-                         monthchar + ".grd"
-       n = systemfunc( " rm " +  fileout + " 2> /dev/null")
-       fbindirwrite(fileout , SWout )
-	 print ("fileout: "+fileout) 
+
+        fileout  = nameout + yearchar + "/" + Varout1 + "_" + yearchar + ".nc"
+
+        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
  
-        fileout  = nameout + yearchar + "/" + Varout2 + "_" + yearchar + "-" +  \
-                         monthchar + ".grd"
-       n = systemfunc( " rm " +  fileout + " 2> /dev/null")
-       fbindirwrite(fileout , LWout )
-        print("fileout: "+fileout ) 
-        print( "   "  ) 
+       fout = addfile( fileout ,"c")
 
-	delete( LWout)
-       delete( SWout) 
-       delete( LW1D)
-       delete( SW1D)
-       delete( LWin)
-       delete( SWin)
+       setfileoption(fout,"DefineMode",True)
 
+       lon2!0 = "lon"
+       lon2@units = "degrees_east"
+       lon2@_FillValue = undef2
+       lon2@long_name = "longitude"
 
-       end if   ;;  in in the year range
-       end do   ;;; over all input timesteps 
+       lat2!0 = "lat"
+       lat2@units = "degrees_north"
+       lat2@long_name = "latitude"
+       lat2@_FillValue = undef2
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-end
+       fAtt               = True            ; assign file attributes
+       fAtt@title         = "NCL created netcdf"
+       fAtt@source_file   =  "original-file.nc"
+       fAtt@Conventions   = "None"
+       fAtt@creation_date = systemfunc ("date")
+       fileattdef( fout, fAtt )            ; copy file attributes
+
+;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+       filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
+
+       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
+       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
+       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
+       filevardef(fout,  Varout1, typeof(SWout),  dimNames2 )
+
+       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
+       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
+       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
+       filevarattdef(fout, Varout1, SWout)
+
+      setfileoption(fout,"DefineMode",False)
+       fout->time   = (/timeout/)
+       fout->lat    = (/lat2/)
+       fout->lon    = (/lon2/)
+       fout->$Varout1$  = (/SWout/)
+       delete( fout)
+;;;;; second file 
+        fileout  = nameout + yearchar + "/" + Varout2 + "_" + yearchar + ".nc"
+
+        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
+
+       fout = addfile( fileout ,"c")
+
+       setfileoption(fout,"DefineMode",True)
+       fileattdef( fout, fAtt )            ; copy file attributes
+
+;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+       filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
+
+       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
+       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
+       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
+       filevardef(fout,  Varout2, typeof(LWout),  dimNames2 )
+
+       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
+       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
+       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
+       filevarattdef(fout, Varout2, LWout)
+
+      setfileoption(fout,"DefineMode",False)
+       fout->time   = (/timeout/)
+       fout->lat    = (/lat2/)
+       fout->lon    = (/lon2/)
+       fout->$Varout2$  = (/LWout/)
+       delete( fout)
+;;;;;
+;;;       print( "finished " +  yearchar )
+      delete( SWout)
+      delete( LWout)
+
+      end do   ;;    over all  years in the data
+
+;;;;  average clima and output too
+       sssw2 =  where( sssw2 .gt. 0.,  sssw2 ,  sssw2@_FillValue )
+       climasw = climasw/sssw2
+       sslw2 =  where( sslw2 .gt. 0.,  sslw2 ,  sslw2@_FillValue )
+       climalw = climalw/sslw2
+        
+       fileout  = nameclima + "/" + Varout1 + "_clim" + ".nc"
+	 n = systemfunc( " rm " +  fileout + " 2> /dev/null")
+
+       fout = addfile( fileout ,"c")
+
+       setfileoption(fout,"DefineMode",True)
+       fileattdef( fout, fAtt )            ; copy file attributes
+	filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
+
+       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
+       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
+       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
+       filevardef(fout,  Varout1, typeof(climasw),  dimNames2 )
+
+       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
+       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
+       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
+       filevarattdef(fout, Varout1, climasw)
+
+      setfileoption(fout,"DefineMode",False)
+       fout->time   = (/timeout/)
+       fout->lat    = (/lat2/)
+       fout->lon    = (/lon2/)
+       fout->$Varout2$  = (/climasw/)
+       delete( fout)
+;;;;  second file 
+       fileout  = nameclima + "/" + Varout2 + "_clim" + ".nc"
+        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
+
+       fout = addfile( fileout ,"c")
+
+       setfileoption(fout,"DefineMode",True)
+       fileattdef( fout, fAtt )            ; copy file attributes
+       filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
+
+       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
+       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
+       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
+       filevardef(fout,  Varout2, typeof(climalw),  dimNames2 )
+
+       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
+       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
+       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
+       filevarattdef(fout, Varout2, climalw)
+
+      setfileoption(fout,"DefineMode",False)
+       fout->time   = (/timeout/)
+       fout->lat    = (/lat2/)
+       fout->lon    = (/lon2/)
+       fout->$Varout2$  = (/climalw/)
+       delete( fout)
+
+ end 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

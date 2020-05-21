@@ -5,7 +5,7 @@ import sys
 
 ###   read in data and make composite average -  anomaly !!! 
 ####                   full 24 month evolution based on SST indices
-def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  dataout, prefix,  prefix2, undef, undef2):
+def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  dataout, prefix,  prefix2, undef):
     this_func = "ENSO_MSE/COMPOSITE/get_data_in_24.py"
 
     im1 = 1
@@ -18,17 +18,11 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     # not necessary to preallocate memory for arrays that are read in from files
 
 ##  read in the clima values
-    nameclima = prefix2 +  variable + "_clim.grd"
+    nameclima = prefix2 +  variable + "_clim.nc"
     if (os.path.exists( nameclima)):
         print(this_func+" reading "+nameclima)
         # np.fromfile handles file open/close, memory allocation
-        clima = np.fromfile(nameclima, dtype='float32')
-        # specify array was written in fortran index order, instead of manually
-        # swapping axes
-        clima = clima.reshape(imax,jmax,zmax,tmax12, order='F')
-        # mark entries of clima >= undef as invalid (through boolean mask)
-        # valid/invalid status is propagated through all subsequent calculations
-        clima = np.ma.masked_greater_equal(clima, undef, copy=False)
+        clima = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  nameinclima, clima, undef)
     else:
         print " missing file " + nameclima
         print " exiting get_data_in_24.py "
@@ -48,16 +42,11 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                 yy = "%04d" % iyy
                 year = str(yy)
 
-                namein = prefix+"/"+year+"/"+variable+"_"+year+"-"+month+".grd"
+                namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
                 if (os.path.exists( namein)):
                     print(this_func+" reading "+namein)
                     # np.fromfile handles file open/close, memory allocation
-                    vvar = np.fromfile(namein, dtype='float32')
-                    # specify array was written in fortran index order, instead 
-                    # of manually swapping axes
-                    vvar = vvar.reshape(imax,jmax,zmax, order='F')
-                    # create boolean array equal to True for invalid entries of
-                    # vvar (value >= undef)
+                    vvar = read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, vvar, undef)
                     vvar_invalid = (vvar >= undef)
                     # set invalid entries of vvar to zero so they don't contribute
                     # to the running sum in dataout (modifies in-place)
@@ -68,6 +57,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                     # increment entries of ss where entries of vvar were valid;
                     # note we can combine multi-dimensional masking and slicing 
                     ss[~vvar_invalid, im-1] += 1.
+                    nc.close()
                 else:
                     print " missing file " + namein
                     print " exiting  get_data_in_24.py" 
@@ -83,8 +73,8 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     dataout[:,:,:, tmax12:(2*tmax12)] -= clima
 
     print(this_func+" returning ")
-    # fill in masked (invalid) entries with value undef2
+    # fill in masked (invalid) entries with value undef
     # convert from maskedarray to ordinary numpy array for compatibility with 
     # rest of code
-    return dataout.filled(fill_value = undef2)
+    return dataout.filled(fill_value = undef)
 

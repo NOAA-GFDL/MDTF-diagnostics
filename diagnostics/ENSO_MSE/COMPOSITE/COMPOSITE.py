@@ -35,9 +35,7 @@ from get_clima_in import get_clima_in
 from get_flux_clima import get_flux_clima
 from get_flux_in_24 import get_flux_in_24
 from get_data_in_24 import get_data_in_24
-from write_out_4D import write_out_4D
-from write_out_3D import write_out_3D
-from write_out_2D import write_out_2D
+from write_out import write_out
 
 from get_correlation import get_correlation
 from get_regression import get_regression
@@ -54,6 +52,8 @@ from util import check_required_dirs
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
 from generate_ncl_plots import generate_ncl_plots
+
+from read_netcdf import read_netcdf
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -245,63 +245,63 @@ years2 =  np.zeros((itmax), dtype='int32')
 
 ####  declare the variable arrays
 # 3d variables
-uu = np.zeros((imax,jmax,zmax),dtype='float32')
-vv = np.zeros((imax,jmax,zmax),dtype='float32')
-temp = np.zeros((imax,jmax,zmax),dtype='float32')
-hgt = np.zeros((imax,jmax,zmax),dtype='float32')
-shum = np.zeros((imax,jmax,zmax),dtype='float32')
-vvel = np.zeros((imax,jmax,zmax),dtype='float32')
+uu = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+vv = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+temp = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+hgt = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+shum = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+vvel = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
 
 # 2d varaibles - fluxes
-ts  = np.zeros((imax,jmax),dtype='float32')
-pr  = np.zeros((imax,jmax),dtype='float32')
-shf = np.zeros((imax,jmax),dtype='float32')
-lhf = np.zeros((imax,jmax),dtype='float32')
-lw  = np.zeros((imax,jmax),dtype='float32')
-sw  = np.zeros((imax,jmax),dtype='float32')
-frad = np.zeros((imax,jmax),dtype='float32')
+ts  = np.zeros((imax,jmax),dtype='float32',  order='F')
+pr  = np.zeros((imax,jmax),dtype='float32',  order='F')
+shf = np.zeros((imax,jmax),dtype='float32',  order='F')
+lhf = np.zeros((imax,jmax),dtype='float32',  order='F')
+lw  = np.zeros((imax,jmax),dtype='float32',  order='F')
+sw  = np.zeros((imax,jmax),dtype='float32',  order='F')
+frad = np.zeros((imax,jmax),dtype='float32',  order='F')
 
 ## the same for the climatology
-uuclim = np.zeros((imax,jmax,zmax),dtype='float32')
-vvclim = np.zeros((imax,jmax,zmax),dtype='float32')
-tempclim = np.zeros((imax,jmax,zmax),dtype='float32')
-hgtclim = np.zeros((imax,jmax,zmax),dtype='float32')
-shumclim = np.zeros((imax,jmax,zmax),dtype='float32')
-vvelclim = np.zeros((imax,jmax,zmax),dtype='float32')
+uuclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+vvclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+tempclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+hgtclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+shumclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+vvelclim = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
 
-tsclim  = np.zeros((imax,jmax),dtype='float32')
-prclim  = np.zeros((imax,jmax),dtype='float32')
-shfclim = np.zeros((imax,jmax),dtype='float32')
-lhfclim = np.zeros((imax,jmax),dtype='float32')
-lwclim  = np.zeros((imax,jmax),dtype='float32')
-swclim  = np.zeros((imax,jmax),dtype='float32')
-fradclim = np.zeros((imax,jmax),dtype='float32')
+tsclim  = np.zeros((imax,jmax),dtype='float32',  order='F')
+prclim  = np.zeros((imax,jmax),dtype='float32',  order='F')
+shfclim = np.zeros((imax,jmax),dtype='float32',  order='F')
+lhfclim = np.zeros((imax,jmax),dtype='float32',  order='F')
+lwclim  = np.zeros((imax,jmax),dtype='float32',  order='F')
+swclim  = np.zeros((imax,jmax),dtype='float32',  order='F')
+fradclim = np.zeros((imax,jmax),dtype='float32',  order='F')
 
 ###  24 month variable arrays  for 2yr ENSO evolution
-uu24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
-vv24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
-temp24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
-hgt24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
-shum24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
-vvel24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32')
+uu24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
+vv24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
+temp24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
+hgt24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
+shum24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
+vvel24 = np.zeros((imax,jmax,zmax, tmax24),dtype='float32',  order='F')
 
-ts24  = np.zeros((imax,jmax, tmax24),dtype='float32')
-pr24  = np.zeros((imax,jmax, tmax24),dtype='float32')
-shf24 = np.zeros((imax,jmax, tmax24),dtype='float32')
-lhf24 = np.zeros((imax,jmax, tmax24),dtype='float32')
-lw24  = np.zeros((imax,jmax, tmax24),dtype='float32')
-sw24  = np.zeros((imax,jmax, tmax24),dtype='float32')
+ts24  = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
+pr24  = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
+shf24 = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
+lhf24 = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
+lw24  = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
+sw24  = np.zeros((imax,jmax, tmax24),dtype='float32',  order='F')
 
 ###  correlations + regression
-correl  = np.zeros((imax,jmax), dtype='float32')
-aregress = np.zeros((imax,jmax), dtype='float32')
+correl  = np.zeros((imax,jmax), dtype='float32',  order='F')
+aregress = np.zeros((imax,jmax), dtype='float32',  order='F')
 
 ##  select season (imindx1, imindx2) and get the years for composites  (iyear)    
 ##   the NINO3.4 indices  based on area averaging ...  
 ##################################################3
 #############   El Nino/La Nina indices selection
 
-ii1, ii2, jj1, jj2, ttmax1, years1, ttmax2, years2 = get_nino_index(imax, jmax, lon, lat,  itmax,  iy1, iy2, imindx1, imindx2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2, sigma, ttmax1, ttmax2, years1,  years2,  prefix1, undef)
+ii1, ii2, jj1, jj2, ttmax1, years1, ttmax2, years2 = get_nino_index(imax, jmax, lon, lat,  itmax,  iy1, iy2, imindx1, imindx2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2, sigma, ttmax1, ttmax2, years1,  years2,  prefix1, undef2)
 
 
 ######   CLIMATOLOGY:   reading pre-calculated total CLIMATOLOGY - output seasonal one
@@ -312,42 +312,39 @@ if ( test_mode ):
 else:
         print " Reading Climatologies  "  + now.strftime("%Y-%m-%d %H:%M")
 
-        hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "Z_clim",  hgtclim, prefix2, undef, undef2)
-        uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "U_clim",   uuclim , prefix2, undef, undef2)
-        vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "V_clim",   vvclim,  prefix2, undef, undef2)
-        tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "T_clim",   tempclim, prefix2, undef, undef2)
-        shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "Q_clim",   shumclim, prefix2, undef, undef2)
-        vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "OMG_clim", vvelclim, prefix2, undef, undef2)
+        hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "Z_clim",  hgtclim, prefix2, undef2)
+        uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "U_clim",   uuclim , prefix2, undef2)
+        vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "V_clim",   vvclim,  prefix2, undef2)
+        tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "T_clim",   tempclim, prefix2, undef2)
+        shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "Q_clim",   shumclim, prefix2,  undef2)
+        vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "OMG_clim", vvelclim, prefix2, undef2)
         ## and the clima fluxes  average over im1, im2
-        prclim  = get_flux_clima(imax, jmax, im1, im2, "PR_clim",   prclim,  prefix2, undef, undef2)
-        tsclim  = get_flux_clima(imax, jmax, im1, im2, "TS_clim",   tsclim,  prefix2, undef, undef2)
-        shfclim = get_flux_clima(imax, jmax, im1, im2, "SHF_clim",  shfclim, prefix2, undef, undef2)
-        lhfclim = get_flux_clima(imax, jmax, im1, im2, "LHF_clim",  lhfclim, prefix2, undef, undef2)
-        swclim  = get_flux_clima(imax, jmax, im1, im2, "SW_clim",   swclim,  prefix2, undef, undef2)
-        lwclim  = get_flux_clima(imax, jmax, im1, im2, "LW_clim",   lwclim,  prefix2, undef, undef2)
+        prclim  = get_flux_clima(imax, jmax, im1, im2, "PR_clim",   prclim,  prefix2,  undef2)
+        tsclim  = get_flux_clima(imax, jmax, im1, im2, "TS_clim",   tsclim,  prefix2,  undef2)
+        shfclim = get_flux_clima(imax, jmax, im1, im2, "SHF_clim",  shfclim, prefix2,  undef2)
+        lhfclim = get_flux_clima(imax, jmax, im1, im2, "LHF_clim",  lhfclim, prefix2,  undef2)
+        swclim  = get_flux_clima(imax, jmax, im1, im2, "SW_clim",   swclim,  prefix2,  undef2)
+        lwclim  = get_flux_clima(imax, jmax, im1, im2, "LW_clim",   lwclim,  prefix2,  undef2)
         
         ###  write seasonal climatology for further processing 
-        write_out_3D( imax, jmax, zmax,  "Z_clim",    hgtclim,  prefixclim)
-        write_out_3D( imax, jmax, zmax,  "U_clim",     uuclim,  prefixclim)
-        write_out_3D( imax, jmax, zmax,  "V_clim",     vvclim,  prefixclim)
-        write_out_3D( imax, jmax, zmax,  "T_clim",   tempclim,  prefixclim)
-        write_out_3D( imax, jmax, zmax,  "Q_clim",   shumclim,  prefixclim)
-        write_out_3D( imax, jmax, zmax,  "OMG_clim", vvelclim,  prefixclim)
+        write_out( "Z_clim",    hgtclim,  prefixclim)
+        write_out( "U_clim",     uuclim,  prefixclim)
+        write_out( "V_clim",     vvclim,  prefixclim)
+        write_out( "T_clim",   tempclim,  prefixclim)
+        write_out( "Q_clim",   shumclim,  prefixclim)
+        write_out(  "OMG_clim", vvelclim,  prefixclim)
         ## similarly the fluxes
-        write_out_2D( imax, jmax,  "PR_clim",   prclim,  prefixclim)
-        write_out_2D( imax, jmax,  "TS_clim",   tsclim,  prefixclim)
-        write_out_2D( imax, jmax,  "SHF_clim", shfclim,  prefixclim)
-        write_out_2D( imax, jmax,  "LHF_clim", lhfclim,  prefixclim)
-        write_out_2D( imax, jmax,  "LW_clim",   lwclim,  prefixclim)
-        write_out_2D( imax, jmax,  "SW_clim",   swclim,  prefixclim)
+        write_out(  "PR_clim",   prclim,  prefixclim)
+        write_out(  "TS_clim",   tsclim,  prefixclim)
+        write_out(  "SHF_clim", shfclim,  prefixclim)
+        write_out(  "LHF_clim", lhfclim,  prefixclim)
+        write_out(  "LW_clim",   lwclim,  prefixclim)
+        write_out(  "SW_clim",   swclim,  prefixclim)
         ##   add Frad
-        for j in range( 0, jmax):
-                for i in range( 0, imax):
-                        fradclim[i,j] = undef2
-                        if( swclim[i,j]  < undef and lwclim[i,j] < undef ):
-                                fradclim[i,j] = swclim[i,j] +  lwclim[i,j]
-        write_out_2D( imax, jmax,  "FRAD_clim", fradclim,   prefixclim)
-
+        lwclim = np.ma.masked_greater_equal(lwclim, undef, copy=False)
+        swclim = np.ma.masked_greater_equal(swclim, undef, copy=False)
+        fradclim = lwclim  +  swclim
+        write_out(  "FRAD_clim", fradclim,   prefixclim)
 
 ## 
 
@@ -363,88 +360,80 @@ if(  composite == 1):
     now = datetime.datetime.now()
     print "  Starting Seasonal ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
     
-    hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Z",  hgt, prefix1, undef, undef2)
-    uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "U",  uu, prefix1, undef, undef2)
-    vv   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "V",  vv, prefix1, undef, undef2)
-    temp = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "T",  temp, prefix1, undef, undef2)
-    shum = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Q",  shum, prefix1, undef, undef2)
-    vvel = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "OMG",  vvel, prefix1, undef, undef2)
+    hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Z",  hgt, prefix1, undef2)
+    uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "U",  uu, prefix1, undef2)
+    vv   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "V",  vv, prefix1, undef2)
+    temp = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "T",  temp, prefix1, undef2)
+    shum = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Q",  shum, prefix1, undef2)
+    vvel = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "OMG",  vvel, prefix1, undef2)
 
 ## test composites and write out
 
-    write_out_3D( imax, jmax, zmax,  "Z",  hgt,  prefixout1)
-    write_out_3D( imax, jmax, zmax,  "U",   uu,  prefixout1)
-    write_out_3D( imax, jmax, zmax,  "V",   vv,  prefixout1)
-    write_out_3D( imax, jmax, zmax,  "T",  temp,  prefixout1)
-    write_out_3D( imax, jmax, zmax,  "Q",  shum,  prefixout1)
-    write_out_3D( imax, jmax, zmax,  "OMG", vvel,  prefixout1)
+    write_out(  "Z",  hgt,  prefixout1)
+    write_out(  "U",   uu,  prefixout1)
+    write_out(  "V",   vv,  prefixout1)
+    write_out(  "T",  temp,  prefixout1)
+    write_out(  "Q",  shum,  prefixout1)
+    write_out(  "OMG", vvel,  prefixout1)
 
 ###  read in and composite the fluxes 
-    pr  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "PR",  pr, prefix1, undef, undef2)
-    ts  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "TS",  ts, prefix1, undef, undef2)
-    shf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SHF",  shf, prefix1, undef, undef2)
-    lhf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LHF",  lhf, prefix1, undef, undef2)
-    sw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SW",  sw, prefix1, undef, undef2)
-    lw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LW",  lw, prefix1, undef, undef2)
+    pr  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "PR",  pr, prefix1,  undef2)
+    ts  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "TS",  ts, prefix1,  undef2)
+    shf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SHF",  shf, prefix1, undef2)
+    lhf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LHF",  lhf, prefix1, undef2)
+    sw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SW",  sw, prefix1,  undef2)
+    lw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LW",  lw, prefix1,  undef2)
 
 ##   add Frad 
-    for j in range( 0, jmax):
-        for i in range( 0, imax):
-            frad[i,j] = undef2
-            if( sw[i,j]  < undef and lw[i,j] < undef ):
-                frad[i,j] = sw[i,j] +  lw[i,j]
-    write_out_2D( imax, jmax,  "FRAD", frad,   prefixout1)
+    frad = sw + lw
+    write_out( "FRAD", frad,   prefixout1)
 
 ## output  fluxes  in corresponding directory 
-    write_out_2D( imax, jmax,  "PR",  pr,   prefixout1)
-    write_out_2D( imax, jmax,  "TS",  ts,   prefixout1)
-    write_out_2D( imax, jmax,  "SHF", shf,  prefixout1)
-    write_out_2D( imax, jmax,  "LHF", lhf,  prefixout1)
-    write_out_2D( imax, jmax,  "LW",  lw,   prefixout1)
-    write_out_2D( imax, jmax,  "SW",  sw,   prefixout1)
+    write_out( "PR",  pr,   prefixout1)
+    write_out( "TS",  ts,   prefixout1)
+    write_out( "SHF", shf,  prefixout1)
+    write_out( "LHF", lhf,  prefixout1)
+    write_out( "LW",  lw,   prefixout1)
+    write_out( "SW",  sw,   prefixout1)
 
 ########   similarly the same for LA NINA composites
     now = datetime.datetime.now()
     print "  Starting Seasonal LANINA composites: "  + now.strftime("%Y-%m-%d %H:%M")
 
-    hgt  = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Z",  hgt, prefix1, undef, undef2)
-    uu   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "U",  uu, prefix1, undef, undef2)
-    vv   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "V",  vv, prefix1, undef, undef2)
-    temp = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "T",  temp, prefix1, undef, undef2)
-    shum = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Q",  shum, prefix1, undef, undef2)
-    vvel = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "OMG",  vvel, prefix1, undef, undef2)
+    hgt  = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Z",  hgt, prefix1, undef2)
+    uu   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "U",  uu, prefix1, undef2)
+    vv   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "V",  vv, prefix1, undef2)
+    temp = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "T",  temp, prefix1, undef2)
+    shum = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Q",  shum, prefix1, undef2)
+    vvel = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "OMG",  vvel, prefix1, undef2)
 ## write out 
-    write_out_3D( imax, jmax, zmax,  "Z",  hgt,  prefixout2)
-    write_out_3D( imax, jmax, zmax,  "U",   uu,  prefixout2)
-    write_out_3D( imax, jmax, zmax,  "V",   vv,  prefixout2)
-    write_out_3D( imax, jmax, zmax,  "T",  temp,  prefixout2)
-    write_out_3D( imax, jmax, zmax,  "Q",  shum,  prefixout2)
-    write_out_3D( imax, jmax, zmax,  "OMG", vvel,  prefixout2)
+    write_out( "Z",  hgt,  prefixout2)
+    write_out( "U",   uu,  prefixout2)
+    write_out( "V",   vv,  prefixout2)
+    write_out( "T",  temp,  prefixout2)
+    write_out( "Q",  shum,  prefixout2)
+    write_out( "OMG", vvel,  prefixout2)
 
 ###   LA NINA composite   fluxes 
  
-    pr = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "PR",  pr, prefix1, undef, undef2)
-    ts  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "TS",  ts, prefix1, undef, undef2)
-    shf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SHF",  shf, prefix1, undef, undef2)
-    lhf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LHF",  lhf, prefix1, undef, undef2)
-    sw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SW",  sw, prefix1, undef, undef2)
-    lw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LW",  lw, prefix1, undef, undef2)
+    pr = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "PR",  pr, prefix1,  undef2)
+    ts  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "TS",  ts, prefix1,  undef2)
+    shf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SHF",  shf, prefix1,  undef2)
+    lhf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LHF",  lhf, prefix1,  undef2)
+    sw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SW",  sw, prefix1,  undef2)
+    lw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LW",  lw, prefix1,  undef2)
 
 ##   add Frad
-    for j in range( 0, jmax):
-        for i in range( 0, imax):
-            frad[i,j] = undef2
-            if( sw[i,j]  < undef and lw[i,j] < undef ):
-                frad[i,j] = sw[i,j] +  lw[i,j]
-    write_out_2D( imax, jmax,  "FRAD", frad,   prefixout2)
+    frad = sw + lw
+    write_out( "FRAD", frad,   prefixout2)
 
 ## output La NINA composites  in corresponding directory
-    write_out_2D( imax, jmax,  "PR",  pr,   prefixout2)
-    write_out_2D( imax, jmax,  "TS",  ts,   prefixout2)
-    write_out_2D( imax, jmax,  "SHF", shf,  prefixout2)
-    write_out_2D( imax, jmax,  "LHF", lhf,  prefixout2)
-    write_out_2D( imax, jmax,  "LW",  lw,   prefixout2)
-    write_out_2D( imax, jmax,  "SW",  sw,   prefixout2)
+    write_out( "PR",  pr,   prefixout2)
+    write_out( "TS",  ts,   prefixout2)
+    write_out( "SHF", shf,  prefixout2)
+    write_out( "LHF", lhf,  prefixout2)
+    write_out( "LW",  lw,   prefixout2)
+    write_out( "SW",  sw,   prefixout2)
 
 ####  make the plots
     print( "finished composite calculation  ")
@@ -475,107 +464,107 @@ if( composite24 == 1):
     print "  Approximately 5-10  minutes per one 3-dimensional variable   "
 
 ###   El Nino  case :
-    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef, undef2)
+    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable Z completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    uu24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2,  "U",  tmax24, uu24, prefix1, prefix2, undef, undef2)
+    uu24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2,  "U",  tmax24, uu24, prefix1, prefix2, undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable U completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vv24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "V", tmax24, vv24, prefix1, prefix2,  undef, undef2)
+    vv24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "V", tmax24, vv24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable V completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    temp24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef, undef2)
+    temp24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable T completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    shum24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Q",  tmax24, shum24, prefix1, prefix2, undef, undef2)
+    shum24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Q",  tmax24, shum24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable Q completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2, undef, undef2)
+    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2, undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable OMG completed " + now.strftime("%Y-%m-%d %H:%M")
 ##     24 month evolution output files written
 
-    write_out_4D( imax, jmax, zmax, tmax24,  "Z", hgt24, prefixout111)
-    write_out_4D( imax, jmax, zmax, tmax24, "U", uu24, prefixout111)
-    write_out_4D( imax, jmax, zmax, tmax24, "V", vv24, prefixout111)
-    write_out_4D( imax, jmax, zmax, tmax24, "T", temp24, prefixout111)
-    write_out_4D( imax, jmax, zmax, tmax24, "Q", shum24, prefixout111)
-    write_out_4D( imax, jmax, zmax, tmax24, "OMG", vvel24, prefixout111)
+    write_out( "Z", hgt24, prefixout111)
+    write_out( "U", uu24, prefixout111)
+    write_out( "V", vv24, prefixout111)
+    write_out( "T", temp24, prefixout111)
+    write_out( "Q", shum24, prefixout111)
+    write_out( "OMG", vvel24, prefixout111)
 
 #  the same for fluxes 
-    pr24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "PR", tmax24,  pr24, prefix1, prefix2, undef, undef2)
-    ts24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef, undef2)
-    shf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SHF", tmax24, shf24, prefix1, prefix2, undef, undef2)
+    pr24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "PR", tmax24,  pr24, prefix1, prefix2, undef2)
+    ts24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef2)
+    shf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SHF", tmax24, shf24, prefix1, prefix2, undef2)
     lhf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "LHF", tmax24, lhf24, prefix1, prefix2, undef, undef2)
-    sw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SW",tmax24,  sw24, prefix1, prefix2, undef, undef2)
+    sw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SW",tmax24,  sw24, prefix1, prefix2, undef2)
     lw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "LW", tmax24, lw24, prefix1, prefix2,  undef, undef2)
     
     now = datetime.datetime.now()
     print"  ELNINO: all flux variables completed " + now.strftime("%Y-%m-%d %H:%M")
 
 #  write out   fluxes
-    write_out_3D( imax, jmax, tmax24, "PR",  pr24, prefixout111)
-    write_out_3D( imax, jmax, tmax24, "TS",  ts24, prefixout111)
-    write_out_3D( imax, jmax, tmax24, "SHF",shf24, prefixout111)
-    write_out_3D( imax, jmax, tmax24, "LHF",lhf24, prefixout111)
-    write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout111)
-    write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout111)
+    write_out( "PR",  pr24, prefixout111)
+    write_out( "TS",  ts24, prefixout111)
+    write_out( "SHF",shf24, prefixout111)
+    write_out( "LHF",lhf24, prefixout111)
+    write_out( "LW",  lw24, prefixout111)
+    write_out( "SW",  sw24, prefixout111)
 ###   copy the grads control files 
 ###    os.system("cp " + os.environ["POD_HOME"]+"/COMPOSITE/CTL/*.ctl "+ prefixout11  )
 
 ##########################
 ####    La Nina 4 evolution :
-    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef, undef2)
+    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  Z completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    uu24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "U",  tmax24, uu24, prefix1,  prefix2, undef, undef2)
+    uu24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "U",  tmax24, uu24, prefix1,  prefix2, undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  U completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vv24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "V", tmax24, vv24, prefix1,prefix2,  undef, undef2)
+    vv24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "V", tmax24, vv24, prefix1,prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  V completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    temp24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef, undef2)
+    temp24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  T completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    shum24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Q",  tmax24, shum24, prefix1, prefix2,  undef, undef2)
+    shum24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Q",  tmax24, shum24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()    
     print"  LANINA: variable  Q completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2,  undef, undef2) 
+    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2,  undef2) 
     now = datetime.datetime.now()
     print"  LANINA: variable  OMG completed " + now.strftime("%Y-%m-%d %H:%M")
 ###  write output 
-    write_out_4D( imax, jmax, zmax, tmax24,  "Z", hgt24, prefixout222)
-    write_out_4D( imax, jmax, zmax, tmax24, "U", uu24, prefixout222)
-    write_out_4D( imax, jmax, zmax, tmax24, "V", vv24, prefixout222)
-    write_out_4D( imax, jmax, zmax, tmax24, "T", temp24, prefixout222)
-    write_out_4D( imax, jmax, zmax, tmax24, "Q", shum24, prefixout222)
-    write_out_4D( imax, jmax, zmax, tmax24, "OMG", vvel24, prefixout222)
+    write_out( "Z", hgt24, prefixout222)
+    write_out( "U", uu24, prefixout222)
+    write_out( "V", vv24, prefixout222)
+    write_out( "T", temp24, prefixout222)
+    write_out( "Q", shum24, prefixout222)
+    write_out( "OMG", vvel24, prefixout222)
 ##  fluxes     calculation and output 
-    pr24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2,  "PR", tmax24,  pr24, prefix1, prefix2,  undef, undef2)
-    ts24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef, undef2)
-    shf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "SHF", tmax24, shf24, prefix1, prefix2,  undef, undef2)
-    lhf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LHF", tmax24, lhf24, prefix1, prefix2, undef, undef2)
+    pr24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2,  "PR", tmax24,  pr24, prefix1, prefix2,  undef2)
+    ts24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef2)
+    shf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "SHF", tmax24, shf24, prefix1, prefix2,  undef2)
+    lhf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LHF", tmax24, lhf24, prefix1, prefix2, undef2)
     sw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "SW",tmax24,  sw24, prefix1, prefix2,  undef, undef2)
-    lw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LW", tmax24, lw24, prefix1, prefix2,  undef, undef2)
+    lw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LW", tmax24, lw24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: all flux variables completed " + now.strftime("%Y-%m-%d %H:%M")
 #  write out 
-    write_out_3D( imax, jmax, tmax24, "PR",  pr24, prefixout222)
-    write_out_3D( imax, jmax, tmax24, "TS",  ts24, prefixout222)
-    write_out_3D( imax, jmax, tmax24, "SHF",shf24, prefixout222)
-    write_out_3D( imax, jmax, tmax24, "LHF",lhf24, prefixout222)
-    write_out_3D( imax, jmax, tmax24, "LW",  lw24, prefixout222)
-    write_out_3D( imax, jmax, tmax24, "SW",  sw24, prefixout222)
+    write_out(  "PR",  pr24, prefixout222)
+    write_out(  "TS",  ts24, prefixout222)
+    write_out(  "SHF",shf24, prefixout222)
+    write_out(  "LHF",lhf24, prefixout222)
+    write_out(  "LW",  lw24, prefixout222)
+    write_out(  "SW",  sw24, prefixout222)
 ###    convert binaries to NetCDF 
     generate_ncl_plots(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
 
@@ -597,25 +586,25 @@ if( correlation == 1):
     now = datetime.datetime.now()
     print "   Seasonal  SST  correlations started  " + now.strftime("%Y-%m-%d %H:%M")
 ##      correlations with selected variables  El Nino case 
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", correl, prefix1, prefix2, undef, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", correl, prefix1, prefix2, undef2)
 ## output as data : 
-    write_out_2D( imax, jmax,  "CORR_PR",  correl,   prefixout)
+    write_out(  "CORR_PR",  correl,   prefixout)
 ### 
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", correl, prefix1, prefix2, undef, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", correl, prefix1, prefix2, undef2)
 ## output as data :
-    write_out_2D( imax, jmax,  "CORR_SHF",  correl,   prefixout)
+    write_out( "CORR_SHF",  correl,   prefixout)
 #####    
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", correl, prefix1, prefix2, undef, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", correl, prefix1, prefix2, undef2)
 ## output as data : 
-    write_out_2D( imax, jmax,  "CORR_LHF",  correl,   prefixout)
+    write_out(  "CORR_LHF",  correl,   prefixout)
 ####    
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", correl, prefix1, prefix2, undef, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", correl, prefix1, prefix2, undef2)
 ## output as data :
-    write_out_2D( imax, jmax,  "CORR_LW",  correl,   prefixout)
+    write_out(  "CORR_LW",  correl,   prefixout)
 ####   
-    correl =  get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", correl, prefix1, prefix2, undef, undef2)
+    correl =  get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", correl, prefix1, prefix2, undef2)
 ## output   correlation data 
-    write_out_2D( imax, jmax,  "CORR_SW",  correl,   prefixout)
+    write_out( "CORR_SW",  correl,   prefixout)
 ###   plot correlations 
     generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all.ncl")
 
@@ -636,25 +625,25 @@ if( regression == 1):
     now = datetime.datetime.now()
     print "   Seasonal  SST  regression calculations started  " + now.strftime("%Y-%m-%d %H:%M")
 ###  
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2,  im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", aregress, prefix1, prefix2, undef, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2,  im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", aregress, prefix1, prefix2, undef2)
 ##  output in composite directory 
-    write_out_2D( imax, jmax,  "REGRESS_PR",  aregress,   prefixout)
+    write_out(  "REGRESS_PR",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", aregress, prefix1, prefix2, undef, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", aregress, prefix1, prefix2, undef2)
 ##  output in composite directory
-    write_out_2D( imax, jmax,  "REGRESS_SHF",  aregress,   prefixout)
+    write_out( "REGRESS_SHF",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", aregress, prefix1, prefix2, undef, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", aregress, prefix1, prefix2,  undef2)
 ##  output in composite directory
-    write_out_2D( imax, jmax,  "REGRESS_LHF",  aregress,   prefixout)
+    write_out( "REGRESS_LHF",  aregress,   prefixout)
 ###
-    aregress = get_regression(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", aregress, prefix1, prefix2, undef, undef2)
+    aregress = get_regression(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", aregress, prefix1, prefix2,  undef2)
 ##  output in composite directory
-    write_out_2D( imax, jmax,  "REGRESS_LW",  aregress,   prefixout)
+    write_out( "REGRESS_LW",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", aregress, prefix1, prefix2, undef, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", aregress, prefix1, prefix2,  undef2)
 ##  output 
-    write_out_2D( imax, jmax,  "REGRESS_SW",  aregress,   prefixout)
+    write_out( "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
     print("DRBDBG calling ",os.environ["POD_HOME"],"/COMPOSITE/NCL/plot_regression_all.ncl")

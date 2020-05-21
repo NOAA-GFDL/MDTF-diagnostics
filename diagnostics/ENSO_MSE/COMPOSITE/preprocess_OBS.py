@@ -12,6 +12,8 @@ os.sys.path.insert(0, shared_dir)
 from util import check_required_dirs
 from generate_ncl_call import generate_ncl_call
 
+from read_netcdf import read_netcdf
+
 '''
     to pre-process the data for the diagnostic package 
     the code extract the necessary variables from NetCDF files
@@ -41,7 +43,7 @@ prefix2 = this_wrk_dir+"/obs/netCDF/CLIMA/"
 iy1 = 1982
 iy2 = 2011
 
-###   check for th flag file and read - that is if pre-processing is needed.
+###   check for the flag file and read - that is if pre-processing is needed.
 
 convert_file = prefix1 + "/preprocess.txt"
 
@@ -75,10 +77,11 @@ else:
 #    os.system("mkdir " +  os.environ["OBS_DATA"] + "/COMPOSITE/netCDF/DATA/"  + " 2> /dev/null") 
 #    os.system("mkdir " +  os.environ["OBS_DATA"] + "/COMPOSITE/netCDF/CLIMA/"  + " 2> /dev/null") 
 
-    for iy in range( iy1, iy2+1):
-        os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
+###    the annual directories are created in NCL  scrip data_routine.ncl
+##    for iy in range( iy1, iy2+1):
+##        os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
-## print os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine.ncl"
+## print os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine_OBS.ncl"
     print " Observational Data conversion routine started  "
     print " 3-D atmospheric variables conversion "
     print " depending on the data input volume the process can take over 15 minutes "

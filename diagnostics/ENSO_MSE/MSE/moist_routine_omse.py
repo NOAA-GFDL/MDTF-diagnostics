@@ -36,11 +36,9 @@ def moisture_o_energy(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, omega, rea
 
     undef2 = 0.5 * undef 
     # fill with undef first 
-    for j in range(0, jmax):
-        for i in range (0, imax):
-            omse1[i,j] = undef
-            for k in range(0, zmax):
-                omse3[i,j,k] = undef
+    omse3 = np.zeros( (imax,jmax, zmax),dtype='float32', order='F')
+    omse3[:,:,:] = undef
+    omse1 = np.zeros( (imax,jmax),dtype='float32', order='F')
 
     # calculate  the advection  loop over all domain points
     # except the top and bottom J = 1, J= JMAX

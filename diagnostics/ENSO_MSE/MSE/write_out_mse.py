@@ -1,18 +1,5 @@
 
 def write_out_mse(imax, jmax, zmax, mse2, mse2_adv, mse2_div, mdiv2, madv2, tadv2, omse2, prefixout):
-    mse2 = mse2.T
-    
-    mse2_adv = mse2_adv.T
-    
-    mse2_div = mse2_div.T
-    
-    mdiv2 = mdiv2.T
-    
-    madv2 = madv2.T
-    
-    tadv2 = tadv2.T
-    
-    omse2 = omse2.T
     
 ##  write out full MSE variables 
     nameout = prefixout + "MSE_mse.out"

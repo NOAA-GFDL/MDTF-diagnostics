@@ -36,11 +36,10 @@ def moisture_div(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth,
 
     undef2 = 0.5 * undef
     # fill with undef first 
-    for j in range(0, jmax):
-        for i in range (0, imax):
-            mdiv1[i,j] = undef
-            for k in range(0, zmax):
-                mdiv3[i,j,k] = undef
+    mdiv3 = np.zeros( (imax,jmax, zmax),dtype='float32', order='F')
+    mdiv3[:,:,:] = undef
+    mdiv1 = np.zeros( (imax,jmax),dtype='float32', order='F')
+
     # calculate  the advection  loop over all domain points
     # except the top and bottom J = 1, J= JMAX
     # calculations are based on center differences

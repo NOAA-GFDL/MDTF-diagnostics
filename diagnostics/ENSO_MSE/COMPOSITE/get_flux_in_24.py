@@ -4,24 +4,18 @@ import math
 import sys
 
 ###   read in data and make composite average - full  values (not anomaly !!) 
-def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, prefix, prefix2,  undef, undef2):
+def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, prefix, prefix2,  undef):
 
     im1 = 1
     im2 = 24
     tmax12 = 12 
-    ss    = np.zeros((imax,jmax, tmax24),dtype='float32')      
-    vvar  = np.zeros((imax,jmax),dtype='float32')
-    dataout = np.zeros((imax,jmax, tmax24),dtype='float32')
-    clima  = np.zeros((imax,jmax, tmax12),dtype='float32')
+    ss    = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
+    dataout = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
 
-    nameclima = prefix2 +  variable + "_clim.grd"
+    nameclima = prefix2 +  variable + "_clim.nc"
 
     if (os.path.exists( nameclima)):
-        f = open( nameclima)
-        clima = np.fromfile(f, dtype='float32')
-        clima = clima.reshape( tmax12, jmax, imax)
-        clima = np.swapaxes(clima, 0, 2)
-        f.close()
+        clima = read_netcdf_2D(imax, jmax, tmax12,  variable,  nameclima, clima, undef)
     else:
         print " missing file " + nameclima
         print " exiting get_flux_in_24.py "
@@ -40,35 +34,18 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
                 yy = "%04d" % iyy
                 year = str(yy)
 
-                namein = prefix+"/"+year+"/"+variable+"_"+year+"-"+month+".grd"
+                namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
                 if (os.path.exists( namein)):
-                    f = open( namein)
-                    vvar = np.fromfile(f, dtype='float32')
-                    vvar = vvar.reshape(jmax,imax)
-                    vvar = np.swapaxes(vvar, 0, 1)
-                    for j in range(0, jmax):
-                        for i in range (0, imax):
-                            if( vvar[i,j] < undef):
-                                dataout[i,j,im-1] = dataout[i,j,im-1] + vvar[i,j]
-                                ss[i,j,im-1] = ss[i,j,im-1] + 1.
-
-                    f.close()
+                    vvar = read_netcdf_2D(imax, jmax,  tmax12,  variable,  namein, vvar, undef) 
+                    dataout[:,:,:, im-1] += vvar[:,:,:, im-1]
+                    ss[~vvar_invalid, im-1] += 1.
+                    
                 else:
                     print " missing file " + namein
                     print " exiting get_flux_in_24.py "
                     sys.exit()
 #### 
-    for im in range( im1-1, im2):
-        imm = im 
-        if( imm > 11 ):
-            imm = im - 12
-        for j in range(0, jmax):
-            for i in range (0, imax):
-                if( ss[i,j,im]  > 0. and clima[i, j, imm] < undef):
-                    dataout[i,j,im] = dataout[i,j,im]/ss[i,j,im]
-                    dataout[i,j,im] = dataout[i,j,im] - clima[i, j, imm]
-                else:
-                    dataout[i,j,im] = undef2
+    dataout = dataout/ss
 
-    return dataout
+    return dataout.filled(fill_value = undef)
 

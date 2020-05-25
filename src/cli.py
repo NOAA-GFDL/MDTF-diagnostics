@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
-import sys
-if sys.version_info[0] == 2:
+from . import six
+if six.PY2:
     from ConfigParser import _Chainmap as ChainMap
     _basestring = basestring
 else:

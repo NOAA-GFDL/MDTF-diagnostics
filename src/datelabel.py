@@ -14,8 +14,8 @@ Note:
     Timezone support is not currently implemented.
 """
 from __future__ import print_function
-import sys
-if sys.version_info[0] == 2:
+from . import six
+if six.PY2:
     _basestring = basestring
 else:
     _basestring = str

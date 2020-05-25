@@ -3,8 +3,8 @@ Specifically, util.py implements general functionality that's not MDTF-specific.
 """
 from __future__ import print_function
 import os
-import sys
-if sys.version_info[0] == 2:
+from . import six
+if six.PY2:
     _basestring = basestring
     _unicode = unicode
 else:
@@ -14,7 +14,7 @@ import re
 import shlex
 import collections
 from distutils.spawn import find_executable
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:

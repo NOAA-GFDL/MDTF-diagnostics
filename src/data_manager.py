@@ -1,6 +1,6 @@
 from __future__ import print_function
 import os
-import sys
+from . import six
 import glob
 import copy
 import shutil
@@ -9,7 +9,7 @@ from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datetime
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         from subprocess32 import CalledProcessError
     except ImportError:

@@ -1,8 +1,8 @@
 from __future__ import print_function
 import os
-import sys
+from . import six
 import shutil
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
@@ -12,7 +12,7 @@ else:
 from . import datelabel
 from . import util
 from . import util_mdtf
-if sys.version_info[0] == 2:
+if six.PY2:
     from StringIO import StringIO
 else:
     from io import StringIO

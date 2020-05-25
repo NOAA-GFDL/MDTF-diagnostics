@@ -1,9 +1,9 @@
 from __future__ import print_function
 import os
-import sys
+from . import six
 import re
 import shutil
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:

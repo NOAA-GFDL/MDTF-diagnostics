@@ -1,10 +1,13 @@
 from __future__ import print_function
 import os
+from . import six
 import glob
 import shutil
 from . import util
 from . import util_mdtf
 
+
+@six.python_2_unicode_compatible
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
     """

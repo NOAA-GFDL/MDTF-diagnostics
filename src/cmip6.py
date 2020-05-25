@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+from . import six
 import re
 from . import datelabel
 from . import util
@@ -82,6 +83,7 @@ class CMIP6_CVs(util.Singleton):
             if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
 
 
+@six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
     # http://goo.gl/v1drZl, page 16
     _precision_lookup = {

@@ -414,6 +414,7 @@ class _DateMixin(object):
         return dt + td
 
 
+@six.python_2_unicode_compatible
 class DateRange(AtomicInterval, _DateMixin):
     """Class representing a range of variable-precision dates. 
 
@@ -573,6 +574,7 @@ class DateRange(AtomicInterval, _DateMixin):
         return super(DateRange, self).__ge__(other)
 
 
+@six.python_2_unicode_compatible
 class Date(DateRange):
     """Define a date with variable level precision.
 
@@ -689,6 +691,7 @@ class Date(DateRange):
         return (not self.__eq__(other)) # more foolproof
 
 
+@six.python_2_unicode_compatible
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 

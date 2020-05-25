@@ -22,6 +22,8 @@ from . import datelabel
 from . import netcdf_helper
 from .shared_diagnostic import PodRequirementFailure
 
+
+@six.python_2_unicode_compatible
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -39,6 +41,8 @@ class DataQueryFailure(Exception):
         else:
             return 'Query failure: {}.'.format(self.msg)
 
+
+@six.python_2_unicode_compatible
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
     """

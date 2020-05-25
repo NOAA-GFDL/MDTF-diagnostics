@@ -2,6 +2,7 @@
 """
 from __future__ import print_function
 import os
+import io
 from . import six
 import re
 import glob
@@ -329,7 +330,7 @@ def bump_version(path, new_v=None, extra_dirs=[]):
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):
     assert os.path.exists(template_file)
-    with open(template_file, 'r') as f:
+    with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
@@ -341,5 +342,5 @@ def append_html_template(template_file, target_file, template_dict={},
     else:
         print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
-    with open(target_file, mode) as f:
+    with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

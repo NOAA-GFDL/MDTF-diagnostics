@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import os
-import sys
+import io
 import re
 import glob
 import collections
@@ -166,7 +166,7 @@ def make_wrapper_script(using_conda, code_root, conda_config):
         if os.path.exists(out_path):
             print("{} exists; overwriting".format(out_path))
             os.remove(out_path)
-        with open(out_path, 'w') as f:
+        with io.open(out_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(script_start + script_mid + script_end))
         # make executable
         stat_ = os.stat(out_path)
@@ -348,7 +348,10 @@ def framework_test(code_root, output_dir):
         if not runs:
             raise IOError("Can't find framework output in {}".format(abs_out_dir))
         run_output = max(runs, key=os.path.getmtime)
-        with open(os.path.join(run_output, 'mdtf_test.log'), 'w') as f:
+        with io.open(
+            os.path.join(run_output, 'mdtf_test.log'), 
+            'w', encoding='utf-8'
+        ) as f:
             f.write('\n'.join(log_str))
     except Exception as exc:
         fatal_exception_handler(exc, "ERROR: framework test run failed.")

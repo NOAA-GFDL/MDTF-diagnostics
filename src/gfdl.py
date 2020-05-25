@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import io
 from . import six
 import re
 import shutil
@@ -570,7 +571,7 @@ class GfdlarchiveDataManager(DataManager):
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.frepp_mode and os.path.exists(prev_html):
             print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
-            with open(prev_html, 'r') as f1:
+            with io.open(prev_html, 'r', encoding='utf-8') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
             assert len(contents) == 3
@@ -581,7 +582,7 @@ class GfdlarchiveDataManager(DataManager):
             else:
                 print("\tWARNING: No file at {}.".format(self.TEMP_HTML))
                 mode = 'w'
-            with open(self.TEMP_HTML, mode) as f2:
+            with io.open(self.TEMP_HTML, mode, encoding='utf-8') as f2:
                 f2.write(contents)
         super(GfdlarchiveDataManager, self)._make_html(
             cleanup=(not self.frepp_mode)

@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import io
 from . import six
 import glob
 import shutil
@@ -71,7 +72,10 @@ class EnvironmentManager(object):
         for pod in self.pods:
             pod._setup_pod_directories() # should refactor setUp
 
-            pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
+            pod.logfile_obj = io.open(
+                os.path.join(pod.POD_WK_DIR, pod.name+".log"), 
+                'w', encoding='utf-8'
+            )
             log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
             pod.logfile_obj.write(log_str)
             if verbose > 0: print(log_str)

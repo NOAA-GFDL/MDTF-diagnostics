@@ -3,6 +3,7 @@ Specifically, util.py implements general functionality that's not MDTF-specific.
 """
 from __future__ import print_function
 import os
+import io
 from . import six
 import re
 import shlex
@@ -291,7 +292,7 @@ def read_json(file_path):
     assert os.path.exists(file_path), \
         "Couldn't find JSON file {}.".format(file_path)
     try:    
-        with open(file_path, 'r') as file_:
+        with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except IOError:
         print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
@@ -337,7 +338,7 @@ def write_json(struct, file_path, verbose=0, sort_keys=False):
         verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
-        with open(file_path, 'w') as file_obj:
+        with io.open(file_path, 'w', encoding='utf-8') as file_obj:
             json.dump(struct, file_obj, 
                 sort_keys=sort_keys, indent=2, separators=(',', ': '))
     except IOError:

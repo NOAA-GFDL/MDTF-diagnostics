@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import io
 from . import six
 if six.PY2:
     from ConfigParser import _Chainmap as ChainMap
@@ -315,7 +316,7 @@ class FrameworkCLIHandler(CLIHandler):
         config_str = ''
         if config_path:
             try:
-                with open(config_path, 'r') as f:
+                with io.open(config_path, 'r', encoding='utf-8') as f:
                     config_str = f.read()
             except Exception:
                 print("ERROR: Can't read input file at {}.".format(config_path))

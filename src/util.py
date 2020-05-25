@@ -19,6 +19,7 @@ import signal
 import threading
 import errno
 import json
+from six.moves import getcwd
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
@@ -419,7 +420,7 @@ def resolve_path(path, root_path="", env=None):
     if os.path.isabs(path):
         return path
     if root_path == "":
-        root_path = os.getcwd()
+        root_path = getcwd()
     assert os.path.isabs(root_path)
     return os.path.normpath(os.path.join(root_path, path))
 

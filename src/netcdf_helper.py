@@ -14,6 +14,7 @@ from . import datelabel
 from . import util
 from . import util_mdtf
 import xml.etree.ElementTree as ET
+from six.moves import getcwd
 
 class NetcdfHelper(object):
     def __init__(self):
@@ -116,7 +117,7 @@ def _nco_outfile_decorator(function):
                     kwargs['out_file'], kwargs['in_file']))
             else:
                 if kwargs['cwd']:
-                    cwd = os.getcwd()
+                    cwd = getcwd()
                     os.chdir(kwargs['cwd'])
                 os.remove(kwargs['in_file'])
                 shutil.move(kwargs['out_file'], kwargs['in_file'])

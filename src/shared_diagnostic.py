@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import sys
 import glob
 import shutil
 from . import util
@@ -378,8 +377,8 @@ class Diagnostic(object):
                     found_list.extend(new_found)
                     missing_list.extend(new_missing)
         # remove empty list entries
-        found_list = filter(None, found_list)
-        missing_list = filter(None, missing_list)
+        found_list = [x for x in found_list if x is not None]
+        missing_list = [x for x in missing_list if x is not None]
         # nb, need to return due to recursive call
         if (verbose > 2): 
             print("check_for_varlist_files returning ", missing_list)

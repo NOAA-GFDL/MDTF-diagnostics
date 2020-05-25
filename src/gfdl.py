@@ -212,8 +212,7 @@ def GfdlautoDataManager(case_dict, DateFreqMixin=None):
         exit()
 
 
-class GfdlarchiveDataManager(DataManager):
-    __metaclass__ = ABCMeta
+class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
@@ -752,8 +751,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
-    __metaclass__ = ABCMeta    
+class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip

@@ -121,9 +121,8 @@ class DataSet(util.NameSpace):
         FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
         return FrozenDataSet(**d2)
 
-class DataManager(object):
+class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
-    __metaclass__ = ABCMeta
 
     def __init__(self, case_dict, DateFreqMixin=None):
         if not DateFreqMixin:

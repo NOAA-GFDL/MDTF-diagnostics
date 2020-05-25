@@ -18,9 +18,8 @@ from . import util
 from . import util_mdtf
 from .shared_diagnostic import PodRequirementFailure
 
-class EnvironmentManager(object):
+class EnvironmentManager(six.with_metaclass(ABCMeta)):
     # analogue of TestSuite in xUnit - abstract base class
-    __metaclass__ = ABCMeta
 
     def __init__(self, verbose=0):
         config = util_mdtf.ConfigManager()

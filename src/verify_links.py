@@ -6,7 +6,7 @@ in the output webpages.
 
 Based on test_website by Dani Coleman, bundy@ucar.edu
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from . import six
 import argparse

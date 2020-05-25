@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 2 or sys.version_info[1] < 7:

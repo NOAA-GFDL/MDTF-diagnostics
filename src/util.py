@@ -4,12 +4,6 @@ Specifically, util.py implements general functionality that's not MDTF-specific.
 from __future__ import print_function
 import os
 from . import six
-if six.PY2:
-    _basestring = basestring
-    _unicode = unicode
-else:
-    _basestring = str
-    _unicode = str # all strings unicode
 import re
 import shlex
 import collections
@@ -309,7 +303,8 @@ def parse_json(str_):
         # everything is ascii. Raise UnicodeDecodeError if file contains 
         # non-ascii characters. 
         # Originally based on https://stackoverflow.com/a/33571117.
-        if isinstance(data, _unicode):
+        if isinstance(data, six.text_type):
+            # six.text_type == type of unicode data
             # raise UnicodeDecodeError if file contains non-ascii characters
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
@@ -501,7 +496,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if isinstance(command, _basestring):
+    if isinstance(command, six.string_types):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -574,7 +569,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     # starting bash directly instead of from sh.)
     bash_exec = find_executable('bash')
 
-    if not isinstance(command, _basestring):
+    if not isinstance(command, six.string_types):
         command = ' '.join(command)
     if dry_run:
         print('DRY_RUN: call {}'.format(command))

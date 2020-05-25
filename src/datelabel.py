@@ -15,10 +15,6 @@ Note:
 """
 from __future__ import print_function
 from . import six
-if six.PY2:
-    _basestring = basestring
-else:
-    _basestring = str
 import re
 import datetime
 import operator as op
@@ -431,7 +427,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     def __init__(self, start, end=None, precision=None):
         if not end:
-            if isinstance(start, _basestring):
+            if isinstance(start, six.string_types):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -592,7 +588,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif isinstance(args[0], _basestring):
+        elif isinstance(args[0], six.string_types):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -702,9 +698,9 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, _basestring) and (unit is None):
+        if isinstance(quantity, six.string_types) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif not isinstance(quantity, int) or not isinstance(unit, _basestring):
+        elif not isinstance(quantity, int) or not isinstance(unit, six.string_types):
             raise ValueError("Malformed input")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)

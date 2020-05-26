@@ -40,7 +40,7 @@ class CMIP6_CVs(util.Singleton):
     def is_in_cv(self, category, items):
         self._make_cv()
         assert category in self.cv
-        if hasattr(items, '__iter__'):
+        if util.is_iterable(items):
             return [(item in self.cv[category]) for item in items]
         else:
             return (items in self.cv[category])
@@ -69,7 +69,7 @@ class CMIP6_CVs(util.Singleton):
 
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
-        if hasattr(source_items, '__iter__'):
+        if util.is_iterable(source_items):
             return [util.coerce_from_iter(_lookup[item]) for item in source_items]
         else:
             return util.coerce_from_iter(_lookup[source_items])

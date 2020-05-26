@@ -20,7 +20,7 @@ import signal
 import threading
 import errno
 import json
-from six.moves import getcwd
+from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
@@ -587,19 +587,23 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     else:
         return stdout.splitlines()
 
+def is_iterable(obj):
+    return isinstance(obj, collections_abc.Iterable) \
+        and not isinstance(obj, six.string_types) # py3 strings have __iter__
+
 def coerce_to_iter(obj, coll_type=list):
     assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
         return obj
-    elif hasattr(obj, '__iter__'):
+    elif is_iterable(obj):
         return coll_type(obj)
     else:
         return coll_type([obj])
 
 def coerce_from_iter(obj):
-    if hasattr(obj, '__iter__'):
+    if is_iterable(obj):
         if len(obj) == 1:
             return list(obj)[0]
         else:

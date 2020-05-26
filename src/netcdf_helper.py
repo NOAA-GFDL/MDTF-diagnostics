@@ -106,7 +106,7 @@ def _nco_outfile_decorator(function):
             raise AssertionError()
         
         # only pass func the keyword arguments it accepts
-        named_args = function.func_code.co_varnames
+        named_args = six.get_function_code(function).co_varnames
         fkwargs = dict((k, kwargs[k]) for k in named_args if k in kwargs)
         result = function(*args, **fkwargs)
         

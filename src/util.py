@@ -630,7 +630,7 @@ def coerce_from_iter(obj):
 def filter_kwargs(kwarg_dict, function):
     """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    named_args = set(function.func_code.co_varnames)
+    named_args = set(six.get_function_code(function).co_varnames)
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \

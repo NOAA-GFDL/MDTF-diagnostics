@@ -33,7 +33,7 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton('SingletonMeta', (object,), {})): 
+class Singleton(_Singleton(six.ensure_str('SingletonMeta'), (object,), {})): 
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
@@ -300,30 +300,9 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    def _to_ascii(data):
-        # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Raise UnicodeDecodeError if file contains 
-        # non-ascii characters. 
-        # Originally based on https://stackoverflow.com/a/33571117.
-        if isinstance(data, six.text_type):
-            # six.text_type == type of unicode data
-            # raise UnicodeDecodeError if file contains non-ascii characters
-            return data.encode('ascii', 'strict')
-        # if this is a list of values, return list of byteified values
-        if isinstance(data, list):
-            return [_to_ascii(item) for item in data]
-        # dicts should be handled by pairs_hook. if it's anything else, return 
-        # it in its original form
-        return data
-
-    def _pairs_hook(pairs):
-        return collections.OrderedDict(
-            [(_to_ascii(key), _to_ascii(val)) for key, val in pairs]
-        )
-
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
-        parsed_json = json.loads(str_, object_pairs_hook=_pairs_hook)
+        parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
     except UnicodeDecodeError:
         print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
@@ -338,9 +317,10 @@ def write_json(struct, file_path, verbose=0, sort_keys=False):
         verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
-        with io.open(file_path, 'w', encoding='utf-8') as file_obj:
-            json.dump(struct, file_obj, 
-                sort_keys=sort_keys, indent=2, separators=(',', ': '))
+        str_ = json.dumps(struct, 
+            sort_keys=sort_keys, indent=2, separators=(',', ': '))
+        with io.open(file_path, 'w', encoding='utf-8') as file_:
+            file_.write(six.ensure_text(str_, encoding='utf-8', errors='strict'))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()

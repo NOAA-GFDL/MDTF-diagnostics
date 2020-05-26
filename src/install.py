@@ -158,7 +158,7 @@ def make_wrapper_script(using_conda, code_root, conda_config):
     else:
         script_mid = []
     script_end = [
-        '{mdtf_py} "$@"'.format(mdtf_py=os.path.join(code_root, 'src', 'mdtf.py'))
+        '/usr/bin/env python -m src.mdtf "$@"' # module import 
     ]
     out_path = os.path.join(code_root, 'mdtf')
     print('Creating MDTF wrapper script at {}'.format(out_path))

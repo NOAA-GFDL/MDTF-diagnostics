@@ -13,7 +13,7 @@ import argparse
 import collections
 import itertools
 from six.moves import html_parser, urllib # py3: html.parser
-import util
+from . import util
 
 # https://stackoverflow.com/a/41663924
 class LinkParser(html_parser.HTMLParser):

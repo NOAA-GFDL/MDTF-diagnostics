@@ -370,7 +370,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     if not pod_list:
         pod_list = os.listdir(os.path.join(code_root, _pod_dir))
         pod_list = [s for s in pod_list if not s.startswith(('_','.'))]
-        pod_list.sort(key=str.lower)
+        pod_list.sort(key=six.text_type.lower)
     if pod == 'list':
         return pod_list
 
@@ -404,7 +404,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             pod_data=pods, realm_data=realms,
             sorted_lists={
                 "pods": pod_list,
-                "realms": sorted(list(realm_list), key=str.lower)
+                "realms": sorted(list(realm_list), key=six.text_type.lower)
             }
         )
     else:

@@ -19,6 +19,11 @@ sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
+# AutoStructify needed for getting full Sphinx features from markdown (.md) files
+# https://recommonmark.readthedocs.io/en/latest/auto_structify.html
+import recommonmark
+from recommonmark.transform import AutoStructify
+
 # mock out imports of non-standard library modules
 autodoc_mock_imports = ['yaml', 'subprocess32']
 import mock # do this twice just to be safe
@@ -36,6 +41,9 @@ version = u''
 # The full version, including alpha/beta/rc tags
 release = u'3.0 beta 1'
 
+# only used for resolving relative links in markdown docs
+# use develop branch because that's what readthedocs is configured to use
+_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop/'
 
 # -- General configuration ---------------------------------------------------
 
@@ -314,15 +322,6 @@ def run_apidoc(_):
         argv.insert(0, apidoc.__file__)
         apidoc.main(argv)
 
-def setup(app):
-    app.connect('builder-inited', run_apidoc)
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
-
-
 # -- Extensions to the Napoleon GoogleDocstring class ---------------------
 # copied from: https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
 # purpose: provide correct formatting of class attributes when documented 
@@ -354,3 +353,26 @@ GoogleDocstring._parse = patched_parse
 
 # -- Options for intersphinx extension -----------------------------------------
 intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}
+
+# -- Options for todo extension ----------------------------------------------
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
+
+# == Overall Sphinx app setup hook =============================================
+
+def setup(app):
+    # register autodoc event
+    app.connect('builder-inited', run_apidoc)
+
+    # AutoStructify for recommonmark
+    # see eg https://stackoverflow.com/a/52430829
+    app.add_config_value('recommonmark_config', {
+        'url_resolver': lambda url: _project_github_url + url,
+        'enable_auto_toc_tree': False,
+        'enable_math': True,
+        'enable_inline_math': True,
+        'enable_eval_rst': True,
+        'enable_auto_doc_ref': True,
+    }, True)
+    app.add_transform(AutoStructify)

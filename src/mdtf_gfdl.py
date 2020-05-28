@@ -41,7 +41,7 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
             gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
         else:
             gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
-        gfdl_tmp_dir = config.paths.resolve_path(
+        gfdl_tmp_dir = util.resolve_path(
             gfdl_tmp_dir, root_path=self.code_root, env=config.global_envvars
         )
         if not os.path.isdir(gfdl_tmp_dir):

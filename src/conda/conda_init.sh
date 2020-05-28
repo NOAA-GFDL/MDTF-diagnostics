@@ -124,6 +124,9 @@ else
     exit 1
 fi
 
+# workaround for $PATH being set incorrectly
+# https://github.com/conda/conda/issues/9392#issuecomment-617345019
+unset CONDA_SHLVL
 # finally run conda's init script
 __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
 if [ $? -eq 0 ]; then

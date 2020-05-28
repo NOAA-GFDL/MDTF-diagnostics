@@ -163,10 +163,27 @@ latex_elements = {
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
-    'preamble': r'''
+    'preamble': r"""
         \usepackage{unicode-math}
-    ''',
-    'extraclassoptions': 'openany,oneside'
+        \makeatletter
+        \fancypagestyle{normal}{
+            \fancyhf{}
+            \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
+            % \fancyfoot[LO]{{\py@HeaderFamily\nouppercase{\rightmark}}}
+            % \fancyfoot[RE]{{\py@HeaderFamily\nouppercase{\leftmark}}}
+            \fancyhead[LE,RO]{{\py@HeaderFamily \@title, \py@release}}
+            \renewcommand{\headrulewidth}{0.4pt}
+            \renewcommand{\footrulewidth}{0pt}
+        }
+        \fancypagestyle{plain}{
+            % used for first page of a chapter only
+            \fancyhf{}
+            \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
+            \renewcommand{\footrulewidth}{0pt}
+        }
+        \makeatother
+    """,
+    'extraclassoptions': 'openany'
 }
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

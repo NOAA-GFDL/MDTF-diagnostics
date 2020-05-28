@@ -173,17 +173,23 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
+        # "Main" PDF containing all source files. This is built automatically by
+        # ReadTheDocs (filename is fixed by the RTD account name).
         'tex_all', 'mdtf-diagnostics.tex', 
         u'MDTF Diagnostics Documentation', author, 'manual'
-    ),
-    (
-        'tex_getting_started', 'MDTF_getting_started.tex', 
+    ),(
+        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can 
+        # tell, ReadTheDocs won't (linked open issues in prior commits to this 
+        # file?). Instead these are currently built manually and checked into 
+        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's 
+        # build process if it finds multiple .tex files, and doesn't affect sphinx.
+        'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
         'sphinxmdtfhowto'
-    ),
-    (
-        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+    ),(
+        # another secondary PDF.
+        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
         u"MDTF Developer's Walkthrough", 
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "

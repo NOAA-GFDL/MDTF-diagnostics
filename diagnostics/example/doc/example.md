@@ -12,9 +12,15 @@ own documentation: it describes what information you should provide in each
 section. For example, if this were a real POD, you'd place a one-paragraph 
 synopsis of your diagnostic here (like an abstract).
 
- It also serves as an 
-example of the markdown (.md) format used to generate this page: 
-compare this output with the input [source file](https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example_markdown.md).
+It also serves as an example of the markdown (.md) format used to generate this 
+page: compare this output with the input 
+[source file](https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example.md).
+
+For more info on markdown syntax, see this 
+[cheat sheet](https://www.markdownguide.org/cheat-sheet/) and GitHub's 
+[reference](https://guides.github.com/features/mastering-markdown/). There are
+multiple web-based editors that give you immediate feedback, such as 
+<https://dillinger.io/>. 
 
 ## Version & Contact info
 
@@ -91,8 +97,9 @@ your diagnostic's output, by showing how to interpret example plots.
 Instead of doing that here, we provide more examples of markdown syntax that 
 you can customize as needed.
 
-A good online editor that gives immediate feedback is at https://dillinger.io/. 
-Also see GitHub's [reference](https://guides.github.com/features/mastering-markdown/).
+A good online editor that gives immediate feedback is at <https://dillinger.io/>. 
+Also see this [cheat sheet](https://www.markdownguide.org/cheat-sheet/) and 
+GitHub's [reference](https://guides.github.com/features/mastering-markdown/).
 
 ### Links to external sites
 

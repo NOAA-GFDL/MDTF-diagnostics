@@ -220,7 +220,8 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    'latex/sphinxmdtfhowto.cls'
+    'latex/sphinxmdtfhowto.cls',
+    'latex/latexmkrc'
 ]
 
 # latex_docclass = {

@@ -12,13 +12,15 @@ own documentation: it describes what information you should provide in each
 section. For example, if this were a real POD, you'd place a one-paragraph 
 synopsis of your diagnostic here (like an abstract).
 
- It also serves as an 
-example of the markdown (.md) format used to generate this page: 
-compare this output with the input [source file](https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example_markdown.md).
+It also serves as an example of the markdown (.md) format used to generate this 
+page: compare this output with the input 
+[source file](https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example.md).
 
-We also support submitting documents in RestructuredText format, which has a 
-more complicated syntax but offers more formatting features. See the 
-[ReST version](example) of this document.
+For more info on markdown syntax, see this 
+[cheat sheet](https://www.markdownguide.org/cheat-sheet/) and GitHub's 
+[reference](https://guides.github.com/features/mastering-markdown/). There are
+multiple web-based editors that give you immediate feedback, such as 
+<https://dillinger.io/>. 
 
 ## Version & Contact info
 
@@ -95,12 +97,14 @@ your diagnostic's output, by showing how to interpret example plots.
 Instead of doing that here, we provide more examples of markdown syntax that 
 you can customize as needed.
 
-A good online editor that gives immediate feedback is at https://dillinger.io/. 
-Also see GitHub's [reference](https://guides.github.com/features/mastering-markdown/).
+A good online editor that gives immediate feedback is at <https://dillinger.io/>. 
+Also see this [cheat sheet](https://www.markdownguide.org/cheat-sheet/) and 
+GitHub's [reference](https://guides.github.com/features/mastering-markdown/).
 
 ### Links to external sites
 
-URLs written out in the text are linked automatically: https://ncar.ucar.edu/. 
+To include a link, enclose the URL in angle brackets: `<https://ncar.ucar.edu/>`
+gives <https://ncar.ucar.edu/>. 
 
 To use custom text for the link, use the syntax 
 `[link text](https://www.noaa.gov/)` (text in square brackets, URL in 
@@ -112,7 +116,7 @@ Here's another reference:
 
 2. Charney, Jule; Fjørtoft, Ragnar; von Neumann, John (1950). Numerical 
 Integration of the Barotropic Vorticity Equation. *Tellus* **2** (4) 237–254, 
-`doi:10.3402/tellusa.v2i4.8607 <https://doi.org/10.3402/tellusa.v2i4.8607>`__.
+[doi:10.3402/tellusa.v2i4.8607](https://doi.org/10.3402/tellusa.v2i4.8607).
 
 ### Figures
 
@@ -132,6 +136,10 @@ displayed properly in both the html and pdf output.
 Accented and Greek letters can be written directly using Unicode: é, Ω. 
 (Make sure your text editor is saving the file in UTF-8 encoding).
 
-Sphinx currently doesn't recognize latex equations in markdown files ([known 
-bug](https://github.com/readthedocs/recommonmark/issues/133)). To include 
-equations in your document, use the .rst format.
+More complicated math can be written using standard 
+[latex (PDF link)](https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf)
+syntax inside a code block with the word `math`:
+
+```math
+\frac{\partial \rho}{\partial t} + \rho \nabla \cdot v = 0
+```

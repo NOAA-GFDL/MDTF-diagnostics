@@ -61,15 +61,13 @@ In panel (c), the observed PDFs of CWV display characteristic shapes that depend
 
 ### 2) Collapsed statistics
 
-![Image title](convective_transition_diag_fig2.png)
-
-Same as the statistics in panels (a)-(d), respectively, but for each bulk tropospheric temperature, shift the CWV by the corresponding critical CWV `$w_c$`. Here, only the results from observations are presented. In panels (g)-(h), the PDF values are rescaled.
+![](convective_transition_diag_fig2.png)
+*Same as the statistics in panels (a)-(d), respectively, but for each bulk tropospheric temperature, shift the CWV by the corresponding critical CWV `$w_c$`. Here, only the results from observations are presented. In panels (g)-(h), the PDF values are rescaled.*
 
 In practice, we define the critical CWV to be value at which the best-fit line to the conditionally averaged precipitation intersects with the CWV axis, as shown in panel (e) \[see panels (i)-(j) below for the observed and simulated critical values\]. When expressed as a function of CWV − `$w_c$`, the conditional average and probability of precipitation \[panels (e)-(f)\] collapse without exhibiting dependence on the bulk temperature (and ocean basin). The rescaled PDFs in panel (g) also collapse for CWV above critical. For the most relevant temperature bins in the tropics (the mass-weighted column average temperature ≥ 271 K or`$\widehat{q_{sat}}$` ≥ 70 mm ) , the PDF of CWV for precipitating events share a common near-Gaussian core near the critical CWV.
 
-![Image title](convective_transition_diag_fig3.png)
-
-The critical CWV `$w_{c}$` and corresponding critical column relative humidity `$w_{c}/\widehat{q_{sat}}$` are shown in (i) and (j). The colored markers represent the results simulated by the AM4 model and observed values in gray.
+![](convective_transition_diag_fig3.png)
+*(i) Critical CWV `$w_{c}$` and (j) the corresponding critical column relative humidity `$w_{c}/\widehat{q_{sat}}$`. The colored markers represent the results simulated by the AM4 model and observed values in gray.*
 
 Compared to the observations, the slope of the best-fit line simulated by the AM4 model is slightly higher than observed \[0.76 vs. 0.62 in panel (e); Kuo et al. 2020\], but within the uncertainty range of observations (Kuo et al. 2018). The simulated statistics are more sensitive to the tropospheric temperature and ocean basin and indicate that there are more above critical events for highest temperature bins in the model. The functional form of the PDFs for precipitating events deviates from Gaussian. The simulated critical values are consistent with the observed values \[panels (i)-(j)\]. It has been noted that the dependence of critical values on tropospheric temperature (i.e., critical CWV increases with tropospheric temperature but the corresponding critical column RH `$w_{c}/\widehat{q_{sat}}$` decreases) is a generic consequence of including entrainment in the buoyancy/conditional instability calculation (Sahany et al. 2012).
 

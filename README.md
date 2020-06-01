@@ -59,6 +59,8 @@ For advanced users interested in keeping more up-to-date on project development 
 
 For POD developers, the `develop` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in the Developer’s’ Walkthrough.
 
+`% ./src/install.py --env_setup conda-basic --conda_env_root ./envs --MODEL_DATA_ROOT ../inputdata/model --OBS_DATA_ROOT ../inputdata/obs_data --OUTPUT_DIR ../inputdata/wkdir --WORKING_DIR ../inputdata/wkdir`
+
 ### 1.2 Obtaining supporting data
 
 Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:

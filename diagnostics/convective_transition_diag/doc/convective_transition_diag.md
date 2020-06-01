@@ -49,7 +49,7 @@ See http://research.atmos.ucla.edu/csi//REF/pub.html for updates.
 
 ## More about this diagnostic
 
-The current version of the convective transition diagnostic POD produces three sets of figures for both digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; Zhao et al., 2018a, 2018b; see also Kuo et al. 2020) that are produced by the package.
+The current version of the convective transition diagnostic POD produces three sets of figures for both digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; Zhao et al., 2018a,b; see also Kuo et al. 2020) that are produced by the package.
 
 ### 1) Basic statistics
 ![](convective_transition_diag_fig1.png)

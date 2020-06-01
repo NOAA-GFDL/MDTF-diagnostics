@@ -124,7 +124,7 @@ You can include an image in markdown with `![Image title](<path to image file>)`
 which produces
 
 ![Image title](gaussians.jpg)
-*Here is where to put figure caption*
+**Figure:** *Here is where to put figure caption*
 
 There's no clean way (ie without adding HTML) to implement the alignment, size
 and captioning features available in .rst.

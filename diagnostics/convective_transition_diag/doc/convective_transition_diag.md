@@ -45,14 +45,15 @@ The following three 3-D (lat-lon-time) high-frequency (at least 6-hrly) model fi
 2. Kuo, Y.-H., K. A. Schiro, and J. D. Neelin, 2018: Convective transition statistics over tropical oceans for climate model diagnostics: Observational baseline. *J. Atmos. Sci.*, **75**, 1553-1570, https://doi.org/10.1175/JAS-D-17-0287.1.
 3. Kuo, Y.-H., and Co-authors, 2020: Convective Transition Statistics over Tropical Oceans for Climate Model Diagnostics: GCM Evaluation. *J. Atmos. Sci.*, **77**, 379-403, https://doi.org/10.1175/JAS-D-19-0132.1.
 
+See http://research.atmos.ucla.edu/csi//REF/pub.html for updates.
+
 ## More about this diagnostic
 
 The current version of the convective transition diagnostic POD produces three sets of figures for both digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; Zhao et al., 2018a, 2018b; see also Kuo et al. 2020) that are produced by the package.
 
 ### 1) Basic statistics
-![Image title](convective_transition_diag_fig1.png)
-
-Basic statistics computed using events over tropical western Pacific (20°S-20°N, west to 180°), including (a) conditionally averaged precipitation rate, (b) conditional probability of precipitation > 0.25 mm hr<sup>-1</sup>}, (c) PDF of CWV, and (d) PDF of CWV for precipitating events, all as a function of CWV. Here the large markers represent results simulated by the model, and small markers represent the corresponding observations at 1°. The colors indicate the column-integrated saturation humidity which is used as a bulk measure of tropospheric temperature (also shown as triangles). The PDFs in (c) together represent the normalized joint PDF of CWV and bulk temperature. Multiplying (b) and (c) results in PDFs in (d) (not normalized).
+![](convective_transition_diag_fig1.png)
+*Basic statistics computed using events over tropical western Pacific (20°S-20°N, west to 180°), including (a) conditionally averaged precipitation rate, (b) conditional probability of precipitation > 0.25 mm hr<sup>-1</sup>}, (c) PDF of CWV, and (d) PDF of CWV for precipitating events, all as a function of CWV. Here the large markers represent results simulated by the model, and small markers represent the corresponding observations at 1°. The colors indicate the column-integrated saturation humidity which is used as a bulk measure of tropospheric temperature (also shown as triangles). The PDFs in (c) together represent the normalized joint PDF of CWV and bulk temperature. Multiplying (b) and (c) results in PDFs in (d) (not normalized).*
 
 The observed (small markers) and simulated precipitation (large markers) in panel (a) sharply picks up as CWV exceeds a certain threshold, known as the critical CWV \[see panel (e) below for how it is defined, and panel (i) for the values\]. Here, the column integrated saturation humidity `$\widehat{q_{sat}}$` (units: mm) is used as a bulk measure of the tropospheric temperature. As the bulk tropospheric temperature increases, the pickup of precipitation occurs at higher CWV. The probability of precipitation in panel (b) exhibits a similar pickup behavior. The AM4 model examined here can reasonably simulate the observed pickup of precipitation, with slightly higher probability than observed.
 

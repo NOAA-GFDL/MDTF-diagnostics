@@ -81,7 +81,7 @@ The MDTF framework code is written in Python 2.7, but supports running PODs writ
 
 ### 2.1 Conda installation
 
-The framework’s environments can co-exist within an existing Conda or Anaconda installation. Run `% conda --version` as the user who will be using the framework to determine if Conda is installed; the framework has been tested against versions of Conda >= 4.7.5.
+The framework’s environments can co-exist within existing Conda or Anaconda installations. Run `% conda --version` as the user who will be using the framework to determine if Conda is installed; the framework has been tested against versions of Conda >= 4.7.5.
 
 Do not install miniconda/Anaconda again if Conda is already installed for this user: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
@@ -89,14 +89,14 @@ If you do not have a pre-existing Conda installation on your system, we recommen
 
 ### 2.2 Conda environment installation
 
-Run `% $CODE_ROOT/src/conda/conda_init.sh -v` to see where the install script will put the Conda environments by default. 
+The defulat installation may take ~10 min and requires ~4.5 Gb. After installing the framework-specific Conda environments, one should not manually alter them (i.e., never run `conda update` on them). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other Conda environments.
+ 
+To see where the automated script will install the Conda environments by default and which Conda executable it will call (in case there are multiple Conda installations on your machine), run `% $CODE_ROOT/src/conda/conda_init.sh -v`. 
 
-- If the script returns an error or finds the wrong Conda executable (eg. you want to use a local installation of Conda instead of a site-wide installation), the correct location can be passed to the install script as `$CONDA_ROOT` below. `$CONDA_ROOT` should be the base directory containing the Conda installation you want to use (returned by `% conda info --base`).
-- By default, Conda will install program files in the "active env location" listed by `% conda info`. To use a different location (for space reasons, or if you don't have write access), pass the desired directory as `$CONDA_ENV_DIR` below.
+- If the script returns an error or finds the wrong Conda executable (eg. you want to use a local installation of Conda instead of a site-wide installation), the correct location can be passed to the automated script as `$CONDA_ROOT` below. `$CONDA_ROOT` should be the base directory containing the Conda installation you want to use (returned by `% conda info --base`).
+- By default, Conda will install program files in the "active env location" listed by `% conda info`. To use a different location (for disk space or write permission reasons), pass the desired directory as `$CONDA_ENV_DIR` below.
 
-Once the correct paths have been determined, all Conda environments used by the framework can be installed by running `% $CODE_ROOT/src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`. The last two flags only need to be included if you want to override the default values, as described above.
-
- The installation may take ~10min and requires ~4.5 Gb for the default case. After installing the framework-specific Conda environments, one should not manually alter them (i.e., never run `conda update` on them). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined. 
+Once the correct paths have been determined, all Conda environments used by the framework can be installed by running `% $CODE_ROOT/src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`. The two flags after `--all` only need to be included if you want to override the default values, as described above.
 
 ### 2.3 Non-Conda installation
 

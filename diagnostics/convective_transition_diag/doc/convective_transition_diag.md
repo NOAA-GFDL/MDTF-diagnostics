@@ -47,16 +47,11 @@ The following three 3-D (lat-lon-time) high-frequency (at least 6-hrly) model fi
 
 ## More about this diagnostic
 
-In this section, you can go into more detail on the science behind your 
-diagnostic. It's especially helpful if you're able to teach users how to use 
-your diagnostic's output, by showing how to interpret example plots.
+The current version of the convective transition diagnostic POD produces three sets of figures for both digested observations and model output, including (1) basic statistics, (2) collapsed statistics, and (3) critical column water vapor. In the following, we will show an example set of the figures for an uncoupled simulation of the 1° version of the GFDL AM4 (configuration AM4-G9; Zhao et al., 2018a, 2018b; see also Kuo et al. 2020) that are produced by the package.
 
-Instead of doing that here, we provide more examples of markdown syntax that 
-you can customize as needed.
+![Image title](convective_transition_diag_fig1.png)
 
-A good online editor that gives immediate feedback is at <https://dillinger.io/>. 
-Also see this [cheat sheet](https://www.markdownguide.org/cheat-sheet/) and 
-GitHub's [reference](https://guides.github.com/features/mastering-markdown/).
+Basic statistics computed using events over tropical western Pacific (20°S-20°N, west to 180°), including (a) conditionally averaged precipitation rate, (b) conditional probability of precipitation > 0.25 mm hr^{-1}, (c) PDF of CWV, and (d) PDF of CWV for precipitating events, all as a function of CWV. Here the large markers represent results simulated by the model, and small markers represent the corresponding observations at 1°. The colors indicate the column-integrated saturation humidity which is used as a bulk measure of tropospheric temperature (also shown as triangles). The PDFs in (c) together represent the normalized joint PDF of CWV and bulk temperature. Multiplying (b) and (c) results in PDFs in (d) (not normalized).
 
 ### Additional references
 

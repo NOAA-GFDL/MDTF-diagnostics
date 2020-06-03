@@ -5,7 +5,7 @@ The MDTF diagnostic package is portable, extensible, usable, and open for contri
 The MDTF Diagnostic Framework consists of multiple modules, each of which is developed by an individual research group or user. Modules are independent of each other, each module:
 
 1. Produces its own html file (webpage) as the final product
-2. Consists of a set of process-oriented diagnostics
+2. Consists of a set of process-oriented diagnostics (PODs)
 3. Produces a figures or multiple figures that can be displayed by the html in a browser
 
 ![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
@@ -34,7 +34,7 @@ and a link to the full documentation for each diagnostic.
 
 # Quickstart installation instructions
 
-This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics package using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
+This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics (PODs) package using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
 ### Summary of steps for running the package
 
@@ -50,7 +50,7 @@ The official repo for the MDTF code is hosted at the GFDL [GitHub account](https
 
 To install the MDTF package on a local machine, create a directory named `mdtf`, and unzip the code downloaded from the [release page](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1) there. This will create a directory titled `MDTF-diagnostics-3.0-beta.1` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
 
-- `diagnostics/`: directories containing source code of individual PODs.
+- `diagnostics/`: directories containing source code and documentation of individual PODs.
 - `doc/`: directory containing documentation (a local mirror of the documentation site).
 - `src/`: source code of the framework itself.
 - `tests/`: unit tests for the framework.
@@ -58,6 +58,8 @@ To install the MDTF package on a local machine, create a directory named `mdtf`,
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the `master` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.  
 
 For POD developers, the `develop` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in the Developer’s’ Walkthrough.
+
+`% ./src/install.py --env_setup conda-basic --conda_env_root ./envs --MODEL_DATA_ROOT ../inputdata/model --OBS_DATA_ROOT ../inputdata/obs_data --OUTPUT_DIR ../inputdata/wkdir --WORKING_DIR ../inputdata/wkdir`
 
 ### 1.2 Obtaining supporting data
 
@@ -77,26 +79,26 @@ The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am
 
 ## 2. Install the necessary programming languages and modules
 
-The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. To handle this, the framework provides an automated script for setting up and maintaining the necessary environments through the [Conda package manager](https://docs.conda.io/en/latest/). Conda is a free, open source software which is one component of the [Anaconda](https://www.anaconda.com/) python distribution. Note that the framework only makes use of Conda, thus having Anaconda is sufficient but not necessary. For maximum portability and ease of installation, we recommend that all users manage these necessary languages and libraries through this script, even if they have independent installations of these languages on their machine.
+The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. To handle this, the framework provides an automated script for setting up and maintaining the necessary environments through the [Conda package manager](https://docs.conda.io/en/latest/). Conda is a free, open source software which is one component of the [Anaconda](https://www.anaconda.com/) python distribution. Note that the framework only makes use of Conda, thus having Anaconda is sufficient but not necessary. For maximum portability and ease of installation, we recommend that all users manage these necessary languages and libraries through the automated script provided by the framework, even if they have independent installations of these languages on their machine.
 
 ### 2.1 Conda installation
 
-The framework’s environments can co-exist within an existing Conda or Anaconda installation. Run `% conda --version` as the user who will be using the framework to determine if Conda is installed; the framework has been tested against versions of Conda >= 4.7.5.
+The framework’s environments can co-exist within existing Conda or Anaconda installations. Run `% conda --version` as the user who will be using the framework to determine if Conda is installed; the framework has been tested against versions of Conda >= 4.7.5.
 
 Do not install miniconda/Anaconda again if Conda is already installed for this user: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
-If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html), but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`). 
+If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html), but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`). Restart the terminal to load the new shell setting.
 
 ### 2.2 Conda environment installation
 
-Run `% $CODE_ROOT/src/conda/conda_init.sh -v` to see where the install script will put the Conda environments by default. 
+The defulat installation may take ~10 min and requires ~4.5 Gb. After installing the framework-specific Conda environments, one should not manually alter them (i.e., never run `conda update` on them). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other Conda environments.
+ 
+To see where the automated script will install the Conda environments by default and which Conda executable it will call (in case there are multiple Conda installations on your machine), run `% $CODE_ROOT/src/conda/conda_init.sh -v`. 
 
-- If the script returns an error or finds the wrong Conda executable (eg. you want to use a local installation of Conda instead of a site-wide installation), the correct location can be passed to the install script as `$CONDA_ROOT` below. `$CONDA_ROOT` should be the base directory containing the Conda installation you want to use (returned by `% conda info --base`).
-- By default, Conda will install program files in the "active env location" listed by `% conda info`. To use a different location (for space reasons, or if you don't have write access), pass the desired directory as `$CONDA_ENV_DIR` below.
+- If the script returns an error or finds the wrong Conda executable (eg. you want to use a local installation of Conda instead of a site-wide installation), the correct location can be passed to the automated script as `$CONDA_ROOT` below. `$CONDA_ROOT` should be the base directory containing the Conda installation you want to use (returned by `% conda info --base`).
+- By default, Conda will install program files in the "active env location" listed by `% conda info`. To use a different location (for disk space or write permission reasons), pass the desired directory as `$CONDA_ENV_DIR` below.
 
-Once the correct paths have been determined, all Conda environments used by the framework can be installed by running `% $CODE_ROOT/src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`. The last two flags only need to be included if you want to override the default values, as described above.
-
- The installation may take ~10min and requires ~4.5 Gb for the default case. After installing the framework-specific Conda environments, one should not manually alter them (i.e., never run `conda update` on them). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined. 
+Once the correct paths have been determined, all Conda environments used by the framework can be installed by running `% $CODE_ROOT/src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`. The two flags after `--all` only need to be included if you want to override the default values, as described above.
 
 ### 2.3 Non-Conda installation
 

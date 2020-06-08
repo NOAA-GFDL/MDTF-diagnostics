@@ -78,6 +78,7 @@ class MDTFFramework(object):
         pod_info_tuple = cli.load_pod_settings(code_root)
         # do nontrivial parsing
         config = util_mdtf.ConfigManager(cli_obj, pod_info_tuple)
+        print(util.pretty_print_json(config.paths))
         self.parse_mdtf_args(cli_obj, config)
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config)
@@ -306,7 +307,11 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'cli.jsonc'))
+    defaults_rel_path = os.path.join(src_dir, 'cli.jsonc')
+    if not os.path.exists(defaults_rel_path):
+        # print('Warning: site-specific cli.jsonc not found, using template.')
+        defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
+    mdtf = MDTFFramework(code_root, defaults_rel_path)
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

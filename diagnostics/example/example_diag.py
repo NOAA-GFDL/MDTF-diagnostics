@@ -7,6 +7,8 @@ provides, instead of hard-coding them.
 """
 from __future__ import print_function
 import os
+import matplotlib
+matplotlib.use('Agg') # non-X windows backend
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.

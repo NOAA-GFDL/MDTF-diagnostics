@@ -79,7 +79,7 @@ class TestBasicClasses(unittest.TestCase):
         self.assertItemsEqual(temp_inv[1], set(['a']))
 
     def test_namespace_basic(self):
-        test = util.Namespace(name='A', B='C')
+        test = util.NameSpace(name='A', B='C')
         self.assertEqual(test.name, 'A')
         self.assertEqual(test.B, 'C')
         with self.assertRaises(AttributeError):
@@ -88,21 +88,21 @@ class TestBasicClasses(unittest.TestCase):
         self.assertEqual(test.B, 'D')
 
     def test_namespace_dict_ops(self):
-        test = util.Namespace(name='A', B='C')
+        test = util.NameSpace(name='A', B='C')
         self.assertIn('B', test)
         self.assertNotIn('D', test)
 
     def test_namespace_tofrom_dict(self):
-        test = util.Namespace(name='A', B='C')
+        test = util.NameSpace(name='A', B='C')
         test2 = test.toDict()
         self.assertEqual(test2['name'], 'A')
         self.assertEqual(test2['B'], 'C')
-        test3 = util.Namespace.fromDict(test2)
+        test3 = util.NameSpace.fromDict(test2)
         self.assertEqual(test3.name, 'A')
         self.assertEqual(test3.B, 'C')
 
     def test_namespace_copy(self):
-        test = util.Namespace(name='A', B='C')
+        test = util.NameSpace(name='A', B='C')
         test2 = test.copy()
         self.assertEqual(test2.name, 'A')
         self.assertEqual(test2.B, 'C')
@@ -111,12 +111,12 @@ class TestBasicClasses(unittest.TestCase):
         self.assertEqual(test2.B, 'D')
 
     def test_namespace_hash(self):
-        test = util.Namespace(name='A', B='C')
+        test = util.NameSpace(name='A', B='C')
         test2 = test
         test3 = test.copy()
         test4 = test.copy()
         test4.name = 'not_the_same'
-        test5 = util.Namespace(name='A', B='C')
+        test5 = util.NameSpace(name='A', B='C')
         self.assertEqual(test, test2)
         self.assertEqual(test, test3)
         self.assertNotEqual(test, test4)
@@ -182,27 +182,27 @@ class TestUtil(unittest.TestCase):
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):
         input = 'echo "foo"'
-        out = util.run_shell_commands(input)
+        out = util.run_shell_command(input)
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], 'foo')
 
     def test_run_shell_commands_stdout2(self):
-        input = ['echo "foo"', 'echo "bar"']
-        out = util.run_shell_commands(input)
+        input = 'echo "foo" && echo "bar"'
+        out = util.run_shell_command(input)
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'foo')
         self.assertEqual(out[1], 'bar')
         
     def test_run_shell_commands_exitcode(self):
-        input = ['echo "foo"', 'false']
+        input = 'echo "foo"; false'
         with self.assertRaises(Exception):
             # I couldn't get this to catch CalledProcessError specifically,
             # maybe because it takes args?
-            util.run_shell_commands(input)
+            util.run_shell_command(input)
 
     def test_run_shell_commands_envvars(self):
-        input = ['echo $FOO', 'export FOO="baz"', 'echo $FOO']
-        out = util.run_shell_commands(input, env={'FOO':'bar'})
+        input = 'echo $FOO; export FOO="baz"; echo $FOO'
+        out = util.run_shell_command(input, env={'FOO':'bar'})
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'bar')
         self.assertEqual(out[1], 'baz')

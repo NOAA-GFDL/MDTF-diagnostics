@@ -10,8 +10,8 @@ https://pmm.nasa.gov/TRMM/mission-overview) satellite derived 3B42 product.
 Version & Contact info
 ----------------------
 
-| Version 1:
-| Current Developer: Rich Neale
+- Version 1:
+- Current Developer: Rich Neale
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,7 +53,7 @@ References
 More about this diagnostic
 --------------------------
 
-.. figure:: ../img/pod_precip_diurnal_cycle_fig1.png
+.. figure:: precip_diurnal_cycle_fig1.png
    :align: center
    :width: 100 %
 

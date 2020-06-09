@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from __future__ import print_function
 import sys
 # do version check before importing other stuff
@@ -199,8 +199,8 @@ def set_cli_defaults(code_root, cli_config, install_config):
     def _set_cli_default(template, name, default):
         template[name] = default
 
-    in_path = os.path.join(code_root, cli_config['template'])
-    out_path = os.path.join(code_root, cli_config['dest'])
+    in_path = os.path.join(code_root, cli_config['config_in'])
+    out_path = os.path.join(code_root, cli_config['config_out'])
     print("Writing default settings to {}".format(out_path))
     try:
         cli_template = util.read_json(in_path)
@@ -219,16 +219,15 @@ def set_cli_defaults(code_root, cli_config, install_config):
     except Exception as exc:
         fatal_exception_handler(exc, "ERROR: Couldn't write {}.".format(out_path))
 
-def framework_test(code_root, output_dir):
+def framework_test(code_root, output_dir, cli_config):
     print("Starting framework test run")
     abs_out_dir = util.resolve_path(
         output_dir, root_path=code_root, env=os.environ
     )
     try:
         log_str = shell_command_wrapper(
-            './mdtf -w {output_dir} -o {output_dir} {input_file}'.format(
-                output_dir=output_dir,
-                input_file=os.path.join('src', 'default_tests_out.jsonc')
+            './mdtf -f {input_file}'.format(
+                input_file=os.path.join(code_root, cli_config['config_out'])
             ), 
             cwd=code_root
         )
@@ -388,9 +387,8 @@ class MDTFInstaller(object):
             conda_env_create(d.conda_envs, self.code_root, self.settings.conda)
 
         set_cli_defaults(self.code_root, self.settings.cli_defaults, d)
-
         if not d.no_test_run:
-            run_output = framework_test(self.code_root, d.OUTPUT_DIR)
+            run_output = framework_test(self.code_root, d.OUTPUT_DIR, self.settings.cli_defaults)
             framework_verify(self.code_root, run_output)
 
 # ------------------------------------------------------------------------------

@@ -57,8 +57,9 @@
       }
     },
     "cli_defaults": {
-      "template": "src/default_tests.jsonc",
-      "dest": "src/default_tests_out.jsonc",
+      "template": "src/cli_template.jsonc",
+      "config_in": "src/default_tests.jsonc",
+      "config_out": "src/default_tests_out.jsonc",
       "default_keys": [
         "MODEL_DATA_ROOT", "OBS_DATA_ROOT", "WORKING_DIR", "OUTPUT_DIR", 
         "conda_root", "conda_env_root", "venv_root", "r_lib_root",

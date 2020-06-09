@@ -38,7 +38,7 @@ This document provides basic directions for downloading, installing and running 
 
 ### Summary of steps for running the package
 
-You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
+You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
 
 ## 1. Download the package code and sample data for testing
 
@@ -55,9 +55,7 @@ To install the MDTF package on a local machine, create a directory named `mdtf`,
 - `src/`: source code of the framework itself.
 - `tests/`: unit tests for the framework.
 
-For advanced users interested in keeping more up-to-date on project development and contributing feedback, the `master` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.  
-
-For POD developers, the `develop` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in the Developer’s’ Walkthrough.
+For advanced users interested in keeping more up-to-date on project development and contributing feedback, the `master` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested. 
 
 ### 1.2 Obtaining supporting data
 
@@ -77,60 +75,66 @@ The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am
 
 ## 2. Install the necessary programming languages and modules
 
-The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. To handle this, the framework provides an automated script for setting up and maintaining the necessary environments through the [Conda package manager](https://docs.conda.io/en/latest/). Conda is a free, open source software which is one component of the [Anaconda](https://www.anaconda.com/) python distribution. Note that the framework only makes use of Conda, thus having Anaconda is sufficient but not necessary. For maximum portability and ease of installation, we recommend that all users manage these necessary languages and libraries through this script, even if they have independent installations of these languages on their machine.
+The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Anaconda](https://www.anaconda.com/) python distribution, so having Anaconda is sufficient but not necessary. 
+
+For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using the provided script, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below. 
+
+If these space requirements are prohibitive, we provide an alternate method of operation which makes no use of conda and relies on the user to install external dependencies, at the expense of portability. This is described on the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/).
 
 ### 2.1 Conda installation
 
-The framework’s environments can co-exist within an existing Conda or Anaconda installation. Run `% conda --version` as the user who will be using the framework to determine if Conda is installed; the framework has been tested against versions of Conda >= 4.7.5.
+The framework’s environments will co-exist with an existing Anaconda or miniconda installation. *Do not* reinstall miniconda/Anaconda if it's already installed for the user who will be running the framework: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
-Do not install miniconda/Anaconda again if Conda is already installed for this user: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
+To determine if conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5. 
 
-If you do not have a pre-existing Conda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html), but any version of miniconda or Anaconda released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`). 
+If you do not have a pre-existing Anaconda or miniconda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of miniconda/Anaconda (2 or 3) released after June 2019 will work: the only differences are the modules that are pre-installed by default. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`). 
 
 ### 2.2 Conda environment installation
 
-Run `% $CODE_ROOT/src/conda/conda_init.sh -v` to see where the install script will put the Conda environments by default. 
-
-- If the script returns an error or finds the wrong Conda executable (eg. you want to use a local installation of Conda instead of a site-wide installation), the correct location can be passed to the install script as `$CONDA_ROOT` below. `$CONDA_ROOT` should be the base directory containing the Conda installation you want to use (returned by `% conda info --base`).
-- By default, Conda will install program files in the "active env location" listed by `% conda info`. To use a different location (for space reasons, or if you don't have write access), pass the desired directory as `$CONDA_ENV_DIR` below.
-
-Once the correct paths have been determined, all Conda environments used by the framework can be installed by running `% $CODE_ROOT/src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`. The last two flags only need to be included if you want to override the default values, as described above.
-
- The installation may take ~10min and requires ~4.5 Gb for the default case. After installing the framework-specific Conda environments, one should not manually alter them (i.e., never run `conda update` on them). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined. 
-
-### 2.3 Non-Conda installation
-
-If you're unable to use the Conda-based installation, the framework can use existing dependencies installed without using Conda. Because this mode of operation is dependent on the details of each user’s system, we don't recommend it and can only support it at a secondary priority. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for details. The following software is used by the framework and needs to be available on your `$PATH`:
-
-- [Python](https://www.python.org/) version 2.7: the framework will attempt to create virtualenvs for each POD.
-- [NCO utilities](http://nco.sourceforge.net/) version 4.7.6.
-- [ImageMagick](https://imagemagick.org/index.php).
-- [NCL](https://www.ncl.ucar.edu/), version 6.5.0 or newer.
-- [R](https://www.r-project.org/), for the SM_ET_coupling POD only.
-
-
-## 3. Execute the MDTF package with default test settings
-
-### 3.1 Location of the MDTF executable
-
-Following section 2.2, the installation script will have created an executable at `$CODE_ROOT/mdtf` which sets the correct Conda environment before running the framework. To test the installation, `% $CODE_ROOT/mdtf --help` will print help on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
-
-### 3.2 Run the framework on sample data
-
-To run the framework on the first test case, execute
+Run `% conda info --base` as the user who will be using the framework to determine the location of your conda installation. This path will be referred to as `$CONDA_ROOT` below. After determining this path, run
 
 ```
 % cd $CODE_ROOT
-% ./mdtf --OUTPUT_DIR $OUTPUT_DIR src/default_tests.jsonc
+% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT
 ```
 
-`$OUTPUT_DIR` should be a directory you want the results to be written to. The output files for this test case will be written to `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981`. 
+to install all needed environments. This takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined. 
 
-Run time may be 20 minutes or more, depending on your system. When the framework is finished, open `file://$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html` in a web browser to view the output report.
+By default, Conda will install program files within `$CONDA_ROOT` (the "active env location" listed by `% conda info`). To use a different location (for space reasons, or if you don't have write access), pass the desired directory as `$CONDA_ENV_DIR`: `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`.
 
-The settings for default test cases are included in `$CODE_ROOT/src/default_tests.jsonc`. Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the entry for QBOi.EXP1.AMIP.001 in the "caselist" section of that file.
+After installing the framework-specific conda environments, you shouldn't manually alter them (i.e., never run `conda update` on them). To update the environments after updating the framework code, re-run the above commands.
 
-## 4. Next steps
+## 3. Configuring package paths
+
+Open ``src/default_tests.jsonc`` in an editor (we recommend working on a copy). This is a template/example of an input file you can use to define configuration options instead of re-typing them on the command line every time you run the framework.
+
+- If you've installed the supporting data in the directory structure described in section 1.2, the existing values for `OBS_DATA_ROOT` and `MODEL_DATA_ROOT` will be correct. If you put the data in a different location, these values should be changed accordingly.
+- `OUTPUT_DIR` should be set to the location you want the output files to be written to. The output of each run of the framework will be saved in a different subdirectory in this location.
+- `conda_root` should be set to the value of `$CONDA_ROOT` you used above.
+- If you specified a custom environment location with `$CONDA_ENV_DIR`, set `conda_env_root` to that value; otherwise, leave it blank.
+
+## 4. Execute the MDTF package with default test settings
+
+### 4.1 Location of the MDTF executable
+
+The setup script will have created an executable at `$CODE_ROOT/mdtf` which sets the correct conda environment before running the framework. To test the installation, `% $CODE_ROOT/mdtf --help` will print help on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
+
+### 4.2 Run the framework on sample data
+
+To run the framework on the CESM sample model data, run
+
+```
+% cd $CODE_ROOT
+% ./mdtf -f src/default_tests.jsonc
+```
+
+If you edited a copy of ``default_tests.jsonc``, pass that file instead. Run time may be 10-20 minutes, depending on your system. 
+
+The output files for this test case will be written to `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981`. When the framework is finished, open `file://$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html` in a web browser to view the output report.
+
+Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the entry for QBOi.EXP1.AMIP.001 in the "caselist" section of the input file.
+
+## 5. Next steps
 
 Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
 

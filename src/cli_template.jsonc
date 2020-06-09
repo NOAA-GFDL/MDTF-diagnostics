@@ -45,27 +45,23 @@
         {
           "name": "MODEL_DATA_ROOT",
           "help": "Parent directory containing results from different models.",
-          "default" : "../inputdata/model/",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OBS_DATA_ROOT",
           "help": "Parent directory containing observational data used by individual PODs.",
-          "default" : "../inputdata/obs_data",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "WORKING_DIR",
           "short_name" : "w",
           "help": "Working directory.",
-          "default" : "../wkdir",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
           "short_name" : "o",
           "help": "Directory to write output files. Defaults to working directory.",
-          "default" : "../wkdir",
           "metavar" : "<DIR>",
           "parse_type": "path"
         }

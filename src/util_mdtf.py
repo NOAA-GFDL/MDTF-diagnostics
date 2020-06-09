@@ -172,6 +172,8 @@ class TempDirManager(util.Singleton):
         for d in self._dirs:
             self.rm_tempdir(d)
 
+class ConventionError(Exception):
+    pass
 
 class VariableTranslator(util.Singleton):
     def __init__(self, unittest_flag=False, verbose=0):
@@ -200,9 +202,15 @@ class VariableTranslator(util.Singleton):
             for conv in util.coerce_to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
+                if self.variables.has_key(conv):
+                    print("ERROR: convention "+conv+" defined in "+filename+" already exists")
+                    raise ConventionError
+
                 self.axes[conv] = d.get('axes', dict())
                 self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
                 self.units[conv] = util.MultiMap(d.get('units', dict()))
+
+
 
     def toCF(self, convention, varname_in):
         if convention == 'CF': 

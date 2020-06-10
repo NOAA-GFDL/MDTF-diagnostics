@@ -53,15 +53,15 @@
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "WORKING_DIR",
-          "short_name" : "w",
-          "help": "Working directory.",
+          "name": "OUTPUT_DIR",
+          "short_name" : "o",
+          "help": "Directory to write output files.",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "OUTPUT_DIR",
-          "short_name" : "o",
-          "help": "Directory to write output files. Defaults to working directory.",
+          "name": "WORKING_DIR",
+          "short_name" : "w",
+          "help": "Working directory. Defaults to output directory if unspecified.",
           "metavar" : "<DIR>",
           "parse_type": "path"
         }

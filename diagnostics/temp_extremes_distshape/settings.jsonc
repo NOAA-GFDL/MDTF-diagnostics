@@ -35,7 +35,7 @@
     },
     // Programs and third-party libraries diagnostic needs to run.
     "runtime_requirements": {
-        "python": ["os","json","numpy","scipy","matplotlib","mpl_toolkits","h5py","netcdf4","netcdftime","math","cftime","cartopy"]
+        "python": ["numpy","scipy","matplotlib","mpl_toolkits","h5py","netcdf4","netcdftime","cftime","cartopy"]
     }
    },
    "data" : {

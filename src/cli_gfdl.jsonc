@@ -65,16 +65,17 @@
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "WORKING_DIR",
-          "help": "Working directory.",
-          "default" : "$MDTF_GFDL_TMPDIR/wkdir",
+          "name": "OUTPUT_DIR",
+          "short_name" : "o",
+          "help": "Directory to write output files.",
+          "default" : "$HOME/mdtf_out",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
-          "name": "OUTPUT_DIR",
-          "short_name" : "o",
-          "help": "Directory to write output files. Defaults to working directory.",
-          "default" : "$HOME/mdtf_out",
+          "name": "WORKING_DIR",
+          "short_name" : "w",
+          "help": "Working directory. Defaults to output directory if unspecified.",
+          "default" : "$MDTF_GFDL_TMPDIR/wkdir",
           "metavar" : "<DIR>",
           "parse_type": "path"
         }

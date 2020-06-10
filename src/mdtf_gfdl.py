@@ -136,7 +136,11 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = GFDLMDTFFramework(code_root, os.path.join(src_dir, 'cli_gfdl.jsonc'))
+    defaults_rel_path = os.path.join(src_dir, 'cli_gfdl.jsonc')
+    if not os.path.exists(defaults_rel_path):
+        # print('Warning: site-specific cli_gfdl.jsonc not found, using template.')
+        defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
+    mdtf = GFDLMDTFFramework(code_root, defaults_rel_path)
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

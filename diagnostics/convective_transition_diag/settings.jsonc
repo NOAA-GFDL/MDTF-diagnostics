@@ -23,7 +23,7 @@
       // Specify parameters for Convective Transition Diagnostic Package.
       // BULK_TROPOSPHERIC_TEMPERATURE_MEASURE: Use 1:tave, or 2:qsat_int
       // as the Bulk Tropospheric Temperature Measure.
-      "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" : "2",
+      "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" : "1",
       // RES: set Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00).
       "RES" : "1.00"
     },

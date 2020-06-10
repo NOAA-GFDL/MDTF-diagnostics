@@ -8,6 +8,7 @@ dependencies:
 - numpy
 - scipy
 - netCDF4
+- cftime
 - xarray
 - matplotlib
 - cartopy

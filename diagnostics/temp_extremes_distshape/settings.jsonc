@@ -65,21 +65,24 @@
       "path_variable": "/vol/share/climate_lab/Arielle/nonGaussian_tails/MDTF/MDTF_final/mdtf/inputdata/model/GFDL-CM3/day/",
       "units": "K",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required"
+      "requirement" : "required",
+      "freq" : "day"
      },
      {
       "var_name" : "zg_var",
       "path_variable": "/vol/share/climate_lab/Arielle/nonGaussian_tails/MDTF/MDTF_final/mdtf/inputdata/model/GFDL-CM3/day/",
       "units": "m",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required"
+      "requirement" : "required",
+      "freq" : "day"
      },
      {
       "var_name" : "psl_var",
       "path_variable": "/vol/share/climate_lab/Arielle/nonGaussian_tails/MDTF/MDTF_final/mdtf/inputdata/model/GFDL-CM3/day/",
       "units": "Pa",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required"
+      "requirement" : "required",
+      "freq" : "day"
      }
    ]
 }

@@ -14,7 +14,6 @@ This site contains documentation for the MDTF Diagnostics framework. The code is
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 3
 
    sphinx/start_toc
    sphinx/site_toc

@@ -83,9 +83,7 @@ class CLIHandler(object):
     def __init__(self, code_root, cli_config, partial_defaults=None):
         self.code_root = code_root
         self.config = dict()
-        if isinstance(partial_defaults, dict):
-            partial_defaults = [partial_defaults] # not handled correctly by coerce_to_iter
-        self.partial_defaults = util.coerce_to_iter(partial_defaults)
+        self.partial_defaults = partial_defaults
         self.parser_groups = dict()
         # no way to get this from public interface? _actions of group
         # contains all actions for entire parser
@@ -229,21 +227,31 @@ class CLIHandler(object):
                 self.is_default[arg.dest] = (arg.dest is arg.default)
 
     def parse_cli(self, args=None):
+        # call preparse_cli if child class hasn't done so already
         if not self.config:
             self.preparse_cli(args)
+
         # if no additional defaults were set, that's sufficient, otherwise need
         # to take into account their intermediate priority
+        if isinstance(self.partial_defaults, dict):
+            # not handled correctly by coerce_to_iter
+            self.partial_defaults = [self.partial_defaults] 
+        self.partial_defaults = util.coerce_to_iter(self.partial_defaults)
+        partial_defaults = []
+        for d in self.partial_defaults:
+            # drop empty strings
+            partial_defaults.append({k:v for k,v in d.iteritems() if v != ""})
 
-        if self.partial_defaults:
-            # Options explicitly set by user on CLI; is_default = None if no default
-            cli_opts = {k:v for k,v in self.config.iteritems() \
-                if not self.is_default.get(k, True)}
-            # full set of defaults from cli.jsonc, from running parser on empty input
-            defaults = vars(self.parser.parse_args([]))
-            chained_dict_list = [cli_opts] + self.partial_defaults + [defaults]
+        # self.config was populated by preparse_cli()
+        # Options explicitly set by user on CLI; is_default = None if no default
+        cli_opts = {k:v for k,v in self.config.iteritems() \
+            if not self.is_default.get(k, True)}
+        # full set of defaults from cli.jsonc, from running parser on empty input
+        defaults = vars(self.parser.parse_args([]))
+        chained_dict_list = [cli_opts] + partial_defaults + [defaults]
 
-            # CLI opts override options set from file, which override defaults
-            self.config = dict(ChainMap(*chained_dict_list))
+        # CLI opts override options set from file, which override defaults
+        self.config = dict(ChainMap(*chained_dict_list))
 
 
 class FrameworkCLIHandler(CLIHandler):

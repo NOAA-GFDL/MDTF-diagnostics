@@ -25,7 +25,7 @@ The currently package consists of following functionalities:
 
 More on the way... (\* under development)
 
-As a module of the MDTF code package, all scripts of this POD can be found under the [convective_transition_diag](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/master/var_code/convective_transition_diag) directory and digested observational data under `inputdata/obs_data/convective_transition_diag`.
+As a module of the MDTF code package, all scripts of this POD can be found under the [convective_transition_diag](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/var_code/convective_transition_diag) directory and digested observational data under `inputdata/obs_data/convective_transition_diag`.
 
 ## Required programming language and libraries
 

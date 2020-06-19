@@ -1,7 +1,7 @@
 Walkthrough of framework operation 
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing only on aspects that are relevant for the operation of individual PODs. For the rest of this walkthrough, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/master/diagnostics/example>`__ is used as a concrete example to illustrate how a POD is implemented and integrated into the framework. 
+We now describe in greater detail the actions that are taken when the framework is run, focusing only on aspects that are relevant for the operation of individual PODs. For the rest of this walkthrough, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ is used as a concrete example to illustrate how a POD is implemented and integrated into the framework. 
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
@@ -19,7 +19,7 @@ Data request
 
 Each POD describes the model data it requires as input in the ``"varlist"`` section of its settings file. The most important features of this file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.) Each entry in the ``varlist`` section corresponds to one model data file used by the POD. 
 
-The framework goes through all the PODs to be run and assembles a master list of required model data from their ``varlist`` sections. It then queries the source of the model data for the presence of each requested variable with the requested characteristics.
+The framework goes through all the PODs to be run and assembles a top-level list of required model data from their ``varlist`` sections. It then queries the source of the model data for the presence of each requested variable with the requested characteristics.
 
 Variables are specified in the settings file in a model-independent way, using `CF convention <http://cfconventions.org/>`__ standard terminology wherever possible. If your POD takes derived quantities as input (column weighted averages, etc.) we recommend that you incorporate whatever preprocessing is necessary to compute these into your POD’s code. Your POD may request variables outside of the CF conventions (by requiring an exact match on the variable name), but please be aware that this will severely limit the situations in which your POD will be run (see below).
 
@@ -44,7 +44,7 @@ The framework will check that all these programs and libraries are available on 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-In its settings file, the example diagnostic lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__ as the python language interpreter, and the matplotlib, xarray and netCDF4 third-party libraries for python. In this walkthrough, we assume the framework is managing its dependencies using the conda package manager, so the framework assigns the POD to run in the `“python-base” <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/master/src/conda/env_python_base.yml>`__ conda environment, which was created when the user installed the framework.
+In its settings file, the example diagnostic lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__ as the python language interpreter, and the matplotlib, xarray and netCDF4 third-party libraries for python. In this walkthrough, we assume the framework is managing its dependencies using the conda package manager, so the framework assigns the POD to run in the `“python-base” <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python_base.yml>`__ conda environment, which was created when the user installed the framework.
 
 POD execution
 -------------
@@ -84,7 +84,7 @@ The most important environment variables set by the framework describe the locat
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The framework starts a unix subprocess, sets environment variables and the conda environment, and runs the `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/master/diagnostics/example/example_diag.py>`__ script in python. See comments in the code. The script reads the model surface air temperature data located at ``$TAS_FILE``, and reference digested temperature data at ``$OBS_DATA/example_tas_means.nc``.
+The framework starts a unix subprocess, sets environment variables and the conda environment, and runs the `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ script in python. See comments in the code. The script reads the model surface air temperature data located at ``$TAS_FILE``, and reference digested temperature data at ``$OBS_DATA/example_tas_means.nc``.
 
 The calculation performed by the example POD is chosen to be simple: it just does a time average of the model data. The observational data was supplied in time-averaged form, following the instructions for digested results above. 
 

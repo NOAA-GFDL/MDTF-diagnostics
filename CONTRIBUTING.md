@@ -8,7 +8,7 @@
 
 ### Repo Organization
 Contributors are encouraged to follow the [git-flow](https://nvie.com/posts/a-successful-git-branching-model/) model, which has proven to be a popular way to organize projects. There are three permanent branches in the project:
-- `master`: The "stable release" branch. At any time, a new user should be able to clone master to obtain fully functional, scientifically valid code.
+- `main`: The "stable release" branch. At any time, a new user should be able to clone main to obtain fully functional, scientifically valid code.
 - `develop`: The "beta testing" branch. 
 - `hotfix`: Branch from which one-off bug fixes are committed.
 

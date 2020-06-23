@@ -35,15 +35,14 @@ and a link to the full documentation for each diagnostic.
 
 This document provides basic directions for downloading, installing and running a test of the MDTF framework using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
-Throughout this document, `%` indicates the command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`. `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be replaced by the actual path to the `MDTF-diagnostics` directory.
+Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory. 
+
+### Summary of steps for running the package
 
 **Summary of steps for installing the framework**
 
 You will need to download the source code, digested observational data, and sample model data (section 1). Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__ package manager (sections 2 and 3) and run the framework on sample model data (sections 4 and 5).
 
-Consult the [documentation](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) for more general instructions, including how to run the framework on your own data.
-
-## 1. Download the framework code and supporting data
 
 ### 1.1 Obtaining the code
 

@@ -58,9 +58,9 @@ bin_output_list=sorted(glob.glob(BIN_OUTPUT_DIR+"/"+BIN_OUTPUT_FILENAME+".nc"))
 FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
 # Figure filename for Convective Transition Statistics (CTS)
 #  collapsed by shifting CWV by Critical CWV
-FIG_FILENAME_CTS=os.environ["CASENAME"]+".convecTransCriticalCollapse_stats"+"_"+TEMP_VAR+".ps"
+FIG_FILENAME_CTS=os.environ["CASENAME"]+".convecTransCriticalCollapse_stats"+"_"+TEMP_VAR+".eps"
 # Figure filename for Critical CWV
-FIG_FILENAME_WC=os.environ["CASENAME"]+".convecTransCriticalCollapse_wc"+"_"+TEMP_VAR+".ps"
+FIG_FILENAME_WC=os.environ["CASENAME"]+".convecTransCriticalCollapse_wc"+"_"+TEMP_VAR+".eps"
 
 ## Binned data filename & figure directory/filename for OBS (default: R2TMIv7) ##
 OBS="Reanalysis-2 + TMIv7r1" # will show up in the OBS figure
@@ -71,9 +71,9 @@ bin_obs_list=sorted(glob.glob(os.environ["OBS_DATA"]\
 # convecTransCriticalCollapse.py generates 2 sets figures for OBS too
 FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
 FIG_OBS_FILENAME_CTS="convecTransCriticalCollapse_stats_R2TMIv7r1_200206_201405_res="\
-                      +RES+"_fillNrCWV_"+TEMP_VAR+".ps"
+                      +RES+"_fillNrCWV_"+TEMP_VAR+".eps"
 FIG_OBS_FILENAME_WC="convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res="\
-                      +RES+"_fillNrCWV_"+TEMP_VAR+".ps"
+                      +RES+"_fillNrCWV_"+TEMP_VAR+".eps"
 
 # Don't fit/plot bins with PDF<PDF_THRESHOLD
 PDF_THRESHOLD=1e-5 # default: 1e-5

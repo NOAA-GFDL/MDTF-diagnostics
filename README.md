@@ -36,13 +36,14 @@ and a link to the full documentation for each diagnostic.
 
 This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics (PODs) package using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
+Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory. 
+
 ### Summary of steps for running the package
 
 You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
 
 ## 1. Download the package code and sample data for testing
 
-Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory. 
 
 ### 1.1 Obtaining the code
 

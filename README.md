@@ -42,10 +42,14 @@ Throughout this document, `%` indicates the UNIX/LINUX command line prompt and i
 
 ### Summary of steps for running the package
 
-You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) in the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
+You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). While the package contains quite a few scripts, the most relevant for present purposes are:
 
-You will need to download the source code, digested observational data, and sample model data (section 1). Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__ package manager (sections 2 and 3) and run the framework on sample model data (sections 4 and 5).
+- `conda_env_setup.sh`: automated script for installing necessary Conda environments.
+- `default_tests.jsonc`: configuration file for running the framework.
 
+Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) for how to run the framework on your own data and configure general settings.
+
+## 1. Download the package code and sample data for testing
 
 ### 1.1 Obtaining the code
 
@@ -99,27 +103,25 @@ mdtf
 
 The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that `mdtf` now contains both `MDTF-diagnostics` and `inputdata` directories.
 
-You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of `OBS_DATA_ROOT` and `MODEL_DATA_ROOT` as described below in section 4.
+You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of `OBS_DATA_ROOT` and `MODEL_DATA_ROOT` as described below in Section 3.
 
-The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Anaconda](https://www.anaconda.com/) python distribution, so having Anaconda is sufficient but not necessary.
+## 2. Install the necessary programming languages and modules
 
-For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using the provided script, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
+The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [Conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/) python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
+
+For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using the provided script `src/conda/conda_env_setup.sh`, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda, even if they have a pre-existing installations of the required languages. A complete installation of all dependencies requires roughly 5 Gb, and the location of this installation can be set with the `$CONDA_ENV_DIR` setting described below.
 
 ### 2.1 Conda installation
 
-Users with an existing conda installation should skip this section and proceed to section 3.
+The framework’s environments will co-exist with an existing Miniconda/Anaconda installation. *Do not* reinstall Miniconda/Anaconda if it's already installed for the user who will be running the framework: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
-* To determine if conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
-
-To determine if conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
-
-If you do not have a pre-existing Anaconda or miniconda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of miniconda/Anaconda (2 or 3) released after June 2019 will work: the only differences are the modules that are pre-installed by default. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`).
+To determine if Conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5. If you do not have a pre-existing Conda on your system (i.e., the command doesn't return anything), we recommend using the Miniconda installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of Miniconda/Anaconda (2 or 3) released after June 2019 will work. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`).
 
 ## 3. Install framework dependencies with conda
 
-As described above, all software dependencies for the framework and PODs are managed through conda environments. 
+Run `% conda info --base` as the user who will be using the framework to determine the location of your Conda installation. This path will be referred to as `$CONDA_ROOT` below. After determining this path, run
 
 Run `% conda info --base` as the user who will be using the framework to determine the location of your conda installation. This path will be referred to as `$CONDA_ROOT` below. If you don't have write access to this location (eg, on a multi-user system), you'll need to tell conda to install files in a non-default location `$CONDA_ENV_DIR`, as described below.
 
@@ -129,12 +131,13 @@ Next, run
 % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 ```
 
-to install all needed environments. This takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined.
+to install all needed environments under. This takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
-- Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
-- The optional `--env_dir` flag directs conda to install framework dependencies in `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). If this flag is omitted, the environments will be installed in `$CONDA_ROOT/envs/` by default.
+By default, Conda will install the environments within `$CONDA_ROOT/envs/`. To use a different location (for space reasons, or if you don't have write access), pass the desired directory as `$CONDA_ENV_DIR`: `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`.
 
-After installing the framework-specific conda environments, you shouldn't manually alter them (eg, never run `conda update` on them). To update the environments after updating the framework code, re-run the above commands. These environments can be uninstalled by simply deleting the "_MDTF" directories under `$CONDA_ENV_DIR` (or `$CONDA_ROOT/envs/` by default).
+The `--all` flag makes the script install all environments prescribed by the YAML (.yml) files under `src/conda/` (one YAML file for one environment). You can install the environments selectively by using the `--env` flag instead. For instance, `% ./src/conda/conda_env_setup.sh --env base --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR` will install the "_MDTF_base" environment prescribed by `env_base.yml`, and so on. With `--env`, the current script can install one environment at a time. Repeat the command for multiple environments. Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see Section 4.3.
+
+After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run `conda update` on them). To update the environments after updating the framework code, re-run the above commands.
 
 ## 4. Configure framework paths
 

@@ -2,12 +2,15 @@
 
 The MDTF diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on climate model data. Each POD script targets a specific physical process or emergent behavior, with the goals of determining how accurately the model represents that process, ensuring that models produce the right answers for the right reasons, and identifying gaps in the understanding of phenomena.
 
-The package provides an extensible, portable and reproducible means for running these diagnostics as part of the model development workflow. The framework handles software dependency and data handling tasks, meaning that POD developers can focus on science instead of “reinventing the wheel”. Development is community-driven and built on open-source technologies. Documentation for users and contributors is hosted on <a href="https://mdtf-diagnostics.readthedocs.io/en/latest/">readthedocs.io</a>.
+The MDTF Diagnostic Framework consists of multiple process-oriented diagnostic (POD) modules, each of which is developed by an individual research group or user. PODs are independent of each other, each POD:
+
+1. Produces its own html file (webpage) as the final product
+2. Consists of a set of diagnostics targeting process-level performance
+3. Produces a figure or multiple figures that can be displayed by the html in a browser
 
 ![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
 
 ## Diagnostics in Package
-
 Follow the links in the table below to view sample output, including a brief description
 and a link to the full documentation for each diagnostic.
 
@@ -35,18 +38,18 @@ and a link to the full documentation for each diagnostic.
 
 This document provides basic directions for downloading, installing and running a test of the MDTF framework using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
-Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory. 
+Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in Section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory.
 
 ### Summary of steps for running the package
 
-**Summary of steps for installing the framework**
+You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (Section 1). Afterwards, we describe how to install necessary Conda environments and languages (Section 2) and run the framework on the default test case (Section 3). Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) in the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for how to run the framework on your own data and configure general settings.
 
 You will need to download the source code, digested observational data, and sample model data (section 1). Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__ package manager (sections 2 and 3) and run the framework on sample model data (sections 4 and 5).
 
 
 ### 1.1 Obtaining the code
 
-The official repo for the MDTF code is hosted at the NOAA-GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that end users download and test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2).
+The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that end users download and test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1).
 
 To install the MDTF package on a local machine, create a directory named `mdtf` and unzip the code downloaded from the [release page](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2) there. This will create a directory titled `MDTF-diagnostics-3.0-beta.2` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
 
@@ -94,13 +97,13 @@ mdtf
          ├── (... supporting data for individual PODs )
 ```
 
-The default test case uses the QBOi.EXP1.AMIP.001 data. The GFDL.CM4.c96L32.am4g10r8 data is only for testing the MJO Propagation and Amplitude POD.
+The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that `mdtf` now contains both `MDTF-diagnostics` and `inputdata` directories.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of `OBS_DATA_ROOT` and `MODEL_DATA_ROOT` as described below in section 4.
 
-## 2. Install the conda package manager, if needed
+The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Anaconda](https://www.anaconda.com/) python distribution, so having Anaconda is sufficient but not necessary.
 
-The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [conda](https://docs.conda.io/en/latest/), a free, open-source package manager, to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda ](https://www.anaconda.com/) Python distributions, so having Miniconda or Anaconda is sufficient but not required.
+For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using the provided script, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda, even if they have a pre-existing installations of the required languages. A complete installation of all dependencies requires roughly 5 Gb, and the location of this installation can be set with the `$CONDA_ENV_DIR` setting described below.
 
@@ -110,9 +113,9 @@ Users with an existing conda installation should skip this section and proceed t
 
 * To determine if conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
 
-    - Do not install a new copy of Miniconda/Anaconda if it's already installed for the user who will be running the framework: the installer will break the existing installation (if it's not managed with, e.g., environment modules.) The framework’s environments are designed to coexist with an existing Miniconda/Anaconda installation. 
+To determine if conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
 
-* If you do not have a pre-existing conda installation, we recommend installing Miniconda 3.x, available [here](https://docs.conda.io/en/latest/miniconda.html). This version is not required: any version of Miniconda/Anaconda (2 or 3) released after June 2019 will work equally well. Follow the [installation instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) appropriate for your system.
+If you do not have a pre-existing Anaconda or miniconda installation on your system, we recommend using the miniconda2 (python 2.7) installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of miniconda/Anaconda (2 or 3) released after June 2019 will work: the only differences are the modules that are pre-installed by default. Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” prompt. This will allow the installer to add the conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`).
 
 ## 3. Install framework dependencies with conda
 
@@ -126,7 +129,7 @@ Next, run
 % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 ```
 
-to install all dependencies, which takes ~10 min (depending on machine and internet connection). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with user-created environments in a preexisting conda installation.
+to install all needed environments. This takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments that are defined.
 
 - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
 - The optional `--env_dir` flag directs conda to install framework dependencies in `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). If this flag is omitted, the environments will be installed in `$CONDA_ROOT/envs/` by default.
@@ -167,7 +170,7 @@ If you've downloaded the NCAR-CESM-CAM sample data (described in section 1.2 abo
 % ./mdtf -f src/default_tests.jsonc
 ```
 
-Run time may be 10-20 minutes, depending on your system.
+If you edited a copy of ``default_tests.jsonc``, pass that file instead. Run time may be 10-20 minutes, depending on your system.
 
 - If you edited or renamed `src/default_tests.jsonc`, as recommended in the previous section, pass the path to that configuration file instead.
 - The output files for this test case will be written to `$OUTPUT_DIR/MDTF_QBOi.EXP1.AMIP.001_1977_1981`. When the framework is finished, open `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html` in a web browser to view the output report.

@@ -109,7 +109,7 @@ You can put the observational data and model output in different locations (e.g.
 
 The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [Conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/) python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
 
-For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using the provided script `src/conda/conda_env_setup.sh`, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
+For maximum portability and ease of installation, we recommend that all users manage dependencies through Conda using the provided script `src/conda/conda_env_setup.sh`, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda, even if they have a pre-existing installations of the required languages. A complete installation of all dependencies requires roughly 5 Gb, and the location of this installation can be set with the `$CONDA_ENV_DIR` setting described below.
 
@@ -149,11 +149,16 @@ The MDTF framework supports setting configuration options in a file as well as o
 - `conda_root` should be set to the value of `$CONDA_ROOT` used above in :ref:`ref-conda-env-install`.
 - If you specified a non-default conda environment location with `$CONDA_ENV_DIR`, set `conda_env_root` to that value; otherwise, leave it blank.
 
-Relative paths in the configuration file will be interpreted relative to `$CODE_ROOT`, and shell environment variables (eg, `$HOME`) will be expanded when the framework is run. 
+`src/default_tests.jsonc` is a template/example for configuration options that will be passed to the executable as an input. Open it in an editor (we recommend working on a copy). The following adjustments are necessary before running the framework:
 
-## 5. Run the MDTF framework on sample data
+- If you've saved the supporting data in the directory structure described in Section 1.2, the default values for `OBS_DATA_ROOT` and `MODEL_DATA_ROOT` pointing to `mdtf/inputdata/obs_data/` and `mdtf/inputdata/model/` will be correct. If you put the data in a different location, these values should be changed accordingly.
+- `OUTPUT_DIR` should be set to the location you want the output files to be written to (default: `mdtf/wkdir/`; will be created by the framework). The output of each run of the framework will be saved in a different subdirectory in this location.
+- `conda_root` should be set to the value of `$CONDA_ROOT` you used above.
+- If you specified a custom environment location with `$CONDA_ENV_DIR`, set `conda_env_root` to that value; otherwise, leave it blank.
 
-### 5.1 Location of the MDTF executable
+We recommend using absolute paths in `default_tests.jsonc`, but relative paths are also allowed (should be relative to `$CODE_ROOT`).
+
+## 4. Execute the MDTF package with default test settings
 
 The MDTF framework is run via a wrapper script at `$CODE_ROOT/mdtf`. 
 

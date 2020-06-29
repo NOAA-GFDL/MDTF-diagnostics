@@ -523,6 +523,14 @@ class Diagnostic(object):
                         path_stem+'-{}.png'.format(n+1),
                         path_stem+'-{}.png'.format(n)
                     )
+        # also move any figures saved directly as bitmaps
+        exts = ['gif', 'png', 'jpg', 'jpeg']
+        for d in dirs:
+            for ext in exts:
+                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
+                for f in glob.glob(pattern):
+                    (dd, ff) = os.path.split(f)
+                    shutil.move(f, os.path.join(os.path.dirname(dd), ff))
 
     def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

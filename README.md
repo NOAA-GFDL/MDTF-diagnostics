@@ -178,9 +178,11 @@ If you edited/renamed `default_tests.jsonc`, pass that file instead. Run time ma
 
 The output files for this test case will be written to `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981`. When the framework is finished, open `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html` in a web browser to view the output report.
 
-@@@Add instructions for running other PODs...
+The above command will execute PODs included in `pod_list` of the configuration file. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding `//`). Note that entries in the list must be separated by `,`. Check for missing or surplus `,` if you encounter an error (e.g., "ValueError: No closing quotation").
 
-Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the entry for QBOi.EXP1.AMIP.001 in the "caselist" section of the configuration file, and uncomment the entry for GFDL.CM4.c96L32.am4g10r8.
+Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of the configuration file, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
+
+If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
 
 ### 4.3 Framework interaction with Conda environments
 

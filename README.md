@@ -186,7 +186,18 @@ If you re-run the above command,  the result will be written to another subdirec
 
 ### 4.3 Framework interaction with Conda environments
 
-@@@If `--all` flag wasn't used...
+As just described in section 4.2, when you run the `mdtf` executable, among other things, it reads `pod_list` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+
+- The framework will first try to determine whether there is a Conda environment named `_MDTF_$POD_NAME` under `$CONDA_ENV_DIR`. If yes, the framework will switch to this environment and run the POD.
+- If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in the settings file specifies the programming language(s) adopted by the POD.
+- If purely Python, the framework will switch to `_MDTF_python_base` and run the POD.
+- If NCL is used, then `_MDTF_NCL_base`.
+
+Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to `_MDTF_NCL_base` when seeing both NCL and Python in the settings file.
+
+If you choose to selectively install Conda environments using the `--env` flag (section 2.2), remember to install all the environments needed for the PODs you're interested in, and that `_MDTF_base` is mandatory for the framework's operation.
+
+## 5. Next steps
 
 This quickstart installation instructions is part of the "Getting started" in the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/). Consult the rest of Getting started for more detailed information, including how to run the framework on your own data and configure general settings. For users interested in contributing a POD module, see "Developer information" or [Developer's Walkthrough](https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf).
 

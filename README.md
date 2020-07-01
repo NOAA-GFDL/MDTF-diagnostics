@@ -119,7 +119,7 @@ Here we are checking that the Conda command is available on your system. We reco
 
 - To determine if Conda is installed, run `% conda --version` as the user who will be using the framework. The framework has been tested against versions of Conda >= 4.7.5.
 
-- If the command doesn't return anything, or the return points to a path under `/usr/`, i.e., you do not have a pre-existing personal Conda on your system, we recommend using the Miniconda installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of Miniconda/Anaconda (2 or 3) released after June 2019 will work. Installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
+- If the command doesn't return anything, i.e., you do not have a pre-existing Conda on your system, we recommend using the Miniconda installer available [here](https://docs.conda.io/en/latest/miniconda.html). Any version of Miniconda/Anaconda (2 or 3) released after June 2019 will work. Installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
 
 - Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda2 by running conda init?” (or similar) prompt. This will allow the installer to add the Conda path to the user's shell login script (e.g., `~/.bashrc` or `~/.cshrc`).
 
@@ -132,6 +132,8 @@ The framework’s environments will co-exist with an existing Miniconda/Anaconda
 Here we set up the necessary environments needed for running the framework and individual PODs via the provided script. These are sometimes referred to as "Conda environments" conventionally.
 
 After making sure that Conda is available, run `% conda info --base` as the user who will be using the framework to determine the location of your Conda installation. This path will be referred to as `$CONDA_ROOT` below.
+
+- If this path points to `/usr/` or a subdirectory therein, we recomnend having a separate Miniconda/Anaconda installation of your own following section 2.1.
 
 Next, run
 ```

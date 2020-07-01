@@ -150,7 +150,7 @@ to install all necessary environments (and create an executable; section 4.1), w
 
 - Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see section 4.3.
 
-After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run `conda update` on them). To update the environments after updating the framework code, re-run the above commands.
+After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run `conda update` on them). To update the environments after updating the framework code, re-run the above commands. These environments can be uninstalled by simply deleting "_MDTF" directories under `$CONDA_ENV_DIR` (or `$CONDA_ROOT/envs/` for default setting).
 
 ## 4. Configure framework paths
 

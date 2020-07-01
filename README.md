@@ -66,7 +66,7 @@ For advanced users interested in keeping more up-to-date on project development 
 
 ### 1.2 Obtaining supporting data
 
-Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The required files are:
+Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf). The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
 
 - Digested observational data (159 Mb): MDTF_v2.1.a.obs_data.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar).
 - NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar).
@@ -107,7 +107,7 @@ You can put the observational data and model output in different locations (e.g.
 
 ## 2. Install the necessary programming languages and modules
 
-*For users unfamiliar with Conda, section 2.1 can be skipped if Conda has been installed, but section 2.2 CANNOT be skipped.*
+*For users unfamiliar with Conda, section 2.1 can be skipped if Conda has been installed, but section 2.2 CANNOT be skipped regardless.*
 
 The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [Conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://www.anaconda.com/) python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
 
@@ -209,13 +209,16 @@ As just described in section 4.2, when you run the `mdtf` executable, among othe
 
 2. If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in the settings file specifies the programming language(s) adopted by the POD:
 
-      1). If purely Python, the framework will switch to `_MDTF_python_base` and run the POD.
+      a. If purely Python, the framework will switch to `_MDTF_python_base` and run the POD.
 
-      2). If NCL is used, then `_MDTF_NCL_base`.
+      b. If NCL is used, then `_MDTF_NCL_base`.
 
 Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to `_MDTF_NCL_base` when seeing both NCL and Python in the settings file.
 
 If you choose to selectively install Conda environments using the `--env` flag (section 2.2), remember to install all the environments needed for the PODs you're interested in, and that `_MDTF_base` is mandatory for the framework's operation.
+
+- For instance, the minimal installation for running the `EOF_500hPa` and `convective_transition_diag` PODs requres `_MDTF_base` (mandatory), `_MDTF_NCL_base` (b), and `_MDTF_convective_transition_diag` (1). These can be installed by passing `base`, `NCL_base`, and `convective_transition_diag` to the `--env` flag.
+
 
 ## 5. Next steps
 

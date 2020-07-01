@@ -207,11 +207,11 @@ As just described in section 4.2, when you run the `mdtf` executable, among othe
 
 1. The framework will first try to determine whether there is a Conda environment named `_MDTF_$POD_NAME` under `$CONDA_ENV_DIR`. If yes, the framework will switch to this environment and run the POD.
 
-2. If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in the settings file specifies the programming language(s) adopted by the POD.
+2. If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in the settings file specifies the programming language(s) adopted by the POD:
 
-3. If purely Python, the framework will switch to `_MDTF_python_base` and run the POD.
+      1). If purely Python, the framework will switch to `_MDTF_python_base` and run the POD.
 
-4. If NCL is used, then `_MDTF_NCL_base`.
+      2). If NCL is used, then `_MDTF_NCL_base`.
 
 Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to `_MDTF_NCL_base` when seeing both NCL and Python in the settings file.
 

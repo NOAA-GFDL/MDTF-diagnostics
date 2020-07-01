@@ -217,7 +217,7 @@ Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, 
 
 If you choose to selectively install Conda environments using the `--env` flag (section 2.2), remember to install all the environments needed for the PODs you're interested in, and that `_MDTF_base` is mandatory for the framework's operation.
 
-- For instance, the minimal installation for running the `EOF_500hPa` and `convective_transition_diag` PODs requres `_MDTF_base` (mandatory), `_MDTF_NCL_base` (b), and `_MDTF_convective_transition_diag` (1). These can be installed by passing `base`, `NCL_base`, and `convective_transition_diag` to the `--env` flag.
+- For instance, the minimal installation for running the `EOF_500hPa` and `convective_transition_diag` PODs requres `_MDTF_base` (mandatory), `_MDTF_NCL_base` (because of b), and `_MDTF_convective_transition_diag` (because of 1). These can be installed by passing `base`, `NCL_base`, and `convective_transition_diag` to the `--env` flag.
 
 
 ## 5. Next steps

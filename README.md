@@ -138,7 +138,7 @@ After making sure that Conda is available, run `% conda info --base` as the user
 Next, run
 ```
 % cd $CODE_ROOT
-% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`
+% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 ```
 to install all necessary environments (and create an executable; section 4.1), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
@@ -178,7 +178,7 @@ We recommend using absolute paths in `default_tests.jsonc`, but relative paths a
 
 The MDTF framework is run via a wrapper script at `$CODE_ROOT/mdtf`. 
 
-The setup script (section 2.2) will have created an executable at `$CODE_ROOT/mdtf` which sets the correct Conda environments before running the framework and individual PODs. To test the installation, `% $CODE_ROOT/mdtf --help` will print help on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
+The setup script (section 2.2) will have created an executable at `$CODE_ROOT/mdtf` which sets the correct Conda environments before running the framework and individual PODs. To test the installation, `% $CODE_ROOT/mdtf --help` will print help text on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
 
 For interested users, the `mdtf` executable is also a script, which calls `src/conda/conda_init.sh` and `src/mdtf.py`.
 
@@ -195,9 +195,9 @@ Run time may be 10-20 minutes, depending on your system.
 
 - The output files for this test case will be written to `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981`. When the framework is finished, open `$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html` in a web browser to view the output report.
 
-- The above command will execute PODs included in `pod_list` of the configuration file. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding `//`). Note that entries in the list must be separated by `,`. Check for missing or surplus `,` if you encounter an error (e.g., "ValueError: No closing quotation").
+- The above command will execute PODs included in `pod_list` of `default_tests.jsonc`. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding `//`). Note that entries in the list must be separated by `,`. Check for missing or surplus `,` if you encounter an error (e.g., "ValueError: No closing quotation").
 
-- Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of the configuration file, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
+- Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of `default_tests.jsonc`, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
 
 If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
 

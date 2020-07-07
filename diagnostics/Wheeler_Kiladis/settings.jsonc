@@ -1,0 +1,64 @@
+// Wheeler Kiladis plots
+//
+// see Wheeler and Kiladis, JAS, vol 56, 374-399, 1999
+// This uses daily field of U200, U850, OMEGA500, OLR, PRECT to produce wave 
+// spectra plots.
+// Each variable should store in a single file. 
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings" : {
+    "driver" : "Wheeler_Kiladis.py",
+    "long_name" : "Wheeler Kiladis plots",
+    "realm" : "atmos",
+    "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
+    "runtime_requirements": {
+      "python": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
+    }
+  },
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
+  "varlist" : [
+    {
+      "var_name" : "rlut_var",
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "pr_var",
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "omega500_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["wap_var"]
+    },{
+      "var_name" : "u200_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    },{
+      "var_name" : "u850_var",
+      "freq" : "day",
+      "requirement" : "required",
+      "alternates" : ["u_var"]
+    }
+  ]
+}

@@ -75,7 +75,7 @@ gw0 = f[0]->gw
 
 ;   f       = addfile (diri+fili , "r")                         
 ;   TIME    = f->time                          ; days since ...
-;   YMD     = ut_calendar(TIME, -2)            ; entire (time,6)
+;   YMD     = cd_calendar(TIME, -2)            ; entire (time,6)
 
 ;   iStrt   = ind(YMD.eq.ymdStrt)              ; index start
 ;   iLast   = ind(YMD.eq.ymdLast)              ; index last 
@@ -97,7 +97,7 @@ do ivars = 0,dimsizes(vars)-1
 
 ;   time    = f->time(iStrt:iLast)             ; days since ...
    time    = f[ivars]->time
-   t_utc = ut_calendar(time,0)
+   t_utc = cd_calendar(time,0)
 
    yrStrt = min(t_utc(:,0))
    yrLast = max(t_utc(:,0))
@@ -294,12 +294,16 @@ end if
 ; create individual plots
 
   if(season.eq.0) then
-  yyyymmdd= ut_calendar(time0, -2)
+  ;yyyymmdd= cd_calendar(time0, -2)
+  yrfrac = cd_calendar(time0, 4)
   else
-  yyyymmdd= ut_calendar(time1, -2)
+  ;yyyymmdd= cd_calendar(time1, -2)
+  yrfrac = cd_calendar(time1, 4)
   end if
-  yrfrac  = yyyymmdd_to_yyyyfrac(yyyymmdd, 0.0)
-  delete(yrfrac@long_name)
+  ;yrfrac  = yyyymmdd_to_yyyyfrac(yyyymmdd, 0.0) ; yyyymmdd_to_yyyyfrac assumes gregorian year
+  if (isatt(yrfrac, "long_name")) then
+    delete(yrfrac@long_name)
+  end if
 
   nGrd    = nlat*mlon 
   eof_ts  = eof_ts/nGrd
@@ -320,14 +324,14 @@ end if
        end if
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
-       system("/bin/rm -f "+pltPath+".eps")
+       system("rm -f "+pltPath+".eps")
    end if
 
 delete(pltName)
 delete(eof)
 delete(eof_ts)
 delete(work)
-delete(yyyymmdd)
+; delete(yyyymmdd)
 delete(yrfrac)
 
 end do ; season loop

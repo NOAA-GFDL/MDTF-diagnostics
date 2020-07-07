@@ -1,0 +1,55 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "convention_name" : "SPEAR",
+  "axes" : {
+    "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
+    "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
+    "level" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+  },
+  "var_names" : {
+    "ps_var" : "ps",
+    "u_var" : "u",
+    "v_var" : "v",
+    "zg_var" : "hght",
+    "u200_var" : "u200",
+    "v200_var" : "v200",
+    "u250_var" : "u250",
+    "v250_var" : "v250",
+    "u850_var" : "u850",
+    "v850_var" : "v850",
+    "omega500_var" : "OMEGA500",
+    "z250_var" : "z250",
+    // Variables for Xianan Jiang mjo diagnostic:
+    "pr_var" : "precip",
+    "qa_var" : "sphum",
+    "rlut_var" : "olr",
+    // Variables for Convective Transition Diagnostics module: 
+    // ta: 3D temperature, units = K:
+    "ta_var" : "temp",
+    "tas_var" : "temp",
+    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
+    "prw_var" : "WVP",
+    // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K
+    "tave_var" : "tave",
+    // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
+    "qsat_int_var" : "qsat_int",
+    // Variables for SM_ET_coupling module
+    "mrsos_var" : "mrsos",
+    "evspsbl_var" : "evspsbl"
+  },
+  "units" : {
+    // TODO: assign to variables; do honest unit conversion
+    // factor * [model native unit] = flux in kg m-2 s-1
+    "pr_conversion_factor" : 1,
+    "prc_conversion_factor" : 1,
+    "prls_conversion_factor" : 1,
+    // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
+    "date_int_offset" : 0,
+    // pressure axis: factor * [model native unit] = pressure in Pa
+    "pressure_to_Pa_factor" : 100
+  }
+}

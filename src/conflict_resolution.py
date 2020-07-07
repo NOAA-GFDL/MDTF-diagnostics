@@ -1,3 +1,4 @@
+from __future__ import print_function
 from itertools import chain
 from collections import defaultdict
 
@@ -56,7 +57,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         datasets (iterable of :class:`~util.DataSet`): 
             Collection of all variables being requested in this DataManager.
 
-    Returns: :obj:`list` of :obj:`str`: name(s) of model components to use.
+    Returns: :py:obj:`list` of :py:obj:`str`: name(s) of model components to use.
 
     Raises: AssertionError if problem is unsatisfiable. This indicates some
         error in the input data.
@@ -64,12 +65,17 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     if tiebreaker_fn is None:
         tiebreaker_fn = _default_tiebreaker
 
+    # drop empty entries from option_dict, although these shouldn't have been
+    # passed in the first place
+    option_dict = {k:v for k,v in option_dict.iteritems() if v}
     all_idx = set()
     d = defaultdict(set)
     for idx, key in enumerate(option_dict.keys()):
+        all_idx.add(idx)
         for val in option_dict[key]:
             d[option_fn(val)].add(idx)
-        all_idx.add(idx)
+    # print("\tDEBUG min_cover indices:", all_idx)
+    # print("\tDEBUG min_cover sets:", d)
     assert set(e for s in d.values() for e in s) == all_idx
 
     covered_idx = set()
@@ -85,6 +91,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         cover.append(elt_to_add)
         covered_idx.update(d[elt_to_add])
     assert cover # is not empty
+    print("\tDEBUG min_cover:", cover)
     
     choices = dict.fromkeys(option_dict.keys())
     for key in option_dict:

@@ -1,9 +1,9 @@
+from __future__ import print_function
 import os
 import sys
 import glob
+import copy
 import shutil
-import atexit
-import signal
 from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter
@@ -17,6 +17,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     from subprocess import CalledProcessError
 import util
+import util_mdtf
 import datelabel
 import netcdf_helper
 from shared_diagnostic import PodRequirementFailure
@@ -52,7 +53,7 @@ class DataAccessError(Exception):
         else:
             return 'Data access error: {}.'.format(self.msg)
 
-class DataSet(util.Namespace):
+class DataSet(util.NameSpace):
     """Class to describe datasets.
 
     `https://stackoverflow.com/a/48806603`_ for implementation.
@@ -63,16 +64,15 @@ class DataSet(util.Namespace):
         else:
             self.DateFreq = kwargs['DateFreqMixin']
             del kwargs['DateFreqMixin']
-
+        # assign explicitly else linter complains
+        self.name = None
+        self.date_range = None
+        self.date_freq = None
+        self._local_data = None
+        self._remote_data = []
+        self.alternates = []
+        self.axes = dict()
         super(DataSet, self).__init__(*args, **kwargs)
-        for key in ['name', 'units', 'date_range', 'date_freq', '_local_data']:
-            if key not in self:
-                self[key] = None
-        
-        for key in ['_remote_data', 'alternates']:
-            if key not in self:
-                self[key] = []
-
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
             del self.var_name
@@ -88,7 +88,7 @@ class DataSet(util.Namespace):
 
     @classmethod
     def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util.VariableTranslator()
+        translate = util_mdtf.VariableTranslator()
         var_copy = var.copy()
         var_copy.update(dm_args)
         ds = cls(**var_copy)
@@ -121,26 +121,18 @@ class DataManager(object):
     # analogue of TestFixture in xUnit
     __metaclass__ = ABCMeta
 
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
-        self.case_name = case_dict['CASENAME']
-        self.model_name = case_dict['model']
-        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
-        self.lastyr = datelabel.Date(case_dict['LASTYR'])
-        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+    def __init__(self, case_dict, DateFreqMixin=None):
         if not DateFreqMixin:
             self.DateFreq = datelabel.DateFrequency
         else:
             self.DateFreq = DateFreqMixin
 
-        if 'envvars' in config:
-            self.envvars = config['envvars'].copy() # gets appended to
-        else:
-            self.envvars = {}
-
-        if 'variable_convention' in case_dict:
-            self.convention = case_dict['variable_convention']
-        else:
-            self.convention = 'CF' # default to assuming CF-compliance
+        self.case_name = case_dict['CASENAME']
+        self.model_name = case_dict['model']
+        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
+        self.lastyr = datelabel.Date(case_dict['LASTYR'])
+        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
+        self.convention = case_dict.get('convention', 'CF')
         if 'data_freq' in case_dict:
             self.data_freq = self.DateFreq(case_dict['data_freq'])
         else:
@@ -148,28 +140,32 @@ class DataManager(object):
         self.pod_list = case_dict['pod_list'] 
         self.pods = []
 
-        paths = util.PathManager()
-        self.__dict__.update(paths.modelPaths(self))
+        config = util_mdtf.ConfigManager()
+        self.envvars = config.global_envvars.copy() # gets appended to
+        # assign explicitly else linter complains
+        self.dry_run = config.config.dry_run
+        self.file_transfer_timeout = config.config.file_transfer_timeout
+        self.make_variab_tar = config.config.make_variab_tar
+        self.keep_temp = config.config.keep_temp
+        self.overwrite = config.config.overwrite
+        self.file_overwrite = self.overwrite # overwrite config and .tar
+
+        d = config.paths.model_paths(case_dict, overwrite=self.overwrite)
+        self.code_root = config.paths.CODE_ROOT
+        self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
+        self.MODEL_WK_DIR = d.MODEL_WK_DIR
+        self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = util.get_from_config('netcdf_helper', config, default='NetcdfHelper')
-        mixin = getattr(netcdf_helper, mixin)
+        mixin = config.config.get(netcdf_helper, 'NcoNetcdfHelper')
+        mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
             self.nc_check_environ() # make sure we have dependencies
         except Exception:
             raise
-
-        self.dry_run = util.get_from_config('dry_run', config, default=False)
-        self.file_transfer_timeout = util.get_from_config(
-            'file_transfer_timeout', config, default=0) # 0 = syntax for no timeout
-
-        # delete temp files if we're killed
-        atexit.register(self.abortHandler)
-        signal.signal(signal.SIGTERM, self.abortHandler)
-        signal.signal(signal.SIGINT, self.abortHandler)
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -189,22 +185,11 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def setUp(self):
-        self._setup_model_paths()
-        self._set_model_env_vars()
-        for pod in self.iter_pods():
-            self._setup_pod(pod)
-        self._build_data_dicts()
-
-    def _setup_model_paths(self, verbose=0):
-        # pylint: disable=maybe-no-member
-        util.check_required_dirs(
+    def setUp(self, verbose=0):
+        util_mdtf.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
-
-    def _set_model_env_vars(self, verbose=0):
-        # pylint: disable=maybe-no-member
         self.envvars.update({
             "DATADIR": self.MODEL_DATA_DIR,
             "variab_dir": self.MODEL_WK_DIR,
@@ -213,24 +198,28 @@ class DataManager(object):
             "FIRSTYR": self.firstyr.format(precision=1), 
             "LASTYR": self.lastyr.format(precision=1)
         })
+        # set env vars for unit conversion factors (TODO: honest unit conversion)
+        translate = util_mdtf.VariableTranslator()
+        if self.convention not in translate.units:
+            raise AssertionError(("Variable name translation doesn't recognize "
+                "{}.").format(self.convention))
+        temp = translate.variables[self.convention].to_dict()
+        for key, val in temp.iteritems():
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
+        temp = translate.units[self.convention].to_dict()
+        for key, val in temp.iteritems():
+            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
 
-        translate = util.VariableTranslator()
-        # Silently set env vars for *all* model variables, because it contains
-        # things like axis mappings etc. Relevant variable names will get 
-        # overridden when POD sets its variables.
-        assert self.convention in translate.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(self.convention)
-        temp = translate.field_dict[self.convention].to_dict()
-        for key, val in temp.items():
-            util.setenv(key, val, self.envvars, verbose=verbose)
+        for pod in self.iter_pods():
+            self._setup_pod(pod)
+        self._build_data_dicts()
 
     def _setup_pod(self, pod):
-        paths = util.PathManager()
-        translate = util.VariableTranslator()
+        config = util_mdtf.ConfigManager()
+        translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
-        pod.__dict__.update(paths.modelPaths(self))
-        pod.__dict__.update(paths.podPaths(pod))
+        pod.__dict__.update(config.paths.pod_paths(pod, self))
         pod.TEMP_HTML = self.TEMP_HTML
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
@@ -246,15 +235,18 @@ class DataManager(object):
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
             var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
+            var.axes = copy.deepcopy(translate.axes[self.convention])
 
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
                 if var.date_freq != self.data_freq:
-                    pod.skipped = PodRequirementFailure(pod,
-                        """{} requests {} (= {}) at {} frequency, which isn't compatible
-                        with case {} providing data at {} frequency only.""".format(
-                        pod.name, var.name_in_model, var.name, var.date_freq,
-                        self.case_name, self.data_freq
+                    pod.skipped = PodRequirementFailure(
+                        pod,
+                        ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
+                        "compatible with case {4} providing data at {5} frequency "
+                        "only.").format(
+                            pod.name, var.name_in_model, var.name, 
+                            var.date_freq, self.case_name, self.data_freq
                     ))
                     break
 
@@ -272,7 +264,6 @@ class DataManager(object):
         `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
         Files not following this convention won't be found.
         """
-        # pylint: disable=maybe-no-member
         assert 'name_in_model' in data_key._fields
         assert 'date_freq' in data_key._fields
         # values in key are repr strings by default, so need to instantiate the
@@ -315,11 +306,12 @@ class DataManager(object):
                 new_varlist = [var for var \
                     in self._iter_populated_varlist(pod.varlist, pod.name)]
             except DataQueryFailure as exc:
-                print "Data query failed on pod {}; skipping.".format(pod.name)
+                print("Data query failed on pod {}; skipping.".format(pod.name))
                 pod.skipped = exc
                 new_varlist = []
+            for var in new_varlist:
+                var.alternates = []
             pod.varlist = new_varlist
-            pod.alternates = []
         # revise DataManager's to-do list, now that we've marked some PODs as
         # being skipped due to data inavailability
         self._build_data_dicts()
@@ -354,23 +346,21 @@ class DataManager(object):
                 self._fetch_exception_handler(exc)
                 continue
 
-        # do translation/ transformations of data here
-        self.process_fetched_data_hook()
-
     def _fetch_exception_handler(self, exc):
-        print exc
+        print(exc)
         keys_from_file = self.data_files.inverse()
         for key in keys_from_file[exc.dataset]:
             for pod in self.data_pods[key]:
-                print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+                print(("\tSkipping pod {} due to data fetch error."
+                    "").format(pod.name))
                 pod.skipped = exc
 
     def _query_data(self):
         for data_key in self.data_keys:
             try:
                 var = self.data_keys[data_key][0]
-                print "Calling query_dataset on {} @ {}".format(
-                    var.name_in_model, var.date_freq)
+                print("Calling query_dataset on {} @ {}".format(
+                    var.name_in_model, var.date_freq))
                 files = self.query_dataset(var)
                 self.data_files[data_key].update(files)
             except DataQueryFailure:
@@ -383,18 +373,22 @@ class DataManager(object):
         """
         for var in var_iter:
             if var._remote_data:
-                print "Found {} (= {}) @ {} for {}".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
+                print("Found {} (= {}) @ {} for {}".format(
+                    var.name_in_model, var.name, var.date_freq, pod_name
+                ))
                 yield var
             elif not var.alternates:
                 raise DataQueryFailure(
                     var,
-                    "Couldn't find {} (= {}) @ {} for {} & no other alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
-                )
+                    ("Couldn't find {} (= {}) @ {} for {} & no other "
+                        "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                ))
             else:
-                print "Couldn't find {} (= {}) @ {} for {}, trying alternates".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name)
+                print(("Couldn't find {} (= {}) @ {} for {}, trying "
+                    "alternates").format(
+                        var.name_in_model, var.name, var.date_freq, pod_name
+                ))
                 for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
                     yield alt_var  # no 'yield from' in py2.7
 
@@ -415,8 +409,8 @@ class DataManager(object):
         unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier
         if unique_files:
-            if hasattr(self, 'fetch_ordering_function'):
-                sort_key = self.fetch_ordering_function
+            if self._fetch_order_function is not None:
+                sort_key = self._fetch_order_function
             if hasattr(unique_files[0], '_remote_data'):
                 sort_key = attrgetter('_remote_data')
             else:
@@ -424,6 +418,8 @@ class DataManager(object):
             unique_files.sort(key=sort_key)
         return unique_files
     
+    _fetch_order_function=None
+
     def local_data_is_current(self, dataset):
         """Determine if local copy of data needs to be refreshed.
 
@@ -438,7 +434,8 @@ class DataManager(object):
     def plan_data_fetch_hook(self):
         pass
 
-    def process_fetched_data_hook(self):
+    def preprocess_local_data(self, *args, **kwargs):
+        # do translation/ transformations of data here
         pass
 
     # -------------------------------------
@@ -454,19 +451,17 @@ class DataManager(object):
 
     # -------------------------------------
 
-    def tearDown(self, config):
+    def tearDown(self):
         # TODO: handle OSErrors in all of these
+        config = util_mdtf.ConfigManager()
         self._make_html()
-        self._backup_config_file(config)
-        self._make_tar_file()
+        _ = self._backup_config_file(config)
+        if self.make_variab_tar:
+            _ = self._make_tar_file(config.paths.OUTPUT_DIR)
         self._copy_to_output()
-        paths = util.PathManager()
-        paths.cleanup()
 
     def _make_html(self, cleanup=True):
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        src_dir = os.path.join(self.code_root, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(dest):
             print("WARNING: index.html exists, deleting.")
@@ -475,11 +470,11 @@ class DataManager(object):
         template_dict = self.envvars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        util.append_html_template(
+        util_mdtf.append_html_template(
             os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
         )
-        util.append_html_template(self.TEMP_HTML, dest, {})
-        util.append_html_template(
+        util_mdtf.append_html_template(self.TEMP_HTML, dest, {})
+        util_mdtf.append_html_template(
             os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
         )
         if cleanup:
@@ -489,53 +484,47 @@ class DataManager(object):
             os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
         )
 
-    def _backup_config_file(self, config, verbose=0):
+    def _backup_config_file(self, config):
         """Record settings in file variab_dir/config_save.json for rerunning
         """
-        # pylint: disable=maybe-no-member
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
-        if os.path.isfile(out_file):
-            out_fileold = os.path.join(self.MODEL_WK_DIR, 'config_save.json.old')
-            if verbose > 1: 
-                print "WARNING: moving existing namelist file to ", out_fileold
-            shutil.move(out_file, out_fileold)
-        util.write_json(config, out_file)
+        if not self.file_overwrite:
+            out_file, _ = util_mdtf.bump_version(out_file)
+        elif os.path.exists(out_file):
+            print('Overwriting {}.'.format(out_file))
+        util.write_json(config.config.toDict(), out_file)
+        return out_file
 
-    def _make_tar_file(self):
-        """Make tar file
+    def _make_tar_file(self, tar_dest_dir):
+        """Make tar file of web/bitmap output.
         """
-        # pylint: disable=maybe-no-member
-        if os.environ["make_variab_tar"] == "0":
-            print "Not making tar file because make_variab_tar = 0"
-            return
-
-        print "Making tar file because make_variab_tar = ",os.environ["make_variab_tar"]
-        if os.path.isfile(self.MODEL_WK_DIR+'.tar'):
-            print "Moving existing {0}.tar to {0}.tar.old".format(self.MODEL_WK_DIR)
-            shutil.move(self.MODEL_WK_DIR+'.tar', self.MODEL_WK_DIR+'.tar.old')
-
-        print "Creating {}.tar".format(self.MODEL_WK_DIR)
-        # not running in shell, so don't need to quote globs
-        tar_flags = ["--exclude=*.{}".format(s) for s in ['netCDF','nc','ps','PS']]
-        util.run_command(['tar', '-cf', '{}.tar'.format(self.MODEL_WK_DIR),
-            self.MODEL_WK_DIR ] + tar_flags,
+        out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
+        if not self.file_overwrite:
+            out_file, _ = util_mdtf.bump_version(out_file)
+            print("Creating {}.".format(out_file))
+        elif os.path.exists(out_file):
+            print('Overwriting {}.'.format(out_file))
+        tar_flags = ["--exclude=.{}".format(s) for s in ['netCDF','nc','ps','PS','eps']]
+        tar_flags = ' '.join(tar_flags)
+        util.run_shell_command(
+            'tar {} -czf {} -C {} .'.format(tar_flags, out_file, self.MODEL_WK_DIR),
             dry_run = self.dry_run
         )
+        return out_file
 
     def _copy_to_output(self):
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        if paths.OUTPUT_DIR != paths.WORKING_DIR:
-            print "copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
+        if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
+            return # no copying needed
+        print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
+        try:
             if os.path.exists(self.MODEL_OUT_DIR):
+                if not self.overwrite:
+                    print('Error: {} exists, overwriting anyway.'.format(
+                        self.MODEL_OUT_DIR))
                 shutil.rmtree(self.MODEL_OUT_DIR)
-            shutil.copytree(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
-
-    def abortHandler(self, *args):
-        # delete any temp files if we're killed
-        # normal operation should call tearDown for organized cleanup
-        paths = util.PathManager()
-        paths.cleanup()
+        except Exception:
+            raise
+        shutil.move(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
 
 
 class LocalfileDataManager(DataManager):

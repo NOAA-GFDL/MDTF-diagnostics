@@ -1,7 +1,7 @@
 import os
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
-import src.util as util
+import src.util_mdtf as util
 from src.shared_diagnostic import Diagnostic
 from src.data_manager import DataManager
 
@@ -45,13 +45,11 @@ class TestDataManagerSetup(unittest.TestCase):
         'varlist': [{'var_name': 'PRECT', 'freq':'mon'}]
         }
 
-    def test_netcdf_inheritance(self, mock_register):
-        case = DataManager(self.default_case)
-        self.assertRaises(NotImplementedError, case.nc_cat_chunks, [], [])
-
     def test_setup_model_paths(self, mock_register):
         pass
 
+    # expect failure because variable name env vars set by POD now
+    @unittest.expectedFailure
     def test_set_model_env_vars(self, mock_register):
         # set env vars for model
         case = DataManager(self.default_case)
@@ -65,8 +63,7 @@ class TestDataManagerSetup(unittest.TestCase):
         # exit if can't find model
         case = DataManager(self.default_case)
         case.convention = 'nonexistent'
-        dummy = {'envvars':{}}
-        self.assertRaises(AssertionError, case._set_model_env_vars, dummy)
+        self.assertRaises(AssertionError, case.setUp)
 
     def test_setup_html(self, mock_register):
         pass

@@ -7,7 +7,7 @@ python: '2.7' # only supported version, for now
 
 branches:
   only:
-    - master
+    - main
     - develop
     - /^feature/ 
 

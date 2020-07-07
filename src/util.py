@@ -1,14 +1,12 @@
 """Common functions and classes used in multiple places in the MDTF code.
+Specifically, util.py implements general functionality that's not MDTF-specific.
 """
-
+from __future__ import print_function
 import os
 import sys
 import re
-import glob
 import shlex
-import shutil
-import tempfile
-from collections import defaultdict, namedtuple
+import collections
 from distutils.spawn import find_executable
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
@@ -18,6 +16,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import signal
+import threading
 import errno
 import json
 import datelabel
@@ -37,11 +36,6 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
-
-    Note:
-        All child classes, :class:`~util.PathManager` and :class:`~util.VariableTranslator`,
-        are read-only, although this is not enforced. This eliminates most of the
-        danger in using Singletons or global state in general.
     """
     @classmethod
     def _reset(cls):
@@ -56,86 +50,31 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
             del cls._instances[cls]
 
 
-class PathManager(Singleton):
-    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``mdtf_settings.json``.
+class ExceptionPropagatingThread(threading.Thread):
+    """Class to propagate exceptions raised in a child thread back to the caller
+    thread when the child is join()ed. 
+    Adapted from `https://stackoverflow.com/a/31614591`__
     """
-    _root_pathnames = [
-        'CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-        'WORKING_DIR', 'OUTPUT_DIR'
-    ]
-
-    def __init__(self, arg_dict={}, unittest_flag=False):
-        for var in self._root_pathnames:
-            if unittest_flag: # use in unit testing only
-                self.__setattr__(var, 'TEST_'+var)
+    def run(self):
+        self.ret = None
+        self.exc = None
+        try:
+            if hasattr(self, '_Thread__target'):
+                # Thread uses name mangling prior to Python 3.
+                self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
             else:
-                assert var in arg_dict, \
-                    'Error: {} not initialized.'.format(var)
-                self.__setattr__(var, arg_dict[var])
+                self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
 
-        self._temp_dirs = []
+    def join(self, timeout=None):
+        super(ExceptionPropagatingThread, self).join(timeout)
+        if self.exc:
+            raise self.exc
+        return self.ret
 
-    def modelPaths(self, case):
-        # pylint: disable=maybe-no-member
-        d = {}
-        if isinstance(case, dict):
-            name = case['CASENAME']
-            yr1 = case['FIRSTYR']
-            yr2 = case['LASTYR']
-        else:
-            name = case.case_name
-            yr1 = case.firstyr
-            yr2 = case.lastyr
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
-        d['MODEL_DATA_DIR'] = os.path.join(self.MODEL_DATA_ROOT, name)
-        d['MODEL_WK_DIR'] = os.path.join(self.WORKING_DIR, case_wk_dir)
-        d['MODEL_OUT_DIR'] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
-        return d
 
-    def podPaths(self, pod):
-        # pylint: disable=maybe-no-member
-        d = {}
-        d['POD_CODE_DIR'] = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
-        d['POD_OBS_DATA'] = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        if 'MODEL_WK_DIR' in pod.__dict__:
-            d['POD_WK_DIR'] = os.path.join(pod.MODEL_WK_DIR, pod.name)
-        if 'MODEL_OUT_DIR' in pod.__dict__:
-            d['POD_OUT_DIR'] = os.path.join(pod.MODEL_OUT_DIR, pod.name)
-        return d
-
-    def make_tempdir(self, hash_obj=None):
-        tempdir_prefix = 'MDTF_temp_'
-
-        temp_root = tempfile.gettempdir()
-        if hash_obj is None:
-            new_dir = tempfile.mkdtemp(prefix=tempdir_prefix, dir=temp_root)
-        elif isinstance(hash_obj, str):
-            new_dir = os.path.join(temp_root, tempdir_prefix+hash_obj)
-        else:
-            # nicer-looking hash representation
-            hash_ = hex(hash(hash_obj))
-            if hash_ < 0:
-                new_dir = 'Y'+str(hash_)[3:]
-            else:
-                new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(temp_root, tempdir_prefix+new_dir)
-        if not os.path.isdir(new_dir):
-            os.makedirs(new_dir)
-        assert new_dir not in self._temp_dirs
-        self._temp_dirs.append(new_dir)
-        return new_dir
-
-    def rm_tempdir(self, path):
-        assert path in self._temp_dirs
-        self._temp_dirs.remove(path)
-        shutil.rmtree(path)
-
-    def cleanup(self):
-        for d in self._temp_dirs:
-            self.rm_tempdir(d)
-
-class MultiMap(defaultdict):
+class MultiMap(collections.defaultdict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
     from either keys or values. 
     
@@ -145,19 +84,19 @@ class MultiMap(defaultdict):
     See <https://stackoverflow.com/a/21894086>_.
     """
     def __init__(self, *args, **kwargs):
-        """Initialize :class:`~util.MultiMap` by passing an ordinary :obj:`dict`.
+        """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
         for key in self.keys():
-            super(MultiMap, self).__setitem__(key, coerce_to_collection(self[key], set))
+            super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
-        super(MultiMap, self).__setitem__(key, coerce_to_collection(value, set))
+        super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
         if key not in self.keys():
             raise KeyError(key)
-        return coerce_from_collection(self[key])
+        return coerce_from_iter(self[key])
     
     def to_dict(self):
         d = {}
@@ -166,60 +105,23 @@ class MultiMap(defaultdict):
         return d
 
     def inverse(self):
-        d = defaultdict(set)
-        for key, val_set in self.items():
+        d = collections.defaultdict(set)
+        for key, val_set in self.iteritems():
             for v in val_set:
                 d[v].add(key)
         return dict(d)
 
     def inverse_get_(self, val):
-        # if val not in self.values():
-        #     raise KeyError(val)
-        temp = self.inverse()
-        return coerce_from_collection(temp[val])
+        # don't raise keyerror if empty; could be appropriate result
+        inv_lookup = self.inverse()
+        return coerce_from_iter(inv_lookup[val])
 
-class VariableTranslator(Singleton):
-    def __init__(self, unittest_flag=False, verbose=0):
-        # pylint: disable=maybe-no-member
-        if unittest_flag:
-            # value not used, when we're testing will mock out call to read_json
-            # below with actual translation table to use for test
-            config_files = ['dummy_filename']
-        else:
-            paths = PathManager()
-            glob_pattern = os.path.join(paths.CODE_ROOT, 'src', 'model_config_*.json')
-            config_files = glob.glob(glob_pattern)
 
-        # always have CF-compliant option, which does no translation
-        self.field_dict = {'CF':{}} 
-        for filename in config_files:
-            file_contents = read_json(filename)
-
-            if type(file_contents['convention_name']) is str:
-                file_contents['convention_name'] = [file_contents['convention_name']]
-            for conv in file_contents['convention_name']:
-                if verbose > 0: print 'XXX found ' + conv
-                self.field_dict[conv] = MultiMap(file_contents['var_names'])
-
-    def toCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention].inverse_get_(varname_in)
-    
-    def fromCF(self, convention, varname_in):
-        if convention == 'CF': 
-            return varname_in
-        assert convention in self.field_dict, \
-            "Variable name translation doesn't recognize {}.".format(convention)
-        return self.field_dict[convention].get_(varname_in)
-
-class Namespace(dict):
+class NameSpace(dict):
     """ A dictionary that provides attribute-style access.
 
     For example, `d['key'] = value` becomes `d.key = value`. All methods of 
-    :obj:`dict` are supported.
+    :py:obj:`dict` are supported.
 
     Note: recursive access (`d.key.subkey`, as in C-style languages) is not
         supported.
@@ -243,7 +145,7 @@ class Namespace(dict):
 
     def __setattr__(self, k, v):
         """ Sets attribute k if it exists, otherwise sets key k. A KeyError
-            raised by set-item (only likely if you subclass Namespace) will
+            raised by set-item (only likely if you subclass NameSpace) will
             propagate as an AttributeError instead.
         """
         try:
@@ -297,13 +199,13 @@ class Namespace(dict):
         self.update(state)
 
     def toDict(self):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)
 
     @classmethod
     def _toDict(cls, x):
-        """ Recursively converts a Namespace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
@@ -319,7 +221,7 @@ class Namespace(dict):
 
     @classmethod
     def fromDict(cls, x):
-        """ Recursively transforms a dictionary into a Namespace via copy.
+        """ Recursively transforms a dictionary into a NameSpace via copy.
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
@@ -343,7 +245,7 @@ class Namespace(dict):
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
-        FrozenNameSpace = namedtuple('FrozenNameSpace', sorted(d.keys()))
+        FrozenNameSpace = collections.namedtuple('FrozenNameSpace', sorted(d.keys()))
         return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
@@ -360,97 +262,94 @@ class Namespace(dict):
 
 # ------------------------------------
 
-def read_json(file_path):
-    def _utf8_to_ascii(data, ignore_dicts=False):
-        # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Convert strings to ascii using this solution:
-        # https://stackoverflow.com/a/33571117
-        # Also drop any elements beginning with a '#' (convention for comments.)
+def strip_comments(str_, delimiter=None):
+    # would be better to use shlex, but that doesn't support multi-character
+    # comment delimiters like '//'
+    if not delimiter:
+        return str_
+    s = str_.splitlines()
+    for i in range(len(s)):
+        if s[i].startswith(delimiter):
+            s[i] = ''
+            continue
+        # If delimiter appears quoted in a string, don't want to treat it as
+        # a comment. So for each occurrence of delimiter, count number of 
+        # "s to its left and only truncate when that's an even number.
+        # TODO: handle ' as well as ", for non-JSON applications
+        s_parts = s[i].split(delimiter)
+        s_counts = [ss.count('"') for ss in s_parts]
+        j = 1
+        while sum(s_counts[:j]) % 2 != 0:
+            j += 1
+        s[i] = delimiter.join(s_parts[:j])
+    # join lines, stripping blank lines
+    return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
 
-        # if this is a unicode string, return its string representation
+def read_json(file_path):
+    assert os.path.exists(file_path), \
+        "Couldn't find JSON file {}.".format(file_path)
+    try:    
+        with open(file_path, 'r') as file_:
+            str_ = file_.read()
+    except IOError:
+        print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
+        exit()
+    return parse_json(str_)
+
+def parse_json(str_):
+    def _to_ascii(data):
+        # json returns UTF-8 encoded strings by default, but we're in py2 where 
+        # everything is ascii. Raise UnicodeDecodeError if file contains 
+        # non-ascii characters. 
+        # Originally based on https://stackoverflow.com/a/33571117.
         if isinstance(data, unicode):
             # raise UnicodeDecodeError if file contains non-ascii characters
             return data.encode('ascii', 'strict')
         # if this is a list of values, return list of byteified values
         if isinstance(data, list):
-            ascii_ = [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-            return [item for item in ascii_ if not (
-                hasattr(item, 'startswith') and item.startswith('#'))]
-        # if this is a dictionary, return dictionary of byteified keys and values
-        # but only if we haven't already byteified it
-        if isinstance(data, dict) and not ignore_dicts:
-            ascii_ = {
-                _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
-                for key, value in data.iteritems()
-            }
-            return {key: ascii_[key] for key in ascii_ if not (
-                hasattr(key, 'startswith') and key.startswith('#'))}
-        # if it's anything else, return it in its original form
+            return [_to_ascii(item) for item in data]
+        # dicts should be handled by pairs_hook. if it's anything else, return 
+        # it in its original form
         return data
 
-    assert os.path.exists(file_path), \
-        "Couldn't find file {}.".format(file_path)
-    try:    
-        with open(file_path, 'r') as file_obj:
-            file_contents = _utf8_to_ascii(
-                json.load(file_obj, object_hook=_utf8_to_ascii),
-                ignore_dicts=True
-            )
-    except UnicodeDecodeError:
-        print '{} contains non-ascii characters. Exiting.'.format(file_path)
-        exit()
-    except IOError:
-        print 'Fatal IOError when trying to read {}. Exiting.'.format(file_path)
-        exit()
-    return file_contents
+    def _pairs_hook(pairs):
+        return collections.OrderedDict(
+            [(_to_ascii(key), _to_ascii(val)) for key, val in pairs]
+        )
 
-def write_json(struct, file_path, verbose=0):
+    str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
+    try:
+        parsed_json = json.loads(str_, object_pairs_hook=_pairs_hook)
+    except UnicodeDecodeError:
+        print('{} contains non-ascii characters. Exiting.'.format(str_))
+        exit()
+    return parsed_json
+
+def write_json(struct, file_path, verbose=0, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
-        struct (:obj:`dict`)
-        file_path (:obj:`str`): path of the JSON file to write.
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+        struct (:py:obj:`dict`)
+        file_path (:py:obj:`str`): path of the JSON file to write.
+        verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
         with open(file_path, 'w') as file_obj:
             json.dump(struct, file_obj, 
-                sort_keys=True, indent=2, separators=(',', ': '))
+                sort_keys=sort_keys, indent=2, separators=(',', ': '))
     except IOError:
-        print 'Fatal IOError when trying to write {}. Exiting.'.format(file_path)
+        print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
-def pretty_print_json(struct):
-    """Pseudo-YAML output for human-readbale debugging output only - 
+def pretty_print_json(struct, sort_keys=False):
+    """Pseudo-YAML output for human-readable debugging output only - 
     not valid JSON"""
-    str_ = json.dumps(struct, sort_keys=True, indent=2)
-    for char in ['"', ',', '{', '}', '[', ']']:
+    str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
+    for char in ['"', ',', '}', '[', ']']:
         str_ = str_.replace(char, '')
+    str_ = re.sub(r"{\s+", "- ", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
-
-def resolve_path(in_path, root_path=''):
-    """Abbreviation to resolve relative paths.
-
-    Args:
-        path (:obj:`str`): path to resolve.
-        root_path (:obj:`str`, optional): root path to resolve `path` with. If
-            not given, resolves relative to `cwd`.
-
-    Returns: Absolute version of `path`, relative to `root_path` if given, 
-        otherwise relative to `os.getcwd`.
-    """
-    path = in_path
-    for key, val in os.environ.iteritems():
-        path = re.sub(r"\$"+key, val, path)
-    if os.path.isabs(path):
-        return path
-    else:
-        if root_path == '':
-            root_path = os.getcwd()
-        else:
-            assert os.path.isabs(root_path)
-        return os.path.normpath(os.path.join(root_path, path))
 
 def find_files(root_dir, pattern):
     """Return list of files in `root_dir` matching `pattern`. 
@@ -459,13 +358,13 @@ def find_files(root_dir, pattern):
     way to query if its DB is current). 
 
     Args:
-        root_dir (:obj:`str`): Directory to search for files in.
-        pattern (:obj:`str`): Patterrn to match. This is a shell globbing pattern,
+        root_dir (:py:obj:`str`): Directory to search for files in.
+        pattern (:py:obj:`str`): Patterrn to match. This is a shell globbing pattern,
             not a full regex. Default is to match filenames only, unless the
             pattern contains a directory separator, in which case the match will
             be done on the entire path relative to `root_dir`.
 
-    Returns: :obj:`list` of relative paths to files matching `pattern`. Paths are
+    Returns: :py:obj:`list` of relative paths to files matching `pattern`. Paths are
         relative to `root_dir`. If no files are found, the list is empty.
     """
     if os.sep in pattern:
@@ -482,13 +381,53 @@ def find_files(root_dir, pattern):
     prefix_length = len(os.path.normpath(root_dir)) + 1 
     return [p[prefix_length:] for p in paths]
 
+def resolve_path(path, root_path="", env=None):
+    """Abbreviation to resolve relative paths.
+
+    Args:
+        path (:obj:`str`): path to resolve.
+        root_path (:obj:`str`, optional): root path to resolve `path` with. If
+            not given, resolves relative to `cwd`.
+
+    Returns: Absolute version of `path`, relative to `root_path` if given, 
+        otherwise relative to `os.getcwd`.
+    """
+    def _expandvars(path, env_dict):
+        """Expand quoted variables of the form $key and ${key} in path,
+        where key is a key in env_dict, similar to os.path.expandvars.
+
+        See https://stackoverflow.com/a/30777398; specialize to not skipping
+        escaped characters and not changing unrecognized variables.
+        """
+        return re.sub(
+            r'\$(\w+|\{([^}]*)\})', 
+            lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+            path
+        )
+
+    if path == '':
+        return path # default value set elsewhere
+    path = os.path.expanduser(path) # resolve '~' to home dir
+    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
+    if isinstance(env, dict):
+        path = _expandvars(path, env)
+    if '$' in path:
+        print("Warning: couldn't resolve all env vars in '{}'".format(path))
+        return path
+    if os.path.isabs(path):
+        return path
+    if root_path == "":
+        root_path = os.getcwd()
+    assert os.path.isabs(root_path)
+    return os.path.normpath(os.path.join(root_path, path))
+
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 
     Args:
-        exec_name (:obj:`str`): Name of the executable to search for.
+        exec_name (:py:obj:`str`): Name of the executable to search for.
 
-    Returns: :obj:`bool` True/false if executable was found on $PATH.
+    Returns: :py:obj:`bool` True/false if executable was found on $PATH.
     """
     return (find_executable(exec_name) is not None)
 
@@ -502,9 +441,9 @@ def poll_command(command, shell=False, env=None):
     Args:
         command: list of command + arguments, or the same as a single string. 
             See `subprocess` syntax. Note this interacts with the `shell` setting.
-        shell (:obj:`bool`, optional): shell flag, passed to Popen, 
+        shell (:py:obj:`bool`, optional): shell flag, passed to Popen, 
             default `False`.
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             Popen, default `None`.
     """
     process = subprocess.Popen(
@@ -514,7 +453,7 @@ def poll_command(command, shell=False, env=None):
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
+            print(output.strip())
     rc = process.poll()
     return rc
 
@@ -535,17 +474,17 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
-        command (list of :obj:`str`): List of commands to execute
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        command (list of :py:obj:`str`): List of commands to execute
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             `Popen`, default `None`.
-        cwd (:obj:`str`, optional): child processes' working directory, passed
+        cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
-        timeout (:obj:`int`, optional): Optionally, kill the command's subprocess
+        timeout (:py:obj:`int`, optional): Optionally, kill the command's subprocess
             and raise a CalledProcessError if the command doesn't finish in 
             `timeout` seconds.
 
     Returns:
-        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
@@ -555,11 +494,11 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if type(command) == str:
+    if isinstance(command, basestring):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
-        print 'DRY_RUN: call {}'.format(cmd_str)
+        print('DRY_RUN: call {}'.format(cmd_str))
         return
     proc = None
     pid = None
@@ -589,8 +528,9 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         stderr = stderr+"\nCaught exception {0}({1!r})".format(
             type(exc).__name__, exc.args)
     if retcode != 0:
-        print 'run_command on {} (pid {}) exit status={}:{}\n'.format(
-            cmd_str, pid, retcode, stderr)
+        print('run_command on {} (pid {}) exit status={}:{}\n'.format(
+            cmd_str, pid, retcode, stderr
+        ))
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
@@ -598,21 +538,21 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     else:
         return stdout.splitlines()
 
-def run_shell_commands(commands, env=None, cwd=None):
-    """Subprocess wrapper to facilitate running multiple shell commands.
+def run_shell_command(command, env=None, cwd=None, dry_run=False):
+    """Subprocess wrapper to facilitate running shell commands.
 
     See documentation for the Python2 `subprocess 
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
-        commands (list of :obj:`str`): List of commands to execute
-        env (:obj:`dict`, optional): environment variables to set, passed to 
+        commands (list of :py:obj:`str`): List of commands to execute
+        env (:py:obj:`dict`, optional): environment variables to set, passed to 
             `Popen`, default `None`.
-        cwd (:obj:`str`, optional): child processes' working directory, passed
+        cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
 
     Returns:
-        :obj:`list` of :obj:`str` containing output that was written to stdout  
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
         by each command. Note: this is split on newlines after the fact, so if 
         commands give != 1 lines of output this will not map to the list of commands
         given.
@@ -621,31 +561,50 @@ def run_shell_commands(commands, env=None, cwd=None):
         CalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
-    proc = subprocess.Popen(
-        ['/usr/bin/env', 'bash'],
-        shell=False, env=env, cwd=cwd,
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, bufsize=0
-    )
-    if type(commands) == str:
-        commands = [commands]
-    # Tried many scenarios for executing commands sequentially 
-    # (eg with stdin.write()) but couldn't find a solution that wasn't 
-    # susceptible to deadlocks. Instead just hand over all commands at once.
-    # Only disadvantage is that we lose the ability to assign output to a specfic
-    # command.
-    (stdout, stderr) = proc.communicate(' && '.join(commands))
-    if proc.returncode != 0:
+    # shouldn't lookup on each invocation, but need abs path to bash in order
+    # to pass as executable argument. Pass executable argument because we want
+    # bash specifically (not default /bin/sh, and we save a bit of overhead by
+    # starting bash directly instead of from sh.)
+    bash_exec = find_executable('bash')
+
+    if not isinstance(command, basestring):
+        command = ' '.join(command)
+    if dry_run:
+        print('DRY_RUN: call {}'.format(command))
+        return
+    proc = None
+    pid = None
+    retcode = 1
+    stderr = ''
+    try:
+        proc = subprocess.Popen(
+            command,
+            shell=True, executable=bash_exec,
+            env=env, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, bufsize=0
+        )
+        pid = proc.pid
+        (stdout, stderr) = proc.communicate()
+        retcode = proc.returncode
+    except Exception as exc:
+        if proc:
+            proc.kill()
+        stderr = stderr+"\nCaught exception {0}({1!r})".format(
+            type(exc).__name__, exc.args)
+    if retcode != 0:
+        print('run_shell_command on {} (pid {}) exit status={}:{}\n'.format(
+            command, pid, retcode, stderr
+        ))
         raise subprocess.CalledProcessError(
-            returncode=proc.returncode, cmd=' && '.join(commands), output=stderr)
-    return stdout.splitlines()
+            returncode=retcode, cmd=command, output=stderr)
+    if '\0' in stdout:
+        return stdout.split('\0')
+    else:
+        return stdout.splitlines()
 
-def get_available_programs(verbose=0):
-    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
-    #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def coerce_to_collection(obj, coll_type):
-    assert coll_type in [list, set] # only supported types for now
+def coerce_to_iter(obj, coll_type=list):
+    assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
@@ -655,119 +614,32 @@ def coerce_to_collection(obj, coll_type):
     else:
         return coll_type([obj])
 
-def coerce_from_collection(obj):
+def coerce_from_iter(obj):
     if hasattr(obj, '__iter__'):
         if len(obj) == 1:
             return list(obj)[0]
         else:
             return list(obj)
     else:
-        return obj        
+        return obj
 
-def is_in_config(key, config, section='settings'):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if (section in config) and (key in config[section]):
-        if type(config[section][key] is bool):
-            return True
-        else:
-            if (config[section][key]): # is not empty
-                return True
-            else:
-                return False
-    else:
-        return False
-
-def get_from_config(key, config, section='settings', default=None):
-    # Ugly - should replace with cleaner solution/explicit defaults
-    if is_in_config(key, config, section=section):
-        return config[section][key]
-    else:
-        return default
-
-def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
-    """Wrapper to set environment variables.
-
-    Args:
-        varname (:obj:`str`): Variable name to define
-        varvalue: Value to assign. Coerced to type :obj:`str` before being set.
-        env_dict (:obj:`dict`): Copy of 
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-        overwrite (:obj:`bool`): If set to `False`, do not overwrite the values
-            of previously-set variables. 
+def filter_kwargs(kwarg_dict, function):
+    """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    if (not overwrite) and (varname in env_dict): 
-        if (verbose > 0): print "Not overwriting ENV ",varname," = ",env_dict[varname]
-    else:
-        if ('varname' in env_dict) and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print "WARNING: setenv ",varname," = ",varvalue," overriding previous setting ",env_dict[varname]
-        env_dict[varname] = varvalue
+    named_args = set(function.func_code.co_varnames)
+    # if 'kwargs' in named_args:
+    #    return kwarg_dict # presumably can handle anything
+    return dict((k, kwarg_dict[k]) for k in named_args \
+        if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
-        # environment variables must be strings
-        if type(varvalue) is bool:
-            if varvalue == True:
-                varvalue = '1'
-            else:
-                varvalue = '0'
-        elif type(varvalue) is not str:
-            varvalue = str(varvalue)
-        os.environ[varname] = varvalue
-
-        if (verbose > 0): print "ENV ",varname," = ",env_dict[varname]
-    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
-
-def check_required_envvar(*varlist):
-    verbose=0
-    varlist = varlist[0]   #unpack tuple
-    for n in range(len(varlist)):
-        if ( verbose > 2): print "checking envvar ",n,varlist[n],str(varlist[n])
-        try:
-            _ = os.environ[varlist[n]]
-        except:
-            print "ERROR: Required environment variable ",varlist[n]," not found "
-            print "       Please set in input file (default namelist) as VAR ",varlist[n]," value "
-            exit()
-
-
-def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
-    # arguments can be envvar name or just the paths
-    filestr = __file__+":check_required_dirs: "
-    errstr = "ERROR "+filestr
-    if verbose > 1: filestr +" starting"
-    for dir_in in already_exist + create_if_nec : 
-        if verbose > 1: "\t looking at "+dir_in
- 
-        if dir_in in os.environ:  
-            dir = os.environ[dir_in]
-        else:
-            if verbose>2: print(" envvar "+dir_in+" not defined")    
-            dir = dir_in
-
-        if not os.path.exists(dir):
-            if not dir_in in create_if_nec:
-                if (verbose>0): 
-                    print errstr+dir_in+" = "+dir+" directory does not exist"
-                    #print "         and not create_if_nec list: "+create_if_nec
-                raise OSError(dir+" directory does not exist")
-            else:
-                print(dir_in+" = "+dir+" created")
-                os.makedirs(dir)
-        else:
-            print("Found "+dir)
-
-def append_html_template(template_file, target_file, template_dict={}, 
-    create=True):
-    assert os.path.exists(template_file)
-    with open(template_file, 'r') as f:
-        html_str = f.read()
-        html_str = html_str.format(**template_dict)
-    if not os.path.exists(target_file):
-        if create:
-            print "\tDEBUG: write {} to new {}".format(template_file, target_file)
-            mode = 'w'
-        else:
-            raise OSError("Can't find {}".format(target_file))
-    else:
-        print "\tDEBUG: append {} to {}".format(template_file, target_file)
-        mode = 'a'
-    with open(target_file, mode) as f:
-        f.write(html_str)
+def signal_logger(caller_name, signum=None, frame=None):
+    if signum:
+        # lookup signal name from number; https://stackoverflow.com/a/2549950
+        sig_lookup = {
+            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+                if v.startswith('SIG') and not v.startswith('SIG_')
+        }
+        print("\tDEBUG: {} caught signal {} ({})".format(
+            caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
+        ))
+        print("\tDEBUG: {}".format(frame))

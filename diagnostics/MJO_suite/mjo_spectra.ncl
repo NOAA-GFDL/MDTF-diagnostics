@@ -8,7 +8,7 @@ load "$POD_HOME/my_cam_diags.ncl"
    
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
-vars = (/"pr","rlut","u200","u850","v200","v200"/)
+vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
 
@@ -18,7 +18,7 @@ filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"
 filename_u850 = file_dir+casename+".u850.day.anom.nc"
 filename_v200 = file_dir+casename+".v200.day.anom.nc"
-filename_v850 = file_dir+casename+".v200.day.anom.nc"
+filename_v850 = file_dir+casename+".v850.day.anom.nc"
 
   nameSeason = (/"winter" , "summer"/)
 
@@ -72,7 +72,7 @@ do ivars = 0,dimsizes(vars)-1
 ; time indices corresponding to the desired time window
 ;************************************************************
 
-  date  = ut_calendar(f[ivars]->time, -2)   ; entire file
+  date  = cd_calendar(f[ivars]->time, -2)   ; entire file
   twStrt = min(date)
   twLast = max(date)
 ;  iStrt = ind(date.eq.twStrt)        ; desired dates
@@ -93,7 +93,7 @@ do ivars = 0,dimsizes(vars)-1
   printMinMax(X, True)
 
   time  = X&time                     ; clarity
-  date  = ut_calendar( time , -2 )   ; yyyymmdd
+  date  = cd_calendar( time , -2 )   ; yyyymmdd
 
 ;************************************************************
 ; MJO Clivar says to average the data over latitude and

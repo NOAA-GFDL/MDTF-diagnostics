@@ -1,6 +1,8 @@
+from __future__ import print_function
 import os
 import sys
 import re
+import shutil
 if os.name == 'posix' and sys.version_info[0] < 3:
     try:
         import subprocess32 as subprocess
@@ -14,6 +16,7 @@ from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod, abstractproperty
 import datelabel
 import util
+import util_mdtf
 import conflict_resolution as choose
 import cmip6
 from data_manager import DataSet, DataManager, DataAccessError
@@ -28,14 +31,16 @@ class ModuleManager(util.Singleton):
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',
         'gcp':      'gcp/2.3',
-        'nco':      'nco/4.5.4', # avoid bug in 4.7.6 module on workstations
+        # install nco in conda environment, rather than using GFDL module
+        # 'nco':      'nco/4.5.4', # 4.7.6 still broken on workstations
         'netcdf':   'netcdf/4.2'
     }
 
     def __init__(self):
         if 'MODULESHOME' not in os.environ:
             # could set from module --version
-            raise OSError('Unable to determine how modules are handled on this host.')
+            raise OSError(("Unable to determine how modules are handled "
+                "on this host."))
         if not os.environ.has_key('LOADEDMODULES'):
             os.environ['LOADEDMODULES'] = ''
 
@@ -46,10 +51,8 @@ class ModuleManager(util.Singleton):
 
     def _module(self, *args):
         # based on $MODULESHOME/init/python.py
-        if type(args[0]) == type([]):
+        if isinstance(args[0], list): # if we're passed explicit list, unpack it
             args = args[0]
-        else:
-            args = list(args)
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         proc = subprocess.Popen([cmd, 'python'] + args, stdout=subprocess.PIPE)
         (output, error) = proc.communicate()
@@ -73,7 +76,8 @@ class ModuleManager(util.Singleton):
                 self._module(['load', mod_name])
 
     def load_commands(self, *module_names):
-        return ['module load {}'.format(m) for m in self._parse_names(*module_names)]
+        return ['module load {}'.format(m) \
+            for m in self._parse_names(*module_names)]
 
     def unload(self, *module_names):
         """Wrapper for module unload.
@@ -85,7 +89,8 @@ class ModuleManager(util.Singleton):
                 self._module(['unload', mod_name])
 
     def unload_commands(self, *module_names):
-        return ['module unload {}'.format(m) for m in self._parse_names(*module_names)]
+        return ['module unload {}'.format(m) \
+            for m in self._parse_names(*module_names)]
 
     def _list(self):
         """Wrapper for module list.
@@ -106,20 +111,18 @@ class GfdlDiagnostic(Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
     """
-    # hack because we can't pass config to init easily
-    _config = None
-
     def __init__(self, pod_name, verbose=0):
         super(GfdlDiagnostic, self).__init__(pod_name, verbose)
         self._has_placeholder = False
 
     def setUp(self, verbose=0):
+        config = util_mdtf.ConfigManager()
         try:
             super(GfdlDiagnostic, self).setUp(verbose)
             make_remote_dir(
                 self.POD_OUT_DIR,
-                timeout=util.get_from_config('file_transfer_timeout', self._config),
-                dry_run=util.get_from_config('dry_run', self._config)
+                timeout=config.config.get('file_transfer_timeout', 0),
+                dry_run=config.config.get('dry_run', False)
             )
             self._has_placeholder = True
         except PodRequirementFailure:
@@ -134,20 +137,20 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.
 
-    def __init__(self, config, verbose=0):
+    def __init__(self, verbose=0):
         _ = ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__(config, verbose)
+        super(GfdlvirtualenvEnvironmentManager, self).__init__(verbose)
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
-        keys = [s.lower() for s in pod.required_programs]
+        langs = [s.lower() for s in pod.runtime_requirements.keys()]
         if pod.name == 'convective_transition_diag':
             pod.env = 'py_convective_transition_diag'
         elif pod.name == 'MJO_suite':
             pod.env = 'ncl_MJO_suite'
-        elif ('r' in keys) or ('rscript' in keys):
+        elif ('r' in langs) or ('rscript' in langs):
             pod.env = 'r_default'
-        elif 'ncl' in keys:
+        elif 'ncl' in langs:
             pod.env = 'ncl'
         else:
             pod.env = 'py_default'
@@ -158,7 +161,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         'r_default': ['r'],
         'py_default': ['python'],
         'py_convective_transition_diag': ['python', 'ncl'],
-        'ncl_MJO_suite': ['ncl', 'nco']
+        'ncl_MJO_suite': ['python', 'ncl']
     }
 
     def create_environment(self, env_name):
@@ -167,18 +170,18 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         super(GfdlvirtualenvEnvironmentManager, \
             self).create_environment(env_name)
 
-    def activate_env_commands(self, pod):
+    def activate_env_commands(self, env_name):
         modMgr = ModuleManager()
-        mod_list = modMgr.load_commands(self._module_lookup[pod.env])
+        mod_list = modMgr.load_commands(self._module_lookup[env_name])
         return ['source $MODULESHOME/init/bash'] \
             + mod_list \
-            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(pod)
+            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(env_name)
 
-    def deactivate_env_commands(self, pod):
+    def deactivate_env_commands(self, env_name):
         modMgr = ModuleManager()
-        mod_list = modMgr.unload_commands(self._module_lookup[pod.env])
+        mod_list = modMgr.unload_commands(self._module_lookup[env_name])
         return super(GfdlvirtualenvEnvironmentManager, \
-            self).deactivate_env_commands(pod) + mod_list
+            self).deactivate_env_commands(env_name) + mod_list
 
     def tearDown(self):
         super(GfdlvirtualenvEnvironmentManager, self).tearDown()
@@ -187,62 +190,56 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
 class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
     # Use mdteam's anaconda2
-    def __init__(self, config, verbose=0):
-        super(GfdlcondaEnvironmentManager, self).__init__(config, verbose)
-
     def _call_conda_create(self, env_name):
-        raise Exception(
-            'Trying to create conda env {} in read-only mdteam account.'.format(env_name)
+        raise Exception(("Trying to create conda env {} "
+            "in read-only mdteam account.").format(env_name)
         )
 
-def GfdlautoDataManager(case_dict, config={}, DateFreqMixin=None):
+
+def GfdlautoDataManager(case_dict, DateFreqMixin=None):
     """Wrapper for dispatching DataManager based on inputs.
     """
-    drs_partial_directory_regex = re.compile(r"""
-        .*CMIP6
-        (/(?P<activity_id>\w+))?
-        (/(?P<institution_id>[a-zA-Z0-9_-]+))?
-        (/(?P<source_id>[a-zA-Z0-9_-]+))?
-        (/(?P<experiment_id>[a-zA-Z0-9_-]+))?
-        (/(?P<member_id>\w+))?
-        (/(?P<table_id>\w+))?
-        (/(?P<variable_id>\w+))?
-        (/(?P<grid_label>\w+))?
-        (/v(?P<version_date>\d+))?
-        /?                      # maybe final separator
-    """, re.VERBOSE)
-
-    if 'root_dir' in case_dict \
-        and os.path.normpath(case_dict['root_dir']).endswith(os.sep+'pp'):
-        return GfdlppDataManager(case_dict, config, DateFreqMixin)
-    elif ('experiment_id' in case_dict or 'experiment' in case_dict) \
-        and ('source_id' in case_dict or 'model' in case_dict):
-        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
-    elif 'root_dir' in case_dict and 'CMIP6' in case_dict['root_dir']:
-        match = re.match(drs_partial_directory_regex, case_dict['root_dir'])
-        if match:
-            case_dict.update(match.groupdict())
-        return Gfdludacmip6DataManager(case_dict, config, DateFreqMixin)
-    elif 'root_dir' in case_dict:
-        return GfdlppDataManager(case_dict, config, DateFreqMixin)
+    test_root = case_dict.get('CASE_ROOT_DIR', None)
+    if not test_root:
+        return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
+    test_root = os.path.normpath(test_root)
+    if 'pp' in os.path.basename(test_root):
+        return GfdlppDataManager(case_dict, DateFreqMixin)
     else:
-        raise Exception("Don't know how to dispatch DataManager based on input.")
+        print(("ERROR: Couldn't determine data fetch method from input."
+            "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
+            "'GFDL_data_cmip6', depending on the source you want."))
+        exit()
 
 
 class GfdlarchiveDataManager(DataManager):
     __metaclass__ = ABCMeta
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+    def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
-        modMgr.load('gcp', 'nco') # should refactor
-        config['settings']['netcdf_helper'] = 'NcoNetcdfHelper'
-        self.coop_mode = config['settings']['frepp']
+        modMgr.load('gcp') # should refactor
 
-        super(GfdlarchiveDataManager, self).__init__(case_dict, config, DateFreqMixin)
-        assert ('root_dir' in case_dict)
-        assert os.path.isdir(case_dict['root_dir'])
-        self.root_dir = case_dict['root_dir']
+        config = util_mdtf.ConfigManager()
+        config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now
+        super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
+
+        assert ('CASE_ROOT_DIR' in case_dict)
+        if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
+            raise DataAccessError(None, 
+                "Can't access CASE_ROOT_DIR = '{}'".format(case_dict['CASE_ROOT_DIR']))
+        self.root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
+
+        self.frepp_mode = config.config.get('frepp', False)
+        if self.frepp_mode:
+            self.overwrite = True
+            # flag to not overwrite config and .tar: want overwrite for frepp
+            self.file_overwrite = True
+            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
+            # unique name in parent's init. Set it back so it will be overwritten.
+            d = config.paths.modelPaths(self, overwrite=True)
+            self.MODEL_WK_DIR = d.MODEL_WK_DIR
+            self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
@@ -260,11 +257,11 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _listdir(self, dir_):
-        # print "\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):])
+        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):]))
         return os.listdir(dir_)
 
     def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.coerce_to_collection(subdir_filter, set)
+        subdir_filter = util.coerce_to_iter(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \
@@ -274,9 +271,9 @@ class GfdlarchiveDataManager(DataManager):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                print "\tCouldn't find subdirs (in {}) at {}, skipping".format(
+                print("\tCouldn't find subdirs (in {}) at {}, skipping".format(
                     subdir_filter, os.path.join(self.root_dir, dir_)
-                )
+                ))
                 continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
@@ -316,8 +313,8 @@ class GfdlarchiveDataManager(DataManager):
                 try:
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print '\tDEBUG:', exc
-                    #print '\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f
+                    print('\tDEBUG:', exc)
+                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f)
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -326,8 +323,10 @@ class GfdlarchiveDataManager(DataManager):
                 if data_key not in file_lookup:
                     continue
                 try:
-                    files_date_range = datelabel.DateRange( \
-                        [f.date_range for f in file_lookup[data_key]])
+                    # method throws ValueError if ranges aren't contiguous
+                    files_date_range = datelabel.DateRange.from_contiguous_span(
+                        *[f.date_range for f in file_lookup[data_key]]
+                    )
                 except ValueError:
                     # Date range of remote files doesn't contain analysis range or 
                     # is noncontiguous; should probably log an error
@@ -357,9 +356,9 @@ class GfdlarchiveDataManager(DataManager):
         d_to_u_dict = self._decide_allowed_components()
         for data_key in self.data_keys:
             u_key = d_to_u_dict[data_key]
-            print "Selected {} for {} @ {}".format(
+            print("Selected {} for {} @ {}".format(
                 u_key, data_key.name_in_model, data_key.date_freq)
-
+            )
             # check we didn't eliminate everything:
             assert self._component_map[u_key, data_key] 
             self.data_files[data_key] = self._component_map[u_key, data_key]
@@ -369,12 +368,12 @@ class GfdlarchiveDataManager(DataManager):
             for f in self.data_files[data_key]:
                 paths.add(f._remote_data)
         if self.tape_filesystem:
-            print "start dmget of {} files".format(len(paths))
+            print("start dmget of {} files".format(len(paths)))
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.file_transfer_timeout,
                 dry_run=self.dry_run
             ) 
-            print "end dmget"
+            print("end dmget")
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -396,11 +395,11 @@ class GfdlarchiveDataManager(DataManager):
         return sorted(self.data_keys.keys())
 
     def _fetch_exception_handler(self, exc):
-        print exc
+        print(exc)
         # iterating over the keys themselves, so that will be what's passed 
         # in the exception
         for pod in self.data_pods[exc.dataset]:
-            print "\tSkipping pod {} due to data fetch error.".format(pod.name)
+            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
             pod.skipped = exc
 
     def fetch_dataset(self, d_key, method='auto'):
@@ -414,8 +413,8 @@ class GfdlarchiveDataManager(DataManager):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
         # GCP can't copy to home dir, so always copy to temp
-        paths = util.PathManager()
-        work_dir = paths.make_tempdir(hash_obj = d_key)
+        tmpdirs = util_mdtf.TempDirManager()
+        work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
         remote_files = sorted( # cast from set to list so we can go in chrono order
             list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
             ) 
@@ -423,8 +422,9 @@ class GfdlarchiveDataManager(DataManager):
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in remote_files:
-            print "\tcopying ...{} to {}".format(
-                f._remote_data[len(self.root_dir):], work_dir)
+            print("\tcopying ...{} to {}".format(
+                f._remote_data[len(self.root_dir):], work_dir
+            ))
             util.run_command(cp_command + [
                 smartsite + f._remote_data, 
                 # gcp requires trailing slash, ln ignores it
@@ -432,43 +432,116 @@ class GfdlarchiveDataManager(DataManager):
             ], 
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
-            ) 
+            )
+
+        # ----------------------------------------
+        # Processing of copied files: TODO: refactor individual steps into 
+        # separate functions 
+
+        # set axis names from header info
+        # only look at first file; if other chunks for same var differ, NCO will
+        # raise error when we try to concat them
+        file_name = os.path.basename(remote_files[0]._remote_data)
+        var_name = remote_files[0].name_in_model
+        file_axes = self.nc_get_axes_attributes(
+            var_name,
+            in_file=file_name, cwd=work_dir, dry_run=self.dry_run
+        )
+        for fax, fax_attrs in file_axes.iteritems():
+            # update DataSets with axis info - need to loop since multiple PODs
+            # may reference this file (warning will be repeated; TODO fix that)
+            error_flag = 0
+            for var in self.data_keys[d_key]: 
+                if fax in var.axes:
+                    # file's axis in list of case's axis names; check their
+                    # axis attributes match if they're both defined
+                    if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
+                        and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower() \
+                        and error_flag != 1:
+                        print(("\tWarning: unexpected axis attribute for {0} in "
+                            "{1} (found {2}, {3} convention is {4})").format(
+                                fax, file_name, fax_attrs['axis'], 
+                                self.convention, var.axes[fax]['axis']
+                        ))
+                        error_flag = 1
+                    var.axes[fax]['MDTF_set_from_axis'] = False
+                else: 
+                    # file has different axis name, try to match by attribute
+                    for vax, vax_attrs in var.axes.iteritems():
+                        if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
+                            continue
+                        elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
+                            # matched axis attributes: log warning & reassign
+                            if error_flag != 2:
+                                print(("\tWarning: unexpected {0} axis name in {1} "
+                                    "(found {2}, {3} convention is {4})").format(
+                                        fax_attrs['axis'], file_name, fax, 
+                                        self.convention, vax
+                                ))
+                                error_flag = 2
+                            # only update so we don't overwrite the envvar name
+                            var.axes[fax] = vax_attrs.copy()
+                            var.axes[fax].update(fax_attrs)
+                            var.axes[fax]['MDTF_set_from_axis'] = True
+                            del var.axes[vax]
+                            break
+                    else:
+                        # get here if we didn't hit 'break' above -- give up
+                        if error_flag != 3:
+                            print(("\tWarning: unable to assign {0} axis "
+                                "in {1}.").format(fax, file_name))
+                            error_flag = 3
 
         # crop time axis to requested range
-        translate = util.VariableTranslator()
-        time_var_name = translate.fromCF(self.convention, 'time_coord')
+        # do this *before* combining chunks to reduce disk activity
+        for vax, vax_attrs in var.axes.iteritems():
+            if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
+                continue
+            else:
+                time_var_name = vax
+                break
+        else:
+            print("\tCan't determine time axis for {}.".format(file_name))
+            time_var_name = 'time' # will probably give KeyError
         trim_count = 0
         for f in remote_files:
-            trimmed_range = f.date_range.intersection(
-                self.date_range, 
-                precision=f.date_range.start.precision
-            )
-            if trimmed_range != f.date_range:
-                file_name = os.path.basename(f._remote_data)
-                print "\ttrimming '{}' of {} from {} to {}".format(
-                    time_var_name, file_name, f.date_range, trimmed_range)
+            file_name = os.path.basename(f._remote_data)
+            if not self.date_range.overlaps(f.date_range):
+                print(("\tWarning: {} has dates {} outside of requested "
+                    "range {}.").format(file_name, f.date_range, self.date_range))
+                continue
+            if not self.date_range.contains(f.date_range):
+                # file overlaps analysis range but is not strictly contained
+                # in it means we need to trim either start or end or both
+                trimmed_range = f.date_range.intersection(
+                    self.date_range,
+                    precision=f.date_range.precision
+                )
+                print("\ttrimming '{}' of {} from {} to {}".format(
+                    time_var_name, file_name, f.date_range, trimmed_range))
                 trim_count = trim_count + 1
                 self.nc_crop_time_axis(
-                    time_var_name, trimmed_range, file_name, 
-                    working_dir=work_dir, 
-                    dry_run=self.dry_run
+                    time_var_name, trimmed_range, 
+                    in_file=file_name, cwd=work_dir, dry_run=self.dry_run
                 )
-        assert trim_count <= 2
+        if trim_count > 2:
+            print("trimmed {} files!".format(trim_count))
+            raise AssertionError()
 
         # cat chunks to destination, if more than one
         if len(remote_files) > 1:
             # not running in shell, so can't use glob expansion.
-            print "\tcatting {} chunks to {}".format(
-                d_key.name_in_model, dest_path)
+            print("\tcatting {} chunks to {}".format(
+                d_key.name_in_model, dest_path
+            ))
             chunks = [os.path.basename(f._remote_data) for f in remote_files]
             self.nc_cat_chunks(chunks, dest_path, 
-                working_dir=work_dir,
-                dry_run=self.dry_run
+                cwd=work_dir, dry_run=self.dry_run
             )
         else:
-            f = util.coerce_from_collection(remote_files)
+            f = util.coerce_from_iter(remote_files)
             file_name = os.path.basename(f._remote_data)
-            print "\tsymlinking {} to {}".format(d_key.name_in_model, dest_path)
+            print("\tsymlinking {} to {}".format(d_key.name_in_model, dest_path))
             util.run_command(['ln', '-fs', \
                 os.path.join(work_dir, file_name), dest_path],
                 dry_run=self.dry_run
@@ -477,7 +550,7 @@ class GfdlarchiveDataManager(DataManager):
 
     def _determine_fetch_method(self, method='auto'):
         _methods = {
-            'gcp': {'command': ['gcp', '-sync', '-v', '-cd'], 'site':'gfdl:'},
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
@@ -492,9 +565,12 @@ class GfdlarchiveDataManager(DataManager):
         pass
 
     def _make_html(self, cleanup=False):
+        # never cleanup html if we're in frepp_mode, since framework may run 
+        # later when another component finishes. Instead just append current
+        # progress to TEMP_HTML.
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
-        if self.coop_mode and os.path.exists(prev_html):
-            print "\tDEBUG: Appending previous index.html at {}".format(prev_html)
+        if self.frepp_mode and os.path.exists(prev_html):
+            print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
             with open(prev_html, 'r') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
@@ -504,19 +580,33 @@ class GfdlarchiveDataManager(DataManager):
             if os.path.exists(self.TEMP_HTML):
                 mode = 'a'
             else:
-                print "\tWARNING: No file at {}.".format(self.TEMP_HTML)
+                print("\tWARNING: No file at {}.".format(self.TEMP_HTML))
                 mode = 'w'
             with open(self.TEMP_HTML, mode) as f2:
                 f2.write(contents)
-        super(GfdlarchiveDataManager, self)._make_html(cleanup=False)
+        super(GfdlarchiveDataManager, self)._make_html(
+            cleanup=(not self.frepp_mode)
+        )
+
+    def _make_tar_file(self, tar_dest_dir):
+        # make locally in WORKING_DIR and gcp to destination,
+        # since OUTPUT_DIR might be mounted read-only
+        config = util_mdtf.ConfigManager()
+        out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
+            config.paths.WORKING_DIR
+        )
+        gcp_wrapper(
+            out_file, tar_dest_dir,
+            timeout=self.file_transfer_timeout, dry_run=self.dry_run
+        )
+        _, file_ = os.path.split(out_file)
+        return os.path.join(tar_dest_dir, file_)
 
     def _copy_to_output(self):
-        # pylint: disable=maybe-no-member
         # use gcp, since OUTPUT_DIR might be mounted read-only
-        paths = util.PathManager()
-        if paths.OUTPUT_DIR == paths.WORKING_DIR:
+        if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
-        if self.coop_mode:
+        if self.frepp_mode:
             # only copy PODs that ran, whether they succeeded or not
             for pod in self.pods:
                 if pod._has_placeholder:
@@ -526,10 +616,11 @@ class GfdlarchiveDataManager(DataManager):
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
             # copy all case-level files
-            print "\tDEBUG: files in {}".format(self.MODEL_WK_DIR)
-            for f in os.path.listdir(self.MODEL_WK_DIR):
-                print "\t\tDEBUG: found {}".format(f)
+            print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
+            for f in os.listdir(self.MODEL_WK_DIR):
+                print("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
+                    print("\t\tDEBUG: found {}".format(f))
                     gcp_wrapper(
                         os.path.join(self.MODEL_WK_DIR, f), 
                         self.MODEL_OUT_DIR,
@@ -537,19 +628,48 @@ class GfdlarchiveDataManager(DataManager):
                     )
         else:
             # copy everything at once
-            gcp_wrapper(
-                self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
-                timeout=self.file_transfer_timeout,
-                dry_run=self.dry_run
-            )
+            if os.path.exists(self.MODEL_OUT_DIR):
+                if self.overwrite:
+                    try:
+                        print('Error: {} exists, attempting to remove.'.format(
+                            self.MODEL_OUT_DIR))
+                        shutil.rmtree(self.MODEL_OUT_DIR)
+                    except OSError:
+                        # gcp will not overwrite dirs, so forced to save under
+                        # a different name despite overwrite=True
+                        print(("Error: couldn't remove {} (probably mounted read"
+                            "-only); will rename new directory.").format(
+                            self.MODEL_OUT_DIR))
+                else:
+                    print("Error: {} exists; will rename new directory.".format(
+                        self.MODEL_OUT_DIR))
+            try:
+                if os.path.exists(self.MODEL_OUT_DIR):
+                    # check again, since rmtree() might have succeeded
+                    self.MODEL_OUT_DIR, version = \
+                        util_mdtf.bump_version(self.MODEL_OUT_DIR)
+                    new_wkdir, _ = \
+                        util_mdtf.bump_version(self.MODEL_WK_DIR, new_v=version)
+                    print("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
+                    shutil.move(self.MODEL_WK_DIR, new_wkdir)
+                    self.MODEL_WK_DIR = new_wkdir
+                gcp_wrapper(
+                    self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
+                    timeout=self.file_transfer_timeout,
+                    dry_run=self.dry_run
+                )
+            except Exception:
+                raise # only delete MODEL_WK_DIR if copied successfully
+            shutil.rmtree(self.MODEL_WK_DIR)
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
-        super(GfdlppDataManager, self).__init__(case_dict, config, DateFreqMixin)
-        for attr in ['component', 'data_freq', 'chunk_freq']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
+    def __init__(self, case_dict, DateFreqMixin=None):
+        # assign explicitly else linter complains
+        self.component = None
+        self.data_freq = None
+        self.chunk_freq = None
+        super(GfdlppDataManager, self).__init__(case_dict, DateFreqMixin)
 
     UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
     def undecided_key(self, dataset):
@@ -585,7 +705,6 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.component, 'ts', frepp_freq(self.data_freq), 
                 frepp_freq(self.chunk_freq)]
                 
@@ -600,9 +719,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             the shortest overall name.
 
         Args:
-            str_list (:obj:`list` of :obj:`str`:): list of component names.
+            str_list (:py:obj:`list` of :py:obj:`str`:): list of component names.
 
-        Returns: :obj:`str`: name of component that breaks the tie.
+        Returns: :py:obj:`str`: name of component that breaks the tie.
         """
         def _heuristic_tiebreaker_sub(strs):
             min_len = min(len(s.split('_')) for s in strs)
@@ -635,7 +754,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
 
 class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
     __metaclass__ = ABCMeta    
-    def __init__(self, case_dict, config={}, DateFreqMixin=None):
+    def __init__(self, case_dict, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
@@ -660,22 +779,22 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         self.institution_id = cmip.lookup(key, 'source_id', 'institution_id')
         if 'member_id' not in case_dict:
             self.member_id = 'r1i1p1f1'
-        case_dict['root_dir'] = os.path.join(
+        case_dict['CASE_ROOT_DIR'] = os.path.join(
             self._cmip6_root, self.activity_id, self.institution_id, 
             self.source_id, self.experiment_id, self.member_id)
-        if not os.path.exists(case_dict['root_dir']):
-            raise DataAccessError(None, 
-                "Can't access {}".format(case_dict['root_dir']))
+        # assign explicitly else linter complains
+        self.data_freq = None
+        self.table_id = None
+        self.grid_label = None
+        self.version_date = None
         super(Gfdlcmip6abcDataManager, self).__init__(
-            case_dict, config, DateFreqMixin=cmip6.CMIP6DateFrequency)
-        for attr in ['data_freq', 'table_id', 'grid_label', 'version_date']:
-            if attr not in self.__dict__:
-                self.__setattr__(attr, None)
+            case_dict, DateFreqMixin=cmip6.CMIP6DateFrequency
+        )
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
     @abstractmethod # note: only using this as a property
-    def _cmip6_root():
+    def _cmip6_root(self):
         pass
 
     # also need to determine table?
@@ -699,7 +818,6 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
         return ds
 
     def subdirectory_filters(self):
-        # pylint: disable=maybe-no-member
         return [self.table_id, None, # variable_id
             self.grid_label, self.version_date]
 
@@ -707,9 +825,8 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
     def _cmip6_table_tiebreaker(str_list):
         # no suffix or qualifier, if possible
         tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
-        tbls = [t for t in tbls if (
-            not t['spatial_avg'] and not t['region'] and t['temporal_avg'] == 'interval'
-        )]
+        tbls = [t for t in tbls if (not t['spatial_avg'] and not t['region'] \
+            and t['temporal_avg'] == 'interval')]
         if not tbls:
             raise Exception('Need to refine table_id more carefully')
         tbls = min(tbls, key=lambda t: len(t['table_prefix']))
@@ -776,21 +893,27 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     else:
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
+    print('\tDEBUG: GCP {} -> {}'.format(source[-1], dest[-1]))
     util.run_command(
-        ['gcp', '-sync', '-v', '-cd'] + source + dest,
+        ['gcp', '--sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
         dry_run=dry_run
     )
 
-def make_remote_dir(dest_dir, timeout=0, dry_run=False):
+def make_remote_dir(dest_dir, timeout=None, dry_run=None):
     try:
         os.makedirs(dest_dir)
     except OSError:
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        paths = util.PathManager()
-        work_dir = paths.make_tempdir()
+        config = util_mdtf.ConfigManager()
+        tmpdirs = util_mdtf.TempDirManager()
+        work_dir = tmpdirs.make_tempdir()
+        if timeout is None:
+            timeout = config.config.get('file_transfer_timeout', 0)
+        if dry_run is None:
+            dry_run = config.config.get('dry_run', False)
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
         gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)
@@ -802,7 +925,8 @@ def running_on_PPAN():
 
 def is_on_tape_filesystem(path):
     # handle eg. /arch0 et al as well as /archive.
-    return any(os.path.realpath(path).startswith(s) for s in ['/arch', '/ptmp', '/work'])
+    return any(os.path.realpath(path).startswith(s) \
+        for s in ['/arch', '/ptmp', '/work'])
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)
@@ -836,7 +960,7 @@ def parse_frepp_stub(frepp_stub):
 
     See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
 
-    Returns: :obj:`dict` of frepp parameters.
+    Returns: :py:obj:`dict` of frepp parameters.
     """
     # parse arguments and relabel keys
     d = {}
@@ -852,7 +976,7 @@ def parse_frepp_stub(frepp_stub):
         \s*$          # remainder of line must be whitespace.
         """, re.VERBOSE)
     for line in frepp_stub.splitlines():
-        print "line = '{}'".format(line)
+        print("line = '{}'".format(line))
         match = re.match(regex, line)
         if match:
             if match.group('key') in frepp_translate:

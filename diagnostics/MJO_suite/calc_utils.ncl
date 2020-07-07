@@ -178,7 +178,7 @@ begin
   nlat       = ndims(1)                   ; In variable pressure levels 
   ntime      = ndims(0)
 
-  time_ut    = ut_calendar(invar&time, 0)
+  time_ut    = cd_calendar(invar&time, 0)
 ; Following construct is to grab dtstep(hours) and checks to see iff it crosses days my finding the minimum of
 ; the first two timesteps.
   dt_days    = min((/fabs((time_ut(1,3)-time_ut(0,3))/24.),fabs((time_ut(2,3)-time_ut(1,3))/24.)/)) 
@@ -375,7 +375,7 @@ lat_coord = getenv("lat_coord")
 
 time = invar&$time_coord$
 time@calendar = "noleap"
-t_utc = ut_calendar(time,0)
+t_utc = cd_calendar(time,0)
 nt = dimsizes(time)
 
 lon = invar&$lon_coord$

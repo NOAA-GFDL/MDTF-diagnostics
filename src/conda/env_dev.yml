@@ -1,0 +1,14 @@
+# Conda environment for development work. 
+name: _MDTF_dev
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=2.7
+- subprocess32
+- mock
+- jupyter
+- netCDF4
+- sphinx
+- pylint
+- doc8

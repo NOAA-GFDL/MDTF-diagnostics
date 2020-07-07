@@ -1,8 +1,10 @@
+from __future__ import print_function
 import os
 import sys
 import glob
 import shutil
 import util
+import util_mdtf
 
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
@@ -13,7 +15,8 @@ class PodRequirementFailure(Exception):
 
     def __str__(self):
         if self.msg is not None:
-            return "Requirements not met for {}.\nReason: {}.".format(self.pod.name, self.msg)
+            return ("Requirements not met for {0}."
+                "\nReason: {1}.").format(self.pod.name, self.msg)
         else:
             return 'Requirements not met for {}.'.format(self.pod.name)
 
@@ -26,15 +29,15 @@ class Diagnostic(object):
     settings.json file upon initialization.
 
     Attributes:
-        driver (:obj:`str`): Filename of the top-level driver script for the POD.
-        long_name (:obj:`str`): POD's name used for display purposes. May contain spaces.
-        description (:obj:`str`): Short description of POD inserted by the link in the
+        driver (:py:obj:`str`): Filename of the top-level driver script for the POD.
+        long_name (:py:obj:`str`): POD's name used for display purposes. May contain spaces.
+        description (:py:obj:`str`): Short description of POD inserted by the link in the
             top-level index.html file.
-        required_programs (:obj:`list` of :obj:`str`, optional): List of 
+        required_programs (:py:obj:`list` of :py:obj:`str`, optional): List of 
             executables required by the POD (typically language interpreters). 
             validate_environment.sh will make sure these are on the environment's
             $PATH before the POD is run.
-        required_ncl_scripts (:obj:`list` of :obj:`str`, optional): List of NCL 
+        required_ncl_scripts (:py:obj:`list` of :py:obj:`str`, optional): List of NCL 
             scripts required by the POD, if any.  
             validate_environment.sh will make sure these are on the environment's
             $PATH before the POD is run.
@@ -46,22 +49,29 @@ class Diagnostic(object):
         contents.
 
         Args:
-            pod_name (:obj:`str`): Name of the POD to initialize.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            pod_name (:py:obj:`str`): Name of the POD to initialize.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
+        config = util_mdtf.ConfigManager()
+        assert pod_name in config.pods
+        # define attributes manually so linter doesn't complain
+        # others are set in _parse_pod_settings
+        self.driver = ""
+        self.program = ""
+        self.pod_env_vars = dict()
+        self.skipped = None
+        self.POD_CODE_DIR = ""
+        self.POD_OBS_DATA = ""
+        self.POD_WK_DIR = ""
+        self.POD_OUT_DIR = ""
+        self.TEMP_HTML = ""
 
         self.name = pod_name
-        self.__dict__.update(paths.podPaths(self))
-        file_contents = util.read_json(
-            os.path.join(self.POD_CODE_DIR, 'settings.json'))
-        self.dry_run = False
-
-        config = self._parse_pod_settings(file_contents['settings'], verbose)
-        self.__dict__.update(config)
-        config = self._parse_pod_varlist(file_contents['varlist'], verbose)
-        self.varlist = config
+        self.code_root = config.paths.CODE_ROOT
+        self.dry_run = config.config.get('dry_run', False)
+        d = config.pods[pod_name]
+        self.__dict__.update(self._parse_pod_settings(d['settings']))
+        self.varlist = self._parse_pod_varlist(d['varlist'])
 
     def iter_vars_and_alts(self):
         """Generator iterating over all variables and alternates in POD's varlist.
@@ -75,9 +85,9 @@ class Diagnostic(object):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
 
         Args:
-            settings (:obj:`dict`): Contents of the settings portion of the POD's
+            settings (:py:obj:`dict`): Contents of the settings portion of the POD's
                 settings.json file.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
             Dict of parsed settings.
@@ -85,16 +95,13 @@ class Diagnostic(object):
         d = {}
         d['pod_name'] = self.name # redundant
         # define empty defaults to avoid having to test existence of attrs
-        for str_attr in ['program', 'driver', 'long_name', 'description', 
-            'env', 'convention']:
+        for str_attr in ['long_name', 'description', 'env', 'convention']:
             d[str_attr] = ''
-        for list_attr in ['varlist',
-            'required_programs', 'required_python_modules', 
-            'required_ncl_scripts', 'required_r_packages']:
+        for list_attr in ['varlist']:
             d[list_attr] = []
-        for dict_attr in ['pod_env_vars']:
-            d[dict_attr] = {}
-        for obj_attr in ['process_obj', 'logfile_obj', 'skipped']:
+        for dict_attr in ['runtime_requirements']:
+            d[dict_attr] = dict()
+        for obj_attr in ['process_obj', 'logfile_obj']:
             d[obj_attr] = None
 
         # overwrite with contents of settings.json file
@@ -103,45 +110,42 @@ class Diagnostic(object):
         if 'variable_convention' in d:
             d['convention'] = d['variable_convention']
             del d['variable_convention']
-        elif d['convention'] == '':
+        elif not d.get('convention', None):
             d['convention'] = 'CF'
-        for list_attr in ['required_programs', 'required_python_modules', 
-            'required_ncl_scripts', 'required_r_packages']:
-            if type(d[list_attr]) != list:
-                d[list_attr] = [d[list_attr]]
+        for key, val in d['runtime_requirements'].iteritems():
+            d['runtime_requirements'][key] = util.coerce_to_iter(val)
         if (verbose > 0): 
-            print self.name + " settings: "
-            print d
+            print(self.name + " settings: ")
+            print(d)
         return d
 
     def _parse_pod_varlist(self, varlist, verbose=0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
 
         Args:
-            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+            varlist (:py:obj:`list` of :py:obj:`dict`): Contents of the varlist portion 
                 of the POD's settings.json file.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
             varlist
         """
-        # pylint: disable=maybe-no-member
         default_file_required = True 
-        for idx, var in enumerate(varlist):
+        for i, var in enumerate(varlist):
             assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
                 "WARNING: didn't find "+var['freq']+" in frequency options "+\
                     " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
-                varlist[idx]['required'] = (var['requirement'].lower() == 'required')
-            elif 'required' not in varlist[idx]:
-                varlist[idx]['required'] = default_file_required
-            if ('alternates' not in var):
-                varlist[idx]['alternates'] = []
-            elif ('alternates' in var) and (type(var['alternates']) is not list):
-                varlist[idx]['alternates'] = [var['alternates']]
+                varlist[i]['required'] = (var['requirement'].lower() == 'required')
+            elif 'required' not in varlist[i]:
+                varlist[i]['required'] = default_file_required
+            if 'alternates' not in var:
+                varlist[i]['alternates'] = []
+            else:
+                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'])
         if (verbose > 0): 
-            print self.name + " varlist: "
-            print varlist
+            print(self.name + " varlist: ")
+            print(varlist)
         return varlist
 
     # -------------------------------------
@@ -190,9 +194,9 @@ class Diagnostic(object):
                         "\n".join(missing_files)
                     ))
             else:
-                if (verbose > 0): print "No known missing required input files"
+                if (verbose > 0): print("No known missing required input files")
         except PodRequirementFailure as exc:
-            print exc
+            print(exc)
             raise exc
 
     def _set_pod_env_vars(self, verbose=0):
@@ -200,36 +204,65 @@ class Diagnostic(object):
         Sets all environment variables for POD.
 
         Args:
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # pylint: disable=maybe-no-member
         self.pod_env_vars.update({
             "POD_HOME": self.POD_CODE_DIR, # location of POD's code
             "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
         })
-        # set all env vars: POD has inherited vars from case (DataManager._setup_pod)
-        # and global.
-        for key, val in self.pod_env_vars.items():
-            util.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
+        # Set env vars POD has inherited globally and from current case 
+        # (set in DataManager._setup_pod).
+        for key, val in self.pod_env_vars.iteritems():
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
-        # pod variable mappings:
+        # Set env vars for variable and axis names:
+        axes = dict()
+        ax_status = dict()
         for var in self.iter_vars_and_alts():
-            util.setenv(var.original_name, var.name_in_model, self.pod_env_vars, 
-                verbose=verbose) 
+            # util_mdtf.setenv(var.original_name, var.name_in_model, 
+            #     self.pod_env_vars, verbose=verbose)
+            # make sure axes found for different vars are consistent
+            for ax_name, ax_attrs in var.axes.iteritems():
+                if 'MDTF_envvar' not in ax_attrs:
+                    print(("\tWarning: don't know env var to set" 
+                        "for axis name {}").format(ax_name))
+                    envvar_name = ax_name+'_coord'
+                else:
+                    envvar_name = ax_attrs['MDTF_envvar']
+                set_from_axis = ax_attrs.get('MDTF_set_from_axis', None)
+                if envvar_name not in axes:
+                    # populate dict
+                    axes[envvar_name] = ax_name
+                    ax_status[envvar_name] = set_from_axis
+                elif axes[envvar_name] != ax_name and ax_status[envvar_name] is None:
+                    # populated with defaults, but now overwrite with name that
+                    # was confirmed from file
+                    axes[envvar_name] = ax_name
+                    ax_status[envvar_name] = set_from_axis
+                elif axes[envvar_name] != ax_name \
+                    and ax_status[envvar_name] == set_from_axis:
+                    # names found in two different files disagree - raise error
+                    raise PodRequirementFailure(self,
+                        ("Two variables have conflicting axis names {}:"
+                            "({}!={})").format(
+                                envvar_name, axes[envvar_name], ax_name
+                    ))
+        for key, val in axes.iteritems(): 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
 
         Args:
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        # pylint: disable=maybe-no-member
-        util.check_required_dirs(
+        util_mdtf.check_required_dirs(
             already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
             create_if_nec = [self.POD_WK_DIR], 
             verbose=verbose)
-        dirs = ['', 'model', 'model/PS', 'model/netCDF', 'obs', 'obs/PS','obs/netCDF']
+        dirs = ['', 'model', 'model/PS', 'model/netCDF', 
+            'obs', 'obs/PS','obs/netCDF']
         for d in dirs:
             if not os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                 os.makedirs(os.path.join(self.POD_WK_DIR, d))
@@ -238,36 +271,42 @@ class Diagnostic(object):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
 
         Args:
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if driver script
             can't be found.
         """
-        # pylint: disable=maybe-no-member
         func_name = "check_pod_driver "
-        if (verbose > 1):  print func_name," received POD settings: ", self.__dict__
-        programs = util.get_available_programs()
+        if (verbose > 1): 
+            print(func_name," received POD settings: ", self.__dict__)
+        programs = util_mdtf.get_available_programs()
 
         if self.driver == '':  
-            print "WARNING: no valid driver entry found for ", self.name
+            print("WARNING: no valid driver entry found for ", self.name)
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
-            file_combos = [ file_root + ext for file_root in try_filenames for ext in programs.keys()]
+            file_combos = [ file_root + ext for file_root \
+                in try_filenames for ext in programs.keys()]
             if verbose > 1: 
-                print "Checking for possible driver names in ",self.POD_CODE_DIR," ",file_combos
+                print("Checking for possible driver names in {} {}".format(
+                    self.POD_CODE_DIR, file_combos
+                ))
             for try_file in file_combos:
                 try_path = os.path.join(self.POD_CODE_DIR, try_file)
-                if verbose > 1: print " looking for driver file "+try_path
+                if verbose > 1: print(" looking for driver file "+try_path)
                 if os.path.exists(try_path):
                     self.driver = try_path
-                    if (verbose > 0): print "Found driver script for "+self.name+" : "+ self.driver
+                    if (verbose > 0): 
+                        print("Found driver script for {}: {}".format(
+                            self.name, self.driver
+                        ))
                     break    #go with the first one found
                 else:
-                    if (verbose > 1 ): print "\t "+try_path+" not found..."
+                    if (verbose > 1 ): print("\t "+try_path+" not found...")
         if self.driver == '':
             raise PodRequirementFailure(self, 
                 """No driver script found in {}. Specify 'driver' in 
-                settings.json.""".format(self.POD_CODE_DIR)
+                settings.jsonc.""".format(self.POD_CODE_DIR)
                 )
 
         if not os.path.isabs(self.driver): # expand relative path
@@ -283,11 +322,13 @@ class Diagnostic(object):
             # Possible error: Driver file type unrecognized
             if driver_ext not in programs:
                 raise PodRequirementFailure(self, 
-                    """{} doesn't know how to call a .{} file. \n
-                    Supported programs: {}""".format(func_name, driver_ext, programs.keys())
-                )
+                    ("{} doesn't know how to call a .{} file.\n"
+                    "Supported programs: {}").format(
+                        func_name, driver_ext, programs.keys()
+                ))
             self.program = programs[driver_ext]
-            if ( verbose > 1): print func_name +": Found program "+programs[driver_ext]
+            if ( verbose > 1): 
+                print(func_name +": Found program "+programs[driver_ext])
 
     def _check_for_varlist_files(self, varlist, verbose=0):
         """Verify that all data files needed by a POD exist locally.
@@ -295,45 +336,53 @@ class Diagnostic(object):
         Private method called by :meth:`~data_manager.DataManager.fetchData`.
 
         Args:
-            varlist (:obj:`list` of :obj:`dict`): Contents of the varlist portion 
+            varlist (:py:obj:`list` of :py:obj:`dict`): Contents of the varlist portion 
                 of the POD's settings.json file.
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
-        Returns: :obj:`tuple` of found and missing file lists. Note that this is called
+        Returns: :py:obj:`tuple` of found and missing file lists. Note that this is called
             recursively.
         """
         func_name = "\t \t check_for_varlist_files :"
-        if ( verbose > 2 ): print func_name+" check_for_varlist_files called with ", varlist
+        if ( verbose > 2 ): 
+            print(func_name+" check_for_varlist_files called with ", varlist)
         found_list = []
         missing_list = []
         if self.dry_run:
-            print 'DRY_RUN: Skipping POD file check'
+            print('DRY_RUN: Skipping POD file check')
             return (found_list, missing_list)
         for ds in varlist:
-            if (verbose > 2 ): print func_name +" "+ds.name
+            if (verbose > 2 ): print(func_name +" "+ds.name)
             filepath = ds._local_data
             if os.path.isfile(filepath):
                 found_list.append(filepath)
                 continue
             if (not ds.required):
-                print "WARNING: optional file not found ",filepath
+                print("WARNING: optional file not found ", filepath)
                 continue
             if not ds.alternates:
-                print "ERROR: missing required file ",filepath,". No alternatives found"
+                print(("ERROR: missing required file {}. "
+                    "No alternatives found").format(filepath))
                 missing_list.append(filepath)
             else:
                 alt_list = ds.alternates
-                print "WARNING: required file not found ",filepath,"\n \t Looking for alternatives: ",alt_list
-                for alt_var in alt_list: # maybe some way to do this w/o loop since check_ takes a list
-                    if (verbose > 1): print "\t \t examining alternative ",alt_var
-                    (new_found, new_missing) = self._check_for_varlist_files([alt_var],verbose=verbose)
+                print(("WARNING: required file not found: {}."
+                    "\n\tLooking for alternatives: ").format(filepath))
+                for alt_var in alt_list: 
+                    # maybe some way to do this w/o loop since check_ takes a list
+                    if (verbose > 1): 
+                        print("\t\t examining alternative ",alt_var)
+                    (new_found, new_missing) = self._check_for_varlist_files(
+                        [alt_var], verbose=verbose
+                    )
                     found_list.extend(new_found)
                     missing_list.extend(new_missing)
         # remove empty list entries
         found_list = filter(None, found_list)
         missing_list = filter(None, missing_list)
         # nb, need to return due to recursive call
-        if (verbose > 2): print "check_for_varlist_files returning ", missing_list
+        if (verbose > 2): 
+            print("check_for_varlist_files returning ", missing_list)
         return (found_list, missing_list)
 
     # -------------------------------------
@@ -343,7 +392,7 @@ class Diagnostic(object):
         :meth:`environment_manager.EnvironmentManager.run`.
 
         Returns:
-            (:obj:`list` of :obj:`str`): Command-line invocation to run the POD.
+            (:py:obj:`list` of :py:obj:`str`): Command-line invocation to run the POD.
         """
         #return [self.program + ' ' + self.driver]
         return ['/usr/bin/env python -u '+self.driver]
@@ -358,20 +407,19 @@ class Diagnostic(object):
         before the POD is run.
 
         Returns:
-            (:obj:`list` of :obj:`str`): Command-line invocation to validate 
+            (:py:obj:`list` of :py:obj:`str`): Command-line invocation to validate 
                 the POD's runtime environment.
         """
         # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        command_path = os.path.join(paths.CODE_ROOT, 'src', 'validate_environment.sh')
+        command_path = os.path.join(self.code_root, 'src', 'validate_environment.sh')
         command = [
             command_path,
             ' -v',
-            ' -p '.join([''] + self.required_programs),
+            ' -p '.join([''] + self.runtime_requirements.keys()),
             ' -z '.join([''] + self.pod_env_vars.keys()),
-            ' -a '.join([''] + self.required_python_modules),
-            ' -b '.join([''] + self.required_ncl_scripts),
-            ' -c '.join([''] + self.required_r_packages)
+            ' -a '.join([''] + self.runtime_requirements.get('python', [])),
+            ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
+            ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))
         ]
         return [''.join(command)]
 
@@ -388,60 +436,50 @@ class Diagnostic(object):
         the output directory and deletes temporary files.
 
         Args:
-            verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
+            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         if isinstance(self.skipped, Exception):
             self.append_result_link(self.skipped)
         else:
-            # shouldn't need to re-set env vars, but used by 
-            # convective_transition_diag to set filename info 
-            self._set_pod_env_vars(verbose=verbose)
-            self._make_pod_html()
-            self._convert_pod_figures()
-            self._cleanup_pod_files()
+            config = util_mdtf.ConfigManager()
+            self._make_pod_html(config)
+            self._convert_pod_figures(config)
+            self._cleanup_pod_files(config)
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
             # elapsed = timeit.default_timer() - start_time
             # print(pod+" Elapsed time ",elapsed)
 
-    def _make_pod_html(self):
+    def _make_pod_html(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
         """
-        # pylint: disable=maybe-no-member
-        html_file = os.path.join(self.POD_WK_DIR, self.name+'.html')
-        temp_file = os.path.join(self.POD_WK_DIR, 'tmp.html')
+        source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
+        dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
 
-        if os.path.exists(html_file):
-            os.remove(html_file)
-        shutil.copy2(os.path.join(self.POD_CODE_DIR, self.name+'.html'), self.POD_WK_DIR)
-        os.system("cat "+ html_file \
-            + r" | sed -e s/casename/" + os.environ["CASENAME"] + r"/g > " \
-            + temp_file)
-        # following two substitutions are specific to convective_transition_diag
-        # need to find a more elegant way to handle this
+        template = config.global_envvars.copy()
+        template.update(self.pod_env_vars)
         if self.name == 'convective_transition_diag':
-            temp_file2 = os.path.join(self.POD_WK_DIR, 'tmp2.html')
-            if ("BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" in os.environ) \
-                and os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2":
-                os.system("cat " + temp_file \
-                    + r" | sed -e s/_tave\./_qsat_int\./g > " + temp_file2)
-                shutil.move(temp_file2, temp_file)
-            if ("RES" in os.environ) and os.environ["RES"] != "1.00":
-                os.system("cat " + temp_file \
-                    + r" | sed -e s/_res\=1\.00_/_res\=" + os.environ["RES"] + r"_/g > " \
-                    + temp_file2)
-                shutil.move(temp_file2, temp_file)
-        shutil.copy2(temp_file, html_file) 
-        os.remove(temp_file)
+            # change filenames of model and obs figures that get linked
+            # need a more elegant way to handle this
+            tropo_meas = template.get('BULK_TROPOSPHERIC_TEMPERATURE_MEASURE', None)
+            if tropo_meas == '1':
+                template['TROPO_VAR'] = 'tave'
+            elif tropo_meas == '2':
+                template['TROPO_VAR'] = 'qsat_int'
+            else:
+                print(("ERROR in convective_transition_diag's settings.jsonc: "
+                    "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE = {}, expected '1' "
+                    "or '2'").format(tropo_meas))
 
+        if os.path.exists(dest):
+            os.remove(dest)
+        util_mdtf.append_html_template(source, dest, template_dict=template)
         # add link and description to main html page
         self.append_result_link()
 
     def append_result_link(self, error=None):
-        # pylint: disable=maybe-no-member
-        paths = util.PathManager()
-        src_dir = os.path.join(paths.CODE_ROOT, 'src', 'html')
+        src_dir = os.path.join(self.code_root, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
             # normal exit
@@ -450,12 +488,11 @@ class Diagnostic(object):
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
-        util.append_html_template(src, self.TEMP_HTML, template_dict)
+        util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self):
+    def _convert_pod_figures(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
-        # pylint: disable=maybe-no-member
         dirs = ['model/PS', 'obs/PS']
         exts = ['ps', 'eps']
         files = []
@@ -464,18 +501,42 @@ class Diagnostic(object):
                 pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
                 files.extend(glob.glob(pattern))
         for f in files:
-            (dd, ff) = os.path.split(os.path.splitext(f)[0])
-            ff = os.path.join(os.path.dirname(dd), ff) # parent directory/filename
-            command_str = 'convert '+ os.environ['convert_flags'] + ' ' \
-                + f + ' ' + ff + '.' + os.environ['convert_output_fmt']
-            os.system(command_str)
+            (dd, f_out) = os.path.split(os.path.splitext(f)[0])
+            path_stem = os.path.join(os.path.dirname(dd), f_out)
+            _ = util.run_shell_command(
+                'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
+                flags=config.config.get('convert_flags',''),
+                f_in=f,
+                f_out=path_stem+'-%d.png'
+            ))
+            # if .ps file was multiple pages, this will generate 1 png per page.
+            # however, page number is included for output from single-page ps 
+            # files, and number starts from 1, not 0. Rename files to fix this.
+            out_files = glob.glob(path_stem+'-?.png')
+            if not out_files:
+                print("Error: no png generated for {}".format(f))
+            elif len(out_files) == 1:
+                shutil.move(out_files[0], path_stem+'.png')
+            else:
+                for n in range(len(out_files)):
+                    shutil.move(
+                        path_stem+'-{}.png'.format(n+1),
+                        path_stem+'-{}.png'.format(n)
+                    )
+        # also move any figures saved directly as bitmaps
+        exts = ['gif', 'png', 'jpg', 'jpeg']
+        for d in dirs:
+            for ext in exts:
+                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
+                for f in glob.glob(pattern):
+                    (dd, ff) = os.path.split(f)
+                    shutil.move(f, os.path.join(os.path.dirname(dd), ff))
 
-    def _cleanup_pod_files(self):
+    def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
-        # pylint: disable=maybe-no-member
         # copy PDF documentation (if any) to output
-        files = glob.glob(os.path.join(self.POD_CODE_DIR, '*.pdf'))
+        files = glob.glob(os.path.join(self.POD_CODE_DIR, 'doc', '*.pdf'))
         for file in files:
             shutil.copy2(file, self.POD_WK_DIR)
 
@@ -489,15 +550,15 @@ class Diagnostic(object):
             shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested
-        if os.environ["save_ps"] == "0":
-            dirs = ['model/PS', 'obs/PS']
-            for d in dirs:
+        if not config.config.save_ps:
+            for d in ['model/PS', 'obs/PS']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
-
-        # delete netCDF files if requested
-        if os.environ["save_nc"] == "0":    
-            dirs = ['model/netCDF', 'obs/netCDF']
-            for d in dirs:
+        # delete netCDF files, keep everything else
+        if config.config.save_non_nc:
+            os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
+        # delete all generated data (flag is a misnomer)
+        elif not config.config.save_nc:
+            for d in ['model/netCDF', 'obs/netCDF']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))

@@ -16,6 +16,8 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     # create masked arrays, initialized to all zeros
     # use fortran index order to match arrays read in from files
     ss    = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
+    clima   = np.zeros((imax,jmax,zmax,tmax12),dtype='float32',  order='F')
+    vvar    = np.zeros((imax,jmax,zmax,tmax),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
     # not necessary to preallocate memory for arrays that are read in from files
 

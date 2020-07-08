@@ -24,8 +24,11 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
     tmax = 12 * (iy2 - iy1 + 1)
     tvar1 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F') 
     tvar2 = np.zeros( (tmax),dtype='float32', order='F')
-    xx2 = np.zeros( (tmax),dtype='float32', order='F')
-    yy2 = np.zeros( (tmax),dtype='float32', order='F')
+    clima1  = np.zeros( (imax,jmax,tmax),dtype='float32', order='F')
+    clima2  = np.zeros( (imax,jmax,tmax),dtype='float32', order='F')
+    # following two variables commented out because they were allocated but never used 
+    # xx2 = np.zeros( (tmax),dtype='float32', order='F')
+    # yy2 = np.zeros( (tmax),dtype='float32', order='F')
     aregress = np.zeros((imax,jmax),dtype='float32', order='F')
 
 #    

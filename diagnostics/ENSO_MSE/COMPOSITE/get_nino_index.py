@@ -28,15 +28,14 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
     im12 = 12
 
     clima = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
-    sst1 = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
+    sst = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
 
 ###    read in TS from NetCDF 
     nameclima = prefix+"/../CLIMA/TS_clim.nc"
     if ( os.path.exists(nameclima)):
         print("get_nino_index.py reading "+nameclima)
-        clima1 = read_netcdf_2D(imax, jmax,  zmax, im12,  "TS",  nameclima, clima1, undef)
-        clima1 = np.ma.masked_greater_equal(clima1, undef, copy=False)
-        nc.close()
+        clima = read_netcdf_2D(imax, jmax,  zmax, im12,  "TS",  nameclima, clima, undef)
+        clima = np.ma.masked_greater_equal(clima, undef, copy=False)
     else:
         print " missing file " + nameclima
         print " exiting get_nino_index.py "
@@ -60,10 +59,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 namein = prefix+"/"+year+"/TS_"+year+".nc"
 
                 if ( os.path.exists(namein) ):
-                   sst1 = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst1, undef)
-                   sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
-                   nc_fid.close()
-                   			
+                   sst = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst, undef)
+                   sst = np.ma.masked_greater_equal(sst, undef, copy=False)                			
                 #    do the calculation of SST sigma 
                    for j in range (jj1, jj2):
                         for i in range (ii1, ii2):
@@ -105,9 +102,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
 
                 namein = prefix+"/"+year+"/TS_"+year+".nc"
                 if ( os.path.exists(namein)):
-                    sst1 = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst1, undef)      
-                    sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
-                    nc_fid.close()
+                    sst = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst, undef)      
+                    sst = np.ma.masked_greater_equal(sst, undef, copy=False)
 #     loop over NINO3.4  and  make anomaly 
                     for j in range (jj1, jj2):
                         for i in range (ii1, ii2):

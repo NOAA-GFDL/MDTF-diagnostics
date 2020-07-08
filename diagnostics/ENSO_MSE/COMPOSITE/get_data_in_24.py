@@ -26,7 +26,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     if (os.path.exists( nameclima)):
         print(this_func+" reading "+nameclima)
         # np.fromfile handles file open/close, memory allocation
-        clima = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  nameinclima, clima, undef)
+        clima = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  nameclima, clima, undef)
     else:
         print " missing file " + nameclima
         print " exiting get_data_in_24.py "
@@ -61,7 +61,6 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                     # increment entries of ss where entries of vvar were valid;
                     # note we can combine multi-dimensional masking and slicing 
                     ss[~vvar_invalid, im-1] += 1.
-                    nc.close()
                 else:
                     print " missing file " + namein
                     print " exiting  get_data_in_24.py" 

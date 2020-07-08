@@ -6,7 +6,7 @@ import sys
 from read_netcdf_2D import read_netcdf_2D
 
 ###   read in data and make composite average - full  values (not anomaly !!) 
-def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, prefix, undef2):
+def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, prefix, undef):
 
     ss    = np.zeros((imax,jmax),dtype='float32',  order='F')      
     vvar  = np.zeros((imax,jmax),dtype='float32',  order='F')

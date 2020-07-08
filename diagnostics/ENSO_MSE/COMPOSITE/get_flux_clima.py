@@ -16,7 +16,7 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef):
     namein = prefixclim + variable + ".grd"
 
     if (os.path.exists( namein)):
-        vvar = read_netcdf_2D(imax, jmax, itmax,  variable,  namein, vvar1, undef)
+        vvar = read_netcdf_2D(imax, jmax, itmax,  variable,  namein, vvar, undef)
         vvar_invalid = (vvar >= undef)
         for im in range (im1, im2+1):
                      imm = im

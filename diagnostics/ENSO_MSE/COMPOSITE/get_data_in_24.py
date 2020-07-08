@@ -17,7 +17,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     # use fortran index order to match arrays read in from files
     ss    = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
     clima   = np.ma.zeros((imax,jmax,zmax,tmax12),dtype='float32',  order='F')
-    vvar    = np.ma.zeros((imax,jmax,zmax,tmax),dtype='float32',  order='F')
+    vvar    = np.ma.zeros((imax,jmax,zmax,tmax12),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
     # not necessary to preallocate memory for arrays that are read in from files
 
@@ -34,6 +34,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
 
 
     for it in range(0, ttmax+1):
+        file_count = 0
         for im in range (im1, im2+1):
             iyy = years[it]
             imm = im
@@ -46,25 +47,25 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                 yy = "%04d" % iyy
                 year = str(yy)
 
-                namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
-                if (os.path.exists( namein)):
-                    print(this_func+" reading "+namein)
-                    # np.fromfile handles file open/close, memory allocation
-                    vvar = read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, vvar, undef)
-                    vvar_invalid = (vvar >= undef)
-                    # set invalid entries of vvar to zero so they don't contribute
-                    # to the running sum in dataout (modifies in-place)
-                    vvar[vvar_invalid] = 0.
-                    # add 3D vvar to the 3D slice of 4D dataout corresponding to 
-                    # current month (im)
-                    dataout[:,:,:, im-1] += vvar
-                    # increment entries of ss where entries of vvar were valid;
-                    # note we can combine multi-dimensional masking and slicing 
-                    ss[~vvar_invalid, im-1] += 1.
-                else:
-                    print " missing file " + namein
-                    print " exiting  get_data_in_24.py" 
-                    sys.exit()
+                # data files now per-year, not per-month, so only load when year changes
+                if (file_count == 0) or (im > 12  and file_count == 1):
+                    namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
+                    if (os.path.exists( namein)):
+                        print(this_func+" reading "+namein)
+                        # np.fromfile handles file open/close, memory allocation
+                        vvar = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  namein, vvar, undef)
+                        vvar_invalid = (vvar >= undef)
+                        # set invalid entries of vvar to zero so they don't contribute
+                        # to the running sum in dataout (modifies in-place)
+                        vvar[vvar_invalid] = 0.
+                        file_count += 1
+                    else:
+                        print " missing file " + namein
+                        print " exiting  get_data_in_24.py" 
+                        sys.exit()
+
+                dataout[:,:,:, im-1] += vvar[:,:,:, imm-1]
+                ss[:,:,:, im-1] += vvar_valid[:,:,:, imm-1]
 
     # element-wise division
     # all occurrences of division by zero are converted to a masked (invalid) 

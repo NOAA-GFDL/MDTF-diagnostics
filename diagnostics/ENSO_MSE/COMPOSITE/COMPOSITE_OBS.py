@@ -25,6 +25,12 @@
 import numpy as np
 import sys
 import math
+import os
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
 
 from get_parameters_in import get_parameters_in
 from get_nino_index import get_nino_index
@@ -40,13 +46,6 @@ from get_correlation import get_correlation
 from get_regression import get_regression
 
 import datetime
-
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
 from util import check_required_dirs
 from get_season import get_season
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in

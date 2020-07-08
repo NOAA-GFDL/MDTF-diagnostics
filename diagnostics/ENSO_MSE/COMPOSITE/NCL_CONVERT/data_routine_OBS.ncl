@@ -37,9 +37,9 @@ begin
 
 ;;       coordinate vars
        lev  =  getenv("lev_coord")
-       lon  =  getenv("lon_var")
-       lat  =  getenv("lat_var")
-       time =  getenv("time_var")
+       lon  =  getenv("lon_coord")
+       lat  =  getenv("lat_coord")
+       time =  getenv("time_coord")
 
        hyam =  getenv("hyam_var")
        hybm =  getenv("hybm_var")

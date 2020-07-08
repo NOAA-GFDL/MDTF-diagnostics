@@ -3,6 +3,9 @@ import os.path
 import math
 import sys
 
+from read_netcdf_2D import read_netcdf_2D
+from read_netcdf_3D import read_netcdf_3D
+
 
 ###   read in data and make composite  correlations need anomalies to calculate
 

@@ -5,6 +5,8 @@ import sys
 
 from scipy import stats
 
+from read_netcdf_2D import read_netcdf_2D
+
 ###   read in data and make composite  regression to variable2 = SST = x, variable1 = y 
 ##      output is the coefficient A in  y = a*x * + b
 ####

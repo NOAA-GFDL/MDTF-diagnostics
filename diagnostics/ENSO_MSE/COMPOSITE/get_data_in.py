@@ -3,6 +3,8 @@ import os.path
 import math
 import sys
 
+from read_netcdf_3D import read_netcdf_3D
+
 ###   read in data and make composite average - full  values (not anomaly !!) 
 def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datout, prefix, undef2):
 

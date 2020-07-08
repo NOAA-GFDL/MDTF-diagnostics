@@ -3,6 +3,8 @@ import os.path
 import math
 import sys
 
+from read_netcdf_2D import read_netcdf_2D
+
 ###   read in data and make composite average - full  values (not anomaly !!) 
 def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, prefix, prefix2,  undef):
 

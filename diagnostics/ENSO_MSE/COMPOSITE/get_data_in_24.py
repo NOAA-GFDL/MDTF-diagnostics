@@ -3,6 +3,8 @@ import os.path
 import math
 import sys
 
+from read_netcdf_3D import read_netcdf_3D
+
 ###   read in data and make composite average -  anomaly !!! 
 ####                   full 24 month evolution based on SST indices
 def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  dataout, prefix,  prefix2, undef):

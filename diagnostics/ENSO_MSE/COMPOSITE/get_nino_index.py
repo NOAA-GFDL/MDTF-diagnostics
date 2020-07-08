@@ -4,6 +4,8 @@ import math
 import sys
 from scipy.io import netcdf
 
+from read_netcdf_2D import read_netcdf_2D
+
 def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2,  sigma, tmax1, tmax2, years1,  years2, prefix, undef):
 ####   need to select the indexes  ii1, ii2,   jj1, jj2  of the area to calculate the sigmas etc
     for i in range(0, imax):
@@ -57,7 +59,7 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 namein = prefix+"/"+year+"/TS_"+year+".nc"
 
                 if ( os.path.exists(namein) ):
-                   sst1 = read_netcdf_2S(imax, jmax, im12,  "TS",  namein, sst1, undef)
+                   sst1 = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst1, undef)
                    sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
                    nc_fid.close()
                    			
@@ -102,7 +104,7 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
 
                 namein = prefix+"/"+year+"/TS_"+year+".nc"
                 if ( os.path.exists(namein)):
-                    sst1 = read_netcdf_2S(imax, jmax, im12,  "TS",  namein, sst1, undef)      
+                    sst1 = read_netcdf_2D(imax, jmax, im12,  "TS",  namein, sst1, undef)      
                     sst1 = np.ma.masked_greater_equal(sst1, undef, copy=False)
                     nc_fid.close()
 #     loop over NINO3.4  and  make anomaly 

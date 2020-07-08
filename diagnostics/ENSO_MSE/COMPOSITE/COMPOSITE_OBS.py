@@ -53,8 +53,6 @@ from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
 from generate_ncl_call import generate_ncl_call
 
-from read_netcdf import read_netcdf
-
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
       The top driver code for the COMPOSITE module.

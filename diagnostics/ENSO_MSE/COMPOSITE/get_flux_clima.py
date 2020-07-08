@@ -17,13 +17,17 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef):
 
     if (os.path.exists( namein)):
         vvar = read_netcdf_2D(imax, jmax, itmax,  variable,  namein, vvar, undef)
-        vvar_invalid = (vvar >= undef)
+        vvar_valid = (vvar < undef)
+        # set invalid entries of vvar to zero so they don't contribute
+        # to the running sum in dataout (modifies in-place)
+        vvar[~vvar_valid] = 0.
+
         for im in range (im1, im2+1):
-                     imm = im
-                     if( im > 12 ):
-                            imm = im - 12
-                            dataout[:,:] += vvar[:,:, imm-1]
-                            ss[~vvar_invalid, imm-1] += 1.
+            imm = im
+            if( im > 12 ):
+                imm = im - 12
+            dataout[:,:] += vvar[:,:, imm-1]
+            ss[:,:] += vvar_valid[:,:, imm-1]
 
     else:
         print " missing file " +  namein

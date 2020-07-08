@@ -34,7 +34,7 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
     nameclima = prefix+"/../CLIMA/TS_clim.nc"
     if ( os.path.exists(nameclima)):
         print("get_nino_index.py reading "+nameclima)
-        clima = read_netcdf_2D(imax, jmax,  zmax, im12,  "TS",  nameclima, clima, undef)
+        clima = read_netcdf_2D(imax, jmax, im12,  "TS",  nameclima, clima, undef)
         clima = np.ma.masked_greater_equal(clima, undef, copy=False)
     else:
         print " missing file " + nameclima

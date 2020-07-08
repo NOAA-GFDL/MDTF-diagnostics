@@ -68,10 +68,10 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
                     vvar2 = np.ma.masked_greater_equal( vvar2, undef, copy=False)
                 ###  collect the global time series of anomalies
                 ##  get the SST anomaly  based on ii, jj 
-                    sst_anom = mean ( vvar2[ii1:ii2,jj1:jj2, imm-1]  - clima2[ii1:ii2, jj1:jj2, imm-1] ) 
+                    sst_anom = np.mean( vvar2[ii1:ii2,jj1:jj2, imm-1]  - clima2[ii1:ii2, jj1:jj2, imm-1] ) 
                     tvar2[it2] = sst_anom
                 ###    collect  global anomaly variable1 
-                    tvar1[:,:]  =  mean ( ff * vvar1[:,:,imm-1] - clima1[:,:imm-1])
+                    tvar1[:,:]  = np.mean( ff * vvar1[:,:,imm-1] - clima1[:,:,imm-1])
                 else:
                     print " missing file 1 " + namein1
                     print " of missing file 2 " + namein2

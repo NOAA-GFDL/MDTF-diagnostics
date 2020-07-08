@@ -11,13 +11,13 @@ from read_netcdf_3D import read_netcdf_3D
 
 def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, variable1, variable2, correl, prefix, prefixclim, undef):
 
-    ss     = np.zeros( (imax,jmax),dtype='float32', order='F')      
-    vvar1  = np.zeros( (imax,jmax),dtype='float32', order='F')
-    vvar2  = np.zeros( (imax,jmax),dtype='float32', order='F')
-    correl = np.zeros( (imax,jmax),dtype='float32', order='F')
-    variance1 = np.zeros((imax,jmax),dtype='float32')
+    ss     = np.ma.zeros( (imax,jmax),dtype='float32', order='F')      
+    vvar1  = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
+    vvar2  = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
+    correl = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
+    variance1 = np.np.ma.zeros((imax,jmax),dtype='float32')
 ##    variance2 = np.zeros((imax,jmax),dtype='float32')
-    ss2 = np.zeros( (imax,jmax),dtype='float32', order='F')
+    ss2 = np.np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     variance2 = 0.
     ss22 = 0.
 

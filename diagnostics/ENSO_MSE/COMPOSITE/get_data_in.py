@@ -8,9 +8,9 @@ from read_netcdf_3D import read_netcdf_3D
 ###   read in data and make composite average - full  values (not anomaly !!) 
 def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datout, prefix, undef):
 
-    ss      = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')      
-    vvar    = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
-    dataout = np.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+    ss      = np.ma.zeros((imax,jmax,zmax),dtype='float32',  order='F')      
+    vvar    = np.ma.zeros((imax,jmax,zmax),dtype='float32',  order='F')
+    dataout = np.ma.zeros((imax,jmax,zmax),dtype='float32',  order='F')
     im12 = 12
     for it in range(0, ttmax+1):
         for im in range (im1, im2+1):

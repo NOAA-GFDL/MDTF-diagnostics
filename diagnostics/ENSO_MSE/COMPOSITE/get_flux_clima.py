@@ -9,9 +9,9 @@ from read_netcdf_2D import read_netcdf_2D
 def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef):
 
     itmax = 12
-    ss    = np.zeros((imax,jmax),dtype='float32', order='F')      
-    vvar  = np.zeros((imax,jmax, itmax),dtype='float32', order='F')
-    dataout = np.zeros((imax,jmax),dtype='float32', order='F')
+    ss    = np.ma.zeros((imax,jmax),dtype='float32', order='F')      
+    vvar  = np.ma.zeros((imax,jmax, itmax),dtype='float32', order='F')
+    dataout = np.ma.zeros((imax,jmax),dtype='float32', order='F')
 ##  read x, y, t dimensioned data 
     namein = prefixclim + variable + ".grd"
 

@@ -8,9 +8,9 @@ from read_netcdf_3D import read_netcdf_3D
 ###   read in data and make composite average - full  values (not anomaly !!) 
 def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim,  undef):
     tmax = 12
-    ss    = np.zeros((imax,jmax,zmax),dtype='float32', order='F')      
-    vvar  = np.zeros((imax,jmax,zmax, tmax),dtype='float32', order='F')
-    dataout = np.zeros((imax,jmax,zmax),dtype='float32', order='F')
+    ss    = np.ma.zeros((imax,jmax,zmax),dtype='float32', order='F')      
+    vvar  = np.ma.zeros((imax,jmax,zmax, tmax),dtype='float32', order='F')
+    dataout = np.ma.zeros((imax,jmax,zmax),dtype='float32', order='F')
 ##  read x, y, z, t dimensioned data 
     namein = prefixclim + variable + ".nc"
     if (os.path.exists( namein)):

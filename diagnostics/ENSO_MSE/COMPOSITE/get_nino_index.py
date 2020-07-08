@@ -27,8 +27,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
 ###    define  full 12 month climatology 
     im12 = 12
 
-    clima = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
-    sst = np.zeros((imax,jmax, im12),dtype='float32',  order='F')
+    clima = np.ma.zeros((imax,jmax, im12),dtype='float32',  order='F')
+    sst = np.ma.zeros((imax,jmax, im12),dtype='float32',  order='F')
 
 ###    read in TS from NetCDF 
     nameclima = prefix+"/../CLIMA/TS_clim.nc"

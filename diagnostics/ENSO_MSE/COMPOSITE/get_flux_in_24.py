@@ -12,8 +12,8 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
     im2 = 24
     tmax12 = 12 
     ss    = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
-    clima   = np.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
-    vvar    = np.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
+    clima   = np.ma.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
+    vvar    = np.ma.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax,zmax,tmax24), dtype='float32', order='F')
 
     nameclima = prefix2 +  variable + "_clim.nc"
@@ -40,7 +40,8 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
 
                 namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
                 if (os.path.exists( namein)):
-                    vvar = read_netcdf_2D(imax, jmax,  tmax12,  variable,  namein, vvar, undef) 
+                    vvar = read_netcdf_2D(imax, jmax,  tmax12,  variable,  namein, vvar, undef)
+                    vvar_invalid = (vvar >= undef)
                     dataout[:,:,:, im-1] += vvar[:,:,:, im-1]
                     ss[~vvar_invalid, im-1] += 1.
                     

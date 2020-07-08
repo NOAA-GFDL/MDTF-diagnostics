@@ -46,7 +46,7 @@ shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     'shared'
 )
-os.sys.path.insert(0, shared_dir)
+sys.path.insert(0, shared_dir)
 from util import check_required_dirs
 from get_season import get_season
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in

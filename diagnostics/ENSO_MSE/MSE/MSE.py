@@ -40,7 +40,7 @@ shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     'shared'
 )
-os.sys.path.insert(0, shared_dir)
+sys.path.insert(0, shared_dir)
 from get_dimensions import get_dimensions
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from generate_ncl_call import generate_ncl_call

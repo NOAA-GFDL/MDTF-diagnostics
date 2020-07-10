@@ -10,32 +10,37 @@
 #
 import json
 import os
-import glob
 
 # ======================================================================
 # START USER SPECIFIED SECTION
 # ======================================================================
 ### Model name and output directory
 MODEL=os.environ["CASENAME"]
-MODEL_OUTPUT_DIR=os.environ["MODEL_OUTPUT_DIR"] # where original model data are located
+MODEL_OUTPUT_DIR=os.environ["DATADIR"]+"/day"
 
 ### Variable names
 T2M_VAR=os.environ["tas_var"]
 SLP_VAR=os.environ["psl_var"]
 Z500_VAR=os.environ["zg_var"]
-TIME_VAR=os.environ["time_var"]
-LAT_VAR=os.environ["lat_var"]
-LON_VAR=os.environ["lon_var"]
+TIME_VAR=os.environ["time_coord"]
+LAT_VAR=os.environ["lat_coord"]
+LON_VAR=os.environ["lon_coord"]
+
+### Set range of years, season, and tail percentile threshold for calculations
+yearbeg=int(os.environ["FIRSTYR"])
+yearend=int(os.environ["LASTYR"])
+monthstr=os.environ["monthstr"]
+monthsub=os.environ["monthsub"]
+ptile=int(os.environ["ptile"])
 
 ### Location information, use "-" or "_" instead of spaces in city name
-# ----- For DJF
-city='Yellowknife'
-statlat=62.4540
-statlon=-114.3718
-# ----- For JJA
-#city='Rennes'
-#statlat=48.0698
-#statlon=-1.7344
+city=os.environ["city"]
+if city == "Yellowknife": #DJF
+	statlat=62.4540
+	statlon=-114.3718
+elif city == "Rennes": #JJA
+	statlat=48.0698
+	statlon=-1.7344
 
 ### Plotting parameters
 lagstep=2 #number of days between lags
@@ -60,17 +65,12 @@ Z500anommaxval=2
 Z500anomrangestep=0.1
 
 ### Model output figure
-# -----  load monthstr from user-defined file TempExtDistShape_SeasonAndTail_usp.py
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail.json") as outfile:
-    season_data=json.load(outfile)
-
-FIG_OUTPUT_DIR=os.environ["variab_dir"]+"/temp_extremes_distshape/model/PS"
-FIG_OUTPUT_FILENAME="CircComps_"+city+"_"+season_data["monthstr"]+".ps"
+FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
+FIG_OUTPUT_FILENAME="CircComps_"+city+"_"+monthstr+".png"
 
 ### Reanalysis output figure for comparisons
-FIG_OBS_DIR=os.environ["variab_dir"]+"/temp_extremes_distshape/obs"
-FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.CircComps_"+city+"_"+season_data["monthstr"]+".png"
+FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
+FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.CircComps_"+city+"_"+monthstr+".png"
 
 # ======================================================================
 # END USER SPECIFIED SECTION
@@ -78,8 +78,7 @@ FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.CircComps_"+city+"_"+season_
 #
 #
 # ======================================================================
-# DO NOT MODIFY CODE BELOW UNLESS
-# YOU KNOW WHAT YOU ARE DOING
+# DO NOT MODIFY CODE BELOW
 # ======================================================================
 data={}
 
@@ -103,6 +102,12 @@ data["LON_VAR"]=LON_VAR
 data["city"]=city
 data["statlat"]=statlat
 data["statlon"]=statlon
+
+data["yearbeg"]=yearbeg
+data["yearend"]=yearend
+data["monthsub"]=monthsub
+data["monthstr"]=monthstr
+data["ptile"]=ptile
 
 data["lagstep"]=lagstep
 data["lagtot"]=lagtot
@@ -132,6 +137,11 @@ statlat, \
 statlon, \
 lagstep, \
 lagtot, \
+yearbeg, \
+yearend, \
+monthsub, \
+monthstr, \
+ptile, \
 SLPminval, \
 SLPmaxval, \
 SLPrangestep, \
@@ -163,6 +173,6 @@ Z500_VAR, \
 LAT_VAR, \
 LON_VAR ]
 
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_CircComps_parameters.json", "w") as outfile:
+with open(os.environ["POD_HOME"]+"/TempExtDistShape_CircComps_parameters.json", "w") as outfile:
     json.dump(data, outfile)
 

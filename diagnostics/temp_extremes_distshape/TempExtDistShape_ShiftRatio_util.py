@@ -40,7 +40,7 @@ from scipy import signal
 
 def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
     ### Load & pre-process region mask
-    print(("   Generating region mask..."), end=' ')
+    print("   Generating region mask...")
     matfile=scipy.io.loadmat(region_mask_filename)
     lat_m=matfile["lats"]
     lon_m=matfile["lons"]
@@ -105,8 +105,6 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     ### Reshape data to [lon, lat, time] dimensions for code to run properly
     if len(var_data.shape) == 4:
         var_data=numpy.squeeze(var_data)
-    #if len(var_data.shape) != 3:
-        #print '...'+field_var+' has incorrect number of dimensions' # <- turn into error message
     if var_data.shape == (len(lon),len(lat),len(datatime)):
         var_data=var_data
     elif var_data.shape == (len(lat),len(datatime),len(lon)):
@@ -126,8 +124,6 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     mo=numpy.array([int('{0.month:02d}'.format(t)) for t in list(datecf)])
     yr=numpy.array([int('{0.year:04d}'.format(t)) for t in list(datecf)])
     leapstr = numpy.array(['{0.month:2d}-{0.day:2d}'.format(t) for t in list(datecf)])
-    print leapstr
-    exit()
     yearind = numpy.where(numpy.logical_and(yr>=yearbeg, yr<=yearend))[0]
     var_data=var_data[:,:,yearind]
     datecf=numpy.array(datecf)
@@ -158,7 +154,7 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
         temp_clim=numpy.mean(var_data[:,:,dayinds[begval]],axis=2)
         temp_clim=temp_clim.reshape(temp_clim.shape[0],temp_clim.shape[1], 1)
         var_anom[:,:,dayinds[begval]]=var_data[:,:,dayinds[begval]]-temp_clim
-    return var_anom,lon,lat,datecf
+    return var_anom,lon,lat
 
 # ======================================================================
 ### ShiftRatio_Calc
@@ -168,9 +164,9 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
 # -----  msk is output from Region_Mask function, masking to land grid cells
 # -----  T2Manom_data is two-meter temperature anomaly data output from Seasonal_Anomalies function above
 # -----  lon and lat are longitude and latitude arrays output from Seasonal_Anomalies function above
-# ---------  Output is global shift ratios
+# ---------  Output is global shift ratio array
 def ShiftRatio_Calc(ptile,shift,msk,T2Manom_data,lon,lat):
-    print(("   Computing underlying-to-Gaussian distribution shift ratio..."), end=' ')
+    print("   Computing underlying-to-Gaussian distribution shift ratio...")
 
     ### Detrend temperature anomaly data output from Seasonal_Anomalies function
     T2Manom_data=signal.detrend(T2Manom_data,axis=2,type='linear')
@@ -232,14 +228,14 @@ def ShiftRatio_Calc(ptile,shift,msk,T2Manom_data,lon,lat):
 # -----  ptile is percentile to define tail of distribution of interest
 # -----  fig_dir and fig_name are location to save figure output
 def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,monthstr,ptile,fig_dir,fig_name):
-    print(("   Plotting shift ratio..."), end=' ')
+    print("   Plotting shift ratio...")
     if ptile < 50:
         cmap_name='ShiftRatio_cold'
     elif ptile > 50:
         cmap_name='ShiftRatio_warm'
     colormaps=scipy.io.loadmat(colormap_file)
     mycmap=mcolors.LinearSegmentedColormap.from_list('my_colormap', colormaps[cmap_name])
-    fig=mplt.figure(figsize=(20,10))
+    fig=mplt.figure(figsize=(10,10))
     ax=mplt.axes(projection=cartopy.crs.PlateCarree())
     ax.set_extent([-180,180,-60,90])
 
@@ -256,12 +252,12 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
         p1=mplt.pcolormesh(lon,lat,numpy.log10(shiftratio),cmap=mycmap,vmin=numpy.log10(0.5),vmax=numpy.log10(2),transform=cartopy.crs.PlateCarree())
 
     ### Add coastlines and lake boundaries
-    ax.add_feature(cartopy.feature.COASTLINE,zorder=1)
+    ax.add_feature(cartopy.feature.COASTLINE,zorder=1,linewidth=0.7)
     ax.add_feature(cartopy.feature.LAKES,zorder=1,linewidth=0.7,edgecolor='k',facecolor='none')
 
-    ## create individual colorbars per subplot
+    ### Create individual colorbars per subplot
     ax.set_aspect('equal')
-    cax2 = inset_axes(ax,width="100%", height="8%",loc='lower center',bbox_to_anchor=(0,-0.05,1,0.3),bbox_transform=ax.transAxes,borderpad=0)
+    cax2 = inset_axes(ax,width="100%", height="15%",loc='lower center',bbox_to_anchor=(0,-0.05,1,0.3),bbox_transform=ax.transAxes,borderpad=0)
     if ptile < 50:
         cbar=mplt.colorbar(p1,cax=cax2,orientation='horizontal',ticks=[numpy.log10(0.125),numpy.log10(0.25),numpy.log10(0.5),numpy.log10(1),numpy.log10(2)])
         cbar.ax.set_xticklabels(['1/8','1/4','1/2','1','2'])
@@ -269,11 +265,11 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
         cbar=mplt.colorbar(p1,cax=cax2,orientation='horizontal',ticks=[numpy.log10(0.5),numpy.log10(1),numpy.log10(2)])
         cbar.ax.set_xticklabels(['1/2','1','2'])
     cbar.ax.tick_params(labelsize=20)
-    ax.text(0.02, 0.02, monthstr,fontsize=20,transform=ax.transAxes,weight='bold')
+    ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
     fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
     
     print("...Completed!")
-    print(("      Figure saved as "+fig_dir+'/'+fig_name+"!"))
+    print("      Figure saved as "+fig_dir+'/'+fig_name+"!")
 
 # ======================================================================
 ### shiftgrid

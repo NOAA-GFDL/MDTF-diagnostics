@@ -11,10 +11,11 @@
 #   (1) Seasonal_Subset
 #   (2) Variable_Anomaly
 #   (3) Labfunc
-#   (4) Circ_Comp_Lags
+#   (4) Circ_Comp_Lag
 #   (5) Plot_Circ_Comp_Lags
 #   (6) Set_Colorbars
-#   (7) Lag_Correct
+#   (7) shiftgrid
+#   (8) Lag_Correct
 #  
 # ======================================================================
 
@@ -41,6 +42,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 # -----  model_netcdf_file is string name of directory location of netcdf file to read in data
 # -----  lon_var,lat_var,field_var,time_var are string names of longitude, latitude, variable, and time in netcdf file
 # -----  monthsub is array of months (integers) for seasonal analysis
+# -----  yearbeg and yearend are range of years for analysis
 # ---------  Output is variable subset to season specified, units, longitude and latitude arrays, and time array
 def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,monthsub,yearbeg,yearend):
     var_netcdf=Dataset(model_netcdf_filename,"r")
@@ -60,8 +62,6 @@ def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mon
     ### Reshape data to [lon, lat, time] dimensions for code to run properly
     if len(var_data.shape) == 4:
         var_data=numpy.squeeze(var_data)
-    #if len(var_data.shape) != 3:
-        #print '...'+field_var+' has incorrect number of dimensions' # <- turn into error message
     if var_data.shape == (len(lon),len(lat),len(datatime)):
         var_data=var_data
     elif var_data.shape == (len(lat),len(datatime),len(lon)):
@@ -88,7 +88,6 @@ def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mon
     yr=yr[yearind]
 
     ### Subset temperature to season specified by "monthsub" vector
-    #print "...Subsetting "+field_var+" to "+monthsub
     moinds=numpy.in1d(mo,monthsub)
     moinds=(numpy.where(moinds)[0])
     moinds=[numpy.int(indval) for indval in moinds]
@@ -144,7 +143,7 @@ def Circ_Comp_Lags(T2Manom_data,T2M_data,T2M_units,SLP_data,SLP_units,Z500_data,
     if T2M_units == 'K':
         T2M_data=T2M_data-273
     SLP_units='hPa'
-    T2M_units='\u00b0'+'C'
+    T2M_units=u"\u00b0"+'C'
     Z500_units='m'
 
     ### Detrend just two-meter temperature anomaly
@@ -223,7 +222,7 @@ def Plot_Circ_Comp_Lags(model_netcdf_filename,lon_var,figstep,plotcol,lon,lat,ta
         lonmesh,latmesh = numpy.meshgrid(lon_shift,lat)
         t1 = axes[figstep,plotcol].pcolormesh(lonmesh,latmesh,var_lag,vmin=minval,vmax=maxval,linewidth=0,rasterized=True,zorder=1,transform=cartopy.crs.PlateCarree())
         t3 = axes[figstep,plotcol].contour(lonmesh,latmesh,var_laganom,levels=numpy.arange(anomminval,anommaxval+anomrangestep,anomrangestep),colors='red',zorder=2,transform=cartopy.crs.PlateCarree())
-        cls=mplt.clabel(t3,t3.levels[:],fmt=Labfunc,colors='red')
+        cls = mplt.clabel(t3,t3.levels[:],fmt=Labfunc,colors='red')
         [txt.set_bbox(dict(facecolor='white', edgecolor='none', pad=0)) for txt in cls]
     else:
         ### Shiftdata for wrapping problem
@@ -238,8 +237,8 @@ def Plot_Circ_Comp_Lags(model_netcdf_filename,lon_var,figstep,plotcol,lon,lat,ta
     t2 = axes[figstep,plotcol].plot(lonloc,latloc,marker='*',color='m',linewidth=40,markersize=10,zorder=4,transform=cartopy.crs.PlateCarree())
 
     ### Add coastlines and lake boundaries
-    axes[figstep,plotcol].add_feature(cartopy.feature.COASTLINE,zorder=1)
-    axes[figstep,plotcol].add_feature(cartopy.feature.LAKES,zorder=1,linewidth=0.7,edgecolor='k',facecolor='none')
+    axes[figstep,plotcol].add_feature(cartopy.feature.COASTLINE,zorder=1,linewidth=1)
+    axes[figstep,plotcol].add_feature(cartopy.feature.LAKES,zorder=1,linewidth=1,edgecolor='k',facecolor='none')
 
     axes[figstep,plotcol].text(0.02, 0.92, var_name, bbox=dict(facecolor='white', alpha=0.8),fontsize=14,transform=axes[figstep,plotcol].transAxes,zorder=5)
     if lag == 0:
@@ -270,7 +269,7 @@ def Set_Colorbars(minval,maxval,cbarstep,t,figstep,plotcol,var_units,axes,fig):
     cax2 = inset_axes(axes[figstep,plotcol],width="90%",height="5%",loc='lower center',bbox_to_anchor=(0, -0.1, 1, 1),bbox_transform=axes[figstep,plotcol].transAxes,borderpad=0,)
     cbar=fig.colorbar(sm,label=var_units,orientation='horizontal',cax=cax2,pad=0.1,ticks=numpy.arange(int(minval),int(maxval)+cbarstep,cbarstep))
     cbar.ax.set_xticklabels(numpy.arange(int(minval),int(maxval)+cbarstep,cbarstep))
-
+    
 # ======================================================================
 ### shiftgrid
 ### Shift global lat/lon grid east or west. Taken from Python 2 Basemap function
@@ -337,13 +336,14 @@ def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
 # -----  lagstep is the user-specified step in days (default=2)
 # -----  monthsub is the array of months associated with the season
 def Lag_Correct(lag,figstep,tail_days_lags,datearrstr,lagstep,monthsub):
-    ## Correct for lags outside season
+    ### Correct for lags outside season
     if lag == 0:
         newtailinds=tail_days_lags[figstep]
     else:
         datelag=datearrstr[tail_days_lags[figstep-1]]
         realdate=[(datetime.strptime(dd,'%m-%d') - timedelta(days=lagstep)) for dd in datelag]
-        realmonths=numpy.array([t.strftime('%m') for t in list(realdate)])
+        realdatefix=[rr.replace(2000) for rr in realdate]
+        realmonths=numpy.array([t.strftime('%m') for t in list(realdatefix)])
         badmonth=monthsub[0]-1
         badmonth='{0:02d}'.format(badmonth)
         badinds=numpy.where(realmonths==str(badmonth))

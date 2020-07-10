@@ -10,44 +10,44 @@
 #
 import json
 import os
-import glob
-import numpy
 
 # ======================================================================
 # START USER SPECIFIED SECTION
 # ======================================================================
 ### Model name and output directory
 MODEL=os.environ["CASENAME"]
-MODEL_OUTPUT_DIR=os.environ["MODEL_OUTPUT_DIR"] # where original model data are located
+MODEL_OUTPUT_DIR=os.environ["DATADIR"]+"/day"
 
 ### Variable Names
 T2M_VAR=os.environ["tas_var"]
-TIME_VAR=os.environ["time_var"]
-LAT_VAR=os.environ["lat_var"]
-LON_VAR=os.environ["lon_var"]
+TIME_VAR=os.environ["time_coord"]
+LAT_VAR=os.environ["lat_coord"]
+LON_VAR=os.environ["lon_coord"]
+
+### Set range of years, season, and tail percentile threshold for calculations
+yearbeg=int(os.environ["FIRSTYR"])
+yearend=int(os.environ["LASTYR"])
+monthstr=os.environ["monthstr"]
+monthsub=os.environ["monthsub"]
+ptile=int(os.environ["ptile"])
 
 ### Region mask directory & filename
-REGION_MASK_DIR=os.environ["VARDATA"]+"/temp_extremes_distshape"
+REGION_MASK_DIR=os.environ["OBS_DATA"]
 REGION_MASK_FILENAME="MERRA2_landmask.mat"
 
 ###  Set plotting properties
 cmaps=['YlOrRd','GnBu','PiYG']
 titles=['Mean','Standard Deviation','Skewness']
 tickrange=[[-40,-30,-20,-10,0,10,20,30,40],[0,1,2,3,4,5,6,7,8,9,10],[-2,-1,0,1,2]]
-var_units='\u00b0'+'C'
+var_units= u"\u00b0"+'C'
 
-### Save figure to filename/directory
-# -----  load monthstr from user-defined file TempExtDistShape_SeasonAndTail_usp.py
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail.json") as outfile:
-    season_data=json.load(outfile)
-
-FIG_OUTPUT_DIR=os.environ["variab_dir"]+"/temp_extremes_distshape/model/PS"
-FIG_OUTPUT_FILENAME="Moments_"+season_data["monthstr"]+".ps"
+### Output figure name and directory
+FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
+FIG_OUTPUT_FILENAME="Moments_"+monthstr+".ps"
 
 ### Reanalysis output figure for comparisons
-FIG_OBS_DIR=os.environ["variab_dir"]+"/temp_extremes_distshape/obs"
-FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.Moments_"+season_data["monthstr"]+".png"
+FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
+FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.Moments_"+monthstr+".png"
 
 # ======================================================================
 # END USER SPECIFIED SECTION
@@ -55,8 +55,7 @@ FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.Moments_"+season_data["month
 #
 #
 # ======================================================================
-# DO NOT MODIFY CODE BELOW UNLESS
-# YOU KNOW WHAT YOU ARE DOING
+# DO NOT MODIFY CODE BELOW
 # ======================================================================
 data={}
 
@@ -74,6 +73,12 @@ data["LAT_VAR"]=LAT_VAR
 data["LON_VAR"]=LON_VAR
 data["T2M_VAR"]=T2M_VAR
 
+data["yearbeg"]=yearbeg
+data["yearend"]=yearend
+data["monthsub"]=monthsub
+data["monthstr"]=monthstr
+data["ptile"]=ptile
+
 data["cmaps"]=cmaps
 data["titles"]=titles
 data["tickrange"]=tickrange
@@ -89,6 +94,11 @@ REGION_MASK_DIR, \
 REGION_MASK_FILENAME, \
 MODEL_OUTPUT_DIR, \
 MODEL, \
+yearbeg, \
+yearend, \
+monthsub, \
+monthstr, \
+ptile, \
 FIG_OUTPUT_FILENAME, \
 FIG_OUTPUT_DIR, \
 FIG_OBS_DIR, \
@@ -98,6 +108,6 @@ T2M_VAR, \
 LAT_VAR, \
 LON_VAR ]
 
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_Moments_parameters.json", "w") as outfile:
+with open(os.environ["POD_HOME"]+"/TempExtDistShape_Moments_parameters.json", "w") as outfile:
     json.dump(data, outfile)
 

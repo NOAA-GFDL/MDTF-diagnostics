@@ -24,7 +24,7 @@ To install the MDTF package on a local machine, create a directory named ``mdtf`
 - ``src/``: source code of the framework itself.
 - ``tests/``: unit tests for the framework.
 
-For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``master`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.  
+For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``main`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.  
 
 For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin work on this branch as described in :ref:`ref-dev-git`.
 

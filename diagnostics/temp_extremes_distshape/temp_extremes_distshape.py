@@ -4,7 +4,7 @@
 #
 #   Surface Temperature Extremes and Distribution Shape Diagnostic Package
 #
-#   Version 1 13-Apr-2020 Arielle J. Catalano (PSU)
+#   Version 1 07-Jul-2020 Arielle J. Catalano (PSU)
 #   PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
@@ -17,11 +17,8 @@
 #   (3) Frequency Distributions at Non-Gaussian Tail locations (TempExtDistShape_FreqDist.py)
 #   (4) Composite Circulation at Non-Gaussian Tail locations (TempExtDistShape_CircComps.py)
 #
-#   As a module of the MDTF code package, all scripts of this package can be found under /mdtf/MDTF_$ver/var_code/temp_extremes_distshape/**
-#   and observational data under 
-#    /mdtf/inputdata/obs_data/temp_extremes_distshape/
-#   (**$ver depends on the actual version of the MDTF code package)
-#
+#   As a module of the MDTF code package, all scripts of this package can be found under /diagnostics/temp_extremes_distshape/**
+#   and observational data under /inputdata/obs_data/temp_extremes_distshape/**
 #
 #   This package is written in Python 3, and requires the following Python packages:
 #    os,json,numpy,scipy,matplotlib,mpl_toolkits,h5py,netcdf4,netcdftime,cftime,cartopy
@@ -34,6 +31,9 @@
 #    (3) Geopotential height (units: m)
 #
 #   References:
+#    Catalano, A. J., P. C. Loikith, and J. D. Neelin, 2020: Evaluating CMIP6
+#      model fidelity at simulating non-Gaussian temperature distribution tails.
+#      Environ. Res. Lett., https://doi.org/10.1088/1748-9326/ab8cd0
 #    Loikith, P. C., and J. D. Neelin, 2019: Non-Gaussian cold-side temperature
 #      distribution tails and associated synoptic meteorology. J. Climate, 32,
 #      8399-8414, https://doi.org/10.1175/JCLI-D-19-0344.1.
@@ -52,19 +52,6 @@
 # Import standard Python packages
 import os
 import glob
-from pathlib import Path
-
-# ======================================================================
-# dictionary of all the environment variables set in this script, to be archived in variab_dir/namelist file
-envvars = {} 
-setenv("POD_HOME",os.getcwd(),envvars,verbose=verbose)
-setenv("OBS_DATA",str(Path(os.environ["POD_HOME"]).parents[2])+"/inputdata/",envvars,verbose=verbose)
-setenv("WK_DIR",os.getcwd()+"/wkdir",envvars,verbose=verbose)
-## ======================================================================
-# USER-DESIGNATED ENVIRNOMENTAL VARIABLES
-setenv("CASENAME","GFDL-CM3",envvars,verbose=verbose)
-setenv("FIRSTYR",str(1980),envvars,verbose=verbose)
-setenv("LASTYR",str(2005),envvars,verbose=verbose)
 
 ##### Functionalities in Surface Temperature Extremes and Distribution Shape Package #####
 
@@ -72,7 +59,7 @@ setenv("LASTYR",str(2005),envvars,verbose=verbose)
 ##  Moments of Surface Temperature Probability Distribution
 ##  See TempExtDistShape_Moments.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"TempExtDistShape_Moments.py")
+    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_Moments.py")
 except OSError as e:
     print(('WARNING',e.errno,e.strerror))
     print("**************************************************")
@@ -83,7 +70,7 @@ except OSError as e:
 ##  Shifted Underlying-to-Gaussian Distribution Tail Exceedances Ratio 
 ##  See TempExtDistShape_ShiftRatio.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"TempExtDistShape_ShiftRatio.py")
+    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_ShiftRatio.py")
 except OSError as e:
     print(('WARNING',e.errno,e.strerror))
     print("**************************************************")
@@ -94,7 +81,7 @@ except OSError as e:
 ##  Frequency Distributions at Non-Gaussian Tail Locations
 ##  See TempExtDistShape_FreqDist.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"TempExtDistShape_FreqDist.py")
+    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_FreqDist.py")
 except OSError as e:
     print(('WARNING',e.errno,e.strerror))
     print("**************************************************")
@@ -105,7 +92,7 @@ except OSError as e:
 ##  Composite Circulation at Non-Gaussian Tail Locations
 ##  See TempExtDistShape_CircComps.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"TempExtDistShape_CircComps.py")
+    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_CircComps.py")
 except OSError as e:
     print(('WARNING',e.errno,e.strerror))
     print("**************************************************")

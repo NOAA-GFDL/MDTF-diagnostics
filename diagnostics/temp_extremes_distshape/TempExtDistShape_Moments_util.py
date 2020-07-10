@@ -39,7 +39,7 @@ from scipy import signal
 
 def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
     ### Load & pre-process region mask
-    print(("   Generating region mask..."), end=' ')
+    print("   Generating region mask...")
     matfile=scipy.io.loadmat(region_mask_filename)
     lat_m=matfile["lats"]
     lon_m=matfile["lons"]
@@ -79,15 +79,15 @@ def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
     return mask_region
 
 # ======================================================================
-### Seasonal_Data
+### Seasonal_Moments
 ### Read in two-meter temperature variable from netcdf file and compute seasonal subset
 # -----  model_netcdf_filename is string name of directory location of netcdf file to be opened
 # -----  lon_var,lat_var,field_var,time_var are string names of longitude, latitude, variable, and time in netcdf file
 # -----  monthsub is array of months (integers) for seasonal analysis
 # -----  yearbeg and yearend of range of years for analysis
-# ---------  Output is two-meter temperature seasonal data, longitude, and latitude arrays
+# ---------  Output is two-meter temperature seasonal data arrays, and longitude and latitude arrays
 def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,monthsub,yearbeg,yearend,mask_region):
-    print(("   Computing seasonal temperature moments..."), end=' ')
+    print("   Computing seasonal temperature moments...")
     var_netcdf=Dataset(model_netcdf_filename,"r")
     lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float") 
     lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float") 
@@ -105,8 +105,6 @@ def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mo
     ### Reshape data to [lon, lat, time] dimensions for code to run properly
     if len(var_data.shape) == 4:
         var_data=numpy.squeeze(var_data)
-    #if len(var_data.shape) != 3:
-        #print '...'+field_var+' has incorrect number of dimensions' # <- turn into error message
     if var_data.shape == (len(lon),len(lat),len(datatime)):
         var_data=var_data
     elif var_data.shape == (len(lat),len(datatime),len(lon)):
@@ -138,15 +136,10 @@ def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mo
     moinds=[numpy.int(indval) for indval in moinds]
     leapstr=leapstr[moinds]
     var_data=var_data[:,:,moinds]
-    #moseas=[mo[indval] for indval in moinds]
-    #yrseas=[yr[indval] for indval in moinds]
 
     ### Remove leap days
     dateind=(leapstr != '02-29')
     leapstr=leapstr[dateind]
-    var_data=var_data[:,:,dateind]
-    #moseas=[mo[indval] for indval in dateind]
-    #yrseas=[yr[indval] for indval in dateind]
     var_data=var_data[:,:,dateind]
     if varunits == 'K' or varunits == 'Kelvin':
         var_data=var_data-273
@@ -163,19 +156,18 @@ def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mo
 ### Moments_Plot
 ### Plot mathematical moments of temperature distribution
 # -----  model_netcdf_filename is data filename and lon_var is longitude string to read in longitude array
-# -----  colormap_file is Matlab file specifying colormap for plotting
-# -----  lat is latitude array output from Seasonal_Data function above
-# -----  seas_data is seasonal data moments computed from Seasonal_Data function above
+# -----  lat is latitude array output from Seasonal_Moments function above
 # -----  monthstr is string referring to months of seasonal analysis
-# -----  ptile is percentile to define tail of distribution of interest
+# -----  cmaps is Matlab file specifying colormap for plotting
+# -----  titles and data are arrays of moments being plotted, computed from Seasonal_Moments function above
+# -----  tickrange and var_units are plotting parameters specified in usp.py file 
 # -----  fig_dir and fig_name are location to save figure output
 def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,tickrange,var_units,fig_dir,fig_name):
-    print(("   Plotting seasonal temperature moments..."), end=' ')
-    fig=mplt.figure(figsize=(20,20))
+    print("   Plotting seasonal temperature moments...")
+    fig=mplt.figure(figsize=(11,13))
 
-    ### align latitudes with land borders
+    ### Align latitudes with land borders
     lat=lat - numpy.true_divide((lat[2]-lat[1]),2)
-
     for idata in numpy.arange(0,len(cmaps)):
         ax=fig.add_subplot(int('31'+str(idata+1)),projection=cartopy.crs.PlateCarree())
         ax.set_extent([-180,180,-60,90])
@@ -190,35 +182,31 @@ def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,ti
         lon=lon - numpy.true_divide((lon[2]-lon[1]),2)
 
         p1=ax.pcolormesh(lon,lat,data_plt,cmap=cmaps[idata],vmin=numpy.min(tickrange[idata]),vmax=numpy.max(tickrange[idata]),linewidth=0,rasterized=True,transform=cartopy.crs.PlateCarree())
-        ax.add_feature(cartopy.feature.COASTLINE,zorder=1)
-        ax.add_feature(cartopy.feature.LAKES,zorder=1,linewidth=0.7,edgecolor='k',facecolor='none')
-        ax.set_title(titles[idata],fontdict={'fontsize': 20, 'fontweight': 'medium'})
+        ax.add_feature(cartopy.feature.COASTLINE,zorder=10,linewidth=0.7)
+        ax.add_feature(cartopy.feature.LAKES,zorder=11,linewidth=0.7,edgecolor='k',facecolor='none')
+        ax.set_title(titles[idata],fontdict={'fontsize': 15, 'fontweight': 'medium'})
         ax.set_aspect('equal')
 
-        ## create individual colorbars per subplot
+        ### Create individual colorbars per subplot
         axpos = ax.get_position()
         axpos0 = axpos.x0
-        pos_x = axpos0+axpos.width-0.06
-        cax = inset_axes(ax,width="5%", height="100%",loc='right',bbox_to_anchor=(pos_x,0,0.3,1),bbox_transform=ax.transAxes,borderpad=0)
+        pos_x = axpos.width - 0.04
+        cax = inset_axes(ax,width="7%", height="100%",loc='right',bbox_to_anchor=(pos_x,0,0.3,1),bbox_transform=ax.transAxes,borderpad=0)
         if idata != 2:
             cbar=fig.colorbar(p1,cax=cax,label=var_units,orientation='vertical',ticks=tickrange[idata])
         else:
             cbar=fig.colorbar(p1,cax=cax,orientation='vertical',ticks=tickrange[idata])
-        #cax.axis('off')
         cbar.ax.set_xticklabels(tickrange[idata])
         cbar.ax.tick_params(labelsize=14)
-        ax.text(0.02, 0.02, monthstr,fontsize=20,transform=ax.transAxes,weight='bold')
+        ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
     fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
-    
     print("...Completed!")
-    print(("      Figure saved as "+fig_dir+'/'+fig_name+"!"))
-
+    print("      Figure saved as "+fig_dir+'/'+fig_name+"!")
 
 # ======================================================================
 ### shiftgrid
 ### Shift global lat/lon grid east or west. Taken from Python 2 Basemap function
 def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
-    
     #.. tabularcolumns:: |l|L|
     #==============   ====================================================
     #Arguments        Description

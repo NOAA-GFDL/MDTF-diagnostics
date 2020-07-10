@@ -6,7 +6,7 @@
 #    as part of functionality provided by
 #   Surface Temperature Extremes and Distribution Shape Package (temp_extremes_distshape.py)
 #
-#   Version 1 15-Jan-2020 Arielle J. Catalano (PSU)
+#   Version 1 07-Jul-2020 Arielle J. Catalano (PSU)
 #   PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
@@ -21,10 +21,8 @@
 #   Depends on the following scripts:
 #    (1) TempExtDistShape_FreqDist_usp.py
 #    (2) TempExtDistShape_FreqDist_util.py
-#    (3) TempExtDistShape_SeasonAndTail_usp.py
 #
 #   Defaults for locations, seasons, etc. that can be altered by user are in TempExtDistShape_FreqDist_usp.py
-#   Defaults for the range of years that can be altered by user are in TempExtDistShape_SeasonAndTail_usp.py
 # 
 #   Utility functions are defined in TempExtDistShape_FreqDist_util.py
 #  
@@ -48,17 +46,10 @@ print("**************************************************")
 
 # ======================================================================
 ### Load user-specified parameters (usp) for calcluating and plotting shift ratio
-# -----  This is in the /var_code/temp_extremes_distshape folder under TempExtDistShape_FreqDist_usp.py and TempExtDistShape_SeasonAndTail_usp.py
 
-print(("Load user-specified years and tail..."), end=' ')
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail.json") as outfile:
-    season_data=json.load(outfile)
-print("...Loaded!")
-
-print(("Load user-specified parameters including season..."), end=' ')
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_FreqDist_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_FreqDist_parameters.json") as outfile:
+print("Load user-specified parameters including season...")
+os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_FreqDist_usp.py")
+with open(os.environ["POD_HOME"]+"/TempExtDistShape_FreqDist_parameters.json") as outfile:
     freq_data=json.load(outfile)
 print("...Loaded!")
 
@@ -70,13 +61,13 @@ T2Mfile=sorted(glob.glob(freq_data["MODEL_OUTPUT_DIR"]+"/"+freq_data["MODEL"]+"*
 ### Estimate and plot Gaussian fit to two-meter temperature distribution at specified locations, save figure in wkdir/TempExtDistShape/
 # -----  Set figure prior to looping over each city and adding to each subplot
 # -----  Large subplot 111 added to display overall x and y labels properly in plotting
-fig = mplt.figure(figsize=(30,20))
+fig = mplt.figure(figsize=(9,10))
 ax_lg = fig.add_subplot(111)
 for statind in numpy.arange(0,len(freq_data["citynames"])):
 
     # ======================================================================
     ### Calculate seasonal anomalies for two-meter temperature
-    Tanom_data,lon,lat=Seasonal_Anomalies(T2Mfile,freq_data["LON_VAR"],freq_data["LAT_VAR"],freq_data["T2M_VAR"],freq_data["TIME_VAR"],freq_data["monthsub"],season_data["yearbeg"],season_data["yearend"],statind)
+    Tanom_data,lon,lat=Seasonal_Anomalies(T2Mfile,freq_data["LON_VAR"],freq_data["LAT_VAR"],freq_data["T2M_VAR"],freq_data["TIME_VAR"],freq_data["monthsub"],freq_data["yearbeg"],freq_data["yearend"],statind)
 
     # ======================================================================
     ### Estimate Gaussian fit to two-meter temperature distribution at specified location
@@ -84,7 +75,7 @@ for statind in numpy.arange(0,len(freq_data["citynames"])):
 
     # ======================================================================
     ### Plot two-meter temperature distribution and estimated Gaussian fit computed above at specified location, save to wkdir/TempExtDistShape
-    Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_stat,season_data["ptile"],freq_data["citynames"],freq_data["monthstr"],statind,freq_data["plotrows"],freq_data["plotcols"])
+    Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_stat,freq_data["ptile"],freq_data["citynames"],freq_data["monthstr"],statind,freq_data["plotrows"],freq_data["plotcols"])
 
 ### Turn off axis lines and ticks of the big subplot and set x & y labels
 ax_lg.spines['top'].set_color('none')
@@ -92,18 +83,15 @@ ax_lg.spines['bottom'].set_color('none')
 ax_lg.spines['left'].set_color('none')
 ax_lg.spines['right'].set_color('none')
 ax_lg.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-ax_lg.set_ylabel('Normalized Frequency',fontsize=25,labelpad=30)
-ax_lg.set_xlabel('Temperature Anomaly ('+'\u00b0'+'C)',fontsize=25,labelpad=16)
+ax_lg.set_ylabel('Normalized Frequency',fontsize=14,labelpad=30)
+ax_lg.set_xlabel('Temperature Anomaly ('+u"\u00b0"+'C)',fontsize=14,labelpad=16)
 
 ### Format subplot spacing
-fig.subplots_adjust(wspace=0.08, hspace=0.1)
+fig.subplots_adjust(wspace=0.2, hspace=0.25)
 
 ### Save figure to PDF
 fig.savefig(freq_data["FIG_OUTPUT_DIR"]+"/"+freq_data["FIG_OUTPUT_FILENAME"],bbox_inches='tight')
-print(("      Figure saved as "+freq_data["FIG_OUTPUT_DIR"]+'/'+freq_data["FIG_OUTPUT_FILENAME"]+"!"))
-
-### Copy observation figures over for comparisons
-os.popen('cp '+os.environ["VARDATA"]+'temp_extremes_distshape/'+freq_data["FIG_OBS_FILENAME"]+' '+freq_data["FIG_OBS_DIR"]+'/')
+print("      Figure saved as "+freq_data["FIG_OUTPUT_DIR"]+'/'+freq_data["FIG_OUTPUT_FILENAME"]+"!")
 
 # ======================================================================
 

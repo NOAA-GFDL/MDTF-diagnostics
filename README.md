@@ -1,12 +1,8 @@
 # MDTF-diagnostics [![Build Status](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics.svg?branch=develop)](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics)
 
-The MDTF diagnostic package is portable, extensible, usable, and open for contribution from the community. A goal is to allow diagnostics to be repeatable inside, or outside, of modeling center workflows. These are diagnostics focused on model improvement, and as such a slightly different focus from other efforts. The code runs on CESM model output, as well as on GFDL and CF-compliant model output.
+The MDTF diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on climate model data. Each POD module targets a specific physical process or emergent behavior, with the goals of determining how accurately the model represents that process, ensuring that models produce the right answers for the right reasons, and identifying gaps in the understanding of phenomena.
 
-The MDTF Diagnostic Framework consists of multiple process-oriented diagnostic (POD) modules, each of which is developed by an individual research group or user. PODs are independent of each other, each POD:
-
-1. Produces its own html file (webpage) as the final product
-2. Consists of a set of diagnostics targeting specific physical processes
-3. Produces a figure or multiple figures that can be displayed by the html in a browser
+The package provides an extensible, portable and reproducible means for running these diagnostics as part of the model development workflow. The framework handles software dependency and data handling tasks, meaning that POD developers can focus on science instead of “reinventing the wheel”. Development is community-driven and built on open-source technologies. Documentation for users and contributors is hosted on <a href="https://mdtf-diagnostics.readthedocs.io/en/latest/">readthedocs.io</a>.
 
 ![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
 
@@ -34,7 +30,13 @@ and a link to the full documentation for each diagnostic.
 
 # Quickstart installation instructions
 
-This document provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics (PODs) package using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
+The Model Diagnostics Task Force (MDTF) Diagnostic Framework consists of multiple Process-Oriented Diagnostic (POD) modules, each of which is developed by an individual research group. PODs are independent of each other. Each POD:
+
+1. Consists of a set of diagnostics targeting specific physical processes
+2. Produces a figure or multiple figures that can be displayed by the html in a browser
+3. Produces its own html file (webpage) as the final product
+
+This document provides basic directions for downloading, installing and running a test of the MDTF diagnostic framework package using sample model data. See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
 Throughout this document, `%` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in `fixed-width font`, and `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` in section 1.1 should be substituted by the actual path to the MDTF-diagnostics directory.
 

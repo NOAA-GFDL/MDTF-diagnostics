@@ -1,18 +1,18 @@
-Framework configuration
-=======================
+Using customized model data & framework configuration
+=====================================================
 
-In this section we describe configuration options in more generality than the test case described in :doc:`start_install`. 
+In this section we describe how to run the framework with your own model data, and more configuration options than the test case described in :doc:`start_install`.
 
-The complete set of options is described in :doc:`ref_cli`, or by running ``% ./mdtf --help``. All options can be specified as a command-line flag (eg ``--OUTPUT_DIR``) or as a JSON input file of the form provided in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/default_tests.jsonc>`__. We recommend using this file as a template, making copies and customizing it as needed.
+The complete set of configuration options is described in :doc:`ref_cli`, or by running ``% ./mdtf --help``. All options can be specified as a command-line flag (e.g., ``--OUTPUT_DIR``) or as a JSON input file of the form provided in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/default_tests.jsonc>`__. We recommend using this file as a template, making copies and customizing it as needed.
 
-Options given on the command line always take precedence over the input file. This is so you can store options that don't change in the file (eg. the input/output data paths) and use command-line flags to only set the options you want to change from run to run (eg. the analysis period start and end years). In all cases, the complete set of option values used in each run of the framework is included in the output directory, for reproducibility and provenance.
+Options given on the command line always take precedence over the JSON input file. This is so you can store options that don't freuently change in the file (e.g., the input/output data paths) and use command-line flags to only set the options you want to change from run to run (e.g., the analysis period start and end years). In all cases, the complete set of option values used in each run of the framework will be included in the log file as part of the output, for reproducibility and provenance.
 
 Adding your own model data
 --------------------------
 
 Currently the framework is only able to run on model data in the form of NetCDF files on a locally mounted disk following a specific directory hierarchy and filename convention. We hope to offer more flexibility in this area in the near future.
 
-The directory/filename convention we use is 
+The directory/filename convention we use is
 
 ``$MODEL_DATA_ROOT``/<*CASENAME*>/<*frequency*>/<*CASENAME*>.<*variable*>.<*frequency*>.nc,
 

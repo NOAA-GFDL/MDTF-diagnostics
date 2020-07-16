@@ -1,7 +1,13 @@
 Quickstart installation instructions
 ====================================
 
-This section provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
+The Model Diagnostics Task Force (MDTF) Diagnostic Framework consists of multiple Process-Oriented Diagnostic (POD) modules, each of which is developed by an individual research group. PODs are independent of each other. Each POD:
+
+1. Consists of a set of diagnostics targeting specific physical processes
+2. Produces a figure or multiple figures that can be displayed by the html in a browser
+3. Produces its own html file (webpage) as the final product
+
+This section provides basic directions for downloading, installing and running a test of the MDTF diagnostic framework package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
 Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``, and ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be substituted by the actual path to the MDTF-diagnostics directory. While the package contains quite a few scripts, the most relevant for present purposes are:
 

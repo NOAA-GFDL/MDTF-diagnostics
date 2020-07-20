@@ -2,8 +2,7 @@
 # It does not make use of external test data and does not test the scientific 
 # content of individual diagnostics.
 
-# use "minimal" not "python" to save disk space; 
-# all software installed through conda
+# use "minimal" not "python" to save disk space; all software installed through conda
 language: minimal
 sudo: false
 python: '2.7' # only supported version, for now
@@ -36,17 +35,31 @@ install:
   # MDTF-specific setup: install all conda envs
   - ./src/conda/conda_env_setup.sh --all --conda_root "$HOME/miniconda"
 
-  # Log space remaining for data
-  - df -h
+  - df -h # Log space remaining for data
 
-  # attempt FTP data fetch, will probably fail
-  - curl --verbose --ipv4 --connect-timeout 8 --max-time 120 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/QBOi.EXP1.AMIP.001.PS.mon.nc --output QBOi.EXP1.AMIP.001.PS.mon.nc
-  # - curl --verbose --ipv4 --connect-timeout 8 --max-time 120 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/QBOi.EXP1.AMIP.001.Z3.mon.nc --output QBOi.EXP1.AMIP.001.Z3.mon.nc
+  # attempt FTP data fetch for EOF_500hPa
+  # allow 20 min for transfer before timeout; Travis only allots 50 min for everything
+  - curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/travis_test.tar --output travis_test.tar
+  - tar -xvf travis_test.tar
+  - mkdir wkdir
+  - ls # debug
 
+  - df -h # Log space remaining
 
 script:
- # trivial check that install script worked
+  # trivial check that install script worked
   - ./mdtf --version
+
+  # try running EOF_500hPa
+  - ./mdtf -f tests/travis_test.jsonc 
+  - POD_OUT="wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa"
+  - if [[ -d "$POD_DIR" ]]; then
+      ls "$POD_DIR";
+      ls "${POD_DIR}/obs";
+      ls "${POD_DIR}/model";
+      # dump log
+      cat wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa/EOF_500hPa.log;
+    fi
 
   # run unit tests
   - conda activate _MDTF_base

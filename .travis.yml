@@ -1,8 +1,11 @@
 # This Travis-CI file only runs unit tests on the MDTF code.
 # It does not make use of external test data and does not test the scientific 
 # content of individual diagnostics.
-language: python
-sudo: required
+
+# use "minimal" not "python" to save disk space; 
+# all software installed through conda
+language: minimal
+sudo: false
 python: '2.7' # only supported version, for now
 
 branches:
@@ -14,7 +17,7 @@ branches:
 install:
 # miniconda setup taken from official guide at 
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
-  - sudo apt update
+  # - sudo apt update
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -36,7 +39,15 @@ install:
   # Log space remaining for data
   - df -h
 
+  # attempt FTP data fetch, will probably fail
+  - curl --verbose --ipv4 --connect-timeout 8 --max-time 120 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/QBOi.EXP1.AMIP.001.PS.mon.nc --output QBOi.EXP1.AMIP.001.PS.mon.nc
+  # - curl --verbose --ipv4 --connect-timeout 8 --max-time 120 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/QBOi.EXP1.AMIP.001.Z3.mon.nc --output QBOi.EXP1.AMIP.001.Z3.mon.nc
+
+
 script:
-  - ./mdtf --version # trivial check that install script worked
+ # trivial check that install script worked
+  - ./mdtf --version
+
+  # run unit tests
   - conda activate _MDTF_base
   - python -m unittest discover

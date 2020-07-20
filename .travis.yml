@@ -59,7 +59,7 @@ install:
   - df -h # Log space remaining
 
 before_script:
-  - cd "$BUILD_PARENT"
+  - cd "$TRAVIS_BUILD_DIR"
 
 script:
   # trivial check that install script worked
@@ -76,5 +76,4 @@ script:
 
   # run unit tests
   - conda activate _MDTF_base
-  - cd $TRAVIS_BUILD_DIR
   - python -m unittest discover

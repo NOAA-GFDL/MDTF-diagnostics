@@ -2,6 +2,8 @@
 # It does not make use of external test data and does not test the scientific 
 # content of individual diagnostics.
 
+# Config validator: https://config.travis-ci.com/explore 
+
 os: linux
 dist: xenial # default
 language: shell # synonym for "minimal". Use instead of "python" to save disk space; all software installed through conda
@@ -15,10 +17,13 @@ branches:
     - /^feature/ 
 
 before_install: 
-  - cd $HOME # should be parent
-  - ls # debug
-  - echo $HOME
-  - echo $TRAVIS_BUILD_DIR
+  # TRAVIS_BUILD_DIR = abs path to checked-out repo
+  - BUILD_PARENT="$( cd "$( dirname "$TRAVIS_BUILD_DIR" )" >/dev/null 2>&1 && pwd )"
+  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa"
+  - echo "$TRAVIS_BUILD_DIR"
+  - echo "$BUILD_PARENT"
+  - echo "$POD_OUTPUT"
+  - cd "$BUILD_PARENT"
 
 install:
 # miniconda setup taken from official guide at 
@@ -53,14 +58,16 @@ install:
 
   - df -h # Log space remaining
 
+before_script:
+  - cd "$BUILD_PARENT"
+
 script:
   # trivial check that install script worked
   - ./mdtf --version
 
   # try running EOF_500hPa
-  - ./mdtf -f tests/travis_test.jsonc 
+  - ./mdtf -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
   - ls wkdir
-  - POD_OUTPUT="wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa"
   - ls "$POD_OUTPUT"
   - ls "${POD_OUTPUT}/obs"
   - ls "${POD_OUTPUT}/model"

@@ -53,13 +53,11 @@ script:
   # try running EOF_500hPa
   - ./mdtf -f tests/travis_test.jsonc 
   - POD_OUT="wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa"
-  - if [[ -d "$POD_DIR" ]]; then
-      ls "$POD_DIR";
-      ls "${POD_DIR}/obs";
-      ls "${POD_DIR}/model";
-      # dump log
-      cat wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa/EOF_500hPa.log;
-    fi
+  - ls "$POD_DIR";
+  - ls "${POD_DIR}/obs";
+  - ls "${POD_DIR}/model";
+  # dump log
+  - cat wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa/EOF_500hPa.log;
 
   # run unit tests
   - conda activate _MDTF_base

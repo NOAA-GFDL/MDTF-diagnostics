@@ -20,6 +20,8 @@
     "description" : "Surface Temperature Extremes and Distribution Shape",
 
     "pod_env_vars" : {
+      // test: enforce non-interactive backend here, instead of code
+      "MPLBACKEND": "Agg",
       // optional pod-specific shell environment variables:
       // Specify parameters for Surface Temperature Extremes and
       // Distribution Shape.

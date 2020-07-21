@@ -6,7 +6,7 @@
 #    as part of functionality provided by
 #   Surface Temperature Extremes and Distribution Shape Package (temp_extremes_distshape.py)
 #
-#   Version 1 15-Jan-2020 Arielle J. Catalano (PSU)
+#   Version 1 07-Jul-2020 Arielle J. Catalano (PSU)
 #   PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
@@ -21,10 +21,8 @@
 #   Depends on the following scripts:
 #    (1) TempExtDistShape_Moments_usp.py
 #    (2) TempExtDistShape_Moments_util.py
-#    (3) TempExtDistShape_SeasonAndTail_usp.py
 #
 #   Defaults for plotting parameters, etc. that can be altered by user are in TempExtDistShape_Moments_usp.py
-#   Defaults for season, range of years, etc. that can be altered by user are in TempExtDistShape_SeasonAndTail_usp.py
 # 
 #   Utility functions are defined in TempExtDistShape_Moments_util.py
 #  
@@ -45,25 +43,16 @@ print("**************************************************")
 
 # ======================================================================
 ### Load user-specified parameters (usp) for calcluating and plotting shift ratio
-# ----  This is in the /var_code/temp_extremes_distshape folder under TempExtDistShape_ShiftRatio_usp.py and TempExtDistShape_SeasonAndTail_usp.py
-
-print(("Load user-specified season and tail..."), end=' ')
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail.json") as outfile:
-    season_data=json.load(outfile)
-print("...Loaded!")
-
-print(("Load user-specified parameters..."), end=' ')
-os.system("python "+os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_Moments_usp.py")
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_Moments_parameters.json") as outfile:
+print("Load user-specified parameters...")
+os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_Moments_usp.py")
+with open(os.environ["POD_HOME"]+"/TempExtDistShape_Moments_parameters.json") as outfile:
     mom_data=json.load(outfile)
 print("...Loaded!")
-
-# ======================================================================
-
+monthsub=json.loads(mom_data["monthsub"]) #change unicode string into array of integers
 
 # ======================================================================
 ### List model filenames for two-meter temperature data
+print(mom_data["MODEL_OUTPUT_DIR"])
 T2Mfile=sorted(glob.glob(mom_data["MODEL_OUTPUT_DIR"]+"/"+mom_data["MODEL"]+"*"+mom_data["T2M_VAR"]+".day.nc"))[0]
 
 # ======================================================================
@@ -73,16 +62,11 @@ msk=Region_Mask(mom_data["REGION_MASK_DIR"]+'/'+mom_data["REGION_MASK_FILENAME"]
 
 # ======================================================================
 ### Calculate seasonal subset for two-meter temperature
-seas_mean,seas_std,seas_skew,lon,lat=Seasonal_Moments(T2Mfile,mom_data["LON_VAR"],mom_data["LAT_VAR"],mom_data["T2M_VAR"],mom_data["TIME_VAR"],season_data["monthsub"],season_data["yearbeg"],season_data["yearend"],msk)
+seas_mean,seas_std,seas_skew,lon,lat=Seasonal_Moments(T2Mfile,mom_data["LON_VAR"],mom_data["LAT_VAR"],mom_data["T2M_VAR"],mom_data["TIME_VAR"],monthsub,mom_data["yearbeg"],mom_data["yearend"],msk)
 
 # ======================================================================
 data=[seas_mean,seas_std,seas_skew]
-Moments_Plot(T2Mfile,mom_data["LON_VAR"],lat,season_data["monthstr"],mom_data["cmaps"],mom_data["titles"],data,mom_data["tickrange"],mom_data["var_units"],mom_data["FIG_OUTPUT_DIR"],mom_data["FIG_OUTPUT_FILENAME"])
-
-# ======================================================================
-
-### Copy observation figures over for comparisons
-os.popen('cp '+os.environ["VARDATA"]+'temp_extremes_distshape/'+mom_data["FIG_OBS_FILENAME"]+' '+mom_data["FIG_OBS_DIR"]+'/')
+Moments_Plot(T2Mfile,mom_data["LON_VAR"],lat,mom_data["monthstr"],mom_data["cmaps"],mom_data["titles"],data,mom_data["tickrange"],mom_data["var_units"],mom_data["FIG_OUTPUT_DIR"],mom_data["FIG_OUTPUT_FILENAME"])
 
 # ======================================================================
 

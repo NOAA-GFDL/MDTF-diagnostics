@@ -54,8 +54,6 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     ### Reshape data to [lon, lat, time] dimensions for code to run properly
     if len(var_data.shape) == 4:
         var_data=numpy.squeeze(var_data)
-    #if len(var_data.shape) != 3:
-        #print '...'+field_var+' has incorrect number of dimensions' # <- turn into error message
     if var_data.shape == (len(lon),len(lat),len(datatime)):
         var_data=var_data
     elif var_data.shape == (len(lat),len(datatime),len(lon)):
@@ -129,14 +127,14 @@ def Gaussfit_Params(x,y,h):
 # ======================================================================
 ### Gaussfit_Est
 ### Estimates the Gaussian fit to the histogram of the distribution of two-meter temperature anomalies at specified station/season
-# -----  Tanom_data is 2-meter temperature anomaly data output from Seasonal_Anomalies function above
+# -----  T2Manom_data is 2-meter temperature anomaly data output from Seasonal_Anomalies function above
 # -----  lat and lon are latitude and longitude arrays output from Seasonal_Anomalies function above
 # -----  statind is city index from loop calling function for each specified location 
 # -----  statlats, statlons, and citynames are arrays of city name strings and associated coordinates
 # -----  binwidth is for histogram binning of temperature anomalies at each city
 # ---------  Output is centers and counts of histogram bins of temperature anomaly data, fixed bin centers if gaussian fit is too wide, gaussian fit, and detrended temperature anomaly array for location
 def Gaussfit_Est(T2Manom_data,lat,lon,statind,statlats,statlons,citynames,binwidth):
-    print(("   Estimating Gaussian fit at "+citynames[statind]+"..."), end=' ')
+    print("   Estimating Gaussian fit at "+citynames[statind]+"...")
     Tanom_data=signal.detrend(T2Manom_data,axis=2,type='linear')
 
     ### Determine grid cell closest to chosen location
@@ -161,7 +159,6 @@ def Gaussfit_Est(T2Manom_data,lat,lon,statind,statlats,statlons,citynames,binwid
         sigma=numpy.std(Tanom_stat)
         
     ### Determine Gaussian fit using equation and parameters from gaussfit_params, and bin centers from histogram
-    #gauss_fit=map(lambda x: A*math.exp(numpy.true_divide(-(x-mu)**2,2*sigma**2)),bin_centers)
     gauss_fit=[A*math.exp(numpy.true_divide(-(x-mu)**2,2*sigma**2)) for x in bin_centers]
 
     ### Gaussian fit often does not extend to zero. Extend bin_centers and recompute fit to facilitate plotting
@@ -184,22 +181,23 @@ def Gaussfit_Est(T2Manom_data,lat,lon,statind,statlats,statlons,citynames,binwid
 # -----  Tanom_stat is detrended 2-meter temperature anomaly data output from SeGaussfit_Est function above
 # -----  ptile is percentile to define tail of distribution of interest
 # -----  citynames is array of location name strings
+# -----  monthstr are seasons associated with each cityname
 # -----  statind is city index from loop calling function for each specified location
 # -----  plotrows and plotcols are rows and columns of subplots to figure
 def Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_stat,ptile,citynames,monthstr,statind,plotrows,plotcols):
     ax=fig.add_subplot(int(str(plotrows)+str(plotcols)+str(statind+1)))
-    ax.scatter(bin_centers,bin_counts,color='blue',marker='o',facecolors='none',s=30)
-    ax.plot(bin_centers_gauss,gauss_fit,color='blue',linewidth=2)
+    ax.scatter(bin_centers,bin_counts,color='blue',marker='o',facecolors='none',s=13)
+    ax.plot(bin_centers_gauss,gauss_fit,color='blue',linewidth=1)
     mxval=max(abs(bin_centers))
     ax.set_xlim(-mxval-numpy.nanstd(Tanom_stat),mxval+numpy.nanstd(Tanom_stat))
     ax.set_ylim(bin_counts[0]-numpy.true_divide(bin_counts[0],10),1.05)
     ax.set_yscale('log')
     for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(20) 
+        tick.label.set_fontsize(11) 
     for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(20)
-    ax.text(0.02, 0.92, citynames[statind],fontsize=25,transform=ax.transAxes,weight='bold')
-    ax.text(0.92, 0.92, monthstr[statind],fontsize=25,transform=ax.transAxes,weight='bold')
+        tick.label.set_fontsize(11)
+    ax.set_title(citynames[statind],fontdict={'fontsize': 14, 'fontweight': 'heavy'})
+    ax.text(0.91, 0.92, monthstr[statind],fontsize=10,transform=ax.transAxes,weight='bold')
 
     ### Plot binned values exceeding the percentile threshold as open circles and the rest filled
     pthresh=numpy.nanpercentile(Tanom_stat,ptile,interpolation='midpoint')
@@ -209,7 +207,7 @@ def Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_s
     elif ptile > 50:
         pthresh_bincenters=bin_centers[bin_centers<pthresh]
         pthresh_bincounts=bin_counts[bin_centers<pthresh]
-    ax.scatter(pthresh_bincenters,pthresh_bincounts,color='blue',marker='o',facecolors='blue',s=30)
+    ax.scatter(pthresh_bincenters,pthresh_bincounts,color='blue',marker='o',facecolors='blue',s=13)
     mplt.axvline(x=0,color='blue',linewidth=1,linestyle='dashed')
     mplt.axvline(x=pthresh,color='black',linewidth=1,linestyle='dashed')
 

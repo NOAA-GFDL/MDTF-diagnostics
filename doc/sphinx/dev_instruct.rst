@@ -19,6 +19,32 @@ We also do not accept PODs written in compiled languages (C or Fortran): install
 
 We require that PODs that are funded through the CPO grant be developed in Python, specifically Python >= 3.6 (official support for Python 2 was discontinued as of January 2020). While the framework is able to call PODs written in any scripting language, Python support will be “first among equals” in terms of priority for allocating developer resources, etc. At the same time, if your POD development is *not* being funded, we  recommend against unnecessarily **re** writing existing analysis scripts in Python. Doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
 
+Managing language and library dependencies
+------------------------------------------
+
+We recommend developing your POD using miniconda/Anaconda to manage your POD's dependencies during development for the same reasons we recommend it to :ref:`end users <ref-install>`: it allows you to keep your development environment separate from the rest of your system. Note that conda is not python-specific, but allows coexisting versioned environments of most scripting languages (`R <https://anaconda.org/conda-forge/r-base>`__, `NCL <https://anaconda.org/conda-forge/ncl>`__, `pyFerret <https://anaconda.org/conda-forge/pyferret>`__, etc.)
+
+To prevent the proliferation of dependencies, we suggest that new python development use libraries in the `python_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_python_base.yml>`__ conda environment, if possible. 
+
+If your POD requires libraries that aren't available in an existing environment, we ask that you notify us (since this situation may be relevant to other developers) and submit a `YAML file <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-file-manually>`__ that creates the environment needed for your POD. 
+
+- The environment filename should be ``env_<your POD's name>.yml``, and committed in ``src/conda``.
+- The name of the environment should be ``_MDTF_<your POD's name>``.
+- We recommend listing `conda-forge <https://anaconda.org/conda-forge>`__ as the first channel to search, as it's entirely open source and has the largest range of packages. Note that combining packages from different channels (in particular, conda-forge and anaconda's channel) may create incompatibilities.
+- We recommend constructing the list of packages manually, and *not* exporting your development environment with ``conda env export``. The latter command gives platform-specific version information and will not be fully portable in all cases; it also does so for every package in the environment, not just the "top-level" ones you directly requested. It's straightforward to search your POD's code for ``import`` statements referencing third-party libraries.
+- We recommend specifying versions as little as possible, out of consideration for the end user: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (eg. python 2 vs. 3) or a bug affecting your POD was fixed (eg. postscript font rendering on MacOS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies. 
+
+After creating the environment file and placing it in ``src/conda``, verify that your POD works:
+
+- Create the environment using the ``conda_env_setup.sh`` script described in the :ref:`installation <ref-conda-env-install>` instructions:
+
+   ::
+
+   % cd $CODE_ROOT
+   % ./src/conda/conda_env_setup.sh --env <your POD's name> --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR 
+
+- Have the framework run your POD on suitable test data, as described in :doc:`start_config`. No additional steps are needed to specify the environment: if your conda environment follows the naming conventions above, the framework will always use it to run your POD, and your POD only.
+
 Scope of your POD’s code
 ------------------------
 

@@ -1,12 +1,6 @@
 Quickstart installation instructions
 ====================================
 
-The Model Diagnostics Task Force (MDTF) Diagnostic Framework consists of multiple Process-Oriented Diagnostic (POD) modules, each of which is developed by an individual research group. PODs are independent of each other. Each POD:
-
-1. Consists of a set of diagnostics targeting specific physical processes
-2. Produces a figure or multiple figures that can be displayed by the html in a browser
-3. Produces its own html file (webpage) as the final product
-
 This section provides basic directions for downloading, installing and running a test of the MDTF diagnostic framework package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
 Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``, and ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be substituted by the actual path to the MDTF-diagnostics directory. While the package contains quite a few scripts, the most relevant for present purposes are:
@@ -107,7 +101,7 @@ Next, run
 % cd $CODE_ROOT
 % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
-to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
+to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min (depending on machine and internet connection). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
 - Substitute the actual paths for ``$CODE_ROOT``, ``$CONDA_ROOT``, and ``$CONDA_ENV_DIR``.
 
@@ -168,7 +162,7 @@ Run time may be 10-20 minutes, depending on your system.
 
 - The output files for this test case will be written to ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981``. When the framework is finished, open ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html`` in a web browser to view the output report.
 
-- The above command will execute PODs included in ``pod_list`` of ``default_tests.jsonc``. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding ``//``). Note that entries in the list must be separated by ``,``. Check for missing or surplus ``,`` if you encounter an error (e.g., "ValueError: No closing quotation").
+- The above command will execute PODs included in ``pod_list`` of ``default_tests.jsonc``. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding ``//``). Note that entries in the list must be separated by ``,`` properly. Check for missing or surplus ``,`` if you encounter an error (e.g., "ValueError: No closing quotation").
 
 - Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of ``default_tests.jsonc``, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
 

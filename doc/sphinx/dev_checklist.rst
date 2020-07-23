@@ -40,7 +40,7 @@ The environment variables most relevant for a POD's operation are:
 
 - ``WK_DIR``: Path to directory for POD to output files. Note that this is the only directory a POD is allowed to write its output. E.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
-Note that values ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs.
+Note that values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs.
 
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files.
 
@@ -65,7 +65,7 @@ The following are the necessary steps for the POD module implementation and inte
 
    - Raw data, e.g., undigested reanalysis data will be rejected.
 
-   - The data files should small (preferably a few MB) and just enough for producing figures for model comparison.
+   - The data files should be small (preferably a few MB) and just enough for producing figures for model comparison.
 
    - If you really cannot reduce the data size or require GB of space, consult with the lead team.
 
@@ -112,4 +112,4 @@ After getting your POD working under the framework, there are 2 additional steps
 
       - Possible β-tester candidates include nearby postdocs/grads and members from other POD-developing groups.
 
-6. Submit you POD code through :doc:`GitHub pull request <dev_git_intro>`, and email the tar files of digested observation (and model data if any) to the lead-team contact. Please also provide a list of tests you've conducted along with the machine configurations (e.g., memory size).
+6. Submit your POD code through :doc:`GitHub pull request <dev_git_intro>`, and share the tar files of digested observation (and model data if any) with the lead-team contact. Please also provide a list of tests you've conducted along with the machine configurations (e.g., memory size).

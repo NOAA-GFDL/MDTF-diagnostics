@@ -10,7 +10,7 @@ Preparation for POD implementation
 
 We assume that, at this point, you have a set of scripts, written in :doc:`languages <dev_instruct>` consistent with the framework's open source policy, that a) read in model data, b) perform analysis, and c) output figures. Here are 3 steps to prepare your scripts for POD implementation.
 
-- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``).
+- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``). Try to make your PODs name specific enough that it will be distinct from PODs contributed now or in the future by other groups working on similar phenomena.
 
 - If you have multiple scripts, organize them so that there is a main driver script calling the other scripts, i.e., a user only needs to execute the driver script to perform all read-in data, analysis, and plotting tasks. This driver script *must* be written in Python and named after the POD's short name (e.g., ``convective_transition_diag.py``).
 
@@ -71,9 +71,9 @@ The following are the necessary steps for the POD module implementation and inte
 
 3. Provide the Conda environment your POD requires. Either you can use one of the Conda environments currently supplied with the framework, defined by the YAML (.yml) files in ``src/conda/``, or submit a .yml file for a new environment.
 
-   - To add a new Conda environment, and a new .yml file to ``src/conda/``, and install the environment using the ``conda_env_setup.sh`` script as described in the :doc:`Getting started <start_install>`.
-
    - We recommend using existing Conda environments as much as possible. Consult with the lead team if you would like to submit a new one.
+
+   - If you need a new Conda environment, add a new .yml file to ``src/conda/``, and install the environment using the ``conda_env_setup.sh`` script as described in the :doc:`Getting started <start_install>`.
 
 4. If your POD requires model data not included in the samples, prepare your own data files following instructions given in the :doc:`Getting started <start_config>`, and create a new configuration input from the template ``src/default_tests.jsonc``.
 
@@ -102,7 +102,7 @@ After getting your POD working under the framework, there are 2 additional steps
 
       - Try to run your POD with a different set of model data. @@@Timeslice Experiments Data@@@ If you have problems finding another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
 
-      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory become a problem if one tries your POD on high-resolution model output? Does it depends on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
+      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory become a problem if one tries your POD on high-resolution model output? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
 
    B. After you have tested your POD thoroughly, make clean tar files for distribution. Make a tar file of your digested observational data (preserving the ``inputdata/obs_data/`` structure). Do the same for model data used for testing (if different from what is provided by the MDTF page). Upload your POD code to your :doc:`GitHub repo <dev_git_intro>`. The tar files (and your GitHub repo) should not include any extraneous files (backups, ``pyc``, ``*~``, or ``#`` files).
 

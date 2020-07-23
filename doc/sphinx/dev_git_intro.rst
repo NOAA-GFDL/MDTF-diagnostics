@@ -17,7 +17,7 @@ It should be easy to figure out how to add/edit files through your repo webpage 
 
 - Your changes will not affect the official NOAA's repo until the pull request is accepted by the lead-team programmer.
 
-Note that if any buttons are mssing, try ``CRTL``+``+`` or ``CRTL``+``-`` to adjust the webpage font size so the missing buttons may magically appear.
+Note that if any buttons are missing, try ``CRTL``+``+`` or ``CRTL``+``-`` to adjust the webpage font size so the missing buttons may magically appear.
 
 Managing through the webpage interface as described above is quick and easy. Another approach, unfortunately with a steeper learning curve, is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
 

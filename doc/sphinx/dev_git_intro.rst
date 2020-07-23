@@ -51,14 +51,19 @@ Clone a local repository onto your machine
 
 .. (TODO: `pip install -v .`, other installation instructions...)
 
-Coding a feature
-^^^^^^^^^^^^^^^^
+Start coding
+^^^^^^^^^^^^
 
 - Switch to the ``develop`` branch: ``git checkout develop``.
 - If it's been a while since you created your fork, other people may have updated NOAA's ``develop`` branch. To make sure you're up-to-date, get these changes with ``git pull upstream develop`` and ``git submodule update --recursive --remote``.
 - That command updates the working copy on your computer, but you also need to tell your fork on GitHub about the changes: ``git push origin develop``.
 - Now you're up-to-date and ready to start working on a new feature. ``git checkout -b feature/<my_feature_name>`` will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
-- Edit your code! A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet). ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
+
+   - If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
+
+   - If you encounter problems during practice, you can first try looking for *plain English* instructions to unmess the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
+
+- Write your code! A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet). ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
 
 .. (TODO: tests ...)
 .. (TODO: adding files...)
@@ -84,8 +89,6 @@ Coding a feature
 - When the feature branch is no longer needed, delete the branch locally with ``git branch -d feature/<my_feature_name>``. If you pushed it to your fork, you can delete it remotely with ``git push --delete origin feature/<my_feature_name>``.
 
    - Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
-
-
 
 - If you want to let others work on your feature, push its branch to your GitHub fork with ``git push -u origin feature/<my_feature_name>``. The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.
 

@@ -1,7 +1,7 @@
 Migration from framework v2.0
 =============================
 
-In this page we summarize issues to be aware of for developers familiar with the organization of version 2.0 of the framework. New developers can skip this section, as the rest of this documentation is self-contained.
+In this section we summarize issues to be aware of for developers familiar with the organization of version 2.0 of the framework. New developers can skip this section, as the rest of this documentation is self-contained.
 
 Getting Started and Developer's Walkthrough
 -------------------------------------------

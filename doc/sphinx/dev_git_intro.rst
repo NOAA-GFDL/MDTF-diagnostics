@@ -71,6 +71,8 @@ Start coding
 .. Good commit messages are key to making the project's history useful. To make this easier, instead of using the ``-m`` flag, you can configure git to launch your text editor of choice with ``git config --global core.editor "<command string to launch your editor>"``.
 .. - To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools). Here's an `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b>`__.
 
+- If you've added new files, ``git add --all`` before commit the changes.
+
 - Commit changes with ``git commit -a``. This creates a snapshot of the code into the history in your local repo.
 
    - The snapshot will exist until you intentionally delete it (after confirming a warning message). You can always revert to a previous snapshot.

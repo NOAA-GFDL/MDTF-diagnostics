@@ -66,7 +66,7 @@ print("In wkSpaceTime_driver")
   f=addfile(fili,"r")
   time_coord = getenv("time_coord")
   time = f->$time_coord$
-  time_all = ut_calendar(f->$time_coord$,-3)
+  time_all = cd_calendar(f->$time_coord$,-3)
   i1 = 0
   i2 = dimsizes(time_all)-1
   start_time = yr1*1000000+101*100

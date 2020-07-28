@@ -75,6 +75,7 @@ else if (date_offset.eq.1) then
    start_date = firstyr*10000+201
    end_date = (lastyr+1)*10000+101
 end if
+end if
 ; in either case, above only used to set following indices
 do i=0,dimsizes(date_all)-1
    if( date_all(i).eq.start_date ) then

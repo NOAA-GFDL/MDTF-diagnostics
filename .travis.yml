@@ -19,8 +19,8 @@ branches:
 before_install: 
   # TRAVIS_BUILD_DIR = abs path to checked-out repo
   - BUILD_PARENT="$( cd "$( dirname "$TRAVIS_BUILD_DIR" )" >/dev/null 2>&1 && pwd )"
-  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/EOF_500hPa"
-  - echo "$TRAVIS_BUILD_DIR"
+  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_NCAR-CAM5.timeslice_2000_2004"
+  - echo "$TRAVIS_BUILD_DIR" # debug
   - echo "$BUILD_PARENT"
   - echo "$POD_OUTPUT"
   - cd "$BUILD_PARENT"
@@ -65,13 +65,16 @@ script:
   # trivial check that install script worked
   - ./mdtf --version
 
-  # try running EOF_500hPa
+  # try running EOF_500hPa and example PODs
   - ./mdtf -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
-  - ls "$POD_OUTPUT"
-  - ls "${POD_OUTPUT}/obs"
-  - ls "${POD_OUTPUT}/model"
-  # dump log
-  - cat "${POD_OUTPUT}/EOF_500hPa.log"
+  # EOF_500hPa 
+  - ls "${POD_OUTPUT}/EOF_500hPa/obs"
+  - ls "${POD_OUTPUT}/EOF_500hPa/model"
+  - cat "${POD_OUTPUT}/EOF_500hPa/EOF_500hPa.log"
+  # example 
+  - ls "${POD_OUTPUT}/example/obs"
+  - ls "${POD_OUTPUT}/example/model"
+  - cat "${POD_OUTPUT}/example/example.log"
 
   # run unit tests
   - conda activate _MDTF_base

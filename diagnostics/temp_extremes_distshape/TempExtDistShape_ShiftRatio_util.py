@@ -210,7 +210,13 @@ def ShiftRatio_Calc(ptile,shift,msk,T2Manom_data,lon,lat):
     ### Find where exceedance percentiles are outside the 5th and 95th percentile of the random gaussian distribution
     # -----  Where values are not outside the 5th/95th percentiles, set to NaN
     # -----  Remaining grid cells are statistically significantly different from a Gaussian shift
+    print("### DEBUG ShiftRatio_util")
+    print("### gaussp5: {}, gaussp95: {}".format(gaussp5,gaussp95))
+    print("### exceedances: {} {}; {} bytes".format(exceedances.dtype, exceedances.shape, exceedances.nbytes))
+
     exceedances[(exceedances>gaussp5)&(exceedances<gaussp95)]=numpy.nan
+
+    print("### exceedances: {} {}; {} bytes".format(exceedances.dtype, exceedances.shape, exceedances.nbytes))
 
     ### Compute ratio of exceedances from non-Gaussian shift to median (50th percentile) of shifts from randomly generated Gaussian distributions
     shiftratio=numpy.true_divide(exceedances,numpy.ones_like(exceedances)*gaussp50).transpose(1,0)

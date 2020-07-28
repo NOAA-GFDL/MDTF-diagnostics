@@ -82,7 +82,12 @@ def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mon
     yr=numpy.array([int('{0.year:04d}'.format(t)) for t in list(datecf)])
     leapstr = numpy.array([t.strftime('%m-%d') for t in list(datecf)])
     yearind = numpy.where(numpy.logical_and(yr>=yearbeg, yr<=yearend))[0]
+
+    print("### DEBUG CircComps_util")
+    print("### yearbeg: {}, yearend: {}, yearind: {}".format(yearbeg,yearend,yearind))
+    print("### var_data: {} {}; {} bytes".format(var_data.dtype, var_data.shape, var_data.nbytes))
     var_data=var_data[:,:,yearind]
+    print("### var_data: {} {}; {} bytes".format(var_data.dtype, var_data.shape, var_data.nbytes))
     leapstr=leapstr[yearind]
     mo=mo[yearind]
     yr=yr[yearind]

@@ -39,3 +39,6 @@ Other tips on implementation:
 #. Basic vs. advanced diagnostics (within a POD): Separate parts of diagnostics, e.g, those might need adjustment when model performance out of obs range.
 
 #. Avoid special characters (``!@#$%^&*``) in file/script names.
+
+
+See section 3 of the Getting Started for more details on how the package is called. See the :doc:`command line reference <ref_cli>` for documentation on command line options (or run ``mdtf --help``).

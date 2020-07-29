@@ -29,7 +29,7 @@ We assume that you've followed the :ref:`instructions <ref-install>` in the Gett
 Developers working with Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (abbr. ``python3_base`` below) as the generic Python environment, which you can install following the :ref:`instructions <ref-install>`. You can then activate this environment by running in a terminal:
+The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-install>`. You can then activate this environment by running in a terminal:
 
 ::
 
@@ -56,7 +56,7 @@ In case you need any exotic third-party libraries, e.g., a storm tracker, consul
 Developers working with NCL or R
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The framework also provides the `_MDTF_NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__ and `_MDTF_R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ Conda environments as the generic NCL and R environments. You can activate/deactivate or add common NCL-/R-related libraries (or jupyterlab) to them using commands similar to those listed above.
+The framework also provides the `_MDTF_NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__ and `_MDTF_R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ Conda environments as the generic NCL and R environments. You can install, activate/deactivate or add common NCL-/R-related libraries (or ``jupyterlab``) to them using commands similar to those listed above.
 
 .. _ref-create-conda-env:
 
@@ -71,7 +71,7 @@ If your POD requires languages that aren't available in an existing environment 
 
 - The first entry of the YAML file, name of the environment, should be ``_MDTF_$your_POD_short_name``.
 
-- We recommend listing `conda-forge <https://anaconda.org/conda-forge>`__ as the first channel to search, as it's entirely open source and has the largest range of packages. Note that combining packages from different channels (in particular, conda-forge and anaconda channels) may create incompatibilities.
+- We recommend listing conda-forge as the first channel to search, as it's entirely open source and has the largest range of packages. Note that combining packages from different channels (in particular, conda-forge and anaconda channels) may create incompatibilities.
 
 - We recommend constructing the list of packages manually, by simply searching your POD's code for ``import`` statements referencing third-party libraries. Please do *not* exporting your development environment with ``% conda env export``, which gives platform-specific version information and will not be fully portable in all cases; it also does so for every package in the environment, not just the "top-level" ones you directly requested.
 
@@ -95,6 +95,6 @@ Recall :ref:`how <ref-interaction-conda-env>` the framework finds a proper Conda
 
 - Have the framework run your POD on suitable test data.
 
-   1. Add your POD's short name to ``pod_list`` in the configuration input file (template: ``src/default_tests.jsonc``).
+   1. Add your POD's short name to the ``pod_list`` section of the configuration input file (template: ``src/default_tests.jsonc``).
 
    2. Prepare the test data as described in :doc:`start_config`.

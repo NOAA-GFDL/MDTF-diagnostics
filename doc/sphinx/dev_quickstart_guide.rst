@@ -5,7 +5,7 @@ This walkthrough contains information for developers wanting to contribute a pro
 
 For developers already familiar with version 2.0 of the framework, :doc:`section 2 <dev_migration>` concisely summarizes changes from v2.0 to facilitate migration to v3.0. New developers can skip this section, as the rest of this walkthrough is self-contained.
 
-For new developers, :doc:`section 3 <dev_checklist>` provides a to-do list of steps for implementing and integrating a POD into the framework, with more technical details in subsequent sections.
+For new developers, :doc:`section 3 <dev_checklist>` provides a to-do list of steps for implementing and integrating a POD into the framework, with more technical details in subsequent sections. :doc:`Section 4 <dev_instruct>` discusses the choice of programming languages, managing language and library dependencies through Conda, how to make use of and extend an existing Conda environment for POD development, and create a new Conda environment if necessary. In :doc:`section 5 <dev_walkthrough>`, we walk the developers through the workflow of the framework, focusing on aspects that are relevant for the operation of individual PODs, and using the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ as a concrete example to illustrate how a POD works under the framework.
 
 We require developers to manage POD codes and submit them through `GitHub <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. See :doc:`section 8 <dev_git_intro>` for how to manage code through the GitHub website and, for motivated developers, how to manage using the ``git`` command.
 

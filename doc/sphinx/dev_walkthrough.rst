@@ -1,33 +1,33 @@
 Walkthrough of framework operation
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing only on aspects that are relevant for the operation of individual PODs. For the rest of this walkthrough, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ is used as a concrete example to illustrate how a POD is implemented and integrated into the framework.
+We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. For the rest of this section, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ is used as a concrete example to illustrate how a POD is implemented and integrated into the framework.
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
    :width: 100 %
 
-Framework invocation
+Step 1: Framework invocation
+----------------------------
+
+The user runs the framework by executing the framework’s driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section of the configuration input ``src/default_tests.jsonc``.
+
+- Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
+
+Step 2: Data request
 --------------------
 
-The user runs the framework by executing the framework’s driver script, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed. The user can choose which PODs to run, with the default being all of them except for the example.
+Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
 
-See section 3 of the Getting Started for more details on how the package is called. See the :doc:`command line reference <ref_cli>` for documentation on command line options (or run ``mdtf --help``).
+- The most important features of the settings file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
 
-Data request
-------------
+- Variables are specified in the settings file in a model-independent way, using `CF convention <http://cfconventions.org/>`__ standard terminology wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), you should incorporate necessary preprocessings for computing these from standard output variables into your POD’s code. POD may request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the situations in which your POD will be run.
 
-Each POD describes the model data it requires as input in the ``"varlist"`` section of its settings file. The most important features of this file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`. Each entry in the ``varlist`` section corresponds to one model data file used by the POD. 
+- Some of the variables your POD requests may be unavailable or without the requested frequency (or other characteristics). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
 
-The framework goes through all the PODs to be run and assembles a top-level list of required model data from their ``varlist`` sections. It then queries the source of the model data for the presence of each requested variable with the requested characteristics.
+- If no alternates are defined or the alternate variables are also unavailable, the framework concludes that it’s unable to run the POD on the provided model data. Your POD will not be executed, and an error message listing the missing variables will be presented to the user in your POD’s entry in the top-level results page ``index.html``.
 
-Variables are specified in the settings file in a model-independent way, using `CF convention <http://cfconventions.org/>`__ standard terminology wherever possible. If your POD takes derived quantities as input (column weighted averages, etc.) we recommend that you incorporate whatever preprocessing is necessary to compute these into your POD’s code. Your POD may request variables outside of the CF conventions (by requiring an exact match on the variable name), but please be aware that this will severely limit the situations in which your POD will be run (see below).
-
-It may be that some of the variables your POD requests are not available: they were not saved during the model run, or they weren’t output at the requested frequency (or other characteristics). You have the option to specify a “backup plan” for this situation by designating sets of variables as “alternates,” where this is scientifically feasible: if the framework is unable to obtain a variable that has the “alternates” attribute set in the ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
-
-If no alternates are defined or the alternate variables are not available, the framework concludes that it’s unable to run the POD on the provided model data. Your POD’s code will not be executed, and an error message listing the missing variables will be presented to the user in your POD’s entry in the top-level results page.
-
-Once the framework has determined which PODs are able to run given the model data, it downloads a local copy of the requested variables.
+Once the framework has determined which PODs are able to run given the model data, it downloads a local copy of the requested variables.@@@REALLY?@@@
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
@@ -37,14 +37,14 @@ The example diagnostic uses only one model variable in its `varlist <https://git
 Runtime environment configuration
 ---------------------------------
 
-In the first section of your POD’s settings file, we request that you provide a list of programs your POD uses to run (names of interpreters for scripting languages, as well as any utility programs) and any third-party libraries they use.
+In the ``runtime_requirements`` section of your POD’s settings file, we request that you provide a list of languages and third-party libraries your POD uses.
 
-The framework will check that all these programs and libraries are available on the system it’s running on. The mechanism for doing so will differ, depending on whether the framework is making use of the conda package manager or not. If these dependencies are not found (for whatever reason), your POD will not be run and an error message will be presented to the user.
+The framework will check that all these languages and libraries are available on the system it’s running on. If these dependencies are not found, your POD will not be run and an error message will be presented to the user.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-In its settings file, the example diagnostic lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__ as the python language interpreter, and the matplotlib, xarray and netCDF4 third-party libraries for python. In this walkthrough, we assume the framework is managing its dependencies using the conda package manager, so the framework assigns the POD to run in the `“python-base” <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python_base.yml>`__ conda environment, which was created when the user installed the framework.
+In its settings file, the example diagnostic lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__ as the python language interpreter, and the matplotlib, xarray and netCDF4 third-party libraries for Python. Assuming the dependencies of the framework is managed using the Conda, so the framework assigns the POD to run in the `“python_base” <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python_base.yml>`__ Conda environment, which is provided with the framework via ``src/conda/env_python_base.py``. @@@python2_base or python3_base@@@
 
 POD execution
 -------------

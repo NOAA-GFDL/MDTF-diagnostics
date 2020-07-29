@@ -132,8 +132,8 @@ We recommend using absolute paths in ``default_tests.jsonc``, but relative paths
 
 .. _ref-execute:
 
-Run the MDTF package with test settings
----------------------------------------
+Run the MDTF package with default test settings
+-----------------------------------------------
 
 .. _ref-location-execute:
 

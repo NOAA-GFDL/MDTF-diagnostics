@@ -16,6 +16,8 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 
 - You should have no problem getting scripts working as long as you have (1) the location and filenames of model data, (2) the model variable naming convention, and (3) where to output files/figures. The framework will provide these as *environment variables* that you can access (e.g., using ``os.environ`` in Python, or ``getenv`` in NCL). *DO NOT* hard code these paths/filenames/variable naming convention, etc., into your scripts.
 
+- Your scripts should not access the internet or other networked resources.
+
 An example of using framework-provided environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code and make your POD portable and reusable.
@@ -61,7 +63,9 @@ The following are the necessary steps for the POD module implementation and inte
 
    - ``settings.jsonc`` contains a POD's information. The framework will read this setting file to find out the driver script's name, verify the required environment and model data files are available, and prepare the necessary environment variables before executing the driver script.
 
-2. Create a directory under ``inputdata/obs_data/`` named after the short name, and put all your *digested* observation data/figures in.
+2. Create a directory under ``inputdata/obs_data/`` named after the short name, and put all your *digested* observation data in (or more generally, any quantities that are independent of the model being analyzed).
+
+   - Digested data should be in the form of numerical data, not figures.
 
    - Raw data, e.g., undigested reanalysis data will be rejected.
 
@@ -73,11 +77,11 @@ The following are the necessary steps for the POD module implementation and inte
 
    - We recommend using existing Conda environments as much as possible. Consult with the lead team if you would like to submit a new one.
 
-   - If you need a new Conda environment, add a new .yml file to ``src/conda/``, and install the environment using the ``conda_env_setup.sh`` script as described in the :doc:`Getting started <start_install>`.
+   - If you need a new Conda environment, add a new .yml file to ``src/conda/``, and install the environment using the ``conda_env_setup.sh`` script as described in the :doc:`Getting Started <start_install>`.
 
-4. If your POD requires model data not included in the samples, prepare your own data files following instructions given in the :doc:`Getting started <start_config>`, and create a new configuration input from the template ``src/default_tests.jsonc``.
+4. If your POD requires model data not included in the samples, prepare your own data files following instructions given in the :doc:`Getting Started <start_config>`, and create a new configuration input from the template ``src/default_tests.jsonc``.
 
-Update ``case_list`` and ``pod_list`` in the configuration input file for your POD. Now you can try to run the framework following the :doc:`Getting started <start_install>` and start debugging. Good luck!
+Update ``case_list`` and ``pod_list`` in the configuration input file for your POD. Now you can try to run the framework following the :doc:`Getting Started <start_install>` and start debugging. Good luck!
 
 Checklist before submitting your POD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -100,15 +104,17 @@ After getting your POD working under the framework, there are 2 additional steps
 
       - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
 
-      - Try to run your POD with a different set of model data. @@@Timeslice Experiments Data@@@ If you have problems finding another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
+      - Try to run your POD with a different set of model data. For POD development and testing, the MDTF-1 team produced the Timeslice Experiments output from the `NCAR CAM5 <https://www.earthsystemgrid.org/dataset/ucar.cgd.ccsm4.NOAA-MDTF.html>`__ and `GFDL AM4 (contact the lead team programmer for password) <http://data1.gfdl.noaa.gov/MDTF/>`__.
 
-      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory become a problem if one tries your POD on high-resolution model output? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
+      - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
+
+      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory and run time become a problem if one tries your POD on model output of high spatial resolution and temporal frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
 
    B. After you have tested your POD thoroughly, make clean tar files for distribution. Make a tar file of your digested observational data (preserving the ``inputdata/obs_data/`` structure). Do the same for model data used for testing (if different from what is provided by the MDTF page). Upload your POD code to your :doc:`GitHub repo <dev_git_intro>`. The tar files (and your GitHub repo) should not include any extraneous files (backups, ``pyc``, ``*~``, or ``#`` files).
 
       - Use ``tar -tf`` to see what is in the tar file.
 
-   C. β-test before distribution. Find people (β-testers) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting started instructions. Ask for comments on whether they can understand the documentation.
+   C. β-test before distribution. Find people (β-testers) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions. Ask for comments on whether they can understand the documentation.
 
       - Possible β-tester candidates include nearby postdocs/grads and members from other POD-developing groups.
 

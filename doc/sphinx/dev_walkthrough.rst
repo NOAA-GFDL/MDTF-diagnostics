@@ -1,7 +1,7 @@
 Walkthrough of framework operation
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. For the rest of this section, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ is used as a concrete example to illustrate how a POD is implemented and integrated into the framework.
+We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. For the rest of this section, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``) is used as a concrete example to illustrate how a POD is implemented and integrated into the framework.
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
@@ -10,14 +10,14 @@ We now describe in greater detail the actions that are taken when the framework 
 Step 1: Framework invocation
 ----------------------------
 
-The user runs the framework by executing the framework’s driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section of the configuration input ``src/default_tests.jsonc``.
+The user runs the framework by executing the framework’s main driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section of the configuration input ``src/default_tests.jsonc``.
 
 - Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
 
 Step 2: Data request
 --------------------
 
-Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
+Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` (or simply *settings*) file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
 
 - The most important features of the settings file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
 
@@ -25,29 +25,37 @@ Each POD describes the model data it requires as input in the ``varlist`` sectio
 
 - Some of the variables your POD requests may be unavailable or without the requested frequency (or other characteristics). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
 
-- If no alternates are defined or the alternate variables are also unavailable, the framework concludes that it’s unable to run the POD on the provided model data. Your POD will not be executed, and an error message listing the missing variables will be presented to the user in your POD’s entry in the top-level results page ``index.html``.
+- If no alternates are defined or the alternate variables are also unavailable, the framework concludes that it’s unable to run the POD on the provided model data. Your POD will not be executed, and an error message listing the missing variables will be presented to the user in your POD’s entry as ``error log`` in the top-level results page ``index.html``.
 
-Once the framework has determined which PODs are able to run given the model data, it downloads a local copy of the requested variables.@@@REALLY?@@@
+Once the framework has determined which PODs are able to run given the model data, it prepares the necessary environment variables, including directory paths and the requested variable names (as defined in ``src/filedlist_$convention.jsonc``) for PODs' operation.
 
-Example diagnostic
-^^^^^^^^^^^^^^^^^^
-
-The example diagnostic uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
-
-Runtime environment configuration
----------------------------------
-
-In the ``runtime_requirements`` section of your POD’s settings file, we request that you provide a list of languages and third-party libraries your POD uses.
-
-The framework will check that all these languages and libraries are available on the system it’s running on. If these dependencies are not found, your POD will not be run and an error message will be presented to the user.
+- Actually, at this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would just crash with error messages showing on the terminal.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-In its settings file, the example diagnostic lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__ as the python language interpreter, and the matplotlib, xarray and netCDF4 third-party libraries for Python. Assuming the dependencies of the framework is managed using the Conda, so the framework assigns the POD to run in the `“python_base” <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python_base.yml>`__ Conda environment, which is provided with the framework via ``src/conda/env_python_base.py``. @@@python2_base or python3_base@@@
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
 
-POD execution
--------------
+- If you add ``example`` to ``pod_list`` and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist.
+
+- Create an empty ``example`` directory under ``inputdata/obs_data/``. Now the framework can run but would skip the example POD.
+
+Step 3: Runtime environment configuration
+-----------------------------------------
+
+In the ``runtime_requirements`` section of your POD’s settings file, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
+
+- The requirements should be satisfied by one of the existing generic Conda environments (updated by you if necessary), or a new environment you created specifically for your POD.
+
+- If not, your POD will be skipped, with the error message ``Not a conda environment`` included at the end of your POD’s ``log`` entry in the top-level results page ``index.html``.
+
+Example diagnostic
+^^^^^^^^^^^^^^^^^^
+
+In its settings file, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
+
+Step 4: POD execution
+---------------------
 
 At this point, your POD’s requirements have been met, so the framework begins execution of your POD’s code by calling the top-level script listed in your POD’s settings file.
 

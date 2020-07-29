@@ -14,10 +14,11 @@ The framework itself is written in Python, and can call PODs written in any scri
 
 - To achieve portability, the MDTF **cannot** accept PODs written in closed-source languages (e.g., MATLAB and IDL; try `Octave <https://www.gnu.org/software/octave/>`__ and `GDL <https://github.com/gnudatalanguage/gdl>`__ if possible). We also **cannot** accept PODs written in compiled languages (e.g., C or Fortran): installation would rapidly become impractical if users had to check compilation options for each POD.
 
-- PODs funded through the CPO grant are required to be developed in Python >= 3.6 (official support for Python 2 was discontinued as of January 2020).
+- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in Python. Python version >= 3.6 is required (official support for Python 2 was discontinued as of January 2020).
 
-- If your POD development is *not* funded through the CPO grant, we recommend against unnecessarily re-writing existing scripts in Python 3 (unless the scripts were written in closed-source languages). Doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
+- If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
 
+- If scripts were written in closed-source languages, translation to Python 3.6 or above is required.
 
 We do not allow new PODs using Python 2 in principle. However, for a POD primarily coded in NCL and R, and uses Python only for the main driver script, an exception can be made on the basis of better managing existing Conda environments, after consulting with the lead team.
 

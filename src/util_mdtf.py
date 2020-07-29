@@ -10,10 +10,10 @@ import util
 
 
 class ConfigManager(util.Singleton):
-    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest_flag=False):
+    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest=False):
         assert cli_obj # Singleton, so init should only ever be called once
         # set up paths
-        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest_flag)
+        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest)
         # load pod info
         self.pods = pod_info_tuple.pod_data
         self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
@@ -28,8 +28,8 @@ class _PathManager(util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``defaults.jsonc``.
     """
-    def __init__(self, d, code_root=None, unittest_flag=False):
-        self._unittest_flag = unittest_flag
+    def __init__(self, d, code_root=None, unittest=False):
+        self._unittest = unittest
         self.CODE_ROOT = code_root
         assert os.path.isdir(self.CODE_ROOT)
 
@@ -52,7 +52,7 @@ class _PathManager(util.NameSpace):
             self.WORKING_DIR = self.OUTPUT_DIR
 
     def _init_path(self, key, d, env=None):
-        if self._unittest_flag: # use in unit testing only
+        if self._unittest: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
@@ -133,8 +133,8 @@ class TempDirManager(util.Singleton):
 
 
 class VariableTranslator(util.Singleton):
-    def __init__(self, unittest_flag=False, verbose=0):
-        if unittest_flag:
+    def __init__(self, unittest=False, verbose=0):
+        if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']

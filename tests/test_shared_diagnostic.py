@@ -16,16 +16,16 @@ class TestDiagnosticInit(unittest.TestCase):
             })
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
-        _ = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
+        _ = util.PathManager(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
+        temp = util.PathManager(unittest = True)
         temp._reset()
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         temp._reset()
 
     # ---------------------------------------------------  
@@ -84,16 +84,16 @@ class TestDiagnosticSetUp(unittest.TestCase):
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
-        _ = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
+        _ = util.PathManager(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         temp._reset()
-        temp = util.PathManager(unittest_flag = True)
+        temp = util.PathManager(unittest = True)
         temp._reset()
 
     # ---------------------------------------------------
@@ -159,22 +159,22 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
-        _ = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
+        _ = util.PathManager(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         temp._reset()
-        temp = util.PathManager(unittest_flag = True)
+        temp = util.PathManager(unittest = True)
         temp._reset()
 
     def _populate_pod__local_data(self, pod):
         # reproduce logic in DataManager._setup_pod rather than invoke it here
-        paths = util.PathManager(unittest_flag = True)
-        translate = util.VariableTranslator(unittest_flag = True)
+        paths = util.PathManager(unittest = True)
+        translate = util.VariableTranslator(unittest = True)
         case_name = 'A'
 
         ds_list = []
@@ -253,16 +253,16 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}})
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
-        _ = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
+        _ = util.PathManager(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         temp._reset()
-        temp = util.PathManager(unittest_flag = True)
+        temp = util.PathManager(unittest = True)
         temp._reset()
 
     # ---------------------------------------------------
@@ -307,16 +307,16 @@ class TestDiagnosticTearDown(unittest.TestCase):
             })
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
-        _ = util.PathManager(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
+        _ = util.PathManager(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest_flag = True)
+        temp = util.PathManager(unittest = True)
         temp._reset()
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         temp._reset()
 
     # expected to fail because error will be raised about missing TEMP_HTML

@@ -234,7 +234,7 @@ class MDTFFramework(object):
             d[key] = case
         d['pod_list'] = self.pod_list
         d['paths'] = config.paths
-        d['paths'].pop('_unittest_flag', None)
+        d['paths'].pop('_unittest', None)
         d['settings'] = dict()
         settings_gps = set(cli_obj.parser_groups.keys()).difference(
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])

@@ -169,27 +169,27 @@ class TestVariableTranslator(unittest.TestCase):
             })
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator(unittest_flag=True)
+        temp = util.VariableTranslator(unittest=True)
         temp._reset()
 
     def test_variabletranslator(self):
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         self.assertEqual(temp.toCF('not_CF', 'PRECT'), 'pr_var')
         self.assertEqual(temp.fromCF('not_CF', 'pr_var'), 'PRECT')
 
     def test_variabletranslator_cf(self):
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         self.assertEqual(temp.toCF('CF', 'pr_var'), 'pr_var')
         self.assertEqual(temp.fromCF('CF', 'pr_var'), 'pr_var')
 
     def test_variabletranslator_no_key(self):
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         self.assertRaises(AssertionError, temp.toCF, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.toCF, 'not_CF', 'nonexistent_var')
         self.assertRaises(AssertionError, temp.fromCF, 'B', 'PRECT')
@@ -200,7 +200,7 @@ class TestVariableTranslatorReadFiles(unittest.TestCase):
         return_value = {'convention_name':'A','var_names':{'B':'D'}})
     def test_read_model_varnames(self, mock_read_json):
         # normal operation - convert string to list
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
         temp._reset()
 
@@ -208,7 +208,7 @@ class TestVariableTranslatorReadFiles(unittest.TestCase):
         return_value = {'convention_name':['A','C'],'var_names':{'B':'D'}})
     def test_read_model_varnames_multiple(self, mock_read_json):
         # create multiple entries when multiple models specified
-        temp = util.VariableTranslator(unittest_flag = True)
+        temp = util.VariableTranslator(unittest = True)
         self.assertEqual(temp.fromCF('A','B'), 'D')
         self.assertEqual(temp.fromCF('C','B'), 'D')
         temp._reset()
@@ -222,13 +222,13 @@ class TestPathManager(unittest.TestCase):
             })
     def setUp(self, mock_read_json):
         # set up translation dictionary without calls to filesystem
-        _ = util.VariableTranslator(unittest_flag = True)
+        _ = util.VariableTranslator(unittest = True)
 
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.VariableTranslator(unittest_flag=True)
+        temp = util.VariableTranslator(unittest=True)
         temp._reset()
         temp = util.PathManager()
         temp._reset()
@@ -252,10 +252,10 @@ class TestPathManager(unittest.TestCase):
         }
         self.assertRaises(AssertionError, util.PathManager, d)
         # initialize successfully so that tearDown doesn't break
-        _ = util.PathManager(unittest_flag = True) 
+        _ = util.PathManager(unittest = True) 
 
     def test_pathmgr_global_testmode(self):
-        paths = util.PathManager(unittest_flag = True)
+        paths = util.PathManager(unittest = True)
         self.assertEqual(paths.CODE_ROOT, 'TEST_CODE_ROOT')
         self.assertEqual(paths.OUTPUT_DIR, 'TEST_OUTPUT_DIR')
 
@@ -273,7 +273,7 @@ class TestPathManager(unittest.TestCase):
     @mock.patch.multiple(DataManager, __abstractmethods__=set())
     @mock.patch('src.data_manager.atexit.register')
     def test_pathmgr_model(self, mock_register):
-        paths = util.PathManager(unittest_flag = True)
+        paths = util.PathManager(unittest = True)
         case = DataManager(self.default_case)
         d = paths.modelPaths(case)
         self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
@@ -283,7 +283,7 @@ class TestPathManager(unittest.TestCase):
     @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
     def test_pathmgr_pod(self, mock_exists, mock_read_json):
-        paths = util.PathManager(unittest_flag = True)
+        paths = util.PathManager(unittest = True)
         pod = Diagnostic('A')
         pod.MODEL_WK_DIR = 'B'
         d = paths.podPaths(pod)
@@ -295,7 +295,7 @@ class TestPathManager(unittest.TestCase):
     @mock.patch('src.shared_diagnostic.util.read_json', return_value = default_pod_CF)
     @mock.patch('os.path.exists', return_value = True)
     def test_pathmgr_pod_nomodel(self, mock_exists, mock_read_json):
-        paths = util.PathManager(unittest_flag = True)
+        paths = util.PathManager(unittest = True)
         pod = Diagnostic('A')
         d = paths.podPaths(pod)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/A')

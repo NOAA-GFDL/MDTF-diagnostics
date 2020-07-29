@@ -6,8 +6,8 @@ import util
 import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
-    def __init__(self, unittest_flag=False):
-        if unittest_flag:
+    def __init__(self, unittest=False):
+        if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             file_ = 'dummy_filename'

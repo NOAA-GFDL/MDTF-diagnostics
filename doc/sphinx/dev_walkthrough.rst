@@ -57,7 +57,7 @@ In its settings file, the example POD lists its `requirements <https://github.co
 Step 4: POD execution
 ---------------------
 
-At this point, your POD’s requirements have been met, so the framework activates the right Conda environment, generates the necessary environment variables, then begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
+At this point, your POD’s requirements have been met, so the framework sets the necessary environment variables, activates the right Conda environment, then begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
 
 - All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see the `reference documentation <ref_envvars.html>`__ for a complete list of the environment variables.
 
@@ -76,33 +76,12 @@ At this point, your POD’s requirements have been met, so the framework activat
 POD execution: paths
 ^^^^^^^^^^^^^^^^^^^^
 
-Recall that installing the code package will create a directory titled ``MDTF-diagnostics`` (likely appended by version info) containing the files listed on the GitHub page. As in the Getting Started, we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
-
-- diagnostics/ : directories containing source code of individual PODs
-- doc/ : directory containing documentation (a local mirror of the GitHub wiki and documentation site)
-- src/ : source code of the framework itself
-- tests/ : unit tests for the framework
-
-Please refer to the Getting Started document, section 3@@@ for background on the paths.
-
-A reminder on accessing environment variables before we go further: the value of an environment variable, e.g., ``POD_HOME``, can be accessed by using ``$POD_HOME`` in Linux shell and NCL, and ``os.environ["POD_HOME"]`` in Python.
-
-The most important environment variables set by the framework describe the location of resources your POD needs. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the following variable names :
-
-- ``$POD_HOME``: Path to the top-level directory containing your POD's source code. This will be of the form ``.../MDTF-diagnostics/diagnostics/$POD_NAME``. This can be used to call sub-scripts from your POD’s driver script. This directory should be treated as read-only.
-
-- ``$OBS_DATA``: Path to the top-level directory containing any digested observational or supporting data for your POD. Files and sub-directories will be present within this directory with the names and layout in which you supplied them. This directory should be treated as read-only. The path to each model data file is provided in an environment variable you name in that variable’s entry in the ``varlist`` section of the settings file.
-
-- ``$WK_DIR``: path to your POD’s working directory. This is the only location to which your POD should write files. Within this, the framework will create sub-directories which should be where your output is written:
-
-- ``$WK_DIR/obs/PS`` and ``$WK_DIR/model/PS``: All output plots produced by your diagnostic should be written to one of these two directories. Only files in these locations will be converted to bitmaps for HTML output.
-
-- ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: Any output data files your diagnostic wants to make available to the user should be saved to one of these two directories.
+See :ref:`ref-using-env-vars` for the most important environment variables set by the framework for your POD's operation, and `a more comprehensive list <ref_envvars.html>`__. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the environment variables.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The framework starts a unix subprocess, sets environment variables and the conda environment, and runs the `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ script in python. See comments in the code. The script reads the model surface air temperature data located at ``$TAS_FILE``, and reference digested temperature data at ``$OBS_DATA/example_tas_means.nc``.
+The framework starts a subprocess, sets environment variables and the Conda environment, and runs the `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ script in python. See comments in the code. The script reads the model surface air temperature data located at ``$TAS_FILE``, and reference digested temperature data at ``$OBS_DATA/example_tas_means.nc``.
 
 The calculation performed by the example POD is chosen to be simple: it just does a time average of the model data. The observational data was supplied in time-averaged form, following the instructions for digested results above.
 

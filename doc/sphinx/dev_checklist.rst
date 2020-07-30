@@ -18,6 +18,8 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 
 - Your scripts should not access the internet or other networked resources.
 
+.. _ref-using-env-vars:
+
 An example of using framework-provided environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code and make your POD portable and reusable.
@@ -42,18 +44,17 @@ The environment variables most relevant for a POD's operation are:
 
 - ``DATADIR``: Path to directory containing model data files for one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
 
-- ``WK_DIR``: Path to directory for POD to output files. Note that this is the only directory a POD is allowed to write its output. E.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
+- ``WK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed to write its output**. E.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
+   1. Output figures to ``$WK_DIR/obs/`` and ``$WK_DIR/model/`` respectively.
 
-   1. ``$WK_DIR/obs/PS`` and ``$WK_DIR/model/PS``: All output plots produced by the POD should be written to one of these two directories. Only files in these locations will be converted by the framework to bitmaps for HTML output.
+   2. ``$WK_DIR/obs/PS`` and ``$WK_DIR/model/PS``: If a POD chooses to save vector-format figures, save them as ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
 
-   2. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: Any digested data files the POD wants to make available to users should be saved to one of these two directories.
+   3. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: If a POD chooses to save any digested data for later analysis/plotting, save them in two directories in ``NetCDF``.
 
-Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) ``WKDIR`` is automatically created by the framework, and (3) subdirectories under ``WKDIR`` is created by the POD. Under ``WKDIR``, please follow the subdirectory structure described here for ease of maintenance.
+Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) ``WKDIR`` is automatically created by the framework, and (3) subdirectories under ``WKDIR`` are created by the POD, when necessary, following the structure just described for ease of maintenance.
 
-More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files.
-
-A comprehensive list of environment variables supplied by the framework can be found @@@.
+More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see `the comprehensive list <ref_envvars.html>`__  of environment variables supplied by the framework.
 
 To-do list for POD implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

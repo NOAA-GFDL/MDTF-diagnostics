@@ -14,6 +14,7 @@ dependencies:
 - matplotlib=3.3
 - cartopy=0.18
 # additional development tools
+- mock # needed until tests updated from py2
 - jupyter
 - jupyterlab
 - sphinx

@@ -90,7 +90,7 @@ def convecTransCriticalCollapse_loadAnalyzedData(*argsv):
         print("...Loaded!")
 
     else: # If the binned model/obs data does not exist
-        return [],[],[],[],[],[],[],[],[],[]
+        return numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([])
 
 # ======================================================================
 # convecTransCriticalCollapse_fitCritical
@@ -122,7 +122,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
     PRECIP_FIT_MIN,\
     PRECIP_FIT_MAX=argsv2[0]
 
-    if (P0!=[]):
+    if (P0.size!=0):
 
         P0[P0==0.0]=numpy.nan
         P=P1/P0
@@ -248,7 +248,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         return t_reg_I,wc,al,TEMP_MIN,TEMP_MAX,P,CP,PDF,PDF_pe
 
     else: # binned data doesn't exist
-        return [],[],[],[],[],[],[],[],[]
+        return numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([])
 
 # ======================================================================
 # convecTransCriticalCollapse_plot
@@ -318,7 +318,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     
     fig_params=argsv6
     
-    if (p1_obs!=[]):
+    if (p1_obs.size!=0):
         # ======================================================================
         # ======================Start Plot OBS Binned Data======================
         # ======================================================================
@@ -333,7 +333,8 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         # create figure canvas
         fig_obs_cts = mp.figure(figsize=(figsize1,figsize2))
 
-        title_text=fig_obs_cts.text(s='Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_obs_cts.transFigure, fontsize=16)
+        #title_text=fig_obs_cts.text(s='Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_obs_cts.transFigure, fontsize=16)
+        fig_obs_cts.suptitle('Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', y=1.04, fontsize=16) ###Change y=1.04 to 1.02 for Python3.
 
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             # create figure 1
@@ -389,7 +390,8 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                             handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
             ax1.add_artist(leg)
             if reg==0:
-                ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+                ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 2 (probability pickup)
             ax2 = fig_obs_cts.add_subplot(NUMBER_OF_REGIONS,4,2+reg*NUMBER_OF_REGIONS)
@@ -416,14 +418,13 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                                     s=marker_size,clip_on=True,zorder=3,marker="^")
             ax2.set_xlabel(fig_params['f2'][2], fontsize=axes_fontsize)
             ax2.set_ylabel(fig_params['f2'][3], fontsize=axes_fontsize)
-            #ax2.text(0.05, 0.95, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
-            #ax2.text(0.05, 0.85, RES+"$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
             ax2.text(0.05, 0.95, REGION_STR[reg], transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
             ax2.grid()
             ax2.grid(b=True, which='minor', color='0.8', linestyle='-')
             ax2.set_axisbelow(True)
             if reg==0:
-                ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/hr', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/hr', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+                ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/h', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 3 (normalized PDF)
             ax3 = fig_obs_cts.add_subplot(NUMBER_OF_REGIONS,4,3+reg*NUMBER_OF_REGIONS)
@@ -456,7 +457,8 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
             ax3.grid(b=True, which='minor', color='0.8', linestyle='-')
             ax3.set_axisbelow(True)
             if reg==0:
-                ax3_text = ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax3_text = ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
+                ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 4 (normalized PDF - precipitation)
             ax4 = fig_obs_cts.add_subplot(NUMBER_OF_REGIONS,4,4+reg*NUMBER_OF_REGIONS)
@@ -484,35 +486,32 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                                     s=marker_size,clip_on=True,zorder=3,marker="^")
             ax4.set_xlabel(fig_params['f4'][2], fontsize=axes_fontsize)
             ax4.set_ylabel(fig_params['f4'][3], fontsize=axes_fontsize)
-            ax4.text(0.05, 0.95, "Precip > "+str(PT_obs)+" mm hr$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
+            ax4.text(0.05, 0.95, "Precip > "+str(PT_obs)+" mm h$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
             ax4.grid()
             ax4.grid(b=True, which='minor', color='0.8', linestyle='-')
             ax4.set_axisbelow(True)
             if reg==0:
-                ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+                ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
 
-        # now add a separate legend for triangles that represent column saturation values
-        leg2 = ax1.legend([handles[num_handles]], [labels[num_handles]], fontsize=axes_fontsize, bbox_to_anchor=(0.0,0.0), \
-                            bbox_transform=fig_obs_cts.transFigure, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                            fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
-                            handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-            footnote_str='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
+            temp_str='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
         elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-            footnote_str='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity w.r.t. Liquid) used as the bulk tropospheric temperature measure'
-        footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-        footnote = ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs_cts.transFigure, ha='left', va='top', fontsize=12)
+            temp_str='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
+        fig_obs_cts.text(s=temp_str, x=0, y=0, ha='left', va='top', transform=fig_obs_cts.transFigure, fontsize=12)
 
-        leg2.legendHandles[0].set_color('black')
+        triag_qsat_str = '$\Delta$: $\widehat{q_{sat}}-w_c$; $\widehat{q_{sat}}$: 1000-200hPa Column-integrated Saturation Specific Humidity w.r.t. Liquid; $w_c$: Estimated Critical Column Water Vapor; units: mm.'
+        triag_qsat_str += '\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
+        fig_obs_cts.text(s=triag_qsat_str, x=0, y=-0.02, ha='left', va='top', transform=fig_obs_cts.transFigure, fontsize=12)
 
         # set layout to tight (so that space between figures is minimized)
         fig_obs_cts.tight_layout()
-        fig_obs_cts.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_CTS, bbox_inches="tight", bbox_extra_artists=(leg,leg2,title_text,footnote,))
+        fig_obs_cts.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_CTS, bbox_inches="tight")
 
         ##### Figure Critical CWV (WC) #####
         fig_obs_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
 
-        title_text=fig_obs_wc.text(s='Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.03, ha='center', va='bottom', transform=fig_obs_wc.transFigure, fontsize=16)
+        fig_obs_wc.text(s='Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.03, ha='center', va='bottom', transform=fig_obs_wc.transFigure, fontsize=16)
 
         reg_color=[-1,-2,-3,0]
 
@@ -546,7 +545,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax1.set_ylabel(fig_params['f5'][3], fontsize=axes_fontsize)
         ax1.grid()
         ax1.set_axisbelow(True)
-        ax1_text = ax1.text(s='Critical CWV & Col. Satn.', x=0.5, y=1.02, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+        ax1.text(s='Critical CWV & Col. Satn.', x=0.5, y=1.02, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
 
         # create figure 6: wc/qsat_int
         ax2 = fig_obs_wc.add_subplot(1,2,2)
@@ -579,19 +578,19 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax2.set_ylabel(fig_params['f6'][3], fontsize=axes_fontsize)
         ax2.grid()
         ax2.set_axisbelow(True)
-        ax2_text = ax2.text(s='Critical Col. RH', x=0.5, y=1.02, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+        ax2.text(s='Critical Col. RH', x=0.5, y=1.02, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
-        footnote_str='Solid line: $\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity w.r.t. Liquid)\n'
+        footnote_str='Solid line: $\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity w.r.t. Liquid)\n'
         if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-            footnote_str+='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
+            footnote_str+='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) as the bulk tropospheric temperature measure'
         elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-            footnote_str+='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
+            footnote_str+='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) as the bulk tropospheric temperature measure'
         footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-        footnote = ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs_wc.transFigure, ha='left', va='top', fontsize=12)
+        ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs_wc.transFigure, ha='left', va='top', fontsize=12)
 
         # set layout to tight (so that space between figures is minimized)
         fig_obs_wc.tight_layout()
-        fig_obs_wc.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_WC, bbox_inches="tight", bbox_extra_artists=(leg,title_text,footnote,))
+        fig_obs_wc.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_WC, bbox_inches="tight")
 
         print("...Completed!")
         print("      OBS Figure saved as "+FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_CTS+"!")
@@ -601,7 +600,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         # ======================================================================    
 
     # Use OBS to set colormap (but if they don't exist or users don't want to...)
-    if (p1_obs==[] or USE_SAME_COLOR_MAP==False): 
+    if (p1_obs.size==0 or USE_SAME_COLOR_MAP==False): 
         TEMP_MIN_obs=TEMP_MIN
         TEMP_MAX_obs=TEMP_MAX
 
@@ -619,7 +618,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     # create figure canvas
     fig_cts = mp.figure(figsize=(figsize1,figsize2))
     
-    title_text=fig_cts.text(s='Convective Transition Collapsed Statistics ('+MODEL+')', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_cts.transFigure, fontsize=16)
+    fig_cts.text(s='Convective Transition Collapsed Statistics ('+MODEL+')', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_cts.transFigure, fontsize=16)
 
     for reg in numpy.arange(NUMBER_OF_REGIONS):
         # create figure 1
@@ -675,7 +674,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                         handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         ax1.add_artist(leg)
         if reg==0:
-            ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+            ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
         # create figure 2 (probability pickup)
         ax2 = fig_cts.add_subplot(NUMBER_OF_REGIONS,4,2+reg*NUMBER_OF_REGIONS)
         ax2.set_xlim(fig_params['f2'][0])
@@ -707,7 +706,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax2.grid(b=True, which='minor', color='0.8', linestyle='-')
         ax2.set_axisbelow(True)
         if reg==0:
-            ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT)+'mm/hr', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+            ax2.text(s='Prob. of Precip.>'+str(PT)+'mm/h', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
         # create figure 3 (normalized PDF)
         ax3 = fig_cts.add_subplot(NUMBER_OF_REGIONS,4,3+reg*NUMBER_OF_REGIONS)
@@ -740,7 +739,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax3.grid(b=True, which='minor', color='0.8', linestyle='-')
         ax3.set_axisbelow(True)
         if reg==0:
-            ax3_text = ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
+            ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
 
         # create figure 4 (normalized PDF - precipitation)
         ax4 = fig_cts.add_subplot(NUMBER_OF_REGIONS,4,4+reg*NUMBER_OF_REGIONS)
@@ -773,24 +772,21 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax4.grid(b=True, which='minor', color='0.8', linestyle='-')
         ax4.set_axisbelow(True)
         if reg==0:
-            ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+            ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
 
-    # now add a separate legend for triangles that represent column saturation values
-    leg2 = ax1.legend([handles[num_handles]], [labels[num_handles]], fontsize=axes_fontsize, bbox_to_anchor=(0.0,0.0), \
-                        bbox_transform=fig_cts.transFigure, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                        fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
-                        handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
     if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-        footnote_str='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
+        temp_str='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
     elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-        footnote_str='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity w.r.t. Liquid) used as the bulk tropospheric temperature measure'
-    footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-    footnote = ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_cts.transFigure, ha='left', va='top', fontsize=12)
+        temp_str='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
+    fig_cts.text(s=temp_str, x=0, y=0, ha='left', va='top', transform=fig_cts.transFigure, fontsize=12)
 
-    leg2.legendHandles[0].set_color('black')
+    triag_qsat_str = '$\Delta$: $\widehat{q_{sat}}-w_c$; $\widehat{q_{sat}}$: 1000-200hPa Column-integrated Saturation Specific Humidity w.r.t. Liquid; $w_c$: Estimated Critical Column Water Vapor; units: mm.'
+    triag_qsat_str += '\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
+    fig_cts.text(s=triag_qsat_str, x=0, y=-0.02, ha='left', va='top', transform=fig_cts.transFigure, fontsize=12)
+
     # set layout to tight (so that space between figures is minimized)
     fig_cts.tight_layout()
-    fig_cts.savefig(FIG_OUTPUT_DIR+"/"+FIG_FILENAME_CTS, bbox_inches="tight", bbox_extra_artists=(leg,title_text,footnote,))
+    fig_cts.savefig(FIG_OUTPUT_DIR+"/"+FIG_FILENAME_CTS, bbox_inches="tight")
 
     ##### Figure Critical CWV (WC) #####
     fig_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
@@ -808,7 +804,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     ax1.tick_params(labelsize=axes_fontsize)
     ax1.tick_params(axis="x", pad=10)
     ax1.set_aspect(float(fig_params['f5'][0][1]-fig_params['f5'][0][0])/float(fig_params['f5'][1][1]-fig_params['f5'][1][0]))
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs!=[]):   
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):   
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             ax1.plot(temp_bin_center_obs,wc_obs[reg,:],'-',color='0.6')
             ax1.scatter(temp_bin_center_obs,wc_obs[reg,:],color='0.6',s=marker_size,clip_on=True,zorder=3)
@@ -832,7 +828,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                     fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0, \
                     handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
     #ax1.text(0.5, 0.1, MODEL, transform=ax1.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs!=[]):
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):
         ax1.text(0.3, 0.2, OBS, transform=ax1.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
         ax1.text(0.3, 0.1, RES+"$^{\circ}$", transform=ax1.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
     ax1.set_xlabel(fig_params['f5'][2], fontsize=axes_fontsize)
@@ -850,7 +846,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     ax2.tick_params(labelsize=axes_fontsize)
     ax2.tick_params(axis="x", pad=10)
     ax2.set_aspect(float(fig_params['f6'][0][1]-fig_params['f5'][0][0])/float(fig_params['f6'][1][1]-fig_params['f6'][1][0]))
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs!=[]):
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
                 with warnings.catch_warnings():
@@ -878,7 +874,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                     fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0, \
                     handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
     #ax2.text(0.15, 0.07, MODEL, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs!=[]):
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):
         ax2.text(0.15, 0.2, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
         ax2.text(0.15, 0.1, RES+"$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
     ax2.set_xlabel(fig_params['f6'][2], fontsize=axes_fontsize)
@@ -887,19 +883,19 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     ax2.set_axisbelow(True)
     ax2_text = ax2.text(s='Critical Col. RH', x=0.5, y=1.02, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
-    footnote_str='Solid line: $\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity w.r.t. Liquid)\n'
+    footnote_str='Solid line: $\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity w.r.t. Liquid)\n'
     if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-        footnote_str+='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
+        footnote_str+='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) as the bulk tropospheric temperature measure'
     elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-        footnote_str+='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
+        footnote_str+='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) as the bulk tropospheric temperature measure'
     footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs!=[]):
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):
         footnote_str+='\nCorresponding results from '+OBS+' (spatial resolution: '+RES+'$^{\circ}$) plotted in gray'
-    footnote = ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_wc.transFigure, ha='left', va='top', fontsize=12)
+    ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_wc.transFigure, ha='left', va='top', fontsize=12)
 
     # set layout to tight (so that space between figures is minimized)
     fig_wc.tight_layout()
-    fig_wc.savefig(FIG_OUTPUT_DIR+"/"+FIG_FILENAME_WC, bbox_inches="tight", bbox_extra_artists=(leg,title_text,footnote,))
+    fig_wc.savefig(FIG_OUTPUT_DIR+"/"+FIG_FILENAME_WC, bbox_inches="tight")
     
     print("...Completed!")
     print("      MODEL Figure saved as "+FIG_OUTPUT_DIR+"/"+FIG_FILENAME_CTS+"!")

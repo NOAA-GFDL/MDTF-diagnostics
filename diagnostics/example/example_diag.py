@@ -7,6 +7,8 @@ provides, instead of hard-coding them.
 """
 from __future__ import print_function
 import os
+import matplotlib
+matplotlib.use('Agg') # non-X windows backend
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
@@ -56,7 +58,7 @@ obs_mean_tas = obs_dataset['mean_tas']
 tas_var_name = os.environ["tas_var"]
 # For safety, don't even assume that the time dimension of the input file is
 # named "time":
-time_coord_name = os.environ["time_dim"]
+time_coord_name = os.environ["time_coord"]
 
 # The only computation done here: compute the time average of input data
 tas_data = model_dataset[tas_var_name]

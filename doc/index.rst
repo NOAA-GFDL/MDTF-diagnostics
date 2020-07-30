@@ -1,4 +1,4 @@
-.. MDTF-diagnostics documentation master file, created by
+.. MDTF-diagnostics documentation main file, created by
    sphinx-quickstart on Fri Aug 30 11:07:25 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -14,7 +14,6 @@ This site contains documentation for the MDTF Diagnostics framework. The code is
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 3
 
    sphinx/start_toc
    sphinx/site_toc

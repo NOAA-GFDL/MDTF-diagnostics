@@ -50,8 +50,8 @@ class _PathManager(util.NameSpace):
         self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
-        if not self.OUTPUT_DIR:
-            self.OUTPUT_DIR = self.WORKING_DIR
+        if not self.WORKING_DIR:
+            self.WORKING_DIR = self.OUTPUT_DIR
 
     def _init_path(self, key, d, env=None):
         if self._unittest_flag: # use in unit testing only

@@ -19,6 +19,11 @@ sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 
+# AutoStructify needed for getting full Sphinx features from markdown (.md) files
+# https://recommonmark.readthedocs.io/en/latest/auto_structify.html
+import recommonmark
+from recommonmark.transform import AutoStructify
+
 # mock out imports of non-standard library modules
 autodoc_mock_imports = ['yaml', 'subprocess32']
 import mock # do this twice just to be safe
@@ -36,6 +41,9 @@ version = u''
 # The full version, including alpha/beta/rc tags
 release = u'3.0 beta 1'
 
+# only used for resolving relative links in markdown docs
+# use develop branch because that's what readthedocs is configured to use
+_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop/'
 
 # -- General configuration ---------------------------------------------------
 
@@ -163,27 +171,50 @@ latex_elements = {
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
-    'preamble': r'''
+    'preamble': r"""
         \usepackage{unicode-math}
-    ''',
-    'extraclassoptions': 'openany,oneside'
+        \makeatletter
+        \fancypagestyle{normal}{
+            \fancyhf{}
+            \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
+            % \fancyfoot[LO]{{\py@HeaderFamily\nouppercase{\rightmark}}}
+            % \fancyfoot[RE]{{\py@HeaderFamily\nouppercase{\leftmark}}}
+            \fancyhead[LE,RO]{{\py@HeaderFamily \@title, \py@release}}
+            \renewcommand{\headrulewidth}{0.4pt}
+            \renewcommand{\footrulewidth}{0pt}
+        }
+        \fancypagestyle{plain}{
+            % used for first page of a chapter only
+            \fancyhf{}
+            \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
+            \renewcommand{\footrulewidth}{0pt}
+        }
+        \makeatother
+    """,
+    'extraclassoptions': 'openany'
 }
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
+        # "Main" PDF containing all source files. This is built automatically by
+        # ReadTheDocs (filename is fixed by the RTD account name).
         'tex_all', 'mdtf-diagnostics.tex', 
         u'MDTF Diagnostics Documentation', author, 'manual'
-    ),
-    (
-        'tex_getting_started', 'MDTF_getting_started.tex', 
+    ),(
+        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can 
+        # tell, ReadTheDocs won't (linked open issues in prior commits to this 
+        # file?). Instead these are currently built manually and checked into 
+        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's 
+        # build process if it finds multiple .tex files, and doesn't affect sphinx.
+        'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
         'sphinxmdtfhowto'
-    ),
-    (
-        'tex_walkthrough', 'MDTF_walkthrough.tex', 
+    ),(
+        # another secondary PDF.
+        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
         u"MDTF Developer's Walkthrough", 
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
@@ -197,7 +228,8 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    'latex/sphinxmdtfhowto.cls'
+    'latex/sphinxmdtfhowto.cls',
+    'latex/latexmkrc'
 ]
 
 # latex_docclass = {
@@ -290,15 +322,6 @@ def run_apidoc(_):
         argv.insert(0, apidoc.__file__)
         apidoc.main(argv)
 
-def setup(app):
-    app.connect('builder-inited', run_apidoc)
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
-
-
 # -- Extensions to the Napoleon GoogleDocstring class ---------------------
 # copied from: https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
 # purpose: provide correct formatting of class attributes when documented 
@@ -330,3 +353,26 @@ GoogleDocstring._parse = patched_parse
 
 # -- Options for intersphinx extension -----------------------------------------
 intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}
+
+# -- Options for todo extension ----------------------------------------------
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
+
+# == Overall Sphinx app setup hook =============================================
+
+def setup(app):
+    # register autodoc event
+    app.connect('builder-inited', run_apidoc)
+
+    # AutoStructify for recommonmark
+    # see eg https://stackoverflow.com/a/52430829
+    app.add_config_value('recommonmark_config', {
+        'url_resolver': lambda url: _project_github_url + url,
+        'enable_auto_toc_tree': False,
+        'enable_math': True,
+        'enable_inline_math': True,
+        'enable_eval_rst': True,
+        'enable_auto_doc_ref': True,
+    }, True)
+    app.add_transform(AutoStructify)

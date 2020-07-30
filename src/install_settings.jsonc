@@ -10,6 +10,7 @@
       "conda_env_root": "",
       "src_dir": "src/conda",
       "init_script": "src/conda/conda_init.sh",
+      "setup_script": "src/conda/conda_env_setup.sh",
       "yaml_path": "src/conda/env_{}.yml",
       "env_prefix": "_MDTF",
       "framework_env": "base",
@@ -21,7 +22,7 @@
       "user": "anonymous",
       "passwd": "",
       "acct": "anonymous",
-      "timeout": 1200.0
+      "timeout": 1500.0
     },
     "data": {
       "obs": {
@@ -57,7 +58,8 @@
     },
     "cli_defaults": {
       "template": "src/cli_template.jsonc",
-      "dest": "src/cli.jsonc",
+      "config_in": "src/default_tests.jsonc",
+      "config_out": "src/default_tests_out.jsonc",
       "default_keys": [
         "MODEL_DATA_ROOT", "OBS_DATA_ROOT", "WORKING_DIR", "OUTPUT_DIR", 
         "conda_root", "conda_env_root", "venv_root", "r_lib_root",
@@ -70,7 +72,7 @@
     "arguments": [
       {
         "name": "env_setup",
-        "help": "Method to use for runtime dependency management.",
+        "help": "Method to use for runtime dependency management. 'conda-basic' or 'conda-full' will install environments using the conda package manager.",
         "nargs": 1,
         "choices": ["conda-basic", "conda-full", "no-conda"]
       },{

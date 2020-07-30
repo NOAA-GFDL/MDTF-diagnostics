@@ -439,7 +439,7 @@ def convecTransBasic_calc_model(REGION,*argsv):
         lat=numpy.asarray(pr_netcdf.variables[LAT_VAR][:],dtype="float")
         pr=numpy.squeeze(numpy.asarray(pr_netcdf.variables[PR_VAR][:,:,:],dtype="float"))
         pr_netcdf.close()
-        # Units: mm/s --> mm/hr
+        # Units: mm/s --> mm/h
         pr=pr[:,numpy.logical_and(lat>=-20.0,lat<=20.0),:]*3.6e3*float(os.environ["pr_conversion_factor"])
         print("      "+pr_list[li]+" Loaded!")
 
@@ -542,11 +542,11 @@ def convecTransBasic_calc_model(REGION,*argsv):
         p0[:,:,:]=P0
 
         p1=bin_output_netcdf.createVariable("P1",numpy.float64,("region","cwv",TAVE_VAR))
-        p1.units="mm/hr"
+        p1.units="mm/h"
         p1[:,:,:]=P1
 
         p2=bin_output_netcdf.createVariable("P2",numpy.float64,("region","cwv",TAVE_VAR))
-        p2.units="mm^2/hr^2"
+        p2.units="mm^2/h^2"
         p2[:,:,:]=P2
 
         pe=bin_output_netcdf.createVariable("PE",numpy.float64,("region","cwv",TAVE_VAR))
@@ -569,11 +569,11 @@ def convecTransBasic_calc_model(REGION,*argsv):
         p0[:,:,:]=P0
 
         p1=bin_output_netcdf.createVariable("P1",numpy.float64,("region","cwv",QSAT_INT_VAR))
-        p1.units="mm/hr"
+        p1.units="mm/h"
         p1[:,:,:]=P1
 
         p2=bin_output_netcdf.createVariable("P2",numpy.float64,("region","cwv",QSAT_INT_VAR))
-        p2.units="mm^2/hr^2"
+        p2.units="mm^2/h^2"
         p2[:,:,:]=P2
 
         pe=bin_output_netcdf.createVariable("PE",numpy.float64,("region","cwv",QSAT_INT_VAR))
@@ -647,7 +647,7 @@ def convecTransBasic_loadAnalyzedData(*argsv):
         return cwv_bin_center,temp_bin_center,P0,P1,P2,PE,Q0,Q1,CWV_BIN_WIDTH,PRECIP_THRESHOLD
 
     else: # If the binned model/obs data does not exist (in practive, for obs data only)   
-        return [],[],[],[],[],[],[],[],[],[]
+        return numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([])
 
 # ======================================================================
 # convecTransBasic_plot
@@ -729,7 +729,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
 
     ### Process/Plot binned OBS data
     #  if the binned OBS data exists, checking by P0_obs==[]
-    if (P0_obs!=[]):
+    if (P0_obs.size!=0):
         # Post-binning Processing before Plotting
         P0_obs[P0_obs==0.0]=numpy.nan
         P_obs=P1_obs/P0_obs
@@ -813,7 +813,8 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
         # create figure canvas
         fig_obs = mp.figure(figsize=(figsize1,figsize2))
 
-        title_text=fig_obs.text(s='Convective Transition Basic Statistics ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_obs.transFigure, fontsize=16)
+        #title_text=fig_obs.text(s='Convective Transition Basic Statistics ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_obs.transFigure, fontsize=16)
+        fig_obs.suptitle('Convective Transition Basic Statistics ('+OBS+', '+RES+'$^{\circ}$)', y=1.04, fontsize=16) ###Change y=1.04 to 1.02 for Python3.
 
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             # create figure 1
@@ -861,7 +862,8 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                             handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
             ax1.add_artist(leg)
             if reg==0:
-                ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+                ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 2 (probability pickup)
             ax2 = fig_obs.add_subplot(NUMBER_OF_REGIONS,4,2+reg*NUMBER_OF_REGIONS)
@@ -888,13 +890,12 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                                     s=marker_size,clip_on=True,zorder=3,marker="^")
             ax2.set_xlabel(fig_params['f2'][2], fontsize=axes_fontsize)
             ax2.set_ylabel(fig_params['f2'][3], fontsize=axes_fontsize)
-            #ax2.text(0.05, 0.95, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
-            #ax2.text(0.05, 0.85, RES+"$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
             ax2.text(0.05, 0.95, REGION_STR_OBS[reg], transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
             ax2.grid()
             ax2.set_axisbelow(True)
             if reg==0:
-                ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/hr', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/h', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+                ax2.text(s='Prob. of Precip.>'+str(PT_obs)+'mm/h', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 3 (normalized PDF)
             ax3 = fig_obs.add_subplot(NUMBER_OF_REGIONS,4,3+reg*NUMBER_OF_REGIONS)
@@ -924,7 +925,8 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
             ax3.grid()
             ax3.set_axisbelow(True)
             if reg==0:
-                ax3_text = ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax3_text = ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
+                ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes, fontsize=12, ha='center', va='bottom')
 
             # create figure 4 (normalized PDF - precipitation)
             ax4 = fig_obs.add_subplot(NUMBER_OF_REGIONS,4,4+reg*NUMBER_OF_REGIONS)
@@ -951,28 +953,25 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                                     s=marker_size,clip_on=True,zorder=3,marker="^")
             ax4.set_xlabel(fig_params['f4'][2], fontsize=axes_fontsize)
             ax4.set_ylabel(fig_params['f4'][3], fontsize=axes_fontsize)
-            ax4.text(0.05, 0.95, "Precip > "+str(PT_obs)+" mm hr$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
+            ax4.text(0.05, 0.95, "Precip > "+str(PT_obs)+" mm h$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
             ax4.grid()
             ax4.set_axisbelow(True)
             if reg==0:
-                ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+                #ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/h', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+                ax4.text(s='PDF of CWV for Precip.>'+str(PT_obs)+'mm/h', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
 
-        # now add a separate legend for triangles that represent column saturation values
-        leg2 = ax1.legend([handles[num_handles]], [labels[num_handles]], fontsize=axes_fontsize, bbox_to_anchor=(0.0,-0.00), \
-                            bbox_transform=fig_obs.transFigure, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                            fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
-                            handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-            footnote_str='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
+            temp_str='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
         elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-            footnote_str='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
-        footnote = ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs.transFigure, ha='left', va='top', fontsize=12)
+            temp_str='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
+        fig_obs.text(s=temp_str, x=0, y=0, ha='left', va='top', transform=fig_obs.transFigure, fontsize=12)
 
-        leg2.legendHandles[0].set_color('black')
-
+        triag_qsat_str = '$\Delta$: $\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity; Units: mm)'
+        fig_obs.text(s=triag_qsat_str, x=0, y=-0.02, ha='left', va='top', transform=fig_obs.transFigure, fontsize=12)
+        
         # set layout to tight (so that space between figures is minimized)
         fig_obs.tight_layout()
-        fig_obs.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME, bbox_inches="tight", bbox_extra_artists=(leg,title_text,footnote,))
+        fig_obs.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME, bbox_inches="tight")
         
         print("...Completed!")
         print("      OBS Figure saved as "+FIG_OBS_DIR+"/"+FIG_OBS_FILENAME+"!")
@@ -1053,7 +1052,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
     TEMP_MIN=numpy.where(numpy.sum(t_reg_I,axis=0)>=1)[0][0]
     TEMP_MAX=numpy.where(numpy.sum(t_reg_I,axis=0)>=1)[0][-1]
     # Use OBS to set colormap (but if they don't exist or users don't want to...)
-    if (P0_obs==[] or USE_SAME_COLOR_MAP==False): 
+    if (P0_obs.size==0 or USE_SAME_COLOR_MAP==False): 
         TEMP_MIN_obs=TEMP_MIN
         TEMP_MAX_obs=TEMP_MAX
 
@@ -1070,7 +1069,8 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
     # create figure canvas
     fig = mp.figure(figsize=(figsize1,figsize2))
 
-    title_text=fig.text(s='Convective Transition Basic Statistics ('+MODEL+')', x=0.5, y=1.02, ha='center', va='bottom', transform=fig.transFigure, fontsize=16)
+    #title_text=fig.text(s='Convective Transition Basic Statistics ('+MODEL+')', x=0.5, y=1.02, ha='center', va='bottom', transform=fig.transFigure, fontsize=16)
+    fig.suptitle('Convective Transition Basic Statistics ('+MODEL+')', y=1.04, fontsize=16) ###Change y=1.04 to 1.02 for Python3.
 
     for reg in numpy.arange(NUMBER_OF_REGIONS):
         # create figure 1
@@ -1095,7 +1095,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                                 label="{:.1f}".format(temp_bin_center[Tidx]))
         for Tidx in numpy.arange(min(TEMP_MIN_obs,TEMP_MIN),max(TEMP_MAX_obs+1,TEMP_MAX+1)):
             if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and \
-                P0_obs!=[] and t_reg_I_obs[reg,Tidx]):
+                P0_obs.size!=0 and t_reg_I_obs[reg,Tidx]):
                 ax1.scatter(cwv_bin_center_obs,p1_obs[reg,:,Tidx],\
                             edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,\
                             facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],\
@@ -1122,11 +1122,12 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
         num_handles = sum(t_reg_I[reg,:])
         leg = ax1.legend(handles[0:num_handles], labels[0:num_handles], fontsize=axes_fontsize, bbox_to_anchor=(0.05,0.95), \
                         bbox_transform=ax1.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                        fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0, \
+                        fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
                         handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         ax1.add_artist(leg)
         if reg==0:
-            ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+            #ax1_text = ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
+            ax1.text(s='Precip. cond. avg. on CWV', x=0.5, y=1.05, transform=ax1.transAxes, fontsize=12, ha='center', va='bottom')
 
         # create figure 2 (probability pickup)
         ax2 = fig.add_subplot(NUMBER_OF_REGIONS,4,2+reg*NUMBER_OF_REGIONS)
@@ -1143,7 +1144,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                             s=marker_size,clip_on=True,zorder=3)
         for Tidx in numpy.arange(min(TEMP_MIN_obs,TEMP_MIN),max(TEMP_MAX_obs+1,TEMP_MAX+1)):
             if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and \
-                P0_obs!=[] and t_reg_I_obs[reg,Tidx]):
+                P0_obs.size!=0 and t_reg_I_obs[reg,Tidx]):
                 ax2.scatter(cwv_bin_center_obs,cp_obs[reg,:,Tidx],\
                             edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,\
                             facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],\
@@ -1160,15 +1161,11 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                                 s=marker_size,clip_on=True,zorder=4,marker="^")
         ax2.set_xlabel(fig_params['f2'][2], fontsize=axes_fontsize)
         ax2.set_ylabel(fig_params['f2'][3], fontsize=axes_fontsize)
-        #ax2.text(0.05, 0.95, MODEL, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
         ax2.text(0.05, 0.95, REGION_STR[reg], transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
-#       if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and P0_obs!=[]):
-#           ax2.text(0.05, 0.7, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top", color="0.3")
-#           ax2.text(0.05, 0.6, RES+"$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top", color="0.3")
         ax2.grid()
         ax2.set_axisbelow(True)
         if reg==0:
-            ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT)+'mm/hr', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+            ax2_text = ax2.text(s='Prob. of Precip.>'+str(PT)+'mm/h', x=0.5, y=1.05, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
 
         # create figure 3 (normalized PDF)
         ax3 = fig.add_subplot(NUMBER_OF_REGIONS,4,3+reg*NUMBER_OF_REGIONS)
@@ -1185,7 +1182,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                             s=marker_size,clip_on=True,zorder=3)
         for Tidx in numpy.arange(min(TEMP_MIN_obs,TEMP_MIN),max(TEMP_MAX_obs+1,TEMP_MAX+1)):
             if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and \
-                P0_obs!=[] and t_reg_I_obs[reg,Tidx]):
+                P0_obs.size!=0 and t_reg_I_obs[reg,Tidx]):
                 ax3.scatter(cwv_bin_center_obs,PDF_obs[reg,:,Tidx],\
                             edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,\
                             facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],\
@@ -1222,7 +1219,7 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                             s=marker_size,clip_on=True,zorder=3)
         for Tidx in numpy.arange(min(TEMP_MIN_obs,TEMP_MIN),max(TEMP_MAX_obs+1,TEMP_MAX+1)):
             if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and \
-                P0_obs!=[] and t_reg_I_obs[reg,Tidx]):
+                P0_obs.size!=0 and t_reg_I_obs[reg,Tidx]):
                 ax4.scatter(cwv_bin_center_obs,pdf_pe_obs[reg,:,Tidx],\
                             edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,\
                             facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],\
@@ -1239,37 +1236,22 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
                                 s=marker_size,clip_on=True,zorder=4,marker="^")
         ax4.set_xlabel(fig_params['f4'][2], fontsize=axes_fontsize)
         ax4.set_ylabel(fig_params['f4'][3], fontsize=axes_fontsize)
-        ax4.text(0.05, 0.95, "Precip > "+str(PT)+" mm hr$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
+        ax4.text(0.05, 0.95, "Precip > "+str(PT)+" mm h$^-$$^1$" , transform=ax4.transAxes, fontsize=12, verticalalignment="top")
         ax4.grid()
         ax4.set_axisbelow(True)
         if reg==0:
-            ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+            #ax4_text = ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/h', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+            ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/h', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
 
-    # now add a separate legend for triangles that represent column saturation values
-    leg2 = ax1.legend([handles[num_handles]], [labels[num_handles]], fontsize=axes_fontsize, bbox_to_anchor=(0.0,-0.00), \
-                        bbox_transform=fig.transFigure, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                        fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
-                        handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
-    ax1.add_artist(leg2)
-    leg3 = ax1.legend([handles[-1]], [labels[-1]], fontsize=axes_fontsize, bbox_to_anchor=(0.0,-0.02), \
-                        bbox_transform=fig.transFigure, loc="upper left", borderaxespad=0, labelspacing=0.1, \
-                        fancybox=False, scatterpoints=1,  framealpha=0, borderpad=0, \
-                        handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
-    if (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1):
-        footnote_str='$\widehat{T}$ (Mass-weighted Column Average Temperature) used as the bulk tropospheric temperature measure'
-    elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
-        footnote_str='$\widehat{q_{sat}}$ (Column-integrated Saturation Specific Humidity) used as the bulk tropospheric temperature measure'
-    
-    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and P0_obs!=[]):
-        leg2.legendHandles[0].set_color('black')
-        footnote = ax1.text(s=footnote_str, x=0, y=-0.04, transform=fig.transFigure, ha='left', va='top', fontsize=12)
-    else:
-        footnote = ax1.text(s=footnote_str, x=0, y=-0.03, transform=fig.transFigure, ha='left', va='top', fontsize=12)
-    leg3.legendHandles[0].set_color('black')
+    fig.text(s=temp_str, x=0, y=0, ha='left', va='top', transform=fig.transFigure, fontsize=12)
+    fig.text(s=triag_qsat_str, x=0, y=-0.02, ha='left', va='top', transform=fig.transFigure, fontsize=12)
+
+    if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and P0_obs.size!=0):
+        fig.text(s='$\circ$: OBS ('+OBS+', '+RES+'$^{\circ}$)', x=0, y=-0.04, ha='left', va='top', transform=fig.transFigure, fontsize=12)
 
     # set layout to tight (so that space between figures is minimized)
     fig.tight_layout()
-    fig.savefig(FIG_OUTPUT_DIR+"/"+FIG_OUTPUT_FILENAME, bbox_inches="tight", bbox_extra_artists=(leg,title_text,footnote,))
+    fig.savefig(FIG_OUTPUT_DIR+"/"+FIG_OUTPUT_FILENAME, bbox_inches="tight")
     
     print("...Completed!")
     print("      Figure saved as "+FIG_OUTPUT_DIR+"/"+FIG_OUTPUT_FILENAME+"!")

@@ -19,13 +19,11 @@ section. For example, if this were a real POD, you'd place a one-paragraph
 synopsis of your diagnostic here (like an abstract). 
 
 It also serves as an example of the RestructuredText (ReST, .rst) format used to 
-generate this page: compare this output with the input 
-`source file <https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example.rst>`__. For other examples you can also look at the .rst files for 
-the other diagnostics.
-
-We also support submitting documents in markdown format, which has a simpler 
-syntax but lacks some of the formatting features provided by ReST. See the 
-:doc:`markdown version <example_markdown>` of this document.
+generate this page: compare this output with the input `source file 
+<https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example.rst>`__. 
+The easiest way to get started is to copy the source file into the online editor 
+at `https://livesphinx.herokuapp.com/ <https://livesphinx.herokuapp.com/>`__ and 
+experiment.
 
 .. Underline with '-'s to make a second-level heading.
 
@@ -49,6 +47,7 @@ Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
+Unless you've distirbuted your script elsewhere, you don't need to change this.
 
 Functionality
 -------------
@@ -79,13 +78,15 @@ References
 ----------
 
 Here you should cite the journal articles providing the scientific basis for 
-your diagnostic. The .rst format provides support for citations but places them
-at the end of the page. To keep the documentation format used in version 2.0 of
+your diagnostic. To keep the documentation format used in version 2.0 of
 the framework, we list references "manually" with the following command:
+
+.. Note this syntax, which sets the "anchor" for the hyperlink: two periods, one
+   space, one underscore, the reference tag, and a colon, then a blank line.
 
 .. code-block:: restructuredtext
 
-   .. _1: 
+   .. _ref-Maloney: 
 
    1. E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate 
    and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, 
@@ -93,19 +94,17 @@ the framework, we list references "manually" with the following command:
 
 which produces
 
-.. Note this syntax, which sets the "anchor" for the hyperlink: two periods, one
-   space, one underscore, the reference number, and a colon, then a blank line.
-
-.. _1: 
+.. _ref-Maloney: 
    
 1. E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and 
 Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, 
 `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
 
-which can be cited in text as ``:ref:`a hyperlink <reference number>```, which 
-gives :ref:`a hyperlink <1>`. Because references are split between this section 
-and the following "More about this diagnostic" section, unfortunately you'll 
-have to number references manually.
+which can be cited in text as ``:ref:`a hyperlink <reference tag>```, which 
+gives :ref:`a hyperlink <ref-Maloney>` to the location of the reference on the 
+page. Because references are split between this section and the following "More 
+about this diagnostic" section, unfortunately you'll have to number references 
+manually.
 
 We don't enforce any particular bibliographic style, but please provide a 
 hyperlink to the article's DOI for ease of online access. Hyperlinks are written
@@ -116,15 +115,16 @@ More about this diagnostic
 --------------------------
 
 In this section, you can go into more detail on the science behind your 
-diagnostic. It's especially helpful if you're able to teach users how to use 
+diagnostic, for example, by copying in relevant text articles you've written 
+using th  It's especially helpful if you're able to teach users how to use 
 your diagnostic's output, by showing how to interpret example plots.
 
 Instead of doing that here, we provide more examples of RestructuredText
 syntax that you can customize as needed.
 
-A good online editor that gives immediate feedback is at http://rst.ninjs.org/; 
-however, note that this doesn't implement the Sphinx features (anything 
-involving a ``:command:`` delimited with colons.)
+As mentioned above, we recommend the online editor at `https://livesphinx.herokuapp.com/ 
+<https://livesphinx.herokuapp.com/>`__, which gives immediate feedback and has
+support for sphinx-specific commands.
 
 Here's an 
 `introduction <http://docutils.sourceforge.net/docs/user/rst/quickstart.html>`__ 
@@ -145,25 +145,47 @@ followed by two underscores). This produces `link text <https://www.noaa.gov/>`_
 More references and citations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Here's another reference, and an example of how to cite in text: 
-:ref:`Maloney et. al., 2019 <1>`, :ref:`Charney, Fjørtoft and von Neumann, 1950 <2>`.
+Here's another reference:
 
-   .. _2: 
+.. code-block:: restructuredtext
+
+   .. _ref-Charney: 
+
+   2. Charney, Jule; Fjørtoft, Ragnar; von Neumann, John (1950). Numerical 
+   Integration of the Barotropic Vorticity Equation. *Tellus* **2** (4) 237–254, 
+   `doi:10.3402/tellusa.v2i4.8607 <https://doi.org/10.3402/tellusa.v2i4.8607>`__.
+
+.. _ref-Charney: 
 
 2. Charney, Jule; Fjørtoft, Ragnar; von Neumann, John (1950). Numerical 
 Integration of the Barotropic Vorticity Equation. *Tellus* **2** (4) 237–254, 
 `doi:10.3402/tellusa.v2i4.8607 <https://doi.org/10.3402/tellusa.v2i4.8607>`__.
 
+Here's an example of citing these references:
+
+.. code-block:: restructuredtext
+
+   :ref:`Maloney et. al., 2019 <ref-Maloney>`, 
+   :ref:`Charney, Fjørtoft and von Neumann, 1950 <ref-Charney>`
+
+produces :ref:`Maloney et. al., 2019 <ref-Maloney>`, 
+:ref:`Charney, Fjørtoft and von Neumann, 1950 <ref-Charney>`.
+
 Figures
 ^^^^^^^
+
+Images **must** be provided in either .png or .jpeg formats in order to be 
+displayed properly in both the html and pdf output.
 
 Here's the syntax for including a figure in the document:
 
 .. code-block:: restructuredtext
 
-   .. figure:: <path to image file, relative to the source.rst file>
+   .. _my-figure-tag: [only needed for linking to figures]
+
+   .. figure:: [path to image file, relative to the source.rst file]
       :align: left
-      :width: 80 % (these both need to be indented by three spaces)
+      :width: 75 % [these both need to be indented by three spaces]
 
       Paragraphs or other text following the figure that are indented by three
       spaces are treated as a caption/legend, eg:
@@ -173,9 +195,11 @@ Here's the syntax for including a figure in the document:
 
 which produces
 
+.. _my-figure-tag:
+
 .. figure:: gaussians.jpg
    :align: left
-   :width: 80 %
+   :width: 75 %
 
    Paragraphs or other text following the figure that are indented by three
    spaces are treated as a caption/legend, eg:
@@ -183,21 +207,47 @@ which produces
    - blue line: a Gaussian
    - orange line: another Gaussian
 
-Unfortunately, images **must** be in either .png or .jpeg formats in order to be
-displayed properly in both the html and pdf output.
+The tag lets you refer to figures in the text, e.g. 
+``:ref:`Figure 1 <my-figure-tag>``` → :ref:`Figure 1 <my-figure-tag>`.
 
 Equations
 ^^^^^^^^^
 
-Sphinx will do superscripts and subscripts in text, with slightly clunky syntax:
-W m\ :sup:`-2`\  (``W m\ :sup:`-2`\``); CO\ :sub:`2` \ (``CO\ :sub:`2` \``).
-
 Accented and Greek letters can be written directly using Unicode: é, Ω. 
 (Make sure your text editor is saving the file in UTF-8 encoding).
 
-More complicated math can be written in a ``:math:`<latex commands>``` command,
-using standard 
-`latex <https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf>`__ 
-(PDF link) syntax:
+Use the following syntax for superscripts and subscripts in text:
+``W m\:sup:`-2`\`` → W m\:sup:`-2`\; ``CO\:sub:`2`\`` → CO\:sub:`2`\.
 
-:math:`\frac{\partial \rho}{\partial t} + \rho \nabla \cdot v = 0`.
+Equations can be written using standard 
+`latex <https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf>`__ 
+(PDF link) syntax. Short equations in-line with the text can be written as 
+``:math:`f = 2 \Omega \sin \phi``` → :math:`f = 2 \Omega \sin \phi`.
+
+Longer display equations can be written as follows. Note that a blank line is 
+needed after the ``.. math::`` heading and after each equation, with the 
+exception of aligned equations.
+
+.. code-block:: restructuredtext
+
+   .. math::
+
+      \frac{D \mathbf{u}_g}{Dt} + f_0 \hat{\mathbf{k}} \times \mathbf{u}_a &= 0; \\
+      \frac{Dh}{Dt} + f \nabla_z \cdot \mathbf{u}_a &= 0,
+
+      \text{where } \mathbf{u}_g = \frac{g}{f_0} \hat{\mathbf{k}} \times \nabla_z h.
+
+which produces:
+
+.. math::
+
+   \frac{D \mathbf{u}_g}{Dt} + f_0 \hat{\mathbf{k}} \times \mathbf{u}_a &= 0; \\
+   \frac{Dh}{Dt} + f \nabla_z \cdot \mathbf{u}_a &= 0,
+
+   \text{where } \mathbf{u}_g = \frac{g}{f_0} \hat{\mathbf{k}} \times \nabla_z h.
+
+The editor at `https://livesphinx.herokuapp.com/ 
+<https://livesphinx.herokuapp.com/>`__ can have issues formatting complicated 
+equations, so you may want to check its output with a latex-specific editor, 
+such as `overleaf <https://www.overleaf.com/>`__ or other `equation editors 
+<https://www.codecogs.com/latex/eqneditor.php>`__.

@@ -1,16 +1,14 @@
 // Configuration for command-line arguments for MDTF-diagnostics driver script.
-//
-// All text to the right of an unquoted "//" is a comment and ignored, as well
-// as blank lines (JSONC quasi-standard.)
-//
-// DO NOT modify this file. Instead, edit a copy of default_tests.jsonc 
-// and pass it to the script with the --config_file/-f option.
+// This is used by install.py to generate cli.jsonc. 
+// DO NOT modify this file. Instead, edit cli.jsonc.
 //
 // Entries here are used in src/cli.py to configure command-line options 
 // accepted by the script. Syntax is based on python's argparse library, see
 // https://docs.python.org/2.7/library/argparse.html or 
 // https://docs.python.org/2.7/howto/argparse.html. 
 //
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
 {
   "description" : "Driver script for the NOAA Model Diagnostics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
   "arguments": [ // Top-level args not in any group
@@ -47,27 +45,23 @@
         {
           "name": "MODEL_DATA_ROOT",
           "help": "Parent directory containing results from different models.",
-          "default" : "../inputdata/model/",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OBS_DATA_ROOT",
           "help": "Parent directory containing observational data used by individual PODs.",
-          "default" : "../inputdata/obs_data",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        },{
-          "name": "WORKING_DIR",
-          "short_name" : "w",
-          "help": "Working directory.",
-          "default" : "../wkdir",
           "metavar" : "<DIR>",
           "parse_type": "path"
         },{
           "name": "OUTPUT_DIR",
           "short_name" : "o",
-          "help": "Directory to write output files. Defaults to working directory.",
-          "default" : "../wkdir",
+          "help": "Directory to write output files.",
+          "metavar" : "<DIR>",
+          "parse_type": "path"
+        },{
+          "name": "WORKING_DIR",
+          "short_name" : "w",
+          "help": "Working directory. Defaults to output directory if unspecified.",
           "metavar" : "<DIR>",
           "parse_type": "path"
         }

@@ -18,8 +18,6 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 
 - Your scripts should not access the internet or other networked resources.
 
-.. _ref-using-env-vars:
-
 An example of using framework-provided environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code and make your POD portable and reusable.
@@ -35,6 +33,11 @@ For instance, using 3 of the environment variables provided by the framework, ``
 You can then use ``pr_filepath`` in your code to load the precipitation data.
 
 Note that in Linux shell or NCL, the values of environment variables are accessed via a ``$`` sign, e.g., ``os.environ["CASENAME"]`` in Python is equivalent to ``$CASENAME`` in Linux shell/NCL.
+
+.. _ref-using-env-vars:
+
+Relevant environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The environment variables most relevant for a POD's operation are:
 
@@ -52,7 +55,7 @@ The environment variables most relevant for a POD's operation are:
 
    3. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: If a POD chooses to save any digested data for later analysis/plotting, save them in two directories in ``NetCDF``.
 
-Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) the ``WKDIR`` directory is automatically created by the framework, and (3) subdirectories under ``WKDIR`` are created by the POD, when necessary, following the structure just described for ease of maintenance.
+Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) the ``WKDIR`` directory and subdirectories therein are automatically created by the framework. **Each POD should output files as described here** so that the framework knows where to find what, and also for the ease of code maintenance.
 
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see `the comprehensive list <ref_envvars.html>`__  of environment variables supplied by the framework.
 

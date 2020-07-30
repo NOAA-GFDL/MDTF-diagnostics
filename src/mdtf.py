@@ -24,13 +24,13 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-import cli
-import util
-import util_mdtf
-import data_manager
-import environment_manager
-import shared_diagnostic
-import netcdf_helper
+from src import cli
+from src import util
+from src import util_mdtf
+from src import data_manager
+from src import environment_manager
+from src import shared_diagnostic
+from src import netcdf_helper
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -117,6 +117,9 @@ class MDTFFramework(object):
         # don't think PODs use global env vars?
         # self.envvars = self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
         config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        # globally enforce non-interactive matplotlib backend
+        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
+        config.global_envvars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, cli_obj, config):
         self.pod_list = []
@@ -303,6 +306,8 @@ class MDTFFramework(object):
         self.cleanup_tempdirs()
 
 
+# should move this out of "src" package, but need to create wrapper shell script
+# to set framework conda env.
 if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 

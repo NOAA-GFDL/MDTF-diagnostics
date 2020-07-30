@@ -3,12 +3,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-import six
+from src import six
 import re
 import glob
 import shutil
 import tempfile
-import util
+from src import util
 
 
 class ConfigManager(util.Singleton):

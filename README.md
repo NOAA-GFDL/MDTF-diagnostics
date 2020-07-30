@@ -117,6 +117,8 @@ Here we are checking that the Conda command is available on your system. We reco
 
 - Restart the terminal to reload the updated shell login script.
 
+- Mac OS users may encounter a benign Java warning pop-up: *To use the "java" command-line tool you need to install a JDK.* It's safe to ignore it.
+
 The framework’s environments will co-exist with an existing Miniconda/Anaconda installation. *Do not* reinstall Miniconda/Anaconda if it's already installed for the user who will be running the framework: the installer will break the existing installation (if it's not managed with, eg., environment modules.)
 
 ### 2.2 Framework-specific environment installation

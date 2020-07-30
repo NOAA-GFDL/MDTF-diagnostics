@@ -75,7 +75,7 @@ At this point, your POD’s requirements have been met, so the framework sets th
 
 POD execution: paths
 ^^^^^^^^^^^^^^^^^^^^
-
+@@@
 See :ref:`ref-using-env-vars` for the most important environment variables set by the framework for your POD's operation, and `a more comprehensive list <ref_envvars.html>`__. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the environment variables.
 
 Example diagnostic

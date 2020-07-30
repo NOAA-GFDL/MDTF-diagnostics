@@ -47,11 +47,33 @@ Supporting observational data and sample model data are available via anonymous 
 
 Users installing on Mac OS should use the Finder’s Archive Utility instead of the command-line tar command to extract the files. Download these three files and extract the contents in the following hierarchy under the ``mdtf`` directory:
 
-- ``mdtf/inputdata/obs_data/...``
-- ``mdtf/inputdata/model/QBOi.EXP1.AMIP.001/...``
-- ``mdtf/inputdata/model/GFDL.CM4.c96L32.am4g10r8/...``
+::
 
-The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that ``mdtf`` now contains both ``MDTF-diagnostics`` and ``inputdata`` directories.
+   mdtf
+   ├── MDTF-diagnostics
+   ├── inputdata
+       ├── model ( = $MODEL_DATA_ROOT)
+       │   ├── GFDL.CM4.c96L32.am4g10r8
+       │   │   └── day
+       │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
+       │   │       └── (... other .nc files )
+       │   └── QBOi.EXP1.AMIP.001
+       │       ├── 1hr
+       │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
+       │       │   └── (... other .nc files )
+       │       ├── 3hr
+       │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
+       │       ├── day
+       │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
+       │       │   └── (... other .nc files )
+       │       └── mon
+       │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
+       │           └── (... other .nc files )
+       └── obs_data ( = $OBS_DATA_ROOT)
+           ├── (... supporting data for individual PODs )
+
+
+The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described below in :numref:`ref-configure`.
 

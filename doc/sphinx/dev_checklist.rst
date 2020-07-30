@@ -52,7 +52,7 @@ The environment variables most relevant for a POD's operation are:
 
    3. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: If a POD chooses to save any digested data for later analysis/plotting, save them in two directories in ``NetCDF``.
 
-Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) ``WKDIR`` is automatically created by the framework, and (3) subdirectories under ``WKDIR`` are created by the POD, when necessary, following the structure just described for ease of maintenance.
+Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) the ``WKDIR`` directory is automatically created by the framework, and (3) subdirectories under ``WKDIR`` are created by the POD, when necessary, following the structure just described for ease of maintenance.
 
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see `the comprehensive list <ref_envvars.html>`__  of environment variables supplied by the framework.
 

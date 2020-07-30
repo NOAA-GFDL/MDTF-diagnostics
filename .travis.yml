@@ -8,7 +8,7 @@ os: linux
 dist: xenial # default
 language: shell # synonym for "minimal". Use instead of "python" to save disk space; all software installed through conda
 # sudo: false # deprecated in Travis
-python: '2.7' # only supported version, for now
+python: '3.7' # doesn't matter, conda python used instead of system
 
 branches:
   only:

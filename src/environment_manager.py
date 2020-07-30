@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-from . import six
+import six
 import glob
 import shutil
 import atexit
@@ -14,9 +14,9 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-from . import util
-from . import util_mdtf
-from .shared_diagnostic import PodRequirementFailure
+import util
+import util_mdtf
+from shared_diagnostic import PodRequirementFailure
 
 class EnvironmentManager(six.with_metaclass(ABCMeta)):
     # analogue of TestSuite in xUnit - abstract base class

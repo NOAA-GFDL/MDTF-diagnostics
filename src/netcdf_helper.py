@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from . import six
+import six
 import io
 import shutil
 if os.name == 'posix' and six.PY2:
@@ -10,9 +10,9 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-from . import datelabel
-from . import util
-from . import util_mdtf
+import datelabel
+import util
+import util_mdtf
 import xml.etree.ElementTree as ET
 from six.moves import getcwd
 

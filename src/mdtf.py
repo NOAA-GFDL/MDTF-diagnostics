@@ -24,13 +24,13 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-from . import cli
-from . import util
-from . import util_mdtf
-from . import data_manager
-from . import environment_manager
-from . import shared_diagnostic
-from . import netcdf_helper
+import cli
+import util
+import util_mdtf
+import data_manager
+import environment_manager
+import shared_diagnostic
+import netcdf_helper
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):

@@ -8,12 +8,12 @@ Based on test_website by Dani Coleman, bundy@ucar.edu
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from . import six
+import six
 import argparse
 import collections
 import itertools
 from six.moves import html_parser, urllib # py3: html.parser
-from . import util
+import util
 
 # https://stackoverflow.com/a/41663924
 class LinkParser(html_parser.HTMLParser):

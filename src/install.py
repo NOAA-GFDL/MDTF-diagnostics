@@ -18,9 +18,9 @@ import stat
 import ftplib
 import socket
 import shutil
-from . import cli
-from . import util
-from .verify_links import LinkVerifier
+import cli
+import util
+from verify_links import LinkVerifier
 
 
 # ------------------------------------------------------------------------------

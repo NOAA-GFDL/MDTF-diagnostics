@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from . import six
+import six
 import glob
 import copy
 import shutil
@@ -16,11 +16,11 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from . import util
-from . import util_mdtf
-from . import datelabel
-from . import netcdf_helper
-from .shared_diagnostic import PodRequirementFailure
+import util
+import util_mdtf
+import datelabel
+import netcdf_helper
+from shared_diagnostic import PodRequirementFailure
 
 
 @six.python_2_unicode_compatible

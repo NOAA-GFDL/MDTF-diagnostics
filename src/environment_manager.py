@@ -375,8 +375,11 @@ class CondaEnvironmentManager(EnvironmentManager):
                 pod.env = self.env_name_prefix + 'R_base'
             elif 'ncl' in langs:
                 pod.env = self.env_name_prefix + 'NCL_base'
-            elif 'python' in langs:
-                pod.env = self.env_name_prefix + 'python_base'
+            elif 'python2' in langs:
+                raise NotImplementedError('Python 2 not supported for new PODs.')
+                # pod.env = self.env_name_prefix + 'python2_base'
+            elif 'python3' in langs:
+                pod.env = self.env_name_prefix + 'python3_base'
             else:
                 print("Can't find environment providing {}".format(
                     pod.runtime_requirements))

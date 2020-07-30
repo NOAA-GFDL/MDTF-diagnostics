@@ -27,7 +27,9 @@ from .netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
-        'python':   'python/2.7.12',
+        'python2':   'python/2.7.12',
+        # most recent version common to analysis and workstations; use conda anyway
+        'python3':   'python/3.4.3',
         'ncl':      'ncarg/6.5.0',
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',

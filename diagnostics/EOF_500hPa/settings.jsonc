@@ -15,7 +15,7 @@
     "realm" : "atmos",
     "description" : "EOF of geopotential height anomalies for 500 hPa",
     "runtime_requirements": {
-      "python": [],
+      "python2": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm"]
     }
   },

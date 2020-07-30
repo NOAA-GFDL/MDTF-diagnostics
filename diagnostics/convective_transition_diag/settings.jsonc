@@ -28,7 +28,7 @@
       "RES" : "1.00"
     },
     "runtime_requirements": {
-      "python": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+      "python2": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
     }
   },
   //

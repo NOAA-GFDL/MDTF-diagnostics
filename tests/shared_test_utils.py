@@ -62,7 +62,7 @@ def configure_pods(case_list, config_to_insert=[]):
 def checksum_function(file_path):
     IMAGE_FILES = ['.eps','.ps','.png','.gif','.jpg','.jpeg']
 
-    print os.path.split(file_path)[1]
+    print(os.path.split(file_path)[1])
     ext = os.path.splitext(file_path)[1]
     if ext in IMAGE_FILES:
         # use ImageMagick 'identify' command which ignores file creation time 

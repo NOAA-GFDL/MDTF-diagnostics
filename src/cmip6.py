@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import six
+from src import six
 import re
-import datelabel
-import util
-import util_mdtf
+from src import datelabel
+from src import util
+from src import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
     def __init__(self, unittest_flag=False):

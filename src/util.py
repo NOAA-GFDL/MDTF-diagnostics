@@ -95,7 +95,7 @@ class MultiMap(collections.defaultdict):
         super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
-        if key not in self.keys():
+        if key not in list(self.keys()):
             raise KeyError(key)
         return coerce_from_iter(self[key])
     

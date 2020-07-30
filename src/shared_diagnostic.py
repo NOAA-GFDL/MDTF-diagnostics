@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import six
+from src import six
 import glob
 import shutil
-import util
-import util_mdtf
+from src import util
+from src import util_mdtf
 
 
 @six.python_2_unicode_compatible

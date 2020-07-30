@@ -24,13 +24,13 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-import cli
-import util
-import util_mdtf
-import data_manager
-import environment_manager
-import shared_diagnostic
-import netcdf_helper
+from src import cli
+from src import util
+from src import util_mdtf
+from src import data_manager
+from src import environment_manager
+from src import shared_diagnostic
+from src import netcdf_helper
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -303,6 +303,8 @@ class MDTFFramework(object):
         self.cleanup_tempdirs()
 
 
+# should move this out of "src" package, but need to create wrapper shell script
+# to set framework conda env.
 if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 

@@ -11,7 +11,7 @@
     "realm" : "atmos",
     "description" : "MJO CLIVAR suite (NCAR)",
     "runtime_requirements": {
-      "python": [],
+      "python2": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"],
       "ncks": []
     }

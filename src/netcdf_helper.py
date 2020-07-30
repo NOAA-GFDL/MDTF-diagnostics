@@ -1,8 +1,9 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import six
+import io
 import shutil
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
@@ -12,8 +13,8 @@ else:
 import datelabel
 import util
 import util_mdtf
-import StringIO
 import xml.etree.ElementTree as ET
+from six.moves import getcwd
 
 class NetcdfHelper(object):
     def __init__(self):
@@ -105,7 +106,7 @@ def _nco_outfile_decorator(function):
             raise AssertionError()
         
         # only pass func the keyword arguments it accepts
-        named_args = function.func_code.co_varnames
+        named_args = six.get_function_code(function).co_varnames
         fkwargs = dict((k, kwargs[k]) for k in named_args if k in kwargs)
         result = function(*args, **fkwargs)
         
@@ -116,7 +117,7 @@ def _nco_outfile_decorator(function):
                     kwargs['out_file'], kwargs['in_file']))
             else:
                 if kwargs['cwd']:
-                    cwd = os.getcwd()
+                    cwd = getcwd()
                     os.chdir(kwargs['cwd'])
                 os.remove(kwargs['in_file'])
                 shutil.move(kwargs['out_file'], kwargs['in_file'])
@@ -162,16 +163,16 @@ class NcoNetcdfHelper(NetcdfHelper):
     def ncdump_h(cls, in_file=None, cwd=None, dry_run=False):
         """Return header information for all variables in a file.
         """
-        def _parse_xml_wrapper(str_):
+        def _parse_xml_wrapper(bytes_):
             # strips namespaces; https://stackoverflow.com/a/25920989
             # https://stackoverflow.com/a/53738357 would be more robust, but for
             # some reason I can't reproduce it
-            f_obj = StringIO.StringIO(str_)
-            it = ET.iterparse(f_obj)
+            str_obj = io.TextIOWrapper(six.BytesIO(bytes_), encoding='utf-8')
+            it = ET.iterparse(str_obj)
             for _, el in it:
                 if '}' in el.tag:
                     el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
-                for at in el.attrib.keys(): # strip namespaces of attributes too
+                for at in el.attrib: # strip namespaces of attributes too
                     if '}' in at:
                         newat = at.split('}', 1)[1]
                         el.attrib[newat] = el.attrib[at]
@@ -182,11 +183,11 @@ class NcoNetcdfHelper(NetcdfHelper):
         if dry_run:
             return d # dummy answer
         # JSON output for -m is malformed in NCO <=4.5.4, verified OK for 4.7.6
-        xml_str = util.run_command(
+        xml_out = util.run_command(
             ['ncks', '--xml', '-m', in_file],
             cwd=cwd, dry_run=dry_run
         )
-        root = _parse_xml_wrapper('\n'.join(xml_str))
+        root = _parse_xml_wrapper('\n'.join(xml_out))
         for dim in root.iter('dimension'):
             d['dimensions'][dim.attrib['name']] = int(dim.attrib['length'])
         dv = d['variables']
@@ -216,14 +217,14 @@ class NcoNetcdfHelper(NetcdfHelper):
         # cases out first.
         d = cls.nc_get_attribute('units', in_file=in_file, cwd=cwd, dry_run=dry_run)
         dd = dict()
-        for var, unit in new_units_dict.iteritems():
+        for var, unit in iter(new_units_dict.items()):
             if var not in d:
                 print(("Warning: no unit attribute for {} in {}."
                     " Skipping unit conversion").format(var, in_file))
             elif d[var] != unit:
                 dd[var] = unit
         cmd_string = '{var}=udunits({var},"{unit}");{var}@units="{unit}";'
-        cmds = [cmd_string.format(var=k, unit=v) for k,v in dd.iteritems()]
+        cmds = [cmd_string.format(var=k, unit=v) for k,v in iter(dd.items())]
         if cmds:
             cls._run_command(
                 ['ncap2', '-O', '-s', ''.join(cmds), in_file, out_file],

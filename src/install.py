@@ -1,5 +1,5 @@
-#!/usr/bin/env python2
-from __future__ import print_function
+#!/usr/bin/env python
+from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 2 or sys.version_info[1] < 7:
@@ -9,6 +9,7 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
     exit(1)
 # passed; continue with imports
 import os
+import io
 import re
 import glob
 import collections
@@ -20,6 +21,7 @@ import shutil
 import cli
 import util
 from verify_links import LinkVerifier
+
 
 # ------------------------------------------------------------------------------
 # Functions that call external programs to do all the work
@@ -164,7 +166,7 @@ def untar_data(ftp_data, install_config):
     else:
         tar_cmd = 'tar -xf '
     
-    for f in ftp_data.values():
+    for f in iter(ftp_data.values()):
         print("Extracting {}".format(f.file))
         cwd = install_config[f.target_dir]
         f_subdir_0 = f.contents_subdir.split(os.sep)[0]
@@ -237,7 +239,10 @@ def framework_test(code_root, output_dir, cli_config):
         if not runs:
             raise IOError("Can't find framework output in {}".format(abs_out_dir))
         run_output = max(runs, key=os.path.getmtime)
-        with open(os.path.join(run_output, 'mdtf_test.log'), 'w') as f:
+        with io.open(
+            os.path.join(run_output, 'mdtf_test.log'), 
+            'w', encoding='utf-8'
+        ) as f:
             f.write('\n'.join(log_str))
     except Exception as exc:
         fatal_exception_handler(exc, "ERROR: framework test run failed.")
@@ -303,7 +308,7 @@ class MDTFInstaller(object):
         cli_dict = util.read_json(
             os.path.join(self.code_root, self.settings.cli_defaults['template'])
         )
-        for key, val in self.cli_settings.iteritems():
+        for key, val in iter(self.cli_settings.items()):
             cli_dict[key] = val
         # filter only the defaults we're setting
         for arg_gp in cli_dict['argument_groups']:
@@ -359,7 +364,7 @@ class MDTFInstaller(object):
 
     def print_config(self):
         _tmp = {'settings': dict(), 'defaults to assign': dict()}
-        for key, val in self.config.iteritems():
+        for key, val in iter(self.config.items()):
             if key in self.settings.cli_defaults['default_keys']:
                 _tmp['defaults to assign'][key] = val
             else:

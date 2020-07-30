@@ -207,14 +207,17 @@ class TestSubprocessInteraction(unittest.TestCase):
         self.assertEqual(out[0], 'bar')
         self.assertEqual(out[1], 'baz')
 
+    @unittest.skip("Skipping poll_command tests")
     def test_poll_command_shell_true(self):
         rc = util.poll_command('echo "foo"', shell=True)
         self.assertEqual(rc, 0)
 
+    @unittest.skip("Skipping poll_command tests")
     def test_poll_command_shell_false(self):
         rc = util.poll_command(['echo', 'foo'], shell=False)
         self.assertEqual(rc, 0)
     
+    @unittest.skip("Skipping poll_command tests")
     def test_poll_command_error(self):
         rc = util.poll_command(['false'], shell=False)
         self.assertEqual(rc, 1)

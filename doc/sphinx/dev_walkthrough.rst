@@ -57,11 +57,11 @@ In its settings file, the example POD lists its `requirements <https://github.co
 Step 4: POD execution
 ---------------------
 
-At this point, your POD’s requirements have been met, so the framework begins execution of your POD’s code by calling the top-level script listed in your POD’s settings file.
+At this point, your POD’s requirements have been met, so the framework activates the right Conda environment, generates the necessary environment variables, then begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
 
-All information is passed from the framework to your POD in the form of unix shell environment variables; see the `reference documentation <ref_envvars.html>`__ for details on their names and values.
+- All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see the `reference documentation <ref_envvars.html>`__ for a complete list of the environment variables.
 
-You should avoid making assumptions about the environment in which your POD will run beyond what’s listed here; a development priority is to interface the framework with cluster and cloud job schedulers to enable individual PODs to run in a concurrent, distributed manner.
+-
 
 We encourage that your POD produce a log of its progress as it runs: this can be useful in debugging. All text your POD writes to stdout or stderr is captured in a log file and made available to the user.
 

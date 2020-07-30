@@ -61,27 +61,37 @@ At this point, your POD’s requirements have been met, so the framework activat
 
 - All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see the `reference documentation <ref_envvars.html>`__ for a complete list of the environment variables.
 
--
+- We encourage that your POD prints out messages of its progress as it runs. This can be useful in debugging. All text your POD writes to stdout or stderr (i.e., displayed in a terminal) will be captured by the framework and saved in a log file available to the user via ``index.html``.
 
-We encourage that your POD produce a log of its progress as it runs: this can be useful in debugging. All text your POD writes to stdout or stderr is captured in a log file and made available to the user.
+- Properly structure your code/scripts and include *error and exception handling* mechanisms in your code so that simple issues would not completely shut down the POD's operation. Here are a few suggestions:
 
-If your POD experiences a fatal or unrecoverable error, it should signal that to the framework in the conventional unix way by exiting with a return code different from zero. This error will be presented to the user, who can then look over the log file to determine what went wrong.
+   1. Separate basic and advanced diagnostics. Certain computations (e.g., fitting) may need adjustment or are more likely to fail when model performance out of observed range. Organize your POD scripts so that the basic part can produce results even when the advanced part fails.
+
+   2. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data.
+
+   3. Say a POD reads in multiple variable files and computes certain statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest.
+
+- The framework contains additional exception-handling mechanisms so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages will be captured and presented to the user as part of the log file to determine what went wrong.
 
 POD execution: paths
 ^^^^^^^^^^^^^^^^^^^^
 
-Recall that installing the code will create a directory titled ``MDTF-diagnostics`` containing the files listed on the github page. Below we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
-diagnostics/ : directories containing source code of individual PODs
-doc/ : directory containing documentation (a local mirror of the github wiki and documentation site)
-src/ : source code of the framework itself
-tests/ : unit tests for the framework
-Please refer to the Getting Started document, section 3 for background on the paths.
+Recall that installing the code package will create a directory titled ``MDTF-diagnostics`` (likely appended by version info) containing the files listed on the GitHub page. As in the Getting Started, we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
 
-The most important environment variables set by the framework describe the location of resources your POD needs. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the following variable names (note ``$POD_HOME`` is used in linux shell and NCL; in Python ``os.environ["POD_HOME"]`` would be used):
+- diagnostics/ : directories containing source code of individual PODs
+- doc/ : directory containing documentation (a local mirror of the GitHub wiki and documentation site)
+- src/ : source code of the framework itself
+- tests/ : unit tests for the framework
 
-- ``$POD_HOME``: Path to the top-level directory containing your diagnostic’s source code. This will be of the form .../MDTF-diagnostics/diagnostics/<your POD's name>. This can be used to call sub-scripts from your diagnostic’s driver script. This directory should be treated as read-only.
+Please refer to the Getting Started document, section 3@@@ for background on the paths.
 
-- ``$OBS_DATA``: Path to the top-level directory containing any digested observational or reference data you’ve provided as the author of your diagnostic. Files and sub-directories will be present within this directory with the names and layout in which you supplied them. The framework will ensure this is copied to a local filesystem when your diagnostic is run, but this directory should be treated as read-only. The path to each model data file is provided in an environment variable you name in that variable’s entry in the varlist section of the settings file.
+A reminder on accessing environment variables before we go further: the value of an environment variable, e.g., ``POD_HOME``, can be accessed by using ``$POD_HOME`` in Linux shell and NCL, and ``os.environ["POD_HOME"]`` in Python.
+
+The most important environment variables set by the framework describe the location of resources your POD needs. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the following variable names :
+
+- ``$POD_HOME``: Path to the top-level directory containing your POD's source code. This will be of the form ``.../MDTF-diagnostics/diagnostics/$POD_NAME``. This can be used to call sub-scripts from your POD’s driver script. This directory should be treated as read-only.
+
+- ``$OBS_DATA``: Path to the top-level directory containing any digested observational or supporting data for your POD. Files and sub-directories will be present within this directory with the names and layout in which you supplied them. This directory should be treated as read-only. The path to each model data file is provided in an environment variable you name in that variable’s entry in the ``varlist`` section of the settings file.
 
 - ``$WK_DIR``: path to your POD’s working directory. This is the only location to which your POD should write files. Within this, the framework will create sub-directories which should be where your output is written:
 

@@ -32,6 +32,8 @@ For instance, using 3 of the environment variables provided by the framework, ``
 
 You can then use ``pr_filepath`` in your code to load the precipitation data.
 
+Note that in Linux shell or NCL, the values of environment variables are accessed via a ``$`` sign, e.g., ``os.environ["CASENAME"]`` in Python is equivalent to ``$CASENAME`` in Linux shell/NCL.
+
 The environment variables most relevant for a POD's operation are:
 
 - ``POD_HOME``: Path to directory containing POD's scripts, e.g., ``diagnostics/convective_transition_diag/``.
@@ -42,7 +44,12 @@ The environment variables most relevant for a POD's operation are:
 
 - ``WK_DIR``: Path to directory for POD to output files. Note that this is the only directory a POD is allowed to write its output. E.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
-Note that values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs.
+
+   1. ``$WK_DIR/obs/PS`` and ``$WK_DIR/model/PS``: All output plots produced by the POD should be written to one of these two directories. Only files in these locations will be converted by the framework to bitmaps for HTML output.
+
+   2. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: Any digested data files the POD wants to make available to users should be saved to one of these two directories.
+
+Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WKDIR`` change when the framework executes different PODs; (2) ``WKDIR`` is automatically created by the framework, and (3) subdirectories under ``WKDIR`` is created by the POD. Under ``WKDIR``, please follow the subdirectory structure described here for ease of maintenance.
 
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files.
 

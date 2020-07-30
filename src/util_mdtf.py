@@ -1,7 +1,9 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import io
+import six
 import re
 import glob
 import shutil
@@ -105,7 +107,7 @@ class TempDirManager(util.Singleton):
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
-        elif isinstance(hash_obj, basestring):
+        elif isinstance(hash_obj, six.string_types):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
@@ -221,7 +223,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif not isinstance(varvalue, basestring):
+        elif not isinstance(varvalue, six.string_types):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
@@ -231,7 +233,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
-    for n in range(len(varlist)):
+    for n in list(range(len(varlist))):
         if ( verbose > 2):
             print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
@@ -328,7 +330,7 @@ def bump_version(path, new_v=None, extra_dirs=[]):
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):
     assert os.path.exists(template_file)
-    with open(template_file, 'r') as f:
+    with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
@@ -340,5 +342,5 @@ def append_html_template(template_file, target_file, template_dict={},
     else:
         print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
-    with open(target_file, mode) as f:
+    with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

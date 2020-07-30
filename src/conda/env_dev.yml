@@ -4,11 +4,19 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- python=2.7
-- subprocess32
-- mock
+# contents of python3_base
+- python=3.7
+- numpy=1.19
+- scipy=1.5.2
+- netCDF4=1.5.4
+- cftime=1.2
+- xarray=0.16
+- matplotlib=3.3
+- cartopy=0.18
+# additional development tools
+- mock # needed until tests updated from py2
 - jupyter
-- netCDF4
+- jupyterlab
 - sphinx
 - pylint
 - doc8

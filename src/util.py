@@ -1,14 +1,15 @@
 """Common functions and classes used in multiple places in the MDTF code.
 Specifically, util.py implements general functionality that's not MDTF-specific.
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import io
+import six
 import re
 import shlex
 import collections
 from distutils.spawn import find_executable
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
@@ -19,7 +20,7 @@ import signal
 import threading
 import errno
 import json
-import datelabel
+from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
@@ -32,7 +33,7 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton('SingletonMeta', (object,), {})): 
+class Singleton(_Singleton(six.ensure_str('SingletonMeta'), (object,), {})): 
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
@@ -87,26 +88,26 @@ class MultiMap(collections.defaultdict):
         """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
-        for key in self.keys():
+        for key in iter(self.keys()):
             super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
         super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
-        if key not in self.keys():
+        if key not in list(self.keys()):
             raise KeyError(key)
         return coerce_from_iter(self[key])
     
     def to_dict(self):
         d = {}
-        for key in self.keys():
+        for key in iter(self.keys()):
             d[key] = self.get_(key)
         return d
 
     def inverse(self):
         d = collections.defaultdict(set)
-        for key, val_set in self.iteritems():
+        for key, val_set in iter(self.items()):
             for v in val_set:
                 d[v].add(key)
         return dict(d)
@@ -176,7 +177,7 @@ class NameSpace(dict):
             object.__delattr__(self, k)
 
     def __dir__(self):
-        return self.keys()
+        return list(self.keys())
     __members__ = __dir__  # for python2.x compatibility
 
     def __repr__(self):
@@ -189,7 +190,7 @@ class NameSpace(dict):
         """ Implement a serializable interface used for pickling.
         See https://docs.python.org/3.6/library/pickle.html.
         """
-        return {k: v for k, v in self.items()}
+        return {k: v for k, v in iter(self.items())}
 
     def __setstate__(self, state):
         """ Implement a serializable interface used for pickling.
@@ -209,7 +210,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return dict((k, cls._toDict(v)) for k, v in x.iteritems())
+            return dict((k, cls._toDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls._toDict(v) for v in x)
         else:
@@ -225,7 +226,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return cls((k, cls.fromDict(v)) for k, v in x.iteritems())
+            return cls((k, cls.fromDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls.fromDict(v) for v in x)
         else:
@@ -245,7 +246,9 @@ class NameSpace(dict):
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
-        FrozenNameSpace = collections.namedtuple('FrozenNameSpace', sorted(d.keys()))
+        FrozenNameSpace = collections.namedtuple(
+            'FrozenNameSpace', sorted(list(d.keys()))
+        )
         return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
@@ -268,7 +271,7 @@ def strip_comments(str_, delimiter=None):
     if not delimiter:
         return str_
     s = str_.splitlines()
-    for i in range(len(s)):
+    for i in list(range(len(s))):
         if s[i].startswith(delimiter):
             s[i] = ''
             continue
@@ -289,7 +292,7 @@ def read_json(file_path):
     assert os.path.exists(file_path), \
         "Couldn't find JSON file {}.".format(file_path)
     try:    
-        with open(file_path, 'r') as file_:
+        with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except IOError:
         print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
@@ -297,29 +300,9 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    def _to_ascii(data):
-        # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Raise UnicodeDecodeError if file contains 
-        # non-ascii characters. 
-        # Originally based on https://stackoverflow.com/a/33571117.
-        if isinstance(data, unicode):
-            # raise UnicodeDecodeError if file contains non-ascii characters
-            return data.encode('ascii', 'strict')
-        # if this is a list of values, return list of byteified values
-        if isinstance(data, list):
-            return [_to_ascii(item) for item in data]
-        # dicts should be handled by pairs_hook. if it's anything else, return 
-        # it in its original form
-        return data
-
-    def _pairs_hook(pairs):
-        return collections.OrderedDict(
-            [(_to_ascii(key), _to_ascii(val)) for key, val in pairs]
-        )
-
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
-        parsed_json = json.loads(str_, object_pairs_hook=_pairs_hook)
+        parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
     except UnicodeDecodeError:
         print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
@@ -334,9 +317,10 @@ def write_json(struct, file_path, verbose=0, sort_keys=False):
         verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
-        with open(file_path, 'w') as file_obj:
-            json.dump(struct, file_obj, 
-                sort_keys=sort_keys, indent=2, separators=(',', ': '))
+        str_ = json.dumps(struct, 
+            sort_keys=sort_keys, indent=2, separators=(',', ': '))
+        with io.open(file_path, 'w', encoding='utf-8') as file_:
+            file_.write(six.ensure_text(str_, encoding='utf-8', errors='strict'))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
@@ -417,7 +401,7 @@ def resolve_path(path, root_path="", env=None):
     if os.path.isabs(path):
         return path
     if root_path == "":
-        root_path = os.getcwd()
+        root_path = getcwd()
     assert os.path.isabs(root_path)
     return os.path.normpath(os.path.join(root_path, path))
 
@@ -494,7 +478,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if isinstance(command, basestring):
+    if isinstance(command, six.string_types):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -567,7 +551,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     # starting bash directly instead of from sh.)
     bash_exec = find_executable('bash')
 
-    if not isinstance(command, basestring):
+    if not isinstance(command, six.string_types):
         command = ' '.join(command)
     if dry_run:
         print('DRY_RUN: call {}'.format(command))
@@ -603,19 +587,23 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     else:
         return stdout.splitlines()
 
+def is_iterable(obj):
+    return isinstance(obj, collections_abc.Iterable) \
+        and not isinstance(obj, six.string_types) # py3 strings have __iter__
+
 def coerce_to_iter(obj, coll_type=list):
     assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
         return obj
-    elif hasattr(obj, '__iter__'):
+    elif is_iterable(obj):
         return coll_type(obj)
     else:
         return coll_type([obj])
 
 def coerce_from_iter(obj):
-    if hasattr(obj, '__iter__'):
+    if is_iterable(obj):
         if len(obj) == 1:
             return list(obj)[0]
         else:
@@ -626,7 +614,7 @@ def coerce_from_iter(obj):
 def filter_kwargs(kwarg_dict, function):
     """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    named_args = set(function.func_code.co_varnames)
+    named_args = set(six.get_function_code(function).co_varnames)
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \
@@ -636,7 +624,7 @@ def signal_logger(caller_name, signum=None, frame=None):
     if signum:
         # lookup signal name from number; https://stackoverflow.com/a/2549950
         sig_lookup = {
-            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+            k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')
         }
         print("\tDEBUG: {} caught signal {} ({})".format(

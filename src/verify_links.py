@@ -6,21 +6,19 @@ in the output webpages.
 
 Based on test_website by Dani Coleman, bundy@ucar.edu
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import six
 import argparse
 import collections
 import itertools
-from HTMLParser import HTMLParser # py3: html.parser
-import urlparse # py3: urllib.parse
-import urllib2
+from six.moves import html_parser, urllib # py3: html.parser
 import util
 
 # https://stackoverflow.com/a/41663924
-class LinkParser(HTMLParser):
+class LinkParser(html_parser.HTMLParser):
     def reset(self):
-        HTMLParser.reset(self)
+        super(LinkParser, self).reset()
         self.links = iter([])
 
     def handle_starttag(self, tag, attrs):
@@ -36,7 +34,7 @@ class LinkVerifier(object):
         organize missing links in a dictionary keyed on POD name.
         """
         self.verbose=verbose
-        root_parts = urlparse.urlsplit(root)
+        root_parts = urllib.parse.urlsplit(root)
         path_ = root_parts.path
         if not path_.endswith('index.html'):
             path_ = os.path.join(path_, 'index.html')
@@ -45,9 +43,9 @@ class LinkVerifier(object):
             path_ = os.path.abspath(path_)
             root_parts = root_parts._replace(scheme='file')
         root_parts = root_parts._replace(path=path_)
-        self.root = urlparse.urlunsplit(root_parts)
+        self.root = urllib.parse.urlunsplit(root_parts)
         root_parts = root_parts._replace(path=os.path.dirname(path_))
-        self.urlbase = urlparse.urlunsplit(root_parts)
+        self.urlbase = urllib.parse.urlunsplit(root_parts)
 
     @staticmethod
     def gen_links(f, parser):
@@ -65,14 +63,14 @@ class LinkVerifier(object):
         or 2) a list of all html links appearing in that file (if any).
         """
         try:
-            f = urllib2.urlopen(url)
-        except (urllib2.HTTPError, urllib2.URLError):
+            f = urllib.request.urlopen(url)
+        except (urllib.error.HTTPError, urllib.error.URLError):
             return None
         if f.info().getsubtype() != 'html':
             return []
         else:
             parser = LinkParser()
-            links = [(url, urlparse.urljoin(url, l)) for l in self.gen_links(f, parser)]
+            links = [(url, urllib.parse.urljoin(url, l)) for l in self.gen_links(f, parser)]
             f.close()
             return links
 
@@ -107,13 +105,13 @@ class LinkVerifier(object):
 
     def get_missing_pods(self):
         if self.verbose:
-            print("Checking {}\n".format(root))
+            print("Checking {}\n".format(self.root))
         missing = self.breadth_first(self.root, self.urlbase)
         
         missing_dict = collections.defaultdict(list)
         for tup in missing:
             prefix = os.path.commonprefix(tup)
-            dirs = urlparse.urlsplit(prefix).path.split('/')
+            dirs = urllib.parse.urlsplit(prefix).path.split('/')
             dirs = [d for d in dirs if d]
             pod = dirs[-1]
             rel_link = tup[1][len(prefix):]
@@ -130,7 +128,7 @@ if __name__ == '__main__':
         help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
     
-    link_verifier = LinkVerfifier(args.path_or_url, args.verbose)
+    link_verifier = LinkVerifier(args.path_or_url, args.verbose)
     missing_dict = link_verifier.get_missing_pods()
 
     if missing_dict:

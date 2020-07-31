@@ -266,6 +266,7 @@ class TestPathManager(unittest.TestCase):
         self.assertEqual(config.paths.OUTPUT_DIR, 'TEST_OUTPUT_DIR')
 
 
+@mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestPathManagerPodCase(unittest.TestCase):
     def setUp(self):
         # set up translation dictionary without calls to filesystem
@@ -289,38 +290,21 @@ class TestPathManagerPodCase(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    @unittest.skip("")
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
     def test_pathmgr_model(self):
         config = util_mdtf.ConfigManager()
         case = DataManager(self.case_dict)
-        d = config.paths.modelPaths(case)
+        d = config.paths.model_paths(case)
         self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
         self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
-    @unittest.skip("")
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('src.shared_diagnostic.os.path.exists', return_value = True)
-    def test_pathmgr_pod(self, mock_exists):
+    def test_pathmgr_pod(self):
         config = util_mdtf.ConfigManager()
         case = DataManager(self.case_dict)
         pod = Diagnostic('AA')
-        pod.MODEL_WK_DIR = 'B'
         d = config.paths.pod_paths(pod, case)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
         self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
-        self.assertEqual(d['POD_WK_DIR'], 'B/AA')
-
-    @unittest.skip("")
-    @mock.patch.multiple(DataManager, __abstractmethods__=set())
-    @mock.patch('src.shared_diagnostic.os.path.exists', return_value = True)
-    def test_pathmgr_pod_nomodel(self, mock_exists):
-        config = util_mdtf.ConfigManager()
-        case = DataManager(self.case_dict)
-        pod = Diagnostic('AA')
-        d = config.paths.pod_paths(pod, case)
-        self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
-        self.assertNotIn('POD_WK_DIR', d)
+        self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
 
 # ---------------------------------------------------
 

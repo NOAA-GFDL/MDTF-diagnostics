@@ -60,6 +60,9 @@ install:
 
 before_script:
   - cd "$TRAVIS_BUILD_DIR"
+  - pwd # debug
+  - ls #debug
+  - cat ./mdtf
 
 script:
   # trivial check that install script worked

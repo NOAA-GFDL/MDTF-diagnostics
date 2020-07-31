@@ -1,7 +1,7 @@
 Walkthrough of framework operation
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. For the rest of this section, the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``) is used as a concrete example to illustrate how a POD is implemented and integrated into the framework.
+We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. We also provide the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``), which is specifically designed to be used as a concrete example here, to show how and when the framework/POD would fail through 5 simple exercises below. (Please skip commenting on the example POD's scientific value.)
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
@@ -38,9 +38,9 @@ Once the framework has determined which PODs are able to run given the model dat
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: @@@surface air temperature, recorded at monthly frequency.
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air pressure, recorded at monthly frequency.
 
-1. If you add ``example`` to ``pod_list`` (using the ``QBOi.EXP1.AMIP.001`` case) and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist.
+1. If you add ``example`` to ``pod_list`` (using the ``QBOi.EXP1.AMIP.001`` case) and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist. We recommend you to comment out other entries in ``pod_list``
 
 2. Create an empty ``example`` directory under ``inputdata/obs_data/``. Now the framework can run the example POD, which cannot produce results for observations.
 
@@ -58,12 +58,12 @@ Example diagnostic
 
 In its settings file, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-3. You can try to hide the python3_base environment (e.g., by renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``)
+3. In 2, you should be able to get results from the example POD. You can try to hide the python3_base environment (e.g., by temporarily renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``), and run the framework again. You'll see the error message in the new log file. Don't forget to undo the change to the ``_MDTF_python3_base`` directory afterwards.
 
 Step 4: POD execution
 ---------------------
 
-At this point, your POD’s requirements have been met, so the framework sets the necessary environment variables, activates the right Conda environment, then begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
+At this point, your POD’s requirements have been met, so the framework (1) sets the necessary environment variables, (2) activates the right Conda environment, then (3) begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
 
 - See :ref:`ref-using-env-vars` for most relevant environment variables, and how your POD is expected to output results.
 
@@ -73,33 +73,44 @@ At this point, your POD’s requirements have been met, so the framework sets th
 
 - Properly structure your code/scripts and include *error and exception handling* mechanisms so that simple issues would not completely shut down the POD's operation. Here are a few suggestions:
 
-   1. Separate basic and advanced diagnostics. Certain computations (e.g., fitting) may need adjustment or are more likely to fail when model performance out of observed range. Organize your POD scripts so that the basic part can produce results even when the advanced part fails.
+   A. Separate basic and advanced diagnostics. Certain computations (e.g., fitting) may need adjustment or are more likely to fail when model performance out of observed range. Organize your POD scripts so that the basic part can produce results even when the advanced part fails.
 
-   2. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data regardless.
+   B. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data regardless.
 
-   3. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest. (Although in this case, the framework would choose to skip this POD anyway.)
+   C. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest. (Although in this case, the framework would skip this POD anyway.)
 
 - The framework contains additional exception-handling mechanisms so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages will be included in the POD's log file.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The framework starts a subprocess, sets environment variables and the Conda environment, and runs the `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ script in python. See comments in the code. The script reads the model surface air temperature data located at ``$TAS_FILE``, and reference digested temperature data at ``$OBS_DATA/example_tas_means.nc``.
+The framework calls the driver script `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ listed in the settings file. Take a look at the script and the comments therein.
 
-The calculation performed by the example POD is chosen to be simple: it just does a time average of the model data. The observational data was supplied in time-averaged form, following the instructions for digested results above.
+The the script performs tasks roughly in the following order:
 
-The model time averages are saved to ``$WK_DIR/model/netCDF/temp_means.nc`` for use by the user. Then both the observational and model means are plotted: the model plot is saved to ``$WK_DIR/model/PS/example_model_plot.eps`` and the observational data plot is saved to ``$WK_DIR/obs/PS/example_obs_plot.eps``.
+   (1) It reads the model surface air pressure data located at ``$PS_FILE``,
+   (2) computes the time average,
+   (3) saves the model time averages to ``$WK_DIR/model/netCDF/temp_means.nc`` for later use,
+   (4) plots model figure ``$WK_DIR/model/PS/example_model_plot.eps``,
+   (5) reads the digested pressure data in time-averaged form at ``$OBS_DATA/example_ps_means.nc``, and
+   (6) saves the observational data plot to ``$WK_DIR/obs/PS/example_obs_plot.eps``.
 
-Output and cleanup
-------------------
+4. The digested pressure data wasn't provided with the code package. If you've followed 2, the example POD is still able generate the html page but with observational figure missing. This is because the script is organized to finish plotting the model figure before accessing the missing digested pressure data. You can try moving the lines corresponding to (5) and (6) upward in the script to see how the POD can fail without producing meaningful results.
+
+5. In 2, the model time average has been saved to ``$WK_DIR/model/netCDF/temp_means.nc``. To make the example POD function normally, copy, move, and rename the file to ``$OBS_DATA/example_ps_means.nc``, and run the framework again.
+
+Step 5: Output and cleanup
+--------------------------
 
 At this point, your POD has successfully finished running, and all remaining tasks are handled by the framework. The framework converts the postscript plots to bitmaps according to the following rule:
 
 - ``$WK_DIR/model/PS/<filename>.eps`` → ``$WK_DIR/model/filename.png``
 - ``$WK_DIR/obs/PS/<filename>.eps`` → ``$WK_DIR/obs/filename.png``
 
-The webpage template is copied to ``$WK_DIR`` by the framework, so in writing the template file all plots should be referenced as relative links to this location, eg. "``<A href=model/filename.png>``".
+The html template for each POD is then copied to ``$WK_DIR`` by the framework.
 
-Values of all environment variables are substituted in the html template, allowing you to reference the run’s ``CASENAME`` and date range. Beyond this, we don’t offer a way to alter the text of your POD’s output webpage at run time.
+- In writing the template file all plots should be referenced as relative links to this location, e.g., "``<A href=model/filename.png>``". See templates from existing POD.
 
-The framework links your POD’s html page to the top-level ``index.html`` page, and copies all files to the specified output location.
+- Values of all environment variables referenced in the html template are substituted by the framework, allowing you to show the run’s ``CASENAME``, date range, etc. Beyond this, (i.e., through environment variables), we don’t offer other ways to alter the text of your POD’s output webpage at run time.
+
+Finally, the framework links your POD’s html page to the top-level ``index.html``, and copies all files to the specified output location.

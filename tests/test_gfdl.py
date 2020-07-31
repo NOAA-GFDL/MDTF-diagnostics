@@ -8,7 +8,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-import shared_test_utils as shared
+from tests import shared_test_utils as shared
 import src.gfdl as gfdl
 from src.mdtf import MDTFFramework
 

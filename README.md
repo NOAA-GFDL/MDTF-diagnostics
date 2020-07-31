@@ -184,7 +184,7 @@ Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, 
 
 If you choose to selectively install Conda environments using the `--env` flag (section 2.2), remember to install all the environments needed for the PODs you're interested in, and that `_MDTF_base` is mandatory for the framework's operation.
 
-- For instance, the minimal installation for running the `EOF_500hPa` and `convective_transition_diag` PODs requres `_MDTF_base` (mandatory), `_MDTF_NCL_base` (because of b), and `_MDTF_convective_transition_diag` (because of 1). These can be installed by passing `base`, `NCL_base`, and `convective_transition_diag` to the `--env` flag one at a time (section 2.2).
+- For instance, the minimal installation for running the `EOF_500hPa` and `convective_transition_diag` PODs requires `_MDTF_base` (mandatory), `_MDTF_NCL_base` (because of b), and `_MDTF_convective_transition_diag` (because of 1). These can be installed by passing `base`, `NCL_base`, and `convective_transition_diag` to the `--env` flag one at a time (section 2.2).
 
 
 ## 5. Next steps
@@ -199,6 +199,10 @@ Development of this code framework for process-oriented diagnostics was supporte
 
 Many of the process-oriented diagnostics modules (PODs) were contributed by members of the NOAA [Model Diagnostics Task Force](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP/MAPP-Task-Forces/Model-Diagnostics-Task-Force) under MAPP support. Statements, findings or recommendations in these documents do not necessarily reflect the views of NOAA or the US Department of Commerce.
 
-# Disclaimer
+## Dependencies
+
+This code base makes use of the [six](https://github.com/benjaminp/six) library, copyright (c) 2010-2020 Benjamin Peterson and provided under an MIT license.
+
+## Disclaimer
 
 This repository is a scientific product and is not an official communication of the National Oceanic and Atmospheric Administration, or the United States Department of Commerce. All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

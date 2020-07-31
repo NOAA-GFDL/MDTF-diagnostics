@@ -1,11 +1,13 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+from src import six
 import glob
 import shutil
-import util
-import util_mdtf
+from src import util
+from src import util_mdtf
 
+
+@six.python_2_unicode_compatible
 class PodRequirementFailure(Exception):
     """Exception raised if POD doesn't have required resoruces to run. 
     """
@@ -112,7 +114,7 @@ class Diagnostic(object):
             del d['variable_convention']
         elif not d.get('convention', None):
             d['convention'] = 'CF'
-        for key, val in d['runtime_requirements'].iteritems():
+        for key, val in iter(d['runtime_requirements'].items()):
             d['runtime_requirements'][key] = util.coerce_to_iter(val)
         if (verbose > 0): 
             print(self.name + " settings: ")
@@ -213,7 +215,7 @@ class Diagnostic(object):
         })
         # Set env vars POD has inherited globally and from current case 
         # (set in DataManager._setup_pod).
-        for key, val in self.pod_env_vars.iteritems():
+        for key, val in iter(self.pod_env_vars.items()):
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
 
         # Set env vars for variable and axis names:
@@ -223,7 +225,7 @@ class Diagnostic(object):
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
             #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
-            for ax_name, ax_attrs in var.axes.iteritems():
+            for ax_name, ax_attrs in iter(var.axes.items()):
                 if 'MDTF_envvar' not in ax_attrs:
                     print(("\tWarning: don't know env var to set" 
                         "for axis name {}").format(ax_name))
@@ -248,7 +250,7 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in axes.iteritems(): 
+        for key, val in iter(axes.items()): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
@@ -286,7 +288,7 @@ class Diagnostic(object):
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \
-                in try_filenames for ext in programs.keys()]
+                in try_filenames for ext in programs]
             if verbose > 1: 
                 print("Checking for possible driver names in {} {}".format(
                     self.POD_CODE_DIR, file_combos
@@ -324,7 +326,7 @@ class Diagnostic(object):
                 raise PodRequirementFailure(self, 
                     ("{} doesn't know how to call a .{} file.\n"
                     "Supported programs: {}").format(
-                        func_name, driver_ext, programs.keys()
+                        func_name, driver_ext, programs
                 ))
             self.program = programs[driver_ext]
             if ( verbose > 1): 
@@ -378,8 +380,8 @@ class Diagnostic(object):
                     found_list.extend(new_found)
                     missing_list.extend(new_missing)
         # remove empty list entries
-        found_list = filter(None, found_list)
-        missing_list = filter(None, missing_list)
+        found_list = [x for x in found_list if x is not None]
+        missing_list = [x for x in missing_list if x is not None]
         # nb, need to return due to recursive call
         if (verbose > 2): 
             print("check_for_varlist_files returning ", missing_list)
@@ -415,8 +417,8 @@ class Diagnostic(object):
         command = [
             command_path,
             ' -v',
-            ' -p '.join([''] + self.runtime_requirements.keys()),
-            ' -z '.join([''] + self.pod_env_vars.keys()),
+            ' -p '.join([''] + list(self.runtime_requirements)),
+            ' -z '.join([''] + list(self.pod_env_vars)),
             ' -a '.join([''] + self.runtime_requirements.get('python', [])),
             ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
             ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))
@@ -518,7 +520,7 @@ class Diagnostic(object):
             elif len(out_files) == 1:
                 shutil.move(out_files[0], path_stem+'.png')
             else:
-                for n in range(len(out_files)):
+                for n in list(range(len(out_files))):
                     shutil.move(
                         path_stem+'-{}.png'.format(n+1),
                         path_stem+'-{}.png'.format(n)

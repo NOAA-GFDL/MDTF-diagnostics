@@ -1,9 +1,14 @@
 # This Travis-CI file only runs unit tests on the MDTF code.
 # It does not make use of external test data and does not test the scientific 
 # content of individual diagnostics.
-language: python
-sudo: required
-python: '2.7' # only supported version, for now
+
+# Config validator: https://config.travis-ci.com/explore 
+
+os: linux
+dist: xenial # default
+language: shell # synonym for "minimal". Use instead of "python" to save disk space; all software installed through conda
+# sudo: false # deprecated in Travis
+python: '3.7' # doesn't matter, conda python used instead of system
 
 branches:
   only:
@@ -11,30 +16,69 @@ branches:
     - develop
     - /^feature/ 
 
+before_install: 
+  # TRAVIS_BUILD_DIR = abs path to checked-out repo
+  - BUILD_PARENT="$( cd "$( dirname "$TRAVIS_BUILD_DIR" )" >/dev/null 2>&1 && pwd )"
+  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_NCAR-CAM5.timeslice_2000_2004"
+  - echo "$TRAVIS_BUILD_DIR" # debug
+  - echo "$BUILD_PARENT"
+  - echo "$POD_OUTPUT"
+  - cd "$BUILD_PARENT"
+
 install:
 # miniconda setup taken from official guide at 
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
-  - sudo apt-get update
+  # - sudo apt update
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - |
-    if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # MDTF-specific setup
-  - pip install -v . 
-  - source ./src/conda_env_setup.sh # sets up all conda environments
-  - conda activate "${_CONDA_ENV_ROOT}/_MDTF-diagnostics-base"
+  # MDTF-specific setup: install all conda envs
+  - $TRAVIS_BUILD_DIR/src/conda/conda_env_setup.sh --all --conda_root "$HOME/miniconda"
+
+  - df -h # Log space remaining for data
+
+  # attempt FTP data fetch for EOF_500hPa
+  # allow 20 min for transfer before timeout; Travis only allots 50 min for everything
+  - curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/travis_test.tar --output travis_test.tar
+  - tar -xvf travis_test.tar
+  - mkdir wkdir
+  - ls # debug
+
+  - df -h # Log space remaining
+
+before_script:
+  - cd "$TRAVIS_BUILD_DIR"
+  - pwd # debug
+  - ls #debug
+  - cat ./mdtf
 
 script:
+  # trivial check that install script worked
+  - ./mdtf --version
+
+  # try running EOF_500hPa and example PODs
+  - ./mdtf -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
+  # EOF_500hPa 
+  - ls "${POD_OUTPUT}/EOF_500hPa/obs"
+  - ls "${POD_OUTPUT}/EOF_500hPa/model"
+  - cat "${POD_OUTPUT}/EOF_500hPa/EOF_500hPa.log"
+  # example 
+  - ls "${POD_OUTPUT}/example/obs"
+  - ls "${POD_OUTPUT}/example/model"
+  - cat "${POD_OUTPUT}/example/example.log"
+
+  # run unit tests
+  - conda activate _MDTF_base
   - python -m unittest discover

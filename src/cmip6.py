@@ -1,13 +1,14 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+from src import six
 import re
-import datelabel
-import util
-import util_mdtf
+from src import datelabel
+from src import util
+from src import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
-    def __init__(self, unittest_flag=False):
-        if unittest_flag:
+    def __init__(self, unittest=False):
+        if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
@@ -39,7 +40,7 @@ class CMIP6_CVs(util.Singleton):
     def is_in_cv(self, category, items):
         self._make_cv()
         assert category in self.cv
-        if hasattr(items, '__iter__'):
+        if util.is_iterable(items):
             return [(item in self.cv[category]) for item in items]
         else:
             return (items in self.cv[category])
@@ -50,7 +51,7 @@ class CMIP6_CVs(util.Singleton):
         elif (dest, source) in self._lookups:
             return self._lookups[(dest, source)].inverse()
         elif source in self._contents:
-            k = self._contents[source].keys()[0]
+            k = list(self._contents[source])[0]
             if dest not in self._contents[source][k]:
                 raise KeyError(
                     "Can't find {} in attributes for {}.".format(dest, source))
@@ -68,7 +69,7 @@ class CMIP6_CVs(util.Singleton):
 
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
-        if hasattr(source_items, '__iter__'):
+        if util.is_iterable(source_items):
             return [util.coerce_from_iter(_lookup[item]) for item in source_items]
         else:
             return util.coerce_from_iter(_lookup[source_items])
@@ -82,6 +83,7 @@ class CMIP6_CVs(util.Singleton):
             if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
 
 
+@six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
     # http://goo.gl/v1drZl, page 16
     _precision_lookup = {
@@ -295,8 +297,8 @@ def parse_DRS_path(*args):
         raise ValueError()
     d1 = parse_DRS_directory(dir_)
     d2 = parse_DRS_filename(file_)
-    common_keys = set(d1.keys())
-    common_keys = common_keys.intersection(d2.keys())
+    common_keys = set(d1)
+    common_keys = common_keys.intersection(list(d2))
     for key in common_keys:
         if d1[key] != d2[key]:
             raise ValueError("{} fields inconsistent in parsing {}".format(

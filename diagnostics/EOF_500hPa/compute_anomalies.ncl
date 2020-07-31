@@ -9,9 +9,11 @@ wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
+date_off = getenv("date_int_offset")
 
 firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
+date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
 nyrs = lastyr-firstyr+1
 nmons = nyrs*12
 
@@ -60,12 +62,21 @@ do i=0,nlat-1
 end do
 
 time_all = f_zg->$time_coord$
-date_all = ut_calendar(time_all,-2)
-year_all = date_all/10000
-
-start_date = firstyr*10000+201
-end_date = (lastyr+1)*10000+101
-
+if (date_offset.eq.0) then
+   ; CMIP / GFDL date index, use YYYYMM
+   date_all = cd_calendar(time_all,-1)
+   year_all = date_all/100
+   start_date = firstyr*100+1
+   end_date = (lastyr)*100+12
+else if (date_offset.eq.1) then
+   ; CESM native date index, use YYYYMMDD
+   date_all = cd_calendar(time_all,-2)
+   year_all = date_all/10000
+   start_date = firstyr*10000+201
+   end_date = (lastyr+1)*10000+101
+end if
+end if
+; in either case, above only used to set following indices
 do i=0,dimsizes(date_all)-1
    if( date_all(i).eq.start_date ) then
       i1 = i

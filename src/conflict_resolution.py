@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 from itertools import chain
 from collections import defaultdict
 
@@ -11,24 +11,24 @@ def require_all_same(option_dict, option_fn, tiebreaker_fn=None):
         tiebreaker_fn = _default_tiebreaker
 
     allowed_opts = set(option_fn(v) \
-        for v in chain.from_iterable(option_dict.values()))
+        for v in chain.from_iterable(iter(option_dict.values())))
     for key in option_dict:
         allowed_opts = allowed_opts.intersection(
             set(option_fn(val) for val in option_dict[key])
         )
     if not allowed_opts:
         raise ValueError('Unable to choose the same value for all variables.')
-    return dict.fromkeys(option_dict.keys(), tiebreaker_fn(allowed_opts))
+    return dict.fromkeys(option_dict, tiebreaker_fn(allowed_opts))
 
 def same_for_subsets(option_dict, subsets, option_fn, tiebreaker_fn=None):
-    if set(option_dict.keys()) != set(k for k in chain.from_iterable(subsets)):
+    if set(option_dict) != set(k for k in chain.from_iterable(subsets)):
         raise AssertionError('Union of subsets is different than set of all keys.')   
 
-    choices = dict.fromkeys(option_dict.keys())
+    choices = dict.fromkeys(option_dict)
     for subset in subsets:
         subset_options = {key: option_dict[key] for key in subset}
         subset_choice = require_all_same(subset_options, option_fn, tiebreaker_fn)
-        for key, val in subset_choice.iteritems():
+        for key, val in iter(subset_choice.items()):
             if choices[key] not in [None, val]:
                 raise ValueError(
                     'Conflicting assignment for {}: {} != {}'.format(
@@ -67,25 +67,25 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
 
     # drop empty entries from option_dict, although these shouldn't have been
     # passed in the first place
-    option_dict = {k:v for k,v in option_dict.iteritems() if v}
+    option_dict = {k:v for k,v in iter(option_dict.items()) if v}
     all_idx = set()
     d = defaultdict(set)
-    for idx, key in enumerate(option_dict.keys()):
+    for idx, key in enumerate(list(option_dict)):
         all_idx.add(idx)
         for val in option_dict[key]:
             d[option_fn(val)].add(idx)
     # print("\tDEBUG min_cover indices:", all_idx)
     # print("\tDEBUG min_cover sets:", d)
-    assert set(e for s in d.values() for e in s) == all_idx
+    assert set(e for s in iter(d.values()) for e in s) == all_idx
 
     covered_idx = set()
     cover = []
     while covered_idx != all_idx:
         # max() with key=... only returns one entry if there are duplicates
         # so we need to do two passes in order to call our tiebreaker logic
-        max_uncovered = max(len(val - covered_idx) for val in d.values())
+        max_uncovered = max(len(val - covered_idx) for val in iter(d.values()))
         elt_to_add = tiebreaker_fn(
-            [key for key, val in d.iteritems() \
+            [key for key, val in iter(d.items()) \
                 if (len(val - covered_idx) == max_uncovered)]
         )
         cover.append(elt_to_add)
@@ -93,7 +93,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     assert cover # is not empty
     print("\tDEBUG min_cover:", cover)
     
-    choices = dict.fromkeys(option_dict.keys())
+    choices = dict.fromkeys(option_dict)
     for key in option_dict:
         choices[key] = tiebreaker_fn(
             set(option_fn(val) for val in option_dict[key] if option_fn(val) in cover)

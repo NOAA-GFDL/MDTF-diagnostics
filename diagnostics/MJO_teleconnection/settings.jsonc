@@ -17,7 +17,7 @@
     "realm" : "atmos",
     "description": "MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017", 
     "runtime_requirements": {
-      "python": [],
+      "python2": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "diagnostics_cam"]
     }
   },

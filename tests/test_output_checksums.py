@@ -9,7 +9,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     else:
         import subprocess
 from src.util import read_json
-import shared_test_utils as shared
+from tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)

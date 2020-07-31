@@ -164,7 +164,7 @@ class VariableTranslator(util.Singleton):
             for conv in util.coerce_to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
-                if self.variables.has_key(conv):
+                if conv in self.variables:
                     print("ERROR: convention "+conv+" defined in "+filename+" already exists")
                     raise ConventionError
 

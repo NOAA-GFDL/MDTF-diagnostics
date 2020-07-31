@@ -58,7 +58,7 @@ obs_mean_tas = obs_dataset['mean_tas']
 tas_var_name = os.environ["tas_var"]
 # For safety, don't even assume that the time dimension of the input file is
 # named "time":
-time_coord_name = os.environ["time_dim"]
+time_coord_name = os.environ["time_coord"]
 
 # The only computation done here: compute the time average of input data
 tas_data = model_dataset[tas_var_name]

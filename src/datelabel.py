@@ -13,7 +13,8 @@ Note:
 Note: 
     Timezone support is not currently implemented.
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
+from src import six
 import re
 import datetime
 import operator as op
@@ -336,7 +337,7 @@ class AtomicInterval(object):
     @classmethod
     def contiguous_span(cls, *args):
         ints = sorted(args, key=op.attrgetter('lower'))
-        for i in range(0, len(ints) - 1):
+        for i in list(range(0, len(ints) - 1)):
             if not ints[i].adjoins_left(ints[i+1]):
                 raise ValueError(("Intervals {} and {} not contiguous and "
                     "nonoverlapping.").format(ints[i], ints[i+1]))
@@ -413,6 +414,7 @@ class _DateMixin(object):
         return dt + td
 
 
+@six.python_2_unicode_compatible
 class DateRange(AtomicInterval, _DateMixin):
     """Class representing a range of variable-precision dates. 
 
@@ -426,7 +428,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     def __init__(self, start, end=None, precision=None):
         if not end:
-            if isinstance(start, basestring):
+            if isinstance(start, six.string_types):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -572,6 +574,7 @@ class DateRange(AtomicInterval, _DateMixin):
         return super(DateRange, self).__ge__(other)
 
 
+@six.python_2_unicode_compatible
 class Date(DateRange):
     """Define a date with variable level precision.
 
@@ -587,7 +590,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif isinstance(args[0], basestring):
+        elif isinstance(args[0], six.string_types):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -602,7 +605,7 @@ class Date(DateRange):
             prec = len(dt_args)
 
         assert prec <= 6 # other values not supported
-        for i in range(prec):
+        for i in list(range(prec)):
             setattr(self, self._datetime_attrs[i], dt_args[i])
         if prec == 1:
             dt_args = (dt_args[0], 1, 1) # missing month & day
@@ -636,7 +639,7 @@ class Date(DateRange):
         if '-' in s:
             return tuple([int(ss) for ss in s.split('-')])
         ans = [int(s[0:4])]
-        for i in range(4, len(s), 2):
+        for i in list(range(4, len(s), 2)):
             ans.append(int(s[i:(i+2)]))
         return tuple(ans)
     
@@ -688,6 +691,7 @@ class Date(DateRange):
         return (not self.__eq__(other)) # more foolproof
 
 
+@six.python_2_unicode_compatible
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 
@@ -697,9 +701,9 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, basestring) and (unit is None):
+        if isinstance(quantity, six.string_types) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif not isinstance(quantity, int) or not isinstance(unit, basestring):
+        elif not isinstance(quantity, int) or not isinstance(unit, six.string_types):
             raise ValueError("Malformed input")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)
@@ -707,7 +711,7 @@ class DateFrequency(datetime.timedelta):
         obj.quantity = None
         obj.unit = None
         # actually set attributes, as well as any others child classes may add
-        for key, val in attrs.iteritems():
+        for key, val in iter(attrs.items()):
             obj.__setattr__(key, val)
         return obj
 

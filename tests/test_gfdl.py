@@ -8,7 +8,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-import shared_test_utils as shared
+from tests import shared_test_utils as shared
 import src.gfdl as gfdl
 from src.mdtf import MDTFFramework
 
@@ -37,10 +37,12 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 #     for pod in case_list['pods']:
 #         write_json(pod_configs[pod], os.path.join(out_path, pod+'_temp.json'))
 
+@unittest.skipIf('MODULESHOME' not in os.environ,
+    "Skipping GFDL tests because not running on a system with environment modules.")
 @unittest.skipIf(DOING_TRAVIS,
-    "Skipping POD execution tests because running in Travis CI environment")
+    "Skipping GFDL tests because running in Travis CI environment")
 @unittest.skipUnless(DOING_MDTF_DATA_TESTS,
-    "Skipping POD execution tests because not running data-intensive test suite.")
+    "Skipping GFDL tests because not running data-intensive test suite.")
 class TestModuleManager(unittest.TestCase):
 
     test_mod_name = 'latexdiff/1.2.0' # least likely to cause side effects?
@@ -101,6 +103,13 @@ class TestModuleManager(unittest.TestCase):
         mod_list = modMgr._list()
         self.assertNotIn(self.test_mod_name, mod_list)
 
+
+@unittest.skipIf('MODULESHOME' not in os.environ,
+    "Skipping GFDL tests because not running on a system with environment modules.")
+@unittest.skipIf(DOING_TRAVIS,
+    "Skipping GFDL tests because running in Travis CI environment")
+@unittest.skipUnless(DOING_MDTF_DATA_TESTS,
+    "Skipping GFDL tests because not running data-intensive test suite.")
 class TestFreppArgParsing(unittest.TestCase):
 
     def setUp(self):

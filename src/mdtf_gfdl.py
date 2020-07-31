@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    print(("ERROR: MDTF currently only supports python 2.7.*. Please check "
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    print(("ERROR: MDTF currently only supports python >= 2.7. Please check "
     "which version is on your $PATH (e.g. with `which python`.)"))
     print("Attempted to run with following python version:\n{}".format(sys.version))
     exit()
@@ -12,14 +12,14 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
 import os
 import shutil
 import tempfile
-import util
-import util_mdtf
-import mdtf
-import data_manager
-import environment_manager
-import shared_diagnostic
-import netcdf_helper
-import gfdl
+from src import util
+from src import util_mdtf
+from src import mdtf
+from src import data_manager
+from src import environment_manager
+from src import shared_diagnostic
+from src import netcdf_helper
+from src import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr

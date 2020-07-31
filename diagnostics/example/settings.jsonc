@@ -36,7 +36,7 @@
     // The framework will ensure everything listed here is on your diagnostic's
     // $PATH when it runs.
     "runtime_requirements": {
-        "python": ["matplotlib", "xarray", "netCDF4"]
+        "python3": ["matplotlib", "xarray", "netCDF4"]
     }
   },
 

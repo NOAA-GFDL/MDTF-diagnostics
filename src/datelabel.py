@@ -40,12 +40,14 @@ class AtomicInterval(object):
         """Create an atomic interval.
         If a bound is set to infinity (regardless of its sign), the 
         corresponding boundary will be exclusive.
-        :param left: Boolean indicating if left boundary is inclusive (True) or 
-            exclusive (False).
-        :param lower: value of the lower bound.
-        :param upper: value of the upper bound.
-        :param right: Boolean indicating if right boundary is inclusive (True) 
-            or exclusive (False).
+
+        Args:
+            left: Boolean indicating if left boundary is inclusive (True) or 
+                exclusive (False).
+            lower: value of the lower bound.
+            upper: value of the upper bound.
+            right: Boolean indicating if right boundary is inclusive (True) 
+                or exclusive (False).
         """
         self._left = bool(left)
         self._lower = lower
@@ -98,13 +100,16 @@ class AtomicInterval(object):
         Callable can be passed instead of values. In that case, it is called 
         with the current corresponding value except if ignore_inf if set 
         (default) and the corresponding bound is an infinity.
-        :param left: (a function of) left boundary.
-        :param lower: (a function of) value of the lower bound.
-        :param upper: (a function of) value of the upper bound.
-        :param right: (a function of) right boundary.
-        :param ignore_inf: ignore infinities if functions are provided 
-            (default is True).
-        :return: an Interval instance
+
+        Args:
+            left: (a function of) left boundary.
+            lower: (a function of) value of the lower bound.
+            upper: (a function of) value of the upper bound.
+            right: (a function of) right boundary.
+            ignore_inf: ignore infinities if functions are provided 
+                (default is True).
+
+        Returns: an Interval instance
         """
         if callable(left):
             left = left(self._left)
@@ -428,6 +433,7 @@ class DateRange(AtomicInterval, _DateMixin):
     _range_sep = '-'
 
     def __init__(self, start, end=None, precision=None):
+        "Init method for DateRange."
         if not end:
             if isinstance(start, six.string_types):
                 (start, end) = start.split(self._range_sep)
@@ -588,6 +594,7 @@ class Date(DateRange):
     _datetime_attrs = ('year','month','day','hour','minute','second')
 
     def __init__(self, *args, **kwargs):
+        "Init method for Date."
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True

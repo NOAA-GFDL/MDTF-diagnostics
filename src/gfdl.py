@@ -380,11 +380,12 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         """Test whether data is current based on filesystem modification dates.
 
         TODO:
-        - Throw an error if local copy has been modified after remote copy. 
-        - Handle case where local data involves processing of remote data, like
-            ncrcat'ing. Copy raw remote files to temp directory if we need to 
-            process?
-        - gcp --sync does this already.
+            - Throw an error if local copy has been modified after remote copy. 
+            - Handle case where local data involves processing of remote data, like
+                ncrcat'ing. Copy raw remote files to temp directory if we need to 
+                process?
+            - gcp --sync does this already.
+
         """
         return False
         # return os.path.getmtime(dataset._local_data) \

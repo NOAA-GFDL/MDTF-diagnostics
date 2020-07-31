@@ -14,6 +14,10 @@ The user runs the framework by executing the framework’s main driver script ``
 
 - Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
 
+At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (default: ``mdtf/wkdir/``) and subdirectories therein for hosting the output files by the framework and PODs from each run.
+
+Note that when running, the framework will collect the messages relevant to individual PODs, including (1) the status of required data and environment, and (2) texts printed out by PODs during execution, and save them as log files under each POD's output directory. These ``log`` files can be viewed via the top-level results page ``index.html`` and are useful for debugging.
+
 Step 2: Data request
 --------------------
 
@@ -21,24 +25,24 @@ Each POD describes the model data it requires as input in the ``varlist`` sectio
 
 - The most important features of the settings file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
 
-- Variables are specified in the settings file in a model-independent way, using `CF convention <http://cfconventions.org/>`__ standard terminology wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), you should incorporate necessary preprocessings for computing these from standard output variables into your POD’s code. POD may request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the situations in which your POD will be run.
+- Variables are specified in the settings file following `CF convention <http://cfconventions.org/>`__ wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), incorporate necessary preprocessings for computing these from standard output variables into your code. POD are allowed to request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the POD's application.
 
-- Some of the variables your POD requests may be unavailable or without the requested frequency (or other characteristics). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
+- Some of the requested variables may be unavailable or without the requested characteristics (e.g., frequency). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
 
-- If no alternates are defined or the alternate variables are also unavailable, the framework concludes that it’s unable to run the POD on the provided model data. Your POD will not be executed, and an error message listing the missing variables will be presented to the user in your POD’s entry as ``error log`` in the top-level results page ``index.html``.
+- If no alternates are defined or the alternate variables are also unavailable, the framework will skip executing your POD, and an ``error log`` will be presented in ``index.html``.
 
 Once the framework has determined which PODs are able to run given the model data, it prepares the necessary environment variables, including directory paths and the requested variable names (as defined in ``src/filedlist_$convention.jsonc``) for PODs' operation.
 
-- Actually, at this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would just crash with error messages showing on the terminal.
+- Actually, at this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would just *crash* with error messages showing on the terminal. Note that the framework only checks the presence of the directory, but not the files therein.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: @@@surface air temperature, recorded at monthly frequency.
 
-- If you add ``example`` to ``pod_list`` and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist.
+1. If you add ``example`` to ``pod_list`` (using the ``QBOi.EXP1.AMIP.001`` case) and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist.
 
-- Create an empty ``example`` directory under ``inputdata/obs_data/``. Now the framework can run but would skip the example POD.
+2. Create an empty ``example`` directory under ``inputdata/obs_data/``. Now the framework can run the example POD, which cannot produce results for observations.
 
 Step 3: Runtime environment configuration
 -----------------------------------------
@@ -47,36 +51,35 @@ In the ``runtime_requirements`` section of your POD’s settings file, we reques
 
 - The requirements should be satisfied by one of the existing generic Conda environments (updated by you if necessary), or a new environment you created specifically for your POD.
 
-- If not, your POD will be skipped, with the error message ``Not a conda environment`` included at the end of your POD’s ``log`` entry in the top-level results page ``index.html``.
+- If there isn't a suitable environment, your POD will be skipped with a ``Not a conda environment`` error message added to the log file.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
 In its settings file, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
+3. You can try to hide the python3_base environment (e.g., by renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``)
+
 Step 4: POD execution
 ---------------------
 
 At this point, your POD’s requirements have been met, so the framework sets the necessary environment variables, activates the right Conda environment, then begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
 
-- All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see the `reference documentation <ref_envvars.html>`__ for a complete list of the environment variables.
+- See :ref:`ref-using-env-vars` for most relevant environment variables, and how your POD is expected to output results.
 
-- We encourage that your POD prints out messages of its progress as it runs. This can be useful in debugging. All text your POD writes to stdout or stderr (i.e., displayed in a terminal) will be captured by the framework and saved in a log file available to the user via ``index.html``.
+- All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see `reference <ref_envvars.html>`__ for a complete list of environment variables.
 
-- Properly structure your code/scripts and include *error and exception handling* mechanisms in your code so that simple issues would not completely shut down the POD's operation. Here are a few suggestions:
+- For debugging, we encourage that your POD prints out messages of its progress as it runs. All text written to stdout or stderr (i.e., displayed in a terminal) will be captured by the framework and added to a log file available to the users via ``index.html``.
+
+- Properly structure your code/scripts and include *error and exception handling* mechanisms so that simple issues would not completely shut down the POD's operation. Here are a few suggestions:
 
    1. Separate basic and advanced diagnostics. Certain computations (e.g., fitting) may need adjustment or are more likely to fail when model performance out of observed range. Organize your POD scripts so that the basic part can produce results even when the advanced part fails.
 
-   2. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data.
+   2. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data regardless.
 
-   3. Say a POD reads in multiple variable files and computes certain statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest.
+   3. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest. (Although in this case, the framework would choose to skip this POD anyway.)
 
-- The framework contains additional exception-handling mechanisms so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages will be captured and presented to the user as part of the log file to determine what went wrong.
-
-POD execution: paths
-^^^^^^^^^^^^^^^^^^^^
-@@@
-See :ref:`ref-using-env-vars` for the most important environment variables set by the framework for your POD's operation, and `a more comprehensive list <ref_envvars.html>`__. To achieve the design goal of portability, you should ensure that **no paths are hard-coded in your POD**, for any reason. Instead, they should reference one of the environment variables.
+- The framework contains additional exception-handling mechanisms so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages will be included in the POD's log file.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^

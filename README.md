@@ -62,9 +62,9 @@ For advanced users interested in keeping more up-to-date on project development 
 
 Supporting observational data and sample model data are available via anonymous FTP (ftp://ftp.cgd.ucar.edu/archive/mdtf). The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
 
-- Digested observational data (159 Mb): MDTF_v2.1.a.20200410.obs_data.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200410.obs_data.tar).
-- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar).
-- NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar).
+- Digested observational data (159 Mb): MDTF_v2.1.a.20200730.obs_data.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200730.obs_data.tar).
+- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.20200730.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.20200730.tar).
+- NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.20200409.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.20200409.tar).
 
 Download these three files and extract the contents in the following hierarchy under the `mdtf` directory:
 

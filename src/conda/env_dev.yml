@@ -18,5 +18,6 @@ dependencies:
 - jupyter
 - jupyterlab
 - sphinx
+- recommonmark
 - pylint
 - doc8

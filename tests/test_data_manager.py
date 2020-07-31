@@ -54,7 +54,8 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(os.environ['pr_var'], 'PRECT')
         self.assertEqual(os.environ['prc_var'], 'PRECC')
 
-    def test_set_model_env_vars_no_model(self):
+    @mock.patch('src.util_mdtf.check_required_dirs')
+    def test_set_model_env_vars_no_model(self, mock_check_required_dirs):
         # exit if can't find model
         case = DataManager(self.default_case)
         case.convention = 'nonexistent'

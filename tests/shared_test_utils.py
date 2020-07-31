@@ -7,8 +7,54 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
     else:
         import subprocess
-from src.util import read_json
-from src.mdtf import MDTFFramework
+from src.util import read_json, NameSpace, coerce_to_iter
+from src import util_mdtf
+import collections
+
+def setUp_ConfigManager(config=None, paths=None, pods=None, unittest=True):
+    PodDataTuple = collections.namedtuple(
+        'PodDataTuple', 'sorted_lists pod_data realm_data'
+    )
+
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root, _ = os.path.split(cwd)
+    dummy_config = read_json(os.path.join(cwd, 'dummy_config.json'))
+    if config:
+        dummy_config.update(config)
+    if paths:
+        dummy_config.update(paths)
+    if not pods:
+        pods = dict()
+    dummy_cli_obj = NameSpace.fromDict({
+        'code_root': code_root,
+        'config': dummy_config
+    })
+    dummy_pod_data = PodDataTuple(
+        pod_data=pods, realm_data=dict(), sorted_lists=dict()
+    )
+    config = util_mdtf.ConfigManager(dummy_cli_obj, dummy_pod_data, unittest=unittest)
+    if paths:
+        config.paths.parse(paths, list(paths.keys()))
+
+def tearDown_ConfigManager():
+    # clear Singletons
+    try:
+        temp = util_mdtf.ConfigManager(unittest=True)
+        temp._reset()
+    except:
+        pass
+    try:
+        temp = util_mdtf.VariableTranslator(unittest=True)
+        temp._reset()
+    except:
+        pass
+    try:
+        temp = util_mdtf.TempDirManager()
+        temp._reset()
+    except:
+        pass
+
+# -------------------------------------------------------------
 
 def get_configuration(config_file='', check_input=False, check_output=False):
     # Redundant with code in util; need to fix this

@@ -33,7 +33,8 @@ class _PathManager(util.NameSpace):
     def __init__(self, d, code_root=None, unittest=False):
         self._unittest = unittest
         self.CODE_ROOT = code_root
-        assert os.path.isdir(self.CODE_ROOT)
+        if not self._unittest:
+            assert os.path.isdir(self.CODE_ROOT)
 
     def parse(self, d, paths_to_parse=[], env=None):
         # set by CLI settings that have "parse_type": "path" in JSON entry

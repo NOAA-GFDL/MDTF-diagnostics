@@ -28,7 +28,7 @@ with open("README.md", 'r') as f:
 packages = find_packages()
 setup(
     name='MDTF-diagnostics',
-    version='3.0 beta 1',
+    version='3.0 beta 2',
     description='Process-oriented diagnostics for weather and climate simulations',
     license='LGPLv3',
     long_description=long_description,
@@ -41,6 +41,7 @@ setup(
             "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7'
+            'Programming Language :: Python :: 3.7',
     ],
     scripts=[
         'src/mdtf.py'

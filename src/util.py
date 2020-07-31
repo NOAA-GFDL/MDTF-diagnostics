@@ -24,7 +24,7 @@ from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
-    called. This version is copied from <https://stackoverflow.com/a/6798042>_ and
+    called. This version is copied from `<https://stackoverflow.com/a/6798042>`__ and
     should be compatible with both Python 2 and 3.
     """
     _instances = {}
@@ -54,7 +54,7 @@ class Singleton(_Singleton(six.ensure_str('SingletonMeta'), (object,), {})):
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
     thread when the child is join()ed. 
-    Adapted from `https://stackoverflow.com/a/31614591`__
+    Adapted from `<https://stackoverflow.com/a/31614591>`__.
     """
     def run(self):
         self.ret = None
@@ -82,7 +82,7 @@ class MultiMap(collections.defaultdict):
     Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
     from values is done on the `inverse` attribute and returns a set of matching
     keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
-    See <https://stackoverflow.com/a/21894086>_.
+    See `<https://stackoverflow.com/a/21894086>`__.
     """
     def __init__(self, *args, **kwargs):
         """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
@@ -127,7 +127,7 @@ class NameSpace(dict):
     Note: recursive access (`d.key.subkey`, as in C-style languages) is not
         supported.
 
-    Implementation is based on `https://github.com/Infinidat/munch`_.
+    Implementation is based on `<https://github.com/Infinidat/munch>`__.
     """
 
     # only called if k not found in normal places
@@ -188,13 +188,13 @@ class NameSpace(dict):
 
     def __getstate__(self):
         """ Implement a serializable interface used for pickling.
-        See https://docs.python.org/3.6/library/pickle.html.
+        See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
         return {k: v for k, v in iter(self.items())}
 
     def __setstate__(self, state):
         """ Implement a serializable interface used for pickling.
-        See https://docs.python.org/3.6/library/pickle.html.
+        See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
         self.clear()
         self.update(state)
@@ -242,7 +242,7 @@ class NameSpace(dict):
         We do this to enable comparison of two Namespaces, which otherwise would 
         be done by the default method of testing if the two objects refer to the
         same location in memory.
-        See `https://stackoverflow.com/a/45170549`_.
+        See `<https://stackoverflow.com/a/45170549>`__.
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
@@ -380,7 +380,7 @@ def resolve_path(path, root_path="", env=None):
         """Expand quoted variables of the form $key and ${key} in path,
         where key is a key in env_dict, similar to os.path.expandvars.
 
-        See https://stackoverflow.com/a/30777398; specialize to not skipping
+        See `<https://stackoverflow.com/a/30777398>`__; specialize to not skipping
         escaped characters and not changing unrecognized variables.
         """
         return re.sub(
@@ -621,8 +621,9 @@ def filter_kwargs(kwarg_dict, function):
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
 def signal_logger(caller_name, signum=None, frame=None):
+    """Lookup signal name from number; `<https://stackoverflow.com/a/2549950>`__.
+    """
     if signum:
-        # lookup signal name from number; https://stackoverflow.com/a/2549950
         sig_lookup = {
             k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')

@@ -356,7 +356,8 @@ class _DateMixin(object):
         
         Note:
             strftime() is broken for dates prior to 1900 in python < 3.3, see
-            https://bugs.python.org/issue1777412 and https://stackoverflow.com/q/10263956.
+            `<https://bugs.python.org/issue1777412>`__ and 
+            `<https://stackoverflow.com/q/10263956>`__.
             For this reason, the workaround implemented here should be used 
             instead.
         """

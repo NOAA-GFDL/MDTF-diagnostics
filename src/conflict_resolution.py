@@ -47,8 +47,8 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     """Determine experiment component(s) from heuristics.
 
     1. Pick all data from the same component if possible, and from as few
-        components if not. See `https://en.wikipedia.org/wiki/Set_cover_problem`_ 
-        and `http://www.martinbroadhurst.com/greedy-set-cover-in-python.html`_.
+        components if not. See `<https://en.wikipedia.org/wiki/Set_cover_problem>`__ 
+        and `<http://www.martinbroadhurst.com/greedy-set-cover-in-python.html>`__.
 
     2. If multiple components satisfy (1) equally well, use a tie-breaking 
         heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 

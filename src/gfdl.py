@@ -958,7 +958,7 @@ frepp_translate = {
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.
 
-    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+    See `<https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures>`__.
 
     Returns: :py:obj:`dict` of frepp parameters.
     """

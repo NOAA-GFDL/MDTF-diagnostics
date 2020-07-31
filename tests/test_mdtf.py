@@ -4,6 +4,7 @@ import mock # define mock os.environ so we don't mess up real env vars
 from src.mdtf import MDTFFramework
 import src.util_mdtf as util
 
+@unittest.skip("")
 class TestMDTFArgParsing(unittest.TestCase):
     def setUp(self):
         _ = util.PathManager(unittest = True)

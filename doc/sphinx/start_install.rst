@@ -201,7 +201,7 @@ As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` exec
 
 2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in ``settings.jsonc`` specifies the programming language(s) adopted by the POD:
 
-    a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD (`_MDTF_python2_base` for ealier PODs developed in Python 2.7).
+    a). If purely Python, the framework will switch to ``_MDTF_python3_base`` and run the POD (`_MDTF_python2_base` for ealier PODs developed in Python 2.7).
 
     b). If NCL is used, then ``_MDTF_NCL_base``.
 

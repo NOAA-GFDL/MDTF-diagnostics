@@ -1,9 +1,71 @@
-"""Example MDTF diagnostic
+"""MDTF Example Diagnostic POD
 
 This script does a simple diagnostic calculation to illustrate how to adapt code
 for use in the MDTF diagnostic framework. The main change is to set input/output
 paths, variable names etc. from shell environment variables the framework 
 provides, instead of hard-coding them.
+
+Below, this script consists of 2 parts: (1) a template of comprehensive header POD
+developers must include in their POD's main driver script, (2) actual code, and 
+(3) extensive in-line comments.
+"""
+
+"""
+This file is part of the Example Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+
+Example Diagnostic POD
+
+  Last update: 5/06/2020
+
+  This is a example POD that you can use as a template for your diagnostics.
+  If this were a real POD, you'd place a one-paragraph synopsis of your 
+  diagnostic here (like an abstract). 
+
+  Version & Contact info
+
+  Here you should describe who contributed to the diagnostic, and who should be
+  contacted for further information:
+
+  - Version/revision information: version 1 (5/06/2020)
+  - PI (name, affiliation, email)
+  - Developer/point of contact (name, affiliation, email)
+  - Other contributors
+
+  Open source copyright agreement
+
+  The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
+  Unless you've distirbuted your script elsewhere, you don't need to change this.
+
+  Functionality
+
+  In this section you should summarize the stages of the calculations your 
+  diagnostic performs, and how they translate to the individual source code files 
+  provided in your submission. This will, e.g., let maintainers fixing a bug or 
+  people with questions about how your code works know where to look.
+
+  Required programming language and libraries
+
+  In this section you should summarize the programming languages and third-party 
+  libraries used by your diagnostic. You also provide this information in the 
+  ``settings.jsonc`` file, but here you can give helpful comments to human 
+  maintainers (eg, "We need at least version 1.5 of this library because we call
+  this function.")
+
+  Required model output variables
+
+  In this section you should describe each variable in the input data your 
+  diagnostic uses. You also need to provide this in the ``settings.jsonc`` file, 
+  but here you should go into detail on the assumptions your diagnostic makes 
+  about the structure of the data.
+
+  References
+
+  Here you should cite the journal articles providing the scientific basis for 
+  your diagnostic.
+
+     1. E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate 
+     and Weather Forecasting Models. BAMS, 100(9), 1665–1686, 
+     doi:10.1175/BAMS-D-18-0042.1.
 """
 from __future__ import print_function
 import os
@@ -58,7 +120,7 @@ obs_mean_tas = obs_dataset['mean_tas']
 tas_var_name = os.environ["tas_var"]
 # For safety, don't even assume that the time dimension of the input file is
 # named "time":
-time_coord_name = os.environ["time_dim"]
+time_coord_name = os.environ["time_coord"]
 
 # The only computation done here: compute the time average of input data
 tas_data = model_dataset[tas_var_name]

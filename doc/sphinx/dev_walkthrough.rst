@@ -1,7 +1,7 @@
 Walkthrough of framework operation
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. We also provide the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``), which is specifically designed to be used as a concrete example here, to show how and when the framework/POD would fail through 5 simple exercises below. (Please skip commenting on the example POD's scientific value.)
+We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. The `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``) is used as a concrete example .....@@@
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
@@ -33,7 +33,7 @@ Each POD describes the model data it requires as input in the ``varlist`` sectio
 
 Once the framework has determined which PODs are able to run given the model data, it prepares the necessary environment variables, including directory paths and the requested variable names (as defined in ``src/filedlist_$convention.jsonc``) for PODs' operation.
 
-- Actually, at this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would just *crash* with error messages showing on the terminal. Note that the framework only checks the presence of the directory, but not the files therein.
+- At this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would terminate with error messages showing on the terminal. Note that the framework only checks the presence of the directory, but not the files therein.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^

@@ -47,6 +47,14 @@
     //   "LASTYR" : 2005,
     //   "pod_list" : ["SM_ET_coupling"]
     // }
+    // {
+    //   "CASENAME" : "NCAR-CAM5.timeslice",
+    //   "model" : "CESM",
+    //   "convention" : "CMIP",
+    //   "FIRSTYR" : 2000,
+    //   "LASTYR" : 2004,
+    //   "pod_list": ["example"]
+    // }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.

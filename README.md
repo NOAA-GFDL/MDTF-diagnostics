@@ -185,21 +185,21 @@ Run time may be 10-20 minutes, depending on your system.
 
 - Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of `default_tests.jsonc`, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
 
-If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
+If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in `default_tests.jsonc` to `true`.
 
 ### 4.3 Framework interaction with Conda environments
 
-As just described in section 4.2, when you run the `mdtf` executable, among other things, it reads `pod_list` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+As just described in section 4.2, when you run the `mdtf` executable, among other things, it reads `pod_list` in `default_tests.jsonc` and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
 
 1. The framework will first try to determine whether there is a Conda environment named `_MDTF_$POD_NAME` under `$CONDA_ENV_DIR`. If yes, the framework will switch to this environment and run the POD.
 
-2. If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in the settings file specifies the programming language(s) adopted by the POD:
+2. If not, the framework will then look into the POD's `settings.jsonc` file in `$CODE_ROOT/diagnostics/$POD_NAME`. `runtime_requirements` in `settings.jsonc` specifies the programming language(s) adopted by the POD:
 
       a. If purely Python, the framework will switch to `_MDTF_python3_base` and run the POD (`_MDTF_python2_base` for ealier PODs developed in Python 2.7).
 
       b. If NCL is used, then `_MDTF_NCL_base`.
 
-Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to `_MDTF_NCL_base` when seeing both NCL and Python in the settings file.
+Note that for the six existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to `_MDTF_NCL_base` when seeing both NCL and Python in `settings.jsonc`.
 
 If you choose to selectively install Conda environments using the `--env` flag (section 2.2), remember to install all the environments needed for the PODs you're interested in, and that `_MDTF_base` is mandatory for the framework's operation.
 

@@ -21,11 +21,11 @@ Note that when running, the framework will collect the messages relevant to indi
 Step 2: Data request
 --------------------
 
-Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` (or simply *settings*) file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
+Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
 
-- The most important features of the settings file are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
+- The most important features of ``settings.jsonc`` are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
 
-- Variables are specified in the settings file following `CF convention <http://cfconventions.org/>`__ wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), incorporate necessary preprocessings for computing these from standard output variables into your code. POD are allowed to request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the POD's application.
+- Variables are specified in ``settings.jsonc`` following `CF convention <http://cfconventions.org/>`__ wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), incorporate necessary preprocessings for computing these from standard output variables into your code. POD are allowed to request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the POD's application.
 
 - Some of the requested variables may be unavailable or without the requested characteristics (e.g., frequency). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
 
@@ -47,7 +47,7 @@ The example POD uses only one model variable in its `varlist <https://github.com
 Step 3: Runtime environment configuration
 -----------------------------------------
 
-In the ``runtime_requirements`` section of your POD’s settings file, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
+In the ``runtime_requirements`` section of your POD’s ``settings.jsonc``, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
 
 - The requirements should be satisfied by one of the existing generic Conda environments (updated by you if necessary), or a new environment you created specifically for your POD.
 
@@ -56,14 +56,14 @@ In the ``runtime_requirements`` section of your POD’s settings file, we reques
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-In its settings file, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
+In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
 3. In 2, you should be able to get results from the example POD. You can try to hide the python3_base environment (e.g., by temporarily renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``), and run the framework again. You'll see the error message in the new log file. Don't forget to undo the change to the ``_MDTF_python3_base`` directory afterwards.
 
 Step 4: POD execution
 ---------------------
 
-At this point, your POD’s requirements have been met, so the framework (1) sets the necessary environment variables, (2) activates the right Conda environment, then (3) begins execution of your POD’s code by calling the top-level driver script listed in the settings file.
+At this point, your POD’s requirements have been met, so the framework (1) sets the necessary environment variables, (2) activates the right Conda environment, then (3) begins execution of your POD’s code by calling the top-level driver script listed in its ``settings.jsonc``.
 
 - See :ref:`ref-using-env-vars` for most relevant environment variables, and how your POD is expected to output results.
 
@@ -84,7 +84,7 @@ At this point, your POD’s requirements have been met, so the framework (1) set
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The framework calls the driver script `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ listed in the settings file. Take a look at the script and the comments therein.
+The framework calls the driver script `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ listed in ``settings.jsonc``. Take a look at the script and the comments therein.
 
 The the script performs tasks roughly in the following order:
 

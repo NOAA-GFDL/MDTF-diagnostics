@@ -195,11 +195,11 @@ Run time may be 10-20 minutes, depending on your system.
 Framework interaction with Conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in ``default_tests.jsonc`` and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
 
 1. The framework will first try to determine whether there is a Conda environment named ``_MDTF_$POD_NAME`` under ``$CONDA_ENV_DIR``. If yes, the framework will switch to this environment and run the POD.
 
-2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in the settings file specifies the programming language(s) adopted by the POD:
+2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in ``settings.jsonc`` specifies the programming language(s) adopted by the POD:
 
     a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD (`_MDTF_python2_base` for ealier PODs developed in Python 2.7).
 

@@ -25,9 +25,10 @@ import recommonmark
 from recommonmark.transform import AutoStructify
 
 # mock out imports of non-standard library modules
-# NOTE _gdbm is mocked out due to an error encountered in running autodoc on six.py
-# with python 3.7 (gdbm is one of the modules covered by six.moves.)
-autodoc_mock_imports = ['subprocess32', '_gdbm']
+# Modules in this list are mocked out due to an error encountered in running 
+# autodoc on six.py with python 3.7. None of the modules are used by the
+# framework: they're only referenced by six.py.
+autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
 import mock # do this twice just to be safe
 for module in autodoc_mock_imports:
     sys.modules[module] = mock.Mock()
@@ -310,7 +311,7 @@ autodoc_default_options = {
 # but we don't want to document it.
 # https://stackoverflow.com/a/21449475
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    return skip or ('six' in name)
+    return skip or ('six' in name) or ('_MovedItems' in name)
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449

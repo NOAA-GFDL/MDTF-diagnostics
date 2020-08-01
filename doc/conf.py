@@ -25,7 +25,9 @@ import recommonmark
 from recommonmark.transform import AutoStructify
 
 # mock out imports of non-standard library modules
-autodoc_mock_imports = ['yaml', 'subprocess32']
+# NOTE _gdbm is mocked out due to an error encountered in running autodoc on six.py
+# with python 3.7 (gdbm is one of the modules covered by six.moves.)
+autodoc_mock_imports = ['subprocess32', '_gdbm']
 import mock # do this twice just to be safe
 for module in autodoc_mock_imports:
     sys.modules[module] = mock.Mock()
@@ -39,7 +41,7 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 1'
+release = u'3.0 beta 2'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -304,6 +306,11 @@ autodoc_default_options = {
     'undoc-members': True,
     'show-inheritance': True
 }
+# For simplicty, the six.py library is included directly in the /src module, 
+# but we don't want to document it.
+# https://stackoverflow.com/a/21449475
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    return skip or ('six' in name)
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
@@ -352,7 +359,7 @@ GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
 
 # -- Options for intersphinx extension -----------------------------------------
-intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}
+intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None)}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -362,8 +369,9 @@ todo_include_todos = True
 # == Overall Sphinx app setup hook =============================================
 
 def setup(app):
-    # register autodoc event
+    # register autodoc events
     app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-skip-member', autodoc_skip_member)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829
@@ -372,7 +380,7 @@ def setup(app):
         'enable_auto_toc_tree': False,
         'enable_math': True,
         'enable_inline_math': True,
-        'enable_eval_rst': True,
-        'enable_auto_doc_ref': True,
+        'enable_eval_rst': True
+        # 'enable_auto_doc_ref': True, # deprecated, now default behavior
     }, True)
     app.add_transform(AutoStructify)

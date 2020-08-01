@@ -60,7 +60,7 @@ class DataAccessError(Exception):
 class DataSet(util.NameSpace):
     """Class to describe datasets.
 
-    `https://stackoverflow.com/a/48806603`_ for implementation.
+    `<https://stackoverflow.com/a/48806603>`__ for implementation.
     """
     def __init__(self, *args, **kwargs):
         if 'DateFreqMixin' not in kwargs:

@@ -1,7 +1,7 @@
 Quickstart installation instructions
 ====================================
 
-This section provides basic directions for downloading, installing and running a test of the Model Diagnostics Task Force (MDTF) Process-Oriented Diagnostics package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
+This section provides basic directions for downloading, installing and running a test of the MDTF diagnostic framework package using sample model data. The current MDTF package has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
 Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``, and ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be substituted by the actual path to the MDTF-diagnostics directory. While the package contains quite a few scripts, the most relevant for present purposes are:
 
@@ -41,17 +41,39 @@ Obtaining supporting data
 
 Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
 
-- Digested observational data (159 Mb): `MDTF_v2.1.a.20200410.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.20200410.obs_data.tar>`__.
+- Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
 - NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
 
-Users installing on Mac OS should use the Finder’s Archive Utility instead of the command-line tar command to extract the files. Download these three files and extract the contents in the following hierarchy under the ``mdtf`` directory:
+Download these three files and extract the contents in the following hierarchy under the ``mdtf`` directory:
 
-- ``mdtf/inputdata/obs_data/...``
-- ``mdtf/inputdata/model/QBOi.EXP1.AMIP.001/...``
-- ``mdtf/inputdata/model/GFDL.CM4.c96L32.am4g10r8/...``
+::
 
-The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that ``mdtf`` now contains both ``MDTF-diagnostics`` and ``inputdata`` directories.
+   mdtf
+   ├── MDTF-diagnostics
+   ├── inputdata
+       ├── model ( = $MODEL_DATA_ROOT)
+       │   ├── GFDL.CM4.c96L32.am4g10r8
+       │   │   └── day
+       │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
+       │   │       └── (... other .nc files )
+       │   └── QBOi.EXP1.AMIP.001
+       │       ├── 1hr
+       │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
+       │       │   └── (... other .nc files )
+       │       ├── 3hr
+       │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
+       │       ├── day
+       │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
+       │       │   └── (... other .nc files )
+       │       └── mon
+       │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
+       │           └── (... other .nc files )
+       └── obs_data ( = $OBS_DATA_ROOT)
+           ├── (... supporting data for individual PODs )
+
+
+The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described below in :numref:`ref-configure`.
 
@@ -82,6 +104,8 @@ Here we are checking that the Conda command is available on your system. We reco
 
 - Restart the terminal to reload the updated shell login script.
 
+- Mac OS users may encounter a benign Java warning pop-up: *To use the "java" command-line tool you need to install a JDK.* It's safe to ignore it.
+
 The framework’s environments will co-exist with an existing Miniconda/Anaconda installation. *Do not* reinstall Miniconda/Anaconda if it's already installed for the user who will be running the framework: the installer will break the existing installation (if it's not managed with, e.g., environment modules.)
 
 .. _ref-conda-env-install:
@@ -101,7 +125,7 @@ Next, run
 % cd $CODE_ROOT
 % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
-to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
+to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min (depending on machine and internet connection). The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
 - Substitute the actual paths for ``$CODE_ROOT``, ``$CONDA_ROOT``, and ``$CONDA_ENV_DIR``.
 
@@ -109,7 +133,7 @@ to install all necessary environments (and create an executable; :ref:`ref-locat
 
 - The ``--all`` flag makes the script install all environments prescribed by the YAML (.yml) files under ``src/conda/`` (one YAML for one environment). You can install the environments selectively by using the ``--env`` flag instead. For instance, ``% ./src/conda/conda_env_setup.sh --env base --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`` will install the "_MDTF_base" environment prescribed by ``env_base.yml``, and so on. With ``--env``, the current script can install one environment at a time. Repeat the command for multiple environments.
 
-- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :erf:`ref-interaction-conda-env`.
+- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :ref:`ref-interaction-conda-env`.
 
 After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run ``conda update`` on them). To update the environments after updating the framework code, re-run the above commands. These environments can be uninstalled by simply deleting "_MDTF" directories under ``$CONDA_ENV_DIR`` (or ``$CONDA_ROOT/envs/`` for default setting).
 
@@ -132,8 +156,8 @@ We recommend using absolute paths in ``default_tests.jsonc``, but relative paths
 
 .. _ref-execute:
 
-Run the MDTF package with test settings
----------------------------------------
+Run the MDTF package with default test settings
+-----------------------------------------------
 
 .. _ref-location-execute:
 
@@ -162,7 +186,7 @@ Run time may be 10-20 minutes, depending on your system.
 
 - The output files for this test case will be written to ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981``. When the framework is finished, open ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html`` in a web browser to view the output report.
 
-- The above command will execute PODs included in ``pod_list`` of ``default_tests.jsonc``. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding ``//``). Note that entries in the list must be separated by ``,``. Check for missing or surplus ``,`` if you encounter an error (e.g., "ValueError: No closing quotation").
+- The above command will execute PODs included in ``pod_list`` of ``default_tests.jsonc``. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding ``//``). Note that entries in the list must be separated by ``,`` properly. Check for missing or surplus ``,`` if you encounter an error (e.g., "ValueError: No closing quotation").
 
 - Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of ``default_tests.jsonc``, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
 
@@ -171,13 +195,13 @@ Run time may be 10-20 minutes, depending on your system.
 Framework interaction with Conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in ``default_tests.jsonc`` and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
 
 1. The framework will first try to determine whether there is a Conda environment named ``_MDTF_$POD_NAME`` under ``$CONDA_ENV_DIR``. If yes, the framework will switch to this environment and run the POD.
 
-2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in the settings file specifies the programming language(s) adopted by the POD:
+2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in ``settings.jsonc`` specifies the programming language(s) adopted by the POD:
 
-    a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD.
+    a). If purely Python, the framework will switch to ``_MDTF_python3_base`` and run the POD (`_MDTF_python2_base` for ealier PODs developed in Python 2.7).
 
     b). If NCL is used, then ``_MDTF_NCL_base``.
 

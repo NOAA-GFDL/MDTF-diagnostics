@@ -25,12 +25,12 @@ At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (defaul
 
 - If you've run the framework with both ``save_ps`` and ``save_nc`` in ``default_tests.jsonc`` set to ``true``, check the output directory structure and files therein.
 
-Note that when running, the framework will keep collecting the messages relevant to individual PODs, including (1) the status of required data and environment, and (2) texts printed out by PODs during execution, and save them as log files under each POD's output directory. These ``log`` files can be viewed via the top-level results page ``index.html`` and are useful for debugging.
+Note that when running, the framework will keep collecting the messages relevant to individual PODs, including (1) the status of required data and environment, and (2) texts printed out by PODs during execution, and save them as log files under each POD's output directory. These ``log`` files can be viewed via the top-level results page ``index.html`` and, together with messages printed in the terminal, are useful for debugging.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-Run the framework using the ``NCAR-CAM5.timeslice`` case. After successful execution, open the ``index.html`` under the output directory in a web browser. The ``plots`` links to the webpage produced by the example POD with figures, and ``log`` to ``example.log`` including all example-related messages collected by the framework.
+Run the framework using the ``NCAR-CAM5.timeslice`` case. After successful execution, open the ``index.html`` under the output directory in a web browser. The ``plots`` links to the webpage produced by the example POD with figures, and ``log`` to ``example.log`` including all example-related messages collected by the framework. The messages displayed in the terminal are not identical to those in the log files, but also provide a status update on the framework-POD operation.
 
 Step 2: Data request
 --------------------
@@ -61,27 +61,31 @@ The example POD uses only one model variable in its `varlist <https://github.com
 Step 3: Runtime environment configuration
 -----------------------------------------
 
-In the ``runtime_requirements`` section of your POD’s ``settings.jsonc``, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
+The framework reads the other parts of your POD’s ``settings.jsonc``, e.g., , and generates the additional environment variables accordingly (on top of those being defined through ``default_tests.jsonc``).
+
+Furthermore, in the ``runtime_requirements`` section of ``settings.jsonc``, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
 
 - The requirements should be satisfied by one of the existing generic Conda environments (updated by you if necessary), or a new environment you created specifically for your POD.
 
-- If there isn't a suitable environment, your POD will be skipped with a ``Not a conda environment`` error message added to the log file.
+- If there isn't a suitable environment, the POD will be skipped.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
 In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-3. In 2, you should be able to get results from the example POD. You can try to hide the python3_base environment (e.g., by temporarily renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``), and run the framework again. You'll see the error message in the new log file. Don't forget to undo the change to the ``_MDTF_python3_base`` directory afterwards.
+- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``for example.
+
+- In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the Conda environment assigned to the POD.
 
 Step 4: POD execution
 ---------------------
 
-At this point, your POD’s requirements have been met, so the framework (1) sets the necessary environment variables, (2) activates the right Conda environment, then (3) begins execution of your POD’s code by calling the top-level driver script listed in its ``settings.jsonc``.
+At this point, your POD’s requirements have been met, and the environment variables are set. The framework then activates the right Conda environment, and begins execution of your POD’s code by calling the top-level driver script listed in its ``settings.jsonc``.
 
 - See :ref:`ref-using-env-vars` for most relevant environment variables, and how your POD is expected to output results.
 
-- All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see `reference <ref_envvars.html>`__ for a complete list of environment variables.
+- All information passed from the framework to your POD is in the form of Unix/Linux shell environment variables; see `reference <ref_envvars.html>`__ for a complete list of environment variables (another good source is the log files for individual PODs).
 
 - For debugging, we encourage that your POD prints out messages of its progress as it runs. All text written to stdout or stderr (i.e., displayed in a terminal) will be captured by the framework and added to a log file available to the users via ``index.html``.
 
@@ -91,35 +95,40 @@ At this point, your POD’s requirements have been met, so the framework (1) set
 
    B. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for model data regardless.
 
-   C. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest. (Although in this case, the framework would skip this POD anyway.)
+   C. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest (despite in this case, the framework would skip this POD anyway).
 
-- The framework contains additional exception-handling mechanisms so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages will be included in the POD's log file.
+- The framework contains additional exception handling so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages, if any, will be included in the POD's log file.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The framework calls the driver script `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ listed in ``settings.jsonc``. Take a look at the script and the comments therein.
+The framework activate the ``_MDTF_python3_base`` Conda environment, and calls the driver script `example-diag.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ listed in ``settings.jsonc``. Take a look at the script and the comments therein.
 
-The the script performs tasks roughly in the following order:
+``example-diag.py`` performs tasks roughly in the following order:
 
-   (1) It reads the model surface air pressure data located at ``$PS_FILE``,
-   (2) computes the time average,
-   (3) saves the model time averages to ``$WK_DIR/model/netCDF/temp_means.nc`` for later use,
-   (4) plots model figure ``$WK_DIR/model/PS/example_model_plot.eps``,
-   (5) reads the digested pressure data in time-averaged form at ``$OBS_DATA/example_ps_means.nc``, and
-   (6) saves the observational data plot to ``$WK_DIR/obs/PS/example_obs_plot.eps``.
+   1) It reads the model surface air temperature data at ``input_path``,
+   2) computes the model time average,
+   3) saves the model time averages to ``$WK_DIR/model/netCDF/temp_means.nc`` for later use,
+   4) plots model figure ``$WK_DIR/model/PS/example_model_plot.eps``,
+   5) reads the digested data in time-averaged form at ``$OBS_DATA/example_tas_means.nc``, and plots the figure to ``$WK_DIR/obs/PS/example_obs_plot.eps``.
 
-4. The digested pressure data wasn't provided with the code package. If you've followed 2, the example POD is still able generate the html page but with observational figure missing. This is because the script is organized to finish plotting the model figure before accessing the missing digested pressure data. You can try moving the lines corresponding to (5) and (6) upward in the script to see how the POD can fail without producing meaningful results.
+Note that these tasks correspond to the code blocks 1) through 5) in the script.
 
-5. In 2, the model time average has been saved to ``$WK_DIR/model/netCDF/temp_means.nc``. To make the example POD function normally, copy, move, and rename the file to ``$OBS_DATA/example_ps_means.nc``, and run the framework again.
+- When the script is called and running, it prints out messages which are saved in ``example.log``. These are helpful to determine when and how the POD execution is interrupted if there's a problem.
+
+- The script is organized to deal with model data first, and then to process digested observation. Thus if something goes wrong with the digested data, the script is still able to produce the html page with model figure. This won't happen if code block 5) is moved before 4), i.e., well-organized code is more robust and may be able to produce partial results even when encounters problems.
+
+In code block 7) of ``example-diag.py``, we include an example of exception handling by trying to access a non-existent file (the final block is just to confirm that the *error* would not interrupt the script's execution because of exception-handling).
+
+- The last few lines of ``example.log`` demonstrate the script is able to finish execution despite an error has occurred. Exception handling makes code robust.
 
 Step 5: Output and cleanup
 --------------------------
 
 At this point, your POD has successfully finished running, and all remaining tasks are handled by the framework. The framework converts the postscript plots to bitmaps according to the following rule:
 
-- ``$WK_DIR/model/PS/<filename>.eps`` → ``$WK_DIR/model/filename.png``
-- ``$WK_DIR/obs/PS/<filename>.eps`` → ``$WK_DIR/obs/filename.png``
+- ``$WK_DIR/model/PS/filename.eps`` → ``$WK_DIR/model/filename.png``
+- ``$WK_DIR/obs/PS/filename.eps`` → ``$WK_DIR/obs/filename.png``
 
 The html template for each POD is then copied to ``$WK_DIR`` by the framework.
 
@@ -127,4 +136,8 @@ The html template for each POD is then copied to ``$WK_DIR`` by the framework.
 
 - Values of all environment variables referenced in the html template are substituted by the framework, allowing you to show the run’s ``CASENAME``, date range, etc. Beyond this, (i.e., through environment variables), we don’t offer other ways to alter the text of your POD’s output webpage at run time.
 
+- If ``save_ps`` and ``save_nc`` are set to ``false``, the ``.eps`` and ``.nc`` files will be deleted.
+
 Finally, the framework links your POD’s html page to the top-level ``index.html``, and copies all files to the specified output location.
+
+- If ``make_variab_tar`` in ``default_tests.jsonc`` is set to ``true``, the framework will create a tar file for the output directory, in case you're working on a server, and have to move the file to a local machine before viewing it.

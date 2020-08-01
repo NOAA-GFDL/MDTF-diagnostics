@@ -1,0 +1,6 @@
+# these requirements are only used by readthedocs.org to build documentation.
+# For local documentation builds, use the _MDTF_dev conda environment at
+# /src/conda/env_dev.yml.
+sphinx==3.1.2
+recommonmark==0.6
+mock

@@ -74,7 +74,7 @@ Example diagnostic
 
 In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``for example.
+- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
 
 - In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the Conda environment assigned to the POD.
 

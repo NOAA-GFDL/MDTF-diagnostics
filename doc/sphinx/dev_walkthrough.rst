@@ -52,7 +52,7 @@ Once the framework has determined which PODs are able to run given the model dat
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air pressure, recorded at monthly frequency.
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
 
 - In the beginning of ``example.log``, the framework reports finding the requested model data file under ``Found files``.
 
@@ -77,8 +77,6 @@ In its ``settings.jsonc``, the example POD lists its `requirements <https://gith
 - In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``for example.
 
 - In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the Conda environment assigned to the POD.
-
-3. In 2, you should be able to get results from the example POD. You can try to hide the python3_base environment (e.g., by temporarily renaming the ``_MDTF_python3_base`` directory under ``$CONDA_ENV_DIR/``), and run the framework again. You'll see the error message in the new log file. Don't forget to undo the change to the ``_MDTF_python3_base`` directory afterwards.
 
 Step 4: POD execution
 ---------------------

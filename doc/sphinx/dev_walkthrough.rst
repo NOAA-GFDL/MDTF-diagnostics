@@ -1,31 +1,45 @@
 Walkthrough of framework operation
 ==================================
 
-We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. The `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``) is used as a concrete example .....@@@
+We now describe in greater detail the actions that are taken when the framework is run, focusing on aspects that are relevant for the operation of individual PODs. The `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ (short name: ``example``) is used as a concrete example here to illustrate ow a POD is implemented and integrated into the framework.
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
    :width: 100 %
 
+We begin with a reminder that there are 2 essential files for the operation of the framework and POD:
+
+- ``src/default_tests.jsonc``: configuration input for the framework.
+- ``diagnostics/example/settings.jsonc``: settings file for the example POD.
+
+To setup for running the example POD, (1) download the necessary supporting and NCAR-CAM5.timeslice sample data @@@hyperlinks required@@@ and unzip them under ``inputdata/``, and (2) open ``default_tests.jsonc``, uncommnet the whole ``NCAR-CAM5.timeslice`` section in ``case_list``, and comment out the other cases in the list. We also recommend setting both ``save_ps`` and ``save_nc`` to ``true``.
+
 Step 1: Framework invocation
 ----------------------------
 
-The user runs the framework by executing the framework’s main driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section of the configuration input ``src/default_tests.jsonc``.
+The user runs the framework by executing the framework’s main driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section in ``default_tests.jsonc``.
 
 - Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
 
-At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (default: ``mdtf/wkdir/``) and subdirectories therein for hosting the output files by the framework and PODs from each run.
+At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (default: ``mdtf/wkdir/``) and all subdirectories therein for hosting the output files by the framework and PODs from each run.
 
-Note that when running, the framework will collect the messages relevant to individual PODs, including (1) the status of required data and environment, and (2) texts printed out by PODs during execution, and save them as log files under each POD's output directory. These ``log`` files can be viewed via the top-level results page ``index.html`` and are useful for debugging.
+- If you've run the framework with both ``save_ps`` and ``save_nc`` in ``default_tests.jsonc`` set to ``true``, check the output directory structure and files therein.
+
+Note that when running, the framework will keep collecting the messages relevant to individual PODs, including (1) the status of required data and environment, and (2) texts printed out by PODs during execution, and save them as log files under each POD's output directory. These ``log`` files can be viewed via the top-level results page ``index.html`` and are useful for debugging.
+
+Example diagnostic
+^^^^^^^^^^^^^^^^^^
+
+Run the framework using the ``NCAR-CAM5.timeslice`` case. After successful execution, open the ``index.html`` under the output directory in a web browser. The ``plots`` links to the webpage produced by the example POD with figures, and ``log`` to ``example.log`` including all example-related messages collected by the framework.
 
 Step 2: Data request
 --------------------
 
-Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc`` file, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a top-level list of required model data from their ``varlist``. It then queries the source of the model data for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
+Each POD describes the model data it requires as input in the ``varlist`` section of its ``settings.jsonc``, with each entry in ``varlist`` corresponding to one model data file used by the POD. The framework goes through all the PODs to be run in ``pod_list`` and assembles a list of required model data from their ``varlist``. It then queries the source of the model data (``$DATADIR/``) for the presence of each requested variable with the requested characteristics (e.g., frequency, units, etc.).
 
-- The most important features of ``settings.jsonc`` are described in the :doc:`settings file <dev_settings_quick>` and documented in full detail on the :doc:`reference page <ref_settings>`.
+- The most important features of ``settings.jsonc`` are described in the :doc:`settings documentation <dev_settings_quick>` and full detail on the :doc:`reference page <ref_settings>`.
 
-- Variables are specified in ``settings.jsonc`` following `CF convention <http://cfconventions.org/>`__ wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), incorporate necessary preprocessings for computing these from standard output variables into your code. POD are allowed to request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the POD's application.
+- Variables are specified in ``varlist`` following `CF convention <http://cfconventions.org/>`__ wherever possible. If your POD requires derived quantities that are not part of the standard model output (e.g., column weighted averages), incorporate necessary preprocessings for computing these from standard output variables into your code. POD are allowed to request variables outside of the CF conventions (by requiring an exact match on the variable name), but this will severely limit the POD's application.
 
 - Some of the requested variables may be unavailable or without the requested characteristics (e.g., frequency). You can specify a *backup plan* for this situation by designating sets of variables as *alternates* if feasible: when the framework is unable to obtain a variable that has the ``alternates`` attribute in ``varlist``, it will then (and only then) query the model data source for the variables named as alternates.
 
@@ -38,11 +52,11 @@ Once the framework has determined which PODs are able to run given the model dat
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air pressure, recorded at monthly frequency.
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
 
-1. If you add ``example`` to ``pod_list`` (using the ``QBOi.EXP1.AMIP.001`` case) and try to run the framework, it will crash because the directory for observational/supporting data doesn't exist. We recommend you to comment out other entries in ``pod_list``
+- In the beginning of ``example.log``, the framework reports finding the requested model data file under ``Found files``.
 
-2. Create an empty ``example`` directory under ``inputdata/obs_data/``. Now the framework can run the example POD, which cannot produce results for observations.
+- If the framework could not locate the file, the log would instead record ``Skipping execution`` with the reason being missing data.
 
 Step 3: Runtime environment configuration
 -----------------------------------------

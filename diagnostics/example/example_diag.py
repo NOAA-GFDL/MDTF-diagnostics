@@ -187,4 +187,13 @@ plot_and_save_figure("obs", title_string, obs_mean_tas)
 #
 model_dataset.close()
 obs_dataset.close()
+
+### 7) Error/Exception-Handling Example ########################################
+nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
+try:
+    nonexistent_dataset = xr.open_dataset(nonexistent_file_path)
+except OSError as e:
+    print('WARNING',e.errno,e.strerror)
+    print("This message is printed by the example POD because exception-handling is working!")
+
 print("Another log message: finished successfully!")

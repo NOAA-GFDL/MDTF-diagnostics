@@ -53,6 +53,9 @@ latexpdf:
 	@echo "Running LaTeX files through pdflatex..."
 	make -C $(BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
+	-cp -f _build/latex/MDTF_getting_started.pdf _static/MDTF_getting_started.pdf
+	-cp -f _build/latex/MDTF_walkthrough.pdf _static/MDTF_walkthrough.pdf
+	@echo "Copied PDFs to _static."
 
 text:
 	$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text

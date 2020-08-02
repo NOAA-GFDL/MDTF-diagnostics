@@ -12,7 +12,6 @@ Developer information
    dev_walkthrough
    dev_coding_tips
    dev_extra_tips
-   dev_extra_tips
    dev_settings_quick
    dev_general
    dev_git_intro

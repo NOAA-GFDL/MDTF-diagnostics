@@ -52,7 +52,7 @@ Once the framework has determined which PODs are able to run given the model dat
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
+The example POD uses only one model variable in its `varlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L46>`__: surface air temperature, recorded at monthly frequency.
 
 - In the beginning of ``example.log``, the framework reports finding the requested model data file under ``Found files``.
 
@@ -61,7 +61,7 @@ The example POD uses only one model variable in its `varlist <https://github.com
 Step 3: Runtime environment configuration
 -----------------------------------------
 
-The framework reads the other parts of your POD’s ``settings.jsonc``, e.g., , and generates the additional environment variables accordingly (on top of those being defined through ``default_tests.jsonc``).
+The framework reads the other parts of your POD’s ``settings.jsonc``, e.g., ``pod_env_vars``, and generates additional environment variables accordingly (on top of those being defined through ``default_tests.jsonc``).
 
 Furthermore, in the ``runtime_requirements`` section of ``settings.jsonc``, we request that you provide a list of languages and third-party libraries your POD uses. The framework will check that all these requirements are met by one of the Conda environments under ``$CONDA_ENV_DIR/``.
 
@@ -69,16 +69,20 @@ Furthermore, in the ``runtime_requirements`` section of ``settings.jsonc``, we r
 
 - If there isn't a suitable environment, the POD will be skipped.
 
-Note that the framework's knowledge about the Conda environments all comes from the YMAL (.yml) files under ``src/conda/`` (and their contents) by assuming that the corresponding Conda environments have been installed using (thus are consistent with) the YAML files. Therefore, it's imperative that you keep the Conda environments and the YAML files consistent at all time for the framework to properly function.
+Note that the framework's information about the Conda environments all comes from the YMAL (.yml) files under ``src/conda/`` (and their contents) by assuming that the corresponding Conda environments have been installed using (thus are consistent with) the YAML files.
+
+- The framework doesn't directly check files under ``$CONDA_ENV_DIR/``, where the Conda environments locate.
+
+- Therefore, it's imperative that you keep the Conda environments and the YAML files consistent at all time so the framework can properly function.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
 
-In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
+In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
+- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in `src/filedlist_CMIP.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/fieldlist_CMIP.jsonc>`__ via setting ``convention`` in ``default_tests.jsonc`` to ``CMIP``. Some of the environment variables are POD-specific as defined under `pod_env_vars <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L29>`__ in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
 
-- In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the Conda environment assigned to the POD.
+- In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the python3_base environment via checking `env_python3_base.yml <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__.
 
 Step 4: POD execution
 ---------------------
@@ -103,7 +107,7 @@ At this point, your POD’s requirements have been met, and the environment vari
 
 In case your POD requires derived quantities that are not part of the standard model output, and you've incorporated necessary preprocessings into your code (e.g., compute column average temperature from a vertically-resolved temperature field), one might be interested in saving these derived quantities as intermediate output for later use, and you may include this functionality in your code.
 
-- Here we are referring to derived quantities similarly gridded as model output, instead of highly-digested data that is just enough for making figures.
+- Here we are referring to derived quantities gridded in a similar way to model output, instead of highly-digested data that is just enough for making figures.
 
 - Save these as NetCDF files to the same directory containing the original model files. One file for one variable, following the filename convention spelled out in :doc:`Getting Started <start_config>`.
 
@@ -131,6 +135,8 @@ Note that these tasks correspond to the code blocks 1) through 5) in the script.
 In code block 7) of ``example-diag.py``, we include an example of exception handling by trying to access a non-existent file (the final block is just to confirm that the *error* would not interrupt the script's execution because of exception-handling).
 
 - The last few lines of ``example.log`` demonstrate the script is able to finish execution despite an error having occurred. Exception handling makes code robust.
+
+.. _ref-output-cleanup:
 
 Step 5: Output and cleanup
 --------------------------

@@ -18,6 +18,8 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 
 - Your scripts should not access the internet or other networked resources.
 
+.. _ref-example-env-vars:
+
 An example of using framework-provided environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code to make your POD portable and reusable.
@@ -93,6 +95,8 @@ The following are the necessary steps for the POD module implementation and inte
 4. If your POD requires model data not included in the samples, prepare your own data files following instructions given in the :doc:`Getting Started <start_config>`, and create a new configuration input from the template ``src/default_tests.jsonc``.
 
 Update ``case_list`` and ``pod_list`` in the configuration input file for your POD. Now you can try to run the framework following the :doc:`Getting Started <start_install>` and start debugging. Good luck!
+
+.. _ref-checklist:
 
 Checklist before submitting your POD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

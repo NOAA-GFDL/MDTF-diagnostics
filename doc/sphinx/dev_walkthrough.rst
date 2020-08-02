@@ -95,10 +95,17 @@ At this point, your POD’s requirements have been met, and the environment vari
 
    B. If some of the observational data files are missing by accident, the POD should still be able to run analysis and produce figures for *model* data regardless.
 
-   C. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest (note that in this case, the framework would skip this POD due to missing data, but PODs should have this robustness property for ease of workarounds or running outside the framework).
-
+   C. Say a POD reads in multiple variable files and computes statistics for individual variables. If some of the files are missing or corrupted, the POD should still produce results for the rest (note that the framework would skip this POD due to missing data, but PODs should have this robustness property for ease of workarounds or running outside the framework).
 
 - The framework contains additional exception handling so that if a POD experiences a fatal or unrecoverable error, the rest of the tasks and POD-calls by the framework can continue. The error messages, if any, will be included in the POD's log file.
+
+In case your POD requires derived quantities that are not part of the standard model output, and you've incorporated necessary preprocessings into your code (e.g., compute column average temperature from a vertically-resolved temperature field), one might be interested in saving these derived quantities as intermediate output for later use, and you may include this functionality in your code.
+
+- Here we are referring to derived quantities similarly gridded as model output, instead of highly-digested data that is just enough for making figures.
+
+- Save these as NetCDF files to the same directory containing the original model files. One file for one variable, following the filename convention spelled out in :doc:`Getting Started <start_config>`.
+
+- You *must* provide an option so that users can choose *not* to save the files (e.g., because of write permission, disk space, or files are accessed via soft links). Include this option through ``pod_env_vars`` in your POD's ``settings.jsonc``, with "not to save" as default. You can remind users about this option by printing out messages in the terminal during runtime, or include a reminder in your POD documentation.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^
@@ -135,10 +142,15 @@ The html template for each POD is then copied to ``$WK_DIR`` by the framework.
 
 - In writing the template file all plots should be referenced as relative links to this location, e.g., "``<A href=model/filename.png>``". See templates from existing PODs.
 
-- Values of all environment variables referenced in the html template are substituted by the framework, allowing you to show the run’s ``CASENAME``, date range, etc. Text you'd like to change at runtime must be changed through environment variables: the v3 framework does not allow other ways to alter the text of your POD’s output webpage at run-time.
+- Values of all environment variables referenced in the html template are substituted by the framework, allowing you to show the run’s ``CASENAME``, date range, etc. Text you'd like to change at runtime must be changed through environment variables (the v3 framework doesn’t allow other ways to alter the text of your POD’s output webpage at runtime).
 
 - If ``save_ps`` and ``save_nc`` are set to ``false``, the ``.eps`` and ``.nc`` files will be deleted.
 
-Finally, the framework links your POD’s html page to the top-level ``index.html``, and copies all files to the specified output location.
+Finally, the framework links your POD’s html page to the top-level ``index.html``, and copies all files to the specified output location (``OUTPUT_DIR`` in ``default_tests.jsonc``; same as ``WK_DIR`` by default).
 
 - If ``make_variab_tar`` in ``default_tests.jsonc`` is set to ``true``, the framework will create a tar file for the output directory, in case you're working on a server, and have to move the file to a local machine before viewing it.
+
+Example diagnostic
+^^^^^^^^^^^^^^^^^^
+
+Open the html template ``diagnostics/example/example.html`` and the output ``$WK_DIR/example.html`` in a text editor, and compare. All the environment variables in the template have been substituted, e.g., ``{EXAMPLE_FAV_COLOR}`` becomes ``blue`` (defined in ``pod_env_vars`` in settings.jsonc).

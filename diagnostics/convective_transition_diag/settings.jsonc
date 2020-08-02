@@ -25,7 +25,9 @@
       // as the Bulk Tropospheric Temperature Measure.
       "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" : "1",
       // RES: set Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00).
-      "RES" : "1.00"
+      "RES" : "1.00",
+      // SAVE_TAVE_QSAT_INT: save tave and qsat_int files (0=no, 1=yes).
+      "SAVE_TAVE_QSAT_INT" : "0"
     },
     "runtime_requirements": {
       "python2": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]

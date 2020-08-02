@@ -33,9 +33,8 @@ Getting started for users
 The rest of the documentation in this section describes next steps for end users of the framework:
 
 - We provide instructions on how to :doc:`download and install <start_install>` the framework and run it on sample model data.
-- We describe the most common :doc:`configuration options <start_config>` for running the framework on your own model data.
-- See also the list of :doc:`command-line options <ref_cli>` and known :doc:`troubleshooting issues <start_troubleshoot>`.
-- Also see the GitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`__.
+- We describe the most common :doc:`configuration options <start_config>` for running the framework on your own model data. Also see the full list of :doc:`command-line options <ref_cli>`.
+- If you encounter a bug, check the GitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`__.
 
 Getting started for POD developers
 ----------------------------------

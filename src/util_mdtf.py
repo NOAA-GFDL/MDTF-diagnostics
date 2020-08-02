@@ -1,19 +1,21 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import io
+from src import six
 import re
 import glob
 import shutil
 import tempfile
-import util
+from src import util
 
 
 class ConfigManager(util.Singleton):
-    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest_flag=False):
+    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest=False):
         assert cli_obj # Singleton, so init should only ever be called once
         # set up paths
-        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest_flag)
+        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest)
         # load pod info
         self.pods = pod_info_tuple.pod_data
         self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
@@ -28,10 +30,11 @@ class _PathManager(util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``defaults.jsonc``.
     """
-    def __init__(self, d, code_root=None, unittest_flag=False):
-        self._unittest_flag = unittest_flag
+    def __init__(self, d, code_root=None, unittest=False):
+        self._unittest = unittest
         self.CODE_ROOT = code_root
-        assert os.path.isdir(self.CODE_ROOT)
+        if not self._unittest:
+            assert os.path.isdir(self.CODE_ROOT)
 
     def parse(self, d, paths_to_parse=[], env=None):
         # set by CLI settings that have "parse_type": "path" in JSON entry
@@ -52,7 +55,7 @@ class _PathManager(util.NameSpace):
             self.WORKING_DIR = self.OUTPUT_DIR
 
     def _init_path(self, key, d, env=None):
-        if self._unittest_flag: # use in unit testing only
+        if self._unittest: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
@@ -105,7 +108,7 @@ class TempDirManager(util.Singleton):
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
-        elif isinstance(hash_obj, basestring):
+        elif isinstance(hash_obj, six.string_types):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
@@ -131,10 +134,12 @@ class TempDirManager(util.Singleton):
         for d in self._dirs:
             self.rm_tempdir(d)
 
+class ConventionError(Exception):
+    pass
 
 class VariableTranslator(util.Singleton):
-    def __init__(self, unittest_flag=False, verbose=0):
-        if unittest_flag:
+    def __init__(self, unittest=False, verbose=0):
+        if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
@@ -159,9 +164,15 @@ class VariableTranslator(util.Singleton):
             for conv in util.coerce_to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
+                if conv in self.variables:
+                    print("ERROR: convention "+conv+" defined in "+filename+" already exists")
+                    raise ConventionError
+
                 self.axes[conv] = d.get('axes', dict())
                 self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
                 self.units[conv] = util.MultiMap(d.get('units', dict()))
+
+
 
     def toCF(self, convention, varname_in):
         if convention == 'CF': 
@@ -221,7 +232,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif not isinstance(varvalue, basestring):
+        elif not isinstance(varvalue, six.string_types):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
@@ -231,7 +242,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
-    for n in range(len(varlist)):
+    for n in list(range(len(varlist))):
         if ( verbose > 2):
             print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
@@ -328,7 +339,7 @@ def bump_version(path, new_v=None, extra_dirs=[]):
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True):
     assert os.path.exists(template_file)
-    with open(template_file, 'r') as f:
+    with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
         html_str = html_str.format(**template_dict)
     if not os.path.exists(target_file):
@@ -340,5 +351,5 @@ def append_html_template(template_file, target_file, template_dict={},
     else:
         print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
-    with open(target_file, mode) as f:
+    with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

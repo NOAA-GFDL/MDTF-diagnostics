@@ -10,6 +10,8 @@ Developer information
    dev_checklist
    dev_instruct
    dev_walkthrough
+   dev_coding_tips
+   dev_extra_tips
    dev_extra_tips
    dev_settings_quick
    dev_general

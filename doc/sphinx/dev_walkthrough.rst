@@ -74,7 +74,7 @@ Example diagnostic
 
 In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/d8d9f951d2c887b9a30fc496298815ab7ee68569/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``for example.
+- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in ``src/filedlist_$convention.jsonc`` via ``convention`` in ``default_tests``. Some of the environment variables are POD-specific as defined under ''pod_env_vars'' in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
 
 - In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the Conda environment assigned to the POD.
 
@@ -124,7 +124,7 @@ Note that these tasks correspond to the code blocks 1) through 5) in the script.
 
 - When the script is called and running, it prints out messages which are saved in ``example.log``. These are helpful to determine when and how the POD execution is interrupted if there's a problem.
 
-- The script is organized to deal with model data first, and then to process digested observations. Thus if something goes wrong with the digested data, the script is still able to produce the html page with model figure. This won't happen if code block 5) is moved before 4), i.e., well-organized code is more robust and may be able to produce partial results even when it encounters problems.
+- The script is organized to deal with model data first, and then to process digested observations. Thus if something goes wrong with the digested data, the script is still able to produce the html page with model figures. This won't happen if code block 5) is moved before 4), i.e., well-organized code is more robust and may be able to produce partial results even when it encounters problems.
 
 In code block 7) of ``example-diag.py``, we include an example of exception handling by trying to access a non-existent file (the final block is just to confirm that the *error* would not interrupt the script's execution because of exception-handling).
 

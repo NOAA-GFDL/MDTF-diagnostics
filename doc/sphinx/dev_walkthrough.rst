@@ -12,7 +12,7 @@ We begin with a reminder that there are 2 essential files for the operation of t
 - ``src/default_tests.jsonc``: configuration input for the framework.
 - ``diagnostics/example/settings.jsonc``: settings file for the example POD.
 
-To setup for running the example POD, (1) download the necessary supporting and NCAR-CAM5.timeslice sample data @@@hyperlinks required@@@ and unzip them under ``inputdata/``, and (2) open ``default_tests.jsonc``, uncomment the whole ``NCAR-CAM5.timeslice`` section in ``case_list``, and comment out the other cases in the list. We also recommend setting both ``save_ps`` and ``save_nc`` to ``true``.
+To setup for running the example POD, (1) download the necessary `supporting <https://drive.google.com/file/d/15xh9V3suuyLfwK-iniU5KrBsdo2IPWG4/view?usp=sharing>`__ and `NCAR-CAM5.timeslice sample data <https://drive.google.com/file/d/1eWT-kC_XNBfkSbUj07xQbS2OK0askeTC/view?usp=sharing>`__ and unzip them under ``inputdata/``, and (2) open ``default_tests.jsonc``, uncomment the whole ``NCAR-CAM5.timeslice`` section in ``case_list``, and comment out the other cases in the list. We also recommend setting both ``save_ps`` and ``save_nc`` to ``true``.
 
 Step 1: Framework invocation
 ----------------------------
@@ -68,6 +68,8 @@ Furthermore, in the ``runtime_requirements`` section of ``settings.jsonc``, we r
 - The requirements should be satisfied by one of the existing generic Conda environments (updated by you if necessary), or a new environment you created specifically for your POD.
 
 - If there isn't a suitable environment, the POD will be skipped.
+
+Note that the framework's knowledge about the Conda environments all comes from the YMAL (.yml) files under ``src/conda/`` (and their contents) by assuming that the corresponding Conda environments have been installed using (thus are consistent with) the YAML files. Therefore, it's imperative that you keep the Conda environments and the YAML files consistent at all time for the framework to properly function.
 
 Example diagnostic
 ^^^^^^^^^^^^^^^^^^

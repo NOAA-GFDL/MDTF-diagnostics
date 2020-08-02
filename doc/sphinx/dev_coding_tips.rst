@@ -7,9 +7,9 @@ All languages
 -------------
 
 - **PS vs. EPS figures**: Save vector plots as .eps (Encapsulated PostScript), not .ps (regular PostScript).
-  
+
   *Why*: Postscript (.ps) is perhaps the most common vector graphics format, and almost all plotting packages are able to output postscript files. `Encapsulated Postscript <https://en.wikipedia.org/wiki/Encapsulated_PostScript>`__ (.eps) includes bounding box information that describes the physical extent of the plot's contents. This is used by the framework to generate bitmap versions of the plots correctly: the framework calls `ghostscript <https://www.ghostscript.com/>`__ for the conversion, and if not provided with a bounding box ghostscript assumes the graphics use an entire sheet of (letter or A4) paper. This can cause plots to be cut off if they extend outside of this region.
-  
+
   Note that many plotting libraries will set the format of the output file automatically from the filename extension. The framework will process both `*.ps` and `*.eps` files.
 
 Python: General
@@ -57,7 +57,7 @@ Python: General
 Python: Arrays
 --------------
 
-To obtain acceptable performance for numerical computation, people use Python interfaces to optimized, compiled code. `NumPy <https://numpy.org/doc/stable/index.html>`__ is the standard module for manipulating numerical arrays in Python. `xarray <http://xarray.pydata.org/en/stable/index.html>`__ sits on top of NumPy and provides a higher-level interface to its functionality; any advice about NumPy applies to it as well. 
+To obtain acceptable performance for numerical computation, people use Python interfaces to optimized, compiled code. `NumPy <https://numpy.org/doc/stable/index.html>`__ is the standard module for manipulating numerical arrays in Python. `xarray <http://xarray.pydata.org/en/stable/index.html>`__ sits on top of NumPy and provides a higher-level interface to its functionality; any advice about NumPy applies to it as well.
 
 NumPy and xarray both have extensive documentation and many tutorials, such as:
 
@@ -75,10 +75,10 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   + "`Turn your conditional loops to Numpy vectors <https://towardsdatascience.com/data-science-with-python-turn-your-conditional-loops-to-numpy-vectors-9484ff9c622e>`__," by Tirthajyoti Sarkar;
   + "`'Vectorized' Operations: Optimized Computations on NumPy Arrays <https://www.pythonlikeyoumeanit.com/Module3_IntroducingNumpy/VectorizedOperations.html>`__", part of "`Python like you mean it <https://www.pythonlikeyoumeanit.com/>`__," a free resource by Ryan Soklaski.
 
-- **Use xarray with netCDF data**: 
+- **Use xarray with netCDF data**:
 
-  *Why*: This is xarray's use case. You can think of NumPy as implementing multidimensional matrices in the fully general, mathematical sense, and xarray providing the specialization to the case where the matrix contains data on a lat-lon-time-(etc.) grid. 
-  
+  *Why*: This is xarray's use case. You can think of NumPy as implementing multidimensional matrices in the fully general, mathematical sense, and xarray providing the specialization to the case where the matrix contains data on a lat-lon-time-(etc.) grid.
+
   xarray lets you refer to your data with human-readable labels such as 'latitude,' rather than having to remember that that's the second dimension of your array. This bookkeeping is essential when writing code for the MDTF framework, when your POD will be run on data from models you haven't been able to test on.
 
   In particular, xarray provides seamless support for `time axes <http://xarray.pydata.org/en/stable/time-series.html>`__, with `support <http://xarray.pydata.org/en/stable/weather-climate.html>`__ for all CF convention calendars through the ``cftime`` library. You can, eg, subset a range of data between two dates without having to manually convert those dates to array indices.
@@ -88,7 +88,7 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
 
 - **Memory use and views vs. copies**: Use scalar indexing and `slices <https://numpy.org/doc/stable/reference/arrays.indexing.html#basic-slicing-and-indexing>`__ (index specifications of the form `start_index`:`stop_index`:`stride`) to get subsets of arrays whenever possible, and only use `advanced indexing <https://numpy.org/doc/stable/reference/arrays.indexing.html#advanced-indexing>`__ features (indexing arrays with other arrays) when necessary.
 
-  *Why*: When advanced indexing is used, NumPy will need to create a new copy of the array in memory, which can hurt performance if the array contains a large amount of data. By contrast, slicing or basic indexing is done in-place, without allocating a new array: the NumPy documentation calls this a "view." 
+  *Why*: When advanced indexing is used, NumPy will need to create a new copy of the array in memory, which can hurt performance if the array contains a large amount of data. By contrast, slicing or basic indexing is done in-place, without allocating a new array: the NumPy documentation calls this a "view."
 
   Note that array slices are native `Python objects <https://docs.python.org/3.7/library/functions.html?highlight=slice#slice>`__, so you can define a slice in a different place from the array you intend to use it on. Both NumPy and xarray arrays recognize slice objects.
 
@@ -102,7 +102,7 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
 
 
 - **MaskedArrays instead of NaNs or sentinel values**: Use NumPy's `MaskedArrays <https://numpy.org/doc/stable/reference/maskedarray.generic.html>`__ for data that may contain missing or invalid values, instead of setting those entries to NaN or a sentinel value.
-  
+
   *Why*: One sometimes encounters code which sets array entries to fixed "sentinel values" (such as 1.0e+20 or `NaN <https://en.wikipedia.org/wiki/NaN>`__\) to indicate missing or invalid data. This is a dangerous and error-prone practice, since it's frequently not possible to detect if the invalid entries are being used by mistake. For example, computing the variance of a timeseries with missing elements set to 1e+20 will either result in a floating-point overflow, or return zero.
   
   NumPy provides a better solution in the form of `MaskedArrays <https://numpy.org/doc/stable/reference/maskedarray.html>`__, which behave identically to regular arrays but carry an extra boolean mask to indicate valid/invalid status. All the NumPy mathematical functions will automatically use this mask for error propagation. For `example <https://numpy.org/doc/stable/reference/maskedarray.generic.html#numerical-operations>`__, trying to divide an array element by zero or taking the square root of a negative element will mask it off, indicating that the value is invalid: you don't need to remember to do these sorts of checks explicitly.
@@ -112,9 +112,9 @@ Python: Plotting
 ----------------
 
 - **Use the 'Agg' backend when testing your POD**: For reproducibility, set the shell environment variable ``MPLBACKEND`` to ``Agg`` when testing your POD outside of the framework.
-  
-  *Why*: Matplotlib can use a variety of `backends <https://matplotlib.org/tutorials/introductory/usage.html#backends>`__\: interfaces to low-level graphics libraries. Some of these are platform-dependent, or require additional libraries that the MDTF framework doesn't install. In order to achieve cross-platform portability and reproducibility, the framework specifies the ``'Agg'`` non-interactive (ie, writing files only) backend for all PODs, by setting the ``MPLBACKEND`` environment variable. 
-  
+
+  *Why*: Matplotlib can use a variety of `backends <https://matplotlib.org/tutorials/introductory/usage.html#backends>`__\: interfaces to low-level graphics libraries. Some of these are platform-dependent, or require additional libraries that the MDTF framework doesn't install. In order to achieve cross-platform portability and reproducibility, the framework specifies the ``'Agg'`` non-interactive (ie, writing files only) backend for all PODs, by setting the ``MPLBACKEND`` environment variable.
+
   When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this backend difference.
 
 
@@ -122,7 +122,7 @@ NCL
 ---
 
 - **Deprecated calendar functions**: Check the `function reference <https://www.ncl.ucar.edu/Document/Functions/index.shtml>`__ to verify that the functions you use are not deprecated in the current version of `NCL <https://www.ncl.ucar.edu/>`__. This is especially necessary for `date/calendar functions <https://www.ncl.ucar.edu/Document/Functions/date.shtml>`__.
-  
+
   *Why*: The framework uses a current version of `NCL <https://www.ncl.ucar.edu/>`__ (6.6.x), to avoid plotting bugs that were present in earlier versions. This is especially relevant for calendar functions: the ``ut_*`` set of functions have been deprecated in favor of counterparts beginning with ``cd_`` that take identical arguments (so code can be updated using find/replace). For example, use `cd_calendar <https://www.ncl.ucar.edu/Document/Functions/Built-in/cd_calendar.shtml>`__ instead of the deprecated `ut_calendar <https://www.ncl.ucar.edu/Document/Functions/Built-in/ut_calendar.shtml>`__.
-  
+
   This change is necessary because only the ``cd_*`` functions support all calendars defined in the CF conventions, which is needed to process data from some models (eg, weather or seasonal models are typically run with a Julian calendar.)

@@ -5,9 +5,9 @@ channels:
 dependencies:
 - python=2.7
 - subprocess32
-- numpy
+- numpy=1.17
 - scipy
-- matplotlib
+- matplotlib=2.2.5
 - netCDF4
-- networkx
+- networkx=2.2
 - numba

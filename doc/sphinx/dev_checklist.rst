@@ -10,7 +10,7 @@ Preparation for POD implementation
 
 We assume that, at this point, you have a set of scripts, written in :doc:`languages <dev_instruct>` consistent with the framework's open source policy, that a) read in model data, b) perform analysis, and c) output figures. Here are 3 steps to prepare your scripts for POD implementation.
 
-- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``). Try to make your PODs name specific enough that it will be distinct from PODs contributed now or in the future by other groups working on similar phenomena.
+- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``). Try to make your POD's name specific enough that it will be distinct from PODs contributed now or in the future by other groups working on similar phenomena.
 
 - If you have multiple scripts, organize them so that there is a main driver script calling the other scripts, i.e., a user only needs to execute the driver script to perform all read-in data, analysis, and plotting tasks. This driver script should be named after the POD's short name (e.g., ``convective_transition_diag.py``).
 
@@ -20,14 +20,14 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 
 An example of using framework-provided environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code and make your POD portable and reusable.
+The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code to make your POD portable and reusable.
 
 For instance, using 3 of the environment variables provided by the framework, ``CASENAME``, ``DATADIR``, and ``pr_var``, the full path to the hourly precipitation file can be expressed as
 
 ::
 
    MODEL_OUTPUT_DIR = os.environ["DATADIR"]+"/1hr/"
-   pr_filename = os.environ["CASENAME"]+*."+os.environ["pr_var"]+".1hr.nc"
+   pr_filename = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".1hr.nc"
    pr_filepath = MODEL_OUTPUT_DIR + pr_filename
 
 You can then use ``pr_filepath`` in your code to load the precipitation data.
@@ -51,26 +51,26 @@ The environment variables most relevant for a POD's operation are:
 
    1. Output figures to ``$WK_DIR/obs/`` and ``$WK_DIR/model/`` respectively.
 
-   2. ``$WK_DIR/obs/PS`` and ``$WK_DIR/model/PS``: If a POD chooses to save vector-format figures, save them as ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
+   2. ``$WK_DIR/obs/PS/`` and ``$WK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
 
-   3. ``$WK_DIR/obs/netCDF`` and ``$WK_DIR/model/netCDF``: If a POD chooses to save any digested data for later analysis/plotting, save them in two directories in ``NetCDF``.
+   3. ``$WK_DIR/obs/netCDF/`` and ``$WK_DIR/model/netCDF/``: If a POD chooses to save digested data for later analysis/plotting, save them in these two directories in ``NetCDF``.
 
 Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when the framework executes different PODs; (2) the ``WK_DIR`` directory and subdirectories therein are automatically created by the framework. **Each POD should output files as described here** so that the framework knows where to find what, and also for the ease of code maintenance.
 
-More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see `the comprehensive list <ref_envvars.html>`__  of environment variables supplied by the framework.
+More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables supplied by the framework.
 
 To-do list for POD implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following are the necessary steps for the POD module implementation and integration into the framework. You can use the PODs currently included in the code package under ``diagnostics/`` as concrete examples since they all have the same structure as described below:
 
-1. Create your POD directory under ``diagnostics/`` and put all scripts in. Among the scripts, there should be 1) a driver script written in Python, 2) a template html, and 3) a ``settings.jsonc`` file. The POD directory, driver script, and html template should all be named after your POD's short name.
+1. Create your POD directory under ``diagnostics/`` and put all scripts in. Among the scripts, there should be 1) a main driver script, 2) a template html, and 3) a ``settings.jsonc`` file. The POD directory, driver script, and html template should all be named after your POD's short name.
 
    - For instance, ``diagnostics/convective_transition_diag/`` contains its driver script ``convective_transition_diag.py``, ``convective_transition_diag.html``, and ``settings.jsonc``, etc.
 
    - The framework will call the driver script, which calls the other scripts in the same POD directory.
 
-   - The html template will be copied by the framework into the output directory to display the figures generated by the POD. You can create a new html template by simply copying and modifying the example templates from existing PODs without prior knowledge about html syntax.
+   - The html template will be copied by the framework into the output directory to display the figures generated by the POD. You should be able to create a new html template by simply copying and modifying the example templates from existing PODs even without prior knowledge about html syntax.
 
    - ``settings.jsonc`` contains a POD's information. The framework will read this setting file to find out the driver script's name, verify the required environment and model data files are available, and prepare the necessary environment variables before executing the driver script.
 
@@ -111,11 +111,11 @@ After getting your POD working under the framework, there are 2 additional steps
 
 5. Test before distribution. It is important that you test your POD before sending it to the lead team contact. Please take the time to go through the following procedures:
 
-   A. Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Have you added any code to scripts outside your own POD directory. Here are some simple tests you should try:
+   A. Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
 
       - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
 
-      - Try to run your POD with a different set of model data. For POD development and testing, the MDTF-1 team produced the Timeslice Experiments output from the `NCAR CAM5 <https://www.earthsystemgrid.org/dataset/ucar.cgd.ccsm4.NOAA-MDTF.html>`__ and `GFDL AM4 (contact the lead team programmer for password) <http://data1.gfdl.noaa.gov/MDTF/>`__.
+      - Try to run your POD with a different set of model data. For POD development and testing, the MDTF-1 team produced the Timeslice Experiments output from the `NCAR CAM5 <https://www.earthsystemgrid.org/dataset/ucar.cgd.ccsm4.NOAA-MDTF.html>`__ and `GFDL AM4 (contact the lead team for password) <http://data1.gfdl.noaa.gov/MDTF/>`__.
 
       - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
 

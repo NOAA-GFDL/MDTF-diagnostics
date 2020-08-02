@@ -5,7 +5,7 @@ In this section, we discuss restrictions on coding languages and how to manage l
 
 You **must** manage your POD's language/library dependencies through `Conda <https://docs.conda.io/en/latest/>`__, since the dependencies of the framework are so managed by design, and this is also how the end-users are instructed to set up and manage their own environments for the framework. Note that Conda is not Python-specific, but allows coexisting versioned environments of most scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__, `NCL <https://anaconda.org/conda-forge/ncl>`__, `Ruby <https://anaconda.org/conda-forge/ruby>`__, `PyFerret <https://anaconda.org/conda-forge/pyferret>`__, and more.
 
-To prevent the proliferation of dependencies, we suggest that new POD development use existing Conda environments whenever possible, e.g., `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__, `NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__, and `R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ for Python, NCL, and R, respectively.
+To prevent the proliferation of dependencies, we suggest that new POD development use existing Conda environments whenever possible, e.g., `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_python3_base.yml>`__, `NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__, and `R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ for Python, NCL, and R, respectively.
 
 Choice of language(s)
 ---------------------
@@ -19,8 +19,6 @@ The framework itself is written in Python, and can call PODs written in any scri
 - If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
 
 - If scripts were written in closed-source languages, translation to Python 3.6 or above is required.
-
-We do not allow new PODs using Python 2 in principle. However, for a POD primarily coded in NCL and R, and uses Python only for the main driver script, an exception can be made on the basis of better managing existing Conda environments, after consulting with the lead team.
 
 POD development using exiting Conda environment
 -----------------------------------------------
@@ -48,7 +46,7 @@ where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments.
 
    c. After installation, run ``% conda clean --a`` to clear cache.
 
-   d. Don't forget to update ``src/conda/env_python3_base.yml`` accordingly.
+   d. *DO NOT* forget to update ``src/conda/env_python3_base.yml`` accordingly.
 
 After you've finished working under this environment, run ``% conda deactivate`` or simply close the terminal.
 
@@ -76,7 +74,7 @@ If your POD requires languages that aren't available in an existing environment 
 
 - We recommend constructing the list of packages manually, by simply searching your POD's code for ``import`` statements referencing third-party libraries. Please do *not* exporting your development environment with ``% conda env export``, which gives platform-specific version information and will not be fully portable in all cases; it also does so for every package in the environment, not just the "top-level" ones you directly requested.
 
-- We recommend specifying versions as little as possible, out of consideration for end-users: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (e.g., Python 2 vs. 3) or a bug affecting your POD was fixed (e.g., postscript font rendering on MacOS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies.
+- We recommend specifying versions as little as possible, out of consideration for end-users: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (e.g., Python 2 vs. 3) or a bug affecting your POD was fixed (e.g., postscript font rendering on Mac OS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies.
 
 Testing with new Conda environment
 ----------------------------------

@@ -214,7 +214,7 @@ latex_documents = [
         'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
         r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
-        'sphinxmdtfhowto'
+        'manual'
     ),(
         # another secondary PDF.
         'tex_walkthrough', 'MDTF_walkthrough.tex_', 
@@ -226,7 +226,7 @@ latex_documents = [
         r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
         r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
         ),
-        'sphinxmdtfhowto'
+        'manual'
     )
 ]
 

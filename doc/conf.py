@@ -213,7 +213,7 @@ latex_documents = [
         # build process if it finds multiple .tex files, and doesn't affect sphinx.
         'tex_getting_started', 'MDTF_getting_started.tex_', 
         u"MDTF Getting Started Guide", 
-        r"Thomas Jackson (GFDL), Yi-Hung Kuo (UCLA), Dani Coleman (NCAR)", 
+        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)", 
         'manual'
     ),(
         # another secondary PDF.

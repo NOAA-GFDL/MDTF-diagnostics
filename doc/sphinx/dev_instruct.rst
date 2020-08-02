@@ -46,7 +46,7 @@ where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments.
 
    c. After installation, run ``% conda clean --a`` to clear cache.
 
-   d. Don't forget to update ``src/conda/env_python3_base.yml`` accordingly.
+   d. *DO NOT* forget to update ``src/conda/env_python3_base.yml`` accordingly.
 
 After you've finished working under this environment, run ``% conda deactivate`` or simply close the terminal.
 

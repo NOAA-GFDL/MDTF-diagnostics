@@ -76,6 +76,28 @@ If your POD requires languages that aren't available in an existing environment 
 
 - We recommend specifying versions as little as possible, out of consideration for end-users: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (e.g., Python 2 vs. 3) or a bug affecting your POD was fixed (e.g., postscript font rendering on Mac OS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies.
 
+.. _ref-interaction-conda-env:
+
+Framework interaction with conda environments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As  described in :ref:`ref-execute`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in ``default_tests.jsonc`` and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+
+1. The framework will first try to look for the YAML file ``src/conda/env_$POD_NAME.yml``. If it exists, the framework will assume that the corresponding conda environment ``_MDTF_$POD_NAME`` has been installed under ``$CONDA_ENV_DIR``, and will switch to this environment and run the POD.
+
+2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME/``. The ``runtime_requirements`` section in ``settings.jsonc`` specifies the programming language(s) adopted by the POD:
+
+    a). If purely Python 3, the framework will look for ``src/conda/env_python3_base.yml`` and check its content to determine whether the POD's requirements are met, and then switch to ``_MDTF_python3_base`` and run the POD.
+
+    b). Similarly, if NCL or R is used, then ``NCL_base`` or ``R_base``.
+
+Note that for the 6 existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to ``_MDTF_NCL_base`` when seeing both NCL and Python in ``settings.jsonc``.
+
+The framework verifies PODs' requirements via looking for the YAML files and their contents. Thus if you choose to selectively install conda environments using the ``--env`` flag (:ref:`ref-conda-env-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
+
+- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs`` requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag`` (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag`` to the ``--env`` flag one at a time (:ref:`ref-conda-env-install`).
+
+
 Testing with new Conda environment
 ----------------------------------
 

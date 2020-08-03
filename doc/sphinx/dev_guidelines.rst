@@ -1,10 +1,10 @@
-POD development instructions
-============================
+POD development guidelines
+==========================
 
 We recommend running the framework on the sample model data again with both ``save_ps`` and ``save_nc`` in the configuration input ``src/default_tests.jsonc`` set to ``true``. This will preserve directories and files created by individual PODs in the output directory, which could come in handy when you go through the instructions below, and help understand how a POD is expected to write output.
 
 Preparation for POD implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 We assume that, at this point, you have a set of scripts, written in :doc:`languages <dev_instruct>` consistent with the framework's open source policy, that a) read in model data, b) perform analysis, and c) output figures. Here are 3 steps to prepare your scripts for POD implementation.
 
@@ -60,16 +60,35 @@ Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when t
 
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables supplied by the framework.
 
-Other tips on implementation:
------------------------------
+
+Guidelines for testing your POD
+-------------------------------
+
+5. Test before distribution. It is important that you test your POD before sending it to the lead team contact. Please take the time to go through the following procedures:
+
+   A. Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
+
+      - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
+
+      - Try to run your POD with a different set of model data. 
+
+      - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
+
+      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory and run time become a problem if one tries your POD on model output of high spatial resolution and temporal frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
+
+   Test before distribution. Find people (eg, nearby postdocs/grads and members from other POD-developing groups) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions. Ask for comments on whether they can understand the documentation.
+
+
+Other tips on implementation
+----------------------------
 
 #. Structure of the code package: Implementing the constituent PODs in accordance with the structure described in earlier sections makes it easy to pass the package (or just part of it) to other groups.
 
-#. Robustness to model file/variable names: Each POD should be robust to modest changes in the file/variable names of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure, :ref:`ref-example-env-vars` and :ref:`ref-Checklist` regarding using the environment variables and robustness tests. Also, it would be easier to apply the code package to a broader range of model output.
+#. Robustness to model file/variable names: Each POD should be robust to modest changes in the file/variable names of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure, :ref:`ref-example-env-vars` and :ref:`ref-dev-checklist` regarding using the environment variables and robustness tests. Also, it would be easier to apply the code package to a broader range of model output.
 
 #. Save digested data after analysis: Can be used, e.g., to save time when there is a substantial computation that can be re-used when re-running or re-plotting diagnostics. See :ref:`ref-output-cleanup` regarding where to save the output.
 
-#. Self-documenting: For maintenance and adaptation, to provide references on the scientific underpinnings, and for the code package to work out of the box without support. See :ref:`ref-Checklist`.
+#. Self-documenting: For maintenance and adaptation, to provide references on the scientific underpinnings, and for the code package to work out of the box without support. See :ref:`ref-dev-checklist`.
 
 #. Handle large model data: The spatial resolution and temporal frequency of climate model output have increased in recent years. As such, developers should take into account the size of model data compared with the available memory. For instance, the example POD precip_diurnal_cycle and Wheeler_Kiladis only analyze part of the available model output for a period specified by the environment variables ``FIRSTYR`` and ``LASTYR``, and the convective_transition_diag module reads in data in segments.
 

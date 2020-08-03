@@ -1,3 +1,5 @@
+.. _ref-dev-start:
+
 Developer quickstart guide
 ==========================
 

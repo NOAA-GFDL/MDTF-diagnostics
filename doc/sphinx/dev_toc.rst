@@ -9,9 +9,9 @@ Developer information
    dev_migration
    dev_checklist
    dev_dependencies
+   dev_guidelines
    dev_walkthrough
    dev_coding_tips
-   dev_extra_tips
    dev_settings_quick
    dev_git_intro
    dev_links

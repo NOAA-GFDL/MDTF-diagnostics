@@ -1,3 +1,5 @@
+.. _ref-dev-guidelines:
+
 POD development guidelines
 ==========================
 

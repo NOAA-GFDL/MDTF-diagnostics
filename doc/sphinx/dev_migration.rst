@@ -3,7 +3,7 @@
 Migration from framework v2.0
 =============================
 
-In this section we summarize issues to be aware of for developers familiar with the organization of version 2.0 of the framework. New developers can skip this section, as the rest of this documentation is self-contained.
+In this section we describe the major changes made from v2.0 to v3.0 of the framework that are relevant for POD developers. The scope of the framework has expanded in version 3.0, which required changes in the way the PODs and framework interact. New developers can skip this section, as the rest of this documentation is self-contained.
 
 Getting Started and Developer's Walkthrough
 -------------------------------------------
@@ -13,7 +13,8 @@ A main source of documentation for v2.0 of the framework were the "Getting Start
 - `Getting Started v3.0 (PDF) <https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf>`__
 - `Developer's Walkthrough v3.0 (PDF) <https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf>`__
 
-**Note**: these documents contain a *subset* of information available on this website, rather than new material: the text is reorganized to be placed in the same order as the v2.0 documents, for ease of comparison.
+.. note::
+   These documents contain a subset of information available on this website, rather than new material: the text is reorganized to be placed in the same order as the v2.0 documents, for ease of comparison. 
 
 Checklist for migrating a POD from v2.0
 ---------------------------------------

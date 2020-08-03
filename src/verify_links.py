@@ -15,8 +15,10 @@ import itertools
 from six.moves import html_parser, urllib # py3: html.parser
 from src import util
 
-# https://stackoverflow.com/a/41663924
+
 class LinkParser(html_parser.HTMLParser):
+    """See `<https://stackoverflow.com/a/41663924>`__.
+    """
     def reset(self):
         super(LinkParser, self).reset()
         self.links = iter([])

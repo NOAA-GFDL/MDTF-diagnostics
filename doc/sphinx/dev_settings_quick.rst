@@ -1,7 +1,9 @@
-Diagnostic settings file quickstart
-===================================
+.. _ref-dev-settings-quick:
 
-This page gives a quick introduction to how to write the settings file for your diagnostic. See the full :doc:`documentation <./ref_settings>` on this file format for a complete list of all the options you can specify.
+POD settings file summary
+=========================
+
+This page gives a quick introduction to how to write the settings file for your POD. See the full :doc:`documentation <./ref_settings>` on this file format for a complete list of all the options you can specify.
 
 Overview
 --------
@@ -9,7 +11,7 @@ Overview
 The MDTF framework can be viewed as a "wrapper" for your code that handles data fetching and munging. Your code communicates with this wrapper in two ways:
 
 - The *settings file* is where your code talks to the framework: when you write your code, you document what model data your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here (or tell the user what went wrong).
-- When your code is run, the framework talks to it by setting :doc:`environment variables <ref_envvars>` containing paths to the data files and other information specific to the run (not covered on this page, follow the link for details). 
+- When your code is run, the framework talks to it by setting :doc:`environment variables <ref_envvars>` containing paths to the data files and other information specific to the run. 
 
 In the settings file, you specify what model data your diagnostic uses in a vocabulary you're already familiar with:
 

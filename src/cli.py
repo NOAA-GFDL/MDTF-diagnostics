@@ -17,9 +17,9 @@ class CustomHelpFormatter(
     ):
     """Modify help text formatter to only display variable placeholder 
     ("metavar") once, to save space. Taken from 
-    https://stackoverflow.com/a/16969505 . Also inherit from 
+    `<https://stackoverflow.com/a/16969505>`__ . Also inherit from 
     RawDescriptionHelpFormatter in order to preserve line breaks in description
-    only (https://stackoverflow.com/a/18462760).
+    only (`<https://stackoverflow.com/a/18462760>`__).
     """
     def __init__(self, *args, **kwargs):
         # tweak indentation of help strings
@@ -52,7 +52,7 @@ class CustomHelpFormatter(
 
 class RecordDefaultsAction(argparse.Action):
     """Add boolean to record if user actually set argument's value, or if we're
-    using the specified default. From https://stackoverflow.com/a/50936474. This
+    using the specified default. From `<https://stackoverflow.com/a/50936474>`__. This
     also re-implements the 'store_true' and 'store_false' actions, in order to 
     give defaults information on boolean flags.
     """

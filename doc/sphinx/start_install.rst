@@ -39,7 +39,7 @@ For POD developers, the ``develop`` branch is the “beta test” version of the
 Obtaining supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
+Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for test/demonstration purposes. For package installation and default tests, the most relevant files are:
 
 - Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
@@ -73,7 +73,7 @@ Download these three files and extract the contents in the following hierarchy u
            ├── (... supporting data for individual PODs )
 
 
-The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD.
+The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. More data for additional PODs (including those still under development) are available from the FTP.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described below in :numref:`ref-configure`.
 

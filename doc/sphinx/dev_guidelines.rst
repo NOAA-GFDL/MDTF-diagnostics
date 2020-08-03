@@ -1,12 +1,25 @@
 POD development guidelines
 ==========================
 
-We recommend running the framework on the sample model data again with both ``save_ps`` and ``save_nc`` in the configuration input ``src/default_tests.jsonc`` set to ``true``. This will preserve directories and files created by individual PODs in the output directory, which could come in handy when you go through the instructions below, and help understand how a POD is expected to write output.
+Admissible languages
+--------------------
+
+The framework itself is written in Python, and can call PODs written in any scripting language. However, Python support by the lead team will be “first among equals” in terms of priority for allocating developer resources, etc.
+
+- To achieve portability, the MDTF **cannot** accept PODs written in closed-source languages (e.g., MATLAB and IDL; try `Octave <https://www.gnu.org/software/octave/>`__ and `GDL <https://github.com/gnudatalanguage/gdl>`__ if possible). We also **cannot** accept PODs written in compiled languages (e.g., C or Fortran): installation would rapidly become impractical if users had to check compilation options for each POD.
+
+- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in Python. Python version >= 3.6 is required. Official support for Python 2 was discontinued as of January 2020.
+
+- If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
+
+- If scripts were written in closed-source languages, translation to Python 3.6 or above is required.
 
 Preparation for POD implementation
 ----------------------------------
 
 We assume that, at this point, you have a set of scripts, written in :doc:`languages <dev_instruct>` consistent with the framework's open source policy, that a) read in model data, b) perform analysis, and c) output figures. Here are 3 steps to prepare your scripts for POD implementation.
+
+We recommend running the framework on the sample model data again with both ``save_ps`` and ``save_nc`` in the configuration input ``src/default_tests.jsonc`` set to ``true``. This will preserve directories and files created by individual PODs in the output directory, which could come in handy when you go through the instructions below, and help understand how a POD is expected to write output.
 
 - Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``). Try to make your POD's name specific enough that it will be distinct from PODs contributed now or in the future by other groups working on similar phenomena.
 
@@ -64,19 +77,17 @@ More environment variables for specifying model variable naming convention can b
 Guidelines for testing your POD
 -------------------------------
 
-5. Test before distribution. It is important that you test your POD before sending it to the lead team contact. Please take the time to go through the following procedures:
+Test before distribution. Find people (eg, nearby postdocs/grads and members from other POD-developing groups) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions. Ask for comments on whether they can understand the documentation.
 
-   A. Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
+Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
 
-      - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
+   - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
 
-      - Try to run your POD with a different set of model data. 
+   - Try to run your POD with a different set of model data. 
 
-      - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
+   - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
 
-      - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory and run time become a problem if one tries your POD on model output of high spatial resolution and temporal frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
-
-   Test before distribution. Find people (eg, nearby postdocs/grads and members from other POD-developing groups) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions. Ask for comments on whether they can understand the documentation.
+   - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory and run time become a problem if one tries your POD on model output of high spatial resolution and temporal frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
 
 
 Other tips on implementation

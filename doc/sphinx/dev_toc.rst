@@ -14,4 +14,4 @@ Developer information
    dev_extra_tips
    dev_settings_quick
    dev_git_intro
-   dev_general
+   dev_links

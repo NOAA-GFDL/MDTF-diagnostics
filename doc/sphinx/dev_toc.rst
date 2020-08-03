@@ -8,7 +8,7 @@ Developer information
    dev_overview
    dev_migration
    dev_checklist
-   dev_instruct
+   dev_dependencies
    dev_walkthrough
    dev_coding_tips
    dev_extra_tips

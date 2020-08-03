@@ -3,7 +3,7 @@ Quickstart installation instructions
 
 This section provides instructions for downloading, installing and running a test of the MDTF framework using sample model data. The MDTF framework has been tested on UNIX/LINUX, Mac OS, and Windows Subsystem for Linux.
 
-Throughout this document, ``%`` indicates the command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``. ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be substituted by the actual path to the MDTF-diagnostics directory.
+Throughout this document, ``%`` indicates the command line prompt and is followed by commands to be executed in a terminal in ``fixed-width font``. ``$`` indicates strings to be substituted, e.g., the string ``$CODE_ROOT`` below should be replaced by the actual path to the ``MDTF-diagnostics`` directory.
 
 **Summary of steps for installing the framework**
 
@@ -17,7 +17,7 @@ Download the framework code and supporting data
 Obtaining the code
 ^^^^^^^^^^^^^^^^^^
 
-The official repo for the MDTF code is hosted at the GFDL `GitHub repo <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. We recommend that end users download and test the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2>`__.
+The official repo for the MDTF code is hosted at the NOAA-GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. We recommend that end users download and test the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2>`__.
 
 To install the MDTF framework, create a directory named ``mdtf`` and unzip the code downloaded from the `release page <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2>`__ there. This will create a directory titled ``MDTF-diagnostics-3.0-beta.2`` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as ``$CODE_ROOT``. It contains the following subdirectories:
 
@@ -71,7 +71,7 @@ Download these three files and extract the contents in the following hierarchy u
            ├── (... supporting data for individual PODs )
 
 
-The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD.
+The default test case uses the QBOi.EXP1.AMIP.001 data. The GFDL.CM4.c96L32.am4g10r8 data is only for testing the MJO Propagation and Amplitude POD.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described in :numref:`ref-configure`.
 
@@ -80,7 +80,7 @@ You can put the observational data and model output in different locations (e.g.
 Install the conda package manager, if needed
 --------------------------------------------
 
-The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager to install and manage these dependencies. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distribution, so having Miniconda or Anaconda is sufficient but not required.
+The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager, to install and manage these dependencies. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ Python distributions, so having Miniconda or Anaconda is sufficient but not required.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda, even if they have a pre-existing installations of the required languages. A complete installation of all dependencies requires roughly 5 Gb, and the location of this installation can be set with the ``$CONDA_ENV_DIR`` setting described below. Note that conda does not create duplicates of dependencies that are already installed (instead using hard links by default). 
 
@@ -89,7 +89,7 @@ If these space requirements are prohibitive, we provide an alternate method of o
 Conda installation
 ^^^^^^^^^^^^^^^^^^
 
-Users with an existing conda installation can skip this section and proceed to :numref:`ref-conda-env-install`.
+Users with an existing conda installation should skip this section and proceed to :numref:`ref-conda-env-install`.
 
 - To determine if conda is installed, run ``% conda --version`` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
 

@@ -1,3 +1,5 @@
+.. _ref-dev-checklist:
+
 POD development checklist
 =========================
 

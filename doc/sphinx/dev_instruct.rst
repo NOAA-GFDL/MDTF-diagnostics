@@ -1,3 +1,5 @@
+.. _ref-dev-instruct:
+
 Language choice and managing library dependencies
 =================================================
 

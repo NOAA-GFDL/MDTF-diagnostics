@@ -1,3 +1,5 @@
+.. _ref-dev-extra-tips:
+
 Extra tips for POD implementation
 =================================
 

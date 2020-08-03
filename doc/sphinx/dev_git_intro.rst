@@ -1,4 +1,4 @@
-.. _ref-dev-git:
+.. _ref-dev-git-intro:
 
 Git-based development workflow
 ==============================

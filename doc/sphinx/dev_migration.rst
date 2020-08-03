@@ -1,3 +1,5 @@
+.. _ref-dev-migration:
+
 Migration from framework v2.0
 =============================
 

@@ -1,3 +1,5 @@
+.. _ref-dev-coding-tips:
+
 Coding best practices: avoiding common issues
 =============================================
 

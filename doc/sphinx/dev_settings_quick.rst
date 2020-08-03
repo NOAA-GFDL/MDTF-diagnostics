@@ -1,3 +1,5 @@
+.. _ref-dev-settings-quick:
+
 Diagnostic settings file quickstart
 ===================================
 

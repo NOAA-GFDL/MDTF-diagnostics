@@ -1,3 +1,5 @@
+.. _ref-dev-links:
+
 Links to external resources
 ===========================
 

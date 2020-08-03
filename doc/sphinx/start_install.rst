@@ -28,7 +28,7 @@ To install the MDTF framework, create a directory named ``mdtf`` and unzip the c
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``main`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.
 
-For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin by locally cloning the repo and checking out this branch, as described in :ref:`ref-dev-git`.
+For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin by locally cloning the repo and checking out this branch, as described in :ref:`ref-dev-git-intro`.
 
 .. _ref-supporting-data:
 

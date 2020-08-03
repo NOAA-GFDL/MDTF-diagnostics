@@ -1,3 +1,5 @@
+.. _ref-dev-walkthrough:
+
 Walkthrough of framework operation
 ==================================
 

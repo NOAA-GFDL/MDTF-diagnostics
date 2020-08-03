@@ -1,7 +1,7 @@
 .. _ref-dev-coding-tips:
 
-Coding best practices: avoiding common issues
-=============================================
+POD coding best practices
+=========================
 
 In this section we describe issues we've seen in POD code that have caused problems in the form of bugs, inefficiencies, or unintended consequences.
 

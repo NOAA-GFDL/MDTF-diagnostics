@@ -20,6 +20,8 @@ The framework itself is written in Python, and can call PODs written in any scri
 
 - If scripts were written in closed-source languages, translation to Python 3.6 or above is required.
 
+.. _ref-conda-dev-envs:
+
 POD development using exiting Conda environment
 -----------------------------------------------
 

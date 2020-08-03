@@ -1,4 +1,4 @@
-POD Development Checklist
+POD development checklist
 =========================
 
 In this section, we compile a to-do list summarizing necessary steps for POD implementation, as well as a checklist for mandatory POD documentation and testing before submitting your POD.
@@ -21,7 +21,8 @@ We assume that, at this point, you have a set of scripts, written in :doc:`langu
 .. _ref-example-env-vars:
 
 An example of using framework-provided environment variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------------------------
+
 The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code to make your POD portable and reusable.
 
 For instance, using 3 of the environment variables provided by the framework, ``CASENAME``, ``DATADIR``, and ``pr_var``, the full path to the hourly precipitation file can be expressed as
@@ -39,7 +40,7 @@ Note that in Linux shell or NCL, the values of environment variables are accesse
 .. _ref-using-env-vars:
 
 Relevant environment variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 The environment variables most relevant for a POD's operation are:
 
@@ -62,7 +63,7 @@ Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when t
 More environment variables for specifying model variable naming convention can be found in the ``src/filedlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables supplied by the framework.
 
 To-do list for POD implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 The following are the necessary steps for the POD module implementation and integration into the framework. You can use the PODs currently included in the code package under ``diagnostics/`` as concrete examples since they all have the same structure as described below:
 
@@ -99,7 +100,7 @@ Update ``case_list`` and ``pod_list`` in the configuration input file for your P
 .. _ref-checklist:
 
 Checklist before submitting your POD
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 After getting your POD working under the framework, there are 2 additional steps regarding the mandatory POD documentation and testing before you can submit your work to the lead team.
 

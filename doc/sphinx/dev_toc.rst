@@ -5,7 +5,7 @@ Developer information
    :maxdepth: 1
    :numbered: 2
 
-   dev_quickstart_guide
+   dev_overview
    dev_migration
    dev_checklist
    dev_instruct

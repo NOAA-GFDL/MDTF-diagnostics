@@ -1,11 +1,15 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import io
+from src import six
+if six.PY2:
+    from ConfigParser import _Chainmap as ChainMap
+else:
+    from collections import ChainMap
 import argparse
-from ConfigParser import _Chainmap as ChainMap # in collections in py3
 import shlex
 import collections
-import util
+from src import util
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 
@@ -13,9 +17,9 @@ class CustomHelpFormatter(
     ):
     """Modify help text formatter to only display variable placeholder 
     ("metavar") once, to save space. Taken from 
-    https://stackoverflow.com/a/16969505 . Also inherit from 
+    `<https://stackoverflow.com/a/16969505>`__ . Also inherit from 
     RawDescriptionHelpFormatter in order to preserve line breaks in description
-    only (https://stackoverflow.com/a/18462760).
+    only (`<https://stackoverflow.com/a/18462760>`__).
     """
     def __init__(self, *args, **kwargs):
         # tweak indentation of help strings
@@ -48,7 +52,7 @@ class CustomHelpFormatter(
 
 class RecordDefaultsAction(argparse.Action):
     """Add boolean to record if user actually set argument's value, or if we're
-    using the specified default. From https://stackoverflow.com/a/50936474. This
+    using the specified default. From `<https://stackoverflow.com/a/50936474>`__. This
     also re-implements the 'store_true' and 'store_false' actions, in order to 
     give defaults information on boolean flags.
     """
@@ -59,7 +63,7 @@ class RecordDefaultsAction(argparse.Action):
         if isinstance(default, bool):
             nargs = 0             # behave like a flag
             const = (not default) # set flag = store opposite of default
-        elif isinstance(default, basestring) and nargs is None:
+        elif isinstance(default, six.string_types) and nargs is None:
             # unless explicitly specified, string-valued options accept 1 argument
             nargs = 1
             const = None
@@ -91,7 +95,7 @@ class CLIHandler(object):
         # manually track args requiring custom postprocessing (even if default
         # is used, so can't do with action=.. in argument)
         self.custom_types = collections.defaultdict(list)
-        if isinstance(cli_config, basestring):
+        if isinstance(cli_config, six.string_types):
             # we were given a path to config file, instead of file's contents
             if not os.path.isabs(cli_config):
                 cli_config = os.path.join(code_root, cli_config)
@@ -209,7 +213,7 @@ class CLIHandler(object):
     def preparse_cli(self, args=None):
         # "first pass" 
         # if no args are passed, default will parse sys.argv[1:]
-        if isinstance(args, basestring):
+        if isinstance(args, six.string_types):
             args = shlex.split(args, posix=True)
         self.config = vars(self.parser.parse_args(args))
 
@@ -240,11 +244,11 @@ class CLIHandler(object):
         partial_defaults = []
         for d in self.partial_defaults:
             # drop empty strings
-            partial_defaults.append({k:v for k,v in d.iteritems() if v != ""})
+            partial_defaults.append({k:v for k,v in d.items() if v != ""})
 
         # self.config was populated by preparse_cli()
         # Options explicitly set by user on CLI; is_default = None if no default
-        cli_opts = {k:v for k,v in self.config.iteritems() \
+        cli_opts = {k:v for k,v in self.config.items() \
             if not self.is_default.get(k, True)}
         # full set of defaults from cli.jsonc, from running parser on empty input
         defaults = vars(self.parser.parse_args([]))
@@ -320,7 +324,7 @@ class FrameworkCLIHandler(CLIHandler):
         config_str = ''
         if config_path:
             try:
-                with open(config_path, 'r') as f:
+                with io.open(config_path, 'r', encoding='utf-8') as f:
                     config_str = f.read()
             except Exception:
                 print("ERROR: Can't read input file at {}.".format(config_path))
@@ -334,7 +338,7 @@ class FrameworkCLIHandler(CLIHandler):
                     self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
                 self.partial_defaults = [{
-                    self.canonical_arg_name(k): v for k,v in file_input.iteritems()
+                    self.canonical_arg_name(k): v for k,v in file_input.items()
                 }]
             except Exception:
                 if 'json' in os.path.splitext('config_path')[1].lower():
@@ -374,7 +378,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     if not pod_list:
         pod_list = os.listdir(os.path.join(code_root, _pod_dir))
         pod_list = [s for s in pod_list if not s.startswith(('_','.'))]
-        pod_list.sort(key=str.lower)
+        pod_list.sort(key=six.text_type.lower)
     if pod == 'list':
         return pod_list
 
@@ -408,7 +412,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             pod_data=pods, realm_data=realms,
             sorted_lists={
                 "pods": pod_list,
-                "realms": sorted(list(realm_list), key=str.lower)
+                "realms": sorted(list(realm_list), key=six.text_type.lower)
             }
         )
     else:
@@ -500,7 +504,7 @@ class InfoCLIHandler(object):
     def info_realms_all(self, *args):
         print('List of installed diagnostics by realm:')
         for realm in self.realms:
-            if isinstance(realm, basestring):
+            if isinstance(realm, six.string_types):
                 print('{}:'.format(realm))
             else:
                 # tuple of multiple realms

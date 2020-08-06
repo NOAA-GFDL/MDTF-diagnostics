@@ -16,7 +16,7 @@
     "realm" : "atmos",
     "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
     "runtime_requirements": {
-      "python": [],
+      "python2": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
     }
   },

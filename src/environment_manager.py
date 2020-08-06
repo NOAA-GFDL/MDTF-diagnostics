@@ -1,25 +1,25 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import io
+from src import six
 import glob
 import shutil
 import atexit
 import signal
 from abc import ABCMeta, abstractmethod
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
         import subprocess
 else:
     import subprocess
-import util
-import util_mdtf
-from shared_diagnostic import PodRequirementFailure
+from src import util
+from src import util_mdtf
+from src.shared_diagnostic import PodRequirementFailure
 
-class EnvironmentManager(object):
+class EnvironmentManager(six.with_metaclass(ABCMeta)):
     # analogue of TestSuite in xUnit - abstract base class
-    __metaclass__ = ABCMeta
 
     def __init__(self, verbose=0):
         config = util_mdtf.ConfigManager()
@@ -71,7 +71,10 @@ class EnvironmentManager(object):
         for pod in self.pods:
             pod._setup_pod_directories() # should refactor setUp
 
-            pod.logfile_obj = open(os.path.join(pod.POD_WK_DIR, pod.name+".log"), 'w')
+            pod.logfile_obj = io.open(
+                os.path.join(pod.POD_WK_DIR, pod.name+".log"), 
+                'w', encoding='utf-8'
+            )
             log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
             pod.logfile_obj.write(log_str)
             if verbose > 0: print(log_str)
@@ -90,7 +93,7 @@ class EnvironmentManager(object):
             print("{} will run in env: {}".format(pod.name, pod.env))
             pod.logfile_obj.write("\n".join(
                 ["Found files: "] + pod.found_files + [" "]))
-            env_list = ["{}: {}". format(k,v) for k,v in pod.pod_env_vars.iteritems()]
+            env_list = ["{}: {}". format(k,v) for k,v in iter(pod.pod_env_vars.items())]
             pod.logfile_obj.write("\n".join(
                 ["Env vars: "] + sorted(env_list) + [" "]))
 
@@ -246,7 +249,7 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         pass 
 
     def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements.keys()]
+        langs = [s.lower() for s in pod.runtime_requirements]
         if ('r' in langs) or ('rscript' in langs):
             pod.env = 'r_' + pod.name
         elif 'ncl' in langs:
@@ -367,13 +370,16 @@ class CondaEnvironmentManager(EnvironmentManager):
             # env created specifically for this POD
             pod.env = self.env_name_prefix + pod.name
         else:
-            langs = [s.lower() for s in pod.runtime_requirements.keys()]
+            langs = [s.lower() for s in pod.runtime_requirements]
             if ('r' in langs) or ('rscript' in langs):
                 pod.env = self.env_name_prefix + 'R_base'
             elif 'ncl' in langs:
                 pod.env = self.env_name_prefix + 'NCL_base'
-            elif 'python' in langs:
-                pod.env = self.env_name_prefix + 'python_base'
+            elif 'python2' in langs:
+                raise NotImplementedError('Python 2 not supported for new PODs.')
+                # pod.env = self.env_name_prefix + 'python2_base'
+            elif 'python3' in langs:
+                pod.env = self.env_name_prefix + 'python3_base'
             else:
                 print("Can't find environment providing {}".format(
                     pod.runtime_requirements))

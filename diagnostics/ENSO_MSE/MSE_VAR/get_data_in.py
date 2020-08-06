@@ -9,7 +9,7 @@ def get_data_in(imax, jmax, mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_mse.out")):
         f = open(prefix+'/MSE_mse.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        mse = data[:, :]
+        mse =  np.reshape( data, (imax, jmax), order='F')
         f.close() 
     else:
         print "missing file " + prefix+"/MSE_mse.out"
@@ -19,7 +19,7 @@ def get_data_in(imax, jmax, mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_omse.out")):
         f = open(prefix+'/MSE_omse.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        omse = data[:, :]
+        omse = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print "missing file " + prefix+"/MSE_omse.out"
@@ -29,7 +29,7 @@ def get_data_in(imax, jmax, mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_madv.out")):
         f = open(prefix+'/MSE_madv.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        madv = data[:, :]
+        madv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print  "missing file " + prefix+"/MSE_madv.out"
@@ -39,7 +39,7 @@ def get_data_in(imax, jmax, mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_mdiv.out")):
         f = open(prefix+'/MSE_mdiv.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        mdiv = data[:, :]
+        mdiv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print "missing file " + prefix+"/MSE_mdiv.out"
@@ -49,7 +49,7 @@ def get_data_in(imax, jmax, mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_tadv.out")):
         f = open(prefix+'/MSE_tadv.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        tadv = data[:, :]
+        tadv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print "missing file " + prefix+"/MSE_tadv.out"

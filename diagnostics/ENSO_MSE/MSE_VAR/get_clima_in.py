@@ -9,7 +9,7 @@ def get_clima_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_mse_clim.out")):
         f = open(prefix+'/MSE_mse_clim.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        mse = data[:, :]
+        mse = np.reshape( data, (imax, jmax), order='F')
         f.close() 
     else:
         print " missing file " + prefix+"/MSE_mse_clim.out"
@@ -19,7 +19,7 @@ def get_clima_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_omse_clim.out")):
         f = open(prefix+'/MSE_omse_clim.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        omse = data[:, :]
+        omse = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:    
         print " missing file " + prefix+"/MSE_omse_clim.out"
@@ -29,7 +29,7 @@ def get_clima_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_madv_clim.out")):
         f = open(prefix+'/MSE_madv_clim.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        madv = data[:, :]
+        madv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print " missing file " + prefix+"/MSE_madv_clim.out"
@@ -39,7 +39,7 @@ def get_clima_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_mdiv_clim.out")):
         f = open(prefix+'/MSE_mdiv_clim.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        mdiv = data[:, :]
+        mdiv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print " missing file " + prefix+"/MSE_mdiv_clim.out"
@@ -49,7 +49,7 @@ def get_clima_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix, undef):
     if (os.path.exists(prefix+"/MSE_tadv_clim.out")):
         f = open(prefix+'/MSE_tadv_clim.out', 'rb')
         data = np.fromfile(f, dtype='float32')
-        tadv = data[:, :]
+        tadv = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print " missing file " + prefix+"/MSE_tadv_clim.out"

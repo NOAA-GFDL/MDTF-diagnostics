@@ -11,7 +11,7 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
     im1 = 1
     im2 = 24
     tmax12 = 12 
-    ss    = np.ma.zeros((imax,jmax,tmax24), dtype='float32', order='F')
+    ss      = np.ma.zeros((imax,jmax,tmax24), dtype='float32', order='F')
     clima   = np.ma.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
     vvar    = np.ma.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax,tmax24), dtype='float32', order='F')
@@ -25,7 +25,7 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
         print " exiting get_flux_in_24.py "
         sys.exit()
 
-    for it in range(0, ttmax+1):
+    for it in range(0, ttmax):
         file_count = 0
         for im in range (im1, im2+1):
             iyy = years[it]
@@ -45,17 +45,16 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
                     if (os.path.exists( namein)):
                         vvar = read_netcdf_2D(imax, jmax,  tmax12,  variable,  namein, vvar, undef)
                         vvar_valid = (vvar < undef)
+                        vvar_invalid = (vvar >= undef)
                         # set invalid entries of vvar to zero so they don't contribute
                         # to the running sum in dataout (modifies in-place)
-                        vvar[~vvar_valid] = 0.
-                        file_count += 1
+                        dataout[:,:, im-1] += vvar[:,:, imm-1]
+                        ss[:,:, im-1] += vvar_valid[:,:, imm-1]
                     else:
                         print " missing file " + namein
                         print " exiting get_flux_in_24.py "
                         sys.exit()
 
-                dataout[:,:, im-1] += vvar[:,:, imm-1]
-                ss[:,:, im-1] += vvar_valid[:,:, imm-1]
 #### 
     dataout = dataout/ss
 

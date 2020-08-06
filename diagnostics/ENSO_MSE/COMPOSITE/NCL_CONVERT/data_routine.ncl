@@ -13,15 +13,13 @@ begin
 
 ;;  read  in the data from  NetCDF directory :  one month at the time 
 ;;     to avoid loading too much into memory 
-
-
       vardata  = getenv("DATADIR")                   ; model input
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ; envvar set in ENSO_MSE.py
       case =  getenv( "CASENAME")
       codedata = getenv ("POD_HOME")
 
-      iy1 = ( getenv("FIRSTYR"))
-      iy2 = ( getenv("LASTYR"))
+      iy1 = toint( ( getenv("FIRSTYR")) )
+      iy2 = toint( (  getenv("LASTYR")) )
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars
@@ -40,27 +38,25 @@ begin
 
 ;;       coordinate vars
        lev  = getenv("lev_coord")
-       lon  = getenv("lon_coord")
-       lat  = getenv("lat_coord")
-       time = getenv("time_coord")
+       lon  = getenv("lon_var")
+       lat  = getenv("lat_var")
+       time = getenv("time_var")
 
        hyam = getenv("hyam_var")
        hybm = getenv("hybm_var")
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels
        plevels_name  =  codedata + "/shared/plevs.txt"
 
-       namein1 = vardata + case +  "/mon/"
-       nameout = outdir + case + "/netCDF/DATA/"
-       nameclima =  outdir + case + "/netCDF/CLIMA/"
-
+       namein1   = vardata +  "/mon/"
+       nameout   =  outdir + "/netCDF/DATA/"
+       nameclima =  outdir + "/netCDF/CLIMA/"
 ;;;;   
 ;;   	     Varnamesin3   = (/ "zg", "ua", "va", "ta", "hus", "wap" /)
             Varnamesin3   = (/ zg, ua, va, ta, hus, wap /)
 
-	Varnamesout3  = (/ "Z", "U", "V", "T", "Q", "OMG" /)
+	Varnamesout3  = (/ "zg", "ua", "va", "ta", "hus", "wap" /)
  	ivar3 = dimsizes( Varnamesin3)
 
 ;;;;	print( Varnamesin3 )
@@ -68,7 +64,7 @@ begin
 ;;  2 D fluxes 
 ;;        Varnamesin2   = (/ "pr",  "hfss", "hfls", "ts"/)
        Varnamesin2   = (/ pr,  hfss, hfls, ts/)
-       Varnamesout2  = (/ "PR",  "SHF" , "LHF" , "TS" /)
+       Varnamesout2  = (/ "pr",  "hfss" , "hfls" , "ts" /)
        ivar2 = dimsizes( Varnamesin2)
        ivar32 = ivar3 + ivar2 
 ;;;;;;;;;;;;   
@@ -422,7 +418,7 @@ begin
       end do  ;;;;  over 3 D variables
       end if  ;;;  if 3D var extraction
 ;;;;;;;;;;;;;;;; END 3D calculations
-     
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; the same for 2D but no vertical or hybrid  interpolations
       if( d2var .eq. 1) then
@@ -434,7 +430,7 @@ begin
        Varname = Varnamesin2(ivar)
        Varout = Varnamesout2(ivar)
        ivv1 = ivar3 + ivar + 1
-;;;  print( " Started preprocessing variable : " + Varname + "  " +  ivv1 + "/" + ivar32 )
+   print( " Started preprocessing variable : " + Varname + "  " +  ivv1 + "/" + ivar32 )
 
        namein = namein1 + case +"." + Varname + ".mon.nc"
        print( "namein " + namein)
@@ -473,7 +469,6 @@ begin
         ss2 = new(  dimSizes22, "float")
         ss2@_FillValue = undef2
         ss2 = 0.
-
 
 ;;;       loop over times and select only prescribed years 
        do year = iy1, iy2
@@ -517,7 +512,51 @@ begin
         Vout2@_FillValue = undef2
 ;;;  output the data to a file based on year  and month
         yearchar =  sprinti("%0.4i", year)
-        
+
+         fileout  = nameout + yearchar + "/" + Varout + "_" + yearchar + ".nc"
+          n = systemfunc( " rm " +  fileout + " 2> /dev/null")
+       fout = addfile( fileout ,"c")
+       setfileoption(fout,"DefineMode",True)
+
+       lon2!0 = "lon"
+       lon2@units = "degrees_east"
+       lon2@_FillValue = undef2
+       lon2@long_name = "longitude"
+
+       lat2!0 = "lat"
+       lat2@units = "degrees_north"
+       lat2@long_name = "latitude"
+       lat2@_FillValue = undef2
+
+
+       fAtt               = True            ; assign file attributes
+       fAtt@title         = "NCL created netcdf"
+       fAtt@source_file   =  "original-file.nc"
+       fAtt@Conventions   = "None"
+       fAtt@creation_date = systemfunc ("date")
+       fileattdef( fout, fAtt )            ; copy file attributes
+;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+            filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
+
+       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
+       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
+       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
+       filevardef(fout,  Varname, typeof(Vout2),  dimNames2 )
+
+       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
+       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
+       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
+       filevarattdef(fout, Varname, Vout2)
+
+       setfileoption(fout,"DefineMode",False)
+       fout->time   = (/timeout/)
+       fout->lat    = (/lat2/)
+       fout->lon    = (/lon2/)
+       fout->$Varname$  = (/Vout2/)
+
+        end do   ;;    over all  years in the data
+      
+
        fileout  = nameclima + "/" + Varout + "_clim" + ".nc"
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
        fout = addfile( fileout ,"c")
@@ -540,31 +579,12 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 ;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" ) 
-      filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
-
-       filevardef(fout, "time" , typeof(timeout), (/"time"/) )
-       filevardef(fout, "lat"  , typeof(lat2),   (/"lat"/) )
-       filevardef(fout, "lon"  , typeof(lon2),   (/"lon"/) )
-       filevardef(fout,  Varname, typeof(Vout2),  dimNames2 )
-
-       filevarattdef(fout, "time" , timeout)                  ; copy time attributes
-       filevarattdef(fout, "lat"  , lat2)                     ; copy lat attributes
-       filevarattdef(fout, "lon"  , lon2)                     ; copy lon attributes
-       filevarattdef(fout, Varname, Vout2)
-
-      setfileoption(fout,"DefineMode",False)
-       fout->time   = (/timeout/)
-       fout->lat    = (/lat2/)
-       fout->lon    = (/lon2/)
-       fout->$Varname$  = (/Vout2/)
-
-     end do   ;;    over all  years in the data
 ;;;;  average clima and output too
       ss2 =  where( ss2 .gt. 0.,  ss2 ,  ss2@_FillValue )
        clima = clima/ss2
 ;;;   define attributes    and nameout
-      fileout  = nameclima + "/" + Varout + "_clim" + ".nc"
-;;       print("fileout: " + fileout )
+;;      fileout  = nameclima + "/" + Varout + "_clim" + ".nc"
+       print("fileout: " + fileout )
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
 
        fout = addfile( fileout ,"c")

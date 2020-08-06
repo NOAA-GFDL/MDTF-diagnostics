@@ -15,9 +15,8 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
     vvar1  = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     vvar2  = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     correl = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
-    variance1 = np.np.ma.zeros((imax,jmax),dtype='float32')
+    variance1 = np.ma.zeros((imax,jmax),dtype='float32')
 ##    variance2 = np.zeros((imax,jmax),dtype='float32')
-    ss2 = np.np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     variance2 = 0.
     ss22 = 0.
 
@@ -30,8 +29,14 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
     clima2 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')    
     
     if (os.path.exists( namein1) and  os.path.exists( namein2)):
-        clima1 = read_netcdf_3D(imax, jmax,  zmax, tmax,  variable1,  namein1, clima1, undef)       
-        clima2 = read_netcdf_3D(imax, jmax,  zmax, tmax,  variable2,  namein1, clima2, undef)
+        clima1 = read_netcdf_2D(imax, jmax,  tmax,  variable1,  namein1, clima1, undef)       
+        clima2 = read_netcdf_2D(imax, jmax,  tmax,  variable2,  namein2, clima2, undef)
+        clima1_valid = (clima1 < undef)
+        clima1_invalid = (clima1 >= undef)
+        clima1[clima1_invalid] = 0.
+        clima2_valid = (clima2 < undef)
+        clima2_invalid = (clima2 >= undef)
+        clima2[clima2_invalid] = 0.
     else:
         print "    missing file 1 " + namein1 
         print " or missing file 2 " + namein2
@@ -55,6 +60,14 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                 if (os.path.exists( namein1) and os.path.exists( namein1)):
                     vvar1 = read_netcdf_2D(imax, jmax, tmax,  variable1,  namein1, vvar1, undef)
                     vvar2 = read_netcdf_2D(imax, jmax, tmax,  variable2,  namein2, vvar2, undef)
+                    vvar1_valid = (vvar1 < undef)
+                    vvar1_invalid = (vvar1 >= undef)
+                    vvar1[vvar1_invalid] = 0.
+
+                    vvar2_valid = (vvar2 < undef)
+                    vvar2_invalid = (vvar2 >= undef)
+                    vvar2[vvar2_invalid] = 0.
+
 ##               get the index SST based on ii, jj 
 ##                     average SST anomaly 
                     sst_anom = np.mean( vvar2[ii1:ii2,jj1:jj2, imm-1] - clima2[ii1:ii2, jj1:jj2, imm-1] )
@@ -63,8 +76,9 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
 
 ####################################
 ###                       collect summations for the variances and covariances
-                    variance1 = variance1 + np.mean( (vvar1[:,:, imm-1]   - clima1[:,:, imm-1])* (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) ) 
-                    correl = correl + np.mean( (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) * sst_anom )
+                    variance1 = variance1 + ( (vvar1[:,:, imm-1]   - clima1[:,:, imm-1])* (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) ) 
+                    correl = correl + ( (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) * sst_anom )
+                    ss[:,:] += vvar1_valid[:,:, imm-1]
                 else:
                     print "    missing file 1 " + namein1
                     print " or missing file 2 " + namein2
@@ -72,13 +86,14 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                     sys.exit()
 
 ############# average and output  
-        variance2 = variance2/ss22
-        variance2 = math.sqrt(variance2)
-
-    correl = correl/ss2
-    variance1 = variance1/ss2
-    variance1 = math.sqrt(variance1 ) 
+ 
+    variance2 = variance2/ss22
+    variance2 = math.sqrt(variance2)
+    print( variance2)
+    correl = correl/ss22
+    variance1 = variance1/ss22
+    variance1 = np.sqrt(variance1) 
     correl = correl/(variance1 * variance2) 
-
+###
     return correl.filled(fill_value = undef)
 

@@ -43,8 +43,7 @@ begin
        season = str_get_field(data(12), 3," ")
 
       domain = (/ "Central Pacific", "Eastern Pacific" /)
-      tlabels = (/ "MSE vertical adv.", "moist adv." , "temperature adv.",  "SW", "LW",  "THF" /)
-       tlabels = (/ "MSE~B~vert. advect.~N", "M~B~adv~N",  "T~B~adv~N" , "SW~B~net~N", \ 
+      tlabels = (/ "MSE~B~vert. advect.~N", "M~B~adv~N",  "T~B~adv~N" , "SW~B~net~N", \ 
                     "LW~B~net~N", "THF~B~net~N" /)
 
       do n = 0, 1
@@ -147,14 +146,16 @@ begin
 ;;      sres@tmYLTickStartF    = sres@trYMinF
 
      sres@gsnXYBarChart = True
-     sres@gsnYRefLine           = 0. ; reference line  
+     sres@gsnYRefLine      = 0. ; reference line  
      sres@gsnMaximize      = True      
 
       sres@tmXBValues = ispan( 1, ydim-2, 1 )
 
      sres@gsnXYBarChartBarWidth = width           ; change bar widths
 
-     sres@tmXBMode          =   "Explicit"         ; explicit labels
+     sres@tmXBMode      =   "Explicit"         ; explicit labels
+     sres@txFuncCode = "~"
+     sres@tmXBLabelFuncCode  = "~"
 
      sres@tmXBLabels = tlabels ;
      sres@tmXBLabelFontHeightF = 0.0105
@@ -162,10 +163,7 @@ begin
      sres@tmYLLabelFontHeightF = 0.015   ;;  0.0225
      sres@tiMainFontHeightF = 0.025
      sres@tiMainFont = "helvetica"
-;;     sres@tiMainString =  maintitle2
      sres@gsnRightString = ""
-;;   sres@tiYAxisString = "(mm/day)"
-;;   sres@tiXAxisString = "pentad"
 
 ;;;    Central 
      sres@gsnXYBarChartColors = (/"red"/)

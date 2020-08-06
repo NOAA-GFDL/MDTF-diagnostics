@@ -105,8 +105,8 @@ begin
    namein2 = nameclima +  variable + "_clim.grd"  ;;; str_concat( string)
 
    nameout12 = nameout + "_" + variable
-;;  print( namein1) 
-;;   print( namein2 ) 
+;    print( namein1) 
+;   print( namein2 ) 
 ;;   read in the data
      dims = (/  ymax, xmax /)
      datain1 =  new(  dims, "float")
@@ -115,7 +115,8 @@ begin
      datain2@_FillValue = undef2
      datain1  = fbindirread (namein1, 0, dims , "float")
      datain2  = fbindirread (namein2, 0, dims , "float")
-
+      
+;;    print( datain1)
 ;;  make the anomaly for plotting
     
     datain =  new(  dims, "float")
@@ -125,6 +126,7 @@ begin
      datain&lon = lon
 
     datain = ff *( datain1  - datain2) 
+;;    printVarSummary( datain)
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
    wks_type = "png"
@@ -164,8 +166,6 @@ begin
 ;;  title 
   res@tiMainFontHeightF = 0.025
   res@tiMainFont = "helvetica"
-;;  res@tiMainString =  maintitle
-;;   res@txFuncCode    = ":"
 
 ;;;  title separate as two texts on the top
       txres1 = True

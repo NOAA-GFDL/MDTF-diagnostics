@@ -108,7 +108,9 @@ begin
      sres@gsnXYBarChartBarWidth = width           ; change bar widths
 
      sres@tmXBMode          =   "Explicit"         ; explicit labels
-
+   
+     sres@txFuncCode    = "~"
+     sres@tmXBLabelFuncCode  = "~"
      sres@tmXBLabels = tlabels ;
      sres@tmXBLabelFontHeightF = 0.0105
      sres@tmXTLabelFontHeightF = 0.015   ;; 0.0205
@@ -182,7 +184,6 @@ begin
       txres2@txFontHeightF = 0.016
        dy2 = -0.03
 
-;;       res@txFuncCode    = ":"
 ;;      region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + slat1 + "~F34~0~F~N " + slat2 + "~F34~0~F~N"
 
     if ( (slat1 .lt. 0.) .and. (slat2 .gt. 0.) )  then
@@ -192,7 +193,7 @@ begin
     if ( (slat1 .lt. 0.) .and. (slat2 .lt. 0.) )  then
     sslat1 = -slat1
     sslat2 = -slat2
-   region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + sslat1 + "~F34~0~F~S " + sslat2 + "~F34~0~F~S"
+    region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + sslat1 + "~F34~0~F~S " + sslat2 + "~F34~0~F~S"
     end if
      if ( (slat1 .ge. 0.) .and. (slat2 .ge. 0.) )  then
    region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + slat1 + "~F34~0~F~N " + slat2 + "~F34~0~F`N"

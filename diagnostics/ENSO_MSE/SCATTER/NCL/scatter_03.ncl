@@ -27,8 +27,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin
 
       varcode = getenv("POD_HOME")
-      wkdir = getenv("WK_DIR")
-      obsdir = getenv("OBS_DATA")
+      wkdir = getenv("ENSO_MSE_WKDIR")
+      obsdir = getenv("OBS_DIR")
 
       prefix = obsdir + "/SCATTER/"
 
@@ -39,10 +39,9 @@ begin
     xmax     =  (/ 180.,  200. /)
     ymin    =  (/ -50.,  -40. /)   ;;;;  only y axis need changing
     ymax    =  (/ 10.,   20. /)
-    xlabel = "Precipitation [W/m:S:2:N:]"
-    ylabel = "MSE vert. adv.  [W/m:S:2:N:]"
+    xlabel = "Precipitation [W/m~S~2~N~]"
+    ylabel = "MSE vert. adv.  [W/m~S~2~N~]"
 
-;;  Frad =  "F:B:rad:N: [W/m:S:2:N:]"
 ;;;----------------------------------------------------------------------
 ; Data is hard-coded here. It was originally calculated by running
 ; a compute-intensive script.
@@ -81,9 +80,6 @@ begin
    datain@_FillValue =  undef9   
    dataX = datain(:, 0)
    dataY = datain(:, 3)
-
-   ;;printMinMax (dataX, False)
-   ;;printMinMax (dataY, False)
 
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
@@ -127,7 +123,7 @@ begin
    wks_type = "png"
    wks_type@wkWidth = 1000
    wks_type@wkHeight = 1000 
-   wks = gsn_open_wks( wks_type, wkdir +  "/MDTF_SCATTER/" + nameout(ibox))
+   wks = gsn_open_wks( wks_type, wkdir +  "/SCATTER/" + nameout(ibox))
 
 ;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
@@ -178,7 +174,7 @@ begin
    res1 = True
    res1@tiMainFont = "helvetica"
    res1@txFont   = "helvetica"
-   res1@txFuncCode    = ":"
+   res1@txFuncCode    = "~"
 
    res1@tmXBMode         =  "Explicit" ;; "Manual"
    res1@tmYLMode         =  "Explicit" ;;  "Manual"
@@ -205,19 +201,18 @@ begin
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
-    txres3@txFuncCode    = ":"
+    txres3@txFuncCode    = "~"
     txres3@txFont   = "helvetica"
     txres3@txFontHeightF = 0.025 ;;  0.025
     gsn_text_ndc(wks, xlabel, 0.45, 0.17, txres3)
 ;;    
     txres4 = True
-    txres4@txFuncCode    = ":"
+    txres4@txFuncCode    = "~"
     txres4@txFont   = "helvetica"
     txres4@txAngleF  = 90.
     txres4@txFontHeightF = 0.02 ;;  0.025
     gsn_text_ndc(wks, ylabel, 0.07, 0.55, txres4)
 
-;;    gsn_text_ndc(wks, "Precipitation [W/m:S:2:N:]",  0.40, 0.17, txres4)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    res1@tiMainFontHeightF  = 0.02

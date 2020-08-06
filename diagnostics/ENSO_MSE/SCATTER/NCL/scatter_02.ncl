@@ -27,8 +27,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin
 
       varcode = getenv("POD_HOME")
-      wkdir = getenv("WK_DIR")
-      obsdir = getenv("OBS_DATA")
+      wkdir = getenv("ENSO_MSE_WKDIR")
+      obsdir = getenv("OBS_DIR")
 
       prefix = obsdir + "/SCATTER/"
 
@@ -39,10 +39,8 @@ begin
     xmax     =  (/ 180.,  200. /)
     ymin    =  (/ 0.,  0. /)
     ymax    =  (/ 40.,   50. /)
-    xlabel = "Precipitation [W/m:S:2:N:]"
-    ylabel = "F:B:rad:N: [W/m:S:2:N:]"
-;;     ylabel = " Frad  W/m2" 
-;;  Frad =  "F:B:rad:N: [W/m:S:2:N:]"
+    xlabel = "Precipitation [W/m~S~2~N~]"
+    ylabel = "F~B~rad~N~ [W/m~S~2~N~]"
 ;;;----------------------------------------------------------------------
 ; Data is hard-coded here. It was originally calculated by running
 ; a compute-intensive script.
@@ -131,7 +129,7 @@ begin
    wks_type = "png"
    wks_type@wkWidth = 1000
    wks_type@wkHeight = 1000 
-   wks = gsn_open_wks( wks_type, wkdir +  "/MDTF_SCATTER/" + nameout(ibox))
+   wks = gsn_open_wks( wks_type, wkdir +  "/SCATTER/" + nameout(ibox))
 
 ;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
@@ -182,7 +180,7 @@ begin
    res1 = True
    res1@tiMainFont = "helvetica"
    res1@txFont   = "helvetica"
-   res1@txFuncCode    = ":"
+   res1@txFuncCode    = "~"
 
    res1@tmXBMode         =  "Explicit" ;; "Manual"
    res1@tmYLMode         =  "Explicit" ;;  "Manual"
@@ -209,19 +207,17 @@ begin
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
-    txres3@txFuncCode    = ":"
+    txres3@txFuncCode    = "~"
     txres3@txFont   = "helvetica"
     txres3@txFontHeightF = 0.025
     gsn_text_ndc(wks, xlabel, 0.45, 0.17, txres3)
 
     txres4 = True
-    txres4@txFuncCode    = ":"
+    txres4@txFuncCode    = "~"
     txres4@txFont   = "helvetica"
     txres4@txAngleF  = 90.
     txres4@txFontHeightF = 0.025
     gsn_text_ndc(wks, ylabel, 0.08, 0.54, txres4)
-
-;;    gsn_text_ndc(wks, "Precipitation [W/m:S:2:N:]",  0.40, 0.17, txres4)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -235,8 +231,6 @@ begin
   res1@tmLabelAutoStride = True
 ;--XY marker resources
   res1@xyMarkLineMode     = "Markers"
-;;  res1@xyMarkerSizeF      = 0.02
-;;  res1@xyMarkerThicknessF = 3.
   res1@xyMonoMarkerColor  = False          ; Allow different colors for markers
   res1@xyMarkerSizes            = markersizes(:)
   res1@xyMarkerThicknesses      = markerthick(:)

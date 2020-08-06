@@ -14,18 +14,18 @@ begin
 ;;  read  in the data from  NetCDF directory : 
 
       vardata  = getenv("DATADIR")  ; model data
-      outdir =  getenv("ENSO_MSE_WKDIR_COMPOSITE")
+      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ;
       case =  getenv( "CASENAME")
       codedata = getenv ("POD_HOME")  ;; not used
 
-      iy1 = ( getenv("FIRSTYR"))
-      iy2 = ( getenv("LASTYR"))
+      iy1 =  toint (( getenv("FIRSTYR")) )
+      iy2 = toint (( getenv("LASTYR")) )
 
        Varname1 = getenv("rsus_var") ;;  "rsus"
        Varname2 = getenv("rsds_var") ;;  "rsds"
        Varname3 = getenv("rsdt_var") ;;  "rsdt"
        Varname4 = getenv("rsut_var") ;;  "rsut"
-       
+
        Varname5 = getenv("rlus_var") ;;  "rlus"
        Varname6 = getenv("rlds_var") ;;  "rlds"
        Varname7 = getenv("rlut_var") ;;  "rlut"
@@ -33,12 +33,12 @@ begin
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         undef2 = 1.1E+20
 
-       namein0 = vardata + case + "/mon/" +  case + "."
-       nameout = outdir + case +  "/netCDF/DATA/"
-       nameclima = outdir + case + "/netCDF/CLIMA/"
+       namein0 = vardata + "/mon/" +  case + "."
+       nameout = outdir +  "/netCDF/DATA/"
+       nameclima = outdir + "/netCDF/CLIMA/"
 
-       Varout1 =  "SW"
-	Varout2 =  "LW" 
+       Varout1 =  "sw"
+	Varout2 =  "lw" 
 
        namein1 = namein0 + Varname1 + ".mon.nc"
        namein2 = namein0 + Varname2 + ".mon.nc"
@@ -281,7 +281,7 @@ begin
        fout->time   = (/timeout/)
        fout->lat    = (/lat2/)
        fout->lon    = (/lon2/)
-       fout->$Varout2$  = (/climasw/)
+       fout->$Varout1$  = (/climasw/)
        delete( fout)
 ;;;;  second file 
        fileout  = nameclima + "/" + Varout2 + "_clim" + ".nc"

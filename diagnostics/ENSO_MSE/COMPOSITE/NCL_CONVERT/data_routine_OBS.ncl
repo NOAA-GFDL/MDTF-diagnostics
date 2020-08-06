@@ -15,7 +15,7 @@ begin
 ;;  read  in the data from  NetCDF directory :  one year at the time 
 ;;     to avoid loading too much into memory 
 
-      obsdata  = getenv("OBS_DATA")    ;;  input directory 
+      obsdata  = getenv("OBS_DIR")    ;;  input directory
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py
       case = "ERA-INTERIM"
       codedata = getenv ("POD_HOME")
@@ -37,13 +37,12 @@ begin
 
 ;;       coordinate vars
        lev  =  getenv("lev_coord")
-       lon  =  getenv("lon_coord")
-       lat  =  getenv("lat_coord")
-       time =  getenv("time_coord")
+       lon  =  getenv("lon_var")
+       lat  =  getenv("lat_var")
+       time =  getenv("time_var")
 
        hyam =  getenv("hyam_var")
        hybm =  getenv("hybm_var")
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels 
@@ -56,14 +55,14 @@ begin
 
 ;;;;   
        Varnamesin3   = (/ zg, ua, va, ta, hus, wap /)
-	Varnamesout3  = (/ "Z", "U", "V", "T", "Q", "OMG" /)
+	Varnamesout3  = (/ "zg", "ua", "va", "ta", "hus", "wap" /)
  	ivar3 = dimsizes( Varnamesin3)
 
 ;;;;	print( Varnamesin3 )
 
 ;;  2 D fluxes 
        Varnamesin2   = (/ pr,  hfss, hfls, ts/)
-       Varnamesout2  = (/ "PR",  "SHF" , "LHF" , "TS" /)
+       Varnamesout2  = (/ "pr",  "hfss" , "hfls" , "ts" /)
        ivar2 = dimsizes( Varnamesin2)
        ivar32 = ivar3 + ivar2 
 ;;;;;;;;;;;;   

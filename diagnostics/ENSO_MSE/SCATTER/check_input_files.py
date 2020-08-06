@@ -9,8 +9,14 @@ import os
 ###  check  the input data in inputdata/model  directories  reqquired for SCATTER routine 
 ## 
 
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
 
-wkdir =  os.environ["WK_DIR"]
+
+wkdir =  os.environ["ENSO_MSE_WKDIR"]
 vardir = os.environ["POD_HOME"]
 
 size = 4
@@ -26,17 +32,17 @@ vvar2[0]  = "MSE_omse"
 vvar2[1]  = "MSE_madv"
 
 ### checking the output direcories and create if missing 
-if not os.path.exists( wkdir + "/MDTF_SCATTER/" ):
-    os.makedirs( wkdir + "/MDTF_SCATTER/" )
+if not os.path.exists( wkdir + "/SCATTER/" ):
+    os.makedirs( wkdir + "/SCATTER/" )
 
 ######  check for each input model data .. 
-namein =  os.environ["OBS_DATA"]  + "/SCATTER/central_pacific_MSE_terms.txt"
+namein =  os.environ["OBS_DIR"]  + "/SCATTER/central_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
     print "============================================="
     print ("===  MISSING FILE for SCATTER  =====" )
     print ( namein )
     exit()
-namein =  os.environ["OBS_DATA"] + "/SCATTER/eastern_pacific_MSE_terms.txt"
+namein =  os.environ["OBS_DIR"] + "/SCATTER/eastern_pacific_MSE_terms.txt"
 if not os.path.exists( namein):
     print "============================================="
     print ("===  MISSING FILE for SCATTER  =====" )

@@ -18,12 +18,6 @@
 import numpy as np
 import sys
 import math
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
 
 from get_data_in import get_data_in
 from get_clima_in import get_clima_in
@@ -40,6 +34,13 @@ from moist_routine_omse import moisture_o_energy
 from get_parameters_in import get_parameters_in
 
 import datetime
+ 
+import os
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
 from get_dimensions import get_dimensions
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from generate_ncl_call import generate_ncl_call
@@ -349,4 +350,5 @@ if os.path.isfile( html_file ):
     os.system("rm -rf "+html_file)
 
 os.system("cp "+os.environ["POD_HOME"]+"/MSE/MSE.html "+html_file)
+
 ############  end 

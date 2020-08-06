@@ -4,9 +4,10 @@ import sys
 
 def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef):
     #print prefix
-    if (os.path.exists(prefix+"/U_clim.gr")):
+    if (os.path.exists(prefix+"/U_clim.grd")):
         f = open(prefix+'/U_clim.grd', 'rb')
-        uu = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        uu = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()
     else:
         print " missing file " + prefix + "/U_clim.grd"
@@ -15,7 +16,8 @@ def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef)
 
     if (os.path.exists(prefix+"/V_clim.grd")):
         f = open(prefix+'/V_clim.grd', 'rb')
-        vv = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        vv = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()        
     else:
         print " missing file "  + prefix + "/V_clim.grd"
@@ -24,7 +26,8 @@ def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef)
 
     if (os.path.exists(prefix+"/T_clim.grd")):
         f = open(prefix+'/T_clim.grd', 'rb')
-        temp = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        temp = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()
     else:
         print "missing file " + prefix + "/T_clim.grd"
@@ -33,7 +36,8 @@ def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef)
 
     if (os.path.exists(prefix+"/Q_clim.grd")):
         f = open(prefix+'/Q_clim.grd', 'rb')
-        shum = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        shum = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()
     else:
         print "missing file " + prefix + "/Q_clim.grd"
@@ -42,7 +46,8 @@ def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef)
         
     if (os.path.exists(prefix+"/Z_clim.grd")):
         f = open(prefix+'/Z_clim.grd', 'rb')
-        hgt = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        hgt = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()        
     else:
         print "missing file " + prefix + "/Z_clim.grd"
@@ -51,7 +56,8 @@ def get_clima_in(imax, jmax, zmax, hgt, uu, vv, temp, shum, vvel, prefix, undef)
 
     if (os.path.exists(prefix+"/OMG_clim.grd")):
         f = open(prefix+'/OMG_clim.grd', 'rb')
-        vvel = np.fromfile(f, dtype='float32')
+        aa1 = np.fromfile(f, dtype='float32')
+        vvel = np.reshape( aa1, (imax, jmax, zmax), order='F')
         f.close()            
     else:
         print "missing file " + prefix + "/OMG_clim.grd"    

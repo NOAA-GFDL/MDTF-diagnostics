@@ -6,7 +6,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
     print("DRBDBG prefix ",prefix)
     if (os.path.exists(prefix+"/PR.grd")):
         f = open(prefix+'/PR.grd', 'rb')
-        pr = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        pr = np.reshape( data, (imax, jmax), order='F')
         pr =  pr * 24.*60.*60.
         f.close()
     else:
@@ -17,7 +18,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
 
     if (os.path.exists(prefix+"/TS.grd")):
         f = open(prefix+'/TS.grd', 'rb')
-        ts = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        ts = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print  "missing file " + prefix+"/TS.grd"
@@ -26,7 +28,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
 
     if (os.path.exists(prefix+"/SHF.grd")):
         f = open(prefix+'/SHF.grd', 'rb')
-        shf = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        shf = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print "missing file " + prefix+"/SHF.grd"
@@ -35,7 +38,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
 
     if (os.path.exists(prefix+"/LHF.grd")):
         f = open(prefix+'/LHF.grd', 'rb')
-        lhf = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        lhf = np.reshape( data, (imax, jmax), order='F')
         f.close()        
     else:
         print "missing file " + prefix+"/LHF.grd"
@@ -44,7 +48,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
 
     if (os.path.exists(prefix+"/SW.grd")):
         f = open(prefix+'/SW.grd', 'rb')
-        sw = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        sw = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print "missing file " + prefix+"/SW.grd"
@@ -53,7 +58,8 @@ def get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
 
     if (os.path.exists(prefix+"/LW.grd")):
         f = open(prefix+'/LW.grd', 'rb')
-        lw = np.fromfile(f, dtype='float32')
+        data = np.fromfile(f, dtype='float32')
+        lw = np.reshape( data, (imax, jmax), order='F')
         f.close()
     else:
         print  "missing file " + prefix+"/LW.grd"

@@ -13,16 +13,16 @@ begin
 
 ;;  read  in the data from  NetCDF directory : 
 
-      obsdata  = getenv("DATADIR")  ; model data
-      outdir =  getenv("ENSO_MSE_WKDIR_COMPOSITE")
-      case =  "ERA-INTERIM"  ;;; 
+      obsdata  = getenv("OBS_DIR")  ; model data
+      outdir =  getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/obs"
+      case =  "ERA-INTERIM"  ;;;
       codedata = getenv ("POD_HOME")  ;; not used
 
        Varname1 = getenv("rsus_var") ;;  "rsus"
        Varname2 = getenv("rsds_var") ;;  "rsds"
        Varname3 = getenv("rsdt_var") ;;  "rsdt"
        Varname4 = getenv("rsut_var") ;;  "rsut"
-       
+
        Varname5 = getenv("rlus_var") ;;  "rlus"
        Varname6 = getenv("rlds_var") ;;  "rlds"
        Varname7 = getenv("rlut_var") ;;  "rlut"
@@ -41,8 +41,8 @@ begin
        nameout = outdir +  "/netCDF/DATA/"
        nameclima = outdir + "/netCDF/CLIMA/"
 
-       Varout1 =  "SW"
-	Varout2 =  "LW" 
+       Varout1 =  "sw"
+	Varout2 =  "lw" 
 
        namein1 = namein0 + Varname1 + ".mon.nc"
        namein2 = namein0 + Varname2 + ".mon.nc"

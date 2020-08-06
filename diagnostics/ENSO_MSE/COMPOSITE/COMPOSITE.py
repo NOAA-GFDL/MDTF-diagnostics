@@ -25,18 +25,11 @@
 import numpy as np
 import sys
 import math
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
 
 from get_parameters_in import get_parameters_in
 from get_nino_index import get_nino_index
 from get_data_in import get_data_in
 from get_flux_in import get_flux_in
-
 from get_clima_in import get_clima_in
 from get_flux_clima import get_flux_clima
 from get_flux_in_24 import get_flux_in_24
@@ -47,10 +40,20 @@ from get_correlation import get_correlation
 from get_regression import get_regression
 
 import datetime
+
+import os
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
+
+
+from util import check_required_dirs
 from util import check_required_dirs
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
-from generate_ncl_plots import generate_ncl_plots
+from generate_ncl_call import generate_ncl_call
 
 '''
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
@@ -309,19 +312,19 @@ if ( test_mode ):
 else:
         print " Reading Climatologies  "  + now.strftime("%Y-%m-%d %H:%M")
 
-        hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "Z_clim",  hgtclim, prefix2, undef2)
-        uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "U_clim",   uuclim , prefix2, undef2)
-        vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "V_clim",   vvclim,  prefix2, undef2)
-        tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "T_clim",   tempclim, prefix2, undef2)
-        shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "Q_clim",   shumclim, prefix2,  undef2)
-        vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "OMG_clim", vvelclim, prefix2, undef2)
+        hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "zg",  hgtclim, prefix2, undef2)
+        uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "ua",   uuclim , prefix2, undef2)
+        vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "va",   vvclim,  prefix2, undef2)
+        tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "ta",   tempclim, prefix2, undef2)
+        shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "hus",   shumclim, prefix2,  undef2)
+        vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "wap", vvelclim, prefix2, undef2)
         ## and the clima fluxes  average over im1, im2
-        prclim  = get_flux_clima(imax, jmax, im1, im2, "PR_clim",   prclim,  prefix2,  undef2)
-        tsclim  = get_flux_clima(imax, jmax, im1, im2, "TS_clim",   tsclim,  prefix2,  undef2)
-        shfclim = get_flux_clima(imax, jmax, im1, im2, "SHF_clim",  shfclim, prefix2,  undef2)
-        lhfclim = get_flux_clima(imax, jmax, im1, im2, "LHF_clim",  lhfclim, prefix2,  undef2)
-        swclim  = get_flux_clima(imax, jmax, im1, im2, "SW_clim",   swclim,  prefix2,  undef2)
-        lwclim  = get_flux_clima(imax, jmax, im1, im2, "LW_clim",   lwclim,  prefix2,  undef2)
+        prclim  = get_flux_clima(imax, jmax, im1, im2, "pr",   prclim,  prefix2,  undef2)
+        tsclim  = get_flux_clima(imax, jmax, im1, im2, "ts",   tsclim,  prefix2,  undef2)
+        shfclim = get_flux_clima(imax, jmax, im1, im2, "hfss",  shfclim, prefix2,  undef2)
+        lhfclim = get_flux_clima(imax, jmax, im1, im2, "hfls",  lhfclim, prefix2,  undef2)
+        swclim  = get_flux_clima(imax, jmax, im1, im2, "sw",   swclim,  prefix2,  undef2)
+        lwclim  = get_flux_clima(imax, jmax, im1, im2, "lw",   lwclim,  prefix2,  undef2)
         
         ###  write seasonal climatology for further processing 
         write_out( "Z_clim",    hgtclim,  prefixclim)
@@ -338,8 +341,8 @@ else:
         write_out(  "LW_clim",   lwclim,  prefixclim)
         write_out(  "SW_clim",   swclim,  prefixclim)
         ##   add Frad
-        lwclim = np.ma.masked_greater_equal(lwclim, undef, copy=False)
-        swclim = np.ma.masked_greater_equal(swclim, undef, copy=False)
+        #lwclim = np.ma.masked_greater_equal(lwclim, undef, copy=False)
+        #swclim = np.ma.masked_greater_equal(swclim, undef, copy=False)
         fradclim = lwclim  +  swclim
         write_out(  "FRAD_clim", fradclim,   prefixclim)
 
@@ -357,12 +360,12 @@ if(  composite == 1):
     now = datetime.datetime.now()
     print "  Starting Seasonal ELNINO composites: "  + now.strftime("%Y-%m-%d %H:%M")
     
-    hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Z",  hgt, prefix1, undef2)
-    uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "U",  uu, prefix1, undef2)
-    vv   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "V",  vv, prefix1, undef2)
-    temp = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "T",  temp, prefix1, undef2)
-    shum = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "Q",  shum, prefix1, undef2)
-    vvel = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "OMG",  vvel, prefix1, undef2)
+    hgt  = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "zg",  hgt, prefix1, undef2)
+    uu   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "ua",  uu, prefix1, undef2)
+    vv   = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "va",  vv, prefix1, undef2)
+    temp = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "ta",  temp, prefix1, undef2)
+    shum = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "hus",  shum, prefix1, undef2)
+    vvel = get_data_in(imax, jmax, zmax, ttmax1, years1, iy2, im1, im2, "wap",  vvel, prefix1, undef2)
 
 ## test composites and write out
 
@@ -374,12 +377,12 @@ if(  composite == 1):
     write_out(  "OMG", vvel,  prefixout1)
 
 ###  read in and composite the fluxes 
-    pr  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "PR",  pr, prefix1,  undef2)
-    ts  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "TS",  ts, prefix1,  undef2)
-    shf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SHF",  shf, prefix1, undef2)
-    lhf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LHF",  lhf, prefix1, undef2)
-    sw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "SW",  sw, prefix1,  undef2)
-    lw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "LW",  lw, prefix1,  undef2)
+    pr  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "pr",  pr, prefix1,  undef2)
+    ts  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "ts",  ts, prefix1,  undef2)
+    shf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "hfss",  shf, prefix1, undef2)
+    lhf = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "hfls",  lhf, prefix1, undef2)
+    sw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "sw",  sw, prefix1,  undef2)
+    lw  = get_flux_in(imax, jmax, ttmax1, years1, iy2, im1, im2, "lw",  lw, prefix1,  undef2)
 
 ##   add Frad 
     frad = sw + lw
@@ -397,12 +400,12 @@ if(  composite == 1):
     now = datetime.datetime.now()
     print "  Starting Seasonal LANINA composites: "  + now.strftime("%Y-%m-%d %H:%M")
 
-    hgt  = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Z",  hgt, prefix1, undef2)
-    uu   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "U",  uu, prefix1, undef2)
-    vv   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "V",  vv, prefix1, undef2)
-    temp = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "T",  temp, prefix1, undef2)
-    shum = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "Q",  shum, prefix1, undef2)
-    vvel = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "OMG",  vvel, prefix1, undef2)
+    hgt  = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "zg",  hgt, prefix1, undef2)
+    uu   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "ua",  uu, prefix1, undef2)
+    vv   = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "va",  vv, prefix1, undef2)
+    temp = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "ta",  temp, prefix1, undef2)
+    shum = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "hus",  shum, prefix1, undef2)
+    vvel = get_data_in(imax, jmax, zmax, ttmax2, years2, iy2, im1, im2, "wap",  vvel, prefix1, undef2)
 ## write out 
     write_out( "Z",  hgt,  prefixout2)
     write_out( "U",   uu,  prefixout2)
@@ -413,12 +416,12 @@ if(  composite == 1):
 
 ###   LA NINA composite   fluxes 
  
-    pr = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "PR",  pr, prefix1,  undef2)
-    ts  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "TS",  ts, prefix1,  undef2)
-    shf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SHF",  shf, prefix1,  undef2)
-    lhf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LHF",  lhf, prefix1,  undef2)
-    sw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "SW",  sw, prefix1,  undef2)
-    lw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "LW",  lw, prefix1,  undef2)
+    pr = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "pr",  pr, prefix1,  undef2)
+    ts  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "ts",  ts, prefix1,  undef2)
+    shf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "hfss",  shf, prefix1,  undef2)
+    lhf = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "hfls",  lhf, prefix1,  undef2)
+    sw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "sw",  sw, prefix1,  undef2)
+    lw  = get_flux_in(imax, jmax, ttmax2, years2, iy2, im1, im2, "lw",  lw, prefix1,  undef2)
 
 ##   add Frad
     frad = sw + lw
@@ -435,7 +438,7 @@ if(  composite == 1):
 ####  make the plots
     print( "finished composite calculation  ")
     
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all.ncl")
 
     now = datetime.datetime.now()
     print "   Seasonal ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M")
@@ -461,109 +464,109 @@ if( composite24 == 1):
     print "  Approximately 5-10  minutes per one 3-dimensional variable   "
 
 ###   El Nino  case :
-    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef2)
+    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "zg", tmax24, hgt24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable Z completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    uu24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2,  "U",  tmax24, uu24, prefix1, prefix2, undef2)
+    uu24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2,  "ua",  tmax24, uu24, prefix1, prefix2, undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable U completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vv24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "V", tmax24, vv24, prefix1, prefix2,  undef2)
+    vv24   = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "va", tmax24, vv24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable V completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    temp24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef2)
+    temp24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "ta",  tmax24, temp24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable T completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    shum24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "Q",  tmax24, shum24, prefix1, prefix2,  undef2)
+    shum24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "hus",  tmax24, shum24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable Q completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2, undef2)
+    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax1, years1, iy2, "wap", tmax24,   vvel24, prefix1, prefix2, undef2)
     now = datetime.datetime.now()
     print"  ELNINO: variable OMG completed " + now.strftime("%Y-%m-%d %H:%M")
 ##     24 month evolution output files written
 
-    write_out( "Z", hgt24, prefixout111)
-    write_out( "U", uu24, prefixout111)
-    write_out( "V", vv24, prefixout111)
-    write_out( "T", temp24, prefixout111)
-    write_out( "Q", shum24, prefixout111)
-    write_out( "OMG", vvel24, prefixout111)
+    write_out( "zg", hgt24, prefixout111)
+    write_out( "ua", uu24, prefixout111)
+    write_out( "va", vv24, prefixout111)
+    write_out( "ta", temp24, prefixout111)
+    write_out( "hus", shum24, prefixout111)
+    write_out( "wap", vvel24, prefixout111)
 
 #  the same for fluxes 
-    pr24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "PR", tmax24,  pr24, prefix1, prefix2, undef2)
-    ts24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef2)
-    shf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SHF", tmax24, shf24, prefix1, prefix2, undef2)
-    lhf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "LHF", tmax24, lhf24, prefix1, prefix2, undef2)
-    sw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "SW",tmax24,  sw24, prefix1, prefix2, undef2)
-    lw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "LW", tmax24, lw24, prefix1, prefix2, undef2)
+    pr24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "pr", tmax24,  pr24, prefix1, prefix2, undef2)
+    ts24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "ts", tmax24, ts24, prefix1, prefix2, undef2)
+    shf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "hfss", tmax24, shf24, prefix1, prefix2, undef2)
+    lhf24 = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "hfls", tmax24, lhf24, prefix1, prefix2, undef2)
+    sw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "sw",tmax24,  sw24, prefix1, prefix2, undef2)
+    lw24  = get_flux_in_24(imax, jmax, ttmax1, years1, iy2, "lw", tmax24, lw24, prefix1, prefix2, undef2)
     
     now = datetime.datetime.now()
     print"  ELNINO: all flux variables completed " + now.strftime("%Y-%m-%d %H:%M")
 
 #  write out   fluxes
-    write_out( "PR",  pr24, prefixout111)
-    write_out( "TS",  ts24, prefixout111)
-    write_out( "SHF",shf24, prefixout111)
-    write_out( "LHF",lhf24, prefixout111)
-    write_out( "LW",  lw24, prefixout111)
-    write_out( "SW",  sw24, prefixout111)
+    write_out( "pr",  pr24, prefixout111)
+    write_out( "ts",  ts24, prefixout111)
+    write_out( "hfss",shf24, prefixout111)
+    write_out( "hfls",lhf24, prefixout111)
+    write_out( "lw",  lw24, prefixout111)
+    write_out( "sw",  sw24, prefixout111)
 ###   copy the grads control files 
 ###    os.system("cp " + os.environ["POD_HOME"]+"/COMPOSITE/CTL/*.ctl "+ prefixout11  )
 
 ##########################
 ####    La Nina 4 evolution :
-    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Z", tmax24, hgt24, prefix1, prefix2,  undef2)
+    hgt24  = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "zg", tmax24, hgt24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  Z completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    uu24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "U",  tmax24, uu24, prefix1,  prefix2, undef2)
+    uu24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "ua",  tmax24, uu24, prefix1,  prefix2, undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  U completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vv24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "V", tmax24, vv24, prefix1,prefix2,  undef2)
+    vv24   = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "va", tmax24, vv24, prefix1,prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  V completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    temp24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "T",  tmax24, temp24, prefix1, prefix2,  undef2)
+    temp24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "ta",  tmax24, temp24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: variable  T completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    shum24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "Q",  tmax24, shum24, prefix1, prefix2,  undef2)
+    shum24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "hus",  tmax24, shum24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()    
     print"  LANINA: variable  Q completed " + now.strftime("%Y-%m-%d %H:%M")
 
-    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "OMG", tmax24,   vvel24, prefix1, prefix2,  undef2) 
+    vvel24 = get_data_in_24(imax, jmax, zmax, ttmax2, years2, iy2, "wap", tmax24,   vvel24, prefix1, prefix2,  undef2) 
     now = datetime.datetime.now()
     print"  LANINA: variable  OMG completed " + now.strftime("%Y-%m-%d %H:%M")
 ###  write output 
-    write_out( "Z", hgt24, prefixout222)
-    write_out( "U", uu24, prefixout222)
-    write_out( "V", vv24, prefixout222)
-    write_out( "T", temp24, prefixout222)
-    write_out( "Q", shum24, prefixout222)
-    write_out( "OMG", vvel24, prefixout222)
+    write_out( "zg", hgt24, prefixout222)
+    write_out( "ua", uu24, prefixout222)
+    write_out( "va", vv24, prefixout222)
+    write_out( "ta", temp24, prefixout222)
+    write_out( "hus", shum24, prefixout222)
+    write_out( "wap", vvel24, prefixout222)
 ##  fluxes     calculation and output 
-    pr24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2,  "PR", tmax24,  pr24, prefix1, prefix2,  undef2)
-    ts24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "TS", tmax24, ts24, prefix1, prefix2, undef2)
-    shf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "SHF", tmax24, shf24, prefix1, prefix2,  undef2)
-    lhf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LHF", tmax24, lhf24, prefix1, prefix2, undef2)
-    sw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "SW",tmax24,  sw24, prefix1, prefix2, undef2)
-    lw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "LW", tmax24, lw24, prefix1, prefix2,  undef2)
+    pr24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2,  "pr", tmax24,  pr24, prefix1, prefix2,  undef2)
+    ts24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "ts", tmax24, ts24, prefix1, prefix2, undef2)
+    shf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "hfss", tmax24, shf24, prefix1, prefix2,  undef2)
+    lhf24 = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "hfls", tmax24, lhf24, prefix1, prefix2, undef2)
+    sw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "sw",tmax24,  sw24, prefix1, prefix2, undef2)
+    lw24  = get_flux_in_24(imax, jmax, ttmax2, years2, iy2, "lw", tmax24, lw24, prefix1, prefix2,  undef2)
     now = datetime.datetime.now()
     print"  LANINA: all flux variables completed " + now.strftime("%Y-%m-%d %H:%M")
 #  write out 
-    write_out(  "PR",  pr24, prefixout222)
-    write_out(  "TS",  ts24, prefixout222)
-    write_out(  "SHF",shf24, prefixout222)
-    write_out(  "LHF",lhf24, prefixout222)
-    write_out(  "LW",  lw24, prefixout222)
-    write_out(  "SW",  sw24, prefixout222)
+    write_out(  "pr",  pr24, prefixout222)
+    write_out(  "ts",  ts24, prefixout222)
+    write_out(  "hfss",shf24, prefixout222)
+    write_out(  "hfls",lhf24, prefixout222)
+    write_out(  "lw",  lw24, prefixout222)
+    write_out(  "sw",  sw24, prefixout222)
 ###    convert binaries to NetCDF 
-    generate_ncl_plots(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
+    generate_ncl_call(os.environ["POD_HOME"] +  "/COMPOSITE/NCL_CONVERT/write_24month_netcdf.ncl")
 
     print "   calculation of 2 year  ENSO evolution completed  "
     print "   resulting  data are   located in : " + wkdir_model + "/netCDF/24MONTH_ELNINO/"
@@ -583,27 +586,27 @@ if( correlation == 1):
     now = datetime.datetime.now()
     print "   Seasonal  SST  correlations started  " + now.strftime("%Y-%m-%d %H:%M")
 ##      correlations with selected variables  El Nino case 
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", correl, prefix1, prefix2, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "pr", "ts", correl, prefix1, prefix2, undef2)
 ## output as data : 
     write_out(  "CORR_PR",  correl,   prefixout)
 ### 
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", correl, prefix1, prefix2, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "hfss", "ts", correl, prefix1, prefix2, undef2)
 ## output as data :
     write_out( "CORR_SHF",  correl,   prefixout)
 #####    
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", correl, prefix1, prefix2, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "hfls", "ts", correl, prefix1, prefix2, undef2)
 ## output as data : 
     write_out(  "CORR_LHF",  correl,   prefixout)
 ####    
-    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", correl, prefix1, prefix2, undef2)
+    correl =  get_correlation(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "lw", "ts", correl, prefix1, prefix2, undef2)
 ## output as data :
     write_out(  "CORR_LW",  correl,   prefixout)
 ####   
-    correl =  get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", correl, prefix1, prefix2, undef2)
+    correl =  get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "sw", "ts", correl, prefix1, prefix2, undef2)
 ## output   correlation data 
     write_out( "CORR_SW",  correl,   prefixout)
 ###   plot correlations 
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all.ncl")
 
     print "   Seasonal  SST  correlations completed  " + now.strftime("%Y-%m-%d %H:%M")
     print "   plots of  seasonal correlations  finished  "
@@ -622,29 +625,29 @@ if( regression == 1):
     now = datetime.datetime.now()
     print "   Seasonal  SST  regression calculations started  " + now.strftime("%Y-%m-%d %H:%M")
 ###  
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2,  im1, im2, ii1, ii2, jj1, jj2, "PR", "TS", aregress, prefix1, prefix2, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2,  im1, im2, ii1, ii2, jj1, jj2, "pr", "ts", aregress, prefix1, prefix2, undef2)
 ##  output in composite directory 
     write_out(  "REGRESS_PR",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SHF", "TS", aregress, prefix1, prefix2, undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "hfss", "ts", aregress, prefix1, prefix2, undef2)
 ##  output in composite directory
     write_out( "REGRESS_SHF",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LHF", "TS", aregress, prefix1, prefix2,  undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "hfls", "ts", aregress, prefix1, prefix2,  undef2)
 ##  output in composite directory
     write_out( "REGRESS_LHF",  aregress,   prefixout)
 ###
-    aregress = get_regression(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "LW", "TS", aregress, prefix1, prefix2,  undef2)
+    aregress = get_regression(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "lw", "ts", aregress, prefix1, prefix2,  undef2)
 ##  output in composite directory
     write_out( "REGRESS_LW",  aregress,   prefixout)
 ##
-    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "SW", "TS", aregress, prefix1, prefix2,  undef2)
+    aregress = get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, "sw", "ts", aregress, prefix1, prefix2,  undef2)
 ##  output 
     write_out( "REGRESS_SW",  aregress,   prefixout)
 
 ##     plotting the regressions 
     print("DRBDBG calling ",os.environ["POD_HOME"],"/COMPOSITE/NCL/plot_regression_all.ncl")
-    generate_ncl_plots(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_regression_all.ncl")
+    generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_regression_all.ncl")
 
     print "   Seasonal SST  regressions completed  " + now.strftime("%Y-%m-%d %H:%M")
     print "   plots of seasonal regressions  finished  "
@@ -659,6 +662,7 @@ file_dest = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]+"/COMPOSITE.html"
 if os.path.isfile( file_dest ):
     os.system("rm -f "+file_dest)
 os.system("cp "+file_src+" "+file_dest)
+
 #============================================================
 #
 now = datetime.datetime.now()

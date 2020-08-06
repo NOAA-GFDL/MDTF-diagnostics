@@ -16,16 +16,6 @@
 #     This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
 import numpy as np
-import sys
-import subprocess
-import commands
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
-
 from get_data_in import get_data_in
 from get_flux_in import get_flux_in
 from get_clima_in import get_clima_in
@@ -36,7 +26,18 @@ from moist_routine_variance import moisture_variance
 from get_parameters_in import get_parameters_in
 from get_anomaly import get_anomaly
 
+import sys
+import subprocess
+import commands
+
 import datetime
+
+import os
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
 from get_season import get_season
@@ -296,7 +297,7 @@ pr_clim, ts_clim, lhf_clim, shf_clim, sw_clim, lw_clim = get_clima_flux_in(imax,
 ######################
 ###      El Nino/La Nina composites   for default domain NINO3.4 + general domain
 ###      general domain set by slon1, slon2, slat1, slat2  enviromental variables 
-###      under  MSE_VAR  section in ~/mdtf.py 
+###      under  MSE_VAR  section in ~/ENSO_MSE/ENSO_MSE.py
 slon1 =  os.environ["slon1"]
 slon2 =  os.environ["slon2"]
 slat1 =  os.environ["slat1"]
@@ -400,7 +401,7 @@ if( composite == 1):
     now = datetime.datetime.now()
     print "   Seasonal OBS ENSO MSE Variance composites finished  " + now.strftime("%Y-%m-%d %H:%M")
 
-    print "   resulting plots are located in : " +os.environ["WK_DIR"],"/MSE_VAR/model"
+    print "   resulting plots are located in : " +mse_var_dir
 
 print " " 
 ##########################

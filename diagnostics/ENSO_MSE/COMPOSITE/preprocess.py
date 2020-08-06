@@ -32,7 +32,7 @@ print("===============================================================")
 
 prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
 
-this_wrk_dir = os.environ["WK_DIR"]+"/COMPOSITE"
+this_wrk_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]
 prefix1 = this_wrk_dir+"/model/netCDF/DATA/"
 prefix2 = this_wrk_dir+"/model/netCDF/CLIMA/"
 

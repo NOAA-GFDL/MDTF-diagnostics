@@ -39,7 +39,6 @@ def moisture_energy(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rear
     mse3 = np.zeros( (imax,jmax, zmax),dtype='float32', order='F')
     mse3[:,:,:] = undef
     mse1 = np.zeros( (imax,jmax),dtype='float32', order='F')
-
     # calculate  the advection  loop over all domain points
     # except the top and bottom J = 1, J= JMAX
     # calculations are based on center differences

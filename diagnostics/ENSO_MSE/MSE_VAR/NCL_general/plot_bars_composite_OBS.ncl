@@ -108,8 +108,9 @@ begin
      sres@gsnXYBarChartBarWidth = width           ; change bar widths
 
      sres@tmXBMode          =   "Explicit"         ; explicit labels
-
+     sres@txFuncCode    = "~"
      sres@tmXBLabels = tlabels ;
+     sres@tmXBLabelFuncCode  = "~"
      sres@tmXBLabelFontHeightF = 0.0105
      sres@tmXTLabelFontHeightF = 0.015   ;; 0.0205
      sres@tmYLLabelFontHeightF = 0.015   ;;  0.0225
@@ -182,7 +183,6 @@ begin
       txres2@txFontHeightF = 0.016
        dy2 = -0.03
 
-;;       res@txFuncCode    = ":"
 ;;      region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + slat1 + "~F34~0~F~N " + slat2 + "~F34~0~F~N"
 
     if ( (slat1 .lt. 0.) .and. (slat2 .gt. 0.) )  then

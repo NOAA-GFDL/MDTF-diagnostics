@@ -13,13 +13,13 @@ begin
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)
     ivar3 = 6 
-    variables3 = (/ "Z" , "U", "V", "T", "Q", "OMG"   /)
+    variables3 = (/ "zg" , "ua", "va", "ta", "hus", "wap"   /)
     varnames3 = (/ "zg", "ua", "va",  "ta", "hus", "wap" /)
     varunits3 =  (/ "[m]", "[m/s]", "[m/s]", "[deg. C]", "[g/g]", "[Pa/s]" /)
     long_name3 = (/ "geopotential height", "zonal wind component", "meridional wind component",   "temperature", "specific humidity", "vertical velocity" /)
 
     ivar2 = 6
-    variables2 = (/ "TS" , "SW", "LW", "LHF", "SHF", "PR" /)
+    variables2 = (/ "ts" , "sw", "lw", "hfls", "hfss", "pr" /)
     varnames2 = (/ "ts" , "sw", "lw", "hfls",  "hfss" , "pr" /)
     varunits2 =  (/ "[deg. C]", "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]", "[mm/day]" /)
     long_name2 = (/ "skin surface temperature ", "net shortwave radiation", "net longwave radiation",  "latent heat flux ", "sensible heat flux", "precipitation " /) 

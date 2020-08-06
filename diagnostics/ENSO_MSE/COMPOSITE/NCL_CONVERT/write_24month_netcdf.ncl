@@ -6,21 +6,21 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
 begin
 
-      vardata  = getenv("DATADIR")
-      case     =  getenv( "CASENAME")
-      varcode = getenv ("POD_HOME")
-      wkdir = getenv("WK_DIR")
+     outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py,
+                                ;processed output from other scripts in this package
+     varcode = getenv ("POD_HOME")
+
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)
    ivar3 = 6 
-    variables3 = (/ "Z" , "U", "V", "T", "Q", "OMG"   /)
+    variables3 = (/ "zg" , "ua", "va", "ta", "hus", "wap"   /)
     varnames3 = (/ "zg", "ua", "va",  "ta", "hus", "wap" /)
     varunits3 =  (/ "[m]", "[m/s]", "[m/s]", "[deg. C]", "[g/g]", "[Pa/s]" /)
     long_name3 = (/ "geopotential height", "zonal wind component", "meridional wind component",   "temperature", "specific humidity", "vertical velocity" /)
 
   ivar2 = 6
-    variables2 = (/ "TS" , "SW", "LW", "LHF", "SHF", "PR" /)
+    variables2 = (/ "ts" , "sw", "lw", "hfls", "hfss", "pr" /)
     varnames2 = (/ "ts" , "sw", "lw", "hfls",  "hfss" , "pr" /)
     varunits2 =  (/ "[deg. C]", "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]", "[mm/day]" /)
     long_name2 = (/ "skin surface temperature ", "net shortwave radiation", "net longwave radiation",  "latent heat flux ", "sensible heat flux", "precipitation " /) 
@@ -29,10 +29,10 @@ begin
      mode = (/ "ELNINO", "LANINA" /)
 
       parameter_name = varcode + "/shared/parameters.txt"
-      name_dimensions = wkdir  + "/COMPOSITE/model/netCDF/DATA/xyz_dimensions.txt"
-      name_lon = wkdir + "/COMPOSITE/model/netCDF/DATA/longitude.out"
-      name_lat = wkdir + "/COMPOSITE/model/netCDF/DATA/latitude.out"
-      name_plevs = wkdir + "/COMPOSITE/model/netCDF/DATA/plevels.out"
+      name_dimensions = outdir  + "/netCDF/DATA/xyz_dimensions.txt"
+      name_lon = outdir + "/netCDF/DATA/longitude.out"
+      name_lat = outdir + "/netCDF/DATA/latitude.out"
+      name_plevs = outdir + "/netCDF/DATA/plevels.out"
 
 
 ;;;;  read in the parameter data lon/lat/plevs 
@@ -112,8 +112,8 @@ begin
 
       do n = 0, 1  ;;;  loop over El Nino/La Nina 
       do iv = 0,  ivar3 - 1
-	  namein = wkdir + "/COMPOSITE/model/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables3(iv) + ".grd"
-       nameout = wkdir + "/COMPOSITE/model/netCDF/24MONTH_" +  mode(n) +  "/" + varnames3(iv) + ".nc"
+      namein  = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables3(iv) + ".grd"
+      nameout = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/" + varnames3(iv) + ".nc"
 ;;;  read in the data 
 
        datain3@units     = varunits3(iv)
@@ -163,8 +163,8 @@ begin
  
 
     do iv = 0, ivar2 - 1
-       namein = wkdir + "/COMPOSITE/model/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables2(iv) + ".grd"
-       nameout = wkdir + "/COMPOSITE/model/netCDF/24MONTH_" +  mode(n) +  "/" + varnames2(iv) + ".nc"
+      namein = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables2(iv) + ".grd"
+      nameout = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/" + varnames2(iv) + ".nc"
 ;;;  read in the data
 
        datain2@units     = varunits2(iv)

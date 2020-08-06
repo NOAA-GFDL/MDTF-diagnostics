@@ -163,8 +163,6 @@ begin
 ;;  title 
   res@tiMainFontHeightF = 0.025
   res@tiMainFont = "helvetica"
-;;  res@tiMainString =  maintitle
-;;   res@txFuncCode    = ":"
 
 ;;;  title separate as two texts on the top
       txres1 = True

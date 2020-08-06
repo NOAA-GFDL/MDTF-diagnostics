@@ -10,12 +10,12 @@ from scipy.io import netcdf
 def read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, dataout, undef):
 
 ##  read in  data from NetCDF file 
-
+ print( namein) 
  if(os.path.exists( namein)):
      nc = netcdf.netcdf_file( namein, 'r')
      vvar2 = nc.variables[ variable][:]
-     dataout = vvar2.copy()
-     dataout.reshape( imax, jmax, zmax, tmax, order='F')
+     dataout1 = vvar2.copy()
+     dataout = np.transpose( dataout1)
      dataout = np.ma.masked_greater_equal( dataout, undef, copy=False)
      vvar2 = []
      nc.close()
@@ -25,9 +25,9 @@ def read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, dataout, undef):
      print " exiting read_netcdf.py "
      sys.exit()
 
- if( byteorder == 'little' ):
-      print( "swapping ")
-      dataout.byteswap(True)
-
+# if( byteorder == 'little' ):
+#      print( "swapping ")
+#      dataout.byteswap(True)
+ 
  return dataout.filled(fill_value = undef)
    

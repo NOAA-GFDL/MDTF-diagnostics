@@ -29,6 +29,7 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
+
 from generate_ncl_call import generate_ncl_call
 
 '''
@@ -63,9 +64,9 @@ undef = float(99999999999.)
 undef2 = float(1.1e+20)
 
 ###  first prefix for data   + other variables passed to the code 
-wkdir =  os.environ["WK_DIR"]
+wkdir =  os.environ["ENSO_MSE_WKDIR"]
 
-####    reading in the data for scatter plots   from ~/inputdata/obs_data/ENSO_MSE/SCATTER
+####    reading in the data for scatter plots   from ~/inputdata/obs_data/SCATTER
 
 time.sleep(6.)
 
@@ -77,16 +78,16 @@ generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_03.ncl")
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_04.ncl")
 
 ###    copy the html files for to create webpages
-if os.path.isfile( os.environ["WK_DIR"]+"/MDTF_SCATTER/SCATTER.html" ):
-    os.system("rm -f "+os.environ["WK_DIR"]+"/MDTF_SCATTER/SCATTER.html")
+if os.path.isfile( os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/SCATTER.html" ):
+    os.system("rm -f "+os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/SCATTER.html")
 
-os.system("cp "+os.environ["POD_HOME"]+"/SCATTER/SCATTER.html "+os.environ["WK_DIR"]+"/MDTF_SCATTER/." )
+os.system("cp "+os.environ["POD_HOME"]+"/SCATTER/SCATTER.html "+os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/." )
 
 ###  the end 
 now = datetime.datetime.now()
 print"   " 
 print " ==================================================================="
 print "  Scatter  Module Finished    " + now.strftime("%Y-%m-%d %H:%M")
-print "  resulting plots are located in : " +os.environ["WK_DIR"],"/MDTF_SCATTER/"
+print "  resulting plots are located in : " +os.environ["ENSO_MSE_WKDIR"],"/SCATTER/"
 print " ==================================================================="
 ### 

@@ -9,11 +9,11 @@ from read_netcdf_2D import read_netcdf_2D
 def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, prefix, undef):
 
     im12 = 12 
-    ss    = np.ma.zeros((imax,jmax),dtype='float32',  order='F')      
-    vvar  = np.ma.zeros((imax,jmax, im12),dtype='float32',  order='F')
+    ss      = np.ma.zeros((imax,jmax),dtype='float32',  order='F')      
+    vvar    = np.ma.zeros((imax,jmax, im12),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax),dtype='float32',  order='F')
 
-    for it in range(0, ttmax+1):
+    for it in range(0, ttmax):
         file_count = 0
         for im in range (im1, im2+1):
             iyy = years[it]
@@ -28,25 +28,26 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                 year = str(yy)
 
                 # data files now per-year, not per-month, so only load when year changes
-                if (file_count == 0) or (im > 12  and file_count == 1):
-                    namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
-                    if (os.path.exists( namein)):
+                namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
+                if (os.path.exists( namein)):
+                        print( namein )
                         vvar = read_netcdf_2D(imax, jmax, im12, variable, namein, vvar, undef)
                         vvar_valid = (vvar < undef)
+                        vvar_invalid = (vvar >= undef)
                         # set invalid entries of vvar to zero so they don't contribute
                         # to the running sum in dataout (modifies in-place)
-                        vvar[~vvar_valid] = 0.
-                        file_count += 1
-                    else:
+                        vvar[vvar_invalid] = 0.
+                        dataout[:,:] += vvar[:,:, imm-1]
+                        ss[:,:] += vvar_valid[:,:, imm-1]
+                else:
                         print " missing file " + namein
                         print " exiting get_flux_in.py "
                         sys.exit()
 
-                dataout[:,:] += vvar[:,:, imm-1]
-                ss[:,:] += vvar_valid[:,:, imm-1]
+#                dataout[:,:] += vvar[:,:, imm-1]
+#                ss[:,:] += vvar_valid[:,:, imm-1]
     
 #### 
     dataout = dataout/ss
-
     return dataout.filled(fill_value = undef)
 

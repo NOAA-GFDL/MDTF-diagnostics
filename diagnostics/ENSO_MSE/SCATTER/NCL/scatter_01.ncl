@@ -26,8 +26,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
       varcode = getenv("POD_HOME")
-      wkdir = getenv("WK_DIR")
-      obsdir = getenv("OBS_DATA")
+      wkdir = getenv("ENSO_MSE_WKDIR")
+      obsdir = getenv("OBS_DIR")
 
       prefix = obsdir + "/SCATTER/"
  
@@ -38,9 +38,7 @@ begin
     xmax     =  (/ 180.,  200. /)
     ymin    =  (/ -25.,  -50. /)
     ymax    =  (/ 20.,   10. /)
-    xlabel = "Precipitation [W/m:S:2:N:]"
-;;     ylabel = " moisture advection  W/m2" 
-;;  Frad =  "F:B:rad:N: [W/m:S:2:N:]"
+    xlabel = "Precipitation [W/m~S~2~N:]"
 ;;;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
 ;;  read in the data based on the region .. 
@@ -124,7 +122,7 @@ begin
    wks_type = "png"
    wks_type@wkWidth = 1000
    wks_type@wkHeight = 1000 
-   wks = gsn_open_wks( wks_type, wkdir + "/MDTF_SCATTER/" + nameout(ibox))
+   wks = gsn_open_wks( wks_type, wkdir + "/SCATTER/" + nameout(ibox))
 
 ;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
@@ -175,7 +173,7 @@ begin
    res1 = True
    res1@tiMainFont = "helvetica"
    res1@txFont   = "helvetica"
-   res1@txFuncCode    = ":"
+   res1@txFuncCode    = "~"
 
    res1@tmXBMode         =  "Explicit" ;; "Manual"
    res1@tmYLMode         =  "Explicit" ;;  "Manual"
@@ -202,16 +200,15 @@ begin
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
-    txres3@txFuncCode    = ":"
+    txres3@txFuncCode    = "~"
     txres3@txFont   = "helvetica"
     txres3@txFontHeightF = 0.025
     gsn_text_ndc(wks, xlabel, 0.45, 0.17, txres3)
-;;    gsn_text_ndc(wks, "Precipitation [W/m:S:2:N:]",  0.40, 0.17, txres4)
 
 ;;  the Y axis separate  as an equation
 ;;   -< v * delq >`
    txres4 = True
-   txres4@txFuncCode    = ":"
+   txres4@txFuncCode    = "~"
 ;;   txres4@txFont   = "helvetica"
 
   xx4 = 0.08
@@ -220,44 +217,44 @@ begin
 ;; - minus
   txres4@txAngleF  = 90.
   txres4@txFontHeightF =  0.020 ;;;  0.025
-  gsn_text_ndc(wks, ":F22:-", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F22~-", xx4, yy4, txres4)
  
 ;;  left paranth
   dyy4 = 0.013
   yy4 = yy4 + dyy4
-  gsn_text_ndc(wks, ":F34:a", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F34~a", xx4, yy4, txres4)
   
 ;;;  V
   dyy4 = 0.018
   yy4 = yy4 + dyy4
-  gsn_text_ndc(wks, ":F25:V", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F25~V", xx4, yy4, txres4)
  
 ;;;  dot  
   dyy4 = 0.018
   yy4 = yy4 + dyy4
-  gsn_text_ndc(wks, ":F18:.", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F18~.", xx4, yy4, txres4)
 
 ;;; 
 ;;  del   q 
   dyy4 = 0.02
   yy4 = yy4 + dyy4
-  gsn_text_ndc(wks, ":F34:Q", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F34~Q", xx4, yy4, txres4)
 
   dyy4 = 0.02
   yy4 = yy4 + dyy4
-;;  gsn_text_ndc(wks, ":F25:q", xx4, yy4, txres4)
-  gsn_text_ndc(wks, ":F14:q", xx4, yy4, txres4)
+;;  gsn_text_ndc(wks, "~F25~q", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F14~q", xx4, yy4, txres4)
  
   dyy4 = 0.02
   yy4 = yy4 + dyy4
-  gsn_text_ndc(wks, ":F34:q", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F34~q", xx4, yy4, txres4)
 
 ;;; prime
   dxx4 = -0.01
   dyy4 = 0.01
   yy4 = yy4 + dyy4
   xx4 = xx4 + dxx4
-  gsn_text_ndc(wks, ":F18:c", xx4, yy4, txres4)
+  gsn_text_ndc(wks, "~F18~c", xx4, yy4, txres4)
 
 ;;;  unit
   txres4@txFont   = "helvetica"
@@ -265,7 +262,7 @@ begin
   dxx4 = 0.01
   yy4 = yy4 + dyy4
   xx4 = xx4 + dxx4
-  gsn_text_ndc(wks,"[W/m:S:2:N:]", xx4, yy4, txres4)
+  gsn_text_ndc(wks,"[W/m~S~2~N:]", xx4, yy4, txres4)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -328,7 +325,6 @@ begin
       txres@txFontColor =  colors1(i)
       txres@txFont   = "helvetica"
       txres@txFontHeightF = 0.01
-     ;;mkres@gsMarkerColor  = True
      mkres@gsMarkerColor =  colors1(i)
      mkres@gsMarkerThicknessF = 3.5
      mkres@gsMarkerSizeF      = 0.012

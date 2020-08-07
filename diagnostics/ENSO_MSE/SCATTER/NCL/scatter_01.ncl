@@ -29,7 +29,7 @@ begin
       wkdir = getenv("ENSO_MSE_WKDIR")
       obsdir = getenv("OBS_DATA")
 
-      prefix = obsdir + "/SCATTER/"
+      prefix = varcode + "/SCATTER/"
  
 ;;---Tickmark resources
     dxx = (/  50., 50. /)

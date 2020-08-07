@@ -15,7 +15,7 @@ begin
 ;;  read  in the data from  NetCDF directory :  one year at the time 
 ;;     to avoid loading too much into memory 
 
-      obsdata  = getenv("OBS_DIR")    ;;  input directory
+      obsdata  = getenv("OBS_DATA")    ;;  input directory
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py
       case = "ERA-INTERIM"
       codedata = getenv ("POD_HOME")
@@ -37,9 +37,9 @@ begin
 
 ;;       coordinate vars
        lev  =  getenv("lev_coord")
-       lon  =  getenv("lon_var")
-       lat  =  getenv("lat_var")
-       time =  getenv("time_var")
+       lon  =  getenv("lon_coord")
+       lat  =  getenv("lat_coord")
+       time =  getenv("time_coord")
 
        hyam =  getenv("hyam_var")
        hybm =  getenv("hybm_var")

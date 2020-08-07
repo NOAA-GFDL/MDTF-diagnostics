@@ -20,7 +20,7 @@ import os.path
 
 print( "Starting ENSO_MSE.py ") 
 
-os.environ["ENSO_MSE_WKDIR"] = os.environ["WKDIR"]
+os.environ["ENSO_MSE_WKDIR"] = os.environ["WK_DIR"]
 
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
@@ -35,24 +35,6 @@ for subpack in subpackages:
         print(" ENSO_MSE subpackage ENSO_"+subpack+" active, output will be in " + os.environ["ENSO_MSE_WKDIR_"+subpack])
     else:
         print(" ENSO_MSE subpackage ENSO_"+subpack+" off. Turn on by adding line to namelist input: VAR ENSO_"+subpack+" 1 ")
-
-os.environ["ENSO_COMPOSITE"] = "1"
-os.environ["ENSO_MSE"] = "1"
-os.environ["ENSO_MSE_VAR"] = "1"
-os.environ["ENSO_SCATTER"] = "1"
-
-
-#     user selectable  domain for MSE variance plots
-slon1 = "160"
-slon2 = "200"
-slat1 = "-10"
-slat2 =   "+5"
-
-os.environ["slon1"]  = slon1
-os.environ["slon2"]  = slon2
-os.environ["slat1"]  = slat1
-os.environ["slat2"]  = slat2
-
 
 #DRB: unfortunately these don't get copied to namelist_save, which means
 #debugging requires starting from this script. To add them here requires

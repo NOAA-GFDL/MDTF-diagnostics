@@ -13,7 +13,7 @@ begin
 
 ;;  read  in the data from  NetCDF directory : 
 
-      obsdata  = getenv("OBS_DIR")  ; model data
+      obsdata  = getenv("OBS_DATA")  ; model data
       outdir =  getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/obs"
       case =  "ERA-INTERIM"  ;;;
       codedata = getenv ("POD_HOME")  ;; not used

@@ -43,7 +43,7 @@ vvar[16] = os.environ["rlut_var"]
 obsmodel = "ERA-INTERIM"
 
 for iv in range(0, 16):
-    filevar = os.environ["OBS_DIR"] + "/DATA/mon/" + obsmodel  + "." +  vvar[iv] + ".mon.nc"
+    filevar = os.environ["OBS_DATA"] + "/DATA/mon/" + obsmodel  + "." +  vvar[iv] + ".mon.nc"
 
     if not os.path.exists(filevar):
         print "============================================="

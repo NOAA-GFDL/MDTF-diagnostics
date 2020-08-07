@@ -28,7 +28,7 @@ begin
 
       varcode = getenv("POD_HOME")
       wkdir = getenv("ENSO_MSE_WKDIR")
-      obsdir = getenv("OBS_DIR")
+      obsdir = getenv("OBS_DATA")
 
       prefix = obsdir + "/SCATTER/"
 

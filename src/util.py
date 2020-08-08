@@ -360,7 +360,8 @@ def find_files(src_dirs, filename_globs):
             files.update(glob.glob(os.path.join(d, '**', g)))
     return list(files)
 
-def recursive_copy(src_files, src_root, dest_root, copy_func=None, overwrite=False):
+def recursive_copy(src_files, src_root, dest_root, copy_function=None, 
+    overwrite=False):
     """Copy src_files to dest_root, preserving relative subdirectory structure.
 
     Copies a subset of files in a directory subtree rooted at src_root to an
@@ -374,7 +375,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_func=None, overwrite=Fal
         src_root: Root subtree of all files in src_files. Raises a ValueError
             if all files in src_files are not contained in the src_root directory.
         dest_root: Destination directory in which to create the copied subtree.
-        copy_func: Function to use to copy individual files. Must take two 
+        copy_function: Function to use to copy individual files. Must take two 
             arguments, the source and destination paths, respectively. Defaults 
             to :py:meth:`shutil.copy2`.
         overwrite: Boolean, deafult False. If False, raise an OSError if
@@ -395,7 +396,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_func=None, overwrite=Fal
             raise OSError('{} exists.'.format(f))
         os.makedirs(os.path.normpath(os.path.dirname(f)), exist_ok=True)
     for src, dest in zip(src_files, dest_files):
-        copy_func(src, dest)
+        copy_function(src, dest)
 
 def resolve_path(path, root_path="", env=None):
     """Abbreviation to resolve relative paths.

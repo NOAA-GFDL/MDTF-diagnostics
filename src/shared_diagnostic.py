@@ -445,8 +445,8 @@ class Diagnostic(object):
 
         if not isinstance(self.skipped, Exception):
             self.make_pod_html()
-            self.convert_pod_figures('model')
-            self.convert_pod_figures('obs')
+            self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
+            self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
             self.cleanup_pod_files()
 
         if verbose > 0: 
@@ -506,59 +506,65 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def convert_pod_figures(self, subdir):
+    def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
         ghostscript.
 
         All vector graphics files (identified by extension) in any subdirectory 
-        of `POD_WK_DIR/subdir` are converted to .png files by running 
+        of `POD_WK_DIR/src_subdir` are converted to .png files by running 
         `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
         Ghostscript is included in the _MDTF_base conda environment. Afterwards,
         any bitmap files (identified by extension) in any subdirectory of
-        `POD_WK_DIR/subdir` are moved to `POD_WK_DIR/subdir`.
-
-        .. note::
-            This effectively flattens any subdirectories in `POD_WK_DIR/subdir`.
+        `POD_WK_DIR/src_subdir` are moved to `POD_WK_DIR/dest_subdir`, preserving
+        and subdirectories (see doc for :func:`~util.recursive_copy`.)
 
         Args:
-            subdir: Either `'model'` or `'obs'`. Subdirectory of `POD_WK_DIR` 
-                to work in.
+            src_subdir: Subdirectory tree of `POD_WK_DIR` to search for vector
+                graphics files.
+            dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
+                bitmap files to.
         """
         config = util_mdtf.ConfigManager()
-        full_subdir = os.path.join(self.POD_WK_DIR, subdir)
+        abs_src_subdir = os.path.join(self.POD_WK_DIR, src_subdir)
+        abs_dest_subdir = os.path.join(self.POD_WK_DIR, dest_subdir)
         files = util.find_files(
-            os.path.join(full_subdir, 'PS'),
+            abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
         )
         for f in files:
-            f_stem, _ = os.path.splitext(os.path.basename(f))
-            path_stem = os.path.join(full_subdir, f_stem)
+            f_stem, _  = os.path.splitext(f)
             _ = util.run_shell_command(
                 'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
                 flags=config.config.get('convert_flags',''),
                 f_in=f,
-                f_out=path_stem+'-%d.png'
+                f_out=f_stem+'_MDTF_TEMP_%d.png'
             ))
-            # if .ps file was multiple pages, this will generate 1 png per page.
-            # however, page number is included for output from single-page ps 
-            # files, and number starts from 1, not 0. Rename files to fix this.
-            out_files = glob.glob(path_stem+'-?.png')
+            # syntax for f_out above appends "_MDTF_TEMP" + page number to 
+            # output files. If input .ps/.pdf file had multiple pages, this will
+            # generate 1 png per page. Page numbering starts at 1. Now check 
+            # how many files gs created:
+            out_files = glob.glob(f_stem+'_MDTF_TEMP_?.png')
             if not out_files:
-                print("Error: no png generated for {}".format(f))
+                raise OSError("Error: no png generated from {}".format(f))
             elif len(out_files) == 1:
-                shutil.move(out_files[0], path_stem+'.png')
+                # got one .png, so remove suffix.
+                os.rename(out_files[0], f_stem+'.png')
             else:
+                # Multiple .pngs. Drop the MDTF_TEMP suffix and renumber starting
+                # from zero (forget which POD requires this.)
                 for n in list(range(len(out_files))):
-                    shutil.move(
-                        path_stem+'-{}.png'.format(n+1),
-                        path_stem+'-{}.png'.format(n)
+                    os.rename(
+                        f_stem+'_MDTF_TEMP_{}.png'.format(n+1),
+                        f_stem+'-{}.png'.format(n)
                     )
-        # move converted figures and any figures saved directly as bitmaps
+        # move converted figures and any figures that were saved directly as bitmaps
         files = util.find_files(
-            full_subdir, ['*.png', '*.gif', '*.jpg', '*.jpeg']
+            abs_src_subdir, ['*.png', '*.gif', '*.jpg', '*.jpeg']
         )
-        for f in files:
-            shutil.move(f, os.path.join(full_subdir, os.path.basename(f)))
+        util.recursive_copy(
+            files, abs_src_subdir, abs_dest_subdir, 
+            copy_function=shutil.move, overwrite=False
+        )
 
     def cleanup_pod_files(self):
         """Copy and remove remaining files to `POD_WK_DIR`.
@@ -579,6 +585,7 @@ class Diagnostic(object):
             shutil.copy2(f, self.POD_WK_DIR)
 
         # copy premade figures (if any) to output 
+        # NOTE this will not respect 
         files = util.find_files(
             self.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )

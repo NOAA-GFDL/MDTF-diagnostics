@@ -444,20 +444,22 @@ class Diagnostic(object):
         self.append_result_link(self.skipped)
 
         if not isinstance(self.skipped, Exception):
-            config = util_mdtf.ConfigManager()
-            self._make_pod_html(config)
-            self._convert_pod_figures('model', config)
-            self._convert_pod_figures('obs', config)
-            self._cleanup_pod_files(config)
+            self.make_pod_html()
+            self.convert_pod_figures('model')
+            self.convert_pod_figures('obs')
+            self.cleanup_pod_files()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
             # elapsed = timeit.default_timer() - start_time
             # print(pod+" Elapsed time ",elapsed)
 
-    def _make_pod_html(self, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
+    def make_pod_html(self):
+        """Perform templating on POD's html results page.
+
+        A wrapper for :func:`~util_mdtf.append_html_template`. 
         """
+        config = util_mdtf.ConfigManager()
         source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
         dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
 
@@ -481,6 +483,18 @@ class Diagnostic(object):
         util_mdtf.append_html_template(source, dest, template_dict=template)
 
     def append_result_link(self, error=None):
+        """Update the top level index.html page with a link to this POD's results.
+
+        This simply appends one of two html fragments to index.html: 
+        pod_result_snippet.html if the POD completed successfully, or
+        pod_error_snippet.html if an exception was raised during the POD's setup
+        or execution.
+
+        Args:
+            error (default None): :py:class:`Exception` object (if any) that was
+                raised during POD's attempted execution. If this is None, assume
+                that POD ran successfully.
+        """
         src_dir = os.path.join(self.code_root, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
@@ -492,9 +506,25 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self, subdir, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+    def convert_pod_figures(self, subdir):
+        """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
+        ghostscript.
+
+        All vector graphics files (identified by extension) in any subdirectory 
+        of `POD_WK_DIR/subdir` are converted to .png files by running 
+        `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
+        Ghostscript is included in the _MDTF_base conda environment. Afterwards,
+        any bitmap files (identified by extension) in any subdirectory of
+        `POD_WK_DIR/subdir` are moved to `POD_WK_DIR/subdir`.
+
+        .. note::
+            This effectively flattens any subdirectories in `POD_WK_DIR/subdir`.
+
+        Args:
+            subdir: Either `'model'` or `'obs'`. Subdirectory of `POD_WK_DIR` 
+                to work in.
         """
+        config = util_mdtf.ConfigManager()
         full_subdir = os.path.join(self.POD_WK_DIR, subdir)
         files = util.find_files(
             os.path.join(full_subdir, 'PS'),
@@ -530,9 +560,19 @@ class Diagnostic(object):
         for f in files:
             shutil.move(f, os.path.join(full_subdir, os.path.basename(f)))
 
-    def _cleanup_pod_files(self, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+    def cleanup_pod_files(self):
+        """Copy and remove remaining files to `POD_WK_DIR`.
+
+        In order, this 1) copies .pdf documentation (if any) from 
+        `POD_CODE_DIR/doc`, 2) copies any bitmap figures in any subdirectory of
+        `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without 
+        digested observational data), 3) removes vector graphics if requested,
+        4) removes netCDF scratch files in `POD_WK_DIR` if requested.
+
+        Settings are set at runtime, when :class:`~util_mdtf.ConfigManager` is 
+        initialized.
         """
+        config = util_mdtf.ConfigManager()
         # copy PDF documentation (if any) to output
         files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
         for f in files:

@@ -440,12 +440,14 @@ class Diagnostic(object):
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        if isinstance(self.skipped, Exception):
-            self.append_result_link(self.skipped)
-        else:
+        # add link and description to main html page
+        self.append_result_link(self.skipped)
+
+        if not isinstance(self.skipped, Exception):
             config = util_mdtf.ConfigManager()
             self._make_pod_html(config)
-            self._convert_pod_figures(config)
+            self._convert_pod_figures('model', config)
+            self._convert_pod_figures('obs', config)
             self._cleanup_pod_files(config)
 
         if verbose > 0: 
@@ -477,8 +479,6 @@ class Diagnostic(object):
         if os.path.exists(dest):
             os.remove(dest)
         util_mdtf.append_html_template(source, dest, template_dict=template)
-        # add link and description to main html page
-        self.append_result_link()
 
     def append_result_link(self, error=None):
         src_dir = os.path.join(self.code_root, 'src', 'html')
@@ -492,19 +492,17 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self, config):
+    def _convert_pod_figures(self, subdir, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
-        dirs = ['model/PS', 'obs/PS']
-        exts = ['ps', 'eps']
-        files = []
-        for d in dirs:
-            for ext in exts:
-                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
-                files.extend(glob.glob(pattern))
+        full_subdir = os.path.join(self.POD_WK_DIR, subdir)
+        files = util.find_files(
+            os.path.join(full_subdir, 'PS'),
+            ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
+        )
         for f in files:
-            (dd, f_out) = os.path.split(os.path.splitext(f)[0])
-            path_stem = os.path.join(os.path.dirname(dd), f_out)
+            f_stem, _ = os.path.splitext(os.path.basename(f))
+            path_stem = os.path.join(full_subdir, f_stem)
             _ = util.run_shell_command(
                 'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
                 flags=config.config.get('convert_flags',''),
@@ -525,42 +523,39 @@ class Diagnostic(object):
                         path_stem+'-{}.png'.format(n+1),
                         path_stem+'-{}.png'.format(n)
                     )
-        # also move any figures saved directly as bitmaps
-        exts = ['gif', 'png', 'jpg', 'jpeg']
-        for d in dirs:
-            for ext in exts:
-                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
-                for f in glob.glob(pattern):
-                    (dd, ff) = os.path.split(f)
-                    shutil.move(f, os.path.join(os.path.dirname(dd), ff))
+        # move converted figures and any figures saved directly as bitmaps
+        files = util.find_files(
+            full_subdir, ['*.png', '*.gif', '*.jpg', '*.jpeg']
+        )
+        for f in files:
+            shutil.move(f, os.path.join(full_subdir, os.path.basename(f)))
 
     def _cleanup_pod_files(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
         """
         # copy PDF documentation (if any) to output
-        files = glob.glob(os.path.join(self.POD_CODE_DIR, 'doc', '*.pdf'))
-        for file in files:
-            shutil.copy2(file, self.POD_WK_DIR)
+        files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
+        for f in files:
+            shutil.copy2(f, self.POD_WK_DIR)
 
         # copy premade figures (if any) to output 
-        exts = ['gif', 'png', 'jpg', 'jpeg']
-        globs = [os.path.join(self.POD_OBS_DATA, '*.'+ext) for ext in exts]
-        files = []
-        for pattern in globs:
-            files.extend(glob.glob(pattern))
-        for file in files:
-            shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
+        files = util.find_files(
+            self.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
+        )
+        for f in files:
+            shutil.copy2(f, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested
         if not config.config.save_ps:
-            for d in ['model/PS', 'obs/PS']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
+            for d in ['model', 'obs']:
+                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'PS')):
+                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'PS'))
         # delete netCDF files, keep everything else
         if config.config.save_non_nc:
-            os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
+            for f in util.find_files(self.POD_WK_DIR, '*.nc'):
+                os.remove(f)
         # delete all generated data (flag is a misnomer)
         elif not config.config.save_nc:
-            for d in ['model/netCDF', 'obs/netCDF']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
+            for d in ['model', 'obs']:
+                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'netCDF')):
+                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'netCDF'))

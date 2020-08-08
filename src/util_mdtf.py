@@ -337,7 +337,8 @@ def bump_version(path, new_v=None, extra_dirs=[]):
         new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
     return (new_path, new_v)
 
-def append_html_template(template_file, target_file, template_dict={}, create=True):
+def append_html_template(template_file, target_file, template_dict={}, 
+    create=True, append=True):
     """Perform subtitutions on template_file and write result to target_file.
 
     Variable substitutions are done with vanilla Python name-based 
@@ -349,10 +350,6 @@ def append_html_template(template_file, target_file, template_dict={}, create=Tr
     Curly-bracketed strings that don't correspond to keys in template_dict are
     ignored (instead of raising a KeyError.)
 
-    .. note:
-        If target_file exists, the templated contents of template_file are always
-        *appended* to it, rather than overwriting it.
-
     Args:
         template_file: Path to template file.
         target_file: Destination path for result. 
@@ -360,6 +357,9 @@ def append_html_template(template_file, target_file, template_dict={}, create=Tr
             and values must be strings.
         create: Boolean, default True. If true, create target_file if it doesn't
             exist, otherwise raise an OSError. 
+        append: Boolean, default True. If target_file exists and this is true,
+            append the substituted contents of template_file to it. If false,
+            overwrite target_file with the substituted contents of template_file.
     """
     # see https://docs.python.org/3/library/collections.html#collections.defaultdict.__missing__
     class _IgnoreMissingDict(collections.defaultdict):
@@ -383,7 +383,12 @@ def append_html_template(template_file, target_file, template_dict={}, create=Tr
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
-        # print("\tDEBUG: append {} to {}".format(template_file, target_file))
-        mode = 'a'
+        if append:
+            # print("\tDEBUG: append {} to {}".format(template_file, target_file))
+            mode = 'a'
+        else:
+            # print("\tDEBUG: overwrite {} with {}".format(target_file, template_file))
+            os.remove(target_file)
+            mode = 'w'
     with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

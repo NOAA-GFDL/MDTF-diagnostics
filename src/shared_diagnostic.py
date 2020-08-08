@@ -455,20 +455,26 @@ class Diagnostic(object):
             # print(pod+" Elapsed time ",elapsed)
 
     def make_pod_html(self):
-        """Perform templating on POD's html results page.
+        """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~util_mdtf.append_html_template`. 
+        A wrapper for :func:`~util_mdtf.append_html_template`. Looks for all 
+        html files in POD_CODE_DIR, templates them, and copies them to 
+        POD_WK_DIR, respecting subdirectory structure (see doc for
+        :func:`~util.recursive_copy`).
         """
         config = util_mdtf.ConfigManager()
-        source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
-        dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
-
         template = config.global_envvars.copy()
         template.update(self.pod_env_vars)
-
-        if os.path.exists(dest):
-            os.remove(dest)
-        util_mdtf.append_html_template(source, dest, template_dict=template)
+        source_files = util.find_files(self.POD_CODE_DIR, '*.html')
+        util.recursive_copy(
+            source_files,
+            self.POD_CODE_DIR,
+            self.POD_WK_DIR,
+            copy_function=lambda src, dest: util_mdtf.append_html_template(
+                src, dest, template_dict=template, append=False
+            ),
+            overwrite=True
+        )
 
     def append_result_link(self, error=None):
         """Update the top level index.html page with a link to this POD's results.

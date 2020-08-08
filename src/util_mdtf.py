@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
+import collections
 import re
 import glob
 import shutil
@@ -336,20 +337,53 @@ def bump_version(path, new_v=None, extra_dirs=[]):
         new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
     return (new_path, new_v)
 
-def append_html_template(template_file, target_file, template_dict={}, 
-    create=True):
+def append_html_template(template_file, target_file, template_dict={}, create=True):
+    """Perform subtitutions on template_file and write result to target_file.
+
+    Variable substitutions are done with vanilla Python name-based 
+    `string formatting <https://docs.python.org/3.7/library/string.html#format-string-syntax>`__,
+    replacing curly bracket-delimited keys with their values in template_dict.
+    For example, if template_dict is {'A': 'foo'}, all occurrences of the string
+    `{A}` in template_file are replaced with the string `foo`. 
+
+    Curly-bracketed strings that don't correspond to keys in template_dict are
+    ignored (instead of raising a KeyError.)
+
+    .. note:
+        If target_file exists, the templated contents of template_file are always
+        *appended* to it, rather than overwriting it.
+
+    Args:
+        template_file: Path to template file.
+        target_file: Destination path for result. 
+        template_dict: :py:obj:`dict` of variable name-value pairs. Both names
+            and values must be strings.
+        create: Boolean, default True. If true, create target_file if it doesn't
+            exist, otherwise raise an OSError. 
+    """
+    # see https://docs.python.org/3/library/collections.html#collections.defaultdict.__missing__
+    class _IgnoreMissingDict(collections.defaultdict):
+        def __missing__(self, key):
+            # TODO: replace this with honest logging
+            print(('\tWARNING: template {} refers to undefined '
+                'variable {}').format(template_file, key))
+            return '{' + str(key) + '}'
+
     assert os.path.exists(template_file)
+    templ8_dict = _IgnoreMissingDict()
+    templ8_dict.update(template_dict)
     with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
-        html_str = html_str.format(**template_dict)
+        # see https://docs.python.org/3/library/stdtypes.html#str.format_map
+        html_str = html_str.format_map(templ8_dict)
     if not os.path.exists(target_file):
         if create:
-            print("\tDEBUG: write {} to new {}".format(template_file, target_file))
+            # print("\tDEBUG: write {} to new {}".format(template_file, target_file))
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
-        print("\tDEBUG: append {} to {}".format(template_file, target_file))
+        # print("\tDEBUG: append {} to {}".format(template_file, target_file))
         mode = 'a'
     with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

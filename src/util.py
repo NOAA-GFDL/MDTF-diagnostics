@@ -381,8 +381,8 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
         overwrite: Boolean, deafult False. If False, raise an OSError if
             any destination files already exist, otherwise silently overwrite.
     """
-    if copy_func is None:
-        copy_func = shutil.copy2
+    if copy_function is None:
+        copy_function = shutil.copy2
     src_files = coerce_to_iter(src_files)
     for f in src_files:
         if not f.startswith(src_root):

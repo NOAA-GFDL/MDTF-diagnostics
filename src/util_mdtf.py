@@ -8,6 +8,7 @@ import collections
 import re
 import glob
 import shutil
+import string
 import tempfile
 from src import util
 
@@ -337,18 +338,50 @@ def bump_version(path, new_v=None, extra_dirs=[]):
         new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
     return (new_path, new_v)
 
+class _DoubleBraceTemplate(string.Template):
+    """Private class used by :func:`~util_mdtf.append_html_template` to do 
+    string templating with double curly brackets as delimiters, since single
+    brackets are also used in css.
+
+    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
+    `https://stackoverflow.com/a/34362892`__.
+    """
+    flags = re.VERBOSE # matching is case-sensitive, unlike default
+    delimiter = '{{' # starting delimter is two braces, then apply
+    pattern = r"""
+        \{\{(?:                 # match delimiter itself, but don't include it
+        # Alternatives for what to do with string following delimiter:
+        # case 1) text is an escaped double bracket, written as '{{{{'.
+        (?P<escaped>\{\{)|
+        # case 2) text is the name of an env var, possibly followed by whitespace,
+        # followed by closing double bracket. Match POSIX env var names,
+        # case-sensitive (see https://stackoverflow.com/a/2821183), with the 
+        # addition that hyphens are allowed.
+        # Can't tell from docs what the distinction between <named> and <braced> is.
+        \s*(?P<named>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        \s*(?P<braced>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        # case 3) none of the above: ignore & move on (when using safe_substitute)
+        (?P<invalid>)
+        )
+    """
+
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True, append=True):
     """Perform subtitutions on template_file and write result to target_file.
 
-    Variable substitutions are done with vanilla Python name-based 
-    `string formatting <https://docs.python.org/3.7/library/string.html#format-string-syntax>`__,
-    replacing curly bracket-delimited keys with their values in template_dict.
+    Variable substitutions are done with custom 
+    `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
+    replacing *double* curly bracket-delimited keys with their values in template_dict.
     For example, if template_dict is {'A': 'foo'}, all occurrences of the string
-    `{A}` in template_file are replaced with the string `foo`. 
+    `{{A}}` in template_file are replaced with the string `foo`. Spaces between
+    the braces and variable names are ignored.
 
-    Curly-bracketed strings that don't correspond to keys in template_dict are
+    Double-curly-bracketed strings that don't correspond to keys in template_dict are
     ignored (instead of raising a KeyError.)
+
+    Double curly brackets are chosen as the delimiter to match the default 
+    syntax of, eg, django and jinja2. Using single curly braces leads to conflicts
+    with CSS syntax.
 
     Args:
         template_file: Path to template file.
@@ -361,21 +394,10 @@ def append_html_template(template_file, target_file, template_dict={},
             append the substituted contents of template_file to it. If false,
             overwrite target_file with the substituted contents of template_file.
     """
-    # see https://docs.python.org/3/library/collections.html#collections.defaultdict.__missing__
-    class _IgnoreMissingDict(collections.defaultdict):
-        def __missing__(self, key):
-            # TODO: replace this with honest logging
-            print(('\tWARNING: template {} refers to undefined '
-                'variable {}').format(template_file, key))
-            return '{' + str(key) + '}'
-
     assert os.path.exists(template_file)
-    templ8_dict = _IgnoreMissingDict()
-    templ8_dict.update(template_dict)
     with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
-        # see https://docs.python.org/3/library/stdtypes.html#str.format_map
-        html_str = html_str.format_map(templ8_dict)
+        html_str = _DoubleBraceTemplate(html_str).safe_substitute(template_dict)
     if not os.path.exists(target_file):
         if create:
             # print("\tDEBUG: write {} to new {}".format(template_file, target_file))

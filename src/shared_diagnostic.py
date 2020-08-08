@@ -465,18 +465,6 @@ class Diagnostic(object):
 
         template = config.global_envvars.copy()
         template.update(self.pod_env_vars)
-        if self.name == 'convective_transition_diag':
-            # change filenames of model and obs figures that get linked
-            # need a more elegant way to handle this
-            tropo_meas = template.get('BULK_TROPOSPHERIC_TEMPERATURE_MEASURE', None)
-            if tropo_meas == '1':
-                template['TROPO_VAR'] = 'tave'
-            elif tropo_meas == '2':
-                template['TROPO_VAR'] = 'qsat_int'
-            else:
-                print(("ERROR in convective_transition_diag's settings.jsonc: "
-                    "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE = {}, expected '1' "
-                    "or '2'").format(tropo_meas))
 
         if os.path.exists(dest):
             os.remove(dest)

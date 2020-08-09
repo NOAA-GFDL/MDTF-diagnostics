@@ -6,17 +6,26 @@ in the output webpages.
 
 Based on test_website by Dani Coleman, bundy@ucar.edu
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+import sys
+# do version check before importing other stuff
+if sys.version_info[0] != 3 or sys.version_info[1] < 6:
+    print(("ERROR: MDTF currently only supports python >= 3.6.*. Please check "
+    "which version is on your $PATH (e.g. with `which python`.)"))
+    print("Attempted to run with following python version:\n{}".format(sys.version))
+    exit(1)
+# passed; continue with imports
 import os
-from src import six
 import argparse
 import collections
 import itertools
-from six.moves import html_parser, urllib # py3: html.parser
+from html.parser import HTMLParser
+import urllib.parse
+import urllib.request
+import urllib.error
 from src import util
 
 
-class LinkParser(html_parser.HTMLParser):
+class LinkParser(HTMLParser):
     """See `<https://stackoverflow.com/a/41663924>`__.
     """
     def reset(self):
@@ -53,12 +62,11 @@ class LinkVerifier(object):
     def gen_links(f, parser):
         """Parse contents of an HTML file f and yield targets of all links.
         """
-        #encoding = f.headers.get_content_charset() or 'UTF-8'# py3
-        encoding = f.headers.getparam('charset') or 'UTF-8'
+        encoding = f.headers.get_content_charset() or 'UTF-8'
+        #encoding = f.headers.getparam('charset') or 'UTF-8' # py2
         for line in f:
             parser.feed(line.decode(encoding))
-            for link in parser.links:
-                yield link
+            yield from parser.links
 
     def check_one_url(self, link_source_url, url):
         """Given a url, return 1) None if resource can't be accessed (doesn't exist),
@@ -66,13 +74,22 @@ class LinkVerifier(object):
         """
         try:
             f = urllib.request.urlopen(url)
-        except (urllib.error.HTTPError, urllib.error.URLError):
+        except urllib.error.URLError as e:
+            if hasattr(e, 'reason'):
+                print('Failed to reach a server.')
+                print('Reason: ', e.reason)
+            elif hasattr(e, 'code'):
+                print('The server couldn\'t fulfill the request.')
+                print('Error code: ', e.code)
             return None
-        if f.info().getsubtype() != 'html':
+        if f.info().get_content_subtype() != 'html':
             return []
         else:
             parser = LinkParser()
-            links = [(url, urllib.parse.urljoin(url, l)) for l in self.gen_links(f, parser)]
+            links = [
+                (url, urllib.parse.urljoin(url, link)) \
+                    for link in self.gen_links(f, parser)
+            ]
             f.close()
             return links
 

@@ -24,25 +24,32 @@ import urllib.request
 import urllib.error
 from src import util
 
-
 class LinkParser(HTMLParser):
-    """See `<https://stackoverflow.com/a/41663924>`__.
+    """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs 
+    an iterable over each <a> tag.
+    
+    Adapted from `<https://stackoverflow.com/a/41663924>`__.
     """
     def reset(self):
         super(LinkParser, self).reset()
         self.links = iter([])
 
     def handle_starttag(self, tag, attrs):
-        if tag == 'a':
+        if tag.lower() == 'a':
             for name, value in attrs:
-                if name == 'href':
+                if name.lower() == 'href':
                     self.links = itertools.chain(self.links, [value])
 
 
 class LinkVerifier(object):
     def __init__(self, root, verbose=False):
-        """Setup for search. Form a file:// URL if we're given a local path, and
-        organize missing links in a dictionary keyed on POD name.
+        """Initialize search for broken links.
+        
+        Args:
+            root (str): Either a URL or path on the local filesystem. Location 
+                of the top-level html file to begin the search from.
+            verbose (bool, default False): Set to True to print each file 
+                examined.
         """
         self.verbose=verbose
         root_parts = urllib.parse.urlsplit(root)
@@ -60,17 +67,41 @@ class LinkVerifier(object):
 
     @staticmethod
     def gen_links(f, parser):
-        """Parse contents of an HTML file f and yield targets of all links.
+        """Generator which parses the contents of an HTML file f and yields 
+        targets of all the links it contains.
+
+        Adapted from `<https://stackoverflow.com/a/41663924>`__.
+
+        Args:
+            f: :py:mod:`urllib.respose` object of the form returned by 
+                :py:func:`~urllib.request.urlopen`: either 
+                :py:class:`~http.client.HTTPResponse` for http or https, or 
+                :py:class:`urllib.response.addinfourl` for files.
+            parser: instance of :class:`LinkParser`.
+
+        Yields:
+            Contents of the `href` attribute of each `a` tag of f, as extracted 
+                by :class:`LinkParser`.
         """
         encoding = f.headers.get_content_charset() or 'UTF-8'
-        #encoding = f.headers.getparam('charset') or 'UTF-8' # py2
         for line in f:
             parser.feed(line.decode(encoding))
             yield from parser.links
 
     def check_one_url(self, link_source_url, url):
-        """Given a url, return 1) None if resource can't be accessed (doesn't exist),
-        or 2) a list of all html links appearing in that file (if any).
+        """Get list of URLs linked to from the current URL (if any).
+
+        Args:
+            link_source_url (str): unused.
+            url (str): URL to examine.
+
+        Returns: 
+            Either 
+
+                #. None if url can't be opened, 
+                #. the empty list if url is not an html document, or 
+                #. a list of links contained in url, expressed as 
+                    (`url`, `target_url`) tuples.
         """
         try:
             f = urllib.request.urlopen(url)
@@ -94,9 +125,20 @@ class LinkVerifier(object):
             return links
 
     def breadth_first(self, root_url, url_base):
-        """Do breadth-first search of all files linked from an initial root_url. 
-        Return a list of (link_source, link_target) tuples where the file in 
-        link_target couldn't be found.
+        """Breadth-first search of all files linked from an initial root_url. 
+
+        The search correctly handles cycles (ie, A.html links to B.html and 
+        B.html links to A.html) and only examines files in subdirectories of 
+        root_url's directory, so that links to external sites are ignored, 
+        rather than trying to trace the link structure of the whole internet.
+
+        Args:
+            root_url (str): URL of an html file to start the search at.
+            url_base (str): Directory containing the file in root_url.
+
+        Returns:
+            list of (link_source, link_target) tuples where the file in 
+                link_target couldn't be found.
         """
         missing = []
         queue = [('', root_url)]
@@ -113,16 +155,26 @@ class LinkVerifier(object):
             else:
                 if self.verbose:
                     print('...OK')
-                # known_urls so that we don't chase cycles
-                # restrict links to those that start with url_base to avoid trying
-                # to download all of ncar.ucar.edu
+                # restrict links to those that start with url_base
                 new_links = [l for l in new_links \
                     if l[1] not in known_urls and l[1].startswith(url_base)]
                 queue.extend(new_links)
+                # update known_urls so that we don't chase cycles
                 known_urls.update([l[1] for l in new_links])
         return missing
 
     def get_missing_pods(self):
+        """Perform search for missing linked files and collect them by POD.
+
+        This is the only user-facing method of :class:`LinkVerifier` once it's
+        been initialized.
+
+        Returns:
+            dict, with keys given by the short names of PODs with missing files
+                and values given by a list of the files that POD is missing. 
+                Missing files are listed by their path relative to the POD's 
+                output directory.
+        """
         if self.verbose:
             print("Checking {}\n".format(self.root))
         missing = self.breadth_first(self.root, self.urlbase)
@@ -140,6 +192,7 @@ class LinkVerifier(object):
 # --------------------------------------------------------------
 
 if __name__ == '__main__':
+    # Wrap input/output if we're called as a standalone script
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true",
         help="increase output verbosity")

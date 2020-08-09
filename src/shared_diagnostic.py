@@ -517,10 +517,10 @@ class Diagnostic(object):
         if missing_out:
             print('ERROR: {} has missing output files.'.format(self.name))
             template_dict = self.__dict__.copy()
-            template_dict['missing_output'] = util.pretty_print_json(missing_out)
+            template_dict['missing_output'] = '<br>'.join(missing_out)
             util_mdtf.append_html_template(
                 os.path.join(self.code_root,'src','html','pod_missing_snippet.html'),
-                self.POD_HTML, template_dict
+                self.TEMP_HTML, template_dict
             )
 
     def convert_pod_figures(self, src_subdir, dest_subdir):

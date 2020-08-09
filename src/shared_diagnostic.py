@@ -5,6 +5,7 @@ import glob
 import shutil
 from src import util
 from src import util_mdtf
+from src import verify_links
 
 
 @six.python_2_unicode_compatible
@@ -440,6 +441,7 @@ class Diagnostic(object):
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
+        self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
         # add link and description to main html page
         self.append_result_link(self.skipped)
 
@@ -448,6 +450,7 @@ class Diagnostic(object):
             self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
             self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
             self.cleanup_pod_files()
+            self.verify_pod_links()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
@@ -499,6 +502,26 @@ class Diagnostic(object):
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
+
+    def verify_pod_links(self):
+        """Check for missing files linked to from POD's html page.
+
+        See documentation for :class:`~verify_links.LinkVerifier`. This method
+        calls LinkVerifier to check existence of all files linked to from the 
+        POD's own top-level html page (after templating). If any files are
+        missing, an error message listing them is written to the run's index.html 
+        (located in src/html/pod_missing_snippet.html).
+        """
+        verifier = verify_links.LinkVerifier(self.POD_HTML, verbose=False)
+        missing_out = verifier.verify_pod_links(self.name)
+        if missing_out:
+            print('ERROR: {} has missing output files.'.format(self.name))
+            template_dict = self.__dict__.copy()
+            template_dict['missing_output'] = util.pretty_print_json(missing_out)
+            util_mdtf.append_html_template(
+                os.path.join(self.code_root,'src','html','pod_missing_snippet.html'),
+                self.POD_HTML, template_dict
+            )
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using

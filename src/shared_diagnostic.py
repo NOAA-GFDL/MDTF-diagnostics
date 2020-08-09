@@ -5,6 +5,7 @@ import glob
 import shutil
 from src import util
 from src import util_mdtf
+from src import verify_links
 
 
 @six.python_2_unicode_compatible
@@ -440,6 +441,7 @@ class Diagnostic(object):
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
+        self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
         if isinstance(self.skipped, Exception):
             self.append_result_link(self.skipped)
         else:
@@ -447,6 +449,7 @@ class Diagnostic(object):
             self._make_pod_html(config)
             self._convert_pod_figures(config)
             self._cleanup_pod_files(config)
+            self.verify_pod_links()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
@@ -457,7 +460,7 @@ class Diagnostic(object):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
         """
         source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
-        dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
+        dest = self.POD_HTML
 
         template = config.global_envvars.copy()
         template.update(self.pod_env_vars)
@@ -491,6 +494,26 @@ class Diagnostic(object):
             src = os.path.join(src_dir, 'pod_error_snippet.html')
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
+
+    def verify_pod_links(self):
+        """Check for missing files linked to from POD's html page.
+
+        See documentation for :class:`~verify_links.LinkVerifier`. This method
+        calls LinkVerifier to check existence of all files linked to from the 
+        POD's own top-level html page (after templating). If any files are
+        missing, an error message listing them is written to the run's index.html 
+        (located in src/html/pod_missing_snippet.html).
+        """
+        verifier = verify_links.LinkVerifier(self.POD_HTML, verbose=False)
+        missing_out = verifier.verify_pod_links(self.name)
+        if missing_out:
+            print('ERROR: {} has missing output files.'.format(self.name))
+            template_dict = self.__dict__.copy()
+            template_dict['missing_output'] = util.pretty_print_json(missing_out)
+            util_mdtf.append_html_template(
+                os.path.join(self.code_root,'src','html','pod_missing_snippet.html'),
+                self.POD_HTML, template_dict
+            )
 
     def _convert_pod_figures(self, config):
         """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.

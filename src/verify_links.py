@@ -71,8 +71,6 @@ class LinkVerifier(object):
             root_parts = root_parts._replace(scheme='file')
         root_parts = root_parts._replace(path=path_)
         self.root = urllib.parse.urlunsplit(root_parts)
-        root_parts = root_parts._replace(path=os.path.dirname(path_))
-        self.urlbase = urllib.parse.urlunsplit(root_parts)
 
     @staticmethod
     def gen_links(f, parser):
@@ -118,12 +116,12 @@ class LinkVerifier(object):
             return None
         try:
             f = urllib.request.urlopen(url)
+        except urllib.error.HTTPError as e:
+            print('Error code: ', e.code)
+            return None
         except urllib.error.URLError as e:
-            if hasattr(e, 'reason'):
-                print('\nFailed to find file or connect to server.')
-                print('Reason: ', e.reason)
-            elif hasattr(e, 'code'):
-                print('Error code: ', e.code)
+            print('\nFailed to find file or connect to server.')
+            print('Reason: ', e.reason)
             return None
         if f.info().get_content_subtype() != 'html':
             return []
@@ -136,7 +134,7 @@ class LinkVerifier(object):
             f.close()
             return links
 
-    def breadth_first(self, root_url, url_base):
+    def breadth_first(self, root_url):
         """Breadth-first search of all files linked from an initial root_url. 
 
         The search correctly handles cycles (ie, A.html links to B.html and 
@@ -146,20 +144,24 @@ class LinkVerifier(object):
 
         Args:
             root_url (str): URL of an html file to start the search at.
-            url_base (str): Directory containing the file in root_url.
 
         Returns:
             list of (link_source, link_target) tuples where the file in 
                 link_target couldn't be found.
         """
         missing = []
-        queue = [Link(origin=None, target=root_url)]
         known_urls = set([root_url])
+        root_parts = urllib.parse.urlsplit(root_url)
+        root_parts = root_parts._replace(path=os.path.dirname(root_parts.path))
+        # root_parent = URL to directory containing file referred to in root_url
+        root_parent = urllib.parse.urlunsplit(root_parts)
+
+        queue = [Link(origin=None, target=root_url)]
         while queue:
             current_link = queue.pop(0)
             if self.verbose:
                 print("\tChecking {}".format(
-                    current_link.target[len(url_base) + 1:]
+                    current_link.target[len(root_parent) + 1:]
                 ), end="")
             new_links = self.check_one_url(current_link)
             if new_links is None:
@@ -169,10 +171,10 @@ class LinkVerifier(object):
             else:
                 if self.verbose:
                     print('...OK')
-                # restrict links to those that start with url_base
+                # restrict links to those that start with root_parent
                 new_links = [
                     lnk for lnk in new_links if lnk.target not in known_urls \
-                        and lnk.target.startswith(url_base)
+                        and lnk.target.startswith(root_parent)
                 ]
                 queue.extend(new_links)
                 # update known_urls so that we don't chase cycles
@@ -193,7 +195,7 @@ class LinkVerifier(object):
         """
         if self.verbose:
             print("Checking {}\n".format(self.root))
-        missing = self.breadth_first(self.root, self.urlbase)
+        missing = self.breadth_first(self.root)
         
         missing_dict = collections.defaultdict(list)
         for link in missing:

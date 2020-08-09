@@ -7,6 +7,8 @@ import io
 from src import six
 import re
 import shlex
+import glob
+import shutil
 import collections
 from distutils.spawn import find_executable
 if os.name == 'posix' and six.PY2:
@@ -335,35 +337,66 @@ def pretty_print_json(struct, sort_keys=False):
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 
-def find_files(root_dir, pattern):
-    """Return list of files in `root_dir` matching `pattern`. 
+def find_files(src_dirs, filename_globs):
+    """Return list of files in `src_dirs` matching any of `filename_globs`. 
 
-    Wraps the unix `find` command (`locate` would be much faster but there's no
-    way to query if its DB is current). 
+    Wraps glob.glob for the use cases encountered in cleaning up POD output.
 
     Args:
-        root_dir (:py:obj:`str`): Directory to search for files in.
-        pattern (:py:obj:`str`): Patterrn to match. This is a shell globbing pattern,
-            not a full regex. Default is to match filenames only, unless the
-            pattern contains a directory separator, in which case the match will
-            be done on the entire path relative to `root_dir`.
+        src_dirs: Directory, or a list of directories, to search for files in.
+            The function will also search all subdirectories.
+        filename_globs: Glob, or a list of globs, for filenames to match. This 
+            is a shell globbing pattern, not a full regex.
 
-    Returns: :py:obj:`list` of relative paths to files matching `pattern`. Paths are
-        relative to `root_dir`. If no files are found, the list is empty.
+    Returns: :py:obj:`list` of paths to files matching any of the criteria.
+        If no files are found, the list is empty.
     """
-    if os.sep in pattern:
-        pattern_flag = '-path' # searching whole path
-    else:
-        pattern_flag = '-name' # search filename only 
-    paths = run_command([
-        'find', os.path.normpath(root_dir), '-depth', '-type', 'f', 
-        pattern_flag, pattern
-        ])
-    # strip out root_dir part of path: get # of chars in root_dir (plus terminating
-    # separator) and return remainder. Could do this with '-printf %P' in GNU find
-    # but BSD find (mac os) doesn't have that.
-    prefix_length = len(os.path.normpath(root_dir)) + 1 
-    return [p[prefix_length:] for p in paths]
+    src_dirs = coerce_to_iter(src_dirs)
+    filename_globs = coerce_to_iter(filename_globs)
+    files = set([])
+    for d in src_dirs:
+        for g in filename_globs:
+            files.update(glob.glob(os.path.join(d, g)))
+            files.update(glob.glob(os.path.join(d, '**', g)))
+    return list(files)
+
+def recursive_copy(src_files, src_root, dest_root, copy_function=None, 
+    overwrite=False):
+    """Copy src_files to dest_root, preserving relative subdirectory structure.
+
+    Copies a subset of files in a directory subtree rooted at src_root to an
+    identical subtree structure rooted at dest_root, creating any subdirectories
+    as needed. For example, `recursive_copy('/A/B/C.txt', '/A', '/D')` will 
+    first create the destination subdirectory `/D/B` and copy '/A/B/C.txt` to 
+    `/D/B/C.txt`.
+
+    Args:
+        src_files: Absolute path, or list of absolute paths, to files to copy.
+        src_root: Root subtree of all files in src_files. Raises a ValueError
+            if all files in src_files are not contained in the src_root directory.
+        dest_root: Destination directory in which to create the copied subtree.
+        copy_function: Function to use to copy individual files. Must take two 
+            arguments, the source and destination paths, respectively. Defaults 
+            to :py:meth:`shutil.copy2`.
+        overwrite: Boolean, deafult False. If False, raise an OSError if
+            any destination files already exist, otherwise silently overwrite.
+    """
+    if copy_function is None:
+        copy_function = shutil.copy2
+    src_files = coerce_to_iter(src_files)
+    for f in src_files:
+        if not f.startswith(src_root):
+            raise ValueError('{} not a sub-path of {}'.format(f, src_root))
+    dest_files = [
+        os.path.join(dest_root, os.path.relpath(f, start=src_root)) \
+        for f in src_files
+    ]
+    for f in dest_files:
+        if not overwrite and os.path.exists(f):
+            raise OSError('{} exists.'.format(f))
+        os.makedirs(os.path.normpath(os.path.dirname(f)), exist_ok=True)
+    for src, dest in zip(src_files, dest_files):
+        copy_function(src, dest)
 
 def resolve_path(path, root_path="", env=None):
     """Abbreviation to resolve relative paths.

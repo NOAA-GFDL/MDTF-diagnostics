@@ -256,7 +256,7 @@ def framework_verify(code_root, run_output):
         if not os.path.exists(html_root):
             raise IOError("Can't find framework html output in {}".format(html_root))
         link_verifier = LinkVerifier(html_root, verbose=False)
-        missing_dict = link_verifier.get_missing_pods()
+        missing_dict = link_verifier.verify_all_links()
     except Exception as exc:
         fatal_exception_handler(exc, "ERROR in link verification.")
     if missing_dict:

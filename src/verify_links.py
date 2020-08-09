@@ -62,14 +62,11 @@ class LinkVerifier(object):
         """
         self.verbose=verbose
         root_parts = urllib.parse.urlsplit(root)
-        path_ = root_parts.path
-        if not path_.endswith('index.html'):
-            path_ = os.path.join(path_, 'index.html')
         if not root_parts.scheme:
             # given a filesystem path, not a URL
-            path_ = os.path.abspath(path_)
+            path_ = os.path.abspath(root_parts.path)
+            root_parts = root_parts._replace(path=path_)
             root_parts = root_parts._replace(scheme='file')
-        root_parts = root_parts._replace(path=path_)
         self.root = urllib.parse.urlunsplit(root_parts)
 
     @staticmethod
@@ -157,6 +154,8 @@ class LinkVerifier(object):
         root_parent = urllib.parse.urlunsplit(root_parts)
 
         queue = [Link(origin=None, target=root_url)]
+        if self.verbose:
+            print("Checking {}:".format(root_url))
         while queue:
             current_link = queue.pop(0)
             if self.verbose:
@@ -181,11 +180,13 @@ class LinkVerifier(object):
                 known_urls.update([lnk.target for lnk in new_links])
         return missing
 
-    def get_missing_pods(self):
-        """Perform search for missing linked files and collect them by POD.
+    def group_relative_links(self, missing):
+        """Format paths to missing linked files as relative paths, grouped by 
+        POD.
 
-        This is the only user-facing method of :class:`LinkVerifier` once it's
-        been initialized.
+        Args:
+            missing (list): List of :class:`Link` objects found by 
+                :meth:`breadth_first`, whose targets correspond to missing files.
 
         Returns:
             dict, with keys given by the short names of PODs with missing files
@@ -193,10 +194,6 @@ class LinkVerifier(object):
                 Missing files are listed by their path relative to the POD's 
                 output directory.
         """
-        if self.verbose:
-            print("Checking {}\n".format(self.root))
-        missing = self.breadth_first(self.root)
-        
         missing_dict = collections.defaultdict(list)
         for link in missing:
             prefix = os.path.commonprefix([link.origin, link.target])
@@ -206,6 +203,46 @@ class LinkVerifier(object):
             rel_link = link.target[len(prefix):]
             missing_dict[pod].append(rel_link)
         return missing_dict
+
+    def verify_pod_links(self, pod_name):
+        """Perform search for missing linked files that were supposed to have 
+        been output by pod_name.
+
+        Args:
+            pod_name: Name of the POD to check for missing files.
+
+        Returns:
+            A list of the files that POD is missing. Missing files are listed by
+                their path relative to the POD's output directory.
+        """
+        root_parts = urllib.parse.urlsplit(self.root)
+        if not root_parts.path.endswith('.html'):
+            path_ = os.path.join(root_parts.path, pod_name+'.html')
+            root_parts = root_parts._replace(path=path_)
+        root_url = urllib.parse.urlunsplit(root_parts)
+
+        missing = self.breadth_first(root_url)
+        missing_dict = self.group_relative_links(missing)
+        return missing_dict.get(pod_name, [])
+
+    def verify_all_links(self):
+        """Perform search for any missing linked files from a run of the MDTF
+        framework and collect them by POD.
+
+        Returns:
+            dict, with keys given by the short names of PODs with missing files
+                and values given by a list of the files that POD is missing. 
+                Missing files are listed by their path relative to the POD's 
+                output directory.
+        """
+        root_parts = urllib.parse.urlsplit(self.root)
+        if not root_parts.path.endswith('.html'):
+            path_ = os.path.join(root_parts.path, 'index.html')
+            root_parts = root_parts._replace(path=path_)
+        root_url = urllib.parse.urlunsplit(root_parts)
+
+        missing = self.breadth_first(root_url)
+        return self.group_relative_links(missing)
 
 # --------------------------------------------------------------
 
@@ -219,7 +256,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     link_verifier = LinkVerifier(args.path_or_url, args.verbose)
-    missing_dict = link_verifier.get_missing_pods()
+    missing_dict = link_verifier.verify_all_links()
 
     if missing_dict:
         print("ERROR: the following files are missing:")

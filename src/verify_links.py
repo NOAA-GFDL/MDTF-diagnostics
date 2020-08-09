@@ -24,6 +24,15 @@ import urllib.request
 import urllib.error
 from src import util
 
+Link = collections.namedtuple('Link', ['origin', 'target'])
+Link.__doc__ = """
+Class representing individual links, to simplify bookkeeping.
+
+Attributes:
+    origin (str): URL of the document containing the link.
+    target (str): URL referred to by the link.
+"""
+
 class LinkParser(HTMLParser):
     """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs 
     an iterable over each <a> tag.
@@ -88,29 +97,32 @@ class LinkVerifier(object):
             parser.feed(line.decode(encoding))
             yield from parser.links
 
-    def check_one_url(self, link_source_url, url):
+    def check_one_url(self, link):
         """Get list of URLs linked to from the current URL (if any).
 
         Args:
-            link_source_url (str): unused.
-            url (str): URL to examine.
+            link (:obj:`Link`): Instance of :class:`Link`. Only the URL in
+                link.target is examined.
 
         Returns: 
             Either 
 
-                #. None if url can't be opened, 
-                #. the empty list if url is not an html document, or 
-                #. a list of links contained in url, expressed as 
-                    (`url`, `target_url`) tuples.
+                #. None if link.target can't be opened, 
+                #. the empty list if link.target is not an html document, or 
+                #. a list of links contained in link.target, expressed as 
+                    :class:`Link` objects.
         """
+        if hasattr(link, 'target'):
+            url = link.target
+        else:
+            return None
         try:
             f = urllib.request.urlopen(url)
         except urllib.error.URLError as e:
             if hasattr(e, 'reason'):
-                print('Failed to reach a server.')
+                print('\nFailed to find file or connect to server.')
                 print('Reason: ', e.reason)
             elif hasattr(e, 'code'):
-                print('The server couldn\'t fulfill the request.')
                 print('Error code: ', e.code)
             return None
         if f.info().get_content_subtype() != 'html':
@@ -118,8 +130,8 @@ class LinkVerifier(object):
         else:
             parser = LinkParser()
             links = [
-                (url, urllib.parse.urljoin(url, link)) \
-                    for link in self.gen_links(f, parser)
+                Link(origin=url, target=urllib.parse.urljoin(url, link_out)) \
+                    for link_out in self.gen_links(f, parser)
             ]
             f.close()
             return links
@@ -141,26 +153,30 @@ class LinkVerifier(object):
                 link_target couldn't be found.
         """
         missing = []
-        queue = [('', root_url)]
+        queue = [Link(origin=None, target=root_url)]
         known_urls = set([root_url])
         while queue:
-            current_url = queue.pop(0)
+            current_link = queue.pop(0)
             if self.verbose:
-                print("\tChecking {}".format(current_url[1][len(url_base) + 1:]), end="")
-            new_links = self.check_one_url(*current_url)
+                print("\tChecking {}".format(
+                    current_link.target[len(url_base) + 1:]
+                ), end="")
+            new_links = self.check_one_url(current_link)
             if new_links is None:
                 if self.verbose:
                     print('...MISSING!')
-                missing.append(current_url)
+                missing.append(current_link)
             else:
                 if self.verbose:
                     print('...OK')
                 # restrict links to those that start with url_base
-                new_links = [l for l in new_links \
-                    if l[1] not in known_urls and l[1].startswith(url_base)]
+                new_links = [
+                    lnk for lnk in new_links if lnk.target not in known_urls \
+                        and lnk.target.startswith(url_base)
+                ]
                 queue.extend(new_links)
                 # update known_urls so that we don't chase cycles
-                known_urls.update([l[1] for l in new_links])
+                known_urls.update([lnk.target for lnk in new_links])
         return missing
 
     def get_missing_pods(self):
@@ -180,12 +196,12 @@ class LinkVerifier(object):
         missing = self.breadth_first(self.root, self.urlbase)
         
         missing_dict = collections.defaultdict(list)
-        for tup in missing:
-            prefix = os.path.commonprefix(tup)
+        for link in missing:
+            prefix = os.path.commonprefix([link.origin, link.target])
             dirs = urllib.parse.urlsplit(prefix).path.split('/')
             dirs = [d for d in dirs if d]
             pod = dirs[-1]
-            rel_link = tup[1][len(prefix):]
+            rel_link = link.target[len(prefix):]
             missing_dict[pod].append(rel_link)
         return missing_dict
 

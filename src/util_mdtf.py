@@ -112,12 +112,9 @@ class TempDirManager(util.Singleton):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
-            hash_ = hex(hash(hash_obj))
-            if hash_ < 0:
-                new_dir = 'Y'+str(hash_)[3:]
-            else:
-                new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(self._root, self._prefix+new_dir)
+            hash_ = hex(hash(hash_obj))[2:]
+            assert isinstance(hash_, str)
+            new_dir = os.path.join(self._root, self._prefix+hash_)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
         assert new_dir not in self._dirs

@@ -359,13 +359,6 @@ if( composite == 1):
     print "   resulting plots are located in : " +mse_var_dir
 
 print " " 
-##########################
-###    copy html files
-###########  copy html files 
-file = mse_var_dir+"/../MSE_VAR.html"
-if os.path.isfile( file ):
-    os.system("rm -f "+file)
-os.system("cp "+os.environ["POD_HOME"]+"/MSE_VAR/MSE_VAR.html "+file)
 
 #============================================================
 # DRB: no longer necessary to add a link to top index.html 

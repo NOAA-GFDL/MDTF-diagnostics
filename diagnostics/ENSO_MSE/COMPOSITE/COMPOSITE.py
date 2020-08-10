@@ -654,14 +654,6 @@ if( regression == 1):
     print "   resulting plots are located in : " + wkdir_model
     print "     with prefix  regression  +  variable name "
 
-    print(os.system("ls "+wkdir_model))
-
-print("what is going on here")
-file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
-file_dest = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]+"/COMPOSITE.html" 
-if os.path.isfile( file_dest ):
-    os.system("rm -f "+file_dest)
-os.system("cp "+file_src+" "+file_dest)
 
 #============================================================
 #

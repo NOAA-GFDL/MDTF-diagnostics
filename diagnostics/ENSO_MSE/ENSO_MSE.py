@@ -105,13 +105,6 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/preprocess.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.py")
-###       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by 
-###                             individual component html files
-        file_src  = os.environ["POD_HOME"]+"/mdtf_diag_banner.png"
-        file_dest = os.environ["ENSO_MSE_WKDIR"]+"/mdtf_diag_banner.png"
-        if os.path.isfile( file_dest ):
-         os.system("rm -f "+file_dest)
-        os.system("cp "+file_src+" "+file_dest)
 
         print("=================================================================")
         print("                         COMPOSITES FINISHED                     ")

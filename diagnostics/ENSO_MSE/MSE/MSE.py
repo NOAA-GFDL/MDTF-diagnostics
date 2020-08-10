@@ -344,11 +344,6 @@ if(  composite == 1):
     print "   resulting plots are located in : " +outdir
     print "   with prefix composite  + ELNINO/LANINA +  variable name "
 print "  " 
-###########  copy html files 
-html_file = os.environ["ENSO_MSE_WKDIR_MSE"] + "/MSE.html"
-if os.path.isfile( html_file ):
-    os.system("rm -rf "+html_file)
 
-os.system("cp "+os.environ["POD_HOME"]+"/MSE/MSE.html "+html_file)
 
 ############  end 

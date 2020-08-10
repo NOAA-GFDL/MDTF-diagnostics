@@ -77,12 +77,6 @@ generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_02.ncl")
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_03.ncl")
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_04.ncl")
 
-###    copy the html files for to create webpages
-if os.path.isfile( os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/SCATTER.html" ):
-    os.system("rm -f "+os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/SCATTER.html")
-
-os.system("cp "+os.environ["POD_HOME"]+"/SCATTER/SCATTER.html "+os.environ["ENSO_MSE_WKDIR"]+"/SCATTER/." )
-
 ###  the end 
 now = datetime.datetime.now()
 print"   " 

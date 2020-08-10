@@ -163,15 +163,12 @@ class NcoNetcdfHelper(NetcdfHelper):
     def ncdump_h(cls, in_file=None, cwd=None, dry_run=False):
         """Return header information for all variables in a file.
         """
-        def _parse_xml_wrapper(bytes_):
+        def _parse_xml_wrapper(xml_):
             # strips namespaces; https://stackoverflow.com/a/25920989
-            # https://stackoverflow.com/a/53738357 would be more robust, but for
-            # some reason I can't reproduce it
-            str_obj = io.TextIOWrapper(six.BytesIO(bytes_), encoding='utf-8')
-            it = ET.iterparse(str_obj)
+            it = ET.iterparse(io.StringIO(xml_))
             for _, el in it:
-                if '}' in el.tag:
-                    el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
+                for _, el in it:
+                    _, _, el.tag = el.tag.rpartition('}') # strip namespaces
                 for at in el.attrib: # strip namespaces of attributes too
                     if '}' in at:
                         newat = at.split('}', 1)[1]

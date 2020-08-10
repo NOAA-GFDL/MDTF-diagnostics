@@ -1,9 +1,7 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-from src import six
 import collections
 import re
 import glob
@@ -110,16 +108,13 @@ class TempDirManager(util.Singleton):
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
-        elif isinstance(hash_obj, six.string_types):
+        elif isinstance(hash_obj, str):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
-            hash_ = hex(hash(hash_obj))
-            if hash_ < 0:
-                new_dir = 'Y'+str(hash_)[3:]
-            else:
-                new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(self._root, self._prefix+new_dir)
+            hash_ = hex(hash(hash_obj))[2:]
+            assert isinstance(hash_, str)
+            new_dir = os.path.join(self._root, self._prefix+hash_)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
         assert new_dir not in self._dirs
@@ -234,7 +229,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif not isinstance(varvalue, six.string_types):
+        elif not isinstance(varvalue, str):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
@@ -244,7 +239,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
-    for n in list(range(len(varlist))):
+    for n in range(len(varlist)):
         if ( verbose > 2):
             print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:

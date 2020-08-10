@@ -102,7 +102,8 @@ An extensive explanation of the figures and techniques used to achieve them can 
    :align: center
    :width: 100 %
 
-# https://stackoverflow.com/questions/4550021/working-example-of-floating-image-in-restructured-text
+.. 
+   # https://stackoverflow.com/questions/4550021/working-example-of-floating-image-in-restructured-text
 
 .. |clearfloats| raw:: html
 

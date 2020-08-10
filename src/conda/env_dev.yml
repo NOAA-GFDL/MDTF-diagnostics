@@ -17,6 +17,7 @@ dependencies:
 - mock # needed until tests updated from py2
 - jupyter
 - jupyterlab
-- sphinx
+- sphinx=3.1.2
+- recommonmark=0.6
 - pylint
 - doc8

@@ -85,7 +85,9 @@ class CMIP6_CVs(util.Singleton):
 
 @six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
-    # http://goo.gl/v1drZl, page 16
+    """
+    `<http://goo.gl/v1drZl>`__, page 16
+    """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
         'hr': 5, # includes minutes

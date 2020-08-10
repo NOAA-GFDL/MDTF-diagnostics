@@ -1,30 +1,91 @@
-Development Checklist
-=====================
+.. _ref-dev-checklist:
 
-The following are the necessary steps for the module implementation and integration into the framework. The POD name tag used in the code should closely resemble the full POD name but should not contain any space bar or special characters. Note that the convective_transition_diag tag here is used repeatedly and consistently for the names of sub-directories, script, and html template. Please follow this convention so that mdtf.py can automatically process through the PODs. 
+POD development checklist
+=========================
 
-All the modules currently included in the code package have the same structure, and hence the descriptions below apply: 
+This section lists all the steps that need to be taken in order to submit a POD for inclusion in the MDTF framework.
 
-1. Provide all the scripts for the convective_transition_diag POD in the sub-directory DIAG_HOME/var_code/convective_transition_diag. Among the provided scripts, there should be a template html file convective_transition_diag.html, and a main script convective_transition_diag.py that calls the other scripts in the same sub-directory for analyzing, plotting, and finalizing html. 
+Code and documentation submission
+---------------------------------
 
-2. Provide all the pre-digested observation data/figures in the sub-directory DATA_IN/obs_data/convective_transition_diag. One can create a new html template by simply copying and modifying the example templates in DIAG_HOME/var_code/html/html_template_examples. Note that scripts therein are exact replications of the html-related scripts in the example PODs, serving merely as a reference, and are not called by ``mdtf.py``. 
+The material in this section must be submitted though a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`__ to the `NOAA-GFDL GitHub repo <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. This is described in :doc:`dev_git_intro`.
 
-3. Provide documentation following the templates: 
+The `example POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ should be used as a reference for how each component of the submission should be structured.
 
-   A. Provide a comprehensive POD documentation, including a one-paragraph synopsis of the POD, developers’ contact information, required programming language and libraries, and model output variables, a brief summary of the presented diagnostics as well as references in which more in-depth discussions can be found (see an example). 
+POD source code
+^^^^^^^^^^^^^^^
 
-   B. All scripts should be self-documenting by including in-line comments. The main script convective_transition_diag.py should contain a comprehensive header providing information that contains the same items as in the POD documentation, except for the "More about this diagnostic" section. 
+All scripts should be placed in a subdirectory of ``diagnostics/``. Among the scripts, there should be 1) a main driver script, 2) a template html, and 3) a ``settings.jsonc`` file. The POD directory and html template should be named after your POD's short name.
 
-   C. The one-paragraph POD synopsis (in the POD documentation) as well as a link to the Full Documentation should be placed at the top of the template convective_transition_diag.html (see example).  
+   - For instance, ``diagnostics/convective_transition_diag/`` contains its driver script ``convective_transition_diag.py``, ``convective_transition_diag.html``, and ``settings.jsonc``, etc.
 
-4. Test before distribution. It is important that developers test their POD before sending it to the MDTF contact. Please take the time to go through the following procedures:  
+   - The framework will call the driver script, which calls the other scripts in the same POD directory.
 
-   A. Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? If it fails, does it stop the whole `mdtf.py` script? (It should contain an error-handling mechanism so the main script can continue). Have developers added any code to `mdtf.py`? (Do not change `mdtf.py`! — if you find some circumstance where it is essential, it should only be done in consultation with the MDTF contact). 
-
-   B. Make a clean tar file. For distribution, a tar file with obs_data/, var_code/, namelist, and model data that developers have thoroughly tested is needed. These should not include any extraneous files (output NetCDF, output figures, backups, ``pyc``, ``*~``, or ``#`` files). The model data used to test (if different from what is provided by the MDTF page) will need to be in its own tar file. Use ``tar -tf`` to see what is in the tar file. Developers might find it helpful to consult the script used to make the overall distributions mdtf/make_tars.sh.
-   
-   C. Final testing: Once a tar file is made, please test it in a clean location where developers haven’t run it before. If it fails, repeat steps 1)-3) until it passes. Next, ask a colleague or assign a group member not involved in the development to test it as well — download to a new machine to install, run, and ask for comments on whether they can understand the documentation. 
-
-#. Post on an ftp site and/or email the MDTF contact. 
+   - If you need a new Conda environment, add a new .yml file to ``src/conda/``, and install the environment using the ``conda_env_setup.sh`` script as described in the :doc:`Getting Started <start_install>`.
 
 
+POD settings file
+^^^^^^^^^^^^^^^^^
+
+The format of this file is described in :doc:`dev_settings_quick` and in more detail in :doc:`ref_settings`.
+
+POD html template for output
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- The html template will be copied by the framework into the output directory to display the figures generated by the POD. You should be able to create a new html template by simply copying and modifying the example templates from existing PODs even without prior knowledge about html syntax.
+
+Preprocessing scripts for digested data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
+
+For maintainability and provenance purposes, we request that you include the code used to generate your POD's "digested" data from raw data sources (any source of data that's permanently hosted). This code will not be called by the framework and will not be used by end users, so the restrictions and guidelines concerning the POD code don't apply.
+
+
+POD documentation
+^^^^^^^^^^^^^^^^^
+
+- The documentation for the framework is automatically generated using `sphinx <https://www.sphinx-doc.org/en/master/index.html>`__, which works with files in `reStructured text <https://docutils.sourceforge.io/rst.html>`__ (reST, ``.rst``) format. In order to include :doc:`documentation for your POD <pod_summary>`, we require that it be in this format. 
+
+  + Use the `example POD documentation <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/example.html>`__ as a template for the information required for your POD, by modifying its .rst `source code <https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/main/diagnostics/example/doc/example.rst>`__. This should include a one-paragraph synopsis of the POD, developers’ contact information, required programming language and libraries, and model output variables, a brief summary of the presented diagnostics as well as references in which more in-depth discussions can be found.
+  + The .rst files and all linked figures should be placed in a ``doc`` subdirectory under your POD directory (e.g., ``diagnostics/convective_transition_diag/doc/``) and put the .rst file and figures inside.
+  + The most convenient way to write and debug reST documentation is with an online editor. We recommend `https://livesphinx.herokuapp.com/ <https://livesphinx.herokuapp.com/>`__ because it recognizes sphinx-specific commands as well.
+  + For reference, see the reStructured text `introduction <http://docutils.sourceforge.net/docs/user/rst/quickstart.html>`__, `quick reference <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`__ and `in-depth guide <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`__.
+  + Also see a reST `syntax comparison <http://hyperpolyglot.org/lightweight-markup>`__ to other text formats you may be familiar with.
+
+- For maintainability, all scripts should be self-documenting by including in-line comments. The main driver script (e.g., ``convective_transition_diag.py``) should contain a comprehensive header providing information that contains the same items as in the POD documentation, except for the "More about this diagnostic" section.
+
+- The one-paragraph POD synopsis (in the POD documentation) as well as a link to the full documentation should be placed at the top of the html template (e.g., ``convective_transition_diag.html``).
+
+Preprocessing script documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
+
+For maintainability purposes, include all information needed for a third party to reproduce your POD's digested data from its raw sources in the ``doc`` directory. This information is not published on the documentation website and can be in any format. In particular, please document the raw data sources used (DOIs/versioned references preferred) and the dependencies/build instructions (eg. conda environment) for your preprocessing script.
+
+
+Sample and supporting data submission
+-------------------------------------
+
+Data hosting for the MDTF framework is currently managed manually. The data is currently hosted via anonymous FTP on UCAR's servers. Please contact the MDTF team leads via email to arrange a data transfer. 
+
+Digested observational or supporting data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
+
+Create a directory under ``inputdata/obs_data/`` named after the short name, and put all your *digested* observation data in (or more generally, any quantities that are independent of the model being analyzed).
+
+   - Digested data should be in the form of numerical data, not figures.
+   - The data files should be small (preferably a few MB) and just enough for producing figures for model comparison.
+   - If you really cannot reduce the data size or require GB of space, consult with the lead team.
+
+
+Sample model data
+^^^^^^^^^^^^^^^^^
+
+For PODs dealing with atmospheric phenomena, we recommend that you use sample data from the following sources, if applicable:
+
+- A timeslice run of `NCAR CAM5 <https://www.earthsystemgrid.org/dataset/ucar.cgd.ccsm4.NOAA-MDTF.html>`__ 
+- A timeslice run of `GFDL AM4 <http://data1.gfdl.noaa.gov/MDTF/>`__ (contact the leads for password).

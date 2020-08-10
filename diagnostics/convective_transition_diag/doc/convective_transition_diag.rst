@@ -37,7 +37,13 @@ Required programming language and libraries
 The is package is written in Python 2, and requires the following Python packages:
 os, glob, json, Dataset, numpy, scipy, matplotlib, networkx, warnings, numba, & netcdf4. These Python packages are already included in the standard Anaconda installation.
 
-The plotting functions in this package depend on an older version of matplotlib, thus an older version of the Anaconda 2 installer (ver. 5.0.1) is recommended.
+Known issue with matplotlib
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The plotting scripts of this POD may not produce the desired figures with the latest version of matplotlib (because of the default size adjustment settings). The matplotlib version comes with the Anaconda 2 installer, version 5.0.1 has been tested. The readers can switch to this older version.
+
+Depending on the platform and Linux distribution/version, a related error may occur with the error message "... ImportError: libcrypto.so.1.0.0: cannot open shared object file: No such file or directory". One can find the missing object file ``libcrypto.so.1.0.0`` in the subdirectory ``~/anaconda2/pkgs/openssl-1.0.2l-h077ae2c_5/lib/``, where ``~/anaconda2/`` is where Anaconda 2 is installed. The precise names of the object file and openssl-folder may vary. Manually copying the object file to ``~/anaconda2/lib/`` should solve the error. 
+
 
 Required model output variables
 -------------------------------

@@ -39,7 +39,7 @@ The rest of the documentation in this section describes next steps for end users
 Getting started for POD developers
 ----------------------------------
 
-Information for researchers wishing to contribute a POD to the framework is provided in the :doc:`Developer <dev_toc>` section; consult the :doc:`quickstart guide <dev_quickstart_guide>` for an overview and the :doc:`checklist <dev_checklist>` of items needed for submitting your POD.
+Information for researchers wishing to contribute a POD to the framework is provided in the :doc:`Developer <dev_toc>` section; consult the :doc:`quickstart guide <dev_start>` for an overview and the :doc:`checklist <dev_checklist>` of items needed for submitting your POD.
 
 The framework is designed to require minimal changes to existing analysis scripts. We recommend that developers of new PODs start independently of the framework and adapt it for the framework's use once it's fully debugged. As summarized in the figure above, the changes needed to convert an existing analysis script for use in the framework are:
 

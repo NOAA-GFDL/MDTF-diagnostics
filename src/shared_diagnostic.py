@@ -609,17 +609,16 @@ class Diagnostic(object):
         for f in files:
             shutil.copy2(f, os.path.join(self.POD_WK_DIR, 'obs'))
 
-        # remove .eps files if requested
+        # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not config.config.save_ps:
-            for d in ['model', 'obs']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'PS')):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'PS'))
+            for d in util.find_files(self.POD_WK_DIR, 'PS'+os.sep):
+                shutil.rmtree(d)
         # delete netCDF files, keep everything else
         if config.config.save_non_nc:
             for f in util.find_files(self.POD_WK_DIR, '*.nc'):
                 os.remove(f)
-        # delete all generated data (flag is a misnomer)
+        # delete all generated data
+        # actually deletes contents of any 'netCDF' subdirs
         elif not config.config.save_nc:
-            for d in ['model', 'obs']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'netCDF')):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'netCDF'))
+            for d in util.find_files(self.POD_WK_DIR, 'netCDF'+os.sep):
+                shutil.rmtree(d)

@@ -357,7 +357,7 @@ def find_files(src_dirs, filename_globs):
     for d in src_dirs:
         for g in filename_globs:
             files.update(glob.glob(os.path.join(d, g)))
-            files.update(glob.glob(os.path.join(d, '**', g)))
+            files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
     return list(files)
 
 def recursive_copy(src_files, src_root, dest_root, copy_function=None, 

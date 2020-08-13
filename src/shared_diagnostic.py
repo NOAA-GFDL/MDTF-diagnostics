@@ -512,7 +512,9 @@ class Diagnostic(object):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
-        verifier = verify_links.LinkVerifier(self.POD_HTML, verbose=False)
+        verifier = verify_links.LinkVerifier(
+            self.POD_HTML, self.MODEL_WK_DIR, verbose=False
+        )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:
             print('ERROR: {} has missing output files.'.format(self.name))

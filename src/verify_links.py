@@ -51,23 +51,43 @@ class LinkParser(HTMLParser):
 
 
 class LinkVerifier(object):
-    def __init__(self, root, verbose=False):
+    def __init__(self, root, rel_path_root=None, verbose=False):
         """Initialize search for broken links.
         
         Args:
             root (str): Either a URL or path on the local filesystem. Location 
                 of the top-level html file to begin the search from.
+            rel_path_root (str, optional): Either a URL or path on the local 
+                filesystem. If given, used as the path that relative paths to 
+                missing files are given relative to. Defaults to root (if root 
+                is a directory) or the directory containing root (if root is a 
+                file.)
             verbose (bool, default False): Set to True to print each file 
                 examined.
         """
-        self.verbose=verbose
-        root_parts = urllib.parse.urlsplit(root)
-        if not root_parts.scheme:
-            # given a filesystem path, not a URL
-            path_ = os.path.abspath(root_parts.path)
-            root_parts = root_parts._replace(path=path_)
-            root_parts = root_parts._replace(scheme='file')
-        self.root = urllib.parse.urlunsplit(root_parts)
+        def munge_input_url(url):
+            url_parts = urllib.parse.urlsplit(url)
+            if not url_parts.scheme:
+                # given a filesystem path, not a URL
+                path_ = os.path.abspath(url_parts.path)
+                url_parts = url_parts._replace(path=path_)
+                url_parts = url_parts._replace(scheme='file')
+            if os.path.splitext(url_parts.path)[1].lower().startswith('.htm'):
+                # URL points to an html file; get parent directory
+                path_, file_ = os.path.split(url_parts.path)
+            else:
+                file_ = ""
+            if not path_.endswith('/'):
+                path_ = path_ + '/'
+            url_parts = url_parts._replace(path=path_)
+            return (urllib.parse.urlunsplit(url_parts), file_)
+
+        self.verbose = verbose
+        (self.root_dir, self.root_file) = munge_input_url(root)
+        if rel_path_root:
+            self.rel_path_root, _ = munge_input_url(rel_path_root)
+        else:
+            self.rel_path_root = self.root_dir
 
     @staticmethod
     def gen_links(f, parser):
@@ -196,11 +216,10 @@ class LinkVerifier(object):
         """
         missing_dict = collections.defaultdict(list)
         for link in missing:
-            prefix = os.path.commonprefix([link.origin, link.target])
-            dirs = urllib.parse.urlsplit(prefix).path.split('/')
-            dirs = [d for d in dirs if d]
-            pod = dirs[-1]
+            # NB: commonprefix not commonpath, since we have URLs
+            prefix = os.path.commonprefix([self.rel_path_root, link.target])
             rel_link = link.target[len(prefix):]
+            pod = rel_link.split('/')[0]
             missing_dict[pod].append(rel_link)
         return missing_dict
 
@@ -215,12 +234,9 @@ class LinkVerifier(object):
             A list of the files that POD is missing. Missing files are listed by
                 their path relative to the POD's output directory.
         """
-        root_parts = urllib.parse.urlsplit(self.root)
-        if not root_parts.path.endswith('.html'):
-            path_ = os.path.join(root_parts.path, pod_name+'.html')
-            root_parts = root_parts._replace(path=path_)
-        root_url = urllib.parse.urlunsplit(root_parts)
-
+        if not self.root_file:
+            self.root_file = pod_name+'.html'
+        root_url = urllib.parse.urljoin(self.root_dir, self.root_file)
         missing = self.breadth_first(root_url)
         missing_dict = self.group_relative_links(missing)
         return missing_dict.get(pod_name, [])
@@ -235,12 +251,9 @@ class LinkVerifier(object):
                 Missing files are listed by their path relative to the POD's 
                 output directory.
         """
-        root_parts = urllib.parse.urlsplit(self.root)
-        if not root_parts.path.endswith('.html'):
-            path_ = os.path.join(root_parts.path, 'index.html')
-            root_parts = root_parts._replace(path=path_)
-        root_url = urllib.parse.urlunsplit(root_parts)
-
+        if not self.root_file:
+            self.root_file = 'index.html'
+        root_url = urllib.parse.urljoin(self.root_dir, self.root_file)
         missing = self.breadth_first(root_url)
         return self.group_relative_links(missing)
 

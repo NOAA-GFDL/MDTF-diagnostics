@@ -143,13 +143,7 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
-#============================================================
-# copy additional html files
-#============================================================
 
-    if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
-        os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
-    os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
 
 #============================================================

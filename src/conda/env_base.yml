@@ -1,11 +1,14 @@
 name: _MDTF_base
+# environment used by the framework itself
 channels:
 - conda-forge
 - defaults
 dependencies:
-- python=2.7
-- subprocess32
+# specify up to minor version number to provide a consistent environment for POD developers
+# versions are current as of Jul 2020
+# see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
+- python=3.7
+- mock # needed until tests updated from py2
 - ghostscript
 - nco>=4.7.6,<=4.8.1
-- mock
-- netCDF4
+- netCDF4=1.5

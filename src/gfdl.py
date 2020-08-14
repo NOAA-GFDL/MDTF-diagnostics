@@ -1,9 +1,10 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import io
+from src import six
 import re
 import shutil
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
@@ -14,19 +15,21 @@ from collections import defaultdict, namedtuple
 from itertools import chain
 from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod, abstractproperty
-import datelabel
-import util
-import util_mdtf
-import conflict_resolution as choose
-import cmip6
-from data_manager import DataSet, DataManager, DataAccessError
-from environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
-from shared_diagnostic import Diagnostic, PodRequirementFailure
-from netcdf_helper import NcoNetcdfHelper # only option currently implemented
+from src import datelabel
+from src import util
+from src import util_mdtf
+import src.conflict_resolution as choose
+from src import cmip6
+from src.data_manager import DataSet, DataManager, DataAccessError
+from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
+from src.shared_diagnostic import Diagnostic, PodRequirementFailure
+from src.netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
-        'python':   'python/2.7.12',
+        'python2':   'python/2.7.12',
+        # most recent version common to analysis and workstations; use conda anyway
+        'python3':   'python/3.4.3',
         'ncl':      'ncarg/6.5.0',
         'r':        'R/3.4.4',
         'anaconda': 'anaconda2/5.1',
@@ -41,8 +44,7 @@ class ModuleManager(util.Singleton):
             # could set from module --version
             raise OSError(("Unable to determine how modules are handled "
                 "on this host."))
-        if not os.environ.has_key('LOADEDMODULES'):
-            os.environ['LOADEDMODULES'] = ''
+        _ = os.environ.setdefault('LOADEDMODULES', '')
 
         # capture the modules the user has already loaded once, when we start up,
         # so that we can restore back to this state in revert_state()
@@ -60,7 +62,7 @@ class ModuleManager(util.Singleton):
             raise subprocess.CalledProcessError(
                 returncode=proc.returncode, 
                 cmd=' '.join([cmd, 'python'] + args), output=error)
-        exec output
+        exec(output)
 
     def _parse_names(self, *module_names):
         return [m if ('/' in m) else self._current_module_versions[m] \
@@ -143,7 +145,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements.keys()]
+        langs = [s.lower() for s in pod.runtime_requirements]
         if pod.name == 'convective_transition_diag':
             pod.env = 'py_convective_transition_diag'
         elif pod.name == 'MJO_suite':
@@ -212,8 +214,7 @@ def GfdlautoDataManager(case_dict, DateFreqMixin=None):
         exit()
 
 
-class GfdlarchiveDataManager(DataManager):
-    __metaclass__ = ABCMeta
+class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
@@ -379,11 +380,12 @@ class GfdlarchiveDataManager(DataManager):
         """Test whether data is current based on filesystem modification dates.
 
         TODO:
-        - Throw an error if local copy has been modified after remote copy. 
-        - Handle case where local data involves processing of remote data, like
-            ncrcat'ing. Copy raw remote files to temp directory if we need to 
-            process?
-        - gcp --sync does this already.
+            - Throw an error if local copy has been modified after remote copy. 
+            - Handle case where local data involves processing of remote data, like
+                ncrcat'ing. Copy raw remote files to temp directory if we need to 
+                process?
+            - gcp --sync does this already.
+
         """
         return False
         # return os.path.getmtime(dataset._local_data) \
@@ -392,7 +394,7 @@ class GfdlarchiveDataManager(DataManager):
     def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
         """
-        return sorted(self.data_keys.keys())
+        return sorted(list(self.data_keys))
 
     def _fetch_exception_handler(self, exc):
         print(exc)
@@ -447,7 +449,7 @@ class GfdlarchiveDataManager(DataManager):
             var_name,
             in_file=file_name, cwd=work_dir, dry_run=self.dry_run
         )
-        for fax, fax_attrs in file_axes.iteritems():
+        for fax, fax_attrs in iter(file_axes.items()):
             # update DataSets with axis info - need to loop since multiple PODs
             # may reference this file (warning will be repeated; TODO fix that)
             error_flag = 0
@@ -467,7 +469,7 @@ class GfdlarchiveDataManager(DataManager):
                     var.axes[fax]['MDTF_set_from_axis'] = False
                 else: 
                     # file has different axis name, try to match by attribute
-                    for vax, vax_attrs in var.axes.iteritems():
+                    for vax, vax_attrs in iter(var.axes.items()):
                         if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
                             continue
                         elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
@@ -494,7 +496,7 @@ class GfdlarchiveDataManager(DataManager):
 
         # crop time axis to requested range
         # do this *before* combining chunks to reduce disk activity
-        for vax, vax_attrs in var.axes.iteritems():
+        for vax, vax_attrs in iter(var.axes.items()):
             if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
                 continue
             else:
@@ -571,7 +573,7 @@ class GfdlarchiveDataManager(DataManager):
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.frepp_mode and os.path.exists(prev_html):
             print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
-            with open(prev_html, 'r') as f1:
+            with io.open(prev_html, 'r', encoding='utf-8') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
             assert len(contents) == 3
@@ -582,7 +584,7 @@ class GfdlarchiveDataManager(DataManager):
             else:
                 print("\tWARNING: No file at {}.".format(self.TEMP_HTML))
                 mode = 'w'
-            with open(self.TEMP_HTML, mode) as f2:
+            with io.open(self.TEMP_HTML, mode, encoding='utf-8') as f2:
                 f2.write(contents)
         super(GfdlarchiveDataManager, self)._make_html(
             cleanup=(not self.frepp_mode)
@@ -738,13 +740,13 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             return _heuristic_tiebreaker_sub(str_list)
 
     def _decide_allowed_components(self):
-        choices = dict.fromkeys(self.data_files.keys())
+        choices = dict.fromkeys(self.data_files)
         cmpt_choices = choose.minimum_cover(
             self.data_files,
             attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
-        for data_key, cmpt in cmpt_choices.iteritems():
+        for data_key, cmpt in iter(cmpt_choices.items()):
             # take shortest chunk frequency (revisit?)
             chunk_freq = min(u_key.chunk_freq \
                 for u_key in self.data_files[data_key] \
@@ -752,8 +754,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
-    __metaclass__ = ABCMeta    
+class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
         # set root_dir
         # from experiment and model, determine institution and mip
@@ -850,7 +851,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
             attrgetter('table_id'), 
             self._cmip6_table_tiebreaker
         )
-        dkeys_for_each_pod = self.data_pods.inverse().values()
+        dkeys_for_each_pod = list(self.data_pods.inverse().values())
         grid_lbl = choose.all_same_if_possible(
             self.data_files,
             dkeys_for_each_pod,
@@ -862,7 +863,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager):
             attrgetter('version_date'),
             lambda dates: str(max(datelabel.Date(dt) for dt in dates))
             )
-        choices = dict.fromkeys(self.data_files.keys())
+        choices = dict.fromkeys(self.data_files)
         for data_key in choices:
             choices[data_key] = self.UndecidedKey(
                 table_id=str(tables[data_key]), 
@@ -958,7 +959,7 @@ frepp_translate = {
 def parse_frepp_stub(frepp_stub):
     """Converts the frepp arguments to a Python dictionary.
 
-    See `https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures`_.
+    See `<https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures>`__.
 
     Returns: :py:obj:`dict` of frepp parameters.
     """

@@ -177,10 +177,15 @@ data["qsat_int_list"]=sorted(glob.glob(MODEL_OUTPUT_DIR+"/"+os.environ["qsat_int
 
 if (len(data["tave_list"])==0 or len(data["qsat_int_list"])==0):
     data["PREPROCESS_TA"]=1
-    data["SAVE_TAVE_QSAT_INT"]=1 # default:1 (save pre-processed tave & qsat_int); 0 if no permission
 else:
     data["PREPROCESS_TA"]=0
-    data["SAVE_TAVE_QSAT_INT"]=0
+# Save pre-processed tave & qsat_int or not; default=0 (don't save)
+data["SAVE_TAVE_QSAT_INT"]=int(os.environ["SAVE_TAVE_QSAT_INT"])
+if data["PREPROCESS_TA"]!=data["SAVE_TAVE_QSAT_INT"]:
+    print("Pre-processing of air temperature (ta) required to compute weighted column averages,")
+    print(" but the pre-processed results will not be saved as intermediate output.")
+    print("To save the pre-processed results as NetCDF files for re-use (write permission required),")
+    print(" go to settings.jsonc, and changes SAVE_TAVE_QSAT_INT to 1.")
 
 # Taking care of function arguments for binning
 data["args1"]=[ \

@@ -32,7 +32,7 @@ Paths
 Parent directories of input and output data. **Note** that all the paths below should be on a *local* filesystem. Environment variables in paths (eg ``$HOME``) are resolved according to the shell context ``mdtf`` was called from. Relative paths are resolved relative to the repo directory.
 
 * ``--MODEL-DATA-ROOT, --MODEL_DATA_ROOT <DIR>``: Directory to store input data from different models. Depending on the choice of ``data_manager`` (see below), input model data will typically be copied from a remote filesystem to this location.
-* ``--OBS-DATA-ROOT, --OBS_DATA_ROOT <DIR>``: Directory containing observational data used by individual PODs. Currently, this must be downloaded manually as part of the framework installation. See :numref:`ref-supporting-data` of the :doc:`installation guide <start_install>` for instructions.
+* ``--OBS-DATA-ROOT, --OBS_DATA_ROOT <DIR>``: Directory containing observational data used by individual PODs. Currently, this must be downloaded manually as part of the framework installation. See :numref:`ref-download` of the :doc:`installation guide <start_install>` for instructions.
 * ``--WORKING-DIR, --WORKING_DIR <DIR>``: Working directory.
 * ``--OUTPUT-DIR, --OUTPUT_DIR, -o <DIR>``: Destination for output files. Currently this must be on the same filesystem as ``WORKING_DIR``.
 

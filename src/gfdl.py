@@ -20,7 +20,8 @@ from src import util
 from src import util_mdtf
 import src.conflict_resolution as choose
 from src import cmip6
-from src.data_manager import DataSet, DataManager, DataAccessError
+from src.data_manager import DataManager, DataAccessError
+from src.dataspec import DataSpec
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
 from src.netcdf_helper import NcoNetcdfHelper # only option currently implemented
@@ -450,7 +451,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
             in_file=file_name, cwd=work_dir, dry_run=self.dry_run
         )
         for fax, fax_attrs in iter(file_axes.items()):
-            # update DataSets with axis info - need to loop since multiple PODs
+            # update DataSpecs with axis info - need to loop since multiple PODs
             # may reference this file (warning will be repeated; TODO fix that)
             error_flag = 0
             for var in self.data_keys[d_key]: 
@@ -696,7 +697,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = DataSet(**(match.groupdict()))
+            ds = DataSpec(**(match.groupdict()))
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
@@ -814,7 +815,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
             filename
         )
         d['name_in_model'] = d['variable_id']
-        ds = DataSet(**d)
+        ds = DataSpec(**d)
         ds._remote_data = os.path.join(self.root_dir, subdir, filename)
         return ds
 

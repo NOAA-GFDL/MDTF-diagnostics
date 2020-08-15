@@ -20,6 +20,7 @@ from src import util
 from src import util_mdtf
 from src import datelabel
 from src import netcdf_helper
+from src.dataspec import DataSpec
 from src.shared_diagnostic import PodRequirementFailure
 
 
@@ -56,70 +57,6 @@ class DataAccessError(Exception):
                 self.dataset._remote_data, self.msg)
         else:
             return 'Data access error: {}.'.format(self.msg)
-
-class DataSet(util.NameSpace):
-    """Class to describe datasets.
-
-    `<https://stackoverflow.com/a/48806603>`__ for implementation.
-    """
-    def __init__(self, *args, **kwargs):
-        if 'DateFreqMixin' not in kwargs:
-            self.DateFreq = datelabel.DateFrequency
-        else:
-            self.DateFreq = kwargs['DateFreqMixin']
-            del kwargs['DateFreqMixin']
-        # assign explicitly else linter complains
-        self.name = None
-        self.date_range = None
-        self.date_freq = None
-        self._local_data = None
-        self._remote_data = []
-        self.alternates = []
-        self.axes = dict()
-        super(DataSet, self).__init__(*args, **kwargs)
-        if ('var_name' in self) and (self.name is None):
-            self.name = self.var_name
-            del self.var_name
-        if ('freq' in self) and (self.date_freq is None):
-            self.date_freq = self.DateFreq(self.freq)
-            del self.freq
-
-    def copy(self, new_name=None):
-        temp = super(DataSet, self).copy()
-        if new_name is not None:
-            temp.name = new_name
-        return temp  
-
-    @classmethod
-    def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util_mdtf.VariableTranslator()
-        var_copy = var.copy()
-        var_copy.update(dm_args)
-        ds = cls(**var_copy)
-        ds.original_name = ds.name
-        ds.CF_name = translate.toCF(pod_convention, ds.name)
-        alt_ds_list = []
-        for alt_var in ds.alternates:
-            alt_ds = ds.copy(new_name=alt_var)
-            alt_ds.original_name = ds.original_name
-            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
-            alt_ds.alternates = []
-            alt_ds_list.append(alt_ds)
-        ds.alternates = alt_ds_list
-        return ds
-
-    def _freeze(self):
-        """Return immutable representation of (current) attributes.
-
-        Exclude attributes starting with '_' from the comparison, in case 
-        we want DataSets with different timestamps, temporary directories, etc.
-        to compare as equal.
-        """
-        d = self.toDict()
-        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
-        d2 = {k: repr(d[k]) for k in keys_to_hash}
-        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
-        return FrozenDataSet(**d2)
 
 class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
@@ -227,10 +164,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
 
-        # express varlist as DataSet objects
+        # express varlist as DataSpec objects
         ds_list = []
         for var in pod.varlist:
-            ds_list.append(DataSet.from_pod_varlist(
+            ds_list.append(DataSpec.from_pod_varlist(
                 pod.convention, var, {'DateFreqMixin': self.DateFreq}))
         pod.varlist = ds_list
 
@@ -254,11 +191,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     break
 
     @staticmethod
-    def dataset_key(dataset):
-        """Return immutable representation of DataSet. Two DataSets should have 
-        the same key 
+    def dataset_key(dataspec):
+        """Return immutable representation of DataSpec. Two DataSpecs should have 
+        the same key.
         """
-        return dataset._freeze()
+        return dataspec._freeze()
 
     def local_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.
@@ -403,8 +340,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         copy of the data already exists and is current (as determined by 
         :meth:`~data_manager.DataManager.local_data_is_current`).
         
-        Returns: collection of :class:`~util.DataSet`
-            objects.
+        Returns: collection of :class:`~dataspec.DataSpec` objects.
         """
         # flatten list of all _remote_datas and remove duplicates
         unique_files = set(f for f in chain.from_iterable(iter(self.data_files.values())))

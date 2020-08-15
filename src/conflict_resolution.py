@@ -54,7 +54,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 
 
     Args:
-        datasets (iterable of :class:`~util.DataSet`): 
+        datasets (iterable of :class:`~dataspec.DataSpec`): 
             Collection of all variables being requested in this DataManager.
 
     Returns: :py:obj:`list` of :py:obj:`str`: name(s) of model components to use.

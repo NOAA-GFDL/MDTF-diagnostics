@@ -513,7 +513,7 @@ class Diagnostic(object):
         (located in src/html/pod_missing_snippet.html).
         """
         verifier = verify_links.LinkVerifier(
-            self.POD_HTML, self.MODEL_WK_DIR, verbose=False
+            self.POD_HTML, os.path.dirname(self.POD_WK_DIR), verbose=False
         )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:

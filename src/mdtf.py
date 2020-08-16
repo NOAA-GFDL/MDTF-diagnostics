@@ -290,7 +290,7 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager(config)
+            env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
             # nc_helper = self.NetCDFHelper()
 

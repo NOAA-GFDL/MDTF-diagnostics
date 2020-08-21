@@ -47,6 +47,9 @@ print("Input data file for Z250 :" + filz250)
 print("t-statistics data table is read from:"+diro+tfile)
 
 
+lev_fac = getenv("pressure_to_Pa_factor")
+lev_factor = stringtointeger(lev_fac)
+
 z250var = getenv("z250_var")
 
 
@@ -70,8 +73,15 @@ print("data table for t stat is read in ")
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
    
-
-    zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
+    ; HACK for merging in SPEAR code before we have general level extraction working
+    if (getenv("MDTF_3D_Z").eq."0") then
+      ; extract level from 4D data
+      zgt = a->$z250var$(iStrt:iLast,{25000/lev_factor},:,:)     ;time,lat,lon
+    else
+      ; 3D data
+      zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
+    end if
+    ; end HACK
     zgt@_FillValue = -999
 
     lon = tofloat(a->lon)
@@ -487,11 +497,11 @@ geop_composites_PSIt(lg,7,:,:) = dim_avg_n(phase8_hgt,0)
 geop_composites_PSIt@_FillValue = -999
 
 ;--test null hypothesis that anomalies are not significantly different from zero--
-;print("significance testing")
+print("significance testing")
 
   MJO_daysn = 5.
   
-;print("MJO average # of days: " + MJO_daysn)
+print("MJO average # of days: " + MJO_daysn)
  n(lg,0) = kphase1/MJO_daysn
  n(lg,1) = kphase2/MJO_daysn
  n(lg,2) = kphase3/MJO_daysn
@@ -501,7 +511,7 @@ geop_composites_PSIt@_FillValue = -999
  n(lg,6) = kphase7/MJO_daysn
  n(lg,7) = kphase8/MJO_daysn
 
-;print(n(lg,:))
+print(n(lg,:))
 
 ;clean up
 delete(kphase1)
@@ -544,7 +554,7 @@ stddv@_FillValue = -999
 
 tstat = new((/dimsizes(stddv)/),typeof(phase1_hgt))
 do i = 0,7
-  tstat(i,:,:) = abs(geop_composites_PSIt(lg,i,:,:)/(stddv(i,:,:)/sqrt(n(lg,i)-1.)))
+  tstat(i,:,:) = abs(sqrt(n(lg,i)-1.)) * abs(geop_composites_PSIt(lg,i,:,:)/stddv(i,:,:))
 end do
 
 tstat@_FillValue = -999
@@ -606,7 +616,7 @@ geop_composites_hgt&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF files")
 
-;  system("/bin/rm -f geop_compositesDly_hgt_"+Model_long+".nc")
+;  system("rm -f geop_compositesDly_hgt_"+Model_long+".nc")
 ;  ncdf = addfile("geop_compositesDly_hgt_"+Model_long+".nc" , "c")
 
 ;make time and unlimited dimension
@@ -699,7 +709,7 @@ geop_composites&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF file for composite of geopotential height for each phase")
 
-  system("/bin/rm -f " + diro + "geop_compositesP_hgt250_"+Model+".nc")
+  system("rm -f " + diro + "geop_compositesP_hgt250_"+Model+".nc")
   ncdf = addfile(diro + "geop_compositesP_hgt250_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension
@@ -728,7 +738,7 @@ tstat_hgt&lon = lon
 ;write out a 3D netcdf file
 print("Writing NetCDF file for t-statistic values")
 
-  system("/bin/rm -f " + diro + "tstatP_hgt250_"+Model+".nc")
+  system("rm -f " + diro + "tstatP_hgt250_"+Model+".nc")
   ncdf = addfile(diro + "tstatP_hgt250_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension

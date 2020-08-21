@@ -86,6 +86,20 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
+# HACK for merging in SPEAR code before we have general level extraction working
+if '850' in os.environ.get('u850_var',''):
+    print('\tDEBUG: assuming 3D u,v ({})'.format(os.environ['u850_var']))
+    os.environ['MDTF_3D_UV'] = '1'
+else:
+    print('\tDEBUG: assuming 4D u,v ({})'.format(os.environ['u850_var']))
+    os.environ['MDTF_3D_UV'] = '0'
+if '250' in os.environ.get('z250_var',''):
+    print('\tDEBUG: assuming 3D z ({})'.format(os.environ['z250_var']))
+    os.environ['MDTF_3D_Z'] = '1'
+else:
+    print('\tDEBUG: assuming 4D z ({})'.format(os.environ['z250_var']))
+    os.environ['MDTF_3D_Z'] = '0'
+
 
 print("=======================================================================")
 print("    Execution of MJO Teleconnection Diagnotics is started from here")
@@ -129,13 +143,7 @@ if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.p
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
-#============================================================
-# copy additional html files
-#============================================================
 
-    if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
-        os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
-    os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
 
 #============================================================

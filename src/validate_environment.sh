@@ -42,7 +42,7 @@ while getopts "vp:a:b:c:z:" opt; do
             if pip list --disable-pip-version-check \
                 | awk -v p="${OPTARG}" 'tolower($0) ~ tolower(p) {rc = 1}; END { exit !rc }'; then
                 if [ "$verbose" = true ]; then
-                    echo "pip list found python module ${OPTARG}."
+                    echo "Found python module ${OPTARG}."
                 fi
                 continue
             else

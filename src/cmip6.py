@@ -1,18 +1,20 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+from src import six
 import re
-import datelabel
-import util
+from src import datelabel
+from src import util
+from src import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
-    def __init__(self, unittest_flag=False):
-        # pylint: disable=maybe-no-member
-        if unittest_flag:
+    def __init__(self, unittest=False):
+        if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            paths = util.PathManager()
-            file_ = os.path.join(paths.CODE_ROOT, 'src', 
+            config = util_mdtf.ConfigManager()
+            file_ = os.path.join(config.paths.CODE_ROOT, 'src', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)
         self._contents = self._contents['CV']
@@ -33,12 +35,12 @@ class CMIP6_CVs(util.Singleton):
         if self.cv:
             return
         for k in self._contents:
-            self.cv[k] = util.coerce_to_collection(self._contents[k], list)
+            self.cv[k] = util.coerce_to_iter(self._contents[k])
 
     def is_in_cv(self, category, items):
         self._make_cv()
         assert category in self.cv
-        if hasattr(items, '__iter__'):
+        if util.is_iterable(items):
             return [(item in self.cv[category]) for item in items]
         else:
             return (items in self.cv[category])
@@ -49,14 +51,14 @@ class CMIP6_CVs(util.Singleton):
         elif (dest, source) in self._lookups:
             return self._lookups[(dest, source)].inverse()
         elif source in self._contents:
-            k = self._contents[source].keys()[0]
+            k = list(self._contents[source])[0]
             if dest not in self._contents[source][k]:
                 raise KeyError(
                     "Can't find {} in attributes for {}.".format(dest, source))
             mm = util.MultiMap()
             for k in self._contents[source]:
                 mm[k].update(
-                    util.coerce_to_collection(self._contents[source][k][dest], set)
+                    util.coerce_to_iter(self._contents[source][k][dest], set)
                 )
             self._lookups[(source, dest)] = mm
             return mm
@@ -67,10 +69,10 @@ class CMIP6_CVs(util.Singleton):
 
     def lookup(self, source_items, source, dest):
         _lookup = self.get_lookup(source, dest)
-        if hasattr(source_items, '__iter__'):
-            return [util.coerce_from_collection(_lookup[item]) for item in source_items]
+        if util.is_iterable(source_items):
+            return [util.coerce_from_iter(_lookup[item]) for item in source_items]
         else:
-            return util.coerce_from_collection(_lookup[source_items])
+            return util.coerce_from_iter(_lookup[source_items])
 
     # ----------------------------------
 
@@ -81,8 +83,11 @@ class CMIP6_CVs(util.Singleton):
             if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
 
 
+@six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
-    # http://goo.gl/v1drZl, page 16
+    """
+    `<http://goo.gl/v1drZl>`__, page 16
+    """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
         'hr': 5, # includes minutes
@@ -166,7 +171,8 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
 mip_table_regex = re.compile(r"""
     ^ # start of line
     (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
-    (?P<table_freq>\d?[a-z]*?)    # maybe a digit, followed by as few lowercase letters as possible
+    # maybe a digit, followed by as few lowercase letters as possible:
+    (?P<table_freq>\d?[a-z]*?)
     (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
     (?P<table_qualifier>(Pt|Z|Off)?)
     $ # end of line - necessary for lazy capture to work
@@ -293,8 +299,8 @@ def parse_DRS_path(*args):
         raise ValueError()
     d1 = parse_DRS_directory(dir_)
     d2 = parse_DRS_filename(file_)
-    common_keys = set(d1.keys())
-    common_keys = common_keys.intersection(d2.keys())
+    common_keys = set(d1)
+    common_keys = common_keys.intersection(list(d2))
     for key in common_keys:
         if d1[key] != d2[key]:
             raise ValueError("{} fields inconsistent in parsing {}".format(

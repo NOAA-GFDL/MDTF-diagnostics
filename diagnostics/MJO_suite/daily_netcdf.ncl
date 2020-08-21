@@ -26,11 +26,11 @@ file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
 
 print("daily_netcdf.ncl reading "+file_pr+" for coordinates")
 f = addfile(file_pr,"r")
-lat_var = getenv("lat_var")
-lat = f->$lat_var$
+lat_coord = getenv("lat_coord")
+lat = f->$lat_coord$
 nlat = dimsizes(lat)
-lon_var = getenv("lon_var")
-lon = f->$lon_var$
+lon_coord = getenv("lon_coord")
+lon = f->$lon_coord$
 nlon = dimsizes(lon)
 if(isfilevar(f,"gw")) then
    gw = f->gw
@@ -64,21 +64,23 @@ gwEq = gw({-40:40})
 yr1 = stringtointeger(getenv("FIRSTYR"))
 yr2 = stringtointeger(getenv("LASTYR"))
 
-time_var = getenv("time_var")
-time_all = f->$time_var$
-date_all = ut_calendar(time_all,-2)
+time_coord = getenv("time_coord")
+time_all = f->$time_coord$
+date_all = cd_calendar(time_all,-2)
 date_all!0 = "time"
 date_all&time = time_all
 date_all@units = "YYYYMMDD"
 year_all = date_all/10000
 
 start_date = yr1*10000+101
-start_date = yr1*10000+101
 if( time_all@calendar.eq."360_day") then
     end_date = yr2*10000+1230
 else
     end_date = yr2*10000+1231
 end if
+print("CALENDAR DEBUG")
+printMinMax(date_all, 0)
+print("start_date: "+start_date+" end_date: "+end_date)
 
 i1 = 0
 i2 = 0
@@ -176,18 +178,27 @@ do i=0,dimsizes(plevs)-1
 
       var_name_plev_package = var_names(j)+tostring(plev)      ; new file name & varname in file
       print(" var_name_plev_package "+var_name_plev_package)
-      LEV = tostring(plevs(i)*100)+"." 
-      src = source(j)
-      temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
-      dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
-      ; extract level
-      nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
-      print(nco_call)
-      system(nco_call)
-      ; flatten to 3D
-      nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
-      print(nco_call)
-      system(nco_call)
+
+      ; HACK for merging in SPEAR code before we have general level extraction working
+      if (getenv("MDTF_3D_UV").eq."0") then
+        ; extract level from 4D data with NCO
+        LEV = tostring(plevs(i)*100)+"." 
+        src = source(j)
+        temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
+        dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
+        ; extract level
+        nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
+        print(nco_call)
+        system(nco_call)
+        ; flatten to 3D
+        nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
+        print(nco_call)
+        system(nco_call)
+      else
+        ; 3D data
+        dst = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
+      end if
+      ; end HACK
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = file_dir+casename+"."+var_name_plev_package+".day.nc"

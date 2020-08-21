@@ -1,5 +1,5 @@
-Code reference
-==============
+Internal framework code
+=======================
 
 .. autosummary::
 

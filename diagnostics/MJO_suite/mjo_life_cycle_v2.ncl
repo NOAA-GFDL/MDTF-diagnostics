@@ -10,7 +10,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
 begin
 
-      casename = getenv("CASENAME")
+   casename = getenv("CASENAME")
    file_dir = getenv("WK_DIR")+"/model/netCDF/"
 
    latS    = -20
@@ -50,7 +50,7 @@ begin
 
    f       = addfile (filu , "r")                         
    TIME    = f->time                          ; days since ...
-   YMD     = ut_calendar(TIME, -2)            ; entire (time,6)
+   YMD     = cd_calendar(TIME, -2)            ; entire (time,6)
 
    ymdStrt = min(YMD(:))
    ymdLast = max(YMD(:))
@@ -95,7 +95,7 @@ begin
 ; Find the indices corresponding to the start/end times
 ;***********************************************************
 ;  TIME    = f->time                          ; days since ...
-;  YMD     = ut_calendar(TIME, -2)            ; entire (time,6)
+;  YMD     = cd_calendar(TIME, -2)            ; entire (time,6)
 
 ;  iStrt   = ind(YMD.eq.ymdStrt)              ; index start
 ;  iLast   = ind(YMD.eq.ymdLast)              ; index last 
@@ -111,7 +111,7 @@ begin
   mjo_indx= f->MJO_INDEX
 
   time    = f->time
-  ymdhms  = ut_calendar(time, 0)
+  ymdhms  = cd_calendar(time, 0)
 
   imon    = floattoint( ymdhms(:,1) )   ; convenience
   iday    = floattoint( ymdhms(:,2) )   ; subscripts must be integer

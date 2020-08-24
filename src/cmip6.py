@@ -1,3 +1,16 @@
+"""Code to parse CMIP6 controlled vocabularies and elements of the CMIP6 DRS.
+
+Specifications for the above were taken from the planning document 
+`<http://goo.gl/v1drZl>`__, which doesn't seem to have a permanent link. The 
+CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
+are derived from data in the 
+`PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__ 
+repo, which is included as a submodule.
+
+.. warning::
+   Functionality here has been added as needed for the project and is incomplete,
+   for example parsing subexperiments is not supported.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from src import six
@@ -7,6 +20,12 @@ from src import util
 from src import util_mdtf
 
 class CMIP6_CVs(util.Singleton):
+    """Interface for looking up information from the CMIP6 CV file.
+
+    .. note::
+       Lookups are implemented in an ad-hoc way with :class:`util.MultiMap`; a 
+       more robust solution would use sqlite.
+    """
     def __init__(self, unittest=False):
         if unittest:
             # value not used, when we're testing will mock out call to read_json
@@ -20,6 +39,7 @@ class CMIP6_CVs(util.Singleton):
         self._contents = self._contents['CV']
         for k in ['product','version_metadata','required_global_attributes',
             'further_info_url','Conventions','license']:
+            # remove unecessary information
             del self._contents[k]
 
         # munge table_ids
@@ -31,13 +51,29 @@ class CMIP6_CVs(util.Singleton):
         self._lookups = dict()
 
     def _make_cv(self):
-        # make on-demand
+        """Populate the *cv* attribute of :class:`CMIP6_CVs` with the tables 
+        read in during __init__().
+
+        Do this on-demand rather than in __init__, in case this information isn't
+        needed for this run of the framework.
+        """
         if self.cv:
             return
         for k in self._contents:
             self.cv[k] = util.coerce_to_iter(self._contents[k])
 
     def is_in_cv(self, category, items):
+        """Determine if *items* take values that are valid for the CV category
+        *category*.
+
+        Args:
+            category (str): the CV category to use to validate values.
+            items (str or list of str): Entries whose validity we'd like to 
+                check.
+
+        Returns: boolean or list of booleans, corresponding to the validity of 
+            the entries in *items*.
+        """
         self._make_cv()
         assert category in self.cv
         if util.is_iterable(items):
@@ -46,6 +82,16 @@ class CMIP6_CVs(util.Singleton):
             return (items in self.cv[category])
 
     def get_lookup(self, source, dest):
+        """Find the appropriate lookup table to convert values in *source* (keys)
+        to values in *dest* (values), generating it if necessary.
+
+        Args:
+            source (str): the CV category to use for the keys.
+            dest (str): the CV category to use for the values.
+
+        Returns: :class:`util.MultiMap` providing a dict-like lookup interface,
+            ie dest_value = d[source_key].
+        """
         if (source, dest) in self._lookups:
             return self._lookups[(source, dest)]
         elif (dest, source) in self._lookups:
@@ -68,6 +114,16 @@ class CMIP6_CVs(util.Singleton):
             raise KeyError('Neither {} or {} in CV table list.'.format(source, dest))
 
     def lookup(self, source_items, source, dest):
+        """Lookup the corresponding *dest* values for *source_items* (keys).
+
+        Args:
+            source_items (str or list): one or more keys 
+            source (str): the CV category that the items in *source_items*
+                belong to.
+            dest (str): the CV category we'd like the corresponding values for.
+
+        Returns: list of *dest* values corresponding to each entry in *source_items*.
+        """
         _lookup = self.get_lookup(source, dest)
         if util.is_iterable(source_items):
             return [util.coerce_from_iter(_lookup[item]) for item in source_items]
@@ -77,6 +133,17 @@ class CMIP6_CVs(util.Singleton):
     # ----------------------------------
 
     def table_id_from_freq(self, date_freq):
+        """Specialized lookup to determine which MIP tables use data at the 
+        requested *date_freq*.
+
+        Should really be handled as a special case of :meth:`lookup`.
+
+        Args:
+            date_freq (:class:`CMIP6DateFrequency`): DateFrequency 
+
+        Returns: list of MIP table ``table_id`` names, if any, that use data at 
+            the given *date_freq*.
+        """
         self._make_cv()
         assert 'table_id' in self.cv
         return [tbl for tbl in self.cv['table_id'] \
@@ -85,8 +152,13 @@ class CMIP6_CVs(util.Singleton):
 
 @six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
-    """
-    `<http://goo.gl/v1drZl>`__, page 16
+    """Subclass of :class:`datelabel.DateFrequency` to parse data frequency
+    information as encoded in MIP tables, DRS filenames, etc.
+
+    Extends DateFrequency in that this records if the data is a climatological
+    average, although this information is not currently used.
+
+    Reference: `<http://goo.gl/v1drZl>`__, page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
@@ -166,8 +238,6 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
 
 # --------------------------------------
 
-# see https://earthsystemcog.org/projects/wip/mip_table_about
-# (which doesn't cover all cases)
 mip_table_regex = re.compile(r"""
     ^ # start of line
     (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
@@ -179,6 +249,17 @@ mip_table_regex = re.compile(r"""
 """, re.VERBOSE)
 
 def parse_mip_table_id(mip_table):
+    """Function to parse MIP table identifier string.
+
+    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    although this doesn't document all cases used in CMIP6.
+
+    Args:
+        mip_table (str): MIP table name.
+
+    Returns:
+        dict of MIP attributes determined by the DRS naming convention.
+    """
     match = re.match(mip_table_regex, mip_table)
     if match:
         md = match.groupdict()
@@ -215,6 +296,16 @@ grid_label_regex = re.compile(r"""
 """, re.VERBOSE)
 
 def parse_grid_label(grid_label):
+    """Function to parse CMIP6 DRS grid label identifier string.
+
+    Reference: `<http://goo.gl/v1drZl>`__, note 11 on page 11.
+
+    Args:
+        grid_label (str): grid label string.
+
+    Returns:
+        dict of grid attributes determined by the DRS naming convention.
+    """
     match = re.match(grid_label_regex, grid_label)
     if match:
         md = match.groupdict()
@@ -258,6 +349,16 @@ drs_directory_regex = re.compile(r"""
 
 # TODO: parse subexperiments!
 def parse_DRS_directory(dir_):
+    """Function to parse DRS directory, using regex defined above.
+
+    Reference: `<http://goo.gl/v1drZl>`__, page 17.
+
+    Args:
+        dir_ (str): directory path to be parsed.
+
+    Returns:
+        dict of directory attributes determined by the DRS naming convention.
+    """
     match = re.match(drs_directory_regex, dir_)
     if match:
         md = match.groupdict()
@@ -279,6 +380,16 @@ drs_filename_regex = re.compile(r"""
 """, re.VERBOSE)
 
 def parse_DRS_filename(file_):
+    """Function to parse DRS filename, using regex defined above.
+
+    Reference: `<http://goo.gl/v1drZl>`__, page 14-15.
+
+    Args:
+        file_ (str): filename to be parsed.
+
+    Returns:
+        dict of file attributes determined by the DRS naming convention.
+    """
     match = re.match(drs_filename_regex, file_)
     if match:
         md = match.groupdict()
@@ -291,6 +402,18 @@ def parse_DRS_filename(file_):
         raise ValueError("Can't parse file {}.".format(file_))
 
 def parse_DRS_path(*args):
+    """Function to parse complete DRS path.
+
+    Calls :func:`parse_DRS_directory` and :func:`parse_DRS_filename`, and 
+    ensures that data specified in both functions is consistent.
+
+    Args:
+        Either a (str) containing the complete path to be parsed, or two (str)s
+            consisting of the directory and filename.
+
+    Returns:
+        dict of file attributes determined by the DRS naming convention.
+    """
     if len(args) == 1:
         dir_, file_ = os.path.split(args[0])
     elif len(args) == 2:

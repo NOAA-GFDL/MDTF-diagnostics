@@ -135,9 +135,6 @@ class Diagnostic(object):
         """
         default_file_required = True 
         for i, var in enumerate(varlist):
-            assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
-                "WARNING: didn't find "+var['freq']+" in frequency options "+\
-                    " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
                 varlist[i]['required'] = (var['requirement'].lower() == 'required')
             elif 'required' not in varlist[i]:

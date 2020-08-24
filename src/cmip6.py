@@ -347,11 +347,13 @@ drs_directory_regex = re.compile(r"""
     /?                      # maybe final separator
 """, re.VERBOSE)
 
-# TODO: parse subexperiments!
 def parse_DRS_directory(dir_):
     """Function to parse DRS directory, using regex defined above.
 
     Reference: `<http://goo.gl/v1drZl>`__, page 17.
+
+    .. warning::
+       This regex will fail on paths involving subexperiments.
 
     Args:
         dir_ (str): directory path to be parsed.
@@ -374,8 +376,9 @@ drs_filename_regex = re.compile(r"""
     (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
     (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
     (?P<realization_code>\w+)_       # field name
-    (?P<grid_label>\w+)_       # field name
-    (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
+    (?P<grid_label>\w+)(_       # field name
+        (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
+    )? # date range group is optional (not included with fx frequency)
     \.nc                      # netCDF file extension
 """, re.VERBOSE)
 
@@ -393,13 +396,20 @@ def parse_DRS_filename(file_):
     match = re.match(drs_filename_regex, file_)
     if match:
         md = match.groupdict()
-        md['start_date'] = datelabel.Date(md['start_date'])
-        md['end_date'] = datelabel.Date(md['end_date'])
-        md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
+        if md['start_date'] is not None and md['end_date'] is not None:
+            md['start_date'] = datelabel.Date(md['start_date'])
+            md['end_date'] = datelabel.Date(md['end_date'])
+            md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
+        else:
+            # no date range for fx-frequency data
+            md['date_range'] = None
         md.update(parse_mip_table_id(md['table_id']))
+        if md['start_date'] is None and md['date_freq'] != CMIP6DateFrequency('fx') \
+            or md['date_freq'] == CMIP6DateFrequency('fx') and md['start_date'] is not None:
+            raise ValueError("Can't parse date range in filename {}.".format(file_))
         return md
     else:
-        raise ValueError("Can't parse file {}.".format(file_))
+        raise ValueError("Can't parse filename {}.".format(file_))
 
 def parse_DRS_path(*args):
     """Function to parse complete DRS path.

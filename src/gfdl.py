@@ -680,19 +680,27 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             chunk_freq=str(dataset.chunk_freq)
         )
 
-    def parse_relative_path(self, subdir, filename):
-        rel_path = os.path.join(subdir, filename)
-        match = re.match(r"""
+    _pp_ts_regex = re.compile(r"""
             /?                      # maybe initial separator
             (?P<component>\w+)/     # component name
-            ts/                     # timeseries; TODO: handle time averages (not needed now)
+            ts/                     # timeseries;
             (?P<date_freq>\w+)/     # ts freq
             (?P<chunk_freq>\w+)/    # data chunk length   
             (?P<component2>\w+)\.        # component name (again)
             (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
             (?P<name_in_model>\w+)\.       # field name
             nc                      # netCDF file extension
-        """, rel_path, re.VERBOSE)
+        """, re.VERBOSE)
+    _pp_static_regex = re.compile(r"""
+            /?                      # maybe initial separator
+            (?P<component>\w+)/     # component name 
+            (?P<component2>\w+)     # component name (again)
+            \.static\.nc             # static frequency, netCDF file extension                
+        """, re.VERBOSE)
+    
+    def parse_relative_path(self, subdir, filename):
+        rel_path = os.path.join(subdir, filename)
+        match = re.match(self._pp_ts_regex, rel_path)
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
@@ -703,8 +711,21 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             ds.date_freq = self.DateFreq(ds.date_freq)
             ds.chunk_freq = self.DateFreq(ds.chunk_freq)
             return ds
-        else:
-            raise ValueError("Can't parse {}, skipping.".format(rel_path))
+        # match failed, try static file regex instead
+        match = re.match(self._pp_static_regex, rel_path)
+        if match:
+            md = match.groupdict()
+            md['start_date'] = None
+            md['end_date'] = None
+            md['name_in_model'] = None # TODO: handle better
+            ds = DataSet(**md)
+            del ds.component2
+            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.date_range = None
+            ds.date_freq = self.DateFreq('static')
+            ds.chunk_freq = self.DateFreq('static')
+            return ds
+        raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
         return [self.component, 'ts', frepp_freq(self.data_freq), 

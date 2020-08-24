@@ -10,6 +10,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
         import subprocess
 from tests import shared_test_utils as shared
 import src.gfdl as gfdl
+import src.datelabel as dt
 from src.mdtf import MDTFFramework
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
@@ -187,6 +188,46 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['case_list'][0]['variable_convention'], 'CMIP_GFDL')
         self.assertEqual(config['case_list'][0]['FIRSTYR'], 1977)
         self.assertEqual(config['case_list'][0]['LASTYR'], 1981)
+
+# quick and dirty way to mock out init, since we only want to test one
+# method
+class _DummyGfdlppDataManager(gfdl.GfdlppDataManager):
+    def __init__(self, component=None, data_freq=None, chunk_freq=None):
+        self.root_dir = '/pp/'
+        self.DateFreq = dt.DateFrequency
+        self.component = component
+        self.data_freq = data_freq
+        self.chunk_freq = chunk_freq
+
+class TestPPPathParsing(unittest.TestCase):
+    def test_ts_parse(self):
+        dm = _DummyGfdlppDataManager()
+        dir_ = 'atmos_cmip/ts/daily/5yr'
+        file_ = 'atmos_cmip.20100101-20141231.rsdscsdiff.nc'
+        ds = dm.parse_relative_path(dir_, file_)
+        self.assertEqual(ds.component, 'atmos_cmip')
+        self.assertEqual(ds.date_freq, dt.DateFrequency('day'))
+        self.assertEqual(ds.chunk_freq, dt.DateFrequency(5, 'yr'))
+        self.assertEqual(ds.start_date, dt.Date(2010,1,1))
+        self.assertEqual(ds.end_date, dt.Date(2014,12,31))
+        self.assertEqual(ds.name_in_model, 'rsdscsdiff')
+        self.assertEqual(ds._remote_data, '/pp/atmos_cmip/ts/daily/5yr/atmos_cmip.20100101-20141231.rsdscsdiff.nc')
+        self.assertEqual(ds.date_range, dt.DateRange('20100101-20141231'))
+
+    def test_static_parse(self):
+        dm = _DummyGfdlppDataManager()
+        dir_ = 'ocean_monthly'
+        file_ = 'ocean_monthly.static.nc'
+        ds = dm.parse_relative_path(dir_, file_)
+        self.assertEqual(ds.component, 'ocean_monthly')
+        self.assertEqual(ds.date_freq, dt.DateFrequency('fx'))
+        self.assertEqual(ds.chunk_freq, dt.DateFrequency('fx'))
+        self.assertEqual(ds.start_date, None)
+        self.assertEqual(ds.end_date, None)
+        self.assertEqual(ds.name_in_model, None)
+        self.assertEqual(ds._remote_data, '/pp/ocean_monthly/ocean_monthly.static.nc')
+        self.assertEqual(ds.date_range, None)
+
 
 if __name__ == '__main__':
     unittest.main()

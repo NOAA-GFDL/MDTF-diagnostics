@@ -104,28 +104,20 @@ class TestModuleManager(unittest.TestCase):
         self.assertNotIn(self.test_mod_name, mod_list)
 
 
-@unittest.skipIf('MODULESHOME' not in os.environ,
-    "Skipping GFDL tests because not running on a system with environment modules.")
-@unittest.skipIf(DOING_TRAVIS,
-    "Skipping GFDL tests because running in Travis CI environment")
-@unittest.skipUnless(DOING_MDTF_DATA_TESTS,
-    "Skipping GFDL tests because not running data-intensive test suite.")
 class TestFreppArgParsing(unittest.TestCase):
-
-    def setUp(self):
-        self.config_test = {
-            'case_list':[{'CASENAME':'B'}],
-            'paths':{'OUTPUT_DIR':'/D'},
-            'settings':{'E':'F', 'verbose':0, 'make_variab_tar': False}
-        }
-        self.frepp_stub = """
-            set in_data_dir = /foo2/bar2
-            set out_dir = /foo/bar
-            set descriptor = baz.r1i1p1f1
-            set yr1 = 1977
-            set yr2 = 1981
-            set make_variab_tar = 1
-        """
+    config_test = {
+        'case_list':[{'CASENAME':'B'}],
+        'paths':{'OUTPUT_DIR':'/D'},
+        'settings':{'E':'F', 'verbose':0, 'make_variab_tar': False}
+    }
+    frepp_stub = """
+        set in_data_dir = /foo2/bar2
+        set out_dir = /foo/bar
+        set descriptor = baz.r1i1p1f1
+        set yr1 = 1977
+        set yr2 = 1981
+        set make_variab_tar = 1
+    """
 
     def test_parse_frepp_stub_regex(self):
         frepp_stub = """
@@ -145,8 +137,7 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(d['foo6'], 'not a #comment')
 
     def test_parse_frepp_stub_substitution(self):
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl.parse_frepp_stub(self.frepp_stub)
         self.assertNotIn('in_data_dir', d)
         self.assertEqual(d['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(d['CASENAME'], 'baz.r1i1p1f1')
@@ -155,14 +146,13 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(d['make_variab_tar'], True)
 
     def test_parse_frepp_stub_mode(self):
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl.parse_frepp_stub(self.frepp_stub)
         self.assertEqual(d['frepp'], True)
 
+    @unittest.skip("")
     def test_parse_mdtf_args_frepp_overwrite(self):
         # overwrite defaults
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True}
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
@@ -171,10 +161,10 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'F')
 
+    @unittest.skip("")
     def test_parse_mdtf_args_frepp_overwrite_both(self):
         # overwrite defaults and command-line
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True, 'OUTPUT_DIR':'/X', 'E':'Y'}
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
@@ -183,10 +173,10 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(config['settings']['make_variab_tar'], True)
         self.assertEqual(config['settings']['E'], 'Y')
 
+    @unittest.skip("")
     def test_parse_mdtf_args_frepp_caselist(self):
         # overwrite defaults and command-line
-        frepp_stub = self.frepp_stub # make a copy to be safe
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True}        
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()

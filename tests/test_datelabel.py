@@ -258,5 +258,16 @@ class TestDateFrequency(unittest.TestCase):
         self.assertEqual(max(test), dt_freq(3, 'wk'))
         self.assertEqual(min(test), dt_freq(3, 'hr'))
 
+    def test_fx_parsing(self):
+        self.assertEqual(dt_freq('fx'), dt_freq('static'))
+        self.assertEqual(dt_freq('fx'), dt_freq(0, 'fx'))
+        self.assertEqual(dt_freq('fx'), dt_freq(1, 'fx'))
+        self.assertEqual(dt_freq('fx').format(), 'fx')
+
+    def test_fx_comparisons(self):
+        self.assertTrue(dt_freq('fx') > dt_freq(2000,'yr'))
+        self.assertTrue(dt_freq('fx') > dt_freq(6,'dy'))
+        self.assertTrue(dt_freq('fx') > dt_freq(1,'wk'))
+
 if __name__ == '__main__':
     unittest.main()

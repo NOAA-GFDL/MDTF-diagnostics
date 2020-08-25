@@ -7,7 +7,7 @@ dependencies:
 - subprocess32
 - numpy=1.16.5
 - scipy
-- matplotlib=2.2.5
+- matplotlib
 - netCDF4
-- networkx=2.2
+- networkx
 - numba

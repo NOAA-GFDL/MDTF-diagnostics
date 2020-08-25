@@ -791,11 +791,16 @@ class DateFrequency(datetime.timedelta):
     __str__ = format
 
     def format_local(self):
+        """Format frequency as used in framework's local directory hierarchy
+        (defined in :meth:`src.data_manager.DataManager.local_path`.)
+        """
         if self.quantity == 1:
             if self.unit == 'mo':
                 return 'mon'
+            elif self.unit == 'day':
+                return 'day'
             else:
-                return self.unit
+                return self.format()
         else:
             return self.format()
 

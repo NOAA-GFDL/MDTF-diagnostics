@@ -56,9 +56,9 @@ class TestCMIP6_CVs(unittest.TestCase):
         )
 
 class TestCMIP6DateFrequency(unittest.TestCase):
-    all_freqs = ['dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
+    all_freqs = ['fx', 'dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
         '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt', 
-        'subhrPt', 'fx']
+        'subhrPt']
 
     def test_string_output(self):
         for s in self.all_freqs:

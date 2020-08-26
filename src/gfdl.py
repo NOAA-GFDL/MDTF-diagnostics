@@ -394,7 +394,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
         """
-        return sorted(list(self.data_keys))
+        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
 
     def _fetch_exception_handler(self, exc):
         print(exc)

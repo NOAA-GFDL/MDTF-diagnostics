@@ -218,6 +218,7 @@ class Diagnostic(object):
 
         # Set env vars for variable and axis names:
         axes = dict()
+        ax_bnds = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
@@ -248,7 +249,12 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in iter(axes.items()): 
+        for key, val in axes.items():
+            # Define ax bounds variables; TODO do this more honestly
+            ax_bnds[key+'_bnds'] = val + '_bnds'
+        for key, val in axes.items(): 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
+        for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):

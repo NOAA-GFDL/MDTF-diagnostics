@@ -760,7 +760,11 @@ class DateFrequency(datetime.timedelta):
     @classmethod
     def _get_timedelta_kwargs(cls, q, s):
         if s == 'fx':
-            return {'seconds': 0}
+            # internally set to maximum representable timedelta, for purposes of comparison
+            tmp = datetime.timedelta.max
+            return {'days': tmp.days, 'seconds': tmp.seconds, 
+                'microseconds': tmp.microseconds
+            }
         elif s == 'yr':
             return {'days': 365 * q}
         elif s == 'season':
@@ -780,19 +784,25 @@ class DateFrequency(datetime.timedelta):
 
     def format(self):
         # conversion? only hr and yr used
-        return "{}{}".format(self.quantity, self.unit)
+        if self.unit == 'fx':
+            return 'fx'
+        else:
+            return "{}{}".format(self.quantity, self.unit)
     __str__ = format
 
     def format_local(self):
-        if self.unit == 'hr':
-            return self.format()
+        """Format frequency as used in framework's local directory hierarchy
+        (defined in :meth:`src.data_manager.DataManager.local_path`.)
+        """
+        if self.quantity == 1:
+            if self.unit == 'mo':
+                return 'mon'
+            elif self.unit == 'day':
+                return 'day'
+            else:
+                return self.format()
         else:
-            assert self.quantity == 1
-            _local_dict = {
-                'mo': 'mon',
-                'day': 'day',
-            }
-            return _local_dict[self.unit]
+            return self.format()
 
     def __repr__(self):
         return "{}('{}')".format(type(self).__name__, self)

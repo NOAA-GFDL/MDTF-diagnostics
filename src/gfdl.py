@@ -715,13 +715,13 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         match = re.match(self._pp_static_regex, rel_path)
         if match:
             md = match.groupdict()
-            md['start_date'] = None
-            md['end_date'] = None
+            md['start_date'] = datelabel.FXDateMin
+            md['end_date'] = datelabel.FXDateMax
             md['name_in_model'] = None # TODO: handle better
             ds = DataSet(**md)
             del ds.component2
             ds._remote_data = os.path.join(self.root_dir, rel_path)
-            ds.date_range = None
+            ds.date_range = datelabel.FXDateRange
             ds.date_freq = self.DateFreq('static')
             ds.chunk_freq = self.DateFreq('static')
             return ds

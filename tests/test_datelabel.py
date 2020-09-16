@@ -260,6 +260,15 @@ class TestFXDates(unittest.TestCase):
         with self.assertRaises(FXDateException):
             _ = (FXDateRange.intersection(dtr))
 
+    def test_is_static(self):
+        dtr = dt_range('19800101-19901231')
+        dt0 = dt('2019-09-18')
+        self.assertTrue(FXDateMin.is_static)
+        self.assertTrue(FXDateMax.is_static)
+        self.assertTrue(FXDateRange.is_static)
+        self.assertFalse(dt0.is_static)
+        self.assertFalse(dtr.is_static)
+
     def test_span(self):
         dtr1 = dt_range('20190101', '20190131')
         dtr2 = dt_range('20190201', '20190228')
@@ -322,6 +331,12 @@ class TestDateFrequency(unittest.TestCase):
         self.assertTrue(dt_freq('fx') > dt_freq(2000,'yr'))
         self.assertTrue(dt_freq('fx') > dt_freq(6,'dy'))
         self.assertTrue(dt_freq('fx') > dt_freq(1,'wk'))
+
+    def test_is_static(self):
+        self.assertTrue(dt_freq('fx').is_static)
+        self.assertFalse(dt_freq(2000,'yr').is_static)
+        self.assertFalse(dt_freq(6,'dy').is_static)
+        self.assertFalse(dt_freq(1,'hr').is_static)
 
 if __name__ == '__main__':
     unittest.main()

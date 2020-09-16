@@ -194,7 +194,7 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
                 md['quantity'] = 0
                 md['unit'] = 'fx'
 
-            if not md['quantity']:
+            if md['quantity'] == '' or md['quantity'] is None:
                 md['quantity'] = 1
             else:
                 md['quantity'] = int(md['quantity'])

@@ -494,6 +494,12 @@ class DateRange(AtomicInterval, _DateMixin):
         else:
             self.precision, _ = self._precision_check(prec0, prec1)
 
+    @property
+    def is_static(self):
+        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """
+        return False
+
     @staticmethod
     def _precision_check(*args):
         min_ = min(args)
@@ -524,7 +530,7 @@ class DateRange(AtomicInterval, _DateMixin):
     @classmethod
     def _coerce_to_self(cls, item):
         # got to be a better way to write this
-        if isinstance(item, cls) or isinstance(item, _FXDateRange):
+        if isinstance(item, cls) or getattr(item, 'is_static', False):
             return item
         else:
             return cls(item)
@@ -608,7 +614,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     # for comparsions, coerce to DateRange first & use inherited interval math
     def _date_range_compare_common(self, other):
-        if isinstance(self, _FXDateRange) or isinstance(item, _FXDateRange):
+        if self.is_static or getattr(other, 'is_static', False):
             raise FXDateException(func_name='_date_range_compare_common')
         return self._coerce_to_self(other)
 
@@ -712,11 +718,10 @@ class Date(DateRange):
         return str_ + '{0.tm_hour:02}:{0.tm_min:02}:{0.tm_sec:02}'.format(tup_)
 
     def _tuple_compare(self, other, func):
-        if self.precision == 0 or getattr(other, 'precision', 1) == 0:
+        if self.is_static or getattr(other, 'is_static', False):
             if func == op.eq:
-                return (
-                    self.precision == 0 and getattr(other, 'precision', 1) == 0
-                ) # True only if both values are FXDates
+                # True only if both values are FXDates
+                return (self.is_static and getattr(other, 'is_static', False))
             else:
                 raise FXDateException(func_name='_tuple_compare')
         if not isinstance(other, Date):
@@ -759,6 +764,12 @@ class _FXDateRange(DateRange):
         self._upper = datetime.datetime.max
         self._right = self.OPEN
         self.precision = 0
+
+    @property
+    def is_static(self):
+        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """
+        return True
 
     @classmethod
     def _coerce_to_self(cls, item):
@@ -845,6 +856,12 @@ class DateFrequency(datetime.timedelta):
         else:
             raise ValueError("Malformed input {} {}".format(quantity, unit))
         return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
+
+    @property
+    def is_static(self):
+        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """
+        return (self.quantity == 0 and self.unit == "fx")
 
     @classmethod
     def _get_timedelta_kwargs(cls, q, s):

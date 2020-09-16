@@ -408,10 +408,7 @@ def parse_DRS_filename(file_):
             md['date_range'] = datelabel.FXDateRange
         md.update(parse_mip_table_id(md['table_id']))
         # verify consistency of FXDates and frequency == fx:
-        if md['date_range'] is datelabel.FXDateRange \
-            and md['date_freq'] != CMIP6DateFrequency('fx') \
-            or md['date_freq'] == CMIP6DateFrequency('fx') \
-            and md['date_range'] is not datelabel.FXDateRange:
+        if md['date_range'].is_static != md['date_freq'].is_static:
             raise ValueError("Can't parse date range in filename {}.".format(file_))
         return md
     else:

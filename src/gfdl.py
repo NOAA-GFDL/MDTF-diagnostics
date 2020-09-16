@@ -417,9 +417,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # GCP can't copy to home dir, so always copy to temp
         tmpdirs = util_mdtf.TempDirManager()
         work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
-        remote_files = sorted( # cast from set to list so we can go in chrono order
-            list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
-            ) 
+        remote_files = list(self.data_files[d_key])
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
@@ -508,6 +506,9 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         trim_count = 0
         for f in remote_files:
             file_name = os.path.basename(f._remote_data)
+            if f.date_range.is_static:
+                # skip date trimming logic for time-independent files
+                continue
             if not self.date_range.overlaps(f.date_range):
                 print(("\tWarning: {} has dates {} outside of requested "
                     "range {}.").format(file_name, f.date_range, self.date_range))
@@ -710,6 +711,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = self.DateFreq(ds.date_freq)
             ds.chunk_freq = self.DateFreq(ds.chunk_freq)
+            assert ds.date_range.is_static == ds.date_freq.is_static
             return ds
         # match failed, try static file regex instead
         match = re.match(self._pp_static_regex, rel_path)
@@ -724,6 +726,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             ds.date_range = datelabel.FXDateRange
             ds.date_freq = self.DateFreq('static')
             ds.chunk_freq = self.DateFreq('static')
+            assert ds.date_range.is_static == ds.date_freq.is_static
             return ds
         raise ValueError("Can't parse {}, skipping.".format(rel_path))
 

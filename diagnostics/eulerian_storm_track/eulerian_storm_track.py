@@ -32,20 +32,18 @@ else:
   # Create the necessary directories
   ##########################################################
 
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/model'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/model')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/model/netCDF'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/model/netCDF')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/model/PS'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/model/PS')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/obs'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/obs')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/obs/netCDF'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/obs/netCDF')
-  if not os.path.exists(os.environ['variab_dir']+'/eulerian_storm_track/obs/PS'):
-    os.makedirs(os.environ['variab_dir']+'/eulerian_storm_track/obs/PS')
+  if not os.path.exists(os.environ['WK_DIR']+'/model'):
+    os.makedirs(os.environ['WK_DIR']+'/model')
+  if not os.path.exists(os.environ['WK_DIR']+'/model/netCDF'):
+    os.makedirs(os.environ['WK_DIR']+'/model/netCDF')
+  if not os.path.exists(os.environ['WK_DIR']+'/model/PS'):
+    os.makedirs(os.environ['WK_DIR']+'/model/PS')
+  if not os.path.exists(os.environ['WK_DIR']+'/obs'):
+    os.makedirs(os.environ['WK_DIR']+'/obs')
+  if not os.path.exists(os.environ['WK_DIR']+'/obs/netCDF'):
+    os.makedirs(os.environ['WK_DIR']+'/obs/netCDF')
+  if not os.path.exists(os.environ['WK_DIR']+'/obs/PS'):
+    os.makedirs(os.environ['WK_DIR']+'/obs/PS')
   
   ##################################################################
   # Reading in the necessary data, and computing the daily eddies
@@ -54,6 +52,12 @@ else:
   netcdf_filename = os.environ['MODEL_OUTPUT_DIR']+'/'+os.environ['CASENAME']+'.'+os.environ['v850_var']+'.day.nc'
   if (not os.path.exists(netcdf_filename)):
     print ('Cannot Find File: ', netcdf_filename)
+
+  # temporarily add the lat_var and lon_var 
+  # since these values seem to be missing 
+  os.environ['lat_var'] = 'lat'
+  os.environ['lon_var'] = 'lon'
+  os.environ['time_var'] = 'time'
 
   # reading in the model data
   ncid = Dataset(netcdf_filename, 'r')
@@ -95,95 +99,95 @@ else:
   season = 'djf'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
+  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
+  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
+  out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
  
   season = 'mam'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
+  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
+  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
+  out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'jja'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
+  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
+  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
+  out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'son'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
+  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
+  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
+  out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
 
 
   #### OBS data ###
   print('*** Processing Observations: ERA-Interim')
-  obs_data_file = os.environ['OBS_DATA_ROOT'] + '/eulerian_storm_track/erai.nc'
+  obs_data_file = os.environ['OBS_DATA'] + '/erai.nc'
   obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file)
 
   obs_max_lim = 6
 
   print('*** Processing Season: DJF')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'DJF')
-  plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'DJF')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'DJF')
+  # plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'DJF')
   plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: MAM')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'MAM')
-  plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'MAM')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'MAM')
+  # plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'MAM')
   plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: JJA')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'JJA')
-  plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'JJA')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'JJA')
+  # plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'JJA')
   plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: SON')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'SON')
-  plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'SON')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'SON')
+  # plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'SON')
   plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
  
   print('*** Processing Observations: ERA-5')
-  obs_data_file = os.environ['OBS_DATA_ROOT'] + '/eulerian_storm_track/era5.nc'
+  obs_data_file = os.environ['OBS_DATA'] + '/era5.nc'
   obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file)
 
   obs_max_lim = 6
 
   print('*** Processing Season: DJF')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'DJF')
-  plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'DJF')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'DJF')
+  # plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'DJF')
   plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: MAM')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'MAM')
-  plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'MAM')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'MAM')
+  # plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'MAM')
   plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: JJA')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'JJA')
-  plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'JJA')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'JJA')
+  # plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'JJA')
   plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: SON')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'SON')
-  plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
-  out_file = os.environ['variab_dir']+'/eulerian_storm_track/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'SON')
+  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'SON')
+  # plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
+  out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'SON')
   plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   ##########################################################
@@ -192,21 +196,23 @@ else:
 
   print('*** Editting Templates...')
   # Copy template html (and delete old html if necessary)
-  if os.path.isfile( os.environ["variab_dir"]+"/eulerian_storm_track/eulerian_storm_track.html" ):
-      os.system("rm -f "+os.environ["variab_dir"]+"/eulerian_storm_track/eulerian_storm_track.html")
+  if os.path.isfile( os.environ["WK_DIR"]+"/eulerian_storm_track.html" ):
+      os.system("rm -f "+os.environ["WK_DIR"]+"/eulerian_storm_track.html")
 
-  os.system("cp "+os.environ["POD_HOME"]+"/eulerian_storm_track.html "+os.environ["variab_dir"]+"/eulerian_storm_track/.")
-  os.system("cp "+os.environ["POD_HOME"]+"/MDTF_Documentation_eulerian_storm_track.pdf "+os.environ["variab_dir"]+"/eulerian_storm_track/.")
+  cmd = "cp "+os.environ["POD_HOME"]+"/eulerian_storm_track.html "+os.environ["WK_DIR"]+"/"
+  os.system(cmd)
+  cmd = "cp "+os.environ["POD_HOME"]+"/MDTF_Documentation_eulerian_storm_track.pdf "+os.environ["WK_DIR"]+"/"
+  os.system(cmd)
 
-  # Replace CASENAME so that the figures are correctly linked through the html
-  os.system("cp "+os.environ["variab_dir"]+"/eulerian_storm_track/eulerian_storm_track.html "+os.environ["variab_dir"]+"/eulerian_storm_track/tmp.html")
-  os.system("cat "+os.environ["variab_dir"]+"/eulerian_storm_track/eulerian_storm_track.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/eulerian_storm_track/tmp.html")
-  os.system("cp "+os.environ["variab_dir"]+"/eulerian_storm_track/tmp.html "+os.environ["variab_dir"]+"/eulerian_storm_track/eulerian_storm_track.html")
-  os.system("rm -f "+os.environ["variab_dir"]+"/eulerian_storm_track/tmp.html")
+  # # Replace CASENAME so that the figures are correctly linked through the html
+  # os.system("cp "+os.environ["WK_DIR"]+"/eulerian_storm_track.html "+os.environ["WK_DIR"]+"/tmp.html")
+  # os.system("cat "+os.environ["WK_DIR"]+"/eulerian_storm_track.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["WK_DIR"]+"/tmp.html")
+  # os.system("cp "+os.environ["WK_DIR"]+"/tmp.html "+os.environ["WK_DIR"]+"/eulerian_storm_track.html")
+  # os.system("rm -f "+os.environ["WK_DIR"]+"/tmp.html")
 
-  a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep eulerian_storm_track > /dev/null")
-  if a != 0:
-     os.system("echo '<H3><font color=navy>Eulerian Strom Track Diagnostics <A HREF=\"eulerian_storm_track/eulerian_storm_track.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")
+  # a = os.system("cat "+os.environ["WK_DIR"]+"/index.html | grep eulerian_storm_track > /dev/null")
+  # if a != 0:
+  #    os.system("echo '<H3><font color=navy>Eulerian Strom Track Diagnostics <A HREF=\"eulerian_storm_track/eulerian_storm_track.html\">plots</A></H3>' >> "+os.environ["WK_DIR"]+"/index.html")
 
   # ======================================================================
   # End of HTML sections

@@ -2,7 +2,8 @@
 
 # Importing Python packages to create plots
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap, maskoceans, shiftgrid
+# from mpl_toolkits.basemap import Basemap, maskoceans, shiftgrid
+import cartopy
 import numpy as np 
 import os
 
@@ -19,13 +20,19 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
   lllon = np.nanmin(lonGrid) 
   urlon = np.nanmax(lonGrid)
 
-  m = Basemap(projection='cyl', urcrnrlat=urlat, urcrnrlon=urlon, llcrnrlat=lllat, llcrnrlon=lllon)
-  cnt = m.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
-  m.colorbar()
-  # m.fillcontinents(lake_color=None)
-  m.drawcoastlines(linewidth=.5)
-  m.drawparallels(np.arange(-90, 90, 25), labels=[True, False, False, False])
-  m.drawmeridians(np.arange(-180, 180, 75), labels=[False, False, False, True])
+  # m = Basemap(projection='cyl', urcrnrlat=urlat, urcrnrlon=urlon, llcrnrlat=lllat, llcrnrlon=lllon)
+  # cnt = m.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
+  # m.colorbar()
+  # # m.fillcontinents(lake_color=None)
+  # m.drawcoastlines(linewidth=.5)
+  # m.drawparallels(np.arange(-90, 90, 25), labels=[True, False, False, False])
+  # m.drawmeridians(np.arange(-180, 180, 75), labels=[False, False, False, True])
+
+  ax = plt.axes(projection=cartopy.crs.PlateCarree())
+  ax.coastlines()
+  cnt = plt.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
+  cb = plt.colorbar(ax=ax, shrink=0.5)
+  cb.ax.set_ylabel(r'$\tilde{V}^{st}_{850}$ [m/s]')
   
   if (len(title) > 0):
     plt.title(title)

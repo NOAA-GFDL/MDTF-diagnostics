@@ -20,16 +20,15 @@
       "model" : "CESM",
       "convention" : "CESM",
       "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
+      "LASTYR" : 2010,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "eulerian_storm_track"
-          // "Wheeler_Kiladis"
-          // "eulerian_storm_track"
-          // "MJO_suite"
+          // "Wheeler_Kiladis",
+          // "MJO_suite",
           // "MJO_teleconnection"
-          // "convective_transition_diag"
+          // "convective_transition_diag", 
           // "precip_diurnal_cycle"
+          "eulerian_storm_track" 
       ]
     }
     // {

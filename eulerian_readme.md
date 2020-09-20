@@ -39,7 +39,6 @@ So in order to avoid the above error, I use the develop branch, even though it i
 3. In addition, I turn off **CASENAME: "Lmon_GISS...."**
 4. There may be additional changes to the code, just revert back to the original if needed and add in **eulerian-storm-track** to your **pod_list**.
 
-
 ## Changes inferred from other modules being editted. 
 
 1. It looks like the way we write out varlist and namelist has changed to json formatting. Therefore, I copy the style provided in Wheeler_Khiladis pod. 

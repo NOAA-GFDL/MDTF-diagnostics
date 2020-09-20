@@ -99,32 +99,24 @@ else:
   season = 'djf'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
  
   season = 'mam'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'jja'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'son'
   print('*** Processing Season: %s'%(season.upper()))
   model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
-  # out_file = os.environ['WK_DIR']+'/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season.upper())
-  # plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
 
@@ -132,61 +124,47 @@ else:
   #### OBS data ###
   print('*** Processing Observations: ERA-Interim')
   obs_data_file = os.environ['OBS_DATA'] + '/erai.nc'
-  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file)
+  obs_topo_file = os.environ['OBS_DATA'] + '/erai_topo.nc'
+  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file, obs_topo_file)
 
   obs_max_lim = 6
 
   print('*** Processing Season: DJF')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'DJF')
-  # plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'DJF')
   plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: MAM')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'MAM')
-  # plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'MAM')
   plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: JJA')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'JJA')
-  # plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'JJA')
   plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: SON')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.erai.ps'%(os.environ['CASENAME'], 'SON')
-  # plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.erai.png'%(os.environ['CASENAME'], 'SON')
   plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
  
   print('*** Processing Observations: ERA-5')
   obs_data_file = os.environ['OBS_DATA'] + '/era5.nc'
-  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file)
+  obs_topo_file = os.environ['OBS_DATA'] + '/era5_topo.nc'
+  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file, obs_topo_file)
 
   obs_max_lim = 6
 
   print('*** Processing Season: DJF')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'DJF')
-  # plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'DJF')
   plotter.plot(obs_lon, obs_lat, djf, out_file=out_file, title='%s (%d to %d)'%('DJF', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: MAM')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'MAM')
-  # plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'MAM')
   plotter.plot(obs_lon, obs_lat, mam, out_file=out_file, title='%s (%d to %d)'%('MAM', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: JJA')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'JJA')
-  # plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'JJA')
   plotter.plot(obs_lon, obs_lat, jja, out_file=out_file, title='%s (%d to %d)'%('JJA', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
   print('*** Processing Season: SON')
-  # out_file = os.environ['WK_DIR']+'/obs/PS/%s.%s.era5.ps'%(os.environ['CASENAME'], 'SON')
-  # plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'SON')
   plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   

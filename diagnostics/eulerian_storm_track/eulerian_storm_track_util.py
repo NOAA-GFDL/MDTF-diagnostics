@@ -73,7 +73,7 @@ def model_std_dev(data, start_year, time, season='djf'):
 
   return out_std_dev
 
-def obs_std_dev(obs_data_file):
+def obs_std_dev(obs_data_file, obs_topo_file):
   '''
   Data input should be in the format (time, lat, lon)
   We will calculate the std_dev for the given time_ind, the time_ind has to be a logical array of the size of the time dimension 
@@ -92,6 +92,11 @@ def obs_std_dev(obs_data_file):
   in_son = nc.variables['son_sq_eddy'][:]
   in_dec = nc.variables['dec_sq_eddy'][:]
   
+  nc.close()
+
+  # read in the topography information to filter before computing the zonal mean 
+  nc = Dataset(obs_topo_file, 'r')
+  in_topo = nc.variables['topo'][:]
   nc.close()
 
   djf_year = []

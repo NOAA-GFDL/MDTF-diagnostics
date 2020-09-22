@@ -96,27 +96,30 @@ else:
 
 
   print('*** Processing Model Data...')
+  model_zonal_means = {}
+  model_zonal_means['lat'] = lat
+
   season = 'djf'
   print('*** Processing Season: %s'%(season.upper()))
-  model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
+  model_std_dev, model_zonal_means[season] = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
  
   season = 'mam'
   print('*** Processing Season: %s'%(season.upper()))
-  model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
+  model_std_dev, model_zonal_means[season] = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'jja'
   print('*** Processing Season: %s'%(season.upper()))
-  model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
+  model_std_dev, model_zonal_means[season] = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
   
   season = 'son'
   print('*** Processing Season: %s'%(season.upper()))
-  model_std_dev = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
+  model_std_dev, model_zonal_means[season] = est.model_std_dev(eddies, int(os.environ['FIRSTYR']), time, season=season)
   out_file = os.environ['WK_DIR']+'/model/%s.%s.png'%(os.environ['CASENAME'], season.upper())
   plotter.plot(lonGrid, latGrid, model_std_dev, out_file=out_file, title='%s (%s to %s)'%(season.upper(), os.environ['FIRSTYR'], os.environ['LASTYR']), levels=np.arange(0,6), extend='max')
 
@@ -125,7 +128,7 @@ else:
   print('*** Processing Observations: ERA-Interim')
   obs_data_file = os.environ['OBS_DATA'] + '/erai.nc'
   obs_topo_file = os.environ['OBS_DATA'] + '/erai_topo.nc'
-  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file, obs_topo_file)
+  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year, erai_zonal_means = est.obs_std_dev(obs_data_file, obs_topo_file)
 
   obs_max_lim = 6
 
@@ -148,7 +151,7 @@ else:
   print('*** Processing Observations: ERA-5')
   obs_data_file = os.environ['OBS_DATA'] + '/era5.nc'
   obs_topo_file = os.environ['OBS_DATA'] + '/era5_topo.nc'
-  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year = est.obs_std_dev(obs_data_file, obs_topo_file)
+  obs_lat, obs_lon, djf, mam, jja, son, obs_start_year, obs_end_year, era5_zonal_means = est.obs_std_dev(obs_data_file, obs_topo_file)
 
   obs_max_lim = 6
 
@@ -168,6 +171,14 @@ else:
   out_file = os.environ['WK_DIR']+'/obs/%s.%s.era5.png'%(os.environ['CASENAME'], 'SON')
   plotter.plot(obs_lon, obs_lat, son, out_file=out_file, title='%s (%d to %d)'%('SON', obs_start_year, obs_end_year), levels=np.arange(0,obs_max_lim), extend='max')
   
+
+  ##########################################################
+  #### Plotting Zonal Means for all the different seasons
+  ##########################################################
+  print('Plotting Zonal Means Image')
+  out_file = os.environ['WK_DIR']+'/%s.zonal_means.png'%(os.environ['CASENAME'])
+  plotter.plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file)
+
   ##########################################################
   # Editting HTML Template for the current CASENAME
   ##########################################################

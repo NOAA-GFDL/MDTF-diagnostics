@@ -17,7 +17,7 @@ o_ds = xr.Dataset({"topo": (('lat', 'lon'), z)}, coords={"lat": lat, "lon": lon}
 o_ds.to_netcdf(out_file)
 
 ''' ERA5 topography file '''
-era5_file = '/localdrive/drive6/era5/invariants.nc'
+era5_file = '/localdrive/drive6/era5/invariants_025.nc'
 out_file  = './era5_topo.nc'
 
 ds = xr.open_dataset(era5_file)

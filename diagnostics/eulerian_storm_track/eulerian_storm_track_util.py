@@ -66,12 +66,14 @@ def model_std_dev(data, start_year, time, season='djf'):
     warnings.simplefilter("ignore", category=RuntimeWarning)
     eddy_year = np.asarray(eddy_year)
     out_std_dev = np.nanmean(eddy_year, axis=0)
+    zonal_mean = np.nanmean(out_std_dev, axis=1)
+    zonal_mean[zonal_mean == 0] = np.nan
 
   # out_sum = np.nansum(eddy_year, axis=0)
   # out_cnt = np.count_nonzero(~np.isnan(eddy_year), axis=0)
   # return out_std_dev, out_sum, out_cnt
 
-  return out_std_dev
+  return out_std_dev, zonal_mean
 
 def obs_std_dev(obs_data_file, obs_topo_file):
   '''
@@ -98,6 +100,8 @@ def obs_std_dev(obs_data_file, obs_topo_file):
   nc = Dataset(obs_topo_file, 'r')
   in_topo = nc.variables['topo'][:]
   nc.close()
+
+  topo_cond = (in_topo > 1000)
 
   djf_year = []
   mam_year = []
@@ -131,21 +135,43 @@ def obs_std_dev(obs_data_file, obs_topo_file):
 
   djf_year = np.asarray(djf_year)
   djf = np.nanmean(djf_year, axis=0)
+  djf[topo_cond] = np.nan
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    zonal_djf = np.nanmean(djf, axis=1)
+    zonal_djf[zonal_djf == 0] = np.nan
   
   mam_year = np.asarray(mam_year)
   mam = np.nanmean(mam_year, axis=0)
+  mam[topo_cond] = np.nan
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    zonal_mam = np.nanmean(mam, axis=1)
+    zonal_mam[zonal_mam == 0] = np.nan
   
   jja_year = np.asarray(jja_year)
   jja = np.nanmean(jja_year, axis=0)
+  jja[topo_cond] = np.nan
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    zonal_jja = np.nanmean(jja, axis=1)
+    zonal_jja[zonal_jja == 0] = np.nan
   
   son_year = np.asarray(son_year)
   son = np.nanmean(son_year, axis=0)
+  son[topo_cond] = np.nan
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+    zonal_son = np.nanmean(son, axis=1)
+    zonal_son[zonal_son == 0] = np.nan
   
   lonGrid, latGrid = np.meshgrid(in_lon, in_lat)
+
+  zonal_means = {'djf': zonal_djf, 'jja': zonal_jja, 'son': zonal_son, 'mam': zonal_mam, 'lat': in_lat}
 
   # import matplotlib.pyplot as plt; 
   # plt.style.use(['classic', 'dark_background'])
   # import pdb; pdb.set_trace()
 
-  return latGrid, lonGrid, djf, mam, jja, son, start_year, end_year
+  return latGrid, lonGrid, djf, mam, jja, son, start_year, end_year, zonal_means
 

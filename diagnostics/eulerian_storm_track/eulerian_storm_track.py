@@ -175,7 +175,7 @@ else:
   ##########################################################
   #### Plotting Zonal Means for all the different seasons
   ##########################################################
-  print('Plotting Zonal Means Image')
+  print('*** Plotting Zonal Means Image')
   out_file = os.environ['WK_DIR']+'/%s.zonal_means.png'%(os.environ['CASENAME'])
   plotter.plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file)
 

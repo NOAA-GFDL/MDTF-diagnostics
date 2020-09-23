@@ -19,6 +19,7 @@ def plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file='
   plt.title('DJF')
   plt.legend(loc=0)
   plt.ylim(-80, 80)
+  plt.ylabel('Latitude')
   
   plt.subplot(2,2,2)
   plt.plot(model_zonal_means['jja'], model_zonal_means['lat'], color='r', label='Model', ls='--')
@@ -35,6 +36,8 @@ def plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file='
   plt.title('MAM')
   plt.legend(loc=0)
   plt.ylim(-80, 80)
+  plt.ylabel('Latitude')
+  plt.xlabel(r'$\tilde{V}^{st}_{850}$ [m/s]')
 
   plt.subplot(2,2,4)
   plt.plot(model_zonal_means['son'], model_zonal_means['lat'], color='r', label='Model', ls='--')
@@ -43,6 +46,8 @@ def plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file='
   plt.title('SON')
   plt.legend(loc=0)
   plt.ylim(-80, 80)
+  plt.ylabel('Latitude')
+  plt.xlabel(r'$\tilde{V}^{st}_{850}$ [m/s]')
 
   plt.tight_layout()
   if (len(out_file) > 0):

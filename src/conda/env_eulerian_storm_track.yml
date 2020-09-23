@@ -1,5 +1,6 @@
 name: _MDTF_eulerian_storm_track
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -94,4 +95,3 @@ dependencies:
   - yaml=0.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.5=h9ceee32_0
-prefix: /home/jj/anaconda3/envs/mdtf_new

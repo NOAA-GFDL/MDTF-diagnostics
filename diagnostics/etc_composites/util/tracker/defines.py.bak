@@ -1,0 +1,105 @@
+import os
+
+#########################################################################################
+############################ TRACKER MODULe SETTINGS ####################################
+#########################################################################################
+
+# location of the source code that is required to run
+source_code_folder = '/localdrive/drive10/mcms_tracker/'
+
+# # location of the slp data to be copied into the data directory
+# SLP folder should cotain the data for slp in the format slp.2010.nc
+
+# slp_data_directory = '/home/jfbooth/FOR_JJ_DATA/ERAI2018/'
+# topo_file = '/home/jfbooth/FOR_JJ_DATA/ERAI2018/erai_hgt.nc'
+# model = 'finaltest'
+# over_write_years = [2018, 2018]
+
+# slp_data_directory = '/localdrive/drive10/mcms_tracker/RUNDIR/DATA/'
+# topo_file = '/localdrive/drive10/mcms_tracker/RUNDIR/erai_hgt.nc'
+# model = 'postleap'
+# over_write_years = [2000, 2001]
+
+# slp_data_directory = '/localdrive/drive6/erai/converts/'
+# topo_file = '/home/jfbooth/FOR_JJ_DATA/ERAI2018/erai_hgt.nc'
+# model = 'autotest'
+# over_write_years = [1979, 1980]
+
+# slp_data_directory = '/localdrive/drive6/era5/data/slp_rename_6hrly/'
+slp_data_directory = '/localdrive/drive6/era5/data/six_hrly/converts'
+# topo_file = '/localdrive/drive10/mcms_tracker/FIXME_slp_converts/era5/era5.hgt.nc'
+topo_file = '/localdrive/drive6/era5/convert_invariants.nc'
+model = 'era19'
+over_write_years = [2019, 2019]
+
+# slp_data_directory = '/localdrive/drive10/mcms_tracker/RUNDIR/DATA365'
+# topo_file = '/localdrive/drive10/mcms_tracker/RUNDIR/TOPO365/rwcntrl_hgt.nc'
+# model = 'jj365'
+# over_write_years = [1902, 1905]
+
+# slp_data_directory = '/localdrive/drive6/era5/data/slp_rename_2deg/'
+# topo_file = '/localdrive/drive10/mcms_tracker/FIXME_slp_converts/era5/era5.hgt_2deg.nc'
+# model = 'testhr2deg'
+# over_write_years = [2000, 2000]
+
+# location of the place where to run the tracker code, it will create the folder
+# main_folder_abbrv is the sub directory that should be created to run the code
+# model = 'mdtfaero'
+# model = 'mdtfnaud'
+
+main_folder_location = '/localdrive/drive10/mcms_tracker/RUNDIR/'
+
+# years to run the code for
+
+#over_write_years = [2018, 2018]
+# over_write_years = [1903, 1905]
+# over_write_years = [2000, 2001]
+
+
+# creating the links to other folder locations that are called by other python codes
+main_folder = os.path.join(main_folder_location, model) + '/'
+code_folder = os.path.join(main_folder, 'CODE') + '/'
+out_folder = os.path.join(main_folder, 'out_%s'%(model)) + '/'
+read_folder = os.path.join(main_folder, 'read_%s'%(model)) + '/'
+out_files_folder = os.path.join(out_folder, '%s_files'%(model)) + '/'
+slp_folder = os.path.join(main_folder, 'data') + '/'
+
+# threshold for height to defining land mask and topo.
+# JJJ - b/c of interpolation and non-zero height of some SST region,
+# need to use a value larger than 0 otherwise parts of the ocean become land.
+thresh_landsea = 50.0
+
+# Print a lot to screen to debug
+verbose = 0
+
+# Flag to hard copy data files over to the RUN directory
+hard_copy = False
+
+################ ADDITIONAL OPTIONS
+# set this flag to create the tracked cyclones into matlab dictionaries
+create_matlab_dictionaries = True
+
+
+#########################################################################################
+############################ DATACYC MODULE SETTINGS ####################################
+#########################################################################################
+
+#########################################################################################
+####################### FRONT DETECTION MODULE SETTINGS #################################
+#########################################################################################
+
+# change below if you want to run the front deteciton module for different set of years
+front_years = over_write_years
+model_data_directory = '/localdrive/drive6/merra2/'
+model_data_directory = '/mnt/drive5/merra2/six_hrly'
+model_data_directory = '/localdrive/drive6/erai/converts/'
+data_folder = os.path.join(main_folder, 'var_data/')
+
+
+#########################################################################################
+########################## DIAGNOSTIC MODULE SETTINGS ###################################
+#########################################################################################
+
+
+
+

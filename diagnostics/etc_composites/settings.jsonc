@@ -1,0 +1,24 @@
+{
+  "settings" : {
+    "driver" : "etc_composites.py",
+    "long_name" : "Extra Tropical Cyclone Composites",
+    "realm" : "atmos",
+    "description" : "Eulerian Storm Track",
+    "runtime_requirements": {
+      "python3": ["numpy", "matplotlib", "xarray", "netCDF4", "cartopy"]
+      }
+  },
+
+  "pod_env_vars": {
+    "lat_var": "lat", 
+    "lon_var": "lon"
+  }, 
+  
+  "varlist" : [
+    {
+      "var_name" : "slp_var",
+      "freq" : "6hr",
+      "requirement" : "required"
+    }
+  ]
+}

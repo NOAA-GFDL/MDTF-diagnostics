@@ -1,0 +1,18 @@
+name: _MDTF_etc_composites
+# environment used by the framework itself
+channels:
+- anaconda
+- conda-forge
+- defaults
+dependencies:
+- python=3.7
+- mock # needed until tests updated from py2
+- ghostscript
+- nco
+- netCDF4
+- numpy
+- xarray
+- matplotlib=3.2.2
+- cartopy
+- basemap
+ 

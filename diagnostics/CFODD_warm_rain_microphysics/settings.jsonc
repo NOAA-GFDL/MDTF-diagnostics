@@ -49,35 +49,35 @@
   "varlist" : [
     {
       "var_name" : "ta_var",
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "dtau_s_var", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "cldtop_reff_var", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "cld_reff", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "optional" // "not really but I want it to pass" ???
     },{
       "var_name" : "cldtype", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "liq_wat", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "ice_wat", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     },{
       "var_name" : "dbze94", // CF?
-      "freq" : "day",
+      "freq" : "6hr",
       "requirement" : "required"
     }
   ]

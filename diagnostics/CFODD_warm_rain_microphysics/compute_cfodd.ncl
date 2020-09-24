@@ -10,8 +10,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
   begin
   wk_dir = getenv("WK_DIR")
   casename = getenv("CASENAME")
-  ;; all model data requested at daily frequency only
-  time_freq = "day" ;; getenv("time_freq")
+  ;; all model data requested at 6hr frequency only
+  time_freq = "6hr" ;; getenv("time_freq")
 
 ; coordinates
   time_coord = getenv("time_coord")

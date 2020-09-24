@@ -10,11 +10,11 @@ Usage
     mdtf info [TOPIC]
 
 
-If the framework was installed to use `Conda <https://docs.conda.io/en/latest/>`__ (recommended), the top-level ``mdtf`` driver script is created at install time. It sets the conda environment and calls `src/mdtf.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/master/src/mdtf.py>`__, the top-level script for non-conda installations.
+If the framework was installed to use `Conda <https://docs.conda.io/en/latest/>`__ (recommended), the top-level ``mdtf`` driver script is created at install time. It sets the conda environment and calls `src/mdtf.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/mdtf.py>`__, the top-level script for non-conda installations.
 
 The first form of the command runs diagnostics on data at ``CASE_ROOT_DIR``, using configuration set on the command line or in ``INPUT_FILE``. 
 
-* ``INPUT_FILE``: Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/master/src/default_tests.jsonc>`__ (which is intended to be copied and used as a template), or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.
+* ``INPUT_FILE``: Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__ (which is intended to be copied and used as a template), or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.
 * ``CASE_ROOT_DIR``: Root directory of model data to analyze.
 
 The second form of the command prints information about available diagnostics; run without an argument ('mdtf info') to see a list of available topics.
@@ -32,7 +32,7 @@ Paths
 Parent directories of input and output data. **Note** that all the paths below should be on a *local* filesystem. Environment variables in paths (eg ``$HOME``) are resolved according to the shell context ``mdtf`` was called from. Relative paths are resolved relative to the repo directory.
 
 * ``--MODEL-DATA-ROOT, --MODEL_DATA_ROOT <DIR>``: Directory to store input data from different models. Depending on the choice of ``data_manager`` (see below), input model data will typically be copied from a remote filesystem to this location.
-* ``--OBS-DATA-ROOT, --OBS_DATA_ROOT <DIR>``: Directory containing observational data used by individual PODs. Currently, this must be downloaded manually as part of the framework installation. See :numref:`ref-supporting-data` of the :doc:`installation guide <start_install>` for instructions.
+* ``--OBS-DATA-ROOT, --OBS_DATA_ROOT <DIR>``: Directory containing observational data used by individual PODs. Currently, this must be downloaded manually as part of the framework installation. See :numref:`ref-download` of the :doc:`installation guide <start_install>` for instructions.
 * ``--WORKING-DIR, --WORKING_DIR <DIR>``: Working directory.
 * ``--OUTPUT-DIR, --OUTPUT_DIR, -o <DIR>``: Destination for output files. Currently this must be on the same filesystem as ``WORKING_DIR``.
 
@@ -57,7 +57,7 @@ Model data retrieval settings
 Diagnostics
 -----------
 
-* ``--pods, -p [...]``: List of diagnostics to run on model data, separated by spaces. This can be ``all`` (the default), one or more `POD names <https://github.com/tsjackson-noaa/MDTF-diagnostics/tree/master/diagnostics>`__, or one or more modeling realms. Run ``mdtf info pods`` for a list of installed PODs.
+* ``--pods, -p [...]``: List of diagnostics to run on model data, separated by spaces. This can be ``all`` (the default), one or more `POD names <https://github.com/tsjackson-noaa/MDTF-diagnostics/tree/main/diagnostics>`__, or one or more modeling realms. Run ``mdtf info pods`` for a list of installed PODs.
 
 Runtime settings
 ----------------

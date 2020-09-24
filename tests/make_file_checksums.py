@@ -50,19 +50,19 @@ if __name__ == '__main__':
 
     case_list = shared.get_test_data_configuration()
 
-    print 'Hashing input observational data'
+    print('Hashing input observational data')
     checksum_dict = checksum_in_subtree_1(obs_path, case_list['pods'])
     with open(os.path.join(md5_path, 'checksum_obs_data.json'), 'w') as file_obj:
         file_obj.write(textwrap.dedent(header))
         json.dump(checksum_dict, file_obj)
 
-    print 'Hashing input model data'
+    print('Hashing input model data')
     checksum_dict = checksum_in_subtree_1(model_path, case_list['models'])
     with open(os.path.join(md5_path, 'checksum_model_data.json'), 'w') as file_obj:
         file_obj.write(textwrap.dedent(header))
         json.dump(checksum_dict, file_obj)
 
-    print 'Hashing output data'
+    print('Hashing output data')
     checksum_dict = make_output_data_dict(out_path, case_list['case_list'],
         ['.tar','.tar_old','.log','.json'])
     with open(os.path.join(md5_path, 'checksum_output.json'), 'w') as file_obj:

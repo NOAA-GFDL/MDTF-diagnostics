@@ -1,15 +1,9 @@
 Summary of MDTF process-oriented diagnostics
-==========================================================
+============================================
 
-The MDTF diagnostic package is portable, extensible, usable, and open for contribution from the community. A goal is to allow diagnostics to be repeatable inside, or outside, of modeling center workflows. These are diagnostics focused on model improvement, and as such a slightly different focus from other efforts. The code runs on CESM model output, as well as on GFDL and CF-compliant model output.
+The MDTF diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on climate model data. Each POD script targets a specific physical process or emergent behavior, with the goals of determining how accurately the model represents that process, ensuring that models produce the right answers for the right reasons, and identifying gaps in the understanding of phenomena.
 
-The MDTF Diagnostic Framework consists of multiple modules, each of which is developed by an individual research group or user. Modules are independent of each other, each module:
-
-- Produces its own html file (webpage) as the final product
-
-- Consists of a set of process-oriented diagnostics
-
-- Produces a figures or multiple figures that can be displayed by the html in a browser
+The scientific motivation and content behind the framework was described in E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
 
 Convective Transition Diagnostics
 ---------------------------------

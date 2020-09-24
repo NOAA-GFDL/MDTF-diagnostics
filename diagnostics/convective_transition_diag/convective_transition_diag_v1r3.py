@@ -1,4 +1,4 @@
-# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 
 # ======================================================================
 # convective_transition_diag_v1r3.py
@@ -63,6 +63,20 @@
 import os
 import glob
 
+# TSJ edit 8/8/2020: introduce BULK_TROPOSPHERIC_TEMPERATURE_VAR env var in POD's
+# settings.jsonc in order to remove code in shared_diagnostic specific to this 
+# POD. This statement translates the value of BULK_TROPOSPHERIC_TEMPERATURE_VAR
+# into BULK_TROPOSPHERIC_TEMPERATURE_MEASURE, the env var used in the rest of the
+# POD's code.
+if os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR','').lower() == 'tave':
+    os.environ['BULK_TROPOSPHERIC_TEMPERATURE_MEASURE'] = '1'
+elif os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR','').lower() == 'qsat_int':
+    os.environ['BULK_TROPOSPHERIC_TEMPERATURE_MEASURE'] = '2'
+else:
+    raise KeyError(
+        'Unrecognized BULK_TROPOSPHERIC_TEMPERATURE_VAR = {}'.format(
+        os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR',''))
+    )
 
 os.environ["pr_file"] = "*."+os.environ["pr_var"]+".1hr.nc"
 os.environ["prw_file"] = "*."+os.environ["prw_var"]+".1hr.nc"

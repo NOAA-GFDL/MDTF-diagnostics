@@ -21,14 +21,17 @@
     "pod_env_vars" : {
       // optional pod-specific shell environment variables:
       // Specify parameters for Convective Transition Diagnostic Package.
-      // BULK_TROPOSPHERIC_TEMPERATURE_MEASURE: Use 1:tave, or 2:qsat_int
-      // as the Bulk Tropospheric Temperature Measure.
-      "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE" : "2",
+      // BULK_TROPOSPHERIC_TEMPERATURE_MEASURE: Set to one of the values "tave" 
+      // or "qsat_int" to use that variable as the Bulk Tropospheric Temperature 
+      // Measure.
+      "BULK_TROPOSPHERIC_TEMPERATURE_VAR" : "tave",
       // RES: set Spatial Resolution (degree) for TMI Data (0.25, 0.50, 1.00).
-      "RES" : "1.00"
+      "RES" : "1.00",
+      // SAVE_TAVE_QSAT_INT: save tave and qsat_int files (0=no, 1=yes).
+      "SAVE_TAVE_QSAT_INT" : "0"
     },
     "runtime_requirements": {
-      "python": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+      "python2": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
     }
   },
   //

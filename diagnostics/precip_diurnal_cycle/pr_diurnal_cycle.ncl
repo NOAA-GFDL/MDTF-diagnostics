@@ -156,7 +156,7 @@ res@tmXBOn              = True
 ;  gwmask  = f->gw
   time0 = f->time
   time0@calendar = "noleap"
-  t_utc = ut_calendar(time0,0)
+  t_utc = cd_calendar(time0,0)
   ntime = dimsizes(time0)
 
   year = floattointeger(t_utc(:,0))

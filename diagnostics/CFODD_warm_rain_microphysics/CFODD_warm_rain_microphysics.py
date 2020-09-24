@@ -41,6 +41,7 @@
 #        JGR Atmosphere, 122, 11,806-11,824.
 #======================================================================
 import os
+import time
 import subprocess
 
 
@@ -66,83 +67,16 @@ def generate_ncl_plots(nclPlotFile):
 
    return 0
 #============================================================
-# Set up directories
-#============================================================
-
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics")
-# model figures and data
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model")
-
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model/PS"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model/PS")
-
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model/netCDF"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/model/netCDF")
-
-# observational figures and data
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/obs"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/obs")
-
-if not os.path.exists(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/obs/netCDF"):
-   os.makedirs(os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/obs/netCDF")
-
-#============================================================
 # Call NCL code here
 #============================================================
 
 print("MAKE CFODD PLOTS FROM MODEL DATA ")
 
 print("COMPUTING CFODD ... this may take several hours depending on data size")
-print("See "+os.environ["WKDIR"]+"/MDTF_"+os.environ["CASENAME"]+"/CFODD_warm_rain_microphysics/runwhere.txt for the status.")
+print("See CFODD_warm_rain_microphysics/runwhere.txt for the status.")
 
-generate_ncl_plots(os.environ["VARCODE"]+"/CFODD_warm_rain_microphysics/compute_cfodd.ncl")
+generate_ncl_plots(os.environ["POD_HOME"]+"/compute_cfodd.ncl")
 
 print("PLOTTING CFODD_warm_rain_microphysics")
 
-generate_ncl_plots(os.environ["VARCODE"]+"/CFODD_warm_rain_microphysics/cfodd_plot.ncl")
-
-#============================================================
-# Copy Template HTML File to appropriate directory
-#============================================================
-if os.path.isfile( os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html" ):
-   os.system("rm -f "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html")
-
-os.system("cp "+os.environ["VARCODE"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/.")
-
-os.system("cp "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/tmp.html")
-os.system("cat "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/tmp.html")
-os.system("cp "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/tmp.html "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html")
-os.system("rm -f "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/tmp.html")
-
-#============================================================
-# Add to HTML File
-#  This adds a line to the main html page (index.html)
-#============================================================
-a = os.system("cat "+os.environ["variab_dir"]+"/index.html | grep CFODD_warm_rain_microphysics")
-if a != 0:
-   os.system("echo '<H3><font color=navy>CFODD for warm clouds over ocean <A HREF=\"CFODD_warm_rain_microphysics/CFODD_warm_rain_microphysics.html\">plots</A></H3>' >> "+os.environ["variab_dir"]+"/index.html")   
-
-#============================================================
-# convert PS to png
-#============================================================
-print("Considering converting files from PS to PNG")
-if os.path.exists(os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/model"):
-   files = os.listdir(os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/model/PS")
-   print ("Found ps files: ")
-   print(files)
-   a = 0
-   while a < len(files):
-      file1 = os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/model/PS/"+files[a]
-      file2 = os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/model/"+files[a]
-      os.system("convert -crop 0x0+5+5 "+file1+" "+file2[:-3]+".png")
-      a = a+1
-      print("Wrote "+file2[:-3]+".png")
-   if os.environ["CLEAN"] == "1":
-      os.system("rm -f "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/model/PS/*.ps")
-
-#============================================================
-# Copy obs gifs into the expected location
-#============================================================
-   os.system("cp "+os.environ["VARDATA"]+"/CFODD_warm_rain_microphysics/*.gif "+os.environ["variab_dir"]+"/CFODD_warm_rain_microphysics/obs/.")
+generate_ncl_plots(os.environ["POD_HOME"]+"/cfodd_plot.ncl")

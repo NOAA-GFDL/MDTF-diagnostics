@@ -1,0 +1,84 @@
+// ================================================================================================
+// 7. Contoured Frequency by Optical Depth Diagram (CFODD) for warm rain mirophysics. 
+//    Required variables (v2.0, April 21, 2019):
+//     (1) radar reflectivity (units: dBZ) and cloud_type info (=1: stratiform cloud; 
+//         =2: convective cloud) from cloud simulator (e.g. cospOUT%cloudsat_Ze_tot 
+//         and cospIN%frac_out from COSP2.0), on subcolumns.
+//     (2) cloud optical depth at each model layer.
+//     (3) effective radius of cloud droplets at cloud top (or. droplet effective radius profile).
+//     (4) cloud water and ice mixing ratio at each model layer (for warm cloud identification)
+//     (5) atmospheric temperature profiles (for warm cloud identification).
+//
+// Note: 
+//     All variables should be provided as timeslice output, and vertical profiles outputed on
+//     PRESSURE levels.
+//
+//     The main code is written in NCL
+// ================================================================================================
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings" : {
+    "driver" : "CFODD_warm_rain_microphysics.py",
+    "long_name" : "Contoured Frequency by Optical Depth Diagram (CFODD) for warm rain microphysics",
+    "realm" : "atmos",
+    "description" : "Contoured Frequency by Optical Depth Diagram (CFODD) for warm rain microphysics",
+    "runtime_requirements": {
+      "python2": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util"]
+    }
+  },
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
+  "varlist" : [
+    {
+      "var_name" : "ta_var",
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "dtau_s_var", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "cldtop_reff_var", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "cld_reff", // CF?
+      "freq" : "day",
+      "requirement" : "optional" // "not really but I want it to pass" ???
+    },{
+      "var_name" : "cldtype", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "liq_wat", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "ice_wat", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    },{
+      "var_name" : "dbze94", // CF?
+      "freq" : "day",
+      "requirement" : "required"
+    }
+  ]
+}

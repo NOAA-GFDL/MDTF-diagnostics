@@ -8,9 +8,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;
 ;************************************************
   begin
-  variab_dir = getenv("variab_dir")
+  wk_dir = getenv("WK_DIR")
   casename = getenv("CASENAME")
-  time_freq = getenv("time_freq")
+  ;; all model data requested at daily frequency only
+  time_freq = "day" ;; getenv("time_freq")
 
 ; coordinates
   time_coord = getenv("time_coord")
@@ -53,9 +54,9 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ; check the existance of the netCDF output file
 ;------------------------------------------------------------------------------
 ; CFODD output file
-  if ( fileexists(variab_dir+"/CFODD_warm_rain_microphysics/model/netCDF/"+casename+".CFODD_ocean.nc") ) then
-    print(" "+ variab_dir+"/CFODD_warm_rain_microphysics/model/netCDF/"+casename+".CFODD_ocean.nc exists!!")
-    print(" Use "+variab_dir+"/CFODD_warm_rain_microphysics/model/netCDF/"+casename+".CFODD_ocean.nc!!")
+  if ( fileexists(wk_dir+"/model/netCDF/"+casename+".CFODD_ocean.nc") ) then
+    print(" "+ wk_dir+"/model/netCDF/"+casename+".CFODD_ocean.nc exists!!")
+    print(" Use "+wk_dir+"/model/netCDF/"+casename+".CFODD_ocean.nc!!")
     exit
   end if
 ;------------------------------------------------------------------------------
@@ -221,7 +222,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
   remntime=-999.
   
   track="-----START-----"
-  asciiwrite(variab_dir+"/CFODD_warm_rain_microphysics/run_where.txt",track)
+  asciiwrite(wk_dir+"/run_where.txt",track)
   delete(track)
   
   do it=0,ntime-1
@@ -356,7 +357,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
           ",subcolumn "+tostring(iscol+1)+" of "+tostring(nscol)+" ..."+ \
           sprintf("%5.1f",per_task)+"%."
       end if
-      asciiwrite(variab_dir+"/CFODD_warm_rain_microphysics/run_where.txt",track)
+      asciiwrite(wk_dir+"/run_where.txt",track)
       delete(track)
 
     ;----------------------------------------------------
@@ -439,14 +440,14 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;------------------------------------------------------------------------------
 ; Write PDFs and counts to netCDF file
 ;------------------------------------------------------------------------------
-  fo = addfile(variab_dir+"/CFODD_warm_rain_microphysics/model/netCDF/"+casename+".CFODD_ocean.nc","c")
+  fo = addfile(wk_dir+"/model/netCDF/"+casename+".CFODD_ocean.nc","c")
   fo->cfodd = pdfcz
   fo->count = count_cld_sum
   
   nowtime=get_cpu_time()/60.
   elaptime=nowtime-begtime
   track="FINISHED. Elapsed time = " + sprintf("%5.1f",elaptime)+" min."
-  asciiwrite(variab_dir+"/CFODD_warm_rain_microphysics/run_where.txt",track)
+  asciiwrite(wk_dir+"/run_where.txt",track)
   delete(track)
 
   end

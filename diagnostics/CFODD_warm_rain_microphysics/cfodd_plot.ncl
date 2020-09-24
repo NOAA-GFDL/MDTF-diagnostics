@@ -9,10 +9,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
 rgb = getenv("RGB")
-variab_dir = getenv("variab_dir")
+wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
  
-f = addfile (variab_dir+"/CFODD_warm_rain_microphysics/model/netCDF/"+casename+".CFODD_ocean.nc","r")
+f = addfile (wk_dir+"/model/netCDF/"+casename+".CFODD_ocean.nc","r")
 cfodd=f->cfodd
 count=f->count
 
@@ -22,7 +22,7 @@ pct_5_10=count_sum(1)/count_5_20*100.
 pct_10_15=count_sum(2)/count_5_20*100.
 pct_15_20=count_sum(3)/count_5_20*100.
 
-wks  = gsn_open_wks("ps",variab_dir+"/CFODD_warm_rain_microphysics/model/PS/"+casename+".CFODD_ocean") 
+wks  = gsn_open_wks("eps", wk_dir+"/model/PS/"+casename+".CFODD_ocean") 
 gsn_define_colormap(wks,"NCV_jet")
 
 res  = True

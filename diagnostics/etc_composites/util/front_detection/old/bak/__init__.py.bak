@@ -1,0 +1,791 @@
+#!python3
+'''
+Front Detection Algorithm
+
+Adopted from Naud et al., 2016, based on Hewson at 1km, and Simmonds et al., 2012
+
+Created by: Jeyavinoth Jeyaratnam
+Created on: March 1st, 2019
+
+Last Modified: March 22nd, 2019
+
+'''
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from scipy.ndimage import label, generate_binary_structure
+from netCDF4 import Dataset
+import pdb
+from mpl_toolkits.basemap import Basemap
+import matplotlib as mpl
+import os
+
+def clean_fronts(wf, cf, cyc_lon, cyc_lat, cyc_center_lon, cyc_center_lat):
+
+    w_label, w_num = label(wf)
+    c_label, c_num = label(cf)
+
+    wf_list = []
+    for i_w in range(1, w_num+1):
+      ind = np.argwhere(w_label == i_w)
+
+      # gettin rid of clusters less than 2 pts
+      if (ind.shape[0] <= 2):
+        continue
+      i_w_lat = [cyc_lat[i_ind[0], i_ind[1]] for i_ind in ind]
+      i_w_lon = [cyc_lon[i_ind[0], i_ind[1]] for i_ind in ind]
+
+      # storm attribution
+      mean_lat = np.nanmean(i_w_lat)
+      mean_lon = np.nanmean(i_w_lon)
+      dist_deg = get_distance_deg(mean_lon, mean_lat, cyc_center_lon, cyc_center_lat)
+
+      # strom attibution conditions
+      if not ((mean_lon > cyc_center_lon) & (dist_deg < 15.) & (abs(cyc_center_lat - mean_lat) < 5.)):
+        continue
+
+      # final list of values 
+      wf_list.append([i_w_lon, i_w_lat])
+
+    cf_list = []
+    # all_cf_list = []
+    for i_c in range(1, c_num+1):
+      ind = np.argwhere(c_label == i_c)
+      if (ind.shape[0] <= 2):
+        continue
+
+      # keeping only the eastern most point on the front cluster
+      i_c_lat = np.asarray([cyc_lat[i_ind[0], i_ind[1]] for i_ind in ind])
+      i_c_lon = np.asarray([cyc_lon[i_ind[0], i_ind[1]] for i_ind in ind])
+      # all_cf_list.append([i_c_lon, i_c_lat])
+
+      f_lat = []
+      f_lon = []
+      for uni_lat in set(i_c_lat):
+        uni_ind = (i_c_lat == uni_lat)
+        f_lat.append(uni_lat)
+        f_lon.append(np.nanmax(i_c_lon[uni_ind]))
+    
+      # strom attribution
+      mean_lat = np.nanmean(f_lat)
+      mean_lon = np.nanmean(f_lon)
+      dist_deg = get_distance_deg(mean_lon, mean_lat, cyc_center_lon, cyc_center_lat)
+
+      # storm attribution conditions
+      if not ((dist_deg < 15) & (abs(mean_lon - cyc_center_lon) < 7.5) & (mean_lat < cyc_center_lat)):
+        continue
+      
+      # addtiional conditions before selecting cold fronts
+      if not ((np.any(np.abs(f_lon - cyc_center_lon) < 2.5)) & ((90 - np.abs(np.nanmax(f_lat))) < 5) & ((cyc_center_lon - np.median(f_lon)) > 15)):
+        continue
+      
+      # for the remaining clusters I have to apply Haning filter that simmonds et al, 2012, allow more than one cluster
+      cf_list.append([f_lon, f_lat])
+
+    return wf_list, cf_list
+
+def hewson_1998(latGrid, lonGrid, theta, u, v):
+
+    theta = smooth_grid(theta)
+    # computing first derivative
+    gx, gy = get_geo_gradient(latGrid, lonGrid, theta)
+    gNorm = get_norm(gx, gy) 
+
+    # computing the 2nd derivative using the first derivative
+    # gNorm_gNorm = grad(abs(gNorm))
+    gx_gNorm, gy_gNorm = get_geo_gradient(latGrid, lonGrid, gNorm)
+    gNorm_gNorm = get_norm(gx_gNorm, gy_gNorm)
+    
+    # let mu = grad(abs(grad(theta)))
+    mu_x, mu_y = gx_gNorm, gy_gNorm
+    abs_mu = get_norm(mu_x, mu_y) 
+
+    grad_abs_mu_x, grad_abs_mu_y = get_geo_gradient(latGrid, lonGrid, abs_mu)
+
+    eq7 = ((grad_abs_mu_x * mu_x) + (grad_abs_mu_y * mu_y))/(abs_mu)
+
+    # compute m1, and m2, using k1, and k2 values
+    sign_m1_val = gx * mu_x + gy * mu_y
+    sign_m1 = np.zeros(sign_m1_val.shape)
+    sign_m1[sign_m1_val > 0.] = 1. 
+    sign_m1[sign_m1_val < 0.] = -1. 
+
+    m1 = abs_mu * sign_m1
+
+    # computing m2
+    # compute distance grid
+    distX, distY = compute_dist_grids(latGrid, lonGrid)
+    dist_avg = np.sqrt(distX**2 + distY**2)
+
+    # m2 (Hewson 1998) 
+    mconst = 1/math.sqrt(2)
+    m2 = gNorm + mconst * dist_avg * gNorm_gNorm / 100
+   
+    k1 = 0.33
+    k2 = 1.49
+    
+    # k1 = 0.75
+    # k2 = 2.0
+
+    m1_mask = m1 > k1
+    m2_mask = m2 > k2
+   
+    eq7_masked = np.copy(eq7)
+    eq7_masked[~(m1_mask & m2_mask)] = np.nan
+
+    plt.figure()
+    cs = plt.contour(latGrid, lonGrid, eq7_masked, levels=[0]) 
+    plt.close('all')
+    zc = np.zeros(eq7_masked.shape)
+    for line in cs.collections[0].get_paths():
+        for line_lat, line_lon in line.vertices:
+            dist = compute_dist_from_cdt(latGrid, lonGrid, line_lat, line_lon)
+            ind = np.nanargmin(dist)
+            ind_x, ind_y = np.unravel_index(ind,latGrid.shape)
+            zc[ind_x, ind_y] = 1
+
+
+    a_gt = -1*(u*gx + v*gy)
+    a_gt = smooth_grid(a_gt)
+    wf_mask = np.double(a_gt > 0)
+    cf_mask = np.double(a_gt < 0)
+   
+    # solving eq8
+    # gNorm == grad_tau/abs(grad_tau)
+    # let temp_a = grad(theta)/abs(grad(theta))
+    # let temp_b = -grad(abs(grad(theta)))
+    # let temp_c = temp_b *dot* temp_a
+    # let temp_d = grad(temp_c)
+    # # let eq8 be l.h.s of eq8 from hewson 1998 = temp_d *dot* temp_a
+    #
+    # temp_a_x = gx/gNorm
+    # temp_a_y = gy/gNorm
+    #
+    # temp_b_x = -1*gx_gNorm
+    # temp_b_y = -1*gy_gNorm
+    #
+    # temp_c = temp_b_x * temp_a_x + temp_b_y * temp_a_y 
+    #
+    # temp_d_x, temp_d_y = get_geo_gradient(latGrid, lonGrid, temp_c)
+    #
+    # eq8 = temp_d_x * temp_a_x + temp_d_y * temp_a_y
+
+    return {'wf': wf_mask*zc, 'cf': cf_mask*zc}
+    
+def simmonds_et_al_2012(u_prior, v_prior, u, v):
+  # At 850 hPa
+
+  w_prior = np.sqrt(np.square(u_prior) + np.square(v_prior))
+  w = np.sqrt(np.square(u) + np.square(v))
+  mag_diff = np.abs(w - w_prior)
+
+  angle_prior = np.arctan2(v_prior, u_prior) * 180 / np.pi
+  angle = np.arctan2(v, u) * 180 / np.pi
+
+  nw = (angle_prior > -90) & (angle_prior < 0) & (~np.isnan(angle_prior))
+  sw = (angle > -180) & (angle < -90) & (~np.isnan(angle))
+
+  fronts = np.double(nw & sw & (mag_diff > 2.))
+  
+  return fronts
+
+#################### OLD CODE ###################
+
+# input files needed are: 
+# topo_file = '/mnt/drive1/jj/cameron/data/MERRA2_101.const_2d_ctm_Nx.00000000.nc4'
+# which is the topographic information from merra2
+
+def expand_fronts(fronts, num_pixels):
+    
+    row_len = fronts.shape[0]
+    for i in np.arange(0, row_len):
+        ind = np.argwhere(fronts[i,:] == -10)
+        if (ind.size == 0):
+            continue
+        # if (ind.size > 1):
+        #     print ind.size
+
+        # ind = ind[0,0]
+        max_ind = np.nanmax(ind)
+        min_ind = np.nanmin(ind)
+
+        if (min_ind == 0):
+            for j in np.arange(max_ind, max_ind+num_pixels):
+                fronts[i, j+1] = -10
+        elif(max_ind == fronts.shape[1]):
+            for j in np.arange(min_ind-num_pixels, min_ind):
+                fronts[i, j] = -10
+        else:
+            for j in np.arange(min_ind-num_pixels, max_ind+num_pixels+1):
+                if (j < 0):
+                    continue
+                if (j >= fronts.shape[1]):
+                    continue
+                fronts[i, j] = -10
+
+    return fronts
+
+def detect_fronts_catherine(latGrid, lonGrid, selectLat, selectLon, selectDate, selectHH):
+    #################### CATHERINE FRONTS ###############
+   
+    selectYY = int(selectDate[0:4])
+    selectMM = int(selectDate[4:6]) 
+    selectDD = int(selectDate[6:8]) 
+
+    print (selectYY, selectMM, selectDD, latGrid.shape)
+    c_fronts = np.zeros(latGrid.shape)
+
+    # get list of files in the folder
+    c_folder = '/mnt/drive1/processed_data/MERRA2fronts/%04d%02d/'%(selectYY, selectMM)
+
+    c_file = ''
+    for dirpath, dirname, filenames in os.walk(c_folder):
+        for filename in filenames:
+            if (filename.endswith(".ncdf")):
+                fs = filename.split("_")
+                c_date = int(fs[1])
+                c_hr = float(fs[2])
+                c_lat = float(fs[3])
+                c_lon = float(fs[4])
+                if (c_lon < 0): 
+                    c_lon = c_lon + 360.
+
+                c_lat_str = '%.2f'%(c_lat)
+                c_lon_str = '%.2f'%(c_lon)
+
+                if ((c_date == int(selectDate)) & (c_hr == selectHH) & (c_lat_str == selectLat) & (c_lon_str == selectLon)):
+                    c_file = os.path.join(dirpath, filename)
+                    break
+  
+    if (not c_file):
+        print ("Catherine's front file not found.")
+        return {'fronts':c_fronts, 'cf_lon':[], 'cf_lat':[],'wf_lon':[],'wf_lat':[]}
+
+    dataset = Dataset(c_file)
+    c_lat = dataset.variables['latitude'][:]
+    c_lon = dataset.variables['longitude'][:]
+    c_slp = dataset.variables['MERRA2SLP'][:]
+    c_info = dataset.variables['storm_info'][:]
+
+    # CF_combined, CF_simmonds850, CF_hewson1km
+    c_cf = dataset.variables['CF_combined'][:]
+    # c_cf = dataset.variables['CF_simmonds850'][:]
+    c_cf_lon = c_cf[:,0]
+    c_cf_lon[c_cf_lon < 0] = c_cf_lon[c_cf_lon < 0] + 360.
+    c_cf_lat = c_cf[:,1]
+    # WF_Hewson850, WF_Hewson1Km, WF_HewsonWB
+    c_wf = dataset.variables['WF_Hewson1km'][:] 
+    # c_wf = dataset.variables['WF_Hewson850'][:] 
+    c_wf_lon = c_wf[:,0]
+    c_wf_lon[c_wf_lon < 0] = c_wf_lon[c_wf_lon < 0] + 360.
+    c_wf_lat = c_wf[:,1]
+
+
+    f_sim = dataset.variables['CF_simmonds850'][:]
+    f_com = c_cf
+    f_hew = c_wf
+
+    dataset.close()
+
+    # overlay catherine fronts on the input grid
+    if (not (c_cf_lon.size == 0)):
+        for i_lon, i_lat in zip(c_cf_lon, c_cf_lat):
+            dist = compute_dist_from_cdt(latGrid, lonGrid, i_lat, i_lon)
+            ind = np.nanargmin(dist)
+            ind_x, ind_y = np.unravel_index(ind,latGrid.shape)
+            c_fronts[ind_x, ind_y] = -10
+    
+    if (not (c_wf_lon.size == 0)): 
+        for i_lon, i_lat in zip(c_wf_lon, c_wf_lat):
+            dist = compute_dist_from_cdt(latGrid, lonGrid, i_lat, i_lon)
+            ind = np.nanargmin(dist)
+            ind_x, ind_y = np.unravel_index(ind,latGrid.shape)
+            c_fronts[ind_x, ind_y] = 10
+
+    return {'fronts':c_fronts, 'cf_lon':c_cf_lon, 'cf_lat':c_cf_lat,'wf_lon':c_wf_lon,'wf_lat':c_wf_lat}
+        
+
+def detect_fronts(latGrid, lonGrid, data, u850, v850, centerLat, centerLon):
+
+    # creating empty fronts data array
+    fronts = np.zeros(data.shape) * np.nan
+    fronts_2 = np.zeros(data.shape) * np.nan
+    fronts_3 = np.zeros(data.shape) * np.nan
+    out_theta_e = np.zeros(data.shape) * np.nan
+    out_t850 = np.zeros(data.shape) * np.nan
+    out_center_mask = np.zeros(data.shape) * np.nan
+    out_topo = np.zeros(data.shape) * np.nan
+
+    # computing first derivative
+    gx, gy = get_geo_gradient(latGrid, lonGrid, data)
+    gNorm = get_norm(gx, gy) 
+
+    # computing the 2nd derivative using the first derivative
+    gx_gNorm, gy_gNorm = get_geo_gradient(latGrid, lonGrid, gNorm)
+    gNorm_gNorm = get_norm(gx_gNorm, gy_gNorm)
+
+    # compute distance grid
+    distX, distY = compute_dist_grids(latGrid, lonGrid)
+    dist_avg = np.sqrt(distX**2 + distY**2)
+
+    # sign test
+    sign_test = (gx + gx_gNorm) + (gy + gy_gNorm)
+    sign_test[sign_test > 0] = 1
+    sign_test[sign_test < 0] = -1
+
+    # m1 (Hewson 1998)
+    m1_eq_10 = gNorm_gNorm * sign_test
+
+    # or m1 computed using this 
+    m1 = -1 * (gx_gNorm * gx/gNorm + gy_gNorm * gy/gNorm)
+    m1 = smooth_grid(m1)
+
+    # m2 (Hewson 1998) 
+    mconst = 1/math.sqrt(2)
+    m2 = gNorm + mconst * dist_avg * gNorm_gNorm / 100
+
+    # computing TFP, as per Sebastian paper
+    tfp = -1 * (gx_gNorm * gx/gNorm + gy_gNorm * gy/gNorm)
+    gx_tfp, gy_tfp = get_geo_gradient(latGrid, lonGrid, tfp)
+    gNorm_tfp = get_norm(gx_tfp, gy_tfp)
+
+    # get zero contour line 
+    tfp_filtered = np.copy(tfp)
+    tfp_filtered[gNorm < 3] = np.nan
+    cs = plt.contour(latGrid, lonGrid, tfp_filtered,levels=[0]) 
+    zc = np.zeros(tfp_filtered.shape)
+    for line in cs.collections[0].get_paths():
+        for line_lat, line_lon in line.vertices:
+            dist = compute_dist_from_cdt(latGrid, lonGrid, line_lat, line_lon)
+            ind = np.nanargmin(dist)
+            ind_x, ind_y = np.unravel_index(ind,latGrid.shape)
+            zc[ind_x, ind_y] = 1
+    
+    # getting cold and warm fronts (Sebastian Schemm et al 2015)
+    vf = u850*gx_tfp/gNorm_tfp + v850*gy_tfp/gNorm_tfp
+    vf_mask = np.zeros(vf.shape)
+    vf_mask[vf > 0] = 1
+    vf_mask[vf < 0] = -1
+
+    # getting divergence as per schem et al 2015
+    div = get_geo_divergence(latGrid, lonGrid, gx_gNorm, gy_gNorm)
+    div_mask = div < 0
+    
+    # # getting cold and warm fronts (Hewson 1998)
+    # vf = u850*gx_gNorm/gNorm_gNorm + v850*gy_gNorm/gNorm_gNorm
+    # vf_mask = np.zeros(vf.shape)
+    # vf_mask[vf > 0] = 1 # warm fronts
+    # vf_mask[vf < 0] = -1 # cold fronts
+
+    # # getting cold and warm fronts (My Method)
+    # # have to change back to the old method
+    # vf = u850*gx/gNorm + v850*gy/gNorm
+    # vf_x = u850 * gx
+    # vf_y = v850 * gy
+    # vf_x_norm = vf_x/gNorm
+    # vf_y_norm = vf_y/gNorm
+    # vf_mask = np.zeros(vf.shape)
+    # vf_mask[vf_x_norm > vf_y_norm] = -1 # cold fronts
+    # vf_mask[vf_y_norm > vf_x_norm] = 1 # warm fronts
+
+    # # masking out the data
+    # k1 = 0.45 #0.33 #/100/100 # converting from deg/100km/100km to deg/km/km
+    # k2 = 2 #1.49 #/100
+
+    k1 = 0.33
+    k2 = 1.49
+
+    m1_mask = m1 > k1
+    m2_mask = m2 > k2
+
+    # additional condition to exclude priori regions of weak thermal graidents form the data
+    # m3_mask = gNorm > 4
+    m3_mask = gNorm > 3 
+
+    # additional condition to remove quasi-stationary fronts from mobile fronts
+    m4_mask = (vf > 3)  | (vf < -3)
+
+    # center masking
+    dist_from_center = compute_dist_from_cdt(latGrid, lonGrid, centerLat, centerLon)
+    # center_mask = compute_center_mask(latGrid, lonGrid, centerLat, centerLon)
+    center_mask = dist_from_center < 2000
+    out_center_mask = dist_from_center
+    
+    # topographic masking  
+    topo = get_mountain_mask(latGrid, lonGrid)
+    topo_mask = topo <= 500
+    out_topo = topo
+ 
+    # combining all the masks
+    combined_mask = m1_mask & m2_mask & m3_mask & m4_mask & center_mask & topo_mask
+
+    # filtered_mask = filter_connected(combined_mask * 1 * vf_mask)
+    filtered_mask = np.copy(combined_mask)
+
+    final_mask = (filtered_mask * 1) * vf_mask * 10
+
+    # saving the final_mask for the fronts
+    fronts = final_mask
+
+
+    # a different font masking criteria as per Sebasitian's paper
+    combined_mask_2 = m1_mask & m2_mask & (gNorm > 4) & m4_mask & center_mask & topo_mask
+    filtered_mask_2 = np.copy(combined_mask_2)
+    final_mask_2 = (filtered_mask_2 * 1) * vf_mask * 10
+    fronts_2 = final_mask_2
+   
+    # method for Sebastian masking
+    combined_mask_3 = (zc == 1) & div_mask & center_mask & topo_mask & m4_mask
+    final_mask_pre_filter = (combined_mask_3 * 1) * vf_mask * 10
+
+    # final_mask_3 = np.copy(final_mask_pre_filter)
+    # final_mask_3 = filter_connected(final_mask_pre_filter)
+
+    fronts_2 = final_mask_pre_filter
+    final_mask_3 = filter_fronts(latGrid, lonGrid, centerLat, centerLon, final_mask_pre_filter)
+    fronts_3 = final_mask_3
+
+    out_theta_e = data
+
+    return {'fronts':fronts_3,'fronts_1': fronts, 'fronts_2':fronts_2,'fronts_3':fronts_3,'theta_e':out_theta_e,'center_mask':out_center_mask,'zc':zc,'tfp':tfp,'topo':out_topo}
+    
+# getting the gradient given lat, lon and data
+def get_geo_gradient(lat, lon, data):
+
+    # compute the gradient of data, in dx, and dy
+    dx, dy = get_auto_derivative(data)
+
+    # get the distance matrix for the given lat and lon
+    distX, distY = compute_dist_grids(lat, lon)
+
+    # # compute the d(data)/dx and d(data)/dy
+    # dx = dx / distX
+    # dy = dy / distY
+
+    # print(distX, distY)
+
+    dx = dx / distX 
+    dy = dy / distY 
+
+    # converting from per km to per 100 km 
+    dx = 100 * dx
+    dy = 100 * dy
+
+    return dx, dy 
+
+def get_geo_divergence(lat, lon, x, y):
+
+    x_dx, x_dy = get_geo_gradient(lat, lon, x)
+    y_dx, y_dy = get_geo_gradient(lat, lon, y)
+
+    div = x_dx + y_dy
+
+    return div
+
+# computing the distance given the lat and lon grid
+def compute_dist_grids(lat, lon):
+
+    # km per degree value
+    mean_radius_earth = 6371
+
+    # compute the dx and dy using lat 
+    dxLat, dyLat = np.gradient(lat)
+    dxLon, dyLon = np.gradient(lon)
+
+    # Haversine function to find distances between lat and lon
+    lat1_x = lat * math.pi / 180; 
+    lat2_x = (lat + dxLat) * math.pi / 180; 
+    
+    lat1_y = lat * math.pi / 180; 
+    lat2_y = (lat + dyLat) * math.pi / 180; 
+
+    lon1_x = lon * math.pi / 180; 
+    lon2_x = (lon + dxLon) * math.pi / 180; 
+    
+    lon1_y = lon * math.pi / 180; 
+    lon2_y = (lon + dyLon) * math.pi / 180; 
+
+    # convert dx and dy to radians as well
+    dLat_x = dxLat * math.pi / 180; 
+    dLat_y = dyLat * math.pi / 180; 
+
+    dLon_x = dxLon * math.pi / 180; 
+    dLon_y = dyLon * math.pi / 180; 
+
+    R = mean_radius_earth
+
+    # computing distance in X direction
+    a_x = np.sin(dLat_x/2)**2 + np.cos(lat1_x) * np.cos(lat2_x) * np.sin(dLon_x/2)**2
+    c_x = np.arctan2(np.sqrt(a_x), np.sqrt(1-a_x)); 
+    # c_x = np.arcsin(np.sqrt(a_x))
+    distX = 2 * R * c_x; 
+    
+    # computing distance in Y direction
+    a_y = np.sin(dLat_y/2)**2 + np.cos(lat1_y) * np.cos(lat2_y) * np.sin(dLon_y/2)**2
+    c_y = np.arctan2(np.sqrt(a_y), np.sqrt(1-a_y)); 
+    # c_y = np.arcsin(np.sqrt(a_y))
+    distY = 2 * R * c_y; 
+
+    return distX, distY
+
+# computing the distance given the lat and lon grid
+def compute_dist_from_cdt(lat, lon, centerLat, centerLon):
+
+    # km per degree value
+    mean_radius_earth = 6371
+
+    # Haversine function to find distances between lat and lon
+    lat1 = lat * math.pi / 180; 
+    lat2 = centerLat * math.pi / 180; 
+    
+    lon1 = lon * math.pi / 180; 
+    lon2 = centerLon * math.pi / 180; 
+    
+    # convert dx and dy to radians as well
+    dLat = lat1 - lat2
+    dLon = lon1 - lon2
+
+    R = mean_radius_earth
+
+    # computing distance in X direction
+    a = np.sin(dLat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dLon/2)**2
+    c = np.arctan2(np.sqrt(a), np.sqrt(1-a)); 
+    dist = 2 * R * c; 
+
+    return dist
+   
+def compute_center_mask(lat, lon, centerLat, centerLon):
+    ''' not used right now, was added here to mimic jimmy's matlab code of applying a center mask '''
+
+    dist = compute_dist_from_cdt(lat, lon, centerLat, centerLon)
+    rCenter, cCenter = np.unravel_index(dist.argmin(), dist.shape)
+
+    out = np.zeros(lat.shape)
+
+    # dist = compute_dist_from_cdt(lat, lon, centerLat, centerLon)
+    # x = dist
+    # y = dist
+    # x[0:rCenter,:] = x[0:rCenter,:] * -1
+    # y[:,0:cCenter] = y[:,0:cCenter] * -1
+    # xdLeft = -18 * 24
+    # xdRight = 45 * 24
+    # ydTop = 5 * 24
+    # ydBot = -45 * 24
+    # x = (x > xdLeft) & (x < xdRight)
+    # y = (y > ydBot) & (y < ydTop)
+
+    xdLeft = 8 
+    xdRight = 11
+    ydTop = 2 
+    ydBot = 16
+    
+    numR, numC = lat.shape 
+
+    rMin = max(0,rCenter-ydBot)
+    cMin = max(0,cCenter-xdLeft)
+    
+    rMax = min(numR,rCenter+ydTop)
+    cMax = min(numC,cCenter+xdRight)
+    
+
+    out[rMin:rMax,cMin:cMax] = 1
+
+    return (out == 1)
+
+
+def get_norm(x,y):
+    return np.sqrt(x**2 + y**2)
+
+def smooth_grid(inGrid):
+    
+    # function to get the average of the values around the center point of the grid
+    no_rows, no_cols = inGrid.shape
+
+    outGrid = inGrid
+
+    # grid used to mask the 3x3 extracted value
+    smooth_mask_init = np.array([[0,1,0],[1,1,1],[0,1,0]])
+
+    for r in np.arange(0,no_rows,1):
+        
+        smooth_mask_r = smooth_mask_init
+
+        # if the row is 0 or max value then we have to chop the masking array
+        if (r == 0):
+            smooth_mask_r = smooth_mask_init[1:, :]
+        elif (r == no_rows-1):
+            smooth_mask_r = smooth_mask_init[:-1, :]
+
+        for c in np.arange(0,no_cols,1):
+
+            smooth_mask_rc = smooth_mask_r
+
+            # if the col is 0 or max value then we have to chop the masking array
+            if (c==0):
+                smooth_mask_rc = smooth_mask_r[:, 1:]
+            elif (c==no_cols-1):
+                smooth_mask_rc = smooth_mask_r[:, :-1]
+            
+            # getting the rows and columns extracted from the input array
+            r_min = np.nanmax([r-1,0])
+            r_max = np.nanmin([r+2,no_rows])
+            
+            c_min = np.nanmax([c-1,0])
+            c_max = np.nanmin([c+2,no_cols])
+
+            temp = inGrid[r_min:r_max, c_min:c_max]
+
+            temp_masked = np.ma.masked_where(smooth_mask_rc==0,temp)
+            outGrid[r,c] = np.nanmean(temp_masked.compressed())
+
+    return outGrid
+
+def filter_fronts(latGrid, lonGrid, centerLat, centerLon, in_mask):
+    """ this function requires the input mask to be 10 for warm fronts, -10 for cold fronts and 0 for no front """
+
+    # first flag everything below and right as cold front
+    intermediate_mask = filter_by_center(latGrid, lonGrid, centerLat, centerLon, in_mask)
+
+    # then flag everything connected by more than 3 grid points, as the majority of the flagging
+    final_mask = filter_connected(intermediate_mask)
+
+    return final_mask
+
+def filter_connected(in_mask):
+    
+    out_array = np.zeros(in_mask.shape)
+    s = generate_binary_structure(2,2)
+
+    mask = (in_mask)*1
+    # labeled_array, num_features = label(mask)
+    labeled_array, num_features = label(mask,structure=s) # diagonal connection
+
+    for i in np.arange(1,num_features):
+        temp = in_mask[labeled_array == i]
+        if (temp.size > 3):
+            if (np.nanmean(temp) < 0):
+                out_array[labeled_array == i] = -10
+            elif (np.nanmean(temp) >= 0):
+                out_array[labeled_array == i] = 10
+
+    return out_array
+
+def filter_by_center(latGrid, lonGrid, centerLat, centerLon, in_mask): 
+    ''' 
+        flagging any front that is below the center as cold front
+        
+        find the low pressure center x and y 
+        then anything below, and right of the center, flag it as cold front, if connected object then make entire object as cold front
+
+        this function has to be run before filter_connected, because this flags all the values below the center as cold fronts, so grouping connected should be done after
+    '''
+    
+    # compute distance from the center
+    dist = compute_dist_from_cdt(latGrid, lonGrid, centerLat, centerLon)
+
+    # get index of the minimum distance value
+    ind = np.nanargmin(dist)
+    ind_x, ind_y = np.unravel_index(ind,latGrid.shape)
+
+    # change all the cold fronts below and right of center as cold fronts
+    for r in np.arange(0,ind_x):
+        for c in np.arange(ind_y, lonGrid.shape[1]):
+            if (in_mask[r,c] == 10):
+                in_mask[r,c] = -10
+        
+    return in_mask
+
+def group_warm_cold_fronts(in_mask):
+
+    # mask = (in_mask < 0)*1
+    # # labeled_array, num_features = label(mask)
+    # labeled_array, num_features = label(mask,structure=s) # diagonal connection
+
+    # for i in np.arange(1,num_features):
+    #     temp = labeled_array[labeled_array == i]
+    #     if (temp.size > 3):
+    #         out_array[labeled_array == i] = 1
+
+    out_array = in_mask
+
+    return out_array
+
+
+def mask_zero_contour(latGrid, lonGrid, data):
+    
+    cs = plt.contour(latGrid, lonGrid, data, [0])
+    plt.close()
+
+    lines = []
+    for line in cs.collections[0].get_paths():
+        lines.append(line.vertices)
+
+    return out_array
+
+def get_mountain_mask(inLat, inLon):
+
+    topo_file = '/mnt/drive1/jj/cameron/data/MERRA2_101.const_2d_ctm_Nx.00000000.nc4'
+
+    # read in the topographic data
+    dataset = Dataset(topo_file)
+
+    # dsearchn the lat and lon from the grid
+    lat = dataset.variables['lat'][:]
+    lon = dataset.variables['lon'][:]
+    phis = dataset.variables['PHIS'][:]
+    phis = phis[1,:,:]/9.8
+
+    lonGrid, latGrid = np.meshgrid(lon, lat)
+
+    ul_lon = inLon[0,0]
+    ul_lat = inLat[0,0]
+    
+    lr_lon = inLon[-1,-1]
+    lr_lat = inLat[-1,-1]
+
+    ul_ind = np.argwhere((lonGrid == ul_lon) & (latGrid == ul_lat))
+    lr_ind = np.argwhere((lonGrid == lr_lon) & (latGrid == lr_lat))
+    
+    topo = phis[ul_ind[0][0]:lr_ind[0][0]+1, ul_ind[0][1]:lr_ind[0][1]+1]
+
+    return topo
+    
+    # create the mask for a threhold height as mountains
+
+    # return the mask 
+    pass
+
+def get_geostrophic_thermal_advection(gx,gy,u10,v10):
+    return -(u10 * gx + v10 * gy)
+
+
+def get_auto_derivative(data):
+    return np.gradient(data)
+
+def show(latGrid, lonGrid, data):
+
+    plt.figure()
+
+    ll_lon = np.nanmin(lonGrid)
+    ll_lat = np.nanmin(latGrid)
+    ur_lon = np.nanmax(lonGrid)
+    ur_lat = np.nanmax(latGrid)
+
+    cmap = mpl.cm.get_cmap('jet',16);
+
+    m = Basemap(projection='lcc',resolution='l',llcrnrlon=ll_lon,llcrnrlat=ll_lat,urcrnrlon=ur_lon,urcrnrlat=ur_lat,lat_1=ll_lat,lat_2=ur_lat,lat_0=50,lon_0=-107.)
+    m.drawmapboundary()
+    m.drawcoastlines()
+    x, y = m(lonGrid, latGrid)
+    vmin_val = np.nanmin(data)
+    vmax_val = np.nanmax(data)
+    m.pcolormesh(x, y, data,vmin=vmin_val,vmax=vmax_val,cmap=cmap)
+    plt.colorbar()
+    plt.show()
+
+
+def get_distance_deg(lon1, lat1, lon2, lat2):
+
+    dist = ((lon1-lon2)**2 + (lat1-lat2)**2)**.5
+
+    return dist

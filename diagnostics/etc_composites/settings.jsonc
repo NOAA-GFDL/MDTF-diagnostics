@@ -16,8 +16,8 @@
   
   "varlist" : [
     {
-      "var_name" : "slp_var",
-      "freq" : "6hr",
+      "var_name" : "v850_var",
+      "freq" : "day",
       "requirement" : "required"
     }
   ]

@@ -5,7 +5,9 @@
 
 import os
 print('Copying over the files to run the tracker...')
-os.system('cp ./defines.py ./tracker/defines.py')
+# os.system('cp ./defines.py ./tracker/defines.py')
+cmd = 'cp %s/util/defines.py %s/util/tracker/defines.py'%(os.environ['POD_HOME'], os.environ['POD_HOME'])
+os.system(cmd)
 import defines
 
 def init_setup():

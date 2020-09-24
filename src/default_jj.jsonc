@@ -28,7 +28,8 @@
           // "MJO_teleconnection"
           // "convective_transition_diag", 
           // "precip_diurnal_cycle"
-          "eulerian_storm_track" 
+          //"eulerian_storm_track" 
+          "etc_composites" 
       ]
     }
     // {

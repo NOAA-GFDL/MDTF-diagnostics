@@ -51,9 +51,8 @@ os.chdir(os.environ["DATADIR"])  # inputdata
 #OLR
 
 #orig
-#varlist = ["u200_var","u850_var","omega500_var","rlut_var","pr_var"]
-#test 
-varlist = ["omega500_var"]
+varlist = ["u200_var","u850_var","omega500_var","rlut_var","pr_var"]
+#test  varlist = ["omega500_var"]
 
 
 for var in varlist:

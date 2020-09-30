@@ -2,6 +2,7 @@ import os
 import unittest
 import src.cmip6 as cmip6
 from src.cmip6 import CMIP6DateFrequency as dt_freq
+import src.datelabel as dl
 from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 # really incomplete! Do more systematically.
@@ -55,9 +56,9 @@ class TestCMIP6_CVs(unittest.TestCase):
         )
 
 class TestCMIP6DateFrequency(unittest.TestCase):
-    all_freqs = ['dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
+    all_freqs = ['fx', 'dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
         '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt', 
-        'subhrPt', 'fx']
+        'subhrPt']
 
     def test_string_output(self):
         for s in self.all_freqs:
@@ -68,6 +69,11 @@ class TestCMIP6DateFrequency(unittest.TestCase):
             self.assertTrue(
                 dt_freq(self.all_freqs[i]) >= dt_freq(self.all_freqs[i+1])
             )
+
+    def test_is_static(self):
+        self.assertTrue(dt_freq(self.all_freqs[0]).is_static)
+        for i in range(1, len(self.all_freqs) - 1):
+            self.assertFalse(dt_freq(self.all_freqs[i]).is_static)
 
 class TestMIPTableParsing(unittest.TestCase):
     test_freqs = {
@@ -82,6 +88,39 @@ class TestMIPTableParsing(unittest.TestCase):
             for tbl in self.test_freqs[k]:
                 d = cmip6.parse_mip_table_id(tbl)
                 self.assertEqual(dt_freq(k), d['date_freq'])
+
+class TestDRSFilename(unittest.TestCase):
+    def test_all_attrs(self):
+        file_ = 'prw_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_195001-201412.nc'
+        d = cmip6.parse_DRS_filename(file_)
+        self.assertEqual(d['variable_id'], 'prw')
+        self.assertEqual(d['table_id'], 'Amon')
+        self.assertEqual(d['source_id'], 'GFDL-ESM4')
+        self.assertEqual(d['experiment_id'], 'historical')
+        self.assertEqual(d['realization_code'], 'r1i1p1f1')
+        self.assertEqual(d['grid_label'], 'gr1')
+        self.assertEqual(d['start_date'], dl.Date(1950,1))
+        self.assertEqual(d['end_date'], dl.Date(2014,12))
+        self.assertEqual(d['date_range'], dl.DateRange('195001-201412'))
+
+    def test_fx_attrs(self):
+        file_ = 'areacello_Ofx_GFDL-ESM4_historical_r1i1p1f1_gn.nc'
+        d = cmip6.parse_DRS_filename(file_)
+        self.assertEqual(d['variable_id'], 'areacello')
+        self.assertEqual(d['table_id'], 'Ofx')
+        self.assertEqual(d['source_id'], 'GFDL-ESM4')
+        self.assertEqual(d['experiment_id'], 'historical')
+        self.assertEqual(d['realization_code'], 'r1i1p1f1')
+        self.assertEqual(d['grid_label'], 'gn')
+        self.assertEqual(d['start_date'], dl.FXDateMin)
+        self.assertEqual(d['end_date'], dl.FXDateMax)
+        self.assertEqual(d['date_range'], dl.FXDateRange)
+
+    def test_fx_consistency_check(self):
+        file_ = 'areacello_3hr_GFDL-ESM4_historical_r1i1p1f1_gn.nc'
+        self.assertRaises(ValueError, cmip6.parse_DRS_filename, file_)
+        file_ = 'prw_Ofx_GFDL-ESM4_historical_r1i1p1f1_gr1_195001-201412.nc'
+        self.assertRaises(ValueError, cmip6.parse_DRS_filename, file_)
 
 
 if __name__ == '__main__':

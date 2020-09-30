@@ -1,12 +1,12 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-from src import six
+import collections
 import re
 import glob
 import shutil
+import string
 import tempfile
 from src import util
 
@@ -108,16 +108,13 @@ class TempDirManager(util.Singleton):
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
-        elif isinstance(hash_obj, six.string_types):
+        elif isinstance(hash_obj, str):
             new_dir = os.path.join(self._root, self._prefix+hash_obj)
         else:
             # nicer-looking hash representation
-            hash_ = hex(hash(hash_obj))
-            if hash_ < 0:
-                new_dir = 'Y'+str(hash_)[3:]
-            else:
-                new_dir = 'X'+str(hash_)[3:]
-            new_dir = os.path.join(self._root, self._prefix+new_dir)
+            hash_ = hex(hash(hash_obj))[2:]
+            assert isinstance(hash_, str)
+            new_dir = os.path.join(self._root, self._prefix+hash_)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
         assert new_dir not in self._dirs
@@ -232,7 +229,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
                 varvalue = '1'
             else:
                 varvalue = '0'
-        elif not isinstance(varvalue, six.string_types):
+        elif not isinstance(varvalue, str):
             varvalue = str(varvalue)
         os.environ[varname] = varvalue
 
@@ -242,7 +239,7 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
 def check_required_envvar(*varlist):
     verbose=0
     varlist = varlist[0]   #unpack tuple
-    for n in list(range(len(varlist))):
+    for n in range(len(varlist)):
         if ( verbose > 2):
             print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
@@ -336,20 +333,79 @@ def bump_version(path, new_v=None, extra_dirs=[]):
         new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
     return (new_path, new_v)
 
+class _DoubleBraceTemplate(string.Template):
+    """Private class used by :func:`~util_mdtf.append_html_template` to do 
+    string templating with double curly brackets as delimiters, since single
+    brackets are also used in css.
+
+    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
+    `https://stackoverflow.com/a/34362892`__.
+    """
+    flags = re.VERBOSE # matching is case-sensitive, unlike default
+    delimiter = '{{' # starting delimter is two braces, then apply
+    pattern = r"""
+        \{\{(?:                 # match delimiter itself, but don't include it
+        # Alternatives for what to do with string following delimiter:
+        # case 1) text is an escaped double bracket, written as '{{{{'.
+        (?P<escaped>\{\{)|
+        # case 2) text is the name of an env var, possibly followed by whitespace,
+        # followed by closing double bracket. Match POSIX env var names,
+        # case-sensitive (see https://stackoverflow.com/a/2821183), with the 
+        # addition that hyphens are allowed.
+        # Can't tell from docs what the distinction between <named> and <braced> is.
+        \s*(?P<named>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        \s*(?P<braced>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        # case 3) none of the above: ignore & move on (when using safe_substitute)
+        (?P<invalid>)
+        )
+    """
+
 def append_html_template(template_file, target_file, template_dict={}, 
-    create=True):
+    create=True, append=True):
+    """Perform subtitutions on template_file and write result to target_file.
+
+    Variable substitutions are done with custom 
+    `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
+    replacing *double* curly bracket-delimited keys with their values in template_dict.
+    For example, if template_dict is {'A': 'foo'}, all occurrences of the string
+    `{{A}}` in template_file are replaced with the string `foo`. Spaces between
+    the braces and variable names are ignored.
+
+    Double-curly-bracketed strings that don't correspond to keys in template_dict are
+    ignored (instead of raising a KeyError.)
+
+    Double curly brackets are chosen as the delimiter to match the default 
+    syntax of, eg, django and jinja2. Using single curly braces leads to conflicts
+    with CSS syntax.
+
+    Args:
+        template_file: Path to template file.
+        target_file: Destination path for result. 
+        template_dict: :py:obj:`dict` of variable name-value pairs. Both names
+            and values must be strings.
+        create: Boolean, default True. If true, create target_file if it doesn't
+            exist, otherwise raise an OSError. 
+        append: Boolean, default True. If target_file exists and this is true,
+            append the substituted contents of template_file to it. If false,
+            overwrite target_file with the substituted contents of template_file.
+    """
     assert os.path.exists(template_file)
     with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
-        html_str = html_str.format(**template_dict)
+        html_str = _DoubleBraceTemplate(html_str).safe_substitute(template_dict)
     if not os.path.exists(target_file):
         if create:
-            print("\tDEBUG: write {} to new {}".format(template_file, target_file))
+            # print("\tDEBUG: write {} to new {}".format(template_file, target_file))
             mode = 'w'
         else:
             raise OSError("Can't find {}".format(target_file))
     else:
-        print("\tDEBUG: append {} to {}".format(template_file, target_file))
-        mode = 'a'
+        if append:
+            # print("\tDEBUG: append {} to {}".format(template_file, target_file))
+            mode = 'a'
+        else:
+            # print("\tDEBUG: overwrite {} with {}".format(target_file, template_file))
+            os.remove(target_file)
+            mode = 'w'
     with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)

@@ -1,11 +1,4 @@
-undef("debug_print")
-procedure debug_print(string_to_print,routine_name,debug_flag)
-begin
 
-  if ( debug_flag ) then
-    print(routine_name+": "+string_to_print)
-  end if
-end ; procedure debug_print
 
 ;==================================================================
 ;                     USER INTERFACE 
@@ -22,6 +15,7 @@ time_i = 10
 undef("replace_missing_with_zeros")
 function replace_missing_with_zeros( x,array_missing,debug_flag )
 begin
+  routine_name = "replace_missing_with_zeros"
   debug_print("Into ",routine_name,debug_flag)
   map_flag = True
     x_fixed = where(array_missing,0.,x)
@@ -40,8 +34,7 @@ function replace_missing_with_zonal_avg( x, array_missing, debug_flag )
 begin
 
   debug_print("Into replace_missing_with_zonal_avg",routine_name,debug_flag)
-;  print("dims xavg "+getvardimnames(xavg))
-;dim_i = 1  xavg_conformed = conform(x,xavg,(/0,2/))   ; conform to x
+
 dim_i = 2 ; this is the dimension to average
     xavg = dim_avg_n(x, dim_i)  ; zonal avg (time,lon)
     debug_print("XAVG at time "+time_i+" "+xavg(time_i,:),routine_name,debug_flag)
@@ -60,9 +53,8 @@ dim_i = 2 ; this is the dimension to average
     x_fixed = where(array_missing,xavg_conformed,x)
     if ( debug_flag ) then
       one_plot(x_fixed(time_i,:,:),"removed_missing_zonal_after",map_flag,debug_flag)
-;     printVarSummary(xavg_conformed)
       diff_plot(x(time_i,:,:),x_fixed(time_i,:,:),"removed_missing_zonal_diff",debug_flag)
-;     diff_plot(x(time_i,:,:),xavg_conformed(time_i,:,:),"conformed_zonal",debug_flag)
+
     end if
     copy_VarMeta(x,x_fixed)
   return x_fixed
@@ -78,20 +70,14 @@ begin
   routine_name = "replace_missing_values"
   array_missing = ismissing(x)
   debug_print("started.",routine_name,debug_flag)
-; printVarSummary(x)
 ;  one_plot(x(0,:,:),"x_raster",debug_flag)
 
   if (x@name.eq.getenv("pr_var")) then
     debug_print("Replacing "+x@name+" missing values with zeros",routine_name,debug_flag)
 ;save
     x_new = replace_missing_with_zeros( x,array_missing,debug_flag )
-; test   print("Replacing "+x@name+" missing values with zonal (WARNING)")
 ;    x_new = replace_missing_with_zonal_avg( x,array_missing )
 
-;wrong dimension
-;    one_plot(x,"missing",False,debug_flag)
-;    one_plot(x_fixed,"missing_zeros",False,debug_flag)
-;    diff_plot(x,x_new,"missing_replaced_with_zeros",debug_flag)
   else
     debug_print("Replacing "+x@name+" missing values zonal average",routine_name,debug_flag)
     x_new = replace_missing_with_zonal_avg( x,array_missing,debug_flag )
@@ -104,7 +90,7 @@ end ; replace_missing_values
 
 
 undef("check_lon")
-procedure check_lon(f,latS,latN,lonL,lonR,lon_flag,debug_flag)
+procedure check_lon(f,latS,latN,lonL,lonR,lon_diff,debug_flag)
 begin
 
 
@@ -118,16 +104,10 @@ begin
 ; shift limits to match what's in the file, in order to read it in
 ; set the flag in order to change back, and change lon itself
   if (min(lon).lt.0) then 
-    if ( min(lon).ne.-180 ) then
-      print("ERROR: Wheeler-Kiladis finds longitude range "+min(lon)+" - "+max(lon))
-      print("       but can only work with lon 0:360 or -180:180. File ")
-      print(f)
-      exit
-    end if
-    lonL = lonL - 180
-    lonR = lonR - 180
-    debug_print(" Adjusted lonL lonR "+lonL+" "+lonR,fname,debug_flag)
-    lon_flag = True
+    lon_diff = 360. - max(lon)  ; difference from expected, serves as a flag when non-zero
+    lonL = lonL - lon_diff
+    lonR = lonR - lon_diff
+    debug_print("Lon diff: "+lon_diff+" results in adjusted lon limits:"+lonL+" "+lonR,fname,debug_flag)
   end if
 
 end; check_lon
@@ -136,14 +116,16 @@ undef("getVarSlice")
 function getVarSlice( fili[*], varName:string, level, latS, latN, lonL,lonR, tstride:integer, i1:integer, i2:integer, debug_flag)
 begin
 
+
   routine_name = "getVarSlice"
+
   debug_print("started routine",routine_name,debug_flag)
     nfil = dimsizes(fili)
     f    = addfile (fili(0), "r")
 
     ; If lon dimension is -180:180, change lonL,lonR to reflect that
-    change_lon_flag = False  
-    check_lon(f,latS,latN,lonL,lonR,change_lon_flag,debug_flag)
+    lon_diff = 0.  ; if changed, gives the change that was made
+    check_lon(f,latS,latN,lonL,lonR,lon_diff,debug_flag)
 
     combine_precs=False
 
@@ -312,7 +294,7 @@ begin
          nvals = num(x)
          npcnt = nMsg/nvals
          print("WARNING: missing values found, their replacement functions ")
-         print("         do not provide great results. Turning on debug output to provide some details")
+         print("         do not provide great results.")
          debug_flag_save = debug_flag
          debug_flag = True
          debug_print("Processing to fill missing values in with field average",routine_name,debug_flag)
@@ -326,9 +308,8 @@ begin
        delete(x@_FillValue)     ; avoid warning messages from fft
    end if
 
-   debug_print("change_lon_flag "+change_lon_flag,routine_name,debug_flag)
-   if ( change_lon_flag ) then
-;   if ( False ) then 
+   debug_print("lon_diff L325 "+lon_diff,routine_name,debug_flag)
+   if ( lon_diff .gt. 0 ) then
 
     ; x(lon=-180:180) y(lon=0,360)
     y = x
@@ -338,23 +319,36 @@ begin
      max_lon_x = max(x&lon)
      debug_print("OLD lon "+min(x&lon)+" "+max(x&lon),routine_name,debug_flag)
      debug_print("Lon limits old "+lonL+" "+lonR,routine_name,debug_flag)
-     lonL = lonL + 180  ; sent back as they came in
-     lonR = lonR + 180
+     lonL = lonL + lon_diff  ; sent back as they came in
+     lonR = lonR + lon_diff
      debug_print("Lon limits new "+lonL+" "+lonR,routine_name,debug_flag)
 ; DRB replace with n/2-1 and such
 
-     y(:,:,0:179) = x(:,:,180:359)
-     y(:,:,180:359) = x(:,:,0:179)
-     print("DRBDBG ERROR: not quitting but must make lon reassignment more general!!")
-     
-     printVarSummary(y)
-     print("NEW1 lon "+min(y&lon)+" "+max(y&lon))
-     y&lon = x&lon +180  ; set it after the assignment of values above
-     printVarSummary(y)
-     print("NEW2 lon "+min(y&lon)+" "+max(y&lon))
-     print("DRBDBG x index: "+min_lon_x+" 0")
-     print("DRBDBG y index: 180 "+max(y&lon))
-     printVarSummary(y)
+     nlon = dimsizes(x&lon)
+     nlon_m1 = nlon - 1
+     nlon_div2 = nlon / 2
+     nlon_div2_p1 = nlon_div2 + 1
+     nlon_div2_m1 = nlon_div2 - 1
+     debug_print("Swapping lon regions ind 0:"+nlon_div2_m1+" with "+nlon_div2+":"+nlon_m1,routine_name,debug_flag)
+
+     if ( False ) then 
+       print("first assignment ")
+       printVarSummary(y(:,:,:nlon_div2_m1))
+       printVarSummary(x(:,:,nlon_div2:))
+       print("second assignment ")
+       printVarSummary(y(:,:,nlon_div2:))
+       printVarSummary(x(:,:,0:nlon_div2_m1))
+     end if
+     y(:,:,:nlon_div2_m1) = x(:,:,nlon_div2:)
+     y(:,:,nlon_div2:) = x(:,:,0:nlon_div2_m1)
+;works     y(:,:,0:179) = x(:,:,180:359)
+;works     y(:,:,180:359) = x(:,:,0:179)
+
+     debug_print("NEW1 lon "+min(y&lon)+" "+max(y&lon),routine_name,debug_flag)
+     y&lon = x&lon +lon_diff  ; add on what was missing
+
+     debug_print("NEW2 lon "+min(y&lon)+" "+max(y&lon),routine_name,debug_flag)
+
     map_flag = False
     one_plot(x(5,:,:),"lon_before",map_flag,debug_flag)
     one_plot(y(5,:,:),"lon_after",map_flag,debug_flag)
@@ -369,6 +363,7 @@ begin
     x = y
 
    end if ;change lon flag
+
 
    return(x)
 

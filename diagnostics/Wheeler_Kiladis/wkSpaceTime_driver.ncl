@@ -91,7 +91,7 @@ begin
 ;-------------------------------------------------------------------
   
   
-  debug = False ;ideally this gets set for verbose >1 from mdtf 
+  debug = False     ;ideally this gets set for verbose >1 from mdtf 
   routine_name = "wkSpaceTime_driver.ncl"
   debug_print("Started ",routine_name,debug)
 
@@ -169,8 +169,8 @@ begin
 ; Get subset (time,level, lat, or lon) of variable
 ;-------------------------------------------------------------------
 
-  lonL    = 0        ; -180
-  lonR    = 360      ;  180
+  lonL    = 0.        ; -180
+  lonR    = 360.      ;  180
   level    = -999    ; only used for 4D set -999 otherwise]
 
 ; Read in files from file list created by script

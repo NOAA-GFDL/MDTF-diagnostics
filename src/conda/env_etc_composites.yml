@@ -1,5 +1,6 @@
 name: _MDTF_etc_composites
 channels:
+  - anaconda
   - defaults
 dependencies:
   - python=3.7

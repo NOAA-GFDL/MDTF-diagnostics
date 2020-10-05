@@ -2,13 +2,24 @@ import numpy as np
 import xarray as xr 
 import matplotlib.pyplot as plt 
 import cartopy
+import os
 
 # read in ERA-I all year SLP data (6-hr)
 # all years of SLP should be given in one file...
-in_file = '/localdrive/drive6/erai/slp/'
-ds = xr.open_dataset(in_file)
+in_folder = '/localdrive/drive6/erai/slp/'
 
-ds.close()
+for year in range(1979, 2010): 
+  in_file = os.path.join(in_folder, 'slp.%d.nc'%(year))
+  print(in_file, os.path.exists(in_file))
+
+  ds = xr.open_dataset(in_file)
+  in_lat = ds.variables['lat']
+  in_lon = ds.variables['lat']
+  in_time = ds.variables['time']
+  in_slp = ds.variables['slp']
+  ds.close()
+
+  breakpoint()
 
 # write the output as netcdf file 
 

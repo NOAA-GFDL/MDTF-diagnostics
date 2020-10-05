@@ -52,8 +52,7 @@ else:
   slp_data_directory = os.environ['WK_DIR'] + '/tmp/data_converts' 
 
   # again this has to be provided, but for now I have to change this to match the data 
-  topo_file = '/localdrive/drive6/era5/convert_invariants.nc'
-  print('hhahaah in defines,, lets go ')
+  topo_file = '/localdrive/drive6/erai/converts/invariants.nc'
   model = 'tmprun'
 
   # over write years have to changed from firstyr to last year

@@ -255,14 +255,8 @@ def rewrite(in_file,years,action="w",reorder=False):
     #---------------------------------------------------------------------------
 
     if len(years) < 2:
-        # JJ splitting up the full path before making year chagnes in the filenames
-        in_file_split = in_file.split('/')
-        in_file_split[-1] = in_file_split[-1].replace("%4d_%4d" % (years[0],years[-1]), "%4d" % (years[0]))
-        out_file = '/'.join(in_file_split)
-
-        # out_file = in_file.replace("%4d_%4d" % (years[0],years[-1]),
-        #                            "%4d" % (years[0]))
-
+        out_file = in_file.replace("%4d_%4d" % (years[0],years[-1]),
+                                   "%4d" % (years[0]))
         # Only a single year
         os.rename(in_file,out_file)
         return([out_file])
@@ -274,15 +268,8 @@ def rewrite(in_file,years,action="w",reorder=False):
 
     for nyear in years:
 
-        # JJ splitting up the full path before making year changes in the filenames
-        in_file_split = in_file.split('/')
-        in_file_split[-1] = in_file_split[-1].replace("%4d_%4d" % (years[0],years[-1]), "%4d" % (years[0]))
-        out_file = '/'.join(in_file_split)
-
-
-        # out_file = in_file.replace("%4d_%4d" % (years[0],years[-1]),
-        #                        "%4d" % (nyear))
-
+        out_file = in_file.replace("%4d_%4d" % (years[0],years[-1]),
+                               "%4d" % (nyear))
         save_file = open(out_file,action)
         yrlydir[nyear] = save_file
         did_files.append(out_file)
@@ -713,18 +700,9 @@ def main(defs_set,imports,years,out_path,centers_file,shared_path,slp_path,
 
     tracks_file = centers_file.replace("centers","tracks")
     # JIMMY: issue is here for file-dir name. problem is my dir name has the year in it.
-
-    # JJ - made changes to only change the filename instead of the full directory
-    tracks_file_split = tracks_file.split('/')
-    tracks_file_split[-1] = tracks_file_split[-1].replace(str(loop_year),
+    # simplest solution: dont use the year in the directory name.
+    tracks_file = tracks_file.replace(str(loop_year),
                                       "%4d_%4d" % (years[0],years[-1]))
-
-    tracks_file = '/'.join(tracks_file_split)
-
-    # JJ - removed the line below, and replaced it with the line above
-    # # simplest solution: dont use the year in the directory name.
-    # tracks_file = tracks_file.replace(str(loop_year),
-    #                                   "%4d_%4d" % (years[0],years[-1]))
 
     dumped_file = tracks_file.replace("tracks","dumped_centers")
 
@@ -1339,10 +1317,7 @@ def main(defs_set,imports,years,out_path,centers_file,shared_path,slp_path,
             pname = pname.replace("/figs","/netcdfs")
             pname = pname.replace(fig_format,".nc")
 #            pname = "%sfreq_%s_%4d_%4d.nc" % (out_path,flag_files[flag],years[0],years[-1])
-            # JJ changed the below line, where I convert the flag_cnt[:,flag] to comp_out, 
-            # because some where in fplot the comp_out changes from X*1 to lat_size*lon_size
-            save_it = Save_NetCDF(comp_out,lons,lats,pname,0)
-            # save_it = Save_NetCDF(flag_cnt[:,flag],lons,lats,pname,0)
+            save_it = Save_NetCDF(flag_cnt[:,flag],lons,lats,pname,0)
             print ("\t\tCreated flag %d: %s" % (flag,pname))
         comp_out = numpy.where(touch_concerns < 1.,0.0,touch_concerns)
         pname = "%sfigs/%s_touch_concerns_%4d_%4d%s" % (out_path,model,
@@ -1354,9 +1329,7 @@ def main(defs_set,imports,years,out_path,centers_file,shared_path,slp_path,
         pname = pname.replace("/figs","/netcdfs")
         pname = pname.replace(fig_format,".nc")
 #        pname = "%stouch_concerns_%4d_%4d.nc" % (out_path,years[0],years[-1])
-        # JJ editted this line below to change from touch_concerns, to comp_out to make sure that the single dim array gets converted to lat_size, lon_size
-        save_it = Save_NetCDF(comp_out,lons,lats,pname,0)
-        # save_it = Save_NetCDF(touch_concerns,lons,lats,pname,0)
+        save_it = Save_NetCDF(touch_concerns,lons,lats,pname,0)
         print ("\tCreated: %s" % (pname))
 
     return (tracks_file,dumped_file,years)

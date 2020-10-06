@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+
+# supressing warnings, because there are a lot of NaN value warnings 
+# comment lines below when debugging
+# only supress in production
+import sys
+if not sys.warnoptions:
+  import warnings
+  warnings.simplefilter("ignore")
+
 import numpy as np 
 import scipy.io as sio
 import cartopy
@@ -120,9 +130,6 @@ def track_feature_density_2d(lon, lat, ax=None):
     cb = plt.colorbar(cf, ax=ax, shrink=0.5, extend='max')
   return H
 
-def track_intensity_2d():
-  pass
-
 ############### main test code #################
 
 # check if mat file exists, if not run the mat file creator code
@@ -175,12 +182,12 @@ for year in range(defines.over_write_years[0], defines.over_write_years[1]+1):
     lon = np.squeeze(track['fulllon'])
     lat = np.squeeze(track['fulllat'])
 
-    # # considering only lat cases between -60 and 60
-    # ind = (np.abs(lat) < 60)
-    # if (not np.any(ind)): 
-    #   continue
-    # lon = lon[ind]
-    # lat = lat[ind]
+    # considering only lat cases between -60 and 60
+    ind = (np.abs(lat) < 60)
+    if (not np.any(ind)): 
+      continue
+    lon = lon[ind]
+    lat = lat[ind]
 
     l_lon.append(lon[-1])
     l_lat.append(lat[-1])
@@ -212,7 +219,7 @@ stats['all']['track_density'] /= np.nansum(stats['all']['track_density'])
 # track density
 plt.close('all')
 
-out_file = os.path.join(defines.images_folder, f'{defines.model}_{year}_track_stats.png')
+out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_track_stats.png')
 cmap = 'jet'
 
 # creating the 2x2 plot
@@ -220,6 +227,7 @@ fig, axes = plt.subplots(ncols=2, nrows=2, subplot_kw={'projection': cartopy.crs
 
 ax = global_map(axes[0, 0])
 levels = np.linspace(0, 0.0025, 10)
+levels = np.linspace(0, 0.005, 10)
 ax.set_title(f'Feature Density')
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['feature_density'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7)
@@ -227,22 +235,25 @@ plt.colorbar(cf, ax=ax, shrink=0.7)
 ax = global_map(axes[0, 1])
 ax.set_title(f'Track Density')
 levels = np.linspace(0, 0.0025, 10)
+levels = np.linspace(0, 0.005, 10)
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['track_density'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7)
 
 ax = global_map(axes[1, 0])
 ax.set_title(f'Genesis')
 levels = np.linspace(0, 0.0025, 10)
+levels = 20
 cf = ax.contourf(lon_mids, lat_mids, stats['genesis'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7)
 
 ax = global_map(axes[1, 1])
 ax.set_title(f'Lysis')
 levels = np.linspace(0, 0.0025, 10)
+levels = 20
 cf = ax.contourf(lon_mids, lat_mids, stats['lysis'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7)
 
 plt.suptitle(f'{defines.model.upper()} ({defines.over_write_years[0]} - {defines.over_write_years[1]})')
 plt.tight_layout()
 plt.savefig(out_file, dpi=300.)
-plt.show()
+plt.close('all')

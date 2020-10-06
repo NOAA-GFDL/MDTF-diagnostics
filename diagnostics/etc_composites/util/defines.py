@@ -79,6 +79,10 @@ else:
   images_folder = os.path.join(read_folder, 'images') + '/'
   fronts_folder = os.path.join(read_folder, 'fronts') + '/'
   data_folder = os.path.join(main_folder, 'var_data') + '/'
+ 
+  # output images folders
+  model_images_folder = os.environ['WK_DIR'] + '/model/'
+  obs_images_folder = os.environ['WK_DIR'] + '/obs/'
 
   # threshold for height to defining land mask and topo.
   # JJJ - b/c of interpolation and non-zero height of some SST region,

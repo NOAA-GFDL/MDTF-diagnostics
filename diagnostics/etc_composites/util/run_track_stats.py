@@ -219,7 +219,7 @@ stats['all']['track_density'] /= np.nansum(stats['all']['track_density'])
 # track density
 plt.close('all')
 
-out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_track_stats.png')
+out_file = os.path.join(defines.model_images_folder, f"{os.environ['CASENAME']}_track_stats.png")
 cmap = 'jet'
 
 # creating the 2x2 plot

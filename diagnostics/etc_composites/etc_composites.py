@@ -6,6 +6,10 @@ import netCDF4 as nc
 
 print('Start of ETC-Composites...')
 
+### Copying over the MDTF_DOC file
+cmd = "cp " + os.environ['POD_HOME']+'/MDTF_Documentation_etc_composites.pdf ' + os.environ['WK_DIR']+'/'
+os.system(cmd)
+
 # Creating the necessary SLP yearly files for the necessary years
 sYear = int(os.environ['FIRSTYR'])
 eYear = int(os.environ['LASTYR'])
@@ -98,10 +102,16 @@ for year in range(sYear, eYear+1):
 
 
 # Running the tracker 
-os.system('ls -lhtr')
-print(os.environ['POD_HOME'])
 cmd = "python %s/util/run_tracker.py"%(os.environ['POD_HOME'])
 os.system(cmd)
+
+# Running the track stats 
+cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])
+os.system(cmd)
+
+
+# Code to create the yearly total precipitation files
+# create a function and call it here? as well as above? 
 
 # Running the composites code
 # create the necesssary variable files and composites 

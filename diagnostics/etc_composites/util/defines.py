@@ -62,6 +62,7 @@ else:
   # this is needed to create the composites, for now I will assume the pre-processing code creates the necessary chunks of data
   # var_data_directory = '/localdrive/drive6/era5/data/six_hrly/converts/'
   slp_data_directory = os.environ['WK_DIR'] + '/tmp/data_converts' 
+  var_data_directory = os.environ['WK_DIR'] + '/tmp/data_converts' 
 
   # location to which to save the outputs from the tracker
   # also this is the location from which the tracker will be run 
@@ -154,7 +155,8 @@ else:
 
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
-  composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
+  # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
+  composite_var_list = ['tp']
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

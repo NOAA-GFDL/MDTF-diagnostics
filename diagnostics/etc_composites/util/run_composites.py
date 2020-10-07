@@ -20,13 +20,16 @@ import datetime as dt
 import xarray as xr
 import pandas as pd
 
-import reader
-
 import pdb
-import composites
 
 import pickle
-from tqdm import tqdm
+# from tqdm import tqdm
+
+import sys
+sys.path.append(os.environ['POD_HOME']+'/util')
+
+import composites
+import reader
 
 # ---------------------- NEW CODE ----------------------------
 
@@ -36,7 +39,8 @@ debug_stop_at_flag = False
 ################## COPY/LINK THE FILES OVER #######################################
 ###################################################################################
 
-var_list = ['tp', 'wap500', 'clt', 'slp', 'cls850']
+# var_list = ['tp', 'wap500', 'clt', 'slp', 'cls850']
+var_list = defines.composite_var_list
 to_folder = defines.data_folder
 if (not os.path.exists(to_folder)): 
   os.makedirs(to_folder)
@@ -117,12 +121,15 @@ for year in year_list:
   ############# Get Centers for the given date ######################
   in_file = os.path.join(defines.read_folder, f'{defines.model}_{year}.mat')
   all_centers = reader.read_center_from_mat_file(in_file)
+  datetimeindex = slp.indexes['time'].to_datetimeindex()
+
 
   # loop through all time steps in the year
-  for t_step in tqdm(range(1, len(slp.time)), total=len(slp.time), desc=f'{year} Time Step: '):
+  for t_step in range(1, len(slp.time)):
 
     # creating a datetime variable for the current time step
-    date = pd.Timestamp(slp.time[t_step].values).to_pydatetime()
+    # date = pd.Timestamp(slp.time[t_step].values).to_pydatetime()
+    date = datetimeindex[t_step].to_pydatetime()
     # print(date)
     
     # getting the season for the given time step date
@@ -261,7 +268,8 @@ for hemis_type in defines.composite_hem_list:
         tmp = tmp_dict['area_sum']/tmp_dict['area_cnt']
         composites.plot_area(area_H.y_edges,  area_H.x_edges, tmp)
         plt.title(f'{var.upper()} {lm_type} {hemis_type}')
-        out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_area_{var}_{hemis_type}_{lm_type}_{season.upper()}.png')
+        # out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_area_{var}_{hemis_type}_{lm_type}_{season.upper()}.png')
+        out_file = os.path.join(defines.model_images_folder, f'{os.environ["CASENAME"]}_area_{var}_{hemis_type}_{lm_type}_{season.upper()}.png')
         plt.savefig(out_file, dpi=300.)
 
 

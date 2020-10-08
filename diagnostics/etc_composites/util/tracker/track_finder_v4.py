@@ -318,9 +318,19 @@ def rewrite(in_file,years,action="w",reorder=False):
     # on in chronological order
     if reorder:
         print ("\t\tReordering....")
-        rev_file = out_file.replace(str(years[-1]),str(years[0]-1))
+
+        #JJ fix below to make sure I only change the out_file_name instead of the whole path
+        out_file_split = out_file.split('/')
+        out_file_split[-1] = out_file_split[-1].replace(str(years[-1]),str(years[0]-1))
+        rev_file = '/'.join(out_file_split)
+        # rev_file = out_file.replace(str(years[-1]),str(years[0]-1))
         for loop_year in years:
-            rev_file = rev_file.replace(str(loop_year-1),str(loop_year))
+            # JJ - fix again to make sure that I am replacing years in the filename instead of the whole path 
+            rev_file_split = rev_file.split('/')
+            rev_file_split[-1] = rev_file_split[-1].replace(str(loop_year-1),str(loop_year))
+            rev_file = '/'.join(rev_file_split)
+            # rev_file = rev_file.replace(str(loop_year-1),str(loop_year))
+
             read_f = open (rev_file,"r")
             ucis = {}
             for line in read_f:

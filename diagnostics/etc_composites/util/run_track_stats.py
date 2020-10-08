@@ -253,7 +253,7 @@ levels = 20
 cf = ax.contourf(lon_mids, lat_mids, stats['lysis'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7)
 
-plt.suptitle(f'{defines.model.upper()} ({defines.over_write_years[0]} - {defines.over_write_years[1]})')
+plt.suptitle(f'{os.environ["CASENAME"]} ({defines.over_write_years[0]} - {defines.over_write_years[1]})')
 plt.tight_layout()
 plt.savefig(out_file, dpi=300.)
 plt.close('all')

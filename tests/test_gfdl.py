@@ -222,11 +222,11 @@ class TestPPPathParsing(unittest.TestCase):
         self.assertEqual(ds.component, 'ocean_monthly')
         self.assertEqual(ds.date_freq, dt.DateFrequency('fx'))
         self.assertEqual(ds.chunk_freq, dt.DateFrequency('fx'))
-        self.assertEqual(ds.start_date, None)
-        self.assertEqual(ds.end_date, None)
+        self.assertEqual(ds.start_date, dt.FXDateMin)
+        self.assertEqual(ds.end_date, dt.FXDateMax)
         self.assertEqual(ds.name_in_model, None)
         self.assertEqual(ds._remote_data, '/pp/ocean_monthly/ocean_monthly.static.nc')
-        self.assertEqual(ds.date_range, None)
+        self.assertEqual(ds.date_range, dt.FXDateRange)
 
 
 if __name__ == '__main__':

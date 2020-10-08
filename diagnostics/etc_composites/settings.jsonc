@@ -3,7 +3,7 @@
     "driver" : "etc_composites.py",
     "long_name" : "Extra Tropical Cyclone Composites",
     "realm" : "atmos",
-    "description" : "Eulerian Storm Track",
+    "description" : "Extra Tropical Cyclone Composites",
     "runtime_requirements": {
       "python3": ["numpy", "matplotlib", "xarray", "netCDF4", "cartopy"]
       }

@@ -108,6 +108,15 @@ class DataSet(util.NameSpace):
         ds.alternates = alt_ds_list
         return ds
 
+    @property
+    def is_static(self):
+        """Check for time-independent data ('fx' in CMIP6 DRS.) Do the comparison
+        by checking date_range against the placeholder value because that's
+        unique -- we may be using a different DateFrequency depending on the
+        data source.
+        """
+        return (self.date_range == datelabel.FXDateRange)
+
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
@@ -236,7 +245,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
-            var.date_range = self.date_range
+            if var.date_freq.is_static:
+                # placeholder value for time-independent data
+                var.date_range = datelabel.FXDateRange
+            else:
+                var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
             var.axes = copy.deepcopy(translate.axes[self.convention])
 

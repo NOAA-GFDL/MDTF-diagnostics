@@ -268,7 +268,7 @@ if __name__ == '__main__':
         help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
     
-    link_verifier = LinkVerifier(args.path_or_url, args.verbose)
+    link_verifier = LinkVerifier(args.path_or_url, verbose=args.verbose)
     missing_dict = link_verifier.verify_all_links()
 
     if missing_dict:

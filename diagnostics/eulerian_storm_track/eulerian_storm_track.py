@@ -190,7 +190,7 @@ else:
 
   cmd = "cp "+os.environ["POD_HOME"]+"/eulerian_storm_track.html "+os.environ["WK_DIR"]+"/"
   os.system(cmd)
-  cmd = "cp "+os.environ["POD_HOME"]+"/MDTF_Documentation_eulerian_storm_track.pdf "+os.environ["WK_DIR"]+"/"
+  cmd = "cp "+os.environ["POD_HOME"]+"/doc/MDTF_Documentation_eulerian_storm_track.pdf "+os.environ["WK_DIR"]+"/"
   os.system(cmd)
 
   # # Replace CASENAME so that the figures are correctly linked through the html

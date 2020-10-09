@@ -897,7 +897,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         return choices
 
 class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
-    _cmip6_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+    _cmip6_root = os.sep + os.path.join('uda', 'CMIP6')
 
 class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
     # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't

@@ -1,14 +1,29 @@
+"""Classes related to customizing the framework's command line interface and 
+parsing the configuration options passed to it.
+"""
+
 import os
 import sys
 import io
-from collections import ChainMap
 import argparse
-import shlex
 import collections
+import shlex
+import re
+import textwrap
 from src import util, diagnostic
 
 import logging
 _log = logging.getLogger(__name__)
+
+def word_wrap(str_):
+    """Clean whitespace and produces better word wrapping for multi-line help
+    and description strings. Explicit paragraph breaks must be encoded as a 
+    double newline (``\n\n``).
+    """
+    paragraphs = textwrap.dedent(str_).split('\n\n')
+    paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
+    paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
+    return '\n\n'.join(paragraphs)
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 
@@ -50,12 +65,19 @@ class CustomHelpFormatter(
 
 
 class RecordDefaultsAction(argparse.Action):
-    """Add boolean to record if user actually set argument's value, or if we're
-    using the specified default. From `<https://stackoverflow.com/a/50936474>`__. This
-    also re-implements the 'store_true' and 'store_false' actions, in order to 
-    give defaults information on boolean flags.
+    """Add a boolean to record if user actually set argument's value, or if we're
+    using the default value specified in the parser. From 
+    `<https://stackoverflow.com/a/50936474>`__. This also re-implements the 
+    'store_true' and 'store_false' actions, in order to give defaults 
+    information on boolean flags.
+
+    If the user specifies a value for ``option``, the :meth:`__call__` method
+    adds a variable named ``option_is_default_`` to the returned 
+    :py:class:`argparse.Namespace`. This information is used by 
+    :meth:`.MDTFArgParser.parse_args` to populate the ``is_default`` attribute 
+    of :class:`.MDTFArgParser`.
     """
-    flag_suffix = '_is_default_'
+    default_value_suffix = '_is_default_'
 
     def __init__(self, option_strings, dest, nargs=None, const=None, 
         default=None, required=False, **kwargs):
@@ -78,92 +100,88 @@ class RecordDefaultsAction(argparse.Action):
             setattr(namespace, self.dest, util.from_iter(values))
         else:
             setattr(namespace, self.dest, values)
-        # set flag to indicate user has set this argument
-        setattr(namespace, self.dest+self.flag_suffix, False)
+        # set additional flag to indicate user has set this argument
+        setattr(namespace, self.dest+self.default_value_suffix, False)
 
 
-class CLIHandler(object):
-    def __init__(self, code_root, cli_config, partial_defaults=None):
-        self.code_root = code_root
-        self.config = dict()
-        self.partial_defaults = partial_defaults
-        self.parser_groups = dict()
+class MDTFArgParser(argparse.ArgumentParser):
+    """Customized :py:class:`argparse.ArgumentParser` used by the framework. The
+    main added functionality is the ability to configure the parser from an 
+    external json file (:meth:`~MDTFArgParser.from_config`). We also implement
+
+    - Customized help text formatting provided by :class:`.CustomHelpFormatter`.
+    - Recording whether the user specified each argument value, or whether the
+        default was used, via :class:`.RecordDefaultsAction`.
+    - Better bookkeeping of `argument groups <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__ 
+        (eg which arguments belong to which group).
+    - Bookkeeping for arguments requiring additional processing (validation etc.)
+        after parsing, via custom_types.
+    """
+    def __init__(self, *args, **kwargs):
         # no way to get this from public interface? _actions of group
         # contains all actions for entire parser
+        self.parser_groups = dict()
         self.parser_args_from_group = collections.defaultdict(list)
         # manually track args requiring custom postprocessing (even if default
         # is used, so can't do with action=.. in argument)
         self.custom_types = collections.defaultdict(list)
-        if isinstance(cli_config, str):
-            # we were given a path to config file, instead of file's contents
-            if not os.path.isabs(cli_config):
-                cli_config = os.path.join(code_root, cli_config)
-            cli_config = util.read_json(cli_config)
-        self.parser = self.make_parser(cli_config)
+        # Dict to store whether default value was used, for arguments using the
+        # RecordDefaultsAction
+        self.is_default = dict()
+        self.parsed_args = None
 
-    def iter_cli_actions(self):
-        for arg_gp in self.parser_args_from_group:
+        kwargs['formatter_class'] = CustomHelpFormatter
+        super(MDTFArgParser, self).__init__(*args, **kwargs)
+        self._positionals.title = None
+        self._optionals.title = 'COMMAND OPTIONS'
+
+    def iter_actions(self, group_name=None):
+        """Iterator over :py:class:`~argparse.Action` objects associated with 
+        arguments defined in parser.
+
+        Args:
+            group_name (optional): If supplied, only iterate over arguments
+                belonging to this `argument group <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__.
+                If omitted, iterate over all arguments. 
+        """
+        if not group_name:
+            _groups = self.parser_args_from_group
+        else:
+            _groups = util.to_iter(group_name)
+        for arg_gp in _groups:
             for arg in self.parser_args_from_group[arg_gp]:
                 yield arg
-
-    def iteritems_cli(self, group_nm=None):
-        if not group_nm:
-            _groups = self.parser_groups
-        else:
-            _groups = util.to_iter(group_nm)
-        for group in _groups:
-            for action in self.parser_args_from_group[group]:
-                key = action.dest
-                yield (key, self.config[key])
-
-    @staticmethod
-    def _append_to_entry(d, key, str_):
-        if key in d:
-            d[key] = d[key] + '\n' + str_
-        else:
-            d[key] = str_
-
-    def make_parser(self, d):
-        args = util.to_iter(d.pop('arguments', None))
-        arg_groups = util.to_iter(d.pop('argument_groups', None))
-        d['formatter_class'] = CustomHelpFormatter
-        p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
-        p = argparse.ArgumentParser(**p_kwargs)
-        for arg in args:
-            # add arguments not in any group
-            self.add_parser_argument(arg, p, 'parser')
-        for group in arg_groups:
-            # add groups and arguments therein
-            self.add_parser_group(group, p)
-        return p
-
-    def add_parser_group(self, d, target_obj):
-        gp_nm = d.pop('name')
-        _ = d.setdefault('title', gp_nm)
-        args = util.to_iter(d.pop('arguments', None))
-        if args:
-            # only add group if it has > 0 arguments
-            gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
-            gp_obj = target_obj.add_argument_group(**gp_kwargs)
-            self.parser_groups[gp_nm] = gp_obj
-            for arg in args:
-                self.add_parser_argument(arg, gp_obj, gp_nm)
     
     @staticmethod
     def canonical_arg_name(str_):
-        # convert flag or other specification to destination variable name
-        # canonical identifier/destination always has _s, no -s (PEP8)
+        """Convert flag or other specification to destination variable name.
+        The destination variable name always has ``_``s, never ``-``s, in
+        accordance with PEP8.
+        """
         return str_.lstrip('-').rstrip().replace('-', '_')
 
-    def add_parser_argument(self, d, target_obj, target_name):
-        # set flags:
+    def add_arg_from_config(self, d, target=None, group_name=None):
+        """Adds a CLI argument (flag or other setting) to the parser based on 
+        settings read from a configuration file.
+
+        Args:
+            d (:obj:`dict`): dict of configuration settings for this argument of
+                the parser.
+            target (optional): Parser object (or parser group, or subparser) to 
+                which the argument will be added. If omitted, the argument will
+                be added to ``self``.
+            group_name (optional): Name of the argument group to add the argument, 
+                used by internal bookkeeping. If omitted, argument will be added
+                at the top level, outside of any group, and added to the "parser"
+                entry in ``parser_args_from_group``.
+        """
+        # Determine name, aliases and desitnation variable for flags:
         if 'name' not in d:
             raise ValueError("No argument name found in {}".format(d))
         arg_nm = self.canonical_arg_name(d.pop('name'))
         arg_flags = [arg_nm]
         if d.pop('is_positional', False):
-            # code to handle positional arguments
-            pass
+            _ = d.pop('dest', None) # positionals can't specify independent dest
         else:
             # argument is a command-line flag (default)
             if 'dest' not in d:
@@ -176,7 +194,7 @@ class CLIHandler(object):
                 # recognize both --option and -O, if short_name defined
                 arg_flags.append('-' + d.pop('short_name'))
 
-        # type conversion of default value
+        # Type conversion of default value:
         if 'type' in d:
             d['type'] = eval(d['type'])
             if 'default' in d:
@@ -186,12 +204,8 @@ class CLIHandler(object):
         if d.get('parse_type', None):
             # make list of args requiring custom post-parsing later
             self.custom_types[d.pop('parse_type')].append(d['dest'])
-        # TODO: what if following require env vars, etc??
-        if d.get('eval', None):
-            for attr in util.to_iter(d.pop('eval')):
-                if attr in d:
-                    d[attr] = eval(d[attr])
 
+        # record whether user set this value, or whether it's default
         _ = d.setdefault('action', RecordDefaultsAction)
 
         # change help string based on default value
@@ -199,322 +213,204 @@ class CLIHandler(object):
             # do not list argument in "mdtf --help", but recognize it
             d['help'] = argparse.SUPPRESS
 
-        self.parser_args_from_group[target_name].append(
-            target_obj.add_argument(*arg_flags, **d)
+        # append argument object to the list of args for this arg group, so that
+        # we can look it up later.
+        if group_name is None:
+            group_name = 'parser'
+        if target is None:
+            target = self
+        self.parser_args_from_group[group_name].append(
+            target.add_argument(*arg_flags, **d)
         )
 
-    def edit_defaults(self, **kwargs):
-        # Change default value of arguments. If a key doesn't correspond to an
-        # argument previously added, its value is still returned when parse_args()
-        # is called.
-        self.parser.set_defaults(**kwargs)
-        
-    def preparse_cli(self, args=None):
-        # "first pass" 
-        # if no args are passed, default will parse sys.argv[1:]
+    def add_group_from_config(self, d, target=None):
+        """Adds a CLI `argument group <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__ 
+        to the parser based on settings read from a configuration file.
+
+        Args:
+            d (:obj:`dict`): dict of configuration settings for this argument 
+                group of the parser.
+            target (optional): Parser object (or parser group, or subparser) to 
+                which the argument will be added. If omitted, the argument will
+                be added to ``self``.
+        """
+        if target is None:
+            target = self
+        gp_nm = d.pop('name')
+        _ = d.setdefault('title', gp_nm)
+        args = util.to_iter(d.pop('arguments', None))
+        if args:
+            # only add group if it has > 0 arguments
+            gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
+            gp_obj = target.add_argument_group(**gp_kwargs)
+            self.parser_groups[gp_nm] = gp_obj
+            for arg in args:
+                self.add_arg_from_config(arg, gp_obj, gp_nm)
+
+    def configure(self, d):
+        """Configures the argument parser based on settings read in from a file.
+        Handles functionality provided by :py:meth:`~argparse.ArgumentParser.__init__`
+        as well as :py:meth:`~argparse.ArgumentParser.add_argument` and 
+        :py:meth:`~argparse.ArgumentParser.add_argument_group`.
+
+        Args:
+            d (:obj:`dict`): dict of configuration settings for the parser.
+
+        Returns:
+            Configured instance of :class:`MDTFArgParser`.
+        """
+        for attr_ in ['prog', 'usage', 'description', 'epilog']:
+            if attr_ in d:
+                setattr(self, attr_, word_wrap(d[attr_]))
+        for arg_d in util.to_iter(d.pop('arguments', [])):
+            # add arguments not in any group
+            self.add_arg_from_config(arg_d)
+        for group_d in util.to_iter(d.pop('argument_groups', [])):
+            # add groups and arguments therein
+            self.add_group_from_config(group_d)
+
+    def parse_args(self, args=None, namespace=None):
+        """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_args` which
+        populates the ``is_default`` attribute based on whether the user specified
+        a value in ``args``, or whether the default was used.
+
+        Args:
+            args (optional): String or list of strings to parse. If a single 
+                string is passed, it's split using :py:meth:`shlex.split`. 
+                If not supplied, the default behavior parses :py:meth:`sys.argv`.
+            namespace (optional): An object to store the parsed arguments. 
+                The default is a new empty :py:class:`argparse.Namespace` object.
+
+        Returns:
+            Populated namespace containing parsed arguments, as with 
+            :py:meth:`argparse.ArgumentParser.parse_args`. This is also stored 
+            in the ``parsed_args`` attribute.
+        """
         if isinstance(args, str):
             args = shlex.split(args, posix=True)
-        self.config = vars(self.parser.parse_args(args))
+        self.parsed_args = super(MDTFArgParser, self).parse_args(args, namespace)
 
-        # set flag for arguments that were left as default values
-        self.is_default = dict()
-        for arg in self.iter_cli_actions():
+        # populate is_default with status of arguments left as default values
+        for arg in self.iter_actions():
             if isinstance(arg, RecordDefaultsAction):
-                flag_name = arg.dest + arg.flag_suffix
-                if flag_name in self.config:
-                    del self.config[flag_name]
+                default_value_flag = arg.dest + arg.default_value_suffix
+                if default_value_flag in self.parsed_args:
                     self.is_default[arg.dest] = False
+                    # delete the flag set by RecordDefaultsAction.__call__, 
+                    # since we're transferring the information to is_default
+                    delattr(self.parsed_args, default_value_flag)
                 else:
                     self.is_default[arg.dest] = True
             else:
                 self.is_default[arg.dest] = (arg.dest is arg.default)
-
-    def parse_cli(self, args=None):
-        # call preparse_cli if child class hasn't done so already
-        if not self.config:
-            self.preparse_cli(args)
-
-        # if no additional defaults were set, that's sufficient, otherwise need
-        # to take into account their intermediate priority
-        if isinstance(self.partial_defaults, dict):
-            # not handled correctly by to_iter
-            self.partial_defaults = [self.partial_defaults] 
-        self.partial_defaults = util.to_iter(self.partial_defaults)
-        partial_defaults = []
-        for d in self.partial_defaults:
-            # drop empty strings
-            partial_defaults.append({k:v for k,v in d.items() if v != ""})
-
-        # self.config was populated by preparse_cli()
-        # Options explicitly set by user on CLI; is_default = None if no default
-        cli_opts = {k:v for k,v in self.config.items() \
-            if not self.is_default.get(k, True)}
-        # full set of defaults from cli.jsonc, from running parser on empty input
-        defaults = vars(self.parser.parse_args([]))
-        chained_dict_list = [cli_opts] + partial_defaults + [defaults]
-
-        # CLI opts override options set from file, which override defaults
-        self.config = dict(ChainMap(*chained_dict_list))
+        return self.parsed_args
 
 
-class FrameworkCLIHandler(CLIHandler):
-    def __init__(self, code_root, cli_rel_path):
-        cli_config = util.read_json(os.path.join(code_root, cli_rel_path))
-        self.case_list = cli_config.pop('case_list', [])
-        self.pod_list = cli_config.pop('pod_list', [])
-        super(FrameworkCLIHandler, self).__init__(
-            code_root, cli_config, partial_defaults=None
-        )
+class ConfigManager(util.Singleton):
+    """:class:`~framework.util.Singleton` to make the results of CLI argument
+    parsing more easily available for commands with a larger code base. Also 
+    implements functionality to set "partial default" values from an external
+    configuration file or other source.
+    """
+    def __init__(self, parser=None, partial_defaults=None):
+        self._p = parser
+        self._partial_defaults = partial_defaults
+        # have "config" point to parsed_args namespace for now
+        self.config = self._p.parsed_args
+        # not really related, but store this info here as well
+        self.global_envvars = dict()
 
-    def make_parser(self, d):
-        _ = d.setdefault(
-            'usage',
-            ("%(prog)s [options] [INPUT_FILE] [CASE_ROOT_DIR]\n"
-                "{}%(prog)s info [TOPIC]").format(len('usage: ')*' ')
-        )
-        p = super(FrameworkCLIHandler, self).make_parser(d)
-        p._positionals.title = None
-        p._optionals.title = 'GENERAL OPTIONS'
-        return p
+    def parse_partial_defaults(self, config_str=None):
+        """Set ``_partial_defaults`` using values read in from a configuration
+        file in one of two formats. 
+        
+        Args:
+            config_str (str): contents of the configuration file, either:
 
-    def parse_positionals(self, var_name):
-        _ = self.config.setdefault('INPUT_FILE', None)
-        _ = self.config.setdefault('CASE_ROOT_DIR', None)
+            1. A JSON/JSONC file of key-value pairs. This is parsed using
+                :func:`~framework.util.file_io.parse_json`.
+            2. A plain text file containing flags and arguments as they would
+                be passed on the command line (except shell expansions are not 
+                performed). This is parsed by the :meth:`MDTFArgParser.parse_args`
+                method of the configured parser.
 
-        var_val = self.config.pop(var_name, None)
-        if var_val is None:
-            # maybe it was set with flag
-            var_val = self.config.pop('flag_'+var_name, None)
-        if var_val is None:
+        The format is determined from context. ValueError is raised if the string
+        cannot be parsed.
+        """
+        if not config_str:
             return
-        is_file = os.path.isfile(var_val)
-        is_dir = os.path.isdir(var_val)
-        if not is_file and not is_dir:
-            _log.critcal("Critical error: couldn't locate '%s'.", var_val)
-            exit(1)
-        elif is_file:
-            if self.config['INPUT_FILE'] is not None:
-                _log.critcal(("Error: trying to set INPUT_FILE twice (got "
-                    f"'{self.config['INPUT_FILE']}', '{var_val}')."))
-                exit(1)
-            else:
-                self.config['INPUT_FILE'] = var_val
-                self.is_default['INPUT_FILE'] = False
-        elif is_dir:
-            if self.config['CASE_ROOT_DIR'] is not None:
-                _log.critcal(("Error: trying to set CASE_ROOT_DIR twice (got "
-                    f"'{self.config['CASE_ROOT_DIR']}', '{var_val}')."))
-                exit(1)
-            else:
-                self.config['CASE_ROOT_DIR'] = var_val
-                self.is_default['CASE_ROOT_DIR'] = False
-
-    def parse_cli(self, args=None):
-        # explicitly set cmd-line options, parsed according to default parser;
-        # result stored in self.config
-        self.preparse_cli(args)
-
-        # handle positionals here because we need to find input_file
-        self.parse_positionals('input_file')
-        self.parse_positionals('root_dir')
-
-        # deal with options set in user-specified defaults file, if present
-        config_path = self.config.get('INPUT_FILE', None)
-        config_str = ''
-        if config_path:
-            try:
-                with io.open(config_path, 'r', encoding='utf-8') as f:
-                    config_str = f.read()
-            except Exception:
-                _log.exception("Can't read input file at %s.", config_path)
-        if config_str:
+        # try to determine if file is json
+        is_json = 'json' in os.path.splitext('config_path')[1].lower()
+        # check if first non-comment, non-whitespace character is '{':
+        try:
+            temp_str = util.strip_comments(config_str, delimiter= '//')
+            temp_ind = len(temp_str) - len(temp_str.lstrip())
+            is_json = is_json or (temp_str[temp_ind] == '{')
+        except Exception:
+            is_json = False
+        if is_json:
             try:
                 file_input = util.parse_json(config_str)
                 # overwrite default case_list and pod_list, if given
-                if 'case_list' in file_input:
-                    self.case_list = file_input.pop('case_list')
-                if 'pod_list' in file_input:
-                    self.pod_list = file_input.pop('pod_list')
+                # XXX HANDLE THIS
+                # if 'case_list' in file_input:
+                #     self.case_list = file_input.pop('case_list')
+                # if 'pod_list' in file_input:
+                #     self.pod_list = file_input.pop('pod_list')
                 # assume config_file a JSON dict of option:value pairs.
-                self.partial_defaults = [{
-                    self.canonical_arg_name(k): v for k,v in file_input.items()
+                self._partial_defaults = [{
+                    self._p.canonical_arg_name(k): v for k,v in file_input.items()
                 }]
             except Exception:
-                if 'json' in os.path.splitext('config_path')[1].lower():
-                    _log.exception("Couldn't parse JSON in %s.", config_path)
-                    raise
-                # assume config_file is a plain text file containing flags, etc.
-                # as they would be passed on the command line.
+                _log.exception('Attempted to parse input file as JSONC; failed.')
+                raise ValueError()
+        else:
+            # assume config_file is a plain text file containing flags, etc.
+            # as they would be passed on the command line.
+            try:
                 config_str = util.strip_comments(config_str, '#')
-                self.partial_defaults = [vars(
-                    self.parser.parse_args(shlex.split(config_str))
+                self._partial_defaults = [vars(
+                    self._p.parse_args(shlex.split(config_str))
                 )]
-        # CLI opts override options set from file, which override defaults
-        super(FrameworkCLIHandler, self).parse_cli(args)
+            except Exception:
+                _log.exception('Attempted to parse input file as plain text; failed.')
+                raise ValueError()
 
+    def parse_with_defaults(self):
+        """Re-parse command-line arguments, allowing default values to be 
+        overridden by values (if any) in the ``_partial_defaults`` attribute.
+        The precedence order is:
 
-PodDataTuple = collections.namedtuple(
-    'PodDataTuple', 'sorted_lists pod_data realm_data'
-)
-def load_pod_settings(code_root, pod=None, pod_list=None):
-    """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
-    """
-    # only place we can put it would be util.py if we want to avoid circular imports
-    _pod_dir = 'diagnostics'
-    _pod_settings = 'settings.jsonc'
-    def _load_one_json(pod):
-        d = dict()
-        try:
-            d = util.read_json(
-                os.path.join(code_root, _pod_dir, pod, _pod_settings)
-            )
-            assert 'settings' in d
-        except Exception as exc:
-            raise util.PodConfigError(pod, 
-                "Syntax error encountered when reading settings.jsonc.") from exc
-        return d
-
-    # get list of pods
-    if not pod_list:
-        pod_list = os.listdir(os.path.join(code_root, _pod_dir))
-        pod_list = [s for s in pod_list if not s.startswith(('_','.'))]
-        pod_list.sort(key=str.lower)
-    if pod == 'list':
-        return pod_list
-
-    # load one settings.jsonc file
-    if pod is not None:
-        if pod not in pod_list:
-            print(f"Couldn't recognize '{pod}' out of the following diagnostics:")
-            print(', '.join(pod_list))
-            return dict()
-        return _load_one_json(pod)
-
-    # load all of them
-    pods = dict()
-    realm_list = set()
-    bad_pods = []
-    realms = collections.defaultdict(list)
-    for p in pod_list:
-        try:
-            d = _load_one_json(p)
-            assert d
-        except Exception as exc:
-            bad_pods.append(p)
-            continue
-        pods[p] = d
-        # PODs requiring data from multiple realms get stored in the dict
-        # under a tuple of those realms; realms stored indivudally in realm_list
-        _realm = util.to_iter(d['settings'].get('realm', None), tuple)
-        if len(_realm) == 0:
-            continue
-        elif len(_realm) == 1:
-            _realm = _realm[0]
-            realm_list.add(_realm)
+        1. Argument values explictly given by the user on the command line, as 
+            recorded in the ``is_default`` attribute of :class:`.MDTFArgParser`.
+        2. Argument values given in the ``_partial_defaults`` attribute.
+        3. Argument values specified as the default values in the argument parser.
+        """
+        # if no partial_defaults were set, results of the existing parse are
+        # sufficient
+        if self._partial_defaults is None:
+            self.config = util.NameSpace.fromDict(vars(self._p.parsed_args))
         else:
-            realm_list.update(_realm)
-        realms[_realm].append(p)
-    for p in bad_pods:
-        pod_list.remove(p)
-    return PodDataTuple(
-        pod_data=pods, realm_data=realms,
-        sorted_lists={
-            "pods": pod_list,
-            "realms": sorted(list(realm_list), key=str.lower)
-        }
-    )
+            # Highest priority: options that were explicitly set by user on CLI
+            # Note that is_default[opt] = None (not True or False) if no default 
+            # value is defined for that option.
+            user_cli_opts = {k:v for k,v in vars(self._p.parsed_args).items() \
+                if not self._p.is_default.get(k, True)}
 
+            if isinstance(self._partial_defaults, dict):
+                # not handled correctly by to_iter, since dicts are iterable
+                self._partial_defaults = [self._partial_defaults] 
+            self._partial_defaults = util.to_iter(self._partial_defaults)
+            partial_defaults = []
+            for d in self._partial_defaults:
+                # drop values equal to the empty string
+                partial_defaults.append({k:v for k,v in d.items() if v != ""})
 
-class InfoCLIHandler(object):
-    def __init__(self, code_root, arg_list):
-        def _add_topic_handler(keywords, function):
-            # keep cmd_list ordered
-            keywords = util.to_iter(keywords)
-            self.cmd_list.extend(keywords)
-            for k in keywords:
-                self.cmds[k] = function
-
-        self.code_root = code_root
-        pod_info_tuple = load_pod_settings(self.code_root)
-        self.pod_list = pod_info_tuple.sorted_lists.get('pods', [])
-        self.pods = pod_info_tuple.pod_data
-        self.realm_list = pod_info_tuple.sorted_lists.get('realms', [])
-        self.realms = pod_info_tuple.realm_data
-
-        # build list of recognized topics, in order
-        self.cmds = dict()
-        self.cmd_list = []
-        _add_topic_handler(['diagnostics', 'pods'], self.info_pods_all)
-        _add_topic_handler('realms', self.info_realms_all)
-        _add_topic_handler(self.realm_list, self.info_realm)
-        _add_topic_handler(self.pod_list, self.info_pod)
-        # ...
-
-        # dispatch based on topic
-        if not arg_list:
-            self.info_cmds()
-        elif arg_list[0] in self.cmd_list:
-            self.cmds[arg_list[0]](arg_list[0])
-        else:
-            print("ERROR: '{}' not a recognized topic.".format(' '.join(arg_list)))
-            self.info_cmds()
-
-    def info_cmds(self):
-        print('Recognized topics for `mdtf.py info`:')
-        print(', '.join(self.cmd_list))
-
-    def _print_pod_info(self, pod, verbose):
-        ds = self.pods[pod]['settings']
-        dv = self.pods[pod]['varlist']
-        if verbose == 1:
-            print('  {}: {}.'.format(pod, ds['long_name']))
-        elif verbose == 2:
-            print('  {}: {}.'.format(pod, ds['long_name']))
-            print('    {}'.format(ds['description']))
-            print('    Variables: {}'.format(
-                ', '.join([v['var_name'].replace('_var','') for v in dv])
-            ))
-        elif verbose == 3:
-            print('{}: {}.'.format(pod, ds['long_name']))
-            print('  Realm: {}.'.format(' and '.join(util.to_iter(ds['realm']))))
-            print('  {}'.format(ds['description']))
-            print('  Variables:')
-            for var in dv:
-                var_str = '    {} ({}) @ {} frequency'.format(
-                    var['var_name'].replace('_var',''), 
-                    var.get('requirement',''), 
-                    var['freq'] 
-                )
-                if 'alternates' in var:
-                    var_str = var_str + '; alternates: {}'.format(
-                        ', '.join([s.replace('_var','') for s in var['alternates']])
-                    )
-                print(var_str)
-
-    def info_pods_all(self, *args):
-        print('List of installed diagnostics:')
-        print(('Do `mdtf info <diagnostic>` for more info on a specific diagnostic '
-            'or check documentation at github.com/NOAA-GFDL/MDTF-diagnostics.'))
-        for pod in self.pod_list:
-            self._print_pod_info(pod, verbose=1)
-
-    def info_pod(self, pod):
-        self._print_pod_info(pod, verbose=3)
-
-    def info_realms_all(self, *args):
-        print('List of installed diagnostics by realm:')
-        for realm in self.realms:
-            if isinstance(realm, str):
-                print('{}:'.format(realm))
-            else:
-                # tuple of multiple realms
-                print('{}:'.format(' and '.join(realm)))
-            for pod in self.realms[realm]:
-                self._print_pod_info(pod, verbose=1)
-
-    def info_realm(self, realm):
-        print('List of installed diagnostics for {}:'.format(realm))
-        for pod in self.realms[realm]:
-            self._print_pod_info(pod, verbose=2)
-
+            # Lowest priority: set of defaults from running parser on empty input
+            defaults = vars(self._p.parse_args([]))
+            
+            # CLI opts override options set from file, which override defaults
+            chained_dict_list = [user_cli_opts] + partial_defaults + [defaults]
+            self.config = dict(collections.ChainMap(*chained_dict_list))
+            self.config = util.NameSpace.fromDict(self.config)
 

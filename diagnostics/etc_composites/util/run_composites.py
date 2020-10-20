@@ -248,6 +248,10 @@ for year in year_list:
 
 
 # saving the data files 
+comp['x'] = area_H.x
+comp['y'] = area_H.y
+comp['x_edges'] = area_H.x_edges
+comp['y_edges'] = area_H.y_edges 
 pickle.dump(comp, open(os.path.join(defines.read_folder, 'composites.pkl'), 'wb'))
 
 for hemis_type in defines.composite_hem_list:

@@ -276,7 +276,7 @@ def rewrite(in_file,years,action="w",reorder=False):
 
         # JJ splitting up the full path before making year changes in the filenames
         in_file_split = in_file.split('/')
-        in_file_split[-1] = in_file_split[-1].replace("%4d_%4d" % (years[0],years[-1]), "%4d" % (years[0]))
+        in_file_split[-1] = in_file_split[-1].replace("%4d_%4d" % (years[0],years[-1]), "%4d" % (nyear))
         out_file = '/'.join(in_file_split)
 
 
@@ -323,6 +323,7 @@ def rewrite(in_file,years,action="w",reorder=False):
         out_file_split = out_file.split('/')
         out_file_split[-1] = out_file_split[-1].replace(str(years[-1]),str(years[0]-1))
         rev_file = '/'.join(out_file_split)
+        print(rev_file)
         # rev_file = out_file.replace(str(years[-1]),str(years[0]-1))
         for loop_year in years:
             # JJ - fix again to make sure that I am replacing years in the filename instead of the whole path 

@@ -8,7 +8,7 @@ table, th, td {border: 1px solid black;}
 <TITLE>ETC Composites</TITLE>
 <H3>ETC Composite Analysis</h3>
 <P>
-bla bla bla...
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 <p>
 <a href="MDTF_Documentation_etc_composites.pdf">Full Documentation and Contact Information</a>
 <P>
@@ -16,16 +16,51 @@ bla bla bla...
 <H3>Track Stats: </H3> <A HREF=model/{{CASENAME}}_track_stats.png>{{CASENAME}}</A>
 <P>
 <P>
+<H3>Variable Legend</H3> 
+<P>
+<TABLE>
+  <TR>
+    <TH>Variable</TH>
+    <TH>Long Name</TH>
+    <TH>Units</TH>
+  </TR>
+  <TR>
+    <TD>PR</TD>
+    <TD>Total Precipitation</TD>
+    <TD>mm/hr</TD>
+  </TR>
+  <TR>
+    <TD>PRW</TD>
+    <TD>Total Column Water Vapor</TD>
+    <TD>mm/hr</TD>
+  </TR>
+  <TR>
+    <TD>WS</TD>
+    <TD>Wind Speeds [sqrt(U^2 + V^2)]</TD>
+    <TD>m/s</TD>
+  </TR>
+  <TR>
+    <TD>CC</TD>
+    <TD>Cloud Cover</TD>
+    <TD>none</TD>
+  </TR>
+  <TR>
+    <TD>OMEGA</TD>
+    <TD>Vertical Velocity @ 500 hPA</TD>
+    <TD>m/s</TD>
+  </TR>
+</TABLE>
 
-<H3>Total Precipitation Composites</H3>
-
+<P>
+<H3>ETC Composites</H3>
+<P>
 <TABLE width=100%>
 <TR>
-  <TH ALIGH=LEFT><font color=navy> Hemisphere</TH>
-  <TH ALIGH=LEFT><font color=navy> ETC Composites</TH>
-  <TH ALIGH=LEFT>{{CASENAME}}</TH>
-  <TH ALIGH=LEFT>ERA-Interim</TH>
-  <TH ALIGH=LEFT>ERA-5</TH>
+  <TH><font color=navy>Hemis - Land/Ocean - Season</TH>
+  <TH>{{CASENAME}}</TH>
+  <TH>ERA-Interim (2008-2012)</TH>
+  <TH>MERRA (2008-2012)</TH>
+  <TH>Observations (2008-2012)</TH>
 </TR>
 
 <TR>
@@ -36,53 +71,40 @@ bla bla bla...
   <TH></TH>
 </TR>
 
-<!-- Southern Hemisphere Figures -->
+<!-- Figures -->
 <TR>
-  <TH ALIGH=LEFT></TH>
-  <TH ALIGH=LEFT>ALL</TH>
-  <TH ALIGH=CENTER><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_ALL.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_ALL.png>Land</A></TH>
-  <TH ALIGH=CENTER><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=CENTER><A>Ocean</A>/<A>Land</A></TH>
+  <TH>SH - Ocean - WARM</TH>
+  <TH>
+    <A HREF=model/{{CASENAME}}_area_tp_SH_ocean_WARM.png>PR</A> . 
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_erai_pr_SH_ocean_WARM.png>PR</A> . 
+    <A HREF=obs/{{CASENAME}}_erai_prw_SH_ocean_WARM.png>PRW</A> .
+    <A HREF=obs/{{CASENAME}}_erai_ws_SH_ocean_WARM.png>WS</A>
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_merra_pw_SH_ocean_WARM.png>PW</A> . 
+    <A HREF=obs/{{CASENAME}}_merra_omega_SH_ocean_WARM.png>OMEGA</A>
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_modis_cld_SH_ocean_WARM.png>CC</A> 
+  </TH>
 </TR>
 
 <TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>WARM (Nov-Mar)
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_WARM.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_WARM.png>Land</A></TH>
-	<TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-	<TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>SH
-  <TH ALIGH=LEFT>DJF
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_DJF.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_DJF.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>MAM
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_MAM.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_MAM.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>JJA
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_JJA.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_JJA.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>SON
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_SH_ocean_SON.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_SH_land_SON.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
+  <TH>NH - Ocean - WARM</TH>
+  <TH>
+    <A HREF=model/{{CASENAME}}_area_tp_NH_ocean_WARM.png>PR</A> . 
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_erai_pr_NH_ocean_WARM.png>PR</A> . 
+    <A HREF=obs/{{CASENAME}}_erai_prw_NH_ocean_WARM.png>PRW</A> .
+    <A HREF=obs/{{CASENAME}}_erai_ws_NH_ocean_WARM.png>WS</A>
+  </TH>
+  <TH>
+  </TH>
+  <TH>
+  </TH>
 </TR>
 
 <TR>
@@ -92,56 +114,6 @@ bla bla bla...
   <TH></TH>
   <TH></TH>
 </TR>
-
-<!-- Northern Hemisphere Figures -->
-<TR>
-  <TH ALIGH=LEFT></TH>
-  <TH ALIGH=LEFT>ALL</TH>
-  <TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_ALL.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_ALL.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>WARM (Nov-Mar)
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_WARM.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_WARM.png>Land</A></TH>
-	<TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-	<TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>NH
-  <TH ALIGH=LEFT>DJF
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_DJF.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_DJF.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>MAM
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_MAM.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_MAM.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>JJA
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_JJA.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_JJA.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
-<TR>
-  <TH ALIGH=LEFT>
-  <TH ALIGH=LEFT>SON
-	<TH ALIGH=LEFT><A HREF=model/{{CASENAME}}_area_tp_NH_ocean_SON.png>Ocean</A>/<A HREF=model/{{CASENAME}}_area_tp_NH_land_SON.png>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-  <TH ALIGH=LEFT><A>Ocean</A>/<A>Land</A></TH>
-</TR>
-
 
 
 </TABLE>

@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 # from mpl_toolkits.basemap import Basemap, maskoceans, shiftgrid
 import cartopy
+from cartopy.util import add_cyclic_point
 import numpy as np 
 import os
 
@@ -72,6 +73,14 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
   lllon = np.nanmin(lonGrid) 
   urlon = np.nanmax(lonGrid)
 
+  # adding cyclic point
+  # provided the values are given as lat x lon
+  lons = lonGrid[0,:]
+  lats = latGrid[:,0]
+
+  new_data, new_lons = add_cyclic_point(data, coord=lons)
+  new_lonGrid, new_latGrid = np.meshgrid(new_lons, lats)
+
   # m = Basemap(projection='cyl', urcrnrlat=urlat, urcrnrlon=urlon, llcrnrlat=lllat, llcrnrlon=lllon)
   # cnt = m.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
   # m.colorbar()
@@ -82,7 +91,8 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
 
   ax = plt.axes(projection=cartopy.crs.PlateCarree())
   ax.coastlines()
-  cnt = plt.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
+  # getting rid of the line due to lack of continuity
+  cnt = plt.contourf(new_lonGrid, new_latGrid, new_data, cmap='jet', **kwargs)
   cb = plt.colorbar(ax=ax, shrink=0.5)
   cb.ax.set_ylabel(r'$\tilde{V}^{st}_{850}$ [m/s]')
   

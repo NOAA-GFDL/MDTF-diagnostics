@@ -1,4 +1,4 @@
-# MDTF-diagnostics [![Build Status](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics.svg?branch=develop)](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics)
+# MDTF-diagnostics [![Build Status](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics.svg?branch=develop)](https://travis-ci.org/tsjackson-noaa/MDTF-diagnostics) <a href="https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/alerts/"> <img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18"/></a>￼<a href="https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/context:python"> <img alt="Language grade: Python" src="https://img.shields.io/lgtm/grade/python/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18"/></a>
 
 The MDTF diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on climate model data. Each POD script targets a specific physical process or emergent behavior, with the goals of determining how accurately the model represents that process, ensuring that models produce the right answers for the right reasons, and identifying gaps in the understanding of phenomena.
 

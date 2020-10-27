@@ -12,6 +12,7 @@ import re
 import shutil
 import string
 from . import basic
+from . import exceptions as exc
 
 import logging
 _log = logging.getLogger(__name__)
@@ -118,17 +119,17 @@ def check_executable(exec_name):
     """
     return (find_executable(exec_name) is not None)
 
-def find_files(src_dirs, filename_globs):
-    """Return list of files in `src_dirs` matching any of `filename_globs`. 
-
-    Wraps glob.glob for the use cases encountered in cleaning up POD output.
-
+def find_files(src_dirs, filename_globs, n_files=None):
+    """Return list of files in ``src_dirs``, or any subdirectories, matching any
+    of ``filename_globs``. Wraps :py:class:`glob.glob`.
     Args:
         src_dirs: Directory, or a list of directories, to search for files in.
             The function will also search all subdirectories.
         filename_globs: Glob, or a list of globs, for filenames to match. This 
             is a shell globbing pattern, not a full regex.
-
+        n_files (int, optional): If supplied, raise 
+            :class:`~framework.util.exceptions.MDTFFileNotFoundError` if the 
+            number of files found is not equal to this number.
     Returns: :py:obj:`list` of paths to files matching any of the criteria.
         If no files are found, the list is empty.
     """
@@ -139,6 +140,9 @@ def find_files(src_dirs, filename_globs):
         for g in filename_globs:
             files.update(glob.glob(os.path.join(d, g)))
             files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
+    if n_files is not None and len(files) != n_files:
+        _log.debug('Expected to find %d files, instead found %d.', n_files, len(files))
+        raise exc.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 
 def check_dirs(*dirs, create=False):

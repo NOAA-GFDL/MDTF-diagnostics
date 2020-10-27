@@ -1,7 +1,9 @@
 """Classes and functions that define and operate on basic data structures.
 """
 import collections
+import collections.abc
 import enum
+import itertools
 import unittest.mock
 
 import logging
@@ -300,3 +302,71 @@ def filter_kwargs(kwarg_dict, function):
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
+def splice_into_list(list_, splice_d,  key_fn=None):
+    """Splice sub-lists in ``splice_d`` into list ``list_`` after their 
+    corresponding entries (keys of ``slice_d``). Example: 
+
+    .. code-block:: python
+       >>> splice_into_list(['a','b','c'], {'b': ['b1', 'b2']})
+       ['a', 'b', 'b1', 'b2', 'c']
+
+    Args:
+        list_: parent list to splice sub-lists into.
+        splice_d: dict of sub-lists to splice in. Keys are entries in ``list_``
+            and values are the sub-lists to insert after that entry. Duplicate
+            or missing entries are handled appropriately.
+        key_fn (optional): If supplied, function applied to elements of ``list_`` 
+            to compare to keys of ``splice_d``.
+
+    Returns: spliced ``list_`` as described above.
+    """
+    if key_fn is None:
+        key_fn = lambda x: x
+    chunks = [0, len(list_)]
+    for k in splice_d:
+        idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
+        if len(idx) != 1:
+            _log.debug('%s not unique in %s.', k, str(list_))
+        chunks.extend(idx)
+    chunk_0, chunk_1 = itertools.tee(sorted(chunks))
+    next(chunk_1, None)
+    chunks = [list_[c[0]:c[1]] for c in zip(chunk_0, chunk_1)]
+    spliced_chunks = []
+    for c in chunks:
+        if c and key_fn(c[-1]) in splice_d:
+            spliced_chunks.append(c + splice_d[key_fn(c[-1])])
+        else:
+            spliced_chunks.append(c)
+    return list(itertools.chain.from_iterable(spliced_chunks))
+
+def deserialize_class(name):
+    """Given the name of a currently defined class, return the class itself.
+    This avoids security issues with calling :py:func:`eval`. Based on 
+    `https://stackoverflow.com/a/11781721`__.
+
+    Args:
+        name (str): name of the class to look up.
+
+    Returns: class with the given name, or raise ValueError.
+    """
+    try:
+        # for performance, search python builtin types first before going 
+        # through everything
+        return getattr(__builtins__, name)
+    except AttributeError:
+        _log.debug('%s not found in builtin types.', name)
+    q = collections.deque([object])
+    while q:
+        t = q.popleft()
+        if t.__name__ == name:
+            return t
+        try: # keep looking
+            q.extend(t.__subclasses__())
+        except TypeError:
+            # type.__subclasses__ needs an argument, for whatever reason.
+            if t is type:
+                continue
+            else:
+                raise
+    else:
+        raise ValueError('No such type: %r' % name)

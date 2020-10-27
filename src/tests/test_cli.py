@@ -3,6 +3,20 @@ import unittest
 import unittest.mock as mock
 from framework import cli
 
+def _parser_from_dict(d, add_site=True):
+    p = cli.MDTFArgParser()
+    p_config = cli.CLIParser.from_dict(d)
+    p_config.configure(p)
+    if add_site:
+        p.add_argument('--site', default='local')
+    return p
+
+class TestCanonicalArgName(unittest.TestCase):
+    def test_canonical_arg_name(self):
+        self.assertEqual(cli.canonical_arg_name('--flag '), 'flag')
+        self.assertEqual(cli.canonical_arg_name('--flag-two '), 'flag_two')
+        self.assertEqual(cli.canonical_arg_name('-flag-three_3'), 'flag_three_3')
+
 class TestWordWrap(unittest.TestCase):
     def test_word_wrap(self):
         str1 = """
@@ -30,14 +44,9 @@ class TestWordWrap(unittest.TestCase):
         self.assertEqual(cli.word_wrap(str1), str2)
 
 class TestMDTFArgParserBasic(unittest.TestCase):
-    def test_canonical_arg_name(self):
-        self.assertEqual(cli.MDTFArgParser.canonical_arg_name('--flag '), 'flag')
-        self.assertEqual(cli.MDTFArgParser.canonical_arg_name('--flag-two '), 'flag_two')
-        self.assertEqual(cli.MDTFArgParser.canonical_arg_name('-flag-three_3'), 'flag_three_3')
-
     def test_flag_aliases(self):
-        p = cli.MDTFArgParser()
-        p.configure({"arguments": [{"name": "multi_word_flag", "short_name": "f"}]})
+        p = _parser_from_dict({
+            "arguments": [{"name": "multi_word_flag", "short_name": "f"}]})
         x = p.parse_args('-f bar')
         self.assertEqual(x.multi_word_flag, "bar")
         x = p.parse_args('--multi_word_flag bar')
@@ -46,33 +55,15 @@ class TestMDTFArgParserBasic(unittest.TestCase):
         self.assertEqual(x.multi_word_flag, "bar")
 
     def test_iter_actions(self):
-        p = cli.MDTFArgParser()
-        p.configure({"arguments": [{"name": "foo"}, {"name": "foo_2"}]})
+        p = _parser_from_dict({
+            "arguments": [{"name": "foo"}, {"name": "foo_2"}]})
         dests = [a.dest for a in p.iter_actions()]
-        self.assertCountEqual(dests, ['foo', 'foo_2'])
-
-    def test_iter_actions_group(self):
-        p = cli.MDTFArgParser()
-        p.configure({
-            "arguments": [{"name": "foo"}, {"name": "foo_2"}],
-            "argument_groups": [{
-                "name" : "GROUP1",
-                "arguments":[{"name": "arg2"}]
-            },{
-                "name" : "GROUP2",
-                "arguments":[{"name": "arg3"}],
-            }]
-        })
-        dests = [a.dest for a in p.iter_actions('GROUP1')]
-        self.assertCountEqual(dests, ['arg2'])
-        dests = [a.dest for a in p.iter_actions('parser')]
-        self.assertCountEqual(dests, ['foo', 'foo_2'])
+        self.assertCountEqual(dests, ['foo', 'foo_2', 'site'])
 
 
 class TestMDTFArgParserHelpFormat(unittest.TestCase):
     def test_formatting(self):
-        p = cli.MDTFArgParser()
-        p.configure({
+        p = _parser_from_dict({
             "usage": 'foo',
             "description": """long multiline description text, although strictly
                 speaking we covered this in TestWordWrap, but why not test it 
@@ -84,7 +75,7 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
                 "metavar": "<foo metavar>",
                 "default": "bar"}],
             "epilog": 'baz'
-        })
+        }, add_site=False)
         str2 = ('usage: foo\n\nlong multiline description text, although strictly speaking we '
             'covered this in\nTestWordWrap, but why not test it again\n\nCOMMAND OPTIONS:\n  -h,'
             ' --help\n      show this help message and exit\n  --foo <foo metavar>\n      foo '
@@ -94,8 +85,7 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
         self.assertEqual(str_.getvalue(), str2)
 
     def test_formatting_groups(self):
-        p = cli.MDTFArgParser()
-        p.configure({
+        p = _parser_from_dict({
             "usage": 'foo',
             "description": "bar",
             "arguments": [{
@@ -104,20 +94,20 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
                 "name": "hidden arg", "help": "hidden help", "hidden": True
             }],
             "argument_groups": [{
-                "name" : "GROUP1",
+                "title" : "GROUP1",
                 "description" : "group1 desc",
                 "arguments":[{
                     "name": "arg2", "help": "arg2 help", "metavar": "<arg2 metavar>",
                 }]
             },{
-                "name" : "GROUP2",
+                "title" : "GROUP2",
                 "description" : "group2 desc",
                 "arguments":[{
                     "name": "arg3", "help": "arg3 help", "metavar": "<arg3 metavar>",
                 }]
             }],
             "epilog": 'baz'
-        })
+        }, add_site=False)
         str2 = ('usage: foo\n\nbar\n\nCOMMAND OPTIONS:\n  -h, --help\n      show this'
             ' help message and exit\n  --arg1 <arg1 metavar>\n      arg1 help (default:'
             ' None)\n\nGROUP1:\n  group1 desc\n\n  --arg2 <arg2 metavar>\n      arg2 '
@@ -130,8 +120,7 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
 
 class TestMDTFArgParserRecordDefaults(unittest.TestCase):
     def test_string_defaults(self):
-        p = cli.MDTFArgParser()
-        p.configure({"arguments": [{"name": "foo", "default": "bar"}]})
+        p = _parser_from_dict({"arguments": [{"name": "foo", "default": "bar"}]})
         x = p.parse_args('')
         self.assertEqual(x.foo, "bar")
         self.assertTrue(p.is_default['foo'])
@@ -143,8 +132,7 @@ class TestMDTFArgParserRecordDefaults(unittest.TestCase):
         self.assertFalse(p.is_default['foo'])
 
     def test_bool_defaults_true(self):
-        p = cli.MDTFArgParser()
-        p.configure({"arguments": [{"name": "foo", "default": True}]})
+        p = _parser_from_dict({"arguments": [{"name": "foo", "default": True}]})
         x = p.parse_args('')
         self.assertTrue(x.foo)
         self.assertTrue(p.is_default['foo'])
@@ -153,8 +141,7 @@ class TestMDTFArgParserRecordDefaults(unittest.TestCase):
         self.assertFalse(p.is_default['foo'])
 
     def test_bool_defaults_false(self):
-        p = cli.MDTFArgParser()
-        p.configure({"arguments": [{"name": "foo", "default": False}]})
+        p = _parser_from_dict({"arguments": [{"name": "foo", "default": False}]})
         x = p.parse_args('')
         self.assertFalse(x.foo)
         self.assertTrue(p.is_default['foo'])
@@ -163,87 +150,95 @@ class TestMDTFArgParserRecordDefaults(unittest.TestCase):
         self.assertFalse(p.is_default['foo'])
 
 
-class TestMDTFArgParserPositionals(unittest.TestCase):
-    def test_dupe_dest(self):
-        p = cli.MDTFArgParser()
-        p.configure({
-            "arguments": [{
-                "name": "foo"
-            },{
-                "name": "CASE_ROOT_DIR", "is_positional": True, "nargs" : "?",
-            },{
-                "name": "CASE_ROOT_DIR", "type" : "str"
-            }]
-        })
-        self.assertDictEqual(vars(p.parse_args('')), {'foo': None, 'CASE_ROOT_DIR': None})
-        self.assertDictEqual(vars(p.parse_args('A')),
-            {'foo': None, 'CASE_ROOT_DIR': 'A'})
-        self.assertDictEqual(vars(p.parse_args('--foo X')),
-            {'foo': 'X', 'CASE_ROOT_DIR': None})
-        self.assertDictEqual(vars(p.parse_args('--foo X A')),
-            {'foo': 'X', 'CASE_ROOT_DIR': 'A'})
-        self.assertDictEqual(vars(p.parse_args('--CASE_ROOT_DIR B --foo X A')),
-            {'foo': 'X', 'CASE_ROOT_DIR': 'A'})
-
-
-class TestConfigManager(unittest.TestCase):
+class TestCLIConfigManager(unittest.TestCase):
     def setUp(self):
-        p = cli.MDTFArgParser()
-        p.configure({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        _ = cli.ConfigManager(parser=p)
+        _ = cli.CLIConfigManager('dummy/test/path')
 
     def tearDown(self):
         # clear contents of Singleton
         try:
-            c = cli.ConfigManager()
+            c = cli.CLIConfigManager()
             c._reset()
         except:
             pass
 
     def test_no_partial_def(self):
-        c = cli.ConfigManager()
-        c._p.parse_args('--foo baz')
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'baz', 'foo2': 'bar'})
-        c._p.parse_args('--foo2 baz')
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':None, 'foo2': 'baz'})
+        c = cli.CLIConfigManager()
+        p = _parser_from_dict({
+            "arguments": [
+                {"name": "foo"},
+                {"name": "foo2", "default": "bar"}
+            ],
+        })
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar', 'site': 'local'})
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':None, 'foo2': 'baz','site':'local'})
 
     def test_partial_def_1(self):
-        c = cli.ConfigManager()
-        c._p.parse_args('--foo baz')
-        c._partial_defaults = {'foo': 'XX', 'foo2': 'YY'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'baz', 'foo2': 'YY'})
+        c = cli.CLIConfigManager()
+        p = _parser_from_dict({
+            "arguments": [
+                {"name": "foo"},
+                {"name": "foo2", "default": "bar"}
+            ],
+        })
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
-        c._p.parse_args('--foo baz')
-        c._partial_defaults = {'foo': 'XX'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'baz', 'foo2': 'bar'})
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar','site':'local'})
 
-        c._p.parse_args('--foo baz')
-        c._partial_defaults = {'foo2': 'YY'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'baz', 'foo2': 'YY'})
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
     def test_partial_def_2(self):
-        c = cli.ConfigManager()
-        c._p.parse_args('--foo2 baz')
-        c._partial_defaults = {'foo': 'XX', 'foo2': 'YY'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'XX', 'foo2': 'baz'})
+        c = cli.CLIConfigManager()
+        p = _parser_from_dict({
+            "arguments": [
+                {"name": "foo"},
+                {"name": "foo2", "default": "bar"}
+            ],
+        })
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX', 'foo2': 'YY'}
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c._p.parse_args('--foo2 baz')
-        c._partial_defaults = {'foo': 'XX'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':'XX', 'foo2': 'baz'})
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX'}
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c._p.parse_args('--foo2 baz')
-        c._partial_defaults = {'foo2': 'YY'}
-        c.parse_with_defaults()
-        self.assertDictEqual(c.config.toDict(), {'foo':None, 'foo2': 'baz'})
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo2': 'YY'}
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':None, 'foo2': 'baz','site':'local'})
+
+    def test_partial_def_3(self):
+        c = cli.CLIConfigManager()
+        p = _parser_from_dict({
+            "arguments": [
+                {"name": "foo"},
+                {"name": "foo2", "default": "bar"}
+            ],
+        })
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
+
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
+
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YYQ','site':'local'})
+
+        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
+        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        config = vars(p.parse_args('--foo2 baz'))
+        self.assertDictEqual(config, {'foo':'XXQ', 'foo2': 'baz','site':'local'})

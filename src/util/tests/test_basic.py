@@ -143,6 +143,58 @@ class TestMDTFEnum(unittest.TestCase):
         self.assertEqual(Dummy.from_struct('value'), Dummy.VALUE)
         self.assertEqual(Dummy.from_struct('another_value'), Dummy.ANOTHER_VALUE)
 
+class TestSpliceIntoList(unittest.TestCase):
+    def test_splice_into_list_start(self):
+        list_ = ['a','b','c']
+        ans = util.splice_into_list(list_, {'a':['a1']})
+        self.assertEqual(ans, ['a', 'a1', 'b', 'c'])
+
+    def test_splice_into_list_middle(self):
+        list_ = ['a','b','c']
+        ans = util.splice_into_list(list_, {'b':['b1']})
+        self.assertEqual(ans, ['a', 'b', 'b1', 'c'])
+    
+    def test_splice_into_list_end(self):
+        list_ = ['a','b','c']
+        ans = util.splice_into_list(list_, {'c':['c1']})
+        self.assertEqual(ans, ['a', 'b', 'c', 'c1'])
+
+    def test_splice_into_list_multi(self):
+        list_ = ['a','b','a']
+        ans = util.splice_into_list(list_, {'a':['a1'], 'c':['c1']})
+        self.assertEqual(ans, ['a', 'a1', 'b', 'a', 'a1'])
+
+    def test_splice_into_list_keyfn(self):
+        list_ = ['aaa','bXX','bYY','c','dXX','bZZ']
+        key_fn = (lambda s: s[0])
+        splice_d = {'a':['a1'], 'b':['b1'], 'd':['d1'],'g':['g1']}
+        ans = util.splice_into_list(list_, splice_d, key_fn)
+        self.assertEqual(ans, 
+            ['aaa', 'a1', 'bXX', 'b1', 'bYY', 'b1', 'c', 'dXX', 'd1', 'bZZ', 'b1']
+        )
+
+    def test_splice_into_list_general(self):
+        list_ = ['a','b','b','c','d','b']
+        splice_d = {'a':['a1','a2'], 'b':['b1'], 'd':['d1'],'g':['g1']}
+        ans = util.splice_into_list(list_, splice_d)
+        self.assertEqual(ans, 
+            ['a', 'a1', 'a2', 'b', 'b1', 'b', 'b1', 'c', 'd', 'd1', 'b', 'b1']
+        )
+
+class TestSerializeClass(unittest.TestCase):
+    def test_deserialize_builtin(self):
+        cls_ = util.deserialize_class('list')
+        self.assertEqual(cls_, list)
+        cls_ = util.deserialize_class('str')
+        self.assertEqual(cls_, str)
+        cls_ = util.deserialize_class('int')
+        self.assertEqual(cls_, int)
+
+    def test_deserialize_user(self):
+        class Dummy(object):
+            pass
+        cls_ = util.deserialize_class('Dummy')
+        self.assertEqual(cls_, Dummy)
 # ---------------------------------------------------
 
 if __name__ == '__main__':

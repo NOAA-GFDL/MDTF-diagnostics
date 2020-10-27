@@ -3,8 +3,7 @@
 from .basic import (
     Singleton, MultiMap, NameSpace, MDTFEnum,
     sentinel_object_factory, is_iterable, to_iter, from_iter, remove_prefix, 
-    remove_suffix, filter_kwargs
-    #splice_into_list, deserialize_class
+    remove_suffix, filter_kwargs, splice_into_list, deserialize_class
 )
 from .dataclass import (
     RegexPatternBase, RegexPattern, RegexPatternWithTemplate, ChainedRegexPattern,

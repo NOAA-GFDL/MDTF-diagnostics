@@ -2,8 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
-import glob
-import shutil
 import atexit
 import signal
 from abc import ABCMeta, abstractmethod

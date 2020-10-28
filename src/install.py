@@ -10,11 +10,9 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
 # passed; continue with imports
 import os
 import io
-import re
 import glob
 import collections
 import platform
-import stat
 import ftplib
 import socket
 import shutil

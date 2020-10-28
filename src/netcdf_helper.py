@@ -10,9 +10,7 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-from src import datelabel
 from src import util
-from src import util_mdtf
 import xml.etree.ElementTree as ET
 from six.moves import getcwd
 

@@ -2,7 +2,6 @@
 """
 import os
 import io
-import collections
 import re
 import glob
 import shutil

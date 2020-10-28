@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from src import six
-import glob
 import copy
 import shutil
 from collections import defaultdict, namedtuple

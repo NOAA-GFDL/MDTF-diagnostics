@@ -157,7 +157,7 @@ class NameSpace(dict):
         except AttributeError:
             try:
                 self[k] = v
-            except:
+            except Exception:
                 raise AttributeError(k)
         else:
             object.__setattr__(self, k, v)

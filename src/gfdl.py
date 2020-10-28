@@ -12,9 +12,8 @@ if os.name == 'posix' and six.PY2:
 else:
     import subprocess
 from collections import defaultdict, namedtuple
-from itertools import chain
 from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from src import datelabel
 from src import util
 from src import util_mdtf
@@ -23,7 +22,6 @@ from src import cmip6
 from src.data_manager import DataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
-from src.netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {

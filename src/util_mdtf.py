@@ -274,7 +274,7 @@ def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
         else:
             print("Found "+dir)
 
-def bump_version(path, new_v=None, extra_dirs=[]):
+def bump_version(path, new_v=None, extra_dirs=None):
     # return a filename that doesn't conflict with existing files.
     # if extra_dirs supplied, make sure path doesn't conflict with pre-existing
     # files at those locations either.
@@ -309,7 +309,10 @@ def bump_version(path, new_v=None, extra_dirs=[]):
     else:
         final_sep = ''
     dir_, file_ = os.path.split(path)
-    dir_list = util.coerce_to_iter(extra_dirs)
+    if not extra_dirs:
+        dir_list = []
+    else:
+        dir_list = util.coerce_to_iter(extra_dirs)
     dir_list.append(dir_)
     file_, old_v = _split_version(file_)
     if not old_v:

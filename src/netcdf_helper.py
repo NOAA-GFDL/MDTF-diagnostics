@@ -165,8 +165,7 @@ class NcoNetcdfHelper(NetcdfHelper):
             # strips namespaces; https://stackoverflow.com/a/25920989
             it = ET.iterparse(io.StringIO(xml_))
             for _, el in it:
-                for _, el in it:
-                    _, _, el.tag = el.tag.rpartition('}') # strip namespaces
+                _, _, el.tag = el.tag.rpartition('}') # strip namespaces
                 for at in el.attrib: # strip namespaces of attributes too
                     if '}' in at:
                         newat = at.split('}', 1)[1]

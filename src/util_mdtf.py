@@ -236,11 +236,8 @@ def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
     if ( verbose > 2) : print("Check ",varname," ",env_dict[varname])
 
 def check_required_envvar(*varlist):
-    verbose=0
     varlist = varlist[0]   #unpack tuple
     for n in range(len(varlist)):
-        if ( verbose > 2):
-            print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
             _ = os.environ[varlist[n]]
         except Exception:

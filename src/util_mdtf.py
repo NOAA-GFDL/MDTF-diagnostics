@@ -243,7 +243,7 @@ def check_required_envvar(*varlist):
             print("checking envvar ", n, varlist[n], str(varlist[n]))
         try:
             _ = os.environ[varlist[n]]
-        except:
+        except Exception:
             print("ERROR: Required environment variable {} not found.".format(
                 varlist[n]
             ))

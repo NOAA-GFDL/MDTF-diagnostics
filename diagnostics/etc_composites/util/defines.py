@@ -52,7 +52,8 @@ else:
   slp_data_directory = os.environ['WK_DIR'] + '/tmp/data_converts' 
 
   # again this has to be provided, but for now I have to change this to match the data 
-  topo_file = '/localdrive/drive6/erai/converts/invariants.nc'
+  # topo_file = '/localdrive/drive6/erai/converts/invariants.nc'
+  topo_file = os.environ['topo_file']
   model = 'tmprun'
 
   # over write years have to changed from firstyr to last year
@@ -156,7 +157,7 @@ else:
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
   # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
-  composite_var_list = ['tp']
+  composite_var_list = ['tp', 'prw']
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

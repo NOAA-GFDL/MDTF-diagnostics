@@ -3,6 +3,8 @@ import xarray as xr
 import os 
 import matplotlib.pyplot as plt 
 import netCDF4 as nc
+from scipy import interpolate
+import pickle
 import sys
 sys.path.append(os.environ['POD_HOME']+'/util')
 
@@ -12,7 +14,7 @@ sys.path.append(os.environ['POD_HOME']+'/util')
 
 def plot_area_fig(x,y,data,title,out_file):
   plt.figure()
-  plt.contourf(x, y, data)
+  plt.pcolormesh(x, y, data, cmap='jet')
   plt.colorbar()
   plt.title(title)
   plt.ylabel('Distance [km]')
@@ -23,6 +25,10 @@ def plot_area_fig(x,y,data,title,out_file):
 ##################################
 ###### Main Code
 ##################################
+
+# os.environ['topo_file'] = '/localdrive/drive6/erai/converts/invariants.nc'
+os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+# '/localdrive/drive6/erai/converts/invariants.nc'
 
 print('Start of ETC-Composites...')
 
@@ -41,10 +47,16 @@ os.environ['slp_file'] = '*.'+os.environ['slp_var']+'.6hr.nc'
 os.environ['tp_var'] = 'PRECT'
 os.environ['tp_file'] = '*.'+os.environ['tp_var']+'.6hr.nc'
 
+os.environ['prw_var'] = 'PRW'
+os.environ['prw_file'] = '*.'+os.environ['prw_var']+'.6hr.nc'
+
 # Setting up the slp_file to be used
 os.environ['MODEL_OUTPUT_DIR']  = os.environ['DATADIR'] + '/6hr'
 slp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['slp_var'] + '.6hr.nc'
 tp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['tp_var'] + '.6hr.nc'
+prw_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['prw_var'] + '.6hr.nc'
+
+print('Splitting into yearly files for the tracker ...')
 
 # read in the SLP files from the model data
 # getting the type of calendar
@@ -65,6 +77,11 @@ in_ds.close()
 # Reading in total precipitation
 in_ds = xr.open_dataset(tp_file)
 tp = in_ds.PRECT
+in_ds.close()
+
+# Reading in total column water vapor
+in_ds = xr.open_dataset(prw_file)
+prw = in_ds.PRW
 in_ds.close()
 
 # creating the year_list to chunk out the yearly sections of the files
@@ -90,12 +107,15 @@ for year in range(sYear, eYear+1):
     # selecting only the time index for the year
     slp_sel = slp[ind, :, :]
     tp_sel = tp[ind, :, :]
+    prw_sel = prw[ind, :, :]
     
     # creating the filename of the output in the correct folder
     out_slp_file= f"{os.environ['WK_DIR']}/tmp/data_converts/slp.{year:04d}.nc"
     out_tp_file= f"{os.environ['WK_DIR']}/tmp/data_converts/tp.{year:04d}.nc"
+    out_prw_file= f"{os.environ['WK_DIR']}/tmp/data_converts/prw.{year:04d}.nc"
     print(out_slp_file)
     print(out_tp_file)
+    print(out_prw_file)
         
     # creating my custom time variable to match what is required by the tracker
     time = np.arange(0, np.sum(ind)*6, 6)
@@ -167,7 +187,42 @@ for year in range(sYear, eYear+1):
             
     # writing to the netcdf file
     out_tp_ds.to_netcdf(out_tp_file)
+    
+    ###### Outputting the total column water vapor file
+    # creating the xarray dataset
+    out_prw_ds = xr.Dataset(
+        {'prw': (('time', 'lat', 'lon'), prw_sel)}, 
+        coords={
+            'time': time, 
+            'lat': lat, 
+            'lon': lon
+        }
+    )
+    
+    # adding the necessary attributes to the SLP file
+    out_prw_ds.prw.attrs['units'] = 'mm/hr'
+    
+    out_prw_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
+    out_prw_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
+    if (calendar == 'noleap'):
+        out_prw_ds.time.attrs['calendar'] = '365_day'
+    else:
+        out_prw_ds.time.attrs['calendar'] = calendar
+        
+    out_prw_ds.lon.attrs['long_name'] = 'longitude'
+    out_prw_ds.lon.attrs['standard_name'] = 'longitude'
+    out_prw_ds.lon.attrs['units'] = 'degrees_east'
+    out_prw_ds.lon.attrs['axis'] = 'X'
+    
+    out_prw_ds.lat.attrs['long_name'] = 'latitude'
+    out_prw_ds.lat.attrs['standard_name'] = 'latitude'
+    out_prw_ds.lat.attrs['units'] = 'degrees_north'
+    out_prw_ds.lat.attrs['axis'] = 'Y'
+            
+    # writing to the netcdf file
+    out_prw_ds.to_netcdf(out_prw_file)
 
+print('Splitting into yearly files for the tracker ... Completed.')
 
 # Running the tracker 
 cmd = "python %s/util/run_tracker.py"%(os.environ['POD_HOME'])
@@ -182,6 +237,7 @@ os.system(cmd)
 
 # Running the composites code
 # create the necesssary variable files and composites 
+print('Running the composites code...')
 cmd = "python %s/util/run_composites.py"%(os.environ['POD_HOME'])
 os.system(cmd)
 
@@ -195,29 +251,17 @@ era_file = f"{os.environ['OBS_DATA']}/era_interim.nc"
 
 # reading in the observation file
 ds = xr.open_dataset(obs_file)
-x = ds['X'].values
-y = ds['Y'].values
+obs_x = ds['X'].values
+obs_y = ds['Y'].values
 modis_cld = ds['modis_cld'].values
 merra_pw = ds['merra_pw'].values
 merra_omega = ds['merra_omega'].values
 ds.close()
 
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_modis_cld_SH_ocean_WARM.png"
-title = 'MODIS Cloud Cover [SH-Ocean-WARM]'
-plot_area_fig(x,y,modis_cld,title,out_file)
-
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_pw_SH_ocean_WARM.png"
-title = 'MERRA Precipitation [SH-Ocean-WARM]'
-plot_area_fig(x,y,merra_pw,title,out_file)
-
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_omega_SH_ocean_WARM.png"
-title = 'MERRA Omega @ 500 hPa [SH-Ocean-WARM]'
-plot_area_fig(x,y,merra_omega,title,out_file)
-
 # reading in the re-analysis file
 ds = xr.open_dataset(era_file)
-x = ds['X'].values
-y = ds['Y'].values
+erai_x = ds['X'].values
+erai_y = ds['Y'].values
 pr_nh_ocean_warm = ds['pr_nh_ocean_warm'].values
 prw_nh_ocean_warm = ds['prw_nh_ocean_warm'].values
 ws_nh_ocean_warm = ds['ws_nh_ocean_warm'].values
@@ -226,31 +270,127 @@ prw_sh_ocean_warm = ds['prw_sh_ocean_warm'].values
 ws_sh_ocean_warm = ds['ws_sh_ocean_warm'].values
 ds.close()
 
+# Re-griding the observation data 
+## setting up the necessary x,y values in the format required for griddata
+obs_x_1d = obs_x.flatten()
+obs_y_1d = obs_y.flatten()
+
+modis_cld_1d = modis_cld.flatten()
+merra_pw_1d = merra_pw.flatten()
+merra_omega_1d = merra_omega.flatten()
+
+## the erai x and y are 1d, have to convert it to a 2d grid
+erai_x_grid, erai_y_grid = np.meshgrid(erai_x, erai_y)
+erai_x_1d = erai_x_grid.flatten()
+erai_y_1d = erai_y_grid.flatten()
+
+# interpolating the ang, dist plots from observations on to the erai standard grid (same grid as the outputs from the model)
+erai_modis_cld = interpolate.griddata((obs_x_1d, obs_y_1d), modis_cld_1d, (erai_x_1d, erai_y_1d))
+erai_modis_cld = erai_modis_cld.reshape(erai_x_grid.shape)
+
+erai_merra_pw = interpolate.griddata((obs_x_1d, obs_y_1d), merra_pw_1d, (erai_x_1d, erai_y_1d))
+erai_merra_pw = erai_merra_pw.reshape(erai_x_grid.shape)
+
+erai_merra_omega = interpolate.griddata((obs_x_1d, obs_y_1d), merra_omega_1d, (erai_x_1d, erai_y_1d))
+erai_merra_omega = erai_merra_omega.reshape(erai_x_grid.shape)
+
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_modis_cld_SH_ocean_WARM.png"
+title = 'MODIS Cloud Cover [SH-Ocean-WARM]'
+# plot_area_fig(obs_x,obs_y,modis_cld,title,out_file)
+plot_area_fig(erai_x,erai_y,erai_modis_cld,title,out_file)
+
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_pw_SH_ocean_WARM.png"
+title = 'MERRA Precipitation [SH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,erai_merra_pw,title,out_file)
+
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_omega_SH_ocean_WARM.png"
+title = 'MERRA Omega @ 500 hPa [SH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,erai_merra_omega,title,out_file)
+
+
 # SH - Ocean - WARM
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
 title = 'ERA-Interim PR [SH-Ocean-WARM]'
-plot_area_fig(x,y,pr_sh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,pr_sh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
 title = 'ERA-Interim PRW [SH-Ocean-WARM]'
-plot_area_fig(x,y,prw_sh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,prw_sh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_ws_SH_ocean_WARM.png"
 title = 'ERA-Interim Wind Speed [SH-Ocean-WARM]'
-plot_area_fig(x,y,ws_sh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,ws_sh_ocean_warm,title,out_file)
 
 # NH - Ocean - WARM
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_NH_ocean_WARM.png"
 title = 'ERA-Interim PR [NH-Ocean-WARM]'
-plot_area_fig(x,y,pr_nh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,pr_nh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
 title = 'ERA-Interim PRW [NH-Ocean-WARM]'
-plot_area_fig(x,y,prw_nh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,prw_nh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_ws_NH_ocean_WARM.png"
 title = 'ERA-Interim Wind Speed [NH-Ocean-WARM]'
-plot_area_fig(x,y,ws_nh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,ws_nh_ocean_warm,title,out_file)
+
+
+############################################################
+####### Creating Difference Plots
+############################################################
+
+## Reading in the model composites
+model_file = f"{os.environ['WK_DIR']}/tmp/RUNDIR/tmprun/read_tmprun/composites.pkl"
+model_data = pickle.load(open(model_file, 'rb'))
+
+# Creating the plots
+
+# MODEL - ERA-Interim PR (Total Precip)
+out_file = f"{os.environ['WK_DIR']}/model/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
+hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'tp'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - pr_sh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM PR")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MODEL - ERA-Interim PRW (Total Column Water Vapor)
+out_file = f"{os.environ['WK_DIR']}/model/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
+hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'prw'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - prw_sh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM PRW")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MERRA - ERA-Interim
+out_file = f"{os.environ['WK_DIR']}/obs/merra_erai_pw_SH_ocean_WARM.png"
+plt.figure()
+diff_val = erai_merra_pw - prw_sh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+# plt.title(f"MERRA -  {os.environ['CASENAME']}\nPW")
+plt.title(f"MERRA -  ERA-Interim\nSH OCEAN WARM PW")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
 
 print('Done Completing ETC-composites driver code.')

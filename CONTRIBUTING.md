@@ -52,4 +52,3 @@ There are many git tutorials online, but in the interests of making things self-
 - When your feature is ready, submit a *pull request* by going to the Github page of your fork and clicking on that button. This is your proposal to the maintainers to incorporate your feature into NOAA's code base. 
 - (... policy on CI, tests passing ...)
 - When it's no longer needed, delete the branch locally with `git branch -d feature/<my_feature_name>`. If you pushed it to your fork, you can delete it remotely with `git push --delete origin feature/<my_feature_name>`. Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
-

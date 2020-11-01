@@ -6,13 +6,14 @@
     "description" : "Extra Tropical Cyclone Composites",
     "runtime_requirements": {
       "python3": ["numpy", "matplotlib", "xarray", "netCDF4", "cartopy"]
-      }
+      },
+    "pod_env_vars": {
+      "lat_var": "lat", 
+      "lon_var": "lon",
+      "RUN_MCMS": "True"
+    } 
   },
 
-  "pod_env_vars": {
-    "lat_var": "lat", 
-    "lon_var": "lon"
-  }, 
   
   "varlist" : [
     {

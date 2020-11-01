@@ -135,6 +135,7 @@ def track_feature_density_2d(lon, lat, ax=None):
 # check if mat file exists, if not run the mat file creator code
 mat_file = os.path.join(defines.read_folder, f'{defines.model}_{defines.over_write_years[0]}.mat') 
 if (not os.path.exists(mat_file)):
+  print('No MAT file, create the mat file from tracker output')
   os.system('python3 main_create_dict.py')
 
 # data = {'genesis': {'lat': [], 'lon': [], 'slp': []}, \

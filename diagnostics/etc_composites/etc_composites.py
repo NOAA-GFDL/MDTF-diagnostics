@@ -8,6 +8,10 @@ import pickle
 import sys
 sys.path.append(os.environ['POD_HOME']+'/util')
 
+# have to setup topo file env var, before initial setup, because defines.py needs this variable
+os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+import run_tracker_setup 
+
 ##################################
 ###### Function to plot composites
 ##################################
@@ -27,7 +31,7 @@ def plot_area_fig(x,y,data,title,out_file):
 ##################################
 
 # os.environ['topo_file'] = '/localdrive/drive6/erai/converts/invariants.nc'
-os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+# os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
 # '/localdrive/drive6/erai/converts/invariants.nc'
 
 print('Start of ETC-Composites...')
@@ -224,9 +228,16 @@ for year in range(sYear, eYear+1):
 
 print('Splitting into yearly files for the tracker ... Completed.')
 
-# Running the tracker 
-cmd = "python %s/util/run_tracker.py"%(os.environ['POD_HOME'])
-os.system(cmd)
+if (os.environ['RUN_MCMS'] == 'True'): 
+  print('Running the MCMS Tracker...')
+  # Running the tracker 
+  cmd = "python %s/util/run_tracker.py"%(os.environ['POD_HOME'])
+  os.system(cmd)
+  print('Completed the MCMS Tracker')
+else:
+  print('Running the code using different tracker outputs...')
+  run_tracker_setup.init_setup()
+  run_tracker_setup.copy_code_over()
 
 # Running the track stats 
 cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])

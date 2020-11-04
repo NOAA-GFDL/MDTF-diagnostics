@@ -238,6 +238,9 @@ else:
   print('Running the code using different tracker outputs...')
   run_tracker_setup.init_setup()
   run_tracker_setup.copy_code_over()
+  cmd = "python %s/util/run_create_dict.py"%(os.environ['POD_HOME'])
+  os.system(cmd)
+  print('Completed creating the mat file used for the analysis.')
 
 # Running the track stats 
 cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])

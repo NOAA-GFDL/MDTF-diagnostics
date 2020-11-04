@@ -12,9 +12,8 @@ if os.name == 'posix' and six.PY2:
 else:
     import subprocess
 from collections import defaultdict, namedtuple
-from itertools import chain
 from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from src import datelabel
 from src import util
 from src import util_mdtf
@@ -23,7 +22,6 @@ from src import cmip6
 from src.data_manager import DataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
-from src.netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -394,7 +392,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
         """
-        return sorted(list(self.data_keys))
+        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
 
     def _fetch_exception_handler(self, exc):
         print(exc)
@@ -417,9 +415,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # GCP can't copy to home dir, so always copy to temp
         tmpdirs = util_mdtf.TempDirManager()
         work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
-        remote_files = sorted( # cast from set to list so we can go in chrono order
-            list(self.data_files[d_key]), key=lambda ds: ds.date_range.start
-            ) 
+        remote_files = list(self.data_files[d_key])
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
@@ -508,6 +504,9 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         trim_count = 0
         for f in remote_files:
             file_name = os.path.basename(f._remote_data)
+            if f.date_range.is_static:
+                # skip date trimming logic for time-independent files
+                continue
             if not self.date_range.overlaps(f.date_range):
                 print(("\tWarning: {} has dates {} outside of requested "
                     "range {}.").format(file_name, f.date_range, self.date_range))
@@ -680,19 +679,27 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             chunk_freq=str(dataset.chunk_freq)
         )
 
-    def parse_relative_path(self, subdir, filename):
-        rel_path = os.path.join(subdir, filename)
-        match = re.match(r"""
+    _pp_ts_regex = re.compile(r"""
             /?                      # maybe initial separator
             (?P<component>\w+)/     # component name
-            ts/                     # timeseries; TODO: handle time averages (not needed now)
+            ts/                     # timeseries;
             (?P<date_freq>\w+)/     # ts freq
             (?P<chunk_freq>\w+)/    # data chunk length   
             (?P<component2>\w+)\.        # component name (again)
             (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
             (?P<name_in_model>\w+)\.       # field name
             nc                      # netCDF file extension
-        """, rel_path, re.VERBOSE)
+        """, re.VERBOSE)
+    _pp_static_regex = re.compile(r"""
+            /?                      # maybe initial separator
+            (?P<component>\w+)/     # component name 
+            (?P<component2>\w+)     # component name (again)
+            \.static\.nc             # static frequency, netCDF file extension                
+        """, re.VERBOSE)
+    
+    def parse_relative_path(self, subdir, filename):
+        rel_path = os.path.join(subdir, filename)
+        match = re.match(self._pp_ts_regex, rel_path)
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
@@ -702,9 +709,24 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = self.DateFreq(ds.date_freq)
             ds.chunk_freq = self.DateFreq(ds.chunk_freq)
+            assert ds.date_range.is_static == ds.date_freq.is_static
             return ds
-        else:
-            raise ValueError("Can't parse {}, skipping.".format(rel_path))
+        # match failed, try static file regex instead
+        match = re.match(self._pp_static_regex, rel_path)
+        if match:
+            md = match.groupdict()
+            md['start_date'] = datelabel.FXDateMin
+            md['end_date'] = datelabel.FXDateMax
+            md['name_in_model'] = None # TODO: handle better
+            ds = DataSet(**md)
+            del ds.component2
+            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.date_range = datelabel.FXDateRange
+            ds.date_freq = self.DateFreq('static')
+            ds.chunk_freq = self.DateFreq('static')
+            assert ds.date_range.is_static == ds.date_freq.is_static
+            return ds
+        raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
         return [self.component, 'ts', frepp_freq(self.data_freq), 
@@ -873,7 +895,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         return choices
 
 class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
-    _cmip6_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+    _cmip6_root = os.sep + os.path.join('uda', 'CMIP6')
 
 class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
     # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't

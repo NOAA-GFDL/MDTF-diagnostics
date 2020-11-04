@@ -4,6 +4,8 @@ import datetime
 from src.datelabel import Date as dt
 from src.datelabel import DateRange as dt_range
 from src.datelabel import DateFrequency as dt_freq
+from src.datelabel import (FXDateMin, FXDateMax, FXDateRange, 
+    FXDateException, MixedDatePrecisionException)
 
 class TestDate(unittest.TestCase):
     def test_init(self):
@@ -223,6 +225,67 @@ class TestDateRange(unittest.TestCase):
         r1 = dt_range('20000101-20000201')
         self.assertEqual(r1, eval(repr(r1), globs))
 
+class TestFXDates(unittest.TestCase):
+    def test_compare(self):
+        dtr = dt_range('19800101-19901231')
+        dt0 = dt('2019-09-18')
+        with self.assertRaises(FXDateException):
+            _ = (dt0 > FXDateMin)
+        with self.assertRaises(FXDateException):
+            _ = (dt0 <= FXDateMax)
+        with self.assertRaises(FXDateException):
+            _ = (dtr > FXDateMin)
+        with self.assertRaises(FXDateException):
+            _ = (dtr <= FXDateMax)
+        with self.assertRaises(FXDateException):
+            _ = (FXDateMin <= FXDateMax)
+        with self.assertRaises(FXDateException):
+            _ = (dtr <= FXDateRange)
+        self.assertTrue(dtr != FXDateRange)
+        self.assertTrue(dt0 != FXDateMax)
+
+    def test_contain(self):
+        dtr = dt_range('19800101-19901231')
+        dt0 = dt('2019-09-18')
+        self.assertTrue(dtr in FXDateRange)
+        self.assertTrue(dt0 in FXDateRange)
+        self.assertTrue(FXDateRange.contains(dtr))
+        self.assertTrue(FXDateRange.contains(dt0))
+        self.assertTrue(FXDateRange.overlaps(dtr))
+        self.assertTrue(FXDateRange.overlaps(dt0))
+        self.assertFalse(dtr.contains(FXDateRange))
+        self.assertTrue(dtr.overlaps(FXDateRange))
+        with self.assertRaises(FXDateException):
+            _ = (dtr.intersection(FXDateRange))
+        with self.assertRaises(FXDateException):
+            _ = (FXDateRange.intersection(dtr))
+
+    def test_is_static(self):
+        dtr = dt_range('19800101-19901231')
+        dt0 = dt('2019-09-18')
+        self.assertTrue(FXDateMin.is_static)
+        self.assertTrue(FXDateMax.is_static)
+        self.assertTrue(FXDateRange.is_static)
+        self.assertFalse(dt0.is_static)
+        self.assertFalse(dtr.is_static)
+
+    def test_span(self):
+        dtr1 = dt_range('20190101', '20190131')
+        dtr2 = dt_range('20190201', '20190228')
+        dt0 = dt('2019-09-18')
+        self.assertEqual(dt_range.from_contiguous_span(FXDateRange), FXDateRange)
+        with self.assertRaises(FXDateException):
+            _ = dt_range.from_contiguous_span(FXDateRange, FXDateRange)
+        with self.assertRaises(FXDateException):
+            _ = dt_range.from_contiguous_span(dtr1, FXDateRange, dtr2)
+        with self.assertRaises(FXDateException):
+            _ = dt_range.from_contiguous_span(dtr1, dtr2, FXDateRange)
+        with self.assertRaises(FXDateException):
+            _ = dt_range.from_date_span(FXDateMin, FXDateMax)
+        with self.assertRaises(FXDateException):
+            _ = dt_range.from_date_span(dt0, FXDateMax)
+
+
 class TestDateFrequency(unittest.TestCase):
     def test_string_parsing(self):
         self.assertEqual(dt_freq('1hr'), dt_freq(1, 'hr'))
@@ -257,6 +320,23 @@ class TestDateFrequency(unittest.TestCase):
         test = test + [dt_freq(n,'wk') for n in [3, 1]]
         self.assertEqual(max(test), dt_freq(3, 'wk'))
         self.assertEqual(min(test), dt_freq(3, 'hr'))
+
+    def test_fx_parsing(self):
+        self.assertEqual(dt_freq('fx'), dt_freq('static'))
+        self.assertEqual(dt_freq('fx'), dt_freq(0, 'fx'))
+        self.assertEqual(dt_freq('fx'), dt_freq(1, 'fx'))
+        self.assertEqual(dt_freq('fx').format(), 'fx')
+
+    def test_fx_comparisons(self):
+        self.assertTrue(dt_freq('fx') > dt_freq(2000,'yr'))
+        self.assertTrue(dt_freq('fx') > dt_freq(6,'dy'))
+        self.assertTrue(dt_freq('fx') > dt_freq(1,'wk'))
+
+    def test_is_static(self):
+        self.assertTrue(dt_freq('fx').is_static)
+        self.assertFalse(dt_freq(2000,'yr').is_static)
+        self.assertFalse(dt_freq(6,'dy').is_static)
+        self.assertFalse(dt_freq(1,'hr').is_static)
 
 if __name__ == '__main__':
     unittest.main()

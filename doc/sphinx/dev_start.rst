@@ -15,7 +15,7 @@ Obtaining the source code
 
 POD developers should work from the `develop branch <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop>`__ of the framework code. This is the "beta test" version, used for testing changes before releasing them to end users.
 
-Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the develop branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev-git-intro`.
+Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the develop branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
 Installing dependencies via conda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

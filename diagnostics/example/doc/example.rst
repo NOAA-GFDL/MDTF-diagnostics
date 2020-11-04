@@ -217,7 +217,8 @@ Accented and Greek letters can be written directly using Unicode: é, Ω.
 (Make sure your text editor is saving the file in UTF-8 encoding).
 
 Use the following syntax for superscripts and subscripts in text:
-``W m\:sup:`-2`\`` → W m\:sup:`-2`\; ``CO\:sub:`2`\`` → CO\:sub:`2`\.
+``W m\ :sup:`-2`\ `` → W m\ :sup:`-2`\ ; ``CO\ :sub:`2`\ `` → CO\ :sub:`2`\ .
+Note that spaces are needed before and after the forward slashes.
 
 Equations can be written using standard 
 `latex <https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf>`__ 

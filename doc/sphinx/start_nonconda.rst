@@ -25,7 +25,7 @@ Configuring this mode of operation requires adding additional settings to the ``
 - Likewise, to install packages needed by R in a location other than your system default, create a new setting ``"r_lib_root": <path to R package directory>``.
 
 Known issues with standalone NCL installation
----------------------------------------
+---------------------------------------------
 
 Many Linux distributions (Ubuntu, Mint, etc.) have offered a way of installing `NCL <https://www.ncl.ucar.edu/>`__ through their system package manager (apt, yum, etc.) This method of installation is not recommended: users may encounter errors when running the example PODs provided by NCAR, even if the environment variables and search path have been added. 
 

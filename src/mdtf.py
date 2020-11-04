@@ -262,7 +262,7 @@ class MDTFFramework(object):
             for mod in self._dispatch_search:
                 try:
                     return getattr(mod, class_prefix+class_suffix)
-                except:
+                except Exception:
                     continue
             print("No class named {}.".format(class_prefix+class_suffix))
             raise Exception('no_class')
@@ -290,7 +290,7 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager(config)
+            env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
             # nc_helper = self.NetCDFHelper()
 

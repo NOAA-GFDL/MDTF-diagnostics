@@ -224,7 +224,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
         for pod in self.iter_pods():
             self._setup_pod(pod)
-        self._build_data_dicts()
+        self.build_data_dicts()
 
     def _setup_pod(self, pod):
         config = util_mdtf.ConfigManager()
@@ -297,7 +297,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 self.case_name, data_key.name_in_model, freq)
         )
 
-    def _build_data_dicts(self):
+    def build_data_dicts(self):
         self.data_keys = defaultdict(list)
         self.data_pods = util.MultiMap()
         self.data_files = util.MultiMap()
@@ -308,81 +308,9 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 self.data_keys[key].append(var)
                 self.data_files[key].update(var._remote_data)
 
-    # -------------------------------------
+    # DATA QUERY -------------------------------------
 
-    def fetch_data(self):
-        self._query_data()
-        # populate vars with found files
-        for data_key in self.data_keys:
-            for var in self.data_keys[data_key]:
-                var._remote_data.extend(list(self.data_files[data_key]))
-        
-        for pod in self.iter_pods():
-            try:
-                new_varlist = [var for var \
-                    in self._iter_populated_varlist(pod.varlist, pod.name)]
-            except DataQueryFailure as exc:
-                print("Data query failed on pod {}; skipping.".format(pod.name))
-                pod.skipped = exc
-                new_varlist = []
-            for var in new_varlist:
-                var.alternates = []
-            pod.varlist = new_varlist
-        # revise DataManager's to-do list, now that we've marked some PODs as
-        # being skipped due to data inavailability
-        self._build_data_dicts()
-
-        self.plan_data_fetch_hook()
-
-        for file_ in self.remote_data_list():
-            try:
-                self.fetch_dataset(file_)
-            except CalledProcessError as caught_exc:
-                exc = DataAccessError(
-                    file_,
-                    """Running external command {} when fetching {} @ {} 
-                    returned error: {} (status {}). Did not retry.
-                    """.format(
-                        caught_exc.cmd, file_.name_in_model, file_.date_freq,
-                        caught_exc.output, caught_exc.returncode
-                    )
-                )
-                self._fetch_exception_handler(exc)
-                continue
-            except Exception as caught_exc:
-                exc = DataAccessError(
-                    file_,
-                    """Caught {} exception ({}) when fetching {} @ {}.
-                    Did not retry.
-                    """.format(
-                        type(caught_exc).__name__, caught_exc, 
-                        file_.name_in_model, file_.date_freq
-                    )
-                )
-                self._fetch_exception_handler(exc)
-                continue
-
-    def _fetch_exception_handler(self, exc):
-        print(exc)
-        keys_from_file = self.data_files.inverse()
-        for key in keys_from_file[exc.dataset]:
-            for pod in self.data_pods[key]:
-                print(("\tSkipping pod {} due to data fetch error."
-                    "").format(pod.name))
-                pod.skipped = exc
-
-    def _query_data(self):
-        for data_key in self.data_keys:
-            try:
-                var = self.data_keys[data_key][0]
-                print("Calling query_dataset on {} @ {}".format(
-                    var.name_in_model, var.date_freq))
-                files = self.query_dataset(var)
-                self.data_files[data_key].update(files)
-            except DataQueryFailure:
-                continue
-
-    def _iter_populated_varlist(self, var_iter, pod_name):
+    def iter_populated_varlist(self, var_iter, pod_name):
         """Generator function yielding either a variable, its alternates if the
         variable was not found in the data query, or DataQueryFailure if the
         variable request can't be satisfied with found data.
@@ -405,8 +333,49 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     "alternates").format(
                         var.name_in_model, var.name, var.date_freq, pod_name
                 ))
-                for alt_var in self._iter_populated_varlist(var.alternates, pod_name):
+                for alt_var in self.iter_populated_varlist(var.alternates, pod_name):
                     yield alt_var  # no 'yield from' in py2.7
+
+    # specific details that must be implemented in child class 
+    @abstractmethod
+    def query_dataset(self, dataset):
+        pass
+
+    def query_data(self):
+        for data_key in self.data_keys:
+            try:
+                var = self.data_keys[data_key][0]
+                print("Calling query_dataset on {} @ {}".format(
+                    var.name_in_model, var.date_freq))
+                files = self.query_dataset(var)
+                self.data_files[data_key].update(files)
+            except DataQueryFailure:
+                continue
+
+        # populate vars with found files
+        for data_key in self.data_keys:
+            for var in self.data_keys[data_key]:
+                var._remote_data.extend(list(self.data_files[data_key]))
+        
+        for pod in self.iter_pods():
+            try:
+                new_varlist = [var for var \
+                    in self.iter_populated_varlist(pod.varlist, pod.name)]
+            except DataQueryFailure as exc:
+                print("Data query failed on pod {}; skipping.".format(pod.name))
+                pod.skipped = exc
+                new_varlist = []
+            for var in new_varlist:
+                var.alternates = []
+            pod.varlist = new_varlist
+        # revise DataManager's to-do list, now that we've marked some PODs as
+        # being skipped due to data inavailability
+        self.build_data_dicts()
+
+    # FETCH REMOTE DATA -------------------------------------
+
+    def plan_data_fetch_hook(self):
+        pass
 
     def remote_data_list(self):
         """Process list of requested data to make data fetching efficient.
@@ -447,25 +416,58 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """
         return False
 
-    def plan_data_fetch_hook(self):
+    # specific details that must be implemented in child class 
+    @abstractmethod
+    def fetch_dataset(self, dataset):
         pass
+
+    def fetch_data(self):
+        self.plan_data_fetch_hook()
+
+        for file_ in self.remote_data_list():
+            try:
+                self.fetch_dataset(file_)
+            except CalledProcessError as caught_exc:
+                exc = DataAccessError(
+                    file_,
+                    """Running external command {} when fetching {} @ {} 
+                    returned error: {} (status {}). Did not retry.
+                    """.format(
+                        caught_exc.cmd, file_.name_in_model, file_.date_freq,
+                        caught_exc.output, caught_exc.returncode
+                    )
+                )
+                self._fetch_exception_handler(exc)
+                continue
+            except Exception as caught_exc:
+                exc = DataAccessError(
+                    file_,
+                    """Caught {} exception ({}) when fetching {} @ {}.
+                    Did not retry.
+                    """.format(
+                        type(caught_exc).__name__, caught_exc, 
+                        file_.name_in_model, file_.date_freq
+                    )
+                )
+                self._fetch_exception_handler(exc)
+                continue
+
+    def _fetch_exception_handler(self, exc):
+        print(exc)
+        keys_from_file = self.data_files.inverse()
+        for key in keys_from_file[exc.dataset]:
+            for pod in self.data_pods[key]:
+                print(("\tSkipping pod {} due to data fetch error."
+                    "").format(pod.name))
+                pod.skipped = exc
+
+    # -------------------------------------
 
     def preprocess_local_data(self, *args, **kwargs):
         # do translation/ transformations of data here
         pass
 
-    # -------------------------------------
-
-    # following are specific details that must be implemented in child class 
-    @abstractmethod
-    def query_dataset(self, dataset):
-        pass
-
-    @abstractmethod
-    def fetch_dataset(self, dataset):
-        pass
-
-    # -------------------------------------
+    # HTML & PLOT OUTPUT -------------------------------------
 
     def tearDown(self):
         # TODO: handle OSErrors in all of these

@@ -286,6 +286,7 @@ class MDTFFramework(object):
                     print(str(error))
                 case.pods.append(pod)
             case.setUp()
+            case.query_data()
             case.fetch_data()
             caselist.append(case)
 

@@ -251,6 +251,8 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def undecided_key(self, dataset):
         pass
 
+    # DATA QUERY -------------------------------------
+
     @abstractmethod
     def parse_relative_path(self, subdir, filename):
         pass
@@ -259,7 +261,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):]))
         return os.listdir(dir_)
 
-    def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
+    def list_filtered_subdirs(self, dirs_in, subdir_filter=None):
         subdir_filter = util.coerce_to_iter(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
@@ -284,7 +286,11 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def subdirectory_filters(self):
         pass
 
-    def _query_data(self):
+    def query_dataset(self, dataset):
+        # all the work done by query_data
+        pass
+
+    def query_data(self):
         """XXX UPDATE DOCSTRING 
         Populate _remote_data attribute with list of candidate files.
 
@@ -302,7 +308,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
         pathlist = ['']
         for filter_ in self.subdirectory_filters():
-            pathlist = self._list_filtered_subdirs(pathlist, filter_)
+            pathlist = self.list_filtered_subdirs(pathlist, filter_)
         for dir_ in pathlist:
             file_lookup = defaultdict(list)
             dir_contents = self._listdir(os.path.join(self.root_dir, dir_))
@@ -341,18 +347,16 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                         self.data_files[data_key].update([u_key])
                         self._component_map[u_key, data_key].append(ds)
 
-    def query_dataset(self, dataset):
-        # all the work done by _query_data
-        pass
+    # FETCH REMOTE DATA -------------------------------------
 
     @abstractmethod
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         pass
 
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
-        d_to_u_dict = self._decide_allowed_components()
+        d_to_u_dict = self.decide_allowed_components()
         for data_key in self.data_keys:
             u_key = d_to_u_dict[data_key]
             print("Selected {} for {} @ {}".format(
@@ -374,6 +378,11 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
             ) 
             print("end dmget")
 
+    def remote_data_list(self):
+        """Process list of requested data to make data fetching efficient.
+        """
+        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
+
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
 
@@ -389,24 +398,24 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # return os.path.getmtime(dataset._local_data) \
         #     >= os.path.getmtime(dataset._remote_data)
 
-    def remote_data_list(self):
-        """Process list of requested data to make data fetching efficient.
-        """
-        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
-
-    def _fetch_exception_handler(self, exc):
-        print(exc)
-        # iterating over the keys themselves, so that will be what's passed 
-        # in the exception
-        for pod in self.data_pods[exc.dataset]:
-            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
-            pod.skipped = exc
+    def determine_fetch_method(self, method='auto'):
+        _methods = {
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
+            'cp':  {'command': ['cp'], 'site':''},
+            'ln':  {'command': ['ln', '-fs'], 'site':''}
+        }
+        if method not in _methods:
+            if self.tape_filesystem:
+                method = 'gcp' # use GCP for DMF filesystems
+            else:
+                method = 'ln' # symlink for local files
+        return (_methods[method]['command'], _methods[method]['site'])
 
     def fetch_dataset(self, d_key, method='auto'):
         """Copy files to temporary directory and combine chunks.
         """
         # pylint: disable=maybe-no-member
-        (cp_command, smartsite) = self._determine_fetch_method(method)
+        (cp_command, smartsite) = self.determine_fetch_method(method)
         dest_path = self.local_path(d_key)
         dest_dir = os.path.dirname(dest_path)
         # ncrcat will error instead of creating destination directories
@@ -549,21 +558,15 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
             ) 
         # temp files cleaned up by data_manager.tearDown
 
-    def _determine_fetch_method(self, method='auto'):
-        _methods = {
-            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
-            'cp':  {'command': ['cp'], 'site':''},
-            'ln':  {'command': ['ln', '-fs'], 'site':''}
-        }
-        if method not in _methods:
-            if self.tape_filesystem:
-                method = 'gcp' # use GCP for DMF filesystems
-            else:
-                method = 'ln' # symlink for local files
-        return (_methods[method]['command'], _methods[method]['site'])
+    def _fetch_exception_handler(self, exc):
+        print(exc)
+        # iterating over the keys themselves, so that will be what's passed 
+        # in the exception
+        for pod in self.data_pods[exc.dataset]:
+            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
+            pod.skipped = exc
 
-    def process_fetched_data_hook(self):
-        pass
+    # HTML & PLOT OUTPUT -------------------------------------
 
     def _make_html(self, cleanup=False):
         # never cleanup html if we're in frepp_mode, since framework may run 
@@ -761,7 +764,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         else:
             return _heuristic_tiebreaker_sub(str_list)
 
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         choices = dict.fromkeys(self.data_files)
         cmpt_choices = choose.minimum_cover(
             self.data_files,
@@ -867,7 +870,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         grids = min(grids, key=itemgetter('grid_number'))
         return grids['grid_label']
 
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         tables = choose.minimum_cover(
             self.data_files,
             attrgetter('table_id'), 

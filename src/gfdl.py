@@ -19,7 +19,7 @@ from src import util
 from src import util_mdtf
 import src.conflict_resolution as choose
 from src import cmip6
-from src.data_manager import DataSet, DataManager, DataAccessError
+from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
 
@@ -225,8 +225,8 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
             raise DataAccessError(None, 
                 "Can't access CASE_ROOT_DIR = '{}'".format(case_dict['CASE_ROOT_DIR']))
-        self.root_dir = case_dict['CASE_ROOT_DIR']
-        self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
+        self.data_root_dir = case_dict['CASE_ROOT_DIR']
+        self.tape_filesystem = is_on_tape_filesystem(self.data_root_dir)
 
         self.frepp_mode = config.config.get('frepp', False)
         if self.frepp_mode:
@@ -257,7 +257,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         pass
 
     def _listdir(self, dir_):
-        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):]))
+        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.data_root_dir):]))
         return os.listdir(dir_)
 
     def list_filtered_subdirs(self, dirs_in, subdir_filter=None):
@@ -265,19 +265,19 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \
-                in self._listdir(os.path.join(self.root_dir, dir_)) \
+                in self._listdir(os.path.join(self.data_root_dir, dir_)) \
                 if not (d.startswith('.') or d.endswith('.nc'))
             }
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
                 print("\tCouldn't find subdirs (in {}) at {}, skipping".format(
-                    subdir_filter, os.path.join(self.root_dir, dir_)
+                    subdir_filter, os.path.join(self.data_root_dir, dir_)
                 ))
                 continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
-                if os.path.isdir(os.path.join(self.root_dir, dir_, subdir_))
+                if os.path.isdir(os.path.join(self.data_root_dir, dir_, subdir_))
             ])
         return found_dirs
 
@@ -290,14 +290,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         pass
 
     def query_data(self):
-        """XXX UPDATE DOCSTRING 
-        Populate _remote_data attribute with list of candidate files.
-
-        Specifically, if a <component> and <chunk_freq> subdirectory has all the
-        requested data, return paths to all files we *would* need in that 
-        subdirectory. The decision of which <component> and <chunk_freq> to use
-        is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
-        because it requires comparing the files found for *all* requested datasets.
+        """
         """
         self._component_map = defaultdict(list)
 
@@ -310,7 +303,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
             pathlist = self.list_filtered_subdirs(pathlist, filter_)
         for dir_ in pathlist:
             file_lookup = defaultdict(list)
-            dir_contents = self._listdir(os.path.join(self.root_dir, dir_))
+            dir_contents = self._listdir(os.path.join(self.data_root_dir, dir_))
             dir_contents = list(filter(regex_no_tiles.search, dir_contents))
             files = []
             for f in dir_contents:
@@ -318,7 +311,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
                     print('\tDEBUG:', exc)
-                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f)
+                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.data_root_dir, dir_), f)
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -368,7 +361,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         paths = set()
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
-                paths.add(f._remote_data)
+                paths.add(f.remote_data)
         if self.tape_filesystem:
             print("start dmget of {} files".format(len(paths)))
             util.run_command(['dmget','-t','-v'] + list(paths),
@@ -394,8 +387,8 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
         """
         return False
-        # return os.path.getmtime(dataset._local_data) \
-        #     >= os.path.getmtime(dataset._remote_data)
+        # return os.path.getmtime(dataset.local_path) \
+        #     >= os.path.getmtime(dataset.remote_path)
 
     def determine_fetch_method(self, method='auto'):
         _methods = {
@@ -415,30 +408,31 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         """
         # pylint: disable=maybe-no-member
         (cp_command, smartsite) = self.determine_fetch_method(method)
-        dest_path = self.local_path(d_key)
-        dest_dir = os.path.dirname(dest_path)
+        dest_dir = os.path.dirname(self.local_path(d_key))
         # ncrcat will error instead of creating destination directories
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
-        # GCP can't copy to home dir, so always copy to temp
+        # GCP can't copy to home dir, so always copy to a temp dir and move to
+        # dest_dir upon completion
         tmpdirs = util_mdtf.TempDirManager()
-        work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
+        tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
         remote_files = list(self.data_files[d_key])
 
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
         for f in remote_files:
             print("\tcopying ...{} to {}".format(
-                f._remote_data[len(self.root_dir):], work_dir
+                f.remote_path[len(self.data_root_dir):], tmpdir
             ))
             util.run_command(cp_command + [
-                smartsite + f._remote_data, 
+                smartsite + f.remote_path, 
                 # gcp requires trailing slash, ln ignores it
-                smartsite + work_dir + os.sep
+                smartsite + tmpdir + os.sep
             ], 
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
             )
+            f.tempdir_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
 
     def _fetch_exception_handler(self, exc):
         print(exc)
@@ -588,9 +582,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = DataSet(**(match.groupdict()))
+            ds = SingleFileDataSet(**(match.groupdict()))
             del ds.component2
-            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = self.DateFreq(ds.date_freq)
             ds.chunk_freq = self.DateFreq(ds.chunk_freq)
@@ -603,9 +597,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             md['start_date'] = datelabel.FXDateMin
             md['end_date'] = datelabel.FXDateMax
             md['name_in_model'] = None # TODO: handle better
-            ds = DataSet(**md)
+            ds = SingleFileDataSet(**md)
             del ds.component2
-            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
             ds.date_range = datelabel.FXDateRange
             ds.date_freq = self.DateFreq('static')
             ds.chunk_freq = self.DateFreq('static')
@@ -663,7 +657,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
 
 class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
-        # set root_dir
+        # set data_root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
         cmip = cmip6.CMIP6_CVs()
@@ -717,12 +711,12 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
 
     def parse_relative_path(self, subdir, filename):
         d = cmip6.parse_DRS_path(
-            os.path.join(self.root_dir, subdir)[len(self._cmip6_root):],
+            os.path.join(self.data_root_dir, subdir)[len(self._cmip6_root):],
             filename
         )
         d['name_in_model'] = d['variable_id']
-        ds = DataSet(**d)
-        ds._remote_data = os.path.join(self.root_dir, subdir, filename)
+        ds = SingleFileDataSet(**d)
+        ds.remote_path = os.path.join(self.data_root_dir, subdir, filename)
         return ds
 
     def subdirectory_filters(self):
@@ -855,7 +849,7 @@ def frepp_freq(date_freq):
         return _frepp_dict[date_freq.unit]
 
 frepp_translate = {
-    'in_data_dir': 'root_dir', # /pp/ directory
+    'in_data_dir': 'data_root_dir', # /pp/ directory
     'descriptor': 'CASENAME',
     'out_dir': 'OUTPUT_DIR',
     'WORKDIR': 'WORKING_DIR',

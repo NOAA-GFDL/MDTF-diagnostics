@@ -49,14 +49,15 @@ class DataAccessError(Exception):
         self.msg = msg
 
     def __str__(self):
-        if hasattr(self.dataset, '_remote_data'):
+        if hasattr(self.dataset, 'remote_path'):
             return 'Data access error for {}: {}.'.format(
-                self.dataset._remote_data, self.msg)
+                self.dataset.remote_path, self.msg)
         else:
             return 'Data access error: {}.'.format(self.msg)
 
-class DataSet(util.NameSpace):
-    """Class to describe datasets.
+class DataSetBase(util.NameSpace):
+    """Class to describe general properties of datasets. Should be reimplemented
+    as a py3 dataclass.
 
     `<https://stackoverflow.com/a/48806603>`__ for implementation.
     """
@@ -68,13 +69,11 @@ class DataSet(util.NameSpace):
             del kwargs['DateFreqMixin']
         # assign explicitly else linter complains
         self.name = None
+        self.name_in_model = None
         self.date_range = None
         self.date_freq = None
-        self._local_data = None
-        self._remote_data = []
-        self.alternates = []
         self.axes = dict()
-        super(DataSet, self).__init__(*args, **kwargs)
+        super(DataSetBase, self).__init__(*args, **kwargs)
         if ('var_name' in self) and (self.name is None):
             self.name = self.var_name
             del self.var_name
@@ -83,28 +82,11 @@ class DataSet(util.NameSpace):
             del self.freq
 
     def copy(self, new_name=None):
-        temp = super(DataSet, self).copy()
+        # TODO: we meant copy, not deepcopy, right?
+        temp = super(DataSetBase, self).copy()
         if new_name is not None:
             temp.name = new_name
         return temp  
-
-    @classmethod
-    def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util_mdtf.VariableTranslator()
-        var_copy = var.copy()
-        var_copy.update(dm_args)
-        ds = cls(**var_copy)
-        ds.original_name = ds.name
-        ds.CF_name = translate.toCF(pod_convention, ds.name)
-        alt_ds_list = []
-        for alt_var in ds.alternates:
-            alt_ds = ds.copy(new_name=alt_var)
-            alt_ds.original_name = ds.original_name
-            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
-            alt_ds.alternates = []
-            alt_ds_list.append(alt_ds)
-        ds.alternates = alt_ds_list
-        return ds
 
     @property
     def is_static(self):
@@ -127,6 +109,45 @@ class DataSet(util.NameSpace):
         d2 = {k: repr(d[k]) for k in keys_to_hash}
         FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
         return FrozenDataSet(**d2)
+
+class VarlistEntry(DataSetBase):
+    """Class to describe data for a single variable requested by a POD. Should 
+    be reimplemented as a py3 dataclass.
+    """
+    def __init__(self, *args, **kwargs):
+        self.original_name = None
+        self.CF_name = None
+        self.local_path = None
+        self.remote_data = []
+        self.alternates = []
+        super(VarlistEntry, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def from_pod_varlist(cls, pod_convention, var, dm_args):
+        translate = util_mdtf.VariableTranslator()
+        var_copy = var.copy()
+        var_copy.update(dm_args)
+        ds = cls(**var_copy)
+        ds.original_name = ds.name
+        ds.CF_name = translate.toCF(pod_convention, ds.name)
+        alt_ds_list = []
+        for alt_var in ds.alternates:
+            alt_ds = ds.copy(new_name=alt_var)
+            alt_ds.original_name = ds.original_name
+            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
+            alt_ds.alternates = []
+            alt_ds_list.append(alt_ds)
+        ds.alternates = alt_ds_list
+        return ds
+
+class SingleFileDataSet(DataSetBase):
+    """Class describing data contained in a single file. Should be reimplemented
+    as a py3 dataclass.
+    """
+    def __init__(self, *args, **kwargs):
+        self.remote_path = None
+        self.tempdir_path = None
+        super(SingleFileDataSet, self).__init__(*args, **kwargs)
 
 class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
@@ -224,10 +245,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
 
-        # express varlist as DataSet objects
+        # express varlist as VarlistEntry objects
         ds_list = []
         for var in pod.varlist:
-            ds_list.append(DataSet.from_pod_varlist(
+            ds_list.append(VarlistEntry.from_pod_varlist(
                 pod.convention, var, {'DateFreqMixin': self.DateFreq}))
         pod.varlist = ds_list
 
@@ -238,7 +259,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 var.date_range = datelabel.FXDateRange
             else:
                 var.date_range = self.date_range
-            var._local_data = self.local_path(self.dataset_key(var))
+            var.local_path = self.local_path(self.dataset_key(var))
             var.axes = copy.deepcopy(translate.axes[self.convention])
 
         if self.data_freq is not None:
@@ -256,8 +277,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     @staticmethod
     def dataset_key(dataset):
-        """Return immutable representation of DataSet. Two DataSets should have 
-        the same key 
+        """Return immutable representation of a :class:`DataSetBase` object. 
+        Two DataSets should have the same key 
         """
         return dataset._freeze()
 
@@ -286,6 +307,21 @@ class DataManager(six.with_metaclass(ABCMeta)):
         )
 
     def build_data_dicts(self):
+        """Initialize or update internal bookkeeping: which PODs use which 
+        variables, and which variables are contained in which files. Current 
+        implementation is needlessly opaque and should be replaced with sqlite
+        queries.
+
+        - A ``data_key`` is an object identifying a dataset for a single variable.
+        - ``data_keys`` maps a data_key to a list of :class:`VarlistEntry` objects 
+            representing specific versions of that variable.
+        - ``data_pods`` is a reversible map (:class:`~util.MultiMap`) between a
+            data_key and the set of PODs (represented as 
+            :class:`~shared_diagnostic.Diagnostic` objects) that use that variable.
+        - ``data_files`` is a reversible map (:class:`~util.MultiMap`) between a
+            data_key and the set of files (represented as :class:`SingleFileDataSet` 
+            objects) that contain that variable's data.
+        """
         self.data_keys = defaultdict(list)
         self.data_pods = util.MultiMap()
         self.data_files = util.MultiMap()
@@ -294,7 +330,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 key = self.dataset_key(var)
                 self.data_pods[key].update(set([pod]))
                 self.data_keys[key].append(var)
-                self.data_files[key].update(var._remote_data)
+                self.data_files[key].update(var.remote_data)
 
     # DATA QUERY -------------------------------------
 
@@ -304,7 +340,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         variable request can't be satisfied with found data.
         """
         for var in var_iter:
-            if var._remote_data:
+            if var.remote_data:
                 print("Found {} (= {}) @ {} for {}".format(
                     var.name_in_model, var.name, var.date_freq, pod_name
                 ))
@@ -343,7 +379,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         # populate vars with found files
         for data_key in self.data_keys:
             for var in self.data_keys[data_key]:
-                var._remote_data.extend(list(self.data_files[data_key]))
+                var.remote_data.extend(list(self.data_files[data_key]))
         
         for pod in self.iter_pods():
             try:
@@ -373,19 +409,20 @@ class DataManager(six.with_metaclass(ABCMeta)):
         copy of the data already exists and is current (as determined by 
         :meth:`~data_manager.DataManager.local_data_is_current`).
         
-        Returns: collection of :class:`~util.DataSet`
-            objects.
+        Returns: collection of :class:`SingleFileDataSet` objects.
         """
-        # flatten list of all _remote_datas and remove duplicates
-        unique_files = set(f for f in chain.from_iterable(iter(self.data_files.values())))
+        # flatten list of all remote_data and remove duplicates
+        unique_files = set(f \
+            for f in chain.from_iterable(iter(self.data_files.values())))
         # filter out any data we've previously fetched that's up to date
-        unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
+        unique_files = [f \
+            for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier
         if unique_files:
             if self._fetch_order_function is not None:
                 sort_key = self._fetch_order_function
-            elif hasattr(unique_files[0], '_remote_data'):
-                sort_key = attrgetter('_remote_data')
+            elif hasattr(unique_files[0], 'remote_path'):
+                sort_key = attrgetter('remote_path')
             else:
                 sort_key = None
             unique_files.sort(key=sort_key)

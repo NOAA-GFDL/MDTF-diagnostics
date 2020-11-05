@@ -18,7 +18,6 @@ else:
 from src import util
 from src import util_mdtf
 from src import datelabel
-from src import netcdf_helper
 from src.shared_diagnostic import PodRequirementFailure
 
 
@@ -167,17 +166,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
         self.MODEL_WK_DIR = d.MODEL_WK_DIR
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
-
-        # dynamic inheritance to add netcdf manipulation functions
-        # source: https://stackoverflow.com/a/8545134
-        # mixin = config.config.get(netcdf_helper, 'NcoNetcdfHelper')
-        # hardwire now, since NCO is all that's implemented
-        mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
-        self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
-        try:
-            self.nc_check_environ() # make sure we have dependencies
-        except Exception:
-            raise
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been

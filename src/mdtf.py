@@ -30,7 +30,6 @@ from src import util_mdtf
 from src import data_manager
 from src import environment_manager
 from src import shared_diagnostic
-from src import netcdf_helper
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -251,7 +250,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic, netcdf_helper
+        data_manager, environment_manager, shared_diagnostic
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -270,7 +269,6 @@ class MDTFFramework(object):
         self.DataManager = _dispatch('data_manager', 'DataManager')
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
-        self.NetCDFHelper = _dispatch('netcdf_helper', 'NetcdfHelper')
 
     def main_loop(self):
         config = util_mdtf.ConfigManager()
@@ -293,11 +291,7 @@ class MDTFFramework(object):
         for case in caselist:
             env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
-            # nc_helper = self.NetCDFHelper()
-
-            # case.preprocess_local_data(
-            #     netcdf_mixin=nc_helper, environment_manager=env_mgr
-            # )
+            # case.preprocess_local_data(environment_manager=env_mgr)
             env_mgr.setUp()
             env_mgr.run()
             env_mgr.tearDown()

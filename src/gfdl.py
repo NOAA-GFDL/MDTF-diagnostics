@@ -219,7 +219,6 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         modMgr.load('gcp') # should refactor
 
         config = util_mdtf.ConfigManager()
-        config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now
         super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
 
         assert ('CASE_ROOT_DIR' in case_dict)
@@ -440,123 +439,6 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
             )
-
-        # ----------------------------------------
-        # Processing of copied files: TODO: refactor individual steps into 
-        # separate functions 
-
-        # set axis names from header info
-        # only look at first file; if other chunks for same var differ, NCO will
-        # raise error when we try to concat them
-        file_name = os.path.basename(remote_files[0]._remote_data)
-        var_name = remote_files[0].name_in_model
-        file_axes = self.nc_get_axes_attributes(
-            var_name,
-            in_file=file_name, cwd=work_dir, dry_run=self.dry_run
-        )
-        for fax, fax_attrs in iter(file_axes.items()):
-            # update DataSets with axis info - need to loop since multiple PODs
-            # may reference this file (warning will be repeated; TODO fix that)
-            error_flag = 0
-            for var in self.data_keys[d_key]: 
-                if fax in var.axes:
-                    # file's axis in list of case's axis names; check their
-                    # axis attributes match if they're both defined
-                    if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
-                        and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower() \
-                        and error_flag != 1:
-                        print(("\tWarning: unexpected axis attribute for {0} in "
-                            "{1} (found {2}, {3} convention is {4})").format(
-                                fax, file_name, fax_attrs['axis'], 
-                                self.convention, var.axes[fax]['axis']
-                        ))
-                        error_flag = 1
-                    var.axes[fax]['MDTF_set_from_axis'] = False
-                else: 
-                    # file has different axis name, try to match by attribute
-                    for vax, vax_attrs in iter(var.axes.items()):
-                        if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
-                            continue
-                        elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
-                            # matched axis attributes: log warning & reassign
-                            if error_flag != 2:
-                                print(("\tWarning: unexpected {0} axis name in {1} "
-                                    "(found {2}, {3} convention is {4})").format(
-                                        fax_attrs['axis'], file_name, fax, 
-                                        self.convention, vax
-                                ))
-                                error_flag = 2
-                            # only update so we don't overwrite the envvar name
-                            var.axes[fax] = vax_attrs.copy()
-                            var.axes[fax].update(fax_attrs)
-                            var.axes[fax]['MDTF_set_from_axis'] = True
-                            del var.axes[vax]
-                            break
-                    else:
-                        # get here if we didn't hit 'break' above -- give up
-                        if error_flag != 3:
-                            print(("\tWarning: unable to assign {0} axis "
-                                "in {1}.").format(fax, file_name))
-                            error_flag = 3
-
-        # crop time axis to requested range
-        # do this *before* combining chunks to reduce disk activity
-        for vax, vax_attrs in iter(var.axes.items()):
-            if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
-                continue
-            else:
-                time_var_name = vax
-                break
-        else:
-            print("\tCan't determine time axis for {}.".format(file_name))
-            time_var_name = 'time' # will probably give KeyError
-        trim_count = 0
-        for f in remote_files:
-            file_name = os.path.basename(f._remote_data)
-            if f.date_range.is_static:
-                # skip date trimming logic for time-independent files
-                continue
-            if not self.date_range.overlaps(f.date_range):
-                print(("\tWarning: {} has dates {} outside of requested "
-                    "range {}.").format(file_name, f.date_range, self.date_range))
-                continue
-            if not self.date_range.contains(f.date_range):
-                # file overlaps analysis range but is not strictly contained
-                # in it means we need to trim either start or end or both
-                trimmed_range = f.date_range.intersection(
-                    self.date_range,
-                    precision=f.date_range.precision
-                )
-                print("\ttrimming '{}' of {} from {} to {}".format(
-                    time_var_name, file_name, f.date_range, trimmed_range))
-                trim_count = trim_count + 1
-                self.nc_crop_time_axis(
-                    time_var_name, trimmed_range, 
-                    in_file=file_name, cwd=work_dir, dry_run=self.dry_run
-                )
-        if trim_count > 2:
-            print("trimmed {} files!".format(trim_count))
-            raise AssertionError()
-
-        # cat chunks to destination, if more than one
-        if len(remote_files) > 1:
-            # not running in shell, so can't use glob expansion.
-            print("\tcatting {} chunks to {}".format(
-                d_key.name_in_model, dest_path
-            ))
-            chunks = [os.path.basename(f._remote_data) for f in remote_files]
-            self.nc_cat_chunks(chunks, dest_path, 
-                cwd=work_dir, dry_run=self.dry_run
-            )
-        else:
-            f = util.coerce_from_iter(remote_files)
-            file_name = os.path.basename(f._remote_data)
-            print("\tsymlinking {} to {}".format(d_key.name_in_model, dest_path))
-            util.run_command(['ln', '-fs', \
-                os.path.join(work_dir, file_name), dest_path],
-                dry_run=self.dry_run
-            ) 
-        # temp files cleaned up by data_manager.tearDown
 
     def _fetch_exception_handler(self, exc):
         print(exc)

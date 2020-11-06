@@ -1,6 +1,7 @@
 **Description**
 Include a summary of the change, and link the associated issue (if applicable).  
-List any dependencies that are required for this change.
+List any dependencies that are required for this change, including libraries and variables,   and their metadata (units, frequencies, etc...). Be sure to separate PRs and issues for new  
+PODs and PODs currently under development.
 
 Associated issue # (replace this phrase and parentheses with the issue number)  
 

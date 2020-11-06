@@ -280,7 +280,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """Return immutable representation of a :class:`DataSetBase` object. 
         Two DataSets should have the same key 
         """
-        return dataset._freeze()
+        return dataspec._freeze()
 
     def local_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.

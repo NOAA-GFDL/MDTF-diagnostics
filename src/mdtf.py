@@ -286,12 +286,12 @@ class MDTFFramework(object):
             case.setUp()
             case.query_data()
             case.fetch_data()
+            case.preprocess_data()
             caselist.append(case)
 
         for case in caselist:
             env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
-            # case.preprocess_local_data(environment_manager=env_mgr)
             env_mgr.setUp()
             env_mgr.run()
             env_mgr.tearDown()

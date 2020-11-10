@@ -15,9 +15,7 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from src import util
-from src import util_mdtf
-from src import datelabel
+from src import util, util_mdtf, datelabel, preprocessor
 from src.shared_diagnostic import PodRequirementFailure
 
 
@@ -280,7 +278,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """Return immutable representation of a :class:`DataSetBase` object. 
         Two DataSets should have the same key 
         """
-        return dataspec._freeze()
+        return dataset._freeze()
 
     def local_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.
@@ -488,9 +486,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # -------------------------------------
 
-    def preprocess_local_data(self, *args, **kwargs):
-        # do translation/ transformations of data here
-        pass
+    def preprocess_data(self):
+        for var in self.iter_vars:
+            pp = preprocessor.MDTFPreprocessor(self, var)
+            pp.preprocess()
 
     # HTML & PLOT OUTPUT -------------------------------------
 

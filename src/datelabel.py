@@ -542,9 +542,13 @@ class DateRange(AtomicInterval, _DateMixin):
 
     @property
     def end(self):
-        # raise warning?
+        # need to decrement because interval is closed, but Date() assumes its
+        # input is the start of the interval (set by precision)
         assert self.precision
-        return Date(self.upper, precision=self.precision)
+        return Date(
+            self.decrement(self.upper, self.precision), 
+            precision=self.precision
+        )
 
     @classmethod
     def from_contiguous_span(cls, *args):

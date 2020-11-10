@@ -369,15 +369,15 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 var = self.data_keys[data_key][0]
                 print("Calling query_dataset on {} @ {}".format(
                     var.name_in_model, var.date_freq))
-                files = self.query_dataset(var)
-                self.data_files[data_key].update(files)
+                self.data_files[data_key].update([self.query_dataset(var)])
             except DataQueryFailure:
                 continue
 
         # populate vars with found files
         for data_key in self.data_keys:
             for var in self.data_keys[data_key]:
-                var.remote_data.extend(list(self.data_files[data_key]))
+                for f in self.data_files[data_key]:
+                    var.remote_data.append(f)
         
         for pod in self.iter_pods():
             try:
@@ -487,7 +487,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
     # -------------------------------------
 
     def preprocess_data(self):
-        for var in self.iter_vars:
+        for var in self.iter_vars():
             pp = preprocessor.MDTFPreprocessor(self, var)
             pp.preprocess()
 
@@ -582,7 +582,14 @@ class LocalfileDataManager(DataManager):
     def query_dataset(self, dataset):
         path = self.local_path(self.dataset_key(dataset))
         if os.path.isfile(path):
-            return [path]
+            out = SingleFileDataSet()
+            out.name = dataset.name
+            out.name_in_model = dataset.name_in_model
+            out.date_range = dataset.date_freq
+            out.axes = dataset.axes
+            out.remote_path = path
+            out.tempdir_path = path
+            return out
         else:
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     

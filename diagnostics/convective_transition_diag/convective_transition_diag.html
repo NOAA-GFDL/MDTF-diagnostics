@@ -19,20 +19,21 @@ also computed (provided the model exhibits such an increase).
 <TABLE>
 <TR>
 <TH ALIGH=LEFT><font color=navy> Convective Transition Statistics
-<TH ALIGH=LEFT>{CASENAME}
+<TH ALIGH=LEFT>{{CASENAME}}
 <TH ALIGH=LEFT>OBS
 <TR>
 <TH ALIGH=LEFT>Basic Statistics
-<TH ALIGH=CENTER><A HREF=model/{CASENAME}.convecTransBasic_{TROPO_VAR}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/convecTransBasic_R2TMIv7r1_200206_201405_res={RES}_fillNrCWV_{TROPO_VAR}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.convecTransBasic_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/convecTransBasic_R2TMIv7r1_200206_201405_res={{RES}}_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
 <TR>
 <TR>
+<!-- convecTransCriticalCollapse_usp.py says these files always use res=0.25, independent of user setting of RES -->
 <TH ALIGH=LEFT>Collapsed Statistics
-<TH ALIGH=CENTER><A HREF=model/{CASENAME}.convecTransCriticalCollapse_stats_{TROPO_VAR}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/convecTransCriticalCollapse_stats_R2TMIv7r1_200206_201405_res={RES}_fillNrCWV_{TROPO_VAR}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.convecTransCriticalCollapse_stats_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/convecTransCriticalCollapse_stats_R2TMIv7r1_200206_201405_res=0.25_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
 <TR>
 <TH ALIGH=LEFT>Critical column water vapor (CWV)
-<TH ALIGH=CENTER><A HREF=model/{CASENAME}.convecTransCriticalCollapse_wc_{TROPO_VAR}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res={RES}_fillNrCWV_{TROPO_VAR}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.convecTransCriticalCollapse_wc_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res=0.25_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
 <TR>
 </TABLE>

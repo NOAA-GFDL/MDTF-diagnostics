@@ -1,0 +1,13 @@
+name: _MDTF_R_base
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=2.7
+- subprocess32
+- r-base
+- r-akima
+- r-colorramps
+- r-fields
+- r-maps
+- r-ncdf4

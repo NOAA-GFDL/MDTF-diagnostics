@@ -1,6 +1,6 @@
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+from src import six
 import glob
 import copy
 import shutil
@@ -9,19 +9,21 @@ from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datetime
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         from subprocess32 import CalledProcessError
     except ImportError:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-import util
-import util_mdtf
-import datelabel
-import netcdf_helper
-from shared_diagnostic import PodRequirementFailure
+from src import util
+from src import util_mdtf
+from src import datelabel
+from src import netcdf_helper
+from src.shared_diagnostic import PodRequirementFailure
 
+
+@six.python_2_unicode_compatible
 class DataQueryFailure(Exception):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -39,6 +41,8 @@ class DataQueryFailure(Exception):
         else:
             return 'Query failure: {}.'.format(self.msg)
 
+
+@six.python_2_unicode_compatible
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
     """
@@ -56,7 +60,7 @@ class DataAccessError(Exception):
 class DataSet(util.NameSpace):
     """Class to describe datasets.
 
-    `https://stackoverflow.com/a/48806603`_ for implementation.
+    `<https://stackoverflow.com/a/48806603>`__ for implementation.
     """
     def __init__(self, *args, **kwargs):
         if 'DateFreqMixin' not in kwargs:
@@ -104,6 +108,15 @@ class DataSet(util.NameSpace):
         ds.alternates = alt_ds_list
         return ds
 
+    @property
+    def is_static(self):
+        """Check for time-independent data ('fx' in CMIP6 DRS.) Do the comparison
+        by checking date_range against the placeholder value because that's
+        unique -- we may be using a different DateFrequency depending on the
+        data source.
+        """
+        return (self.date_range == datelabel.FXDateRange)
+
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
@@ -117,9 +130,8 @@ class DataSet(util.NameSpace):
         FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
         return FrozenDataSet(**d2)
 
-class DataManager(object):
+class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
-    __metaclass__ = ABCMeta
 
     def __init__(self, case_dict, DateFreqMixin=None):
         if not DateFreqMixin:
@@ -204,10 +216,10 @@ class DataManager(object):
             raise AssertionError(("Variable name translation doesn't recognize "
                 "{}.").format(self.convention))
         temp = translate.variables[self.convention].to_dict()
-        for key, val in temp.iteritems():
+        for key, val in iter(temp.items()):
             util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
         temp = translate.units[self.convention].to_dict()
-        for key, val in temp.iteritems():
+        for key, val in iter(temp.items()):
             util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
 
         for pod in self.iter_pods():
@@ -233,7 +245,11 @@ class DataManager(object):
 
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
-            var.date_range = self.date_range
+            if var.date_freq.is_static:
+                # placeholder value for time-independent data
+                var.date_range = datelabel.FXDateRange
+            else:
+                var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
             var.axes = copy.deepcopy(translate.axes[self.convention])
 
@@ -404,7 +420,7 @@ class DataManager(object):
             objects.
         """
         # flatten list of all _remote_datas and remove duplicates
-        unique_files = set(f for f in chain.from_iterable(self.data_files.values()))
+        unique_files = set(f for f in chain.from_iterable(iter(self.data_files.values())))
         # filter out any data we've previously fetched that's up to date
         unique_files = [f for f in unique_files if not self.local_data_is_current(f)]
         # fetch data in sorted order to make interpreting logs easier

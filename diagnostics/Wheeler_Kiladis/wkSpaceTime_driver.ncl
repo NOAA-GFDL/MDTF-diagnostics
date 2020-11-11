@@ -187,7 +187,7 @@ begin
   ; DRB: should move all the time/calendar stuff to a function
   time_coord = getenv("time_coord")
   time = f->$time_coord$
-
+  
   if ( time@units.eq."julian day") then  ; set so cd_calendar can convert it
     time@units = "days since -4713-01-01 00:00:00" ;
     time@calendar = "julian"
@@ -196,7 +196,7 @@ begin
   ; Overkill but different parts of the code use each of these
   time_array = cd_calendar(time,0) ; separated YYYY,MM,DD,HH dims
   time_all = cd_calendar(time,-3)  ; YYYYMMDDHH
-
+  
   i1 = 0
   nd = dimsizes(time_array)
   i2 = nd(0) - 1

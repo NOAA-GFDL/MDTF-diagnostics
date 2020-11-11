@@ -1,14 +1,17 @@
 """Common functions and classes used in multiple places in the MDTF code.
 Specifically, util.py implements general functionality that's not MDTF-specific.
 """
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import sys
+import io
+from src import six
 import re
 import shlex
+import glob
+import shutil
 import collections
 from distutils.spawn import find_executable
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
     except ImportError:
@@ -16,13 +19,14 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
     import subprocess
 import signal
+import threading
 import errno
 import json
-import datelabel
+from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
-    called. This version is copied from <https://stackoverflow.com/a/6798042>_ and
+    called. This version is copied from `<https://stackoverflow.com/a/6798042>`__ and
     should be compatible with both Python 2 and 3.
     """
     _instances = {}
@@ -31,7 +35,7 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton('SingletonMeta', (object,), {})): 
+class Singleton(_Singleton(six.ensure_str('SingletonMeta'), (object,), {})): 
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
@@ -49,6 +53,30 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
             del cls._instances[cls]
 
 
+class ExceptionPropagatingThread(threading.Thread):
+    """Class to propagate exceptions raised in a child thread back to the caller
+    thread when the child is join()ed. 
+    Adapted from `<https://stackoverflow.com/a/31614591>`__.
+    """
+    def run(self):
+        self.ret = None
+        self.exc = None
+        try:
+            if hasattr(self, '_Thread__target'):
+                # Thread uses name mangling prior to Python 3.
+                self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
+            else:
+                self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
+
+    def join(self, timeout=None):
+        super(ExceptionPropagatingThread, self).join(timeout)
+        if self.exc:
+            raise self.exc
+        return self.ret
+
+
 class MultiMap(collections.defaultdict):
     """Extension of the :obj:`dict` class that allows doing dictionary lookups 
     from either keys or values. 
@@ -56,32 +84,32 @@ class MultiMap(collections.defaultdict):
     Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
     from values is done on the `inverse` attribute and returns a set of matching
     keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
-    See <https://stackoverflow.com/a/21894086>_.
+    See `<https://stackoverflow.com/a/21894086>`__.
     """
     def __init__(self, *args, **kwargs):
         """Initialize :class:`~util.MultiMap` by passing an ordinary :py:obj:`dict`.
         """
         super(MultiMap, self).__init__(set, *args, **kwargs)
-        for key in self.keys():
+        for key in iter(self.keys()):
             super(MultiMap, self).__setitem__(key, coerce_to_iter(self[key], set))
 
     def __setitem__(self, key, value):
         super(MultiMap, self).__setitem__(key, coerce_to_iter(value, set))
 
     def get_(self, key):
-        if key not in self.keys():
+        if key not in list(self.keys()):
             raise KeyError(key)
         return coerce_from_iter(self[key])
     
     def to_dict(self):
         d = {}
-        for key in self.keys():
+        for key in iter(self.keys()):
             d[key] = self.get_(key)
         return d
 
     def inverse(self):
         d = collections.defaultdict(set)
-        for key, val_set in self.iteritems():
+        for key, val_set in iter(self.items()):
             for v in val_set:
                 d[v].add(key)
         return dict(d)
@@ -101,7 +129,7 @@ class NameSpace(dict):
     Note: recursive access (`d.key.subkey`, as in C-style languages) is not
         supported.
 
-    Implementation is based on `https://github.com/Infinidat/munch`_.
+    Implementation is based on `<https://github.com/Infinidat/munch>`__.
     """
 
     # only called if k not found in normal places
@@ -151,7 +179,7 @@ class NameSpace(dict):
             object.__delattr__(self, k)
 
     def __dir__(self):
-        return self.keys()
+        return list(self.keys())
     __members__ = __dir__  # for python2.x compatibility
 
     def __repr__(self):
@@ -162,13 +190,13 @@ class NameSpace(dict):
 
     def __getstate__(self):
         """ Implement a serializable interface used for pickling.
-        See https://docs.python.org/3.6/library/pickle.html.
+        See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
-        return {k: v for k, v in self.items()}
+        return {k: v for k, v in iter(self.items())}
 
     def __setstate__(self, state):
         """ Implement a serializable interface used for pickling.
-        See https://docs.python.org/3.6/library/pickle.html.
+        See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
         self.clear()
         self.update(state)
@@ -184,7 +212,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return dict((k, cls._toDict(v)) for k, v in x.iteritems())
+            return dict((k, cls._toDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls._toDict(v) for v in x)
         else:
@@ -200,7 +228,7 @@ class NameSpace(dict):
             nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
         """
         if isinstance(x, dict):
-            return cls((k, cls.fromDict(v)) for k, v in x.iteritems())
+            return cls((k, cls.fromDict(v)) for k, v in iter(x.items()))
         elif isinstance(x, (list, tuple)):
             return type(x)(cls.fromDict(v) for v in x)
         else:
@@ -216,11 +244,13 @@ class NameSpace(dict):
         We do this to enable comparison of two Namespaces, which otherwise would 
         be done by the default method of testing if the two objects refer to the
         same location in memory.
-        See `https://stackoverflow.com/a/45170549`_.
+        See `<https://stackoverflow.com/a/45170549>`__.
         """
         d = self.toDict()
         d2 = {k: repr(d[k]) for k in d}
-        FrozenNameSpace = collections.namedtuple('FrozenNameSpace', sorted(d.keys()))
+        FrozenNameSpace = collections.namedtuple(
+            'FrozenNameSpace', sorted(list(d.keys()))
+        )
         return FrozenNameSpace(**d2)
 
     def __eq__(self, other):
@@ -238,10 +268,12 @@ class NameSpace(dict):
 # ------------------------------------
 
 def strip_comments(str_, delimiter=None):
+    # would be better to use shlex, but that doesn't support multi-character
+    # comment delimiters like '//'
     if not delimiter:
         return str_
     s = str_.splitlines()
-    for i in range(len(s)):
+    for i in list(range(len(s))):
         if s[i].startswith(delimiter):
             s[i] = ''
             continue
@@ -262,7 +294,7 @@ def read_json(file_path):
     assert os.path.exists(file_path), \
         "Couldn't find JSON file {}.".format(file_path)
     try:    
-        with open(file_path, 'r') as file_:
+        with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except IOError:
         print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
@@ -270,39 +302,15 @@ def read_json(file_path):
     return parse_json(str_)
 
 def parse_json(str_):
-    def _utf8_to_ascii(data, ignore_dicts=False):
-        # json returns UTF-8 encoded strings by default, but we're in py2 where 
-        # everything is ascii. Convert strings to ascii using this solution:
-        # https://stackoverflow.com/a/33571117
-
-        # if this is a unicode string, return its string representation
-        if isinstance(data, unicode):
-            # raise UnicodeDecodeError if file contains non-ascii characters
-            return data.encode('ascii', 'strict')
-        # if this is a list of values, return list of byteified values
-        if isinstance(data, list):
-            return [_utf8_to_ascii(item, ignore_dicts=True) for item in data]
-        # if this is a dictionary, return dictionary of byteified keys and values
-        # but only if we haven't already byteified it
-        if isinstance(data, dict) and not ignore_dicts:
-            return {
-                _utf8_to_ascii(key, ignore_dicts=True): _utf8_to_ascii(value, ignore_dicts=True)
-                for key, value in data.iteritems()
-            }
-        # if it's anything else, return it in its original form
-        return data
-
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
-        parsed_json = _utf8_to_ascii(
-            json.loads(str_, object_hook=_utf8_to_ascii), ignore_dicts=True
-        )
+        parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
     except UnicodeDecodeError:
         print('{} contains non-ascii characters. Exiting.'.format(str_))
         exit()
     return parsed_json
 
-def write_json(struct, file_path, verbose=0):
+def write_json(struct, file_path, verbose=0, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
@@ -311,51 +319,124 @@ def write_json(struct, file_path, verbose=0):
         verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
-        with open(file_path, 'w') as file_obj:
-            json.dump(struct, file_obj, 
-                sort_keys=True, indent=2, separators=(',', ': '))
+        str_ = json.dumps(struct, 
+            sort_keys=sort_keys, indent=2, separators=(',', ': '))
+        with io.open(file_path, 'w', encoding='utf-8') as file_:
+            file_.write(six.ensure_text(str_, encoding='utf-8', errors='strict'))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
 
-def pretty_print_json(struct):
-    """Pseudo-YAML output for human-readbale debugging output only - 
+def pretty_print_json(struct, sort_keys=False):
+    """Pseudo-YAML output for human-readable debugging output only - 
     not valid JSON"""
-    str_ = json.dumps(struct, sort_keys=True, indent=2)
-    for char in ['"', ',', '{', '}', '[', ']']:
+    str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
+    for char in ['"', ',', '}', '[', ']']:
         str_ = str_.replace(char, '')
+    str_ = re.sub(r"{\s+", "- ", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 
-def find_files(root_dir, pattern):
-    """Return list of files in `root_dir` matching `pattern`. 
+def find_files(src_dirs, filename_globs):
+    """Return list of files in `src_dirs` matching any of `filename_globs`. 
 
-    Wraps the unix `find` command (`locate` would be much faster but there's no
-    way to query if its DB is current). 
+    Wraps glob.glob for the use cases encountered in cleaning up POD output.
 
     Args:
-        root_dir (:py:obj:`str`): Directory to search for files in.
-        pattern (:py:obj:`str`): Patterrn to match. This is a shell globbing pattern,
-            not a full regex. Default is to match filenames only, unless the
-            pattern contains a directory separator, in which case the match will
-            be done on the entire path relative to `root_dir`.
+        src_dirs: Directory, or a list of directories, to search for files in.
+            The function will also search all subdirectories.
+        filename_globs: Glob, or a list of globs, for filenames to match. This 
+            is a shell globbing pattern, not a full regex.
 
-    Returns: :py:obj:`list` of relative paths to files matching `pattern`. Paths are
-        relative to `root_dir`. If no files are found, the list is empty.
+    Returns: :py:obj:`list` of paths to files matching any of the criteria.
+        If no files are found, the list is empty.
     """
-    if os.sep in pattern:
-        pattern_flag = '-path' # searching whole path
-    else:
-        pattern_flag = '-name' # search filename only 
-    paths = run_command([
-        'find', os.path.normpath(root_dir), '-depth', '-type', 'f', 
-        pattern_flag, pattern
-        ])
-    # strip out root_dir part of path: get # of chars in root_dir (plus terminating
-    # separator) and return remainder. Could do this with '-printf %P' in GNU find
-    # but BSD find (mac os) doesn't have that.
-    prefix_length = len(os.path.normpath(root_dir)) + 1 
-    return [p[prefix_length:] for p in paths]
+    src_dirs = coerce_to_iter(src_dirs)
+    filename_globs = coerce_to_iter(filename_globs)
+    files = set([])
+    for d in src_dirs:
+        for g in filename_globs:
+            files.update(glob.glob(os.path.join(d, g)))
+            files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
+    return list(files)
+
+def recursive_copy(src_files, src_root, dest_root, copy_function=None, 
+    overwrite=False):
+    """Copy src_files to dest_root, preserving relative subdirectory structure.
+
+    Copies a subset of files in a directory subtree rooted at src_root to an
+    identical subtree structure rooted at dest_root, creating any subdirectories
+    as needed. For example, `recursive_copy('/A/B/C.txt', '/A', '/D')` will 
+    first create the destination subdirectory `/D/B` and copy '/A/B/C.txt` to 
+    `/D/B/C.txt`.
+
+    Args:
+        src_files: Absolute path, or list of absolute paths, to files to copy.
+        src_root: Root subtree of all files in src_files. Raises a ValueError
+            if all files in src_files are not contained in the src_root directory.
+        dest_root: Destination directory in which to create the copied subtree.
+        copy_function: Function to use to copy individual files. Must take two 
+            arguments, the source and destination paths, respectively. Defaults 
+            to :py:meth:`shutil.copy2`.
+        overwrite: Boolean, deafult False. If False, raise an OSError if
+            any destination files already exist, otherwise silently overwrite.
+    """
+    if copy_function is None:
+        copy_function = shutil.copy2
+    src_files = coerce_to_iter(src_files)
+    for f in src_files:
+        if not f.startswith(src_root):
+            raise ValueError('{} not a sub-path of {}'.format(f, src_root))
+    dest_files = [
+        os.path.join(dest_root, os.path.relpath(f, start=src_root)) \
+        for f in src_files
+    ]
+    for f in dest_files:
+        if not overwrite and os.path.exists(f):
+            raise OSError('{} exists.'.format(f))
+        os.makedirs(os.path.normpath(os.path.dirname(f)), exist_ok=True)
+    for src, dest in zip(src_files, dest_files):
+        copy_function(src, dest)
+
+def resolve_path(path, root_path="", env=None):
+    """Abbreviation to resolve relative paths.
+
+    Args:
+        path (:obj:`str`): path to resolve.
+        root_path (:obj:`str`, optional): root path to resolve `path` with. If
+            not given, resolves relative to `cwd`.
+
+    Returns: Absolute version of `path`, relative to `root_path` if given, 
+        otherwise relative to `os.getcwd`.
+    """
+    def _expandvars(path, env_dict):
+        """Expand quoted variables of the form $key and ${key} in path,
+        where key is a key in env_dict, similar to os.path.expandvars.
+
+        See `<https://stackoverflow.com/a/30777398>`__; specialize to not skipping
+        escaped characters and not changing unrecognized variables.
+        """
+        return re.sub(
+            r'\$(\w+|\{([^}]*)\})', 
+            lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+            path
+        )
+
+    if path == '':
+        return path # default value set elsewhere
+    path = os.path.expanduser(path) # resolve '~' to home dir
+    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
+    if isinstance(env, dict):
+        path = _expandvars(path, env)
+    if '$' in path:
+        print("Warning: couldn't resolve all env vars in '{}'".format(path))
+        return path
+    if os.path.isabs(path):
+        return path
+    if root_path == "":
+        root_path = getcwd()
+    assert os.path.isabs(root_path)
+    return os.path.normpath(os.path.join(root_path, path))
 
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
@@ -430,7 +511,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if isinstance(command, basestring):
+    if isinstance(command, six.string_types):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -503,7 +584,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     # starting bash directly instead of from sh.)
     bash_exec = find_executable('bash')
 
-    if not isinstance(command, basestring):
+    if not isinstance(command, six.string_types):
         command = ' '.join(command)
     if dry_run:
         print('DRY_RUN: call {}'.format(command))
@@ -539,19 +620,23 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     else:
         return stdout.splitlines()
 
+def is_iterable(obj):
+    return isinstance(obj, collections_abc.Iterable) \
+        and not isinstance(obj, six.string_types) # py3 strings have __iter__
+
 def coerce_to_iter(obj, coll_type=list):
     assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
         return obj
-    elif hasattr(obj, '__iter__'):
+    elif is_iterable(obj):
         return coll_type(obj)
     else:
         return coll_type([obj])
 
 def coerce_from_iter(obj):
-    if hasattr(obj, '__iter__'):
+    if is_iterable(obj):
         if len(obj) == 1:
             return list(obj)[0]
         else:
@@ -562,17 +647,18 @@ def coerce_from_iter(obj):
 def filter_kwargs(kwarg_dict, function):
     """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    named_args = set(function.func_code.co_varnames)
+    named_args = set(six.get_function_code(function).co_varnames)
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
 def signal_logger(caller_name, signum=None, frame=None):
+    """Lookup signal name from number; `<https://stackoverflow.com/a/2549950>`__.
+    """
     if signum:
-        # lookup signal name from number; https://stackoverflow.com/a/2549950
         sig_lookup = {
-            k:v for v, k in reversed(sorted(signal.__dict__.items())) \
+            k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')
         }
         print("\tDEBUG: {} caught signal {} ({})".format(

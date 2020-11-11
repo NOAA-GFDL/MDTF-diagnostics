@@ -29,7 +29,7 @@ CWV_RANGE_THRESHOLD=18 # default: 18
 CP_THRESHOLD=0.2
 
 FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
-FIG_OUTPUT_FILENAME=bin_data["BIN_OUTPUT_FILENAME"]+".ps"
+FIG_OUTPUT_FILENAME=bin_data["BIN_OUTPUT_FILENAME"]+".eps"
 
 ## Binned data filename & figure directory/filename for OBS (default: R2TMIv7) ##
 OBS="Reanalysis-2 + TMIv7r1" # will show up in the MODEL figure
@@ -40,7 +40,7 @@ bin_obs_list=sorted(glob.glob(os.environ["OBS_DATA"]\
                     +bin_data["TEMP_VAR"]+".nc"))
 FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
 FIG_OBS_FILENAME="convecTransBasic_R2TMIv7r1_200206_201405_res="\
-                  +os.environ["RES"]+"_fillNrCWV_"+bin_data["TEMP_VAR"]+".ps"
+                  +os.environ["RES"]+"_fillNrCWV_"+bin_data["TEMP_VAR"]+".eps"
 
 # Force the OBS & MODEL figures to use the same color map
 #  Will be ignored if binned OBS data does not exist

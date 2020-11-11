@@ -10,6 +10,8 @@ This file is part of the MDTF code package, version 2.0, which includes the foll
 
 The MDTF code package and individual PODs are made available under the version 3 of the GNU Lesser General Public License, which is provided below. 
 
+The 'six' compatbility library (src/six.py) is copyright (c) 2010-2020 Benjamin Peterson and provided in accordance with the terms of its MIT license. See the header of src/six.py for license information.
+
 The intent of this license is to ensure free and unrestricted access to the MDTF code package and individual PODs, and to pass on those rights to modified versions this code package.
 
 GNU LESSER GENERAL PUBLIC LICENSE

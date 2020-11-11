@@ -12,11 +12,11 @@
 # the LGPLv3 license (see LICENSE.txt).
 # ======================================================================
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    print(("ERROR: MDTF currently only supports python 2.7.*. Please check "
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    print(("ERROR: MDTF currently only supports python >= 2.7. Please check "
     "which version is on your $PATH (e.g. with `which python`.)"))
     print("Attempted to run with following python version:\n{}".format(sys.version))
     exit()
@@ -24,13 +24,13 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-import cli
-import util
-import util_mdtf
-import data_manager
-import environment_manager
-import shared_diagnostic
-import netcdf_helper
+from src import cli
+from src import util
+from src import util_mdtf
+from src import data_manager
+from src import environment_manager
+from src import shared_diagnostic
+from src import netcdf_helper
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -78,6 +78,7 @@ class MDTFFramework(object):
         pod_info_tuple = cli.load_pod_settings(code_root)
         # do nontrivial parsing
         config = util_mdtf.ConfigManager(cli_obj, pod_info_tuple)
+        print(util.pretty_print_json(config.paths))
         self.parse_mdtf_args(cli_obj, config)
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config)
@@ -116,15 +117,18 @@ class MDTFFramework(object):
         # don't think PODs use global env vars?
         # self.envvars = self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
         config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        # globally enforce non-interactive matplotlib backend
+        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
+        config.global_envvars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, cli_obj, config):
         self.pod_list = []
         args = util.coerce_to_iter(config.config.pop('pods', []), set)
         if 'example' in args or 'examples' in args:
-            self.pod_list = [pod for pod in config.pods.keys() \
+            self.pod_list = [pod for pod in config.pods \
                 if pod.startswith('example')]
         elif 'all' in args:
-            self.pod_list = [pod for pod in config.pods.keys() \
+            self.pod_list = [pod for pod in config.pods \
                 if not pod.startswith('example')]
         else:
             # specify pods by realm
@@ -134,9 +138,9 @@ class MDTFFramework(object):
                 if util.coerce_to_iter(key, set).issubset(realms):
                     self.pod_list.extend(config.pod_realms[key])
             # specify pods by name
-            pods = args.intersection(set(config.pods.keys()))
+            pods = args.intersection(set(config.pods))
             self.pod_list.extend(list(pods))
-            for arg in args.difference(set(config.pods.keys())): # remainder:
+            for arg in args.difference(set(config.pods)): # remainder:
                 print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
             # exclude examples
             self.pod_list = [pod for pod in self.pod_list \
@@ -233,14 +237,14 @@ class MDTFFramework(object):
             d[key] = case
         d['pod_list'] = self.pod_list
         d['paths'] = config.paths
-        d['paths'].pop('_unittest_flag', None)
+        d['paths'].pop('_unittest', None)
         d['settings'] = dict()
-        settings_gps = set(cli_obj.parser_groups.keys()).difference(
+        settings_gps = set(cli_obj.parser_groups).difference(
             set(['parser','PATHS','MODEL','DIAGNOSTICS'])
         )
         for group in settings_gps:
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
-        d['settings'] = {k:v for k,v in d['settings'].iteritems() \
+        d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
             if k not in d['paths']}
         d['envvars'] = config.global_envvars
         print('DEBUG: SETTINGS:')
@@ -286,7 +290,7 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager(config)
+            env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
             # nc_helper = self.NetCDFHelper()
 
@@ -302,11 +306,17 @@ class MDTFFramework(object):
         self.cleanup_tempdirs()
 
 
+# should move this out of "src" package, but need to create wrapper shell script
+# to set framework conda env.
 if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    mdtf = MDTFFramework(code_root, os.path.join(src_dir, 'cli.jsonc'))
+    defaults_rel_path = os.path.join(src_dir, 'cli.jsonc')
+    if not os.path.exists(defaults_rel_path):
+        # print('Warning: site-specific cli.jsonc not found, using template.')
+        defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
+    mdtf = MDTFFramework(code_root, defaults_rel_path)
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
     print("Exiting normally from {}".format(__file__))

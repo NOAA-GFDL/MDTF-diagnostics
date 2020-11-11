@@ -91,6 +91,7 @@ class _PathManager(util.NameSpace):
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
         d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
         d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
+        d.DATADIR = d.POD_WK_DIR # synonym so we don't need to change docs
         return d
 
 

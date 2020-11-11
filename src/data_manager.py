@@ -210,8 +210,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
             verbose=verbose)
         self.envvars.update({
-            "DATADIR": self.MODEL_DATA_DIR,
-            "variab_dir": self.MODEL_WK_DIR,
             "CASENAME": self.case_name,
             "model": self.model_name,
             "FIRSTYR": self.firstyr.format(precision=1), 
@@ -297,7 +295,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             freq = eval('datelabel.'+data_key.date_freq)
         freq = freq.format_local()
         return os.path.join(
-            pod_wk_dir,
+            pod_wk_dir, freq,
             "{}.{}.{}.nc".format(self.case_name, data_key.name_in_model, freq)
         )
 

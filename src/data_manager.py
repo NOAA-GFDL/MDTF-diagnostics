@@ -3,7 +3,7 @@ import os
 from src import six
 import copy
 import shutil
-from collections import defaultdict, namedtuple
+import collections
 from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
@@ -15,7 +15,7 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from src import util, util_mdtf, datelabel, preprocessor
+from src import util, util_mdtf, datelabel, preprocessor, dataspec
 from src.shared_diagnostic import PodRequirementFailure
 
 
@@ -37,7 +37,6 @@ class DataQueryFailure(Exception):
         else:
             return 'Query failure: {}.'.format(self.msg)
 
-
 @six.python_2_unicode_compatible
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
@@ -52,100 +51,6 @@ class DataAccessError(Exception):
                 self.dataset.remote_path, self.msg)
         else:
             return 'Data access error: {}.'.format(self.msg)
-
-class DataSetBase(util.NameSpace):
-    """Class to describe general properties of datasets. Should be reimplemented
-    as a py3 dataclass.
-
-    `<https://stackoverflow.com/a/48806603>`__ for implementation.
-    """
-    def __init__(self, *args, **kwargs):
-        if 'DateFreqMixin' not in kwargs:
-            self.DateFreq = datelabel.DateFrequency
-        else:
-            self.DateFreq = kwargs['DateFreqMixin']
-            del kwargs['DateFreqMixin']
-        # assign explicitly else linter complains
-        self.name = None
-        self.name_in_model = None
-        self.date_range = None
-        self.date_freq = None
-        self.axes = dict()
-        super(DataSetBase, self).__init__(*args, **kwargs)
-        if ('var_name' in self) and (self.name is None):
-            self.name = self.var_name
-            del self.var_name
-        if ('freq' in self) and (self.date_freq is None):
-            self.date_freq = self.DateFreq(self.freq)
-            del self.freq
-
-    def copy(self, new_name=None):
-        # TODO: we meant copy, not deepcopy, right?
-        temp = super(DataSetBase, self).copy()
-        if new_name is not None:
-            temp.name = new_name
-        return temp  
-
-    @property
-    def is_static(self):
-        """Check for time-independent data ('fx' in CMIP6 DRS.) Do the comparison
-        by checking date_range against the placeholder value because that's
-        unique -- we may be using a different DateFrequency depending on the
-        data source.
-        """
-        return (self.date_range == datelabel.FXDateRange)
-
-    def _freeze(self):
-        """Return immutable representation of (current) attributes.
-
-        Exclude attributes starting with '_' from the comparison, in case 
-        we want DataSets with different timestamps, temporary directories, etc.
-        to compare as equal.
-        """
-        d = self.toDict()
-        keys_to_hash = sorted(k for k in d if not k.startswith('_'))
-        d2 = {k: repr(d[k]) for k in keys_to_hash}
-        FrozenDataSet = namedtuple('FrozenDataSet', keys_to_hash)
-        return FrozenDataSet(**d2)
-
-class VarlistEntry(DataSetBase):
-    """Class to describe data for a single variable requested by a POD. Should 
-    be reimplemented as a py3 dataclass.
-    """
-    def __init__(self, *args, **kwargs):
-        self.original_name = None
-        self.CF_name = None
-        self.dest_path = None
-        self.remote_data = []
-        self.alternates = []
-        super(VarlistEntry, self).__init__(*args, **kwargs)
-
-    @classmethod
-    def from_pod_varlist(cls, pod_convention, var, dm_args):
-        translate = util_mdtf.VariableTranslator()
-        var_copy = var.copy()
-        var_copy.update(dm_args)
-        ds = cls(**var_copy)
-        ds.original_name = ds.name
-        ds.CF_name = translate.toCF(pod_convention, ds.name)
-        alt_ds_list = []
-        for alt_var in ds.alternates:
-            alt_ds = ds.copy(new_name=alt_var)
-            alt_ds.original_name = ds.original_name
-            alt_ds.CF_name = translate.toCF(pod_convention, alt_ds.name)
-            alt_ds.alternates = []
-            alt_ds_list.append(alt_ds)
-        ds.alternates = alt_ds_list
-        return ds
-
-class SingleFileDataSet(DataSetBase):
-    """Class describing data contained in a single file. Should be reimplemented
-    as a py3 dataclass.
-    """
-    def __init__(self, *args, **kwargs):
-        self.remote_path = None
-        self.local_path = None
-        super(SingleFileDataSet, self).__init__(*args, **kwargs)
 
 class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
@@ -315,7 +220,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             data_key and the set of files (represented as :class:`SingleFileDataSet` 
             objects) that contain that variable's data.
         """
-        self.data_keys = defaultdict(list)
+        self.data_keys = collections.defaultdict(list)
         self.data_pods = util.MultiMap()
         self.data_files = util.MultiMap()
         for pod in self.iter_pods():
@@ -569,7 +474,7 @@ class LocalfileDataManager(DataManager):
     already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
     the PODs' sample model data.
     """
-    DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
+    DataKey = collections.namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
         return self.DataKey(
             name_in_model=dataset.name_in_model, 

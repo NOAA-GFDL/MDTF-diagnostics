@@ -565,7 +565,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
 
 class LocalfileDataManager(DataManager):
-    # Assumes data files are already present in required directory structure 
+    """:class:`DataManager` for working with input model data files that are 
+    already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
+    the PODs' sample model data.
+    """
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
         return self.DataKey(
@@ -573,16 +576,49 @@ class LocalfileDataManager(DataManager):
             date_freq=str(dataset.date_freq)
         )
 
+    def remote_path(self, data_key):
+        """Returns the absolute path of the local copy of the file for dataset.
+
+        This determines the local sample model data directory structure, which 
+        is
+        ``$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'``.
+        Sample model data not following this convention won't be found.
+        """
+        assert 'name_in_model' in data_key._fields
+        assert 'date_freq' in data_key._fields
+        # values in key are repr strings by default, so need to instantiate the
+        # datelabel object to use its formatting method
+        try:
+            # value in key is from __str__
+            freq = self.DateFreq(data_key.date_freq)
+        except ValueError:
+            # value in key is from __repr__
+            freq = eval('datelabel.'+data_key.date_freq)
+        freq = freq.format_local()
+        return os.path.join(
+            self.MODEL_DATA_DIR, freq,
+            "{}.{}.{}.nc".format(self.case_name, data_key.name_in_model, freq)
+        )
+
     def query_dataset(self, dataset):
-        path = self.dest_path(self.dataset_key(dataset))
+        d_key = self.dataset_key(dataset)
+        path = self.remote_path(d_key)
+        tmpdirs = util_mdtf.TempDirManager()
+        tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
         if os.path.isfile(path):
-            return [path]
+            out = SingleFileDataSet()
+            out.name = dataset.name
+            out.name_in_model = dataset.name_in_model
+            out.date_range = dataset.date_freq
+            out.axes = dataset.axes
+            out.remote_path = path
+            out.local_path = os.path.join(tmpdir, os.path.basename(path))
+            return out
         else:
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
     def local_data_is_current(self, dataset):
         return True 
 
-    def fetch_dataset(self, dataset):
-        pass
-    
+    def fetch_dataset(self, file_ds):
+        shutil.copy2(file_ds.remote_path, file_ds.local_path)

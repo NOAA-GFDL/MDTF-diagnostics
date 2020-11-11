@@ -902,7 +902,7 @@ class DateFrequency(datetime.timedelta):
 
     def format_local(self):
         """Format frequency as used in framework's local directory hierarchy
-        (defined in :meth:`src.data_manager.DataManager.local_path`.)
+        (defined in :meth:`src.data_manager.DataManager.dest_path`.)
         """
         if self.quantity == 1:
             if self.unit == 'mo':

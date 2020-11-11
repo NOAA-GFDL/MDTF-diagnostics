@@ -359,7 +359,7 @@ class Diagnostic(object):
             return (found_list, missing_list)
         for ds in varlist:
             if (verbose > 2 ): print(func_name +" "+ds.name)
-            filepath = ds.local_path
+            filepath = ds.dest_path
             if os.path.isfile(filepath):
                 found_list.append(filepath)
                 continue

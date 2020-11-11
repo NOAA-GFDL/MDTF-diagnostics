@@ -207,9 +207,10 @@ class MDTFFramework(object):
 
     def _post_parse_hook(self, cli_obj, config):
         # init other services
-        _ = util_mdtf.TempDirManager()
-        _ = util_mdtf.VariableTranslator()
         self.verify_paths(config)
+        # use WORKING_DIR for temp data
+        _ = util_mdtf.TempDirManager(config.paths.WORKING_DIR)
+        _ = util_mdtf.VariableTranslator()
 
     def verify_paths(self, config):
         # clean out WORKING_DIR if we're not keeping temp files

@@ -115,7 +115,7 @@ class VarlistEntry(DataSetBase):
     def __init__(self, *args, **kwargs):
         self.original_name = None
         self.CF_name = None
-        self.local_path = None
+        self.dest_path = None
         self.remote_data = []
         self.alternates = []
         super(VarlistEntry, self).__init__(*args, **kwargs)
@@ -144,7 +144,7 @@ class SingleFileDataSet(DataSetBase):
     """
     def __init__(self, *args, **kwargs):
         self.remote_path = None
-        self.tempdir_path = None
+        self.local_path = None
         super(SingleFileDataSet, self).__init__(*args, **kwargs)
 
 class DataManager(six.with_metaclass(ABCMeta)):
@@ -257,7 +257,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 var.date_range = datelabel.FXDateRange
             else:
                 var.date_range = self.date_range
-            var.local_path = self.local_path(self.dataset_key(var))
+            var.dest_path = self.dest_path(pod.POD_WK_DIR, self.dataset_key(var))
             var.axes = copy.deepcopy(translate.axes[self.convention])
 
         if self.data_freq is not None:
@@ -280,12 +280,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """
         return dataset._freeze()
 
-    def local_path(self, data_key):
-        """Returns the absolute path of the local copy of the file for dataset.
-
-        This determines the local model data directory structure, which is
-        `$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'`.
-        Files not following this convention won't be found.
+    def dest_path(self, pod_wk_dir, data_key):
+        """Returns the absolute path of the POD's preprocessed, local copy of 
+        the file containing the requested dataset. Files not following this 
+        convention won't be found by the POD.
         """
         assert 'name_in_model' in data_key._fields
         assert 'date_freq' in data_key._fields
@@ -299,9 +297,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
             freq = eval('datelabel.'+data_key.date_freq)
         freq = freq.format_local()
         return os.path.join(
-            self.MODEL_DATA_DIR, freq,
-            "{}.{}.{}.nc".format(
-                self.case_name, data_key.name_in_model, freq)
+            pod_wk_dir,
+            "{}.{}.{}.nc".format(self.case_name, data_key.name_in_model, freq)
         )
 
     def build_data_dicts(self):
@@ -571,7 +568,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
 class LocalfileDataManager(DataManager):
     # Assumes data files are already present in required directory structure 
-
     DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
     def dataset_key(self, dataset):
         return self.DataKey(
@@ -580,16 +576,9 @@ class LocalfileDataManager(DataManager):
         )
 
     def query_dataset(self, dataset):
-        path = self.local_path(self.dataset_key(dataset))
+        path = self.dest_path(self.dataset_key(dataset))
         if os.path.isfile(path):
-            out = SingleFileDataSet()
-            out.name = dataset.name
-            out.name_in_model = dataset.name_in_model
-            out.date_range = dataset.date_freq
-            out.axes = dataset.axes
-            out.remote_path = path
-            out.tempdir_path = path
-            return out
+            return [path]
         else:
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
@@ -598,4 +587,4 @@ class LocalfileDataManager(DataManager):
 
     def fetch_dataset(self, dataset):
         pass
-
+    

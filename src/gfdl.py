@@ -432,7 +432,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
             )
-            f.tempdir_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
+            f.local_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
 
     def _fetch_exception_handler(self, exc):
         print(exc)

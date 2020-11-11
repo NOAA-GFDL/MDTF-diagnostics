@@ -57,7 +57,8 @@ class MDTFPreprocessorBase(six.with_metaclass(ABCMeta)):
         "decode_cf": False,    # don't decode CF on open: done in parse_cf_wrapper instead
         "decode_times": False, # don't decode time axis into default np.datetime64 objects
         "use_cftime": True     # use cftime library for dates/calendars instead
-    }.update(netcdf_kwargs)
+    }
+    open_dataset_kwargs.update(netcdf_kwargs)
 
     @staticmethod
     def parse_cf_wrapper(ds):
@@ -143,7 +144,7 @@ class MDTFPreprocessorBase(six.with_metaclass(ABCMeta)):
         the only user-facing method after instance has been init'ed.
         """
         ds = xr.open_dataset(
-            self.files[0].tempdir_path, **self.open_dataset_kwargs
+            self.files[0].local_path, **self.open_dataset_kwargs
         )
         ds = self.parse_cf_wrapper(ds)
         self.parse_axes(ds)
@@ -155,7 +156,7 @@ class MDTFPreprocessorBase(six.with_metaclass(ABCMeta)):
             # skip date trimming logic for time-independent files
             assert len(self.files) == 1
             ds = xr.open_dataset(
-                self.files[0].tempdir_path, **self.open_dataset_kwargs
+                self.files[0].local_path, **self.open_dataset_kwargs
             )
             ds = self.parse_cf_wrapper(ds)
             ds = self.process_static_dataset(ds)
@@ -165,7 +166,7 @@ class MDTFPreprocessorBase(six.with_metaclass(ABCMeta)):
                 return self.process_file(ds)
 
             ds = xr.open_mfdataset(
-                [f.tempdir_path for f in self.files],
+                [f.local_path for f in self.files],
                 concat_dim=self.time_ax_name,
                 combine="by_coords",
                 # all non-concat'ed vars, attrs must be the same:
@@ -182,7 +183,7 @@ class MDTFPreprocessorBase(six.with_metaclass(ABCMeta)):
             ds = self.process_dataset(ds)
 
         ds.to_netcdf(
-            path=self.v.local_path,
+            path=self.v.dest_path,
             mode='w',
             format="NETCDF3_64BIT",
             **self.netcdf_kwargs
@@ -260,7 +261,7 @@ class MDTFPreprocessor(MDTFPreprocessorBase):
         elif 'calendar' in self.convention:
             self.calendar = self.convention['calendar']
             print(('\tWarning: no calendar info in file, using convention default'
-                '{}.').format(self.calendar))
+                ' {}.').format(self.calendar))
         else:
             self.calendar = 'noleap'
             print('\tWarning: no calendar info in file, defaulting to noleap')

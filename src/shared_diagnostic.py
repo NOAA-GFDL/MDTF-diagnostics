@@ -1,12 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from src import six
+import dataclasses
+import enum
 import glob
 import shutil
-from src import util
-from src import util_mdtf
-from src import verify_links
-
+from src import util, util_mdtf, verify_links, datelabel
 
 @six.python_2_unicode_compatible
 class PodRequirementFailure(Exception):
@@ -22,6 +21,129 @@ class PodRequirementFailure(Exception):
                 "\nReason: {1}.").format(self.pod.name, self.msg)
         else:
             return 'Requirements not met for {}.'.format(self.pod.name)
+
+
+PodDataFileFormat = enum.Enum(
+    'PodDataFileFormat', 
+    ("ANY_NETCDF ANY_NETCDF_CLASSIC "
+    "ANY_NETCDF3 NETCDF3_CLASSIC NETCDF_64BIT_OFFSET NETCDF_64BIT_DATA "
+    "ANY_NETCDF4 NETCDF4_CLASSIC NETCDF4"),
+    module=__name__
+)
+
+@dataclasses.dataclass
+class PodDataSettings(object):
+    """Class to describe options affecting all variables requested by this POD.
+    Corresponds to the "data" section of the POD's settings.jsonc file.
+    """
+    format: PodDataFileFormat = PodDataFileFormat.ANY_NETCDF_CLASSIC
+    rename_dimensions: bool = False
+    rename_variables: bool = False
+    multi_file_ok: bool = False
+    min_duration: str = 'any'
+    max_duration: str = 'any'
+    dimensions_ordered: bool = False
+    frequency: datelabel.DateFrequency = None
+    min_frequency: datelabel.DateFrequency = None
+    max_frequency: datelabel.DateFrequency = None
+
+    @classmethod
+    def from_struct(cls, kwargs):
+        if 'format' in kwargs:
+            kwargs['format'] = PodDataFileFormat[kwargs['format'].upper()]
+        for attr_ in ['frequency', 'min_frequency', 'max_frequency']:
+            if attr_ in kwargs:
+                kwargs[attr_] = datelabel.DateFrequency(kwargs[attr_])
+        return cls(**kwargs)
+
+@dataclasses.dataclass
+class PodDataDimension(object):
+    """Class to describe a single dimension (in the netcdf data model sense)
+    used by one or more variables. Corresponds to list entries in the 
+    "dimensions" section of the POD's settings.jsonc file.
+    """
+    name: str
+    standard_name: str = None
+    units: str = None
+    need_bounds: bool = False
+    axis = None
+
+    def __post_init__(self):
+        # do this instead of removing defaults because we want these fields to
+        # take fixed values in child classes
+        if not self.standard_name or not self.units:
+            raise ValueError('Dimension {} needs standard name or units'.format(self.name))
+
+@dataclasses.dataclass
+class PodDataLongitudeDimension(PodDataDimension):
+    range: list = None
+    axis = 'X'
+
+    def __post_init__(self):
+        self.standard_name = 'longitude'
+        self.units = 'degrees_E'
+        super(PodDataLongitudeDimension, self).__post_init__
+
+@dataclasses.dataclass
+class PodDataLatitudeDimension(PodDataDimension):
+    range: list = None
+    axis = 'Y'
+
+    def __post_init__(self):
+        self.standard_name = 'latitude'
+        self.units = 'degrees_N'
+        super(PodDataLongitudeDimension, self).__post_init__
+
+@dataclasses.dataclass
+class PodDataVerticalDimension(PodDataDimension):
+    positive: str
+    axis = 'Z'
+
+@dataclasses.dataclass
+class PodDataTimeDimension(PodDataDimension):
+    calendar: str
+    axis = 'T'
+
+    def __post_init__(self):
+        self.standard_name = 'time'
+        if not self.units:
+            self.units = 'days' # questionable
+        super(PodDataLongitudeDimension, self).__post_init__
+
+PodVariableRequirement = enum.Enum(
+    'PodVariableRequirement', 'REQUIRED OPTIONAL ALTERNATE', module=__name__
+)
+
+@dataclasses.dataclass
+class PodVarlistEntry(PodDataSettings):
+    """Class to describe data for a single variable requested by a POD. 
+    Corresponds to list entries in the "varlist" section of the POD's 
+    settings.jsonc file.
+    """
+    name_in_POD: str
+    standard_name: str
+    dimensions: list
+    path_variable: str = None
+    use_exact_name: bool = False
+    units: str = None
+    scalar_coordinates: dict = dataclasses.field(default_factory=dict)
+    requirement: PodVariableRequirement = PodVariableRequirement.REQUIRED
+    alternates: list = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.path_variable:
+            self.path_variable = self.name.upper() + '_FILE'
+
+    @classmethod
+    def from_struct(cls, pod_data_settings, name, kwargs):
+        if 'requirement' in kwargs:
+            kwargs['requirement'] = PodVariableRequirement[
+                kwargs['requirement'].upper()
+            ]
+        cls_kwargs = dataclasses.asdict(pod_data_settings)
+        cls_kwargs.update(kwargs)
+        return cls(name_in_POD=name, **cls_kwargs)
+
 
 class Diagnostic(object):
     """Class holding configuration for a diagnostic script.
@@ -58,7 +180,7 @@ class Diagnostic(object):
         config = util_mdtf.ConfigManager()
         assert pod_name in config.pods
         # define attributes manually so linter doesn't complain
-        # others are set in _parse_pod_settings
+        # others are set in parse_pod_settings
         self.driver = ""
         self.program = ""
         self.pod_env_vars = dict()
@@ -73,8 +195,9 @@ class Diagnostic(object):
         self.code_root = config.paths.CODE_ROOT
         self.dry_run = config.config.get('dry_run', False)
         d = config.pods[pod_name]
-        self.__dict__.update(self._parse_pod_settings(d['settings']))
-        self.varlist = self._parse_pod_varlist(d['varlist'])
+        self.__dict__.update(self.parse_pod_settings(d['settings']))
+        self.dims = self.parse_pod_varlist_dims(d)
+        self.varlist = self.parse_pod_varlist(d)
 
     def iter_vars_and_alts(self):
         """Generator iterating over all variables and alternates in POD's varlist.
@@ -84,12 +207,13 @@ class Diagnostic(object):
             for alt_var in var.alternates:
                 yield alt_var
 
-    def _parse_pod_settings(self, settings, verbose=0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
+    def parse_pod_settings(self, settings, verbose=0):
+        """Parse the "settings" section of the settings.jsonc file when
+        instantiating a new Diagnostic() object.
 
         Args:
-            settings (:py:obj:`dict`): Contents of the settings portion of the POD's
-                settings.json file.
+            settings (:py:obj:`dict`): Contents of the settings portion of the 
+                POD's settings.jsonc file.
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
@@ -122,31 +246,80 @@ class Diagnostic(object):
             print(d)
         return d
 
-    def _parse_pod_varlist(self, varlist, verbose=0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.__init__`.
+    def parse_pod_varlist_dims(self, d):
+        """Parse the "dimensions" section of the POD's settings.jsonc file when 
+        instantiating a new Diagnostic() object. This information needs to be
+        associated with the POD, not individual variables, because variables
+        might specify a ``scalar_coordinate`` setting (eg in order to extract a
+        level), and we need info about that axis even though the dimension isn't
+        present in the variable.
 
         Args:
-            varlist (:py:obj:`list` of :py:obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.json file.
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns: 
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+
+        def _pod_dimension_from_struct(name, d):
+            if d.get('axis', None) == 'X' \
+                or d.get('standard_name', None) == 'longitude':
+                return PodDataLongitudeDimension(name=name, **d)
+            elif d.get('axis', None) == 'Y' \
+                or d.get('standard_name', None) == 'latitude':
+                return PodDataLatitudeDimension(name=name, **d)
+            elif d.get('axis', None) == 'Z':
+                return PodDataVerticalDimension(name=name, **d)
+            elif d.get('axis', None) == 'T' \
+                or d.get('standard_name', None) == 'time':
+                return PodDataTimeDimension(name=name, **d)
+            else:
+                return PodDataDimension(name=name, **d)
+
+        return {k: _pod_dimension_from_struct(k, v) \
+            for k,v in d['dimensions'].items()}
+
+    def parse_pod_varlist(self, d, verbose=0):
+        """Parse the "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new Diagnostic() object.
+
+        Args:
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Returns:
-            varlist
+            List of :class:`PodVarlistEntry` objects.
         """
-        default_file_required = True 
-        for i, var in enumerate(varlist):
-            if 'requirement' in var:
-                varlist[i]['required'] = (var['requirement'].lower() == 'required')
-            elif 'required' not in varlist[i]:
-                varlist[i]['required'] = default_file_required
-            if 'alternates' not in var:
-                varlist[i]['alternates'] = []
-            else:
-                varlist[i]['alternates'] = util.coerce_to_iter(var['alternates'])
-        if (verbose > 0): 
-            print(self.name + " varlist: ")
-            print(varlist)
-        return varlist
+        if 'data' not in d:
+            pod_data_settings = PodDataSettings()
+        else:
+            pod_data_settings = PodDataSettings.from_struct(d['data'])
+        vars_ = {k: PodVarlistEntry(pod_data_settings, k, v) \
+            for k,v in d['varlist'].items()}
+
+        for v in vars_:
+            # replace names of dimensions in varlist vars with dimension objects
+            for dim in v.dimensions:
+                if dim not in self.dims:
+                    raise ValueError(("Unknown dimension name {} in varlist "
+                        "entry for {} in POD {}")).format(dim, v.name, self.name))
+            for dim in v.scalar_coordinates.keys():
+                if dim not in self.dims:
+                    raise ValueError(("Unknown dimension name {} in varlist "
+                        "entry for {} in POD {}")).format(dim, v.name, self.name))
+            v.dimensions = [self.dims[dim] for dim in v.dimensions]
+
+            # replace names of alternate vars with varlist objects
+            # note that python is pass-by-reference, so we're only adding
+            #references to the original, mutable object
+            for vv in v.alternates:
+                if vv not in vars_:
+                    raise ValueError(("Unknown alternate variable {} in varlist "
+                        "entry for {} in POD {}")).format(vv, v.name, self.name))
+            v.alternates = [vars_[vv] for vv in v.alternates]
+
+        return list(vars_.values())
 
     # -------------------------------------
 

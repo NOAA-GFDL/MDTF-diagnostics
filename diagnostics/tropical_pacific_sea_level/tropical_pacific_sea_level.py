@@ -1,201 +1,672 @@
-# MDTF Example Diagnostic POD
-# ================================================================================
-# This script does a simple diagnostic calculation to illustrate how to adapt code
-# for use in the MDTF diagnostic framework. The main change is to set input/output
-# paths, variable names etc. from shell environment variables the framework 
-# provides, instead of hard-coding them.
+#!/usr/bin/env python
+# coding: utf-8
+
+# # MDTF tool
 #
-# Below, this script consists of 2 parts: (1) a template of comprehensive header POD
-# developers must include in their POD's main driver script, (2) actual code, and 
-# (3) extensive in-line comments.
-# ================================================================================
-# 
-# This file is part of the Example Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
-# 
-# Example Diagnostic POD
-# 
-#   Last update: 8/1/2020
-# 
-#   This is a example POD that you can use as a template for your diagnostics.
-#  If this were a real POD, you'd place a one-paragraph synopsis of your 
-#   diagnostic here (like an abstract). 
-# 
-#   Version & Contact info
-# 
-#   Here you should describe who contributed to the diagnostic, and who should be
-#   contacted for further information:
-# 
-#   - Version/revision information: version 1 (5/06/2020)
-#   - PI (name, affiliation, email)
-#   - Developer/point of contact (name, affiliation, email)
-#   - Other contributors
-# 
-#   Open source copyright agreement
-# 
-#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-#   Unless you've distirbuted your script elsewhere, you don't need to change this.
-# 
-#   Functionality
-# 
-#   In this section you should summarize the stages of the calculations your 
-#   diagnostic performs, and how they translate to the individual source code files 
-#   provided in your submission. This will, e.g., let maintainers fixing a bug or 
-#   people with questions about how your code works know where to look.
-# 
-#   Required programming language and libraries
-# 
-#   In this section you should summarize the programming languages and third-party 
-#   libraries used by your diagnostic. You also provide this information in the 
-#   ``settings.jsonc`` file, but here you can give helpful comments to human 
-#   maintainers (eg, "We need at least version 1.5 of this library because we call
-#   this function.")
-# 
-#   Required model output variables
-# 
-#   In this section you should describe each variable in the input data your 
-#   diagnostic uses. You also need to provide this in the ``settings.jsonc`` file, 
-#   but here you should go into detail on the assumptions your diagnostic makes 
-#   about the structure of the data.
-# 
-#   References
-# 
-#   Here you should cite the journal articles providing the scientific basis for 
-#   your diagnostic.
-# 
-#      Maloney, E. D, and Co-authors, 2019: Process-oriented evaluation of climate
-#         and wether forcasting models. BAMS, 100(9), 1665-1686,
-#         doi:10.1175/BAMS-D-18-0042.1.
 #
-from __future__ import print_function
+# The script generate the tropical Pacific dynamic sea level
+# and wind stress curl scatter plots at different time scale
+# due to their strong dependency from Ekman pumping/suction
+# and barotropic response over the ocean
+#
+# input files
+# ============
+# Ocean model : tauuo, tauvo, zos
+#
+#
+# function used
+# ==================
+# - spherical_area.cal_area     : generate area array based on the lon lat of data
+# - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)
+# - dynamical_balance2.curl_var    : calculate wind stress curl in obs (for Dataset without time dim)
+# - dynamical_balance2.curl_tau_3d : calculate wind stress curl in model (for Dataset with time dim)
+# - dynamical_balance2.curl_tau    : calculate wind stress curl in model (for Dataset without time dim)
+# - xr_ufunc.da_linregress : linregress for Dataset with time dim
+#
+
+
 import os
-import matplotlib
-matplotlib.use('Agg') # non-X windows backend
-# Commands to load third-party libraries. Any code you don't include that's 
-# not part of your language's standard library should be listed in the 
-# settings.jsonc file.
-import xarray as xr                # python library we use to read netcdf files
-import matplotlib.pyplot as plt    # python library we use to make plots
+import sys
+import cftime
+# import dask
+import xarray as xr
+import numpy as np
+import cartopy.mpl.ticker as cticker
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+
+import spherical_area as sa
+from xr_ufunc import da_linregress
+from dynamical_balance2 import curl_tau, curl_tau_3d
+from dynamical_balance2 import curl_var, curl_var_3d
+
+# from dask.distributed import Client
+# client = Client(n_workers=1, threads_per_worker=8, processes=False)
+# client
 
 
-### 1) Loading model data files: ###############################################
+import warnings
+warnings.simplefilter("ignore")
+
+# from mem_track import used_memory
+# used_memory()
+
+
+#### possible input info from external text file
+# constant setting
+syear = 1993                 # crop model and obs data from year
+fyear = 2009                 # crop model and obs data to year
+tp_lat_region = [-30,30]     # extract model till latitude
+
+# regional average box
+lon_range_list = [120,150]   # 0-360
+lat_range_list = [10,20]
+
+# Model label
+Model_name = ['CESM2_CORE']        # model name in the dictionary
+Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
+
+
+
+# initialization
+modelin = {}
+path = {}
+#####################
+ori_syear = 1948
+ori_fyear = 2009
+modeldir = os.getenv('MODEL_DATA_ROOT')+'/CESM2_omip1_r1i1p1f1_gn/mon/'
+modelfile = [['tauuo_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc'],
+             ['tauvo_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc'],
+             ['zos_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc']]
+areafile = 'areacello_Ofx_CESM2_omip1_r1i1p1f1_gn.nc'
+path[Model_name[0]]=[modeldir,modelfile]
+
+Model_varname = ['tauuo','tauvo','zos']
+Model_dimname = ['time','nlat','nlon']
+Model_coordname = ['lat','lon']
+
+xname = Model_dimname[2]
+yname = Model_dimname[1]
+
+
+
+for nmodel,model in enumerate(Model_name):
+    modeldir = path[model][0]
+    modelfile = path[model][1]
+    multivar = []
+    for file in modelfile :
+        if len(file) == 1 :
+            multivar.append([os.path.join(modeldir,file[0])])
+        elif len(file) > 1 :
+            multifile = []
+            for ff in file :
+                multifile.append(os.path.join(modeldir,ff))
+            multivar.append(multifile)
+    modelin[model] = multivar
+
+#### create time axis (datatime.datetime)
+timeax = xr.cftime_range(start=cftime.datetime(ori_syear,1,1),end=cftime.datetime(ori_fyear,12,1),freq='MS')
+timeax = timeax.to_datetimeindex()    # cftime => datetime64
+
+
+# initialization of dict and list  (!!!!!!!! remove all previous read model info if exec !!!!!!!!!!)
+nmodel = len(Model_name)
+nvar = len(Model_varname)
+
+ds_model_mlist = {}
+mean_mlist = {}
+season_mlist = {}
+linear_mlist = {}
+#### models
+for nmodel,model in enumerate(Model_name):
+    ds_model_list = {}
+    mean_list = {}
+    season_list = {}
+    linear_list = {}
+    for nvar,var in enumerate(Model_varname):
+        print('read %s %s'%(model,var))
+
+#         # read input data
+#         ds_model = xr.open_mfdataset(modelin[model][nvar],
+#                                      chunks={Model_dimname[0]:100,
+#                                              Model_dimname[1]:100,
+#                                              Model_dimname[2]:100},
+#                                      use_cftime=True)
+        # read input data
+        ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
+
+
+        # crop data (time)
+        ds_model['time'] = timeax
+        da_model = ds_model[var].where((ds_model['time.year'] >= syear)&
+                                       (ds_model['time.year'] <= fyear)
+                                       ,drop=True)
+        # crop data (space)
+        da_model = da_model.where((ds_model.lat >= np.min(np.array(tp_lat_region)))&
+                                  (ds_model.lat <= np.max(np.array(tp_lat_region)))
+                                  ,drop=True)
+
+        # remove land value
+        da_model['lon'] = da_model.lon.where(da_model.lon<1000.,other=np.nan)
+        da_model['lat'] = da_model.lat.where(da_model.lat<1000.,other=np.nan)
+
+        # store all model data
+        ds_model_list[var] = da_model
+
+        # calculate mean
+        mean_list[var] = ds_model_list[var].mean(dim='time').compute()
+        ds_model_list[var] = ds_model_list[var]-mean_list[var]
+
+        # calculate seasonality
+        season_list[var] = ds_model_list[var].groupby('time.month').mean(dim='time').compute()
+        ds_model_list[var] = ds_model_list[var].groupby('time.month')-season_list[var]
+
+        # remove linear trend
+        linear_list[var] = da_linregress(ds_model_list[var],stTconfint=0.99)
+
+    linear_mlist[model] = linear_list
+    mean_mlist[model] = mean_list
+    season_mlist[model] = season_list
+    ds_model_mlist[model] = ds_model_list
+
 #
-# The framework copies model data to a regular directory structure of the form
-# <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
-# Here <variable_name> and frequency are requested in the "varlist" part of 
-# settings.json.
-
-# The following command replaces the substrings "{DATA_DIR}", "{CASENAME}", etc.
-# with the values of the corresponding environment variables:
-input_path = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
-
-# command to load the netcdf file
-model_dataset = xr.open_dataset(input_path)
+# # detrend
+# for nmodel,model in enumerate(Model_name):
+#     for nvar,var in enumerate(Model_varname):
+#         da_time = ds_model_mlist[model][var].time.copy()
+#         year = ds_model_mlist[model][var]['time.year'].values
+#         month = ds_model_mlist[model][var]['time.month'].values
+#         da_time.values = year+month/12.
+#         ds_model_mlist[model][var] = ds_model_mlist[model][var]-                                     (da_time*linear_mlist[model][var]['slope']+linear_mlist[model][var]['intercept'])
 
 
-### 2) Doing computations: #####################################################
+# # Observation
+# constant setting
+obs_year_range = [[1950,2011],[1993,2018,9]]
+Obs_varname = [['tx','ty'],['adt']]
+Obs_name = ['WASwind','CMEMS']
+
+# inputs
+obsin = {}
+obspath = {}
+
+obs = Obs_name[0]
+obsdir = os.getenv('OBS_DATA_ROOT')
+obsfile = [['waswind_v1_0_1.monthly.nc'],['waswind_v1_0_1.monthly.nc']]
+obspath[obs]=[obsdir,obsfile]
+
+obs = Obs_name[1]
+obsdir = os.getenv('OBS_DATA_ROOT')
+obsfile = [['dt_global_allsat_phy_l4_monthly_adt.nc']]
+obspath[obs]=[obsdir,obsfile]
+
+
+for nobs,obs in enumerate(Obs_name):
+    obsdir = obspath[obs][0]
+    obsfile = obspath[obs][1]
+    multivar = []
+    for file in obsfile :
+        if len(file) == 1 :
+            multivar.append([os.path.join(obsdir,file[0])])
+        elif len(file) > 1 :
+            multifile = []
+            for ff in file :
+                multifile.append(os.path.join(obsdir,ff))
+            multivar.append(multifile)
+    obsin[obs] = multivar
+
+
+# initialization of dict and list
+ds_obs_mlist = {}
+obs_mean_mlist = {}
+obs_season_mlist = {}
+obs_linear_mlist = {}
+
+for nobs,obs in enumerate(Obs_name):
+    ds_obs_list = {}
+    obs_mean_list = {}
+    obs_season_list = {}
+    obs_linear_list = {}
+    for nvar,var in enumerate(Obs_varname[nobs]):
+        print('read %s %s'%(obs,var))
+
+        # read input data
+        #-- single file
+        if len(obsin[obs][nvar]) == 1 :
+
+            # find out dimension name
+            da = xr.open_dataset(obsin[obs][nvar][0])
+            obsdims = list(da[var].dims)
+
+#             ds_obs = xr.open_dataset(obsin[obs][nvar][0],chunks={obsdims[0]:50,obsdims[1]:50,obsdims[2]:50},use_cftime=True)
+            ds_obs = xr.open_dataset(obsin[obs][nvar][0])
+
+        #-- multi-file merge (same variable)
+        elif len(obsin[obs][nvar]) > 1 :
+            for nf,file in enumerate(obsin[obs][nvar]):
+                # find out dimension name
+                da = xr.open_dataset(file,chunks={})
+                obsdims = list(da[var].dims)
+
+#                 ds_obs_sub = xr.open_dataset(file,chunks={obsdims[0]:50,obsdims[1]:50,obsdims[2]:50},use_cftime=True)
+                ds_obs_sub = xr.open_dataset(file,use_cftime=True)
+                if nf == 0 :
+                    ds_obs = ds_obs_sub
+                else:
+                    ds_obs = xr.concat([ds_obs,ds_obs_sub],dim='time',data_vars='minimal')
+
+        ############## CMEMS ##############
+        if obs in ['CMEMS']:
+            syear_obs = obs_year_range[nobs][0]
+            fyear_obs = obs_year_range[nobs][1]
+            fmon_obs = obs_year_range[nobs][2]
+            #### create time axis for overlapping period
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,fmon_obs,1),freq='MS')
+            timeax = timeax.to_datetimeindex()    # cftime => datetime64
+            ds_obs['time'] = timeax
+
+            # calculate global mean sea level
+            da_area = sa.da_area(ds_obs, lonname='longitude', latname='latitude',
+                                 xname='longitude', yname='latitude', model=None)
+            da_glo_mean = (ds_obs*da_area).sum(dim=['longitude','latitude'])/da_area.sum(dim=['longitude','latitude'])
+            ds_obs = ds_obs-da_glo_mean
+
+            # rename
+            ds_obs = ds_obs.rename({'longitude':'lon','latitude':'lat'})
+
+        else:
+            syear_obs = obs_year_range[nobs][0]
+            fyear_obs = obs_year_range[nobs][1]
+            #### create time axis for overlapping period
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,12,31),freq='MS')
+            timeax = timeax.to_datetimeindex()    # cftime => datetime64
+            ds_obs['time'] = timeax
+
+
+        # crop data (time)
+        ds_obs = ds_obs[var]\
+                          .where((ds_obs['time.year'] >= syear)&
+                                 (ds_obs['time.year'] <= fyear)
+                                 ,drop=True)
+        ds_obs = ds_obs\
+                          .where((ds_obs.lat >= np.min(np.array(tp_lat_region)))&
+                                 (ds_obs.lat <= np.max(np.array(tp_lat_region)))
+                                 ,drop=True)
+
+        # store all model data
+        ds_obs_list[var] = ds_obs
+
+        # calculate mean
+        obs_mean_list[var] = ds_obs_list[var].mean(dim='time').compute()
+        ds_obs_list[var] = ds_obs_list[var]-obs_mean_list[var]
+
+        # calculate seasonality
+        obs_season_list[var] = ds_obs_list[var].groupby('time.month').mean(dim='time').compute()
+        ds_obs_list[var] = ds_obs_list[var].groupby('time.month')-obs_season_list[var]
+
+        # remove linear trend
+        obs_linear_list[var] = da_linregress(ds_obs_list[var],stTconfint=0.99)
+
+    obs_linear_mlist[obs] = obs_linear_list
+    obs_mean_mlist[obs] = obs_mean_list
+    obs_season_mlist[obs] = obs_season_list
+    ds_obs_mlist[obs] = ds_obs_list
+
+
+# # detrend
+# for nobs,obs in enumerate(Obs_name):
+#     for nvar,var in enumerate(Obs_varname[nobs]):
+#         da_time = ds_obs_mlist[obs][var].time.copy()
+#         year = ds_obs_mlist[obs][var]['time.year'].values
+#         month = ds_obs_mlist[obs][var]['time.month'].values
+#         da_time.values = year+month/12.
+#         ds_obs_mlist[obs][var] = ds_obs_mlist[obs][var]-                                     (da_time*obs_linear_mlist[obs][var]['slope']+obs_linear_mlist[obs][var]['intercept'])
+
+
+
+# # Ocean basin mask
+# from create_ocean_mask import levitus98
 #
-# Diagnostics in the framework are intended to work with native output from a
-# variety of models. For this reason, variable names should not be hard-coded
-# but instead set from environment variables. 
+# # # calculate zonal mean in the Pacific Basin
+# # from create_ocean_mask import levitus98
 #
-tas_var_name = os.environ["tas_var"]
-# For safety, don't even assume that the time dimension of the input file is
-# named "time":
-time_coord_name = os.environ["time_coord"]
-
-# The only computation done here: compute the time average of input data
-tas_data = model_dataset[tas_var_name]
-model_mean_tas = tas_data.mean(dim = time_coord_name)
-# Note that we supplied the observational data as time averages, to save space
-# and avoid having to repeat that calculation each time the diagnostic is run.
-
-# Logging relevant debugging or progress information is a good idea. Anything
-# your diagnostic prints to STDOUT will be saved to its own log file.
-print("Computed time average of {tas_var} for {CASENAME}.".format(**os.environ))
-
-
-### 3) Saving output data: #####################################################
+# da_pacific = levitus98(da_model_standard,
+#                        basin=['pac'],
+#                        reuse_weights=True,
+#                        newvar=True,
+#                        lon_name='nlon',
+#                        lat_name='nlat',
+#                        new_regridder_name='')
 #
-# Diagnostics should write output data to disk to a) make relevant results 
-# available to the user for further use or b) to pass large amounts of data
-# between stages of a calculation run as different sub-scripts. Data can be in
-# any format (as long as it's documented) and should be written to the 
-# directory <WK_DIR>/model/netCDF (created by the framework).
-#
-out_path = "{WK_DIR}/model/netCDF/temp_means.nc".format(**os.environ)
-
-# write out time averages as a netcdf file
-model_mean_tas.to_netcdf(out_path)
+# da_pacific = da_pacific*da_model_standard[Variable_standard]/da_model_standard[Variable_standard]
 
 
-### 4) Saving output plots: ####################################################
-#
-# Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS 
-# (created by the framework). Plots can be given any filename, but should have 
-# the extension ".eps" or ".ps". To make the webpage output, the framework will 
-# convert these to bitmaps with the same name but extension ".png".
 
-# Define a python function to make the plot, since we'll be doing it twice and
-# we don't want to repeat ourselves.
-def plot_and_save_figure(model_or_obs, title_string, dataset):
-    # initialize the plot
-    plt.figure(figsize=(12,6))
-    plot_axes = plt.subplot(1,1,1)
-    # actually plot the data (makes a lat-lon colormap)
-    dataset.plot(ax = plot_axes)
-    plot_axes.set_title(title_string)
-    # save the plot in the right location
-    plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
-        model_or_obs=model_or_obs, **os.environ
-    )
-    plt.savefig(plot_path, bbox_inches='tight')
-# end of function
+# # Derive Ekman upwelling/downwelling and wind stress curl
+#########
+# Model
+#########
+for nmodel,model in enumerate(Model_name):
+    linear_mlist[model]['curl_tauuo'],linear_mlist[model]['curl_tauvo'] = curl_tau(
+                                               linear_mlist[model]['tauuo'].slope,
+                                               linear_mlist[model]['tauvo'].slope,
+                                               xname=xname,yname=yname)
 
-# set an informative title using info about the analysis set in env vars
-title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
-# Plot the model data:
-plot_and_save_figure("model", title_string, model_mean_tas)
+    linear_mlist[model]['curl_tau'] = linear_mlist[model]['curl_tauuo']+linear_mlist[model]['curl_tauvo']
 
+    mean_mlist[model]['curl_tauuo'],mean_mlist[model]['curl_tauvo'] = curl_tau(
+                                               mean_mlist[model]['tauuo'],
+                                               mean_mlist[model]['tauvo'],
+                                               xname=xname,yname=yname)
 
-### 5) Loading obs data files & plotting obs figures: ##########################
-#
-# If your diagnostic uses any model-independent supporting data (eg. reference 
-# or observational data) larger than a few kB of text, it should be provided via
-# the observational data distribution instead of being included with the source
-# code. This data can be in any format: the framework doesn't process it. The 
-# environment variable OBS_DATA will be set to a path where the framework has
-# copied a directory containing your supplied data.
-#
-# The following command replaces the substring "{OBS_DATA}" with the value of 
-# the OBS_DATA environment variable.
-input_path = "{OBS_DATA}/example_tas_means.nc".format(**os.environ)
+    mean_mlist[model]['curl_tau'] = mean_mlist[model]['curl_tauuo']+mean_mlist[model]['curl_tauvo']
 
-# command to load the netcdf file
-obs_dataset = xr.open_dataset(input_path)
-obs_mean_tas = obs_dataset['mean_tas']
+    season_mlist[model]['curl_tauuo'],season_mlist[model]['curl_tauvo'] = curl_tau_3d(
+                                               season_mlist[model]['tauuo'],
+                                               season_mlist[model]['tauvo'],
+                                               xname=xname,yname=yname)
 
-# Plot the observational data:
-title_string = "Observations: mean {tas_var}".format(**os.environ)
-plot_and_save_figure("obs", title_string, obs_mean_tas)
+    season_mlist[model]['curl_tau'] = season_mlist[model]['curl_tauuo']+season_mlist[model]['curl_tauvo']
 
+#########
+# Obs
+#########
+obs = 'WASwind'
+obs_linear_mlist[obs]['curl_tx'],obs_linear_mlist[obs]['curl_ty'] = curl_var(
+                                           obs_linear_mlist[obs]['tx'].slope,
+                                           obs_linear_mlist[obs]['ty'].slope,
+                                           x_name='lon',y_name='lat')
 
-### 6) Cleaning up: ############################################################
-#
-# In addition to your language's normal housekeeping, don't forget to delete any
-# temporary/scratch files you created in step 4).
-#
-model_dataset.close()
-obs_dataset.close()
+obs_linear_mlist[obs]['curl_tau'] = obs_linear_mlist[obs]['curl_tx']+obs_linear_mlist[obs]['curl_ty']
+
+obs_mean_mlist[obs]['curl_tx'],obs_mean_mlist[obs]['curl_ty'] = curl_var(
+                                           obs_mean_mlist[obs]['tx'],
+                                           obs_mean_mlist[obs]['ty'],
+                                           x_name='lon',y_name='lat')
+
+obs_mean_mlist[obs]['curl_tau'] = obs_mean_mlist[obs]['curl_tx']+obs_mean_mlist[obs]['curl_ty']
+
+obs_season_mlist[obs]['curl_tx'],obs_season_mlist[obs]['curl_ty'] = curl_var_3d(
+                                           obs_season_mlist[obs]['tx'],
+                                           obs_season_mlist[obs]['ty'],
+                                           xname='lon',yname='lat')
+
+obs_season_mlist[obs]['curl_tau'] = obs_season_mlist[obs]['curl_tx']+obs_season_mlist[obs]['curl_ty']
 
 
-### 7) Error/Exception-Handling Example ########################################
-nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
-try:
-    nonexistent_dataset = xr.open_dataset(nonexistent_file_path)
-except IOError as error:
-    print(error)
-    print("This message is printed by the example POD because exception-handling is working!")
+# # Regional averaging
+#### setting regional range
+lon_range  = lon_range_list
+lat_range  = lat_range_list
+
+# correct the lon range
+lon_range_mod = np.array(lon_range)
+lonmin = ds_model_mlist[model]['zos'].lon.min()
+ind1 = np.where(lon_range_mod<np.float(0))[0]
+lon_range_mod[ind1] = lon_range_mod[ind1]+360.  # change Lon range to 0-360
 
 
-### 8) Confirm POD executed sucessfully ########################################
-print("Last log message by Example POD: finished successfully!")
+#####################
+# MODEL
+#####################
+regionalavg_mlist = {}
+for nmodel,model in enumerate(Model_name):
+    regionalavg_list = {}
+    for nvar,var in enumerate(['curl_tau','zos']):
+
+        # read areacello
+        da_area = xr.open_dataset(path[Model_name[0]][0]+areafile)['areacello']
+
+        # crop region
+        ds_mask = mean_mlist[model][var].where(
+                      (mean_mlist[model][var].lon>=np.min(lon_range_mod))&
+                      (mean_mlist[model][var].lon<=np.max(lon_range_mod))&
+                      (mean_mlist[model][var].lat>=np.min(lat_range))&
+                      (mean_mlist[model][var].lat<=np.max(lat_range))
+                      ,drop=True).compute()
+        ds_mask = ds_mask/ds_mask
+
+
+        # calculate regional mean
+        regionalavg_list['%s_%i_%i_%i_%i_season'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          = ((season_mlist[model][var]*ds_mask*da_area).sum(dim=[xname,yname])/(ds_mask*da_area).sum(dim=[xname,yname])).compute()
+
+        regionalavg_list['%s_%i_%i_%i_%i_mean'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          = ((mean_mlist[model][var]*ds_mask*da_area).sum(dim=[xname,yname])/(ds_mask*da_area).sum(dim=[xname,yname])).compute()
+
+        regionalavg_list['%s_%i_%i_%i_%i_linear'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          = ((linear_mlist[model][var]*ds_mask*da_area).sum(dim=[xname,yname])/(ds_mask*da_area).sum(dim=[xname,yname])).compute()
+
+    regionalavg_mlist[model] = regionalavg_list
+
+#####################
+# OBS
+#####################
+obs_regionalavg_mlist = {}
+for nobs,obs in enumerate(Obs_name):
+    obs_regionalavg_list = {}
+    if obs in ['CMEMS']:
+        var = 'adt'
+        obs_xname = 'lon'
+        obs_yname = 'lat'
+
+    elif obs in ['WASwind']:
+        var = 'curl_tau'
+        obs_xname = 'lon'
+        obs_yname = 'lat'
+
+
+    da_area = sa.da_area(obs_mean_mlist[obs][var], lonname='lon', latname='lat',
+                                 xname=obs_xname, yname=obs_yname, model=None)
+
+    # crop region
+    ds_obs_mask = obs_mean_mlist[obs][var].where(
+                  (obs_mean_mlist[obs][var].lon>=np.min(lon_range_mod))&
+                  (obs_mean_mlist[obs][var].lon<=np.max(lon_range_mod))&
+                  (obs_mean_mlist[obs][var].lat>=np.min(lat_range))&
+                  (obs_mean_mlist[obs][var].lat<=np.max(lat_range))
+                  ,drop=True).compute()
+    ds_obs_mask = ds_obs_mask/ds_obs_mask
+
+    # calculate regional mean
+    obs_regionalavg_list['%s_%i_%i_%i_%i_season'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      = ((obs_season_mlist[obs][var]*ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])/ \
+         (ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])).compute()
+
+    obs_regionalavg_list['%s_%i_%i_%i_%i_mean'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      = ((obs_mean_mlist[obs][var]*ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])/ \
+         (ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])).compute()
+
+    obs_regionalavg_list['%s_%i_%i_%i_%i_linear'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      = ((obs_linear_mlist[obs][var]*ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])/ \
+         (ds_obs_mask*da_area).sum(dim=[obs_xname,obs_yname])).compute()
+
+    obs_regionalavg_mlist[obs] = obs_regionalavg_list
+
+
+#### plotting
+fig = plt.figure(1)
+
+
+#######
+# mean
+#######
+ax1 = fig.add_axes([0,0,1,1])
+obscolor = 'k'
+
+all_wsc = []
+all_ssh = []
+
+wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_mean'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_mean'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+ax1.scatter(wsc,ssh,c='k',label='Observation')
+all_wsc.append(wsc)
+all_ssh.append(ssh)
+
+for nmodel,model in enumerate(Model_name):
+    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_mean'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_mean'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+    ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
+    all_wsc.append(wsc)
+    all_ssh.append(ssh)
+
+all_wsc = np.array(all_wsc)
+all_ssh = np.array(all_ssh)
+
+#### setting the plotting format
+ax1.set_ylabel('SSH (m)',{'size':'20'},color='k')
+ax1.set_ylim([all_ssh.min()-all_ssh.min()/5.,all_ssh.max()+all_ssh.max()/5.])
+ax1.set_xlabel('WSC (N/m$^3$)',{'size':'20'},color='k')
+ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
+ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
+ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
+ax1.set_title("Mean state",{'size':'24'},pad=24)
+# ax1.legend(loc='upper left',bbox_to_anchor=(1.05, 1),fontsize=14,frameon=False)
+ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
+
+#########
+# Linear
+#########
+ax1 = fig.add_axes([1.3,0,1,1])
+obscolor = 'k'
+
+all_wsc = []
+all_ssh = []
+
+wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_linear'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_linear'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].slope
+ax1.scatter(wsc,ssh,c='k',label='Observation')
+all_wsc.append(wsc)
+all_ssh.append(ssh)
+
+for nmodel,model in enumerate(Model_name):
+    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_linear'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_linear'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].slope
+    ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
+    all_wsc.append(wsc)
+    all_ssh.append(ssh)
+
+all_wsc = np.array(all_wsc)
+all_ssh = np.array(all_ssh)
+
+
+#### setting the plotting format
+ax1.set_ylabel('SSH (m)',{'size':'20'},color='k')
+ax1.set_ylim([all_ssh.min()-all_ssh.min()/5.,all_ssh.max()+all_ssh.max()/5.])
+ax1.set_xlabel('WSC (N/m$^3$)',{'size':'20'},color='k')
+ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
+ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
+ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
+ax1.set_title("Linear trend",{'size':'24'},pad=24)
+ax1.legend(loc='upper left',bbox_to_anchor=(1.05, 1),fontsize=14,frameon=False)
+ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
+
+
+
+#########
+# Annual amp
+#########
+ax1 = fig.add_axes([0,-1.5,1,1])
+obscolor = 'k'
+
+all_wsc = []
+all_ssh = []
+
+wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
+      -obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
+      -obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+wsc = np.abs(wsc)
+ssh = np.abs(ssh)
+ax1.scatter(wsc,ssh,c='k',label='Observation')
+all_wsc.append(wsc)
+all_ssh.append(ssh)
+
+for nmodel,model in enumerate(Model_name):
+    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
+          -regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
+          -regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+    ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
+    wsc = np.abs(wsc)
+    ssh = np.abs(ssh)
+    all_wsc.append(wsc)
+    all_ssh.append(ssh)
+
+
+
+all_wsc = np.array(all_wsc)
+all_ssh = np.array(all_ssh)
+
+
+#### setting the plotting format
+ax1.set_ylabel('SSH (m)',{'size':'20'},color='k')
+ax1.set_ylim([all_ssh.min()-all_ssh.min()/5.,all_ssh.max()+all_ssh.max()/5.])
+ax1.set_xlabel('WSC (N/m$^3$)',{'size':'20'},color='k')
+ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
+ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
+ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
+ax1.set_title("Annual amplitude",{'size':'24'},pad=24)
+# ax1.legend(loc='upper left',fontsize=14,frameon=False)
+ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
+
+
+#########
+# Annual phase
+#########
+ax1 = fig.add_axes([1.3,-1.5,1,1])
+obscolor = 'k'
+
+all_wsc = []
+all_ssh = []
+
+ind = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      .argmax()
+wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      .isel(month=ind).month.values
+ind = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      .argmax()
+ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+      .isel(month=ind).month.values
+
+ax1.scatter(wsc,ssh,c='k',label='Observation')
+all_wsc.append(wsc)
+all_ssh.append(ssh)
+
+for nmodel,model in enumerate(Model_name):
+    ind = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          .argmax()
+    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          .isel(month=ind).month.values
+    ind = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          .argmax()
+    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+          .isel(month=ind).month.values
+
+    ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
+    all_wsc.append(wsc)
+    all_ssh.append(ssh)
+
+
+
+all_wsc = np.array(all_wsc)
+all_ssh = np.array(all_ssh)
+
+
+#### setting the plotting format
+ax1.set_ylabel('SSH (month)',{'size':'20'},color='k')
+ax1.set_ylim([0.5,12.5])
+ax1.set_xlabel('WSC (month)',{'size':'20'},color='k')
+ax1.set_xlim([0.5,12.5])
+ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
+ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
+ax1.set_title("Annual phase",{'size':'24'},pad=24)
+# ax1.legend(loc='upper left',fontsize=14,frameon=False)
+ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
+
+
+
+fig.savefig('tropical_pac_sl.eps', facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches="tight", pad_inches=None,
+                frameon=None)

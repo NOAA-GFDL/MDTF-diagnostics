@@ -6,6 +6,7 @@ import os
 import io
 from src import six
 import re
+import enum
 import shlex
 import glob
 import shutil
@@ -264,6 +265,31 @@ class NameSpace(dict):
 
     def __hash__(self):
         return hash(self._freeze())
+
+class MDTFEnum(enum.Enum):
+    """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
+    to the members of the enumeration. 2) Provide a ``from_struct`` method to 
+    simplify instantiating an instance from a string. To avoid potential 
+    confusion with reserved keywords, we use the Python convention that members
+    of the enumeration are all uppercase.
+    """
+    def __new__(cls, *args):
+        """AutoNumber recipe from python stdlib docs."""
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+
+    def __str__(self):
+        return str(self.name).lower()
+
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+    @classmethod
+    def from_struct(cls, str_):
+        """Instantiate from string."""
+        return cls.__members__.get(str_.upper())
 
 # ------------------------------------
 

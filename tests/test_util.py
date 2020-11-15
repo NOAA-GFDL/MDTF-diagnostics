@@ -3,7 +3,7 @@ import unittest
 import mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 
-class TestBasicClasses(unittest.TestCase):
+class TestSingleton(unittest.TestCase):
     def test_singleton(self):
         # Can only be instantiated once
         class Temp1(util.Singleton):
@@ -25,6 +25,7 @@ class TestBasicClasses(unittest.TestCase):
         temp2 = Temp2()
         self.assertEqual(temp2.foo, 0)
 
+class TestMultiMap(unittest.TestCase):
     def test_multimap_inverse(self):
         # test inverse map
         temp = util.MultiMap({'a':1, 'b':2})
@@ -78,6 +79,7 @@ class TestBasicClasses(unittest.TestCase):
         self.assertIn(1, temp_inv)
         self.assertCountEqual(temp_inv[1], set(['a']))
 
+class TestNameSpace(unittest.TestCase):
     def test_namespace_basic(self):
         test = util.NameSpace(name='A', B='C')
         self.assertEqual(test.name, 'A')
@@ -126,6 +128,20 @@ class TestBasicClasses(unittest.TestCase):
         self.assertIn(test, set_test)
         self.assertIn(test4, set_test)
 
+class TestMDTFEnum(unittest.TestCase):
+    def test_to_string(self):
+        class Dummy(util.MDTFEnum):
+            VALUE = ()
+            ANOTHER_VALUE = ()
+        self.assertEqual('value', str(Dummy.VALUE))
+        self.assertEqual('another_value', str(Dummy.ANOTHER_VALUE))
+
+    def test_from_string(self):
+        class Dummy(util.MDTFEnum):
+            VALUE = ()
+            ANOTHER_VALUE = ()
+        self.assertEqual(Dummy.from_struct('value'), Dummy.VALUE)
+        self.assertEqual(Dummy.from_struct('another_value'), Dummy.ANOTHER_VALUE)
 
 class TestUtil(unittest.TestCase):
     def test_parse_json_basic(self):

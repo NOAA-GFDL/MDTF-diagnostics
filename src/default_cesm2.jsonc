@@ -31,16 +31,16 @@
   // resolved relative to the MDTF-diagnostics code directory.
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "./inputdata/model",
+  "MODEL_DATA_ROOT": "../inputdata/model",
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "./inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
-  "WORKING_DIR": "./wkdir",
+  "WORKING_DIR": "../wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "./mdtf_out",
+  "OUTPUT_DIR": "",
 
   // RUNTIME -------------------------------------------------------------------
   // Settings affecting the runtime environment of the PODs.
@@ -53,7 +53,7 @@
   // Root directory for Anaconda environment installs. Only used if 
   // environment_manager = 'Conda'. Set equal to '' to install in your system's 
   // default location.
-  "conda_env_root": "./MDTF-diagnostics/envs",
+  "conda_env_root": "./envs",
   
   // OUTPUT --------------------------------------------------------------------
   // Settings affecting what output is generated.

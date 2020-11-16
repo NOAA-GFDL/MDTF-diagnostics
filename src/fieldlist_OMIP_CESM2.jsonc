@@ -3,7 +3,7 @@
 // in strings, so you'll want to turn word wrap on in your editor.
 //
 {
-  "convention_name" : "OMIP",
+  "convention_name" : "OMIP_CESM2",
   "axes" : {
     "lon" : {"axis" : "nlon", "MDTF_envvar" : "lon_coord"},
     "lat" : {"axis" : "nlat", "MDTF_envvar" : "lat_coord"},

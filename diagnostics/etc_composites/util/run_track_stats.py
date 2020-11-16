@@ -258,3 +258,8 @@ plt.suptitle(f'{os.environ["CASENAME"]} ({defines.over_write_years[0]} - {define
 plt.tight_layout()
 plt.savefig(out_file, dpi=300.)
 plt.close('all')
+
+import pickle
+out_file = os.path.join(os.environ['WK_DIR'], 'track_stats.pkl')
+out_struct = {'lon': lon_mids, 'lat': lat_mids, 'stats': stats}
+pickle.dump(out_struct, open(out_file, 'wb'))

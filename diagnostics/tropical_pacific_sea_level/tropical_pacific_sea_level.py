@@ -52,19 +52,58 @@ warnings.simplefilter("ignore")
 # used_memory()
 
 
+# #### possible input info from external text file
+# # constant setting
+# syear = 1993                 # crop model and obs data from year
+# fyear = 2009                 # crop model and obs data to year
+# tp_lat_region = [-30,30]     # extract model till latitude
+
+# # regional average box
+# lon_range_list = [120,150]   # 0-360
+# lat_range_list = [10,20]
+
+# # Model label
+# Model_name = ['CESM2_CORE']        # model name in the dictionary
+# Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
+
+
+
+# # initialization
+# modelin = {}
+# path = {}
+# #####################
+# ori_syear = 1948
+# ori_fyear = 2009
+# modeldir = os.getenv('MODEL_DATA_ROOT')+'/CESM2_omip1_r1i1p1f1_gn/mon/'
+# modelfile = [['CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc'],
+#              ['CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc'],
+#              ['CESM2_omip1_r1i1p1f1_gn.zos.mon.nc']]
+# areafile = 'CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc'
+# path[Model_name[0]]=[modeldir,modelfile]
+
+# Model_varname = ['tauuo','tauvo','zos']
+# Model_dimname = ['time','nlat','nlon']
+# Model_coordname = ['lat','lon']
+
+# xname = Model_dimname[2]
+# yname = Model_dimname[1]
+
+
 #### possible input info from external text file
 # constant setting
-syear = 1993                 # crop model and obs data from year
-fyear = 2009                 # crop model and obs data to year
-tp_lat_region = [-30,30]     # extract model till latitude
+syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
+fyear = np.int(os.getenv('fyear'))                  # crop model and obs data to year
+tp_lat_region = [-30,30]                 # extract model till latitude
 
 # regional average box
-lon_range_list = [120,150]   # 0-360
-lat_range_list = [10,20]
+lon_range_list = [np.float(os.getenv('lon_min')),
+                  np.float(os.getenv('lon_max'))]   # 0-360
+lat_range_list = [np.float(os.getenv('lat_min')),
+                  np.float(os.getenv('lat_max'))]
 
 # Model label
-Model_name = ['CESM2_CORE']        # model name in the dictionary
-Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
+Model_name = [os.getenv('Model_name')]        # model name in the dictionary
+Model_legend_name = [os.getenv('Model_legend_name')] # model name appeared on the plot legend
 
 
 
@@ -72,21 +111,22 @@ Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
 modelin = {}
 path = {}
 #####################
-ori_syear = 1948
-ori_fyear = 2009
-modeldir = os.getenv('MODEL_DATA_ROOT')+'/CESM2_omip1_r1i1p1f1_gn/mon/'
-modelfile = [['CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc'],
-             ['CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc'],
-             ['CESM2_omip1_r1i1p1f1_gn.zos.mon.nc']]
-areafile = 'CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc'
+ori_syear = os.getenv('FIRSTYR')
+ori_fyear = os.getenv('LASTYR')
+modeldir = os.getenv('MODEL_DATA_ROOT')+os.getenv('Model_path')
+modelfile = [[os.getenv('tauuo_file')],
+             [os.getenv('tauvo_file')],
+             [os.getenv('zos_file')]]
+areafile = os.getenv('areacello_file')
 path[Model_name[0]]=[modeldir,modelfile]
 
-Model_varname = ['tauuo','tauvo','zos']
-Model_dimname = ['time','nlat','nlon']
-Model_coordname = ['lat','lon']
+Model_varname = [os.getenv('tauuo_var'),os.getenv('tauvo_var'),os.getenv('zos_var')]
+Model_dimname = [os.getenv('Model_dim0'),os.getenv('Model_dim1'),os.getenv('Model_dim2')]
+Model_coordname = [os.getenv('Model_coord0'),os.getenv('Model_coord1')]
 
 xname = Model_dimname[2]
 yname = Model_dimname[1]
+
 
 
 

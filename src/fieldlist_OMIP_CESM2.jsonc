@@ -1,0 +1,28 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "convention_name" : "OMIP_CESM2",
+  "axes" : {
+    "lon" : {"axis" : "nlon", "MDTF_envvar" : "lon_coord"},
+    "lat" : {"axis" : "nlat", "MDTF_envvar" : "lat_coord"},
+    "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
+    "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+  },
+  "var_names" : {
+    // Variables for tropical pacific sea level POD:
+    "zos_var" : "zos",
+    "tauuo_var" : "tauuo",
+    "tauvo_var" : "tauvo",
+  },
+  "units" : {
+    "zos_conversion_factor" : 1,
+    "tauuo_conversion_factor" : 1,
+    "tauvo_conversion_factor" : 1,
+    // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
+    "date_int_offset" : 0,
+    // pressure axis: factor * [model native unit] = pressure in Pa
+    "pressure_to_Pa_factor" : 1
+  }
+}

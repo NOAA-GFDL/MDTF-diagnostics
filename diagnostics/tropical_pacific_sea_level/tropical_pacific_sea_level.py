@@ -75,10 +75,10 @@ path = {}
 ori_syear = 1948
 ori_fyear = 2009
 modeldir = os.getenv('MODEL_DATA_ROOT')+'/CESM2_omip1_r1i1p1f1_gn/mon/'
-modelfile = [['tauuo_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc'],
-             ['tauvo_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc'],
-             ['zos_Omon_CESM2_omip1_r1i1p1f1_gn_024901-031012.nc']]
-areafile = 'areacello_Ofx_CESM2_omip1_r1i1p1f1_gn.nc'
+modelfile = [['CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc'],
+             ['CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc'],
+             ['CESM2_omip1_r1i1p1f1_gn.zos.mon.nc']]
+areafile = 'CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc'
 path[Model_name[0]]=[modeldir,modelfile]
 
 Model_varname = ['tauuo','tauvo','zos']

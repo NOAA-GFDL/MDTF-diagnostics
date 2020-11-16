@@ -5,13 +5,18 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
-import re
-import enum
-import shlex
-import glob
-import shutil
 import collections
+import dataclasses
 from distutils.spawn import find_executable
+import enum
+import errno
+import functools
+import glob
+import json
+import re
+import shlex
+import shutil
+import signal
 if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
@@ -19,10 +24,9 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-import signal
 import threading
-import errno
-import json
+import typing
+import unittest.mock
 from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
@@ -290,6 +294,94 @@ class MDTFEnum(enum.Enum):
     def from_struct(cls, str_):
         """Instantiate from string."""
         return cls.__members__.get(str_.upper())
+
+MDTF_NOTSET = unittest.mock.sentinel.NotSet
+MDTF_NOTSET.__doc__ = """
+Sentinel object to detect uninitialized values, in cases where ``None`` is a 
+valid value. See `https://www.revsys.com/tidbits/sentinel-values-python/`__.
+"""
+
+# declaration to allow calling with and without args: python cookbook 9.6
+# https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
+def mdtf_dataclass(cls=None, **deco_kwargs):
+    """Wrap :py:func:`~dataclasses.dataclass` class decorator to customize
+    dataclasses to provide (very) rudimentary type checking and conversion. This
+    is hacky, since dataclasses don't enforce type annontations for their fields.
+    A better solution would be to use a deserialization library like pydantic.
+
+    After auto-generated __init__ and __post_init__, check each field's value to
+    see if it's consistent with known type info. If not, attempt to coerce it to
+    that type, using a ``from_struct`` method if it exists. Raise ValueError if 
+    this fails.
+
+    .. warning::
+       Type checking logic used is specific to the ``typing`` module in python 
+       3.7. It may or may not work on newer pythons, and definitely will not 
+       work with 3.5 or 3.6. See `https://stackoverflow.com/a/52664522`__.
+    """
+    dc_kwargs = {'init': True, 'repr': True, 'eq': True, 'order': False, 
+        'unsafe_hash': False, 'frozen': False}
+    dc_kwargs.update(deco_kwargs)
+    if cls is None:
+        # called without arguments
+        return functools.partial(mdtf_dataclass, **dc_kwargs)
+
+    cls = dataclasses.dataclass(cls, **dc_kwargs)
+    _old_init = cls.__init__
+    @functools.wraps(_old_init)
+    def _new_init(self, *args, **kwargs):
+        # Execute dataclass' auto-generated __init__ and __post_init__:
+        _old_init(self, *args, **kwargs)
+        
+        for f in dataclasses.fields(self):
+            if not f.init:
+                # ignore fields that aren't handled at init
+                continue
+            value = getattr(self, f.name)
+            # ignore unset field values, regardless of type
+            if value is None or value is MDTF_NOTSET:
+                continue
+            # guess what types are valid
+            if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
+                continue
+            elif isinstance(f.type, typing._GenericAlias) \
+                or isinstance(f.type, typing._SpecialForm):
+                # type is a generic from typing module, eg "typing.List"
+                if f.type.__origin__ is typing.Union:
+                    new_type = None # can't do coercion, but can test type
+                    valid_types = list(f.type.__args__)
+                elif issubclass(f.type.__origin__, typing.Generic):
+                    continue # can't do anything in this case
+                else:
+                    new_type = f.type.__origin__
+                    valid_types = [new_type]
+            else:
+                new_type = f.type
+                valid_types = [new_type]
+            # Get types of field's default value, if present. Dataclass doesn't 
+            # require defaults to be same type as what's given for field.
+            if not isinstance(f.default, dataclasses._MISSING_TYPE):
+                valid_types.append(type(f.default))
+            if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+                valid_types.append(type(f.default_factory()))
+            
+            try:
+                if isinstance(value, tuple(valid_types)):
+                    continue
+                if new_type is None or hasattr(new_type, '__abstract_methods__'):
+                    # can't do type coercion, so print a warning
+                    print((f"\tWarning: Type of {f.name} is ({f.type}), recieved "
+                        "{repr(value)} of conflicting type."))
+                else:
+                    if hasattr(new_type, 'from_struct'):
+                        setattr(self, f.name, new_type.from_struct(value))
+                    else:
+                        setattr(self, f.name, new_type(value))
+            except (TypeError, ValueError, dataclasses.FrozenInstanceError): 
+                raise ValueError((f"Expected {f.name} to be {f.type}, "
+                    f"got {repr(value)}"))
+    cls.__init__ = _new_init
+    return cls
 
 # ------------------------------------
 

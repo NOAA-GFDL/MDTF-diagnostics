@@ -1,7 +1,10 @@
 import os
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
+import dataclasses
+import typing
 import src.util as util
+import src.datelabel as dt # only used to construct one test instance
 
 class TestSingleton(unittest.TestCase):
     def test_singleton(self):
@@ -142,6 +145,127 @@ class TestMDTFEnum(unittest.TestCase):
             ANOTHER_VALUE = ()
         self.assertEqual(Dummy.from_struct('value'), Dummy.VALUE)
         self.assertEqual(Dummy.from_struct('another_value'), Dummy.ANOTHER_VALUE)
+
+class TestMDTFDataclass(unittest.TestCase):
+    def test_builtin_coerce(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: str
+            b: int
+            c: list
+
+        dummy = Dummy(a="foo", b="5", c=(1,2,3))
+        self.assertEqual(dummy.a, "foo")
+        self.assertEqual(dummy.b, 5)
+        self.assertEqual(dummy.c, [1,2,3])
+
+    def test_decorator_args(self):
+        @util.mdtf_dataclass(frozen=True)
+        class Dummy(object):
+            a: str
+            b: int
+
+        dummy = Dummy(a="foo", b=5)
+        self.assertTrue(hasattr(dummy, '__hash__'))
+        self.assertEqual(dummy.a, "foo")
+        self.assertEqual(dummy.b, 5)
+        with self.assertRaises(dataclasses.FrozenInstanceError):
+            dummy.b = 7
+
+    def test_defaults_coerce(self):
+        @util.mdtf_dataclass()
+        class Dummy(object):
+            a: int = 5
+            b: int = None
+            c: int = util.MDTF_NOTSET
+            d: int = "not_an_int_but_python_don't_care"
+            e: int = dataclasses.field(default_factory=list)
+
+        dummy = Dummy()
+        self.assertEqual(dummy.a, 5)
+        self.assertEqual(dummy.b, None)
+        self.assertEqual(dummy.c, util.MDTF_NOTSET)
+        self.assertEqual(dummy.d, "not_an_int_but_python_don't_care")
+        self.assertEqual(dummy.e, [])
+
+    def test_ignore_noninit_values(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: int = 5
+            b: int = 6
+            c: int = dataclasses.field(init=False)
+            d: dataclasses.InitVar[int] = None
+
+            def __post_init__(self, d):
+                self.c = "foo"
+                self.d = d
+
+        dummy = Dummy(a=None, b=util.MDTF_NOTSET, d="bar")
+        self.assertEqual(dummy.a, None)
+        self.assertEqual(dummy.b, util.MDTF_NOTSET)
+        self.assertEqual(dummy.c, "foo")
+        self.assertEqual(dummy.d, "bar")
+
+    def test_from_struct(self):
+        FooEnum = util.MDTFEnum('FooEnum', 'X Y Z')
+
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: FooEnum
+            b: dt.Date
+            c: dt.DateFrequency
+
+        dummy = Dummy(a="X", b="2010", c="6hr")
+        self.assertEqual(dummy.a, FooEnum.X)
+        self.assertEqual(dummy.b, dt.Date(2010))
+        self.assertEqual(dummy.c, dt.DateFrequency(6, 'hr'))
+
+    def test_typing_generics(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: typing.List
+            b: typing.List[int]
+            c: typing.Union[int, list] = 6
+            d: typing.MutableSequence = dataclasses.field(default_factory=list)
+            e: typing.Text = "foo"
+
+        dummy = Dummy(a=(1,2), b=(1,2))
+        self.assertEqual(dummy.a, [1,2])
+        self.assertEqual(dummy.b, [1,2])
+        self.assertEqual(dummy.c, 6)
+        dummy = Dummy(a=(1,2), b=(1,2), c=[1,2])
+        self.assertEqual(dummy.c, [1,2])
+        dummy = Dummy(a=(1,2), b=(1,2), c=5)
+        self.assertEqual(dummy.c, 5)
+        dummy = Dummy(a=(1,2), b=(1,2), d=[1,2])
+        self.assertEqual(dummy.d, [1,2])
+        with self.assertRaises(ValueError):
+            _ = Dummy(a=(1,2), b=(1,2), d=(1,2))
+
+    def test_typing_generics_2(self):
+        def dummy_f(x: str) -> int:
+            return int(x)
+
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: typing.Any
+            b: typing.TypeVar('foo') = None
+            c: typing.Callable[[int], str] = util.MDTF_NOTSET
+            d: typing.Generic[typing.TypeVar('X'), typing.TypeVar('X')] = None
+            e: typing.Tuple[int, int] = (5,6)
+
+        dummy = Dummy(a="a")
+        self.assertEqual(dummy.a, "a")
+        self.assertEqual(dummy.b, None)
+        self.assertEqual(dummy.c, util.MDTF_NOTSET)
+        self.assertEqual(dummy.d, None)
+        self.assertEqual(dummy.e, (5,6))
+        dummy = Dummy(a="a", b="bar", c=dummy_f, d="also_ignored", e=[1,2])
+        self.assertEqual(dummy.a, "a")
+        self.assertEqual(dummy.b, "bar")
+        self.assertEqual(dummy.c, dummy_f)
+        self.assertEqual(dummy.d, "also_ignored")
+        self.assertEqual(dummy.e, (1,2))
 
 class TestUtil(unittest.TestCase):
     def test_parse_json_basic(self):

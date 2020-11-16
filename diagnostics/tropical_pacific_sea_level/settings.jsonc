@@ -64,15 +64,15 @@
     // need to add field_*.json for OMIP in src/
     // need variable "zos", 'tauuo', 'tauvo'
     {
-      "var_name" : "zos",
+      "var_name" : "zos_var",
       "freq" : "mon",
       "requirement" : "required"
     },{
-      "var_name" : "tauuo",
+      "var_name" : "tauuo_var",
       "freq" : "mon",
       "requirement" : "required"
     },{
-      "var_name" : "tauvo",
+      "var_name" : "tauvo_var",
       "freq" : "mon",
       "requirement" : "required"
     }

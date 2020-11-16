@@ -15,6 +15,7 @@ Note:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 from src import six
+import abc
 import re
 import datetime
 import operator as op
@@ -926,3 +927,26 @@ class DateFrequency(datetime.timedelta):
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
+
+class AbstractDateRange(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+class AbstractDate(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+class AbstractDateFrequency(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+
+# Use the "register" method, instead of inheritance, to identify the 
+# DM*Dimension classes as implementations of AbstractDMDimension, because 
+# Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
+AbstractDateRange.register(DateRange)
+AbstractDate.register(Date)
+AbstractDateFrequency.register(DateFrequency)

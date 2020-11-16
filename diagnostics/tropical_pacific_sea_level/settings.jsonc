@@ -31,10 +31,10 @@
       "Model_dim2": "nlon"
       "Model_coord0": "lat"
       "Model_coord1": "lon"
-      "zos_file": "CESM2_omip1_r1i1p1f1_gn.zos.mon.nc.nc"
-      "tauuo_file": "CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc.nc"
-      "tauvo_file": "CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc.nc"
-      "areacello_file": "CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc.nc"
+      "zos_file": "CESM2_omip1_r1i1p1f1_gn.zos.mon.nc"
+      "tauuo_file": "CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc"
+      "tauvo_file": "CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc"
+      "areacello_file": "CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc"
       "zos_var": "zos"
       "tauuo_var": "tauuo"
       "tauvo_var": "tauvo"
@@ -56,25 +56,51 @@
         "python3": ["matplotlib", "xarray", "cartopy","cftime","numpy"]
     }
   },
-
+  
+  
+  "data" : {
+    "frequency": "mon"
+  },
+  
+  "dimensions": {
+    "nlat": {
+      "standard_name": "latitude index"
+    },
+    "nlon": {
+      "standard_name": "longitude index"
+    },
+    "time": {
+      "standard_name": "time",
+    }
+  },
+  
   // In this section, you describe what model data your diagnostic uses. Add one
   // list entry (the section in curly braces) for each variable, separated by
   // commas.
   "varlist" : [
-    // need to add field_*.json for OMIP in src/
+    // need to add fieldlist_*.json for OMIP in src/
     // need variable "zos", 'tauuo', 'tauvo'
     {
       "var_name" : "zos_var",
       "freq" : "mon",
       "requirement" : "required"
+      "units" : "meter"
+      "standard_name" : "sea_surface_height_above_geoid"
+      "dimensions" : ["time", "nlat", "nlon"]
     },{
       "var_name" : "tauuo_var",
       "freq" : "mon",
       "requirement" : "required"
+      "units" : "Pa"
+      "standard_name" : "downward_x_stress_at_sea_water_surface"
+      "dimensions" : ["time", "nlat", "nlon"]
     },{
       "var_name" : "tauvo_var",
       "freq" : "mon",
       "requirement" : "required"
+      "units" : "Pa"
+      "standard_name" : "downward_y_stress_at_sea_water_surface"
+      "dimensions" : ["time", "nlat", "nlon"]
     }
   ]
 }

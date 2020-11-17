@@ -113,10 +113,9 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 ax_names['T'], ax_names['var'],
                 time_ax.values[0], time_ax.values[-1], date_range
             ))
-        kwargs = {
+        return ds.sel(**({
             ax_names['T']: slice(dt_start_lower, dt_end_upper)
-        }  
-        return ds.sel(**kwargs)
+        }))
 
     def parse(self, ds, **kwargs):
         pass
@@ -137,7 +136,6 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     here is parsing data axes and CF attributes; all other functionality is 
     provided by :class:`PreprocessorFunctionBase` functions.
     """
-    _default_calendar = 'noleap'
     _default_functions = []
 
     def __init__(self, data_mgr, var, functions=None):
@@ -156,7 +154,7 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
             )
         else:
             self.files = var.remote_data
-
+        # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, var) for cls_ in self._default_functions]
         if functions:
             self.functions.extend([cls_(data_mgr, var) for cls_ in functions])
@@ -199,7 +197,10 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         ds.attrs = _strip_dict(ds.attrs)
         for var in ds.variables:
             ds[var].attrs = _strip_dict(ds[var].attrs)
-        ds = xr.decode_cf(ds)
+        ds = xr.decode_cf(
+            ds, decode_times=True, decode_coords=True, use_cftime=True, 
+            decode_timedelta=None
+        )
         return ds.metpy.parse_cf()
 
     def parse_axes(self, ds):
@@ -248,15 +249,19 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     def parse_calendar(self, ds):
         """Parse the calendar for time-dependent data (assumes CF conventions).
         """
-        if 'calendar' in ds.attrs:
-            self.calendar = ds.attrs['calendar'].lower().strip()
-        elif 'calendar' in self.convention:
-            self.calendar = self.convention['calendar']
-            print(('\tWarning: no calendar info in file, using convention default'
-                ' {}.').format(self.calendar))
-        else:
-            self.calendar = self._default_calendar
-            print('\tWarning: no calendar info in file, defaulting to  {}.').format(self.calendar)
+        def _check_backup_location(dict_):
+            if (not self.calendar) and 'calendar' in dict_:
+                self.calendar = dict_['calendar'].lower().strip()
+
+        time = self.ax_names['T']
+        self.calendar = getattr(ds[time].values[0], 'calendar', None)
+        if self.calendar is None:
+            print('\tWarning: cftime calendar info parse failed.')
+            _check_backup_location(ds[time].attrs)
+            _check_backup_location(ds.attrs)
+            _check_backup_location(self.convention)
+        if self.calendar is None:
+            raise ValueError("No calendar info in file.")
 
     def parse(self, xr_dataset):
         """Additional setup and parsing to be done based on attributes of first 

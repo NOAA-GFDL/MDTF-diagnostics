@@ -88,6 +88,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 instance.
         """
         if 'T' not in ax_names:
+            print('\tWarning: tried to crop time axis of time-independent variable')
             return ds
         # lower/upper are earliest/latest datetimes consistent with the datetime 
         # we were given, to that precision (eg lower for "2000" would be 
@@ -129,6 +130,46 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
     def process_dataset(self, ds, **kwargs):
         return self.crop_time_axis(ds, **kwargs)
 
+class ExtractLevelFunction(PreprocessorFunctionBase):
+    """Extract a single pressure level from a DataSet. Unit conversions of 
+    pressure are handled by metpy, but paramateric vertical coordinates are not
+    handled (since that would require interpolation.) If the exact level is not
+    provided by the data, DataPreprocessError is raised.  
+
+    Args:
+        ds: `xarray.Dataset 
+            <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ 
+            instance.
+    """
+    def extract_level(self, ds, ax_names, v, **kwargs):
+        if 'Z' not in ax_names \
+            or 'pressure' not in getattr(v, 'scalar_coordinates', dict()):
+            return ds
+        p_level = int(v.scalar_coordinates['pressure'])
+        try:
+            ds = ds.metpy.sel(**({ax_names['Z']: p_level * units.hPa}))
+            # rename dependent variable
+            return ds.rename({ax_names['var']: ax_names['var']+str(p_level)})
+        except KeyError:
+            # level wasn't present in coordinate axis
+            raise DataPreprocessError(("Pressure axis of file didn't provide "
+                f"requested level {p_level}."))
+
+    def parse(self, ds, **kwargs):
+        pass
+
+    def process_static_dataset(self, ds, **kwargs):
+        return ds
+
+    def process_file(self, ds, **kwargs):
+        # Do the level extraction here, on a per-file basis, to minimize the
+        # data volume kept in memory.
+        return self.extract_level(ds, **kwargs)
+
+    def process_dataset(self, ds, **kwargs):
+        return ds
+
+# ==================================================
 
 class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     """Base class for preprocessing data after it's been fetched, in order to 

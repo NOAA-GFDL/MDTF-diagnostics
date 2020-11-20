@@ -33,12 +33,12 @@ def generate_ncl_plots(nclPlotFile):
 
 # HACK for merging in SPEAR code before we have general level extraction working
 if '200' in os.environ.get('u200_var','') and '200' in os.environ.get('v200_var',''):
-    print('\tDEBUG: assuming 3D u,v ({},{})'.format(
+    print('\t U,V found on pressure levels ({},{})'.format(
         os.environ['u200_var'], os.environ['v200_var']
     ))
     os.environ['MDTF_3D_UV'] = '1'
 else:
-    print('\tDEBUG: assuming 4D u,v ({},{})'.format(
+    print('\t Since no {},{} settings found, will interpolate from full vertical fields)'.format(
         os.environ['u200_var'], os.environ['v200_var']
     ))
     os.environ['MDTF_3D_UV'] = '0'
@@ -52,7 +52,7 @@ generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl")
 print("COMPUTING DAILY ANOMALIES")
 generate_ncl_plots(os.environ["POD_HOME"]+"/daily_anom.ncl")
 
-print("COMPUTING MJO EOF")
+print("COMPUTING MJO EOF (may take a while for long time samples)")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF.ncl")
 
 print("MJO lag plots")
@@ -62,13 +62,15 @@ print("MJO spectra")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
 if os.path.isfile( os.environ["WK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
-    print("WARNING: MJO_PC_INDEX.nc already exists!")
+    print("WARNING: MJO_PC_INDEX.nc already exists. Not re-running.")
 else:
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")
    
 print("MJO life cycle composite")
+
+# This has a loop to generate two sets of figures, on with -1*PC
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle.ncl")
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle_v2.ncl")
 
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo.ncl")
 
+print("MJO_suite.py finished.")

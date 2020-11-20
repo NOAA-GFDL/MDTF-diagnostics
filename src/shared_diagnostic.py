@@ -526,14 +526,20 @@ class Diagnostic(object):
 
         # remove .eps files if requested
         if not config.config.save_ps:
+            print("Deleting PS files because save_ps = False")
             for d in ['model/PS', 'obs/PS']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
         # delete netCDF files, keep everything else
         if config.config.save_non_nc:
+            print("Deleting NC files because save_non_nc = True")
+            temp = os.system('find {} -iname "*.nc"'.format(self.POD_WK_DIR))
             os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
-        # delete all generated data (flag is a misnomer)
+        # delete all generated data (save_nc flag is a misnomer)
         elif not config.config.save_nc:
+            print("Deleting NC files because save_nc = False")
             for d in ['model/netCDF', 'obs/netCDF']:
                 if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                     shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
+        else:
+            print(" ") # DRB: something should happen here to fix the above logic

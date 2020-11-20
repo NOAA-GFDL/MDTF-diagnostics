@@ -542,6 +542,7 @@ class LocalfileDataManager(DataManager):
         if os.path.isfile(path):
             return [path]
         else:
+            print("\t File not found {}, \n\t program will only fail if this is required and no alternatives found... ".format(path))
             raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
     
     def local_data_is_current(self, dataset):

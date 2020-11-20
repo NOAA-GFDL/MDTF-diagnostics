@@ -243,12 +243,14 @@ class MDTFFramework(object):
         d['settings'] = {k:v for k,v in d['settings'].iteritems() \
             if k not in d['paths']}
         d['envvars'] = config.global_envvars
-        print('DEBUG: SETTINGS:')
+        print('SETTINGS:')
         print(util.pretty_print_json(d))
 
+    # List of modules to search for classes within
     _dispatch_search = [
         data_manager, environment_manager, shared_diagnostic, netcdf_helper
     ]
+
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
             class_prefix = config.config.get(setting, '')
@@ -269,6 +271,7 @@ class MDTFFramework(object):
         self.NetCDFHelper = _dispatch('netcdf_helper', 'NetcdfHelper')
 
     def main_loop(self):
+        print("Starting mdtf:main_loop()")
         config = util_mdtf.ConfigManager()
         self.manual_dispatch(config)
         caselist = []

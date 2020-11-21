@@ -5,7 +5,7 @@ import dataclasses
 import enum
 import glob
 import shutil
-from src import util, util_mdtf, verify_links, datelabel
+from src import util, util_mdtf, verify_links, datelabel, data_model
 
 @six.python_2_unicode_compatible
 class PodRequirementFailure(Exception):
@@ -23,7 +23,7 @@ class PodRequirementFailure(Exception):
             return 'Requirements not met for {}.'.format(self.pod.name)
 
 
-PodDataFileFormat = enum.Enum(
+PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
     ("ANY_NETCDF ANY_NETCDF_CLASSIC "
     "ANY_NETCDF3 NETCDF3_CLASSIC NETCDF_64BIT_OFFSET NETCDF_64BIT_DATA "
@@ -31,8 +31,8 @@ PodDataFileFormat = enum.Enum(
     module=__name__
 )
 
-@dataclasses.dataclass
-class PodDataSettings(object):
+@util.mdtf_dataclass
+class VarlistSettings(object):
     """Class to describe options affecting all variables requested by this POD.
     Corresponds to the "data" section of the POD's settings.jsonc file.
     """
@@ -47,100 +47,62 @@ class PodDataSettings(object):
     min_frequency: datelabel.DateFrequency = None
     max_frequency: datelabel.DateFrequency = None
 
-    @classmethod
-    def from_struct(cls, kwargs):
-        if 'format' in kwargs:
-            kwargs['format'] = PodDataFileFormat[kwargs['format'].upper()]
-        for attr_ in ['frequency', 'min_frequency', 'max_frequency']:
-            if attr_ in kwargs:
-                kwargs[attr_] = datelabel.DateFrequency(kwargs[attr_])
-        return cls(**kwargs)
-
-@dataclasses.dataclass
-class PodDataDimension(object):
+@util.mdtf_dataclass(frozen=True)
+class VarlistCoordinateMixin(object):
     """Class to describe a single dimension (in the netcdf data model sense)
     used by one or more variables. Corresponds to list entries in the 
     "dimensions" section of the POD's settings.jsonc file.
     """
-    name: str
-    standard_name: str = None
-    units: str = None
+    name_in_POD: str
     need_bounds: bool = False
-    axis = None
 
-    def __post_init__(self):
-        # do this instead of removing defaults because we want these fields to
-        # take fixed values in child classes
-        if not self.standard_name or not self.units:
-            raise ValueError('Dimension {} needs standard name or units'.format(self.name))
+@util.mdtf_dataclass(frozen=True)
+class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
+    pass
 
-@dataclasses.dataclass
-class PodDataLongitudeDimension(PodDataDimension):
-    range: list = None
-    axis = 'X'
+@util.mdtf_dataclass(frozen=True)
+class VarlistLongitudeCoordinate(data_model.DMLongitudeCoordinate, \
+    VarlistCoordinateMixin):
+    range: tuple = None
 
-    def __post_init__(self):
-        self.standard_name = 'longitude'
-        self.units = 'degrees_E'
-        super(PodDataLongitudeDimension, self).__post_init__
+@util.mdtf_dataclass(frozen=True)
+class VarlistLatitudeCoordinate(data_model.DMLatitudeCoordinate, \
+    VarlistCoordinateMixin):
+    range: tuple = None
 
-@dataclasses.dataclass
-class PodDataLatitudeDimension(PodDataDimension):
-    range: list = None
-    axis = 'Y'
+@util.mdtf_dataclass(frozen=True)
+class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
+    VarlistCoordinateMixin):
+    pass
 
-    def __post_init__(self):
-        self.standard_name = 'latitude'
-        self.units = 'degrees_N'
-        super(PodDataLongitudeDimension, self).__post_init__
+@util.mdtf_dataclass(frozen=True)
+class VarlistTimeCoordinate(data_model.DMTimeCoordinate, VarlistCoordinateMixin):
+    pass
 
-@dataclasses.dataclass
-class PodDataVerticalDimension(PodDataDimension):
-    positive: str
-    axis = 'Z'
-
-@dataclasses.dataclass
-class PodDataTimeDimension(PodDataDimension):
-    calendar: str
-    axis = 'T'
-
-    def __post_init__(self):
-        self.standard_name = 'time'
-        if not self.units:
-            self.units = 'days' # questionable
-        super(PodDataLongitudeDimension, self).__post_init__
-
-PodVariableRequirement = enum.Enum(
-    'PodVariableRequirement', 'REQUIRED OPTIONAL ALTERNATE', module=__name__
+PodVariableRequirement = util.MDTFEnum(
+    'PodVariableRequirement', 
+    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', module=__name__
 )
 
-@dataclasses.dataclass
-class PodVarlistEntry(PodDataSettings):
+@util.mdtf_dataclass
+class VarlistEntry(data_model.DMVariable, VarlistSettings):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
     settings.jsonc file.
     """
     name_in_POD: str
-    standard_name: str
-    dimensions: list
     path_variable: str = None
     use_exact_name: bool = False
-    units: str = None
-    scalar_coordinates: dict = dataclasses.field(default_factory=dict)
     requirement: PodVariableRequirement = PodVariableRequirement.REQUIRED
     alternates: list = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
         if not self.path_variable:
-            self.path_variable = self.name.upper() + '_FILE'
+            self.path_variable = self.name_in_POD.upper() + '_FILE'
 
     @classmethod
-    def from_struct(cls, pod_data_settings, name, kwargs):
-        if 'requirement' in kwargs:
-            kwargs['requirement'] = PodVariableRequirement[
-                kwargs['requirement'].upper()
-            ]
-        cls_kwargs = dataclasses.asdict(pod_data_settings)
+    def from_struct(cls, varlist_settings, name, **kwargs):
+        cls_kwargs = dataclasses.asdict(varlist_settings)
         cls_kwargs.update(kwargs)
         return cls(name_in_POD=name, **cls_kwargs)
 
@@ -265,17 +227,17 @@ class Diagnostic(object):
         def _pod_dimension_from_struct(name, d):
             if d.get('axis', None) == 'X' \
                 or d.get('standard_name', None) == 'longitude':
-                return PodDataLongitudeDimension(name=name, **d)
+                return VarlistLongitudeCoordinate(name_in_POD=name, **d)
             elif d.get('axis', None) == 'Y' \
                 or d.get('standard_name', None) == 'latitude':
-                return PodDataLatitudeDimension(name=name, **d)
+                return VarlistLatitudeCoordinate(name_in_POD=name, **d)
             elif d.get('axis', None) == 'Z':
-                return PodDataVerticalDimension(name=name, **d)
+                return VarlistVerticalCoordinate(name_in_POD=name, **d)
             elif d.get('axis', None) == 'T' \
                 or d.get('standard_name', None) == 'time':
-                return PodDataTimeDimension(name=name, **d)
+                return VarlistTimeCoordinate(name_in_POD=name, **d)
             else:
-                return PodDataDimension(name=name, **d)
+                return VarlistCoordinate(name_in_POD=name, **d)
 
         return {k: _pod_dimension_from_struct(k, v) \
             for k,v in d['dimensions'].items()}
@@ -284,6 +246,12 @@ class Diagnostic(object):
         """Parse the "data" and "varlist" sections of the POD's
         settings.jsonc file when instantiating a new Diagnostic() object.
 
+        .. note::
+           Coordinate and dimension names referenced in each varlist entry aren't
+           resolved here and are kept as strings. They're resolved into objects
+           when the varlist entries are passed to a 
+           :class:`~data_sources.DataSource`.
+
         Args:
             d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
@@ -291,34 +259,25 @@ class Diagnostic(object):
         Returns:
             List of :class:`PodVarlistEntry` objects.
         """
-        if 'data' not in d:
-            pod_data_settings = PodDataSettings()
-        else:
-            pod_data_settings = PodDataSettings.from_struct(d['data'])
-        vars_ = {k: PodVarlistEntry(pod_data_settings, k, v) \
+        assert 'varlist' in d
+        varlist_settings = VarlistSettings(**(d.get('data', dict())))
+        vars_ = {k: VarlistEntry(varlist_settings, k, **v) \
             for k,v in d['varlist'].items()}
 
         for v in vars_:
-            # replace names of dimensions in varlist vars with dimension objects
+            # verify that references to coords, other vars are valid
             for dim in v.dimensions:
                 if dim not in self.dims:
-                    raise ValueError(("Unknown dimension name {} in varlist "
-                        "entry for {} in POD {}")).format(dim, v.name, self.name))
+                    raise ValueError((f"Unknown dimension name {dim} in varlist "
+                        f"entry for {v.name_in_POD} in POD {self.name}"))
             for dim in v.scalar_coordinates.keys():
                 if dim not in self.dims:
-                    raise ValueError(("Unknown dimension name {} in varlist "
-                        "entry for {} in POD {}")).format(dim, v.name, self.name))
-            v.dimensions = [self.dims[dim] for dim in v.dimensions]
-
-            # replace names of alternate vars with varlist objects
-            # note that python is pass-by-reference, so we're only adding
-            #references to the original, mutable object
+                    raise ValueError((f"Unknown dimension name {dim} in varlist "
+                        f"entry for {v.name_in_POD} in POD {self.name}"))
             for vv in v.alternates:
                 if vv not in vars_:
-                    raise ValueError(("Unknown alternate variable {} in varlist "
-                        "entry for {} in POD {}")).format(vv, v.name, self.name))
-            v.alternates = [vars_[vv] for vv in v.alternates]
-
+                    raise ValueError((f"Unknown alternate variable {vv} in "
+                        f"varlist entry for {v.name_in_POD} in POD {self.name}"))
         return list(vars_.values())
 
     # -------------------------------------

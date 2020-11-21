@@ -4,6 +4,7 @@ independent of any model, experiment, or hosting protocol.
 import abc
 import collections
 import dataclasses
+import typing
 from src import util, util_mdtf, datelabel
 
 DMAxis = util.MDTFEnum(
@@ -12,8 +13,8 @@ DMAxis = util.MDTFEnum(
 
 @util.mdtf_dataclass(frozen=True)
 class DMCoordinate(object):
-    """Class to describe a single coordinate (in the netcdf data model sense)
-    used by one or more variables.
+    """Class to describe a single coordinate variable (in the sense used by the
+    `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
     standard_name: str
     units: str
@@ -33,11 +34,27 @@ class DMLatitudeCoordinate(object):
 
 @util.mdtf_dataclass(frozen=True)
 class DMVerticalCoordinate(object):
+    """Class to describe a non-parametric vertical coordinate (height or depth),
+    following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
+    """
     standard_name: str
-    units: str
+    units: str = "1" # dimensionless vertical coords OK
     positive: str
 
     axis = DMAxis.Z
+
+@util.mdtf_dataclass(frozen=True)
+class DMParametricVerticalCoordinate(DMVerticalCoordinate):
+    """Class to describe `parametric vertical coordinates
+    <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#parametric-vertical-coordinate>`__.
+    Note that the variable names appearing in ``formula_terms`` aren't parsed 
+    here, in order to keep the class hashable. 
+    """
+    computed_standard_name: str = ""
+    long_name: str = ""
+    formula_terms: str = dataclasses.field(default=None, compare=False)
+    # Don't include formula_terms in testing for equality, since this could 
+    # reference different names for the aux coord variables.
 
 @util.mdtf_dataclass(frozen=True)
 class DMTimeCoordinate(object):
@@ -76,20 +93,53 @@ class AbstractDMCoordinate(abc.ABC):
     def axis(self):
         pass
 
-# Use the "register" method, instead of inheritance, to identify the 
-# DM*Coordinate classes as implementations of AbstractDMCoordinate, because 
-# Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
+# Use the "register" method, instead of inheritance, to identify these classes
+# as implementations of AbstractDMCoordinate, because Python dataclass 
+# fields aren't recognized as implementing an abc.abstractmethod.
 AbstractDMCoordinate.register(DMCoordinate)
 AbstractDMCoordinate.register(DMLongitudeCoordinate)
 AbstractDMCoordinate.register(DMLatitudeCoordinate)
 AbstractDMCoordinate.register(DMVerticalCoordinate)
+AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
 AbstractDMCoordinate.register(DMTimeCoordinate)
+
+class DMScalarCoordinateMixin(object):
+    """Agument definitions of coordinates with a specific value, as in the
+    CF conventions treatment of `scalar coordinates 
+    <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__.
+    """
+    value: typing.Union[int, float] = None
+
+@util.mdtf_dataclass(frozen=True)
+class DMScalarCoordinate(DMCoordinate, DMScalarCoordinateMixin):
+    pass
+
+@util.mdtf_dataclass(frozen=True)
+class DMScalarVerticalCoordinate(DMVerticalCoordinate, DMScalarCoordinateMixin):
+    pass
+
+class AbstractDMScalarCoordinate(AbstractDMCoordinate):
+    """Defines interface (set of attributes) for :class:`DMScalarCoordinate` 
+    objects.
+    """
+    @property
+    @abc.abstractmethod
+    def value(self):
+        pass
+
+# Use the "register" method, instead of inheritance, to identify these classes
+# as implementations of AbstractDMScalarCoordinate, because Python dataclass 
+# fields aren't recognized as implementing an abc.abstractmethod.
+AbstractDMScalarCoordinate.register(DMScalarCoordinate)
+AbstractDMScalarCoordinate.register(DMScalarVerticalCoordinate)
 
 @util.mdtf_dataclass
 class DMCoordinateSet(object):
     # stuff for map projections, non-lat-lon horiz bookkeeping
     # also areacello/volcello, hyam/hybm
-    coords: tuple
+    dims: tuple
+    scalar_coordinates: list
+    aux_coordinates: list
     X: AbstractDMCoordinate = dataclasses.field(init=False, default=None)
     Y: AbstractDMCoordinate = dataclasses.field(init=False, default=None)
     Z: AbstractDMCoordinate = dataclasses.field(init=False, default=None)
@@ -103,12 +153,28 @@ class DMCoordinateSet(object):
 
     @property
     def is_static(self):
-        return (self.T is None)
+        return (self.T is None) or (self.T.is_static)
+
+    def replace_date_range(self, new_range):
+        assert not self.is_static
+        new_T = dataclasses.replace(self.T, range=new_range)
+        self.T = new_T
+        # still need to replace in dims
+
 
 @util.mdtf_dataclass
-class DMVariable(DMCoordinateSet):
-    """Class to describe general properties of datasets.
+class DMAuxiliaryCoordinate(DMCoordinateSet):
+    """Class to describe `auxiliary coordinate variables 
+    <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__,
+    as defined in the CF conventions. An example would be lat or lon for data 
+    presented in a tripolar or other grid projection.
     """
     standard_name: str
     units: str
-    scalar_coordinates: dict = dataclasses.field(default_factory=dict)
+
+@util.mdtf_dataclass
+class DMVariable(DMCoordinateSet):
+    """Class to describe general properties of dependent (data) variables.
+    """
+    standard_name: str
+    units: str

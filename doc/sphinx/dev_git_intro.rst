@@ -54,16 +54,56 @@ Clone a local repository onto your machine
 Start coding
 ^^^^^^^^^^^^
 
-- Switch to the ``develop`` branch: ``git checkout develop``.
-- If it's been a while since you created your fork, other people may have updated NOAA's ``develop`` branch. To make sure you're up-to-date, get these changes with ``git pull upstream develop`` and ``git submodule update --recursive --remote``.
-- That command updates the working copy on your computer, but you also need to tell your fork on GitHub about the changes: ``git push origin develop``.
-- Now you're up-to-date and ready to start working on a new feature. ``git checkout -b feature/<my_feature_name>`` will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
+1. Switch to the ``develop`` branch:
+   .. code-block:: bash
+      git checkout develop
+2. Make sure that you pull in changes from the develop branch frequently to simplify the merge process after you submit a PR.
+Update your local copy (the copy on your computer) of the develop branch:
+   .. code-block:: bash
+      git fetch upstream develop
+      git pull upstream develop
+      git submodule update --recursive --remote
+3. Next, update your remote copy (the branch on your Github fork):
+   .. code-block:: bash
+      git push origin develop
+4. Now you're up-to-date and ready to start working on a new feature:
+   .. code-block:: bash
+      git checkout -b feature/<my_feature_name>
+will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
+5. To sync your feature branch with the NOAA_GFDL develop, update the local and remote develop branches as described steps 1--3.
+Next, check out your feature branch:
+   .. code-block:: bash
+      git checkout feature/<my_feature_name>
+and rebase your branch onto develop interactively:
+   ..code-block:: bash
+      git rebase -i
+This will launch an interactive rebase. Your text editor will open in the terminal
+(Vim by default) and display your commit hashes with the oldest commit at the top.
+   ..code-block:: bash
+      pick 39n3b42 oldest commit
+      pick 320cnyn older commit
+      pick 20ac93c newest commit
+You may squash commits by replacing *pick* with *squash* for the commit(s) that are newer
+than the commit you want to combine with (i.e., the commits below the target commit).
+For example:
+   ..code-block:: bash
+      pick 39n3b42 oldest commit
+      squash 320cnyn older commit
+      pick 20ac93c newest commit
+combines commit 320cnyn with commit 29n3b42, while
+   ..code-block:: bash
+      pick 39n3b42 oldest commit
+      squash 320cnyn older commit
+      squash 20ac93c newest commit
+combines 20ac93c and 320cnyn with 39n3b42.
 
-   - If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
 
-   - If you encounter problems during practice, you can first try looking for *plain English* instructions to unmess the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
+     
+- If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
 
-- Write your code! A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet). ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
+- If you encounter problems during practice, you can first try looking for *plain English* instructions to unmess the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
+
+6. Write your code! A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet). ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
 
 .. (TODO: tests ...)
 .. (TODO: adding files...)

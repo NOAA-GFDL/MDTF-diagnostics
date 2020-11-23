@@ -54,56 +54,87 @@ Clone a local repository onto your machine
 Start coding
 ^^^^^^^^^^^^
 
-1. Switch to the ``develop`` branch:
-   .. code-block:: bash
-      git checkout develop
+1. Switch to the ``develop`` branch
+::
+  git checkout develop
 2. Make sure that you pull in changes from the develop branch frequently to simplify the merge process after you submit a PR.
-Update your local copy (the copy on your computer) of the develop branch:
-   .. code-block:: bash
-      git fetch upstream develop
-      git pull upstream develop
-      git submodule update --recursive --remote
-3. Next, update your remote copy (the branch on your Github fork):
-   .. code-block:: bash
-      git push origin develop
-4. Now you're up-to-date and ready to start working on a new feature:
-   .. code-block:: bash
-      git checkout -b feature/<my_feature_name>
+Update your local copy (the copy on your computer) of the develop branch::
+  git fetch upstream develop
+  git pull upstream develop
+  git submodule update --recursive --remote
+3. Next, update your remote copy (the branch on your Github fork)
+::
+  git push origin develop
+4. Now you're up-to-date and ready to start working on a new feature
+::
+  git checkout -b feature/<my_feature_name>
 will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
 5. To sync your feature branch with the NOAA_GFDL develop, update the local and remote develop branches as described steps 1--3.
-Next, check out your feature branch:
-   .. code-block:: bash
-      git checkout feature/<my_feature_name>
-and rebase your branch onto develop interactively:
-   ..code-block:: bash
-      git rebase -i
+Next, check out your feature branch ::
+  git checkout feature/<my_feature_name>
+and rebase your branch onto develop interactively
+::
+  git rebase -i
 This will launch an interactive rebase. Your text editor will open in the terminal
-(Vim by default) and display your commit hashes with the oldest commit at the top.
-   ..code-block:: bash
-      pick 39n3b42 oldest commit
-      pick 320cnyn older commit
-      pick 20ac93c newest commit
+(Vim by default) and display your commit hashes with the oldest commit at the top::
+  pick 39n3b42 oldest commit
+  pick 320cnyn older commit
+  pick 20ac93c newest commit
 You may squash commits by replacing *pick* with *squash* for the commit(s) that are newer
 than the commit you want to combine with (i.e., the commits below the target commit).
-For example:
-   ..code-block:: bash
-      pick 39n3b42 oldest commit
-      squash 320cnyn older commit
-      pick 20ac93c newest commit
+For example ::
+  pick 39n3b42 oldest commit
+  squash 320cnyn older commit
+  pick 20ac93c newest commit
 combines commit 320cnyn with commit 29n3b42, while
-   ..code-block:: bash
-      pick 39n3b42 oldest commit
-      squash 320cnyn older commit
-      squash 20ac93c newest commit
+::
+  pick 39n3b42 oldest commit
+  squash 320cnyn older commit
+  squash 20ac93c newest commit
 combines 20ac93c and 320cnyn with 39n3b42.
 
+Note that squashing commits is not required. However, doing so creates a more streamlined commit history.
+Once you're done squashing commits (if you chose to do so), save your changes and close the editor
+``ESC + SHIFT + wq`` to save and quit in Vim), and the rebase will launch. If the rebase stops because
+there are merge conficts and resolve the conflicts. To show the files with merge conflicts, type::
+git status
 
+This will show files with a message that there are merge conflicts, or that a file has been added/deleted by only one
+branch. Open the files in an editor, resolve the conflicts, then add edited (or remove deleted) 
+files to the staging area ::
+  git add file1
+  git add file2
+  ...
+  git rm file3
+Next, continue the rebase
+::
+  git rebase --continue
+The editor will pop up with the edited commit history. Simply save the changes and close the editor
+(``ESC+SHIFT+wq``), and the rebase will continue. If the rebase stops with errors, repeat the merge conflict resolution process,
+add/remove the files to staging area, type ``git rebase --continue``, and proceed.
+
+If you have not updated your branch in a long time, you'll likely find that you have to keep fixing the
+same conflicts over and over again (every time your commits collide with the commits on the main branch). This is why we strongly advise POD developers to pull updates into their forks
+and rebase their branches onto the develop branch frequently.
+
+Note that if you want to stop the rebase at any time and revert to the original state of your branch, type
+::
+  git rebase --abort
+
+6. Once the rebase has completed, push your changes to the remote copy of your branch
+::
+  git push -u origin feature/<my_feature_name> --force
+The ``--force`` option is necessary because rebasing modified the commit history.
+
+7. Now that your branch is up-to-date, write your code! 
+A useful command is ``git status`` to remind you what branch you're on and 
+changes you've made (but have not committed yet)::
+  git branch -a 
+lists all branches with ``*`` indicating the branch you're on.
      
 - If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
 
 - If you encounter problems during practice, you can first try looking for *plain English* instructions to unmess the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
-
-6. Write your code! A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet). ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
 
 .. (TODO: tests ...)
 .. (TODO: adding files...)

@@ -17,8 +17,8 @@
       "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
       "model" : "CESM2",
       "convention" : "OMIP_CESM2",
-      "FIRSTYR" : 1948,
-      "LASTYR" : 2009,
+      "FIRSTYR" : "1948",
+      "LASTYR" : "2009",
       "CASE_ROOT_DIR" : "/storage1/home1/chiaweih/mdtf/inputdata/model/CESM2_omip1_r1i1p1f1_gn/mon/",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)

@@ -24,12 +24,8 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-from src import cli
-from src import util
-from src import util_mdtf
-from src import data_manager
-from src import environment_manager
-from src import shared_diagnostic
+from src import cli, util, util_mdtf, data_manager, environment_manager, \
+    shared_diagnostic, preprocessor
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -251,7 +247,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic
+        data_manager, environment_manager, shared_diagnostic, preprocessor
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -270,6 +266,7 @@ class MDTFFramework(object):
         self.DataManager = _dispatch('data_manager', 'DataManager')
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
+        self.Preprocessor = _dispatch('preprocessor', 'Preprocessor')
 
     def main_loop(self):
         config = util_mdtf.ConfigManager()
@@ -287,7 +284,7 @@ class MDTFFramework(object):
             case.setUp()
             case.query_data()
             case.fetch_data()
-            case.preprocess_data()
+            case.preprocess_data(self.Preprocessor)
             caselist.append(case)
 
         for case in caselist:

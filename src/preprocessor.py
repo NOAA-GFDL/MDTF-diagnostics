@@ -419,3 +419,17 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         )
         ds.close() # save memory; shouldn't be necessary
         del ds
+
+# -------------------------------------------------
+
+class SampleModelDataPreprocessor(SingleFilePreprocessor):
+    """A :class:`MDTFPreprocessorBase` intended for use on sample model data
+    only. Assumes all data is in one netCDF file and only truncates the date
+    range.
+    """
+    _default_functions = [CropDateRangeFunction]
+
+class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
+    """A :class:`MDTFPreprocessorBase` for general, multi-file data.
+    """
+    _default_functions = [CropDateRangeFunction, ExtractLevelFunction]

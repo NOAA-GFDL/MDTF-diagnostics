@@ -481,9 +481,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # -------------------------------------
 
-    def preprocess_data(self):
+    def preprocess_data(self, preprocessor):
+        """Hook to run the preprocessing function on all variables. The 
+        preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
+        """
         for var in self.iter_vars():
-            pp = preprocessor.MDTFPreprocessor(self, var)
+            pp = preprocessor(self, var)
             pp.preprocess()
 
     # HTML & PLOT OUTPUT -------------------------------------

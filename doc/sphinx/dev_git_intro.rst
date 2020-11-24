@@ -65,18 +65,27 @@ Update your local copy (the copy on your computer) of the develop branch::
 3. Next, update your remote copy (the branch on your Github fork)
 ::
   git push origin develop
-4. Now you're up-to-date and ready to start working on a new feature
+4. Now your branch is up-to-date, and you are ready to start working on a new feature
 ::
   git checkout -b feature/<my_feature_name>
 will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
-5. To sync your feature branch with the NOAA_GFDL develop, update the local and remote develop branches as described steps 1--3.
-Next, check out your feature branch ::
+
+Updating your feature branch by rebasing it onto the develop branch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Git rebasing is procedure to integrate the changes from one branch into another branch.
+``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the 
+branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes
+in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged
+into the develop branch.
+1. To sync your feature branch with the NOAA-GFDL develop branch, update the local and 
+remote develop branches on your fork as described steps 1--3 of the *Start Coding* section, 
+check out your feature branch ::
   git checkout feature/<my_feature_name>
-and rebase your branch onto develop interactively
+and launch an interactive rebase of your branch onto the develop branch.
 ::
-  git rebase -i
-This will launch an interactive rebase. Your text editor will open in the terminal
-(Vim by default) and display your commit hashes with the oldest commit at the top::
+  git rebase -i develop
+Your text editor will open in the terminal (Vim by default)
+and display your commit hashes with the oldest commit at the top::
   pick 39n3b42 oldest commit
   pick 320cnyn older commit
   pick 20ac93c newest commit
@@ -99,8 +108,8 @@ Once you're done squashing commits (if you chose to do so), save your changes an
 there are merge conficts and resolve the conflicts. To show the files with merge conflicts, type::
 git status
 
-This will show files with a message that there are merge conflicts, or that a file has been added/deleted by only one
-branch. Open the files in an editor, resolve the conflicts, then add edited (or remove deleted) 
+This will show files with a message that there are merge conflicts, or that a file has been added/deleted
+by only one of the branches. Open the files in an editor, resolve the conflicts, then add edited (or remove deleted) 
 files to the staging area ::
   git add file1
   git add file2
@@ -109,7 +118,7 @@ files to the staging area ::
 Next, continue the rebase
 ::
   git rebase --continue
-The editor will pop up with the edited commit history. Simply save the changes and close the editor
+The editor will open with the modified commit history. Simply save the changes and close the editor
 (``ESC+SHIFT+wq``), and the rebase will continue. If the rebase stops with errors, repeat the merge conflict resolution process,
 add/remove the files to staging area, type ``git rebase --continue``, and proceed.
 
@@ -121,48 +130,79 @@ Note that if you want to stop the rebase at any time and revert to the original 
 ::
   git rebase --abort
 
-6. Once the rebase has completed, push your changes to the remote copy of your branch
+2. Once the rebase has completed, push your changes to the remote copy of your branch
 ::
-  git push -u origin feature/<my_feature_name> --force
+  git push origin feature/<my_feature_name> --force
 The ``--force`` option is necessary because rebasing modified the commit history.
 
-7. Now that your branch is up-to-date, write your code! 
-A useful command is ``git status`` to remind you what branch you're on and 
-changes you've made (but have not committed yet)::
-  git branch -a 
-lists all branches with ``*`` indicating the branch you're on.
+3. Now that your branch is up-to-date, write your code!
+
+Pushing to your remote POD development branch on your fork
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When you are ready to push your updates to the remote branch on your fork
+1. type ``git status`` to list the file(s) that have been updated
+2. type ``git add <file>`` to add individual files, or
+``git add --all`` to add all files, that have been updated to the staging area
+3. Commit the changes with ``git commit -m <your commit message>``. You can also
+type ``git commit`` to launch an editor in the terminal where you can enter your message.
+If you use the editor or BASH shell, you can easily break up your message over multiple lines
+for better readability.
+4. Push the updates to your fork: `` git push -u origin feature/<my_feature_name>``
+(The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
+
+Pull Requests
+^^^^^^^^^^^^^
+A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo.
+When your feature is ready, submit a PR by going to the GitHub page of your fork
+and clicking on ``Pull request`` to the right of the branch description. Make sure you are submitting
+the PR to NOAA-GFDL/develop. 
+Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks.
+If you are still working on your POD, but want to test it with the CI, you can select the *Created draft Pull Request* option
+from the dropdown menu by clicking the green button with the arrow to the right of the
+*Create Pull Request Button".
+
+Git Tips and Tricks
+^^^^^^^^^^^^^^^^^^^
+* If you are unfamiliar with git and want to practice with the commands listed here, 
+we recommend you to create an additional feature branch just for this.
+Remember: your changes will not affect NOAA's repo until you've submitted a pull request
+through the GitHub webpage and accepted by the lead-team programmer.
+
+* If you encounter problems during practice, you can first try looking for *plain English*
+instructions to fix the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
+* A useful command is ``git status`` to remind you what branch you're on and 
+changes you've made (but have not committed yet).
+
+* ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
      
-- If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
+* Push your changes to your remote fork often (e.g., at least daily) even if your changes aren't
+"clean", or you are in the middle of something. Your commit history does not need to look like a
+polished document, and nobody is judging your coding prowess by your development branch.
+Frequently pushing to your remote branch ensures that you have an easily accessible recent snapshot of your code in the
+event that your system goes down, or you go crazy with ``rm -f *``.
 
-- If you encounter problems during practice, you can first try looking for *plain English* instructions to unmess the situation at `Dangit, Git?! <https://dangitgit.com/>`__.
-
-.. (TODO: tests ...)
-.. (TODO: adding files...)
-.. (- Commit changes with ``git commit -m <your commit message>``.) Somehow -m never works for YH.
-.. Good commit messages are key to making the project's history useful. To make this easier, instead of using the ``-m`` flag, you can configure git to launch your text editor of choice with ``git config --global core.editor "<command string to launch your editor>"``.
-.. - To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools). Here's an `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b>`__.
-
-- If you've added new files, ``git add --all`` before commit the changes.
-
-- Commit changes with ``git commit -a``. This creates a snapshot of the code into the history in your local repo.
-
+* A commit creates a snapshot of the code into the history in your local repo.
    - The snapshot will exist until you intentionally delete it (after confirming a warning message). You can always revert to a previous snapshot.
    - Don't commit code that you know is buggy or non-functional!
    - You'll be asked to enter a commit message. Good commit messages are key to making the project's history useful.
    - Write in *present tense* describing what the commit, when applied, does to the code -- not what you did to the code.
    - Messages should start with a brief, one-line summary, less than 80 characters. If this is too short, you may want to consider entering your changes as multiple commits.
 
-- When finish updating your feature, merge it back into ``develop``: first ``git checkout develop`` then ``git merge --no-ff feature/<my_feature_name>``. **The '--no-ff' flag is important:** it tells git not to compress ("fast-forward") your commit history onto the ``develop`` branch.
-- ``git push origin`` so that the changes to your local repo is incorporated to the your GitHub fork (displayed on the webpage).
+* Good commit messages are key to making the project's history useful. To make this easier, instead of using the ``-m`` flag, 
+To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools).
+Here's an `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b>`__.
 
-   - Enter the SSH key *passphrase* when asked for *password*.
+* To configure git to launch your text editor of choice: ``git config --global core.editor "<command string to launch your editor>"``.
 
-- If you haven't finished working on your feature, you can checkout and update the local feature branch again by repeating the above commands.
-- When your feature is ready, submit a *pull request* by going to the GitHub page of your fork and clicking on the ``Pull request`` button. This is your proposal to the maintainers to incorporate your feature into NOAA's repo.
-- When the feature branch is no longer needed, delete the branch locally with ``git branch -d feature/<my_feature_name>``. If you pushed it to your fork, you can delete it remotely with ``git push --delete origin feature/<my_feature_name>``.
+* To set your email: ``git config --global user.email "myemail@somedomain.com"`` You can
+use the masked email github provides if you don't want your work email included in the commit log message.
+The masked email address is located in the `Primary email address` section under Settings>emails. 
 
-   - Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
+* When the feature branch is no longer needed, delete the branch locally with ``git branch -d feature/<my_feature_name>``.
+ If you pushed it to your fork, you can delete it remotely with ``git push --delete origin feature/<my_feature_name>``.
+   * Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
 
-- If you want to let others work on your feature, push its branch to your GitHub fork with ``git push -u origin feature/<my_feature_name>``. The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.
+* If you want to let others work on your feature, push its branch to your GitHub fork with ``git push -u origin feature/<my_feature_name>``.
 
+.. (TODO: tests ...)
 .. (... policy on CI, tests passing ...)

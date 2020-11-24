@@ -95,8 +95,8 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         # jan 1, 2000, and upper would be dec 31).
         dt_start_lower = self.cast_to_cftime(date_range.start.lower, calendar)
         dt_start_upper = self.cast_to_cftime(date_range.start.upper, calendar)
-        dt_end_upper = self.cast_to_cftime(date_range.end.lower, calendar)
-        dt_end_lower = self.cast_to_cftime(date_range.end.upper, calendar)
+        dt_end_lower = self.cast_to_cftime(date_range.end.lower, calendar)
+        dt_end_upper = self.cast_to_cftime(date_range.end.upper, calendar)
 
         time_ax = ds[ax_names['T']] # abbreviate
         if time_ax.values[0] > dt_start_upper:

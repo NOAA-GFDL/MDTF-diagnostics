@@ -140,6 +140,10 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         ds: `xarray.Dataset 
             <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ 
             instance.
+
+    TODO: Properly translate vertical coordinate name and units. If passed 3D
+    data, verify that it's for the requested level. Rename variable according to
+    convention POD expects.
     """
     def extract_level(self, ds, ax_names, v, **kwargs):
         if 'Z' not in ax_names \
@@ -422,14 +426,14 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
 # -------------------------------------------------
 
-class SampleModelDataPreprocessor(SingleFilePreprocessor):
+class SamplemodeldataPreprocessor(SingleFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` intended for use on sample model data
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
     _default_functions = [CropDateRangeFunction]
 
-class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
+class MdtfdataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
     _default_functions = [CropDateRangeFunction, ExtractLevelFunction]

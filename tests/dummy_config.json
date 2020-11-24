@@ -21,6 +21,7 @@
   "keep_temp": false,
   "pods": "all",
   "environment_manager": "Conda",
+  "preprocessor": "SampleModelData",
   "conda_root": "",
   "conda_env_root": "",
   "venv_root": "",

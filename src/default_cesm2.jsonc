@@ -17,9 +17,9 @@
       "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
       "model" : "CESM2",
       "convention" : "OMIP_CESM2",
-      "FIRSTYR" : "1948",
-      "LASTYR" : "2009",
-      "CASE_ROOT_DIR" : "/storage1/home1/chiaweih/mdtf/inputdata/model/CESM2_omip1_r1i1p1f1_gn/mon/",
+      "FIRSTYR" : 1948,
+      "LASTYR" : 2009,
+      "CASE_ROOT_DIR" : "/storage1/home1/chiaweih/mdtf/inputdata/model/CESM2_omip1_r1i1p1f1_gn/mon",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           "tropical_pacific_sea_level"
@@ -31,7 +31,7 @@
   // resolved relative to the MDTF-diagnostics code directory.
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model",
+  "MODEL_DATA_ROOT": "../inputdata/model/",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
@@ -40,7 +40,7 @@
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "",
+  "OUTPUT_DIR": "../wkdir",
 
   // RUNTIME -------------------------------------------------------------------
   // Settings affecting the runtime environment of the PODs.
@@ -55,8 +55,12 @@
   // default location.
   "conda_env_root": "./envs",
   
+  // Method used to fetch model data.
+  "data_manager": "Local_File",
+
   // OUTPUT --------------------------------------------------------------------
   // Settings affecting what output is generated.
+  
 
   // Set flag to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,

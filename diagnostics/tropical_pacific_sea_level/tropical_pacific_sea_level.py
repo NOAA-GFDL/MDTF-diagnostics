@@ -26,13 +26,10 @@
 
 
 import os
-import sys
 import cftime
 # import dask
 import xarray as xr
 import numpy as np
-import cartopy.mpl.ticker as cticker
-import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 
 import spherical_area as sa
@@ -568,7 +565,7 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Linear
 #########
 ax1 = fig.add_axes([1.3,0,1,1])
-obscolor = 'k'
+# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -607,7 +604,7 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual amp
 #########
 ax1 = fig.add_axes([0,-1.5,1,1])
-obscolor = 'k'
+# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -655,7 +652,8 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual phase
 #########
 ax1 = fig.add_axes([1.3,-1.5,1,1])
-obscolor = 'k'
+# obscolor = 'k'
+
 
 all_wsc = []
 all_ssh = []

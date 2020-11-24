@@ -16,7 +16,7 @@
 #
 # function used
 # ==================
-# - spherical_area.cal_area     : generate area array based on the lon lat of data
+# - spherical_area.da_area     : generate area array based on the lon lat of data
 # - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)
 # - dynamical_balance2.curl_var    : calculate wind stress curl in obs (for Dataset without time dim)
 # - dynamical_balance2.curl_tau_3d : calculate wind stress curl in model (for Dataset with time dim)

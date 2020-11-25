@@ -178,6 +178,13 @@ class TestUtil(unittest.TestCase):
     def test_write_json(self):
         pass
 
+    def test_is_subpath(self):
+        self.assertTrue(util.is_subpath('/A/B', '/A/B/C'))
+        self.assertFalse(util.is_subpath('/A/B', '/D/B/C'))
+        self.assertFalse(util.is_subpath('/A/B', '/A'))
+        self.assertTrue(util.is_subpath('/A/B', '/irrelevant/path', '/A/B/C', 'also/irrelevant'))
+        self.assertFalse(util.is_subpath('/A/B', '/irrelevant/path', '/A', 'also/irrelevant'))
+
 # ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):

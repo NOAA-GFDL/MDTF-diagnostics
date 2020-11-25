@@ -70,16 +70,69 @@ Update your local copy (the copy on your computer) of the develop branch::
   git checkout -b feature/<my_feature_name>
 will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
 
-Updating your feature branch by rebasing it onto the develop branch
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Git rebasing is procedure to integrate the changes from one branch into another branch.
+Updating your feature branch by merging in changes from the develop branch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Update the local and remote develop branches on your fork as described steps 1--3  
+of the *Start Coding* section, check out your feature branch, and merge the develop branch
+into your feature branch ::
+  git checkout feature/<my_feature_name>
+  git merge develop
+
+2. Resolve any conflicts that occur from the merge
+
+3. Add the updated files to the staging area
+::
+  git add file1
+  git add file2
+  ...
+
+4. Push the branch updates to your remote fork
+::
+  git push origin feature/<my_feature_name>
+
+* If you want to revert to the commit(s) before you pulled in updates:
+  1. Find the commit hash(es) with the updates, in your git log
+  ::
+    git log
+  or consult the commit log in the web interface
+  2. Revert each commit in order from newest to oldest
+  ::
+    git revert <newer commit hash>
+    git revert <older commit hash>
+  3. Push the updates to the remote branch
+  ::
+    git push origin feature/<my_feature_name> --force
+
+* If you are concerned with updates breaking your development branch, but don't want to deal with undoing
+commits, you can test the updates in a copy of your feature branch, then merge the copy branch into your
+feature branch:
+1. Check out your feature branch
+::
+  git checkout feature/<my_feature_name>
+2. Check out a new branch from the feature branch
+::
+  git checkout -b <test_branch_name>
+3. Merge develop into the test branch using the procedure described in the previous section
+4. Test the branch with the MDTF framework software
+5. Check out your feature branch, then merge the test branch into the feature branch
+::
+  git checkout feature/<my_feature_name>
+  git merge <test_branch_name>
+6. Push the updates to your remote branch
+::
+  git push origin feature/<my_feature_name>
+7. Delete the test branch
+::
+  git branch -D <test_branch_name>
+Updating your feature branch by rebasing it onto the develop branch (preferred method)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Rebasing is procedure to integrate the changes from one branch into another branch.
 ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the 
 branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes
 in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged
 into the develop branch.
-1. To sync your feature branch with the NOAA-GFDL develop branch, update the local and 
-remote develop branches on your fork as described steps 1--3 of the *Start Coding* section, 
-check out your feature branch ::
+1. Update the local and remote develop branches on your fork as described steps 1--3  
+of the *Start Coding* section, then check out your feature branch ::
   git checkout feature/<my_feature_name>
 and launch an interactive rebase of your branch onto the develop branch.
 ::
@@ -203,6 +256,10 @@ The masked email address is located in the `Primary email address` section under
    * Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
 
 * If you want to let others work on your feature, push its branch to your GitHub fork with ``git push -u origin feature/<my_feature_name>``.
+
+* For additional ways to undo changes in your branch, see
+ `How to undo (almost) anything with Git <https://github.blog/2015-06-08-how-to-undo-almost-anything-with-git/>`
+
 
 .. (TODO: tests ...)
 .. (... policy on CI, tests passing ...)

@@ -20,10 +20,7 @@
       "FIRSTYR" : 1948,
       "LASTYR" : 2009,
       "CASE_ROOT_DIR" : "/storage1/home1/chiaweih/mdtf/inputdata/model/CESM2_omip1_r1i1p1f1_gn/mon",
-      "pod_list": [
-          // Optional: PODs to run for this model only (defaults to all)
-          "tropical_pacific_sea_level"
-      ]
+      "pod_list": ["tropical_pacific_sea_level"]
     }
   ],
   // PATHS ---------------------------------------------------------------------
@@ -48,12 +45,12 @@
 
   // Path to the Anaconda installation. Only used if environment_manager='Conda'. 
   // Set equal to "" to use conda from your system's $PATH.
-  "CONDA_ROOT": "/storage1/home1/chiaweih/anaconda2/",
+  "conda_root": "/storage1/home1/chiaweih/anaconda2",
 
   // Root directory for Anaconda environment installs. Only used if 
   // environment_manager = 'Conda'. Set equal to '' to install in your system's 
   // default location.
-  "conda_env_root": "./envs",
+  "conda_env_root": "/storage1/home1/chiaweih/anaconda2/envs",
   
   // Method used to fetch model data.
   "data_manager": "Local_File",

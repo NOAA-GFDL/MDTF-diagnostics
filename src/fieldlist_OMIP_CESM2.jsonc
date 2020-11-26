@@ -14,7 +14,7 @@
     // Variables for tropical pacific sea level POD:
     "zos_var" : "zos",
     "tauuo_var" : "tauuo",
-    "tauvo_var" : "tauvo",
+    "tauvo_var" : "tauvo"
   },
   "units" : {
     "zos_conversion_factor" : 1,

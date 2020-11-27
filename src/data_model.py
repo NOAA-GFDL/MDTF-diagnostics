@@ -16,18 +16,21 @@ class DMCoordinate(object):
     """Class to describe a single coordinate variable (in the sense used by the
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
+    dim: str
     standard_name: str
     units: str
     axis: DMAxis = DMAxis.OTHER
 
 @util.mdtf_dataclass(frozen=True)
 class DMLongitudeCoordinate(object):
+    dim: str
     standard_name = 'longitude'
     units = 'degrees_E'
     axis = DMAxis.X
 
 @util.mdtf_dataclass(frozen=True)
 class DMLatitudeCoordinate(object):
+    dim: str
     standard_name = 'latitude'
     units = 'degrees_N'
     axis = DMAxis.Y
@@ -37,6 +40,7 @@ class DMVerticalCoordinate(object):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
+    dim: str
     standard_name: str
     units: str = "1" # dimensionless vertical coords OK
     positive: str
@@ -50,6 +54,7 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     Note that the variable names appearing in ``formula_terms`` aren't parsed 
     here, in order to keep the class hashable. 
     """
+    dim: str
     computed_standard_name: str = ""
     long_name: str = ""
     formula_terms: str = dataclasses.field(default=None, compare=False)
@@ -58,6 +63,7 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
 
 @util.mdtf_dataclass(frozen=True)
 class DMTimeCoordinate(object):
+    dim: str
     units: str
     calendar: str
     range: datelabel.AbstractDateRange = None
@@ -78,6 +84,11 @@ class DMTimeCoordinate(object):
 class AbstractDMCoordinate(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
     """
+    @property
+    @abc.abstractmethod
+    def dim(self):
+        pass
+
     @property
     @abc.abstractmethod
     def standard_name(self):
@@ -135,7 +146,7 @@ AbstractDMScalarCoordinate.register(DMScalarVerticalCoordinate)
 
 @util.mdtf_dataclass
 class DMCoordinateSet(object):
-    # stuff for map projections, non-lat-lon horiz bookkeeping
+    # TODO: stuff for map projections, non-lat-lon horiz bookkeeping
     # also areacello/volcello, hyam/hybm
     dims: tuple
     scalar_coordinates: list
@@ -149,7 +160,7 @@ class DMCoordinateSet(object):
         for d in self.coords:
             axis = getattr(d.axis, 'name', '')
             if axis in ('X', 'Y', 'Z', 'T'):
-                setattr(self, axis, d)
+                setattr(self, axis, d) 
 
     @property
     def is_static(self):
@@ -159,7 +170,7 @@ class DMCoordinateSet(object):
         assert not self.is_static
         new_T = dataclasses.replace(self.T, range=new_range)
         self.T = new_T
-        # still need to replace in dims
+        # TODO: still need to replace in dims
 
 
 @util.mdtf_dataclass
@@ -167,14 +178,14 @@ class DMAuxiliaryCoordinate(DMCoordinateSet):
     """Class to describe `auxiliary coordinate variables 
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__,
     as defined in the CF conventions. An example would be lat or lon for data 
-    presented in a tripolar or other grid projection.
+    presented in a tripolar grid projection.
     """
     standard_name: str
     units: str
 
 @util.mdtf_dataclass
 class DMVariable(DMCoordinateSet):
-    """Class to describe general properties of dependent (data) variables.
+    """Class to describe general properties of data (dependent) variables.
     """
     standard_name: str
     units: str

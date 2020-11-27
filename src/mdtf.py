@@ -29,7 +29,7 @@ from src import util
 from src import util_mdtf
 from src import data_manager
 from src import environment_manager
-from src import shared_diagnostic
+from src import diagnostic
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -251,7 +251,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic
+        data_manager, environment_manager, diagnostic
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):

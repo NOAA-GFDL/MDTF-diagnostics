@@ -15,8 +15,8 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from src import util, util_mdtf, datelabel, preprocessor, dataspec
-from src.shared_diagnostic import PodRequirementFailure
+from src import util, util_mdtf, datelabel, preprocessor, data_modeln
+from src.diagnostic import PodRequirementFailure
 
 
 @six.python_2_unicode_compatible
@@ -56,11 +56,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
     # analogue of TestFixture in xUnit
 
     def __init__(self, case_dict, DateFreqMixin=None):
-        if not DateFreqMixin:
-            self.DateFreq = datelabel.DateFrequency
-        else:
-            self.DateFreq = DateFreqMixin
-
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
         self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
@@ -215,7 +210,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             representing specific versions of that variable.
         - ``data_pods`` is a reversible map (:class:`~util.MultiMap`) between a
             data_key and the set of PODs (represented as 
-            :class:`~shared_diagnostic.Diagnostic` objects) that use that variable.
+            :class:`~diagnostic.Diagnostic` objects) that use that variable.
         - ``data_files`` is a reversible map (:class:`~util.MultiMap`) between a
             data_key and the set of files (represented as :class:`SingleFileDataSet` 
             objects) that contain that variable's data.

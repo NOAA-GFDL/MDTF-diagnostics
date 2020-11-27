@@ -14,7 +14,7 @@ else:
     import subprocess
 from src import util
 from src import util_mdtf
-from src.shared_diagnostic import PodRequirementFailure
+from src.diagnostic import PodRequirementFailure
 
 class EnvironmentManager(six.with_metaclass(ABCMeta)):
     # analogue of TestSuite in xUnit - abstract base class

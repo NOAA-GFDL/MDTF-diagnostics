@@ -17,13 +17,13 @@ from src import util_mdtf
 from src import mdtf
 from src import data_manager
 from src import environment_manager
-from src import shared_diagnostic
+from src import diagnostic
 from src import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic, gfdl
+        data_manager, environment_manager, diagnostic, gfdl
     ]
 
     def parse_mdtf_args(self, cli_obj, config):

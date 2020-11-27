@@ -3,6 +3,7 @@ Specifically, util.py implements general functionality that's not MDTF-specific.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import sys
 import io
 from src import six
 import re
@@ -272,42 +273,63 @@ def strip_comments(str_, delimiter=None):
     # comment delimiters like '//'
     if not delimiter:
         return str_
-    s = str_.splitlines()
-    for i in list(range(len(s))):
-        if s[i].startswith(delimiter):
-            s[i] = ''
+    lines = str_.splitlines()
+    for i in range(len(lines)):
+        # get rid of lines starting with delimiter
+        if lines[i].startswith(delimiter):
+            lines[i] = ''
             continue
+        # handle delimiters midway through a line:
         # If delimiter appears quoted in a string, don't want to treat it as
         # a comment. So for each occurrence of delimiter, count number of 
         # "s to its left and only truncate when that's an even number.
         # TODO: handle ' as well as ", for non-JSON applications
-        s_parts = s[i].split(delimiter)
-        s_counts = [ss.count('"') for ss in s_parts]
+        line_parts = lines[i].split(delimiter)
+        quote_counts = [s.count('"') for s in line_parts]
         j = 1
-        while sum(s_counts[:j]) % 2 != 0:
+        while sum(quote_counts[:j]) % 2 != 0:
             j += 1
-        s[i] = delimiter.join(s_parts[:j])
+        lines[i] = delimiter.join(line_parts[:j])
+    # make lookup table of correct line numbers, taking into account lines we
+    # dropped
+    line_nos = [i for i, s in enumerate(lines) if (s and not s.isspace())]
     # join lines, stripping blank lines
-    return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
+    new_str = '\n'.join([s for s in lines if (s and not s.isspace())])
+    return (new_str, line_nos)
 
 def read_json(file_path):
-    assert os.path.exists(file_path), \
-        "Couldn't find JSON file {}.".format(file_path)
+    if not os.path.exists(file_path):
+        sys.exit(f"Couldn't find JSON file at {file_path}.")
     try:    
         with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except IOError:
-        print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
-        exit()
+        sys.exit(f"Fatal IOError when trying to read {file_path}. Exiting.")
     return parse_json(str_)
 
 def parse_json(str_):
-    str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
+    def _pos_from_lc(lineno, colno, str_):
+        # fix line number, since we stripped commented-out lines. JSONDecodeError 
+        # computes line/col no. in error message from character position in string.
+        lines = str_.splitlines()
+        return (colno - 1) + sum( (len(line) + 1) for line in lines[:lineno])
+
+    (strip_str, line_nos) = strip_comments(str_, delimiter= '//')
     try:
-        parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
-    except UnicodeDecodeError:
-        print('{} contains non-ascii characters. Exiting.'.format(str_))
-        exit()
+        parsed_json = json.loads(strip_str, 
+            object_pairs_hook=collections.OrderedDict)
+    except json.JSONDecodeError as exc:
+        # fix reported line number, since we stripped commented-out lines. 
+        assert exc.lineno <= len(line_nos)
+        raise json.JSONDecodeError(
+            msg=exc.msg, doc=str_, 
+            pos=_pos_from_lc(line_nos[exc.lineno-1], exc.colno, str_)
+        )
+    except UnicodeDecodeError as exc:
+        raise json.JSONDecodeError(
+            msg=f"parse_json received UnicodeDecodeError:\n{exc}", 
+            doc=strip_str, pos=0
+        )
     return parsed_json
 
 def write_json(struct, file_path, verbose=0, sort_keys=False):

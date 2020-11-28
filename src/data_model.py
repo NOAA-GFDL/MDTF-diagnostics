@@ -236,10 +236,17 @@ class DMDimensions(object):
     def is_static(self):
         return (self.T is None) or (self.T.is_static)
 
-    def replace_date_range(self, new_range):
+    def replace_date_range(self, new_T):
+        """Returns copy of self with date range on time coordinate changed to 
+        new value.
+        """
         assert not self.is_static
-        new_T = dataclasses.replace(self.T, range=new_range)
-        self.T = new_T
+        old_T = self.T
+        if not isinstance(new_T, DMTimeCoordinate):
+            new_T = dataclasses.replace(old_T, range=new_T)
+        new_dims = list(self.dims)
+        new_dims[self.dims.index(old_T)] = new_T
+        return dataclasses.replace(self, dims=tuple(new_dims))
 
 @util.mdtf_dataclass
 class DMAuxiliaryCoordinate(DMDimensions):

@@ -53,7 +53,6 @@ class VarlistCoordinateMixin(object):
     used by one or more variables. Corresponds to list entries in the 
     "dimensions" section of the POD's settings.jsonc file.
     """
-    name_in_POD: str
     need_bounds: bool = False
 
 @util.mdtf_dataclass(frozen=True)
@@ -79,9 +78,13 @@ class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
 class VarlistTimeCoordinate(data_model.DMTimeCoordinate, VarlistCoordinateMixin):
     pass
 
-PodVariableRequirement = util.MDTFEnum(
-    'PodVariableRequirement', 
+VarlistEntryRequirement = util.MDTFEnum(
+    'VarlistEntryRequirement', 
     'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', module=__name__
+)
+
+VarlistEntryStatus = util.MDTFEnum(
+    'VarlistEntryStatus', 'INIT QUERY FETCH', module=__name__
 )
 
 @util.mdtf_dataclass
@@ -89,22 +92,37 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
     settings.jsonc file.
+
+    Two VarlistEntries are equal (as determined by the ``__eq__`` method, which
+    compares fields without ``compare=False``) if they specify the same data 
+    product, ie if the same output file from the preprocessor can be symlinked 
+    to two different locations.
     """
-    name_in_POD: str
-    path_variable: str = None
+    path_variable: str = dataclasses.field(default=None, compare=False)
     use_exact_name: bool = False
-    requirement: PodVariableRequirement = PodVariableRequirement.REQUIRED
-    alternates: list = dataclasses.field(default_factory=list)
+    requirement: VarlistEntryRequirement = dataclasses.field(
+        default=VarlistEntryRequirement.REQUIRED, compare=False
+    )
+    alternates: list = dataclasses.field(default_factory=list, compare=False)
+    status: VarlistEntryStatus = dataclasses.field(init=False, compare=False)
+    exception: Exception = dataclasses.field(init=False, compare=False)
 
     def __post_init__(self):
+        super(VarlistEntry, self).__post_init__()
+        self.status = VarlistEntryStatus.INIT
+        self.exception = None
         if not self.path_variable:
-            self.path_variable = self.name_in_POD.upper() + '_FILE'
+            self.path_variable = self.name.upper() + '_FILE'
+
+    @property
+    def is_active(self):
+        return (self.exception is None)
 
     @classmethod
     def from_struct(cls, varlist_settings, name, **kwargs):
         cls_kwargs = dataclasses.asdict(varlist_settings)
         cls_kwargs.update(kwargs)
-        return cls(name_in_POD=name, **cls_kwargs)
+        return cls(name=name, **cls_kwargs)
 
 
 class Diagnostic(object):
@@ -227,22 +245,22 @@ class Diagnostic(object):
         def _pod_dimension_from_struct(name, d):
             if d.get('axis', None) == 'X' \
                 or d.get('standard_name', None) == 'longitude':
-                return VarlistLongitudeCoordinate(name_in_POD=name, **d)
+                return VarlistLongitudeCoordinate(name=name, **d)
             elif d.get('axis', None) == 'Y' \
                 or d.get('standard_name', None) == 'latitude':
-                return VarlistLatitudeCoordinate(name_in_POD=name, **d)
+                return VarlistLatitudeCoordinate(name=name, **d)
             elif d.get('axis', None) == 'Z':
-                return VarlistVerticalCoordinate(name_in_POD=name, **d)
+                return VarlistVerticalCoordinate(name=name, **d)
             elif d.get('axis', None) == 'T' \
                 or d.get('standard_name', None) == 'time':
-                return VarlistTimeCoordinate(name_in_POD=name, **d)
+                return VarlistTimeCoordinate(name=name, **d)
             else:
-                return VarlistCoordinate(name_in_POD=name, **d)
+                return VarlistCoordinate(name=name, **d)
 
         return {k: _pod_dimension_from_struct(k, v) \
             for k,v in d['dimensions'].items()}
 
-    def parse_pod_varlist(self, d, verbose=0):
+    def parse_pod_varlist(self, d):
         """Parse the "data" and "varlist" sections of the POD's
         settings.jsonc file when instantiating a new Diagnostic() object.
 
@@ -266,18 +284,18 @@ class Diagnostic(object):
 
         for v in vars_:
             # verify that references to coords, other vars are valid
-            for dim in v.dimensions:
+            for dim in v.dims:
                 if dim not in self.dims:
                     raise ValueError((f"Unknown dimension name {dim} in varlist "
-                        f"entry for {v.name_in_POD} in POD {self.name}"))
-            for dim in v.scalar_coordinates.keys():
+                        f"entry for {v.name} in POD {self.name}"))
+            for dim in v.scalar_coords.keys():
                 if dim not in self.dims:
                     raise ValueError((f"Unknown dimension name {dim} in varlist "
-                        f"entry for {v.name_in_POD} in POD {self.name}"))
+                        f"entry for {v.name} in POD {self.name}"))
             for vv in v.alternates:
                 if vv not in vars_:
                     raise ValueError((f"Unknown alternate variable {vv} in "
-                        f"varlist entry for {v.name_in_POD} in POD {self.name}"))
+                        f"varlist entry for {v.name} in POD {self.name}"))
         return list(vars_.values())
 
     # -------------------------------------
@@ -298,20 +316,20 @@ class Diagnostic(object):
             multiple languages) so the validation must take place in that 
             subprocess.
 
-        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if requirements
+        Raises: :exc:`~diagnostic.PodRequirementFailure` if requirements
             aren't met. This is re-raised from the 
-            :meth:`~shared_diagnostic.Diagnostic._check_pod_driver` and
-            :meth:`~shared_diagnostic.Diagnostic._check_for_varlist_files` 
+            :meth:`~diagnostic.Diagnostic._check_pod_driver` and
+            :meth:`~diagnostic.Diagnostic._check_for_varlist_files` 
             subroutines.
         """
         self._set_pod_env_vars(verbose)
         self._setup_pod_directories()
-        if isinstance(self.skipped, Exception):
+        if isinstance(self.exception, Exception):
             # already encountered reason we can't run this, re-raise it here 
             # to log it
             raise PodRequirementFailure(self,
                 "Caught {} exception:\n{}".format(
-                    type(self.skipped).__name__, self.skipped
+                    type(self.exception).__name__, self.exception
                 ))
         try:
             self._check_pod_driver(verbose)
@@ -332,7 +350,7 @@ class Diagnostic(object):
             raise exc
 
     def _set_pod_env_vars(self, verbose=0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
         Sets all environment variables for POD.
 
         Args:
@@ -390,7 +408,7 @@ class Diagnostic(object):
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
 
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
@@ -406,12 +424,12 @@ class Diagnostic(object):
                 os.makedirs(os.path.join(self.POD_WK_DIR, d))
 
     def _check_pod_driver(self, verbose=0):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
 
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
-        Raises: :exc:`~shared_diagnostic.PodRequirementFailure` if driver script
+        Raises: :exc:`~diagnostic.PodRequirementFailure` if driver script
             can't be found.
         """
         func_name = "check_pod_driver "
@@ -578,9 +596,9 @@ class Diagnostic(object):
         """
         self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
         # add link and description to main html page
-        self.append_result_link(self.skipped)
+        self.append_result_link(self.exception)
 
-        if not isinstance(self.skipped, Exception):
+        if not isinstance(self.exception, Exception):
             self.make_pod_html()
             self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
             self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')

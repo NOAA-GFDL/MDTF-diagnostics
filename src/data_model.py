@@ -8,6 +8,100 @@ import itertools
 import typing
 from src import util, datelabel
 
+class AbstractDMCoordinate(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
+    """
+    @property
+    @abc.abstractmethod
+    def name(self): pass
+
+    @property
+    @abc.abstractmethod
+    def standard_name(self): pass
+
+    @property
+    @abc.abstractmethod
+    def units(self): pass
+
+    @property
+    @abc.abstractmethod
+    def axis(self): pass
+
+    @property
+    @abc.abstractmethod
+    def bounds(self): pass
+
+class AbstractDMScalarCoordinate(AbstractDMCoordinate):
+    """Defines interface (set of attributes) for :class:`DMScalarCoordinate` 
+    objects.
+    """
+    @property
+    @abc.abstractmethod
+    def value(self): pass
+
+class AbstractDMDependentVariable(abc.ABC):
+    """Defines interface (set of attributes) for "dependent variables" (data 
+    defined as a function of one or more dimension coordinates), which inherit 
+    from :class:`DMDimensions` in this implementation.
+    """
+    @property
+    @abc.abstractmethod
+    def name(self): pass
+
+    @property
+    @abc.abstractmethod
+    def standard_name(self): pass
+
+    @property
+    @abc.abstractmethod
+    def units(self): pass
+
+    @property
+    @abc.abstractmethod
+    def dims(self): pass
+
+    @property
+    @abc.abstractmethod
+    def scalar_coords(self): pass
+
+    @property
+    @abc.abstractmethod
+    def axes(self): pass
+
+    @property
+    @abc.abstractmethod
+    def phys_axes(self): pass
+
+    @property
+    @abc.abstractmethod
+    def X(self): pass
+
+    @property
+    @abc.abstractmethod
+    def Y(self): pass
+
+    @property
+    @abc.abstractmethod
+    def Z(self): pass
+
+    @property
+    @abc.abstractmethod
+    def T(self): pass
+
+    @property
+    @abc.abstractmethod
+    def is_static(self): pass
+
+class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
+    """Defines interface (set of attributes) for :class:`DMCoordinateBounds` 
+    objects.
+    """
+    @property
+    @abc.abstractmethod
+    def coord(self): pass
+
+# ------------------------------------------------------------------------------
+
 DMAxis = util.MDTFEnum(
     'DMAxis', 'X Y Z T BOUNDS OTHER', module=__name__
 )
@@ -16,7 +110,7 @@ DMAxis.__doc__ = """:py:class:`~enum.Enum` encoding the recognized axis types
 (dimension coordinates with a distinguished role.)
 """
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMCoordinate(object):
     """Class to describe a single coordinate variable (in the sense used by the
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
@@ -25,27 +119,27 @@ class DMCoordinate(object):
     standard_name: str
     units: str
     axis: DMAxis = DMAxis.OTHER
-    bounds: DMCoordinateBounds = None
+    bounds: AbstractDMCoordinateBounds = None
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMLongitudeCoordinate(object):
     name: str
-    bounds: DMCoordinateBounds = None
+    bounds: AbstractDMCoordinateBounds = None
     
     standard_name = 'longitude'
     units = 'degrees_E'
     axis = DMAxis.X
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMLatitudeCoordinate(object):
     name: str
-    bounds: DMCoordinateBounds = None
+    bounds: AbstractDMCoordinateBounds = None
 
     standard_name = 'latitude'
     units = 'degrees_N'
     axis = DMAxis.Y
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMVerticalCoordinate(object):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
@@ -54,11 +148,11 @@ class DMVerticalCoordinate(object):
     standard_name: str
     units: str = "1" # dimensionless vertical coords OK
     positive: str
-    bounds: DMCoordinateBounds = None
+    bounds: AbstractDMCoordinateBounds = None
 
     axis = DMAxis.Z
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     """Class to describe `parametric vertical coordinates
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#parametric-vertical-coordinate>`__.
@@ -68,18 +162,18 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     name: str
     computed_standard_name: str = ""
     long_name: str = ""
-    formula_terms: str = dataclasses.field(default=None, compare=False)
     # Don't include formula_terms in testing for equality, since this could 
     # reference different names for the aux coord variables.
+    formula_terms: str = dataclasses.field(default=None, compare=False)
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMTimeCoordinate(object):
     name: str
     units: str
     calendar: str
     range: datelabel.AbstractDateRange = None
     frequency: datelabel.AbstractDateFrequency = None
-    bounds: DMCoordinateBounds = None
+    bounds: AbstractDMCoordinateBounds = None
 
     standard_name = 'time'
     axis = DMAxis.T
@@ -93,7 +187,7 @@ class DMTimeCoordinate(object):
         """
         return (self.range == datelabel.FXDateRange)
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMBoundsDimension(object):
     """Placeholder object to represent the bounds dimension of a 
     :class:`DMCoordinateBounds` object. Not a dimension coordinate, and strictly
@@ -106,37 +200,9 @@ class DMBoundsDimension(object):
     axis = DMAxis.BOUNDS
     bounds = None
 
-class AbstractDMCoordinate(abc.ABC):
-    """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
-    """
-    @property
-    @abc.abstractmethod
-    def name(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def standard_name(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def units(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def axis(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def bounds(self):
-        pass
-
-# Use the "register" method, instead of inheritance, to identify these classes
-# as implementations of AbstractDMCoordinate, because Python dataclass 
-# fields aren't recognized as implementing an abc.abstractmethod.
+# Use the "register" method, instead of inheritance, to associate these classes
+# with their corresponding abstract interfaces, because Python dataclass fields 
+# aren't recognized as implementing an abc.abstractmethod.
 AbstractDMCoordinate.register(DMCoordinate)
 AbstractDMCoordinate.register(DMLongitudeCoordinate)
 AbstractDMCoordinate.register(DMLatitudeCoordinate)
@@ -162,59 +228,31 @@ class DMScalarCoordinateMixin(object):
         kwargs['value'] = value
         return cls(**kwargs)
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMScalarCoordinate(DMCoordinate, DMScalarCoordinateMixin):
     pass
 
-@util.mdtf_dataclass
+@util.mdtf_dataclass(frozen=True)
 class DMScalarVerticalCoordinate(DMVerticalCoordinate, DMScalarCoordinateMixin):
     pass
 
-class AbstractDMScalarCoordinate(AbstractDMCoordinate):
-    """Defines interface (set of attributes) for :class:`DMScalarCoordinate` 
-    objects.
-    """
-    @property
-    @abc.abstractmethod
-    def value(self):
-        pass
-
-# Use the "register" method, instead of inheritance, to identify these classes
-# as implementations of AbstractDMScalarCoordinate, because Python dataclass 
-# fields aren't recognized as implementing an abc.abstractmethod.
+# Use the "register" method, instead of inheritance, to associate these classes
+# with their corresponding abstract interfaces, because Python dataclass fields 
+# aren't recognized as implementing an abc.abstractmethod.
 AbstractDMScalarCoordinate.register(DMScalarCoordinate)
 AbstractDMScalarCoordinate.register(DMScalarVerticalCoordinate)
 
-@util.mdtf_dataclass
-class DMDimensions(object):
+class _DMDependentVariableMixin(object):
     """Lookups for the dimensions, and associated dimension coordinates, 
-    associated with an array (eg a variable or auxiliary coordinate.)
+    associated with an array (eg a variable or auxiliary coordinate.) Needs to 
+    be included as a parent class of a dataclass.
     """
-    dims: tuple
-    scalar_coords: set = dataclasses.field(default_factory=set)
-    axes: dict = dataclasses.field(init=False)
-    phys_axes: dict = dataclasses.field(init=False)
-
     def __post_init__(self):
-        # validate that we don't have duplicate axes
-        temp_d = dict()
-        for c in itertools.chain(self.dims, self.scalar_coords):
-            axis = getattr(c.axis, 'name', '')
-            if axis != 'OTHER' and axis in temp_d:
-                raise ValueError((f"Duplicate definition of {axis} axis:"
-                        f"{str(c)}, {str(temp_d[axis])}"))
-            temp_d[axis] = c
-
         self.axes = dict((x, None) for x in DMAxis.spatiotemporal_names)
         for c in self.dims:
             axis = getattr(c.axis, 'name', '')
             if axis in DMAxis.spatiotemporal_names:
                 self.axes[axis] = c
-        self.phys_axes = self.axes.copy()
-        for c in self.scalar_coords:
-            axis = getattr(c.axis, 'name', '')
-            if axis in DMAxis.spatiotemporal_names:
-                self.phys_axes[axis] = c
 
     @property
     def X(self):
@@ -236,6 +274,25 @@ class DMDimensions(object):
     def is_static(self):
         return (self.T is None) or (self.T.is_static)
 
+    @classmethod
+    def from_dimensions(cls, dm_dimensions, **kwargs):
+        """Constructor for use by child classes. Preserves references to the
+        shared set of dims and scalar_coords, since python is pass-by-reference.
+        """
+        kwargs.setdefault('dims', dm_dimensions.dims)
+        kwargs.setdefault('scalar_coords', dm_dimensions.scalar_coords)
+        return cls(**kwargs)
+
+    def validate_axes(self, *coords):
+        # validate that we don't have duplicate axes
+        temp_d = dict()
+        for c in itertools.chain(*coords):
+            axis = getattr(c.axis, 'name', '')
+            if axis != 'OTHER' and axis in temp_d:
+                raise ValueError((f"Duplicate definition of {axis} axis:"
+                        f"{str(c)}, {str(temp_d[axis])}"))
+            temp_d[axis] = c
+
     def replace_date_range(self, new_T):
         """Returns copy of self with date range on time coordinate changed to 
         new value.
@@ -247,6 +304,25 @@ class DMDimensions(object):
         new_dims = list(self.dims)
         new_dims[self.dims.index(old_T)] = new_T
         return dataclasses.replace(self, dims=tuple(new_dims))
+
+@util.mdtf_dataclass
+class DMDimensions(_DMDependentVariableMixin):
+    """Lookups for the dimensions, and associated dimension coordinates, 
+    associated with an array (eg a variable or auxiliary coordinate.)
+    """
+    dims: tuple
+    scalar_coords: set = dataclasses.field(default_factory=set)
+    axes: dict = dataclasses.field(init=False)
+    phys_axes: dict = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        self.validate_axes(self.dims, self.scalar_coords)
+        super(DMDimensions, self).__post_init__()
+        self.phys_axes = self.axes.copy()
+        for c in self.scalar_coords:
+            axis = getattr(c.axis, 'name', '')
+            if axis in DMAxis.spatiotemporal_names:
+                self.phys_axes[axis] = c
 
 @util.mdtf_dataclass
 class DMAuxiliaryCoordinate(DMDimensions):
@@ -300,3 +376,35 @@ class DMVariable(DMDimensions):
     name: str
     standard_name: str
     units: str
+
+# Use the "register" method, instead of inheritance, to associate these classes
+# with their corresponding abstract interfaces, because Python dataclass fields 
+# aren't recognized as implementing an abc.abstractmethod.
+AbstractDMDependentVariable.register(DMAuxiliaryCoordinate)
+AbstractDMDependentVariable.register(DMVariable)
+AbstractDMCoordinateBounds.register(DMCoordinateBounds)
+
+@util.mdtf_dataclass
+class DMDataSet(_DMDependentVariableMixin):
+    """Class to describe a collection of one or more variables sharing a set of
+    common dimensions.
+    """
+    dims: set = dataclasses.field(default_factory=set)
+    scalar_coords: set = dataclasses.field(default_factory=set)
+    axes: dict = dataclasses.field(init=False)
+    aux_coords: list = dataclasses.field(default_factory=list)
+    vars: list = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        # can't have duplicate dims, but duplicate scalar_coords are OK.
+        self.validate_axes(self.dims)
+        super(DMDataSet, self).__post_init__()
+
+    def add_dependent_variable(self, var):
+        self.dims.update(var.dims)
+        self.scalar_coords.update(var.scalar_coords)
+        self.__post_init__()
+        if isinstance(var, DMVariable):
+            self.vars.append(var)
+        else:
+            self.aux_coords.append(var)

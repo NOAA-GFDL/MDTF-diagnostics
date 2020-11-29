@@ -22,7 +22,6 @@ class PodRequirementFailure(Exception):
         else:
             return 'Requirements not met for {}.'.format(self.pod.name)
 
-
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
     ("ANY_NETCDF ANY_NETCDF_CLASSIC "
@@ -104,25 +103,178 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
     alternates: list = dataclasses.field(default_factory=list, compare=False)
+    active: bool = dataclasses.field(init=False, compare=False)
     status: VarlistEntryStatus = dataclasses.field(init=False, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
     def __post_init__(self):
         super(VarlistEntry, self).__post_init__()
+        self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
         self.status = VarlistEntryStatus.INIT
         self.exception = None
         if not self.path_variable:
             self.path_variable = self.name.upper() + '_FILE'
+        # self.alternates is either [] or a list of nonempty lists of VEs
+        if self.alternates:
+            if not isinstance(self.alternates[0], list):
+                self.alternates = [self.alternates]
+            self.alternates = [vs for vs in self.alternates if vs]
 
     @property
-    def is_active(self):
-        return (self.exception is None)
+    def failed(self):
+        return (self.exception is not None)
 
     @classmethod
-    def from_struct(cls, varlist_settings, name, **kwargs):
-        cls_kwargs = dataclasses.asdict(varlist_settings)
-        cls_kwargs.update(kwargs)
-        return cls(name=name, **cls_kwargs)
+    def from_struct(cls, varlist_settings, dim_dict, name, **kwargs):
+        """Instantiate from a struct in the varlist section of a POD's
+        settings.jsonc.
+        """
+        new_kw = dataclasses.asdict(varlist_settings)
+        new_kw['dims'] = []
+        new_kw['scalar_coords'] = set([])
+
+        if 'dimensions' not in kwargs:
+            raise ValueError(f"No dimensions specified for varlist entry {name}.")
+        for d_name in kwargs.pop('dimensions'):
+            if d_name not in dim_dict:
+                raise ValueError((f"Unknown dimension name {d_name} in varlist "
+                    f"entry for {name}."))
+            new_kw['dims'].append(dim_dict[d_name])
+        new_kw['dims'] = tuple(new_kw['dims'])
+
+        if 'scalar_coordinates' in kwargs:
+            for d_name, scalar_val in kwargs.pop('scalar_coordinates').items():
+                if d_name not in dim_dict:
+                    raise ValueError((f"Unknown dimension name {d_name} in varlist "
+                        f"entry for {name}."))
+                new_kw['scalar_coords'].add(
+                    dim_dict[d_name].make_scalar(scalar_val)
+                )
+        new_kw.update(kwargs)
+        return cls(name=name, **new_kw)
+
+    def iter_alternate_entries(self):
+        """Iterator over all VarlistEntries referenced as parts of "sets" of 
+        alternates. ("Sets" is in quotes because they're implemented as lists 
+        here, since VarlistEntries aren't immutable.) 
+        """
+        for alt_vs in self.alternates:
+            yield from alt_vs
+
+    def iter_alternates(self):
+        """Breadth-first traversal of "sets" of alternate VarlistEntries, 
+        alternates for those alternates, etc. ("Sets" is in quotes because 
+        they're implemented as lists here, since VarlistEntries aren't immutable.)
+        Unlike :meth:`iter_alternate_entries`, this is a "deep" iterator and 
+        yields the "sets" of alternates instead of the VarlistEntries themselves.
+
+        Note that all local state (``stack`` and ``already_encountered``) is 
+        maintained across successive calls -- see docs on python generators.
+        """
+        stack = [[self]]
+        already_encountered = []
+        while stack:
+            alt_vs = stack.pop(0)
+            if alt_vs not in already_encountered:
+                yield alt_vs
+            already_encountered.append(alt_vs)
+            for ve in alt_vs:
+                for alt_of_alt in ve.alternates:
+                    if alt_of_alt not in already_encountered:
+                        stack.append(alt_of_alt)
+
+class Varlist(data_model.DMDataSet):
+    """Class to perform bookkeeping for the model variables requested by a 
+    single POD.
+    """
+    @classmethod
+    def from_struct(cls, d):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's 
+        settings.jsonc file when instantiating a new Diagnostic() object.
+
+        Args:
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns: 
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+        def _pod_dimension_from_struct(name, dd):
+            try:
+                if dd.get('axis', None) == 'X' \
+                    or dd.get('standard_name', None) == 'longitude':
+                    return VarlistLongitudeCoordinate(name=name, **dd)
+                elif dd.get('axis', None) == 'Y' \
+                    or dd.get('standard_name', None) == 'latitude':
+                    return VarlistLatitudeCoordinate(name=name, **dd)
+                elif dd.get('axis', None) == 'Z':
+                    return VarlistVerticalCoordinate(name=name, **dd)
+                elif dd.get('axis', None) == 'T' \
+                    or dd.get('standard_name', None) == 'time':
+                    return VarlistTimeCoordinate(name=name, **dd)
+                else:
+                    return VarlistCoordinate(name=name, **dd)
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+
+        vlist_settings = VarlistSettings(**(d.get('data', dict())))
+        assert 'dimensions' in d
+        vlist_dims = {k: _pod_dimension_from_struct(k, v) \
+            for k,v in d['dimensions'].items()}
+
+        assert 'varlist' in d
+        vlist_vars = {
+            k: VarlistEntry.from_struct(vlist_settings, vlist_dims, k, **v) \
+            for k,v in d['varlist'].items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in v.iter_alternate_entries():
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                        f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(
+            dims=set(vlist_dims.values()),
+            vars=list(vlist_vars.values())
+        )
+
+    @property
+    def active_vars(self):
+        return [v for v in self.vars if v.active]
+
+    def update_active_vars(self):
+        """Update the status of which VarlistEntries are "active" (not failed
+        somewhere in the query/fetch process) based on new information. If the
+        process has failed for a VarlistEntry, try to find a set of alternate 
+        VarlistEntries. If successful, activate them; if not, raise a 
+        :class:`PodRequirementFailure`.
+        """
+        old_active_vars = self.active_vars
+        failed_vs = []
+        for v in old_active_vars:
+            if v.failed:
+                v.active = False
+                alt_success_flag = False
+                for alts in v.iter_alternates():
+                    if any(v.failed for v in alts):
+                        continue
+                    # found a viable set of alternates
+                    alt_success_flag = True
+                    for v in alts:
+                        v.active = True
+                if not alt_success_flag:
+                    # failed; ran through all sets of alternates
+                    failed_vs.append(v)
+        if failed_vs:
+            for v in self.active_vars:
+                v.active = False
+            raise PodRequirementFailure(
+                f"No alternates available for {[v.name for v in failed_vs]}."
+            )
 
 
 class Diagnostic(object):
@@ -176,16 +328,7 @@ class Diagnostic(object):
         self.dry_run = config.config.get('dry_run', False)
         d = config.pods[pod_name]
         self.__dict__.update(self.parse_pod_settings(d['settings']))
-        self.dims = self.parse_pod_varlist_dims(d)
-        self.varlist = self.parse_pod_varlist(d)
-
-    def iter_vars_and_alts(self):
-        """Generator iterating over all variables and alternates in POD's varlist.
-        """
-        for var in self.varlist:
-            yield var
-            for alt_var in var.alternates:
-                yield alt_var
+        self.varlist = Varlist.from_struct(d)
 
     def parse_pod_settings(self, settings, verbose=0):
         """Parse the "settings" section of the settings.jsonc file when
@@ -225,78 +368,6 @@ class Diagnostic(object):
             print(self.name + " settings: ")
             print(d)
         return d
-
-    def parse_pod_varlist_dims(self, d):
-        """Parse the "dimensions" section of the POD's settings.jsonc file when 
-        instantiating a new Diagnostic() object. This information needs to be
-        associated with the POD, not individual variables, because variables
-        might specify a ``scalar_coordinate`` setting (eg in order to extract a
-        level), and we need info about that axis even though the dimension isn't
-        present in the variable.
-
-        Args:
-            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
-
-        Returns: 
-            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
-            values are :class:`PodDataDimension` objects.
-        """
-
-        def _pod_dimension_from_struct(name, d):
-            if d.get('axis', None) == 'X' \
-                or d.get('standard_name', None) == 'longitude':
-                return VarlistLongitudeCoordinate(name=name, **d)
-            elif d.get('axis', None) == 'Y' \
-                or d.get('standard_name', None) == 'latitude':
-                return VarlistLatitudeCoordinate(name=name, **d)
-            elif d.get('axis', None) == 'Z':
-                return VarlistVerticalCoordinate(name=name, **d)
-            elif d.get('axis', None) == 'T' \
-                or d.get('standard_name', None) == 'time':
-                return VarlistTimeCoordinate(name=name, **d)
-            else:
-                return VarlistCoordinate(name=name, **d)
-
-        return {k: _pod_dimension_from_struct(k, v) \
-            for k,v in d['dimensions'].items()}
-
-    def parse_pod_varlist(self, d):
-        """Parse the "data" and "varlist" sections of the POD's
-        settings.jsonc file when instantiating a new Diagnostic() object.
-
-        .. note::
-           Coordinate and dimension names referenced in each varlist entry aren't
-           resolved here and are kept as strings. They're resolved into objects
-           when the varlist entries are passed to a 
-           :class:`~data_sources.DataSource`.
-
-        Args:
-            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns:
-            List of :class:`PodVarlistEntry` objects.
-        """
-        assert 'varlist' in d
-        varlist_settings = VarlistSettings(**(d.get('data', dict())))
-        vars_ = {k: VarlistEntry(varlist_settings, k, **v) \
-            for k,v in d['varlist'].items()}
-
-        for v in vars_:
-            # verify that references to coords, other vars are valid
-            for dim in v.dims:
-                if dim not in self.dims:
-                    raise ValueError((f"Unknown dimension name {dim} in varlist "
-                        f"entry for {v.name} in POD {self.name}"))
-            for dim in v.scalar_coords.keys():
-                if dim not in self.dims:
-                    raise ValueError((f"Unknown dimension name {dim} in varlist "
-                        f"entry for {v.name} in POD {self.name}"))
-            for vv in v.alternates:
-                if vv not in vars_:
-                    raise ValueError((f"Unknown alternate variable {vv} in "
-                        f"varlist entry for {v.name} in POD {self.name}"))
-        return list(vars_.values())
 
     # -------------------------------------
 

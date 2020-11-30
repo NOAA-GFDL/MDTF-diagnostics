@@ -120,7 +120,7 @@ class DMBoundsDimension(object):
     :class:`DMCoordinateBounds` object. Not a dimension coordinate, and strictly
     speaking we should make another set of classes for dimensions.
     """
-    name: str
+    name: str = util.MANDATORY
     
     standard_name = 'bounds'
     units = '1'
@@ -144,7 +144,7 @@ class _DMCoordinateShared(object):
     ``value`` is our mechanism for implementing CF convention `scalar coordinates 
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__.
     """
-    name: str
+    name: str = util.MANDATORY
     bounds: AbstractDMCoordinateBounds = None
     value: typing.Union[int, float] = None
 
@@ -164,8 +164,8 @@ class DMCoordinate(_DMCoordinateShared):
     """Class to describe a single coordinate variable (in the sense used by the
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
-    standard_name: str
-    units: str
+    standard_name: str = util.MANDATORY
+    units: str = util.MANDATORY
     axis: DMAxis = DMAxis.OTHER
 
 @util.mdtf_dataclass(frozen=True)
@@ -185,9 +185,9 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
-    standard_name: str
+    standard_name: str = util.MANDATORY
     units: str = "1" # dimensionless vertical coords OK
-    positive: str
+    positive: str = util.MANDATORY
 
     axis = DMAxis.Z
 
@@ -208,8 +208,8 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
 
 @util.mdtf_dataclass(frozen=True)
 class DMTimeCoordinate(_DMCoordinateShared):
-    units: str
-    calendar: str
+    units: str = util.MANDATORY
+    calendar: str = util.MANDATORY
     range: datelabel.AbstractDateRange = None
     frequency: datelabel.AbstractDateFrequency = None
 
@@ -237,7 +237,7 @@ AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
 
 
-class _DMDependentVariableMixin(object):
+class _DMDimensionsMixin(object):
     """Lookups for the dimensions, and associated dimension coordinates, 
     associated with an array (eg a variable or auxiliary coordinate.) Needs to 
     be included as a parent class of a dataclass.
@@ -310,11 +310,15 @@ class _DMDependentVariableMixin(object):
         return dataclasses.replace(self, dims=tuple(new_dims))
 
 @util.mdtf_dataclass
-class DMDimensions(_DMDependentVariableMixin):
-    """Lookups for the dimensions, and associated dimension coordinates, 
-    associated with an array (eg a single variable or auxiliary coordinate.)
+class DMDependentVariable(_DMDimensionsMixin):
+    """Base class for any "dependent variable": all non-dimension-coordinate
+    information that depends on one or more dimension coordinates.
     """
-    dims: tuple
+    name: str = util.MANDATORY
+    standard_name: str = util.MANDATORY
+    units: str = util.MANDATORY
+
+    dims: tuple = util.MANDATORY
     scalar_coords: set = dataclasses.field(default_factory=set)
     axes: dict = dataclasses.field(init=False)
     phys_axes: dict = dataclasses.field(init=False)
@@ -324,15 +328,13 @@ class DMDimensions(_DMDependentVariableMixin):
         self.phys_axes = self.build_axes(self.dims, self.scalar_coords)
 
 @util.mdtf_dataclass
-class DMAuxiliaryCoordinate(DMDimensions):
+class DMAuxiliaryCoordinate(DMDependentVariable):
     """Class to describe `auxiliary coordinate variables 
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__,
     as defined in the CF conventions. An example would be lat or lon for data 
     presented in a tripolar grid projection.
     """
-    name: str
-    standard_name: str
-    units: str
+    pass
 
 @util.mdtf_dataclass
 class DMCoordinateBounds(DMAuxiliaryCoordinate):
@@ -369,22 +371,21 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
         return coord_bounds
 
 @util.mdtf_dataclass
-class DMVariable(DMDimensions):
-    """Class to describe general properties of data (dependent) variables.
+class DMVariable(DMDependentVariable):
+    """Class to describe general properties of data variables.
     """
-    name: str
-    standard_name: str
-    units: str
+    pass
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields 
 # aren't recognized as implementing an abc.abstractmethod.
+AbstractDMDependentVariable.register(DMDependentVariable)
 AbstractDMDependentVariable.register(DMAuxiliaryCoordinate)
 AbstractDMDependentVariable.register(DMVariable)
 AbstractDMCoordinateBounds.register(DMCoordinateBounds)
 
 @util.mdtf_dataclass
-class DMDataSet(_DMDependentVariableMixin):
+class DMDataSet(_DMDimensionsMixin):
     """Class to describe a collection of one or more variables sharing a set of
     common dimensions.
     """

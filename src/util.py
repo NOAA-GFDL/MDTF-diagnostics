@@ -295,10 +295,23 @@ class MDTFEnum(enum.Enum):
         """Instantiate from string."""
         return cls.__members__.get(str_.upper())
 
-MDTF_NOTSET = unittest.mock.sentinel.NotSet
-MDTF_NOTSET.__doc__ = """
+NOTSET = unittest.mock.sentinel.NotSet
+NOTSET.__doc__ = """
 Sentinel object to detect uninitialized values, in cases where ``None`` is a 
-valid value. See `https://www.revsys.com/tidbits/sentinel-values-python/`__.
+valid value. For implentation, see `python docs 
+<https://docs.python.org/3/library/unittest.mock.html#unittest.mock.sentinel>`__.
+"""
+
+MANDATORY = unittest.mock.sentinel.Mandatory
+MANDATORY.__doc__ = """
+Sentinel object to mark :func:`mdtf_dataclass` fields that do not take a default 
+value. This is a workaround to avoid errors with non-default fields coming after
+default fields in the dataclass-generated ``__init__`` method under 
+`inheritance <https://docs.python.org/3/library/dataclasses.html#inheritance>`__:
+we use the second solution described in `https://stackoverflow.com/a/53085935`__.
+
+For implentation, see `python docs 
+<https://docs.python.org/3/library/unittest.mock.html#unittest.mock.sentinel>`__.
 """
 
 # declaration to allow calling with and without args: python cookbook 9.6
@@ -309,10 +322,25 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     is hacky, since dataclasses don't enforce type annontations for their fields.
     A better solution would be to use a deserialization library like pydantic.
 
-    After auto-generated __init__ and __post_init__, check each field's value to
-    see if it's consistent with known type info. If not, attempt to coerce it to
-    that type, using a ``from_struct`` method if it exists. Raise ValueError if 
-    this fails.
+    After the auto-generated ``__init__`` and the class' ``__post_init__``, the
+    following tasks are performed:
+
+    1. Verify that mandatory fields have values specified. We have to work around
+       the usual :py:func:`~dataclasses.dataclass` way of doing this, because it 
+       leads to errors in the signature of the dataclass-generated ``__init__`` 
+       method under inheritance (mandatory fields can't come after optional 
+       fields.) Mandatory fields must be designated by setting their default to
+       ``MANDATORY``, and a ValueError is raised here if mandatory fields are
+       uninitialized.
+
+    2. Check each field's value to see if it's consistent with known type info. 
+       If not, attempt to coerce it to that type, using a ``from_struct`` method if
+       it exists. Raise ValueError if this fails.
+
+    .. warning::
+       Unlike :py:func:`~dataclasses.dataclass`, all fields **must** have a 
+       *default* or *default_factory* defined. Fields which are mandatory must 
+       have their default value set to the sentinel object ``MANDATORY``.
 
     .. warning::
        Type checking logic used is specific to the ``typing`` module in python 
@@ -339,8 +367,11 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                 continue
             value = getattr(self, f.name)
             # ignore unset field values, regardless of type
-            if value is None or value is MDTF_NOTSET:
+            if value is None or value is NOTSET:
                 continue
+            if value is MANDATORY:
+                raise ValueError((f"{self.__class__.__name__}: No value supplied "
+                    f"for mandatory field {f.name}."))
             # guess what types are valid
             if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
                 continue
@@ -370,16 +401,17 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                     continue
                 if new_type is None or hasattr(new_type, '__abstract_methods__'):
                     # can't do type coercion, so print a warning
-                    print((f"\tWarning: Type of {f.name} is ({f.type}), recieved "
-                        "{repr(value)} of conflicting type."))
+                    print((f"\tWarning: {self.__class__.__name__}: type of "
+                        f" {f.name} is ({f.type}), recieved {repr(value)} of "
+                        "conflicting type."))
                 else:
                     if hasattr(new_type, 'from_struct'):
                         setattr(self, f.name, new_type.from_struct(value))
                     else:
                         setattr(self, f.name, new_type(value))
             except (TypeError, ValueError, dataclasses.FrozenInstanceError): 
-                raise ValueError((f"Expected {f.name} to be {f.type}, "
-                    f"got {repr(value)}"))
+                raise ValueError((f"{self.__class__.__name__}: Expected {f.name} "
+                    f"to be type ({f.type}), got {repr(value)}."))
     cls.__init__ = _new_init
     return cls
 

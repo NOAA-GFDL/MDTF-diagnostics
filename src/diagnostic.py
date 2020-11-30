@@ -326,7 +326,7 @@ class Diagnostic(object):
     <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
     for documentation on attributes.
     """
-    name: str
+    name: str = util.MANDATORY
     long_name: str = ""
     description: str = ""
     convention: str = "CF"

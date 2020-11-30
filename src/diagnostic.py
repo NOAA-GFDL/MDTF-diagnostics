@@ -39,10 +39,22 @@ class PodConfigError(PodExceptionBase):
     _error_str = "Couldn't parse configuration in settings.jsonc file."
 
 @six.python_2_unicode_compatible
-class PodRequirementFailure(PodExceptionBase):
+class PodDataError(PodExceptionBase):
+    """Exception raised if POD doesn't have required data to run. 
+    """
+    _error_str = "Requested data not available."
+
+@six.python_2_unicode_compatible
+class PodRuntimeError(PodExceptionBase):
     """Exception raised if POD doesn't have required resources to run. 
     """
-    _error_str = "Requested resources not available."
+    _error_str = "An error occurred in setting up the POD's runtime environment."
+
+@six.python_2_unicode_compatible
+class PodExecutionError(PodExceptionBase):
+    """Exception raised if POD doesn't have required resources to run. 
+    """
+    _error_str = "An error occurred during the POD's execution."
 
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
@@ -273,7 +285,7 @@ class Varlist(data_model.DMDataSet):
         somewhere in the query/fetch process) based on new information. If the
         process has failed for a VarlistEntry, try to find a set of alternate 
         VarlistEntries. If successful, activate them; if not, raise a 
-        :class:`PodRequirementFailure`.
+        :class:`PodDataError`.
         """
         old_active_vars = self.active_vars
         failed_vs = []
@@ -294,7 +306,7 @@ class Varlist(data_model.DMDataSet):
         if failed_vs:
             for v in self.active_vars:
                 v.active = False
-            raise PodRequirementFailure(
+            raise PodDataError(
                 f"No alternates available for {[v.name for v in failed_vs]}."
             )
 
@@ -328,7 +340,6 @@ class Diagnostic(object):
     CODE_ROOT = ""
 
     varlist: Varlist = None
-
     driver: str = ""
     program: str = ""
     runtime_requirements: dict = dataclasses.field(default_factory=dict)
@@ -337,8 +348,6 @@ class Diagnostic(object):
 
     status: DiagnosticStatus = dataclasses.field(init=False)
     exception: Exception = dataclasses.field(init=False)
-    process_obj: typing.Any = dataclasses.field(init=False)
-    logfile_obj: typing.Any = dataclasses.field(init=False)
     
     def __post_init__(self):
         self.status = DiagnosticStatus.INIT
@@ -404,7 +413,7 @@ class Diagnostic(object):
 
     # -------------------------------------
 
-    def setUp(self):
+    def setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
 
         In order, this 1) sets environment variables specific to the POD, 2)
@@ -420,7 +429,7 @@ class Diagnostic(object):
             multiple languages) so the validation must take place in that 
             subprocess.
 
-        Raises: :exc:`~diagnostic.PodRequirementFailure` if requirements
+        Raises: :exc:`~diagnostic.PodRuntimeError` if requirements
             aren't met. This is re-raised from the 
             :meth:`~diagnostic.Diagnostic._check_pod_driver` and
             :meth:`~diagnostic.Diagnostic._check_for_varlist_files` 
@@ -433,7 +442,7 @@ class Diagnostic(object):
             self.setup_pod_directories()
             self.check_pod_driver()
         except Exception as exc:
-            raise PodRequirementFailure(self, 
+            raise PodRuntimeError(self, 
                 "Caught exception during setup: {0}({1!r})".format(
                     type(exc).__name__, exc.args)
             )
@@ -483,7 +492,7 @@ class Diagnostic(object):
                 elif axes[envvar_name] != ax_name \
                     and ax_status[envvar_name] == set_from_axis:
                     # names found in two different files disagree - raise error
-                    raise PodRequirementFailure(self,
+                    raise PodRuntimeError(self,
                         ("Two variables have conflicting axis names {}:"
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
@@ -518,7 +527,7 @@ class Diagnostic(object):
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
-        Raises: :exc:`~diagnostic.PodRequirementFailure` if driver script
+        Raises: :exc:`~diagnostic.PodRuntimeError` if driver script
             can't be found.
         """
         func_name = "check_pod_driver "
@@ -549,7 +558,7 @@ class Diagnostic(object):
                 else:
                     if (verbose > 1 ): print("\t "+try_path+" not found...")
         if self.driver == '':
-            raise PodRequirementFailure(self, 
+            raise PodRuntimeError(self, 
                 """No driver script found in {}. Specify 'driver' in 
                 settings.jsonc.""".format(self.POD_CODE_DIR)
                 )
@@ -557,7 +566,7 @@ class Diagnostic(object):
         if not os.path.isabs(self.driver): # expand relative path
             self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
         if not os.path.exists(self.driver):
-            raise PodRequirementFailure(self, 
+            raise PodRuntimeError(self, 
                 "Unable to locate driver script {}.".format(self.driver)
                 )
 
@@ -566,7 +575,7 @@ class Diagnostic(object):
             driver_ext  = self.driver.split('.')[-1]
             # Possible error: Driver file type unrecognized
             if driver_ext not in programs:
-                raise PodRequirementFailure(self, 
+                raise PodRuntimeError(self, 
                     ("{} doesn't know how to call a .{} file.\n"
                     "Supported programs: {}").format(
                         func_name, driver_ext, programs
@@ -577,45 +586,7 @@ class Diagnostic(object):
 
     # -------------------------------------
 
-    def run_commands(self):
-        """Produces the shell command(s) to run the POD. Called by 
-        :meth:`environment_manager.EnvironmentManager.run`.
-
-        Returns:
-            (:py:obj:`list` of :py:obj:`str`): Command-line invocation to run the POD.
-        """
-        #return [self.program + ' ' + self.driver]
-        return ['/usr/bin/env python -u '+self.driver]
-
-    def validate_commands(self):
-        """Produces the shell command(s) to validate the POD's runtime environment 
-        (ie, check for all requested third-party module dependencies.)
-
-        Called by :meth:`environment_manager.EnvironmentManager.run`. 
-        Dependencies are passed as arguments to the shell script 
-        ``src/validate_environment.sh``, which is invoked in the POD's subprocess
-        before the POD is run.
-
-        Returns:
-            (:py:obj:`list` of :py:obj:`str`): Command-line invocation to validate 
-                the POD's runtime environment.
-        """
-        # pylint: disable=maybe-no-member
-        command_path = os.path.join(self.CODE_ROOT, 'src', 'validate_environment.sh')
-        command = [
-            command_path,
-            ' -v',
-            ' -p '.join([''] + list(self.runtime_requirements)),
-            ' -z '.join([''] + list(self.pod_env_vars)),
-            ' -a '.join([''] + self.runtime_requirements.get('python', [])),
-            ' -b '.join([''] + self.runtime_requirements.get('ncl', [])),
-            ' -c '.join([''] + self.runtime_requirements.get('Rscript', []))
-        ]
-        return [''.join(command)]
-
-    # -------------------------------------
-
-    def tearDown(self, verbose=0):
+    def tear_down(self, verbose=0):
         """Performs cleanup tasks when the POD has finished running.
 
         In order, this 1) creates the POD's HTML output page from its included

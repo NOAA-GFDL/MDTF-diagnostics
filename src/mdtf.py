@@ -291,11 +291,12 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager()
-            env_mgr.pods = case.pods # best way to do this?
-            env_mgr.setUp()
-            env_mgr.run()
-            env_mgr.tearDown()
+            run_mgr = environment_manager.SubprocessRuntimeManager(
+                self.EnvironmentManager, pods=case.pods
+            )
+            run_mgr.setup()
+            run_mgr.run()
+            run_mgr.tear_down()
 
         for case in caselist:
             case.tearDown()

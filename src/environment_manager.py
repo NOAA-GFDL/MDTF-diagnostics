@@ -2,9 +2,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
+import abc
 import atexit
+import dataclasses
+from distutils.spawn import find_executable
 import signal
-from abc import ABCMeta, abstractmethod
+import typing
 if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
@@ -12,169 +15,38 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-from src import util
-from src import util_mdtf
-from src.diagnostic import PodRequirementFailure
+from src import util, util_mdtf, diagnostic
 
-class EnvironmentManager(six.with_metaclass(ABCMeta)):
-    # analogue of TestSuite in xUnit - abstract base class
+class AbstractEnvironmentManager(abc.ABC):
+    """Interface for EnvironmentManagers.
+    """
+    @abc.abstractmethod
+    def create_environment(self, env_name): pass 
 
-    def __init__(self, verbose=0):
-        config = util_mdtf.ConfigManager()
-        self.test_mode = config.config.test_mode
-        self.pods = []
-        self.envs = set()
+    @abc.abstractmethod
+    def get_pod_env(self, pod): pass 
 
-        # kill any subprocesses that are still active if we exit normally 
-        # (shouldn't be necessary) or are killed
-        atexit.register(self.subprocess_cleanup)
-        signal.signal(signal.SIGTERM, self.subprocess_cleanup)
-        signal.signal(signal.SIGINT, self.subprocess_cleanup)
+    @abc.abstractmethod
+    def activate_env_commands(self, env_name): pass 
 
-    # -------------------------------------
-    # following are specific details that must be implemented in child class 
+    @abc.abstractmethod
+    def deactivate_env_commands(self, env_name): pass 
 
-    @abstractmethod
-    def create_environment(self, env_name):
-        pass 
+    @abc.abstractmethod
+    def destroy_environment(self, env_name): pass 
 
-    @abstractmethod
-    def set_pod_env(self, pod):
-        pass 
-
-    @abstractmethod
-    def activate_env_commands(self, env_name):
-        pass 
-
-    @abstractmethod
-    def deactivate_env_commands(self, env_name):
-        pass 
-
-    @abstractmethod
-    def destroy_environment(self, env_name):
-        pass 
-
-    # -------------------------------------
-
-    def setUp(self):
-        for pod in self.pods:
-            self.set_pod_env(pod)
-            self.envs.add(pod.env)
-        for env in self.envs:
-            self.create_environment(env)
-
-    # -------------------------------------
-
-    def run(self, verbose=0):
-        for pod in self.pods:
-            pod._setup_pod_directories() # should refactor setUp
-
-            pod.logfile_obj = io.open(
-                os.path.join(pod.POD_WK_DIR, pod.name+".log"), 
-                'w', encoding='utf-8'
-            )
-            log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
-            pod.logfile_obj.write(log_str)
-            if verbose > 0: print(log_str)
-
-            try:
-                pod.setUp()
-            except PodRequirementFailure as exc:
-                log_str = "\nSkipping execution of {}.\nReason: {}\n".format(
-                    exc.pod.name, str(exc))
-                pod.logfile_obj.write(log_str)
-                pod.logfile_obj.close()
-                pod.logfile_obj = None
-                print(log_str)
-                pod.exception = exc
-                continue
-            print("{} will run in env: {}".format(pod.name, pod.env))
-            pod.logfile_obj.write("\n".join(
-                ["Found files: "] + pod.found_files + [" "]))
-            env_list = ["{}: {}". format(k,v) for k,v in iter(pod.pod_env_vars.items())]
-            pod.logfile_obj.write("\n".join(
-                ["Env vars: "] + sorted(env_list) + [" "]))
-
-            try:
-                pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
-                pod.logfile_obj.flush()
-                pod.process_obj = self.spawn_subprocess(
-                    pod.validate_commands() + pod.run_commands(),
-                    pod.env,
-                    env = os.environ, cwd = pod.POD_WK_DIR,
-                    stdout = pod.logfile_obj, stderr = subprocess.STDOUT
-                )
-            except OSError as exc:
-                print('ERROR :', exc.errno, exc.strerror)
-                print(" occured with call: {}".format(pod.run_commands()))
-                pod.exception = exc
-                pod.logfile_obj.close()
-                pod.logfile_obj = None
-                continue
-
-        # if this were python3 we'd have asyncio, instead wait for each process
-        # to terminate and close all log files
-        for pod in self.pods:
-            if pod.process_obj is not None:
-                pod.process_obj.wait()
-                pod.process_obj = None
-            if pod.logfile_obj is not None:
-                pod.logfile_obj.close()
-                pod.logfile_obj = None
-
-    def spawn_subprocess(self, cmd_list, env_name,
-        env=None, cwd=None, stdout=None, stderr=None):
-        if stdout is None:
-            stdout = subprocess.STDOUT
-        if stderr is None:
-            stderr = subprocess.STDOUT
-        run_cmds = util.coerce_to_iter(cmd_list, list)
-        if self.test_mode:
-            run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
-        commands = self.activate_env_commands(env_name) \
-            + run_cmds \
-            + self.deactivate_env_commands(env_name)
-        # '&&' so we abort if any command in the sequence fails.
-        if self.test_mode:
-            for cmd in commands:
-                print('TEST MODE: call {}'.format(cmd))
-        else:
-            print("Calling : {}".format(run_cmds[-1]))
-        commands = ' && '.join([s for s in commands if s])
-
-        # Need to run bash explicitly because 'conda activate' sources 
-        # env vars (can't do that in posix sh). tcsh could also work.
-        return subprocess.Popen(
-            ['bash', '-c', commands],
-            env=env, cwd=cwd, stdout=stdout, stderr=stderr 
-        )
-
-    # -------------------------------------
-
-    def tearDown(self):
-        # call diag's tearDown to clean up
-        for pod in self.pods:
-            pod.tearDown()
-        for env in self.envs:
-            self.destroy_environment(env)
-
-    def subprocess_cleanup(self, signum=None, frame=None):
-        util.signal_logger(self.__class__.__name__, signum, frame)
-        # kill any active subprocesses
-        for pod in self.pods:
-            if pod.process_obj is not None:
-                pod.process_obj.kill()
-
-
-class NoneEnvironmentManager(EnvironmentManager):
-    # Do not attempt to switch execution environments for each POD.
+class NullEnvironmentManager(AbstractEnvironmentManager):
+    """:class:`AbstractEnvironmentManager` which performs no environment 
+    switching. Useful only as a dummy setting for building framework test 
+    harnesses.
+    """
     def create_environment(self, env_name):
         pass 
     
     def destroy_environment(self, env_name):
         pass 
 
-    def set_pod_env(self, pod):
+    def get_pod_env(self, pod):
         pass
 
     def activate_env_commands(self, env_name):
@@ -183,11 +55,14 @@ class NoneEnvironmentManager(EnvironmentManager):
     def deactivate_env_commands(self, env_name):
         return []
 
-class VirtualenvEnvironmentManager(EnvironmentManager):
-    # create Python virtualenv to manage environments.
-    # for R, use xxx.
-    # Do not attempt management for NCL.
-
+class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
+    """:class:`AbstractEnvironmentManager` that manages dependencies assuming 
+    that current versions of the scripting language executables are already 
+    available on ``$PATH``. For python-based PODs, it uses pip and virtualenvs
+    to install needed libraries. For R-based PODs, it attempts to install needed
+    libraries into the current user's ``$PATH``. For other scripting languages, 
+    no library management is performed.
+    """
     def __init__(self, verbose=0):
         super(VirtualenvEnvironmentManager, self).__init__(verbose)
 
@@ -195,87 +70,78 @@ class VirtualenvEnvironmentManager(EnvironmentManager):
         self.venv_root = config.paths.get('venv_root', '')
         self.r_lib_root = config.paths.get('r_lib_root', '')
 
-    def create_environment(self, env_name):
-        if env_name.startswith('py_'):
-            self._create_py_venv(env_name)
-        elif env_name.startswith('r_'):
-            self._create_r_venv(env_name)
-        else:
-            pass
+    def create_environment(self, env_key):
+        env_name = env_key[0]
+        for tup in env_key[1:]:
+            lang = tup[0].lower()
+            if lang.startswith('py'):
+                self._create_py_venv(env_name, tup[1])
+            elif lang.startswith('r'):
+                self._create_r_venv(env_name, tup[1])
 
-    def _create_py_venv(self, env_name):
-        py_pkgs = set()
-        for pod in self.pods: 
-            if pod.env == env_name:
-                py_pkgs.update(set(pod.required_python_modules))
-        
+    def _create_py_venv(self, env_name, py_pkgs):
         env_path = os.path.join(self.venv_root, env_name)
         if not os.path.isdir(env_path):
             os.makedirs(env_path) # recursive mkdir if needed
         for cmd in [
-            'python -m virtualenv {}'.format(env_path),
-            'source {}/bin/activate'.format(env_path),
+            f"python -m virtualenv {env_path}",
+            f"source {env_path}/bin/activate",
             'pip install {}'.format(' '.join(py_pkgs)),
             'deactivate'
         ]:
             util.run_shell_command(cmd)
     
-    def _create_r_venv(self, env_name):
-        r_pkgs = set()
-        for pod in self.pods: 
-            if pod.env == env_name:
-                r_pkgs.update(set(pod.required_r_packages))
+    def _create_r_venv(self, env_name, r_pkgs):
         r_pkg_str = ', '.join(['"'+x+'"' for x in r_pkgs])
-
         if self.r_lib_root != '':
             env_path = os.path.join(self.r_lib_root, env_name)
             if not os.path.isdir(env_path):
                 os.makedirs(env_path) # recursive mkdir if needed
             cmds = [
-                'export R_LIBS_USER="{}"'.format(env_path),
-                'Rscript -e \'install.packages(c({}), '.format(r_pkg_str) \
+                f'export R_LIBS_USER="{env_path}"',
+                f'Rscript -e \'install.packages(c({r_pkg_str}), ' \
                     + 'lib=Sys.getenv("R_LIBS_USER"))\''
             ]
         else:
-            cmds = [
-                'Rscript -e \'install.packages(c({}))\''.format(r_pkg_str)
-            ]
+            cmds = [f'Rscript -e \'install.packages(c({r_pkg_str}))\'']
         for cmd in cmds:
             util.run_shell_command(cmd)
 
-    def destroy_environment(self, env_name):
+    def destroy_environment(self, env_key):
         pass 
 
-    def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements]
-        if ('r' in langs) or ('rscript' in langs):
-            pod.env = 'r_' + pod.name
-        elif 'ncl' in langs:
-            pod.env = 'ncl'
-        else:
-            pod.env = 'py_' + pod.name
+    def get_pod_env(self, pod):
+        env_key = [pod.name]
+        return tuple(env_key + [(k, frozenset(v)) for k,v \
+            in pod.runtime_requirements.items()])
 
-    def activate_env_commands(self, env_name):
-        if env_name.startswith('py_'):
-            env_path = os.path.join(self.venv_root, env_name)
-            return ['source {}/bin/activate'.format(env_path)]
-        elif env_name.startswith('r_'):
-            env_path = os.path.join(self.r_lib_root, env_name)
-            return ['export R_LIBS_USER="{}"'.format(env_path)]
-        else:
-            return []
+    def activate_env_commands(self, env_key):
+        env_name = env_key[0]
+        langs = [tup[0] for tup in env_key[1:]]
+        cmd_list = []
+        for lang in langs:
+            if lang.startswith('py'):
+                env_path = os.path.join(self.venv_root, env_name)
+                cmd_list.append(f"source {env_path}/bin/activate")
+            elif lang.startswith('r'):
+                env_path = os.path.join(self.r_lib_root, env_name)
+                cmd_list.append(f'export R_LIBS_USER="{env_path}"')
+        return cmd_list
 
-    def deactivate_env_commands(self, env_name):
-        if env_name.startswith('py_'):
-            return ['deactivate']
-        elif env_name.startswith('r_'):
-            return ['unset R_LIBS_USER']
-        else:
-            return []
+    def deactivate_env_commands(self, env_key):
+        langs = [tup[0] for tup in env_key[1:]]
+        cmd_list = []
+        for lang in langs:
+            if lang.startswith('py'):
+                cmd_list.append('deactivate')
+            elif lang.startswith('r'):
+                cmd_list.append('unset R_LIBS_USER')
+        return cmd_list
 
-
-class CondaEnvironmentManager(EnvironmentManager):
-    # Use Anaconda to switch execution environments.
+class CondaEnvironmentManager(AbstractEnvironmentManager):
+    """:class:`AbstractEnvironmentManager` that uses the conda package manager
+    to define and switch runtime environments.
+    """
     env_name_prefix = '_MDTF_' # our envs start with this string to avoid conflicts
 
     def __init__(self, verbose=0):
@@ -323,10 +189,10 @@ class CondaEnvironmentManager(EnvironmentManager):
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         try:
             _ = util.run_shell_command(
-                '{} env list | grep -qF "{}"'.format(self.conda_exe, conda_prefix)
+                f'{self.conda_exe} env list | grep -qF "{conda_prefix}"'
             )
         except Exception:
-            print('Conda env {} not found (grepped for {})'.format(env_name,conda_prefix))
+            print(f'Conda env {env_name} not found (grepped for {conda_prefix})')
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
@@ -334,18 +200,16 @@ class CondaEnvironmentManager(EnvironmentManager):
             short_name = env_name[(len(self.env_name_prefix)+1):]
         else:
             short_name = env_name
-        path = '{}/env_{}.yml'.format(self.conda_dir, short_name)
+        path = f"{self.conda_dir}/env_{short_name}.yml"
         if not os.path.exists(path):
-            print("Can't find {}".format(path))
+            print(f"Can't find {path}")
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
-            print('Creating conda env {} in {}'.format(env_name, conda_prefix))
-        command = \
-            'source {}/conda_init.sh {} && '.format(
-                self.conda_dir, self.conda_root
-            ) + '{} env create --force -q -p "{}" -f "{}"'.format(
-                self.conda_exe, conda_prefix, path
-            )
+            print(f"Creating conda env {env_name} in {conda_prefix}'")
+        command = (
+            f'source {self.conda_dir}/conda_init.sh {self.conda_root} && '
+            f'{self.conda_exe} env create --force -q -p "{conda_prefix}" -f "{path}"'
+        )
         try:
             _ = util.run_shell_command(command)
         except Exception:
@@ -353,9 +217,9 @@ class CondaEnvironmentManager(EnvironmentManager):
 
     def create_all_environments(self):
         try:
-            _ = util.run_shell_command(
-                '{}/conda_env_setup.sh -c "{}" -d "{}" --all'.format(
-                    self.conda_dir, self.conda_exe, self.conda_env_root
+            _ = util.run_shell_command((
+                f'{self.conda_dir}/conda_env_setup.sh -c "{self.conda_exe}" '
+                f'-d "{self.conda_env_root}" --all'
             ))
         except Exception:
             raise
@@ -363,24 +227,23 @@ class CondaEnvironmentManager(EnvironmentManager):
     def destroy_environment(self, env_name):
         pass 
 
-    def set_pod_env(self, pod):
+    def get_pod_env(self, pod):
         if pod.name in self.env_list:
             # env created specifically for this POD
-            pod.env = self.env_name_prefix + pod.name
+            return self.env_name_prefix + pod.name
         else:
             langs = [s.lower() for s in pod.runtime_requirements]
             if ('r' in langs) or ('rscript' in langs):
-                pod.env = self.env_name_prefix + 'R_base'
+                return self.env_name_prefix + 'R_base'
             elif 'ncl' in langs:
-                pod.env = self.env_name_prefix + 'NCL_base'
+                return self.env_name_prefix + 'NCL_base'
             elif 'python2' in langs:
                 raise NotImplementedError('Python 2 not supported for new PODs.')
-                # pod.env = self.env_name_prefix + 'python2_base'
+                # return self.env_name_prefix + 'python2_base'
             elif 'python3' in langs:
-                pod.env = self.env_name_prefix + 'python3_base'
+                return self.env_name_prefix + 'python3_base'
             else:
-                print("Can't find environment providing {}".format(
-                    pod.runtime_requirements))
+                print(f"Can't find environment providing {pod.runtime_requirements}")
 
     def activate_env_commands(self, env_name):
         """Source conda_init.sh to set things that aren't set b/c we aren't 
@@ -390,12 +253,220 @@ class CondaEnvironmentManager(EnvironmentManager):
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         return [
-            'source {}/conda_init.sh {}'.format(
-                self.conda_dir, self.conda_root
-            ),
-            'conda activate {}'.format(conda_prefix)
+            f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
+            f'conda activate {conda_prefix}'
         ]
 
     def deactivate_env_commands(self, env_name):
         return [] 
     
+# ============================================================================
+
+class AbstractRuntimeManager(abc.ABC):
+    """Interface for RuntimeManagers.
+    """
+    @abc.abstractmethod
+    def setup(self): pass 
+
+    @abc.abstractmethod
+    def run(self): pass 
+
+    @abc.abstractmethod
+    def tear_down(self): pass
+
+
+@util.mdtf_dataclass
+class SubprocessRuntimePODWrapper(object):
+    """Wrapper for :class:`diagnostic.Diagnostic` that adds fields and methods
+    used by :class:`SubprocessRuntimeManager`.
+    """
+    pod: diagnostic.Diagnostic
+    env: typing.Any = None
+    log_handle: io.IOBase = dataclasses.field(default=None, init=False)
+    process: typing.Any = dataclasses.field(default=None, init=False)
+
+    @property
+    def cwd(self):
+        return self.pod.POD_WK_DIR
+
+    def setup(self, verbose=0):
+        self.pod.setup_pod_directories() # should refactor setUp
+        self.log_handle = io.open(
+            os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
+            'w', encoding='utf-8'
+        )
+        log_str = f"--- MDTF.py Starting POD {self.pod.name}\n"
+        self.log_handle.write(log_str)
+        if verbose > 0: print(log_str)
+        self.pod.setup()
+        print(f"{self.pod.name} will run in env: {self.env}")
+        #self.log_handle.write("\n".join(
+        #    ["Found files: "] + pod.found_files + [" "]))
+        env_list = [f"{k}: {v}" for k,v in self.pod.pod_env_vars.items()]
+        self.log_handle.write("\n".join(
+            ["Env vars: "] + sorted(env_list) + [" "]))
+
+    def setup_exception_handler(self, exc):
+        log_str = (f"\nCaught exception while preparing to run {self.pod.name}: "
+            "{0}({1!r})".format(type(exc).__name__, exc.args))
+        print(log_str)
+        if self.log_handle is not None:
+            self.log_handle.write(log_str)
+            self.log_handle.close()
+            self.log_handle = None
+        self.pod.exception = diagnostic.PodRuntimeError(self.pod, log_str)
+
+    def run_commands(self):
+        """Produces the shell command(s) to run the POD. 
+        """
+        #return [self.program + ' ' + self.driver]
+        return ['/usr/bin/env python -u '+self.pod.driver]
+
+    def validate_commands(self):
+        """Produces the shell command(s) to validate the POD's runtime environment 
+        (ie, check for all requested third-party module dependencies.) 
+        Dependencies are passed as arguments to the shell script 
+        ``src/validate_environment.sh``, which is invoked in the POD's subprocess
+        before the POD is run.
+
+        Returns:
+            (:py:obj:`str`): Command-line invocation to validate the POD's 
+                runtime environment.
+        """
+        config = util_mdtf.ConfigManager()
+        command_path = os.path.join(config.paths.CODE_ROOT, \
+            'src', 'validate_environment.sh')
+        reqs = self.pod.runtime_requirements # abbreviate
+        command = [
+            command_path,
+            ' -v',
+            ' -p '.join([''] + list(reqs)),
+            ' -z '.join([''] + list(self.pod.pod_env_vars)),
+            ' -a '.join([''] + reqs.get('python', [])),
+            ' -b '.join([''] + reqs.get('ncl', [])),
+            ' -c '.join([''] + reqs.get('Rscript', []))
+        ]
+        return [''.join(command)]
+
+    def runtime_exception_handler(self, exc):
+        log_str = (f"\nCaught exception while running {self.pod.name}: "
+            "{0}({1!r})".format(type(exc).__name__, exc.args))
+        print(log_str)
+        if self.log_handle is not None:
+            self.log_handle.write(log_str)
+            self.log_handle.close()
+            self.log_handle = None
+        self.pod.exception = diagnostic.PodExecutionError(self.pod, log_str)
+
+    def tear_down(self):
+        if self.log_handle is not None:
+            # just to be safe
+            self.log_handle.close()
+            self.log_handle = None
+        self.pod.tear_down()
+
+
+class SubprocessRuntimeManager(AbstractRuntimeManager):
+    """:class:`AbstractRuntimeManager` that spawns a separate system subprocess
+    for each POD.
+    """
+    _PodWrapperClass = SubprocessRuntimePODWrapper
+
+    def __init__(self, EnvMgr, pods):
+        config = util_mdtf.ConfigManager()
+        self.test_mode = config.config.test_mode
+        self.pods = [self._PodWrapperClass(pod=pod) for pod in pods]
+        self.env_mgr = EnvMgr()
+
+        # kill any subprocesses that are still active if we exit normally 
+        # (shouldn't be necessary) or are killed
+        atexit.register(self.subprocess_cleanup)
+        signal.signal(signal.SIGTERM, self.subprocess_cleanup)
+        signal.signal(signal.SIGINT, self.subprocess_cleanup)
+
+    def iter_active_pods(self):
+        """Generator iterating over all wrapped pods which haven't been skipped 
+        due to requirement errors.
+        """
+        for p in self.pods:
+            if p.pod.active:
+                yield p
+
+    def setup(self):
+        for pod in self.iter_active_pods():
+            pod.env = self.env_mgr.get_pod_env(pod.pod)
+        envs = set([pod.env for pod in self.pods if pod.env])
+        for env in envs:
+            self.env_mgr.create_environment(env)
+
+    def spawn_subprocess(self, cmd_list, env_name,
+        env=None, cwd=None, stdout=None, stderr=None):
+        if stdout is None:
+            stdout = subprocess.STDOUT
+        if stderr is None:
+            stderr = subprocess.STDOUT
+        run_cmds = util.coerce_to_iter(cmd_list, list)
+        if self.test_mode:
+            run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
+        commands = self.activate_env_commands(env_name) \
+            + run_cmds \
+            + self.deactivate_env_commands(env_name)
+        # '&&' so we abort if any command in the sequence fails.
+        if self.test_mode:
+            for cmd in commands:
+                print('TEST MODE: call {}'.format(cmd))
+        else:
+            print("Calling : {}".format(run_cmds[-1]))
+        commands = ' && '.join([s for s in commands if s])
+
+        # Need to run bash explicitly because 'conda activate' sources 
+        # env vars (can't do that in posix sh). tcsh could also work.
+        return subprocess.Popen(
+            ['bash', '-c', commands],
+            env=env, cwd=cwd, stdout=stdout, stderr=stderr 
+        )
+
+    def run(self):
+        for pod in self.iter_active_pods():
+            try:
+                pod.setup()
+            except Exception as exc:
+                pod.setup_exception_handler(exc)
+                continue
+            try:
+                pod.log_handle.write(f"--- MDTF.py calling POD {pod.pod.name}\n\n")
+                pod.log_handle.flush()
+                pod.process_obj = self.spawn_subprocess(
+                    pod.validate_commands() + pod.run_commands(),
+                    pod.env,
+                    env = os.environ, cwd = pod.cwd,
+                    stdout = pod.log_handle, stderr = subprocess.STDOUT
+                )
+            except Exception as exc:
+                pod.runtime_exception_handler(exc)
+                continue
+        # should use asyncio, instead wait for each process
+        # to terminate and close all log files
+        for pod in self.pods:
+            if pod.process is not None:
+                pod.process.wait()
+                pod.process = None
+            if pod.log_handle is not None:
+                pod.log_handle.close()
+                pod.log_handle = None
+
+    def tear_down(self):
+        for pod in self.iter_active_pods():
+            pod.tear_down()
+        # cleanup all envs that were defined, just to be safe
+        envs = set([pod.env for pod in self.pods if pod.env])
+        for env in envs:
+            self.env_mgr.destroy_environment(env)
+
+    def subprocess_cleanup(self, signum=None, frame=None):
+        util.signal_logger(self.__class__.__name__, signum, frame)
+        # kill any active subprocesses
+        for pod in self.pods:
+            if pod.process is not None:
+                pod.process.kill()
+

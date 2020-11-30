@@ -5,22 +5,44 @@ import dataclasses
 import enum
 import glob
 import shutil
+import typing
 from src import util, util_mdtf, verify_links, datelabel, data_model
 
 @six.python_2_unicode_compatible
-class PodRequirementFailure(Exception):
-    """Exception raised if POD doesn't have required resoruces to run. 
+class PodExceptionBase(Exception):
+    """Base class and common formatting code for exceptions affecting a single
+    POD.
     """
+    _error_str = ""
+
     def __init__(self, pod, msg=None):
         self.pod = pod
         self.msg = msg
 
     def __str__(self):
-        if self.msg is not None:
-            return ("Requirements not met for {0}."
-                "\nReason: {1}.").format(self.pod.name, self.msg)
+        if hasattr(self.pod, 'name'):
+            pod_name = self.pod.name
         else:
-            return 'Requirements not met for {}.'.format(self.pod.name)
+            pod_name = self.pod
+        s = f"Error in {pod_name}: " + self._error_str
+        if self.msg is not None:
+            s = s + f"\nReason: {self.msg}."
+        return s
+
+@six.python_2_unicode_compatible
+class PodConfigError(PodExceptionBase):
+    """Exception raised if we can't parse info in a POD's settings.jsonc file.
+    (Covers issues with the file format/schema; malformed JSONC will raise a
+    :py:class:`~json.JSONDecodeError` when :func:`~util.parse_json` attempts to
+    parse the file.
+    """
+    _error_str = "Couldn't parse configuration in settings.jsonc file."
+
+@six.python_2_unicode_compatible
+class PodRequirementFailure(PodExceptionBase):
+    """Exception raised if POD doesn't have required resources to run. 
+    """
+    _error_str = "Requested resources not available."
 
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
@@ -276,102 +298,113 @@ class Varlist(data_model.DMDataSet):
                 f"No alternates available for {[v.name for v in failed_vs]}."
             )
 
+# ------------------------------------------------------------
 
+DiagnosticStatus = util.MDTFEnum(
+    'DiagnosticStatus', 'INIT QUERY FETCH RUN OUTPUT', module=__name__
+)
+
+@util.mdtf_dataclass
 class Diagnostic(object):
-    """Class holding configuration for a diagnostic script.
+    """Class holding configuration for a diagnostic script. Object attributes 
+    are read from entries in the settings section of the POD's settings.jsonc 
+    file upon initialization.
 
-    This is the analogue of TestCase in the xUnit analogy.
-
-    Object attributes are read from entries in the settings section of the POD's
-    settings.json file upon initialization.
-
-    Attributes:
-        driver (:py:obj:`str`): Filename of the top-level driver script for the POD.
-        long_name (:py:obj:`str`): POD's name used for display purposes. May contain spaces.
-        description (:py:obj:`str`): Short description of POD inserted by the link in the
-            top-level index.html file.
-        required_programs (:py:obj:`list` of :py:obj:`str`, optional): List of 
-            executables required by the POD (typically language interpreters). 
-            validate_environment.sh will make sure these are on the environment's
-            $PATH before the POD is run.
-        required_ncl_scripts (:py:obj:`list` of :py:obj:`str`, optional): List of NCL 
-            scripts required by the POD, if any.  
-            validate_environment.sh will make sure these are on the environment's
-            $PATH before the POD is run.
+    See `settings file documentation 
+    <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
+    for documentation on attributes.
     """
+    name: str
+    long_name: str = ""
+    description: str = ""
+    convention: str = "CF"
+    realm: str = ""
 
-    def __init__(self, pod_name, verbose=0):
-        """POD initializer. Given a POD name, we attempt to read a settings.json 
-        file in a subdirectory of ``/diagnostics`` by that name and parse the
-        contents.
+    POD_CODE_DIR = ""
+    POD_OBS_DATA = ""
+    POD_WK_DIR = ""
+    POD_OUT_DIR = ""
+    TEMP_HTML = ""
+    CODE_ROOT = ""
 
-        Args:
-            pod_name (:py:obj:`str`): Name of the POD to initialize.
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
+    varlist: Varlist = None
+
+    driver: str = ""
+    program: str = ""
+    runtime_requirements: dict = dataclasses.field(default_factory=dict)
+    pod_env_vars: dict = dataclasses.field(default_factory=dict)
+    dry_run: bool = False
+
+    status: DiagnosticStatus = dataclasses.field(init=False)
+    exception: Exception = dataclasses.field(init=False)
+    process_obj: typing.Any = dataclasses.field(init=False)
+    logfile_obj: typing.Any = dataclasses.field(init=False)
+    
+    def __post_init__(self):
+        self.status = DiagnosticStatus.INIT
+        self.exception = None
+        self.process_obj = None
+        self.logfile_obj = None
+        for k,v in self.runtime_requirements.items():
+            self.runtime_requirements[k] = util.coerce_to_iter(v)
+
+    @property
+    def active(self):
+        return (self.exception is None)
+
+    @property
+    def failed(self):
+        return (self.exception is not None)
+
+    @classmethod
+    def from_struct(cls, pod_name, d, **kwargs):
+        """Instantiate a Diagnostic object from the JSON format used in its
+        settings.jsonc file.
+        """
+        try:
+            kwargs.update(d.get('settings', dict()))
+            pod = cls(name=pod_name, **kwargs)
+        except Exception as exc:
+            raise PodConfigError(pod_name, 
+                "Caught exception while parsing settings: {0}({1!r})".format(
+                    type(exc).__name__, exc.args)
+            )
+        try:
+            pod.varlist = Varlist.from_struct(d)
+        except Exception as exc:
+            raise PodConfigError(pod_name, 
+                "Caught exception while parsing varlist: {0}({1!r})".format(
+                    type(exc).__name__, exc.args)
+            )
+        return pod
+
+    @classmethod
+    def from_config(cls, pod_name):
+        """Usual method of instantiating Diagnostic objects, from the contents
+        of its settings.jsonc file as stored in the 
+        :class:`~util_mdtf.ConfigManager`.
         """
         config = util_mdtf.ConfigManager()
-        assert pod_name in config.pods
-        # define attributes manually so linter doesn't complain
-        # others are set in parse_pod_settings
-        self.driver = ""
-        self.program = ""
-        self.pod_env_vars = dict()
-        self.skipped = None
-        self.POD_CODE_DIR = ""
-        self.POD_OBS_DATA = ""
-        self.POD_WK_DIR = ""
-        self.POD_OUT_DIR = ""
-        self.TEMP_HTML = ""
+        assert pod_name in config.pods # catch errors in input validation
+        return cls.from_struct(
+            pod_name, config.pods[pod_name],
+            CODE_ROOT=config.paths.CODE_ROOT, 
+            dry_run=config.config.get('dry_run', False)
+        )
 
-        self.name = pod_name
-        self.code_root = config.paths.CODE_ROOT
-        self.dry_run = config.config.get('dry_run', False)
-        d = config.pods[pod_name]
-        self.__dict__.update(self.parse_pod_settings(d['settings']))
-        self.varlist = Varlist.from_struct(d)
+    def iter_vars(self):
+        yield from self.varlist.active_vars
 
-    def parse_pod_settings(self, settings, verbose=0):
-        """Parse the "settings" section of the settings.jsonc file when
-        instantiating a new Diagnostic() object.
+    def update_active_vars(self):
+        self.varlist.update_active_vars()
 
-        Args:
-            settings (:py:obj:`dict`): Contents of the settings portion of the 
-                POD's settings.jsonc file.
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns:
-            Dict of parsed settings.
-        """
-        d = {}
-        d['pod_name'] = self.name # redundant
-        # define empty defaults to avoid having to test existence of attrs
-        for str_attr in ['long_name', 'description', 'env', 'convention']:
-            d[str_attr] = ''
-        for list_attr in ['varlist']:
-            d[list_attr] = []
-        for dict_attr in ['runtime_requirements']:
-            d[dict_attr] = dict()
-        for obj_attr in ['process_obj', 'logfile_obj']:
-            d[obj_attr] = None
-
-        # overwrite with contents of settings.json file
-        d.update(settings)
-
-        if 'variable_convention' in d:
-            d['convention'] = d['variable_convention']
-            del d['variable_convention']
-        elif not d.get('convention', None):
-            d['convention'] = 'CF'
-        for key, val in iter(d['runtime_requirements'].items()):
-            d['runtime_requirements'][key] = util.coerce_to_iter(val)
-        if (verbose > 0): 
-            print(self.name + " settings: ")
-            print(d)
-        return d
+    def configure_paths(self, paths):
+        for k,v in paths.items():
+            setattr(self, k, v)
 
     # -------------------------------------
 
-    def setUp(self, verbose=0):
+    def setUp(self):
         """Perform filesystem operations and checks prior to running the POD. 
 
         In order, this 1) sets environment variables specific to the POD, 2)
@@ -393,34 +426,19 @@ class Diagnostic(object):
             :meth:`~diagnostic.Diagnostic._check_for_varlist_files` 
             subroutines.
         """
-        self._set_pod_env_vars(verbose)
-        self._setup_pod_directories()
-        if isinstance(self.exception, Exception):
-            # already encountered reason we can't run this, re-raise it here 
-            # to log it
-            raise PodRequirementFailure(self,
-                "Caught {} exception:\n{}".format(
-                    type(self.exception).__name__, self.exception
-                ))
         try:
-            self._check_pod_driver(verbose)
-            (found_files, missing_files) = self._check_for_varlist_files(
-                self.varlist, verbose
+            if self.failed:
+                raise self.exception
+            self.set_pod_env_vars()
+            self.setup_pod_directories()
+            self.check_pod_driver()
+        except Exception as exc:
+            raise PodRequirementFailure(self, 
+                "Caught exception during setup: {0}({1!r})".format(
+                    type(exc).__name__, exc.args)
             )
-            self.found_files = found_files
-            self.missing_files = missing_files
-            if missing_files:
-                raise PodRequirementFailure(self,
-                    "Couldn't find required model data files:\n{}".format(
-                        "\n".join(missing_files)
-                    ))
-            else:
-                if (verbose > 0): print("No known missing required input files")
-        except PodRequirementFailure as exc:
-            print(exc)
-            raise exc
 
-    def _set_pod_env_vars(self, verbose=0):
+    def set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
         Sets all environment variables for POD.
 
@@ -478,7 +496,7 @@ class Diagnostic(object):
         for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
-    def _setup_pod_directories(self, verbose =0):
+    def setup_pod_directories(self, verbose =0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
 
         Args:
@@ -494,7 +512,7 @@ class Diagnostic(object):
             if not os.path.exists(os.path.join(self.POD_WK_DIR, d)):
                 os.makedirs(os.path.join(self.POD_WK_DIR, d))
 
-    def _check_pod_driver(self, verbose=0):
+    def check_pod_driver(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
 
         Args:
@@ -557,61 +575,6 @@ class Diagnostic(object):
             if ( verbose > 1): 
                 print(func_name +": Found program "+programs[driver_ext])
 
-    def _check_for_varlist_files(self, varlist, verbose=0):
-        """Verify that all data files needed by a POD exist locally.
-        
-        Private method called by :meth:`~data_manager.DataManager.fetchData`.
-
-        Args:
-            varlist (:py:obj:`list` of :py:obj:`dict`): Contents of the varlist portion 
-                of the POD's settings.json file.
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
-
-        Returns: :py:obj:`tuple` of found and missing file lists. Note that this is called
-            recursively.
-        """
-        func_name = "\t \t check_for_varlist_files :"
-        if ( verbose > 2 ): 
-            print(func_name+" check_for_varlist_files called with ", varlist)
-        found_list = []
-        missing_list = []
-        if self.dry_run:
-            print('DRY_RUN: Skipping POD file check')
-            return (found_list, missing_list)
-        for ds in varlist:
-            if (verbose > 2 ): print(func_name +" "+ds.name)
-            filepath = ds.dest_path
-            if os.path.isfile(filepath):
-                found_list.append(filepath)
-                continue
-            if (not ds.required):
-                print("WARNING: optional file not found ", filepath)
-                continue
-            if not ds.alternates:
-                print(("ERROR: missing required file {}. "
-                    "No alternatives found").format(filepath))
-                missing_list.append(filepath)
-            else:
-                alt_list = ds.alternates
-                print(("WARNING: required file not found: {}."
-                    "\n\tLooking for alternatives: ").format(filepath))
-                for alt_var in alt_list: 
-                    # maybe some way to do this w/o loop since check_ takes a list
-                    if (verbose > 1): 
-                        print("\t\t examining alternative ",alt_var)
-                    (new_found, new_missing) = self._check_for_varlist_files(
-                        [alt_var], verbose=verbose
-                    )
-                    found_list.extend(new_found)
-                    missing_list.extend(new_missing)
-        # remove empty list entries
-        found_list = [x for x in found_list if x is not None]
-        missing_list = [x for x in missing_list if x is not None]
-        # nb, need to return due to recursive call
-        if (verbose > 2): 
-            print("check_for_varlist_files returning ", missing_list)
-        return (found_list, missing_list)
-
     # -------------------------------------
 
     def run_commands(self):
@@ -638,7 +601,7 @@ class Diagnostic(object):
                 the POD's runtime environment.
         """
         # pylint: disable=maybe-no-member
-        command_path = os.path.join(self.code_root, 'src', 'validate_environment.sh')
+        command_path = os.path.join(self.CODE_ROOT, 'src', 'validate_environment.sh')
         command = [
             command_path,
             ' -v',
@@ -716,7 +679,7 @@ class Diagnostic(object):
                 raised during POD's attempted execution. If this is None, assume
                 that POD ran successfully.
         """
-        src_dir = os.path.join(self.code_root, 'src', 'html')
+        src_dir = os.path.join(self.CODE_ROOT, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
             # normal exit
@@ -745,7 +708,7 @@ class Diagnostic(object):
             template_dict = self.__dict__.copy()
             template_dict['missing_output'] = '<br>'.join(missing_out)
             util_mdtf.append_html_template(
-                os.path.join(self.code_root,'src','html','pod_missing_snippet.html'),
+                os.path.join(self.CODE_ROOT,'src','html','pod_missing_snippet.html'),
                 self.TEMP_HTML, template_dict
             )
 

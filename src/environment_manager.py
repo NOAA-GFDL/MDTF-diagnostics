@@ -86,7 +86,7 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
                 print(log_str)
-                pod.skipped = exc
+                pod.exception = exc
                 continue
             print("{} will run in env: {}".format(pod.name, pod.env))
             pod.logfile_obj.write("\n".join(
@@ -107,7 +107,7 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
             except OSError as exc:
                 print('ERROR :', exc.errno, exc.strerror)
                 print(" occured with call: {}".format(pod.run_commands()))
-                pod.skipped = exc
+                pod.exception = exc
                 pod.logfile_obj.close()
                 pod.logfile_obj = None
                 continue

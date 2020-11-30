@@ -15,7 +15,7 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from src import util, util_mdtf, datelabel, preprocessor, data_modeln
+from src import util, util_mdtf, datelabel, preprocessor, data_model
 from src.diagnostic import PodRequirementFailure
 
 
@@ -91,7 +91,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         skipped due to requirement errors.
         """
         for p in self.pods:
-            if p.skipped is None:
+            if p.exception is None:
                 yield p
 
     def iter_vars(self):
@@ -136,8 +136,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         translate = util_mdtf.VariableTranslator()
 
         # transfer DataManager-specific settings
-        pod.__dict__.update(config.paths.pod_paths(pod, self))
-        pod.TEMP_HTML = self.TEMP_HTML
+        pod.configure_paths(config.paths.pod_paths(pod, self))
         pod.pod_env_vars.update(self.envvars)
         pod.dry_run = self.dry_run
 
@@ -161,7 +160,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
                 if var.date_freq != self.data_freq:
-                    pod.skipped = PodRequirementFailure(
+                    pod.exception = PodRequirementFailure(
                         pod,
                         ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
                         "compatible with case {4} providing data at {5} frequency "
@@ -280,7 +279,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     in self.iter_populated_varlist(pod.varlist, pod.name)]
             except DataQueryFailure as exc:
                 print("Data query failed on pod {}; skipping.".format(pod.name))
-                pod.skipped = exc
+                pod.exception = exc
                 new_varlist = []
             for var in new_varlist:
                 var.alternates = []
@@ -377,7 +376,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             for pod in self.data_pods[key]:
                 print(("\tSkipping pod {} due to data fetch error."
                     "").format(pod.name))
-                pod.skipped = exc
+                pod.exception = exc
 
     # -------------------------------------
 

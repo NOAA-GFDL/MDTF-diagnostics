@@ -440,7 +440,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # in the exception
         for pod in self.data_pods[exc.dataset]:
             print("\tSkipping pod {} due to data fetch error.".format(pod.name))
-            pod.skipped = exc
+            pod.exception = exc
 
     # HTML & PLOT OUTPUT -------------------------------------
 

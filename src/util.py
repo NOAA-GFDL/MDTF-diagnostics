@@ -643,7 +643,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         proc = subprocess.Popen(
             command, shell=False, env=env, cwd=cwd,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=0
+            universal_newlines=True, bufsize=1
         )
         pid = proc.pid
         # py3 has timeout built into subprocess; this is a workaround
@@ -717,7 +717,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
             shell=True, executable=bash_exec,
             env=env, cwd=cwd,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=0
+            universal_newlines=True, bufsize=1
         )
         pid = proc.pid
         (stdout, stderr) = proc.communicate()

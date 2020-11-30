@@ -285,10 +285,6 @@ class SubprocessRuntimePODWrapper(object):
     log_handle: io.IOBase = dataclasses.field(default=None, init=False)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
-    @property
-    def cwd(self):
-        return self.pod.POD_WK_DIR
-
     def setup(self, verbose=0):
         self.pod.setup_pod_directories() # should refactor setUp
         self.log_handle = io.open(
@@ -349,9 +345,12 @@ class SubprocessRuntimePODWrapper(object):
         return [''.join(command)]
 
     def runtime_exception_handler(self, exc):
-        log_str = (f"\nCaught exception while running {self.pod.name}: "
+        log_str = (f"Caught exception while running {self.pod.name}: "
             "{0}({1!r})".format(type(exc).__name__, exc.args))
-        print(log_str)
+        print('\n'+log_str)
+        if self.process is not None:
+            self.process.kill()
+            self.process = None
         if self.log_handle is not None:
             self.log_handle.write(log_str)
             self.log_handle.close()
@@ -378,6 +377,10 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.pods = [self._PodWrapperClass(pod=pod) for pod in pods]
         self.env_mgr = EnvMgr()
 
+        # Need to run bash explicitly because 'conda activate' sources 
+        # env vars (can't do that in posix sh). tcsh could also work.
+        self.bash_exec = find_executable('bash')
+
         # kill any subprocesses that are still active if we exit normally 
         # (shouldn't be necessary) or are killed
         atexit.register(self.subprocess_cleanup)
@@ -393,80 +396,80 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 yield p
 
     def setup(self):
-        for pod in self.iter_active_pods():
-            pod.env = self.env_mgr.get_pod_env(pod.pod)
-        envs = set([pod.env for pod in self.pods if pod.env])
+        for p in self.iter_active_pods():
+            p.env = self.env_mgr.get_pod_env(p.pod)
+        envs = set([p.env for p in self.pods if p.env])
         for env in envs:
             self.env_mgr.create_environment(env)
 
-    def spawn_subprocess(self, cmd_list, env_name,
-        env=None, cwd=None, stdout=None, stderr=None):
-        if stdout is None:
-            stdout = subprocess.STDOUT
-        if stderr is None:
-            stderr = subprocess.STDOUT
-        run_cmds = util.coerce_to_iter(cmd_list, list)
+    def spawn_subprocess(self, p):
+        run_cmds = p.validate_commands() + p.run_commands()
         if self.test_mode:
             run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
-        commands = self.activate_env_commands(env_name) \
+        commands = self.env_mgr.activate_env_commands(p.env) \
             + run_cmds \
-            + self.deactivate_env_commands(env_name)
-        # '&&' so we abort if any command in the sequence fails.
+            + self.env_mgr.deactivate_env_commands(p.ev)
         if self.test_mode:
             for cmd in commands:
                 print('TEST MODE: call {}'.format(cmd))
         else:
             print("Calling : {}".format(run_cmds[-1]))
+        # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.
         return subprocess.Popen(
-            ['bash', '-c', commands],
-            env=env, cwd=cwd, stdout=stdout, stderr=stderr 
+            commands,
+            shell=True, executable=self.bash_exec,
+            env=os.environ, cwd=p.pod.POD_WK_DIR,
+            stdout=p.log_handle, stderr=p.log_handle,
+            universal_newlines=True, bufsize=1
         )
 
     def run(self):
-        for pod in self.iter_active_pods():
+        for p in self.iter_active_pods():
             try:
-                pod.setup()
+                p.setup()
             except Exception as exc:
-                pod.setup_exception_handler(exc)
+                p.setup_exception_handler(exc)
                 continue
             try:
-                pod.log_handle.write(f"--- MDTF.py calling POD {pod.pod.name}\n\n")
-                pod.log_handle.flush()
-                pod.process_obj = self.spawn_subprocess(
-                    pod.validate_commands() + pod.run_commands(),
-                    pod.env,
-                    env = os.environ, cwd = pod.cwd,
-                    stdout = pod.log_handle, stderr = subprocess.STDOUT
-                )
+                p.log_handle.write(f"--- MDTF.py calling POD {p.pod.name}\n\n")
+                p.log_handle.flush()
+                p.process = self.spawn_subprocess(p)
             except Exception as exc:
-                pod.runtime_exception_handler(exc)
+                p.runtime_exception_handler(exc)
                 continue
         # should use asyncio, instead wait for each process
         # to terminate and close all log files
-        for pod in self.pods:
-            if pod.process is not None:
-                pod.process.wait()
-                pod.process = None
-            if pod.log_handle is not None:
-                pod.log_handle.close()
-                pod.log_handle = None
+        # TODO: stderr gets eaten with current setup; possible to do a proper 
+        # tee if procs are run with asyncio? https://stackoverflow.com/a/59041913
+        for p in self.pods:
+            if p.process is not None:
+                p.process.wait()
+                if p.process.returncode and p.process.returncode != 0:
+                    s = "Process exited abnormally (code={p.process.returncode})"
+                    p.pod.exception = diagnostic.PodExecutionError(p.pod, s)
+                    if p.log_handle is not None:
+                        p.log_handle.write('ERROR: '+s)
+                p.process = None
+            if p.log_handle is not None:
+                p.log_handle.close()
+                p.log_handle = None
 
     def tear_down(self):
-        for pod in self.iter_active_pods():
-            pod.tear_down()
+        for p in self.iter_active_pods():
+            p.tear_down()
         # cleanup all envs that were defined, just to be safe
-        envs = set([pod.env for pod in self.pods if pod.env])
+        envs = set([p.env for p in self.pods if p.env])
         for env in envs:
             self.env_mgr.destroy_environment(env)
 
     def subprocess_cleanup(self, signum=None, frame=None):
         util.signal_logger(self.__class__.__name__, signum, frame)
         # kill any active subprocesses
-        for pod in self.pods:
-            if pod.process is not None:
-                pod.process.kill()
+        for p in self.pods:
+            if p.process is not None:
+                p.process.kill()
 

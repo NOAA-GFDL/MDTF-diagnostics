@@ -436,13 +436,11 @@ class Diagnostic(object):
             subroutines.
         """
         try:
-            if self.failed:
-                raise self.exception
             self.set_pod_env_vars()
             self.setup_pod_directories()
             self.check_pod_driver()
         except Exception as exc:
-            raise PodRuntimeError(self, 
+            self.exception = PodRuntimeError(self, 
                 "Caught exception during setup: {0}({1!r})".format(
                     type(exc).__name__, exc.args)
             )

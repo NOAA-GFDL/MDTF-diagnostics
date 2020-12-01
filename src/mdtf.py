@@ -25,7 +25,7 @@ import os
 import signal
 import shutil
 from src import cli, util, util_mdtf, data_manager, environment_manager, \
-    shared_diagnostic, preprocessor
+    diagnostic, preprocessor
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -247,7 +247,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic, preprocessor
+        data_manager, environment_manager, diagnostic, preprocessor
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -288,11 +288,12 @@ class MDTFFramework(object):
             caselist.append(case)
 
         for case in caselist:
-            env_mgr = self.EnvironmentManager()
-            env_mgr.pods = case.pods # best way to do this?
-            env_mgr.setUp()
-            env_mgr.run()
-            env_mgr.tearDown()
+            run_mgr = environment_manager.SubprocessRuntimeManager(
+                self.EnvironmentManager, pods=case.pods
+            )
+            run_mgr.setup()
+            run_mgr.run()
+            run_mgr.tear_down()
 
         for case in caselist:
             case.tearDown()

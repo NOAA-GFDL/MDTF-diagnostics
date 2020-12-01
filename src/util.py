@@ -5,12 +5,18 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
+import collections
+import dataclasses
+from distutils.spawn import find_executable
+import enum
+import errno
+import functools
+import glob
+import json
 import re
 import shlex
-import glob
 import shutil
-import collections
-from distutils.spawn import find_executable
+import signal
 if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
@@ -18,10 +24,9 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-import signal
 import threading
-import errno
-import json
+import typing
+import unittest.mock
 from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
@@ -264,6 +269,151 @@ class NameSpace(dict):
 
     def __hash__(self):
         return hash(self._freeze())
+
+class MDTFEnum(enum.Enum):
+    """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
+    to the members of the enumeration. 2) Provide a ``from_struct`` method to 
+    simplify instantiating an instance from a string. To avoid potential 
+    confusion with reserved keywords, we use the Python convention that members
+    of the enumeration are all uppercase.
+    """
+    def __new__(cls, *args):
+        """AutoNumber recipe from python stdlib docs."""
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+
+    def __str__(self):
+        return str(self.name).lower()
+
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+    @classmethod
+    def from_struct(cls, str_):
+        """Instantiate from string."""
+        return cls.__members__.get(str_.upper())
+
+NOTSET = unittest.mock.sentinel.NotSet
+NOTSET.__doc__ = """
+Sentinel object to detect uninitialized values, in cases where ``None`` is a 
+valid value. For implentation, see `python docs 
+<https://docs.python.org/3/library/unittest.mock.html#unittest.mock.sentinel>`__.
+"""
+
+MANDATORY = unittest.mock.sentinel.Mandatory
+MANDATORY.__doc__ = """
+Sentinel object to mark :func:`mdtf_dataclass` fields that do not take a default 
+value. This is a workaround to avoid errors with non-default fields coming after
+default fields in the dataclass-generated ``__init__`` method under 
+`inheritance <https://docs.python.org/3/library/dataclasses.html#inheritance>`__:
+we use the second solution described in `https://stackoverflow.com/a/53085935`__.
+
+For implentation, see `python docs 
+<https://docs.python.org/3/library/unittest.mock.html#unittest.mock.sentinel>`__.
+"""
+
+# declaration to allow calling with and without args: python cookbook 9.6
+# https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
+def mdtf_dataclass(cls=None, **deco_kwargs):
+    """Wrap :py:func:`~dataclasses.dataclass` class decorator to customize
+    dataclasses to provide (very) rudimentary type checking and conversion. This
+    is hacky, since dataclasses don't enforce type annontations for their fields.
+    A better solution would be to use a deserialization library like pydantic.
+
+    After the auto-generated ``__init__`` and the class' ``__post_init__``, the
+    following tasks are performed:
+
+    1. Verify that mandatory fields have values specified. We have to work around
+       the usual :py:func:`~dataclasses.dataclass` way of doing this, because it 
+       leads to errors in the signature of the dataclass-generated ``__init__`` 
+       method under inheritance (mandatory fields can't come after optional 
+       fields.) Mandatory fields must be designated by setting their default to
+       ``MANDATORY``, and a ValueError is raised here if mandatory fields are
+       uninitialized.
+
+    2. Check each field's value to see if it's consistent with known type info. 
+       If not, attempt to coerce it to that type, using a ``from_struct`` method if
+       it exists. Raise ValueError if this fails.
+
+    .. warning::
+       Unlike :py:func:`~dataclasses.dataclass`, all fields **must** have a 
+       *default* or *default_factory* defined. Fields which are mandatory must 
+       have their default value set to the sentinel object ``MANDATORY``.
+
+    .. warning::
+       Type checking logic used is specific to the ``typing`` module in python 
+       3.7. It may or may not work on newer pythons, and definitely will not 
+       work with 3.5 or 3.6. See `https://stackoverflow.com/a/52664522`__.
+    """
+    dc_kwargs = {'init': True, 'repr': True, 'eq': True, 'order': False, 
+        'unsafe_hash': False, 'frozen': False}
+    dc_kwargs.update(deco_kwargs)
+    if cls is None:
+        # called without arguments
+        return functools.partial(mdtf_dataclass, **dc_kwargs)
+
+    cls = dataclasses.dataclass(cls, **dc_kwargs)
+    _old_init = cls.__init__
+    @functools.wraps(_old_init)
+    def _new_init(self, *args, **kwargs):
+        # Execute dataclass' auto-generated __init__ and __post_init__:
+        _old_init(self, *args, **kwargs)
+        
+        for f in dataclasses.fields(self):
+            if not f.init:
+                # ignore fields that aren't handled at init
+                continue
+            value = getattr(self, f.name)
+            # ignore unset field values, regardless of type
+            if value is None or value is NOTSET:
+                continue
+            if value is MANDATORY:
+                raise ValueError((f"{self.__class__.__name__}: No value supplied "
+                    f"for mandatory field {f.name}."))
+            # guess what types are valid
+            if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
+                continue
+            elif isinstance(f.type, typing._GenericAlias) \
+                or isinstance(f.type, typing._SpecialForm):
+                # type is a generic from typing module, eg "typing.List"
+                if f.type.__origin__ is typing.Union:
+                    new_type = None # can't do coercion, but can test type
+                    valid_types = list(f.type.__args__)
+                elif issubclass(f.type.__origin__, typing.Generic):
+                    continue # can't do anything in this case
+                else:
+                    new_type = f.type.__origin__
+                    valid_types = [new_type]
+            else:
+                new_type = f.type
+                valid_types = [new_type]
+            # Get types of field's default value, if present. Dataclass doesn't 
+            # require defaults to be same type as what's given for field.
+            if not isinstance(f.default, dataclasses._MISSING_TYPE):
+                valid_types.append(type(f.default))
+            if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+                valid_types.append(type(f.default_factory()))
+            
+            try:
+                if isinstance(value, tuple(valid_types)):
+                    continue
+                if new_type is None or hasattr(new_type, '__abstract_methods__'):
+                    # can't do type coercion, so print a warning
+                    print((f"\tWarning: {self.__class__.__name__}: type of "
+                        f" {f.name} is ({f.type}), recieved {repr(value)} of "
+                        "conflicting type."))
+                else:
+                    if hasattr(new_type, 'from_struct'):
+                        setattr(self, f.name, new_type.from_struct(value))
+                    else:
+                        setattr(self, f.name, new_type(value))
+            except (TypeError, ValueError, dataclasses.FrozenInstanceError): 
+                raise ValueError((f"{self.__class__.__name__}: Expected {f.name} "
+                    f"to be type ({f.type}), got {repr(value)}."))
+    cls.__init__ = _new_init
+    return cls
 
 # ------------------------------------
 
@@ -525,7 +675,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         proc = subprocess.Popen(
             command, shell=False, env=env, cwd=cwd,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=0
+            universal_newlines=True, bufsize=1
         )
         pid = proc.pid
         # py3 has timeout built into subprocess; this is a workaround
@@ -599,7 +749,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
             shell=True, executable=bash_exec,
             env=env, cwd=cwd,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=0
+            universal_newlines=True, bufsize=1
         )
         pid = proc.pid
         (stdout, stderr) = proc.communicate()

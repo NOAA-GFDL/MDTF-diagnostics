@@ -21,7 +21,7 @@ import src.conflict_resolution as choose
 from src import cmip6
 from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
-from src.shared_diagnostic import Diagnostic, PodRequirementFailure
+from src.diagnostic import Diagnostic, PodRequirementFailure
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -440,7 +440,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         # in the exception
         for pod in self.data_pods[exc.dataset]:
             print("\tSkipping pod {} due to data fetch error.".format(pod.name))
-            pod.skipped = exc
+            pod.exception = exc
 
     # HTML & PLOT OUTPUT -------------------------------------
 

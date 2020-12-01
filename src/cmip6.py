@@ -15,9 +15,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 from src import six
 import re
-from src import datelabel
-from src import util
-from src import util_mdtf
+from src import datelabel, util, util_mdtf
 
 class CMIP6_CVs(util.Singleton):
     """Interface for looking up information from the CMIP6 CV file.

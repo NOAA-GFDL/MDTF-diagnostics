@@ -76,9 +76,9 @@ class VarlistSettings(object):
     min_duration: str = 'any'
     max_duration: str = 'any'
     dimensions_ordered: bool = False
-    frequency: datelabel.DateFrequency = None
-    min_frequency: datelabel.DateFrequency = None
-    max_frequency: datelabel.DateFrequency = None
+    frequency: datelabel.AbstractDateFrequency = None
+    min_frequency: datelabel.AbstractDateFrequency = None
+    max_frequency: datelabel.AbstractDateFrequency = None
 
 @util.mdtf_dataclass(frozen=True)
 class VarlistCoordinateMixin(object):

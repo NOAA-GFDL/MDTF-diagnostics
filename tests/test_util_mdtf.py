@@ -60,33 +60,34 @@ class TestUtil(unittest.TestCase):
 
     # ---------------------------------------------------
 
-    @mock.patch('os.path.exists', return_value = True)
+    @mock.patch('os.path.isdir', return_value = True)
     @mock.patch('os.makedirs')
-    def test_check_required_dirs_found(self, mock_makedirs, mock_exists):
+    def test_check_dirs_found(self, mock_makedirs, mock_isdir):
         # exit function normally if all directories found 
         try:
-            util_mdtf.check_required_dirs(['DIR1'], [])
-            util_mdtf.check_required_dirs([], ['DIR2'])
-        except SystemExit:
+            util_mdtf.check_dirs('DUMMY/PATH/NAME', create=False)
+            util_mdtf.check_dirs('DUMMY/PATH/NAME', create=True)
+        except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_not_called()
  
-    @mock.patch('os.path.exists', return_value = False)
+    @mock.patch('os.path.isdir', return_value = False)
     @mock.patch('os.makedirs')
-    def test_check_required_dirs_not_found(self, mock_makedirs, mock_exists):
+    def test_check_dirs_not_found(self, mock_makedirs, mock_isdir):
         # try to exit() if any directories not found
-        self.assertRaises(OSError, util_mdtf.check_required_dirs, ['DIR1XXX'], [])
+        with self.assertRaises(FileNotFoundError):
+            util_mdtf.check_dirs('DUMMY/PATH/NAME', create=False)
         mock_makedirs.assert_not_called()
 
-    @mock.patch('os.path.exists', return_value = False)
+    @mock.patch('os.path.isdir', return_value = False)
     @mock.patch('os.makedirs')
-    def test_check_required_dirs_not_found_created(self, mock_makedirs, mock_exists):      
+    def test_check_dirs_not_found_created(self, mock_makedirs, mock_isdir):      
         # don't exit() and call os.makedirs if in create_if_nec          
         try:
-            util_mdtf.check_required_dirs([], ['DIR2'])
-        except SystemExit:
+            util_mdtf.check_dirs('DUMMY/PATH/NAME', create=True)
+        except (Exception, SystemExit):
             self.fail()
-        mock_makedirs.assert_called_once_with('DIR2')
+        mock_makedirs.assert_called_once_with('DUMMY/PATH/NAME', exist_ok=False)
 
     @mock.patch('os.path.exists', return_value=False)
     def test_bump_version_noexist(self, mock_exists):

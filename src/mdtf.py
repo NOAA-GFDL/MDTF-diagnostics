@@ -209,20 +209,15 @@ class MDTFFramework(object):
         _ = util_mdtf.VariableTranslator()
 
     def verify_paths(self, config):
-        # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(config.paths.WORKING_DIR) and not \
-            (config.config.get('keep_temp', False) \
-            or config.paths.WORKING_DIR == config.paths.OUTPUT_DIR):
-            shutil.rmtree(config.paths.WORKING_DIR)
-        util_mdtf.check_required_dirs(
-            already_exist = [
-                config.paths.CODE_ROOT, config.paths.OBS_DATA_ROOT
-            ], 
-            create_if_nec = [
-                config.paths.MODEL_DATA_ROOT, 
-                config.paths.WORKING_DIR, 
-                config.paths.OUTPUT_DIR
-        ])
+        p = config.paths # abbreviate
+        keep_temp = config.config.get('keep_temp', False)
+        # clean out WORKING_DIR if we're not keeping temp files:
+        if os.path.exists(p.WORKING_DIR) and not \
+            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+            shutil.rmtree(p.WORKING_DIR)
+        util_mdtf.check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
+        util_mdtf.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
+            create=True)
 
     def _print_config(self, cli_obj, config):
         # make config nested dict for backwards compatibility

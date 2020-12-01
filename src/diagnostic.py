@@ -538,21 +538,14 @@ class Diagnostic(object):
         for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
-    def setup_pod_directories(self, verbose =0):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
-
-        Args:
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
+    def setup_pod_directories(self):
+        """Check and create directories specific to this POD.
         """
-        util_mdtf.check_required_dirs(
-            already_exist =[self.POD_CODE_DIR, self.POD_OBS_DATA], 
-            create_if_nec = [self.POD_WK_DIR], 
-            verbose=verbose)
-        dirs = ['', 'model', 'model/PS', 'model/netCDF', 
-            'obs', 'obs/PS','obs/netCDF']
+        util_mdtf.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
+        util_mdtf.check_dirs(self.POD_WK_DIR, create=True)
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            if not os.path.exists(os.path.join(self.POD_WK_DIR, d)):
-                os.makedirs(os.path.join(self.POD_WK_DIR, d))
+            util_mdtf.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def check_pod_driver(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.

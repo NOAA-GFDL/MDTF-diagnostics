@@ -58,24 +58,18 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
         )
 
     def verify_paths(self, config):
-        # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(config.paths.WORKING_DIR) and not \
-            (config.config.get('keep_temp', False) \
-            or config.paths.WORKING_DIR == config.paths.OUTPUT_DIR):
-            shutil.rmtree(config.paths.WORKING_DIR)
-        util_mdtf.check_required_dirs(
-            already_exist = [
-                config.paths.CODE_ROOT, config.paths.OBS_DATA_REMOTE
-            ], 
-            create_if_nec = [
-                config.paths.MODEL_DATA_ROOT, config.paths.WORKING_DIR,
-                config.paths.OBS_DATA_ROOT
-        ])
+        p = config.paths # abbreviate
+        keep_temp = config.config.get('keep_temp', False)
+        # clean out WORKING_DIR if we're not keeping temp files:
+        if os.path.exists(p.WORKING_DIR) and not \
+            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+            shutil.rmtree(p.WORKING_DIR)
+        util_mdtf.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
+        util_mdtf.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
+            create=True)
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
-        if not os.path.exists(config.paths.OUTPUT_DIR):
-            gfdl.make_remote_dir(
-                config.paths.OUTPUT_DIR, self.timeout, self.dry_run
-            )
+        if not os.path.exists(p.OUTPUT_DIR):
+            gfdl.make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run)
 
     def set_case_pod_list(self, case, cli_obj, config):
         requested_pods = super(GFDLMDTFFramework, self).set_case_pod_list(

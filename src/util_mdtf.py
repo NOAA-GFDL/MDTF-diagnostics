@@ -248,30 +248,31 @@ def check_required_envvar(*varlist):
             ))
             exit()
 
-def check_required_dirs(already_exist =[], create_if_nec = [], verbose=1):
-    # arguments can be envvar name or just the paths
-    filestr = __file__+":check_required_dirs: "
-    errstr = "ERROR "+filestr
-    if verbose > 1: filestr +" starting"
-    for dir_in in already_exist + create_if_nec : 
-        if verbose > 1: "\t looking at "+dir_in
- 
-        if dir_in in os.environ:  
-            dir = os.environ[dir_in]
-        else:
-            if verbose>2: print(" envvar "+dir_in+" not defined")    
-            dir = dir_in
+def check_dirs(*dirs, create=False):
+    """Check existence of directories. No action is taken for directories that
+    already exist; nonexistent directories either raise a 
+    :py:exception:`FileNotFoundError` or cause the creation of that directory.
 
-        if not os.path.exists(dir):
-            if not dir_in in create_if_nec:
-                if (verbose>0): 
-                    print(errstr+dir_in+" = "+dir+" directory does not exist")
-                raise OSError(dir+" directory does not exist")
+    Args:
+        dirs: iterable of absolute paths to check.
+        create: (bool, default False): if True, nonexistent directories are 
+            created. 
+    """
+    for dir_ in dirs:
+        try:
+            if not os.path.isdir(dir_):
+                if create:
+                    os.makedirs(dir_, exist_ok=False)
+                else:
+                    raise FileNotFoundError(f"Directory {dir_} not found.")
+        except Exception as exc:
+            if isinstance(exc, FileNotFoundError):
+                raise exc
             else:
-                print(dir+" created")
-                os.makedirs(dir)
-        else:
-            print("Found "+dir)
+                raise OSError(
+                    "Caught exception when checking {0}: {1}({2!r})".format(
+                        dir_, type(exc).__name__, exc.args)
+                )
 
 def bump_version(path, new_v=None, extra_dirs=None):
     # return a filename that doesn't conflict with existing files.

@@ -501,11 +501,11 @@ class Diagnostic(object):
         axes = dict()
         ax_bnds = dict()
         ax_status = dict()
-        for var in self.iter_vars_and_alts():
+        for var in self.iter_vars():
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
             #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
-            for ax_name, ax_attrs in iter(var.axes.items()):
+            for ax_name, ax_attrs in var.axes.items():
                 if 'MDTF_envvar' not in ax_attrs:
                     print(("\tWarning: don't know env var to set" 
                         "for axis name {}").format(ax_name))
@@ -634,9 +634,9 @@ class Diagnostic(object):
         """
         self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
         # add link and description to main html page
-        self.append_result_link(self.exception)
+        self.append_result_link()
 
-        if not isinstance(self.exception, Exception):
+        if self.active:
             self.make_pod_html()
             self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
             self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
@@ -644,9 +644,17 @@ class Diagnostic(object):
             self.verify_pod_links()
 
         if verbose > 0: 
-            print("---  MDTF.py Finished POD "+self.name+"\n")
+            print(f"---  MDTF.py Finished POD {self.name}")
             # elapsed = timeit.default_timer() - start_time
             # print(pod+" Elapsed time ",elapsed)
+
+    def templating_dict(self):
+        """Get the dict of recognized substitutions to perform in HTML templates.
+        """
+        config = util_mdtf.ConfigManager()
+        template = config.global_envvars.copy()
+        template.update(self.pod_env_vars)
+        return {str(k): str(v) for k,v in template.items()}
 
     def make_pod_html(self):
         """Perform templating on POD's html results page(s).
@@ -656,43 +664,37 @@ class Diagnostic(object):
         POD_WK_DIR, respecting subdirectory structure (see doc for
         :func:`~util.recursive_copy`).
         """
-        config = util_mdtf.ConfigManager()
-        template = config.global_envvars.copy()
-        template.update(self.pod_env_vars)
+        template_d = self.templating_dict()
         source_files = util.find_files(self.POD_CODE_DIR, '*.html')
         util.recursive_copy(
             source_files,
             self.POD_CODE_DIR,
             self.POD_WK_DIR,
-            copy_function=lambda src, dest: util_mdtf.append_html_template(
-                src, dest, template_dict=template, append=False
-            ),
+            copy_function=(
+                lambda src, dest: util_mdtf.append_html_template(
+                src, dest, template_dict=template_d, append=False
+            )),
             overwrite=True
         )
 
-    def append_result_link(self, error=None):
+    def append_result_link(self):
         """Update the top level index.html page with a link to this POD's results.
 
         This simply appends one of two html fragments to index.html: 
         pod_result_snippet.html if the POD completed successfully, or
         pod_error_snippet.html if an exception was raised during the POD's setup
         or execution.
-
-        Args:
-            error (default None): :py:class:`Exception` object (if any) that was
-                raised during POD's attempted execution. If this is None, assume
-                that POD ran successfully.
         """
         src_dir = os.path.join(self.CODE_ROOT, 'src', 'html')
-        template_dict = self.__dict__.copy()
-        if error is None:
-            # normal exit
-            src = os.path.join(src_dir, 'pod_result_snippet.html')
-        else:
+        template_d = self.templating_dict()
+        if self.failed:
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
-            template_dict['error_text'] = str(error)
-        util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
+            template_d['error_text'] = str(self.exception)
+        else:
+            # normal exit
+            src = os.path.join(src_dir, 'pod_result_snippet.html')
+        util_mdtf.append_html_template(src, self.TEMP_HTML, template_d)
 
     def verify_pod_links(self):
         """Check for missing files linked to from POD's html page.
@@ -708,12 +710,14 @@ class Diagnostic(object):
         )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:
-            print('ERROR: {} has missing output files.'.format(self.name))
-            template_dict = self.__dict__.copy()
-            template_dict['missing_output'] = '<br>'.join(missing_out)
+            print(f'ERROR: {self.name} has missing output files.')
+            template_d = self.templating_dict()
+            template_d['missing_output'] = '<br>'.join(missing_out)
             util_mdtf.append_html_template(
-                os.path.join(self.CODE_ROOT,'src','html','pod_missing_snippet.html'),
-                self.TEMP_HTML, template_dict
+                os.path.join(self.CODE_ROOT, 'src', 'html', 
+                    'pod_missing_snippet.html'),
+                self.TEMP_HTML, 
+                template_d
             )
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
@@ -743,29 +747,27 @@ class Diagnostic(object):
         )
         for f in files:
             f_stem, _  = os.path.splitext(f)
-            _ = util.run_shell_command(
-                'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
-                flags=config.config.get('convert_flags',''),
-                f_in=f,
-                f_out=f_stem+'_MDTF_TEMP_%d.png'
-            ))
+            gs_flags = config.config.get('convert_flags', '')
+            # %d = ghostscript's template for multi-page output
+            f_out = f_stem + '_MDTF_TEMP_%d.png' 
+            util.run_shell_command(f'gs {gs_flags} -sOutputFile="{f_out}" {f}')
             # syntax for f_out above appends "_MDTF_TEMP" + page number to 
             # output files. If input .ps/.pdf file had multiple pages, this will
             # generate 1 png per page. Page numbering starts at 1. Now check 
             # how many files gs created:
-            out_files = glob.glob(f_stem+'_MDTF_TEMP_?.png')
+            out_files = glob.glob(f_stem + '_MDTF_TEMP_?.png')
             if not out_files:
-                raise OSError("Error: no png generated from {}".format(f))
+                raise OSError(f"Error: no png generated from {f}")
             elif len(out_files) == 1:
                 # got one .png, so remove suffix.
-                os.rename(out_files[0], f_stem+'.png')
+                os.rename(out_files[0], f_stem + '.png')
             else:
                 # Multiple .pngs. Drop the MDTF_TEMP suffix and renumber starting
                 # from zero (forget which POD requires this.)
-                for n in list(range(len(out_files))):
+                for n in range(len(out_files)):
                     os.rename(
-                        f_stem+'_MDTF_TEMP_{}.png'.format(n+1),
-                        f_stem+'-{}.png'.format(n)
+                        f_stem + f'_MDTF_TEMP_{n+1}.png',
+                        f_stem + f'-{n}.png'
                     )
         # move converted figures and any figures that were saved directly as bitmaps
         files = util.find_files(

@@ -286,7 +286,7 @@ class SubprocessRuntimePODWrapper(object):
     process: typing.Any = dataclasses.field(default=None, init=False)
 
     def setup(self, verbose=0):
-        self.pod.setup_pod_directories() # should refactor setUp
+        self.pod.setup_pod_directories() # should refactor setup
         self.log_handle = io.open(
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'

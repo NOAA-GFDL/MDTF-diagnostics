@@ -91,7 +91,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         skipped due to requirement errors.
         """
         for p in self.pods:
-            if p.exception is None:
+            if p.active:
                 yield p
 
     def iter_vars(self):
@@ -99,12 +99,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
         skipped due to requirement errors.
         """
         for p in self.iter_pods():
-            for var in p.varlist:
-                yield var
+            yield from p.iter_vars()
 
     # -------------------------------------
 
-    def setUp(self, verbose=0):
+    def setup(self, verbose=0):
         util_mdtf.check_required_dirs(
             already_exist =[], 
             create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
@@ -390,7 +389,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # HTML & PLOT OUTPUT -------------------------------------
 
-    def tearDown(self):
+    def tear_down(self):
         # TODO: handle OSErrors in all of these
         config = util_mdtf.ConfigManager()
         self._make_html()

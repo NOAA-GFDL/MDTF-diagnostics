@@ -257,7 +257,7 @@ class TestPathManager(unittest.TestCase):
         }
         config = util_mdtf.ConfigManager()
         self.assertRaises(AssertionError, config.paths.parse, d, list(d.keys()))
-        # initialize successfully so that tearDown doesn't break
+        # initialize successfully so that tear_down doesn't break
         #_ = util_mdtf.PathManager(unittest = True) 
 
     def test_pathmgr_global_testmode(self):

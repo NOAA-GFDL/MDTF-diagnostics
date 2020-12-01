@@ -446,7 +446,7 @@ class Diagnostic(object):
             )
 
     def set_pod_env_vars(self, verbose=0):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
         Sets all environment variables for POD.
 
         Args:
@@ -504,7 +504,7 @@ class Diagnostic(object):
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def setup_pod_directories(self, verbose =0):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
 
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
@@ -520,7 +520,7 @@ class Diagnostic(object):
                 os.makedirs(os.path.join(self.POD_WK_DIR, d))
 
     def check_pod_driver(self, verbose=0):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setUp`.
+        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
 
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.

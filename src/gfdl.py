@@ -181,8 +181,8 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         return super(GfdlvirtualenvEnvironmentManager, \
             self).deactivate_env_commands(env_name) + mod_list
 
-    def tearDown(self):
-        super(GfdlvirtualenvEnvironmentManager, self).tearDown()
+    def tear_down(self):
+        super(GfdlvirtualenvEnvironmentManager, self).tear_down()
         modMgr = ModuleManager()
         modMgr.revert_state()
 

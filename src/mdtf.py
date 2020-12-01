@@ -281,7 +281,7 @@ class MDTFFramework(object):
                 except AssertionError as error:  
                     print(str(error))
                 case.pods.append(pod)
-            case.setUp()
+            case.setup()
             case.query_data()
             case.fetch_data()
             case.preprocess_data(self.Preprocessor)
@@ -296,7 +296,7 @@ class MDTFFramework(object):
             run_mgr.tear_down()
 
         for case in caselist:
-            case.tearDown()
+            case.tear_down()
         self.cleanup_tempdirs()
 
 

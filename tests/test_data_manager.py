@@ -59,7 +59,7 @@ class TestDataManagerSetup(unittest.TestCase):
         # exit if can't find model
         case = DataManager(self.default_case)
         case.convention = 'nonexistent'
-        self.assertRaises(AssertionError, case.setUp)
+        self.assertRaises(AssertionError, case.setup)
 
     def test_setup_html(self):
         pass

@@ -39,7 +39,7 @@ class TestMDTFArgParsing(unittest.TestCase):
 
     @mock.patch('src.util.check_required_dirs')
     def test_set_mdtf_env_vars_config_settings(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
+        # NB env vars now only written to OS by pod's setup (not here)
         # set settings from config file
         mdtf = MDTFFramework.__new__(MDTFFramework)
         mdtf.config = self.config_test.copy()
@@ -48,7 +48,7 @@ class TestMDTFArgParsing(unittest.TestCase):
 
     @mock.patch('src.util.check_required_dirs')
     def test_sset_mdtf_env_vars_config_rgb(self, mock_check_required_dirs):
-        # NB env vars now only written to OS by pod's setUp (not here)
+        # NB env vars now only written to OS by pod's setup (not here)
         # set path to /RGB from os.environ
         mdtf = MDTFFramework.__new__(MDTFFramework)
         mdtf.config = self.config_test.copy()

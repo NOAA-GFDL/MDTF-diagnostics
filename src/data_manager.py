@@ -16,7 +16,7 @@ if os.name == 'posix' and six.PY2:
 else:
     from subprocess import CalledProcessError
 from src import util, util_mdtf, datelabel, preprocessor, data_model
-from src.diagnostic import PodRequirementFailure
+from src.diagnostic import PodDataError
 
 
 @six.python_2_unicode_compatible
@@ -160,7 +160,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         if self.data_freq is not None:
             for var in pod.iter_vars_and_alts():
                 if var.date_freq != self.data_freq:
-                    pod.exception = PodRequirementFailure(
+                    pod.exception = PodDataError(
                         pod,
                         ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
                         "compatible with case {4} providing data at {5} frequency "

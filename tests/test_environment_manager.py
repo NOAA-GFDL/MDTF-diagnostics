@@ -16,7 +16,7 @@ class TestEnvironmentManager(unittest.TestCase):
     # ---------------------------------------------------
 
     # @mock.patch.dict('os.environ', {'DIAG_HOME':'/HOME'})
-    # @mock.patch('src.shared_diagnostic.util.read_json', return_value = {
+    # @mock.patch('src.diagnostic.util.read_json', return_value = {
     #     'settings':{'driver':'C.ncl', 'program':'nonexistent_program'}, 'varlist':[]
     #     })
     # @mock.patch('os.path.exists', return_value = True)

@@ -277,7 +277,7 @@ class MDTFEnum(enum.Enum):
     confusion with reserved keywords, we use the Python convention that members
     of the enumeration are all uppercase.
     """
-    def __new__(cls, *args):
+    def __new__(cls, *args, **kwargs):
         """AutoNumber recipe from python stdlib docs."""
         value = len(cls.__members__) + 1
         obj = object.__new__(cls)

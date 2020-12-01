@@ -2,7 +2,7 @@ import os
 import unittest
 import mock # define mock os.environ so we don't mess up real env vars
 import src.util_mdtf as util_mdtf
-from src.shared_diagnostic import Diagnostic
+from src.diagnostic import Diagnostic
 from src.data_manager import DataManager
 from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
@@ -130,7 +130,7 @@ class TestDataManagerSetupNonCFPod(unittest.TestCase):
         self.assertEqual(pod.varlist[0].name_in_model, 'PRECT')
 
     @unittest.skip("")
-    @mock.patch('src.shared_diagnostic.util.read_json', return_value = {
+    @mock.patch('src.diagnostic.util.read_json', return_value = {
         'settings':{'conda_env':'B'},'varlist':[]})
     def test_parse_pod_settings_conda_env(self, mock_read_json):
         # fill in conda environment 

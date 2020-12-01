@@ -21,7 +21,7 @@ import src.conflict_resolution as choose
 from src import cmip6
 from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
-from src.diagnostic import Diagnostic, PodRequirementFailure
+from src.diagnostic import Diagnostic
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -111,27 +111,25 @@ class GfdlDiagnostic(Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
     """
-    def __init__(self, pod_name, verbose=0):
-        super(GfdlDiagnostic, self).__init__(pod_name, verbose)
-        self._has_placeholder = False
+    _has_placeholder: bool = False
 
-    def setUp(self, verbose=0):
+    def setup(self):
         config = util_mdtf.ConfigManager()
         try:
-            super(GfdlDiagnostic, self).setUp(verbose)
+            super(GfdlDiagnostic, self).setup()
             make_remote_dir(
                 self.POD_OUT_DIR,
                 timeout=config.config.get('file_transfer_timeout', 0),
                 dry_run=config.config.get('dry_run', False)
             )
             self._has_placeholder = True
-        except PodRequirementFailure:
+        except Exception as exc:
             raise
 
-    def tearDown(self, verbose=0):
+    def tear_down(self, verbose=0):
         # only run teardown (including logging error on index.html) if POD ran
         if self._has_placeholder:
-            super(GfdlDiagnostic, self).tearDown(verbose)
+            super(GfdlDiagnostic, self).tear_down(verbose)
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 

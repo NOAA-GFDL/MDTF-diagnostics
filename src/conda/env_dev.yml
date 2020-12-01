@@ -13,6 +13,8 @@ dependencies:
 - xarray=0.16
 - matplotlib=3.3
 - cartopy=0.18
+- pint=0.16
+- dask=2.30
 # additional development tools
 - mock # needed until tests updated from py2
 - jupyter

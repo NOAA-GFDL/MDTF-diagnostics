@@ -24,13 +24,8 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-from src import cli
-from src import util
-from src import util_mdtf
-from src import data_manager
-from src import environment_manager
-from src import shared_diagnostic
-from src import netcdf_helper
+from src import cli, util, util_mdtf, data_manager, environment_manager, \
+    shared_diagnostic, preprocessor
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -208,9 +203,10 @@ class MDTFFramework(object):
 
     def _post_parse_hook(self, cli_obj, config):
         # init other services
-        _ = util_mdtf.TempDirManager()
-        _ = util_mdtf.VariableTranslator()
         self.verify_paths(config)
+        # use WORKING_DIR for temp data
+        _ = util_mdtf.TempDirManager(config.paths.WORKING_DIR)
+        _ = util_mdtf.VariableTranslator()
 
     def verify_paths(self, config):
         # clean out WORKING_DIR if we're not keeping temp files
@@ -251,7 +247,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, shared_diagnostic, netcdf_helper
+        data_manager, environment_manager, shared_diagnostic, preprocessor
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -270,7 +266,7 @@ class MDTFFramework(object):
         self.DataManager = _dispatch('data_manager', 'DataManager')
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
-        self.NetCDFHelper = _dispatch('netcdf_helper', 'NetcdfHelper')
+        self.Preprocessor = _dispatch('preprocessor', 'Preprocessor')
 
     def main_loop(self):
         config = util_mdtf.ConfigManager()
@@ -286,17 +282,14 @@ class MDTFFramework(object):
                     print(str(error))
                 case.pods.append(pod)
             case.setUp()
+            case.query_data()
             case.fetch_data()
+            case.preprocess_data(self.Preprocessor)
             caselist.append(case)
 
         for case in caselist:
             env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
-            # nc_helper = self.NetCDFHelper()
-
-            # case.preprocess_local_data(
-            #     netcdf_mixin=nc_helper, environment_manager=env_mgr
-            # )
             env_mgr.setUp()
             env_mgr.run()
             env_mgr.tearDown()

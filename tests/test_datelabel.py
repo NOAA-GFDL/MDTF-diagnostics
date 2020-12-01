@@ -225,6 +225,14 @@ class TestDateRange(unittest.TestCase):
         r1 = dt_range('20000101-20000201')
         self.assertEqual(r1, eval(repr(r1), globs))
 
+    def test_start_end_properties(self):
+        rng = dt_range('1980-1990')
+        self.assertEqual(rng.start, dt('1980'))
+        self.assertEqual(rng.end, dt('1990'))
+        rng = dt_range('19800101-19871225')
+        self.assertEqual(rng.start, dt('19800101'))
+        self.assertEqual(rng.end, dt('19871225'))
+
 class TestFXDates(unittest.TestCase):
     def test_compare(self):
         dtr = dt_range('19800101-19901231')

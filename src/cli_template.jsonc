@@ -138,6 +138,10 @@
           "help": "Method used to fetch model data.",
           "default" : "Local_File"
         },{
+          "name": "preprocessor",
+          "help": "Format conversion operations to apply to model data before PODs are called.",
+          "default": "MDTFData"
+        },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
           "type" : "int",

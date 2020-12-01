@@ -69,6 +69,9 @@
   // Method used to manage dependencies.
   "environment_manager": "Conda",
 
+  // Method used to preprocess data.
+  "preprocessor": "SampleModelData",
+
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.

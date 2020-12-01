@@ -10,5 +10,12 @@ dependencies:
 - python=3.7
 - mock # needed until tests updated from py2
 - ghostscript
-- nco>=4.7.6,<=4.8.1
-- netCDF4=1.5
+- numpy=1.19
+# - scipy=1.5.2
+- netCDF4=1.5.4
+- cftime=1.2
+- xarray=0.16
+- matplotlib=3.3
+# - cartopy=0.18
+- pint=0.16
+- dask=2.30

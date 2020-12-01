@@ -34,6 +34,14 @@ Development of this code framework for process-oriented diagnostics was supporte
 
 Many of the process-oriented diagnostics modules (PODs) were contributed by members of the NOAA `Model Diagnostics Task Force <https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP/MAPP-Task-Forces/Model-Diagnostics-Task-Force>`__ under MAPP support. Statements, findings or recommendations in these documents do not necessarily reflect the views of NOAA or the US Department of Commerce.
 
+Dependencies
+^^^^^^^^^^^^
+
+This code base includes code from the following sources:
+
+- The `six <https://github.com/benjaminp/six>`__ library, copyright © 2010-2020 Benjamin Peterson and provided under an MIT license.
+- Portions of the `MetPy <https://github.com/Unidata/MetPy>`__ package from `Unidata <https://www.unidata.ucar.edu/>`__, copyright © 2008-2020 MetPy Developers and provided under the BSD 3-clause "revised" license. 
+- Portions of `xarray <https://github.com/pydata/xarray/tree/stable>`__, from `pydata.org <https://pydata.org/>`__, copyright © 2014-2019 xarray Developers and provided under the Apache license, version 2.0.
 
 Indices and tables
 ------------------

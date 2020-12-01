@@ -19,7 +19,7 @@ from src import util
 from src import util_mdtf
 import src.conflict_resolution as choose
 from src import cmip6
-from src.data_manager import DataSet, DataManager, DataAccessError
+from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
 
@@ -219,15 +219,14 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         modMgr.load('gcp') # should refactor
 
         config = util_mdtf.ConfigManager()
-        config.config.netcdf_helper = 'NcoNetcdfHelper' # HACK for now
         super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
 
         assert ('CASE_ROOT_DIR' in case_dict)
         if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
             raise DataAccessError(None, 
                 "Can't access CASE_ROOT_DIR = '{}'".format(case_dict['CASE_ROOT_DIR']))
-        self.root_dir = case_dict['CASE_ROOT_DIR']
-        self.tape_filesystem = is_on_tape_filesystem(self.root_dir)
+        self.data_root_dir = case_dict['CASE_ROOT_DIR']
+        self.tape_filesystem = is_on_tape_filesystem(self.data_root_dir)
 
         self.frepp_mode = config.config.get('frepp', False)
         if self.frepp_mode:
@@ -251,32 +250,34 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def undecided_key(self, dataset):
         pass
 
+    # DATA QUERY -------------------------------------
+
     @abstractmethod
     def parse_relative_path(self, subdir, filename):
         pass
 
     def _listdir(self, dir_):
-        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.root_dir):]))
+        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.data_root_dir):]))
         return os.listdir(dir_)
 
-    def _list_filtered_subdirs(self, dirs_in, subdir_filter=None):
+    def list_filtered_subdirs(self, dirs_in, subdir_filter=None):
         subdir_filter = util.coerce_to_iter(subdir_filter)
         found_dirs = []
         for dir_ in dirs_in:
             found_subdirs = {d for d \
-                in self._listdir(os.path.join(self.root_dir, dir_)) \
+                in self._listdir(os.path.join(self.data_root_dir, dir_)) \
                 if not (d.startswith('.') or d.endswith('.nc'))
             }
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
                 print("\tCouldn't find subdirs (in {}) at {}, skipping".format(
-                    subdir_filter, os.path.join(self.root_dir, dir_)
+                    subdir_filter, os.path.join(self.data_root_dir, dir_)
                 ))
                 continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
-                if os.path.isdir(os.path.join(self.root_dir, dir_, subdir_))
+                if os.path.isdir(os.path.join(self.data_root_dir, dir_, subdir_))
             ])
         return found_dirs
 
@@ -284,15 +285,12 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def subdirectory_filters(self):
         pass
 
-    def _query_data(self):
-        """XXX UPDATE DOCSTRING 
-        Populate _remote_data attribute with list of candidate files.
+    def query_dataset(self, dataset):
+        # all the work done by query_data
+        pass
 
-        Specifically, if a <component> and <chunk_freq> subdirectory has all the
-        requested data, return paths to all files we *would* need in that 
-        subdirectory. The decision of which <component> and <chunk_freq> to use
-        is made in :meth:`~gfdl.GfdlppDataManager.plan_data_fetching` 
-        because it requires comparing the files found for *all* requested datasets.
+    def query_data(self):
+        """
         """
         self._component_map = defaultdict(list)
 
@@ -302,10 +300,10 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
         pathlist = ['']
         for filter_ in self.subdirectory_filters():
-            pathlist = self._list_filtered_subdirs(pathlist, filter_)
+            pathlist = self.list_filtered_subdirs(pathlist, filter_)
         for dir_ in pathlist:
             file_lookup = defaultdict(list)
-            dir_contents = self._listdir(os.path.join(self.root_dir, dir_))
+            dir_contents = self._listdir(os.path.join(self.data_root_dir, dir_))
             dir_contents = list(filter(regex_no_tiles.search, dir_contents))
             files = []
             for f in dir_contents:
@@ -313,7 +311,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                     files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
                     print('\tDEBUG:', exc)
-                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.root_dir, dir_), f)
+                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.data_root_dir, dir_), f)
                     continue
             for ds in files:
                 data_key = self.dataset_key(ds)
@@ -341,18 +339,16 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                         self.data_files[data_key].update([u_key])
                         self._component_map[u_key, data_key].append(ds)
 
-    def query_dataset(self, dataset):
-        # all the work done by _query_data
-        pass
+    # FETCH REMOTE DATA -------------------------------------
 
     @abstractmethod
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         pass
 
     def plan_data_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
-        d_to_u_dict = self._decide_allowed_components()
+        d_to_u_dict = self.decide_allowed_components()
         for data_key in self.data_keys:
             u_key = d_to_u_dict[data_key]
             print("Selected {} for {} @ {}".format(
@@ -365,7 +361,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         paths = set()
         for data_key in self.data_keys:
             for f in self.data_files[data_key]:
-                paths.add(f._remote_data)
+                paths.add(f.remote_data)
         if self.tape_filesystem:
             print("start dmget of {} files".format(len(paths)))
             util.run_command(['dmget','-t','-v'] + list(paths),
@@ -373,6 +369,11 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 dry_run=self.dry_run
             ) 
             print("end dmget")
+
+    def remote_data_list(self):
+        """Process list of requested data to make data fetching efficient.
+        """
+        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -386,170 +387,10 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
         """
         return False
-        # return os.path.getmtime(dataset._local_data) \
-        #     >= os.path.getmtime(dataset._remote_data)
+        # return os.path.getmtime(dataset.local_path) \
+        #     >= os.path.getmtime(dataset.remote_path)
 
-    def remote_data_list(self):
-        """Process list of requested data to make data fetching efficient.
-        """
-        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
-
-    def _fetch_exception_handler(self, exc):
-        print(exc)
-        # iterating over the keys themselves, so that will be what's passed 
-        # in the exception
-        for pod in self.data_pods[exc.dataset]:
-            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
-            pod.skipped = exc
-
-    def fetch_dataset(self, d_key, method='auto'):
-        """Copy files to temporary directory and combine chunks.
-        """
-        # pylint: disable=maybe-no-member
-        (cp_command, smartsite) = self._determine_fetch_method(method)
-        dest_path = self.local_path(d_key)
-        dest_dir = os.path.dirname(dest_path)
-        # ncrcat will error instead of creating destination directories
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
-        # GCP can't copy to home dir, so always copy to temp
-        tmpdirs = util_mdtf.TempDirManager()
-        work_dir = tmpdirs.make_tempdir(hash_obj = d_key)
-        remote_files = list(self.data_files[d_key])
-
-        # copy remote files
-        # TODO: Do something intelligent with logging, caught OSErrors
-        for f in remote_files:
-            print("\tcopying ...{} to {}".format(
-                f._remote_data[len(self.root_dir):], work_dir
-            ))
-            util.run_command(cp_command + [
-                smartsite + f._remote_data, 
-                # gcp requires trailing slash, ln ignores it
-                smartsite + work_dir + os.sep
-            ], 
-                timeout=self.file_transfer_timeout, 
-                dry_run=self.dry_run
-            )
-
-        # ----------------------------------------
-        # Processing of copied files: TODO: refactor individual steps into 
-        # separate functions 
-
-        # set axis names from header info
-        # only look at first file; if other chunks for same var differ, NCO will
-        # raise error when we try to concat them
-        file_name = os.path.basename(remote_files[0]._remote_data)
-        var_name = remote_files[0].name_in_model
-        file_axes = self.nc_get_axes_attributes(
-            var_name,
-            in_file=file_name, cwd=work_dir, dry_run=self.dry_run
-        )
-        for fax, fax_attrs in iter(file_axes.items()):
-            # update DataSets with axis info - need to loop since multiple PODs
-            # may reference this file (warning will be repeated; TODO fix that)
-            error_flag = 0
-            for var in self.data_keys[d_key]: 
-                if fax in var.axes:
-                    # file's axis in list of case's axis names; check their
-                    # axis attributes match if they're both defined
-                    if 'axis' in fax_attrs and 'axis' in var.axes[fax] \
-                        and fax_attrs['axis'].lower() != var.axes[fax]['axis'].lower() \
-                        and error_flag != 1:
-                        print(("\tWarning: unexpected axis attribute for {0} in "
-                            "{1} (found {2}, {3} convention is {4})").format(
-                                fax, file_name, fax_attrs['axis'], 
-                                self.convention, var.axes[fax]['axis']
-                        ))
-                        error_flag = 1
-                    var.axes[fax]['MDTF_set_from_axis'] = False
-                else: 
-                    # file has different axis name, try to match by attribute
-                    for vax, vax_attrs in iter(var.axes.items()):
-                        if 'axis' not in fax_attrs or 'axis' not in vax_attrs:
-                            continue
-                        elif vax_attrs['axis'].lower() == fax_attrs['axis'].lower():
-                            # matched axis attributes: log warning & reassign
-                            if error_flag != 2:
-                                print(("\tWarning: unexpected {0} axis name in {1} "
-                                    "(found {2}, {3} convention is {4})").format(
-                                        fax_attrs['axis'], file_name, fax, 
-                                        self.convention, vax
-                                ))
-                                error_flag = 2
-                            # only update so we don't overwrite the envvar name
-                            var.axes[fax] = vax_attrs.copy()
-                            var.axes[fax].update(fax_attrs)
-                            var.axes[fax]['MDTF_set_from_axis'] = True
-                            del var.axes[vax]
-                            break
-                    else:
-                        # get here if we didn't hit 'break' above -- give up
-                        if error_flag != 3:
-                            print(("\tWarning: unable to assign {0} axis "
-                                "in {1}.").format(fax, file_name))
-                            error_flag = 3
-
-        # crop time axis to requested range
-        # do this *before* combining chunks to reduce disk activity
-        for vax, vax_attrs in iter(var.axes.items()):
-            if 'axis' not in vax_attrs or vax_attrs['axis'].lower() != 't':
-                continue
-            else:
-                time_var_name = vax
-                break
-        else:
-            print("\tCan't determine time axis for {}.".format(file_name))
-            time_var_name = 'time' # will probably give KeyError
-        trim_count = 0
-        for f in remote_files:
-            file_name = os.path.basename(f._remote_data)
-            if f.date_range.is_static:
-                # skip date trimming logic for time-independent files
-                continue
-            if not self.date_range.overlaps(f.date_range):
-                print(("\tWarning: {} has dates {} outside of requested "
-                    "range {}.").format(file_name, f.date_range, self.date_range))
-                continue
-            if not self.date_range.contains(f.date_range):
-                # file overlaps analysis range but is not strictly contained
-                # in it means we need to trim either start or end or both
-                trimmed_range = f.date_range.intersection(
-                    self.date_range,
-                    precision=f.date_range.precision
-                )
-                print("\ttrimming '{}' of {} from {} to {}".format(
-                    time_var_name, file_name, f.date_range, trimmed_range))
-                trim_count = trim_count + 1
-                self.nc_crop_time_axis(
-                    time_var_name, trimmed_range, 
-                    in_file=file_name, cwd=work_dir, dry_run=self.dry_run
-                )
-        if trim_count > 2:
-            print("trimmed {} files!".format(trim_count))
-            raise AssertionError()
-
-        # cat chunks to destination, if more than one
-        if len(remote_files) > 1:
-            # not running in shell, so can't use glob expansion.
-            print("\tcatting {} chunks to {}".format(
-                d_key.name_in_model, dest_path
-            ))
-            chunks = [os.path.basename(f._remote_data) for f in remote_files]
-            self.nc_cat_chunks(chunks, dest_path, 
-                cwd=work_dir, dry_run=self.dry_run
-            )
-        else:
-            f = util.coerce_from_iter(remote_files)
-            file_name = os.path.basename(f._remote_data)
-            print("\tsymlinking {} to {}".format(d_key.name_in_model, dest_path))
-            util.run_command(['ln', '-fs', \
-                os.path.join(work_dir, file_name), dest_path],
-                dry_run=self.dry_run
-            ) 
-        # temp files cleaned up by data_manager.tearDown
-
-    def _determine_fetch_method(self, method='auto'):
+    def determine_fetch_method(self, method='auto'):
         _methods = {
             'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
@@ -562,8 +403,46 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 method = 'ln' # symlink for local files
         return (_methods[method]['command'], _methods[method]['site'])
 
-    def process_fetched_data_hook(self):
-        pass
+    def fetch_dataset(self, d_key, method='auto'):
+        """Copy files to temporary directory and combine chunks.
+        """
+        # pylint: disable=maybe-no-member
+        (cp_command, smartsite) = self.determine_fetch_method(method)
+        dest_dir = os.path.dirname(self.local_path(d_key))
+        # ncrcat will error instead of creating destination directories
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        # GCP can't copy to home dir, so always copy to a temp dir and move to
+        # dest_dir upon completion
+        tmpdirs = util_mdtf.TempDirManager()
+        tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
+        remote_files = list(self.data_files[d_key])
+
+        # copy remote files
+        # TODO: Do something intelligent with logging, caught OSErrors
+        for f in remote_files:
+            print("\tcopying ...{} to {}".format(
+                f.remote_path[len(self.data_root_dir):], tmpdir
+            ))
+            util.run_command(cp_command + [
+                smartsite + f.remote_path, 
+                # gcp requires trailing slash, ln ignores it
+                smartsite + tmpdir + os.sep
+            ], 
+                timeout=self.file_transfer_timeout, 
+                dry_run=self.dry_run
+            )
+            f.local_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
+
+    def _fetch_exception_handler(self, exc):
+        print(exc)
+        # iterating over the keys themselves, so that will be what's passed 
+        # in the exception
+        for pod in self.data_pods[exc.dataset]:
+            print("\tSkipping pod {} due to data fetch error.".format(pod.name))
+            pod.skipped = exc
+
+    # HTML & PLOT OUTPUT -------------------------------------
 
     def _make_html(self, cleanup=False):
         # never cleanup html if we're in frepp_mode, since framework may run 
@@ -703,9 +582,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         if match:
             #if match.group('component') != match.group('component2'):
             #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = DataSet(**(match.groupdict()))
+            ds = SingleFileDataSet(**(match.groupdict()))
             del ds.component2
-            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
             ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
             ds.date_freq = self.DateFreq(ds.date_freq)
             ds.chunk_freq = self.DateFreq(ds.chunk_freq)
@@ -718,9 +597,9 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             md['start_date'] = datelabel.FXDateMin
             md['end_date'] = datelabel.FXDateMax
             md['name_in_model'] = None # TODO: handle better
-            ds = DataSet(**md)
+            ds = SingleFileDataSet(**md)
             del ds.component2
-            ds._remote_data = os.path.join(self.root_dir, rel_path)
+            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
             ds.date_range = datelabel.FXDateRange
             ds.date_freq = self.DateFreq('static')
             ds.chunk_freq = self.DateFreq('static')
@@ -761,7 +640,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         else:
             return _heuristic_tiebreaker_sub(str_list)
 
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         choices = dict.fromkeys(self.data_files)
         cmpt_choices = choose.minimum_cover(
             self.data_files,
@@ -778,7 +657,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
 
 class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
-        # set root_dir
+        # set data_root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
         cmip = cmip6.CMIP6_CVs()
@@ -832,12 +711,12 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
 
     def parse_relative_path(self, subdir, filename):
         d = cmip6.parse_DRS_path(
-            os.path.join(self.root_dir, subdir)[len(self._cmip6_root):],
+            os.path.join(self.data_root_dir, subdir)[len(self._cmip6_root):],
             filename
         )
         d['name_in_model'] = d['variable_id']
-        ds = DataSet(**d)
-        ds._remote_data = os.path.join(self.root_dir, subdir, filename)
+        ds = SingleFileDataSet(**d)
+        ds.remote_path = os.path.join(self.data_root_dir, subdir, filename)
         return ds
 
     def subdirectory_filters(self):
@@ -867,7 +746,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         grids = min(grids, key=itemgetter('grid_number'))
         return grids['grid_label']
 
-    def _decide_allowed_components(self):
+    def decide_allowed_components(self):
         tables = choose.minimum_cover(
             self.data_files,
             attrgetter('table_id'), 
@@ -970,7 +849,7 @@ def frepp_freq(date_freq):
         return _frepp_dict[date_freq.unit]
 
 frepp_translate = {
-    'in_data_dir': 'root_dir', # /pp/ directory
+    'in_data_dir': 'data_root_dir', # /pp/ directory
     'descriptor': 'CASENAME',
     'out_dir': 'OUTPUT_DIR',
     'WORKDIR': 'WORKING_DIR',

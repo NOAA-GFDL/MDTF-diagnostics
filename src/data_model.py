@@ -207,11 +207,13 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     formula_terms: str = dataclasses.field(default=None, compare=False)
 
 @util.mdtf_dataclass(frozen=True)
-class DMTimeCoordinate(_DMCoordinateShared):
-    units: str = util.MANDATORY
-    calendar: str = util.MANDATORY
-    range: datelabel.AbstractDateRange = None
-    frequency: datelabel.AbstractDateFrequency = None
+class DMGenericTimeCoordinate(_DMCoordinateShared):
+    """Applies to collections of variables, which may be at different frequencies
+    (or other attributes).
+    """
+    units: str = ""
+    calendar: str = ""
+    range: typing.Any = None
 
     standard_name = 'time'
     axis = DMAxis.T
@@ -224,6 +226,27 @@ class DMTimeCoordinate(_DMCoordinateShared):
         data source.
         """
         return (self.range == datelabel.FXDateRange)
+    
+    @classmethod
+    def coerce_to_self(cls, other):
+        return cls(**(util.filter_dataclass(other, cls)))
+
+    @classmethod
+    def from_instances(cls, *t_coords):
+        if not t_coords:
+            raise ValueError()
+        t_coords = [cls.coerce_to_self(t) for t in t_coords]
+        t0 = t_coords.pop(0)
+        if any(t != t0 for t in t_coords):
+            raise ValueError("mismatch")
+        return t0
+
+@util.mdtf_dataclass(frozen=True)
+class DMTimeCoordinate(_DMCoordinateShared):
+    units: str = util.MANDATORY
+    calendar: str = util.MANDATORY
+    range: datelabel.AbstractDateRange = None
+    frequency: datelabel.AbstractDateFrequency = None
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields 
@@ -233,6 +256,7 @@ AbstractDMCoordinate.register(DMLongitudeCoordinate)
 AbstractDMCoordinate.register(DMLatitudeCoordinate)
 AbstractDMCoordinate.register(DMVerticalCoordinate)
 AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
+AbstractDMCoordinate.register(DMGenericTimeCoordinate)
 AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
 
@@ -297,17 +321,34 @@ class _DMDimensionsMixin(object):
                 d[axis] = c
         return d
 
-    def replace_date_range(self, new_T):
-        """Returns copy of self with date range on time coordinate changed to 
-        new value.
-        """
-        assert not self.is_static
-        old_T = self.T
-        if not isinstance(new_T, DMTimeCoordinate):
-            new_T = dataclasses.replace(old_T, range=new_T)
+    def change_coord(self, ax_name, new_class=None, **kwargs):
+        # TODO: lookup by non-axis name
+        old_coord = getattr(self, ax_name, None)
+        if not old_coord:
+            raise KeyError(f"{self.name} has no {ax_name} axis")
+        if isinstance(new_class, dict):
+            new_coord_class = new_class.pop('self', None)
+        else:
+            new_coord_class = new_class
+        if new_coord_class is None and not isinstance(new_class, dict):
+            # keep all classes
+            new_coord = dataclasses.replace(old_coord, **kwargs)
+        else:
+            if new_coord_class is None:
+                new_kwargs = dataclasses.asdict(old_coord)
+            else:
+                new_kwargs = util.filter_dataclass(old_coord, new_coord_class)
+            new_kwargs.update(kwargs)
+            if isinstance(new_class, dict):
+                for k, cls_ in new_class.items():
+                    if k in new_kwargs:
+                        new_kwargs[k] = cls_(new_kwargs[k])
+            new_coord = new_coord_class(**new_kwargs)
         new_dims = list(self.dims)
-        new_dims[self.dims.index(old_T)] = new_T
-        return dataclasses.replace(self, dims=tuple(new_dims))
+        new_dims[self.dims.index(old_coord)] = new_coord
+        new_dims = util.coerce_to_iter(new_dims, type(self.dims))
+        self.dims = new_dims
+        self.__post_init__() # rebuild axes dicts
 
 @util.mdtf_dataclass
 class DMDependentVariable(_DMDimensionsMixin):
@@ -389,19 +430,38 @@ class DMDataSet(_DMDimensionsMixin):
     """Class to describe a collection of one or more variables sharing a set of
     common dimensions.
     """
-    dims: set = dataclasses.field(default_factory=set)
-    scalar_coords: set = dataclasses.field(default_factory=set)
+    dims: set = dataclasses.field(init=False, default_factory=set)
+    scalar_coords: set = dataclasses.field(init=False, default_factory=set)
     axes: dict = dataclasses.field(init=False)
     # vars = dependent variables -- includes all aux coords
     vars: list = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
+        self.dims = set([])
+        self.scalar_coords = set([])
+        t_axes = []
         for v in self.vars:
-            self.dims.update(v.dims)
+            spatial_dims = list(v.dims)
+            if not v.is_static:
+                t_axes.append(spatial_dims.pop(spatial_dims.index(v.T)))
+            self.dims.update(spatial_dims)
             self.scalar_coords.update(v.scalar_coords)
+        if t_axes:
+            self.dims.add(DMGenericTimeCoordinate.from_instances(*t_axes))
         # can't have duplicate dims, but duplicate scalar_coords are OK.
         self.axes = self.build_axes(self.dims)
 
     def add_dependent_variables(self, *vars_):
         self.vars.extend(vars_)
         self.__post_init__()
+
+    def change_coord(self, ax_name, new_class=None, **kwargs):
+        for v in self.vars:
+            try:
+                v.change_coord(self, ax_name, new_class, **kwargs)
+            except ValueError:
+                if v.is_static:
+                    continue
+        # time coord for set derived from that for vars
+        self.__post_init__()
+    

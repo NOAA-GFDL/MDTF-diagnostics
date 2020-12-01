@@ -65,24 +65,39 @@ PodDataFileFormat = util.MDTFEnum(
 )
 
 @util.mdtf_dataclass
-class VarlistSettings(object):
-    """Class to describe options affecting all variables requested by this POD.
-    Corresponds to the "data" section of the POD's settings.jsonc file.
-    """
+class _VarlistGlobalSettings(object):
     format: PodDataFileFormat = PodDataFileFormat.ANY_NETCDF_CLASSIC
     rename_dimensions: bool = False
     rename_variables: bool = False
     multi_file_ok: bool = False
-    min_duration: str = 'any'
-    max_duration: str = 'any'
     dimensions_ordered: bool = False
+
+@util.mdtf_dataclass
+class _VarlistTimeSettings(object):
     frequency: datelabel.AbstractDateFrequency = None
     min_frequency: datelabel.AbstractDateFrequency = None
     max_frequency: datelabel.AbstractDateFrequency = None
+    min_duration: str = 'any'
+    max_duration: str = 'any'
+
+@util.mdtf_dataclass
+class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
+    """Class to describe options affecting all variables requested by this POD.
+    Corresponds to the "data" section of the POD's settings.jsonc file.
+    """
+    pass
+
+    @property
+    def global_settings(self):
+        return util.filter_dataclass(self, _VarlistGlobalSettings)
+
+    @property
+    def time_settings(self):
+        return util.filter_dataclass(self, _VarlistTimeSettings)
 
 @util.mdtf_dataclass(frozen=True)
 class VarlistCoordinateMixin(object):
-    """Class to describe a single dimension (in the netcdf data model sense)
+    """Base class to describe a single dimension (in the netcdf data model sense)
     used by one or more variables. Corresponds to list entries in the 
     "dimensions" section of the POD's settings.jsonc file.
     """
@@ -108,7 +123,20 @@ class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
     pass
 
 @util.mdtf_dataclass(frozen=True)
-class VarlistTimeCoordinate(data_model.DMTimeCoordinate, VarlistCoordinateMixin):
+class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
+    VarlistCoordinateMixin):
+    frequency: str = ""
+    min_frequency: str = ""
+    max_frequency: str = ""
+    min_duration: str = 'any'
+    max_duration: str = 'any'
+
+    standard_name = 'time'
+    axis = data_model.DMAxis.T
+
+@util.mdtf_dataclass(frozen=True)
+class VarlistTimeCoordinate(data_model.DMTimeCoordinate, _VarlistTimeSettings, 
+    VarlistCoordinateMixin):
     pass
 
 VarlistEntryRequirement = util.MDTFEnum(
@@ -159,33 +187,38 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         return (self.exception is not None)
 
     @classmethod
-    def from_struct(cls, varlist_settings, dim_dict, name, **kwargs):
+    def from_struct(cls, global_settings_d, dims_d, name, **kwargs):
         """Instantiate from a struct in the varlist section of a POD's
         settings.jsonc.
         """
-        new_kw = dataclasses.asdict(varlist_settings)
+        new_kw = global_settings_d.copy()
         new_kw['dims'] = []
         new_kw['scalar_coords'] = set([])
 
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for varlist entry {name}.")
         for d_name in kwargs.pop('dimensions'):
-            if d_name not in dim_dict:
+            if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in varlist "
                     f"entry for {name}."))
-            new_kw['dims'].append(dim_dict[d_name])
+            new_kw['dims'].append(dims_d[d_name])
         new_kw['dims'] = tuple(new_kw['dims'])
 
         if 'scalar_coordinates' in kwargs:
             for d_name, scalar_val in kwargs.pop('scalar_coordinates').items():
-                if d_name not in dim_dict:
+                if d_name not in dims_d:
                     raise ValueError((f"Unknown dimension name {d_name} in varlist "
                         f"entry for {name}."))
                 new_kw['scalar_coords'].add(
-                    dim_dict[d_name].make_scalar(scalar_val)
+                    dims_d[d_name].make_scalar(scalar_val)
                 )
-        new_kw.update(kwargs)
-        return cls(name=name, **new_kw)
+        filter_kw = util.filter_dataclass(kwargs, cls)
+        obj = cls(name=name, **new_kw, **filter_kw)
+        # specialize time coord
+        time_kw = util.filter_dataclass(kwargs, _VarlistTimeSettings)
+        if time_kw:
+            obj.change_coord('T', **time_kw)
+        return obj
 
     def iter_alternate_entries(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 
@@ -233,7 +266,7 @@ class Varlist(data_model.DMDataSet):
             :py:obj:`dict`, keys are names of the dimensions in POD's convention,
             values are :class:`PodDataDimension` objects.
         """
-        def _pod_dimension_from_struct(name, dd):
+        def _pod_dimension_from_struct(name, dd, v_settings):
             try:
                 if dd.get('axis', None) == 'X' \
                     or dd.get('standard_name', None) == 'longitude':
@@ -245,20 +278,24 @@ class Varlist(data_model.DMDataSet):
                     return VarlistVerticalCoordinate(name=name, **dd)
                 elif dd.get('axis', None) == 'T' \
                     or dd.get('standard_name', None) == 'time':
-                    return VarlistTimeCoordinate(name=name, **dd)
+                    return VarlistPlaceholderTimeCoordinate(
+                        name=name, **dd, **(v_settings.time_settings)
+                    )
                 else:
                     return VarlistCoordinate(name=name, **dd)
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
 
         vlist_settings = VarlistSettings(**(d.get('data', dict())))
+        globals_d = vlist_settings.global_settings
+
         assert 'dimensions' in d
-        vlist_dims = {k: _pod_dimension_from_struct(k, v) \
+        vlist_dims = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
             for k,v in d['dimensions'].items()}
 
         assert 'varlist' in d
         vlist_vars = {
-            k: VarlistEntry.from_struct(vlist_settings, vlist_dims, k, **v) \
+            k: VarlistEntry.from_struct(globals_d, vlist_dims, k, **v) \
             for k,v in d['varlist'].items()
         }
         for v in vlist_vars.values():
@@ -271,10 +308,7 @@ class Varlist(data_model.DMDataSet):
             for alts in v.alternates:
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
-        return cls(
-            dims=set(vlist_dims.values()),
-            vars=list(vlist_vars.values())
-        )
+        return cls(*vlist_vars.values())
 
     @property
     def active_vars(self):
@@ -352,8 +386,6 @@ class Diagnostic(object):
     def __post_init__(self):
         self.status = DiagnosticStatus.INIT
         self.exception = None
-        self.process_obj = None
-        self.logfile_obj = None
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.coerce_to_iter(v)
 
@@ -410,6 +442,9 @@ class Diagnostic(object):
     def configure_paths(self, paths):
         for k,v in paths.items():
             setattr(self, k, v)
+
+    def change_coord(self, ax_name, new_class=None, **kwargs):
+        self.varlist.change_coord(ax_name, new_class, **kwargs)
 
     # -------------------------------------
 

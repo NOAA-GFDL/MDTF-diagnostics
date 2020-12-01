@@ -803,6 +803,12 @@ def filter_kwargs(kwarg_dict, function):
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
+def filter_dataclass(d, dc):
+    assert dataclasses.is_dataclass(dc)
+    if dataclasses.is_dataclass(d):
+        d = dataclasses.asdict(d)
+    return {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
+
 def signal_logger(caller_name, signum=None, frame=None):
     """Lookup signal name from number; `<https://stackoverflow.com/a/2549950>`__.
     """

@@ -303,14 +303,17 @@ class SubprocessRuntimePODWrapper(object):
             ["Env vars: "] + sorted(env_list) + [" "]))
 
     def setup_exception_handler(self, exc):
-        log_str = (f"\nCaught exception while preparing to run {self.pod.name}: "
-            "{0}({1!r})".format(type(exc).__name__, exc.args))
-        print(log_str)
+        log_str = (f"Caught exception while preparing to run {self.pod.name}: "
+            f"{repr(exc)}.")
+        print('\n' + log_str)
         if self.log_handle is not None:
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.log_exception(diagnostic.PodRuntimeError(self.pod, log_str))
+        try:
+            raise diagnostic.PodRuntimeError(self.pod, log_str) from exc
+        except Exception as chained_exc:
+            self.pod.exceptions.log(chained_exc)
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
@@ -346,8 +349,8 @@ class SubprocessRuntimePODWrapper(object):
 
     def runtime_exception_handler(self, exc):
         log_str = (f"Caught exception while running {self.pod.name}: "
-            "{0}({1!r})".format(type(exc).__name__, exc.args))
-        print('\n'+log_str)
+            f"{repr(exc)}.")
+        print('\n' + log_str)
         if self.process is not None:
             self.process.kill()
             self.process = None
@@ -355,7 +358,10 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.log_exception(diagnostic.PodExecutionError(self.pod, log_str))
+        try:
+            raise diagnostic.PodExecutionError(self.pod, log_str) from exc
+        except Exception as chained_exc:
+            self.pod.exceptions.log(chained_exc)
 
     def tear_down(self):
         if self.log_handle is not None:
@@ -450,7 +456,10 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.process.wait()
                 if p.process.returncode and p.process.returncode != 0:
                     s = "Process exited abnormally (code={p.process.returncode})"
-                    p.pod.log_exception(diagnostic.PodExecutionError(p.pod, s))
+                    try:
+                        raise diagnostic.PodExecutionError(p.pod, s)
+                    except Exception as exc:
+                        p.pod.exceptions.log(exc)
                     if p.log_handle is not None:
                         p.log_handle.write('ERROR: '+s)
                 p.process = None

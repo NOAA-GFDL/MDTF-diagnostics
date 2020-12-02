@@ -382,25 +382,21 @@ class Diagnostic(object):
     dry_run: bool = False
 
     status: DiagnosticStatus = dataclasses.field(init=False)
-    exceptions: list = dataclasses.field(init=False)
+    exceptions: util.ExceptionQueue = dataclasses.field(init=False)
     
     def __post_init__(self):
         self.status = DiagnosticStatus.INIT
-        self.exceptions = []
+        self.exceptions = util.ExceptionQueue()
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.coerce_to_iter(v)
 
     @property
     def active(self):
-        return (len(self.exceptions) == 0)
+        return self.exceptions.is_empty
 
     @property
     def failed(self):
-        return (len(self.exceptions) != 0)
-
-    def log_exception(self, exc):
-        # other stuff here when we implement logging
-        self.exceptions.append(exc)
+        return not self.exceptions.is_empty
 
     @classmethod
     def from_struct(cls, pod_name, d, **kwargs):
@@ -412,16 +408,12 @@ class Diagnostic(object):
             pod = cls(name=pod_name, **kwargs)
         except Exception as exc:
             raise PodConfigError(pod_name, 
-                "Caught exception while parsing settings: {0}({1!r})".format(
-                    type(exc).__name__, exc.args)
-            )
+                "Caught exception while parsing settings") from exc
         try:
             pod.varlist = Varlist.from_struct(d)
         except Exception as exc:
             raise PodConfigError(pod_name, 
-                "Caught exception while parsing varlist: {0}({1!r})".format(
-                    type(exc).__name__, exc.args)
-            )
+                "Caught exception while parsing varlist") from exc
         return pod
 
     @classmethod
@@ -472,7 +464,10 @@ class Diagnostic(object):
                     f"recognized by naming convention '{data_mgr.convention}'.")
                 print(err_str)
                 v.exception = PodConfigError(self, err_str)
-                self.log_exception(v.exception)
+                try:
+                    raise PodConfigError(self, "Bad varlist name") from v.exception
+                except Exception as chained_exc:
+                    self.exceptions.log(chained_exc)  
                 continue
 
     # this dependency inversion feels funny to me
@@ -511,10 +506,8 @@ class Diagnostic(object):
             self.setup_pod_directories()
             self.check_pod_driver()
         except Exception as exc:
-            self.log_exception(PodRuntimeError(self, 
-                "Caught exception during setup: {0}({1!r})".format(
-                    type(exc).__name__, exc.args)
-            ))
+            raise PodRuntimeError(self, 
+                "Caught exception during pre_run_setup") from exc
 
     def set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
@@ -719,8 +712,7 @@ class Diagnostic(object):
         if self.failed:
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
-            template_d['error_text'] = """Caught following exceptions:\n""" + \
-                '\n'.join([f"\t* {str(exc)}" for exc in self.exceptions])
+            template_d['error_text'] = self.exceptions.format()
         else:
             # normal exit
             src = os.path.join(src_dir, 'pod_result_snippet.html')

@@ -157,44 +157,40 @@ class VariableTranslator(util.Singleton):
         }}
         self.variables = {'CF': dict()}
         self.units = {'CF': dict()}
-        for filename in config_files:
-            d = util.read_json(filename)
+        for f in config_files:
+            d = util.read_json(f)
             for conv in util.coerce_to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
                 if conv in self.variables:
-                    print("ERROR: convention "+conv+" defined in "+filename+" already exists")
+                    print(f"ERROR: convention {conv} defined in {f} already exists")
                     raise ConventionError
 
                 self.axes[conv] = d.get('axes', dict())
                 self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
                 self.units[conv] = util.MultiMap(d.get('units', dict()))
 
-
-
-    def toCF(self, convention, varname_in):
+    def toCF(self, convention, v_name):
         if convention == 'CF': 
-            return varname_in
+            return v_name
         assert convention in self.variables, \
-            "Variable name translation doesn't recognize {}.".format(convention)
+            f"Variable name translation doesn't recognize {convention}."
         inv_lookup = self.variables[convention].inverse()
         try:
-            return util.coerce_from_iter(inv_lookup[varname_in])
+            return util.coerce_from_iter(inv_lookup[v_name])
         except KeyError:
-            print("ERROR: name {} not defined for convention {}.".format(
-                varname_in, convention))
+            print(f"ERROR: name {v_name} not defined for convention {convention}.")
             raise
     
-    def fromCF(self, convention, varname_in):
+    def fromCF(self, convention, v_name):
         if convention == 'CF': 
-            return varname_in
+            return v_name
         assert convention in self.variables, \
-            "Variable name translation doesn't recognize {}.".format(convention)
+            f"Variable name translation doesn't recognize {convention}."
         try:
-            return self.variables[convention].get_(varname_in)
+            return self.variables[convention].get_(v_name)
         except KeyError:
-            print("ERROR: name {} not defined for convention {}.".format(
-                varname_in, convention))
+            print(f"ERROR: name {v_name} not defined for convention {convention}.")
             raise
 
 
@@ -269,10 +265,7 @@ def check_dirs(*dirs, create=False):
             if isinstance(exc, FileNotFoundError):
                 raise exc
             else:
-                raise OSError(
-                    "Caught exception when checking {0}: {1}({2!r})".format(
-                        dir_, type(exc).__name__, exc.args)
-                )
+                raise OSError(f"Caught exception when checking {dir_}") from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):
     # return a filename that doesn't conflict with existing files.

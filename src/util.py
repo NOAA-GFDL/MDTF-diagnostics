@@ -25,6 +25,7 @@ if os.name == 'posix' and six.PY2:
 else:
     import subprocess
 import threading
+import traceback
 import typing
 import unittest.mock
 from six.moves import getcwd, collections_abc
@@ -415,6 +416,27 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     cls.__init__ = _new_init
     return cls
 
+class ExceptionQueue(object):
+    """Class to retain information about exceptions that were raised, for later
+    output.
+    """
+    def __init__(self):
+        self._queue = []
+
+    @property
+    def is_empty(self):
+        return (len(self._queue) == 0)
+
+    def log(self, exc, exc_to_chain=None):
+        wrapped_exc = traceback.TracebackException.from_exception(exc)
+        self._queue.append(wrapped_exc)
+
+    def format(self):
+        strs_ = [''.join(exc.format()) for exc in self._queue]
+        strs_ = [f"***** Caught exception #{i+1}:\n{exc}\n" \
+            for i, exc in enumerate(strs_)]
+        return "".join(strs_)
+
 # ------------------------------------
 
 def strip_comments(str_, delimiter=None):
@@ -688,12 +710,11 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         if proc:
             proc.kill()
         retcode = errno.ETIME
-        stderr = stderr+"\nKilled by timeout (>{}sec).".format(timeout)
+        stderr += f"\nKilled by timeout ( > {timeout} sec)."
     except Exception as exc:
         if proc:
             proc.kill()
-        stderr = stderr+"\nCaught exception {0}({1!r})".format(
-            type(exc).__name__, exc.args)
+        stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
         print('run_command on {} (pid {}) exit status={}:{}\n'.format(
             cmd_str, pid, retcode, stderr
@@ -757,8 +778,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     except Exception as exc:
         if proc:
             proc.kill()
-        stderr = stderr+"\nCaught exception {0}({1!r})".format(
-            type(exc).__name__, exc.args)
+        stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
         print('run_shell_command on {} (pid {}) exit status={}:{}\n'.format(
             command, pid, retcode, stderr

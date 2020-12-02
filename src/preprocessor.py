@@ -3,7 +3,7 @@ import os
 from src import six
 import abc
 from operator import attrgetter
-from src import util
+from src import util, data_model
 # must import these before xarray in order to register accessors
 import cftime
 import src.metpy_xr
@@ -32,34 +32,35 @@ class PreprocessorFunctionBase(six.with_metaclass(abc.ABCMeta)):
     dumping everything into a general Preprocessor class, in order to keep the
     logic easier to follow.
     """
-    def __init__(self, data_mgr, var):
-        pass
+    pass
+    # def __init__(self, data_mgr, var):
+    #     pass
 
-    @abc.abstractmethod
-    def parse(self, xr_dataset, **kwargs):
-        """Additional setup and parsing to be done based on attributes of first 
-        file in dataset, before full dataset is processed.
-        """
-        pass
+    # @abc.abstractmethod
+    # def parse(self, xr_dataset, **kwargs):
+    #     """Additional setup and parsing to be done based on attributes of first 
+    #     file in dataset, before full dataset is processed.
+    #     """
+    #     pass
 
-    @abc.abstractmethod
-    def process_static_dataset(self, xr_dataset, **kwargs):
-        """Preprocessing to be done for time-independent datasets.
-        """
-        return xr_dataset
+    # @abc.abstractmethod
+    # def process_static_dataset(self, xr_dataset, **kwargs):
+    #     """Preprocessing to be done for time-independent datasets.
+    #     """
+    #     return xr_dataset
 
-    @abc.abstractmethod
-    def process_file(self, xr_dataset, **kwargs):
-        """Preprocessing to be done for each individual file of a time-dependent
-        dataset, before :meth:`process_dataset` is called.
-        """
-        return xr_dataset
+    # @abc.abstractmethod
+    # def process_file(self, xr_dataset, **kwargs):
+    #     """Preprocessing to be done for each individual file of a time-dependent
+    #     dataset, before :meth:`process_dataset` is called.
+    #     """
+    #     return xr_dataset
 
-    @abc.abstractmethod
-    def process_dataset(self, xr_dataset, **kwargs):
-        """Preprocessing to be done for time-dependent datasets.
-        """
-        return xr_dataset
+    # @abc.abstractmethod
+    # def process_dataset(self, xr_dataset, **kwargs):
+    #     """Preprocessing to be done for time-dependent datasets.
+    #     """
+    #     return xr_dataset
 
 class CropDateRangeFunction(PreprocessorFunctionBase):
     """A :class:`PreprocessorFunctionBase` which trims the time axis of the
@@ -75,7 +76,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
 
-    def crop_time_axis(self, ds, ax_names, calendar, date_range, v, **kwargs):
+    def crop_time_axis(self, ds, v, ax_names, calendar, **kwargs):
         """Parse quantities related to the calendar for time-dependent data.
         In particular, ``date_range`` was set from user input before we knew the 
         model's calendar. HACK here to cast those values into `cftime.datetime 
@@ -87,18 +88,20 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ 
                 instance.
         """
-        if 'T' not in ax_names:
+        if 'T' not in ax_names or v.is_static:
             print('\tWarning: tried to crop time axis of time-independent variable')
             return ds
+        dt_range = v.T.range
         # lower/upper are earliest/latest datetimes consistent with the datetime 
         # we were given, to that precision (eg lower for "2000" would be 
         # jan 1, 2000, and upper would be dec 31).
-        dt_start_lower = self.cast_to_cftime(date_range.start.lower, calendar)
-        dt_start_upper = self.cast_to_cftime(date_range.start.upper, calendar)
-        dt_end_lower = self.cast_to_cftime(date_range.end.lower, calendar)
-        dt_end_upper = self.cast_to_cftime(date_range.end.upper, calendar)
+        dt_start_lower = self.cast_to_cftime(dt_range.start.lower, calendar)
+        dt_start_upper = self.cast_to_cftime(dt_range.start.upper, calendar)
+        dt_end_lower = self.cast_to_cftime(dt_range.end.lower, calendar)
+        dt_end_upper = self.cast_to_cftime(dt_range.end.upper, calendar)
 
-        time_ax = ds[ax_names['T']] # abbreviate
+        t_name = ax_names['T'] # abbreviate
+        time_ax = ds[t_name]  # abbreviate
         if time_ax.values[0] > dt_start_upper:
             error_str = ("Error: dataset start ({}) is after requested date "
                 "range start ({})").format(time_ax.values[0], dt_start_upper)
@@ -111,21 +114,10 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             raise DataPreprocessError(v, error_str)
         
         print("\ttrimming '{}' of {} from {}-{} to {}".format(
-                ax_names['T'], ax_names['var'],
-                time_ax.values[0], time_ax.values[-1], date_range
+                t_name, ax_names['var'],
+                time_ax.values[0], time_ax.values[-1], dt_range
             ))
-        return ds.sel(**({
-            ax_names['T']: slice(dt_start_lower, dt_end_upper)
-        }))
-
-    def parse(self, ds, **kwargs):
-        pass
-
-    def process_static_dataset(self, ds, **kwargs):
-        return ds
-
-    def process_file(self, ds, **kwargs):
-        return ds
+        return ds.sel(t_name = slice(dt_start_lower, dt_end_upper))
 
     def process_dataset(self, ds, **kwargs):
         return self.crop_time_axis(ds, **kwargs)
@@ -145,33 +137,27 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     data, verify that it's for the requested level. Rename variable according to
     convention POD expects.
     """
-    def extract_level(self, ds, ax_names, v, **kwargs):
-        if 'Z' not in ax_names \
-            or 'pressure' not in getattr(v, 'scalar_coordinates', dict()):
+    def extract_level(self, ds, v, ax_names, **kwargs):
+        z_coord = v.get_scalar('Z')
+        if not z_coord or not z_coord.value:
             return ds
-        p_level = int(v.scalar_coordinates['pressure'])
+        if 'Z' not in ax_names:
+            raise DataPreprocessError(("Tried to extract level from data with "
+                "no Z axis."))
+        z_level = int(z_coord.value)
         try:
-            ds = ds.metpy.sel(**({ax_names['Z']: p_level * units.hPa}))
+            ds = ds.metpy.sel(**({ax_names['Z']: z_level * units.hPa}))
             # rename dependent variable
-            return ds.rename({ax_names['var']: ax_names['var']+str(p_level)})
+            return ds.rename({ax_names['var']: ax_names['var']+str(z_level)})
         except KeyError:
             # level wasn't present in coordinate axis
             raise DataPreprocessError(("Pressure axis of file didn't provide "
-                f"requested level {p_level}."))
-
-    def parse(self, ds, **kwargs):
-        pass
-
-    def process_static_dataset(self, ds, **kwargs):
-        return ds
+                f"requested level {z_level}."))
 
     def process_file(self, ds, **kwargs):
         # Do the level extraction here, on a per-file basis, to minimize the
         # data volume kept in memory.
         return self.extract_level(ds, **kwargs)
-
-    def process_dataset(self, ds, **kwargs):
-        return ds
 
 # ==================================================
 
@@ -181,28 +167,16 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     here is parsing data axes and CF attributes; all other functionality is 
     provided by :class:`PreprocessorFunctionBase` functions.
     """
-    _default_functions = []
+    _functions = []
 
-    def __init__(self, data_mgr, var, functions=None):
-        self.date_range = data_mgr.date_range
-        self.data_freq = data_mgr.data_freq
+    def __init__(self, data_mgr, var):
         self.convention = data_mgr.convention
         self.ax_names = dict()
         self.calendar = None
 
         self.v = var
-        assert var.remote_data
-        if len(var.remote_data) > 1:
-            self.files = sorted(
-                # should have sorted at end of data query?
-                var.remote_data, key=attrgetter('date_range.start')
-            )
-        else:
-            self.files = var.remote_data
         # initialize PreprocessorFunctionBase objects
-        self.functions = [cls_(data_mgr, var) for cls_ in self._default_functions]
-        if functions:
-            self.functions.extend([cls_(data_mgr, var) for cls_ in functions])
+        self.functions = [cls_(data_mgr, var) for cls_ in self._functions]
 
     # arguments passed to open_dataset, open_mfdataset, to_netcdf
     netcdf_kwargs = {
@@ -318,14 +292,16 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         if 'T' in self.ax_names:
             self.parse_calendar(xr_dataset)
         for func in self.functions:
-            func.parse(xr_dataset, **kwargs)
+            if hasattr(func, 'parse'):
+                func.parse(xr_dataset, **kwargs)
 
     def process_static_dataset(self, xr_dataset):
         """Preprocessing to be done for time-independent datasets.
         """
         kwargs = self.__dict__
         for func in self.functions:
-            func.process_static_dataset(xr_dataset, **kwargs)
+            if hasattr(func, 'process_static_dataset'):
+                xr_dataset = func.process_static_dataset(xr_dataset, **kwargs)
         return xr_dataset
 
     def process_file(self, xr_dataset):
@@ -335,7 +311,8 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         kwargs = self.__dict__
         xr_dataset = self.parse_cf_wrapper(xr_dataset)
         for func in self.functions:
-            xr_dataset = func.process_file(xr_dataset, **kwargs)
+            if hasattr(func, 'process_file'):
+                xr_dataset = func.process_file(xr_dataset, **kwargs)
         return xr_dataset
 
     def process_dataset(self, xr_dataset):
@@ -343,11 +320,12 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         """
         kwargs = self.__dict__
         for func in self.functions:
-            xr_dataset = func.process_dataset(xr_dataset, **kwargs)
+            if hasattr(func, 'process_dataset'):
+                xr_dataset = func.process_dataset(xr_dataset, **kwargs)
         return xr_dataset
 
     @abc.abstractmethod
-    def preprocess(self):
+    def preprocess(self, local_files):
         """Top-level wrapper for doing all preprocessing of data files. This is 
         the only user-facing method after instance has been init'ed.
         """
@@ -359,13 +337,13 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     provided as a single netcdf file per variable, for example the sample model
     data.
     """
-    def preprocess(self):
-        assert len(self.files) == 1
+    def preprocess(self, local_files):
+        assert len(local_files) == 1
         ds = xr.open_dataset(
-            self.files[0].local_path, **self.open_dataset_kwargs
+            local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        if self.v.date_range.is_static:
+        if self.v.is_static:
             ds = self.process_static_dataset(ds)
         else:
             ds = self.process_file(ds)
@@ -386,19 +364,19 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     preprocessing model data provided as one or several netcdf files per 
     variable.
     """
-    def preprocess(self):
+    def preprocess(self, local_files):
         ds = xr.open_dataset(
-            self.files[0].local_path, **self.open_dataset_kwargs
+            local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        if self.v.date_range.is_static:
+        if self.v.is_static:
             # skip date trimming logic for time-independent files
-            assert len(self.files) == 1
+            assert len(local_files) == 1
             ds = self.process_static_dataset(ds)
         else:
             ds.close() # save memory; shouldn't be necessary
             ds = xr.open_mfdataset(
-                [f.local_path for f in self.files],
+                [f.local_path for f in local_files],
                 concat_dim=self.ax_names['T'],
                 combine="by_coords",
                 # all non-concat'ed vars, attrs must be the same:
@@ -431,9 +409,9 @@ class SamplemodeldataPreprocessor(SingleFilePreprocessor):
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
-    _default_functions = [CropDateRangeFunction]
+    _functions = (CropDateRangeFunction, )
 
 class MdtfdataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
-    _default_functions = [CropDateRangeFunction, ExtractLevelFunction]
+    _functions = (CropDateRangeFunction, ExtractLevelFunction)

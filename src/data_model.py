@@ -286,6 +286,12 @@ class _DMDimensionsMixin(object):
     def is_static(self):
         return (self.T is None) or (self.T.is_static)
 
+    def get_scalar(self, ax_name):
+        for c in self.scalar_coords:
+            if c.axis == DMAxis(ax_name):
+                return c
+        return None
+
     @classmethod
     def from_dimensions(cls, dm_dimensions, **kwargs):
         """Constructor for use by child classes. Preserves references to the

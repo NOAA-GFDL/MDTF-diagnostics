@@ -130,22 +130,22 @@ class CMIP6_CVs(util.Singleton):
 
     # ----------------------------------
 
-    def table_id_from_freq(self, date_freq):
+    def table_id_from_freq(self, frequency):
         """Specialized lookup to determine which MIP tables use data at the 
-        requested *date_freq*.
+        requested *frequency*.
 
         Should really be handled as a special case of :meth:`lookup`.
 
         Args:
-            date_freq (:class:`CMIP6DateFrequency`): DateFrequency 
+            frequency (:class:`CMIP6DateFrequency`): DateFrequency 
 
         Returns: list of MIP table ``table_id`` names, if any, that use data at 
-            the given *date_freq*.
+            the given *frequency*.
         """
         self._make_cv()
         assert 'table_id' in self.cv
         return [tbl for tbl in self.cv['table_id'] \
-            if (parse_mip_table_id(tbl)['date_freq'] == date_freq)]
+            if (parse_mip_table_id(tbl)['frequency'] == frequency)]
 
 
 @six.python_2_unicode_compatible
@@ -263,9 +263,9 @@ def parse_mip_table_id(mip_table):
         md = match.groupdict()
         md['table_id'] = mip_table
         if md['table_freq'] == 'clim':
-            md['date_freq'] = CMIP6DateFrequency('mon')
+            md['frequency'] = CMIP6DateFrequency('mon')
         else:
-            md['date_freq'] = CMIP6DateFrequency(md['table_freq'])
+            md['frequency'] = CMIP6DateFrequency(md['table_freq'])
         if md['table_qualifier'] == 'Z':
             md['spatial_avg'] = 'zonal_mean'
         else:
@@ -406,7 +406,7 @@ def parse_DRS_filename(file_):
             md['date_range'] = datelabel.FXDateRange
         md.update(parse_mip_table_id(md['table_id']))
         # verify consistency of FXDates and frequency == fx:
-        if md['date_range'].is_static != md['date_freq'].is_static:
+        if md['date_range'].is_static != md['frequency'].is_static:
             raise ValueError("Can't parse date range in filename {}.".format(file_))
         return md
     else:

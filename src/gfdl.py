@@ -4,6 +4,7 @@ import io
 from src import six
 import re
 import shutil
+import typing
 if os.name == 'posix' and six.PY2:
     try:
         import subprocess32 as subprocess
@@ -11,12 +12,11 @@ if os.name == 'posix' and six.PY2:
         import subprocess
 else:
     import subprocess
-from collections import defaultdict, namedtuple
+import collections
 from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod
-from src import datelabel, util, util_mdtf, cmip6, diagnostic
+from src import datelabel, util, util_mdtf, cmip6, diagnostic, data_manager
 import src.conflict_resolution as choose
-from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
 class ModuleManager(util.Singleton):
@@ -143,9 +143,9 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.
 
-    def __init__(self, verbose=0):
+    def __init__(self, data_mgr):
         _ = ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__(verbose)
+        super(GfdlvirtualenvEnvironmentManager, self).__init__(data_mgr)
 
     # manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
@@ -207,10 +207,10 @@ def GfdlautoDataManager(case_dict, DateFreqMixin=None):
     """
     test_root = case_dict.get('CASE_ROOT_DIR', None)
     if not test_root:
-        return Gfdludacmip6DataManager(case_dict, DateFreqMixin)
+        return Gfdludacmip6DataManager(case_dict)
     test_root = os.path.normpath(test_root)
     if 'pp' in os.path.basename(test_root):
-        return GfdlppDataManager(case_dict, DateFreqMixin)
+        return GfdlppDataManager(case_dict)
     else:
         print(("ERROR: Couldn't determine data fetch method from input."
             "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
@@ -218,19 +218,19 @@ def GfdlautoDataManager(case_dict, DateFreqMixin=None):
         exit()
 
 
-class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
+class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManager)):
     def __init__(self, case_dict, DateFreqMixin=None):
         # load required modules
         modMgr = ModuleManager()
         modMgr.load('gcp') # should refactor
 
         config = util_mdtf.ConfigManager()
-        super(GfdlarchiveDataManager, self).__init__(case_dict, DateFreqMixin)
+        super(GfdlarchiveDataManager, self).__init__(case_dict)
 
         assert ('CASE_ROOT_DIR' in case_dict)
         if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
-            raise DataAccessError(None, 
-                "Can't access CASE_ROOT_DIR = '{}'".format(case_dict['CASE_ROOT_DIR']))
+            raise data_manager.DataAccessError(None, 
+                f"Can't access CASE_ROOT_DIR = '{case_dict['CASE_ROOT_DIR']}'.")
         self.data_root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.data_root_dir)
 
@@ -245,16 +245,21 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
-    DataKey = namedtuple('DataKey', ['name_in_model', 'date_freq'])  
-    def dataset_key(self, dataset):
-        return self.DataKey(
-            name_in_model=dataset.name_in_model, 
-            date_freq=str(dataset.date_freq)
-        )
+    _DataKeyClass = data_manager.DataKey
 
-    @abstractmethod
-    def undecided_key(self, dataset):
-        pass
+    def dataset_key(self, varlist_entry):
+        if varlist_entry.is_static:
+            dt_range = datelabel.FXDateRange
+            freq = datelabel.DateFrequency('static')
+        else:
+            dt_range = varlist_entry.T.range
+            freq = varlist_entry.T.frequency
+        return self._DataKeyClass(
+            case_name = self.case_name,
+            date_range = dt_range,
+            name_in_model = varlist_entry.name_in_model, 
+            frequency = freq
+        )
 
     # DATA QUERY -------------------------------------
 
@@ -291,14 +296,13 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
     def subdirectory_filters(self):
         pass
 
-    def query_dataset(self, dataset):
-        # all the work done by query_data
-        pass
-
-    def query_data(self):
+    def pre_query_hook(self):
+        """Build data catalog on the fly from crawling directory tree.
         """
-        """
-        self._component_map = defaultdict(list)
+        self.build_data_dicts()
+        self._catalog = collections.defaultdict(
+            lambda: collections.defaultdict(list)
+        )
 
         # match files ending in .nc only if they aren't of the form .tile#.nc
         # (negative lookback) 
@@ -308,27 +312,29 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         for filter_ in self.subdirectory_filters():
             pathlist = self.list_filtered_subdirs(pathlist, filter_)
         for dir_ in pathlist:
-            file_lookup = defaultdict(list)
             dir_contents = self._listdir(os.path.join(self.data_root_dir, dir_))
             dir_contents = list(filter(regex_no_tiles.search, dir_contents))
-            files = []
+            temp_file_ds = []
+            temp_d_keys = collections.defaultdict(list)
             for f in dir_contents:
                 try:
-                    files.append(self.parse_relative_path(dir_, f))
+                    temp_file_ds.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
                     print('\tDEBUG:', exc)
                     #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.data_root_dir, dir_), f)
                     continue
-            for ds in files:
+            for ds in temp_file_ds:
                 data_key = self.dataset_key(ds)
-                file_lookup[data_key].append(ds)
+                temp_d_keys[data_key].append(ds)
             for data_key in self.data_keys:
-                if data_key not in file_lookup:
+                # in case data is chunked, only add files to _catalog if the
+                # date_range can be spanned with filed we've found in this dir_
+                if data_key not in temp_d_keys:
                     continue
                 try:
                     # method throws ValueError if ranges aren't contiguous
                     files_date_range = datelabel.DateRange.from_contiguous_span(
-                        *[f.date_range for f in file_lookup[data_key]]
+                        *[f.date_range for f in temp_d_keys[data_key]]
                     )
                 except ValueError:
                     # Date range of remote files doesn't contain analysis range or 
@@ -337,60 +343,49 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 if not files_date_range.contains(self.date_range):
                     # should log warning
                     continue
-                for ds in file_lookup[data_key]:
-                    if ds.date_range in self.date_range:
-                        d_key = self.dataset_key(ds)
+                for file_ds in temp_d_keys[data_key]:
+                    if file_ds.date_range in self.date_range:
+                        d_key = file_ds.to_DataKey(file_ds)
                         assert data_key == d_key
-                        u_key = self.undecided_key(ds)
-                        self.data_files[data_key].update([u_key])
-                        self._component_map[u_key, data_key].append(ds)
+                        u_key = file_ds.to_UndeterminedKey(file_ds)
+                        self._catalog[d_key][u_key].append(file_ds)
+
+    def query_dataset(self, data_key):
+        if data_key in self._catalog:
+            return list(self._catalog[data_key].values())
+        else:
+            return None
 
     # FETCH REMOTE DATA -------------------------------------
 
     # specific details that must be implemented in child class 
     @abstractmethod
-    def decide_allowed_components(self):
+    def select_undetermined(self):
         pass
 
     def pre_fetch_hook(self):
-        """Filter files on model component and chunk frequency.
+        """Make assignments to u_keys, or fail. Issue dmget for selected files.
         """
-        d_to_u_dict = self.decide_allowed_components()
-        for data_key in self.data_keys:
-            u_key = d_to_u_dict[data_key]
-            print("Selected {} for {} @ {}".format(
-                u_key, data_key.name_in_model, data_key.date_freq)
-            )
+        d_to_u_dict = self.select_undetermined()
+        for d_key in self.data_keys:
+            u_key = d_to_u_dict[d_key]
+            print(f"\tSelected {u_key} for {d_key}")
             # check we didn't eliminate everything:
-            assert self._component_map[u_key, data_key] 
-            self.data_files[data_key] = self._component_map[u_key, data_key]
+            if not self._catalog[d_key][u_key]:
+                raise data_manager.DataAccessError(
+                    f'Choosing {d_key}, {u_key} eliminated all files.')
+            self.data_files[d_key] = self._catalog[d_key][u_key]
 
         paths = set()
         for data_key in self.data_keys:
-            for f in self.data_files[data_key]:
-                paths.add(f.remote_data)
+            paths.update([f.remote_path for f in self.data_files[data_key]])
         if self.tape_filesystem:
-            print("start dmget of {} files".format(len(paths)))
+            print(f"start dmget of {len(paths)} files")
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.file_transfer_timeout,
                 dry_run=self.dry_run
             ) 
             print("end dmget")
-
-    def local_data_is_current(self, dataset):
-        """Test whether data is current based on filesystem modification dates.
-
-        TODO:
-            - Throw an error if local copy has been modified after remote copy. 
-            - Handle case where local data involves processing of remote data, like
-                ncrcat'ing. Copy raw remote files to temp directory if we need to 
-                process?
-            - gcp --sync does this already.
-
-        """
-        return False
-        # return os.path.getmtime(dataset.local_path) \
-        #     >= os.path.getmtime(dataset.remote_path)
 
     def determine_fetch_method(self, method='auto'):
         _methods = {
@@ -406,35 +401,31 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         return (_methods[method]['command'], _methods[method]['site'])
 
     def fetch_dataset(self, d_key, method='auto'):
-        """Copy files to temporary directory and combine chunks.
+        """Copy files to temporary directory.
+        (GCP can't copy to home dir, so always copy to a temp dir)
         """
-        # pylint: disable=maybe-no-member
-        (cp_command, smartsite) = self.determine_fetch_method(method)
-        dest_dir = os.path.dirname(self.local_path(d_key))
-        # ncrcat will error instead of creating destination directories
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
-        # GCP can't copy to home dir, so always copy to a temp dir and move to
-        # dest_dir upon completion
         tmpdirs = util_mdtf.TempDirManager()
         tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
-        remote_files = list(self.data_files[d_key])
-
+        (cp_command, smartsite) = self.determine_fetch_method(method)
         # copy remote files
         # TODO: Do something intelligent with logging, caught OSErrors
-        for f in remote_files:
+        new_files = [] # file objects are immutable, must replace them
+        for file_ds in self.data_files[d_key]:
+            path = file_ds.remote_path
+            local_path = os.path.join(tmpdir, os.path.basename(path))
             print("\tcopying ...{} to {}".format(
-                f.remote_path[len(self.data_root_dir):], tmpdir
+                path[len(self.data_root_dir):], tmpdir
             ))
             util.run_command(cp_command + [
-                smartsite + f.remote_path, 
+                smartsite + path, 
                 # gcp requires trailing slash, ln ignores it
                 smartsite + tmpdir + os.sep
             ], 
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
             )
-            f.local_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
+            new_files.append(file_ds.replace(local_path=local_path))
+        self.data_files[d_key] = new_files
 
     # HTML & PLOT OUTPUT -------------------------------------
 
@@ -538,25 +529,39 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
-    def __init__(self, case_dict, DateFreqMixin=None):
+    _DiagnosticClass = GfdlDiagnostic
+    _DateRangeClass = datelabel.DateRange
+    _DateFreqClass = datelabel.DateFrequency
+
+    def __init__(self, case_dict):
         # assign explicitly else linter complains
         self.component = None
         self.data_freq = None
         self.chunk_freq = None
-        super(GfdlppDataManager, self).__init__(case_dict, DateFreqMixin)
+        super(GfdlppDataManager, self).__init__(case_dict)
 
-    UndecidedKey = namedtuple('ComponentKey', ['component', 'chunk_freq'])
-    def undecided_key(self, dataset):
-        return self.UndecidedKey(
-            component=dataset.component, 
-            chunk_freq=str(dataset.chunk_freq)
-        )
+    _DataKeyClass = data_manager.DataKey
+
+    @util.mdtf_dataclass(frozen=True)
+    class UndeterminedKey(object):
+        component: str = ""
+        chunk_freq: datelabel.DateFrequency = None
+
+        def __str__(self):
+            if self.chunk_freq:
+                return f"{self.component} per {self.chunk_freq} chunks"
+            else:
+                return f"{self.component}"
+
+    FileDataSet = data_manager.remote_file_dataset_factory(
+        'FileDataSet', _DataKeyClass, UndeterminedKey
+    )
 
     _pp_ts_regex = re.compile(r"""
             /?                      # maybe initial separator
             (?P<component>\w+)/     # component name
             ts/                     # timeseries;
-            (?P<date_freq>\w+)/     # ts freq
+            (?P<frequency>\w+)/     # ts freq
             (?P<chunk_freq>\w+)/    # data chunk length   
             (?P<component2>\w+)\.        # component name (again)
             (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
@@ -572,33 +577,25 @@ class GfdlppDataManager(GfdlarchiveDataManager):
     
     def parse_relative_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
+        path_d = {
+            'remote_path': os.path.join(self.data_root_dir, rel_path),
+            'local_path': util.NOTSET
+        }
         match = re.match(self._pp_ts_regex, rel_path)
         if match:
-            #if match.group('component') != match.group('component2'):
-            #    raise ValueError("Can't parse {}.".format(rel_path))
-            ds = SingleFileDataSet(**(match.groupdict()))
-            del ds.component2
-            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
-            ds.date_range = datelabel.DateRange(ds.start_date, ds.end_date)
-            ds.date_freq = self.DateFreq(ds.date_freq)
-            ds.chunk_freq = self.DateFreq(ds.chunk_freq)
-            assert ds.date_range.is_static == ds.date_freq.is_static
-            return ds
+            md = util.filter_dataclass(match.groupdict(), self.FileDataSet)
+            return self.FileDataSet(**md, **path_d)
         # match failed, try static file regex instead
         match = re.match(self._pp_static_regex, rel_path)
         if match:
             md = match.groupdict()
             md['start_date'] = datelabel.FXDateMin
             md['end_date'] = datelabel.FXDateMax
-            md['name_in_model'] = None # TODO: handle better
-            ds = SingleFileDataSet(**md)
-            del ds.component2
-            ds.remote_path = os.path.join(self.data_root_dir, rel_path)
-            ds.date_range = datelabel.FXDateRange
-            ds.date_freq = self.DateFreq('static')
-            ds.chunk_freq = self.DateFreq('static')
-            assert ds.date_range.is_static == ds.date_freq.is_static
-            return ds
+            # TODO: fix this: static vars combined in one file;
+            # must extract them in preprocessor
+            md['name_in_model'] = util.NOTSET 
+            md = util.filter_dataclass(match.groupdict(), self.FileDataSet)
+            return self.FileDataSet(**md, **path_d)
         raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
     def subdirectory_filters(self):
@@ -634,23 +631,30 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         else:
             return _heuristic_tiebreaker_sub(str_list)
 
-    def decide_allowed_components(self):
-        choices = dict.fromkeys(self.data_files)
+    def select_undetermined(self):
+        d_to_u = dict.fromkeys(self.data_keys)
+        for d_key in d_to_u:
+            d_to_u[d_key] = {f.to_UndeterminedKey() for f in self.data_files[d_key]}
+        choices = dict.fromkeys(self.data_keys)
         cmpt_choices = choose.minimum_cover(
-            self.data_files,
+            d_to_u,
             attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
-        for data_key, cmpt in iter(cmpt_choices.items()):
+        for d_key, cmpt in iter(cmpt_choices.items()):
             # take shortest chunk frequency (revisit?)
-            chunk_freq = min(u_key.chunk_freq \
-                for u_key in self.data_files[data_key] \
+            chunk_freq = min(u_key.chunk_freq for u_key in d_to_u[d_key] \
                 if u_key.component == cmpt)
-            choices[data_key] = self.UndecidedKey(component=cmpt, chunk_freq=str(chunk_freq))
+            choices[d_key] = self.UndeterminedKey(
+                component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
 class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
-    def __init__(self, case_dict, DateFreqMixin=None):
+    _DiagnosticClass = GfdlDiagnostic
+    _DateRangeClass = datelabel.DateRange
+    _DateFreqClass = cmip6.CMIP6DateFrequency
+
+    def __init__(self, case_dict):
         # set data_root_dir
         # from experiment and model, determine institution and mip
         # set realization code = 'r1i1p1f1' unless specified
@@ -683,9 +687,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         self.table_id = None
         self.grid_label = None
         self.version_date = None
-        super(Gfdlcmip6abcDataManager, self).__init__(
-            case_dict, DateFreqMixin=cmip6.CMIP6DateFrequency
-        )
+        super(Gfdlcmip6abcDataManager, self).__init__(case_dict)
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
@@ -693,15 +695,20 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
     def _cmip6_root(self):
         pass
 
-    # also need to determine table?
-    UndecidedKey = namedtuple('UndecidedKey', 
-        ['table_id', 'grid_label', 'version_date'])
-    def undecided_key(self, dataset):
-        return self.UndecidedKey(
-            table_id=str(dataset.table_id),
-            grid_label=dataset.grid_label, 
-            version_date=str(dataset.version_date)
-        )
+    _DataKeyClass = data_manager.DataKey
+
+    @util.mdtf_dataclass(frozen=True)
+    class UndeterminedKey(object):
+        table_id: str = ""
+        grid_label: str = ""
+        version_date: str = ""
+
+        def __str__(self):
+            return f"({self.table_id}, {self.grid_label}, v{self.version_date})"
+
+    FileDataSet = data_manager.remote_file_dataset_factory(
+        'FileDataSet', _DataKeyClass, UndeterminedKey
+    )
 
     def parse_relative_path(self, subdir, filename):
         d = cmip6.parse_DRS_path(
@@ -709,9 +716,10 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
             filename
         )
         d['name_in_model'] = d['variable_id']
-        ds = SingleFileDataSet(**d)
-        ds.remote_path = os.path.join(self.data_root_dir, subdir, filename)
-        return ds
+        d['remote_path'] = os.path.join(self.data_root_dir, subdir, filename)
+        d['local_path'] = util.NOTSET
+        d = util.filter_dataclass(d, self.FileDataSet)
+        return self.FileDataSet(**d)
 
     def subdirectory_filters(self):
         return [self.table_id, None, # variable_id
@@ -740,27 +748,30 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         grids = min(grids, key=itemgetter('grid_number'))
         return grids['grid_label']
 
-    def decide_allowed_components(self):
+    def select_undetermined(self):
+        d_to_u = dict.fromkeys(self.data_keys)
+        for d_key in d_to_u:
+            d_to_u[d_key] = {f.to_UndeterminedKey() for f in self.data_files[d_key]}
         tables = choose.minimum_cover(
-            self.data_files,
+            d_to_u,
             attrgetter('table_id'), 
             self._cmip6_table_tiebreaker
         )
         dkeys_for_each_pod = list(self.data_pods.inverse().values())
         grid_lbl = choose.all_same_if_possible(
-            self.data_files,
+            d_to_u,
             dkeys_for_each_pod,
             attrgetter('grid_label'), 
             self._cmip6_grid_tiebreaker
             )
         version_date = choose.require_all_same(
-            self.data_files,
+            d_to_u,
             attrgetter('version_date'),
             lambda dates: str(max(datelabel.Date(dt) for dt in dates))
             )
         choices = dict.fromkeys(self.data_files)
         for data_key in choices:
-            choices[data_key] = self.UndecidedKey(
+            choices[data_key] = self.UndeterminedKey(
                 table_id=str(tables[data_key]), 
                 grid_label=grid_lbl[data_key], 
                 version_date=version_date[data_key]

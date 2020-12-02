@@ -5,7 +5,11 @@ channels:
 dependencies:
 - python=2.7
 - subprocess32
+<<<<<<< HEAD
 - numpy
+=======
+- numpy=1.16.5
+>>>>>>> 1c01368579b94417af4ddb1d65e12d368d43e015
 - scipy
 - matplotlib
 - netCDF4

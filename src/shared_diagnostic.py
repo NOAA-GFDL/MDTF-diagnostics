@@ -5,6 +5,7 @@ import glob
 import shutil
 from src import util
 from src import util_mdtf
+from src import verify_links
 
 
 @six.python_2_unicode_compatible
@@ -134,9 +135,6 @@ class Diagnostic(object):
         """
         default_file_required = True 
         for i, var in enumerate(varlist):
-            assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
-                "WARNING: didn't find "+var['freq']+" in frequency options "+\
-                    " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
                 varlist[i]['required'] = (var['requirement'].lower() == 'required')
             elif 'required' not in varlist[i]:
@@ -220,6 +218,7 @@ class Diagnostic(object):
 
         # Set env vars for variable and axis names:
         axes = dict()
+        ax_bnds = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
@@ -250,7 +249,12 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in iter(axes.items()): 
+        for key, val in axes.items():
+            # Define ax bounds variables; TODO do this more honestly
+            ax_bnds[key+'_bnds'] = val + '_bnds'
+        for key, val in axes.items(): 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
+        for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
@@ -440,47 +444,57 @@ class Diagnostic(object):
         Args:
             verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
-        if isinstance(self.skipped, Exception):
-            self.append_result_link(self.skipped)
-        else:
-            config = util_mdtf.ConfigManager()
-            self._make_pod_html(config)
-            self._convert_pod_figures(config)
-            self._cleanup_pod_files(config)
+        self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
+        # add link and description to main html page
+        self.append_result_link(self.skipped)
+
+        if not isinstance(self.skipped, Exception):
+            self.make_pod_html()
+            self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
+            self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
+            self.cleanup_pod_files()
+            self.verify_pod_links()
 
         if verbose > 0: 
             print("---  MDTF.py Finished POD "+self.name+"\n")
             # elapsed = timeit.default_timer() - start_time
             # print(pod+" Elapsed time ",elapsed)
 
-    def _make_pod_html(self, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.  
-        """
-        source = os.path.join(self.POD_CODE_DIR, self.name+'.html')
-        dest = os.path.join(self.POD_WK_DIR, self.name+'.html')
+    def make_pod_html(self):
+        """Perform templating on POD's html results page(s).
 
+        A wrapper for :func:`~util_mdtf.append_html_template`. Looks for all 
+        html files in POD_CODE_DIR, templates them, and copies them to 
+        POD_WK_DIR, respecting subdirectory structure (see doc for
+        :func:`~util.recursive_copy`).
+        """
+        config = util_mdtf.ConfigManager()
         template = config.global_envvars.copy()
         template.update(self.pod_env_vars)
-        if self.name == 'convective_transition_diag':
-            # change filenames of model and obs figures that get linked
-            # need a more elegant way to handle this
-            tropo_meas = template.get('BULK_TROPOSPHERIC_TEMPERATURE_MEASURE', None)
-            if tropo_meas == '1':
-                template['TROPO_VAR'] = 'tave'
-            elif tropo_meas == '2':
-                template['TROPO_VAR'] = 'qsat_int'
-            else:
-                print(("ERROR in convective_transition_diag's settings.jsonc: "
-                    "BULK_TROPOSPHERIC_TEMPERATURE_MEASURE = {}, expected '1' "
-                    "or '2'").format(tropo_meas))
-
-        if os.path.exists(dest):
-            os.remove(dest)
-        util_mdtf.append_html_template(source, dest, template_dict=template)
-        # add link and description to main html page
-        self.append_result_link()
+        source_files = util.find_files(self.POD_CODE_DIR, '*.html')
+        util.recursive_copy(
+            source_files,
+            self.POD_CODE_DIR,
+            self.POD_WK_DIR,
+            copy_function=lambda src, dest: util_mdtf.append_html_template(
+                src, dest, template_dict=template, append=False
+            ),
+            overwrite=True
+        )
 
     def append_result_link(self, error=None):
+        """Update the top level index.html page with a link to this POD's results.
+
+        This simply appends one of two html fragments to index.html: 
+        pod_result_snippet.html if the POD completed successfully, or
+        pod_error_snippet.html if an exception was raised during the POD's setup
+        or execution.
+
+        Args:
+            error (default None): :py:class:`Exception` object (if any) that was
+                raised during POD's attempted execution. If this is None, assume
+                that POD ran successfully.
+        """
         src_dir = os.path.join(self.code_root, 'src', 'html')
         template_dict = self.__dict__.copy()
         if error is None:
@@ -492,75 +506,124 @@ class Diagnostic(object):
             template_dict['error_text'] = str(error)
         util_mdtf.append_html_template(src, self.TEMP_HTML, template_dict)
 
-    def _convert_pod_figures(self, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+    def verify_pod_links(self):
+        """Check for missing files linked to from POD's html page.
+
+        See documentation for :class:`~verify_links.LinkVerifier`. This method
+        calls LinkVerifier to check existence of all files linked to from the 
+        POD's own top-level html page (after templating). If any files are
+        missing, an error message listing them is written to the run's index.html 
+        (located in src/html/pod_missing_snippet.html).
         """
-        dirs = ['model/PS', 'obs/PS']
-        exts = ['ps', 'eps']
-        files = []
-        for d in dirs:
-            for ext in exts:
-                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
-                files.extend(glob.glob(pattern))
+        verifier = verify_links.LinkVerifier(
+            self.POD_HTML, os.path.dirname(self.POD_WK_DIR), verbose=False
+        )
+        missing_out = verifier.verify_pod_links(self.name)
+        if missing_out:
+            print('ERROR: {} has missing output files.'.format(self.name))
+            template_dict = self.__dict__.copy()
+            template_dict['missing_output'] = '<br>'.join(missing_out)
+            util_mdtf.append_html_template(
+                os.path.join(self.code_root,'src','html','pod_missing_snippet.html'),
+                self.TEMP_HTML, template_dict
+            )
+
+    def convert_pod_figures(self, src_subdir, dest_subdir):
+        """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
+        ghostscript.
+
+        All vector graphics files (identified by extension) in any subdirectory 
+        of `POD_WK_DIR/src_subdir` are converted to .png files by running 
+        `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
+        Ghostscript is included in the _MDTF_base conda environment. Afterwards,
+        any bitmap files (identified by extension) in any subdirectory of
+        `POD_WK_DIR/src_subdir` are moved to `POD_WK_DIR/dest_subdir`, preserving
+        and subdirectories (see doc for :func:`~util.recursive_copy`.)
+
+        Args:
+            src_subdir: Subdirectory tree of `POD_WK_DIR` to search for vector
+                graphics files.
+            dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
+                bitmap files to.
+        """
+        config = util_mdtf.ConfigManager()
+        abs_src_subdir = os.path.join(self.POD_WK_DIR, src_subdir)
+        abs_dest_subdir = os.path.join(self.POD_WK_DIR, dest_subdir)
+        files = util.find_files(
+            abs_src_subdir,
+            ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
+        )
         for f in files:
-            (dd, f_out) = os.path.split(os.path.splitext(f)[0])
-            path_stem = os.path.join(os.path.dirname(dd), f_out)
+            f_stem, _  = os.path.splitext(f)
             _ = util.run_shell_command(
                 'gs {flags} -sOutputFile="{f_out}" {f_in}'.format(
                 flags=config.config.get('convert_flags',''),
                 f_in=f,
-                f_out=path_stem+'-%d.png'
+                f_out=f_stem+'_MDTF_TEMP_%d.png'
             ))
-            # if .ps file was multiple pages, this will generate 1 png per page.
-            # however, page number is included for output from single-page ps 
-            # files, and number starts from 1, not 0. Rename files to fix this.
-            out_files = glob.glob(path_stem+'-?.png')
+            # syntax for f_out above appends "_MDTF_TEMP" + page number to 
+            # output files. If input .ps/.pdf file had multiple pages, this will
+            # generate 1 png per page. Page numbering starts at 1. Now check 
+            # how many files gs created:
+            out_files = glob.glob(f_stem+'_MDTF_TEMP_?.png')
             if not out_files:
-                print("Error: no png generated for {}".format(f))
+                raise OSError("Error: no png generated from {}".format(f))
             elif len(out_files) == 1:
-                shutil.move(out_files[0], path_stem+'.png')
+                # got one .png, so remove suffix.
+                os.rename(out_files[0], f_stem+'.png')
             else:
+                # Multiple .pngs. Drop the MDTF_TEMP suffix and renumber starting
+                # from zero (forget which POD requires this.)
                 for n in list(range(len(out_files))):
-                    shutil.move(
-                        path_stem+'-{}.png'.format(n+1),
-                        path_stem+'-{}.png'.format(n)
+                    os.rename(
+                        f_stem+'_MDTF_TEMP_{}.png'.format(n+1),
+                        f_stem+'-{}.png'.format(n)
                     )
-        # also move any figures saved directly as bitmaps
-        exts = ['gif', 'png', 'jpg', 'jpeg']
-        for d in dirs:
-            for ext in exts:
-                pattern = os.path.join(self.POD_WK_DIR, d, '*.'+ext)
-                for f in glob.glob(pattern):
-                    (dd, ff) = os.path.split(f)
-                    shutil.move(f, os.path.join(os.path.dirname(dd), ff))
+        # move converted figures and any figures that were saved directly as bitmaps
+        files = util.find_files(
+            abs_src_subdir, ['*.png', '*.gif', '*.jpg', '*.jpeg']
+        )
+        util.recursive_copy(
+            files, abs_src_subdir, abs_dest_subdir, 
+            copy_function=shutil.move, overwrite=False
+        )
 
-    def _cleanup_pod_files(self, config):
-        """Private method called by :meth:`~shared_diagnostic.Diagnostic.tearDown`.
+    def cleanup_pod_files(self):
+        """Copy and remove remaining files to `POD_WK_DIR`.
+
+        In order, this 1) copies .pdf documentation (if any) from 
+        `POD_CODE_DIR/doc`, 2) copies any bitmap figures in any subdirectory of
+        `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without 
+        digested observational data), 3) removes vector graphics if requested,
+        4) removes netCDF scratch files in `POD_WK_DIR` if requested.
+
+        Settings are set at runtime, when :class:`~util_mdtf.ConfigManager` is 
+        initialized.
         """
+        config = util_mdtf.ConfigManager()
         # copy PDF documentation (if any) to output
-        files = glob.glob(os.path.join(self.POD_CODE_DIR, 'doc', '*.pdf'))
-        for file in files:
-            shutil.copy2(file, self.POD_WK_DIR)
+        files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
+        for f in files:
+            shutil.copy2(f, self.POD_WK_DIR)
 
         # copy premade figures (if any) to output 
-        exts = ['gif', 'png', 'jpg', 'jpeg']
-        globs = [os.path.join(self.POD_OBS_DATA, '*.'+ext) for ext in exts]
-        files = []
-        for pattern in globs:
-            files.extend(glob.glob(pattern))
-        for file in files:
-            shutil.copy2(file, os.path.join(self.POD_WK_DIR, 'obs'))
+        # NOTE this will not respect 
+        files = util.find_files(
+            self.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
+        )
+        for f in files:
+            shutil.copy2(f, os.path.join(self.POD_WK_DIR, 'obs'))
 
-        # remove .eps files if requested
+        # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not config.config.save_ps:
-            for d in ['model/PS', 'obs/PS']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
+            for d in util.find_files(self.POD_WK_DIR, 'PS'+os.sep):
+                shutil.rmtree(d)
         # delete netCDF files, keep everything else
         if config.config.save_non_nc:
-            os.system('find {} -iname "*.nc" -delete'.format(self.POD_WK_DIR))
-        # delete all generated data (flag is a misnomer)
+            for f in util.find_files(self.POD_WK_DIR, '*.nc'):
+                os.remove(f)
+        # delete all generated data
+        # actually deletes contents of any 'netCDF' subdirs
         elif not config.config.save_nc:
-            for d in ['model/netCDF', 'obs/netCDF']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d)):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d))
+            for d in util.find_files(self.POD_WK_DIR, 'netCDF'+os.sep):
+                shutil.rmtree(d)

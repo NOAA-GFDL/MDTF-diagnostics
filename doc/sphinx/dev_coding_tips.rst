@@ -1,5 +1,7 @@
-Coding best practices: avoiding common issues
-=============================================
+.. _ref-dev-coding-tips:
+
+POD coding best practices
+=========================
 
 In this section we describe issues we've seen in POD code that have caused problems in the form of bugs, inefficiencies, or unintended consequences.
 
@@ -16,12 +18,12 @@ Python: General
 ----------------
 
 - **Whitespace**: Indent python code with four spaces per indent level.
-
-  *Why*: Python uses indentation to delineate nesting and scope within a program, and intentation that's not done consistently is a syntax error. Using four spaces is not required, but is the generally accepted standard.
+  
+  *Why*: Python uses indentation to delineate nesting and scope within a program, and indentation that's not done consistently is a syntax error. Using four spaces is not required, but is the generally accepted standard.
 
   Indentation can be configured in most text editors, or fixed with scripts such as ``reindent.py`` described `here <https://stackoverflow.com/q/1024435>`__. We recommend using a `linter <https://books.agiliq.com/projects/essential-python-tools/en/latest/linters.html>`__ such as ``pylint`` to find common bugs and syntax errors.
 
-  Beyond this, we don't impose requirements on how your code is formatted, but voluntarily following standard best practices (such as descriped in `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ or the Google `style guide <https://github.com/google/styleguide/blob/gh-pages/pyguide.md>`__\) will make it easier for you and others to understand your code, find bugs, etc.
+  Beyond this, we don't impose requirements on how your code is formatted, but voluntarily following standard best practices (such as described in `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ or the Google `style guide <https://github.com/google/styleguide/blob/gh-pages/pyguide.md>`__\) will make it easier for you and others to understand your code, find bugs, etc. 
 
 
 - **Filesystem commands**: Use commands in the `os <https://docs.python.org/3.7/library/os.html>`__ and `shutil <https://docs.python.org/3.7/library/shutil.html>`__ modules to interact with the filesystem, instead of running unix commands using ``os.system()``, ``commands`` (which is deprecated), or ``subprocess``.
@@ -82,8 +84,8 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   xarray lets you refer to your data with human-readable labels such as 'latitude,' rather than having to remember that that's the second dimension of your array. This bookkeeping is essential when writing code for the MDTF framework, when your POD will be run on data from models you haven't been able to test on.
 
   In particular, xarray provides seamless support for `time axes <http://xarray.pydata.org/en/stable/time-series.html>`__, with `support <http://xarray.pydata.org/en/stable/weather-climate.html>`__ for all CF convention calendars through the ``cftime`` library. You can, eg, subset a range of data between two dates without having to manually convert those dates to array indices.
-
-  Again, please see the xarray tutorials linked above.
+  
+  See the xarray tutorials linked above for more examples of xarray's features.
 
 
 - **Memory use and views vs. copies**: Use scalar indexing and `slices <https://numpy.org/doc/stable/reference/arrays.indexing.html#basic-slicing-and-indexing>`__ (index specifications of the form `start_index`:`stop_index`:`stride`) to get subsets of arrays whenever possible, and only use `advanced indexing <https://numpy.org/doc/stable/reference/arrays.indexing.html#advanced-indexing>`__ features (indexing arrays with other arrays) when necessary.
@@ -96,7 +98,7 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
 
   See the following references for more information:
 
-  + The numpy `documentation <https://numpy.org/doc/stable/reference/arrays.indexing.html>`__ on indexing;
+  + The NumPy `documentation <https://numpy.org/doc/stable/reference/arrays.indexing.html>`__ on indexing;
   + "`Numpy Views vs Copies: Avoiding Costly Mistakes <https://www.jessicayung.com/numpy-views-vs-copies-avoiding-costly-mistakes/>`__," by Jessica Yung;
   + "`How can I tell if NumPy creates a view or a copy? <https://stackoverflow.com/questions/11524664/how-can-i-tell-if-numpy-creates-a-view-or-a-copy>`__" on stackoverflow.
 
@@ -104,7 +106,7 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
 - **MaskedArrays instead of NaNs or sentinel values**: Use NumPy's `MaskedArrays <https://numpy.org/doc/stable/reference/maskedarray.generic.html>`__ for data that may contain missing or invalid values, instead of setting those entries to NaN or a sentinel value.
 
   *Why*: One sometimes encounters code which sets array entries to fixed "sentinel values" (such as 1.0e+20 or `NaN <https://en.wikipedia.org/wiki/NaN>`__\) to indicate missing or invalid data. This is a dangerous and error-prone practice, since it's frequently not possible to detect if the invalid entries are being used by mistake. For example, computing the variance of a timeseries with missing elements set to 1e+20 will either result in a floating-point overflow, or return zero.
-
+  
   NumPy provides a better solution in the form of `MaskedArrays <https://numpy.org/doc/stable/reference/maskedarray.html>`__, which behave identically to regular arrays but carry an extra boolean mask to indicate valid/invalid status. All the NumPy mathematical functions will automatically use this mask for error propagation. For `example <https://numpy.org/doc/stable/reference/maskedarray.generic.html#numerical-operations>`__, trying to divide an array element by zero or taking the square root of a negative element will mask it off, indicating that the value is invalid: you don't need to remember to do these sorts of checks explicitly.
 
 

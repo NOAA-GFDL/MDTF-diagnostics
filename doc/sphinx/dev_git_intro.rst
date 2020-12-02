@@ -1,7 +1,7 @@
-.. _ref-dev-git:
+.. _ref-dev-git-intro:
 
-Developing for MDTF Diagnostics through GitHub website and git command
-======================================================================
+Git-based development workflow
+==============================
 
 We recommend developers to manage the MDTF package using the GitHub webpage interface:
 

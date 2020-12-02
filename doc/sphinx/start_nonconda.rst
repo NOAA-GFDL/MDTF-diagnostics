@@ -23,3 +23,15 @@ Configuring this mode of operation requires adding additional settings to the ``
 - Any values for ``conda_root`` and ``conda_env_root`` will be ignored.
 - The framework will use ``pip`` to install required python modules in new virtualenvs, which will be installed in the default location for your system's python. To put the files in a different location, create a new setting ``"venv_root": <Path to virtualenv directory>``.
 - Likewise, to install packages needed by R in a location other than your system default, create a new setting ``"r_lib_root": <path to R package directory>``.
+
+Known issues with standalone NCL installation
+---------------------------------------------
+
+Many Linux distributions (Ubuntu, Mint, etc.) have offered a way of installing `NCL <https://www.ncl.ucar.edu/>`__ through their system package manager (apt, yum, etc.) This method of installation is not recommended: users may encounter errors when running the example PODs provided by NCAR, even if the environment variables and search path have been added. 
+
+The recommended method to install standalone NCL is by downloading the pre-compiled binaries from https://www.ncl.ucar.edu/Download/install_from_binary.shtml. Choose a download option according to the Linux distribution and hardware, unzip the file (results in 3 folders: ``bin``, ``include``, ``lib``), create a folder ncl under the directory ``/usr/local`` (requires permission) and move the 3 unzipped folders into ``/usr/local/ncl``. Then add the following lines to the ``.bashrc`` script (under the user’s home directory; may be different if using shells other than bash, e.g., ``.cshrc`` for csh): 
+
+::
+
+   export NCARG_ROOT=/usr/local/ncl 
+   export PATH:$NCARG_ROOT/bin:$PATH 

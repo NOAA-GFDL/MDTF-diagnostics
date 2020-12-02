@@ -511,7 +511,6 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ##### Figure Critical CWV (WC) #####
         fig_obs_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
 
-        #fig_obs_wc.text(s='Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.03, ha='center', va='bottom', transform=fig_obs_wc.transFigure, fontsize=16)
         fig_obs_wc.suptitle('Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', y=1.02, fontsize=16)
 
         reg_color=[-1,-2,-3,0]

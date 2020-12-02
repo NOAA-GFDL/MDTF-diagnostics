@@ -37,13 +37,13 @@ class GFDLMDTFFramework(mdtf.MDTFFramework):
         else:
             gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
         gfdl_tmp_dir = util.resolve_path(
-            gfdl_tmp_dir, root_path=self.code_root, env=config.global_envvars
+            gfdl_tmp_dir, root_path=self.code_root, env=config.global_env_vars
         )
         if not os.path.isdir(gfdl_tmp_dir):
             gfdl.make_remote_dir(gfdl_tmp_dir)
         tempfile.tempdir = gfdl_tmp_dir
         os.environ['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
-        config.global_envvars['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
+        config.global_env_vars['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
 
     def _post_parse_hook(self, cli_obj, config):
         ### call parent class method

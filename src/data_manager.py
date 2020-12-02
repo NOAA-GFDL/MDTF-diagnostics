@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod
 import datetime
 import functools
 import typing
+import dataclasses
 if os.name == 'posix' and six.PY2:
     try:
         from subprocess32 import CalledProcessError
@@ -61,6 +62,20 @@ class DataAccessError(Exception):
     _error_str = "Data fetch error"
 
 @util.mdtf_dataclass(frozen=True)
+class DataKey(object):
+    case_name: str = ""
+    date_range: typing.Any = None
+    name_in_model: str = ""
+    frequency: typing.Any = None
+    level: typing.Any = None
+
+    def __str__(self):
+        if self.level:
+            return f"{self.name_in_model} @ {self.frequency}, {self.level} hPa"
+        else:
+            return f"{self.name_in_model} @ {self.frequency}"
+
+@util.mdtf_dataclass(frozen=True)
 class _RemoteFileDatasetBase(object):
     """Base class for describing data contained in a single file.
     """
@@ -82,8 +97,9 @@ def remote_file_dataset_factory(class_name, *key_classes):
     for key_cls in key_classes:
         method_nm = 'to_' + key_cls.__name__
         methods[method_nm] = functools.partialmethod(_to_dataclass, key_cls)
-    list(key_classes).append(_RemoteFileDatasetBase)
-    new_cls = type(class_name, tuple(key_classes), methods)
+    parents = list(key_classes)
+    parents.append(_RemoteFileDatasetBase)
+    new_cls = type(class_name, tuple(parents), methods)
     return util.mdtf_dataclass(new_cls, frozen=True)
 
 class DataManager(six.with_metaclass(ABCMeta)):
@@ -106,7 +122,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
         config = util_mdtf.ConfigManager()
-        self.envvars = config.global_envvars.copy() # gets appended to
+        self.env_vars = config.global_env_vars.copy() # gets appended to
         # assign explicitly else linter complains
         self.dry_run = config.config.dry_run
         self.file_transfer_timeout = config.config.file_transfer_timeout
@@ -134,20 +150,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
             if all_pods or p.active:
                 yield p
 
-    def iter_vars(self):
-        """Generator iterating over all variables in all pods which haven't been
-        skipped due to requirement errors.
-        """
-        for p in self.iter_pods():
-            yield from p.iter_vars()
-
     # -------------------------------------
 
     def setup(self):
         translate = util_mdtf.VariableTranslator()
 
         util_mdtf.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
-        self.envvars.update({
+        self.env_vars.update({
             "CASENAME": self.case_name,
             "model": self.model_name,
             "FIRSTYR": self.date_range.start.format(precision=1), 
@@ -158,12 +167,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
             raise AssertionError(("Variable name translation doesn't recognize "
                 f"{self.convention}."))
         temp = translate.units[self.convention].to_dict()
-        self.envvars.update(temp)
+        self.env_vars.update(temp)
         # shouldn't need to do this for *all* var names the mdoel defines, but 
         # think a POD was testing for env var for a variable it didn't request
         # TODO: fix this
         temp = translate.variables[self.convention].to_dict()
-        self.envvars.update(temp)
+        self.env_vars.update(temp)
 
         # instantiate Diagnostic objects from config
         self.pods = {
@@ -174,7 +183,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             try:
                 pod.configure_paths(self)
                 pod.configure_vars(self)
-                pod.pod_env_vars.update(self.envvars)
+                pod.pod_env_vars.update(self.env_vars)
             except Exception as exc:
                 try:
                     raise diagnostic.PodConfigError(pod, 
@@ -254,7 +263,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_query:
                 try:
-                    print(f"\tCalling query_dataset on {d_key}")
+                    print(f"\tQuerying '{d_key}'")
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
                     files = util.coerce_to_iter(self.query_dataset(d_key))
@@ -297,9 +306,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """
         # flatten list of all data_files and remove duplicates
         # filter out any data we've previously fetched that's up to date
-        unique_files = set([f for f in self.data_files[d_key] \
-            if not self.local_data_is_current(f)])
+        unique_files = set(f for f in self.data_files[d_key] \
+            if not self.local_data_is_current(f))
         # fetch data in sorted order to make interpreting logs easier
+        unique_files = list(unique_files)
+        sort_key = None
         if unique_files:
             if self._fetch_order_function is not None:
                 sort_key = self._fetch_order_function
@@ -307,7 +318,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 sort_key = attrgetter('remote_path')
             else:
                 sort_key = None
-        return sorted(list(unique_files), key=sort_key)
+        return sorted(unique_files, key=sort_key)
     
     _fetch_order_function = None
 
@@ -345,7 +356,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_fetch:
                 try:
-                    print(f"\tCalling fetch_dataset on {d_key}")
+                    print(f"\tFetching '{d_key}'")
                     # add before fetch, in case fetch raises an exc
                     self.fetched_keys.add(d_key) 
                     self.fetch_dataset(d_key)
@@ -374,10 +385,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """Hook to run the preprocessing function on all variables. The 
         preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
         """
-        for var in self.iter_vars():
-            d_key = self.dataset_key(var)
-            pp = preprocessor(self, var)
-            pp.preprocess(self.data_files[d_key])
+        for pod in self.iter_pods():
+            pod.setup_pod_directories()
+            for var in pod.iter_vars():
+                d_key = self.dataset_key(var)
+                pp = preprocessor(self, var)
+                pp.preprocess(list(self.data_files[d_key]))
 
     # HTML & PLOT OUTPUT -------------------------------------
 
@@ -397,7 +410,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             print("WARNING: index.html exists, deleting.")
             os.remove(dest)
 
-        template_dict = self.envvars.copy()
+        template_dict = self.env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         util_mdtf.append_html_template(
@@ -461,15 +474,9 @@ class LocalfileDataManager(DataManager):
     already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
     the PODs' sample model data.
     """
-    @util.mdtf_dataclass(frozen=True)
-    class DataKey(object):
-        case_name: str = ""
-        date_range: typing.Any = None
-        name_in_model: str = ""
-        frequency: typing.Any = None
-        level: typing.Any = None
+    _DataKeyClass = DataKey
 
-    FileDataSet = remote_file_dataset_factory('FileDataSet', DataKey)
+    FileDataSet = remote_file_dataset_factory('FileDataSet', _DataKeyClass)
 
     def dataset_key(self, varlist_entry):
         if varlist_entry.is_static:
@@ -478,7 +485,7 @@ class LocalfileDataManager(DataManager):
         else:
             dt_range = varlist_entry.T.range
             freq = varlist_entry.T.frequency
-        return self.DataKey(
+        return self._DataKeyClass(
             case_name = self.case_name,
             date_range = dt_range,
             name_in_model = varlist_entry.name_in_model, 
@@ -514,7 +521,7 @@ class LocalfileDataManager(DataManager):
             raise DataQueryError(data_key, f"File not found at {path}.")
     
     def local_data_is_current(self, dataset):
-        return True 
+        return False 
 
     def fetch_dataset(self, data_key):
         files = self.sort_dataset_files(data_key)

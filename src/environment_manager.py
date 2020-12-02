@@ -20,6 +20,9 @@ from src import util, util_mdtf, diagnostic
 class AbstractEnvironmentManager(abc.ABC):
     """Interface for EnvironmentManagers.
     """
+    def __init__(self, data_mgr):
+        pass
+
     def setup(self): pass
 
     @abc.abstractmethod
@@ -67,8 +70,8 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     libraries into the current user's ``$PATH``. For other scripting languages, 
     no library management is performed.
     """
-    def __init__(self, verbose=0):
-        super(VirtualenvEnvironmentManager, self).__init__(verbose)
+    def __init__(self, data_mgr):
+        super(VirtualenvEnvironmentManager, self).__init__(data_mgr)
 
         config = util_mdtf.ConfigManager()
         self.venv_root = config.paths.get('venv_root', '')
@@ -148,8 +151,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     """
     env_name_prefix = '_MDTF_' # our envs start with this string to avoid conflicts
 
-    def __init__(self, verbose=0):
-        super(CondaEnvironmentManager, self).__init__(verbose)
+    def __init__(self, data_mgr):
+        super(CondaEnvironmentManager, self).__init__(data_mgr)
 
         config = util_mdtf.ConfigManager()
         self.code_root = config.paths.CODE_ROOT
@@ -290,8 +293,7 @@ class SubprocessRuntimePODWrapper(object):
     log_handle: io.IOBase = dataclasses.field(default=None, init=False)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
-    def setup(self, verbose=0):
-        self.pod.setup_pod_directories() # should refactor setup
+    def pre_run_setup(self, verbose=0):
         self.log_handle = io.open(
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'
@@ -325,10 +327,8 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        try:
-            raise diagnostic.PodRuntimeError(self.pod, log_str) from exc
-        except Exception as chained_exc:
-            self.pod.exceptions.log(chained_exc)
+        raise exc
+        self.pod.exceptions.log(exc)
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
@@ -373,10 +373,8 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        try:
-            raise diagnostic.PodExecutionError(self.pod, log_str) from exc
-        except Exception as chained_exc:
-            self.pod.exceptions.log(chained_exc)
+        raise exc
+        self.pod.exceptions.log(exc)
 
     def tear_down(self):
         if self.log_handle is not None:
@@ -392,11 +390,11 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
-    def __init__(self, EnvMgr, pods):
+    def __init__(self, data_mgr, EnvMgrClass):
         config = util_mdtf.ConfigManager()
         self.test_mode = config.config.test_mode
-        self.pods = [self._PodWrapperClass(pod=pod) for pod in pods]
-        self.env_mgr = EnvMgr()
+        self.pods = [self._PodWrapperClass(pod=p) for p in data_mgr.iter_pods()]
+        self.env_mgr = EnvMgrClass(data_mgr)
 
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.
@@ -455,7 +453,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
             try:
-                p.setup()
+                p.pre_run_setup()
             except Exception as exc:
                 p.setup_exception_handler(exc)
                 continue

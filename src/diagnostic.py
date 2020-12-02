@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from src import six
+import collections
 import dataclasses
 import enum
 import glob
@@ -29,6 +30,10 @@ class PodExceptionBase(Exception):
         if self.msg is not None:
             s += f"\nReason: {self.msg}."
         return s
+
+    def __repr__(self):
+        # full repr of Diagnostic takes lots of space to print
+        return f"{self.__class__.__name__}({str(self)})"
 
 @six.python_2_unicode_compatible
 class PodConfigError(PodExceptionBase):
@@ -158,6 +163,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     """
     name_in_model: str = dataclasses.field(default="", compare=False)
     dest_path: str = ""
+    env_var: str = ""
     path_variable: str = dataclasses.field(default="", compare=False)
     use_exact_name: bool = False
     requirement: VarlistEntryRequirement = dataclasses.field(
@@ -178,6 +184,8 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             if not isinstance(self.alternates[0], list):
                 self.alternates = [self.alternates]
             self.alternates = [vs for vs in self.alternates if vs]
+        if not self.env_var:
+            self.env_var = self.name # TODO: fix when we do standard_names right
 
     @property
     def failed(self):
@@ -221,8 +229,15 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         str_ = self.name
         if self.name_in_model:
             str_ += f" (= {self.name_in_model})"
+        attrs_ = []
         if not self.is_static and hasattr(self.T, 'frequency'):
-            str_ += f" @ {str(self.T.frequency)}"
+            attrs_.append(str(self.T.frequency))
+        if self.get_scalar('Z'):
+            lev = self.get_scalar('Z')
+            attrs_.append(f"{lev.value} {lev.units}")
+        if attrs_:
+            str_ += " @ "
+            str_ += ", ".join(attrs_)
         return str_
 
     def iter_alternate_entries(self):
@@ -479,7 +494,8 @@ class Diagnostic(object):
         for v in old_active_vars:
             if v.failed:
                 v_str = v.short_format()
-                print(f"\t{self.name}: '{v_str}' invalidated; finding alternate vars.")
+                print((f"\t{self.name}: request for '{v_str}' failed; "
+                    "finding alternate vars."))
                 v.active = False
                 alt_success_flag = False
                 for alts in v.iter_alternates():
@@ -490,16 +506,25 @@ class Diagnostic(object):
                     for v in alts:
                         v.active = True
                 if not alt_success_flag:
-                    print(f"\t{self.name}: no alternates available for {v_str}.")
+                    print(f"\t{self.name}: no alternates available for '{v_str}'.")
                     try:
                         raise PodDataError(self, 
-                            f"No alternates available for {v_str}.") from v.exception
+                            f"No alternates available for '{v_str}'.") from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
                     continue
         self.deactivate_if_failed()
 
     # -------------------------------------
+
+    def setup_pod_directories(self):
+        """Check and create directories specific to this POD.
+        """
+        util_mdtf.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
+        util_mdtf.check_dirs(self.POD_WK_DIR, create=True)
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
+        for d in dirs:
+            util_mdtf.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
@@ -525,7 +550,6 @@ class Diagnostic(object):
         """
         try:
             self.set_pod_env_vars()
-            self.setup_pod_directories()
             self.check_pod_driver()
         except Exception as exc:
             raise PodRuntimeError(self, 
@@ -544,51 +568,26 @@ class Diagnostic(object):
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
         })
         # Set env vars for variable and axis names:
-        axes = dict()
-        ax_status = dict()
+        ax_name_verify = collections.defaultdict(set)
+        for k,v in self.varlist.axes.items():
+            ax_name_verify[k].add(v)
         for var in self.iter_vars():
+            # env var for variable name currently set in data_manager, TODO: fix
+            # env var for path to file:
             self.pod_env_vars[var.path_variable] = var.dest_path
-
-            # util_mdtf.setenv(var.original_name, var.name_in_model, 
-            #     self.pod_env_vars, verbose=verbose)
-            # make sure axes found for different vars are consistent
-            for ax_name, ax_attrs in var.axes.items():
-                if 'MDTF_envvar' not in ax_attrs:
-                    print(f"\tWarning: don't know env var to set for {ax_name}")
-                    envvar_name = ax_name+'_coord'
-                else:
-                    envvar_name = ax_attrs['MDTF_envvar']
-                set_from_axis = ax_attrs.get('MDTF_set_from_axis', None)
-                if envvar_name not in axes:
-                    # populate dict
-                    axes[envvar_name] = ax_name
-                    ax_status[envvar_name] = set_from_axis
-                elif axes[envvar_name] != ax_name and ax_status[envvar_name] is None:
-                    # populated with defaults, but now overwrite with name that
-                    # was confirmed from file
-                    axes[envvar_name] = ax_name
-                    ax_status[envvar_name] = set_from_axis
-                elif axes[envvar_name] != ax_name \
-                    and ax_status[envvar_name] == set_from_axis:
-                    # names found in two different files disagree - raise error
-                    raise PodRuntimeError(self,
-                        ("Two variables have conflicting axis names {}:"
-                            "({}!={})").format(
-                                envvar_name, axes[envvar_name], ax_name
-                    ))
-        for k,v in axes.items():
-            self.pod_env_vars[k] = v
+            for k,v in var.axes:
+                ax_name_verify[k].add(v)
+        for ax, ax_set in ax_name_verify.items():
+            if len(ax_set) > 1:
+                # names found in two different files disagree - raise error
+                raise PodRuntimeError(self,
+                    f"POD's variables have conflicting names for {ax} axis: {ax_set}"
+                )
+        for ax, ax_set in ax_name_verify.items():
+            ax_name = ax_set.pop()
+            self.pod_env_vars[ax_name + '_coord'] = ax_name
             # Define ax bounds variables; TODO do this more honestly
-            self.pod_env_vars[k + '_bnds'] = v + '_bnds'
-
-    def setup_pod_directories(self):
-        """Check and create directories specific to this POD.
-        """
-        util_mdtf.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
-        util_mdtf.check_dirs(self.POD_WK_DIR, create=True)
-        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
-        for d in dirs:
-            util_mdtf.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
+            self.pod_env_vars[ax_name + '_bnds'] = ax_name + '_bnds'
 
     def check_pod_driver(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
@@ -688,7 +687,7 @@ class Diagnostic(object):
         """Get the dict of recognized substitutions to perform in HTML templates.
         """
         config = util_mdtf.ConfigManager()
-        template = config.global_envvars.copy()
+        template = config.global_env_vars.copy()
         template.update(self.pod_env_vars)
         return {str(k): str(v) for k,v in template.items()}
 

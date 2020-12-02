@@ -32,9 +32,8 @@ class PreprocessorFunctionBase(six.with_metaclass(abc.ABCMeta)):
     dumping everything into a general Preprocessor class, in order to keep the
     logic easier to follow.
     """
-    pass
-    # def __init__(self, data_mgr, var):
-    #     pass
+    def __init__(self, data_mgr, var):
+        pass
 
     # @abc.abstractmethod
     # def parse(self, xr_dataset, **kwargs):
@@ -113,11 +112,11 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             print('\t' + error_str)
             raise DataPreprocessError(v, error_str)
         
-        print("\ttrimming '{}' of {} from {}-{} to {}".format(
+        print("\tCrop date range of {} from '{}-{}' to {}".format(
                 t_name, ax_names['var'],
                 time_ax.values[0], time_ax.values[-1], dt_range
             ))
-        return ds.sel(t_name = slice(dt_start_lower, dt_end_upper))
+        return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
 
     def process_dataset(self, ds, **kwargs):
         return self.crop_time_axis(ds, **kwargs)
@@ -146,6 +145,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 "no Z axis."))
         z_level = int(z_coord.value)
         try:
+            print(f"\tExtracting {z_level} hPa level from {ax_names['var']}")
             ds = ds.metpy.sel(**({ax_names['Z']: z_level * units.hPa}))
             # rename dependent variable
             return ds.rename({ax_names['var']: ax_names['var']+str(z_level)})
@@ -178,18 +178,19 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, var) for cls_ in self._functions]
 
-    # arguments passed to open_dataset, open_mfdataset, to_netcdf
-    netcdf_kwargs = {
-        "engine": "netcdf4"
-    }
     # arguments passed to open_dataset and open_mfdataset
     open_dataset_kwargs = {
+        "engine": "netcdf4",
         "decode_coords": True, # parse coords attr
         "decode_cf": False,    # don't decode CF on open: done in parse_cf_wrapper instead
         "decode_times": False, # don't decode time axis into default np.datetime64 objects
         "use_cftime": True     # use cftime library for dates/calendars instead
     }
-    open_dataset_kwargs.update(netcdf_kwargs)
+    # arguments passed to_netcdf
+    save_dataset_kwargs = {
+        "engine": "netcdf4",
+        "format": "NETCDF4"
+    }
 
     @staticmethod
     def parse_cf_wrapper(ds):
@@ -265,6 +266,14 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         for i, ax_name in enumerate(other_axes):
             self.ax_names['W'+str(i)] = ax_name
 
+        # update axes names on var
+        for ax, expected_ax_name in self.v.axes.items():
+            if expected_ax_name != self.ax_names[ax]:
+                print(("\tWarning: expected name for {ax} was "
+                    f"'{expected_ax_name}', got '{self.ax_names[ax]}'"))
+                if not self.v.rename_dimensions:
+                    self.v.change_coord(ax, name=self.ax_names[ax])
+
     def parse_calendar(self, ds):
         """Parse the calendar for time-dependent data (assumes CF conventions).
         """
@@ -281,6 +290,12 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
             _check_backup_location(self.convention)
         if self.calendar is None:
             raise ValueError("No calendar info in file.")
+
+        # update calendar on var
+        expected_cal = self.v.T.calendar
+        if expected_cal and expected_cal != self.calendar:
+            print(f"\tWarning: expected calendar {expected_cal}, got {self.calendar}")
+            self.v.change_coord('T', calendar=self.calendar)
 
     def parse(self, xr_dataset):
         """Additional setup and parsing to be done based on attributes of first 
@@ -338,21 +353,23 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     data.
     """
     def preprocess(self, local_files):
+        print(f"Preprocess: parsing metadata for {self.v}")
         assert len(local_files) == 1
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
+        print(f"Preprocess: processing {self.v}")
         if self.v.is_static:
             ds = self.process_static_dataset(ds)
         else:
             ds = self.process_file(ds)
             ds = self.process_dataset(ds)
+        print(f"Preprocess: writing file to {self.v.dest_path}")
         ds.to_netcdf(
             path=self.v.dest_path,
             mode='w',
-            format="NETCDF3_64BIT",
-            **self.netcdf_kwargs
+            **self.save_dataset_kwargs
             # don't make time unlimited, since data might be static and we 
             # analyze a fixed date range
         )
@@ -365,10 +382,12 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable.
     """
     def preprocess(self, local_files):
+        print(f"Preprocess: parsing metadata for {self.v}")
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
+        print(f"Preprocess: processing {self.v}")
         if self.v.is_static:
             # skip date trimming logic for time-independent files
             assert len(local_files) == 1
@@ -391,11 +410,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 **self.open_dataset_kwargs
             )
             ds = self.process_dataset(ds)
+        print(f"Preprocess: writing file to {self.v.dest_path}")
         ds.to_netcdf(
             path=self.v.dest_path,
             mode='w',
-            format="NETCDF3_64BIT",
-            **self.netcdf_kwargs
+            **self.save_dataset_kwargs
             # don't make time unlimited, since data might be static and we 
             # analyze a fixed date range
         )

@@ -110,11 +110,11 @@ class MDTFFramework(object):
 
     def parse_env_vars(self, cli_obj, config):
         # don't think PODs use global env vars?
-        # self.envvars = self._populate_from_cli(cli_obj, 'PATHS', self.envvars)
-        config.global_envvars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
+        config.global_env_vars['RGB'] = os.path.join(self.code_root,'src','rgb')
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
-        config.global_envvars['MPLBACKEND'] = "Agg"
+        config.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, cli_obj, config):
         self.pod_list = []
@@ -237,7 +237,7 @@ class MDTFFramework(object):
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
         d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
             if k not in d['paths']}
-        d['envvars'] = config.global_envvars
+        d['env_vars'] = config.global_env_vars
         print('DEBUG: SETTINGS:')
         print(util.pretty_print_json(d))
 
@@ -277,7 +277,7 @@ class MDTFFramework(object):
 
         for case in caselist:
             run_mgr = environment_manager.SubprocessRuntimeManager(
-                self.EnvironmentManager, pods=case.pods
+                case, self.EnvironmentManager
             )
             run_mgr.setup()
             run_mgr.run()

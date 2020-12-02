@@ -598,7 +598,7 @@ def resolve_path(path, root_path="", env=None):
     if path == '':
         return path # default value set elsewhere
     path = os.path.expanduser(path) # resolve '~' to home dir
-    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell envvars
+    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell env_vars
     if isinstance(env, dict):
         path = _expandvars(path, env)
     if '$' in path:

@@ -20,7 +20,7 @@ class ConfigManager(util.Singleton):
         self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
         self.pod_realms = pod_info_tuple.realm_data
 
-        self.global_envvars = dict()
+        self.global_env_vars = dict()
         # copy over all config settings
         self.config = util.NameSpace.fromDict(cli_obj.config)
 

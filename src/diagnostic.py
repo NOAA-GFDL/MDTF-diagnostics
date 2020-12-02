@@ -171,6 +171,8 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     )
     alternates: list = dataclasses.field(default_factory=list, compare=False)
     active: bool = dataclasses.field(init=False, compare=False)
+
+    preprocessor: typing.Any = dataclasses.field(default=None, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
     def __post_init__(self):

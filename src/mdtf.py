@@ -25,7 +25,7 @@ import os
 import signal
 import shutil
 from src import cli, util, util_mdtf, data_manager, environment_manager, \
-    diagnostic, preprocessor
+    diagnostic
 
 class MDTFFramework(object):
     def __init__(self, code_root, defaults_rel_path):
@@ -242,7 +242,7 @@ class MDTFFramework(object):
         print(util.pretty_print_json(d))
 
     _dispatch_search = [
-        data_manager, environment_manager, diagnostic, preprocessor
+        data_manager, environment_manager, diagnostic
     ]
     def manual_dispatch(self, config):
         def _dispatch(setting, class_suffix):
@@ -261,7 +261,6 @@ class MDTFFramework(object):
         self.DataManager = _dispatch('data_manager', 'DataManager')
         self.EnvironmentManager = _dispatch('environment_manager', 'EnvironmentManager')
         self.Diagnostic = _dispatch('diagnostic', 'Diagnostic')
-        self.Preprocessor = _dispatch('preprocessor', 'Preprocessor')
 
     def main_loop(self):
         config = util_mdtf.ConfigManager()
@@ -272,7 +271,7 @@ class MDTFFramework(object):
             case = self.DataManager(case_dict)
             case.setup()
             case.query_and_fetch_data()
-            case.preprocess_data(self.Preprocessor)
+            case.preprocess_data()
             caselist.append(case)
 
         for case in caselist:

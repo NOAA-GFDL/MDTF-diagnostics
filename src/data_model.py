@@ -381,6 +381,36 @@ class DMDependentVariable(_DMDimensionsMixin):
         self.axes = self.build_axes(self.dims)
         self.phys_axes = self.build_axes(self.dims, self.scalar_coords)
 
+    def add_scalar(self, ax, ax_value, **kwargs):
+        assert ax in self.axes
+        dim = self.axes[ax]
+        new_dim = dataclasses.replace(dim, value=ax_value)
+        new_dims = list(self.dims)
+        new_dims.remove(dim)
+        new_scalars = self.scalar_coords.copy()
+        new_scalars.add(new_dim)
+        return dataclasses.replace(
+            self,
+            dims=tuple(new_dims),
+            scalar_coords=new_scalars,
+            **kwargs
+        )
+        
+    def remove_scalar(self, ax, position=-1, **kwargs):
+        dim = self.get_scalar(ax)
+        assert dim is not None
+        new_dim = dataclasses.replace(dim, value=None)
+        new_dims = list(self.dims)
+        new_dims.insert(position, new_dim)
+        new_scalars = self.scalar_coords.copy()
+        new_scalars.remove(dim)
+        return dataclasses.replace(
+            self,
+            dims=tuple(new_dims),
+            scalar_coords=new_scalars,
+            **kwargs
+        )
+
 @util.mdtf_dataclass
 class DMAuxiliaryCoordinate(DMDependentVariable):
     """Class to describe `auxiliary coordinate variables 

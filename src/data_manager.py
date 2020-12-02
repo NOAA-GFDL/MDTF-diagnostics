@@ -111,6 +111,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
     _DiagnosticClass = diagnostic.Diagnostic
     _DateRangeClass = datelabel.DateRange
     _DateFreqClass = datelabel.DateFrequency
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
     def __init__(self, case_dict):
         self.case_name = case_dict['CASENAME']
@@ -191,6 +192,19 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)    
                 continue
+            try:
+                for v in pod.iter_vars(all_vars=True):
+                    v.preprocessor = self._PreprocessorClass(self, v)
+                    v.preprocessor.edit_request(pod)
+            except Exception as exc:
+                raise
+                try:
+                    raise diagnostic.PodConfigError(pod, 
+                        "Caught exception in DataManager setup.") from exc
+                except Exception as chained_exc:
+                    pod.exceptions.log(chained_exc)    
+                continue
+
 
     @staticmethod
     def dataset_key(dataset):
@@ -381,7 +395,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # -------------------------------------
 
-    def preprocess_data(self, preprocessor):
+    def preprocess_data(self):
         """Hook to run the preprocessing function on all variables. The 
         preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
         """
@@ -389,8 +403,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             pod.setup_pod_directories()
             for var in pod.iter_vars():
                 d_key = self.dataset_key(var)
-                pp = preprocessor(self, var)
-                pp.preprocess(list(self.data_files[d_key]))
+                var.preprocessor.preprocess(list(self.data_files[d_key]))
 
     # HTML & PLOT OUTPUT -------------------------------------
 
@@ -480,6 +493,7 @@ class LocalfileDataManager(DataManager):
     the PODs' sample model data.
     """
     _DataKeyClass = DataKey
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
     FileDataSet = remote_file_dataset_factory('FileDataSet', _DataKeyClass)
 

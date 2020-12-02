@@ -3,7 +3,7 @@ import os
 from src import six
 import abc
 from operator import attrgetter
-from src import util, data_model
+from src import util, data_model, diagnostic
 # must import these before xarray in order to register accessors
 import cftime
 import src.metpy_xr
@@ -136,6 +136,24 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     data, verify that it's for the requested level. Rename variable according to
     convention POD expects.
     """
+    def edit_request(self, v, pod):
+        name_suffix = '_var'
+        z_level = v.get_scalar('Z')
+        if z_level is None:
+            return
+        new_name = v.standard_name
+        if v.standard_name.endswith(name_suffix):
+            new_name = new_name[:-len(name_suffix)]
+        new_name += str(int(z_level.value))  # TODO: proper units
+        if v.standard_name.endswith(name_suffix):
+            new_name += name_suffix
+        new_v = v.remove_scalar('Z', name=new_name, alternates=[[v]])
+        new_v.preprocessor.v = new_v
+        v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
+        print('####### alts for {new_v.name}:')
+        for vv in new_v.iter_alternate_entries():
+            print(vv.name, vv.requirement)
+
     def extract_level(self, ds, v, ax_names, **kwargs):
         z_coord = v.get_scalar('Z')
         if not z_coord or not z_coord.value:
@@ -177,6 +195,15 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         self.v = var
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, var) for cls_ in self._functions]
+
+    def edit_request(self, pod):
+        """
+        """
+        for func in self.functions:
+            if hasattr(func, 'edit_request'):
+                func.edit_request(self.v, pod)
+
+    # --------------------------------------------------
 
     # arguments passed to open_dataset and open_mfdataset
     open_dataset_kwargs = {
@@ -431,14 +458,14 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
 # -------------------------------------------------
 
-class SamplemodeldataPreprocessor(SingleFilePreprocessor):
+class SampleModelDataPreprocessor(SingleFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` intended for use on sample model data
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
     _functions = (CropDateRangeFunction, )
 
-class MdtfdataPreprocessor(DaskMultiFilePreprocessor):
+class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
     _functions = (CropDateRangeFunction, ExtractLevelFunction)

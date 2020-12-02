@@ -13,13 +13,13 @@ import os
 import shutil
 import tempfile
 from src import cli, util, util_mdtf, data_manager, environment_manager, \
-    diagnostic, preprocessor
+    diagnostic
 from src import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):
     # add gfdl to search path for DataMgr, EnvMgr
     _dispatch_search = [
-        gfdl, data_manager, environment_manager, diagnostic, preprocessor
+        gfdl, data_manager, environment_manager, diagnostic
     ]
 
     def parse_mdtf_args(self, cli_obj, config):

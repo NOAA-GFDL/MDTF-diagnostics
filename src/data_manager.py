@@ -8,6 +8,8 @@ from itertools import chain
 from operator import attrgetter
 from abc import ABCMeta, abstractmethod
 import datetime
+import functools
+import typing
 if os.name == 'posix' and six.PY2:
     try:
         from subprocess32 import CalledProcessError
@@ -57,6 +59,32 @@ class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
     """
     _error_str = "Data fetch error"
+
+@util.mdtf_dataclass(frozen=True)
+class _RemoteFileDatasetBase(object):
+    """Base class for describing data contained in a single file.
+    """
+    remote_path: str = ""
+    local_path: str = ""
+
+def remote_file_dataset_factory(class_name, *key_classes):
+    def _to_dataclass(self, cls_):
+        return cls_(**(util.filter_dataclass(self, cls_)))
+
+    def _from_dataclasses(cls_, *keys, **kwargs):
+        new_kwargs = dict()
+        for key in keys:
+            new_kwargs.update(util.filter_dataclass(key, cls_))
+        new_kwargs.update(kwargs)
+        return cls_(**new_kwargs)
+
+    methods = {'from_keys': classmethod(_from_dataclasses)}
+    for key_cls in key_classes:
+        method_nm = 'to_' + key_cls.__name__
+        methods[method_nm] = functools.partialmethod(_to_dataclass, key_cls)
+    list(key_classes).append(_RemoteFileDatasetBase)
+    new_cls = type(class_name, tuple(key_classes), methods)
+    return util.mdtf_dataclass(new_cls, frozen=True)
 
 class DataManager(six.with_metaclass(ABCMeta)):
     """Base class for handling the data needs of PODs. Executes query for 
@@ -226,7 +254,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # specific details that must be implemented in child class 
     @abstractmethod
-    def query_dataset(self, dataset):
+    def query_dataset(self, data_key):
         pass
 
     def query_data(self):
@@ -246,11 +274,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_query:
                 try:
-                    var = self.data_keys[d_key][0]
                     print(f"\tCalling query_dataset on {d_key}")
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
-                    files = util.coerce_to_iter(self.query_dataset(var))
+                    files = util.coerce_to_iter(self.query_dataset(d_key))
                     if not files:
                         raise DataQueryError(d_key, "No data found by query.")
                     self.data_files[d_key].update(files)
@@ -278,7 +305,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
     def pre_fetch_hook(self):
         pass
 
-    def sort_files(self, d_key):
+    def sort_dataset_files(self, d_key):
         """Process list of requested data to make data fetching efficient.
 
         This is intended as a hook to be used by subclasses. Default behavior is
@@ -304,7 +331,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
     
     _fetch_order_function = None
 
-    def local_data_is_current(self, dataset):
+    def local_data_is_current(self, dataset_obj):
         """Determine if local copy of data needs to be refreshed. This is 
         intended as a hook to be used by subclasses. Default is to always
         return `False`, ie always fetch remote data.
@@ -313,10 +340,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
             updated.
         """
         return False
+        # return os.path.getmtime(dataset.local_path) \
+        #     >= os.path.getmtime(dataset.remote_path)
 
     # specific details that must be implemented in child class 
     @abstractmethod
-    def fetch_dataset(self, dataset):
+    def fetch_dataset(self, data_key):
         pass
 
     def query_and_fetch_data(self):
@@ -452,12 +481,28 @@ class LocalfileDataManager(DataManager):
     already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
     the PODs' sample model data.
     """
-    DataKey = collections.namedtuple('DataKey', ['name_in_model', 'date_freq'])  
+    @util.mdtf_dataclass(frozen=True)
+    class DataKey(object):
+        case_name: str = ""
+        date_range: typing.Any = None
+        name_in_model: str = ""
+        frequency: typing.Any = None
+        level: typing.Any = None
 
-    def dataset_key(self, dataset):
+    FileDataSet = remote_file_dataset_factory('FileDataSet', DataKey)
+
+    def dataset_key(self, varlist_entry):
+        if varlist_entry.is_static:
+            dt_range = datelabel.FXDateRange
+            freq = datelabel.DateFrequency('static')
+        else:
+            dt_range = varlist_entry.T.range
+            freq = varlist_entry.T.frequency
         return self.DataKey(
-            name_in_model=dataset.name_in_model, 
-            date_freq=str(dataset.date_freq)
+            case_name = self.case_name,
+            date_range = dt_range,
+            name_in_model = varlist_entry.name_in_model, 
+            frequency = freq
         )
 
     def remote_path(self, data_key):
@@ -468,41 +513,30 @@ class LocalfileDataManager(DataManager):
         ``$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'``.
         Sample model data not following this convention won't be found.
         """
-        assert 'name_in_model' in data_key._fields
-        assert 'date_freq' in data_key._fields
-        # values in key are repr strings by default, so need to instantiate the
-        # datelabel object to use its formatting method
-        try:
-            # value in key is from __str__
-            freq = datelabel.DateFrequency(data_key.date_freq)
-        except ValueError:
-            # value in key is from __repr__
-            freq = eval('datelabel.'+data_key.date_freq)
-        freq = freq.format_local()
+        freq = data_key.frequency.format_local()
         return os.path.join(
             self.MODEL_DATA_DIR, freq,
-            f"{self.case_name}.{data_key.name_in_model}.{freq}.nc"
+            f"{data_key.case_name}.{data_key.name_in_model}.{freq}.nc"
         )
 
-    def query_dataset(self, dataset):
-        d_key = self.dataset_key(dataset)
-        path = self.remote_path(d_key)
+    def query_dataset(self, data_key):
         tmpdirs = util_mdtf.TempDirManager()
-        tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
+
+        path = self.remote_path(data_key)
+        tmpdir = tmpdirs.make_tempdir(hash_obj = data_key)
         if os.path.isfile(path):
-            out = SingleFileDataSet()
-            out.name = dataset.name
-            out.name_in_model = dataset.name_in_model
-            out.date_range = dataset.date_freq
-            out.axes = dataset.axes
-            out.remote_path = path
-            out.local_path = os.path.join(tmpdir, os.path.basename(path))
-            return out
+            return self.FileDataSet.from_keys(
+                data_key,
+                remote_path = path,
+                local_path = os.path.join(tmpdir, os.path.basename(path))
+            )
         else:
-            raise DataQueryError(dataset, f"File not found at {path}.")
+            raise DataQueryError(data_key, f"File not found at {path}.")
     
     def local_data_is_current(self, dataset):
         return True 
 
-    def fetch_dataset(self, file_ds):
-        shutil.copy2(file_ds.remote_path, file_ds.local_path)
+    def fetch_dataset(self, data_key):
+        files = self.sort_dataset_files(data_key)
+        for file_ds in files:
+            shutil.copy2(file_ds.remote_path, file_ds.local_path)

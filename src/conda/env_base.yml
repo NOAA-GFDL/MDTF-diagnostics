@@ -8,7 +8,6 @@ dependencies:
 # versions are current as of Jul 2020
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
 - python=3.7
-- mock # needed until tests updated from py2
 - ghostscript
 - numpy=1.19
 # - scipy=1.5.2

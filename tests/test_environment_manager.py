@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-import mock # define mock os.environ so we don't mess up real env vars
+import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 from src.environment_manager import EnvironmentManager
 

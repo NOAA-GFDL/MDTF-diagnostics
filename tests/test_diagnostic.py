@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-import mock # define mock os.environ so we don't mess up real env vars
+import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.util_mdtf as util_mdtf
 from src.data_manager import DataSet, DataManager
 from src.datelabel import DateFrequency

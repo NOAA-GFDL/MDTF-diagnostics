@@ -294,7 +294,7 @@ class SubprocessRuntimePODWrapper(object):
         log_str = f"--- MDTF.py Starting POD {self.pod.name}\n"
         self.log_handle.write(log_str)
         if verbose > 0: print(log_str)
-        self.pod.setup()
+        self.pod.pre_run_setup()
         print(f"{self.pod.name} will run in env: {self.env}")
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
@@ -310,7 +310,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.exception = diagnostic.PodRuntimeError(self.pod, log_str)
+        self.pod.log_exception(diagnostic.PodRuntimeError(self.pod, log_str))
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
@@ -355,7 +355,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.exception = diagnostic.PodExecutionError(self.pod, log_str)
+        self.pod.log_exception(diagnostic.PodExecutionError(self.pod, log_str))
 
     def tear_down(self):
         if self.log_handle is not None:
@@ -450,7 +450,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.process.wait()
                 if p.process.returncode and p.process.returncode != 0:
                     s = "Process exited abnormally (code={p.process.returncode})"
-                    p.pod.exception = diagnostic.PodExecutionError(p.pod, s)
+                    p.pod.log_exception(diagnostic.PodExecutionError(p.pod, s))
                     if p.log_handle is not None:
                         p.log_handle.write('ERROR: '+s)
                 p.process = None

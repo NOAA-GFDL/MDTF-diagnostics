@@ -159,7 +159,8 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
-    path_variable: str = dataclasses.field(default=None, compare=False)
+    name_in_model: str = dataclasses.field(default="", compare=False)
+    path_variable: str = dataclasses.field(default="", compare=False)
     use_exact_name: bool = False
     requirement: VarlistEntryRequirement = dataclasses.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
@@ -381,21 +382,25 @@ class Diagnostic(object):
     dry_run: bool = False
 
     status: DiagnosticStatus = dataclasses.field(init=False)
-    exception: Exception = dataclasses.field(init=False)
+    exceptions: list = dataclasses.field(init=False)
     
     def __post_init__(self):
         self.status = DiagnosticStatus.INIT
-        self.exception = None
+        self.exceptions = []
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.coerce_to_iter(v)
 
     @property
     def active(self):
-        return (self.exception is None)
+        return (len(self.exceptions) == 0)
 
     @property
     def failed(self):
-        return (self.exception is not None)
+        return (len(self.exceptions) != 0)
+
+    def log_exception(self, exc):
+        # other stuff here when we implement logging
+        self.exceptions.append(exc)
 
     @classmethod
     def from_struct(cls, pod_name, d, **kwargs):
@@ -426,29 +431,60 @@ class Diagnostic(object):
         :class:`~util_mdtf.ConfigManager`.
         """
         config = util_mdtf.ConfigManager()
-        assert pod_name in config.pods # catch errors in input validation
+        # following should have been caught in user input validation
+        assert pod_name in config.pods, \
+            f"POD name {pod_name} not recognized." 
         return cls.from_struct(
             pod_name, config.pods[pod_name],
             CODE_ROOT=config.paths.CODE_ROOT, 
             dry_run=config.config.get('dry_run', False)
         )
 
-    def iter_vars(self):
-        yield from self.varlist.active_vars
+    def iter_vars(self, all_vars=False):
+        if all_vars:
+            yield from self.varlist.vars
+        else:
+            # only active vars
+            yield from self.varlist.active_vars
 
     def update_active_vars(self):
         self.varlist.update_active_vars()
 
-    def configure_paths(self, paths):
+    # this dependency inversion feels funny to me
+    def configure_vars(self, data_mgr):
+        translate = util_mdtf.VariableTranslator()
+
+        self.varlist.change_coord(
+            'T', 
+            new_class={
+                'self': VarlistTimeCoordinate,
+                'range': data_mgr._DateRangeClass,
+                'frequency': data_mgr._DateFreqClass
+            },
+            range=data_mgr.date_range
+        )
+        translate_d = translate.variables[data_mgr.convention].to_dict()
+        for v in self.iter_vars(all_vars=True):
+            try:
+                v.name_in_model = translate_d[v.name]
+            except KeyError:
+                err_str = (f"Varlist entry {v.name} for POD {self.name} not "
+                    f"recognized by naming convention '{data_mgr.convention}'.")
+                print(err_str)
+                v.exception = PodConfigError(self, err_str)
+                self.log_exception(v.exception)
+                continue
+
+    # this dependency inversion feels funny to me
+    def configure_paths(self, data_mgr):
+        config = util_mdtf.ConfigManager()
+        paths = config.paths.pod_paths(self, data_mgr)
         for k,v in paths.items():
             setattr(self, k, v)
 
-    def change_coord(self, ax_name, new_class=None, **kwargs):
-        self.varlist.change_coord(ax_name, new_class, **kwargs)
-
     # -------------------------------------
 
-    def setup(self):
+    def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
 
         In order, this 1) sets environment variables specific to the POD, 2)
@@ -475,10 +511,10 @@ class Diagnostic(object):
             self.setup_pod_directories()
             self.check_pod_driver()
         except Exception as exc:
-            self.exception = PodRuntimeError(self, 
+            self.log_exception(PodRuntimeError(self, 
                 "Caught exception during setup: {0}({1!r})".format(
                     type(exc).__name__, exc.args)
-            )
+            ))
 
     def set_pod_env_vars(self, verbose=0):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
@@ -683,7 +719,8 @@ class Diagnostic(object):
         if self.failed:
             # report error
             src = os.path.join(src_dir, 'pod_error_snippet.html')
-            template_d['error_text'] = str(self.exception)
+            template_d['error_text'] = """Caught following exceptions:\n""" + \
+                '\n'.join([f"\t* {str(exc)}" for exc in self.exceptions])
         else:
             # normal exit
             src = os.path.join(src_dir, 'pod_result_snippet.html')

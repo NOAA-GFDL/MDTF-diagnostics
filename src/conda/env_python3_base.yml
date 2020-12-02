@@ -15,5 +15,5 @@ dependencies:
 - matplotlib=3.3
 - cartopy=0.18
 - numba = 0.51.2
-- networkx = 2.5
+- networkx = 2.3
 - jupyterlab

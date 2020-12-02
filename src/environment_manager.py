@@ -20,6 +20,8 @@ from src import util, util_mdtf, diagnostic
 class AbstractEnvironmentManager(abc.ABC):
     """Interface for EnvironmentManagers.
     """
+    def setup(self): pass
+
     @abc.abstractmethod
     def create_environment(self, env_name): pass 
 
@@ -34,6 +36,8 @@ class AbstractEnvironmentManager(abc.ABC):
 
     @abc.abstractmethod
     def destroy_environment(self, env_name): pass 
+
+    def tear_down(self): pass
 
 class NullEnvironmentManager(AbstractEnvironmentManager):
     """:class:`AbstractEnvironmentManager` which performs no environment 
@@ -402,6 +406,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 yield p
 
     def setup(self):
+        self.env_mgr.setup()
         for p in self.iter_active_pods():
             p.env = self.env_mgr.get_pod_env(p.pod)
         envs = set([p.env for p in self.pods if p.env])
@@ -474,6 +479,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         envs = set([p.env for p in self.pods if p.env])
         for env in envs:
             self.env_mgr.destroy_environment(env)
+        self.env_mgr.tear_down()
 
     def subprocess_cleanup(self, signum=None, frame=None):
         util.signal_logger(self.__class__.__name__, signum, frame)

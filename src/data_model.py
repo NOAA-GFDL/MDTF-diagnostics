@@ -278,19 +278,19 @@ class _DMDimensionsMixin(object):
     """
     @property
     def X(self):
-        return self.axes['X']
+        return self.axes.get('X', None)
 
     @property
     def Y(self):
-        return self.axes['Y']
+        return self.axes.get('Y', None)
 
     @property
     def Z(self):
-        return self.axes['Z']
+        return self.axes.get('Z', None)
 
     @property
     def T(self):
-        return self.axes['T']
+        return self.axes.get('T', None)
 
     @property
     def is_static(self):
@@ -322,15 +322,13 @@ class _DMDimensionsMixin(object):
                 raise ValueError((f"Non-scalar coordinate {c} supplied as scalar "
                     f"coordinate for {self.name}."))
         # validate that we don't have duplicate axes
-        temp_d = dict()
+        d = dict()
+        verify_d = dict()
         for c in itertools.chain(*coords):
-            if c.axis != 'OTHER' and c.axis in temp_d:
+            if c.axis != 'OTHER' and c.axis in verify_d:
                 raise ValueError((f"Duplicate definition of {c.axis} axis in "
-                    f"{self.name}: {str(c)}, {str(temp_d[c.axis])}"))
-            temp_d[c.axis] = c
-        # acutally make the dict
-        d = dict((x, None) for x in _spatiotemporal_names)
-        for c in itertools.chain(*coords):
+                    f"{self.name}: {str(c)}, {str(verify_d[c.axis])}"))
+            verify_d[c.axis] = c
             if c.axis in _spatiotemporal_names:
                 d[c.axis] = c
         return d

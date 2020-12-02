@@ -397,6 +397,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
     def tear_down(self):
         # TODO: handle OSErrors in all of these
         config = util_mdtf.ConfigManager()
+        
+        # create empty text file for PODs to append to
+        open(self.TEMP_HTML, 'w').close()
+        for p in self.iter_pods(all_pods=True):
+            p.tear_down()
         self._make_html()
         _ = self._backup_config_file(config)
         if self.make_variab_tar:

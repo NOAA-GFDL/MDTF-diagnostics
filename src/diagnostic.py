@@ -439,10 +439,11 @@ class Diagnostic(object):
         """
         if var.is_static:
             f_name = f"{data_mgr.case_name}.{var.name}.nc"
+            return os.path.join(self.POD_WK_DIR, f_name)
         else:
             freq = var.T.frequency.format_local()
             f_name = f"{data_mgr.case_name}.{var.name}.{freq}.nc"
-        return os.path.join(self.POD_WK_DIR, f_name)
+            return os.path.join(self.POD_WK_DIR, freq, f_name)
 
     # this dependency inversion feels funny to me
     def configure_vars(self, data_mgr):
@@ -566,17 +567,18 @@ class Diagnostic(object):
             "POD_HOME": self.POD_CODE_DIR, # location of POD's code
             "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
         })
         # Set env vars for variable and axis names:
         ax_name_verify = collections.defaultdict(set)
         for k,v in self.varlist.axes.items():
-            ax_name_verify[k].add(v)
+            ax_name_verify[k].add(v.name)
         for var in self.iter_vars():
             # env var for variable name currently set in data_manager, TODO: fix
             # env var for path to file:
             self.pod_env_vars[var.path_variable] = var.dest_path
-            for k,v in var.axes:
-                ax_name_verify[k].add(v)
+            for k,v in var.axes.items():
+                ax_name_verify[k].add(v.name)
         for ax, ax_set in ax_name_verify.items():
             if len(ax_set) > 1:
                 # names found in two different files disagree - raise error
@@ -678,10 +680,10 @@ class Diagnostic(object):
             self.cleanup_pod_files()
             self.verify_pod_links()
 
-        if verbose > 0: 
-            print(f"---  MDTF.py Finished POD {self.name}")
-            # elapsed = timeit.default_timer() - start_time
-            # print(pod+" Elapsed time ",elapsed)
+            if verbose > 0: 
+                print(f"---  MDTF.py Finished POD {self.name}")
+                # elapsed = timeit.default_timer() - start_time
+                # print(pod+" Elapsed time ",elapsed)
 
     def templating_dict(self):
         """Get the dict of recognized substitutions to perform in HTML templates.
@@ -740,6 +742,7 @@ class Diagnostic(object):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
+        print(f'Checking linked output files for {self.name}:')
         verifier = verify_links.LinkVerifier(
             self.POD_HTML, os.path.dirname(self.POD_WK_DIR), verbose=False
         )
@@ -754,6 +757,9 @@ class Diagnostic(object):
                 self.TEMP_HTML, 
                 template_d
             )
+            self.exceptions.log(FileNotFoundError(f'Missing {len(missing_out)} files.'))
+        else:
+            print(f'No files are missing.')
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
@@ -852,3 +858,5 @@ class Diagnostic(object):
         elif not config.config.save_nc:
             for d in util.find_files(self.POD_WK_DIR, 'netCDF'+os.sep):
                 shutil.rmtree(d)
+            for f in util.find_files(self.POD_WK_DIR, '*.nc'):
+                os.remove(f)

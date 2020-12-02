@@ -137,8 +137,17 @@ class LinkVerifier(object):
             print('Error code: ', e.code)
             return None
         except urllib.error.URLError as e:
-            print('\nFailed to find file or connect to server.')
-            print('Reason: ', e.reason)
+            # print('\nFailed to find file or connect to server.')
+            # print('Reason: ', e.reason)
+            str_ = str(e.reason)
+            prefix = "[Errno 2] No such file or directory: '" 
+            if str_.startswith(prefix):
+                str_ = str_[len(prefix):-1]
+            if str_.startswith(self.root_dir):
+                str_ = str_[len(self.root_dir):]
+            else:
+                print("##", str_, self.root_dir)
+            print(f"    Missing: {str_}")
             return None
         if f.info().get_content_subtype() != 'html':
             return []

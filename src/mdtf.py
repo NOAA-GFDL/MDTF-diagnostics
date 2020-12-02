@@ -286,6 +286,7 @@ class MDTFFramework(object):
         for case in caselist:
             case.tear_down()
         self.cleanup_tempdirs()
+        return [pod_name for pod_name, pod in case.pods.items() if pod.failed]
 
 
 # should move this out of "src" package, but need to create wrapper shell script
@@ -299,6 +300,15 @@ if __name__ == '__main__':
         # print('Warning: site-specific cli.jsonc not found, using template.')
         defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
     mdtf = MDTFFramework(code_root, defaults_rel_path)
-    print("\n======= Starting {}".format(__file__))
-    mdtf.main_loop()
-    print("Exiting normally from {}".format(__file__))
+    print(f"\n======= Starting {__file__}")
+    failed_pods = mdtf.main_loop()
+    config = util_mdtf.ConfigManager()
+    if failed_pods:
+        print(f"\nExiting with errors from {__file__}")
+        print(f"The following PODs raised errors: {', '.join(failed_pods)}")
+        print(f"Output written to {config.paths.OUTPUT_DIR}")
+        exit(1)
+    else:
+        print(f"\nExiting normally from {__file__}")
+        print(f"Output written to {config.paths.OUTPUT_DIR}")
+        exit(0)

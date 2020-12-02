@@ -113,7 +113,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             raise DataPreprocessError(v, error_str)
         
         print("\tCrop date range of {} from '{}-{}' to {}".format(
-                t_name, ax_names['var'],
+                ax_names['var'],
                 time_ax.values[0], time_ax.values[-1], dt_range
             ))
         return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
@@ -267,10 +267,14 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
             self.ax_names['W'+str(i)] = ax_name
 
         # update axes names on var
-        for ax, expected_ax_name in self.v.axes.items():
-            if expected_ax_name != self.ax_names[ax]:
+        for ax, expected_ax in self.v.axes.items():
+            if ax not in self.v.phys_axes:
+                print(("\tWarning: file has {ax} axis '{self.ax_names[ax]}' "
+                    f"not expected from variable request"))
+                continue
+            if ax in self.ax_names and expected_ax.name != self.ax_names[ax]:
                 print(("\tWarning: expected name for {ax} was "
-                    f"'{expected_ax_name}', got '{self.ax_names[ax]}'"))
+                    f"'{expected_ax.name}', got '{self.ax_names[ax]}'"))
                 if not self.v.rename_dimensions:
                     self.v.change_coord(ax, name=self.ax_names[ax])
 
@@ -353,19 +357,21 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     data.
     """
     def preprocess(self, local_files):
-        print(f"Preprocess: parsing metadata for {self.v}")
+        v_str = self.v.short_format()
+        print(f"Preprocess: parsing metadata for {v_str}")
         assert len(local_files) == 1
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        print(f"Preprocess: processing {self.v}")
+        print(f"Preprocess: processing {v_str}")
         if self.v.is_static:
             ds = self.process_static_dataset(ds)
         else:
             ds = self.process_file(ds)
             ds = self.process_dataset(ds)
-        print(f"Preprocess: writing file to {self.v.dest_path}")
+        print(f"Preprocess: writing file to {self.v.dest_path}\n")
+        os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=self.v.dest_path,
             mode='w',
@@ -382,12 +388,13 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable.
     """
     def preprocess(self, local_files):
-        print(f"Preprocess: parsing metadata for {self.v}")
+        v_str = self.v.short_format()
+        print(f"Preprocess: parsing metadata for {v_str}")
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        print(f"Preprocess: processing {self.v}")
+        print(f"Preprocess: processing {v_str}")
         if self.v.is_static:
             # skip date trimming logic for time-independent files
             assert len(local_files) == 1
@@ -410,7 +417,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 **self.open_dataset_kwargs
             )
             ds = self.process_dataset(ds)
-        print(f"Preprocess: writing file to {self.v.dest_path}")
+        print(f"Preprocess: writing file to {self.v.dest_path}\n")
+        os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=self.v.dest_path,
             mode='w',

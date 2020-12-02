@@ -310,14 +310,17 @@ class SubprocessRuntimePODWrapper(object):
     def setup_env_vars(self):
         def _envvar_format(x):
             # environment variables must be strings
-            if isinstance(x, bool):
+            if isinstance(x, str):
+                return x
+            elif isinstance(x, bool):
                 return ('1' if x else '0')
-            elif not isinstance(x, str):
+            else:
                 return str(x)
 
-        self.env_vars = {k: _envvar_format(v) for k,v in pod.pod_env_vars}
+        self.env_vars = {k: _envvar_format(v) \
+            for k,v in self.pod.pod_env_vars.items()}
         env_list = [f"  {k}: {v}" for k,v in self.env_vars.items()]
-        self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list)))
+        self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list))+'\n\n')
 
     def setup_exception_handler(self, exc):
         log_str = (f"Caught exception while preparing to run {self.pod.name}: "
@@ -329,6 +332,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle = None
         raise exc
         self.pod.exceptions.log(exc)
+        
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
@@ -393,7 +397,8 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     def __init__(self, data_mgr, EnvMgrClass):
         config = util_mdtf.ConfigManager()
         self.test_mode = config.config.test_mode
-        self.pods = [self._PodWrapperClass(pod=p) for p in data_mgr.iter_pods()]
+        # transfer all pods, even failed ones, because we need to call their 
+        self.pods = [self._PodWrapperClass(pod=p) for p in data_mgr.pods.values()]
         self.env_mgr = EnvMgrClass(data_mgr)
 
         # Need to run bash explicitly because 'conda activate' sources 
@@ -428,7 +433,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
         commands = self.env_mgr.activate_env_commands(p.env) \
             + run_cmds \
-            + self.env_mgr.deactivate_env_commands(p.ev)
+            + self.env_mgr.deactivate_env_commands(p.env)
         if self.test_mode:
             for cmd in commands:
                 print('TEST MODE: call {}'.format(cmd))
@@ -437,6 +442,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
+        assert os.path.isdir(p.pod.POD_WK_DIR)
         env_vars = env_vars_base.copy()
         env_vars.update(p.env_vars)
         # Need to run bash explicitly because 'conda activate' sources 
@@ -472,7 +478,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.process is not None:
                 p.process.wait()
                 if p.process.returncode and p.process.returncode != 0:
-                    s = "Process exited abnormally (code={p.process.returncode})"
+                    s = f"Process exited abnormally (code={p.process.returncode})"
                     try:
                         raise diagnostic.PodExecutionError(p.pod, s)
                     except Exception as exc:
@@ -485,8 +491,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.log_handle = None
 
     def tear_down(self):
-        for p in self.iter_active_pods():
-            p.tear_down()
         # cleanup all envs that were defined, just to be safe
         envs = set([p.env for p in self.pods if p.env])
         for env in envs:

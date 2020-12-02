@@ -311,7 +311,7 @@ class _DoubleBraceTemplate(string.Template):
 
 def append_html_template(template_file, target_file, template_dict={}, 
     create=True, append=True):
-    """Perform subtitutions on template_file and write result to target_file.
+    """Perform substitutions on template_file and write result to target_file.
 
     Variable substitutions are done with custom 
     `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,

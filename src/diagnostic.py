@@ -7,6 +7,7 @@ import glob
 import shutil
 import typing
 from src import util, util_mdtf, verify_links, datelabel, data_model
+from src import cli # HACK for now
 
 @six.python_2_unicode_compatible
 class PodExceptionBase(Exception):
@@ -74,9 +75,9 @@ class _VarlistGlobalSettings(object):
 
 @util.mdtf_dataclass
 class _VarlistTimeSettings(object):
-    frequency: datelabel.AbstractDateFrequency = None
-    min_frequency: datelabel.AbstractDateFrequency = None
-    max_frequency: datelabel.AbstractDateFrequency = None
+    frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
+    min_frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
+    max_frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
     min_duration: str = 'any'
     max_duration: str = 'any'
 
@@ -132,7 +133,7 @@ class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     max_duration: str = 'any'
 
     standard_name = 'time'
-    axis = data_model.DMAxis.T
+    axis = 'T'
 
 @util.mdtf_dataclass(frozen=True)
 class VarlistTimeCoordinate(data_model.DMTimeCoordinate, _VarlistTimeSettings, 
@@ -336,13 +337,6 @@ class Diagnostic(object):
     convention: str = "CF"
     realm: str = ""
 
-    POD_CODE_DIR = ""
-    POD_OBS_DATA = ""
-    POD_WK_DIR = ""
-    POD_OUT_DIR = ""
-    TEMP_HTML = ""
-    CODE_ROOT = ""
-
     varlist: Varlist = None
     exceptions: util.ExceptionQueue = dataclasses.field(init=False)
 
@@ -351,6 +345,13 @@ class Diagnostic(object):
     runtime_requirements: dict = dataclasses.field(default_factory=dict)
     pod_env_vars: dict = dataclasses.field(default_factory=dict)
     dry_run: bool = False
+
+    CODE_ROOT: str = ""
+    POD_CODE_DIR = ""
+    POD_OBS_DATA = ""
+    POD_WK_DIR = ""
+    POD_OUT_DIR = ""
+    TEMP_HTML = ""
     
     def __post_init__(self):
         self.exceptions = util.ExceptionQueue()
@@ -390,11 +391,14 @@ class Diagnostic(object):
         :class:`~util_mdtf.ConfigManager`.
         """
         config = util_mdtf.ConfigManager()
-        # following should have been caught in user input validation
-        assert pod_name in config.pods, \
-            f"POD name {pod_name} not recognized." 
+        # HACK - don't want to read config files twice, but this lets us
+        # propagate syntax errors
+        pod_config = cli.load_pod_settings(config.paths.CODE_ROOT, pod_name)
+        # # following should have been caught in user input validation
+        # assert pod_name in config.pods, \
+        #     f"POD name {pod_name} not recognized." 
         return cls.from_struct(
-            pod_name, config.pods[pod_name],
+            pod_name, pod_config,
             CODE_ROOT=config.paths.CODE_ROOT, 
             dry_run=config.config.get('dry_run', False)
         )

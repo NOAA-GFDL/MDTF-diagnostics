@@ -10,6 +10,7 @@ import argparse
 import shlex
 import collections
 from src import util
+from src.diagnostic import PodConfigError
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 
@@ -370,8 +371,9 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
                 os.path.join(code_root, _pod_dir, pod, _pod_settings)
             )
             assert 'settings' in d
-        except Exception:
-            pass # better error handling?
+        except Exception as exc:
+            raise PodConfigError(pod, 
+                "Syntax error encountered when reading settings.jsonc.") from exc
         return d
 
     # get list of pods
@@ -382,45 +384,47 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     if pod == 'list':
         return pod_list
 
-    # load JSON files
-    if not pod:
-        # load all of them
-        pods = dict()
-        realm_list = set()
-        bad_pods = []
-        realms = collections.defaultdict(list)
-        for p in pod_list:
-            d = _load_one_json(p)
-            if not d:
-                bad_pods.append(p)
-                continue
-            pods[p] = d
-            # PODs requiring data from multiple realms get stored in the dict
-            # under a tuple of those realms; realms stored indivudally in realm_list
-            _realm = util.coerce_to_iter(d['settings'].get('realm', None), tuple)
-            if len(_realm) == 0:
-                continue
-            elif len(_realm) == 1:
-                _realm = _realm[0]
-                realm_list.add(_realm)
-            else:
-                realm_list.update(_realm)
-            realms[_realm].append(p)
-        for p in bad_pods:
-            pod_list.remove(p)
-        return PodDataTuple(
-            pod_data=pods, realm_data=realms,
-            sorted_lists={
-                "pods": pod_list,
-                "realms": sorted(list(realm_list), key=six.text_type.lower)
-            }
-        )
-    else:
+    # load one settings.jsonc file
+    if pod is not None:
         if pod not in pod_list:
-            print("Couldn't recognize POD {} out of the following diagnostics:".format(pod))
+            print(f"Couldn't recognize '{pod}' out of the following diagnostics:")
             print(', '.join(pod_list))
             return dict()
         return _load_one_json(pod)
+
+    # load all of them
+    pods = dict()
+    realm_list = set()
+    bad_pods = []
+    realms = collections.defaultdict(list)
+    for p in pod_list:
+        try:
+            d = _load_one_json(p)
+            assert d
+        except Exception as exc:
+            bad_pods.append(p)
+            continue
+        pods[p] = d
+        # PODs requiring data from multiple realms get stored in the dict
+        # under a tuple of those realms; realms stored indivudally in realm_list
+        _realm = util.coerce_to_iter(d['settings'].get('realm', None), tuple)
+        if len(_realm) == 0:
+            continue
+        elif len(_realm) == 1:
+            _realm = _realm[0]
+            realm_list.add(_realm)
+        else:
+            realm_list.update(_realm)
+        realms[_realm].append(p)
+    for p in bad_pods:
+        pod_list.remove(p)
+    return PodDataTuple(
+        pod_data=pods, realm_data=realms,
+        sorted_lists={
+            "pods": pod_list,
+            "realms": sorted(list(realm_list), key=six.text_type.lower)
+        }
+    )
 
 
 class InfoCLIHandler(object):

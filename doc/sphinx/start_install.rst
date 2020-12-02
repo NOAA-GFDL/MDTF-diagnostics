@@ -35,11 +35,7 @@ For POD developers, the ``develop`` branch is the “beta test” version of the
 Obtaining supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-<<<<<<< HEAD
-Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for test/demonstration purposes. For package installation and default tests, the most relevant files are:
-=======
 Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The required files are:
->>>>>>> 1c01368579b94417af4ddb1d65e12d368d43e015
 
 - Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
@@ -75,11 +71,7 @@ Download these three files and extract the contents in the following hierarchy u
            ├── (... supporting data for individual PODs )
 
 
-<<<<<<< HEAD
-The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. More data for additional PODs (including those still under development) are available from the FTP.
-=======
 The default test case uses the QBOi.EXP1.AMIP.001 data. The GFDL.CM4.c96L32.am4g10r8 data is only for testing the MJO Propagation and Amplitude POD.
->>>>>>> 1c01368579b94417af4ddb1d65e12d368d43e015
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described in :numref:`ref-configure`.
 
@@ -88,11 +80,7 @@ You can put the observational data and model output in different locations (e.g.
 Install the conda package manager, if needed
 --------------------------------------------
 
-<<<<<<< HEAD
-The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use `Conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager to install and manage these dependencies. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
-=======
 The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager, to install and manage these dependencies. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ Python distributions, so having Miniconda or Anaconda is sufficient but not required.
->>>>>>> 1c01368579b94417af4ddb1d65e12d368d43e015
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda, even if they have a pre-existing installations of the required languages. A complete installation of all dependencies requires roughly 5 Gb, and the location of this installation can be set with the ``$CONDA_ENV_DIR`` setting described below. Note that conda does not create duplicates of dependencies that are already installed (instead using hard links by default). 
 

@@ -26,7 +26,7 @@ class PodExceptionBase(Exception):
             pod_name = self.pod
         s = f"Error in {pod_name}: " + self._error_str
         if self.msg is not None:
-            s = s + f"\nReason: {self.msg}."
+            s += f"\nReason: {self.msg}."
         return s
 
 @six.python_2_unicode_compatible
@@ -144,10 +144,6 @@ VarlistEntryRequirement = util.MDTFEnum(
     'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', module=__name__
 )
 
-VarlistEntryStatus = util.MDTFEnum(
-    'VarlistEntryStatus', 'INIT QUERY FETCH', module=__name__
-)
-
 @util.mdtf_dataclass
 class VarlistEntry(data_model.DMVariable, VarlistSettings):
     """Class to describe data for a single variable requested by a POD. 
@@ -167,13 +163,11 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     )
     alternates: list = dataclasses.field(default_factory=list, compare=False)
     active: bool = dataclasses.field(init=False, compare=False)
-    status: VarlistEntryStatus = dataclasses.field(init=False, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
     def __post_init__(self):
         super(VarlistEntry, self).__post_init__()
         self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
-        self.status = VarlistEntryStatus.INIT
         self.exception = None
         if not self.path_variable:
             self.path_variable = self.name.upper() + '_FILE'
@@ -220,6 +214,14 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         if time_kw:
             obj.change_coord('T', **time_kw)
         return obj
+
+    def short_format(self):
+        str_ = self.name
+        if self.name_in_model:
+            str_ += f" (= {self.name_in_model})"
+        if not self.is_static and hasattr(self.T, 'frequency'):
+            str_ += f" @ {str(self.T.frequency)}"
+        return str_
 
     def iter_alternate_entries(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 
@@ -315,41 +317,7 @@ class Varlist(data_model.DMDataSet):
     def active_vars(self):
         return [v for v in self.vars if v.active]
 
-    def update_active_vars(self):
-        """Update the status of which VarlistEntries are "active" (not failed
-        somewhere in the query/fetch process) based on new information. If the
-        process has failed for a VarlistEntry, try to find a set of alternate 
-        VarlistEntries. If successful, activate them; if not, raise a 
-        :class:`PodDataError`.
-        """
-        old_active_vars = self.active_vars
-        failed_vs = []
-        for v in old_active_vars:
-            if v.failed:
-                v.active = False
-                alt_success_flag = False
-                for alts in v.iter_alternates():
-                    if any(v.failed for v in alts):
-                        continue
-                    # found a viable set of alternates
-                    alt_success_flag = True
-                    for v in alts:
-                        v.active = True
-                if not alt_success_flag:
-                    # failed; ran through all sets of alternates
-                    failed_vs.append(v)
-        if failed_vs:
-            for v in self.active_vars:
-                v.active = False
-            raise PodDataError(
-                f"No alternates available for {[v.name for v in failed_vs]}."
-            )
-
 # ------------------------------------------------------------
-
-DiagnosticStatus = util.MDTFEnum(
-    'DiagnosticStatus', 'INIT QUERY FETCH RUN OUTPUT', module=__name__
-)
 
 @util.mdtf_dataclass
 class Diagnostic(object):
@@ -375,17 +343,15 @@ class Diagnostic(object):
     CODE_ROOT = ""
 
     varlist: Varlist = None
+    exceptions: util.ExceptionQueue = dataclasses.field(init=False)
+
     driver: str = ""
     program: str = ""
     runtime_requirements: dict = dataclasses.field(default_factory=dict)
     pod_env_vars: dict = dataclasses.field(default_factory=dict)
     dry_run: bool = False
-
-    status: DiagnosticStatus = dataclasses.field(init=False)
-    exceptions: util.ExceptionQueue = dataclasses.field(init=False)
     
     def __post_init__(self):
-        self.status = DiagnosticStatus.INIT
         self.exceptions = util.ExceptionQueue()
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.coerce_to_iter(v)
@@ -439,9 +405,6 @@ class Diagnostic(object):
             # only active vars
             yield from self.varlist.active_vars
 
-    def update_active_vars(self):
-        self.varlist.update_active_vars()
-
     # this dependency inversion feels funny to me
     def configure_vars(self, data_mgr):
         translate = util_mdtf.VariableTranslator()
@@ -476,6 +439,47 @@ class Diagnostic(object):
         paths = config.paths.pod_paths(self, data_mgr)
         for k,v in paths.items():
             setattr(self, k, v)
+
+    def deactivate_if_failed(self):
+        # should be called from a hook whenever we log an exception
+        # only need to keep track of this up to pod execution
+        if self.failed:
+            for v in self.iter_vars():
+                v.active = False
+
+    def update_active_vars(self):
+        """Update the status of which VarlistEntries are "active" (not failed
+        somewhere in the query/fetch process) based on new information. If the
+        process has failed for a VarlistEntry, try to find a set of alternate 
+        VarlistEntries. If successful, activate them; if not, raise a 
+        :class:`PodDataError`.
+        """
+        if self.failed:
+            self.deactivate_if_failed()
+            return
+        old_active_vars = self.varlist.active_vars
+        for v in old_active_vars:
+            if v.failed:
+                v_str = v.short_format()
+                print(f"\t{self.name}: '{v_str}' invalidated; finding alternate vars.")
+                v.active = False
+                alt_success_flag = False
+                for alts in v.iter_alternates():
+                    if any(v.failed for v in alts):
+                        continue
+                    # found a viable set of alternates
+                    alt_success_flag = True
+                    for v in alts:
+                        v.active = True
+                if not alt_success_flag:
+                    print(f"\t{self.name}: no alternates available for {v_str}.")
+                    try:
+                        raise PodDataError(self, 
+                            f"No alternates available for {v_str}.") from v.exception
+                    except Exception as exc:
+                        self.exceptions.log(exc)    
+                    continue
+        self.deactivate_if_failed()
 
     # -------------------------------------
 

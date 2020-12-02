@@ -15,59 +15,67 @@ if os.name == 'posix' and six.PY2:
         from subprocess import CalledProcessError
 else:
     from subprocess import CalledProcessError
-from src import util, util_mdtf, datelabel, preprocessor, data_model
-from src.diagnostic import PodDataError
-
+from src import util, util_mdtf, datelabel, preprocessor, data_model, diagnostic
 
 @six.python_2_unicode_compatible
-class DataQueryFailure(Exception):
+class DataExceptionBase(Exception):
+    """Base class and common formatting code for exceptions raised in data 
+    query/fetch.
+    """
+    _error_str = ""
+
+    def __init__(self, dataset, msg=None):
+        self.dataset = dataset
+        self.msg = msg
+
+    def __str__(self):
+        if hasattr(self.dataset, 'remote_path'):
+            data_id = self.dataset.remote_path
+        elif hasattr(self.dataset, 'name'):
+            data_id = self.dataset.name
+        else:
+            data_id = str(self.dataset)
+        s = self._error_str + f" for {data_id}"
+        if self.msg is not None:
+            s += f": {self.msg}."
+        else:
+            s += "."
+        return s
+
+@six.python_2_unicode_compatible
+class DataQueryError(DataExceptionBase):
     """Exception signaling a failure to find requested data in the remote location. 
     
     Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
     data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
     or :meth:`~data_manager.DataManager.fetchData`.
     """
-    def __init__(self, dataset, msg=''):
-        self.dataset = dataset
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.dataset, 'name'):
-            return 'Query failure for {}: {}.'.format(self.dataset.name, self.msg)
-        else:
-            return 'Query failure: {}.'.format(self.msg)
+    _error_str = "Data query error"
 
 @six.python_2_unicode_compatible
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
     """
-    def __init__(self, dataset, msg=''):
-        self.dataset = dataset
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.dataset, 'remote_path'):
-            return 'Data access error for {}: {}.'.format(
-                self.dataset.remote_path, self.msg)
-        else:
-            return 'Data access error: {}.'.format(self.msg)
+    _error_str = "Data fetch error"
 
 class DataManager(six.with_metaclass(ABCMeta)):
-    # analogue of TestFixture in xUnit
+    """Base class for handling the data needs of PODs. Executes query for 
+    requested model data against the remote data source, fetches the required 
+    data locally, preprocesses it, and performs cleanup/formatting of the POD's 
+    output.
+    """
+    _DiagnosticClass = diagnostic.Diagnostic
+    _DateRangeClass = datelabel.DateRange
+    _DateFreqClass = datelabel.DateFrequency
 
-    def __init__(self, case_dict, DateFreqMixin=None):
+    def __init__(self, case_dict):
         self.case_name = case_dict['CASENAME']
         self.model_name = case_dict['model']
-        self.firstyr = datelabel.Date(case_dict['FIRSTYR'])
-        self.lastyr = datelabel.Date(case_dict['LASTYR'])
-        self.date_range = datelabel.DateRange(self.firstyr, self.lastyr)
         self.convention = case_dict.get('convention', 'CF')
-        if 'data_freq' in case_dict:
-            self.data_freq = self.DateFreq(case_dict['data_freq'])
-        else:
-            self.data_freq = None
-        self.pod_list = case_dict['pod_list'] 
-        self.pods = []
+        self.date_range = self._DateRangeClass(
+            case_dict['FIRSTYR'], case_dict['LASTYR']
+        )
+        self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
         config = util_mdtf.ConfigManager()
         self.envvars = config.global_envvars.copy() # gets appended to
@@ -86,12 +94,16 @@ class DataManager(six.with_metaclass(ABCMeta)):
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
-    def iter_pods(self):
+        self.queried_keys = set([])
+        self.fetched_keys = set([])
+        self.data_files = util.MultiMap()
+
+    def iter_pods(self, all_pods=False):
         """Generator iterating over all pods which haven't been
         skipped due to requirement errors.
         """
-        for p in self.pods:
-            if p.active:
+        for p in self.pods.values():
+            if all_pods or p.active:
                 yield p
 
     def iter_vars(self):
@@ -103,76 +115,50 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     # -------------------------------------
 
-    def setup(self, verbose=0):
-        util_mdtf.check_required_dirs(
-            already_exist =[], 
-            create_if_nec = [self.MODEL_WK_DIR, self.MODEL_DATA_DIR], 
-            verbose=verbose)
+    def setup(self):
+        translate = util_mdtf.VariableTranslator()
+
+        util_mdtf.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
         self.envvars.update({
             "CASENAME": self.case_name,
             "model": self.model_name,
-            "FIRSTYR": self.firstyr.format(precision=1), 
-            "LASTYR": self.lastyr.format(precision=1)
+            "FIRSTYR": self.date_range.start.format(precision=1), 
+            "LASTYR": self.date_range.end.format(precision=1)
         })
         # set env vars for unit conversion factors (TODO: honest unit conversion)
-        translate = util_mdtf.VariableTranslator()
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
-                "{}.").format(self.convention))
+                f"{self.convention}."))
         temp = translate.variables[self.convention].to_dict()
-        for key, val in iter(temp.items()):
-            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
+        for k,v in temp.items():
+            util_mdtf.setenv(k, v, self.envvars)
         temp = translate.units[self.convention].to_dict()
-        for key, val in iter(temp.items()):
-            util_mdtf.setenv(key, val, self.envvars, verbose=verbose)
+        for k,v in temp.items():
+            util_mdtf.setenv(k, v, self.envvars)
 
-        for pod in self.iter_pods():
-            self._setup_pod(pod)
-        self.build_data_dicts()
-
-    def _setup_pod(self, pod):
-        config = util_mdtf.ConfigManager()
-        translate = util_mdtf.VariableTranslator()
-
-        # transfer DataManager-specific settings
-        pod.configure_paths(config.paths.pod_paths(pod, self))
-        pod.pod_env_vars.update(self.envvars)
-        pod.dry_run = self.dry_run
-
-        # express varlist as VarlistEntry objects
-        ds_list = []
-        for var in pod.varlist:
-            ds_list.append(VarlistEntry.from_pod_varlist(
-                pod.convention, var, {'DateFreqMixin': self.DateFreq}))
-        pod.varlist = ds_list
-
-        for var in pod.iter_vars_and_alts():
-            var.name_in_model = translate.fromCF(self.convention, var.CF_name)
-            if var.date_freq.is_static:
-                # placeholder value for time-independent data
-                var.date_range = datelabel.FXDateRange
-            else:
-                var.date_range = self.date_range
-            var.dest_path = self.dest_path(pod.POD_WK_DIR, self.dataset_key(var))
-            var.axes = copy.deepcopy(translate.axes[self.convention])
-
-        if self.data_freq is not None:
-            for var in pod.iter_vars_and_alts():
-                if var.date_freq != self.data_freq:
-                    pod.exception = PodDataError(
-                        pod,
-                        ("{0} requests {1} (= {2}) at {3} frequency, which isn't "
-                        "compatible with case {4} providing data at {5} frequency "
-                        "only.").format(
-                            pod.name, var.name_in_model, var.name, 
-                            var.date_freq, self.case_name, self.data_freq
-                    ))
-                    break
+        # instantiate Diagnostic objects from config
+        self.pods = {
+            pod_name: self._DiagnosticClass.from_config(pod_name) \
+                for pod_name in self.pods
+        }
+        for pod in self.iter_pods(all_pods=True):
+            try:
+                pod.configure_paths(self)
+                pod.configure_vars(self)
+                pod.pod_env_vars.update(self.envvars)
+            except Exception as exc:
+                try:
+                    raise diagnostic.PodConfigError(pod, 
+                        "Caught exception in DataManager setup.") from exc
+                except Exception as chained_exc:
+                    pod.exceptions.log(chained_exc)    
+                continue
 
     @staticmethod
     def dataset_key(dataset):
         """Return immutable representation of a :class:`DataSetBase` object. 
-        Two DataSets should have the same key 
+        Two DataSets should have the same key if they can be retrieved from the 
+        remote data source with a single query/fetch operation.
         """
         return dataset._freeze()
 
@@ -187,14 +173,14 @@ class DataManager(six.with_metaclass(ABCMeta)):
         # datelabel object to use its formatting method
         try:
             # value in key is from __str__
-            freq = self.DateFreq(data_key.date_freq)
+            freq = datelabel.DateFrequency(data_key.date_freq)
         except ValueError:
             # value in key is from __repr__
             freq = eval('datelabel.'+data_key.date_freq)
         freq = freq.format_local()
         return os.path.join(
             pod_wk_dir, freq,
-            "{}.{}.{}.nc".format(self.case_name, data_key.name_in_model, freq)
+            f"{self.case_name}.{data_key.name_in_model}.{freq}.nc"
         )
 
     def build_data_dicts(self):
@@ -203,53 +189,40 @@ class DataManager(six.with_metaclass(ABCMeta)):
         implementation is needlessly opaque and should be replaced with sqlite
         queries.
 
-        - A ``data_key`` is an object identifying a dataset for a single variable.
-        - ``data_keys`` maps a data_key to a list of :class:`VarlistEntry` objects 
-            representing specific versions of that variable.
+        - A ``data_key`` is an object identifying a dataset for a single 
+            variable, in the sense that it can be retrieved from the remote data
+            source with a single query/fetch operation.
+        - ``data_keys`` maps a data_key to a list of 
+            :class:`~diagnostic.VarlistEntry` objects representing specific 
+            versions of that variable.
         - ``data_pods`` is a reversible map (:class:`~util.MultiMap`) between a
-            data_key and the set of PODs (represented as 
-            :class:`~diagnostic.Diagnostic` objects) that use that variable.
+            data_key and a set of names of PODs that use that variable. The PODs
+            themselves can be accessed through the ``pods`` dict.
         - ``data_files`` is a reversible map (:class:`~util.MultiMap`) between a
             data_key and the set of files (represented as :class:`SingleFileDataSet` 
             objects) that contain that variable's data.
         """
         self.data_keys = collections.defaultdict(list)
         self.data_pods = util.MultiMap()
-        self.data_files = util.MultiMap()
+        # self.data_files = util.MultiMap()
         for pod in self.iter_pods():
-            for var in pod.iter_vars_and_alts():
+            pod.update_active_vars()
+            for var in pod.iter_vars():
                 key = self.dataset_key(var)
-                self.data_pods[key].update(set([pod]))
                 self.data_keys[key].append(var)
-                self.data_files[key].update(var.remote_data)
+                self.data_pods[key].update([pod.name])
+                # self.data_files[key].update(var.remote_data)
 
+    def deactivate_key(self, data_key, exc):
+        """Deactivate all active variables corresponding to data_key.
+        """
+        for v in self.data_keys[data_key]:
+            v.exception = exc
+        
     # DATA QUERY -------------------------------------
 
-    def iter_populated_varlist(self, var_iter, pod_name):
-        """Generator function yielding either a variable, its alternates if the
-        variable was not found in the data query, or DataQueryFailure if the
-        variable request can't be satisfied with found data.
-        """
-        for var in var_iter:
-            if var.remote_data:
-                print("Found {} (= {}) @ {} for {}".format(
-                    var.name_in_model, var.name, var.date_freq, pod_name
-                ))
-                yield var
-            elif not var.alternates:
-                raise DataQueryFailure(
-                    var,
-                    ("Couldn't find {} (= {}) @ {} for {} & no other "
-                        "alternates").format(
-                        var.name_in_model, var.name, var.date_freq, pod_name
-                ))
-            else:
-                print(("Couldn't find {} (= {}) @ {} for {}, trying "
-                    "alternates").format(
-                        var.name_in_model, var.name, var.date_freq, pod_name
-                ))
-                for alt_var in self.iter_populated_varlist(var.alternates, pod_name):
-                    yield alt_var  # no 'yield from' in py2.7
+    def pre_query_hook(self):
+        pass
 
     # specific details that must be implemented in child class 
     @abstractmethod
@@ -257,42 +230,55 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pass
 
     def query_data(self):
-        for data_key in self.data_keys:
-            try:
-                var = self.data_keys[data_key][0]
-                print("Calling query_dataset on {} @ {}".format(
-                    var.name_in_model, var.date_freq))
-                self.data_files[data_key].update([self.query_dataset(var)])
-            except DataQueryFailure:
-                continue
+        self.pre_query_hook()
 
-        # populate vars with found files
-        for data_key in self.data_keys:
-            for var in self.data_keys[data_key]:
-                for f in self.data_files[data_key]:
-                    var.remote_data.append(f)
-        
-        for pod in self.iter_pods():
-            try:
-                new_varlist = [var for var \
-                    in self.iter_populated_varlist(pod.varlist, pod.name)]
-            except DataQueryFailure as exc:
-                print("Data query failed on pod {}; skipping.".format(pod.name))
-                pod.exception = exc
-                new_varlist = []
-            for var in new_varlist:
-                var.alternates = []
-            pod.varlist = new_varlist
-        # revise DataManager's to-do list, now that we've marked some PODs as
-        # being skipped due to data inavailability
-        self.build_data_dicts()
+        update = True
+        # really a while-loop, but we limit # of iterations to be safe
+        for _ in range(10): 
+            # refresh list of active variables/PODs; find alternate vars for any
+            # vars that failed since last time.
+            if update:
+                self.build_data_dicts()
+                update = False
+            keys_to_query = set(self.data_keys).difference(self.queried_keys)
+            if not keys_to_query:
+                break # normal exit: queried everything
+
+            for d_key in keys_to_query:
+                try:
+                    var = self.data_keys[d_key][0]
+                    print(f"\tCalling query_dataset on {d_key}")
+                    # add before query, in case query raises an exc
+                    self.queried_keys.add(d_key) 
+                    files = util.coerce_to_iter(self.query_dataset(var))
+                    if not files:
+                        raise DataQueryError(d_key, "No data found by query.")
+                    self.data_files[d_key].update(files)
+                except Exception as exc:
+                    update = True
+                    print(f"\tCaught exception querying {d_key}: {repr(exc)}.")
+                    try:
+                        raise DataQueryError(d_key, 
+                            "Caught exception while querying data.") from exc
+                    except Exception as chained_exc:
+                        self.deactivate_key(d_key, chained_exc)
+                    continue
+        else:
+            # only hit this if we don't break
+            raise Exception(
+                f'Too many iterations in {self.__class__.__name__}.query_data().'
+            )
+        self.post_query_hook()
+
+    def post_query_hook(self):
+        pass
 
     # FETCH REMOTE DATA -------------------------------------
 
-    def plan_data_fetch_hook(self):
+    def pre_fetch_hook(self):
         pass
 
-    def remote_data_list(self):
+    def sort_files(self, d_key):
         """Process list of requested data to make data fetching efficient.
 
         This is intended as a hook to be used by subclasses. Default behavior is
@@ -302,12 +288,10 @@ class DataManager(six.with_metaclass(ABCMeta)):
         
         Returns: collection of :class:`SingleFileDataSet` objects.
         """
-        # flatten list of all remote_data and remove duplicates
-        unique_files = set(f \
-            for f in chain.from_iterable(iter(self.data_files.values())))
+        # flatten list of all data_files and remove duplicates
         # filter out any data we've previously fetched that's up to date
-        unique_files = [f \
-            for f in unique_files if not self.local_data_is_current(f)]
+        unique_files = set([f for f in self.data_files[d_key] \
+            if not self.local_data_is_current(f)])
         # fetch data in sorted order to make interpreting logs easier
         if unique_files:
             if self._fetch_order_function is not None:
@@ -316,15 +300,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
                 sort_key = attrgetter('remote_path')
             else:
                 sort_key = None
-            unique_files.sort(key=sort_key)
-        return unique_files
+        return sorted(list(unique_files), key=sort_key)
     
-    _fetch_order_function=None
+    _fetch_order_function = None
 
     def local_data_is_current(self, dataset):
-        """Determine if local copy of data needs to be refreshed.
-
-        This is intended as a hook to be used by subclasses. Default is to always
+        """Determine if local copy of data needs to be refreshed. This is 
+        intended as a hook to be used by subclasses. Default is to always
         return `False`, ie always fetch remote data.
 
         Returns: `True` if local copy of data exists and remote copy hasn't been
@@ -337,45 +319,45 @@ class DataManager(six.with_metaclass(ABCMeta)):
     def fetch_dataset(self, dataset):
         pass
 
-    def fetch_data(self):
-        self.plan_data_fetch_hook()
+    def query_and_fetch_data(self):
+        self.pre_fetch_hook()
 
-        for file_ in self.remote_data_list():
-            try:
-                self.fetch_dataset(file_)
-            except CalledProcessError as caught_exc:
-                exc = DataAccessError(
-                    file_,
-                    """Running external command {} when fetching {} @ {} 
-                    returned error: {} (status {}). Did not retry.
-                    """.format(
-                        caught_exc.cmd, file_.name_in_model, file_.date_freq,
-                        caught_exc.output, caught_exc.returncode
-                    )
-                )
-                self._fetch_exception_handler(exc)
-                continue
-            except Exception as caught_exc:
-                exc = DataAccessError(
-                    file_,
-                    """Caught {} exception ({}) when fetching {} @ {}.
-                    Did not retry.
-                    """.format(
-                        type(caught_exc).__name__, caught_exc, 
-                        file_.name_in_model, file_.date_freq
-                    )
-                )
-                self._fetch_exception_handler(exc)
-                continue
+        update = True
+        # really a while-loop, but we limit # of iterations to be safe
+        for _ in range(10): 
+            # refresh list of active variables/PODs; find alternate vars for any
+            # vars that failed since last time and query them.
+            if update:
+                self.query_data()
+                update = False
+            keys_to_fetch = set(self.data_keys).difference(self.fetched_keys)
+            if not keys_to_fetch:
+                break # normal exit: fetched everything
 
-    def _fetch_exception_handler(self, exc):
-        print(exc)
-        keys_from_file = self.data_files.inverse()
-        for key in keys_from_file[exc.dataset]:
-            for pod in self.data_pods[key]:
-                print(("\tSkipping pod {} due to data fetch error."
-                    "").format(pod.name))
-                pod.exception = exc
+            for d_key in keys_to_fetch:
+                try:
+                    print(f"\tCalling fetch_dataset on {d_key}")
+                    # add before fetch, in case fetch raises an exc
+                    self.fetched_keys.add(d_key) 
+                    self.fetch_dataset(d_key)
+                except Exception as exc:
+                    update = True
+                    print(f"\tCaught exception fetching {d_key}: {repr(exc)}.")
+                    try:
+                        raise DataAccessError(d_key, 
+                            "Caught exception while fetching data.") from exc
+                    except Exception as chained_exc:
+                        self.deactivate_key(d_key, chained_exc)
+                    continue
+        else:
+            # only hit this if we don't break
+            raise Exception(
+                f'Too many iterations in {self.__class__.__name__}.fetch_data().'
+            )
+        self.post_fetch_hook()
+
+    def post_fetch_hook(self):
+        pass
 
     # -------------------------------------
 
@@ -384,8 +366,9 @@ class DataManager(six.with_metaclass(ABCMeta)):
         preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
         """
         for var in self.iter_vars():
+            d_key = self.dataset_key(var)
             pp = preprocessor(self, var)
-            pp.preprocess()
+            pp.preprocess(self.data_files[d_key])
 
     # HTML & PLOT OUTPUT -------------------------------------
 
@@ -429,7 +412,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         if not self.file_overwrite:
             out_file, _ = util_mdtf.bump_version(out_file)
         elif os.path.exists(out_file):
-            print('Overwriting {}.'.format(out_file))
+            print(f"Overwriting {out_file}.")
         util.write_json(config.config.toDict(), out_file)
         return out_file
 
@@ -439,13 +422,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if not self.file_overwrite:
             out_file, _ = util_mdtf.bump_version(out_file)
-            print("Creating {}.".format(out_file))
+            print(f"Creating {out_file}.")
         elif os.path.exists(out_file):
-            print('Overwriting {}.'.format(out_file))
-        tar_flags = ["--exclude=.{}".format(s) for s in ['netCDF','nc','ps','PS','eps']]
+            print(f"Overwriting {out_file}.")
+        tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
-            'tar {} -czf {} -C {} .'.format(tar_flags, out_file, self.MODEL_WK_DIR),
+            f'tar {tar_flags} -czf {out_file} -C {self.MODEL_WK_DIR} .',
             dry_run = self.dry_run
         )
         return out_file
@@ -453,12 +436,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
     def _copy_to_output(self):
         if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
-        print("copy {} to {}".format(self.MODEL_WK_DIR, self.MODEL_OUT_DIR))
+        print(f"Copy {self.MODEL_WK_DIR} to {self.MODEL_OUT_DIR}")
         try:
             if os.path.exists(self.MODEL_OUT_DIR):
                 if not self.overwrite:
-                    print('Error: {} exists, overwriting anyway.'.format(
-                        self.MODEL_OUT_DIR))
+                    print(f"Error: {self.MODEL_OUT_DIR} exists, overwriting.")
                 shutil.rmtree(self.MODEL_OUT_DIR)
         except Exception:
             raise
@@ -471,6 +453,7 @@ class LocalfileDataManager(DataManager):
     the PODs' sample model data.
     """
     DataKey = collections.namedtuple('DataKey', ['name_in_model', 'date_freq'])  
+
     def dataset_key(self, dataset):
         return self.DataKey(
             name_in_model=dataset.name_in_model, 
@@ -491,14 +474,14 @@ class LocalfileDataManager(DataManager):
         # datelabel object to use its formatting method
         try:
             # value in key is from __str__
-            freq = self.DateFreq(data_key.date_freq)
+            freq = datelabel.DateFrequency(data_key.date_freq)
         except ValueError:
             # value in key is from __repr__
             freq = eval('datelabel.'+data_key.date_freq)
         freq = freq.format_local()
         return os.path.join(
             self.MODEL_DATA_DIR, freq,
-            "{}.{}.{}.nc".format(self.case_name, data_key.name_in_model, freq)
+            f"{self.case_name}.{data_key.name_in_model}.{freq}.nc"
         )
 
     def query_dataset(self, dataset):
@@ -516,7 +499,7 @@ class LocalfileDataManager(DataManager):
             out.local_path = os.path.join(tmpdir, os.path.basename(path))
             return out
         else:
-            raise DataQueryFailure(dataset, 'File not found at {}'.format(path))
+            raise DataQueryError(dataset, f"File not found at {path}.")
     
     def local_data_is_current(self, dataset):
         return True 

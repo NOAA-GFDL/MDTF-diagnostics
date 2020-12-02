@@ -270,15 +270,8 @@ class MDTFFramework(object):
         # only run first case in list until dependence on env vars cleaned up
         for case_dict in self.case_list[0:1]: 
             case = self.DataManager(case_dict)
-            for pod_name in case.pod_list:
-                try:
-                    pod = self.Diagnostic(pod_name)
-                except AssertionError as error:  
-                    print(str(error))
-                case.pods.append(pod)
             case.setup()
-            case.query_data()
-            case.fetch_data()
+            case.query_and_fetch_data()
             case.preprocess_data(self.Preprocessor)
             caselist.append(case)
 

@@ -347,11 +347,12 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
 
     # FETCH REMOTE DATA -------------------------------------
 
+    # specific details that must be implemented in child class 
     @abstractmethod
     def decide_allowed_components(self):
         pass
 
-    def plan_data_fetch_hook(self):
+    def pre_fetch_hook(self):
         """Filter files on model component and chunk frequency.
         """
         d_to_u_dict = self.decide_allowed_components()
@@ -375,11 +376,6 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 dry_run=self.dry_run
             ) 
             print("end dmget")
-
-    def remote_data_list(self):
-        """Process list of requested data to make data fetching efficient.
-        """
-        return sorted(list(self.data_keys), key=lambda dk: repr(dk))
 
     def local_data_is_current(self, dataset):
         """Test whether data is current based on filesystem modification dates.
@@ -439,18 +435,6 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
                 dry_run=self.dry_run
             )
             f.local_path = os.path.join(tmpdir, os.path.basename(f.remote_path))
-
-    def _fetch_exception_handler(self, exc):
-        print(exc)
-        # iterating over the keys themselves, so that will be what's passed 
-        # in the exception
-        for pod_name in self.data_pods[exc.dataset]:
-            print(f"\tSkipping pod {pod_name} due to data fetch error.")
-            pod = self.pods[pod_name]
-            try:
-                raise diagnostic.PodDataError(pod, "Data fetch error.") from exc
-            except Exception as chained_exc:
-                pod.exceptions.log(chained_exc)
 
     # HTML & PLOT OUTPUT -------------------------------------
 

@@ -9,8 +9,7 @@ else:
 import argparse
 import shlex
 import collections
-from src import util
-from src.diagnostic import PodConfigError
+from src import util, diagnostic
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 
@@ -372,7 +371,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             )
             assert 'settings' in d
         except Exception as exc:
-            raise PodConfigError(pod, 
+            raise diagnostic.PodConfigError(pod, 
                 "Syntax error encountered when reading settings.jsonc.") from exc
         return d
 

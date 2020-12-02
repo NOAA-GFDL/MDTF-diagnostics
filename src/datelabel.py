@@ -16,6 +16,7 @@ Note:
 from __future__ import absolute_import, division, print_function, unicode_literals
 from src import six
 import abc
+import copy
 import re
 import datetime
 import operator as op
@@ -636,6 +637,9 @@ class DateRange(AtomicInterval, _DateMixin):
         other = self._date_range_compare_common(other)
         return super(DateRange, self).__ge__(other)
 
+    def __hash__(self):
+        return hash((self.__class__, self.lower, self.upper, self.precision))
+
 @six.python_2_unicode_compatible
 class Date(DateRange):
     """Define a date with variable level precision.
@@ -758,6 +762,9 @@ class Date(DateRange):
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
+
+    def __hash__(self):
+        return hash((self.__class__, self.lower, self.upper, self.precision))
 
 class _FXDateRange(DateRange):
     """Singleton placeholder/sentinel object for use in describing static data 
@@ -927,6 +934,17 @@ class DateFrequency(datetime.timedelta):
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
+
+    def __copy__(self):
+        return self.__class__(self.quantity, self.unit)
+
+    def __deepcopy__(self, memo):
+        return self.__class__(
+            copy.deepcopy(self.quantity, memo), copy.deepcopy(self.unit, memo)
+        )
+
+    def __hash__(self):
+        return hash((self.__class__, self.quantity, self.unit))
 
 class AbstractDateRange(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMDimension` objects.

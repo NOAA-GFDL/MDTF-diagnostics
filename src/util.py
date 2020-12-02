@@ -6,6 +6,7 @@ import os
 import io
 from src import six
 import collections
+import copy
 import dataclasses
 from distutils.spawn import find_executable
 import enum

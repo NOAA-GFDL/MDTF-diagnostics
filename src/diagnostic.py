@@ -126,11 +126,11 @@ class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
 @util.mdtf_dataclass(frozen=True)
 class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     VarlistCoordinateMixin):
-    frequency: str = ""
-    min_frequency: str = ""
-    max_frequency: str = ""
-    min_duration: str = 'any'
-    max_duration: str = 'any'
+    frequency: typing.Any = ""
+    min_frequency: typing.Any = ""
+    max_frequency: typing.Any = ""
+    min_duration: typing.Any = 'any'
+    max_duration: typing.Any = 'any'
 
     standard_name = 'time'
     axis = 'T'
@@ -214,7 +214,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         # specialize time coord
         time_kw = util.filter_dataclass(kwargs, _VarlistTimeSettings)
         if time_kw:
-            obj.change_coord('T', **time_kw)
+            obj.change_coord('T', None, **time_kw)
         return obj
 
     def short_format(self):
@@ -313,7 +313,7 @@ class Varlist(data_model.DMDataSet):
             for alts in v.alternates:
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
-        return cls(*vlist_vars.values())
+        return cls(vars= list(vlist_vars.values()))
 
     @property
     def active_vars(self):
@@ -435,7 +435,7 @@ class Diagnostic(object):
 
         self.varlist.change_coord(
             'T', 
-            new_class={
+            new_class = {
                 'self': VarlistTimeCoordinate,
                 'range': data_mgr._DateRangeClass,
                 'frequency': data_mgr._DateFreqClass

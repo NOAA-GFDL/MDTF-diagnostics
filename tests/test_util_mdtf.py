@@ -10,47 +10,47 @@ from subprocess import CalledProcessError
 from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 class TestUtil(unittest.TestCase):
-    @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
-    def test_setenv_overwrite(self):
-        test_d = {'TEST_OVERWRITE': 'A'}
-        util_mdtf.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
-        self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
-        self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
+    # @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})
+    # def test_setenv_overwrite(self):
+    #     test_d = {'TEST_OVERWRITE': 'A'}
+    #     util_mdtf.setenv('TEST_OVERWRITE','B', test_d, overwrite = False)
+    #     self.assertEqual(test_d['TEST_OVERWRITE'], 'A')
+    #     self.assertEqual(os.environ['TEST_OVERWRITE'], 'A')
 
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_str(self):
-        test_d = {}
-        util_mdtf.setenv('TEST_STR','B', test_d)
-        self.assertEqual(test_d['TEST_STR'], 'B')
-        self.assertEqual(os.environ['TEST_STR'], 'B')
+    # @mock.patch.dict('os.environ', {})
+    # def test_setenv_str(self):
+    #     test_d = {}
+    #     util_mdtf.setenv('TEST_STR','B', test_d)
+    #     self.assertEqual(test_d['TEST_STR'], 'B')
+    #     self.assertEqual(os.environ['TEST_STR'], 'B')
 
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_int(self):
-        test_d = {}        
-        util_mdtf.setenv('TEST_INT',2019, test_d)
-        self.assertEqual(test_d['TEST_INT'], 2019)
-        self.assertEqual(os.environ['TEST_INT'], '2019')
+    # @mock.patch.dict('os.environ', {})
+    # def test_setenv_int(self):
+    #     test_d = {}        
+    #     util_mdtf.setenv('TEST_INT',2019, test_d)
+    #     self.assertEqual(test_d['TEST_INT'], 2019)
+    #     self.assertEqual(os.environ['TEST_INT'], '2019')
 
-    @mock.patch.dict('os.environ', {})
-    def test_setenv_bool(self):
-        test_d = {}
-        util_mdtf.setenv('TEST_TRUE',True, test_d)
-        self.assertEqual(test_d['TEST_TRUE'], True)
-        self.assertEqual(os.environ['TEST_TRUE'], '1')
+    # @mock.patch.dict('os.environ', {})
+    # def test_setenv_bool(self):
+    #     test_d = {}
+    #     util_mdtf.setenv('TEST_TRUE',True, test_d)
+    #     self.assertEqual(test_d['TEST_TRUE'], True)
+    #     self.assertEqual(os.environ['TEST_TRUE'], '1')
 
-        util_mdtf.setenv('TEST_FALSE',False, test_d)
-        self.assertEqual(test_d['TEST_FALSE'], False)
-        self.assertEqual(os.environ['TEST_FALSE'], '0')
+    #     util_mdtf.setenv('TEST_FALSE',False, test_d)
+    #     self.assertEqual(test_d['TEST_FALSE'], False)
+    #     self.assertEqual(os.environ['TEST_FALSE'], '0')
 
-    os_environ_check_required_envvar = {'A':'B', 'C':'D'}
+    # os_environ_check_required_envvar = {'A':'B', 'C':'D'}
 
-    @mock.patch.dict('os.environ', os_environ_check_required_envvar)
-    def test_check_required_envvar_found(self):
-        # exit function normally if all variables found
-        try:
-            util_mdtf.check_required_envvar('A', 'C')
-        except SystemExit:
-            self.fail()
+    # @mock.patch.dict('os.environ', os_environ_check_required_envvar)
+    # def test_check_required_envvar_found(self):
+    #     # exit function normally if all variables found
+    #     try:
+    #         util_mdtf.check_required_envvar('A', 'C')
+    #     except SystemExit:
+    #         self.fail()
 
     # @mock.patch.dict('os.environ', os_environ_check_required_envvar)
     # def test_check_required_envvar_not_found(self):

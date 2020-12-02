@@ -286,6 +286,7 @@ class SubprocessRuntimePODWrapper(object):
     """
     pod: diagnostic.Diagnostic = util.MANDATORY
     env: typing.Any = None
+    env_vars: dict = dataclasses.field(default_factory=dict)
     log_handle: io.IOBase = dataclasses.field(default=None, init=False)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
@@ -302,9 +303,19 @@ class SubprocessRuntimePODWrapper(object):
         print(f"{self.pod.name} will run in env: {self.env}")
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
-        env_list = [f"{k}: {v}" for k,v in self.pod.pod_env_vars.items()]
-        self.log_handle.write("\n".join(
-            ["Env vars: "] + sorted(env_list) + [" "]))
+        self.setup_env_vars()
+
+    def setup_env_vars(self):
+        def _envvar_format(x):
+            # environment variables must be strings
+            if isinstance(x, bool):
+                return ('1' if x else '0')
+            elif not isinstance(x, str):
+                return str(x)
+
+        self.env_vars = {k: _envvar_format(v) for k,v in pod.pod_env_vars}
+        env_list = [f"  {k}: {v}" for k,v in self.env_vars.items()]
+        self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list)))
 
     def setup_exception_handler(self, exc):
         log_str = (f"Caught exception while preparing to run {self.pod.name}: "
@@ -413,7 +424,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for env in envs:
             self.env_mgr.create_environment(env)
 
-    def spawn_subprocess(self, p):
+    def spawn_subprocess(self, p, env_vars_base):
         run_cmds = p.validate_commands() + p.run_commands()
         if self.test_mode:
             run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
@@ -428,17 +439,20 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
+        env_vars = env_vars_base.copy()
+        env_vars.update(p.env_vars)
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.
         return subprocess.Popen(
             commands,
             shell=True, executable=self.bash_exec,
-            env=os.environ, cwd=p.pod.POD_WK_DIR,
+            env=env_vars, cwd=p.pod.POD_WK_DIR,
             stdout=p.log_handle, stderr=p.log_handle,
             universal_newlines=True, bufsize=1
         )
 
     def run(self):
+        env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
             try:
                 p.setup()
@@ -448,7 +462,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             try:
                 p.log_handle.write(f"--- MDTF.py calling POD {p.pod.name}\n\n")
                 p.log_handle.flush()
-                p.process = self.spawn_subprocess(p)
+                p.process = self.spawn_subprocess(p, env_vars_base)
             except Exception as exc:
                 p.runtime_exception_handler(exc)
                 continue

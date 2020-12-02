@@ -198,52 +198,6 @@ def get_available_programs(verbose=0):
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
-def setenv(varname,varvalue,env_dict,verbose=0,overwrite=True):
-    """Wrapper to set environment variables.
-
-    Args:
-        varname (:obj:`str`): Variable name to define
-        varvalue: Value to assign. Coerced to type :obj:`str` before being set.
-        env_dict (:obj:`dict`): Copy of 
-        verbose (:obj:`int`, optional): Logging verbosity level. Default 0.
-        overwrite (:obj:`bool`): If set to `False`, do not overwrite the values
-            of previously-set variables. 
-    """
-    if (not overwrite) and (varname in env_dict): 
-        if (verbose > 0): 
-            print("Not overwriting ENV {}={}".format(varname,env_dict[varname]))
-    else:
-        if ('varname' in env_dict) \
-            and (env_dict[varname] != varvalue) and (verbose > 0): 
-            print("WARNING: setenv {}={} overriding previous setting {}".format(
-                varname, varvalue, env_dict[varname]
-            ))
-        env_dict[varname] = varvalue
-
-        # environment variables must be strings
-        if isinstance(varvalue, bool):
-            if varvalue == True:
-                varvalue = '1'
-            else:
-                varvalue = '0'
-        elif not isinstance(varvalue, str):
-            varvalue = str(varvalue)
-        os.environ[varname] = varvalue
-
-        if (verbose > 0): print("ENV ",varname," = ",env_dict[varname])
-    if ( verbose > 2) : print("Check ",varname," ",env_dict[varname])
-
-def check_required_envvar(*varlist):
-    varlist = varlist[0]   #unpack tuple
-    for n in range(len(varlist)):
-        try:
-            _ = os.environ[varlist[n]]
-        except Exception:
-            print("ERROR: Required environment variable {} not found.".format(
-                varlist[n]
-            ))
-            exit()
-
 def check_dirs(*dirs, create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a 

@@ -158,14 +158,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
             raise AssertionError(("Variable name translation doesn't recognize "
                 f"{self.convention}."))
         temp = translate.units[self.convention].to_dict()
-        for k,v in temp.items():
-            util_mdtf.setenv(k, v, self.envvars)
+        self.envvars.update(temp)
         # shouldn't need to do this for *all* var names the mdoel defines, but 
         # think a POD was testing for env var for a variable it didn't request
         # TODO: fix this
         temp = translate.variables[self.convention].to_dict()
-        for k,v in temp.items():
-            util_mdtf.setenv(k, v, self.envvars)
+        self.envvars.update(temp)
 
         # instantiate Diagnostic objects from config
         self.pods = {

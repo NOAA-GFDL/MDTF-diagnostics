@@ -539,23 +539,18 @@ class Diagnostic(object):
             "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
         })
-        # Set env vars POD has inherited globally and from current case 
-        # (set in DataManager._setup_pod).
-        for key, val in iter(self.pod_env_vars.items()):
-            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose, overwrite=True) 
-
         # Set env vars for variable and axis names:
         axes = dict()
-        ax_bnds = dict()
         ax_status = dict()
         for var in self.iter_vars():
+            self.pod_env_vars[var.path_variable] = var.dest_path
+
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
             #     self.pod_env_vars, verbose=verbose)
             # make sure axes found for different vars are consistent
             for ax_name, ax_attrs in var.axes.items():
                 if 'MDTF_envvar' not in ax_attrs:
-                    print(("\tWarning: don't know env var to set" 
-                        "for axis name {}").format(ax_name))
+                    print(f"\tWarning: don't know env var to set for {ax_name}")
                     envvar_name = ax_name+'_coord'
                 else:
                     envvar_name = ax_attrs['MDTF_envvar']
@@ -577,13 +572,10 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in axes.items():
+        for k,v in axes.items():
+            self.pod_env_vars[k] = v
             # Define ax bounds variables; TODO do this more honestly
-            ax_bnds[key+'_bnds'] = val + '_bnds'
-        for key, val in axes.items(): 
-            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
-        for key, val in ax_bnds.items(): 
-            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
+            self.pod_env_vars[k + '_bnds'] = v + '_bnds'
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

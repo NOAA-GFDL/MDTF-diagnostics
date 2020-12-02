@@ -14,14 +14,10 @@ else:
 from collections import defaultdict, namedtuple
 from operator import attrgetter, itemgetter
 from abc import ABCMeta, abstractmethod
-from src import datelabel
-from src import util
-from src import util_mdtf
+from src import datelabel, util, util_mdtf, cmip6, diagnostic
 import src.conflict_resolution as choose
-from src import cmip6
 from src.data_manager import SingleFileDataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
-from src.diagnostic import Diagnostic
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -107,24 +103,36 @@ class ModuleManager(util.Singleton):
         assert set(self._list()) == self.user_modules
 
 
-class GfdlDiagnostic(Diagnostic):
+class GfdlDiagnostic(diagnostic.Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
     """
     _has_placeholder: bool = False
+    _already_made_POD_OUT_DIR: bool = False
 
-    def setup(self):
+    def pre_run_setup(self):
+        """Extra step needed for POD-specific output directory, which may be on
+        a remote filesystem.
+        """
         config = util_mdtf.ConfigManager()
+
+        super(GfdlDiagnostic, self).pre_run_setup()
+        if self._already_made_POD_OUT_DIR:
+            return
         try:
-            super(GfdlDiagnostic, self).setup()
             make_remote_dir(
                 self.POD_OUT_DIR,
                 timeout=config.config.get('file_transfer_timeout', 0),
                 dry_run=config.config.get('dry_run', False)
             )
             self._has_placeholder = True
+            self._already_made_POD_OUT_DIR = True
         except Exception as exc:
-            raise
+            try:
+                raise diagnostic.PodRuntimeError(self, (f"Caught exception "
+                    f"making output directory at {self.POD_OUT_DIR}.")) from exc
+            except Exception as chained_exc:
+                self.exceptions.log(chained_exc)    
 
     def tear_down(self, verbose=0):
         # only run teardown (including logging error on index.html) if POD ran
@@ -436,8 +444,9 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, DataManager)):
         print(exc)
         # iterating over the keys themselves, so that will be what's passed 
         # in the exception
-        for pod in self.data_pods[exc.dataset]:
-            print(f"\tSkipping pod {pod.name} due to data fetch error.")
+        for pod_name in self.data_pods[exc.dataset]:
+            print(f"\tSkipping pod {pod_name} due to data fetch error.")
+            pod = self.pods[pod_name]
             try:
                 raise diagnostic.PodDataError(pod, "Data fetch error.") from exc
             except Exception as chained_exc:

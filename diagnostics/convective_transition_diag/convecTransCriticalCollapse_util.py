@@ -217,7 +217,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         al=numpy.zeros(t_reg_I.shape[0]) # al:alpha, slope of pickup asymptote
         cwvRange=numpy.linspace(CWV_FIT_RANGE_MIN,\
                                 CWV_FIT_RANGE_MAX,\
-                                (CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH+1)
+                                int((CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH+1))
 
         # Use the 3 most probable Temperature bins only
         #  These should best capture the pickup over tropical oceans

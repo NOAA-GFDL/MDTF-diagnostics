@@ -31,7 +31,7 @@
       "SAVE_TAVE_QSAT_INT" : "0"
     },
     "runtime_requirements": {
-      "python2": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+      "python3": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
     }
   },
   //

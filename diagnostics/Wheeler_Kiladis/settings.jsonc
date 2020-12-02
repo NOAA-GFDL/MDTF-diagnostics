@@ -20,45 +20,46 @@
       "ncl": ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
     }
   },
-  //
-  // USAGE varlist
-  // var_name time-frequency [requirement]
-  // - var_name: as found in src/fieldlist_*.json
-  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
-  // - requirement = blank  (default = optional),
-  //                 required (package cannot run without this)
-  //                 required unless field_name field_name2 ...
-  // - alternates:
-  //
-  // nb. if a variable is required at multiple time frequencies, list it 
-  // separately for each one. Clearly the developer can just leave out 
-  // optional files. However, it is always nice to get an upfront warning of
-  // missing files.
-  //
-  "varlist" : [
-    {
-      "var_name" : "rlut_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-      "var_name" : "pr_var",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-      "var_name" : "omega500_var",
-      "freq" : "day",
-      "requirement" : "required",
-      "alternates" : ["wap_var"]
-    },{
-      "var_name" : "u200_var",
-      "freq" : "day",
-      "requirement" : "required",
-      "alternates" : ["u_var"]
-    },{
-      "var_name" : "u850_var",
-      "freq" : "day",
-      "requirement" : "required",
-      "alternates" : ["u_var"]
+  "data": {
+    "frequency": "day"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "rlut_var": {
+      "standard_name": "rlut_var",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "pr_var": {
+      "standard_name" : "pr_var",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "omega500_var": {
+      "standard_name" : "omega_var",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 500}
+      // "alternates" : ["wap_var"]
+    },
+    "u200_var": {
+      "standard_name" : "u_var",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 200}
+      // "alternates" : ["u_var"]
+    },
+    "u850_var": {
+      "standard_name" : "u_var",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 850}
+      // "alternates" : ["u_var"]
     }
-  ]
+  }
 }

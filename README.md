@@ -101,7 +101,7 @@ You can put the observational data and model output in different locations (e.g.
 
 *For users unfamiliar with Conda, section 2.1 can be skipped if Conda has been installed, but section 2.2 CANNOT be skipped regardless.*
 
-The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [Conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://www.anaconda.com/) python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
+The MDTF framework code is written in Python 3, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use [Conda](https://docs.conda.io/en/latest/), a free, open-source package manager to install and manage these dependencies. Conda is one component of the [Miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://www.anaconda.com/) python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through Conda using the provided script `src/conda/conda_env_setup.sh`, even if they have independent installations of the required languages. A complete installation of all dependencies will take roughly 5 Gb, less if you've already installed some of the dependencies through Conda. The location of this installation can be changed with the `$CONDA_ENV_DIR` setting described below.
 

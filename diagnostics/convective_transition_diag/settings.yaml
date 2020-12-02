@@ -1,0 +1,45 @@
+---
+settings:
+  driver: convective_transition_diag_v2.py
+  long_name: Convection Transition
+  realm: atmos
+  description: Convective transition diagnostics
+  pod_env_vars:
+    BULK_TROPOSPHERIC_TEMPERATURE_VAR: tave
+    RES: '1.00'
+    SAVE_TAVE_QSAT_INT: '0'
+  runtime_requirements:
+    python3:
+    - numpy
+    - scipy
+    - matplotlib
+    - netCDF4
+    - numba
+    - networkx
+varlist:
+- var_name: pr_var
+  freq: 1hr
+  requirement: required
+- var_name: ta_var
+  freq: 1hr
+  requirement: required
+  alternates:
+  - tave_var
+- var_name: prw_var
+  freq: 1hr
+  requirement: required
+  alternates:
+  - ta_var
+  - qa_var
+- var_name: tave_var
+  freq: 1hr
+  requirement: required
+  alternates:
+  - ta_var
+  - qa_var
+- var_name: qsat_int_var
+  freq: 1hr
+  requirement: required
+  alternates:
+  - ta_var
+  - qa_var

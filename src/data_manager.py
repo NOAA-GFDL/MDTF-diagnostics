@@ -98,8 +98,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
     def __init__(self, case_dict):
         self.case_name = case_dict['CASENAME']
-        self.model_name = case_dict['model']
         self.convention = case_dict.get('convention', 'CF')
+        self.model_name = case_dict.get('model', self.convention)
         self.date_range = self._DateRangeClass(
             case_dict['FIRSTYR'], case_dict['LASTYR']
         )
@@ -157,10 +157,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
                 f"{self.convention}."))
-        temp = translate.variables[self.convention].to_dict()
+        temp = translate.units[self.convention].to_dict()
         for k,v in temp.items():
             util_mdtf.setenv(k, v, self.envvars)
-        temp = translate.units[self.convention].to_dict()
+        # shouldn't need to do this for *all* var names the mdoel defines, but 
+        # think a POD was testing for env var for a variable it didn't request
+        # TODO: fix this
+        temp = translate.variables[self.convention].to_dict()
         for k,v in temp.items():
             util_mdtf.setenv(k, v, self.envvars)
 
@@ -189,27 +192,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
         remote data source with a single query/fetch operation.
         """
         return dataset._freeze()
-
-    def dest_path(self, pod_wk_dir, data_key):
-        """Returns the absolute path of the POD's preprocessed, local copy of 
-        the file containing the requested dataset. Files not following this 
-        convention won't be found by the POD.
-        """
-        assert 'name_in_model' in data_key._fields
-        assert 'date_freq' in data_key._fields
-        # values in key are repr strings by default, so need to instantiate the
-        # datelabel object to use its formatting method
-        try:
-            # value in key is from __str__
-            freq = datelabel.DateFrequency(data_key.date_freq)
-        except ValueError:
-            # value in key is from __repr__
-            freq = eval('datelabel.'+data_key.date_freq)
-        freq = freq.format_local()
-        return os.path.join(
-            pod_wk_dir, freq,
-            f"{self.case_name}.{data_key.name_in_model}.{freq}.nc"
-        )
 
     def build_data_dicts(self):
         """Initialize or update internal bookkeeping: which PODs use which 

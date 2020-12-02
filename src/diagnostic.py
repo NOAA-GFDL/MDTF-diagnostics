@@ -156,6 +156,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     to two different locations.
     """
     name_in_model: str = dataclasses.field(default="", compare=False)
+    dest_path: str = ""
     path_variable: str = dataclasses.field(default="", compare=False)
     use_exact_name: bool = False
     requirement: VarlistEntryRequirement = dataclasses.field(
@@ -406,6 +407,25 @@ class Diagnostic(object):
             yield from self.varlist.active_vars
 
     # this dependency inversion feels funny to me
+    def configure_paths(self, data_mgr):
+        config = util_mdtf.ConfigManager()
+        paths = config.paths.pod_paths(self, data_mgr)
+        for k,v in paths.items():
+            setattr(self, k, v)
+
+    def dest_path(self, data_mgr, var):
+        """Returns the absolute path of the POD's preprocessed, local copy of 
+        the file containing the requested dataset. Files not following this 
+        convention won't be found by the POD.
+        """
+        if var.is_static:
+            f_name = f"{data_mgr.case_name}.{var.name}.nc"
+        else:
+            freq = var.T.frequency.format_local()
+            f_name = f"{data_mgr.case_name}.{var.name}.{freq}.nc"
+        return os.path.join(self.POD_WK_DIR, f_name)
+
+    # this dependency inversion feels funny to me
     def configure_vars(self, data_mgr):
         translate = util_mdtf.VariableTranslator()
 
@@ -420,6 +440,7 @@ class Diagnostic(object):
         )
         translate_d = translate.variables[data_mgr.convention].to_dict()
         for v in self.iter_vars(all_vars=True):
+            v.dest_path = self.dest_path(data_mgr, v)
             try:
                 v.name_in_model = translate_d[v.name]
             except KeyError:
@@ -432,13 +453,6 @@ class Diagnostic(object):
                 except Exception as chained_exc:
                     self.exceptions.log(chained_exc)  
                 continue
-
-    # this dependency inversion feels funny to me
-    def configure_paths(self, data_mgr):
-        config = util_mdtf.ConfigManager()
-        paths = config.paths.pod_paths(self, data_mgr)
-        for k,v in paths.items():
-            setattr(self, k, v)
 
     def deactivate_if_failed(self):
         # should be called from a hook whenever we log an exception

@@ -193,14 +193,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     pod.exceptions.log(chained_exc)    
                 continue
             try:
-                for v in pod.iter_vars(all_vars=True):
-                    v.preprocessor = self._PreprocessorClass(self, v)
-                    v.preprocessor.edit_request(pod)
+                pod.preprocessor = self._PreprocessorClass(self, pod)
+                pod.preprocessor.edit_request(pod)
             except Exception as exc:
                 raise
                 try:
                     raise diagnostic.PodConfigError(pod, 
-                        "Caught exception in DataManager setup.") from exc
+                        "Caught exception in preprocessor setup.") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)    
                 continue
@@ -277,7 +276,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_query:
                 try:
-                    print(f"Querying '{d_key}'")
+                    print(f"    Querying '{d_key}'")
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
                     files = util.coerce_to_iter(self.query_dataset(d_key))
@@ -370,7 +369,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_fetch:
                 try:
-                    print(f"Fetching '{d_key}'")
+                    print(f"    Fetching '{d_key}'")
                     # add before fetch, in case fetch raises an exc
                     self.fetched_keys.add(d_key) 
                     self.fetch_dataset(d_key)
@@ -401,9 +400,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """
         for pod in self.iter_pods():
             pod.setup_pod_directories()
+            pod.preprocessor.setup()
             for var in pod.iter_vars():
                 d_key = self.dataset_key(var)
-                var.preprocessor.preprocess(list(self.data_files[d_key]))
+                pod.preprocessor.process(var, list(self.data_files[d_key]))
+            pod.preprocessor.tear_down()
 
     # HTML & PLOT OUTPUT -------------------------------------
 

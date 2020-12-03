@@ -171,8 +171,6 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     )
     alternates: list = dataclasses.field(default_factory=list, compare=False)
     active: bool = dataclasses.field(init=False, compare=False)
-
-    preprocessor: typing.Any = dataclasses.field(default=None, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
     def __post_init__(self):
@@ -272,6 +270,19 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
                     if alt_of_alt not in already_encountered:
                         stack.append(alt_of_alt)
 
+    def print_debug(self):
+        def _format(v):
+            act_str = ('active' if v.active else 'inactive')
+            fail_str = ('failed' if v.failed else 'ok')
+            return (f"({v.name} {v.standard_name} {v.name_in_model} : "
+                f"{act_str}, {fail_str}, {v.requirement})")
+
+        print(_format(self))
+        for i, altvs in enumerate(self.alternates):
+            alt_names = [_format(vv) for vv in altvs]
+            print(f"  Alternate set #{i+1}: [{', '.join(alt_names)}]")
+        print()
+
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a 
     single POD.
@@ -355,6 +366,7 @@ class Diagnostic(object):
     realm: str = ""
 
     varlist: Varlist = None
+    preprocessor: typing.Any = dataclasses.field(default=None, compare=False)
     exceptions: util.ExceptionQueue = dataclasses.field(init=False)
 
     driver: str = ""

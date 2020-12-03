@@ -1,16 +1,13 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from src import six
 import abc
-from operator import attrgetter
-from src import util, data_model, diagnostic
+import functools
+from src import util, util_mdtf, data_model, diagnostic
 # must import these before xarray in order to register accessors
 import cftime
 import src.metpy_xr
 from src.metpy_xr.units import units
 import xarray as xr
 
-@six.python_2_unicode_compatible
 class DataPreprocessError(Exception):
     """Exception signaling an error in preprocessing data after it's been 
     fetched, but before any PODs run.
@@ -26,40 +23,40 @@ class DataPreprocessError(Exception):
         else:
             return 'Data preprocessing error: {}.'.format(self.msg)
 
-class PreprocessorFunctionBase(six.with_metaclass(abc.ABCMeta)):
+class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
     We prefer to put each set of operations in its own child class, rather than
     dumping everything into a general Preprocessor class, in order to keep the
     logic easier to follow.
     """
-    def __init__(self, data_mgr, var):
+    def __init__(self, data_mgr, pod):
         pass
 
     # @abc.abstractmethod
-    # def parse(self, xr_dataset, **kwargs):
+    # def parse(self, var, dataset, **kwargs):
     #     """Additional setup and parsing to be done based on attributes of first 
     #     file in dataset, before full dataset is processed.
     #     """
     #     pass
 
     # @abc.abstractmethod
-    # def process_static_dataset(self, xr_dataset, **kwargs):
+    # def process_static_dataset(self, var, dataset, **kwargs):
     #     """Preprocessing to be done for time-independent datasets.
     #     """
-    #     return xr_dataset
+    #     return dataset
 
     # @abc.abstractmethod
-    # def process_file(self, xr_dataset, **kwargs):
+    # def process_file(self, var, dataset, **kwargs):
     #     """Preprocessing to be done for each individual file of a time-dependent
     #     dataset, before :meth:`process_dataset` is called.
     #     """
-    #     return xr_dataset
+    #     return dataset
 
     # @abc.abstractmethod
-    # def process_dataset(self, xr_dataset, **kwargs):
+    # def process_dataset(self, var, dataset, **kwargs):
     #     """Preprocessing to be done for time-dependent datasets.
     #     """
-    #     return xr_dataset
+    #     return dataset
 
 class CropDateRangeFunction(PreprocessorFunctionBase):
     """A :class:`PreprocessorFunctionBase` which trims the time axis of the
@@ -75,7 +72,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
 
-    def crop_time_axis(self, ds, v, ax_names, calendar, **kwargs):
+    def crop_time_axis(self, var, ds, ax_names, calendar, **kwargs):
         """Parse quantities related to the calendar for time-dependent data.
         In particular, ``date_range`` was set from user input before we knew the 
         model's calendar. HACK here to cast those values into `cftime.datetime 
@@ -87,10 +84,10 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ 
                 instance.
         """
-        if 'T' not in ax_names or v.is_static:
+        if 'T' not in ax_names or var.is_static:
             print('\tWarning: tried to crop time axis of time-independent variable')
             return ds
-        dt_range = v.T.range
+        dt_range = var.T.range
         # lower/upper are earliest/latest datetimes consistent with the datetime 
         # we were given, to that precision (eg lower for "2000" would be 
         # jan 1, 2000, and upper would be dec 31).
@@ -105,23 +102,23 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             error_str = ("Error: dataset start ({}) is after requested date "
                 "range start ({})").format(time_ax.values[0], dt_start_upper)
             print('\t' + error_str)
-            raise DataPreprocessError(v, error_str)
+            raise DataPreprocessError(var, error_str)
         if time_ax.values[-1] < dt_end_lower:
             error_str = ("Error: dataset end ({}) is before requested date "
                 "range end ({})").format(time_ax.values[-1], dt_end_lower)
             print('\t' + error_str)
-            raise DataPreprocessError(v, error_str)
+            raise DataPreprocessError(var, error_str)
         
         print("\tCrop date range of {} from '{} -- {}' to {}".format(
-                ax_names['var'],
+                var.name,
                 time_ax.values[0].strftime('%Y-%m-%d'), 
                 time_ax.values[-1].strftime('%Y-%m-%d'), 
                 dt_range
             ))
         return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
 
-    def process_dataset(self, ds, **kwargs):
-        return self.crop_time_axis(ds, **kwargs)
+    def process_dataset(self, var, ds, **kwargs):
+        return self.crop_time_axis(var, ds, **kwargs)
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a DataSet. Unit conversions of 
@@ -138,26 +135,48 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     data, verify that it's for the requested level. Rename variable according to
     convention POD expects.
     """
-    def edit_request(self, v, pod):
+    def edit_request(self, varlist, convention, **kwargs):
+        # WARNING: the following is a HACK until we get proper CF conventions
+        # implemented in the fieldlist_* files for model definition.
+        # HACK is: 
+        # name = u_var (4D); should be standard_name
+        # standard_name = "u200_var", should be env_var's name
+        # "query for 3D slice before 4D" means replace [u_var] -> {alts}
+        # with [u200_var] -> [u_var] -> {alts}.
+        translate = util_mdtf.VariableTranslator()
+        translate_d = translate.variables[convention].to_dict()
         name_suffix = '_var'
-        z_level = v.get_scalar('Z')
-        if z_level is None:
-            return
-        new_name = v.standard_name
-        if v.standard_name.endswith(name_suffix):
-            new_name = new_name[:-len(name_suffix)]
-        new_name += str(int(z_level.value))  # TODO: proper units
-        if v.standard_name.endswith(name_suffix):
-            new_name += name_suffix
-        new_v = v.remove_scalar('Z', name=new_name, alternates=[[v]])
-        new_v.preprocessor.v = new_v
-        v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
-        print(f'DEBUG: ####### add alts for {new_v.name}:')
-        for vv in new_v.iter_alternate_entries():
-            print('DEBUG: ', vv.name, vv.requirement)
+        new_vars = []
+        for v in varlist.vars:
+            z_level = v.get_scalar('Z')
+            if z_level is None:
+                new_vars.append(v)
+                continue
+            # make new VarlistEntry to query for 3D slice directly
+            new_name = util.remove_suffix(v.standard_name, name_suffix)
+            new_name += str(int(z_level.value))  # TODO: proper units
+            if v.standard_name.endswith(name_suffix):
+                new_name += name_suffix
+            if new_name not in translate_d:
+                continue
+            new_name_in_model = translate_d[new_name]
+            new_v = v.remove_scalar('Z', 
+                standard_name=new_name, 
+                name_in_model=new_name_in_model,
+                alternates=[[v]]
+            )
+            v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
+            v.active = False
 
-    def extract_level(self, ds, v, ax_names, **kwargs):
-        z_coord = v.get_scalar('Z')
+            print(f'DEBUG: ### add alts for {new_v.standard_name} {new_v.requirement}:')
+            for vv in new_v.iter_alternate_entries():
+                print(f'DEBUG: ### ({vv.standard_name} {vv.requirement})')
+            new_vars.append(new_v)
+            new_vars.append(v)
+        return diagnostic.Varlist(vars=new_vars)
+
+    def extract_level(self, var, ds, ax_names, **kwargs):
+        z_coord = var.get_scalar('Z')
         if not z_coord or not z_coord.value:
             return ds
         if 'Z' not in ax_names:
@@ -174,14 +193,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             raise DataPreprocessError(("Pressure axis of file didn't provide "
                 f"requested level {z_level}."))
 
-    def process_file(self, ds, **kwargs):
+    def process_file(self, var, ds, **kwargs):
         # Do the level extraction here, on a per-file basis, to minimize the
         # data volume kept in memory.
-        return self.extract_level(ds, **kwargs)
+        return self.extract_level(var, ds, **kwargs)
 
 # ==================================================
 
-class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
+class MDTFPreprocessorBase(abc.ABC):
     """Base class for preprocessing data after it's been fetched, in order to 
     put it into a format expected by PODs. The only functionality implemented 
     here is parsing data axes and CF attributes; all other functionality is 
@@ -189,22 +208,28 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     """
     _functions = []
 
-    def __init__(self, data_mgr, var):
+    def __init__(self, data_mgr, pod):
         self.MODEL_WK_DIR = data_mgr.MODEL_WK_DIR
+        
         self.convention = data_mgr.convention
         self.ax_names = dict()
         self.calendar = None
 
-        self.v = var
+        self.pod_name = pod.name
+        self.pod_convention = pod.convention
+
         # initialize PreprocessorFunctionBase objects
-        self.functions = [cls_(data_mgr, var) for cls_ in self._functions]
+        self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
 
     def edit_request(self, pod):
+        """Edit POD's data request, based on our known capabilities.
         """
-        """
+        kwargs = self.__dict__
+        varlist = pod.varlist
         for func in self.functions:
             if hasattr(func, 'edit_request'):
-                func.edit_request(self.v, pod)
+                varlist = func.edit_request(varlist, **kwargs)
+        pod.varlist = varlist
 
     # --------------------------------------------------
 
@@ -222,6 +247,9 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
         "format": "NETCDF4"
     }
 
+    def setup(self):
+        print(f'Preprocessor: begin data for {self.pod_name}')
+
     @staticmethod
     def parse_cf_wrapper(ds):
         """Wrapper to pre-process netcdf attributes before calling xarray's
@@ -236,24 +264,24 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
 
         Returns xarray.Dataset instance with CF attributes parsed and defined.
         """
-        def _strip(v):
-            return (v.strip() if isinstance(v, str) else v)
+        def _strip(x):
+            return (x.strip() if isinstance(x, str) else x)
         def _strip_dict(d):
-            return {_strip(k): _strip(v) for k,v in d.items()}
+            return {_strip(k): _strip(var) for k,var in d.items()}
     
         # Handle previously encountered case where model data attributes 
         # contained whitespace. Strip whitepsace from attrs before calling 
         # decode_cf, since malformed metadata will raise errors.
         ds.attrs = _strip_dict(ds.attrs)
-        for var in ds.variables:
-            ds[var].attrs = _strip_dict(ds[var].attrs)
+        for v in ds.variables:
+            ds[v].attrs = _strip_dict(ds[v].attrs)
         ds = xr.decode_cf(
             ds, decode_times=True, decode_coords=True, use_cftime=True, 
             decode_timedelta=None
         )
         return ds.metpy.parse_cf()
 
-    def parse_axes(self, ds):
+    def parse_axes(self, var, ds):
         """Use metpy accessors to determine the names used for X,Y,Z,T and other
         dimensions of the data.
         """
@@ -282,7 +310,7 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
                 # metpy couldn't find this axis, maybe because ds doesn't have it
                 return None
 
-        var_name = _find_var_name(ds, self.v.name_in_model)
+        var_name = _find_var_name(ds, var.name_in_model)
         self.ax_names['var'] = var_name
 
         metpy_attrs = {'X':'x', 'Y':'y', 'Z':'vertical', 'T':'time'}
@@ -297,18 +325,18 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
             self.ax_names['W'+str(i)] = ax_name
 
         # update axes names on var
-        for ax, expected_ax in self.v.axes.items():
-            if ax not in self.v.phys_axes:
+        for ax, expected_ax in var.axes.items():
+            if ax not in var.phys_axes:
                 print(("\tWarning: file has {ax} axis '{self.ax_names[ax]}' "
                     f"not expected from variable request"))
                 continue
             if ax in self.ax_names and expected_ax.name != self.ax_names[ax]:
                 print(("\tWarning: expected name for {ax} was "
                     f"'{expected_ax.name}', got '{self.ax_names[ax]}'"))
-                if not self.v.rename_dimensions:
-                    self.v.change_coord(ax, name=self.ax_names[ax])
+                if not var.rename_dimensions:
+                    var.change_coord(ax, name=self.ax_names[ax])
 
-    def parse_calendar(self, ds):
+    def parse_calendar(self, var, ds):
         """Parse the calendar for time-dependent data (assumes CF conventions).
         """
         def _check_backup_location(dict_):
@@ -326,58 +354,60 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
             raise ValueError("No calendar info in file.")
 
         # update calendar on var
-        expected_cal = self.v.T.calendar
+        expected_cal = var.T.calendar
         if expected_cal and expected_cal != self.calendar:
             print(f"\tWarning: expected calendar {expected_cal}, got {self.calendar}")
-            self.v.change_coord('T', calendar=self.calendar)
+            var.change_coord('T', calendar=self.calendar)
 
-    def parse(self, xr_dataset):
+    def parse(self, var, dataset):
         """Additional setup and parsing to be done based on attributes of first 
         file in dataset, before full dataset is processed.
         """
         kwargs = self.__dict__
-        xr_dataset = self.parse_cf_wrapper(xr_dataset)
-        self.parse_axes(xr_dataset)
+        dataset = self.parse_cf_wrapper(dataset)
+        self.parse_axes(var, dataset)
         if 'T' in self.ax_names:
-            self.parse_calendar(xr_dataset)
+            self.parse_calendar(var, dataset)
         for func in self.functions:
             if hasattr(func, 'parse'):
-                func.parse(xr_dataset, **kwargs)
+                func.parse(var, dataset, **kwargs)
 
-    def process_static_dataset(self, xr_dataset):
+    def process_static_dataset(self, var, dataset):
         """Preprocessing to be done for time-independent datasets.
         """
         kwargs = self.__dict__
         for func in self.functions:
             if hasattr(func, 'process_static_dataset'):
-                xr_dataset = func.process_static_dataset(xr_dataset, **kwargs)
-        return xr_dataset
+                dataset = func.process_static_dataset(var, dataset, **kwargs)
+        return dataset
 
-    def process_file(self, xr_dataset):
+    def process_file(self, var, dataset):
         """Preprocessing to be done for each individual file of a time-dependent
         dataset, before :meth:`process_dataset` is called.
         """
         kwargs = self.__dict__
-        xr_dataset = self.parse_cf_wrapper(xr_dataset)
+        dataset = self.parse_cf_wrapper(dataset)
         for func in self.functions:
             if hasattr(func, 'process_file'):
-                xr_dataset = func.process_file(xr_dataset, **kwargs)
-        return xr_dataset
+                dataset = func.process_file(var, dataset, **kwargs)
+        return dataset
 
-    def process_dataset(self, xr_dataset):
+    def process_dataset(self, var, dataset):
         """Preprocessing to be done for time-dependent datasets.
         """
         kwargs = self.__dict__
         for func in self.functions:
             if hasattr(func, 'process_dataset'):
-                xr_dataset = func.process_dataset(xr_dataset, **kwargs)
-        return xr_dataset
+                dataset = func.process_dataset(var, dataset, **kwargs)
+        return dataset
 
     @abc.abstractmethod
-    def preprocess(self, local_files):
-        """Top-level wrapper for doing all preprocessing of data files. This is 
-        the only user-facing method after instance has been init'ed.
+    def process(self, var, local_files):
+        """Top-level wrapper for doing all preprocessing of data files.
         """
+        pass
+
+    def tear_down(self):
         pass
 
 
@@ -386,25 +416,23 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     provided as a single netcdf file per variable, for example the sample model
     data.
     """
-    def preprocess(self, local_files):
-        v_str = self.v.short_format()
-        print(f"Preprocess: processing {v_str}:")
+    def process(self, var, local_files):
+        print(f"    Processing {var.name}:")
         assert len(local_files) == 1
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
-        self.parse(ds)
-        if self.v.is_static:
-            ds = self.process_static_dataset(ds)
+        self.parse(var, ds)
+        if var.is_static:
+            ds = self.process_static_dataset(var, ds)
         else:
-            ds = self.process_file(ds)
-            ds = self.process_dataset(ds)
-        path_str = util.abbreviate_path(
-            self.v.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
-        print(f"Preprocess: writing to {path_str}")
-        os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
+            ds = self.process_file(var, ds)
+            ds = self.process_dataset(var, ds)
+        path_str = util.abbreviate_path(var.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
+        print(f"    Writing to {path_str}")
+        os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         ds.to_netcdf(
-            path=self.v.dest_path,
+            path=var.dest_path,
             mode='w',
             **self.save_dataset_kwargs
             # don't make time unlimited, since data might be static and we 
@@ -418,26 +446,26 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     preprocessing model data provided as one or several netcdf files per 
     variable.
     """
-    def preprocess(self, local_files):
-        v_str = self.v.short_format()
-        print(f"Preprocess: processing {v_str}:")
+    def process(self, var, local_files):
+        print(f"    Processing {var.name}:")
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
-        self.parse(ds)
-        if self.v.is_static:
+        self.parse(var, ds)
+        if var.is_static:
             # skip date trimming logic for time-independent files
             assert len(local_files) == 1
-            ds = self.process_static_dataset(ds)
+            ds = self.process_static_dataset(var, ds)
         else:
             ds.close() # save memory; shouldn't be necessary
+            process_1_file = functools.partial(self.process_file, var)
             ds = xr.open_mfdataset(
                 [f.local_path for f in local_files],
                 concat_dim=self.ax_names['T'],
                 combine="by_coords",
                 # all non-concat'ed vars, attrs must be the same:
                 compat="identical",
-                preprocess=self.process_file,
+                preprocess=process_1_file,
                 # only time-dependent variables and coords are concat'ed:
                 data_vars="minimal", coords="minimal",
                 # use dask
@@ -446,12 +474,12 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 join="exact",
                 **self.open_dataset_kwargs
             )
-            ds = self.process_dataset(ds)
-        path_str = util.abbreviate_path(self.v.dest_path, self.MODEL_WK_DIR, '$CWD')
-        print(f"Preprocess: writing to {path_str}")
-        os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
+            ds = self.process_dataset(var, ds)
+        path_str = util.abbreviate_path(var.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
+        print(f"    Writing to {path_str}")
+        os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         ds.to_netcdf(
-            path=self.v.dest_path,
+            path=var.dest_path,
             mode='w',
             **self.save_dataset_kwargs
             # don't make time unlimited, since data might be static and we 

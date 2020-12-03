@@ -3,7 +3,6 @@ import os
 import io
 from src import six
 import abc
-import atexit
 import dataclasses
 from distutils.spawn import find_executable
 import signal
@@ -411,13 +410,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.
         self.bash_exec = find_executable('bash')
-
-        # kill any subprocesses that are still active if we exit normally 
-        # (shouldn't be necessary) or are killed
-        atexit.register(self.subprocess_cleanup)
-        signal.signal(signal.SIGTERM, self.subprocess_cleanup)
-        signal.signal(signal.SIGINT, self.subprocess_cleanup)
-
+        
     def iter_active_pods(self):
         """Generator iterating over all wrapped pods which haven't been skipped 
         due to requirement errors.
@@ -463,6 +456,10 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         )
 
     def run(self):
+        # Call cleanup method if we're killed
+        signal.signal(signal.SIGTERM, self.runtime_cleanup)
+        signal.signal(signal.SIGINT, self.runtime_cleanup)
+
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
             print(f'Runtime: run {p.pod.name}')
@@ -506,10 +503,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.destroy_environment(env)
         self.env_mgr.tear_down()
 
-    def subprocess_cleanup(self, signum=None, frame=None):
+    def runtime_cleanup(self, signum=None, frame=None):
         util.signal_logger(self.__class__.__name__, signum, frame)
         # kill any active subprocesses
         for p in self.pods:
+            if p.log_handle is not None:
+                p.log_handle.close()
             if p.process is not None:
                 p.process.kill()
 

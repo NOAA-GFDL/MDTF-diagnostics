@@ -1,26 +1,18 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from src import six
-import copy
-import shutil
+import abc
 import collections
-from itertools import chain
-from operator import attrgetter
-from abc import ABCMeta, abstractmethod
+import copy
+import dataclasses
 import datetime
 import functools
+from itertools import chain
+from operator import attrgetter
+import shutil
+import signal
+from subprocess import CalledProcessError
 import typing
-import dataclasses
-if os.name == 'posix' and six.PY2:
-    try:
-        from subprocess32 import CalledProcessError
-    except ImportError:
-        from subprocess import CalledProcessError
-else:
-    from subprocess import CalledProcessError
 from src import util, util_mdtf, datelabel, preprocessor, data_model, diagnostic
 
-@six.python_2_unicode_compatible
 class DataExceptionBase(Exception):
     """Base class and common formatting code for exceptions raised in data 
     query/fetch.
@@ -45,7 +37,6 @@ class DataExceptionBase(Exception):
             s += "."
         return s
 
-@six.python_2_unicode_compatible
 class DataQueryError(DataExceptionBase):
     """Exception signaling a failure to find requested data in the remote location. 
     
@@ -55,7 +46,6 @@ class DataQueryError(DataExceptionBase):
     """
     _error_str = "Data query error"
 
-@six.python_2_unicode_compatible
 class DataAccessError(Exception):
     """Exception signaling a failure to obtain data from the remote location.
     """
@@ -102,7 +92,7 @@ def remote_file_dataset_factory(class_name, *key_classes):
     new_cls = type(class_name, tuple(parents), methods)
     return util.mdtf_dataclass(new_cls, frozen=True)
 
-class DataManager(six.with_metaclass(ABCMeta)):
+class DataManager(abc.ABC):
     """Base class for handling the data needs of PODs. Executes query for 
     requested model data against the remote data source, fetches the required 
     data locally, preprocesses it, and performs cleanup/formatting of the POD's 
@@ -257,7 +247,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pass
 
     # specific details that must be implemented in child class 
-    @abstractmethod
+    @abc.abstractmethod
     def query_dataset(self, data_key):
         pass
 
@@ -359,11 +349,14 @@ class DataManager(six.with_metaclass(ABCMeta)):
         #     >= os.path.getmtime(dataset.remote_path)
 
     # specific details that must be implemented in child class 
-    @abstractmethod
+    @abc.abstractmethod
     def fetch_dataset(self, data_key):
         pass
 
     def query_and_fetch_data(self):
+        # Call cleanup method if we're killed
+        signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
+        signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
         self.pre_query_and_fetch_hook()
 
         update = True
@@ -402,8 +395,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             raise Exception(
                 f'Too many iterations in {self.__class__.__name__}.fetch_data().'
             )
-        self.post_query_and_fetch_hook()
-            
+        self.post_query_and_fetch_hook()       
 
     def post_fetch_hook(self):
         """Called after fetching each batch of query results.
@@ -415,6 +407,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
         Use to, eg, close database or remote filesystem connections.
         """
         pass
+
+    def query_and_fetch_cleanup(self, signum=None, frame=None):
+        """Called if framework is terminated abnormally. Not called during
+        normal exit.
+        """
+        util.signal_logger(self.__class__.__name__, signum, frame)
+        self.post_query_and_fetch_hook()
 
     # -------------------------------------
 

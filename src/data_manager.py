@@ -277,7 +277,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_query:
                 try:
-                    print(f"\tQuerying '{d_key}'")
+                    print(f"Querying '{d_key}'")
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
                     files = util.coerce_to_iter(self.query_dataset(d_key))
@@ -286,7 +286,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     self.data_files[d_key].update(files)
                 except Exception as exc:
                     update = True
-                    print(f"\tCaught exception querying {d_key}: {repr(exc)}.")
+                    print(f"DEBUG: Caught exception querying {d_key}: {repr(exc)}.")
                     try:
                         raise DataQueryError(d_key, 
                             "Caught exception while querying data.") from exc
@@ -370,13 +370,13 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
             for d_key in keys_to_fetch:
                 try:
-                    print(f"\tFetching '{d_key}'")
+                    print(f"Fetching '{d_key}'")
                     # add before fetch, in case fetch raises an exc
                     self.fetched_keys.add(d_key) 
                     self.fetch_dataset(d_key)
                 except Exception as exc:
                     update = True
-                    print(f"\tCaught exception fetching {d_key}: {repr(exc)}.")
+                    print(f"DEBUG: Caught exception fetching {d_key}: {repr(exc)}.")
                     try:
                         raise DataAccessError(d_key, 
                             "Caught exception while fetching data.") from exc

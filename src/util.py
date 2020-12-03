@@ -26,7 +26,6 @@ if os.name == 'posix' and six.PY2:
 else:
     import subprocess
 import threading
-import traceback
 import typing
 import unittest.mock
 from six.moves import getcwd, collections_abc
@@ -815,6 +814,26 @@ def coerce_from_iter(obj):
     else:
         return obj
 
+def remove_prefix(s1, s2):
+    if s1.startswith(s2):
+        s1 = s1[len(s2):]
+    return s1
+
+def remove_suffix(s1, s2):
+    if s1.endswith(s2):
+        s1 = s1[:-len(s2)]
+    return s1
+
+def abbreviate_path(path, old_base, new_base=None):
+    """Express path as a path relative to old_base, optionally prepending 
+    new_base.
+    """
+    ps = tuple(os.path.abspath(p) for p in (path, old_base))
+    str_ = os.path.relpath(ps[0], start=os.path.commonpath(ps))
+    if new_base is not None:
+        str_ = os.path.join(new_base, str_)
+    return str_
+
 def filter_kwargs(kwarg_dict, function):
     """Given a dict of kwargs, return only those kwargs accepted by function.
     """
@@ -838,7 +857,8 @@ def signal_logger(caller_name, signum=None, frame=None):
             k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')
         }
-        print("\tDEBUG: {} caught signal {} ({})".format(
-            caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
-        ))
-        print("\tDEBUG: {}".format(frame))
+        sig_name = sig_lookup.get(signum, 'UNKNOWN')
+        print(f"DEBUG: {caller_name} caught signal {sig_name} ({signum})")
+        # if frame:
+        #     traceback.print_stack(f=frame)
+

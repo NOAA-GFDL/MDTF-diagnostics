@@ -750,7 +750,7 @@ class Diagnostic(object):
         )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:
-            print(f'ERROR: {self.name} has missing output files.')
+            print(f'\tERROR: {self.name} has missing output files.')
             template_d = self.templating_dict()
             template_d['missing_output'] = '<br>'.join(missing_out)
             util_mdtf.append_html_template(
@@ -761,7 +761,7 @@ class Diagnostic(object):
             )
             self.exceptions.log(FileNotFoundError(f'Missing {len(missing_out)} files.'))
         else:
-            print(f'No files are missing.')
+            print(f'\tNo files are missing.')
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using

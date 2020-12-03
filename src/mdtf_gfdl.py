@@ -132,4 +132,9 @@ if __name__ == '__main__':
     mdtf = GFDLMDTFFramework(code_root, defaults_rel_path)
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()
-    print("Exiting normally from {}".format(__file__))
+    
+    failed = mdtf.print_summary()
+    if failed:
+        exit(1)
+    else:
+        exit(0)

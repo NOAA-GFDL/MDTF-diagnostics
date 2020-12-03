@@ -302,7 +302,7 @@ class SubprocessRuntimePODWrapper(object):
         self.log_handle.write(log_str)
         if verbose > 0: print(log_str)
         self.pod.pre_run_setup()
-        print(f"{self.pod.name} will run in env: {self.env}")
+        print(f"\t{self.pod.name} will run in conda env {self.env}")
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
         self.setup_env_vars()
@@ -325,7 +325,7 @@ class SubprocessRuntimePODWrapper(object):
     def setup_exception_handler(self, exc):
         log_str = (f"Caught exception while preparing to run {self.pod.name}: "
             f"{repr(exc)}.")
-        print('\n' + log_str)
+        print('\n\t' + log_str)
         if self.log_handle is not None:
             self.log_handle.write(log_str)
             self.log_handle.close()
@@ -339,6 +339,13 @@ class SubprocessRuntimePODWrapper(object):
         """
         #return [self.program + ' ' + self.driver]
         return ['/usr/bin/env python -u '+self.pod.driver]
+
+    def run_msg(self):
+        """Log message when execution starts.
+        """
+        str_ = util.abbreviate_path(self.pod.driver, 
+            self.pod.POD_CODE_DIR, '$POD_CODE_DIR')
+        return f"Calling python {str_}"
 
     def validate_commands(self):
         """Produces the shell command(s) to validate the POD's runtime environment 
@@ -436,9 +443,9 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             + self.env_mgr.deactivate_env_commands(p.env)
         if self.test_mode:
             for cmd in commands:
-                print('TEST MODE: call {}'.format(cmd))
+                print('\tTEST MODE: call {}'.format(cmd))
         else:
-            print("Calling : {}".format(run_cmds[-1]))
+            print('\t'+p.run_msg())
         # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
@@ -458,6 +465,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     def run(self):
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
+            print(f'Runtime: run {p.pod.name}')
             try:
                 p.pre_run_setup()
             except Exception as exc:
@@ -489,6 +497,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.log_handle is not None:
                 p.log_handle.close()
                 p.log_handle = None
+        print(f'Runtime: completed')
 
     def tear_down(self):
         # cleanup all envs that were defined, just to be safe

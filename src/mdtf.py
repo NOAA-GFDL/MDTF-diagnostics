@@ -33,6 +33,9 @@ class MDTFFramework(object):
         framework. 
         """
         self.code_root = code_root
+        self.pod_list = []
+        self.case_list = []
+        self.cases = []
         # delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
@@ -265,16 +268,20 @@ class MDTFFramework(object):
     def main_loop(self):
         config = util_mdtf.ConfigManager()
         self.manual_dispatch(config)
-        caselist = []
         # only run first case in list until dependence on env vars cleaned up
-        for case_dict in self.case_list[0:1]: 
-            case = self.DataManager(case_dict)
+        for d in self.case_list[0:1]:
+            print(f"Framework: initialize {d.get('CASENAME', '')}")
+            case = self.DataManager(d)
             case.setup()
+            self.cases.append(case)
+
+        for case in self.cases:
+            print(f'Framework: get data for {case.case_name}')
             case.query_and_fetch_data()
             case.preprocess_data()
-            caselist.append(case)
 
-        for case in caselist:
+        for case in self.cases:
+            print(f'Framework: run {case.case_name}')
             run_mgr = environment_manager.SubprocessRuntimeManager(
                 case, self.EnvironmentManager
             )
@@ -282,11 +289,47 @@ class MDTFFramework(object):
             run_mgr.run()
             run_mgr.tear_down()
 
-        for case in caselist:
+        for case in self.cases:
             case.tear_down()
         self.cleanup_tempdirs()
-        return [pod_name for pod_name, pod in case.pods.items() if pod.failed]
 
+    def print_summary(self):
+        d = dict()
+        for c in self.cases:
+            if not hasattr(c, 'pods') or not c.pods:
+                case_name = c.getattr('case_name', '<ERROR>')
+                d[case_name] = (
+                    ['dummy sentinel string'], [],
+                    getattr(c, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+                )
+            else:
+                d[c.case_name] = (
+                    [p_name for p_name, p in c.pods.items() if p.failed],
+                    [p_name for p_name, p in c.pods.items() if not p.failed],
+                    getattr(c, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+                )
+        failed = any(len(tup[0]) > 0 for tup in d.values())
+        if failed:
+            print(f"\nExiting with errors from {__file__}")
+            for case_name, tup in d.items():
+                print(f"Summary for {case_name}:")
+                if tup[0][0] == 'dummy sentinel string':
+                    print('\tAn error occurred in setup. No PODs were run.')
+                else:
+                    if tup[1]:
+                        print((f"\tThe following PODs exited cleanly: "
+                            f"{', '.join(tup[1])}"))
+                    if tup[0]:
+                        print((f"\tThe following PODs raised errors: "
+                            f"{', '.join(tup[0])}"))
+                print(f"\tOutput written to {tup[2]}")
+        else:
+            print(f"\nExiting normally from {__file__}")
+            for case_name, tup in d.items():
+                print(f"Summary for {case_name}:")
+                print(f"\tAll PODs exited cleanly.")
+                print(f"\tOutput written to {tup[2]}")
+        return failed
 
 # should move this out of "src" package, but need to create wrapper shell script
 # to set framework conda env.
@@ -298,16 +341,13 @@ if __name__ == '__main__':
     if not os.path.exists(defaults_rel_path):
         # print('Warning: site-specific cli.jsonc not found, using template.')
         defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
+
     mdtf = MDTFFramework(code_root, defaults_rel_path)
     print(f"\n======= Starting {__file__}")
-    failed_pods = mdtf.main_loop()
-    config = util_mdtf.ConfigManager()
-    if failed_pods:
-        print(f"\nExiting with errors from {__file__}")
-        print(f"The following PODs raised errors: {', '.join(failed_pods)}")
-        print(f"Output written to {config.paths.OUTPUT_DIR}")
+    mdtf.main_loop()
+
+    failed = mdtf.print_summary()
+    if failed:
         exit(1)
     else:
-        print(f"\nExiting normally from {__file__}")
-        print(f"Output written to {config.paths.OUTPUT_DIR}")
         exit(0)

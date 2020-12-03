@@ -112,9 +112,11 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             print('\t' + error_str)
             raise DataPreprocessError(v, error_str)
         
-        print("\tCrop date range of {} from '{}-{}' to {}".format(
+        print("\tCrop date range of {} from '{} -- {}' to {}".format(
                 ax_names['var'],
-                time_ax.values[0], time_ax.values[-1], dt_range
+                time_ax.values[0].strftime('%Y-%m-%d'), 
+                time_ax.values[-1].strftime('%Y-%m-%d'), 
+                dt_range
             ))
         return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
 
@@ -150,9 +152,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         new_v = v.remove_scalar('Z', name=new_name, alternates=[[v]])
         new_v.preprocessor.v = new_v
         v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
-        print('####### alts for {new_v.name}:')
+        print(f'DEBUG: ####### add alts for {new_v.name}:')
         for vv in new_v.iter_alternate_entries():
-            print(vv.name, vv.requirement)
+            print('DEBUG: ', vv.name, vv.requirement)
 
     def extract_level(self, ds, v, ax_names, **kwargs):
         z_coord = v.get_scalar('Z')
@@ -188,6 +190,7 @@ class MDTFPreprocessorBase(six.with_metaclass(abc.ABCMeta)):
     _functions = []
 
     def __init__(self, data_mgr, var):
+        self.MODEL_WK_DIR = data_mgr.MODEL_WK_DIR
         self.convention = data_mgr.convention
         self.ax_names = dict()
         self.calendar = None
@@ -385,19 +388,20 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     """
     def preprocess(self, local_files):
         v_str = self.v.short_format()
-        print(f"Preprocess: parsing metadata for {v_str}")
+        print(f"Preprocess: processing {v_str}:")
         assert len(local_files) == 1
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        print(f"Preprocess: processing {v_str}")
         if self.v.is_static:
             ds = self.process_static_dataset(ds)
         else:
             ds = self.process_file(ds)
             ds = self.process_dataset(ds)
-        print(f"Preprocess: writing file to {self.v.dest_path}\n")
+        path_str = util.abbreviate_path(
+            self.v.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
+        print(f"Preprocess: writing to {path_str}")
         os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=self.v.dest_path,
@@ -416,12 +420,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     """
     def preprocess(self, local_files):
         v_str = self.v.short_format()
-        print(f"Preprocess: parsing metadata for {v_str}")
+        print(f"Preprocess: processing {v_str}:")
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
         self.parse(ds)
-        print(f"Preprocess: processing {v_str}")
         if self.v.is_static:
             # skip date trimming logic for time-independent files
             assert len(local_files) == 1
@@ -444,7 +447,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 **self.open_dataset_kwargs
             )
             ds = self.process_dataset(ds)
-        print(f"Preprocess: writing file to {self.v.dest_path}\n")
+        path_str = util.abbreviate_path(self.v.dest_path, self.MODEL_WK_DIR, '$CWD')
+        print(f"Preprocess: writing to {path_str}")
         os.makedirs(os.path.dirname(self.v.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=self.v.dest_path,

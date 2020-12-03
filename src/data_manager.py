@@ -54,10 +54,10 @@ class DataAccessError(Exception):
 @util.mdtf_dataclass(frozen=True)
 class DataKey(object):
     case_name: str = ""
-    date_range: typing.Any = None
+    date_range: datelabel.DateRange = None
     name_in_model: str = ""
-    frequency: typing.Any = None
-    level: typing.Any = None
+    frequency: datelabel.DateFrequency = None
+    level: int = None
 
     def __str__(self):
         if self.level:

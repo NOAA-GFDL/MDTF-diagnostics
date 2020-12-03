@@ -302,6 +302,14 @@ class TestDateFrequency(unittest.TestCase):
         self.assertEqual(dt_freq('daily'), dt_freq(1, 'dy'))
         self.assertEqual(dt_freq('120hr'), dt_freq(120, 'hr'))
         self.assertEqual(dt_freq('2 weeks'), dt_freq(2, 'wk'))
+
+    def test_from_struct(self):
+        self.assertEqual(dt_freq.from_struct('1hr'), dt_freq(1, 'hr'))
+        self.assertEqual(dt_freq.from_struct('5yr'), dt_freq(5, 'yr'))
+        self.assertEqual(dt_freq.from_struct('monthly'), dt_freq(1, 'mo'))
+        self.assertEqual(dt_freq.from_struct('daily'), dt_freq(1, 'dy'))
+        self.assertEqual(dt_freq.from_struct('120hr'), dt_freq(120, 'hr'))
+        self.assertEqual(dt_freq.from_struct('2 weeks'), dt_freq(2, 'wk'))
     
     def test_comparisons_same_unit(self):
         self.assertTrue(dt_freq(1,'hr') < dt_freq(2,'hr'))

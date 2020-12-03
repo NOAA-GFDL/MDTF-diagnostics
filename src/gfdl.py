@@ -546,7 +546,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
     @util.mdtf_dataclass(frozen=True)
     class UndeterminedKey(object):
         component: str = ""
-        chunk_freq: datelabel.DateFrequency = None
+        chunk_freq: datelabel.DateFrequency = datelabel.DateFrequency('static')
 
         def __str__(self):
             if self.chunk_freq:
@@ -696,7 +696,11 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, abc.ABC):
     def _cmip6_root(self):
         pass
 
-    _DataKeyClass = data_manager.DataKey
+    @util.mdtf_dataclass(frozen=True)
+    class CMIP6DataKey(data_manager.DataKey):
+        frequency: cmip6.CMIP6DateFrequency = cmip6.CMIP6DateFrequency('fx')
+
+    _DataKeyClass = CMIP6DataKey
 
     @util.mdtf_dataclass(frozen=True)
     class UndeterminedKey(object):

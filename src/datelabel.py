@@ -824,16 +824,29 @@ class DateFrequency(datetime.timedelta):
         if isinstance(quantity, six.string_types) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
         elif not isinstance(quantity, int) or not isinstance(unit, six.string_types):
-            raise ValueError("Malformed input")
+            raise ValueError(f"Malformed input: '{quantity}' '{unit}'")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)
         obj = super(DateFrequency, cls).__new__(cls, **kwargs)
         obj.quantity = None
         obj.unit = None
         # actually set attributes, as well as any others child classes may add
-        for key, val in iter(attrs.items()):
+        for key, val in attrs.items():
             obj.__setattr__(key, val)
         return obj
+
+    @property
+    def is_static(self):
+        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """
+        return (self.quantity == 0 and self.unit == "fx")
+
+    @classmethod
+    def from_struct(cls, str_):
+        """Workaround for object creation, using the method mdtf_dataclass is
+        looking for. 
+        """
+        return cls.__new__(cls, str_, None)
 
     @classmethod
     def _parse_input_string(cls, quantity, unit):
@@ -868,12 +881,6 @@ class DateFrequency(datetime.timedelta):
         else:
             raise ValueError("Malformed input {} {}".format(quantity, unit))
         return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
-
-    @property
-    def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
-        """
-        return (self.quantity == 0 and self.unit == "fx")
 
     @classmethod
     def _get_timedelta_kwargs(cls, q, s):

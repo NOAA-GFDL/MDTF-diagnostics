@@ -358,7 +358,6 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
 
     cls = dataclasses.dataclass(cls, **dc_kwargs)
     _old_init = cls.__init__
-    @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
         # Execute dataclass' auto-generated __init__ and __post_init__:
         _old_init(self, *args, **kwargs)
@@ -375,6 +374,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                 raise ValueError((f"{self.__class__.__name__}: No value supplied "
                     f"for mandatory field {f.name}."))
             # guess what types are valid
+            new_type = None
             if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
                 continue
             elif isinstance(f.type, typing._GenericAlias) \
@@ -402,19 +402,23 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                 if isinstance(value, tuple(valid_types)):
                     continue
                 if new_type is None or hasattr(new_type, '__abstract_methods__'):
-                    # can't do type coercion, so print a warning
-                    print((f"\tWarning: {self.__class__.__name__}: type of "
-                        f" {f.name} is ({f.type}), recieved {repr(value)} of "
-                        "conflicting type."))
+                    continue
+                    # # can't do type coercion, so print a warning
+                    # print((f"\tWarning: {self.__class__.__name__}: type of "
+                    #     f" {f.name} is ({f.type}), recieved {repr(value)} of "
+                    #     "conflicting type."))
                 else:
+                    # https://stackoverflow.com/a/54119384 for implementation
                     if hasattr(new_type, 'from_struct'):
-                        setattr(self, f.name, new_type.from_struct(value))
+                        object.__setattr__(self, f.name, new_type.from_struct(value))
                     else:
-                        setattr(self, f.name, new_type(value))
-            except (TypeError, ValueError, dataclasses.FrozenInstanceError): 
-                raise ValueError((f"{self.__class__.__name__}: Expected {f.name} "
-                    f"to be type ({f.type}), got {repr(value)}."))
-    cls.__init__ = _new_init
+                        object.__setattr__(self, f.name, new_type(value))
+            except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
+                print(exc)
+                raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
+                    f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
+
+    cls.__init__ = functools.wraps(_new_init, _old_init)
     return cls
 
 class ExceptionQueue(object):
@@ -862,4 +866,3 @@ def signal_logger(caller_name, signum=None, frame=None):
         print(f"DEBUG: {caller_name} caught signal {sig_name} ({signum})")
         # if frame:
         #     traceback.print_stack(f=frame)
-

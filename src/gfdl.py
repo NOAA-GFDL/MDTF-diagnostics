@@ -1,20 +1,15 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Code specific to the computing environment at NOAA's Geophysical Fluid 
+Dynamics Laboratory (Princeton, NJ, USA).
+"""
 import os
 import io
-from src import six
+import abc
+import collections
+import operator as op
 import re
 import shutil
+import subprocess
 import typing
-if os.name == 'posix' and six.PY2:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-else:
-    import subprocess
-import collections
-from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod
 from src import datelabel, util, util_mdtf, cmip6, diagnostic, data_manager
 import src.conflict_resolution as choose
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
@@ -202,7 +197,7 @@ class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
         )
 
 
-def GfdlautoDataManager(case_dict, DateFreqMixin=None):
+def GfdlautoDataManager(case_dict):
     """Wrapper for dispatching DataManager based on inputs.
     """
     test_root = case_dict.get('CASE_ROOT_DIR', None)
@@ -218,8 +213,8 @@ def GfdlautoDataManager(case_dict, DateFreqMixin=None):
         exit()
 
 
-class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManager)):
-    def __init__(self, case_dict, DateFreqMixin=None):
+class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
+    def __init__(self, case_dict):
         # load required modules
         modMgr = ModuleManager()
         modMgr.load('gcp') # should refactor
@@ -233,6 +228,9 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManage
                 f"Can't access CASE_ROOT_DIR = '{case_dict['CASE_ROOT_DIR']}'.")
         self.data_root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = is_on_tape_filesystem(self.data_root_dir)
+        self._catalog = collections.defaultdict(
+            lambda: collections.defaultdict(list)
+        )
 
         self.frepp_mode = config.config.get('frepp', False)
         if self.frepp_mode:
@@ -263,7 +261,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManage
 
     # DATA QUERY -------------------------------------
 
-    @abstractmethod
+    @abc.abstractmethod
     def parse_relative_path(self, subdir, filename):
         pass
 
@@ -292,22 +290,25 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManage
             ])
         return found_dirs
 
-    @abstractmethod
+    @abc.abstractmethod
     def subdirectory_filters(self):
         pass
 
-    def pre_query_hook(self):
+    def pre_query_and_fetch_hook(self):
         """Build data catalog on the fly from crawling directory tree.
         """
-        self.build_data_dicts()
-        self._catalog = collections.defaultdict(
-            lambda: collections.defaultdict(list)
-        )
-
         # match files ending in .nc only if they aren't of the form .tile#.nc
         # (negative lookback) 
         regex_no_tiles = re.compile(r".*(?<!\.tile\d)\.nc$")
 
+        # generate data_keys for all files we might search for; will be wiped out
+        # when build_data_dicts() is called
+        for pod in self.iter_pods():
+            for var in pod.iter_vars(all_vars=True):
+                key = self.dataset_key(var)
+                self.data_keys[key].append(var)
+
+        # crawl directory tree rooted at self.data_root_dir
         pathlist = ['']
         for filter_ in self.subdirectory_filters():
             pathlist = self.list_filtered_subdirs(pathlist, filter_)
@@ -359,7 +360,7 @@ class GfdlarchiveDataManager(six.with_metaclass(ABCMeta, data_manager.DataManage
     # FETCH REMOTE DATA -------------------------------------
 
     # specific details that must be implemented in child class 
-    @abstractmethod
+    @abc.abstractmethod
     def select_undetermined(self):
         pass
 
@@ -638,7 +639,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         choices = dict.fromkeys(self.data_keys)
         cmpt_choices = choose.minimum_cover(
             d_to_u,
-            attrgetter('component'),
+            op.attrgetter('component'),
             self._heuristic_component_tiebreaker
         )
         for d_key, cmpt in iter(cmpt_choices.items()):
@@ -649,7 +650,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
                 component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager)):
+class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, abc.ABC):
     _DiagnosticClass = GfdlDiagnostic
     _DateRangeClass = datelabel.DateRange
     _DateFreqClass = cmip6.CMIP6DateFrequency
@@ -691,7 +692,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         if 'data_freq' in self.__dict__:
             self.table_id = cmip.table_id_from_freq(self.data_freq)
 
-    @abstractmethod # note: only using this as a property
+    @abc.abstractmethod # note: only using this as a property
     def _cmip6_root(self):
         pass
 
@@ -745,7 +746,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         )]
         if not grids:
             raise Exception('Need to refine grid_label more carefully')
-        grids = min(grids, key=itemgetter('grid_number'))
+        grids = min(grids, key=op.itemgetter('grid_number'))
         return grids['grid_label']
 
     def select_undetermined(self):
@@ -754,19 +755,19 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
             d_to_u[d_key] = {f.to_UndeterminedKey() for f in self.data_files[d_key]}
         tables = choose.minimum_cover(
             d_to_u,
-            attrgetter('table_id'), 
+            op.attrgetter('table_id'), 
             self._cmip6_table_tiebreaker
         )
         dkeys_for_each_pod = list(self.data_pods.inverse().values())
         grid_lbl = choose.all_same_if_possible(
             d_to_u,
             dkeys_for_each_pod,
-            attrgetter('grid_label'), 
+            op.attrgetter('grid_label'), 
             self._cmip6_grid_tiebreaker
             )
         version_date = choose.require_all_same(
             d_to_u,
-            attrgetter('version_date'),
+            op.attrgetter('version_date'),
             lambda dates: str(max(datelabel.Date(dt) for dt in dates))
             )
         choices = dict.fromkeys(self.data_files)

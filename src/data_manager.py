@@ -139,6 +139,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
 
+        self.data_keys = collections.defaultdict(list)
+        self.data_pods = util.MultiMap()
         self.queried_keys = set([])
         self.fetched_keys = set([])
         self.data_files = util.MultiMap()
@@ -234,14 +236,12 @@ class DataManager(six.with_metaclass(ABCMeta)):
         """
         self.data_keys = collections.defaultdict(list)
         self.data_pods = util.MultiMap()
-        # self.data_files = util.MultiMap()
         for pod in self.iter_pods():
             pod.update_active_vars()
             for var in pod.iter_vars():
                 key = self.dataset_key(var)
                 self.data_keys[key].append(var)
                 self.data_pods[key].update([pod.name])
-                # self.data_files[key].update(var.remote_data)
 
     def deactivate_key(self, data_key, exc):
         """Deactivate all active variables corresponding to data_key.
@@ -252,6 +252,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
     # DATA QUERY -------------------------------------
 
     def pre_query_hook(self):
+        """Called before querying the presence of a new batch of variables.
+        """
         pass
 
     # specific details that must be implemented in child class 
@@ -260,8 +262,6 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pass
 
     def query_data(self):
-        self.pre_query_hook()
-
         update = True
         # really a while-loop, but we limit # of iterations to be safe
         for _ in range(10): 
@@ -273,7 +273,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
             keys_to_query = set(self.data_keys).difference(self.queried_keys)
             if not keys_to_query:
                 break # normal exit: queried everything
-
+            
+            self.pre_query_hook()
             for d_key in keys_to_query:
                 try:
                     print(f"    Querying '{d_key}'")
@@ -292,19 +293,29 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     except Exception as chained_exc:
                         self.deactivate_key(d_key, chained_exc)
                     continue
+            self.post_query_hook()
         else:
             # only hit this if we don't break
             raise Exception(
                 f'Too many iterations in {self.__class__.__name__}.query_data().'
             )
-        self.post_query_hook()
 
     def post_query_hook(self):
+        """Called after querying the presence of a new batch of variables.
+        """
         pass
 
     # FETCH REMOTE DATA -------------------------------------
 
+    def pre_query_and_fetch_hook(self):
+        """Called once, before the iterative query_and_fetch() process starts.
+        Use to, eg, initialize database or remote filesystem connections.
+        """
+        pass
+
     def pre_fetch_hook(self):
+        """Called before fetching each batch of query results.
+        """
         pass
 
     def sort_dataset_files(self, d_key):
@@ -353,7 +364,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         pass
 
     def query_and_fetch_data(self):
-        self.pre_fetch_hook()
+        self.pre_query_and_fetch_hook()
 
         update = True
         # really a while-loop, but we limit # of iterations to be safe
@@ -367,6 +378,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
             if not keys_to_fetch:
                 break # normal exit: fetched everything
 
+            self.pre_fetch_hook()
             for d_key in keys_to_fetch:
                 try:
                     print(f"    Fetching '{d_key}'")
@@ -382,14 +394,26 @@ class DataManager(six.with_metaclass(ABCMeta)):
                     except Exception as chained_exc:
                         self.deactivate_key(d_key, chained_exc)
                     continue
+            self.post_fetch_hook()
         else:
+            # Do cleanup regardless of success/fail
+            self.post_query_and_fetch_hook()
             # only hit this if we don't break
             raise Exception(
                 f'Too many iterations in {self.__class__.__name__}.fetch_data().'
             )
-        self.post_fetch_hook()
+        self.post_query_and_fetch_hook()
+            
 
     def post_fetch_hook(self):
+        """Called after fetching each batch of query results.
+        """
+        pass
+
+    def post_query_and_fetch_hook(self):
+        """Called once, after the iterative query_and_fetch() process ends.
+        Use to, eg, close database or remote filesystem connections.
+        """
         pass
 
     # -------------------------------------

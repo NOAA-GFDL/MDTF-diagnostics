@@ -13,7 +13,7 @@ import os
 import shutil
 import tempfile
 from src import cli, util, util_mdtf, data_manager, environment_manager, \
-    diagnostic
+    diagnostic, mdtf
 from src import gfdl
 
 class GFDLMDTFFramework(mdtf.MDTFFramework):

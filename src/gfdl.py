@@ -246,7 +246,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
     _DataKeyClass = data_manager.DefaultDataKey
 
     def dataset_key(self, varlist_entry):
-        return self._DataKeyClass.from_varlist_entry(varlist_entry, self)
+        return self._DataKeyClass.from_dataset(varlist_entry, self)
 
     # DATA QUERY -------------------------------------
 

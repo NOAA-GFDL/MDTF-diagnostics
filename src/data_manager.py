@@ -79,17 +79,20 @@ class DefaultDataKey(object):
         return (not self.frequency) or self.frequency.is_static
 
     @classmethod
-    def from_varlist_entry(cls, varlist_entry, data_mgr):
-        if varlist_entry.is_static:
+    def from_dataset(cls, dataset, data_mgr):
+        if isinstance(dataset, cls):
+            return cls(**(util.filter_dataclass(dataset, cls)))
+        assert isinstance(dataset, diagnostic.VarlistEntry)
+        if dataset.is_static:
             dt_range = datelabel.FXDateRange
             freq = datelabel.FXDateFrequency
         else:
-            dt_range = varlist_entry.T.range
-            freq = varlist_entry.T.frequency
+            dt_range = dataset.T.range
+            freq = dataset.T.frequency
         return cls(
             case_name = data_mgr.case_name,
             date_range = dt_range,
-            name_in_model = varlist_entry.name_in_model, 
+            name_in_model = dataset.name_in_model, 
             frequency = freq
         )
 
@@ -539,7 +542,11 @@ class LocalfileDataManager(DataManager):
     FileDataSet = remote_file_dataset_factory('FileDataSet', _DataKeyClass)
 
     def dataset_key(self, varlist_entry):
+<<<<<<< HEAD
         return self._DataKeyClass.from_varlist_entry(varlist_entry, self)
+=======
+        return self._DataKeyClass.from_dataset(varlist_entry, self)
+>>>>>>> f6a13d02deb98d0906d80149de344b20c70097f2
 
     def remote_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.

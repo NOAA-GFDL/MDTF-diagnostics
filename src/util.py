@@ -421,6 +421,45 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     cls.__init__ = functools.wraps(_new_init, _old_init)
     return cls
 
+def mdtf_dataclass_factory(class_name, *parents, **kwargs):
+    """Function that returns an mdtf_dataclass whose fields are the union of 
+    the fields specified in its parent classes.
+
+    Args:
+        class_name: name of the new class.
+        parents: collection of other mdtf_dataclasses to inherit from. Order in
+            the collection determines the MRO.
+        kwargs: arguments to pass to the mdtf_dataclass decorator for the
+            returned class.
+    """ 
+    def _to_dataclass(self, cls_, **kwargs_):
+        f"""Method to create an instance of one of the parent classes of
+        {class_name} by copying over the relevant subset of fields.
+        """
+        new_kwargs = filter_dataclass(self, cls_)
+        new_kwargs.update(kwargs_)
+        return cls_(**new_kwargs)
+
+    def _from_dataclasses(cls_, *other_dcs, **kwargs_):
+        f"""Classmethod to create a new instance of {class_name} from instances
+        of its parents, along with any other field values passed in kwargs.
+        """
+        new_kwargs = dict()
+        for dc in other_dcs:
+            new_kwargs.update(filter_dataclass(dc, cls_))
+        new_kwargs.update(kwargs_)
+        return cls_(**new_kwargs)
+
+    methods = {
+        'to_dataclass': _to_dataclass,
+        'from_dataclasses': classmethod(_from_dataclasses),
+    }
+    for dc in parents:
+        method_nm = 'to_' + dc.__name__.lower()
+        methods[method_nm] = functools.partialmethod(_to_dataclass, cls_=dc)
+    new_cls = type(class_name, tuple(parents), methods)
+    return mdtf_dataclass(new_cls, **kwargs)
+
 class ExceptionQueue(object):
     """Class to retain information about exceptions that were raised, for later
     output.
@@ -849,8 +888,14 @@ def filter_kwargs(kwarg_dict, function):
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
 def filter_dataclass(d, dc):
+    """Given a dataclass dc (may be the class or an instance of it), and a dict,
+    dataclass or dataclass instance d, return a dict of the subset of fields or 
+    entries in d that correspond to the fields in dc.
+    """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
+        if isinstance(d, type):
+            d = d() # d is a class; instantiate with default field values
         d = dataclasses.asdict(d)
     return {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
 

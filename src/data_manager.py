@@ -52,7 +52,10 @@ class DataAccessError(Exception):
     _error_str = "Data fetch error"
 
 @util.mdtf_dataclass(frozen=True)
-class DataKey(object):
+class DefaultDataKey(object):
+    """Minimal data_key that captures the relevant information for the data 
+    PODs require so far.
+    """
     case_name: str = ""
     date_range: datelabel.DateRange = None
     name_in_model: str = ""
@@ -60,10 +63,35 @@ class DataKey(object):
     level: int = None
 
     def __str__(self):
+        s = f"<{self.name_in_model}"
+        attrs_ = []
+        if self.frequency and not self.frequency.is_static:
+            attrs_.append(f'{self.frequency}')
         if self.level:
-            return f"{self.name_in_model} @ {self.frequency}, {self.level} hPa"
+            attrs_.append(f'{self.level}mb')
+        if attrs_:
+            return s + ' @ ' + ', '.join(attrs_) + '>'
         else:
-            return f"{self.name_in_model} @ {self.frequency}"
+            return s + '>'
+
+    @property
+    def is_static(self):
+        return (not self.frequency) or self.frequency.is_static
+
+    @classmethod
+    def from_varlist_entry(cls, varlist_entry, data_mgr):
+        if varlist_entry.is_static:
+            dt_range = datelabel.FXDateRange
+            freq = datelabel.FXDateFrequency
+        else:
+            dt_range = varlist_entry.T.range
+            freq = varlist_entry.T.frequency
+        return cls(
+            case_name = data_mgr.case_name,
+            date_range = dt_range,
+            name_in_model = varlist_entry.name_in_model, 
+            frequency = freq
+        )
 
 @util.mdtf_dataclass(frozen=True)
 class _RemoteFileDatasetBase(object):
@@ -73,24 +101,13 @@ class _RemoteFileDatasetBase(object):
     local_path: str = ""
 
 def remote_file_dataset_factory(class_name, *key_classes):
-    def _to_dataclass(self, cls_):
-        return cls_(**(util.filter_dataclass(self, cls_)))
+    """Factory returning a dataclass class that wraps whatever fields are used
+    in key_classes with the additional attributes in _RemoteFileDatasetBase.
+    """
+    key_classes = util.coerce_to_iter(key_classes, list)
+    key_classes.append(_RemoteFileDatasetBase)
+    return util.mdtf_dataclass_factory(class_name, key_classes, frozen=True)
 
-    def _from_dataclasses(cls_, *keys, **kwargs):
-        new_kwargs = dict()
-        for key in keys:
-            new_kwargs.update(util.filter_dataclass(key, cls_))
-        new_kwargs.update(kwargs)
-        return cls_(**new_kwargs)
-
-    methods = {'from_keys': classmethod(_from_dataclasses)}
-    for key_cls in key_classes:
-        method_nm = 'to_' + key_cls.__name__
-        methods[method_nm] = functools.partialmethod(_to_dataclass, key_cls)
-    parents = list(key_classes)
-    parents.append(_RemoteFileDatasetBase)
-    new_cls = type(class_name, tuple(parents), methods)
-    return util.mdtf_dataclass(new_cls, frozen=True)
 
 class DataManager(abc.ABC):
     """Base class for handling the data needs of PODs. Executes query for 
@@ -516,24 +533,13 @@ class LocalfileDataManager(DataManager):
     already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
     the PODs' sample model data.
     """
-    _DataKeyClass = DataKey
+    _DataKeyClass = DefaultDataKey
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
     FileDataSet = remote_file_dataset_factory('FileDataSet', _DataKeyClass)
 
     def dataset_key(self, varlist_entry):
-        if varlist_entry.is_static:
-            dt_range = datelabel.FXDateRange
-            freq = datelabel.DateFrequency('static')
-        else:
-            dt_range = varlist_entry.T.range
-            freq = varlist_entry.T.frequency
-        return self._DataKeyClass(
-            case_name = self.case_name,
-            date_range = dt_range,
-            name_in_model = varlist_entry.name_in_model, 
-            frequency = freq
-        )
+        return self._DataKeyClass.from_varlist_entry(varlist_entry, self)
 
     def remote_path(self, data_key):
         """Returns the absolute path of the local copy of the file for dataset.

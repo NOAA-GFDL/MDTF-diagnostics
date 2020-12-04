@@ -993,9 +993,5 @@ class AbstractDateFrequency(abc.ABC):
 # DM*Dimension classes as implementations of AbstractDMDimension, because 
 # Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
 AbstractDateRange.register(DateRange)
-AbstractDateRange.register(FXDateRange)
 AbstractDate.register(Date)
-AbstractDate.register(FXDateMin)
-AbstractDate.register(FXDateMax)
 AbstractDateFrequency.register(DateFrequency)
-AbstractDateFrequency.register(FXDateFrequency)

@@ -243,21 +243,10 @@ class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
-    _DataKeyClass = data_manager.DataKey
+    _DataKeyClass = data_manager.DefaultDataKey
 
     def dataset_key(self, varlist_entry):
-        if varlist_entry.is_static:
-            dt_range = datelabel.FXDateRange
-            freq = datelabel.DateFrequency('static')
-        else:
-            dt_range = varlist_entry.T.range
-            freq = varlist_entry.T.frequency
-        return self._DataKeyClass(
-            case_name = self.case_name,
-            date_range = dt_range,
-            name_in_model = varlist_entry.name_in_model, 
-            frequency = freq
-        )
+        return self._DataKeyClass.from_varlist_entry(varlist_entry, self)
 
     # DATA QUERY -------------------------------------
 
@@ -541,15 +530,15 @@ class GfdlppDataManager(GfdlarchiveDataManager):
         self.chunk_freq = None
         super(GfdlppDataManager, self).__init__(case_dict)
 
-    _DataKeyClass = data_manager.DataKey
+    _DataKeyClass = data_manager.DefaultDataKey
 
     @util.mdtf_dataclass(frozen=True)
     class UndeterminedKey(object):
         component: str = ""
-        chunk_freq: datelabel.DateFrequency = datelabel.DateFrequency('static')
+        chunk_freq: datelabel.DateFrequency = None
 
         def __str__(self):
-            if self.chunk_freq:
+            if (not self.chunk_freq) or self.chunk_freq.is_static:
                 return f"{self.component} per {self.chunk_freq} chunks"
             else:
                 return f"{self.component}"
@@ -697,7 +686,7 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, abc.ABC):
         pass
 
     @util.mdtf_dataclass(frozen=True)
-    class CMIP6DataKey(data_manager.DataKey):
+    class CMIP6DataKey(data_manager.DefaultDataKey):
         frequency: cmip6.CMIP6DateFrequency = cmip6.CMIP6DateFrequency('fx')
 
     _DataKeyClass = CMIP6DataKey

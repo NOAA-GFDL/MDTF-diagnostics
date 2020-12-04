@@ -766,7 +766,13 @@ class Date(DateRange):
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
 
-class _FXDateRange(DateRange):
+class StaticTimeDependenceBase(object):
+    """Dummy class to label sentinel objects for use in describing static data 
+    with no time dependence.
+    """
+    pass
+
+class _FXDateRange(DateRange, StaticTimeDependenceBase):
     """Singleton placeholder/sentinel object for use in describing static data 
     with no time dependence.
     """
@@ -952,6 +958,20 @@ class DateFrequency(datetime.timedelta):
 
     def __hash__(self):
         return hash((self.__class__, self.quantity, self.unit))
+
+class _FXDateFrequency(DateFrequency, StaticTimeDependenceBase):
+    """Singleton placeholder/sentinel object for use in describing static data 
+    with no time dependence.
+    """
+    # define __new__, not __init__, because timedelta is immutable
+    def __new__(cls):
+        return super(_FXDateFrequency, cls).__new__(cls, 'static')
+
+    @property
+    def is_static(self):
+        return True
+
+FXDateFrequency = _FXDateFrequency()
 
 class AbstractDateRange(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMDimension` objects.

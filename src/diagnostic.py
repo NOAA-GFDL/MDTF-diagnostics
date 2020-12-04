@@ -1,6 +1,4 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from src import six
 import collections
 import dataclasses
 import enum
@@ -10,7 +8,6 @@ import typing
 from src import util, util_mdtf, verify_links, datelabel, data_model
 from src import cli # HACK for now
 
-@six.python_2_unicode_compatible
 class PodExceptionBase(Exception):
     """Base class and common formatting code for exceptions affecting a single
     POD.
@@ -35,7 +32,6 @@ class PodExceptionBase(Exception):
         # full repr of Diagnostic takes lots of space to print
         return f"{self.__class__.__name__}({str(self)})"
 
-@six.python_2_unicode_compatible
 class PodConfigError(PodExceptionBase):
     """Exception raised if we can't parse info in a POD's settings.jsonc file.
     (Covers issues with the file format/schema; malformed JSONC will raise a
@@ -44,19 +40,16 @@ class PodConfigError(PodExceptionBase):
     """
     _error_str = "Couldn't parse configuration in settings.jsonc file."
 
-@six.python_2_unicode_compatible
 class PodDataError(PodExceptionBase):
     """Exception raised if POD doesn't have required data to run. 
     """
     _error_str = "Requested data not available."
 
-@six.python_2_unicode_compatible
 class PodRuntimeError(PodExceptionBase):
     """Exception raised if POD doesn't have required resources to run. 
     """
     _error_str = "An error occurred in setting up the POD's runtime environment."
 
-@six.python_2_unicode_compatible
 class PodExecutionError(PodExceptionBase):
     """Exception raised if POD doesn't have required resources to run. 
     """

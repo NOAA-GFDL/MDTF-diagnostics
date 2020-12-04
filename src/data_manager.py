@@ -106,7 +106,7 @@ def remote_file_dataset_factory(class_name, *key_classes):
     """
     key_classes = util.coerce_to_iter(key_classes, list)
     key_classes.append(_RemoteFileDatasetBase)
-    return util.mdtf_dataclass_factory(class_name, key_classes, frozen=True)
+    return util.mdtf_dataclass_factory(class_name, *key_classes, frozen=True)
 
 
 class DataManager(abc.ABC):
@@ -561,7 +561,7 @@ class LocalfileDataManager(DataManager):
         path = self.remote_path(data_key)
         tmpdir = tmpdirs.make_tempdir(hash_obj = data_key)
         if os.path.isfile(path):
-            return self.FileDataSet.from_keys(
+            return self.FileDataSet.from_dataclasses(
                 data_key,
                 remote_path = path,
                 local_path = os.path.join(tmpdir, os.path.basename(path))

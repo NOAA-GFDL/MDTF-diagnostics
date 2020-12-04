@@ -358,6 +358,8 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
 
     cls = dataclasses.dataclass(cls, **dc_kwargs)
     _old_init = cls.__init__
+
+    @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
         # Execute dataclass' auto-generated __init__ and __post_init__:
         _old_init(self, *args, **kwargs)
@@ -418,7 +420,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                 raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
                     f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
 
-    cls.__init__ = functools.wraps(_new_init, _old_init)
+    cls.__init__ = _new_init
     return cls
 
 def mdtf_dataclass_factory(class_name, *parents, **kwargs):

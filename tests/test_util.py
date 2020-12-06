@@ -279,7 +279,7 @@ class TestMDTFDataclass(unittest.TestCase):
         self.assertEqual(dummy.c, 5)
         dummy = Dummy(a=(1,2), b=(1,2), d=[1,2])
         self.assertEqual(dummy.d, [1,2])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             _ = Dummy(a=(1,2), b=(1,2), d=(1,2))
 
     def test_typing_generics_2(self):
@@ -415,6 +415,30 @@ class TestSubprocessInteraction(unittest.TestCase):
             util.run_command(input)
 
 # ---------------------------------------------------
+
+# TODO: tests for mdtf_dataclass et al.
+
+class TestRegexPattern(unittest.TestCase):
+    def test_regex_dataclass(self):
+        regex = r"/(?P<foo>\d+)/(?P<bar>\d+)/other_text"
+        ppat = util.RegexPattern(regex)
+
+        @util.regex_dataclass(ppat)
+        @util.mdtf_dataclass()
+        class A():
+            foo: int
+            bar: int
+
+        ppat.match('/123/456/other_text')
+        self.assertDictEqual(ppat.data, {'foo':123, 'bar': 456})
+        a = A.from_string('/1/2/other_text')
+        self.assertEqual(a.foo, 1)
+        self.assertEqual(a.bar, 2)
+        b = A.from_string('/3/4/other_text')
+        self.assertEqual(a.foo, 1)
+        self.assertEqual(a.bar, 2)
+        self.assertEqual(b.foo, 3)
+        self.assertEqual(b.bar, 4)
 
 if __name__ == '__main__':
     unittest.main()

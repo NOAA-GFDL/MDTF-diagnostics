@@ -109,7 +109,8 @@ def remote_file_dataset_factory(class_name, *key_classes):
     """
     key_classes = util.coerce_to_iter(key_classes, list)
     key_classes.append(_RemoteFileDatasetBase)
-    return util.mdtf_dataclass_factory(class_name, *key_classes, frozen=True)
+    return util.dataclass_factory(util.mdtf_dataclass, class_name, *key_classes, 
+        frozen=True)
 
 
 class DataManager(abc.ABC):

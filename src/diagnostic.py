@@ -162,7 +162,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     requirement: VarlistEntryRequirement = dataclasses.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
-    needs_query: bool = True
+    separate_query: bool = True
     alternates: list = dataclasses.field(default_factory=list, compare=False)
     active: bool = dataclasses.field(init=False, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
@@ -365,7 +365,17 @@ class Varlist(data_model.DMDataSet):
 
     @property
     def active_vars(self):
-        return [v for v in self.vars if v.active]
+        return [v for v in self.iter_contents() if v.active and v.separate_query]
+
+    def find_var(self, v):
+        """If a variable matching v is already present in the Varlist, return 
+        (a reference to) it (so that we don't try to add duplicates), otherwise
+        return None.
+        """
+        for vv in self.iter_contents():
+            if v == vv:
+                return vv
+        return None
 
 # ------------------------------------------------------------
 

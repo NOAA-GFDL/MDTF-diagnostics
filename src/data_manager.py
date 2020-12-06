@@ -81,7 +81,7 @@ class DefaultDataKey(object):
     @classmethod
     def from_dataset(cls, dataset, data_mgr):
         if isinstance(dataset, cls):
-            return cls(**(util.filter_dataclass(dataset, cls)))
+            return util.coerce_to_dataclass(dataset, cls)
         assert isinstance(dataset, diagnostic.VarlistEntry)
         if dataset.is_static:
             dt_range = datelabel.FXDateRange
@@ -206,7 +206,11 @@ class DataManager(abc.ABC):
                 continue
             try:
                 pod.preprocessor = self._PreprocessorClass(self, pod)
-                pod.preprocessor.edit_request(pod)
+                pod.preprocessor.edit_request(self, pod)
+                print('####################')
+                for v in pod.iter_vars(all_vars=True):
+                    v.print_debug()
+                print('####################')
             except Exception as exc:
                 raise
                 try:
@@ -296,7 +300,9 @@ class DataManager(abc.ABC):
                     self.data_files[d_key].update(files)
                 except Exception as exc:
                     update = True
-                    print(f"DEBUG: Caught exception querying {d_key}: {repr(exc)}.")
+                    if not isinstance(exc, DataQueryError):
+                        print((f"DEBUG: Caught exception querying {d_key}: "
+                            f"{repr(exc)}."))
                     try:
                         raise DataQueryError(d_key, 
                             "Caught exception while querying data.") from exc

@@ -135,7 +135,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     data, verify that it's for the requested level. Rename variable according to
     convention POD expects.
     """
-    def edit_request(self, varlist, convention, **kwargs):
+    def edit_request(self, data_mgr, pod):
         # WARNING: the following is a HACK until we get proper CF conventions
         # implemented in the fieldlist_* files for model definition.
         # HACK is: 
@@ -143,11 +143,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         # standard_name = "u200_var", should be env_var's name
         # "query for 3D slice before 4D" means replace [u_var] -> {alts}
         # with [u200_var] -> [u_var] -> {alts}.
-        translate = util_mdtf.VariableTranslator()
-        translate_d = translate.variables[convention].to_dict()
         name_suffix = '_var'
         new_vars = []
-        for v in varlist.vars:
+        for v in pod.varlist.iter_contents():
             z_level = v.get_scalar('Z')
             if z_level is None:
                 new_vars.append(v)
@@ -157,23 +155,21 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             new_name += str(int(z_level.value))  # TODO: proper units
             if v.standard_name.endswith(name_suffix):
                 new_name += name_suffix
-            if new_name not in translate_d:
-                continue
-            new_name_in_model = translate_d[new_name]
             new_v = v.remove_scalar('Z', 
+                name=new_name, 
                 standard_name=new_name, 
-                name_in_model=new_name_in_model,
                 alternates=[[v]]
             )
+            new_v.configure(data_mgr, pod)
             v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
             v.active = False
 
-            print(f'DEBUG: ### add alts for {new_v.standard_name} {new_v.requirement}:')
+            print(f'DEBUG: ### add alts for <{new_v.short_format()} {new_v.requirement}>:')
             for vv in new_v.iter_alternate_entries():
-                print(f'DEBUG: ### ({vv.standard_name} {vv.requirement})')
+                print(f'DEBUG: ### <{vv.short_format()} {vv.requirement}>')
             new_vars.append(new_v)
             new_vars.append(v)
-        return diagnostic.Varlist(vars=new_vars)
+        pod.varlist = diagnostic.Varlist(contents=new_vars)
 
     def extract_level(self, var, ds, ax_names, **kwargs):
         z_coord = var.get_scalar('Z')
@@ -221,15 +217,12 @@ class MDTFPreprocessorBase(abc.ABC):
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
 
-    def edit_request(self, pod):
+    def edit_request(self, data_mgr, pod):
         """Edit POD's data request, based on our known capabilities.
         """
-        kwargs = self.__dict__
-        varlist = pod.varlist
         for func in self.functions:
             if hasattr(func, 'edit_request'):
-                varlist = func.edit_request(varlist, **kwargs)
-        pod.varlist = varlist
+                func.edit_request(data_mgr, pod)
 
     # --------------------------------------------------
 

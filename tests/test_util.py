@@ -250,6 +250,24 @@ class TestUtil(unittest.TestCase):
     def test_write_json(self):
         pass
 
+    def test_strip_comments_quote_escape(self):
+        str_ = '"foo": "bar\\\"ba//z\\\""'
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": "bar\\"ba//z\\""', [0])
+        )
+        str_ = '"foo": "bar\\\"ba//z\\\"" //comment \\\" '
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": "bar\\"ba//z\\"" ', [0])
+        )
+        # old code breaks on this case - unbalanced
+        str_ = '"foo": bar\\\"ba//z\\\""'
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": bar\\"ba', [0])
+        )
+
 # ---------------------------------------------------
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):

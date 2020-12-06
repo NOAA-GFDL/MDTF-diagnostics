@@ -271,6 +271,8 @@ class NameSpace(dict):
 def strip_comments(str_, delimiter=None):
     # would be better to use shlex, but that doesn't support multi-character
     # comment delimiters like '//'
+    ESCAPED_QUOTE_PLACEHOLDER = '\v' # no one uses vertical tab
+    
     if not delimiter:
         return str_
     lines = str_.splitlines()
@@ -283,13 +285,17 @@ def strip_comments(str_, delimiter=None):
         # If delimiter appears quoted in a string, don't want to treat it as
         # a comment. So for each occurrence of delimiter, count number of 
         # "s to its left and only truncate when that's an even number.
-        # TODO: handle ' as well as ", for non-JSON applications
-        line_parts = lines[i].split(delimiter)
+        # First we get rid of \-escaped single "s.
+        replaced_line = lines[i].replace('\\\"', ESCAPED_QUOTE_PLACEHOLDER)
+        line_parts = replaced_line.split(delimiter)
         quote_counts = [s.count('"') for s in line_parts]
         j = 1
         while sum(quote_counts[:j]) % 2 != 0:
+            if j >= len(quote_counts):
+                raise ValueError(f"Couldn't parse line {i+1} of string.")
             j += 1
-        lines[i] = delimiter.join(line_parts[:j])
+        replaced_line = delimiter.join(line_parts[:j])
+        lines[i] = replaced_line.replace(ESCAPED_QUOTE_PLACEHOLDER, '\\\"')
     # make lookup table of correct line numbers, taking into account lines we
     # dropped
     line_nos = [i for i, s in enumerate(lines) if (s and not s.isspace())]

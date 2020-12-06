@@ -244,6 +244,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
     _DataKeyClass = data_manager.DefaultDataKey
+    _UndeterminedKeyClass = None
 
     def dataset_key(self, varlist_entry):
         return self._DataKeyClass.from_dataset(varlist_entry, self)
@@ -297,6 +298,12 @@ class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
                 key = self.dataset_key(var)
                 self.data_keys[key].append(var)
 
+        print("keys dump:")
+        for k1,v1 in self.data_keys.items():
+            print(k1, len(v1))
+            if k1.name_in_model == 'rlut':
+                print('\t', repr(k1))
+
         # crawl directory tree rooted at self.data_root_dir
         pathlist = ['']
         for filter_ in self.subdirectory_filters():
@@ -304,41 +311,51 @@ class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
         for dir_ in pathlist:
             dir_contents = self._listdir(os.path.join(self.data_root_dir, dir_))
             dir_contents = list(filter(regex_no_tiles.search, dir_contents))
-            temp_file_ds = []
-            temp_d_keys = collections.defaultdict(list)
+            files = [] # list of FileDataSets corresponding to files in this dir
+            file_keys = collections.defaultdict(list) # DataKeys of those files
             for f in dir_contents:
                 try:
-                    temp_file_ds.append(self.parse_relative_path(dir_, f))
+                    files.append(self.parse_relative_path(dir_, f))
                 except ValueError as exc:
-                    print('\tDEBUG:', exc)
+                    # print('\tDEBUG:', exc)
                     #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.data_root_dir, dir_), f)
                     continue
-            for ds in temp_file_ds:
-                data_key = self.dataset_key(ds)
-                temp_d_keys[data_key].append(ds)
+            for file_ds in files:
+                data_key = self.dataset_key(file_ds)
+                if data_key.name_in_model == 'rlut':
+                    print('\t', repr(data_key))
+                file_keys[data_key].append(file_ds)
+
+                
             for data_key in self.data_keys:
                 # in case data is chunked, only add files to _catalog if the
-                # date_range can be spanned with filed we've found in this dir_
-                if data_key not in temp_d_keys:
+                # date_range can be spanned with files we've found in this dir_.
+                # If yes, insert the list of files under a d_key with date_range
+
+                if data_key not in file_keys:
                     continue
+                files = file_keys[data_key]
                 try:
                     # method throws ValueError if ranges aren't contiguous
                     files_date_range = datelabel.DateRange.from_contiguous_span(
-                        *[f.date_range for f in temp_d_keys[data_key]]
+                        *[f.date_range for f in files]
                     )
                 except ValueError:
                     # Date range of remote files doesn't contain analysis range or 
                     # is noncontiguous; should probably log an error
                     continue
                 if not files_date_range.contains(self.date_range):
-                    # should log warning
+                    # files we found don't span the query date range
                     continue
-                for file_ds in temp_d_keys[data_key]:
+                for file_ds in files:
                     if file_ds.date_range in self.date_range:
-                        d_key = file_ds.to_DataKey(file_ds)
-                        assert data_key == d_key
-                        u_key = file_ds.to_UndeterminedKey(file_ds)
+                        d_key = file_ds.to_dataclass(self._DataKeyClass)
+                        u_key = file_ds.to_dataclass(self._UndeterminedKeyClass)
                         self._catalog[d_key][u_key].append(file_ds)
+
+        print("catalog dump:")
+        for k1,v1 in self._catalog.items():
+            print(k1, len(v1.keys()))
 
     def query_dataset(self, data_key):
         if data_key in self._catalog:
@@ -568,12 +585,15 @@ class GfdlppDataManager(GfdlarchiveDataManager):
     def parse_relative_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         path_d = {
+            'case_name': self.case_name,
             'remote_path': os.path.join(self.data_root_dir, rel_path),
             'local_path': util.NOTSET
         }
         match = re.match(self._pp_ts_regex, rel_path)
         if match:
-            md = util.filter_dataclass(match.groupdict(), self.FileDataSet)
+            md = match.groupdict()
+            md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
+            md = util.filter_dataclass(md, self.FileDataSet)
             return self.FileDataSet(**md, **path_d)
         # match failed, try static file regex instead
         match = re.match(self._pp_static_regex, rel_path)
@@ -581,10 +601,11 @@ class GfdlppDataManager(GfdlarchiveDataManager):
             md = match.groupdict()
             md['start_date'] = datelabel.FXDateMin
             md['end_date'] = datelabel.FXDateMax
+            md['date_range'] = datelabel.FXDateRange
             # TODO: fix this: static vars combined in one file;
             # must extract them in preprocessor
             md['name_in_model'] = util.NOTSET 
-            md = util.filter_dataclass(match.groupdict(), self.FileDataSet)
+            md = util.filter_dataclass(md, self.FileDataSet)
             return self.FileDataSet(**md, **path_d)
         raise ValueError("Can't parse {}, skipping.".format(rel_path))
 
@@ -705,15 +726,18 @@ class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, abc.ABC):
     )
 
     def parse_relative_path(self, subdir, filename):
+        path_d = {
+            'case_name': self.case_name,
+            'remote_path': os.path.join(self.data_root_dir, subdir, filename),
+            'local_path': util.NOTSET
+        }
         d = cmip6.parse_DRS_path(
             os.path.join(self.data_root_dir, subdir)[len(self._cmip6_root):],
             filename
         )
         d['name_in_model'] = d['variable_id']
-        d['remote_path'] = os.path.join(self.data_root_dir, subdir, filename)
-        d['local_path'] = util.NOTSET
         d = util.filter_dataclass(d, self.FileDataSet)
-        return self.FileDataSet(**d)
+        return self.FileDataSet(**d, **path_d)
 
     def subdirectory_filters(self):
         return [self.table_id, None, # variable_id

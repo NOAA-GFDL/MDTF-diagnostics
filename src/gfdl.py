@@ -213,7 +213,7 @@ def GfdlautoDataManager(case_dict):
         exit()
 
 
-class GfdlarchiveDataManager(data_manager.DataManager, abc.ABC):
+class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
     def __init__(self, case_dict):
         # load required modules
         modMgr = ModuleManager()
@@ -639,7 +639,7 @@ class GfdlppDataManager(GfdlarchiveDataManager):
                 component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, abc.ABC):
+class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, metaclass=abc.ABCMeta):
     _DiagnosticClass = GfdlDiagnostic
     _DateRangeClass = datelabel.DateRange
     _DateFreqClass = cmip6.CMIP6DateFrequency

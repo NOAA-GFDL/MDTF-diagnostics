@@ -170,7 +170,7 @@ class VariableTranslator(util.Singleton):
                 self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
                 self.units[conv] = util.MultiMap(d.get('units', dict()))
 
-    def toCF(self, convention, v_name):
+    def to_CF(self, convention, v_name):
         if convention == 'CF': 
             return v_name
         assert convention in self.variables, \
@@ -182,7 +182,7 @@ class VariableTranslator(util.Singleton):
             print(f"ERROR: name {v_name} not defined for convention {convention}.")
             raise
     
-    def fromCF(self, convention, v_name):
+    def from_CF(self, convention, v_name):
         if convention == 'CF': 
             return v_name
         assert convention in self.variables, \

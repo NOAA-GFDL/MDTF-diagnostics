@@ -460,6 +460,11 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         signal.signal(signal.SIGTERM, self.runtime_cleanup)
         signal.signal(signal.SIGINT, self.runtime_cleanup)
 
+        test_list = [p for p in self.iter_active_pods()]
+        if not test_list:
+            print('Runtime: no PODs met data requirements; returning')
+            return
+
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
             print(f'Runtime: run {p.pod.name}')

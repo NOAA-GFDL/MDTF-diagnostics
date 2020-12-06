@@ -94,7 +94,7 @@ class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
     def time_settings(self):
         return util.filter_dataclass(self, _VarlistTimeSettings)
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistCoordinateMixin(object):
     """Base class to describe a single dimension (in the netcdf data model sense)
     used by one or more variables. Corresponds to list entries in the 
@@ -102,26 +102,26 @@ class VarlistCoordinateMixin(object):
     """
     need_bounds: bool = False
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     pass
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistLongitudeCoordinate(data_model.DMLongitudeCoordinate, \
     VarlistCoordinateMixin):
     range: tuple = None
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistLatitudeCoordinate(data_model.DMLatitudeCoordinate, \
     VarlistCoordinateMixin):
     range: tuple = None
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
     VarlistCoordinateMixin):
     pass
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     VarlistCoordinateMixin):
     frequency: typing.Any = ""
@@ -133,7 +133,7 @@ class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     standard_name = 'time'
     axis = 'T'
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class VarlistTimeCoordinate(data_model.DMTimeCoordinate, _VarlistTimeSettings, 
     VarlistCoordinateMixin):
     pass
@@ -162,12 +162,13 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     requirement: VarlistEntryRequirement = dataclasses.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
+    separate_query: bool = True
     alternates: list = dataclasses.field(default_factory=list, compare=False)
     active: bool = dataclasses.field(init=False, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
-    def __post_init__(self):
-        super(VarlistEntry, self).__post_init__()
+    def __post_init__(self, coords=None):
+        super(VarlistEntry, self).__post_init__(coords)
         self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
         self.exception = None
         if not self.path_variable:
@@ -190,8 +191,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         settings.jsonc.
         """
         new_kw = global_settings_d.copy()
-        new_kw['dims'] = []
-        new_kw['scalar_coords'] = set([])
+        new_kw['coords'] = []
 
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for varlist entry {name}.")
@@ -199,17 +199,14 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in varlist "
                     f"entry for {name}."))
-            new_kw['dims'].append(dims_d[d_name])
-        new_kw['dims'] = tuple(new_kw['dims'])
+            new_kw['coords'].append(dims_d[d_name])
 
         if 'scalar_coordinates' in kwargs:
             for d_name, scalar_val in kwargs.pop('scalar_coordinates').items():
                 if d_name not in dims_d:
                     raise ValueError((f"Unknown dimension name {d_name} in varlist "
                         f"entry for {name}."))
-                new_kw['scalar_coords'].add(
-                    dims_d[d_name].make_scalar(scalar_val)
-                )
+                new_kw['coords'].append(dims_d[d_name].make_scalar(scalar_val))
         filter_kw = util.filter_dataclass(kwargs, cls)
         obj = cls(name=name, **new_kw, **filter_kw)
         # specialize time coord
@@ -276,6 +273,35 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             print(f"  Alternate set #{i+1}: [{', '.join(alt_names)}]")
         print()
 
+    # this dependency inversion feels funny to me
+    def configure(self, data_mgr, pod):
+        """Update fields with information that only becomes available after
+        DataManager and Diagnostic have been configured (ie, only known at
+        runtime, not from settings.jsonc.)
+        """
+        translate = util_mdtf.VariableTranslator()
+        self.change_coord(
+            'T',
+            new_class = {
+                'self': VarlistTimeCoordinate,
+                'range': data_mgr._DateRangeClass,
+                'frequency': data_mgr._DateFreqClass
+            },
+            range=data_mgr.date_range
+        )
+        self.dest_path = pod.dest_path(data_mgr, self)
+        try:
+            self.name_in_model = translate.from_CF(
+                data_mgr.convention, self.standard_name)
+        except KeyError:
+            err_str = (f"CF name '{self.standard_name}' for varlist entry "
+                f"{self.name} in POD {pod.name} not recognized by naming "
+                f"convention '{data_mgr.convention}'.")
+            print(err_str)
+            self.exception = PodConfigError(self, err_str)
+            self.active = False
+            raise self.exception
+
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a 
     single POD.
@@ -312,7 +338,8 @@ class Varlist(data_model.DMDataSet):
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
 
-        vlist_settings = VarlistSettings(**(d.get('data', dict())))
+        vlist_settings = util.coerce_to_dataclass(
+            d.get('data', dict()), VarlistSettings)
         globals_d = vlist_settings.global_settings
 
         assert 'dimensions' in d
@@ -334,11 +361,21 @@ class Varlist(data_model.DMDataSet):
             for alts in v.alternates:
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
-        return cls(vars= list(vlist_vars.values()))
+        return cls(contents = list(vlist_vars.values()))
 
     @property
     def active_vars(self):
-        return [v for v in self.vars if v.active]
+        return [v for v in self.iter_contents() if v.active and v.separate_query]
+
+    def find_var(self, v):
+        """If a variable matching v is already present in the Varlist, return 
+        (a reference to) it (so that we don't try to add duplicates), otherwise
+        return None.
+        """
+        for vv in self.iter_contents():
+            if v == vv:
+                return vv
+        return None
 
 # ------------------------------------------------------------
 
@@ -454,29 +491,13 @@ class Diagnostic(object):
 
     # this dependency inversion feels funny to me
     def configure_vars(self, data_mgr):
-        translate = util_mdtf.VariableTranslator()
-
-        self.varlist.change_coord(
-            'T', 
-            new_class = {
-                'self': VarlistTimeCoordinate,
-                'range': data_mgr._DateRangeClass,
-                'frequency': data_mgr._DateFreqClass
-            },
-            range=data_mgr.date_range
-        )
-        translate_d = translate.variables[data_mgr.convention].to_dict()
         for v in self.iter_vars(all_vars=True):
-            v.dest_path = self.dest_path(data_mgr, v)
             try:
-                v.name_in_model = translate_d[v.name]
-            except KeyError:
-                err_str = (f"Varlist entry {v.name} for POD {self.name} not "
-                    f"recognized by naming convention '{data_mgr.convention}'.")
-                print(err_str)
-                v.exception = PodConfigError(self, err_str)
+                v.configure(data_mgr, self)
+            except Exception as exc:
                 try:
-                    raise PodConfigError(self, "Bad varlist name") from v.exception
+                    raise PodConfigError(self, 
+                        f"Caught exception when configuring {v.name}") from exc
                 except Exception as chained_exc:
                     self.exceptions.log(chained_exc)  
                 continue

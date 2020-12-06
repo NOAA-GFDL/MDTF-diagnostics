@@ -106,16 +106,16 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 
 # ------------------------------------------------------------------------------
 
-# DMAxis = util.MDTFEnum(
-#     'DMAxis', 'X Y Z T BOUNDS OTHER', module=__name__
-# )
-# DMAxis.spatiotemporal_names = ('X', 'Y', 'Z', 'T')
-# DMAxis.__doc__ = """:py:class:`~enum.Enum` encoding the recognized axis types
-# (dimension coordinates with a distinguished role.)
-# """
-_spatiotemporal_names = ('X', 'Y', 'Z', 'T')
+DMAxis = util.MDTFEnum(
+    'DMAxis', 'X Y Z T BOUNDS OTHER', module=__name__
+)
+DMAxis.spatiotemporal_names = ('X', 'Y', 'Z', 'T')
+DMAxis.spatiotemporal = (DMAxis.X, DMAxis.Y, DMAxis.Z, DMAxis.T)
+DMAxis.__doc__ = """:py:class:`~enum.Enum` encoding the recognized axis types
+(dimension coordinates with a distinguished role.)
+"""
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMBoundsDimension(object):
     """Placeholder object to represent the bounds dimension of a 
     :class:`DMCoordinateBounds` object. Not a dimension coordinate, and strictly
@@ -125,7 +125,7 @@ class DMBoundsDimension(object):
     
     standard_name = 'bounds'
     units = '1'
-    axis = 'BOUNDS'
+    axis = DMAxis.BOUNDS
     bounds = None
     value = None
 
@@ -137,7 +137,7 @@ class DMBoundsDimension(object):
     def is_scalar(self):
         return False
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class _DMCoordinateShared(object):
     """Fields common to all :class:`AbstractDMCoordinate` child classes which
     aren't fixed to particular values.
@@ -160,38 +160,38 @@ class _DMCoordinateShared(object):
     def make_scalar(self, new_value):
         return dataclasses.replace(self, value=new_value)
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMCoordinate(_DMCoordinateShared):
     """Class to describe a single coordinate variable (in the sense used by the
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
     standard_name: str = util.MANDATORY
     units: str = util.MANDATORY
-    axis: str = 'OTHER'
+    axis: DMAxis = DMAxis.OTHER
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'longitude'
     units: str = 'degrees_E'
-    axis: str = 'X'
+    axis: DMAxis = DMAxis.X
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'latitude'
     units: str = 'degrees_N'
-    axis: str = 'Y'
+    axis: DMAxis = DMAxis.Y
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMVerticalCoordinate(_DMCoordinateShared):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
     standard_name: str = util.MANDATORY
     units: str = "1" # dimensionless vertical coords OK
+    axis: DMAxis = DMAxis.Z
     positive: str = util.MANDATORY
-    axis: str = "Z"
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     """Class to describe `parametric vertical coordinates
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#parametric-vertical-coordinate>`__.
@@ -206,17 +206,16 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     # model.
     formula_terms: str = dataclasses.field(default=None, compare=False)
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMGenericTimeCoordinate(_DMCoordinateShared):
     """Applies to collections of variables, which may be at different frequencies
     (or other attributes).
     """
+    standard_name: str = 'time'
     units: str = ""
+    axis: DMAxis = DMAxis.T
     calendar: str = ""
     range: typing.Any = None
-
-    standard_name: str = 'time'
-    axis: str = 'T'
 
     @property
     def is_static(self):
@@ -228,31 +227,25 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         return (self.range == datelabel.FXDateRange)
     
     @classmethod
-    def coerce_to_self(cls, other):
-        d = util.filter_dataclass(other, cls)
-        return cls(**d)
-
-    @classmethod
     def from_instances(cls, *t_coords):
+        """Create new instance from "union" of attributes of t_coords.
+        """
         if not t_coords:
             raise ValueError()
-        t_coords = [cls.coerce_to_self(t) for t in t_coords]
+        t_coords = [util.coerce_to_dataclass(t, cls) for t in t_coords]
         t0 = t_coords.pop(0)
         if any(t != t0 for t in t_coords):
-            print('****', t0, t_coords)
-            print(DMGenericTimeCoordinate(name='time', bounds=None, value=None, units='', calendar='', range=None, standard_name='time', axis='T') == DMGenericTimeCoordinate(name='time', bounds=None, value=None, units='', calendar='', range=None, standard_name='time', axis='T'))
             raise ValueError("mismatch")
         return t0
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DMTimeCoordinate(_DMCoordinateShared):
+    standard_name: str = 'time'
     units: str = util.MANDATORY
+    axis: DMAxis = DMAxis.T
     calendar: str = util.MANDATORY
     range: datelabel.AbstractDateRange = None
     frequency: datelabel.AbstractDateFrequency = None
-
-    standard_name: str = 'time'
-    axis: str = 'T'
 
     @property
     def is_static(self):
@@ -270,74 +263,84 @@ AbstractDMCoordinate.register(DMGenericTimeCoordinate)
 AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
 
-
+@util.mdtf_dataclass
 class _DMDimensionsMixin(object):
     """Lookups for the dimensions, and associated dimension coordinates, 
     associated with an array (eg a variable or auxiliary coordinate.) Needs to 
     be included as a parent class of a dataclass.
     """
+    coords: dataclasses.InitVar = None
+    dims: list = dataclasses.field(init=False, default_factory=list)
+    scalar_coords: list = dataclasses.field(init=False, default_factory=list)
+    axes: dict = dataclasses.field(init=False)
+
+    def __post_init__(self, coords=None):
+        if coords is None:
+            # if we're called to rebuild dicts, rather than after __init__
+            assert (self.dims or self.scalar_coords)
+            coords = self.dims + self.scalar_coords
+        self.dims = []
+        self.scalar_coords = []
+        for c in coords:
+            if isinstance(c.axis, str):
+                c.axis = DMAxis.from_struct(c.axis)
+            if c.is_scalar:
+                self.scalar_coords.append(c)
+            else:
+                self.dims.append(c)
+        self.axes = self.build_axes(self.dims)
+
     @property
     def X(self):
-        return self.axes.get('X', None)
+        return self.axes.get(DMAxis.X, None)
 
     @property
     def Y(self):
-        return self.axes.get('Y', None)
+        return self.axes.get(DMAxis.Y, None)
 
     @property
     def Z(self):
-        return self.axes.get('Z', None)
+        return self.axes.get(DMAxis.Z, None)
 
     @property
     def T(self):
-        return self.axes.get('T', None)
+        return self.axes.get(DMAxis.T, None)
 
     @property
     def is_static(self):
         return (self.T is None) or (self.T.is_static)
 
     def get_scalar(self, ax_name):
+        if isinstance(ax_name, str):
+            ax_name = DMAxis.from_struct(ax_name)
         for c in self.scalar_coords:
             if c.axis == ax_name:
                 return c
         return None
 
-    @classmethod
-    def from_dimensions(cls, dm_dimensions, **kwargs):
-        """Constructor for use by child classes. Preserves references to the
-        shared set of dims and scalar_coords, since python is pass-by-reference.
-        """
-        kwargs.setdefault('dims', dm_dimensions.dims)
-        kwargs.setdefault('scalar_coords', dm_dimensions.scalar_coords)
-        return cls(**kwargs)
-
     def build_axes(self, *coords):
-        # validate types
-        for c in self.dims:
-            if c.is_scalar:
-                raise ValueError((f"Scalar coordinate {c} supplied as dimension "
-                    f"to {self.name}."))
-        for c in self.scalar_coords:
-            if not c.is_scalar:
-                raise ValueError((f"Non-scalar coordinate {c} supplied as scalar "
-                    f"coordinate for {self.name}."))
         # validate that we don't have duplicate axes
         d = dict()
         verify_d = dict()
         for c in itertools.chain(*coords):
-            if c.axis != 'OTHER' and c.axis in verify_d:
+            if c.axis != DMAxis.OTHER and c.axis in verify_d:
+                err_name = getattr(self, 'name', self.__class__.__name__)
                 raise ValueError((f"Duplicate definition of {c.axis} axis in "
-                    f"{self.name}: {str(c)}, {str(verify_d[c.axis])}"))
+                    f"{err_name}: {c}, {verify_d[c.axis]}"))
             verify_d[c.axis] = c
-            if c.axis in _spatiotemporal_names:
+            if c.axis in DMAxis.spatiotemporal:
                 d[c.axis] = c
         return d
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
+        """Replace attributes on a given coordinate, but also optionally cast 
+        them to new classes. Kind of hacky.
+        """
         # TODO: lookup by non-axis name
         old_coord = getattr(self, ax_name, None)
         if not old_coord:
             raise KeyError(f"{self.name} has no {ax_name} axis")
+
         if isinstance(new_class, dict):
             new_coord_class = new_class.pop('self', None)
         else:
@@ -357,11 +360,8 @@ class _DMDimensionsMixin(object):
                     if k in new_kwargs and not isinstance(new_kwargs[k], cls_):
                         new_kwargs[k] = cls_(new_kwargs[k])
             new_coord = new_coord_class(**new_kwargs)
-        new_dims = list(self.dims)
-        new_dims[self.dims.index(old_coord)] = new_coord
-        new_dims = util.coerce_to_iter(new_dims, type(self.dims))
-        self.dims = new_dims
-        self.__post_init__() # rebuild axes dicts
+        self.dims[self.dims.index(old_coord)] = new_coord
+        self.__post_init__(None) # rebuild axes dicts
 
 @util.mdtf_dataclass
 class DMDependentVariable(_DMDimensionsMixin):
@@ -371,28 +371,23 @@ class DMDependentVariable(_DMDimensionsMixin):
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: str = "" # util.MANDATORY
-
-    dims: tuple = util.MANDATORY
-    scalar_coords: set = dataclasses.field(default_factory=set)
-    axes: dict = dataclasses.field(init=False)
     phys_axes: dict = dataclasses.field(init=False)
 
-    def __post_init__(self):
-        self.axes = self.build_axes(self.dims)
+    def __post_init__(self, coords=None):
+        super(DMDependentVariable, self).__post_init__(coords)
         self.phys_axes = self.build_axes(self.dims, self.scalar_coords)
 
     def add_scalar(self, ax, ax_value, **kwargs):
         assert ax in self.axes
         dim = self.axes[ax]
         new_dim = dataclasses.replace(dim, value=ax_value)
-        new_dims = list(self.dims)
+        new_dims = self.dims.copy()
         new_dims.remove(dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.add(new_dim)
         return dataclasses.replace(
             self,
-            dims=tuple(new_dims),
-            scalar_coords=new_scalars,
+            coords=(new_dims + new_scalars),
             **kwargs
         )
         
@@ -400,14 +395,13 @@ class DMDependentVariable(_DMDimensionsMixin):
         dim = self.get_scalar(ax)
         assert dim is not None
         new_dim = dataclasses.replace(dim, value=None)
-        new_dims = list(self.dims)
+        new_dims = self.dims.copy()
         new_dims.insert(position, new_dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.remove(dim)
         return dataclasses.replace(
             self,
-            dims=tuple(new_dims),
-            scalar_coords=new_scalars,
+            coords=(new_dims + new_scalars),
             **kwargs
         )
 
@@ -424,23 +418,25 @@ class DMAuxiliaryCoordinate(DMDependentVariable):
 class DMCoordinateBounds(DMAuxiliaryCoordinate):
     """Class describing bounds on a dimension coordinate.
     """
-    def __post_init__(self):
-        super(DMCoordinateBounds, self).__post_init__()
+    def __post_init__(self, coords=None):
+        super(DMCoordinateBounds, self).__post_init__(coords)
         # validate dimensions
         if self.scalar_coords:
             raise ValueError(("Attempted to create DMCoordinateBounds "
                 f"{self.name} with scalar coordinates: {self.scalar_coords}."))
         if len(self.dims) != 2 or \
-            'BOUNDS' not in {c.axis for c in self.dims}:
+            DMAxis.BOUNDS not in {c.axis for c in self.dims}:
             raise ValueError(("Attempted to create DMCoordinateBounds "
                 f"{self.name} with improper dimensions: {self.dims}."))
 
     @property
     def coord(self):
+        """CF dimension coordinate for which this is the bounds.
+        """
         for c in self.dims:
-            if c.axis != 'BOUNDS':
+            if c.axis != DMAxis.BOUNDS:
                 return c
-        raise ValueError
+        raise ValueError()
 
     @classmethod
     def from_coordinate(cls, coord, bounds_dim):
@@ -448,8 +444,7 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
             in ('name', 'standard_name', 'units')}
         if not isinstance(bounds_dim, DMBoundsDimension):
             bounds_dim = DMBoundsDimension(name=bounds_dim)
-        kwargs['dims'] = (coord, bounds_dim)
-        kwargs['scalar_coords'] = set([])
+        kwargs['coords'] = [coord, bounds_dim]
         coord_bounds = cls(**kwargs)
         coord.bounds = coord_bounds
         return coord_bounds
@@ -473,33 +468,58 @@ class DMDataSet(_DMDimensionsMixin):
     """Class to describe a collection of one or more variables sharing a set of
     common dimensions.
     """
-    dims: set = dataclasses.field(init=False, default_factory=set)
-    scalar_coords: set = dataclasses.field(init=False, default_factory=set)
-    axes: dict = dataclasses.field(init=False)
-    # vars = dependent variables -- includes all aux coords
-    vars: list = dataclasses.field(default_factory=list)
+    contents: dataclasses.InitVar = util.MANDATORY
+    vars: list = dataclasses.field(init=False, default_factory=list)
+    coord_bounds: list = dataclasses.field(init=False, default_factory=list)
+    aux_coords: list = dataclasses.field(init=False, default_factory=list)
 
-    def __post_init__(self):
-        self.dims = set([])
-        self.scalar_coords = set([])
+    def __post_init__(self, coords=None, contents=None):
+        assert coords is None # shouldn't be called with bare coordinates
+        if contents is None:
+            # if we're called to rebuild dicts, rather than after __init__
+            assert (self.vars or self.coord_bounds or self.aux_coords)
+            contents = self.vars + self.coord_bounds + self.aux_coords
+        self.vars = []
+        self.coord_bounds = []
+        self.aux_coords = []
+        for v in contents:
+            self._classify(v).append(v)
+
+        # dims, scalar_coords are a union of those in contents
+        # axes must all be the same, except for time axis, which gets described
+        # by a DMGenericTimeCoordinate
         t_axes = []
-        for v in self.vars:
-            spatial_dims = list(v.dims)
+        coords = []
+        for v in contents:
+            v_dims = v.dims.copy()
             if not v.is_static:
-                t_axes.append(spatial_dims.pop(spatial_dims.index(v.T)))
-            self.dims.update(spatial_dims)
-            self.scalar_coords.update(v.scalar_coords)
+                t_axes.append(v_dims.pop(v_dims.index(v.T)))
+            for c in itertools.chain(v_dims, v.scalar_coords):
+                if c not in coords:
+                    coords.append(c)
         if t_axes:
-            self.dims.add(DMGenericTimeCoordinate.from_instances(*t_axes))
+            new_t = DMGenericTimeCoordinate.from_instances(*t_axes)
+            coords.append(new_t)
         # can't have duplicate dims, but duplicate scalar_coords are OK.
-        self.axes = self.build_axes(self.dims)
+        super(DMDataSet, self).__post_init__(coords)
 
-    def add_dependent_variables(self, *vars_):
-        self.vars.extend(vars_)
-        self.__post_init__()
+    def iter_contents(self):
+        yield from itertools.chain(self.vars, self.coord_bounds, self.aux_coords)
+
+    def _classify(self, v):
+        assert isinstance(v, DMDependentVariable)
+        if isinstance(v, DMVariable):
+            return self.vars
+        elif isinstance(v, DMCoordinateBounds):
+            return self.coord_bounds
+        else:
+            return self.aux_coords
+
+    def add_contents(self, *vars_):
+        raise NotImplementedError()
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
-        for v in self.vars:
+        for v in self.iter_contents():
             try:
                 v.change_coord(ax_name, new_class, **kwargs)
             except ValueError:
@@ -507,6 +527,6 @@ class DMDataSet(_DMDimensionsMixin):
                     continue
                 else:
                     raise
-        # time coord for set derived from that for vars
-        self.__post_init__()
+        # time coord for self derived from those for contents
+        self.__post_init__(None, None)
     

@@ -410,11 +410,15 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                     #     f" {f.name} is ({f.type}), recieved {repr(value)} of "
                     #     "conflicting type."))
                 else:
-                    # https://stackoverflow.com/a/54119384 for implementation
                     if hasattr(new_type, 'from_struct'):
-                        object.__setattr__(self, f.name, new_type.from_struct(value))
+                        new_value = new_type.from_struct(value)
+                    elif isinstance(new_type, enum.Enum):
+                        # need to use item syntax to create enum from name
+                        new_value = new_type.__getitem__(value)
                     else:
-                        object.__setattr__(self, f.name, new_type(value))
+                        new_value = new_type(value)
+                    # https://stackoverflow.com/a/54119384 for implementation
+                    object.__setattr__(self, f.name, new_value)
             except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
                 print(exc)
                 raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
@@ -900,6 +904,18 @@ def filter_dataclass(d, dc):
             d = d() # d is a class; instantiate with default field values
         d = dataclasses.asdict(d)
     return {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
+    
+def coerce_to_dataclass(d, dc, **kwargs):
+    """Given a dataclass dc (may be the class or an instance of it), and a dict,
+    dataclass or dataclass instance d, return an instance of dc's class with 
+    field values initialized from those in d, along with any extra values
+    passed in kwargs.
+    """
+    new_kwargs = filter_dataclass(d, dc)
+    new_kwargs.update(kwargs)
+    if not isinstance(dc, type):
+        dc = dc.__class__
+    return dc(**new_kwargs)
 
 def signal_logger(caller_name, signum=None, frame=None):
     """Lookup signal name from number; `<https://stackoverflow.com/a/2549950>`__.

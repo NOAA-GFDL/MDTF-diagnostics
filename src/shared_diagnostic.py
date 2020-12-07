@@ -135,9 +135,6 @@ class Diagnostic(object):
         """
         default_file_required = True 
         for i, var in enumerate(varlist):
-            assert var['freq'] in ['1hr', '3hr', '6hr', 'day', 'mon'], \
-                "WARNING: didn't find "+var['freq']+" in frequency options "+\
-                    " (set in "+__file__+": parse_pod_varlist)"
             if 'requirement' in var:
                 varlist[i]['required'] = (var['requirement'].lower() == 'required')
             elif 'required' not in varlist[i]:
@@ -221,6 +218,7 @@ class Diagnostic(object):
 
         # Set env vars for variable and axis names:
         axes = dict()
+        ax_bnds = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
@@ -251,7 +249,12 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in iter(axes.items()): 
+        for key, val in axes.items():
+            # Define ax bounds variables; TODO do this more honestly
+            ax_bnds[key+'_bnds'] = val + '_bnds'
+        for key, val in axes.items(): 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
+        for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
@@ -512,7 +515,9 @@ class Diagnostic(object):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
-        verifier = verify_links.LinkVerifier(self.POD_HTML, verbose=False)
+        verifier = verify_links.LinkVerifier(
+            self.POD_HTML, os.path.dirname(self.POD_WK_DIR), verbose=False
+        )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:
             print('ERROR: {} has missing output files.'.format(self.name))
@@ -609,17 +614,16 @@ class Diagnostic(object):
         for f in files:
             shutil.copy2(f, os.path.join(self.POD_WK_DIR, 'obs'))
 
-        # remove .eps files if requested
+        # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not config.config.save_ps:
-            for d in ['model', 'obs']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'PS')):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'PS'))
+            for d in util.find_files(self.POD_WK_DIR, 'PS'+os.sep):
+                shutil.rmtree(d)
         # delete netCDF files, keep everything else
         if config.config.save_non_nc:
             for f in util.find_files(self.POD_WK_DIR, '*.nc'):
                 os.remove(f)
-        # delete all generated data (flag is a misnomer)
+        # delete all generated data
+        # actually deletes contents of any 'netCDF' subdirs
         elif not config.config.save_nc:
-            for d in ['model', 'obs']:
-                if os.path.exists(os.path.join(self.POD_WK_DIR, d, 'netCDF')):
-                    shutil.rmtree(os.path.join(self.POD_WK_DIR, d, 'netCDF'))
+            for d in util.find_files(self.POD_WK_DIR, 'netCDF'+os.sep):
+                shutil.rmtree(d)

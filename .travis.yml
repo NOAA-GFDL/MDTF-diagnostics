@@ -4,17 +4,18 @@
 
 # Config validator: https://config.travis-ci.com/explore 
 
-os: linux
-dist: xenial # default
-language: shell # synonym for "minimal". Use instead of "python" to save disk space; all software installed through conda
-# sudo: false # deprecated in Travis
-python: '3.7' # doesn't matter, conda python used instead of system
-
-branches:
-  only:
-    - main
-    - develop
-    - /^feature/ 
+jobs:
+  include:
+    - os: linux
+      dist: xenial # default
+      language: shell # synonym for "minimal". Use instead of "python" to save disk space; all software installed through conda
+      python: '3.7' # doesn't matter, conda python used instead of system
+      env:
+        - MINICONDA_INSTALLER="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    - os: osx
+      osx_image: xcode12.2
+      env:
+        - MINICONDA_INSTALLER="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
 
 before_install: 
   # TRAVIS_BUILD_DIR = abs path to checked-out repo
@@ -29,13 +30,7 @@ install:
 # miniconda setup taken from official guide at 
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
   # - sudo apt update
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
+  - wget $MINICONDA_INSTALLER -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - source "$HOME/miniconda/etc/profile.d/conda.sh"
   - hash -r

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from src import six
-import glob
 import copy
 import shutil
 from collections import defaultdict, namedtuple
@@ -108,6 +107,15 @@ class DataSet(util.NameSpace):
         ds.alternates = alt_ds_list
         return ds
 
+    @property
+    def is_static(self):
+        """Check for time-independent data ('fx' in CMIP6 DRS.) Do the comparison
+        by checking date_range against the placeholder value because that's
+        unique -- we may be using a different DateFrequency depending on the
+        data source.
+        """
+        return (self.date_range == datelabel.FXDateRange)
+
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
@@ -162,7 +170,8 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
         # dynamic inheritance to add netcdf manipulation functions
         # source: https://stackoverflow.com/a/8545134
-        mixin = config.config.get(netcdf_helper, 'NcoNetcdfHelper')
+        # mixin = config.config.get(netcdf_helper, 'NcoNetcdfHelper')
+        # hardwire now, since NCO is all that's implemented
         mixin = getattr(netcdf_helper, 'NcoNetcdfHelper')
         self.__class__ = type(self.__class__.__name__, (self.__class__, mixin), {})
         try:
@@ -236,7 +245,11 @@ class DataManager(six.with_metaclass(ABCMeta)):
 
         for var in pod.iter_vars_and_alts():
             var.name_in_model = translate.fromCF(self.convention, var.CF_name)
-            var.date_range = self.date_range
+            if var.date_freq.is_static:
+                # placeholder value for time-independent data
+                var.date_range = datelabel.FXDateRange
+            else:
+                var.date_range = self.date_range
             var._local_data = self.local_path(self.dataset_key(var))
             var.axes = copy.deepcopy(translate.axes[self.convention])
 
@@ -414,7 +427,7 @@ class DataManager(six.with_metaclass(ABCMeta)):
         if unique_files:
             if self._fetch_order_function is not None:
                 sort_key = self._fetch_order_function
-            if hasattr(unique_files[0], '_remote_data'):
+            elif hasattr(unique_files[0], '_remote_data'):
                 sort_key = attrgetter('_remote_data')
             else:
                 sort_key = None

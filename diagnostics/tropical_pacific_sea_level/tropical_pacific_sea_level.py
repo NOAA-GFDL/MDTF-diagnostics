@@ -85,7 +85,9 @@ warnings.simplefilter("ignore")
 # xname = Model_dimname[2]
 # yname = Model_dimname[1]
 
-
+print('--------------------------')
+print('Start reading set parameter (pod_env_vars)')
+print('--------------------------')
 #### possible input info from external text file
 # constant setting
 syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
@@ -298,14 +300,19 @@ for nobs,obs in enumerate(Obs_name):
             fyear_obs = obs_year_range[nobs][1]
             fmon_obs = obs_year_range[nobs][2]
             #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,fmon_obs,1),freq='MS')
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                     end=cftime.datetime(fyear_obs,fmon_obs,1),
+                                     freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
             ds_obs['time'] = timeax
 
             # calculate global mean sea level
             da_area = sa.da_area(ds_obs, lonname='longitude', latname='latitude',
                                  xname='longitude', yname='latitude', model=None)
-            da_glo_mean = (ds_obs*da_area).sum(dim=['longitude','latitude'])/da_area.sum(dim=['longitude','latitude'])
+            da_glo_mean = (ds_obs*da_area)\
+                                .sum(dim=['longitude','latitude'])/\
+                           da_area\
+                                .sum(dim=['longitude','latitude'])
             ds_obs = ds_obs-da_glo_mean
 
             # rename
@@ -315,7 +322,9 @@ for nobs,obs in enumerate(Obs_name):
             syear_obs = obs_year_range[nobs][0]
             fyear_obs = obs_year_range[nobs][1]
             #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,12,31),freq='MS')
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                     end=cftime.datetime(fyear_obs,12,31),
+                                     freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
             ds_obs['time'] = timeax
 
@@ -704,7 +713,7 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 
 
-fig.savefig('tropical_pac_sl.eps', facecolor='w', edgecolor='w',
+fig.savefig(os.getenv('WK_DIR')+'/model/PS/example_model_plot.eps', facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches="tight", pad_inches=None,
                 frameon=None)

@@ -60,10 +60,10 @@
   
 
   // Set flag to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": false,
+  "save_ps": true,
 
   // Set flag to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  "save_nc": true,
 
   // Set flag to save all processed data except netcdf files.
   "save_non_nc": false,
@@ -79,7 +79,7 @@
   // Settings used in debugging.
 
   // Log verbosity level.
-  "verbose": 1, 
+  "verbose": 2, 
 
   // Set flag for framework test. Data is fetched but PODs are not run.
   "test_mode": false,

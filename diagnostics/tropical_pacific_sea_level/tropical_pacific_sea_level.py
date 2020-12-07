@@ -16,7 +16,7 @@
 #
 # function used
 # ==================
-# - spherical_area.cal_area     : generate area array based on the lon lat of data
+# - spherical_area.da_area     : generate area array based on the lon lat of data
 # - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)
 # - dynamical_balance2.curl_var    : calculate wind stress curl in obs (for Dataset without time dim)
 # - dynamical_balance2.curl_tau_3d : calculate wind stress curl in model (for Dataset with time dim)
@@ -26,13 +26,10 @@
 
 
 import os
-import sys
 import cftime
 # import dask
 import xarray as xr
 import numpy as np
-import cartopy.mpl.ticker as cticker
-import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 
 import spherical_area as sa
@@ -88,7 +85,10 @@ warnings.simplefilter("ignore")
 # xname = Model_dimname[2]
 # yname = Model_dimname[1]
 
-
+print('--------------------------')
+print('Start reading set parameter (pod_env_vars)')
+print('--------------------------')
+# print(str(os.getenv('OBS_DATA')))
 #### possible input info from external text file
 # constant setting
 syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
@@ -111,9 +111,10 @@ Model_legend_name = [os.getenv('Model_legend_name')] # model name appeared on th
 modelin = {}
 path = {}
 #####################
-ori_syear = os.getenv('FIRSTYR')
-ori_fyear = os.getenv('LASTYR')
-modeldir = os.getenv('MODEL_DATA_ROOT')+os.getenv('Model_path')
+ori_syear = int(os.getenv('FIRSTYR'))
+ori_fyear = int(os.getenv('LASTYR'))
+modeldir = str(os.getenv('DATADIR'))+"/../"+str(os.getenv('Model_path'))
+# print(modeldir)
 modelfile = [[os.getenv('tauuo_file')],
              [os.getenv('tauvo_file')],
              [os.getenv('zos_file')]]
@@ -148,7 +149,9 @@ for nmodel,model in enumerate(Model_name):
 timeax = xr.cftime_range(start=cftime.datetime(ori_syear,1,1),end=cftime.datetime(ori_fyear,12,1),freq='MS')
 timeax = timeax.to_datetimeindex()    # cftime => datetime64
 
-
+print('--------------------------')
+print('Start processing model outputs')
+print('--------------------------')
 # initialization of dict and list  (!!!!!!!! remove all previous read model info if exec !!!!!!!!!!)
 nmodel = len(Model_name)
 nvar = len(Model_varname)
@@ -172,6 +175,7 @@ for nmodel,model in enumerate(Model_name):
 #                                              Model_dimname[1]:100,
 #                                              Model_dimname[2]:100},
 #                                      use_cftime=True)
+        print(modelin[model][nvar][0])
         # read input data
         ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
 
@@ -231,12 +235,12 @@ obsin = {}
 obspath = {}
 
 obs = Obs_name[0]
-obsdir = os.getenv('OBS_DATA_ROOT')
+obsdir = str(os.getenv('OBS_DATA'))
 obsfile = [['waswind_v1_0_1.monthly.nc'],['waswind_v1_0_1.monthly.nc']]
 obspath[obs]=[obsdir,obsfile]
 
 obs = Obs_name[1]
-obsdir = os.getenv('OBS_DATA_ROOT')
+obsdir = str(os.getenv('OBS_DATA'))
 obsfile = [['dt_global_allsat_phy_l4_monthly_adt.nc']]
 obspath[obs]=[obsdir,obsfile]
 
@@ -301,14 +305,19 @@ for nobs,obs in enumerate(Obs_name):
             fyear_obs = obs_year_range[nobs][1]
             fmon_obs = obs_year_range[nobs][2]
             #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,fmon_obs,1),freq='MS')
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                     end=cftime.datetime(fyear_obs,fmon_obs,1),
+                                     freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
             ds_obs['time'] = timeax
 
             # calculate global mean sea level
             da_area = sa.da_area(ds_obs, lonname='longitude', latname='latitude',
                                  xname='longitude', yname='latitude', model=None)
-            da_glo_mean = (ds_obs*da_area).sum(dim=['longitude','latitude'])/da_area.sum(dim=['longitude','latitude'])
+            da_glo_mean = (ds_obs*da_area)\
+                                .sum(dim=['longitude','latitude'])/\
+                           da_area\
+                                .sum(dim=['longitude','latitude'])
             ds_obs = ds_obs-da_glo_mean
 
             # rename
@@ -318,7 +327,9 @@ for nobs,obs in enumerate(Obs_name):
             syear_obs = obs_year_range[nobs][0]
             fyear_obs = obs_year_range[nobs][1]
             #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),end=cftime.datetime(fyear_obs,12,31),freq='MS')
+            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                     end=cftime.datetime(fyear_obs,12,31),
+                                     freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
             ds_obs['time'] = timeax
 
@@ -568,7 +579,7 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Linear
 #########
 ax1 = fig.add_axes([1.3,0,1,1])
-obscolor = 'k'
+# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -607,7 +618,7 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual amp
 #########
 ax1 = fig.add_axes([0,-1.5,1,1])
-obscolor = 'k'
+# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -655,7 +666,8 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual phase
 #########
 ax1 = fig.add_axes([1.3,-1.5,1,1])
-obscolor = 'k'
+# obscolor = 'k'
+
 
 all_wsc = []
 all_ssh = []
@@ -706,7 +718,11 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 
 
-fig.savefig('tropical_pac_sl.eps', facecolor='w', edgecolor='w',
+fig.savefig(os.getenv('WK_DIR')+'/model/PS/example_model_plot.eps', facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches="tight", pad_inches=None,
+                frameon=None)
+fig.savefig(os.getenv('WK_DIR')+'/obs/PS/example_obs_plot.eps', facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches="tight", pad_inches=None,
                 frameon=None)

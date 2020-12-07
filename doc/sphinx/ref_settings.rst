@@ -16,19 +16,25 @@ We'll briefly summarize subset of JSON syntax used in this configuration file. T
 
 In addition, for the purposes of the configuration file we define 
 
-.. _unitful:
+.. _time_duration:
 
-4. a "unit-ful quantity": this is a string containing a number followed by a unit, eg. ``"6hr"``. **In addition**, the string ``"any"`` may be used to signify that any value is acceptable.
+4. a "time duration": this is a string specifying a time span, used eg. to describe how frequently data is sampled. It consists of an optional integer (if omitted, the integer is assumed to be 1) and a units string which is one of ``hr``, ``day``, ``mon``, ``yr`` or ``fx``. ``fx`` is used where appropriate to denote time-independent data. Common synonyms for these units are also recognized (eg ``monthly``, ``month``, ``months``, ``mo`` for ``mon``, ``static`` for ``fx``, etc.)
+
+   **In addition**, the string ``"any"`` may be used to signify that any value is acceptable.
+
+.. _cfunit:
+
+5. a "CF unit": this is a string describing the units of a physical quantity, following the `syntax <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__ of the `UDUNITS2 <https://www.unidata.ucar.edu/software/udunits/udunits-current/doc/udunits/udunits2.html>`__ library. ``1`` should be used for dimensionless quantities.
 
 Items are combined in compound expressions of two types: 
 
 .. _array:
 
-5. *arrays*, which are one-dimensional ordered lists delimited with square brackets. Entries can be of any type, eg ``[true, 1, "two"]``.
+6. *arrays*, which are one-dimensional ordered lists delimited with square brackets. Entries can be of any type, eg ``[true, 1, "two"]``.
 
 .. _object:
 
-6. *objects*, which are *un*-ordered lists of key:value pairs separated by colons and delimited with curly brackets. Keys must be strings and must all be unique within the object, while values may be any expression, eg. ``{"red": 0, "green": false, "blue": "bagels"}``.
+7. *objects*, which are *un*-ordered lists of key:value pairs separated by colons and delimited with curly brackets. Keys must be strings and must all be unique within the object, while values may be any expression, eg. ``{"red": 0, "green": false, "blue": "bagels"}``.
 
 Compound expressions may be nested within each other to an arbitrary depth.
 
@@ -185,10 +191,12 @@ Example
 .. _multi_file:
 
 ``multi_file_ok``: 
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the diagnostic can handle datasets for a single variable spread across multiple files, eg `xarray <http://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__. 
+  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the diagnostic is signalling that it's able to accept data for a single variable that may be spread out in multiple files, to be aggregated along the time dimension (eg through the use of `xarray <http://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.) Aggregation along the time dimension is the only type of aggregation the diagnostic will need to consider. 
+
+  If ``false``, the framework will ensure all data for a single variable is presented as a single netCDF file. This may lead to large filesizes if your diagnostic uses high-frequency data, in which case you should consider setting a limit via ``max_duration``.
 
 ``min_duration``, ``max_duration``: 
-  :ref:`Unit-ful quantities<unitful>`. Optional: assumed ``"any"`` if not specified. Set minimum and maximum length of the analysis period for which the diagnostic should be run: this overrides any choices the user makes at runtime. Some example uses of this setting are:
+  :ref:`Time durations<time_duration>`. Optional: assumed ``"any"`` if not specified. Set minimum and maximum length of the analysis period for which the diagnostic should be run: this overrides any choices the user makes at runtime. Some example uses of this setting are:
   
   - If your diagnostic uses low-frequency (eg seasonal) data, you may want to set ``min_duration`` to ensure the sample size will be large enough for your results to be statistically meaningful. 
   - On the other hand, if your diagnostic uses high-frequency (eg hourly) data, you may want to set ``max_duration`` to prevent the framework from attempting to download a large volume of data for your diagnostic if the framework is called with a multi-decadal analysis period.
@@ -203,10 +211,10 @@ The following properties can optionally be set individually for each variable in
 .. _freq_target:
 
 ``frequency``, ``min_frequency``, ``max_frequency``: 
-  :ref:`Unit-ful quantities<unitful>`. Time frequency at which the data is provided. Either ``frequency`` or the min/max pair, or both, is required:
+  :ref:`Time durations<time_duration>`. Time frequency at which the data is provided. Either ``frequency`` or the min/max pair, or both, is required:
 
   - If only ``frequency`` is provided, the framework will attempt to obtain data at that frequency. If that's not available from the data source, your diagnostic will not run. 
-  - If the min/max pair is provided, the diagnostic must be capable of using data at any frequency within that range (inclusive). **The diagnostic is responsible for determining the frequency** if this option is used.
+  - If the min/max pair is provided, the diagnostic must be capable of using data at any frequency within that range (inclusive). **The diagnostic is responsible for determining the frequency** from the data file itself if this option is used.
   - If all three properties are set, the framework will first attempt to find data at ``frequency``. If that's not available, it will try data within the min/max range, so your code must be able to handle this possibility.
 
 
@@ -215,11 +223,11 @@ The following properties can optionally be set individually for each variable in
 Dimensions section
 ------------------
 
-This section is an :ref:`object<object>` contains properties that apply to the dimensions of model data. "Dimensions" are meant in the sense of the netCDF `data model <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcDims.html>`__: informally, they are "coordinate axes" holding the values of independent variables that the dependent variable is sampled at.
+This section is an :ref:`object<object>` contains properties that apply to the dimensions of model data. "Dimensions" are meant in the sense of the netCDF `data model <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcDims.html>`__, and "coordinate dimensions" in the CF conventions: informally, they are "coordinate axes" holding the values of independent variables that the dependent variables are sampled at.
 
-All :ref:`dimensions<item_var_dims>` and :ref:`scalar coordinates<item_var_coords>` referenced by variables in the varlist section must have an entry in this section. If two variables reference the same dimension, they will be sampled on the same set of values. 
+All :ref:`dimensions<item_var_dims>` and :ref:`scalar coordinates<item_var_coords>` referenced by variables in the varlist section must have an entry in this section. If two variables reference the same dimension, they will be sampled on the same set of *spatial* values. Different time values are specified with the ``frequency`` attribute on varlist entries. 
 
-**Note** that the framework *only* supports the (simplest and most common) "independent axes" case of the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#_independent_latitude_longitude_vertical_and_time_axes>`__. In particular, the framework only deals with data on lat-lon grids. 
+**Note** that the framework currently *only* supports the (simplest and most common) "independent axes" case of the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#_independent_latitude_longitude_vertical_and_time_axes>`__. In particular, the framework only deals with data on lat-lon grids. 
 
 Example
 ^^^^^^^
@@ -261,13 +269,16 @@ Latitude and Longitude
   **Required**, string. Must be ``"latitude"`` and ``"longitude"``, respectively.
 
 ``units``: 
-  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__. Units the diagnostic expects the dimension to be in. Currently the framework only supports decimal ``degrees_north`` and ``degrees_east``, respectively.
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. Currently the framework only supports decimal ``degrees_north`` and ``degrees_east``, respectively.
 
 ``range``: 
   :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects this dimension to take. For example, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and the last entry near +180 degrees.
 
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+
+``axis``:
+  String, optional. Assumed to be ``Y`` and ``X`` respectively if omitted, or if ``standard_name`` is ``"latitude"`` or ``"longitude"``. Included here to enable future support for non-lat-lon horizontal coordinates.
 
 Time
 ^^^^
@@ -284,6 +295,9 @@ Time
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
 
+``axis``:
+  String, optional. Assumed to be ``T`` if omitted or provided.
+
 Z axis (height/depth, pressure, ...)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -291,13 +305,16 @@ Z axis (height/depth, pressure, ...)
   **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in the CMIP6 MIP tables.
 
 ``units``: 
-  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``positive``: 
   String, **required**. Must be ``"up"`` or ``"down"``, according to the `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__. A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set automatically.
 
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+
+``axis``:
+  String, optional. Assumed to be ``Z`` if omitted or provided.
 
 Other dimensions (wavelength, ...)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -306,7 +323,7 @@ Other dimensions (wavelength, ...)
   **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in the CMIP6 MIP tables.
 
 ``units``: 
-  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``need_bounds``: 
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
@@ -316,7 +333,9 @@ Other dimensions (wavelength, ...)
 Varlist section
 ---------------
 
-This section is an :ref:`object<object>` contains properties that apply to the model variables your diagnostic needs for its analysis. "Dimensions" are meant in the sense of the netCDF `data model <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcVars.html>`__: informally, they are the "independent variables" whose values are being computed as a function of the values stored in the dimensions.
+This section is an :ref:`object<object>` contains properties that apply to the model variables your diagnostic needs for its analysis. "Dimensions" are meant in the sense of the netCDF `data model <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcVars.html>`__: informally, they are the "dependent variables" whose values are being computed as a function of the values stored in the dimensions.
+
+**Note** that this includes "auxiliary coordinates" in the CF conventions terminology and similar ancillary information. If your diagnostic needs, eg, cell areas or volumes, orography data, etc., each piece of data should be listed as a separate entry here, *even if* their use is conventionally implied by the use of other variables.
 
 Each entry corresponds to a distinct data file (or set of files, if ``multi_file_ok`` is ``true``) downloaded by the framework. If your framework needs the same physical quantity sampled with different properties (eg. slices of a variable at multiple pressure levels), specify them as multiple entries.
 
@@ -346,17 +365,17 @@ The *key* in a varlist key-value pair is the name your diagnostic uses to refer 
   String, **required**. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in the CMIP6 MIP tables (eg. "ua" instead of "eastward_wind"). 
 
 ``path_variable``: 
-  String, **required**. Name of the shell environment variable the framework will set with the location of this data. See the environment variable :doc:`documentation <ref_envvars>` for details. 
+  String, **optional** but recommended. Name of the shell environment variable the framework will set with the location of this data. **This is the only currently supported method for communicating the location of model data to your diagnostic.** If omitted, set to ``<key>_FILE``, where ``<key>`` is the key to the varlist entry (case-sensitive). See the environment variable :doc:`documentation <ref_envvars>` for details. 
 
   - If ``multi_file_ok`` is ``false``, ``<path_variable>`` will be set to the absolute path to the netcdf file containing this variable's data.
-  - If ``multi_file_ok`` is ``true``, ``<path_variable>`` will be a single path *or* a colon-separated list of paths to the files containing this data. Files will be listed in chronological order.
-  - If the variable is listed as ``"optional"`` or ``"alternate"`` or has ``alternate`` variables listed, ``<path_variable>`` will be defined but set to the empty string if the framework couldn't obtain this data from the data source. **Your diagnostic should test for this possibility**.
+  - If ``multi_file_ok`` is ``true``, ``<path_variable>`` will be a single path *or* a colon-separated list of paths to the files containing this data. Files will be listed in  order of the dates of their contents.
+  - If the variable is listed as ``"optional"`` or ``"alternate"`` or has ``alternate`` variables listed, ``<path_variable>`` will be defined but set to the empty string if the framework couldn't obtain this data from the data source. **Your diagnostic should test for this possibility**. (If the variable is required but the framework couldn't obtain data, an error will be logged and your diagnostic will not run).
 
 ``use_exact_name``:
   Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ignore the model's naming conventions and *only* look for a variable with a name matching the key of this entry, regardless of what model or data source the framework is using. The only use case for this setting is to give diagnostics the ability to request data that falls outside the CF conventions: in general, you should rely on the framework to translate CF standard names to the native field names of the model being analyzed. 
 
 ``units``: 
-  Optional. String, following syntax of the `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__. Units the diagnostic expects the variable to be in. **If not provided, the framework will assume CF convention**  `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the variable to be in. **If not provided, the framework will assume CF convention**  `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 .. _item_var_dims:
 
@@ -377,7 +396,7 @@ The *key* in a varlist key-value pair is the name your diagnostic uses to refer 
   In order to request multiple slices (eg. wind velocity on multiple pressure levels, with each level saved to a different file), create one varlist entry per slice.
 
 ``frequency``, ``min_frequency``, ``max_frequency``: 
-  :ref:`Unit-ful quantities<unitful>`. Optional. Time frequency at which the variable's data is provided. If given here, overrides the values set globally in the ``data`` section (see :ref:`description<freq_target>` there).
+  :ref:`Time durations<time_duration>`. Optional. Time frequency at which the variable's data is provided. If given here, overrides the values set globally in the ``data`` section (see :ref:`description<freq_target>` there).
 
 ``requirement``: 
   String. Optional: assumed ``"required"`` if not specified. One of three values:

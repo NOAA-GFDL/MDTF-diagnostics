@@ -88,6 +88,7 @@ warnings.simplefilter("ignore")
 print('--------------------------')
 print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
+# print(str(os.getenv('OBS_DATA')))
 #### possible input info from external text file
 # constant setting
 syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
@@ -110,9 +111,10 @@ Model_legend_name = [os.getenv('Model_legend_name')] # model name appeared on th
 modelin = {}
 path = {}
 #####################
-ori_syear = os.getenv('FIRSTYR')
-ori_fyear = os.getenv('LASTYR')
-modeldir = os.getenv('MODEL_DATA_ROOT')+os.getenv('Model_path')
+ori_syear = int(os.getenv('FIRSTYR'))
+ori_fyear = int(os.getenv('LASTYR'))
+modeldir = str(os.getenv('DATADIR'))+"/../"+str(os.getenv('Model_path'))
+# print(modeldir)
 modelfile = [[os.getenv('tauuo_file')],
              [os.getenv('tauvo_file')],
              [os.getenv('zos_file')]]
@@ -147,7 +149,9 @@ for nmodel,model in enumerate(Model_name):
 timeax = xr.cftime_range(start=cftime.datetime(ori_syear,1,1),end=cftime.datetime(ori_fyear,12,1),freq='MS')
 timeax = timeax.to_datetimeindex()    # cftime => datetime64
 
-
+print('--------------------------')
+print('Start processing model outputs')
+print('--------------------------')
 # initialization of dict and list  (!!!!!!!! remove all previous read model info if exec !!!!!!!!!!)
 nmodel = len(Model_name)
 nvar = len(Model_varname)
@@ -171,6 +175,7 @@ for nmodel,model in enumerate(Model_name):
 #                                              Model_dimname[1]:100,
 #                                              Model_dimname[2]:100},
 #                                      use_cftime=True)
+        print(modelin[model][nvar][0])
         # read input data
         ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
 
@@ -230,12 +235,12 @@ obsin = {}
 obspath = {}
 
 obs = Obs_name[0]
-obsdir = os.getenv('OBS_DATA_ROOT')
+obsdir = str(os.getenv('OBS_DATA'))
 obsfile = [['waswind_v1_0_1.monthly.nc'],['waswind_v1_0_1.monthly.nc']]
 obspath[obs]=[obsdir,obsfile]
 
 obs = Obs_name[1]
-obsdir = os.getenv('OBS_DATA_ROOT')
+obsdir = str(os.getenv('OBS_DATA'))
 obsfile = [['dt_global_allsat_phy_l4_monthly_adt.nc']]
 obspath[obs]=[obsdir,obsfile]
 
@@ -714,6 +719,10 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 
 fig.savefig(os.getenv('WK_DIR')+'/model/PS/example_model_plot.eps', facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches="tight", pad_inches=None,
+                frameon=None)
+fig.savefig(os.getenv('WK_DIR')+'/obs/PS/example_obs_plot.eps', facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches="tight", pad_inches=None,
                 frameon=None)

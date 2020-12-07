@@ -109,9 +109,9 @@ We only give the relevant parts of the :doc:`settings file <ref_settings>` below
 
 The framework will set the following environment variables:
 
-#. ``lat_dim``: Name of the latitude dimension in the model's native format (because ``rename_dimensions`` is false).
-#. ``lon_dim``: Name of the longitude dimension in the model's native format (because ``rename_dimensions`` is false).
-#. ``time_dim``: Name of the time dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``lat_coord``: Name of the latitude dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``lon_coord``: Name of the longitude dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``time_coord``: Name of the time dimension in the model's native format (because ``rename_dimensions`` is false).
 #. ``pr_var``: Name of the precipitation variable in the model's native format (because ``rename_variables`` is false).
 #. ``PR_FILE``: Absolute path to the file containing ``pr`` data, e.g. ``/dir/precip.nc``.
 

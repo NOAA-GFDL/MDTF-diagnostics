@@ -213,20 +213,22 @@ class MDTFFramework(object):
         self.verify_paths(config)
 
     def verify_paths(self, config):
+        p = config.paths # abbreviate
         # clean out WORKING_DIR if we're not keeping temp files
-        if os.path.exists(config.paths.WORKING_DIR) and not \
-            (config.config.get('keep_temp', False) \
-            or config.paths.WORKING_DIR == config.paths.OUTPUT_DIR):
-            shutil.rmtree(config.paths.WORKING_DIR)
+        keep_wkdir = config.config.get('keep_temp', False) \
+            or p.WORKING_DIR == p.OUTPUT_DIR
+        if os.path.exists(p.WORKING_DIR) and not keep_wkdir:
+            if util.is_subpath(p.WORKING_DIR, 
+                p.CODE_ROOT, p.OBS_DATA_ROOT, p.MODEL_DATA_ROOT):
+                sys.exit((f"ERROR: Chosen working directory ({p.WORKING_DIR}) "
+                    "contains MDTF code or supporting data. Please choose a "
+                    "different location."
+                ))
+            shutil.rmtree(p.WORKING_DIR)
         util_mdtf.check_required_dirs(
-            already_exist = [
-                config.paths.CODE_ROOT, config.paths.OBS_DATA_ROOT
-            ], 
-            create_if_nec = [
-                config.paths.MODEL_DATA_ROOT, 
-                config.paths.WORKING_DIR, 
-                config.paths.OUTPUT_DIR
-        ])
+            already_exist = [p.CODE_ROOT, p.OBS_DATA_ROOT], 
+            create_if_nec = [p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR]
+        )
 
     def _print_config(self, cli_obj, config):
         # make config nested dict for backwards compatibility

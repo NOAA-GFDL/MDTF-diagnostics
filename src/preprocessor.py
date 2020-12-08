@@ -160,7 +160,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 standard_name=new_name, 
                 alternates=[[v]]
             )
-            new_v.configure(data_mgr, pod)
+            data_mgr.setup_var(pod, new_v)
             v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
             v.active = False
 

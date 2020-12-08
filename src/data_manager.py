@@ -198,32 +198,81 @@ class DataManager(abc.ABC):
         }
         for pod in self.iter_pods(all_pods=True):
             try:
-                pod.configure_paths(self)
-                pod.configure_vars(self)
-                pod.pod_env_vars.update(self.env_vars)
+                self.setup_pod(pod)
             except Exception as exc:
+                raise
                 try:
                     raise diagnostic.PodConfigError(pod, 
                         "Caught exception in DataManager setup.") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)    
                 continue
+
+        print('####################')
+        for pod in self.iter_pods(all_pods=True):
+            for v in pod.iter_vars(all_vars=True):
+                v.print_debug()
+        print('####################')
+
+    def setup_pod(self, pod):
+        config = util_mdtf.ConfigManager()
+        paths = config.paths.pod_paths(pod, self)
+        for k,v in paths.items():
+            setattr(pod, k, v)
+        pod.pod_env_vars.update(self.env_vars)
+
+        for v in pod.iter_vars(all_vars=True):
             try:
-                pod.preprocessor = self._PreprocessorClass(self, pod)
-                pod.preprocessor.edit_request(self, pod)
-                print('####################')
-                for v in pod.iter_vars(all_vars=True):
-                    v.print_debug()
-                print('####################')
+                self.setup_var(pod, v)
             except Exception as exc:
-                raise
                 try:
                     raise diagnostic.PodConfigError(pod, 
-                        "Caught exception in preprocessor setup.") from exc
+                        f"Caught exception when configuring {v.name}") from exc
                 except Exception as chained_exc:
-                    pod.exceptions.log(chained_exc)    
+                    pod.exceptions.log(chained_exc)  
                 continue
+        pod.preprocessor = self._PreprocessorClass(self, pod)
+        pod.preprocessor.edit_request(self, pod)
 
+    def setup_var(self, pod, v):
+        """Update VarlistEntry fields with information that only becomes 
+        available after DataManager and Diagnostic have been configured (ie, 
+        only known at runtime, not from settings.jsonc.)
+        """
+        translate = util_mdtf.VariableTranslator()
+        v.change_coord(
+            'T',
+            new_class = {
+                'self': diagnostic.VarlistTimeCoordinate,
+                'range': datelabel.DateRange,
+                'frequency': datelabel.DateFrequency
+            },
+            range=self.attrs.date_range
+        )
+        v.dest_path = self.variable_dest_path(pod, v)
+        try:
+            v.name_in_model = translate.from_CF(self.convention, v.standard_name)
+        except KeyError:
+            err_str = (f"CF name '{v.standard_name}' for varlist entry "
+                f"{v.name} in POD {pod.name} not recognized by naming "
+                f"convention '{self.convention}'.")
+            print(err_str)
+            v.exception = diagnostic.PodConfigError(pod, err_str)
+            v.active = False
+            raise v.exception
+
+    def variable_dest_path(self, pod, var):
+        """Returns the absolute path of the POD's preprocessed, local copy of 
+        the file containing the requested dataset. Files not following this 
+        convention won't be found by the POD.
+        """
+        if var.is_static:
+            f_name = f"{self.case_name}.{var.name}.nc"
+            return os.path.join(pod.POD_WK_DIR, f_name)
+        else:
+            freq = var.T.frequency.format_local()
+            f_name = f"{self.case_name}.{var.name}.{freq}.nc"
+            return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
     @staticmethod
     def dataset_key(dataset):

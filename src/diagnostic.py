@@ -273,34 +273,6 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             print(f"  Alternate set #{i+1}: [{', '.join(alt_names)}]")
         print()
 
-    # this dependency inversion feels funny to me
-    def configure(self, data_mgr, pod):
-        """Update fields with information that only becomes available after
-        DataManager and Diagnostic have been configured (ie, only known at
-        runtime, not from settings.jsonc.)
-        """
-        translate = util_mdtf.VariableTranslator()
-        self.change_coord(
-            'T',
-            new_class = {
-                'self': VarlistTimeCoordinate,
-                'range': datelabel.DateRange,
-                'frequency': datelabel.DateFrequency
-            },
-            range=data_mgr.attrs.date_range
-        )
-        self.dest_path = pod.dest_path(data_mgr, self)
-        try:
-            self.name_in_model = translate.from_CF(
-                data_mgr.convention, self.standard_name)
-        except KeyError:
-            err_str = (f"CF name '{self.standard_name}' for varlist entry "
-                f"{self.name} in POD {pod.name} not recognized by naming "
-                f"convention '{data_mgr.convention}'.")
-            print(err_str)
-            self.exception = PodConfigError(self, err_str)
-            self.active = False
-            raise self.exception
 
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a 
@@ -468,39 +440,6 @@ class Diagnostic(object):
         else:
             # only active vars
             yield from self.varlist.active_vars
-
-    # this dependency inversion feels funny to me
-    def configure_paths(self, data_mgr):
-        config = util_mdtf.ConfigManager()
-        paths = config.paths.pod_paths(self, data_mgr)
-        for k,v in paths.items():
-            setattr(self, k, v)
-
-    def dest_path(self, data_mgr, var):
-        """Returns the absolute path of the POD's preprocessed, local copy of 
-        the file containing the requested dataset. Files not following this 
-        convention won't be found by the POD.
-        """
-        if var.is_static:
-            f_name = f"{data_mgr.case_name}.{var.name}.nc"
-            return os.path.join(self.POD_WK_DIR, f_name)
-        else:
-            freq = var.T.frequency.format_local()
-            f_name = f"{data_mgr.case_name}.{var.name}.{freq}.nc"
-            return os.path.join(self.POD_WK_DIR, freq, f_name)
-
-    # this dependency inversion feels funny to me
-    def configure_vars(self, data_mgr):
-        for v in self.iter_vars(all_vars=True):
-            try:
-                v.configure(data_mgr, self)
-            except Exception as exc:
-                try:
-                    raise PodConfigError(self, 
-                        f"Caught exception when configuring {v.name}") from exc
-                except Exception as chained_exc:
-                    self.exceptions.log(chained_exc)  
-                continue
 
     def deactivate_if_failed(self):
         # should be called from a hook whenever we log an exception

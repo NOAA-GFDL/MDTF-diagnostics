@@ -30,8 +30,8 @@ class CMIP6_CVs(util.Singleton):
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            config = util_mdtf.ConfigManager()
-            file_ = os.path.join(config.paths.CODE_ROOT, 'src', 
+            paths = util_mdtf.PathManager()
+            file_ = os.path.join(paths.CODE_ROOT, 'src', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)
         self._contents = self._contents['CV']

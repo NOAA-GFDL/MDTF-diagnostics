@@ -422,16 +422,17 @@ class Diagnostic(object):
         :class:`~util_mdtf.ConfigManager`.
         """
         config = util_mdtf.ConfigManager()
+        paths = util_mdtf.PathManager()
         # HACK - don't want to read config files twice, but this lets us
         # propagate syntax errors
-        pod_config = cli.load_pod_settings(config.paths.CODE_ROOT, pod_name)
+        pod_config = cli.load_pod_settings(paths.CODE_ROOT, pod_name)
         # # following should have been caught in user input validation
         # assert pod_name in config.pods, \
         #     f"POD name {pod_name} not recognized." 
         return cls.from_struct(
             pod_name, pod_config,
-            CODE_ROOT=config.paths.CODE_ROOT, 
-            dry_run=config.config.get('dry_run', False)
+            CODE_ROOT=paths.CODE_ROOT, 
+            dry_run=config.get('dry_run', False)
         )
 
     def iter_vars(self, all_vars=False):
@@ -755,7 +756,7 @@ class Diagnostic(object):
         )
         for f in files:
             f_stem, _  = os.path.splitext(f)
-            gs_flags = config.config.get('convert_flags', '')
+            gs_flags = config.get('convert_flags', '')
             # %d = ghostscript's template for multi-page output
             f_out = f_stem + '_MDTF_TEMP_%d.png' 
             util.run_shell_command(f'gs {gs_flags} -sOutputFile="{f_out}" {f}')
@@ -813,16 +814,16 @@ class Diagnostic(object):
             shutil.copy2(f, os.path.join(self.POD_WK_DIR, 'obs'))
 
         # remove .eps files if requested (actually, contents of any 'PS' subdirs)
-        if not config.config.save_ps:
+        if not config.save_ps:
             for d in util.find_files(self.POD_WK_DIR, 'PS'+os.sep):
                 shutil.rmtree(d)
         # delete netCDF files, keep everything else
-        if config.config.save_non_nc:
+        if config.save_non_nc:
             for f in util.find_files(self.POD_WK_DIR, '*.nc'):
                 os.remove(f)
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
-        elif not config.config.save_nc:
+        elif not config.save_nc:
             for d in util.find_files(self.POD_WK_DIR, 'netCDF'+os.sep):
                 shutil.rmtree(d)
             for f in util.find_files(self.POD_WK_DIR, '*.nc'):

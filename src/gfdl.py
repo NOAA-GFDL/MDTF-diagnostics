@@ -26,7 +26,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         """Extra step needed for POD-specific output directory, which may be on
         a remote filesystem.
         """
-        config = gfdl_util.GFDLConfigManager()
+        config = util_mdtf.ConfigManager()
 
         super(GfdlDiagnostic, self).pre_run_setup()
         if self._already_made_POD_OUT_DIR:
@@ -151,12 +151,13 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
 
         self.frepp_mode = config.get('frepp', False)
         if self.frepp_mode:
+            paths = util_mdtf.PathManager()
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
             # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
-            d = paths.modelPaths(self, overwrite=True)
+            d = paths.model_paths(self, overwrite=True)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
@@ -380,7 +381,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
     def _make_tar_file(self, tar_dest_dir):
         # make locally in WORKING_DIR and gcp to destination,
         # since OUTPUT_DIR might be mounted read-only
-        config = util_mdtf.ConfigManager()
+        paths = util_mdtf.PathManager()
         out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
             paths.WORKING_DIR
         )

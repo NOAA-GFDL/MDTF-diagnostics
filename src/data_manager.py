@@ -144,15 +144,16 @@ class DataManager(abc.ABC):
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
         # assign explicitly else linter complains
-        self.dry_run = config.config.dry_run
-        self.file_transfer_timeout = config.config.file_transfer_timeout
-        self.make_variab_tar = config.config.make_variab_tar
-        self.keep_temp = config.config.keep_temp
-        self.overwrite = config.config.overwrite
+        self.dry_run = config.dry_run
+        self.file_transfer_timeout = config.file_transfer_timeout
+        self.make_variab_tar = config.make_variab_tar
+        self.keep_temp = config.keep_temp
+        self.overwrite = config.overwrite
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
-        d = config.paths.model_paths(case_dict, overwrite=self.overwrite)
-        self.code_root = config.paths.CODE_ROOT
+        paths = util_mdtf.PathManager()
+        d = paths.model_paths(case_dict, overwrite=self.overwrite)
+        self.code_root = paths.CODE_ROOT
         self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
         self.MODEL_WK_DIR = d.MODEL_WK_DIR
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
@@ -209,8 +210,8 @@ class DataManager(abc.ABC):
         print('####################')
 
     def setup_pod(self, pod):
-        config = util_mdtf.ConfigManager()
-        paths = config.paths.pod_paths(pod, self)
+        paths = util_mdtf.PathManager()
+        paths = paths.pod_paths(pod, self)
         for k,v in paths.items():
             setattr(pod, k, v)
         pod.pod_env_vars.update(self.env_vars)
@@ -507,6 +508,7 @@ class DataManager(abc.ABC):
     def tear_down(self):
         # TODO: handle OSErrors in all of these
         config = util_mdtf.ConfigManager()
+        paths = util_mdtf.PathManager()
         
         # create empty text file for PODs to append to
         open(self.TEMP_HTML, 'w').close()
@@ -515,7 +517,7 @@ class DataManager(abc.ABC):
         self._make_html()
         _ = self._backup_config_file(config)
         if self.make_variab_tar:
-            _ = self._make_tar_file(config.paths.OUTPUT_DIR)
+            _ = self._make_tar_file(paths.OUTPUT_DIR)
         self._copy_to_output()
 
     def _make_html(self, cleanup=True):
@@ -550,7 +552,7 @@ class DataManager(abc.ABC):
             out_file, _ = util_mdtf.bump_version(out_file)
         elif os.path.exists(out_file):
             print(f"Overwriting {out_file}.")
-        util.write_json(config.config.toDict(), out_file)
+        util.write_json(config.toDict(), out_file)
         return out_file
 
     def _make_tar_file(self, tar_dest_dir):

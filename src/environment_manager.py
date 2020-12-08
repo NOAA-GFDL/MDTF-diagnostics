@@ -72,9 +72,9 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     def __init__(self):
         super(VirtualenvEnvironmentManager, self).__init__()
 
-        config = util_mdtf.ConfigManager()
-        self.venv_root = config.paths.get('venv_root', '')
-        self.r_lib_root = config.paths.get('r_lib_root', '')
+        paths = util_mdtf.PathManager()
+        self.venv_root = paths.get('venv_root', '')
+        self.r_lib_root = paths.get('r_lib_root', '')
 
     def create_environment(self, env_key):
         env_name = env_key[0]
@@ -153,8 +153,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     def __init__(self):
         super(CondaEnvironmentManager, self).__init__()
 
-        config = util_mdtf.ConfigManager()
-        self.code_root = config.paths.CODE_ROOT
+        paths = util_mdtf.PathManager()
+        self.code_root = paths.CODE_ROOT
         self.conda_dir = os.path.join(self.code_root, 'src','conda')
         self.env_list = []
         for file_ in os.listdir(self.conda_dir):
@@ -168,7 +168,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         try:
             conda_info = util.run_shell_command(
                 '{}/conda_init.sh {}'.format(
-                self.conda_dir, config.paths.get('conda_root','')
+                self.conda_dir, paths.get('conda_root','')
             ))
             for line in conda_info:
                 key, val = line.split('=')
@@ -182,8 +182,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             raise
 
         # find where environments are installed
-        if 'conda_env_root' in config.paths and config.paths.conda_env_root:
-            self.conda_env_root = config.paths.conda_env_root
+        if 'conda_env_root' in paths and paths.conda_env_root:
+            self.conda_env_root = paths.conda_env_root
             if not os.path.isdir(self.conda_env_root):
                 os.makedirs(self.conda_env_root) # recursive mkdir if needed
         else:
@@ -357,8 +357,8 @@ class SubprocessRuntimePODWrapper(object):
             (:py:obj:`str`): Command-line invocation to validate the POD's 
                 runtime environment.
         """
-        config = util_mdtf.ConfigManager()
-        command_path = os.path.join(config.paths.CODE_ROOT, \
+        paths = util_mdtf.PathManager()
+        command_path = os.path.join(paths.CODE_ROOT, \
             'src', 'validate_environment.sh')
         reqs = self.pod.runtime_requirements # abbreviate
         command = [
@@ -402,7 +402,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
     def __init__(self, pod_dict, EnvMgrClass):
         config = util_mdtf.ConfigManager()
-        self.test_mode = config.config.test_mode
+        self.test_mode = config.test_mode
         # transfer all pods, even failed ones, because we need to call their 
         self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]
         self.env_mgr = EnvMgrClass()

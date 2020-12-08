@@ -9,8 +9,8 @@ import string
 import tempfile
 from src import util, cli
 
-class ConfigManager(util.Singleton):
-    def __init__(self, code_root=None, cli_rel_path=None, unittest=False):
+class MDTFConfigurer(object):
+    def __init__(self, code_root=None, cli_rel_path=None):
         """Set up CLI; parse and store arguments
         """
         # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
@@ -29,16 +29,19 @@ class ConfigManager(util.Singleton):
         self.pod_data = pod_info_tuple.pod_data
         self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
         self.pod_realms = pod_info_tuple.realm_data
-
-        # set up paths
-        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest)
-        # copy over all config settings
-        self.config = util.NameSpace.fromDict(cli_obj.config)
-        print(util.pretty_print_json(self.paths))
         self.parse_mdtf_args(cli_obj)
+        # init singletons
+        config = ConfigManager(cli_obj, self.pod_data, self.case_list, 
+            self.global_env_vars)
+        paths = PathManager(code_root, cli_obj)
+        self.verify_paths(config, paths)
+        # use WORKING_DIR for temp data
+        _ = TempDirManager(paths.WORKING_DIR)
+        _ = VariableTranslator(code_root)
+
         # config should be read-only from here on
-        self._post_parse_hook(cli_obj)
-        self._print_config(cli_obj)
+        self._post_parse_hook(cli_obj, config, paths)
+        self._print_config(cli_obj, config, paths)
 
     def _cli_pre_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler before parsing
@@ -67,7 +70,6 @@ class ConfigManager(util.Singleton):
         self.parse_env_vars(cli_obj)
         self.parse_pod_list(cli_obj)
         self.parse_case_list(cli_obj)
-        self.parse_paths(cli_obj)
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
@@ -78,8 +80,7 @@ class ConfigManager(util.Singleton):
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, cli_obj):
-        self.pod_list = []
-        args = util.coerce_to_iter(self.config.pop('pods', []), set)
+        args = util.coerce_to_iter(cli_obj.config.pop('pods', []), set)
         if 'example' in args or 'examples' in args:
             self.pod_list = [pod for pod in self.pod_data \
                 if pod.startswith('example')]
@@ -159,19 +160,12 @@ class ConfigManager(util.Singleton):
         else:
             return case['pod_list']
 
-    def parse_paths(self, cli_obj):
-        self.paths.parse(cli_obj.config, cli_obj.custom_types.get('path', []))
-
-    def _post_parse_hook(self, cli_obj):
+    def _post_parse_hook(self, cli_obj, config, paths):
         # init other services
-        self.verify_paths()
-        # use WORKING_DIR for temp data
-        _ = TempDirManager(self.paths.WORKING_DIR)
-        _ = VariableTranslator()
+        pass
 
-    def verify_paths(self):
-        p = self.paths # abbreviate
-        keep_temp = self.config.get('keep_temp', False)
+    def verify_paths(self, config, p):
+        keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
@@ -180,15 +174,15 @@ class ConfigManager(util.Singleton):
         check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
             create=True)
 
-    def _print_config(self, cli_obj):
+    def _print_config(self, cli_obj, config, paths):
         # make config nested dict for backwards compatibility
         # this is all temporary
         d = dict()
-        for n, case in enumerate(self.case_list):
+        for n, case in enumerate(config.case_list):
             key = 'case_list({})'.format(n)
             d[key] = case
-        d['pod_list'] = self.pod_list
-        d['paths'] = self.paths
+        # d['pod_list'] = self.pod_list
+        d['paths'] = paths.toDict()
         d['paths'].pop('_unittest', None)
         d['settings'] = dict()
         settings_gps = set(cli_obj.parser_groups).difference(
@@ -198,23 +192,32 @@ class ConfigManager(util.Singleton):
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
         d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
             if k not in d['paths']}
-        d['env_vars'] = self.global_env_vars
+        d['env_vars'] = config.global_env_vars
         print('DEBUG: SETTINGS:')
         print(util.pretty_print_json(d))
 
 
-class _PathManager(util.NameSpace):
+class ConfigManager(util.Singleton, util.NameSpace):
+    def __init__(self, cli_obj=None, pod_data=None, case_list=None, 
+        global_env_vars=None, unittest=False):
+        self.update(cli_obj.config)
+        self.pods = pod_data
+        self.case_list = case_list
+        self.global_env_vars = global_env_vars
+
+
+class PathManager(util.Singleton, util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``defaults.jsonc``.
     """
-    def __init__(self, d, code_root=None, unittest=False):
-        self._unittest = unittest
+    def __init__(self, code_root=None, cli_obj=None, env=None, unittest=False):
         self.CODE_ROOT = code_root
         if not self._unittest:
             assert os.path.isdir(self.CODE_ROOT)
 
-    def parse(self, d, paths_to_parse=[], env=None):
+        d = cli_obj.config
         # set by CLI settings that have "parse_type": "path" in JSON entry
+        paths_to_parse = cli_obj.custom_types.get('path', [])
         if not paths_to_parse:
             print("Warning: didn't get list of paths from CLI.")
         for key in paths_to_parse:
@@ -314,15 +317,14 @@ class ConventionError(Exception):
     pass
 
 class VariableTranslator(util.Singleton):
-    def __init__(self, unittest=False, verbose=0):
+    def __init__(self, code_root=None, unittest=False, verbose=0):
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             config_files = ['dummy_filename']
         else:
-            config = ConfigManager()
             glob_pattern = os.path.join(
-                config.paths.CODE_ROOT, 'src', 'fieldlist_*.jsonc'
+                code_root, 'src', 'fieldlist_*.jsonc'
             )
             config_files = glob.glob(glob_pattern)
         # always have CF-compliant option, which does no translation

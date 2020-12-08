@@ -34,8 +34,8 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         try:
             gfdl_util.make_remote_dir(
                 self.POD_OUT_DIR,
-                timeout=config.config.get('file_transfer_timeout', 0),
-                dry_run=config.config.get('dry_run', False)
+                timeout=config.get('file_transfer_timeout', 0),
+                dry_run=config.get('dry_run', False)
             )
             self._has_placeholder = True
             self._already_made_POD_OUT_DIR = True
@@ -149,14 +149,14 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             lambda: collections.defaultdict(list)
         )
 
-        self.frepp_mode = config.config.get('frepp', False)
+        self.frepp_mode = config.get('frepp', False)
         if self.frepp_mode:
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
             # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
             # unique name in parent's init. Set it back so it will be overwritten.
-            d = config.paths.modelPaths(self, overwrite=True)
+            d = paths.modelPaths(self, overwrite=True)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
@@ -382,7 +382,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         # since OUTPUT_DIR might be mounted read-only
         config = util_mdtf.ConfigManager()
         out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
-            config.paths.WORKING_DIR
+            paths.WORKING_DIR
         )
         gfdl_util.gcp_wrapper(
             out_file, tar_dest_dir,

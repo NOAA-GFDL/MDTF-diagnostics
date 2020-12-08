@@ -89,16 +89,16 @@ class ModuleManager(util.Singleton):
         assert set(self._list()) == self.user_modules
 
 
-class GFDLConfigManager(util_mdtf.ConfigManager):
+class GFDLMDTFConfigurer(util_mdtf.MDTFConfigurer):
     def parse_mdtf_args(self, cli_obj):
-        super(GFDLConfigManager, self).parse_mdtf_args(cli_obj)
+        super(GFDLMDTFConfigurer, self).parse_mdtf_args(cli_obj)
         # set up cooperative mode -- hack to pass config settings
-        self.frepp_mode = self.config.get('frepp', False)
+        self.frepp_mode = cli_obj.config.get('frepp', False)
         if self.frepp_mode:
-            self.config['diagnostic'] = 'Gfdl'
+            cli_obj.config['diagnostic'] = 'Gfdl'
 
     def parse_env_vars(self, cli_obj):
-        super(GFDLConfigManager, self).parse_env_vars(cli_obj)
+        super(GFDLMDTFConfigurer, self).parse_env_vars(cli_obj)
         # set temp directory according to where we're running
         if running_on_PPAN():
             gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
@@ -113,21 +113,36 @@ class GFDLConfigManager(util_mdtf.ConfigManager):
         os.environ['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
         self.global_env_vars['MDTF_GFDL_TMPDIR'] = gfdl_tmp_dir
 
-    def _post_parse_hook(self, cli_obj):
+    def _post_parse_hook(self, cli_obj, config, paths):
         ### call parent class method
-        super(GFDLConfigManager, self)._post_parse_hook(cli_obj)
+        super(GFDLMDTFConfigurer, self)._post_parse_hook(cli_obj, config, paths)
 
-        self.dry_run = self.config.get('dry_run', False)
-        self.timeout = self.config.get('file_transfer_timeout', 0)
+        self.reset_case_pod_list(cli_obj, config, paths)
+        self.dry_run = config.get('dry_run', False)
+        self.timeout = config.get('file_transfer_timeout', 0)
         # copy obs data from site install
         fetch_obs_data(
-            self.paths.OBS_DATA_REMOTE, self.paths.OBS_DATA_ROOT,
+            paths.OBS_DATA_REMOTE, paths.OBS_DATA_ROOT,
             timeout=self.timeout, dry_run=self.dry_run
         )
 
-    def verify_paths(self):
-        p = self.paths # abbreviate
-        keep_temp = self.config.get('keep_temp', False)
+    def reset_case_pod_list(self, cli_obj, config, paths):
+        if self.frepp_mode:
+            for case in config.case_list:
+                # frepp mode:only attempt PODs other instances haven't already done
+                case_outdir = paths.modelPaths(case, overwrite=True)
+                case_outdir = case_outdir.MODEL_OUT_DIR
+                pod_list = case['pod_list']
+                for p in pod_list:
+                    if os.path.isdir(os.path.join(case_outdir, p)):
+                        print(("\tDEBUG: preexisting {} in {}; "
+                            "skipping b/c frepp mode").format(p, case_outdir))
+                case['pod_list'] = [p for p in pod_list if not \
+                    os.path.isdir(os.path.join(case_outdir, p))
+                ]
+
+    def verify_paths(self, config, p):
+        keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
@@ -138,26 +153,6 @@ class GFDLConfigManager(util_mdtf.ConfigManager):
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
             make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run)
-
-    def set_case_pod_list(self, case, cli_obj):
-        requested_pods = super(GFDLConfigManager, self).set_case_pod_list(
-            case, cli_obj
-        )
-        if not self.config.get('frepp', False):
-            # try to run everything if not in frepp cooperative mode
-            return requested_pods
-        else:
-            # frepp mode:only attempt PODs other instances haven't already done
-            case_outdir = self.paths.modelPaths(case, overwrite=True)
-            case_outdir = case_outdir.MODEL_OUT_DIR
-            for p in requested_pods:
-                if os.path.isdir(os.path.join(case_outdir, p)):
-                    print(("\tDEBUG: preexisting {} in {}; "
-                        "skipping b/c frepp mode").format(p, case_outdir))
-            return [p for p in requested_pods if not \
-                os.path.isdir(os.path.join(case_outdir, p))
-            ]
-
 
 
 # ====================================================================
@@ -193,9 +188,9 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         tmpdirs = util_mdtf.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
         if timeout is None:
-            timeout = config.config.get('file_transfer_timeout', 0)
+            timeout = config.get('file_transfer_timeout', 0)
         if dry_run is None:
-            dry_run = config.config.get('dry_run', False)
+            dry_run = config.get('dry_run', False)
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
         gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)

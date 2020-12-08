@@ -28,10 +28,8 @@ from src import cli, util, util_mdtf, data_manager, environment_manager, \
     diagnostic
 
 class MDTFFramework(object):
-    def __init__(self, config, modules_to_search):
-        self.code_root = config.code_root
-        self.pod_list = config.pod_list
-        self.case_list = config.case_list
+    def __init__(self, *modules_to_search):
+        config = util_mdtf.ConfigManager()
         # delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
@@ -41,7 +39,7 @@ class MDTFFramework(object):
                 # drop '_' and title-case class name
                 return ''.join(str_.split('_')).title()
 
-            class_prefix = config.config.get(setting, '')
+            class_prefix = config.get(setting, '')
             class_prefix = _var_to_class_name(util.coerce_from_iter(class_prefix))
             class_suffix = _var_to_class_name(setting)
             for mod in modules_to_search:
@@ -62,7 +60,7 @@ class MDTFFramework(object):
         util.signal_logger(self.__class__.__name__, signum, frame)
         config = util_mdtf.ConfigManager()
         tmpdirs = util_mdtf.TempDirManager()
-        if not config.config.get('keep_temp', False):
+        if not config.get('keep_temp', False):
             tmpdirs.cleanup()
 
     def run_case(self, case_name, case_d):
@@ -90,8 +88,9 @@ class MDTFFramework(object):
 
     def main_loop(self):
         # only run first case in list until dependence on env vars cleaned up
+        config = util_mdtf.ConfigManager()
         summary_d = dict()
-        for d in self.case_list[0:1]:
+        for d in config.case_list[0:1]:
             case_name = d.get('CASENAME', '')
             summary_info = self.run_case(case_name, d)
             summary_d[case_name] = summary_info
@@ -156,10 +155,9 @@ def main(code_root, cli_rel_path):
         # not printing help or info, setup CLI normally 
         # move into its own class so that child classes can customize
         # above options without having to rewrite below
-        config = util_mdtf.ConfigManager(code_root, cli_rel_path)
+        util_mdtf.MDTFConfigurer(code_root, cli_rel_path)
         framework = MDTFFramework(
-            config,
-            (data_manager, environment_manager, diagnostic)
+            data_manager, environment_manager, diagnostic
         )
         print(f"\n======= Starting {__file__}")
         bad_exit = framework.main_loop()

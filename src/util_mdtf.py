@@ -7,22 +7,200 @@ import glob
 import shutil
 import string
 import tempfile
-from src import util
-
+from src import util, cli
 
 class ConfigManager(util.Singleton):
-    def __init__(self, cli_obj=None, pod_info_tuple=None, unittest=False):
-        assert cli_obj # Singleton, so init should only ever be called once
-        # set up paths
-        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest)
-        # load pod info
-        self.pods = pod_info_tuple.pod_data
+    def __init__(self, code_root=None, defaults_rel_path=None, unittest=False):
+        """Set up CLI; parse and store arguments
+        """
+        # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
+        assert code_root # singleton, so this method should only be called once
+        self.code_root = code_root
+        self.pod_list = []
+        self.case_list = []
+        self.global_env_vars = dict()
+
+        cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
+        self._cli_pre_parse_hook(cli_obj)
+        cli_obj.parse_cli()
+        self._cli_post_parse_hook(cli_obj)
+        # load pod data
+        pod_info_tuple = cli.load_pod_settings(code_root)
+        self.pod_data = pod_info_tuple.pod_data
         self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
         self.pod_realms = pod_info_tuple.realm_data
 
-        self.global_env_vars = dict()
+        # set up paths
+        self.paths = _PathManager(cli_obj.config, cli_obj.code_root, unittest)
         # copy over all config settings
         self.config = util.NameSpace.fromDict(cli_obj.config)
+        print(util.pretty_print_json(self.paths))
+        self.parse_mdtf_args(cli_obj)
+        # config should be read-only from here on
+        self._post_parse_hook(cli_obj)
+        self._print_config(cli_obj)
+
+    def _cli_pre_parse_hook(self, cli_obj):
+        # gives subclasses the ability to customize CLI handler before parsing
+        # although most of the work done by parse_mdtf_args
+        pass
+
+    def _cli_post_parse_hook(self, cli_obj):
+        # gives subclasses the ability to customize CLI handler after parsing
+        # although most of the work done by parse_mdtf_args
+        if cli_obj.config.get('dry_run', False):
+            cli_obj.config['test_mode'] = True
+
+    @staticmethod
+    def _populate_from_cli(cli_obj, group_nm, target_d=None):
+        if target_d is None:
+            target_d = dict()
+        for key, val in cli_obj.iteritems_cli(group_nm):
+            if val: # assign nonempty items only
+                target_d[key] = val
+        return target_d
+
+    def parse_mdtf_args(self, cli_obj):
+        """Parse script options returned by the CLI. For greater customizability,
+        most of the functionality is spun out into sub-methods.
+        """
+        self.parse_env_vars(cli_obj)
+        self.parse_pod_list(cli_obj)
+        self.parse_case_list(cli_obj)
+        self.parse_paths(cli_obj)
+
+    def parse_env_vars(self, cli_obj):
+        # don't think PODs use global env vars?
+        # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
+        self.global_env_vars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        # globally enforce non-interactive matplotlib backend
+        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
+        self.global_env_vars['MPLBACKEND'] = "Agg"
+
+    def parse_pod_list(self, cli_obj):
+        self.pod_list = []
+        args = util.coerce_to_iter(self.config.pop('pods', []), set)
+        if 'example' in args or 'examples' in args:
+            self.pod_list = [pod for pod in self.pod_data \
+                if pod.startswith('example')]
+        elif 'all' in args:
+            self.pod_list = [pod for pod in self.pod_data \
+                if not pod.startswith('example')]
+        else:
+            # specify pods by realm
+            realms = args.intersection(set(self.all_realms))
+            args = args.difference(set(self.all_realms)) # remainder
+            for key in self.pod_realms:
+                if util.coerce_to_iter(key, set).issubset(realms):
+                    self.pod_list.extend(self.pod_realms[key])
+            # specify pods by name
+            pods = args.intersection(set(self.pod_data))
+            self.pod_list.extend(list(pods))
+            for arg in args.difference(set(self.pod_data)): # remainder:
+                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
+            # exclude examples
+            self.pod_list = [pod for pod in self.pod_list \
+                if not pod.startswith('example')]
+        if not self.pod_list:
+            print(("WARNING: no PODs selected to be run. Do `./mdtf info pods`"
+            " for a list of available PODs, and check your -p/--pods argument."))
+            print('Received --pods = {}'.format(list(args)))
+            exit()
+
+    def parse_case_list(self, cli_obj):
+        case_list_in = util.coerce_to_iter(cli_obj.case_list)
+        cli_d = self._populate_from_cli(cli_obj, 'MODEL')
+        if 'CASE_ROOT_DIR' not in cli_d and cli_obj.config.get('root_dir', None): 
+            # CASE_ROOT was set positionally
+            cli_d['CASE_ROOT_DIR'] = cli_obj.config['root_dir']
+        if not case_list_in:
+            case_list_in = [cli_d]
+        case_list = []
+        for case_tup in enumerate(case_list_in):
+            case_list.append(self.parse_case(case_tup, cli_d, cli_obj))
+        self.case_list = [case for case in case_list if case is not None]
+        if not self.case_list:
+            print("ERROR: no valid entries in case_list. Please specify model run information.")
+            print('Received:')
+            print(util.pretty_print_json(case_list_in))
+            exit(1)
+
+    def parse_case(self, case_tup, cli_d, cli_obj):
+        n, d = case_tup
+        if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
+            d['CASE_ROOT_DIR'] = d.pop('root_dir')
+        case_convention = d.get('convention', '')
+        d.update(cli_d)
+        if case_convention:
+            d['convention'] = case_convention
+
+        if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
+            print(("WARNING: Need to specify either CASENAME or model/experiment "
+                "in caselist entry {}, skipping.").format(n+1))
+            return None
+        _ = d.setdefault('model', d.get('convention', ''))
+        _ = d.setdefault('experiment', '')
+        _ = d.setdefault('CASENAME', '{}_{}'.format(d['model'], d['experiment']))
+
+        for field in ['FIRSTYR', 'LASTYR', 'convention']:
+            if not d.get(field, None):
+                print(("WARNING: No value set for {} in caselist entry {}, "
+                    "skipping.").format(field, n+1))
+                return None
+        # if pods set from CLI, overwrite pods in case list
+        d['pod_list'] = self.set_case_pod_list(d, cli_obj)
+        return d
+
+    def set_case_pod_list(self, case, cli_obj):
+        # if pods set from CLI, overwrite pods in case list
+        # already finalized self.pod-list by the time we get here
+        if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
+            return self.pod_list
+        else:
+            return case['pod_list']
+
+    def parse_paths(self, cli_obj):
+        self.paths.parse(cli_obj.config, cli_obj.custom_types.get('path', []))
+
+    def _post_parse_hook(self, cli_obj):
+        # init other services
+        self.verify_paths()
+        # use WORKING_DIR for temp data
+        _ = TempDirManager(self.paths.WORKING_DIR)
+        _ = VariableTranslator()
+
+    def verify_paths(self):
+        p = self.paths # abbreviate
+        keep_temp = self.config.get('keep_temp', False)
+        # clean out WORKING_DIR if we're not keeping temp files:
+        if os.path.exists(p.WORKING_DIR) and not \
+            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+            shutil.rmtree(p.WORKING_DIR)
+        check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
+        check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
+            create=True)
+
+    def _print_config(self, cli_obj):
+        # make config nested dict for backwards compatibility
+        # this is all temporary
+        d = dict()
+        for n, case in enumerate(self.case_list):
+            key = 'case_list({})'.format(n)
+            d[key] = case
+        d['pod_list'] = self.pod_list
+        d['paths'] = self.paths
+        d['paths'].pop('_unittest', None)
+        d['settings'] = dict()
+        settings_gps = set(cli_obj.parser_groups).difference(
+            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
+        )
+        for group in settings_gps:
+            d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
+        d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
+            if k not in d['paths']}
+        d['env_vars'] = self.global_env_vars
+        print('DEBUG: SETTINGS:')
+        print(util.pretty_print_json(d))
 
 
 class _PathManager(util.NameSpace):

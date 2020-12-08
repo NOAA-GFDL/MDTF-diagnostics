@@ -459,8 +459,6 @@ class InfoCLIHandler(object):
         else:
             print("ERROR: '{}' not a recognized topic.".format(' '.join(arg_list)))
             self.info_cmds()
-        # displayed info, now exit
-        exit()
 
     def info_cmds(self):
         print('Recognized topics for `mdtf.py info`:')

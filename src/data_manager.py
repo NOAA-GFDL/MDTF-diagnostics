@@ -130,14 +130,13 @@ class DataManager(abc.ABC):
     output.
     """
     _AttributesClass = DataManagerAttributesBase
-    _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
-    def __init__(self, case_dict):
+    def __init__(self, case_dict, pod_dict, PreprocessorClass):
         self.case_name = case_dict['CASENAME']
         self.convention = case_dict.get('convention', 'CF')
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
-        self.pods = dict.fromkeys(case_dict.get('pod_list', []))
+        self.pods = pod_dict
+        self._PreprocessorClass = PreprocessorClass
 
         config = util_mdtf.ConfigManager()
         self.env_vars = config.global_env_vars.copy()
@@ -191,11 +190,6 @@ class DataManager(abc.ABC):
         temp = translate.variables[self.convention].to_dict()
         self.env_vars.update(temp)
 
-        # instantiate Diagnostic objects from config
-        self.pods = {
-            pod_name: self._DiagnosticClass.from_config(pod_name) \
-                for pod_name in self.pods
-        }
         for pod in self.iter_pods(all_pods=True):
             try:
                 self.setup_pod(pod)

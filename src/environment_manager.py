@@ -19,7 +19,7 @@ from src import util, util_mdtf, diagnostic
 class AbstractEnvironmentManager(abc.ABC):
     """Interface for EnvironmentManagers.
     """
-    def __init__(self, data_mgr):
+    def __init__(self):
         pass
 
     def setup(self): pass
@@ -69,8 +69,8 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     libraries into the current user's ``$PATH``. For other scripting languages, 
     no library management is performed.
     """
-    def __init__(self, data_mgr):
-        super(VirtualenvEnvironmentManager, self).__init__(data_mgr)
+    def __init__(self):
+        super(VirtualenvEnvironmentManager, self).__init__()
 
         config = util_mdtf.ConfigManager()
         self.venv_root = config.paths.get('venv_root', '')
@@ -150,8 +150,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     """
     env_name_prefix = '_MDTF_' # our envs start with this string to avoid conflicts
 
-    def __init__(self, data_mgr):
-        super(CondaEnvironmentManager, self).__init__(data_mgr)
+    def __init__(self):
+        super(CondaEnvironmentManager, self).__init__()
 
         config = util_mdtf.ConfigManager()
         self.code_root = config.paths.CODE_ROOT
@@ -400,12 +400,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
-    def __init__(self, data_mgr, EnvMgrClass):
+    def __init__(self, pod_dict, EnvMgrClass):
         config = util_mdtf.ConfigManager()
         self.test_mode = config.config.test_mode
         # transfer all pods, even failed ones, because we need to call their 
-        self.pods = [self._PodWrapperClass(pod=p) for p in data_mgr.pods.values()]
-        self.env_mgr = EnvMgrClass(data_mgr)
+        self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]
+        self.env_mgr = EnvMgrClass()
 
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.

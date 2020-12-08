@@ -10,7 +10,7 @@ import tempfile
 from src import util, cli
 
 class ConfigManager(util.Singleton):
-    def __init__(self, code_root=None, defaults_rel_path=None, unittest=False):
+    def __init__(self, code_root=None, cli_rel_path=None, unittest=False):
         """Set up CLI; parse and store arguments
         """
         # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
@@ -20,7 +20,7 @@ class ConfigManager(util.Singleton):
         self.case_list = []
         self.global_env_vars = dict()
 
-        cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
+        cli_obj = cli.FrameworkCLIHandler(code_root, cli_rel_path)
         self._cli_pre_parse_hook(cli_obj)
         cli_obj.parse_cli()
         self._cli_post_parse_hook(cli_obj)

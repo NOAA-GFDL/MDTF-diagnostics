@@ -28,23 +28,34 @@ from src import cli, util, util_mdtf, data_manager, environment_manager, \
     diagnostic
 
 class MDTFFramework(object):
-    _dispatch_search = [
-        data_manager, environment_manager, diagnostic
-    ]
-
-    def __init__(self, config):
+    def __init__(self, config, modules_to_search):
         self.code_root = config.code_root
         self.pod_list = config.pod_list
         self.case_list = config.case_list
-
-        self.Diagnostic = self.dispatch(config, 'diagnostic')
-        self.DataManager = self.dispatch(config, 'data_manager')
-        self.Preprocessor = self.dispatch(config, 'preprocessor')
-        self.EnvironmentManager = self.dispatch(config, 'environment_manager')
-
         # delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
+
+        def _dispatch(setting):
+            def _var_to_class_name(str_):
+                # drop '_' and title-case class name
+                return ''.join(str_.split('_')).title()
+
+            class_prefix = config.config.get(setting, '')
+            class_prefix = _var_to_class_name(util.coerce_from_iter(class_prefix))
+            class_suffix = _var_to_class_name(setting)
+            for mod in modules_to_search:
+                try:
+                    return getattr(mod, class_prefix+class_suffix)
+                except Exception:
+                    continue
+            print("No class named {}.".format(class_prefix+class_suffix))
+            raise Exception('no_class')
+
+        self.Diagnostic = _dispatch('diagnostic')
+        self.DataManager = _dispatch('data_manager')
+        self.Preprocessor = _dispatch('preprocessor')
+        self.EnvironmentManager = _dispatch('environment_manager')
 
     def cleanup_tempdirs(self, signum=None, frame=None):
         # delete temp files
@@ -53,22 +64,6 @@ class MDTFFramework(object):
         tmpdirs = util_mdtf.TempDirManager()
         if not config.config.get('keep_temp', False):
             tmpdirs.cleanup()
-
-    def dispatch(self, config, setting):
-        def _var_to_class_name(str_):
-            # drop '_' and title-case class name
-            return ''.join(str_.split('_')).title()
-
-        class_prefix = config.config.get(setting, '')
-        class_prefix = _var_to_class_name(util.coerce_from_iter(class_prefix))
-        class_suffix = _var_to_class_name(setting)
-        for mod in self._dispatch_search:
-            try:
-                return getattr(mod, class_prefix+class_suffix)
-            except Exception:
-                continue
-        print("No class named {}.".format(class_prefix+class_suffix))
-        raise Exception('no_class')
 
     def run_case(self, case_name, case_d):
         print(f"Framework: initialize {case_name}")
@@ -146,13 +141,13 @@ class MDTFFramework(object):
         return failed
 
 
-def main(code_root, defaults_rel_path):
+def main(code_root, cli_rel_path):
     # poor man's subparser: argparse's subparser doesn't handle this
     # use case easily, so just dispatch on first argument
     if len(sys.argv) == 1 or \
         len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
         # build CLI, print its help and exit
-        cli_obj = cli.FrameworkCLIHandler(code_root, defaults_rel_path)
+        cli_obj = cli.FrameworkCLIHandler(code_root, cli_rel_path)
         cli_obj.parser.print_help()
     elif sys.argv[1].lower() == 'info': 
         # "subparser" for command-line info
@@ -161,10 +156,13 @@ def main(code_root, defaults_rel_path):
         # not printing help or info, setup CLI normally 
         # move into its own class so that child classes can customize
         # above options without having to rewrite below
-        config = util_mdtf.ConfigManager(code_root, defaults_rel_path)
-        mdtf = MDTFFramework(config)
+        config = util_mdtf.ConfigManager(code_root, cli_rel_path)
+        framework = MDTFFramework(
+            config,
+            (data_manager, environment_manager, diagnostic)
+        )
         print(f"\n======= Starting {__file__}")
-        bad_exit = mdtf.main_loop()
+        bad_exit = framework.main_loop()
         if bad_exit:
             exit(1)
 
@@ -174,10 +172,10 @@ if __name__ == '__main__':
     # get dir of currently executing script: 
     cwd = os.path.dirname(os.path.realpath(__file__)) 
     code_root, src_dir = os.path.split(cwd)
-    defaults_rel_path = os.path.join(src_dir, 'cli.jsonc')
-    if not os.path.exists(defaults_rel_path):
+    cli_rel_path = os.path.join(src_dir, 'cli.jsonc')
+    if not os.path.exists(cli_rel_path):
         # print('Warning: site-specific cli.jsonc not found, using template.')
-        defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
+        cli_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
 
-    main(code_root, defaults_rel_path)
+    main(code_root, cli_rel_path)
     exit(0)

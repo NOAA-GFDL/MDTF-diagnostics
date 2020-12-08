@@ -112,6 +112,16 @@ def remote_file_dataset_factory(class_name, *key_classes):
     return util.dataclass_factory(util.mdtf_dataclass, class_name, *key_classes, 
         frozen=True)
 
+@util.mdtf_dataclass(frozen=True)
+class DataManagerAttributesBase():
+    """Attributes that any data source must specify.
+    """
+    FIRSTYR: dataclasses.InitVar = util.MANDATORY
+    LASTYR: dataclasses.InitVar = util.MANDATORY
+    date_range: datelabel.DateRange = dataclasses.field(init=False)
+
+    def __post_init__(self, FIRSTYR, LASTYR):
+        self.date_range = datelabel.DateRange(FIRSTYR, LASTYR)
 
 class DataManager(abc.ABC):
     """Base class for handling the data needs of PODs. Executes query for 
@@ -119,22 +129,21 @@ class DataManager(abc.ABC):
     data locally, preprocesses it, and performs cleanup/formatting of the POD's 
     output.
     """
+    _AttributesClass = DataManagerAttributesBase
     _DiagnosticClass = diagnostic.Diagnostic
-    _DateRangeClass = datelabel.DateRange
-    _DateFreqClass = datelabel.DateFrequency
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
     def __init__(self, case_dict):
         self.case_name = case_dict['CASENAME']
         self.convention = case_dict.get('convention', 'CF')
-        self.model_name = case_dict.get('model', self.convention)
-        self.date_range = self._DateRangeClass(
-            case_dict['FIRSTYR'], case_dict['LASTYR']
-        )
+        self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
         config = util_mdtf.ConfigManager()
-        self.env_vars = config.global_env_vars.copy() # gets appended to
+        self.env_vars = config.global_env_vars.copy()
+        self.env_vars.update({
+            k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
+        })
         # assign explicitly else linter complains
         self.dry_run = config.config.dry_run
         self.file_transfer_timeout = config.config.file_transfer_timeout
@@ -167,15 +176,9 @@ class DataManager(abc.ABC):
     # -------------------------------------
 
     def setup(self):
-        translate = util_mdtf.VariableTranslator()
-
         util_mdtf.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
-        self.env_vars.update({
-            "CASENAME": self.case_name,
-            "model": self.model_name,
-            "FIRSTYR": self.date_range.start.format(precision=1), 
-            "LASTYR": self.date_range.end.format(precision=1)
-        })
+
+        translate = util_mdtf.VariableTranslator()
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
@@ -537,12 +540,25 @@ class DataManager(abc.ABC):
             raise
         shutil.move(self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
 
+# =================================================================
+
+@util.mdtf_dataclass(frozen=True)
+class LocalfileDataManagerAttributes(DataManagerAttributesBase):
+    CASENAME: dataclasses.InitVar
+    sample_data_source: str = None
+
+    def __post_init__(self, FIRSTYR, LASTYR, CASENAME):
+        super(LocalfileDataManagerAttributes, self).__post_init__(FIRSTYR, LASTYR)
+        if not self.sample_data_source:
+            assert (CASENAME) # is not empty
+            self.sample_data_source = CASENAME
 
 class LocalfileDataManager(DataManager):
     """:class:`DataManager` for working with input model data files that are 
     already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
     the PODs' sample model data.
     """
+    _AttributesClass = LocalfileDataManagerAttributes
     _DataKeyClass = DefaultDataKey
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 

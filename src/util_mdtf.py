@@ -71,8 +71,8 @@ class _PathManager(util.NameSpace):
             yr2 = case['LASTYR']
         else:
             name = case.case_name
-            yr1 = case.firstyr
-            yr2 = case.lastyr
+            yr1 = case.attrs.date_range.start.format(precision=1)
+            yr2 = case.attrs.date_range.end.format(precision=1)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
         d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
         d.MODEL_WK_DIR = os.path.join(self.WORKING_DIR, case_wk_dir)

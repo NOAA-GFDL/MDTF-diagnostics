@@ -538,9 +538,17 @@ class DateRange(AtomicInterval, _DateMixin):
             return cls(item)
 
     @property
+    def start_datetime(self):
+        return self.lower
+
+    @property
     def start(self):
         assert self.precision
-        return Date(self.lower, precision=self.precision)
+        return Date(self.start_datetime, precision=self.precision)
+
+    @property
+    def end_datetime(self):
+        return self.upper
 
     @property
     def end(self):
@@ -548,7 +556,7 @@ class DateRange(AtomicInterval, _DateMixin):
         # input is the start of the interval (set by precision)
         assert self.precision
         return Date(
-            self.decrement(self.upper, self.precision), 
+            self.decrement(self.end_datetime, self.precision), 
             precision=self.precision
         )
 

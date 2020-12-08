@@ -284,10 +284,10 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             'T',
             new_class = {
                 'self': VarlistTimeCoordinate,
-                'range': data_mgr._DateRangeClass,
-                'frequency': data_mgr._DateFreqClass
+                'range': datelabel.DateRange,
+                'frequency': datelabel.DateFrequency
             },
-            range=data_mgr.date_range
+            range=data_mgr.attrs.date_range
         )
         self.dest_path = pod.dest_path(data_mgr, self)
         try:

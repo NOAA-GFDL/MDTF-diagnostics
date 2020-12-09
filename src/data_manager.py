@@ -107,7 +107,7 @@ def remote_file_dataset_factory(class_name, *key_classes):
     """Factory returning a dataclass class that wraps whatever fields are used
     in key_classes with the additional attributes in _RemoteFileDatasetBase.
     """
-    key_classes = util.coerce_to_iter(key_classes, list)
+    key_classes = util.to_iter(key_classes, list)
     key_classes.append(_RemoteFileDatasetBase)
     return util.dataclass_factory(util.mdtf_dataclass, class_name, *key_classes, 
         frozen=True)
@@ -342,7 +342,7 @@ class DataManager(abc.ABC):
                     print(f"    Querying '{d_key}'")
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
-                    files = util.coerce_to_iter(self.query_dataset(d_key))
+                    files = util.to_iter(self.query_dataset(d_key))
                     if not files:
                         raise DataQueryError(d_key, "No data found by query.")
                     self.data_files[d_key].update(files)

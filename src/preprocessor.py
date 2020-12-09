@@ -284,8 +284,8 @@ class MDTFPreprocessorBase(abc.ABC):
             # dependent variable wasn't found by its expected name; try to find
             # it assuming it's the variable with the largest rank.
             dim_lookup = util.MultiMap({var: ds[var].ndim for var in ds.data_vars})
-            d_max = util.coerce_from_iter(
-                max(dim_lookup.values(), key=util.coerce_from_iter)
+            d_max = util.from_iter(
+                max(dim_lookup.values(), key=util.from_iter)
             )
             var_name = dim_lookup.inverse_get_(d_max)
             if not isinstance(var_name, str): 

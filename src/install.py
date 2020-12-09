@@ -234,7 +234,7 @@ def framework_test(code_root, output_dir, cli_config):
             ), 
             cwd=code_root
         )
-        log_str = util.coerce_to_iter(log_str)
+        log_str = util.to_iter(log_str)
         # write to most recent directory in output_dir
         runs = [d for d in glob.glob(os.path.join(abs_out_dir,'*')) if os.path.isdir(d)]
         if not runs:
@@ -373,7 +373,7 @@ class MDTFInstaller(object):
         print(util.pretty_print_json(_tmp, sort_keys=True))
 
     def makedirs(self, path_keys, delete_existing):
-        path_keys = util.coerce_to_iter(path_keys)
+        path_keys = util.to_iter(path_keys)
         for key in path_keys:
             path = self.config[key]
             if path:

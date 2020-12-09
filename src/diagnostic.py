@@ -387,7 +387,7 @@ class Diagnostic(object):
     def __post_init__(self):
         self.exceptions = util.ExceptionQueue()
         for k,v in self.runtime_requirements.items():
-            self.runtime_requirements[k] = util.coerce_to_iter(v)
+            self.runtime_requirements[k] = util.to_iter(v)
 
     @property
     def active(self):

@@ -80,7 +80,7 @@ class MDTFConfigurer(object):
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, cli_obj):
-        args = util.coerce_to_iter(cli_obj.config.pop('pods', []), set)
+        args = util.to_iter(cli_obj.config.pop('pods', []), set)
         if 'example' in args or 'examples' in args:
             self.pod_list = [pod for pod in self.pod_data \
                 if pod.startswith('example')]
@@ -92,7 +92,7 @@ class MDTFConfigurer(object):
             realms = args.intersection(set(self.all_realms))
             args = args.difference(set(self.all_realms)) # remainder
             for key in self.pod_realms:
-                if util.coerce_to_iter(key, set).issubset(realms):
+                if util.to_iter(key, set).issubset(realms):
                     self.pod_list.extend(self.pod_realms[key])
             # specify pods by name
             pods = args.intersection(set(self.pod_data))
@@ -109,7 +109,7 @@ class MDTFConfigurer(object):
             exit()
 
     def parse_case_list(self, cli_obj):
-        case_list_in = util.coerce_to_iter(cli_obj.case_list)
+        case_list_in = util.to_iter(cli_obj.case_list)
         cli_d = self._populate_from_cli(cli_obj, 'MODEL')
         if 'CASE_ROOT_DIR' not in cli_d and cli_obj.config.get('root_dir', None): 
             # CASE_ROOT was set positionally
@@ -241,7 +241,7 @@ class PathManager(util.Singleton, util.NameSpace):
             # need to check existence in case we're being called directly
             assert key in d, 'Error: {} not initialized.'.format(key)
             return util.resolve_path(
-                util.coerce_from_iter(d[key]), root_path=self.CODE_ROOT, env=env
+                util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env
             )
 
     def model_paths(self, case, overwrite=False):
@@ -339,7 +339,7 @@ class VariableTranslator(util.Singleton):
         self.units = {'CF': dict()}
         for f in config_files:
             d = util.read_json(f)
-            for conv in util.coerce_to_iter(d['convention_name']):
+            for conv in util.to_iter(d['convention_name']):
                 if verbose > 0: 
                     print('XXX found ', conv)
                 if conv in self.variables:
@@ -357,7 +357,7 @@ class VariableTranslator(util.Singleton):
             f"Variable name translation doesn't recognize {convention}."
         inv_lookup = self.variables[convention].inverse()
         try:
-            return util.coerce_from_iter(inv_lookup[v_name])
+            return util.from_iter(inv_lookup[v_name])
         except KeyError:
             print(f"ERROR: name {v_name} not defined for convention {convention}.")
             raise
@@ -439,7 +439,7 @@ def bump_version(path, new_v=None, extra_dirs=None):
     if not extra_dirs:
         dir_list = []
     else:
-        dir_list = util.coerce_to_iter(extra_dirs)
+        dir_list = util.to_iter(extra_dirs)
     dir_list.append(dir_)
     file_, old_v = _split_version(file_)
     if not old_v:

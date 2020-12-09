@@ -71,7 +71,7 @@ class RecordDefaultsAction(argparse.Action):
         if self.nargs == 0 and self.const is not None:
             setattr(namespace, self.dest, self.const)
         elif self.nargs == 1:
-            setattr(namespace, self.dest, util.coerce_from_iter(values))
+            setattr(namespace, self.dest, util.from_iter(values))
         else:
             setattr(namespace, self.dest, values)
         # set flag to indicate user has set this argument
@@ -106,7 +106,7 @@ class CLIHandler(object):
         if not group_nm:
             _groups = self.parser_groups
         else:
-            _groups = util.coerce_to_iter(group_nm)
+            _groups = util.to_iter(group_nm)
         for group in _groups:
             for action in self.parser_args_from_group[group]:
                 key = action.dest
@@ -120,8 +120,8 @@ class CLIHandler(object):
             d[key] = str_
 
     def make_parser(self, d):
-        args = util.coerce_to_iter(d.pop('arguments', None))
-        arg_groups = util.coerce_to_iter(d.pop('argument_groups', None))
+        args = util.to_iter(d.pop('arguments', None))
+        arg_groups = util.to_iter(d.pop('argument_groups', None))
         d['formatter_class'] = CustomHelpFormatter
         p_kwargs = util.filter_kwargs(d, argparse.ArgumentParser.__init__)
         p = argparse.ArgumentParser(**p_kwargs)
@@ -136,7 +136,7 @@ class CLIHandler(object):
     def add_parser_group(self, d, target_obj):
         gp_nm = d.pop('name')
         _ = d.setdefault('title', gp_nm)
-        args = util.coerce_to_iter(d.pop('arguments', None))
+        args = util.to_iter(d.pop('arguments', None))
         if args:
             # only add group if it has > 0 arguments
             gp_kwargs = util.filter_kwargs(d, argparse._ArgumentGroup.__init__)
@@ -184,7 +184,7 @@ class CLIHandler(object):
             self.custom_types[d.pop('parse_type')].append(d['dest'])
         # TODO: what if following require env vars, etc??
         if d.get('eval', None):
-            for attr in util.coerce_to_iter(d.pop('eval')):
+            for attr in util.to_iter(d.pop('eval')):
                 if attr in d:
                     d[attr] = eval(d[attr])
 
@@ -233,9 +233,9 @@ class CLIHandler(object):
         # if no additional defaults were set, that's sufficient, otherwise need
         # to take into account their intermediate priority
         if isinstance(self.partial_defaults, dict):
-            # not handled correctly by coerce_to_iter
+            # not handled correctly by to_iter
             self.partial_defaults = [self.partial_defaults] 
-        self.partial_defaults = util.coerce_to_iter(self.partial_defaults)
+        self.partial_defaults = util.to_iter(self.partial_defaults)
         partial_defaults = []
         for d in self.partial_defaults:
             # drop empty strings
@@ -401,7 +401,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
         pods[p] = d
         # PODs requiring data from multiple realms get stored in the dict
         # under a tuple of those realms; realms stored indivudally in realm_list
-        _realm = util.coerce_to_iter(d['settings'].get('realm', None), tuple)
+        _realm = util.to_iter(d['settings'].get('realm', None), tuple)
         if len(_realm) == 0:
             continue
         elif len(_realm) == 1:
@@ -425,7 +425,7 @@ class InfoCLIHandler(object):
     def __init__(self, code_root, arg_list):
         def _add_topic_handler(keywords, function):
             # keep cmd_list ordered
-            keywords = util.coerce_to_iter(keywords)
+            keywords = util.to_iter(keywords)
             self.cmd_list.extend(keywords)
             for k in keywords:
                 self.cmds[k] = function
@@ -472,7 +472,7 @@ class InfoCLIHandler(object):
             ))
         elif verbose == 3:
             print('{}: {}.'.format(pod, ds['long_name']))
-            print('  Realm: {}.'.format(' and '.join(util.coerce_to_iter(ds['realm']))))
+            print('  Realm: {}.'.format(' and '.join(util.to_iter(ds['realm']))))
             print('  {}'.format(ds['description']))
             print('  Variables:')
             for var in dv:

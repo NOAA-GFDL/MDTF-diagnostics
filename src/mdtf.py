@@ -39,7 +39,7 @@ class MDTFFramework(object):
                 return ''.join(str_.split('_')).title()
 
             class_prefix = config.get(setting, '')
-            class_prefix = _var_to_class_name(util.coerce_from_iter(class_prefix))
+            class_prefix = _var_to_class_name(util.from_iter(class_prefix))
             class_suffix = _var_to_class_name(setting)
             for mod in modules_to_search:
                 try:

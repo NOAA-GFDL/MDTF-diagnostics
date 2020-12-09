@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-from src.util import read_json, NameSpace, coerce_to_iter
+from src.util import read_json, NameSpace, to_iter
 from src import configs
 import collections
 

@@ -23,12 +23,12 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 import signal
 import shutil
-from src import cli, util, util_mdtf, data_manager, environment_manager, \
+from src import cli, util, configs, data_manager, environment_manager, \
     diagnostic
 
 class MDTFFramework(object):
     def __init__(self, *modules_to_search):
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         # delete temp files if we're killed
         signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
         signal.signal(signal.SIGINT, self.cleanup_tempdirs)
@@ -57,8 +57,8 @@ class MDTFFramework(object):
     def cleanup_tempdirs(self, signum=None, frame=None):
         # delete temp files
         util.signal_logger(self.__class__.__name__, signum, frame)
-        config = util_mdtf.ConfigManager()
-        tmpdirs = util_mdtf.TempDirManager()
+        config = configs.ConfigManager()
+        tmpdirs = configs.TempDirManager()
         if not config.get('keep_temp', False):
             tmpdirs.cleanup()
 
@@ -87,7 +87,7 @@ class MDTFFramework(object):
 
     def main_loop(self):
         # only run first case in list until dependence on env vars cleaned up
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         summary_d = dict()
         for d in config.case_list[0:1]:
             case_name = d.get('CASENAME', '')
@@ -154,7 +154,7 @@ def main(code_root, cli_rel_path):
         # not printing help or info, setup CLI normally 
         # move into its own class so that child classes can customize
         # above options without having to rewrite below
-        util_mdtf.MDTFConfigurer(code_root, cli_rel_path)
+        configs.MDTFConfigurer(code_root, cli_rel_path)
         framework = MDTFFramework(
             data_manager, environment_manager, diagnostic
         )

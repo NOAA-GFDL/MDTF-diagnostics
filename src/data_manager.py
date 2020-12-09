@@ -11,7 +11,7 @@ import shutil
 import signal
 from subprocess import CalledProcessError
 import typing
-from src import util, util_mdtf, datelabel, preprocessor, data_model, diagnostic
+from src import util, configs, datelabel, preprocessor, data_model, diagnostic
 
 class DataExceptionBase(Exception):
     """Base class and common formatting code for exceptions raised in data 
@@ -138,7 +138,7 @@ class DataManager(abc.ABC):
         self.pods = pod_dict
         self._PreprocessorClass = PreprocessorClass
 
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         self.env_vars = config.global_env_vars.copy()
         self.env_vars.update({
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
@@ -151,7 +151,7 @@ class DataManager(abc.ABC):
         self.overwrite = config.overwrite
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
-        paths = util_mdtf.PathManager()
+        paths = configs.PathManager()
         d = paths.model_paths(case_dict, overwrite=self.overwrite)
         self.code_root = paths.CODE_ROOT
         self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
@@ -176,9 +176,9 @@ class DataManager(abc.ABC):
     # -------------------------------------
 
     def setup(self):
-        util_mdtf.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
+        configs.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
 
-        translate = util_mdtf.VariableTranslator()
+        translate = configs.VariableTranslator()
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
@@ -210,7 +210,7 @@ class DataManager(abc.ABC):
         print('####################')
 
     def setup_pod(self, pod):
-        paths = util_mdtf.PathManager()
+        paths = configs.PathManager()
         paths = paths.pod_paths(pod, self)
         for k,v in paths.items():
             setattr(pod, k, v)
@@ -234,7 +234,7 @@ class DataManager(abc.ABC):
         available after DataManager and Diagnostic have been configured (ie, 
         only known at runtime, not from settings.jsonc.)
         """
-        translate = util_mdtf.VariableTranslator()
+        translate = configs.VariableTranslator()
         v.change_coord(
             'T',
             new_class = {
@@ -507,8 +507,8 @@ class DataManager(abc.ABC):
 
     def tear_down(self):
         # TODO: handle OSErrors in all of these
-        config = util_mdtf.ConfigManager()
-        paths = util_mdtf.PathManager()
+        config = configs.ConfigManager()
+        paths = configs.PathManager()
         
         # create empty text file for PODs to append to
         open(self.TEMP_HTML, 'w').close()
@@ -530,11 +530,11 @@ class DataManager(abc.ABC):
         template_dict = self.env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        util_mdtf.append_html_template(
+        configs.append_html_template(
             os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
         )
-        util_mdtf.append_html_template(self.TEMP_HTML, dest, {})
-        util_mdtf.append_html_template(
+        configs.append_html_template(self.TEMP_HTML, dest, {})
+        configs.append_html_template(
             os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
         )
         if cleanup:
@@ -549,7 +549,7 @@ class DataManager(abc.ABC):
         """
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if not self.file_overwrite:
-            out_file, _ = util_mdtf.bump_version(out_file)
+            out_file, _ = configs.bump_version(out_file)
         elif os.path.exists(out_file):
             print(f"Overwriting {out_file}.")
         util.write_json(config.toDict(), out_file)
@@ -560,7 +560,7 @@ class DataManager(abc.ABC):
         """
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if not self.file_overwrite:
-            out_file, _ = util_mdtf.bump_version(out_file)
+            out_file, _ = configs.bump_version(out_file)
             print(f"Creating {out_file}.")
         elif os.path.exists(out_file):
             print(f"Overwriting {out_file}.")
@@ -627,7 +627,7 @@ class LocalfileDataManager(DataManager):
         )
 
     def query_dataset(self, data_key):
-        tmpdirs = util_mdtf.TempDirManager()
+        tmpdirs = configs.TempDirManager()
 
         path = self.remote_path(data_key)
         tmpdir = tmpdirs.make_tempdir(hash_obj = data_key)

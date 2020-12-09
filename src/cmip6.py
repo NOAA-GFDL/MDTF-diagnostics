@@ -13,7 +13,7 @@ repo, which is included as a submodule.
 """
 import os
 import re
-from src import datelabel, util, util_mdtf
+from src import datelabel, util, configs
 
 class CMIP6_CVs(util.Singleton):
     """Interface for looking up information from the CMIP6 CV file.
@@ -28,7 +28,7 @@ class CMIP6_CVs(util.Singleton):
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            paths = util_mdtf.PathManager()
+            paths = configs.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'src', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)

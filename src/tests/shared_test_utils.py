@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 from src.util import read_json, NameSpace, coerce_to_iter
-from src import util_mdtf
+from src import configs
 import collections
 
 def setUp_ConfigManager(config=None, paths=None, pods=None, unittest=True):
@@ -26,24 +26,24 @@ def setUp_ConfigManager(config=None, paths=None, pods=None, unittest=True):
     dummy_pod_data = PodDataTuple(
         pod_data=pods, realm_data=dict(), sorted_lists=dict()
     )
-    config = util_mdtf.ConfigManager(dummy_cli_obj, dummy_pod_data, unittest=unittest)
+    config = configs.ConfigManager(dummy_cli_obj, dummy_pod_data, unittest=unittest)
     if paths:
         config.paths.parse(paths, list(paths.keys()))
 
 def tearDown_ConfigManager():
     # clear Singletons
     try:
-        temp = util_mdtf.ConfigManager(unittest=True)
+        temp = configs.ConfigManager(unittest=True)
         temp._reset()
     except:
         pass
     try:
-        temp = util_mdtf.VariableTranslator(unittest=True)
+        temp = configs.VariableTranslator(unittest=True)
         temp._reset()
     except:
         pass
     try:
-        temp = util_mdtf.TempDirManager()
+        temp = configs.TempDirManager()
         temp._reset()
     except:
         pass

@@ -5,7 +5,7 @@ import enum
 import glob
 import shutil
 import typing
-from src import util, util_mdtf, verify_links, datelabel, data_model
+from src import util, configs, verify_links, datelabel, data_model
 from src import cli # HACK for now
 
 class PodExceptionBase(Exception):
@@ -419,10 +419,10 @@ class Diagnostic(object):
     def from_config(cls, pod_name):
         """Usual method of instantiating Diagnostic objects, from the contents
         of its settings.jsonc file as stored in the 
-        :class:`~util_mdtf.ConfigManager`.
+        :class:`~configs.ConfigManager`.
         """
-        config = util_mdtf.ConfigManager()
-        paths = util_mdtf.PathManager()
+        config = configs.ConfigManager()
+        paths = configs.PathManager()
         # HACK - don't want to read config files twice, but this lets us
         # propagate syntax errors
         pod_config = cli.load_pod_settings(paths.CODE_ROOT, pod_name)
@@ -489,11 +489,11 @@ class Diagnostic(object):
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.
         """
-        util_mdtf.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
-        util_mdtf.check_dirs(self.POD_WK_DIR, create=True)
+        configs.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
+        configs.check_dirs(self.POD_WK_DIR, create=True)
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            util_mdtf.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
+            configs.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
@@ -571,7 +571,7 @@ class Diagnostic(object):
         func_name = "check_pod_driver "
         if (verbose > 1): 
             print(func_name," received POD settings: ", self.__dict__)
-        programs = util_mdtf.get_available_programs()
+        programs = configs.get_available_programs()
 
         if self.driver == '':  
             print("WARNING: no valid driver entry found for ", self.name)
@@ -656,7 +656,7 @@ class Diagnostic(object):
     def templating_dict(self):
         """Get the dict of recognized substitutions to perform in HTML templates.
         """
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         template = config.global_env_vars.copy()
         template.update(self.pod_env_vars)
         return {str(k): str(v) for k,v in template.items()}
@@ -664,7 +664,7 @@ class Diagnostic(object):
     def make_pod_html(self):
         """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~util_mdtf.append_html_template`. Looks for all 
+        A wrapper for :func:`~configs.append_html_template`. Looks for all 
         html files in POD_CODE_DIR, templates them, and copies them to 
         POD_WK_DIR, respecting subdirectory structure (see doc for
         :func:`~util.recursive_copy`).
@@ -676,7 +676,7 @@ class Diagnostic(object):
             self.POD_CODE_DIR,
             self.POD_WK_DIR,
             copy_function=(
-                lambda src, dest: util_mdtf.append_html_template(
+                lambda src, dest: configs.append_html_template(
                 src, dest, template_dict=template_d, append=False
             )),
             overwrite=True
@@ -699,7 +699,7 @@ class Diagnostic(object):
         else:
             # normal exit
             src = os.path.join(src_dir, 'pod_result_snippet.html')
-        util_mdtf.append_html_template(src, self.TEMP_HTML, template_d)
+        configs.append_html_template(src, self.TEMP_HTML, template_d)
 
     def verify_pod_links(self):
         """Check for missing files linked to from POD's html page.
@@ -719,7 +719,7 @@ class Diagnostic(object):
             print(f'\tERROR: {self.name} has missing output files.')
             template_d = self.templating_dict()
             template_d['missing_output'] = '<br>'.join(missing_out)
-            util_mdtf.append_html_template(
+            configs.append_html_template(
                 os.path.join(self.CODE_ROOT, 'src', 'html', 
                     'pod_missing_snippet.html'),
                 self.TEMP_HTML, 
@@ -747,7 +747,7 @@ class Diagnostic(object):
             dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
                 bitmap files to.
         """
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         abs_src_subdir = os.path.join(self.POD_WK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.POD_WK_DIR, dest_subdir)
         files = util.find_files(
@@ -796,10 +796,10 @@ class Diagnostic(object):
         digested observational data), 3) removes vector graphics if requested,
         4) removes netCDF scratch files in `POD_WK_DIR` if requested.
 
-        Settings are set at runtime, when :class:`~util_mdtf.ConfigManager` is 
+        Settings are set at runtime, when :class:`~configs.ConfigManager` is 
         initialized.
         """
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         # copy PDF documentation (if any) to output
         files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
         for f in files:

@@ -10,7 +10,7 @@ import re
 import shutil
 import subprocess
 import typing
-from src import datelabel, util, util_mdtf, cmip6, diagnostic, data_manager
+from src import datelabel, util, configs, cmip6, diagnostic, data_manager
 from src import gfdl_util
 import src.conflict_resolution as choose
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
@@ -26,7 +26,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         """Extra step needed for POD-specific output directory, which may be on
         a remote filesystem.
         """
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
 
         super(GfdlDiagnostic, self).pre_run_setup()
         if self._already_made_POD_OUT_DIR:
@@ -136,7 +136,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         modMgr = gfdl_util.ModuleManager()
         modMgr.load('gcp') # should refactor
 
-        config = util_mdtf.ConfigManager()
+        config = configs.ConfigManager()
         super(GfdlarchiveDataManager, self).__init__(case_dict, pod_dict, PreprocessorClass)
 
         assert ('CASE_ROOT_DIR' in case_dict)
@@ -151,7 +151,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
 
         self.frepp_mode = config.get('frepp', False)
         if self.frepp_mode:
-            paths = util_mdtf.PathManager()
+            paths = configs.PathManager()
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
@@ -329,7 +329,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         """Copy files to temporary directory.
         (GCP can't copy to home dir, so always copy to a temp dir)
         """
-        tmpdirs = util_mdtf.TempDirManager()
+        tmpdirs = configs.TempDirManager()
         tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
         (cp_command, smartsite) = self.determine_fetch_method(method)
         # copy remote files
@@ -381,7 +381,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
     def _make_tar_file(self, tar_dest_dir):
         # make locally in WORKING_DIR and gcp to destination,
         # since OUTPUT_DIR might be mounted read-only
-        paths = util_mdtf.PathManager()
+        paths = configs.PathManager()
         out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
             paths.WORKING_DIR
         )
@@ -437,9 +437,9 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
                 if os.path.exists(self.MODEL_OUT_DIR):
                     # check again, since rmtree() might have succeeded
                     self.MODEL_OUT_DIR, version = \
-                        util_mdtf.bump_version(self.MODEL_OUT_DIR)
+                        configs.bump_version(self.MODEL_OUT_DIR)
                     new_wkdir, _ = \
-                        util_mdtf.bump_version(self.MODEL_WK_DIR, new_v=version)
+                        configs.bump_version(self.MODEL_WK_DIR, new_v=version)
                     print("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
                     shutil.move(self.MODEL_WK_DIR, new_wkdir)
                     self.MODEL_WK_DIR = new_wkdir

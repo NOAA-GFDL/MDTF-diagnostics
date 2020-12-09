@@ -463,7 +463,7 @@ def bump_version(path, new_v=None, extra_dirs=None):
     return (new_path, new_v)
 
 class _DoubleBraceTemplate(string.Template):
-    """Private class used by :func:`~util_mdtf.append_html_template` to do 
+    """Private class used by :func:`~configs.append_html_template` to do 
     string templating with double curly brackets as delimiters, since single
     brackets are also used in css.
 

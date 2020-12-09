@@ -3,7 +3,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from src import util, util_mdtf, datelabel
+from src import util, configs, datelabel
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -89,7 +89,7 @@ class ModuleManager(util.Singleton):
         assert set(self._list()) == self.user_modules
 
 
-class GFDLMDTFConfigurer(util_mdtf.MDTFConfigurer):
+class GFDLMDTFConfigurer(configs.MDTFConfigurer):
     def parse_mdtf_args(self, cli_obj):
         super(GFDLMDTFConfigurer, self).parse_mdtf_args(cli_obj)
         # set up cooperative mode -- hack to pass config settings
@@ -147,8 +147,8 @@ class GFDLMDTFConfigurer(util_mdtf.MDTFConfigurer):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
-        util_mdtf.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
-        util_mdtf.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
+        configs.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
+        configs.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
             create=True)
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
@@ -184,8 +184,8 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        config = util_mdtf.ConfigManager()
-        tmpdirs = util_mdtf.TempDirManager()
+        config = configs.ConfigManager()
+        tmpdirs = configs.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
         if timeout is None:
             timeout = config.get('file_transfer_timeout', 0)

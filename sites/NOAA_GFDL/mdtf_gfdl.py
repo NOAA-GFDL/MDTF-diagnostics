@@ -11,7 +11,7 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 import os
 from src import cli, util, configs, data_manager, environment_manager, \
     diagnostic, mdtf
-from src import gfdl, gfdl_util
+from sites.NOAA_GFDL import gfdl, gfdl_util
 
 def main(code_root, cli_rel_path):
     # poor man's subparser: argparse's subparser doesn't handle this

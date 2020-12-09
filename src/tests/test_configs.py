@@ -7,7 +7,7 @@ import src.configs as configs
 from src.data_manager import DataManager
 from src.diagnostic import Diagnostic
 from subprocess import CalledProcessError
-from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
+from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 class TestUtil(unittest.TestCase):
     # @mock.patch.dict('os.environ', {'TEST_OVERWRITE': 'A'})

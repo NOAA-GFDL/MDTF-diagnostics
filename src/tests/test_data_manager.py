@@ -4,7 +4,7 @@ import unittest.mock as mock # define mock os.environ so we don't mess up real e
 import src.configs as configs
 from src.diagnostic import Diagnostic
 from src.data_manager import DataManager
-from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
+from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 @mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):

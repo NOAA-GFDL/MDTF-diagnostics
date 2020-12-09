@@ -3,7 +3,7 @@ import unittest
 import src.cmip6 as cmip6
 from src.cmip6 import CMIP6DateFrequency as dt_freq
 import src.datelabel as dl
-from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
+from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 # really incomplete! Do more systematically.
 #@unittest.skipIf(True,

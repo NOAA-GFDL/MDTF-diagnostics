@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import typing
 from src import datelabel, util, configs, cmip6, diagnostic, data_manager
-from src import gfdl_util
+from sites.NOAA_GFDL import gfdl_util
 import src.conflict_resolution as choose
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 

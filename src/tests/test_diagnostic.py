@@ -6,7 +6,7 @@ import src.configs as configs
 from src.data_manager import DataSet, DataManager
 from src.datelabel import DateFrequency
 from src.diagnostic import Diagnostic, PodRuntimeError
-from tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
+from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
 class TestDiagnosticInit(unittest.TestCase):
     # pylint: disable=maybe-no-member

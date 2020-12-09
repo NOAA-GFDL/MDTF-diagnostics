@@ -2,8 +2,8 @@ import os
 import sys
 import unittest
 import subprocess
-from tests import shared_test_utils as shared
-import src.gfdl as gfdl
+from src.tests import shared_test_utils as shared
+import sites.NOAA_GFDL.gfdl as gfdl
 import src.datelabel as dt
 from src.mdtf import MDTFFramework
 

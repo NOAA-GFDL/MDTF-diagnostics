@@ -28,10 +28,10 @@ from recommonmark.transform import AutoStructify
 # Modules in this list are mocked out due to an error encountered in running 
 # autodoc on six.py with python 3.7. None of the modules are used by the
 # framework: they're only referenced by six.py.
-autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
-import unittest.mock as mock
-for module in autodoc_mock_imports:
-    sys.modules[module] = mock.Mock()
+# autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
+# import unittest.mock as mock
+# for module in autodoc_mock_imports:
+#     sys.modules[module] = mock.Mock()
 
 # -- Project information -----------------------------------------------------
 

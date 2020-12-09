@@ -114,7 +114,7 @@ mkdir "${INPUT_DIR}/model"
 gcp -v -r "gfdl:${OBS_DATA_DIR}/" "gfdl:${INPUT_DIR}/obs_data/"
 
 ## make sure we have python dependencies
-${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
+# ${REPO_DIR}/src/validate_environment.sh -v -a subprocess32 -a pyyaml
 if ( $status != 0 ) then
     echo 'Installing required modules'
     mkdir -p "${REPO_DIR}/envs/venv"
@@ -122,7 +122,7 @@ if ( $status != 0 ) then
     python -m virtualenv "${REPO_DIR}/envs/venv/base"
     source "${REPO_DIR}/envs/venv/base/bin/activate"
     # pip --user redundant/not valid in a virtualenv
-    pip install --disable-pip-version-check subprocess32 pyyaml
+    # pip install --disable-pip-version-check subprocess32 pyyaml
 else
     echo 'Found required modules'
 endif

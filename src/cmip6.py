@@ -11,9 +11,7 @@ repo, which is included as a submodule.
    Functionality here has been added as needed for the project and is incomplete,
    for example parsing subexperiments is not supported.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-from src import six
 import re
 from src import datelabel, util, util_mdtf
 
@@ -148,7 +146,6 @@ class CMIP6_CVs(util.Singleton):
             if (parse_mip_table_id(tbl)['frequency'] == frequency)]
 
 
-@six.python_2_unicode_compatible
 class CMIP6DateFrequency(datelabel.DateFrequency):
     """Subclass of :class:`datelabel.DateFrequency` to parse data frequency
     information as encoded in MIP tables, DRS filenames, etc.

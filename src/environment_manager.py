@@ -1,19 +1,11 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-from src import six
 import abc
 import dataclasses
 from distutils.spawn import find_executable
 import signal
 import typing
-if os.name == 'posix' and six.PY2:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-else:
-    import subprocess
+import subprocess
 from src import util, util_mdtf, diagnostic
 
 class AbstractEnvironmentManager(abc.ABC):

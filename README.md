@@ -191,7 +191,6 @@ Many of the process-oriented diagnostics modules (PODs) were contributed by memb
 
 This code base includes code from the following sources:
 
-- The [six](https://github.com/benjaminp/six) library, copyright © 2010-2020 Benjamin Peterson and provided under an MIT license.
 - Portions of the [MetPy](https://github.com/Unidata/MetPy) package from [Unidata](https://www.unidata.ucar.edu/), copyright © 2008-2020 MetPy Developers and provided under the BSD 3-clause "revised" license. 
 - Portions of [xarray](https://github.com/pydata/xarray/tree/stable), from [pydata.org](https://pydata.org/), copyright © 2014-2019 xarray Developers and provided under the Apache license, version 2.0.
 

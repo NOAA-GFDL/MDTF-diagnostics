@@ -13,8 +13,6 @@ Note:
 Note: 
     Timezone support is not currently implemented.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-from src import six
 import abc
 import copy
 import re
@@ -354,7 +352,6 @@ class AtomicInterval(object):
 
 # ===============================================================
 
-@six.python_2_unicode_compatible
 class MixedDatePrecisionException(Exception):
     """Exception raised when we attempt to operate on :class:`Date`s or 
     :class:`DateRange`s with differing levels of precision, which shouldn't
@@ -368,7 +365,6 @@ class MixedDatePrecisionException(Exception):
         return ("Attempted datelabel method '{}' on FXDate "
             "placeholder: {}.").format(self.func_name, self.msg)
 
-@six.python_2_unicode_compatible
 class FXDateException(Exception):
     """Exception raised when :class:`FXDate`s or :class:`FXDateRange:s, which are
     placeholder/sentinel classes used to indicate static data with no time 
@@ -451,7 +447,6 @@ class _DateMixin(object):
         return dt + td
 
 
-@six.python_2_unicode_compatible
 class DateRange(AtomicInterval, _DateMixin):
     """Class representing a range of variable-precision dates. 
 
@@ -466,7 +461,7 @@ class DateRange(AtomicInterval, _DateMixin):
     def __init__(self, start, end=None, precision=None):
         "Init method for DateRange."
         if not end:
-            if isinstance(start, six.string_types):
+            if isinstance(start, str):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -648,7 +643,6 @@ class DateRange(AtomicInterval, _DateMixin):
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
 
-@six.python_2_unicode_compatible
 class Date(DateRange):
     """Define a date with variable level precision.
 
@@ -665,7 +659,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif isinstance(args[0], six.string_types):
+        elif isinstance(args[0], str):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -825,7 +819,6 @@ FXDateMin = _FXDateRange()
 FXDateMax = _FXDateRange()
 FXDateRange = _FXDateRange()
 
-@six.python_2_unicode_compatible
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 
@@ -835,9 +828,9 @@ class DateFrequency(datetime.timedelta):
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, six.string_types) and (unit is None):
+        if isinstance(quantity, str) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif not isinstance(quantity, int) or not isinstance(unit, six.string_types):
+        elif not isinstance(quantity, int) or not isinstance(unit, str):
             raise ValueError(f"Malformed input: '{quantity}' '{unit}'")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)

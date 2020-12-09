@@ -1,11 +1,10 @@
 """Common functions and classes used in multiple places in the MDTF code.
 Specifically, util.py implements general functionality that's not MDTF-specific.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import io
-from src import six
 import collections
+import collections.abc
 import copy
 import dataclasses
 from distutils.spawn import find_executable
@@ -19,18 +18,11 @@ import re
 import shlex
 import shutil
 import signal
-if os.name == 'posix' and six.PY2:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-else:
-    import subprocess
+import subprocess
 import threading
 import traceback
 import typing
 import unittest.mock
-from six.moves import getcwd, collections_abc
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when
@@ -43,7 +35,7 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton(six.ensure_str('SingletonMeta'), (object,), {})): 
+class Singleton(_Singleton('SingletonMeta', (object,), {})): 
     """Parent class defining the 
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
@@ -70,11 +62,7 @@ class ExceptionPropagatingThread(threading.Thread):
         self.ret = None
         self.exc = None
         try:
-            if hasattr(self, '_Thread__target'):
-                # Thread uses name mangling prior to Python 3.
-                self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
-            else:
-                self.ret = self._target(*self._args, **self._kwargs)
+            self.ret = self._target(*self._args, **self._kwargs)
         except BaseException as e:
             self.exc = e
 
@@ -873,7 +861,7 @@ def write_json(struct, file_path, verbose=0, sort_keys=False):
         str_ = json.dumps(struct, 
             sort_keys=sort_keys, indent=2, separators=(',', ': '))
         with io.open(file_path, 'w', encoding='utf-8') as file_:
-            file_.write(six.ensure_text(str_, encoding='utf-8', errors='strict'))
+            file_.write(str_.encode(encoding='utf-8', errors='strict'))
     except IOError:
         print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
         exit()
@@ -985,7 +973,7 @@ def resolve_path(path, root_path="", env=None):
     if os.path.isabs(path):
         return path
     if root_path == "":
-        root_path = getcwd()
+        root_path = os.getcwd()
     assert os.path.isabs(root_path)
     return os.path.normpath(os.path.join(root_path, path))
 
@@ -1062,7 +1050,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     def _timeout_handler(signum, frame):
         raise TimeoutAlarm
 
-    if isinstance(command, six.string_types):
+    if isinstance(command, str):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
@@ -1134,7 +1122,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     # starting bash directly instead of from sh.)
     bash_exec = find_executable('bash')
 
-    if not isinstance(command, six.string_types):
+    if not isinstance(command, str):
         command = ' '.join(command)
     if dry_run:
         print('DRY_RUN: call {}'.format(command))
@@ -1170,8 +1158,8 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
         return stdout.splitlines()
 
 def is_iterable(obj):
-    return isinstance(obj, collections_abc.Iterable) \
-        and not isinstance(obj, six.string_types) # py3 strings have __iter__
+    return isinstance(obj, collections.abc.Iterable) \
+        and not isinstance(obj, str) # py3 strings have __iter__
 
 def coerce_to_iter(obj, coll_type=list):
     assert coll_type in [list, set, tuple] # only supported types for now
@@ -1216,7 +1204,7 @@ def abbreviate_path(path, old_base, new_base=None):
 def filter_kwargs(kwarg_dict, function):
     """Given a dict of kwargs, return only those kwargs accepted by function.
     """
-    named_args = set(six.get_function_code(function).co_varnames)
+    named_args = set(function.__code__.co_varnames)
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \

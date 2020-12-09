@@ -66,7 +66,6 @@
 #         and wether forcasting models. BAMS, 100(9), 1665-1686,
 #         doi:10.1175/BAMS-D-18-0042.1.
 #
-from __future__ import print_function
 import os
 import matplotlib
 matplotlib.use('Agg') # non-X windows backend

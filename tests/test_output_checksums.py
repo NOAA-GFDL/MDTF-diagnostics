@@ -1,13 +1,7 @@
 import os
 import sys
 import unittest
-if os.name == 'posix' and sys.version_info[0] < 3:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-    else:
-        import subprocess
+import subprocess
 from src.util import read_json
 from tests import shared_test_utils as shared
 

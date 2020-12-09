@@ -1,12 +1,6 @@
 import os
 import sys
-if os.name == 'posix' and sys.version_info[0] < 3:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-    else:
-        import subprocess
+import subprocess
 from src.util import read_json, NameSpace, coerce_to_iter
 from src import util_mdtf
 import collections

@@ -8,53 +8,6 @@ import typing
 from src import util, configs, verify_links, datelabel, data_model
 from src import cli # HACK for now
 
-class PodExceptionBase(Exception):
-    """Base class and common formatting code for exceptions affecting a single
-    POD.
-    """
-    _error_str = ""
-
-    def __init__(self, pod, msg=None):
-        self.pod = pod
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.pod, 'name'):
-            pod_name = self.pod.name
-        else:
-            pod_name = self.pod
-        s = f"Error in {pod_name}: " + self._error_str
-        if self.msg is not None:
-            s += f"\nReason: {self.msg}."
-        return s
-
-    def __repr__(self):
-        # full repr of Diagnostic takes lots of space to print
-        return f"{self.__class__.__name__}({str(self)})"
-
-class PodConfigError(PodExceptionBase):
-    """Exception raised if we can't parse info in a POD's settings.jsonc file.
-    (Covers issues with the file format/schema; malformed JSONC will raise a
-    :py:class:`~json.JSONDecodeError` when :func:`~util.parse_json` attempts to
-    parse the file.
-    """
-    _error_str = "Couldn't parse configuration in settings.jsonc file."
-
-class PodDataError(PodExceptionBase):
-    """Exception raised if POD doesn't have required data to run. 
-    """
-    _error_str = "Requested data not available."
-
-class PodRuntimeError(PodExceptionBase):
-    """Exception raised if POD doesn't have required resources to run. 
-    """
-    _error_str = "An error occurred in setting up the POD's runtime environment."
-
-class PodExecutionError(PodExceptionBase):
-    """Exception raised if POD doesn't have required resources to run. 
-    """
-    _error_str = "An error occurred during the POD's execution."
-
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
     ("ANY_NETCDF ANY_NETCDF_CLASSIC "
@@ -406,12 +359,12 @@ class Diagnostic(object):
             kwargs.update(d.get('settings', dict()))
             pod = cls(name=pod_name, **kwargs)
         except Exception as exc:
-            raise PodConfigError(pod_name, 
+            raise util.PodConfigError(pod_name, 
                 "Caught exception while parsing settings") from exc
         try:
             pod.varlist = Varlist.from_struct(d)
         except Exception as exc:
-            raise PodConfigError(pod_name, 
+            raise util.PodConfigError(pod_name, 
                 "Caught exception while parsing varlist") from exc
         return pod
 
@@ -477,7 +430,7 @@ class Diagnostic(object):
                 if not alt_success_flag:
                     print(f"\t{self.name}: no alternates available for '{v_str}'.")
                     try:
-                        raise PodDataError(self, 
+                        raise util.PodDataError(self, 
                             f"No alternates available for '{v_str}'.") from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
@@ -521,7 +474,7 @@ class Diagnostic(object):
             self.set_pod_env_vars()
             self.check_pod_driver()
         except Exception as exc:
-            raise PodRuntimeError(self, 
+            raise util.PodRuntimeError(self, 
                 "Caught exception during pre_run_setup") from exc
 
     def set_pod_env_vars(self, verbose=0):
@@ -550,7 +503,7 @@ class Diagnostic(object):
         for ax, ax_set in ax_name_verify.items():
             if len(ax_set) > 1:
                 # names found in two different files disagree - raise error
-                raise PodRuntimeError(self,
+                raise util.PodRuntimeError(self,
                     f"POD's variables have conflicting names for {ax} axis: {ax_set}"
                 )
         for ax, ax_set in ax_name_verify.items():
@@ -596,7 +549,7 @@ class Diagnostic(object):
                 else:
                     if (verbose > 1 ): print("\t "+try_path+" not found...")
         if self.driver == '':
-            raise PodRuntimeError(self, 
+            raise util.PodRuntimeError(self, 
                 """No driver script found in {}. Specify 'driver' in 
                 settings.jsonc.""".format(self.POD_CODE_DIR)
                 )
@@ -604,7 +557,7 @@ class Diagnostic(object):
         if not os.path.isabs(self.driver): # expand relative path
             self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
         if not os.path.exists(self.driver):
-            raise PodRuntimeError(self, 
+            raise util.PodRuntimeError(self, 
                 "Unable to locate driver script {}.".format(self.driver)
                 )
 
@@ -613,7 +566,7 @@ class Diagnostic(object):
             driver_ext  = self.driver.split('.')[-1]
             # Possible error: Driver file type unrecognized
             if driver_ext not in programs:
-                raise PodRuntimeError(self, 
+                raise util.PodRuntimeError(self, 
                     ("{} doesn't know how to call a .{} file.\n"
                     "Supported programs: {}").format(
                         func_name, driver_ext, programs

@@ -482,7 +482,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 if p.process.returncode and p.process.returncode != 0:
                     s = f"Process exited abnormally (code={p.process.returncode})"
                     try:
-                        raise diagnostic.PodExecutionError(p.pod, s)
+                        raise util.PodExecutionError(p.pod, s)
                     except Exception as exc:
                         p.pod.exceptions.log(exc)
                     if p.log_handle is not None:

@@ -13,44 +13,6 @@ from subprocess import CalledProcessError
 import typing
 from src import util, configs, datelabel, preprocessor, data_model, diagnostic
 
-class DataExceptionBase(Exception):
-    """Base class and common formatting code for exceptions raised in data 
-    query/fetch.
-    """
-    _error_str = ""
-
-    def __init__(self, dataset, msg=None):
-        self.dataset = dataset
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.dataset, 'remote_path'):
-            data_id = self.dataset.remote_path
-        elif hasattr(self.dataset, 'name'):
-            data_id = self.dataset.name
-        else:
-            data_id = str(self.dataset)
-        s = self._error_str + f" for {data_id}"
-        if self.msg is not None:
-            s += f": {self.msg}."
-        else:
-            s += "."
-        return s
-
-class DataQueryError(DataExceptionBase):
-    """Exception signaling a failure to find requested data in the remote location. 
-    
-    Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
-    data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
-    or :meth:`~data_manager.DataManager.fetchData`.
-    """
-    _error_str = "Data query error"
-
-class DataAccessError(Exception):
-    """Exception signaling a failure to obtain data from the remote location.
-    """
-    _error_str = "Data fetch error"
-
 @util.mdtf_dataclass(frozen=True)
 class DefaultDataKey(object):
     """Minimal data_key that captures the relevant information for the data 
@@ -197,7 +159,7 @@ class DataManager(abc.ABC):
             except Exception as exc:
                 raise
                 try:
-                    raise diagnostic.PodConfigError(pod, 
+                    raise util.PodConfigError(pod, 
                         "Caught exception in DataManager setup.") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)    
@@ -221,7 +183,7 @@ class DataManager(abc.ABC):
                 self.setup_var(pod, v)
             except Exception as exc:
                 try:
-                    raise diagnostic.PodConfigError(pod, 
+                    raise util.PodConfigError(pod, 
                         f"Caught exception when configuring {v.name}") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)  
@@ -252,7 +214,7 @@ class DataManager(abc.ABC):
                 f"{v.name} in POD {pod.name} not recognized by naming "
                 f"convention '{self.convention}'.")
             print(err_str)
-            v.exception = diagnostic.PodConfigError(pod, err_str)
+            v.exception = util.PodConfigError(pod, err_str)
             v.active = False
             raise v.exception
 
@@ -344,15 +306,15 @@ class DataManager(abc.ABC):
                     self.queried_keys.add(d_key) 
                     files = util.to_iter(self.query_dataset(d_key))
                     if not files:
-                        raise DataQueryError(d_key, "No data found by query.")
+                        raise util.DataQueryError(d_key, "No data found by query.")
                     self.data_files[d_key].update(files)
                 except Exception as exc:
                     update = True
-                    if not isinstance(exc, DataQueryError):
+                    if not isinstance(exc, util.DataQueryError):
                         print((f"DEBUG: Caught exception querying {d_key}: "
                             f"{repr(exc)}."))
                     try:
-                        raise DataQueryError(d_key, 
+                        raise util.DataQueryError(d_key, 
                             "Caught exception while querying data.") from exc
                     except Exception as chained_exc:
                         self.deactivate_key(d_key, chained_exc)
@@ -456,7 +418,7 @@ class DataManager(abc.ABC):
                     update = True
                     print(f"DEBUG: Caught exception fetching {d_key}: {repr(exc)}.")
                     try:
-                        raise DataAccessError(d_key, 
+                        raise util.DataAccessError(d_key, 
                             "Caught exception while fetching data.") from exc
                     except Exception as chained_exc:
                         self.deactivate_key(d_key, chained_exc)
@@ -638,7 +600,7 @@ class LocalfileDataManager(DataManager):
                 local_path = os.path.join(tmpdir, os.path.basename(path))
             )
         else:
-            raise DataQueryError(data_key, f"File not found at {path}.")
+            raise util.DataQueryError(data_key, f"File not found at {path}.")
     
     def local_data_is_current(self, dataset):
         return False 

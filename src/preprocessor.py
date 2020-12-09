@@ -8,21 +8,6 @@ import src.metpy_xr
 from src.metpy_xr.units import units
 import xarray as xr
 
-class DataPreprocessError(Exception):
-    """Exception signaling an error in preprocessing data after it's been 
-    fetched, but before any PODs run.
-    """
-    def __init__(self, dataset, msg=''):
-        self.dataset = dataset
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.dataset, 'name'):
-            return 'Data preprocessing error for {}: {}.'.format(
-                self.dataset.name, self.msg)
-        else:
-            return 'Data preprocessing error: {}.'.format(self.msg)
-
 class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
     We prefer to put each set of operations in its own child class, rather than
@@ -102,12 +87,12 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             error_str = ("Error: dataset start ({}) is after requested date "
                 "range start ({})").format(time_ax.values[0], dt_start_upper)
             print('\t' + error_str)
-            raise DataPreprocessError(var, error_str)
+            raise util.DataPreprocessError(var, error_str)
         if time_ax.values[-1] < dt_end_lower:
             error_str = ("Error: dataset end ({}) is before requested date "
                 "range end ({})").format(time_ax.values[-1], dt_end_lower)
             print('\t' + error_str)
-            raise DataPreprocessError(var, error_str)
+            raise util.DataPreprocessError(var, error_str)
         
         print("\tCrop date range of {} from '{} -- {}' to {}".format(
                 var.name,
@@ -176,8 +161,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if not z_coord or not z_coord.value:
             return ds
         if 'Z' not in ax_names:
-            raise DataPreprocessError(("Tried to extract level from data with "
-                "no Z axis."))
+            raise util.DataPreprocessError(("Tried to extract level from data "
+                "with no Z axis."))
         z_level = int(z_coord.value)
         try:
             print(f"\tExtracting {z_level} hPa level from {ax_names['var']}")
@@ -186,7 +171,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             return ds.rename({ax_names['var']: ax_names['var']+str(z_level)})
         except KeyError:
             # level wasn't present in coordinate axis
-            raise DataPreprocessError(("Pressure axis of file didn't provide "
+            raise util.DataPreprocessError(("Pressure axis of file didn't provide "
                 f"requested level {z_level}."))
 
     def process_file(self, var, ds, **kwargs):

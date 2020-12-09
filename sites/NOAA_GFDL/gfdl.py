@@ -41,7 +41,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
             self._already_made_POD_OUT_DIR = True
         except Exception as exc:
             try:
-                raise diagnostic.PodRuntimeError(self, (f"Caught exception "
+                raise util.PodRuntimeError(self, (f"Caught exception "
                     f"making output directory at {self.POD_OUT_DIR}.")) from exc
             except Exception as chained_exc:
                 self.exceptions.log(chained_exc)    
@@ -141,7 +141,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
 
         assert ('CASE_ROOT_DIR' in case_dict)
         if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
-            raise data_manager.DataAccessError(None, 
+            raise util.DataAccessError(None, 
                 f"Can't access CASE_ROOT_DIR = '{case_dict['CASE_ROOT_DIR']}'.")
         self.data_root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = gfdl_util.is_on_tape_filesystem(self.data_root_dir)
@@ -297,7 +297,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             print(f"\tSelected {u_key} for {d_key}")
             # check we didn't eliminate everything:
             if not self._catalog[d_key][u_key]:
-                raise data_manager.DataAccessError(
+                raise util.DataAccessError(d_key,
                     f'Choosing {d_key}, {u_key} eliminated all files.')
             self.data_files[d_key] = self._catalog[d_key][u_key]
 

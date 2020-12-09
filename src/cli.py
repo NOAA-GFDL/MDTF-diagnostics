@@ -366,7 +366,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             )
             assert 'settings' in d
         except Exception as exc:
-            raise diagnostic.PodConfigError(pod, 
+            raise util.PodConfigError(pod, 
                 "Syntax error encountered when reading settings.jsonc.") from exc
         return d
 

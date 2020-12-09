@@ -6,6 +6,7 @@ import shlex
 import signal
 import subprocess
 import threading
+from . import exceptions
 
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
@@ -53,9 +54,6 @@ def poll_command(command, shell=False, env=None):
     rc = process.poll()
     return rc
 
-class TimeoutAlarm(Exception):
-    # dummy exception for signal handling in run_command
-    pass
 
 def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     """Subprocess wrapper to facilitate running single command without starting
@@ -88,7 +86,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
             Stderr for that command is stored in `output` attribute.
     """
     def _timeout_handler(signum, frame):
-        raise TimeoutAlarm
+        raise exceptions.TimeoutAlarm
 
     if isinstance(command, str):
         command = shlex.split(command)
@@ -113,7 +111,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         (stdout, stderr) = proc.communicate()
         signal.alarm(0)  # cancel the alarm
         retcode = proc.returncode
-    except TimeoutAlarm:
+    except exceptions.TimeoutAlarm:
         if proc:
             proc.kill()
         retcode = errno.ETIME

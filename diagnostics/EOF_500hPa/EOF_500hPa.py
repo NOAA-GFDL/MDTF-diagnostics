@@ -1,4 +1,4 @@
-# This file is part of the EOF_500hPa module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the EOF_500hPa module of the MDTF code package (see LICENSE.txt)
 
 #============================================================
 # EOF of 500hPa Height Diagnostics

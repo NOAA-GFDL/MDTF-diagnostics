@@ -1,4 +1,4 @@
-; This file is part of the precip_diurnal_cycle module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the precip_diurnal_cycle module of the MDTF code package (see LICENSE.txt)
 
 ; This routine is meant to read in CAM (an time resolution from 1hr to 3 or 6? hrs) data
 ; calculate the magnitude of the diurnal and semi0diyrnal cycle and phase

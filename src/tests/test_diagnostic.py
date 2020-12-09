@@ -3,6 +3,7 @@ import sys
 import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.configs as configs
+import src.util as util
 from src.data_manager import DataSet, DataManager
 from src.datelabel import DateFrequency
 from src.diagnostic import Diagnostic, PodRuntimeError
@@ -127,7 +128,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         self.assertEqual(pod.pod_env_vars['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
         self.assertEqual(pod.pod_env_vars['WK_DIR'], 'A')  
 
-    @mock.patch('src.configs.check_dirs')
+    @mock.patch('src.util.check_dirs')
     @mock.patch('os.path.exists', return_value = False)
     @mock.patch('os.makedirs')
     def test_setup_pod_directories_mkdir(self, mock_makedirs, mock_exists, \
@@ -154,7 +155,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
     @mock.patch('os.path.exists', return_value = True) 
     def test_check_pod_driver_no_driver_1(self, mock_exists):
         # fill in driver from pod name
-        programs = configs.get_available_programs()
+        programs = util.get_available_programs()
         pod = Diagnostic('DUMMY_POD')  
         pod._check_pod_driver()
         ext = os.path.splitext(pod.driver)[1][1:]

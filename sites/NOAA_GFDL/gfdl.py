@@ -437,9 +437,9 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
                 if os.path.exists(self.MODEL_OUT_DIR):
                     # check again, since rmtree() might have succeeded
                     self.MODEL_OUT_DIR, version = \
-                        configs.bump_version(self.MODEL_OUT_DIR)
+                        util.bump_version(self.MODEL_OUT_DIR)
                     new_wkdir, _ = \
-                        configs.bump_version(self.MODEL_WK_DIR, new_v=version)
+                        util.bump_version(self.MODEL_WK_DIR, new_v=version)
                     print("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
                     shutil.move(self.MODEL_WK_DIR, new_wkdir)
                     self.MODEL_WK_DIR = new_wkdir

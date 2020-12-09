@@ -147,8 +147,8 @@ class GFDLMDTFConfigurer(configs.MDTFConfigurer):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
-        configs.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
-        configs.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
+        util.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
+        util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
             create=True)
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):

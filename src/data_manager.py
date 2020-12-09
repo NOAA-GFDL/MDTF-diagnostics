@@ -176,7 +176,7 @@ class DataManager(abc.ABC):
     # -------------------------------------
 
     def setup(self):
-        configs.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
+        util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
 
         translate = configs.VariableTranslator()
         # set env vars for unit conversion factors (TODO: honest unit conversion)
@@ -530,11 +530,11 @@ class DataManager(abc.ABC):
         template_dict = self.env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        configs.append_html_template(
+        util.append_html_template(
             os.path.join(src_dir, 'mdtf_header.html'), dest, template_dict
         )
-        configs.append_html_template(self.TEMP_HTML, dest, {})
-        configs.append_html_template(
+        util.append_html_template(self.TEMP_HTML, dest, {})
+        util.append_html_template(
             os.path.join(src_dir, 'mdtf_footer.html'), dest, template_dict
         )
         if cleanup:
@@ -549,7 +549,7 @@ class DataManager(abc.ABC):
         """
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if not self.file_overwrite:
-            out_file, _ = configs.bump_version(out_file)
+            out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
             print(f"Overwriting {out_file}.")
         util.write_json(config.toDict(), out_file)
@@ -560,7 +560,7 @@ class DataManager(abc.ABC):
         """
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if not self.file_overwrite:
-            out_file, _ = configs.bump_version(out_file)
+            out_file, _ = util.bump_version(out_file)
             print(f"Creating {out_file}.")
         elif os.path.exists(out_file):
             print(f"Overwriting {out_file}.")

@@ -170,8 +170,8 @@ class MDTFConfigurer(object):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
-        check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
-        check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
+        util.check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
+        util.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
             create=True)
 
     def _print_config(self, cli_obj, config, paths):
@@ -262,8 +262,9 @@ class PathManager(util.Singleton, util.NameSpace):
             # bump both WK_DIR and OUT_DIR to same version because name of 
             # former may be preserved when we copy to latter, depending on 
             # copy method
-            d.MODEL_WK_DIR, ver = bump_version(d.MODEL_WK_DIR, extra_dirs=[self.OUTPUT_DIR])
-            d.MODEL_OUT_DIR, _ = bump_version(d.MODEL_OUT_DIR, new_v=ver)
+            d.MODEL_WK_DIR, ver = util.bump_version(
+                d.MODEL_WK_DIR, extra_dirs=[self.OUTPUT_DIR])
+            d.MODEL_OUT_DIR, _ = util.bump_version(d.MODEL_OUT_DIR, new_v=ver)
         return d
 
     def pod_paths(self, pod, case):
@@ -372,169 +373,3 @@ class VariableTranslator(util.Singleton):
         except KeyError:
             print(f"ERROR: name {v_name} not defined for convention {convention}.")
             raise
-
-
-def get_available_programs(verbose=0):
-    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
-    #return {'py': sys.executable, 'ncl': 'ncl'}  
-
-def check_dirs(*dirs, create=False):
-    """Check existence of directories. No action is taken for directories that
-    already exist; nonexistent directories either raise a 
-    :py:exception:`FileNotFoundError` or cause the creation of that directory.
-
-    Args:
-        dirs: iterable of absolute paths to check.
-        create: (bool, default False): if True, nonexistent directories are 
-            created. 
-    """
-    for dir_ in dirs:
-        try:
-            if not os.path.isdir(dir_):
-                if create:
-                    os.makedirs(dir_, exist_ok=False)
-                else:
-                    raise FileNotFoundError(f"Directory {dir_} not found.")
-        except Exception as exc:
-            if isinstance(exc, FileNotFoundError):
-                raise exc
-            else:
-                raise OSError(f"Caught exception when checking {dir_}") from exc
-
-def bump_version(path, new_v=None, extra_dirs=None):
-    # return a filename that doesn't conflict with existing files.
-    # if extra_dirs supplied, make sure path doesn't conflict with pre-existing
-    # files at those locations either.
-    def _split_version(file_):
-        match = re.match(r"""
-            ^(?P<file_base>.*?)   # arbitrary characters (lazy match)
-            (\.v(?P<version>\d+))  # literal '.v' followed by digits
-            ?                      # previous group may occur 0 or 1 times
-            $                      # end of string
-            """, file_, re.VERBOSE)
-        if match:
-            return (match.group('file_base'), match.group('version'))
-        else:
-            return (file_, '')
-
-    def _reassemble(dir_, file_, version, ext_, final_sep):
-        if version:
-            file_ = ''.join([file_, '.v', str(version), ext_])
-        else:
-            # get here for version == 0, '' or None
-            file_ = ''.join([file_, ext_])
-        return os.path.join(dir_, file_) + final_sep
-
-    def _path_exists(dir_list, file_, new_v, ext_, sep):
-        new_paths = [_reassemble(d, file_, new_v, ext_, sep) for d in dir_list]
-        return any([os.path.exists(p) for p in new_paths])
-
-    if path.endswith(os.sep):
-        # remove any terminating slash on directory
-        path = path.rstrip(os.sep)
-        final_sep = os.sep
-    else:
-        final_sep = ''
-    dir_, file_ = os.path.split(path)
-    if not extra_dirs:
-        dir_list = []
-    else:
-        dir_list = util.to_iter(extra_dirs)
-    dir_list.append(dir_)
-    file_, old_v = _split_version(file_)
-    if not old_v:
-        # maybe it has an extension and then a version number
-        file_, ext_ = os.path.splitext(file_)
-        file_, old_v = _split_version(file_)
-    else:
-        ext_ = ''
-
-    if new_v is not None:
-        # removes version if new_v ==0
-        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
-    else:
-        if not old_v:
-            new_v = 0
-        else:
-            new_v = int(old_v)
-        while _path_exists(dir_list, file_, new_v, ext_, final_sep):
-            new_v = new_v + 1
-        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
-    return (new_path, new_v)
-
-class _DoubleBraceTemplate(string.Template):
-    """Private class used by :func:`~configs.append_html_template` to do 
-    string templating with double curly brackets as delimiters, since single
-    brackets are also used in css.
-
-    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
-    `https://stackoverflow.com/a/34362892`__.
-    """
-    flags = re.VERBOSE # matching is case-sensitive, unlike default
-    delimiter = '{{' # starting delimter is two braces, then apply
-    pattern = r"""
-        \{\{(?:                 # match delimiter itself, but don't include it
-        # Alternatives for what to do with string following delimiter:
-        # case 1) text is an escaped double bracket, written as '{{{{'.
-        (?P<escaped>\{\{)|
-        # case 2) text is the name of an env var, possibly followed by whitespace,
-        # followed by closing double bracket. Match POSIX env var names,
-        # case-sensitive (see https://stackoverflow.com/a/2821183), with the 
-        # addition that hyphens are allowed.
-        # Can't tell from docs what the distinction between <named> and <braced> is.
-        \s*(?P<named>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
-        \s*(?P<braced>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
-        # case 3) none of the above: ignore & move on (when using safe_substitute)
-        (?P<invalid>)
-        )
-    """
-
-def append_html_template(template_file, target_file, template_dict={}, 
-    create=True, append=True):
-    """Perform substitutions on template_file and write result to target_file.
-
-    Variable substitutions are done with custom 
-    `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
-    replacing *double* curly bracket-delimited keys with their values in template_dict.
-    For example, if template_dict is {'A': 'foo'}, all occurrences of the string
-    `{{A}}` in template_file are replaced with the string `foo`. Spaces between
-    the braces and variable names are ignored.
-
-    Double-curly-bracketed strings that don't correspond to keys in template_dict are
-    ignored (instead of raising a KeyError.)
-
-    Double curly brackets are chosen as the delimiter to match the default 
-    syntax of, eg, django and jinja2. Using single curly braces leads to conflicts
-    with CSS syntax.
-
-    Args:
-        template_file: Path to template file.
-        target_file: Destination path for result. 
-        template_dict: :py:obj:`dict` of variable name-value pairs. Both names
-            and values must be strings.
-        create: Boolean, default True. If true, create target_file if it doesn't
-            exist, otherwise raise an OSError. 
-        append: Boolean, default True. If target_file exists and this is true,
-            append the substituted contents of template_file to it. If false,
-            overwrite target_file with the substituted contents of template_file.
-    """
-    assert os.path.exists(template_file)
-    with io.open(template_file, 'r', encoding='utf-8') as f:
-        html_str = f.read()
-        html_str = _DoubleBraceTemplate(html_str).safe_substitute(template_dict)
-    if not os.path.exists(target_file):
-        if create:
-            # print("\tDEBUG: write {} to new {}".format(template_file, target_file))
-            mode = 'w'
-        else:
-            raise OSError("Can't find {}".format(target_file))
-    else:
-        if append:
-            # print("\tDEBUG: append {} to {}".format(template_file, target_file))
-            mode = 'a'
-        else:
-            # print("\tDEBUG: overwrite {} with {}".format(target_file, template_file))
-            os.remove(target_file)
-            mode = 'w'
-    with io.open(target_file, mode, encoding='utf-8') as f:
-        f.write(html_str)

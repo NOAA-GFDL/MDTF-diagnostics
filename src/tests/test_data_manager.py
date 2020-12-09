@@ -2,6 +2,7 @@ import os
 import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.configs as configs
+import src.util as util
 from src.diagnostic import Diagnostic
 from src.data_manager import DataManager
 from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
@@ -54,7 +55,7 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(os.environ['pr_var'], 'PRECT')
         self.assertEqual(os.environ['prc_var'], 'PRECC')
 
-    @mock.patch('src.configs.check_dirs')
+    @mock.patch('src.util.check_dirs')
     def test_set_model_env_vars_no_model(self, mock_check_dirs):
         # exit if can't find model
         case = DataManager(self.default_case)

@@ -489,11 +489,11 @@ class Diagnostic(object):
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.
         """
-        configs.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
-        configs.check_dirs(self.POD_WK_DIR, create=True)
+        util.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
+        util.check_dirs(self.POD_WK_DIR, create=True)
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            configs.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
+            util.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
@@ -571,7 +571,7 @@ class Diagnostic(object):
         func_name = "check_pod_driver "
         if (verbose > 1): 
             print(func_name," received POD settings: ", self.__dict__)
-        programs = configs.get_available_programs()
+        programs = util.get_available_programs()
 
         if self.driver == '':  
             print("WARNING: no valid driver entry found for ", self.name)
@@ -664,7 +664,7 @@ class Diagnostic(object):
     def make_pod_html(self):
         """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~configs.append_html_template`. Looks for all 
+        A wrapper for :func:`~util.append_html_template`. Looks for all 
         html files in POD_CODE_DIR, templates them, and copies them to 
         POD_WK_DIR, respecting subdirectory structure (see doc for
         :func:`~util.recursive_copy`).
@@ -676,7 +676,7 @@ class Diagnostic(object):
             self.POD_CODE_DIR,
             self.POD_WK_DIR,
             copy_function=(
-                lambda src, dest: configs.append_html_template(
+                lambda src, dest: util.append_html_template(
                 src, dest, template_dict=template_d, append=False
             )),
             overwrite=True
@@ -699,7 +699,7 @@ class Diagnostic(object):
         else:
             # normal exit
             src = os.path.join(src_dir, 'pod_result_snippet.html')
-        configs.append_html_template(src, self.TEMP_HTML, template_d)
+        util.append_html_template(src, self.TEMP_HTML, template_d)
 
     def verify_pod_links(self):
         """Check for missing files linked to from POD's html page.
@@ -719,7 +719,7 @@ class Diagnostic(object):
             print(f'\tERROR: {self.name} has missing output files.')
             template_d = self.templating_dict()
             template_d['missing_output'] = '<br>'.join(missing_out)
-            configs.append_html_template(
+            util.append_html_template(
                 os.path.join(self.CODE_ROOT, 'src', 'html', 
                     'pod_missing_snippet.html'),
                 self.TEMP_HTML, 

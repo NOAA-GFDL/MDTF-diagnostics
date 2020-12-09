@@ -2,12 +2,13 @@ import os
 import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 from src.mdtf import MDTFFramework
-import src.configs as util
+import src.configs as configs
+import src.util as util
 
 @unittest.skip("")
 class TestMDTFArgParsing(unittest.TestCase):
     def setUp(self):
-        _ = util.PathManager(unittest = True)
+        _ = configs.PathManager(unittest = True)
         self.config_test = {
             'case_list':[{'A':'B'}],
             'paths':{'C':'/D'},
@@ -18,7 +19,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         # call _reset method deleting clearing PathManager for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = util.PathManager(unittest = True)
+        temp = configs.PathManager(unittest = True)
         temp._reset()
 
     def test_parse_mdtf_args_config(self):

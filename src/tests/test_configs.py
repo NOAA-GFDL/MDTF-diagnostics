@@ -65,8 +65,8 @@ class TestUtil(unittest.TestCase):
     def test_check_dirs_found(self, mock_makedirs, mock_isdir):
         # exit function normally if all directories found 
         try:
-            configs.check_dirs('DUMMY/PATH/NAME', create=False)
-            configs.check_dirs('DUMMY/PATH/NAME', create=True)
+            util.check_dirs('DUMMY/PATH/NAME', create=False)
+            util.check_dirs('DUMMY/PATH/NAME', create=True)
         except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_not_called()
@@ -76,7 +76,7 @@ class TestUtil(unittest.TestCase):
     def test_check_dirs_not_found(self, mock_makedirs, mock_isdir):
         # try to exit() if any directories not found
         with self.assertRaises(FileNotFoundError):
-            configs.check_dirs('DUMMY/PATH/NAME', create=False)
+            util.check_dirs('DUMMY/PATH/NAME', create=False)
         mock_makedirs.assert_not_called()
 
     @mock.patch('os.path.isdir', return_value = False)
@@ -84,7 +84,7 @@ class TestUtil(unittest.TestCase):
     def test_check_dirs_not_found_created(self, mock_makedirs, mock_isdir):      
         # don't exit() and call os.makedirs if in create_if_nec          
         try:
-            configs.check_dirs('DUMMY/PATH/NAME', create=True)
+            util.check_dirs('DUMMY/PATH/NAME', create=True)
         except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_called_once_with('DUMMY/PATH/NAME', exist_ok=False)
@@ -96,7 +96,7 @@ class TestUtil(unittest.TestCase):
             'D/C/B/AAAA.v23/', 'A.foo', 'A.v23.foo', 'A.v23.bar.v45.foo',
             'D/C/A.foo', 'D/C/A.v23.foo', 'D/C/A.v23.bar.v45.foo'
         ]:
-            f2, _ = configs.bump_version(f)
+            f2, _ = util.bump_version(f)
             self.assertEqual(f, f2)
 
     @mock.patch('os.path.exists', return_value=False)
@@ -105,7 +105,7 @@ class TestUtil(unittest.TestCase):
             'AAA.v42', 'D/C/B/AAA.v42', 'D/C.v7/B/AAAA.v42/', 'A.v42.foo', 
             'A.v23.bar.v42.foo', 'D/C/A.v42.foo', 'D/C/A.v23.bar.v42.foo'
         ]:
-            _, ver = configs.bump_version(f)
+            _, ver = util.bump_version(f)
             self.assertEqual(ver, 42)
 
     @mock.patch('os.path.exists', return_value=False)
@@ -118,7 +118,7 @@ class TestUtil(unittest.TestCase):
             ('D/C/A.foo','D/C/A.foo'), ('D/C.v1/A234.v3.foo','D/C.v1/A234.foo'),
             ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.foo')
         ]:
-            f1, ver = configs.bump_version(f[0], new_v=0)
+            f1, ver = util.bump_version(f[0], new_v=0)
             self.assertEqual(f1, f[1])
             self.assertEqual(ver, 0)
 
@@ -132,7 +132,7 @@ class TestUtil(unittest.TestCase):
             ('D/C/A.foo','D/C/A.v42.foo'), ('D/C.v1/A.v23.foo','D/C.v1/A.v42.foo'),
             ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.v42.foo')
         ]:
-            f1, ver = configs.bump_version(f[0], new_v=42)
+            f1, ver = util.bump_version(f[0], new_v=42)
             self.assertEqual(f1, f[1])
             self.assertEqual(ver, 42)
 
@@ -145,7 +145,7 @@ class TestUtil(unittest.TestCase):
     #         ('D/C.v1/B/AA/','D/C.v1/B/AA.v1/',1), ('D/C/B/AA.v23','D/C/B/AA.v24',24),
     #         ('D/C3/B.v8/AA.v9/','D/C3/B.v8/AA.v10/',10)
     #     ]:
-    #         f1, ver = configs.bump_version(f[0])
+    #         f1, ver = util.bump_version(f[0])
     #         self.assertEqual(f1, f[1])
     #         self.assertEqual(ver, f[2])
 
@@ -158,7 +158,7 @@ class TestUtil(unittest.TestCase):
     #         ('D/C.v1/A.v99.foo','D/C.v1/A.v100.foo', 100),
     #         ('D/C/A.v23.bar.v78.foo','D/C/A.v23.bar.v79.foo', 79)
     #     ]:
-    #         f1, ver = configs.bump_version(f[0])
+    #         f1, ver = util.bump_version(f[0])
     #         self.assertEqual(f1, f[1])
     #         self.assertEqual(ver, f[2])
 

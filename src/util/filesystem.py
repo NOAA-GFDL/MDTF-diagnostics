@@ -9,6 +9,7 @@ import glob
 import json
 import re
 import shutil
+import string
 from . import basic
 
 def abbreviate_path(path, old_base, new_base=None):
@@ -99,6 +100,10 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     for src, dest in zip(src_files, dest_files):
         copy_function(src, dest)
 
+def get_available_programs(verbose=0):
+    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
+    #return {'py': sys.executable, 'ncl': 'ncl'}  
+
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 
@@ -132,8 +137,93 @@ def find_files(src_dirs, filename_globs):
             files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
     return list(files)
 
+def check_dirs(*dirs, create=False):
+    """Check existence of directories. No action is taken for directories that
+    already exist; nonexistent directories either raise a 
+    :py:exception:`FileNotFoundError` or cause the creation of that directory.
+
+    Args:
+        dirs: iterable of absolute paths to check.
+        create: (bool, default False): if True, nonexistent directories are 
+            created. 
+    """
+    for dir_ in dirs:
+        try:
+            if not os.path.isdir(dir_):
+                if create:
+                    os.makedirs(dir_, exist_ok=False)
+                else:
+                    raise FileNotFoundError(f"Directory {dir_} not found.")
+        except Exception as exc:
+            if isinstance(exc, FileNotFoundError):
+                raise exc
+            else:
+                raise OSError(f"Caught exception when checking {dir_}") from exc
+
+def bump_version(path, new_v=None, extra_dirs=None):
+    """Return a filename that doesn't conflict with existing files.
+    if extra_dirs supplied, make sure path doesn't conflict with pre-existing
+    files at those locations either.
+    """
+    def _split_version(file_):
+        match = re.match(r"""
+            ^(?P<file_base>.*?)   # arbitrary characters (lazy match)
+            (\.v(?P<version>\d+))  # literal '.v' followed by digits
+            ?                      # previous group may occur 0 or 1 times
+            $                      # end of string
+            """, file_, re.VERBOSE)
+        if match:
+            return (match.group('file_base'), match.group('version'))
+        else:
+            return (file_, '')
+
+    def _reassemble(dir_, file_, version, ext_, final_sep):
+        if version:
+            file_ = ''.join([file_, '.v', str(version), ext_])
+        else:
+            # get here for version == 0, '' or None
+            file_ = ''.join([file_, ext_])
+        return os.path.join(dir_, file_) + final_sep
+
+    def _path_exists(dir_list, file_, new_v, ext_, sep):
+        new_paths = [_reassemble(d, file_, new_v, ext_, sep) for d in dir_list]
+        return any([os.path.exists(p) for p in new_paths])
+
+    if path.endswith(os.sep):
+        # remove any terminating slash on directory
+        path = path.rstrip(os.sep)
+        final_sep = os.sep
+    else:
+        final_sep = ''
+    dir_, file_ = os.path.split(path)
+    if not extra_dirs:
+        dir_list = []
+    else:
+        dir_list = basic.to_iter(extra_dirs)
+    dir_list.append(dir_)
+    file_, old_v = _split_version(file_)
+    if not old_v:
+        # maybe it has an extension and then a version number
+        file_, ext_ = os.path.splitext(file_)
+        file_, old_v = _split_version(file_)
+    else:
+        ext_ = ''
+
+    if new_v is not None:
+        # removes version if new_v ==0
+        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+    else:
+        if not old_v:
+            new_v = 0
+        else:
+            new_v = int(old_v)
+        while _path_exists(dir_list, file_, new_v, ext_, final_sep):
+            new_v = new_v + 1
+        new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
+    return (new_path, new_v)
+
 # ---------------------------------------------------------
-# FILE I/O
+# CONFIG FILE PARSING
 # ---------------------------------------------------------
 
 def strip_comments(str_, delimiter=None):
@@ -205,3 +295,84 @@ def pretty_print_json(struct, sort_keys=False):
     str_ = re.sub(r"{\s+", "- ", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
+
+# ---------------------------------------------------------
+# HTML TEMPLATING
+# ---------------------------------------------------------
+
+class _DoubleBraceTemplate(string.Template):
+    """Private class used by :func:`~util.append_html_template` to do 
+    string templating with double curly brackets as delimiters, since single
+    brackets are also used in css.
+
+    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
+    `https://stackoverflow.com/a/34362892`__.
+    """
+    flags = re.VERBOSE # matching is case-sensitive, unlike default
+    delimiter = '{{' # starting delimter is two braces, then apply
+    pattern = r"""
+        \{\{(?:                 # match delimiter itself, but don't include it
+        # Alternatives for what to do with string following delimiter:
+        # case 1) text is an escaped double bracket, written as '{{{{'.
+        (?P<escaped>\{\{)|
+        # case 2) text is the name of an env var, possibly followed by whitespace,
+        # followed by closing double bracket. Match POSIX env var names,
+        # case-sensitive (see https://stackoverflow.com/a/2821183), with the 
+        # addition that hyphens are allowed.
+        # Can't tell from docs what the distinction between <named> and <braced> is.
+        \s*(?P<named>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        \s*(?P<braced>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
+        # case 3) none of the above: ignore & move on (when using safe_substitute)
+        (?P<invalid>)
+        )
+    """
+
+def append_html_template(template_file, target_file, template_dict={}, 
+    create=True, append=True):
+    """Perform substitutions on template_file and write result to target_file.
+
+    Variable substitutions are done with custom 
+    `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
+    replacing *double* curly bracket-delimited keys with their values in template_dict.
+    For example, if template_dict is {'A': 'foo'}, all occurrences of the string
+    `{{A}}` in template_file are replaced with the string `foo`. Spaces between
+    the braces and variable names are ignored.
+
+    Double-curly-bracketed strings that don't correspond to keys in template_dict are
+    ignored (instead of raising a KeyError.)
+
+    Double curly brackets are chosen as the delimiter to match the default 
+    syntax of, eg, django and jinja2. Using single curly braces leads to conflicts
+    with CSS syntax.
+
+    Args:
+        template_file: Path to template file.
+        target_file: Destination path for result. 
+        template_dict: :py:obj:`dict` of variable name-value pairs. Both names
+            and values must be strings.
+        create: Boolean, default True. If true, create target_file if it doesn't
+            exist, otherwise raise an OSError. 
+        append: Boolean, default True. If target_file exists and this is true,
+            append the substituted contents of template_file to it. If false,
+            overwrite target_file with the substituted contents of template_file.
+    """
+    assert os.path.exists(template_file)
+    with io.open(template_file, 'r', encoding='utf-8') as f:
+        html_str = f.read()
+        html_str = _DoubleBraceTemplate(html_str).safe_substitute(template_dict)
+    if not os.path.exists(target_file):
+        if create:
+            # print("\tDEBUG: write {} to new {}".format(template_file, target_file))
+            mode = 'w'
+        else:
+            raise OSError("Can't find {}".format(target_file))
+    else:
+        if append:
+            # print("\tDEBUG: append {} to {}".format(template_file, target_file))
+            mode = 'a'
+        else:
+            # print("\tDEBUG: overwrite {} with {}".format(target_file, template_file))
+            os.remove(target_file)
+            mode = 'w'
+    with io.open(target_file, mode, encoding='utf-8') as f:
+        f.write(html_str)

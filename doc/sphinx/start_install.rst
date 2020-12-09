@@ -23,8 +23,10 @@ To install the MDTF framework, create a directory named ``mdtf`` and unzip the c
 
 - ``diagnostics/``: directory containing source code and documentation of individual PODs.
 - ``doc/``: directory containing documentation (a local mirror of the documentation site).
+- ``shared/``: shared code and resources for use by both the framework and PODs.
+- ``sites/``: site-specific code and configuration files.
 - ``src/``: source code of the framework itself.
-- ``tests/``: unit tests for the framework.
+- ``tests/``: general tests for the framework.
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``main`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.
 
@@ -73,7 +75,7 @@ Download these three files and extract the contents in the following hierarchy u
 
 The default test case uses the QBOi.EXP1.AMIP.001 data. The GFDL.CM4.c96L32.am4g10r8 data is only for testing the MJO Propagation and Amplitude POD.
 
-You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described in :numref:`ref-configure`.
+You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described in :numref:`ref-configure`. The framework will not write to files in these directories, so read-only access is sufficient.
 
 .. _ref-install:
 

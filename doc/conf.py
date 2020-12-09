@@ -29,7 +29,7 @@ from recommonmark.transform import AutoStructify
 # autodoc on six.py with python 3.7. None of the modules are used by the
 # framework: they're only referenced by six.py.
 autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
-import mock # do this twice just to be safe
+import unittest.mock as mock
 for module in autodoc_mock_imports:
     sys.modules[module] = mock.Mock()
 
@@ -58,7 +58,7 @@ _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develo
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'copy_pod_docs',
+    'copy_external_docs',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
@@ -307,11 +307,6 @@ autodoc_default_options = {
     'undoc-members': True,
     'show-inheritance': True
 }
-# For simplicty, the six.py library is included directly in the /src module, 
-# but we don't want to document it.
-# https://stackoverflow.com/a/21449475
-def autodoc_skip_member(app, what, name, obj, skip, options):
-    return skip or ('six' in name) or ('_MovedItems' in name)
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449

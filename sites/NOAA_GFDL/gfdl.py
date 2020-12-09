@@ -15,6 +15,9 @@ from sites.NOAA_GFDL import gfdl_util
 import src.conflict_resolution as choose
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
+import logging
+_log = logging.getLogger(__name__)
+
 class GfdlDiagnostic(diagnostic.Diagnostic):
     """Wrapper for Diagnostic that adds writing a placeholder directory to the
     output as a lockfile if we're running in frepp cooperative mode.
@@ -46,10 +49,10 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
             except Exception as chained_exc:
                 self.exceptions.log(chained_exc)    
 
-    def tear_down(self, verbose=0):
+    def tear_down(self):
         # only run teardown (including logging error on index.html) if POD ran
         if self._has_placeholder:
-            super(GfdlDiagnostic, self).tear_down(verbose)
+            super(GfdlDiagnostic, self).tear_down()
 
 class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
     # Use module files to switch execution environments, as defined on 
@@ -124,10 +127,10 @@ def GfdlautoDataManager(case_dict, pod_dict, PreprocessorClass):
     if 'pp' in os.path.basename(test_root):
         return GfdlppDataManager(case_dict, pod_dict, PreprocessorClass)
     else:
-        print(("ERROR: Couldn't determine data fetch method from input."
+        _log.critical(("ERROR: Couldn't determine data fetch method from input."
             "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
             "'GFDL_data_cmip6', depending on the source you want."))
-        exit()
+        exit(1)
 
 
 class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
@@ -188,9 +191,8 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             if subdir_filter:
                 found_subdirs = found_subdirs.intersection(subdir_filter)
             if not found_subdirs:
-                print("\tCouldn't find subdirs (in {}) at {}, skipping".format(
-                    subdir_filter, os.path.join(self.data_root_dir, dir_)
-                ))
+                _log.warning("\tCouldn't find subdirs (in %s) at %s, skipping",
+                    subdir_filter, os.path.join(self.data_root_dir, dir_))
                 continue
             found_dirs.extend([
                 os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
@@ -294,7 +296,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         d_to_u_dict = self.select_undetermined()
         for d_key in self.data_keys:
             u_key = d_to_u_dict[d_key]
-            print(f"\tSelected {u_key} for {d_key}")
+            _log.info(f"\tSelected {u_key} for {d_key}")
             # check we didn't eliminate everything:
             if not self._catalog[d_key][u_key]:
                 raise util.DataAccessError(d_key,
@@ -305,12 +307,12 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         for data_key in self.data_keys:
             paths.update([f.remote_path for f in self.data_files[data_key]])
         if self.tape_filesystem:
-            print(f"start dmget of {len(paths)} files")
+            _log.info(f"start dmget of {len(paths)} files")
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.file_transfer_timeout,
                 dry_run=self.dry_run
             ) 
-            print("end dmget")
+            _log.info("end dmget")
 
     def determine_fetch_method(self, method='auto'):
         _methods = {
@@ -338,7 +340,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         for file_ds in self.data_files[d_key]:
             path = file_ds.remote_path
             local_path = os.path.join(tmpdir, os.path.basename(path))
-            print("\tcopying ...{} to {}".format(
+            _log.info("\tcopying ...{} to {}".format(
                 path[len(self.data_root_dir):], tmpdir
             ))
             util.run_command(cp_command + [
@@ -360,7 +362,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
         # progress to TEMP_HTML.
         prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
         if self.frepp_mode and os.path.exists(prev_html):
-            print("\tDEBUG: Appending previous index.html at {}".format(prev_html))
+            _log.debug("Appending previous index.html at {}".format(prev_html))
             with io.open(prev_html, 'r', encoding='utf-8') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
@@ -370,7 +372,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             if os.path.exists(self.TEMP_HTML):
                 mode = 'a'
             else:
-                print("\tWARNING: No file at {}.".format(self.TEMP_HTML))
+                _log.warning("\tWARNING: No file at {}.".format(self.TEMP_HTML))
                 mode = 'w'
             with io.open(self.TEMP_HTML, mode, encoding='utf-8') as f2:
                 f2.write(contents)
@@ -406,11 +408,11 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
                         timeout=self.file_transfer_timeout, dry_run=self.dry_run
                     )
             # copy all case-level files
-            print("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
+            _log.debug("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
             for f in os.listdir(self.MODEL_WK_DIR):
-                print("\t\tDEBUG: found {}".format(f))
+                _log.debug("\t\tDEBUG: found {}".format(f))
                 if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
-                    print("\t\tDEBUG: found {}".format(f))
+                    _log.debug("\t\tDEBUG: found {}".format(f))
                     gfdl_util.gcp_wrapper(
                         os.path.join(self.MODEL_WK_DIR, f), 
                         self.MODEL_OUT_DIR,
@@ -421,17 +423,17 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             if os.path.exists(self.MODEL_OUT_DIR):
                 if self.overwrite:
                     try:
-                        print('Error: {} exists, attempting to remove.'.format(
+                        _log.error('Error: {} exists, attempting to remove.'.format(
                             self.MODEL_OUT_DIR))
                         shutil.rmtree(self.MODEL_OUT_DIR)
                     except OSError:
                         # gcp will not overwrite dirs, so forced to save under
                         # a different name despite overwrite=True
-                        print(("Error: couldn't remove {} (probably mounted read"
+                        _log.error(("Error: couldn't remove {} (probably mounted read"
                             "-only); will rename new directory.").format(
                             self.MODEL_OUT_DIR))
                 else:
-                    print("Error: {} exists; will rename new directory.".format(
+                    _log.error("Error: {} exists; will rename new directory.".format(
                         self.MODEL_OUT_DIR))
             try:
                 if os.path.exists(self.MODEL_OUT_DIR):
@@ -440,7 +442,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
                         util.bump_version(self.MODEL_OUT_DIR)
                     new_wkdir, _ = \
                         util.bump_version(self.MODEL_WK_DIR, new_v=version)
-                    print("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
+                    _log.debug("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
                     shutil.move(self.MODEL_WK_DIR, new_wkdir)
                     self.MODEL_WK_DIR = new_wkdir
                 gfdl_util.gcp_wrapper(

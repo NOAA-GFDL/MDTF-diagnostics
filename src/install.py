@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    print(("ERROR: MDTF currently only supports python 2.7.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)"))
-    print("Attempted to run with following python version:\n{}".format(sys.version))
-    exit(1)
+if sys.version_info[0] != 3 or sys.version_info[1] < 7:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.7.*. Please check "
+    "which version is on your $PATH (e.g. with `which python`.)\n"
+    f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import io

@@ -5,6 +5,9 @@ import subprocess
 import tempfile
 from src import util, configs, datelabel
 
+import logging
+_log = logging.getLogger(__name__)
+
 class ModuleManager(util.Singleton):
     _current_module_versions = {
         'python2':   'python/2.7.12',
@@ -135,7 +138,7 @@ class GFDLMDTFConfigurer(configs.MDTFConfigurer):
                 pod_list = case['pod_list']
                 for p in pod_list:
                     if os.path.isdir(os.path.join(case_outdir, p)):
-                        print(("\tDEBUG: preexisting {} in {}; "
+                        _log.info(("\tPreexisting {} in {}; "
                             "skipping b/c frepp mode").format(p, case_outdir))
                 case['pod_list'] = [p for p in pod_list if not \
                     os.path.isdir(os.path.join(case_outdir, p))
@@ -170,7 +173,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
     else:
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
-    print('\tDEBUG: GCP {} -> {}'.format(source[-1], dest[-1]))
+    _log.info('\tGCP {} -> {}'.format(source[-1], dest[-1]))
     util.run_command(
         ['gcp', '--sync', '-v', '-cd'] + source + dest,
         timeout=timeout, 
@@ -199,24 +202,24 @@ def fetch_obs_data(source_dir, dest_dir, timeout=0, dry_run=False):
     if source_dir == dest_dir:
         return
     if not os.path.exists(source_dir) or not os.listdir(source_dir):
-        print("Observational data directory at {} is empty.".format(source_dir))
+        _log.error("Empty obs data directory at '%s'.", source_dir)
     if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
-        print("Observational data directory at {} is empty.".format(dest_dir))
+        _log.debug("Empty obs data directory at '%s'.", dest_dir)
     if running_on_PPAN():
-        print("\tGCPing data from {}.".format(source_dir))
+        _log.info("\tGCPing data from {}.".format(source_dir))
         # giving -cd to GCP, so will create dirs
         gcp_wrapper(
             source_dir, dest_dir, timeout=timeout, dry_run=dry_run
         )
     else:
-        print("\tSymlinking obs data dir to {}.".format(source_dir))
+        _log.info("\tSymlinking obs data dir to {}.".format(source_dir))
         dest_parent = os.path.dirname(dest_dir)
         if os.path.exists(dest_dir):
             assert os.path.isdir(dest_dir)
             try:
                 os.remove(dest_dir) # remove symlink only, not source dir
             except OSError:
-                print('Warning: expected symlink at {}'.format(dest_dir))
+                _log.error('Expected symlink at %s', dest_dir)
                 os.rmdir(dest_dir)
         elif not os.path.exists(dest_parent):
             os.makedirs(dest_parent)
@@ -285,7 +288,7 @@ def parse_frepp_stub(frepp_stub):
         \s*$          # remainder of line must be whitespace.
         """, re.VERBOSE)
     for line in frepp_stub.splitlines():
-        print("line = '{}'".format(line))
+        _log.debug("line = '{}'".format(line))
         match = re.match(regex, line)
         if match:
             if match.group('key') in frepp_translate:

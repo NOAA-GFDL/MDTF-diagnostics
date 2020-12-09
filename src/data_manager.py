@@ -13,6 +13,9 @@ from subprocess import CalledProcessError
 import typing
 from src import util, configs, datelabel, preprocessor, data_model, diagnostic
 
+import logging
+_log = logging.getLogger(__name__)
+
 @util.mdtf_dataclass(frozen=True)
 class DefaultDataKey(object):
     """Minimal data_key that captures the relevant information for the data 
@@ -213,7 +216,7 @@ class DataManager(abc.ABC):
             err_str = (f"CF name '{v.standard_name}' for varlist entry "
                 f"{v.name} in POD {pod.name} not recognized by naming "
                 f"convention '{self.convention}'.")
-            print(err_str)
+            _log.exception(err_str)
             v.exception = util.PodConfigError(pod, err_str)
             v.active = False
             raise v.exception
@@ -301,7 +304,7 @@ class DataManager(abc.ABC):
             self.pre_query_hook()
             for d_key in keys_to_query:
                 try:
-                    print(f"    Querying '{d_key}'")
+                    _log.info("    Querying '%s'", d_key)
                     # add before query, in case query raises an exc
                     self.queried_keys.add(d_key) 
                     files = util.to_iter(self.query_dataset(d_key))
@@ -311,8 +314,8 @@ class DataManager(abc.ABC):
                 except Exception as exc:
                     update = True
                     if not isinstance(exc, util.DataQueryError):
-                        print((f"DEBUG: Caught exception querying {d_key}: "
-                            f"{repr(exc)}."))
+                        _log.exception("Caught exception querying %s: %s",
+                            d_key, repr(exc))
                     try:
                         raise util.DataQueryError(d_key, 
                             "Caught exception while querying data.") from exc
@@ -410,13 +413,14 @@ class DataManager(abc.ABC):
             self.pre_fetch_hook()
             for d_key in keys_to_fetch:
                 try:
-                    print(f"    Fetching '{d_key}'")
+                    _log.info(f"    Fetching '%s'", d_key)
                     # add before fetch, in case fetch raises an exc
                     self.fetched_keys.add(d_key) 
                     self.fetch_dataset(d_key)
                 except Exception as exc:
                     update = True
-                    print(f"DEBUG: Caught exception fetching {d_key}: {repr(exc)}.")
+                    _log.exception("Caught exception fetching %s: %s",
+                        d_key, repr(exc))
                     try:
                         raise util.DataAccessError(d_key, 
                             "Caught exception while fetching data.") from exc
@@ -486,7 +490,7 @@ class DataManager(abc.ABC):
         src_dir = os.path.join(self.code_root, 'src', 'html')
         dest = os.path.join(self.MODEL_WK_DIR, 'index.html')
         if os.path.isfile(dest):
-            print("WARNING: index.html exists, deleting.")
+            _log.warning("%s: index.html exists, deleting.", self.case_name)
             os.remove(dest)
 
         template_dict = self.env_vars.copy()
@@ -513,7 +517,7 @@ class DataManager(abc.ABC):
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
-            print(f"Overwriting {out_file}.")
+            _log.info("%s: Overwriting %s.", self.case_name, out_file)
         util.write_json(config.toDict(), out_file)
         return out_file
 
@@ -523,9 +527,9 @@ class DataManager(abc.ABC):
         out_file = os.path.join(tar_dest_dir, self.MODEL_WK_DIR+'.tar')
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
-            print(f"Creating {out_file}.")
+            _log.info("%s: Creating %s.", self.case_name, out_file)
         elif os.path.exists(out_file):
-            print(f"Overwriting {out_file}.")
+            _log.info("%s: Overwriting %s.", self.case_name, out_file)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
@@ -537,11 +541,13 @@ class DataManager(abc.ABC):
     def _copy_to_output(self):
         if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
             return # no copying needed
-        print(f"Copy {self.MODEL_WK_DIR} to {self.MODEL_OUT_DIR}")
+        _log.debug("%s: Copy %s to %s.", 
+            self.case_name, self.MODEL_WK_DIR, self.MODEL_OUT_DIR)
         try:
             if os.path.exists(self.MODEL_OUT_DIR):
                 if not self.overwrite:
-                    print(f"Error: {self.MODEL_OUT_DIR} exists, overwriting.")
+                    _log.error("%s: %s exists, overwriting.", self.case_name,
+                        self.MODEL_OUT_DIR)
                 shutil.rmtree(self.MODEL_OUT_DIR)
         except Exception:
             raise

@@ -5,6 +5,9 @@ import os
 import errno
 import traceback
 
+import logging
+_log = logging.getLogger(__name__)
+
 class ExceptionQueue(object):
     """Class to retain information about exceptions that were raised, for later
     output.

@@ -8,6 +8,9 @@ import subprocess
 import threading
 from . import exceptions
 
+import logging
+_log = logging.getLogger(__name__)
+
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
     thread when the child is join()ed. 
@@ -92,7 +95,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
-        print('DRY_RUN: call {}'.format(cmd_str))
+        _log.info('DRY_RUN: call %s', cmd_str)
         return
     proc = None
     pid = None
@@ -121,9 +124,8 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
             proc.kill()
         stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
-        print('run_command on {} (pid {}) exit status={}:{}\n'.format(
-            cmd_str, pid, retcode, stderr
-        ))
+        _log.error('run_command on %s (pid %s) exit status=%s:%s\n',
+            cmd_str, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
@@ -163,7 +165,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     if not isinstance(command, str):
         command = ' '.join(command)
     if dry_run:
-        print('DRY_RUN: call {}'.format(command))
+        _log.info('DRY_RUN: call %s', command)
         return
     proc = None
     pid = None
@@ -185,9 +187,8 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
             proc.kill()
         stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
-        print('run_shell_command on {} (pid {}) exit status={}:{}\n'.format(
-            command, pid, retcode, stderr
-        ))
+        _log.error('run_shell_command on %s (pid %s) exit status=%s:%s\n',
+            command, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=command, output=stderr)
     if '\0' in stdout:

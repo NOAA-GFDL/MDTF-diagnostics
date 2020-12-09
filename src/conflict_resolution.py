@@ -1,6 +1,9 @@
 from itertools import chain
 from collections import defaultdict
 
+import logging
+_log = logging.getLogger(__name__)
+
 def _default_tiebreaker(*args):
     assert len(args) == 1
     return args[0]

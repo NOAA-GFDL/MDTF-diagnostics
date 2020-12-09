@@ -1,6 +1,7 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
 import os
+import sys
 import io
 import re
 import glob
@@ -8,6 +9,9 @@ import shutil
 import string
 import tempfile
 from src import util, cli
+
+import logging
+_log = logging.getLogger(__name__)
 
 class MDTFConfigurer(object):
     def __init__(self, code_root=None, cli_rel_path=None):
@@ -103,10 +107,10 @@ class MDTFConfigurer(object):
             self.pod_list = [pod for pod in self.pod_list \
                 if not pod.startswith('example')]
         if not self.pod_list:
-            print(("WARNING: no PODs selected to be run. Do `./mdtf info pods`"
-            " for a list of available PODs, and check your -p/--pods argument."))
-            print('Received --pods = {}'.format(list(args)))
-            exit()
+            _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
+                " for a list of available PODs, and check your -p/--pods argument."
+                f"\nReceived --pods = {str(list(args))}"))
+            exit(1)
 
     def parse_case_list(self, cli_obj):
         case_list_in = util.to_iter(cli_obj.case_list)
@@ -121,9 +125,9 @@ class MDTFConfigurer(object):
             case_list.append(self.parse_case(case_tup, cli_d, cli_obj))
         self.case_list = [case for case in case_list if case is not None]
         if not self.case_list:
-            print("ERROR: no valid entries in case_list. Please specify model run information.")
-            print('Received:')
-            print(util.pretty_print_json(case_list_in))
+            _log.critical(("ERROR: no valid entries in case_list. Please specify "
+                "model run information.\nReceived:"
+                f"\n{util.pretty_print_json(case_list_in)}"))
             exit(1)
 
     def parse_case(self, case_tup, cli_d, cli_obj):
@@ -136,8 +140,8 @@ class MDTFConfigurer(object):
             d['convention'] = case_convention
 
         if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
-            print(("WARNING: Need to specify either CASENAME or model/experiment "
-                "in caselist entry {}, skipping.").format(n+1))
+            _log.warning(("Need to specify either CASENAME or model/experiment "
+                "in caselist entry %s, skipping."), n+1)
             return None
         _ = d.setdefault('model', d.get('convention', ''))
         _ = d.setdefault('experiment', '')
@@ -145,8 +149,8 @@ class MDTFConfigurer(object):
 
         for field in ['FIRSTYR', 'LASTYR', 'convention']:
             if not d.get(field, None):
-                print(("WARNING: No value set for {} in caselist entry {}, "
-                    "skipping.").format(field, n+1))
+                _log.warning(("No value set for %s in caselist entry %s, "
+                    "skipping."), field, n+1)
                 return None
         # if pods set from CLI, overwrite pods in case list
         d['pod_list'] = self.set_case_pod_list(d, cli_obj)
@@ -219,7 +223,7 @@ class PathManager(util.Singleton, util.NameSpace):
         # set by CLI settings that have "parse_type": "path" in JSON entry
         paths_to_parse = cli_obj.custom_types.get('path', [])
         if not paths_to_parse:
-            print("Warning: didn't get list of paths from CLI.")
+            _log.warning("Didn't get list of paths from CLI.")
         for key in paths_to_parse:
             self[key] = self._init_path(key, d, env=env)
             if key in d:
@@ -307,7 +311,7 @@ class TempDirManager(util.Singleton):
     def rm_tempdir(self, path):
         assert path in self._dirs
         self._dirs.remove(path)
-        print("\tDEBUG: cleanup temp dir {}".format(path))
+        _log.debug("Cleaning up temp dir %s", path)
         shutil.rmtree(path)
 
     def cleanup(self):
@@ -315,7 +319,7 @@ class TempDirManager(util.Singleton):
             self.rm_tempdir(d)
 
 class VariableTranslator(util.Singleton):
-    def __init__(self, code_root=None, unittest=False, verbose=0):
+    def __init__(self, code_root=None, unittest=False):
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
@@ -338,10 +342,9 @@ class VariableTranslator(util.Singleton):
         for f in config_files:
             d = util.read_json(f)
             for conv in util.to_iter(d['convention_name']):
-                if verbose > 0: 
-                    print('XXX found ', conv)
+                _log.debug('Found convention %s', conv)
                 if conv in self.variables:
-                    print(f"ERROR: convention {conv} defined in {f} already exists")
+                    _log.error("Convention %s defined in %s already exists.", conv, f)
                     raise util.ConventionError
 
                 self.axes[conv] = d.get('axes', dict())
@@ -351,22 +354,26 @@ class VariableTranslator(util.Singleton):
     def to_CF(self, convention, v_name):
         if convention == 'CF': 
             return v_name
-        assert convention in self.variables, \
-            f"Variable name translation doesn't recognize {convention}."
+        if convention not in self.variables:
+            _log.error("Variable name translation doesn't recognize %s.", convention)
+            raise KeyError(convention)
         inv_lookup = self.variables[convention].inverse()
         try:
             return util.from_iter(inv_lookup[v_name])
         except KeyError:
-            print(f"ERROR: name {v_name} not defined for convention {convention}.")
+            _log.exception("Name '%s' not defined for convention '%s'.",
+                v_name, convention)
             raise
     
     def from_CF(self, convention, v_name):
         if convention == 'CF': 
             return v_name
-        assert convention in self.variables, \
-            f"Variable name translation doesn't recognize {convention}."
+        if convention not in self.variables:
+            _log.error("Variable name translation doesn't recognize %s.", convention)
+            raise KeyError(convention)
         try:
             return self.variables[convention].get_(v_name)
         except KeyError:
-            print(f"ERROR: name {v_name} not defined for convention {convention}.")
+            _log.exception("Name '%s' not defined for convention '%s'.",
+                v_name, convention)
             raise

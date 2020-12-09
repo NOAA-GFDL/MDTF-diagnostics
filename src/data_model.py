@@ -8,6 +8,9 @@ import itertools
 import typing
 from src import util, datelabel
 
+import logging
+_log = logging.getLogger(__name__)
+
 class AbstractDMCoordinate(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
     """

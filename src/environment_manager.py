@@ -8,6 +8,9 @@ import typing
 import subprocess
 from src import util, configs, diagnostic
 
+import logging
+_log = logging.getLogger(__name__)
+
 class AbstractEnvironmentManager(abc.ABC):
     """Interface for EnvironmentManagers.
     """
@@ -170,7 +173,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 elif key == '_CONDA_ROOT':
                     self.conda_root = val
         except Exception:
-            print("Error: can't find conda.")
+            _log.exception("Can't find conda.")
             raise
 
         # find where environments are installed
@@ -190,7 +193,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 f'{self.conda_exe} env list | grep -qF "{conda_prefix}"'
             )
         except Exception:
-            print(f'Conda env {env_name} not found (grepped for {conda_prefix})')
+            _log.exception("Conda env '%s' not found (grepped for '%s')",
+                env_name, conda_prefix)
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
@@ -200,10 +204,10 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             short_name = env_name
         path = f"{self.conda_dir}/env_{short_name}.yml"
         if not os.path.exists(path):
-            print(f"Can't find {path}")
+            _log.error("Can't find %s", path)
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
-            print(f"Creating conda env {env_name} in {conda_prefix}'")
+            _log.info("Creating conda env '%s' in '%s'.", env_name, conda_prefix)
         command = (
             f'source {self.conda_dir}/conda_init.sh {self.conda_root} && '
             f'{self.conda_exe} env create --force -q -p "{conda_prefix}" -f "{path}"'
@@ -241,7 +245,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             elif 'python3' in langs:
                 return self.env_name_prefix + 'python3_base'
             else:
-                print(f"Can't find environment providing {pod.runtime_requirements}")
+                _log.error("Can't find environment providing %s", 
+                    pod.runtime_requirements)
 
     def activate_env_commands(self, env_name):
         """Source conda_init.sh to set things that aren't set b/c we aren't 
@@ -284,16 +289,16 @@ class SubprocessRuntimePODWrapper(object):
     log_handle: io.IOBase = dataclasses.field(default=None, init=False)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
-    def pre_run_setup(self, verbose=0):
+    def pre_run_setup(self):
         self.log_handle = io.open(
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'
         )
         log_str = f"--- MDTF.py Starting POD {self.pod.name}\n"
         self.log_handle.write(log_str)
-        if verbose > 0: print(log_str)
+        _log.info(log_str)
         self.pod.pre_run_setup()
-        print(f"\t{self.pod.name} will run in conda env {self.env}")
+        _log.info("\t%s will run in conda env '%s'", self.pod.name, self.env)
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
         self.setup_env_vars()
@@ -316,7 +321,7 @@ class SubprocessRuntimePODWrapper(object):
     def setup_exception_handler(self, exc):
         log_str = (f"Caught exception while preparing to run {self.pod.name}: "
             f"{repr(exc)}.")
-        print('\n\t' + log_str)
+        _log.error('\n\t' + log_str)
         if self.log_handle is not None:
             self.log_handle.write(log_str)
             self.log_handle.close()
@@ -367,7 +372,7 @@ class SubprocessRuntimePODWrapper(object):
     def runtime_exception_handler(self, exc):
         log_str = (f"Caught exception while running {self.pod.name}: "
             f"{repr(exc)}.")
-        print('\n' + log_str)
+        _log.error('\n' + log_str)
         if self.process is not None:
             self.process.kill()
             self.process = None
@@ -430,7 +435,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             for cmd in commands:
                 print('\tTEST MODE: call {}'.format(cmd))
         else:
-            print('\t'+p.run_msg())
+            _log.info('\t'+p.run_msg())
         # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
@@ -454,12 +459,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
         test_list = [p for p in self.iter_active_pods()]
         if not test_list:
-            print('Runtime: no PODs met data requirements; returning')
+            _log.error('Runtime: no PODs met data requirements; returning')
             return
 
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
-            print(f'Runtime: run {p.pod.name}')
+            _log.info('Runtime: run %s', p.pod.name)
             try:
                 p.pre_run_setup()
             except Exception as exc:
@@ -491,7 +496,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.log_handle is not None:
                 p.log_handle.close()
                 p.log_handle = None
-        print(f'Runtime: completed')
+        _log.info('Runtime: completed')
 
     def tear_down(self):
         # cleanup all envs that were defined, just to be safe

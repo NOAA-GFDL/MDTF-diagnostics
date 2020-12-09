@@ -4,6 +4,8 @@ import collections
 import enum
 import unittest.mock
 
+import logging
+_log = logging.getLogger(__name__)
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when

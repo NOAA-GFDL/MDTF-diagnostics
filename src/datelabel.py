@@ -21,6 +21,9 @@ import operator as op
 import warnings
 from src import util
 
+import logging
+_log = logging.getLogger(__name__)
+
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
 # https://github.com/AlexandreDecan/python-intervals ; LGPLv3
@@ -446,9 +449,8 @@ class DateRange(AtomicInterval, _DateMixin):
         dt0, prec0 = self._coerce_to_datetime(start, is_lower=True)
         dt1, prec1 = self._coerce_to_datetime(end, is_lower=False)
         if not (dt0 < dt1):
-            print('\tWarning: args to DateRange out of order ({} >= {})'.format(
-                start, end
-            ))
+            _log.warning('Args to DateRange out of order (%s >= %s)',
+                start, end)
             dt0, prec0 = self._coerce_to_datetime(end, is_lower=True)
             dt1, prec1 = self._coerce_to_datetime(start, is_lower=False)
         self._left = self.CLOSED

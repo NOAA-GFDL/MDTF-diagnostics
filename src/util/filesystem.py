@@ -2,6 +2,7 @@
 files.
 """
 import os
+import sys
 import io
 import collections
 from distutils.spawn import find_executable
@@ -11,6 +12,9 @@ import re
 import shutil
 import string
 from . import basic
+
+import logging
+_log = logging.getLogger(__name__)
 
 def abbreviate_path(path, old_base, new_base=None):
     """Express path as a path relative to old_base, optionally prepending 
@@ -53,7 +57,7 @@ def resolve_path(path, root_path="", env=None):
     if isinstance(env, dict):
         path = _expandvars(path, env)
     if '$' in path:
-        print("Warning: couldn't resolve all env vars in '{}'".format(path))
+        _log.warning("Couldn't resolve all env vars in '%s'", path)
         return path
     if os.path.isabs(path):
         return path
@@ -100,7 +104,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     for src, dest in zip(src_files, dest_files):
         copy_function(src, dest)
 
-def get_available_programs(verbose=0):
+def get_available_programs():
     return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
     #return {'py': sys.executable, 'ncl': 'ncl'}  
 
@@ -256,8 +260,8 @@ def read_json(file_path):
         with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except IOError:
-        print('Fatal IOError when trying to read {}. Exiting.'.format(file_path))
-        exit()
+        _log.critical(f'Fatal IOError when trying to read {file_path}. Exiting.')
+        exit(1)
     return parse_json(str_)
 
 def parse_json(str_):
@@ -265,17 +269,16 @@ def parse_json(str_):
     try:
         parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
     except UnicodeDecodeError:
-        print('{} contains non-ascii characters. Exiting.'.format(str_))
-        exit()
+        _log.critical(f'{str_} contains non-ascii characters. Exiting.')
+        exit(1)
     return parsed_json
 
-def write_json(struct, file_path, verbose=0, sort_keys=False):
+def write_json(struct, file_path, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
         struct (:py:obj:`dict`)
         file_path (:py:obj:`str`): path of the JSON file to write.
-        verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
     """
     try:
         str_ = json.dumps(struct, 
@@ -283,8 +286,8 @@ def write_json(struct, file_path, verbose=0, sort_keys=False):
         with io.open(file_path, 'w', encoding='utf-8') as file_:
             file_.write(str_.encode(encoding='utf-8', errors='strict'))
     except IOError:
-        print('Fatal IOError when trying to write {}. Exiting.'.format(file_path))
-        exit()
+        _log.critical(f'Fatal IOError when trying to write {file_path}. Exiting.')
+        exit(1)
 
 def pretty_print_json(struct, sort_keys=False):
     """Pseudo-YAML output for human-readable debugging output only - 

@@ -8,6 +8,9 @@ import typing
 from src import util, configs, verify_links, datelabel, data_model
 from src import cli # HACK for now
 
+import logging
+_log = logging.getLogger(__name__)
+
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
     ("ANY_NETCDF ANY_NETCDF_CLASSIC "
@@ -416,8 +419,8 @@ class Diagnostic(object):
         for v in old_active_vars:
             if v.failed:
                 v_str = v.short_format()
-                print((f"\t{self.name}: request for '{v_str}' failed; "
-                    "finding alternate vars."))
+                _log.info(("%s: request for '%s' failed; "
+                    "finding alternate vars."), self.name, v_str)
                 v.active = False
                 alt_success_flag = False
                 for alts in v.iter_alternates():
@@ -428,7 +431,8 @@ class Diagnostic(object):
                     for v in alts:
                         v.active = True
                 if not alt_success_flag:
-                    print(f"\t{self.name}: no alternates available for '{v_str}'.")
+                    _log.info("%s: no alternates available for '%s'.", 
+                        self.name, v_str)
                     try:
                         raise util.PodDataError(self, 
                             f"No alternates available for '{v_str}'.") from v.exception
@@ -477,12 +481,9 @@ class Diagnostic(object):
             raise util.PodRuntimeError(self, 
                 "Caught exception during pre_run_setup") from exc
 
-    def set_pod_env_vars(self, verbose=0):
+    def set_pod_env_vars(self):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
         Sets all environment variables for POD.
-
-        Args:
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         self.pod_env_vars.update({
             "POD_HOME": self.POD_CODE_DIR, # location of POD's code
@@ -512,42 +513,32 @@ class Diagnostic(object):
             # Define ax bounds variables; TODO do this more honestly
             self.pod_env_vars[ax_name + '_bnds'] = ax_name + '_bnds'
 
-    def check_pod_driver(self, verbose=0):
+    def check_pod_driver(self):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
-
-        Args:
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
 
         Raises: :exc:`~diagnostic.PodRuntimeError` if driver script
             can't be found.
         """
-        func_name = "check_pod_driver "
-        if (verbose > 1): 
-            print(func_name," received POD settings: ", self.__dict__)
         programs = util.get_available_programs()
 
-        if self.driver == '':  
-            print("WARNING: no valid driver entry found for ", self.name)
+        if not self.driver:  
+            _log.warning("No valid driver entry found for %s", self.name)
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \
                 in try_filenames for ext in programs]
-            if verbose > 1: 
-                print("Checking for possible driver names in {} {}".format(
-                    self.POD_CODE_DIR, file_combos
-                ))
+            _log.debug("Checking for possible driver names in {} {}".format(
+                self.POD_CODE_DIR, file_combos))
             for try_file in file_combos:
                 try_path = os.path.join(self.POD_CODE_DIR, try_file)
-                if verbose > 1: print(" looking for driver file "+try_path)
+                _log.debug(" looking for driver file "+try_path)
                 if os.path.exists(try_path):
                     self.driver = try_path
-                    if (verbose > 0): 
-                        print("Found driver script for {}: {}".format(
-                            self.name, self.driver
-                        ))
+                    _log.debug("Found driver script for {}: {}".format(
+                        self.name, self.driver))
                     break    #go with the first one found
                 else:
-                    if (verbose > 1 ): print("\t "+try_path+" not found...")
+                    _log.debug("\t "+try_path+" not found...")
         if self.driver == '':
             raise util.PodRuntimeError(self, 
                 """No driver script found in {}. Specify 'driver' in 
@@ -567,17 +558,14 @@ class Diagnostic(object):
             # Possible error: Driver file type unrecognized
             if driver_ext not in programs:
                 raise util.PodRuntimeError(self, 
-                    ("{} doesn't know how to call a .{} file.\n"
-                    "Supported programs: {}").format(
-                        func_name, driver_ext, programs
-                ))
+                    (f"Don't know how to call a .{driver_ext} file.\nSupported "
+                        f"programs: {programs}"))
             self.program = programs[driver_ext]
-            if ( verbose > 1): 
-                print(func_name +": Found program "+programs[driver_ext])
+            _log.debug("Found program "+programs[driver_ext])
 
     # -------------------------------------
 
-    def tear_down(self, verbose=0):
+    def tear_down(self):
         """Performs cleanup tasks when the POD has finished running.
 
         In order, this 1) creates the POD's HTML output page from its included
@@ -586,9 +574,6 @@ class Diagnostic(object):
         report; 2) converts the POD's output plots (in PS or EPS vector format) 
         to a bitmap format for webpage display; 3) Copies all requested files to
         the output directory and deletes temporary files.
-
-        Args:
-            verbose (:py:obj:`int`, optional): Logging verbosity level. Default 0.
         """
         self.POD_HTML = os.path.join(self.POD_WK_DIR, self.name+'.html')
         # add link and description to main html page
@@ -601,8 +586,7 @@ class Diagnostic(object):
             self.cleanup_pod_files()
             self.verify_pod_links()
 
-            if verbose > 0: 
-                print(f"---  MDTF.py Finished POD {self.name}")
+            _log.info("---  MDTF.py Finished POD %s", self.name)
                 # elapsed = timeit.default_timer() - start_time
                 # print(pod+" Elapsed time ",elapsed)
 
@@ -663,13 +647,13 @@ class Diagnostic(object):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
-        print(f'Checking linked output files for {self.name}:')
+        _log.info('Checking linked output files for %s', self.name)
         verifier = verify_links.LinkVerifier(
             self.POD_HTML, os.path.dirname(self.POD_WK_DIR), verbose=False
         )
         missing_out = verifier.verify_pod_links(self.name)
         if missing_out:
-            print(f'\tERROR: {self.name} has missing output files.')
+            _log.error('POD %s has missing output files.', self.name)
             template_d = self.templating_dict()
             template_d['missing_output'] = '<br>'.join(missing_out)
             util.append_html_template(
@@ -680,7 +664,7 @@ class Diagnostic(object):
             )
             self.exceptions.log(FileNotFoundError(f'Missing {len(missing_out)} files.'))
         else:
-            print(f'\tNo files are missing.')
+            _log.info('\tNo files are missing.')
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using

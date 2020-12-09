@@ -15,6 +15,9 @@ import os
 import re
 from src import datelabel, util, configs
 
+import logging
+_log = logging.getLogger(__name__)
+
 class CMIP6_CVs(util.Singleton):
     """Interface for looking up information from the CMIP6 CV file.
 

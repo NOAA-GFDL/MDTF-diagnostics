@@ -8,6 +8,9 @@ import src.metpy_xr
 from src.metpy_xr.units import units
 import xarray as xr
 
+import logging
+_log = logging.getLogger(__name__)
+
 class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
     We prefer to put each set of operations in its own child class, rather than
@@ -70,7 +73,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 instance.
         """
         if 'T' not in ax_names or var.is_static:
-            print('\tWarning: tried to crop time axis of time-independent variable')
+            _log.warning('Tried to crop time axis of time-independent variable.')
             return ds
         dt_range = var.T.range
         # lower/upper are earliest/latest datetimes consistent with the datetime 
@@ -86,20 +89,20 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         if time_ax.values[0] > dt_start_upper:
             error_str = ("Error: dataset start ({}) is after requested date "
                 "range start ({})").format(time_ax.values[0], dt_start_upper)
-            print('\t' + error_str)
+            _log.error(error_str)
             raise util.DataPreprocessError(var, error_str)
         if time_ax.values[-1] < dt_end_lower:
             error_str = ("Error: dataset end ({}) is before requested date "
                 "range end ({})").format(time_ax.values[-1], dt_end_lower)
-            print('\t' + error_str)
+            _log.error(error_str)
             raise util.DataPreprocessError(var, error_str)
         
-        print("\tCrop date range of {} from '{} -- {}' to {}".format(
+        _log.info("Crop date range of %s from '%s -- %s' to '%s'.",
                 var.name,
                 time_ax.values[0].strftime('%Y-%m-%d'), 
                 time_ax.values[-1].strftime('%Y-%m-%d'), 
                 dt_range
-            ))
+            )
         return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
 
     def process_dataset(self, var, ds, **kwargs):
@@ -165,7 +168,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 "with no Z axis."))
         z_level = int(z_coord.value)
         try:
-            print(f"\tExtracting {z_level} hPa level from {ax_names['var']}")
+            _log.info("Extracting %s hPa level from %s", z_level, ax_names['var'])
             ds = ds.metpy.sel(**({ax_names['Z']: z_level * units.hPa}))
             # rename dependent variable
             return ds.rename({ax_names['var']: ax_names['var']+str(z_level)})
@@ -226,7 +229,7 @@ class MDTFPreprocessorBase(abc.ABC):
     }
 
     def setup(self):
-        print(f'Preprocessor: begin data for {self.pod_name}')
+        _log.info("Preprocessor: begin data for %s", self.pod_name)
 
     @staticmethod
     def parse_cf_wrapper(ds):
@@ -277,8 +280,8 @@ class MDTFPreprocessorBase(abc.ABC):
                 # returned a set of (!=1) variables with same rank
                 raise ValueError("Couldn't determine var")
             else:
-                print("\tWarning: Expected {} not found in file, using {}".format(
-                    expected_name, var_name))
+                _log.warning("Expected '%s' not found in file, using '%s'.",
+                    expected_name, var_name)
                 return var_name
 
         def _metpy_lookup(ds, var_name, metpy_attr):
@@ -305,12 +308,12 @@ class MDTFPreprocessorBase(abc.ABC):
         # update axes names on var
         for ax, expected_ax in var.axes.items():
             if ax not in var.phys_axes:
-                print(("\tWarning: file has {ax} axis '{self.ax_names[ax]}' "
-                    f"not expected from variable request"))
+                _log.warning(("File has %s axis '%s', not expected from variable "
+                    "request."), ax, self.ax_names[ax])
                 continue
             if ax in self.ax_names and expected_ax.name != self.ax_names[ax]:
-                print(("\tWarning: expected name for {ax} was "
-                    f"'{expected_ax.name}', got '{self.ax_names[ax]}'"))
+                _log.warning("Expected name for %s was '%s', got '%s'.",
+                    ax, expected_ax.name, self.ax_names[ax])
                 if not var.rename_dimensions:
                     var.change_coord(ax, name=self.ax_names[ax])
 
@@ -324,7 +327,7 @@ class MDTFPreprocessorBase(abc.ABC):
         time = self.ax_names['T']
         self.calendar = getattr(ds[time].values[0], 'calendar', None)
         if self.calendar is None:
-            print('\tWarning: cftime calendar info parse failed.')
+            _log.warning('cftime calendar info parse failed.')
             _check_backup_location(ds[time].attrs)
             _check_backup_location(ds.attrs)
             _check_backup_location(self.convention)
@@ -334,7 +337,8 @@ class MDTFPreprocessorBase(abc.ABC):
         # update calendar on var
         expected_cal = var.T.calendar
         if expected_cal and expected_cal != self.calendar:
-            print(f"\tWarning: expected calendar {expected_cal}, got {self.calendar}")
+            _log.warning("Expected calendar '%s', got '%s'",
+                expected_cal, self.calendar)
             var.change_coord('T', calendar=self.calendar)
 
     def parse(self, var, dataset):
@@ -395,7 +399,7 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
     data.
     """
     def process(self, var, local_files):
-        print(f"    Processing {var.name}:")
+        _log.info("    Processing %s", var.name)
         assert len(local_files) == 1
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
@@ -407,7 +411,7 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
             ds = self.process_file(var, ds)
             ds = self.process_dataset(var, ds)
         path_str = util.abbreviate_path(var.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
-        print(f"    Writing to {path_str}")
+        _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=var.dest_path,
@@ -425,7 +429,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable.
     """
     def process(self, var, local_files):
-        print(f"    Processing {var.name}:")
+        _log.info("    Processing %s", var.name)
         ds = xr.open_dataset(
             local_files[0].local_path, **self.open_dataset_kwargs
         )
@@ -454,7 +458,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             )
             ds = self.process_dataset(var, ds)
         path_str = util.abbreviate_path(var.dest_path, self.MODEL_WK_DIR, '$WK_DIR')
-        print(f"    Writing to {path_str}")
+        _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         ds.to_netcdf(
             path=var.dest_path,

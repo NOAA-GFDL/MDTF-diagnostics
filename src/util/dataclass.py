@@ -9,6 +9,8 @@ import re
 import typing
 from . import basic
 
+import logging
+_log = logging.getLogger(__name__)
 
 class RegexPatternBase():
     """Dummy parent class for :class:`RegexPattern` and 
@@ -57,9 +59,9 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         except re.error as exc:
             raise exc
         if self.regex.groups != len(self.regex.groupindex):
-            print("Warning: unnamed matching fields")
+            _log.warning("Unnamed match groups in regex")
         if self.regex.groups == 0:
-            print("Warning: no matching fields")
+            _log.warning("No named match groups in regex")
         
         if not defaults:
             self._defaults = dict()
@@ -172,7 +174,7 @@ class RegexPatternWithTemplate(RegexPattern):
         self.template = template
         for f in self.fields:
             if f not in self.template:
-                print(f"Warning: field {f} not included in output")
+                _log.warning("Field %s not included in output.", f)
 
     def format(self):
         if self.template is None:
@@ -433,7 +435,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
                     # https://stackoverflow.com/a/54119384 for implementation
                     object.__setattr__(self, f.name, new_value)
             except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
-                print(exc)
+                _log.exception("%s", repr(exc))
                 raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
                     f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
 

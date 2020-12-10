@@ -6,57 +6,65 @@ import io
 import re
 import glob
 import shutil
+import signal
 import string
 import tempfile
-from src import util, cli
+import traceback
+from src import util, cli, mdtf_info
+from src.environment_manager import SubprocessRuntimeManager
 
 import logging
 _log = logging.getLogger(__name__)
 
-class MDTFConfigurer(object):
-    def __init__(self, code_root=None, cli_rel_path=None):
-        """Set up CLI; parse and store arguments
-        """
+class MDTFFramework(object):
+    def __init__(self, cli_obj):
         # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
-        assert code_root # singleton, so this method should only be called once
-        self.code_root = code_root
+        self.code_root = cli_obj.code_root
         self.pod_list = []
         self.case_list = []
+        self.cases = []
         self.global_env_vars = dict()
-
-        cli_obj = cli.FrameworkCLIHandler(code_root, cli_rel_path)
-        self._cli_pre_parse_hook(cli_obj)
-        cli_obj.parse_cli()
+        try:
+            # load pod data
+            pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
+            self.configure(cli_obj, pod_info_tuple)
+        except Exception as exc:
+            wrapped_exc = traceback.TracebackException.from_exception(exc)
+            _log.critical("Framework caught exception %s", repr(exc))
+            print(''.join(wrapped_exc.format()))
+        
+    def configure(self, cli_obj, pod_info_tuple):
+        """Wrapper for all configuration done based on CLI arguments.
+        """
         self._cli_post_parse_hook(cli_obj)
-        # load pod data
-        pod_info_tuple = cli.load_pod_settings(code_root)
-        self.pod_data = pod_info_tuple.pod_data
-        self.all_realms = pod_info_tuple.sorted_lists.get('realms', [])
-        self.pod_realms = pod_info_tuple.realm_data
-        self.parse_mdtf_args(cli_obj)
+        self.dispatch_classes(cli_obj)
+        self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
-        config = ConfigManager(cli_obj, self.pod_data, self.case_list, 
+        config = ConfigManager(cli_obj, pod_info_tuple, self.case_list, 
             self.global_env_vars)
-        paths = PathManager(code_root, cli_obj)
+        paths = PathManager(self.code_root, cli_obj)
         self.verify_paths(config, paths)
-        # use WORKING_DIR for temp data
         _ = TempDirManager(paths.WORKING_DIR)
-        _ = VariableTranslator(code_root)
+        _ = VariableTranslator(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)
         self._print_config(cli_obj, config, paths)
-
-    def _cli_pre_parse_hook(self, cli_obj):
-        # gives subclasses the ability to customize CLI handler before parsing
-        # although most of the work done by parse_mdtf_args
-        pass
 
     def _cli_post_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler after parsing
         # although most of the work done by parse_mdtf_args
         if cli_obj.config.get('dry_run', False):
             cli_obj.config['test_mode'] = True
+
+    def dispatch_classes(self, cli_obj):
+        def _dispatch(setting):
+            return cli_obj.config[setting]
+
+        self.DataManager = _dispatch('data_manager')
+        self.Preprocessor = _dispatch('preprocessor')
+        self.EnvironmentManager = _dispatch('environment_manager')
+        self.RuntimeManager = SubprocessRuntimeManager
 
     @staticmethod
     def _populate_from_cli(cli_obj, group_nm, target_d=None):
@@ -67,12 +75,12 @@ class MDTFConfigurer(object):
                 target_d[key] = val
         return target_d
 
-    def parse_mdtf_args(self, cli_obj):
+    def parse_mdtf_args(self, cli_obj, pod_info_tuple):
         """Parse script options returned by the CLI. For greater customizability,
         most of the functionality is spun out into sub-methods.
         """
         self.parse_env_vars(cli_obj)
-        self.parse_pod_list(cli_obj)
+        self.parse_pod_list(cli_obj, pod_info_tuple)
         self.parse_case_list(cli_obj)
 
     def parse_env_vars(self, cli_obj):
@@ -83,29 +91,30 @@ class MDTFConfigurer(object):
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
-    def parse_pod_list(self, cli_obj):
+    def parse_pod_list(self, cli_obj, pod_info_tuple):
+        pod_data = pod_info_tuple.pod_data
+        all_realms = pod_info_tuple.sorted_lists.get('realms', [])
+        pod_realms = pod_info_tuple.realm_data
+
         args = util.to_iter(cli_obj.config.pop('pods', []), set)
         if 'example' in args or 'examples' in args:
-            self.pod_list = [pod for pod in self.pod_data \
-                if pod.startswith('example')]
+            self.pod_list = [p for p in pod_data if p.startswith('example')]
         elif 'all' in args:
-            self.pod_list = [pod for pod in self.pod_data \
-                if not pod.startswith('example')]
+            self.pod_list = [p for p in pod_data if not p.startswith('example')]
         else:
             # specify pods by realm
-            realms = args.intersection(set(self.all_realms))
-            args = args.difference(set(self.all_realms)) # remainder
-            for key in self.pod_realms:
+            realms = args.intersection(all_realms)
+            args = args.difference(all_realms) # remainder
+            for key in pod_realms:
                 if util.to_iter(key, set).issubset(realms):
-                    self.pod_list.extend(self.pod_realms[key])
+                    self.pod_list.extend(pod_realms[key])
             # specify pods by name
-            pods = args.intersection(set(self.pod_data))
+            pods = args.intersection(set(pod_data))
             self.pod_list.extend(list(pods))
-            for arg in args.difference(set(self.pod_data)): # remainder:
+            for arg in args.difference(set(pod_data)): # remainder:
                 print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
             # exclude examples
-            self.pod_list = [pod for pod in self.pod_list \
-                if not pod.startswith('example')]
+            self.pod_list = [p for p in pod_data if not p.startswith('example')]
         if not self.pod_list:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
@@ -113,7 +122,7 @@ class MDTFConfigurer(object):
             exit(1)
 
     def parse_case_list(self, cli_obj):
-        case_list_in = util.to_iter(cli_obj.case_list)
+        case_list_in = util.to_iter(cli_obj.config.get('case_list', []))
         cli_d = self._populate_from_cli(cli_obj, 'MODEL')
         if 'CASE_ROOT_DIR' not in cli_d and cli_obj.config.get('root_dir', None): 
             # CASE_ROOT was set positionally
@@ -164,10 +173,6 @@ class MDTFConfigurer(object):
         else:
             return case['pod_list']
 
-    def _post_parse_hook(self, cli_obj, config, paths):
-        # init other services
-        pass
-
     def verify_paths(self, config, p):
         keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
@@ -177,6 +182,19 @@ class MDTFConfigurer(object):
         util.check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
         util.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
             create=True)
+
+    def configure_logs(self, cli_obj):
+        root_logger = logging.getLogger()
+        paths = PathManager()
+        # configure the real loggers from a file
+        util.mdtf_log_config(
+            root_logger, cli_obj,
+            {"mdtf_log_file": os.path.join(paths.WORKING_DIR, "mdtf.log")}
+        )
+
+    def _post_parse_hook(self, cli_obj, config, paths):
+        # init other services
+        pass
 
     def _print_config(self, cli_obj, config, paths):
         # make config nested dict for backwards compatibility
@@ -200,12 +218,48 @@ class MDTFConfigurer(object):
         print('DEBUG: SETTINGS:')
         print(util.pretty_print_json(d))
 
+    # --------------------------------------------------------------------
+
+    def run_case(self, case_name, case_d):
+        print(f"Framework: initialize {case_name}")
+        case = self.DataManager(case_d, self.Preprocessor)
+        case.setup()
+        self.cases.append(case)
+
+        print(f'Framework: get data for {case_name}')
+        case.query_and_fetch_data()
+        case.preprocess_data()
+
+        print(f'Framework: run {case_name}')
+        run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
+        run_mgr.setup()
+        run_mgr.run()
+        run_mgr.tear_down()
+        case.tear_down()
+        return any(p.failed for p in case.pods.values())
+
+    def main(self):
+        failed = False
+        _log.info("\n======= Starting {__file__}")
+        # only run first case in list until dependence on env vars cleaned up
+        for d in self.case_list[0:1]:
+            case_name = d.get('CASENAME', '')
+            failed = failed or self.run_case(case_name, d)
+
+        tempdirs = TempDirManager()
+        tempdirs.cleanup()
+        print_summary(self)
+        if failed:
+            return 1
+        else:
+            return 0
+
 
 class ConfigManager(util.Singleton, util.NameSpace):
-    def __init__(self, cli_obj=None, pod_data=None, case_list=None, 
+    def __init__(self, cli_obj=None, pod_info_tuple=None, case_list=None, 
         global_env_vars=None, unittest=False):
         self.update(cli_obj.config)
-        self.pods = pod_data
+        self.pods = pod_info_tuple.pod_data
         self.case_list = case_list
         self.global_env_vars = global_env_vars
 
@@ -292,6 +346,10 @@ class TempDirManager(util.Singleton):
         self._root = temp_root
         self._dirs = []
 
+        # delete temp files if we're killed
+        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler)
+        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler)
+
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
@@ -315,8 +373,15 @@ class TempDirManager(util.Singleton):
         shutil.rmtree(path)
 
     def cleanup(self):
-        for d in self._dirs:
-            self.rm_tempdir(d)
+        config = ConfigManager()
+        if not config.get('keep_temp', False):
+            for d in self._dirs:
+                self.rm_tempdir(d)
+
+    def tempdir_cleanup_handler(self, signum=None, frame=None):
+        # delete temp files
+        util.signal_logger(self.__class__.__name__, signum, frame)
+        self.cleanup()
 
 class VariableTranslator(util.Singleton):
     def __init__(self, code_root=None, unittest=False):
@@ -377,3 +442,43 @@ class VariableTranslator(util.Singleton):
             _log.exception("Name '%s' not defined for convention '%s'.",
                 v_name, convention)
             raise
+
+
+def summary_info_tuple(case):
+    """Debug information; will clean this up.
+    """
+    if not hasattr(case, 'pods') or not case.pods:
+        return (
+            ['dummy sentinel string'], [],
+            getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+        )
+    else:
+        return (
+            [p_name for p_name, p in case.pods.items() if p.failed],
+            [p_name for p_name, p in case.pods.items() if not p.failed],
+            getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+        )
+
+def print_summary(fmwk):
+    d = {c.case_name: summary_info_tuple(c) for c in fmwk.cases}
+    failed = any(len(tup[0]) > 0 for tup in d.values())
+    if failed:
+        print(f"\nExiting with errors from {__file__}")
+        for case_name, tup in d.items():
+            print(f"Summary for {case_name}:")
+            if tup[0][0] == 'dummy sentinel string':
+                print('\tAn error occurred in setup. No PODs were run.')
+            else:
+                if tup[1]:
+                    print((f"\tThe following PODs exited cleanly: "
+                        f"{', '.join(tup[1])}"))
+                if tup[0]:
+                    print((f"\tThe following PODs raised errors: "
+                        f"{', '.join(tup[0])}"))
+            print(f"\tOutput written to {tup[2]}")
+    else:
+        print(f"\nExiting normally from {__file__}")
+        for case_name, tup in d.items():
+            print(f"Summary for {case_name}:")
+            print(f"\tAll PODs exited cleanly.")
+            print(f"\tOutput written to {tup[2]}")

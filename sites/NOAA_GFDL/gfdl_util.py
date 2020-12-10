@@ -3,7 +3,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from src import util, configs, datelabel
+from src import util, core, datelabel
 
 import logging
 _log = logging.getLogger(__name__)
@@ -92,16 +92,16 @@ class ModuleManager(util.Singleton):
         assert set(self._list()) == self.user_modules
 
 
-class GFDLMDTFConfigurer(configs.MDTFConfigurer):
-    def parse_mdtf_args(self, cli_obj):
-        super(GFDLMDTFConfigurer, self).parse_mdtf_args(cli_obj)
+class GFDLMDTFFramework(core.MDTFFramework):
+    def parse_mdtf_args(self, cli_obj, pod_info_tuple):
+        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj, pod_info_tuple)
         # set up cooperative mode -- hack to pass config settings
         self.frepp_mode = cli_obj.config.get('frepp', False)
         if self.frepp_mode:
             cli_obj.config['diagnostic'] = 'Gfdl'
 
     def parse_env_vars(self, cli_obj):
-        super(GFDLMDTFConfigurer, self).parse_env_vars(cli_obj)
+        super(GFDLMDTFFramework, self).parse_env_vars(cli_obj)
         # set temp directory according to where we're running
         if running_on_PPAN():
             gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
@@ -118,7 +118,7 @@ class GFDLMDTFConfigurer(configs.MDTFConfigurer):
 
     def _post_parse_hook(self, cli_obj, config, paths):
         ### call parent class method
-        super(GFDLMDTFConfigurer, self)._post_parse_hook(cli_obj, config, paths)
+        super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
 
         self.reset_case_pod_list(cli_obj, config, paths)
         self.dry_run = config.get('dry_run', False)
@@ -131,7 +131,7 @@ class GFDLMDTFConfigurer(configs.MDTFConfigurer):
 
     def reset_case_pod_list(self, cli_obj, config, paths):
         if self.frepp_mode:
-            for case in config.case_list:
+            for case in self.case_list:
                 # frepp mode:only attempt PODs other instances haven't already done
                 case_outdir = paths.modelPaths(case, overwrite=True)
                 case_outdir = case_outdir.MODEL_OUT_DIR
@@ -187,8 +187,8 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        config = configs.ConfigManager()
-        tmpdirs = configs.TempDirManager()
+        config = core.ConfigManager()
+        tmpdirs = core.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
         if timeout is None:
             timeout = config.get('file_transfer_timeout', 0)

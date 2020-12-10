@@ -20,158 +20,46 @@ if sys.version_info[0] != 3 or sys.version_info[1] < 7:
     f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
-import signal
-import shutil
-from src import cli, util, configs, data_manager, environment_manager, \
-    diagnostic
+import logging
+from src import cli, mdtf_info
+from src.util import logs
 
-class MDTFFramework(object):
-    def __init__(self, *modules_to_search):
-        config = configs.ConfigManager()
-        # delete temp files if we're killed
-        signal.signal(signal.SIGTERM, self.cleanup_tempdirs)
-        signal.signal(signal.SIGINT, self.cleanup_tempdirs)
+_log = logging.getLogger()
+_log.setLevel(logging.INFO)
+logging.captureWarnings(True)
 
-        def _dispatch(setting):
-            def _var_to_class_name(str_):
-                # drop '_' and title-case class name
-                return ''.join(str_.split('_')).title()
+def main():
+    # get dir of currently executing script: 
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root = os.path.dirname(cwd)
 
-            class_prefix = config.get(setting, '')
-            class_prefix = _var_to_class_name(util.from_iter(class_prefix))
-            class_suffix = _var_to_class_name(setting)
-            for mod in modules_to_search:
-                try:
-                    return getattr(mod, class_prefix+class_suffix)
-                except Exception:
-                    continue
-            print("No class named {}.".format(class_prefix+class_suffix))
-            raise Exception('no_class')
-
-        self.Diagnostic = _dispatch('diagnostic')
-        self.DataManager = _dispatch('data_manager')
-        self.Preprocessor = _dispatch('preprocessor')
-        self.EnvironmentManager = _dispatch('environment_manager')
-
-    def cleanup_tempdirs(self, signum=None, frame=None):
-        # delete temp files
-        util.signal_logger(self.__class__.__name__, signum, frame)
-        config = configs.ConfigManager()
-        tmpdirs = configs.TempDirManager()
-        if not config.get('keep_temp', False):
-            tmpdirs.cleanup()
-
-    def run_case(self, case_name, case_d):
-        print(f"Framework: initialize {case_name}")
-        pod_d = {
-            pod_name: self.Diagnostic.from_config(pod_name) \
-                for pod_name in case_d.get('pod_list', [])
-        }
-        case = self.DataManager(case_d, pod_d, self.Preprocessor)
-        case.setup()
-
-        print(f'Framework: get data for {case_name}')
-        case.query_and_fetch_data()
-        case.preprocess_data()
-
-        print(f'Framework: run {case_name}')
-        run_mgr = environment_manager.SubprocessRuntimeManager(
-            pod_d, self.EnvironmentManager
-        )
-        run_mgr.setup()
-        run_mgr.run()
-        run_mgr.tear_down()
-        case.tear_down()
-        return self.summary_info_tuple(case, pod_d)
-
-    def main_loop(self):
-        # only run first case in list until dependence on env vars cleaned up
-        config = configs.ConfigManager()
-        summary_d = dict()
-        for d in config.case_list[0:1]:
-            case_name = d.get('CASENAME', '')
-            summary_info = self.run_case(case_name, d)
-            summary_d[case_name] = summary_info
-        self.cleanup_tempdirs()
-        bad_exit = self.print_summary(summary_d)
-        return bad_exit
-
-    @staticmethod
-    def summary_info_tuple(case, pod_d):
-        """Debug information; will clean this up.
-        """
-        if not pod_d:
-            return (
-                ['dummy sentinel string'], [],
-                getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
-            )
-        else:
-            return (
-                [p_name for p_name, p in pod_d.items() if p.failed],
-                [p_name for p_name, p in pod_d.items() if not p.failed],
-                getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
-            )
-
-    @staticmethod
-    def print_summary(d):
-        failed = any(len(tup[0]) > 0 for tup in d.values())
-        if failed:
-            print(f"\nExiting with errors from {__file__}")
-            for case_name, tup in d.items():
-                print(f"Summary for {case_name}:")
-                if tup[0][0] == 'dummy sentinel string':
-                    print('\tAn error occurred in setup. No PODs were run.')
-                else:
-                    if tup[1]:
-                        print((f"\tThe following PODs exited cleanly: "
-                            f"{', '.join(tup[1])}"))
-                    if tup[0]:
-                        print((f"\tThe following PODs raised errors: "
-                            f"{', '.join(tup[0])}"))
-                print(f"\tOutput written to {tup[2]}")
-        else:
-            print(f"\nExiting normally from {__file__}")
-            for case_name, tup in d.items():
-                print(f"Summary for {case_name}:")
-                print(f"\tAll PODs exited cleanly.")
-                print(f"\tOutput written to {tup[2]}")
-        return failed
-
-
-def main(code_root, cli_rel_path):
     # poor man's subparser: argparse's subparser doesn't handle this
     # use case easily, so just dispatch on first argument
     if len(sys.argv) == 1 or \
         len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
         # build CLI, print its help and exit
-        cli_obj = cli.FrameworkCLIHandler(code_root, cli_rel_path)
-        cli_obj.parser.print_help()
+        cli_obj = cli.MDTFTopLevelArgParser(code_root)
+        cli_obj.print_help()
     elif sys.argv[1].lower() == 'info': 
         # "subparser" for command-line info
-        cli.InfoCLIHandler(code_root, sys.argv[2:])
+        mdtf_info.InfoCLIHandler(code_root, sys.argv[2:])
     else:
+        # run the actual framework
+        # Cache log info in memory until log file is set up
+        log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
+        _log.addHandler(log_cache)
+
         # not printing help or info, setup CLI normally 
-        # move into its own class so that child classes can customize
-        # above options without having to rewrite below
-        configs.MDTFConfigurer(code_root, cli_rel_path)
-        framework = MDTFFramework(
-            data_manager, environment_manager, diagnostic
-        )
-        print(f"\n======= Starting {__file__}")
-        bad_exit = framework.main_loop()
-        if bad_exit:
-            exit(1)
+        cli_obj = cli.MDTFTopLevelArgParser(code_root)
+        framework = cli_obj.dispatch()
+        print(framework)
+        exit_code = framework.main()
+        exit(exit_code)
+
+    logging.shutdown()
 
 # should move this out of "src" package, but need to create wrapper shell script
 # to set framework conda env.
 if __name__ == '__main__':
-    # get dir of currently executing script: 
-    cwd = os.path.dirname(os.path.realpath(__file__)) 
-    code_root, src_dir = os.path.split(cwd)
-    cli_rel_path = os.path.join(src_dir, 'cli.jsonc')
-    if not os.path.exists(cli_rel_path):
-        # print('Warning: site-specific cli.jsonc not found, using template.')
-        cli_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
-
-    main(code_root, cli_rel_path)
+    main()
     exit(0)

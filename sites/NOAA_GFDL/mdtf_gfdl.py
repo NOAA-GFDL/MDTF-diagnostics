@@ -9,7 +9,7 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
     exit(1)
 # passed; continue with imports
 import os
-from src import cli, util, configs, data_manager, environment_manager, \
+from src import cli, util, core, data_manager, environment_manager, \
     diagnostic, mdtf
 from sites.NOAA_GFDL import gfdl, gfdl_util
 

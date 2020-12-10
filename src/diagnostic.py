@@ -5,7 +5,7 @@ import enum
 import glob
 import shutil
 import typing
-from src import util, configs, verify_links, datelabel, data_model
+from src import util, core, verify_links, datelabel, data_model
 from src import cli # HACK for now
 
 import logging
@@ -375,10 +375,10 @@ class Diagnostic(object):
     def from_config(cls, pod_name):
         """Usual method of instantiating Diagnostic objects, from the contents
         of its settings.jsonc file as stored in the 
-        :class:`~configs.ConfigManager`.
+        :class:`~core.ConfigManager`.
         """
-        config = configs.ConfigManager()
-        paths = configs.PathManager()
+        config = core.ConfigManager()
+        paths = core.PathManager()
         # HACK - don't want to read config files twice, but this lets us
         # propagate syntax errors
         pod_config = cli.load_pod_settings(paths.CODE_ROOT, pod_name)
@@ -593,7 +593,7 @@ class Diagnostic(object):
     def templating_dict(self):
         """Get the dict of recognized substitutions to perform in HTML templates.
         """
-        config = configs.ConfigManager()
+        config = core.ConfigManager()
         template = config.global_env_vars.copy()
         template.update(self.pod_env_vars)
         return {str(k): str(v) for k,v in template.items()}
@@ -684,7 +684,7 @@ class Diagnostic(object):
             dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
                 bitmap files to.
         """
-        config = configs.ConfigManager()
+        config = core.ConfigManager()
         abs_src_subdir = os.path.join(self.POD_WK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.POD_WK_DIR, dest_subdir)
         files = util.find_files(
@@ -733,10 +733,10 @@ class Diagnostic(object):
         digested observational data), 3) removes vector graphics if requested,
         4) removes netCDF scratch files in `POD_WK_DIR` if requested.
 
-        Settings are set at runtime, when :class:`~configs.ConfigManager` is 
+        Settings are set at runtime, when :class:`~core.ConfigManager` is 
         initialized.
         """
-        config = configs.ConfigManager()
+        config = core.ConfigManager()
         # copy PDF documentation (if any) to output
         files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
         for f in files:

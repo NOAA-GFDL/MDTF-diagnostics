@@ -13,7 +13,7 @@ repo, which is included as a submodule.
 """
 import os
 import re
-from src import datelabel, util, configs
+from src import datelabel, util, core
 
 import logging
 _log = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class CMIP6_CVs(util.Singleton):
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            paths = configs.PathManager()
+            paths = core.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'src', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)

@@ -1,7 +1,7 @@
 import os
 import abc
 import functools
-from src import util, configs, data_model, diagnostic
+from src import util, core, data_model, diagnostic
 # must import these before xarray in order to register accessors
 import cftime
 import src.metpy_xr

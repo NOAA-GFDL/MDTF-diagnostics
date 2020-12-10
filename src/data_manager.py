@@ -11,7 +11,7 @@ import shutil
 import signal
 from subprocess import CalledProcessError
 import typing
-from src import util, configs, datelabel, preprocessor, data_model, diagnostic
+from src import util, core, datelabel, preprocessor, data_model, diagnostic
 
 import logging
 _log = logging.getLogger(__name__)
@@ -95,15 +95,16 @@ class DataManager(abc.ABC):
     output.
     """
     _AttributesClass = DataManagerAttributesBase
+    _DiagnosticClass = diagnostic.Diagnostic
 
-    def __init__(self, case_dict, pod_dict, PreprocessorClass):
+    def __init__(self, case_dict, PreprocessorClass):
         self.case_name = case_dict['CASENAME']
         self.convention = case_dict.get('convention', 'CF')
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
-        self.pods = pod_dict
         self._PreprocessorClass = PreprocessorClass
+        self.pods = case_dict.get('pod_list', [])
 
-        config = configs.ConfigManager()
+        config = core.ConfigManager()
         self.env_vars = config.global_env_vars.copy()
         self.env_vars.update({
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
@@ -116,7 +117,7 @@ class DataManager(abc.ABC):
         self.overwrite = config.overwrite
         self.file_overwrite = self.overwrite # overwrite config and .tar
 
-        paths = configs.PathManager()
+        paths = core.PathManager()
         d = paths.model_paths(case_dict, overwrite=self.overwrite)
         self.code_root = paths.CODE_ROOT
         self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
@@ -130,12 +131,12 @@ class DataManager(abc.ABC):
         self.fetched_keys = set([])
         self.data_files = util.MultiMap()
 
-    def iter_pods(self, all_pods=False):
+    def iter_pods(self):
         """Generator iterating over all pods which haven't been
         skipped due to requirement errors.
         """
         for p in self.pods.values():
-            if all_pods or p.active:
+            if p.active:
                 yield p
 
     # -------------------------------------
@@ -143,7 +144,7 @@ class DataManager(abc.ABC):
     def setup(self):
         util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
 
-        translate = configs.VariableTranslator()
+        translate = core.VariableTranslator()
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         if self.convention not in translate.units:
             raise AssertionError(("Variable name translation doesn't recognize "
@@ -156,7 +157,11 @@ class DataManager(abc.ABC):
         temp = translate.variables[self.convention].to_dict()
         self.env_vars.update(temp)
 
-        for pod in self.iter_pods(all_pods=True):
+        self.pods = {
+            pod_name: self._DiagnosticClass.from_config(pod_name) \
+                for pod_name in self.pods
+        }
+        for pod in self.pods.values():
             try:
                 self.setup_pod(pod)
             except Exception as exc:
@@ -169,13 +174,13 @@ class DataManager(abc.ABC):
                 continue
 
         print('####################')
-        for pod in self.iter_pods(all_pods=True):
+        for pod in self.pods.values():
             for v in pod.iter_vars(all_vars=True):
                 v.print_debug()
         print('####################')
 
     def setup_pod(self, pod):
-        paths = configs.PathManager()
+        paths = core.PathManager()
         paths = paths.pod_paths(pod, self)
         for k,v in paths.items():
             setattr(pod, k, v)
@@ -199,7 +204,7 @@ class DataManager(abc.ABC):
         available after DataManager and Diagnostic have been configured (ie, 
         only known at runtime, not from settings.jsonc.)
         """
-        translate = configs.VariableTranslator()
+        translate = core.VariableTranslator()
         v.change_coord(
             'T',
             new_class = {
@@ -473,12 +478,12 @@ class DataManager(abc.ABC):
 
     def tear_down(self):
         # TODO: handle OSErrors in all of these
-        config = configs.ConfigManager()
-        paths = configs.PathManager()
+        config = core.ConfigManager()
+        paths = core.PathManager()
         
         # create empty text file for PODs to append to
         open(self.TEMP_HTML, 'w').close()
-        for p in self.iter_pods(all_pods=True):
+        for p in self.pods.values():
             p.tear_down()
         self._make_html()
         _ = self._backup_config_file(config)
@@ -557,7 +562,7 @@ class DataManager(abc.ABC):
 
 @util.mdtf_dataclass(frozen=True)
 class LocalfileDataManagerAttributes(DataManagerAttributesBase):
-    CASENAME: dataclasses.InitVar
+    CASENAME: dataclasses.InitVar = util.MANDATORY
     sample_data_source: str = None
 
     def __post_init__(self, FIRSTYR, LASTYR, CASENAME):
@@ -595,7 +600,7 @@ class LocalfileDataManager(DataManager):
         )
 
     def query_dataset(self, data_key):
-        tmpdirs = configs.TempDirManager()
+        tmpdirs = core.TempDirManager()
 
         path = self.remote_path(data_key)
         tmpdir = tmpdirs.make_tempdir(hash_obj = data_key)

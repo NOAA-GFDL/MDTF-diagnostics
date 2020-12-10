@@ -6,7 +6,7 @@ from distutils.spawn import find_executable
 import signal
 import typing
 import subprocess
-from src import util, configs, diagnostic
+from src import util, core, diagnostic
 
 import logging
 _log = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     def __init__(self):
         super(VirtualenvEnvironmentManager, self).__init__()
 
-        paths = configs.PathManager()
+        paths = core.PathManager()
         self.venv_root = paths.get('venv_root', '')
         self.r_lib_root = paths.get('r_lib_root', '')
 
@@ -148,7 +148,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     def __init__(self):
         super(CondaEnvironmentManager, self).__init__()
 
-        paths = configs.PathManager()
+        paths = core.PathManager()
         self.code_root = paths.CODE_ROOT
         self.conda_dir = os.path.join(self.code_root, 'src','conda')
         self.env_list = []
@@ -354,7 +354,7 @@ class SubprocessRuntimePODWrapper(object):
             (:py:obj:`str`): Command-line invocation to validate the POD's 
                 runtime environment.
         """
-        paths = configs.PathManager()
+        paths = core.PathManager()
         command_path = os.path.join(paths.CODE_ROOT, \
             'src', 'validate_environment.sh')
         reqs = self.pod.runtime_requirements # abbreviate
@@ -398,7 +398,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
     def __init__(self, pod_dict, EnvMgrClass):
-        config = configs.ConfigManager()
+        config = core.ConfigManager()
         self.test_mode = config.test_mode
         # transfer all pods, even failed ones, because we need to call their 
         self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]

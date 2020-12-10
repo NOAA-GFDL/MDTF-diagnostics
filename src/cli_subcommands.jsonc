@@ -31,7 +31,7 @@
     // },
     "run": {
       "help": "Run the framework on model data.",
-      "entry_point": "src.configs:MDTFFramework",
+      "entry_point": "src.core:MDTFFramework",
       "cli_file": "src/cli_template.jsonc"
     }
   }

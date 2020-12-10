@@ -1,5 +1,5 @@
 """Classes related to customizing the framework's command line interface and 
-parsing the configuration options passed to it.
+setting option values from user input.
 """
 import os
 import sys
@@ -14,7 +14,7 @@ import shlex
 import re
 import textwrap
 import typing
-from src import util, diagnostic
+from src import util
 
 import logging
 _log = logging.getLogger(__name__)
@@ -36,6 +36,32 @@ def word_wrap(str_):
     paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
     return '\n\n'.join(paragraphs)
 
+def read_config_files(code_root, file_name, site=""):
+    """Utility function to read a *pair* of configuration files (one for the
+    framework defaults, another optional one for site-specific config.) 
+
+    Args:
+        file_name (str): Name of file to search for. We search for the file
+            in all subdirectories of :class:meth:`._CLIConfigHandler.site_dir`
+            and :class:meth:`._CLIConfigHandler.framework_dir`, respectively.
+
+    Returns: a tuple of the two files' contents. First entry is the 
+        site specific file (empty dict if that file isn't found) and second 
+        is the framework file (fatal error; exit immediately if not found.)
+    """
+    src_dir = os.path.join(code_root, 'src')
+    site_dir = os.path.join(code_root, 'sites', site)
+    site_d = util.find_json(site_dir, file_name, exit_if_missing=False)
+    fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True)
+    return (site_d, fmwk_d)
+
+def read_config_file(code_root, file_name, site=""):
+    """Return site's file if present, else the framework's file.
+    """
+    site_d, fmwk_d = read_config_files(code_root, file_name, site=site)
+    if not site_d:
+        return fmwk_d
+    return site_d
 
 class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter, 
@@ -43,7 +69,7 @@ class CustomHelpFormatter(
     ):
     """Modify help text formatter to only display variable placeholder 
     ("metavar") once, to save space. Taken from 
-    `<https://stackoverflow.com/a/16969505>`__ . Also inherit from 
+    `<https://stackoverflow.com/a/16969505>`__. Also inherit from 
     RawDescriptionHelpFormatter in order to preserve line breaks in description
     only (`<https://stackoverflow.com/a/18462760>`__).
     """
@@ -73,6 +99,21 @@ class CustomHelpFormatter(
                 parts.extend(action.option_strings)
                 parts[-1] += ' %s' % args_string
             return ', '.join(parts)
+
+    def _get_help_string(self, action):
+        """Only print the argument's default in the help string if it's defined. 
+        Based on `https://stackoverflow.com/a/34545549`__.
+        """
+        help = action.help
+        if '%(default)' not in action.help and \
+            action.default not in (None, argparse.SUPPRESS):
+            defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
+            if action.option_strings or action.nargs in defaulting_nargs:
+                if isinstance(action.default, str):
+                    help += " (default: '%(default)s')"
+                else:
+                    help += " (default: %(default)s)"
+        return help
 
 
 class RecordDefaultsAction(argparse.Action):
@@ -136,8 +177,10 @@ class PluginArgAction(RecordDefaultsAction):
         if getattr(config, 'plugins', None):
             value = util.from_iter(values)
             plugin_cmd = config.get_plugin(self.dest, value)
-            setattr(namespace, self.dest, plugin_cmd.import_func())
+            setattr(namespace, self.dest, plugin_cmd.import_target())
 
+# ===========================================================================
+# classes for represting CLI configuration information
 
 @dataclasses.dataclass
 class CLIArgument(object):
@@ -252,12 +295,8 @@ class CLIArgumentGroup(object):
         """
         if self.arguments:
             # only add group if it has > 0 arguments
-            try:
-                kwargs = {k:v for k,v in dataclasses.asdict(self).items() \
-                    if v is not None and k in ['title', 'description']} 
-            except Exception:
-                print(self)
-                print(repr(self))
+            kwargs = {k:v for k,v in dataclasses.asdict(self).items() \
+                if v is not None and k in ['title', 'description']} 
             arg_gp = target_p.add_argument_group(**kwargs)
             for arg in self.arguments:
                 _ = arg.add(arg_gp)
@@ -298,6 +337,20 @@ class CLIParser(object):
                 [CLIArgumentGroup.from_dict(gp_d) for gp_d in arg_gps]
         return cls(**d)
 
+    def iter_args(self):
+        """Iterator over all :class:`.CLIArgument` objects associated with this
+        parser.
+        """
+        yield from self.arguments
+        for arg_gp in self.argument_groups:
+            yield from arg_gp.arguments
+
+    def iter_plugins(self):
+        for arg in self.iter_args():
+            if isinstance(arg.action, type) \
+                and issubclass(arg.action, PluginArgAction):
+                yield arg
+
     def configure(self, target_p):
         """Configures a parser object by setting top-level attributes and adding
         all arguments and argument groups.
@@ -305,6 +358,18 @@ class CLIParser(object):
         Args:
             target_p: Parser object (or parser group, or subparser) to configure.
         """
+        # enforce choices for plugin args:
+        config = CLIConfigManager()
+        for arg in self.iter_plugins():
+            arg.choices = list(config.get_plugin(arg.name).keys())
+            if not arg.default or arg.default not in arg.choices:
+                _log.warning(
+                    "Default '%s' not found in available plugins for %s, using '%s'.",
+                    arg.default, str(arg.choices), arg.choices[0]
+                )
+                arg.default = arg.choices[0]
+
+        # add everything
         if self.arguments: 
             for arg in self.arguments:
                 # add arguments not in any group
@@ -317,14 +382,6 @@ class CLIParser(object):
             str_ = getattr(self, attr_, None)
             if str_:
                 setattr(target_p, attr_, str_)
-
-    def iter_args(self):
-        """Iterator over all :class:`.CLIArgument` objects associated with this
-        parser.
-        """
-        yield from self.arguments
-        for arg_gp in self.argument_groups:
-            yield from arg_gp.arguments
 
     def add_plugin_args(self, preparsed_d):
         """Revise arguments after we know what plugins are being used. This 
@@ -340,31 +397,26 @@ class CLIParser(object):
                 to them by preparsing.
         """
         def _add_plugins_to_arg_list(arg_list, splice_d):
-            for arg in arg_list:
-                if arg.action == PluginArgAction:
-                    # update the arg controlling the plugin
-                    preparsed_val = preparsed_d[arg.name]
-                    plugin_d = config.get_plugin(arg.name)
-                    
-                    arg.help = arg.help + "\n\n" + word_wrap(f"""
-                        NOTE: additional arguments below are specific to the 
-                        chosen value '{preparsed_val}' of this option. 
-                    """)
-                    arg.choices = list(plugin_d.keys())
-                    if not arg.default or arg.default not in arg.choices:
-                        _log.warning(
-                            "Default %s not found in available plugins %s, using %s.",
-                            arg.default, str(arg.choices), arg.choices[0]
-                        )
-                        arg.default = arg.choices[0]
             # insert plugin args into arg_list
             return util.splice_into_list(
                 arg_list, splice_d, operator.attrgetter('name')
             )
 
         config = CLIConfigManager()
-        d = {k: list(config.get_plugin(k,v).cli.iter_args()) \
-            for k,v in preparsed_d.items()}
+        for arg in self.iter_plugins():
+            arg.help = arg.help + "\n\n" + word_wrap(f"""
+                NOTE: additional arguments below are specific to the 
+                chosen value '{preparsed_d[arg.name]}' of this option. 
+            """)
+
+        d = dict()
+        for flag_name, flag_value in preparsed_d.items():
+            plugin = config.get_plugin(flag_name, flag_value)
+            if not plugin:
+                choices = [f"'{x}'" for x in config.get_plugin(flag_name).keys()]
+                sys.exit((f"CLI argument error: '{flag_value}' not a recognized value "
+                    f"for '{flag_name}'. Recognized values: {', '.join(choices)}."))
+            d[flag_name] = list(plugin.cli.iter_args())
         self.arguments = _add_plugins_to_arg_list(self.arguments, d)
         for arg_gp in self.argument_groups:
             arg_gp.arguments = _add_plugins_to_arg_list(arg_gp.arguments, d)
@@ -375,36 +427,47 @@ class CLICommand(object):
     subparser) or a plugin. 
     """
     name: str
-    module: str
     entry_point: str
-    help: str = None
-    cli_file: str = None
+    help: str = ""
+    cli_file: str = ""
     cli: dict = None
     parser: dataclasses.field(init=False) = None
+    code_root: dataclasses.InitVar = ""
 
-    def __post_init__(self):
+    def __post_init__(self, code_root):
         """Post-initialization type converstion of attributes.
         """
         if self.cli is None:
             try:
-                self.cli = util.read_json(self.cli_file)
+                self.cli = util.read_json(os.path.join(code_root, self.cli_file))
             except util.MDTFFileNotFoundError:
-                raise
+                _log.critical("Couldn't find CLI file %s.", self.cli_file)
+                exit(1)
         self.cli = CLIParser.from_dict(self.cli)
 
-    def import_func(self):
-        """Imports or returns the function or method object referred to by the
-        ``module`` and ``entry_point`` attributes.
+    def import_target(self):
+        """Imports the function or class referred to by the ``entry_point`` 
+        attribute.
         """
+        mod_name, cls_name = self.entry_point.split(':')
         try:
-            x = importlib.import_module(self.module)
-            for attr_ in self.entry_point.split('.'):
-                x = getattr(x, attr_)
-            return x
+            mod_ = importlib.import_module(mod_name)
         except ImportError:
-            _log.error('Unable to import %s', self.module)
+            _log.error('Unable to import %s.', mod_name)
+            raise ValueError(self.entry_point)
+        try:
+            return getattr(mod_, cls_name)
         except Exception:
-            _log.error('Unable to import %s in %s', self.entry_point, self.module)
+            _log.error('Unable to import %s in %s.', cls_name, mod_name)
+            raise ValueError(self.entry_point)
+
+    def call(self, *args, **kwargs):
+        """Imports the function or class referred to by the
+        ``entry_point`` attribute, and calls it with the passed arguments.
+        """
+        cls_ = self.import_target()
+        cls_(*args, **kwargs)
+        return cls_
 
 DefaultsFileTypes = enum.Enum('DefaultsFileTypes', 'USER SITE GLOBAL')
 DefaultsFileTypes.__doc__ = """
@@ -434,7 +497,7 @@ class CLIConfigManager(util.Singleton):
         self.code_root = code_root
         self.site = self.default_site
 
-        self.subcommands = []
+        self.subcommands = dict()
         self.subparser_kwargs = dict()
         self.plugins = dict()
 
@@ -494,95 +557,43 @@ class CLIConfigManager(util.Singleton):
             assert path is not None
             _read_defaults(path)
 
-    def _read_config_files(self, file_name):
-        """Utility function to read a *pair* of configuration files (one for the
-        framework defaults, another optional one for site-specific config.) 
-
-        Args:
-            file_name (str): Name of file to search for. We search for the file
-                in all subdirectories of :class:meth:`._CLIConfigHandler.site_dir`
-                and :class:meth:`._CLIConfigHandler.framework_dir`, respectively.
-
-        Returns: a tuple of the two files' contents. First entry is the 
-            site specific file (null dict if that file isn't found) and second 
-            is the framework file (fatal error; exit immediately if not found.)
-        """
-        try:
-            f = util.find_files(self.site_dir, file_name, n_files=1)
-            site_d = util.read_json(util.from_iter(f))
-        except util.MDTFFileNotFoundError:
-            _log.debug('Config file %s not found in site dir %s; continuing.',
-                    file_name, self.site_dir
-            )
-            site_d = dict()
-        try:
-            f = util.find_files(self.framework_dir, file_name, n_files=1)
-            fmwk_d = util.read_json(util.from_iter(f))
-        except util.MDTFFileNotFoundError:
-            sys.exit((
-                f"Error: Couldn't find {file_name} configuration file in"
-                f" {self.framework_dir}."
-            ))
-        return (site_d, fmwk_d)
-
-    @staticmethod
-    def _dict_append_lists(ds, keys_to_append=None):
-        """Utility function used to merge framework and site-specific
-        configurations. 
-
-        Args:
-            ds: list of 1 or 2 dicts. If only one dict, return it. If passed 2 
-                dicts, update the first with entries in the second, except for 
-                those with keys listed in ``append_keys``.
-            append_keys: str or list of str. Keys whose values in each of the 
-                dicts in ``args`` will be coerced to a list and appended, instead
-                of overwritten.
-
-        Returns: dict of merged entries.
-        """
-        if len(ds) == 0:
-            raise ValueError('No dicts were passed.')
-        elif len(ds) == 1:
-            return ds[0]
-        elif len(ds) == 2:
-            # ds = (site dict, fmwk dict)
-            keys_to_append = util.to_iter(keys_to_append)
-            appended_d = dict.fromkeys(keys_to_append)
-            for key in keys_to_append:
-                appended_d[key] = util.to_iter(ds[1].pop(key, [])) \
-                    + util.to_iter(ds[0].pop(key, []))
-            ds[0].update(ds[1])
-            ds[0].update(appended_d)
-            return ds[0]
-        else:
-            raise ValueError('Passed too many dicts ({} > 2)'.format(len(ds)))
-
     def read_subcommands(self):
         """Populates ``subcommands`` and ``subparser_kwargs`` attributes with 
-        contents of CLI plugin files for the framework and site.
+        contents of CLI plugin files for the framework and site. Site-specific 
+        subcommand definitions override those defined on the framework.
         """
-        (site_d, fmwk_d) = self._read_config_files(self.subcommands_filename)
-        # merge CLI files from framework and site
-        d = self._dict_append_lists([site_d, fmwk_d], 'subcommands')
-        self.subcommands = [
-            CLICommand(**kwargs) for kwargs in d.pop('subcommands', [])
-        ]
-        self.subparser_kwargs = d
+        (site_d, fmwk_d) = read_config_files(
+            self.code_root, self.subcommands_filename, self.site
+        )
+        site_cmds = site_d.pop('subcommands', dict())
+        fmwk_cmds = fmwk_d.pop('subcommands', dict())
+        self.subparser_kwargs = fmwk_d
+        self.subparser_kwargs.update(site_d)
+        self.subcommands = {k: CLICommand(name=k, **v, code_root=self.code_root) \
+            for k,v in fmwk_cmds.items()}
+        for k,v in site_cmds.items():
+            if k in self.subcommands:
+                _log.debug('Replacing subcommand %s with site-specific version.', k)
+            self.subcommands[k] = CLICommand(name=k, **v, code_root=self.code_root)
 
     def read_plugins(self):
         """Populates ``plugins`` attribute with contents of CLI plugin files for
         the framework and site.
         """
-        (site_dlist, fmwk_dlist) = self._read_config_files(self.plugins_filename)
-        temp = collections.defaultdict(list)
-        for list_ in (site_dlist, fmwk_dlist):
-            for plugin_d in list_:
-                temp[plugin_d.get('dest','')].append(plugin_d)
-        for dest in temp:
-            # merge CLI files from framework and site
-            d = self._dict_append_lists(temp[dest], 'choices')
-            cmds = [CLICommand(**kwargs) for kwargs in d.pop('choices', [])]
-            self.plugins[dest] = {cmd.name: cmd for cmd in cmds}
+        (site_d, fmwk_d) = read_config_files(
+            self.code_root, self.plugins_filename, self.site
+        )
+        for k, v in fmwk_d.items():
+            self.plugins[k] = {kk: CLICommand(name=kk, **vv, code_root=self.code_root) \
+                for kk,vv in v.items()}
+        for k, v in site_d.items():
+            for kk,vv in v.items():
+                if kk in self.plugins[v]:
+                    _log.debug(
+                        'Replacing plugin %s (for %s) with site-specific version.',
+                        kk, k
+                    )
+                self.plugins[k][kk] = CLICommand(name=kk, **vv, code_root=self.code_root)
 
     def get_plugin(self, plugin_name, choice_of_plugin=None):
         """Lookup requested CLI plugin from ``plugins`` attribute, logging 
@@ -603,6 +614,7 @@ class CLIConfigManager(util.Singleton):
             )
             return dict()
         if choice_of_plugin is None:
+            # return entire dict
             return self.plugins[plugin_name]
         if choice_of_plugin not in self.plugins[plugin_name]:
             _log.error('Choice of %s for plugin %s not found (recognized: %s)', 
@@ -612,6 +624,8 @@ class CLIConfigManager(util.Singleton):
             return dict()
         return self.plugins[plugin_name][choice_of_plugin]
 
+# ===========================================================================
+# CLI parsers
 
 class MDTFArgParser(argparse.ArgumentParser):
     """Customized :py:class:`argparse.ArgumentParser`. Added functionality:
@@ -801,24 +815,18 @@ class MDTFTopLevelArgParser(MDTFArgParser):
     """Class for constructing the command-line interface, parsing the options,
     and handing off execution to the selected subcommand.
     """
-    def __init__(self, argv=None):
+    def __init__(self, code_root, argv=None):
+        _ = CLIConfigManager(code_root)
+        self.code_root = code_root
         self.installed = False
         self.sites = []
+        self.site = None
         if argv is None:
             self.argv = sys.argv[1:]
         else:
             self.argv = self.split_args(argv)
-
-        super(MDTFTopLevelArgParser, self).__init__(
-            prog="mdtf",
-            usage="%(prog)s [flags] <command> [command-specific options]",
-            description=word_wrap("""
-                Driver script for the NOAA Model Diagnostics Task Force (MDTF)
-                package, which runs process-oriented diagnostics (PODs) on
-                climate model data. See documentation at
-                https://mdtf-diagnostics.rtfd.io.
-            """)
-        )
+        self.config = None
+        self.setup()
 
     def add_input_file_arg(self, target_p):
         """Convenience method to add the flag to pass a user-designated defaults
@@ -831,7 +839,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                 'metavar': "INPUT_FILE",
                 'help': word_wrap("""
                     Path to a user configuration file that sets options listed 
-                    here. This can be a JSON file of the form given in 
+                    here. This can be a JSONC file of the form given in 
                     sample_input.jsonc, or a text file containing command-line 
                     arguments. Options set explicitly on the command line will 
                     still override settings in this file.
@@ -902,14 +910,12 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         top-level parser, or the preparser.)
         """
         config = CLIConfigManager()
-        kwargs = {'default': config.default_site}
+        kwargs = {'default': config.default_site, 'nargs': 1}
+        
         if isinstance(target_p, MDTFTopLevelArgParser):
             kwargs.update({
                 'choices': self.sites,
-                'metavar': "<site>", 
-                'help': word_wrap("""
-                    Site-specific functionality to use. 
-                """)
+                'help': word_wrap("Site-specific functionality to use.")
             })
         target_p.add_argument('--site', '-s', **kwargs)
 
@@ -927,8 +933,9 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
         self.sites = [d for d in os.listdir(config.sites_dir) \
             if os.path.isdir(os.path.join(config.sites_dir, d))]
-        if default_site in self.sites:
-            self.installed = True
+        # if default_site in self.sites:
+        #     self.installed = True
+        self.installed = True
 
         site_p = MDTFArgPreparser()
         self.add_site_arg(site_p)
@@ -941,50 +948,20 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             ))
         config.default_site = default_site
         config.site = site
+        self.site = site
         config.read_defaults(DefaultsFileTypes.SITE)
 
-    def build_subparsers(self, target_p):
+    def add_contents(self, target_p):
         """Convenience method to fully configure a parser ``target_p`` (either 
         the top-level parser, or the preparser), adding subparsers for all
         subcommands.
         """
-        def _defaultdict_update(d1, d2):
-            tmp_d = {k: (d1[k] + d2[k]) for k in set(d1) & set(d2)}
-            d1.update(d2)
-            d1.update(tmp_d)
-
         config = CLIConfigManager()
-        add_help = isinstance(target_p, MDTFTopLevelArgParser)
         self.add_site_arg(target_p)
         self.add_input_file_arg(target_p)
-        sub_p = target_p.add_subparsers(**config.subparser_kwargs)
-        _ = sub_p.add_parser(
-            "help", help="Show this help message and exit.", add_help=add_help
-        )
-        for cmd in config.subcommands:
-            cmd.parser = sub_p.add_parser(
-                cmd.name, help=cmd.help, add_help=add_help,
-                usage=cmd.cli.usage, description=cmd.cli.description
-            )
-            cmd.cli.configure(cmd.parser)
-
-    def configure(self):
-        """Method that assembles the top-level CLI parser. Options specific to 
-        the script are hard-coded here; CLI options for each subcommand are 
-        given in jsonc configuration files for each command which are read in 
-        here. See associated documentation for :class:`~src.cli.MDTFArgParser`
-        for information on the configuration file mechanism.
-        """
-        self.add_argument(
-            '--version', action="version", version="%(prog)s 3.0 beta 3"
-        )
-        self._optionals.title = 'GENERAL OPTIONS'
-        if not self.installed:
-            self.epilog=word_wrap("""
-                Warning: User-customized configuration files not found. Consider
-                running 'mdtf install' to configure your installation.
-            """)
-        self.build_subparsers(self)
+        assert len(config.subcommands) == 1
+        cmd = tuple(config.subcommands.values())[0]
+        cmd.cli.configure(target_p)
 
     def setup(self):
         """Method to wrap all configuration methods needed to configure the 
@@ -1001,12 +978,41 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         config.read_plugins()
         # preparse arguments to get plugin configuration, and revise CLI
         temp_p = MDTFArgPreparser()
-        self.build_subparsers(temp_p)
+        self.add_contents(temp_p)
         plugin_args = temp_p.parse_plugins(self.argv)
-        for cmd in config.subcommands:
+        for cmd in config.subcommands.values():
             cmd.cli.add_plugin_args(plugin_args)
         # Build the real CLI parser now that we have plugins
         self.configure()
+
+    def configure(self):
+        """Method that assembles the top-level CLI parser. Options specific to 
+        the script are hard-coded here; CLI options for each subcommand are 
+        given in jsonc configuration files for each command which are read in 
+        here. See associated documentation for :class:`~src.cli.MDTFArgParser`
+        for information on the configuration file mechanism.
+        """
+        MDTFArgParser.__init__(self,
+            prog="mdtf",
+            usage="%(prog)s [options] [CASE_ROOT_DIR]",
+            description=word_wrap("""
+                Driver script for the NOAA Model Diagnostics Task Force (MDTF)
+                package, which runs process-oriented diagnostics (PODs) on
+                climate model data. See documentation at
+                https://mdtf-diagnostics.rtfd.io.
+            """),
+            add_help=True,
+        )
+        self.add_argument(
+            '--version', action="version", version="%(prog)s 3.0 beta 3"
+        )
+        self._optionals.title = 'GENERAL OPTIONS'
+        if not self.installed:
+            self.epilog=word_wrap("""
+                Warning: User-customized configuration files not found. Consider
+                running 'mdtf install' to configure your installation.
+            """)
+        self.add_contents(self)
 
     def _default_argv(self, parsed_args):
         """Utility method returning the arguments passed to the parser for 
@@ -1039,18 +1045,74 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             args = self.argv
         return super(MDTFTopLevelArgParser, self).parse_known_args(args, namespace)
 
+    def dispatch(self):
+        """Parse args, and call the subcommand that was selected.
+        """
+        config = CLIConfigManager()
+        self.config = vars(self.parse_args())
+        self.log_config = read_config_file(
+            self.code_root, "logging.jsonc", site=self.site
+        )
+        assert len(config.subcommands) == 1
+        cmd = tuple(config.subcommands.values())[0]
+        return cmd.call(self)
 
-class ConfigManager(util.Singleton):
-    """:class:`~src.util.Singleton` to make the results of CLI argument
-    parsing more easily available for commands with a larger code base. Also 
-    implements functionality to set "partial default" values from an external
-    configuration file or other source.
+
+class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
+    """Implement top-level parser with multiple subcommands.
     """
-    def __init__(self, parser=None, partial_defaults=None):
-        self._p = parser
-        self._partial_defaults = partial_defaults
-        # have "config" point to parsed_args namespace for now
-        self.config = self._p.parsed_args
-        # not really related, but store this info here as well
-        self.global_envvars = dict()
+    def add_contents(self, target_p):
+        """Convenience method to fully configure a parser ``target_p`` (either 
+        the top-level parser, or the preparser), adding subparsers for all
+        subcommands.
+        """
+        def _defaultdict_update(d1, d2):
+            tmp_d = {k: (d1[k] + d2[k]) for k in set(d1) & set(d2)}
+            d1.update(d2)
+            d1.update(tmp_d)
 
+        config = CLIConfigManager()
+        add_help = isinstance(target_p, MDTFTopLevelArgParser)
+        self.add_site_arg(target_p)
+        self.add_input_file_arg(target_p)
+        sub_p = target_p.add_subparsers(**config.subparser_kwargs)
+        _ = sub_p.add_parser(
+            "help", help="Show this help message and exit.", add_help=add_help
+        )
+        for cmd in config.subcommands.values():
+            cmd.parser = sub_p.add_parser(
+                cmd.name, help=cmd.help, add_help=add_help,
+                usage=cmd.cli.usage, description=cmd.cli.description
+            )
+            cmd.cli.configure(cmd.parser)
+
+    def configure(self):
+        """Method that assembles the top-level CLI parser. Options specific to 
+        the script are hard-coded here; CLI options for each subcommand are 
+        given in jsonc configuration files for each command which are read in 
+        here. See associated documentation for :class:`~src.cli.MDTFArgParser`
+        for information on the configuration file mechanism.
+        """
+        MDTFArgParser.__init__(self,
+            prog="mdtf",
+            usage="%(prog)s [flags] <command> [command-specific options]",
+            description=word_wrap("""
+                Driver script for the NOAA Model Diagnostics Task Force (MDTF)
+                package, which runs process-oriented diagnostics (PODs) on
+                climate model data. See documentation at
+                https://mdtf-diagnostics.rtfd.io.
+            """)
+        )
+        self.add_argument(
+            '--version', action="version", version="%(prog)s 3.0 beta 3"
+        )
+        self._optionals.title = 'GENERAL OPTIONS'
+        if not self.installed:
+            self.epilog=word_wrap("""
+                Warning: User-customized configuration files not found. Consider
+                running 'mdtf install' to configure your installation.
+            """)
+        self.add_contents(self)
+
+    def dispatch(self):
+        raise NotImplementedError()

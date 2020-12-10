@@ -18,10 +18,8 @@ from .filesystem import (
     append_html_template
     # is_subpath, 
 )
-# don't include rest of .logs in package, as custom logger classes should only 
-# be needed in startup script
 from .logs import (
-    signal_logger
+    signal_logger, git_info, mdtf_log_config
 )
 from .processes import (
     ExceptionPropagatingThread, 

@@ -9,8 +9,6 @@ import logging
 import logging.config
 import logging.handlers
 
-from .filesystem import read_json
-
 _log = logging.getLogger(__name__)
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
@@ -60,41 +58,52 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
             self.transfer(logging.lastResort)
 
 
-class DebugHeaderFileHandler(logging.FileHandler):
+class HeaderFileHandler(logging.FileHandler):
     """Subclass :py:class:`logging.FileHandler` to print system information to
     start of file without writing it to other loggers.
     """
-    def _debug_header(self):
-        """Returns string of system debug information to use as log file header.
-        Calls :func:`git_info`.
-        """
-        try:
-            (git_branch, git_hash, git_dirty) = git_info()
-            str_ = (
-            "Started logging at {0}\n"
-            "git hash/branch: {1} (on {2})\n"
-            "uncommitted files: {3}\n"
-            "sys.platform: '{4}'\nsys.executable: '{5}'\nsys.version: '{6}'\n"
-            "sys.path: {7}\nsys.argv: {8}\n").format(
-                datetime.datetime.now(), 
-                git_hash, git_branch,
-                git_dirty,
-                sys.platform, sys.executable, sys.version, 
-                sys.path, sys.argv
-            ) + (80 * '-') + '\n\n'
-            return str_
-        except Exception as exc:
-            print(exc)
-            return "ERROR: couldn't gather header information.\n"
-    
+    def _log_header(self):
+        return ""
+
     def _open(self):
         """Write header information right after we open the log file, then
         proceed normally.
         """
-        fp = super(DebugHeaderFileHandler, self)._open()
-        fp.write(self._debug_header())
+        fp = super(HeaderFileHandler, self)._open()
+        fp.write(self._log_header())
         return fp
 
+class MDTFHeaderFileHandler(HeaderFileHandler):
+    def _log_header(self):
+        """Returns string of system debug information to use as log file header.
+        Calls :func:`git_info`.
+        """
+        try:
+            git_branch, git_hash, git_dirty = git_info()
+            if self.level <= logging.DEBUG:
+                str_ = (
+                    "MDTF PACKAGE DEBUG LOG"
+                    f"Started logging at {datetime.datetime.now()}\n"
+                    f"git hash/branch: {git_hash} (on {git_branch})\n"
+                    f"uncommitted files: {git_dirty}\n"
+                    f"sys.platform: '{sys.platform}'\n"
+                    f"sys.executable: '{sys.executable}'\n"
+                    f"sys.version: '{sys.version}'\n"
+                    f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
+                ) 
+            else:
+                str_ = (
+                    "MDTF PACKAGE LOG"
+                    f"Started logging at {datetime.datetime.now()}\n"
+                    f"git hash/branch: {git_hash} (on {git_branch})\n"
+                    f"sys.platform: '{sys.platform}'\n"
+                    f"sys.argv: {sys.argv}\n"
+                )
+            return str_ + (80 * '-') + '\n\n'
+        except Exception as exc:
+            print(exc)
+            return "ERROR: couldn't gather header information.\n"
+    
 
 class HangingIndentFormatter(logging.Formatter):
     """:py:class:`logging.Formatter` that applies a hanging indent, making it 
@@ -308,7 +317,7 @@ def _set_excepthook(root_logger):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         root_logger.critical(
-            (80*'*') + "\nUncaught exception:", # banner so it stands out 
+            '\n' + (80*'*') + "\nUncaught exception:", # banner so it stands out 
             exc_info=(exc_type, exc_value, exc_traceback)
         )
     
@@ -368,7 +377,7 @@ def _set_console_log_level(d, stdout_level, stderr_level, filter_=True):
         handlers = d['handlers']
         type_handlers = [hk for (hk, hv) in handlers.items() \
             if hv.get('stream','').lower().endswith(type_)]
-        print('#', type_, type_handlers)
+        # print('#', type_, type_handlers)
         if len(type_handlers) > 1:
             _log.warning('More than one handler using %s: %s', type_, type_handlers)
         if new_lev is None:
@@ -424,17 +433,15 @@ def _set_log_file_paths(d, new_paths):
         _log.warning("Couldn't find handlers for the following log files: %s",
             new_paths)
 
-def mdtf_log_config(config_path, root_logger, cli_d=None, new_paths=None):
+def mdtf_log_config(root_logger, cli_obj, new_paths=None):
     """Wrapper to handle logger configuration from a file and transfer of the 
     temporary log cache to the newly-configured loggers.
 
     Args:
-        config_path (str): Path to the logger configuration file. This is taken
-            to be in .jsonc format, following the :py:mod:`logging` ``dictConfig``
-            `schema <https://docs.python.org/3.7/library/logging.config.html#logging-config-dictschema>`__.
         root_logger (:py:class:`logging.Logger`): Framework's root logger, to
             which the temporary log cache was attached.
-        cli_d (dict): Dict of parsed CLI settings, in particular 'verbose'/'quiet'.
+        cli_obj (:class:`~src.cli.MDTFTopLevelArgParser`): CLI parser object
+            containing parsed command-line values.
         new_paths (dict): Dict of new log file names to assign. Keys are the 
             names of :py:class:`logging.Handler`s in the config file, and values
             are the new paths.
@@ -450,14 +457,13 @@ def mdtf_log_config(config_path, root_logger, cli_d=None, new_paths=None):
     _set_excepthook(root_logger)
 
     # set console verbosity level
-    stdout_level, stderr_level = _level_from_cli(cli_d)
+    stdout_level, stderr_level = _level_from_cli(cli_obj.config)
 
     # read the config file, munge it according to CLI settings, configure loggers
     try:
-        log_config = read_json(config_path)
-        _set_console_log_level(log_config, stdout_level, stderr_level)
-        _set_log_file_paths(log_config, new_paths)
-        logging.config.dictConfig(log_config)
+        _set_console_log_level(cli_obj.log_config, stdout_level, stderr_level)
+        _set_log_file_paths(cli_obj.log_config, new_paths)
+        logging.config.dictConfig(cli_obj.log_config)
     except Exception as exc:
         _log.exception("Logging config failed.")
 

@@ -326,7 +326,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
     for k in splice_d:
         idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
         if len(idx) != 1:
-            _log.debug('%s not unique in %s.', k, str(list_))
+            _log.debug('%s not unique (%s) in %s.', k, idx, list_)
         chunks.extend(idx)
     chunk_0, chunk_1 = itertools.tee(sorted(chunks))
     next(chunk_1, None)
@@ -354,7 +354,8 @@ def deserialize_class(name):
         # through everything
         return getattr(__builtins__, name)
     except AttributeError:
-        _log.debug('%s not found in builtin types.', name)
+        # _log.debug('%s not found in builtin types.', name)
+        pass
     q = collections.deque([object])
     while q:
         t = q.popleft()

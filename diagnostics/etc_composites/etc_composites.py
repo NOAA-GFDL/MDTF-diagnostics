@@ -1,5 +1,6 @@
 import numpy as np 
 import xarray as xr 
+import pandas as pd
 import os 
 import matplotlib.pyplot as plt 
 import netCDF4 as nc
@@ -54,11 +55,19 @@ os.environ['tp_file'] = '*.'+os.environ['tp_var']+'.6hr.nc'
 os.environ['prw_var'] = 'PRW'
 os.environ['prw_file'] = '*.'+os.environ['prw_var']+'.6hr.nc'
 
+os.environ['uv10_var'] = 'UV10'
+os.environ['uv10_file'] = '*.'+os.environ['uv10_var']+'.6hr.nc'
+
+os.environ['w500_var'] = 'W500'
+os.environ['w500_file'] = '*.'+os.environ['w500_var']+'.6hr.nc'
+
 # Setting up the slp_file to be used
 os.environ['MODEL_OUTPUT_DIR']  = os.environ['DATADIR'] + '/6hr'
 slp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['slp_var'] + '.6hr.nc'
 tp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['tp_var'] + '.6hr.nc'
 prw_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['prw_var'] + '.6hr.nc'
+uv10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['uv10_var'] + '.6hr.nc'
+w500_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['w500_var'] + '.6hr.nc'
 
 print('Splitting into yearly files for the tracker ...')
 
@@ -72,7 +81,10 @@ ncid.close()
 in_ds = xr.open_dataset(slp_file)
 
 # Getting the necessary data 
-time = in_ds.time.values
+if (calendar == 'noleap'):
+  time = in_ds.time.values
+else:
+  time = [pd.to_datetime(i) for i in in_ds.time.values]
 slp = in_ds.SLP
 lat = in_ds.lat.values
 lon = in_ds.lon.values
@@ -86,6 +98,16 @@ in_ds.close()
 # Reading in total column water vapor
 in_ds = xr.open_dataset(prw_file)
 prw = in_ds.PRW
+in_ds.close()
+
+# Reading in wind speed
+in_ds = xr.open_dataset(uv10_file)
+uv10 = in_ds.UV10
+in_ds.close()
+
+# Reading in wind speed
+in_ds = xr.open_dataset(w500_file)
+w500 = in_ds.W500
 in_ds.close()
 
 # creating the year_list to chunk out the yearly sections of the files
@@ -112,14 +134,22 @@ for year in range(sYear, eYear+1):
     slp_sel = slp[ind, :, :]
     tp_sel = tp[ind, :, :]
     prw_sel = prw[ind, :, :]
+    uv10_sel = uv10[ind, :, :]
+    w500_sel = w500[ind, :, :]
+
     
     # creating the filename of the output in the correct folder
     out_slp_file= f"{os.environ['WK_DIR']}/tmp/data_converts/slp.{year:04d}.nc"
     out_tp_file= f"{os.environ['WK_DIR']}/tmp/data_converts/tp.{year:04d}.nc"
     out_prw_file= f"{os.environ['WK_DIR']}/tmp/data_converts/prw.{year:04d}.nc"
+    out_uv10_file= f"{os.environ['WK_DIR']}/tmp/data_converts/uv10.{year:04d}.nc"
+    out_w500_file= f"{os.environ['WK_DIR']}/tmp/data_converts/w500.{year:04d}.nc"
+    
     print(out_slp_file)
     print(out_tp_file)
     print(out_prw_file)
+    print(out_uv10_file)
+    print(out_w500_file)
         
     # creating my custom time variable to match what is required by the tracker
     time = np.arange(0, np.sum(ind)*6, 6)
@@ -132,32 +162,26 @@ for year in range(sYear, eYear+1):
             'time': time, 
             'lat': lat, 
             'lon': lon
-        }
-    )
-    
-    # adding the necessary attributes to the SLP file
+        })
+   # adding the necessary attributes to the SLP file
     out_slp_ds.slp.attrs['units'] = 'mb'
-    
     out_slp_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
     out_slp_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
     if (calendar == 'noleap'):
         out_slp_ds.time.attrs['calendar'] = '365_day'
     else:
         out_slp_ds.time.attrs['calendar'] = calendar
-        
     out_slp_ds.lon.attrs['long_name'] = 'longitude'
     out_slp_ds.lon.attrs['standard_name'] = 'longitude'
     out_slp_ds.lon.attrs['units'] = 'degrees_east'
     out_slp_ds.lon.attrs['axis'] = 'X'
-    
     out_slp_ds.lat.attrs['long_name'] = 'latitude'
     out_slp_ds.lat.attrs['standard_name'] = 'latitude'
     out_slp_ds.lat.attrs['units'] = 'degrees_north'
-    out_slp_ds.lat.attrs['axis'] = 'Y'
-            
+    out_slp_ds.lat.attrs['axis'] = 'Y'       
     # writing to the netcdf file
     out_slp_ds.to_netcdf(out_slp_file)
-   
+    
     ###### Outputting the total precip file
     # creating the xarray dataset
     out_tp_ds = xr.Dataset(
@@ -166,29 +190,23 @@ for year in range(sYear, eYear+1):
             'time': time, 
             'lat': lat, 
             'lon': lon
-        }
-    )
-    
-    # adding the necessary attributes to the SLP file
+        })
+    # adding the necessary attributes to the file
     out_tp_ds.tp.attrs['units'] = 'mm/hr'
-    
     out_tp_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
     out_tp_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
     if (calendar == 'noleap'):
         out_tp_ds.time.attrs['calendar'] = '365_day'
     else:
         out_tp_ds.time.attrs['calendar'] = calendar
-        
     out_tp_ds.lon.attrs['long_name'] = 'longitude'
     out_tp_ds.lon.attrs['standard_name'] = 'longitude'
     out_tp_ds.lon.attrs['units'] = 'degrees_east'
     out_tp_ds.lon.attrs['axis'] = 'X'
-    
     out_tp_ds.lat.attrs['long_name'] = 'latitude'
     out_tp_ds.lat.attrs['standard_name'] = 'latitude'
     out_tp_ds.lat.attrs['units'] = 'degrees_north'
-    out_tp_ds.lat.attrs['axis'] = 'Y'
-            
+    out_tp_ds.lat.attrs['axis'] = 'Y'  
     # writing to the netcdf file
     out_tp_ds.to_netcdf(out_tp_file)
     
@@ -200,31 +218,81 @@ for year in range(sYear, eYear+1):
             'time': time, 
             'lat': lat, 
             'lon': lon
-        }
-    )
-    
-    # adding the necessary attributes to the SLP file
+        })
+    # adding the necessary attributes to the file
     out_prw_ds.prw.attrs['units'] = 'mm/hr'
-    
     out_prw_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
     out_prw_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
     if (calendar == 'noleap'):
         out_prw_ds.time.attrs['calendar'] = '365_day'
     else:
         out_prw_ds.time.attrs['calendar'] = calendar
-        
     out_prw_ds.lon.attrs['long_name'] = 'longitude'
     out_prw_ds.lon.attrs['standard_name'] = 'longitude'
     out_prw_ds.lon.attrs['units'] = 'degrees_east'
     out_prw_ds.lon.attrs['axis'] = 'X'
-    
     out_prw_ds.lat.attrs['long_name'] = 'latitude'
     out_prw_ds.lat.attrs['standard_name'] = 'latitude'
     out_prw_ds.lat.attrs['units'] = 'degrees_north'
-    out_prw_ds.lat.attrs['axis'] = 'Y'
-            
+    out_prw_ds.lat.attrs['axis'] = 'Y'    
     # writing to the netcdf file
     out_prw_ds.to_netcdf(out_prw_file)
+
+    ###### Outputting the UV10 file
+    # creating the xarray dataset
+    out_var_ds = xr.Dataset(
+        {'uv10': (('time', 'lat', 'lon'), uv10_sel)}, 
+        coords={
+            'time': time, 
+            'lat': lat, 
+            'lon': lon
+        })
+    # adding the necessary attributes to the file
+    out_var_ds.uv10.attrs['units'] = 'm/s'
+    out_var_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
+    out_var_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
+    if (calendar == 'noleap'):
+        out_var_ds.time.attrs['calendar'] = '365_day'
+    else:
+        out_var_ds.time.attrs['calendar'] = calendar
+    out_var_ds.lon.attrs['long_name'] = 'longitude'
+    out_var_ds.lon.attrs['standard_name'] = 'longitude'
+    out_var_ds.lon.attrs['units'] = 'degrees_east'
+    out_var_ds.lon.attrs['axis'] = 'X'
+    out_var_ds.lat.attrs['long_name'] = 'latitude'
+    out_var_ds.lat.attrs['standard_name'] = 'latitude'
+    out_var_ds.lat.attrs['units'] = 'degrees_north'
+    out_var_ds.lat.attrs['axis'] = 'Y'    
+    # writing to the netcdf file
+    out_var_ds.to_netcdf(out_uv10_file)
+    
+    ###### Outputting the W500 file
+    # creating the xarray dataset
+    out_var_ds = xr.Dataset(
+        {'w500': (('time', 'lat', 'lon'), w500_sel)}, 
+        coords={
+            'time': time, 
+            'lat': lat, 
+            'lon': lon
+        })
+    # adding the necessary attributes to the file
+    out_var_ds.w500.attrs['units'] = 'Pa/s'
+    out_var_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
+    out_var_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
+    if (calendar == 'noleap'):
+        out_var_ds.time.attrs['calendar'] = '365_day'
+    else:
+        out_var_ds.time.attrs['calendar'] = calendar
+    out_var_ds.lon.attrs['long_name'] = 'longitude'
+    out_var_ds.lon.attrs['standard_name'] = 'longitude'
+    out_var_ds.lon.attrs['units'] = 'degrees_east'
+    out_var_ds.lon.attrs['axis'] = 'X'
+    out_var_ds.lat.attrs['long_name'] = 'latitude'
+    out_var_ds.lat.attrs['standard_name'] = 'latitude'
+    out_var_ds.lat.attrs['units'] = 'degrees_north'
+    out_var_ds.lat.attrs['axis'] = 'Y'    
+    # writing to the netcdf file
+    out_var_ds.to_netcdf(out_w500_file)
 
 print('Splitting into yearly files for the tracker ... Completed.')
 

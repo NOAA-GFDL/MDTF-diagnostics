@@ -157,7 +157,7 @@ else:
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
   # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
-  composite_var_list = ['tp', 'prw']
+  composite_var_list = ['tp', 'prw', 'w500', 'uv10']
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

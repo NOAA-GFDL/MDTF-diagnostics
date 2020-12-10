@@ -11,8 +11,9 @@ import json
 import re
 import shutil
 import string
+import traceback
 from . import basic
-from . import exceptions as exc
+from . import exceptions
 
 import logging
 _log = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ def find_files(src_dirs, filename_globs, n_files=None):
             files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
     if n_files is not None and len(files) != n_files:
         _log.debug('Expected to find %d files, instead found %d.', n_files, len(files))
-        raise exc.MDTFFileNotFoundError(str(filename_globs))
+        raise exceptions.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 
 def check_dirs(*dirs, create=False):
@@ -257,17 +258,6 @@ def strip_comments(str_, delimiter=None):
     # join lines, stripping blank lines
     return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
 
-def read_json(file_path):
-    assert os.path.exists(file_path), \
-        "Couldn't find JSON file {}.".format(file_path)
-    try:    
-        with io.open(file_path, 'r', encoding='utf-8') as file_:
-            str_ = file_.read()
-    except IOError:
-        _log.critical(f'Fatal IOError when trying to read {file_path}. Exiting.')
-        exit(1)
-    return parse_json(str_)
-
 def parse_json(str_):
     str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
     try:
@@ -277,6 +267,38 @@ def parse_json(str_):
         exit(1)
     return parsed_json
 
+def read_json(file_path):
+    _log.debug('Reading file %s', file_path)
+    if not os.path.isfile(file_path):
+        raise exceptions.MDTFFileNotFoundError(file_path)
+    try:    
+        with io.open(file_path, 'r', encoding='utf-8') as file_:
+            str_ = file_.read()
+        return parse_json(str_)
+    except Exception as exc:
+        # something more serious than missing file
+        wrapped_exc = traceback.TracebackException.from_exception(exc)
+        _log.critical("Caught exception when trying to load %s: %s",
+            file_path, repr(exc))
+        print(''.join(wrapped_exc.format()))
+        exit(1)
+
+def find_json(dir_, file_name, exit_if_missing=True):
+    """Wrap read_json with more elaborate error handling. find_files() will find
+    a file named file_name at any level within dir_.
+    """
+    try:
+        f = find_files(dir_, file_name, n_files=1)
+        return read_json(f[0])
+    except exceptions.MDTFFileNotFoundError:
+        if exit_if_missing:
+            _log.critical("Couldn't find file %s in %s.", file_name, dir_)
+            exit(1)
+        else:
+            _log.debug("Couldn't find file %s in %s; continuing.",
+                file_name, dir_)
+            return dict()
+
 def write_json(struct, file_path, sort_keys=False):
     """Wrapping file I/O simplifies unit testing.
 
@@ -284,6 +306,7 @@ def write_json(struct, file_path, sort_keys=False):
         struct (:py:obj:`dict`)
         file_path (:py:obj:`str`): path of the JSON file to write.
     """
+    _log.debug('Writing file %s', file_path)
     try:
         str_ = json.dumps(struct, 
             sort_keys=sort_keys, indent=2, separators=(',', ': '))

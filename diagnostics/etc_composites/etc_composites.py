@@ -344,12 +344,14 @@ ds.close()
 ds = xr.open_dataset(era_file)
 erai_x = ds['X'].values
 erai_y = ds['Y'].values
-pr_nh_ocean_warm = ds['pr_nh_ocean_warm'].values
+tp_nh_ocean_warm = ds['tp_nh_ocean_warm'].values
 prw_nh_ocean_warm = ds['prw_nh_ocean_warm'].values
-ws_nh_ocean_warm = ds['ws_nh_ocean_warm'].values
-pr_sh_ocean_warm = ds['pr_sh_ocean_warm'].values
+uv10_nh_ocean_warm = ds['uv10_nh_ocean_warm'].values
+w500_nh_ocean_warm = ds['w500_nh_ocean_warm'].values
+tp_sh_ocean_warm = ds['tp_sh_ocean_warm'].values
 prw_sh_ocean_warm = ds['prw_sh_ocean_warm'].values
-ws_sh_ocean_warm = ds['ws_sh_ocean_warm'].values
+uv10_sh_ocean_warm = ds['uv10_sh_ocean_warm'].values
+w500_sh_ocean_warm = ds['w500_sh_ocean_warm'].values
 ds.close()
 
 # Re-griding the observation data 
@@ -391,31 +393,40 @@ plot_area_fig(erai_x,erai_y,erai_merra_omega,title,out_file)
 
 
 # SH - Ocean - WARM
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
-title = 'ERA-Interim PR [SH-Ocean-WARM]'
-plot_area_fig(erai_x,erai_y,pr_sh_ocean_warm,title,out_file)
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+title = 'ERA-Interim TP [SH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,tp_sh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
 title = 'ERA-Interim PRW [SH-Ocean-WARM]'
 plot_area_fig(erai_x,erai_y,prw_sh_ocean_warm,title,out_file)
 
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_ws_SH_ocean_WARM.png"
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_uv10_SH_ocean_WARM.png"
 title = 'ERA-Interim Wind Speed [SH-Ocean-WARM]'
-plot_area_fig(erai_x,erai_y,ws_sh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,uv10_sh_ocean_warm,title,out_file)
+
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_w500_SH_ocean_WARM.png"
+title = 'ERA-Interim Omega @ 500hPa [SH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,w500_sh_ocean_warm,title,out_file)
+
 
 # NH - Ocean - WARM
 
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_NH_ocean_WARM.png"
-title = 'ERA-Interim PR [NH-Ocean-WARM]'
-plot_area_fig(erai_x,erai_y,pr_nh_ocean_warm,title,out_file)
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+title = 'ERA-Interim TP [NH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,tp_nh_ocean_warm,title,out_file)
 
 out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
 title = 'ERA-Interim PRW [NH-Ocean-WARM]'
 plot_area_fig(erai_x,erai_y,prw_nh_ocean_warm,title,out_file)
 
-out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_ws_NH_ocean_WARM.png"
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_uv10_NH_ocean_WARM.png"
 title = 'ERA-Interim Wind Speed [NH-Ocean-WARM]'
-plot_area_fig(erai_x,erai_y,ws_nh_ocean_warm,title,out_file)
+plot_area_fig(erai_x,erai_y,uv10_nh_ocean_warm,title,out_file)
+
+out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_w500_NH_ocean_WARM.png"
+title = 'ERA-Interim Omega @ 500hPa [NH-Ocean-WARM]'
+plot_area_fig(erai_x,erai_y,w500_nh_ocean_warm,title,out_file)
 
 
 ############################################################
@@ -429,15 +440,15 @@ model_data = pickle.load(open(model_file, 'rb'))
 # Creating the plots
 
 # MODEL - ERA-Interim PR (Total Precip)
-out_file = f"{os.environ['WK_DIR']}/model/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
 hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'tp'
 model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
 plt.figure()
-diff_val = model_val - pr_sh_ocean_warm
+diff_val = model_val - tp_sh_ocean_warm
 vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
 vmin = -1*vmax
 plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
-plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM PR")
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM TP")
 plt.ylim(-1500, 1500)
 plt.xlim(-1500, 1500)
 plt.colorbar()
@@ -445,7 +456,7 @@ plt.savefig(out_file)
 plt.close('all')
 
 # MODEL - ERA-Interim PRW (Total Column Water Vapor)
-out_file = f"{os.environ['WK_DIR']}/model/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
 hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'prw'
 model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
 plt.figure()
@@ -461,7 +472,7 @@ plt.savefig(out_file)
 plt.close('all')
 
 # MERRA - ERA-Interim
-out_file = f"{os.environ['WK_DIR']}/obs/merra_erai_pw_SH_ocean_WARM.png"
+out_file = f"{os.environ['WK_DIR']}/obs/diff_merra_erai_prw_SH_ocean_WARM.png"
 plt.figure()
 diff_val = erai_merra_pw - prw_sh_ocean_warm
 vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)

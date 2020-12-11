@@ -1,51 +1,67 @@
 import os
 import sys
+import collections
+import dataclasses
 import subprocess
 from src.util import read_json, NameSpace, to_iter
-from src import configs
-import collections
+from src import core, cli
 
-def setUp_ConfigManager(config=None, paths=None, pods=None, unittest=True):
+@dataclasses.dataclass
+class DummyMDTFFramework(object):
+    code_root: str = ""
+    pod_list: list = dataclasses.field(default_factory=list)
+    case_list: list = dataclasses.field(default_factory=list)
+    cases: list = dataclasses.field(default_factory=list)
+    global_env_vars: dict = dataclasses.field(default_factory=dict)
+
+
+def setUp_config_singletons(config=None, paths=None, pods=None, unittest=True):
+    cwd = os.path.dirname(os.path.realpath(__file__)) 
+    code_root = os.path.dirname(os.path.dirname(cwd))
+    cli_obj = cli.MDTFTopLevelArgParser(
+        code_root, 
+        skip_defaults=True,
+        argv= f"-f {os.path.join(cwd, 'dummy_config.json')}"
+    )
+    cli_obj.config = vars(cli_obj.parse_args())
+    if config:
+        cli_obj.config.update(config)
+
     PodDataTuple = collections.namedtuple(
         'PodDataTuple', 'sorted_lists pod_data realm_data'
     )
-
-    cwd = os.path.dirname(os.path.realpath(__file__)) 
-    code_root, _ = os.path.split(cwd)
-    dummy_config = read_json(os.path.join(cwd, 'dummy_config.json'))
-    if config:
-        dummy_config.update(config)
-    if paths:
-        dummy_config.update(paths)
-    if not pods:
-        pods = dict()
-    dummy_cli_obj = NameSpace.fromDict({
-        'code_root': code_root,
-        'config': dummy_config
-    })
     dummy_pod_data = PodDataTuple(
-        pod_data=pods, realm_data=dict(), sorted_lists=dict()
+        pod_data=pods, realm_data=dict(), sorted_lists={'pods': [], 'realms':[]}
     )
-    config = configs.ConfigManager(dummy_cli_obj, dummy_pod_data, unittest=unittest)
-    if paths:
-        config.paths.parse(paths, list(paths.keys()))
 
-def tearDown_ConfigManager():
+    _ = core.ConfigManager(cli_obj, dummy_pod_data, unittest=unittest)
+    pm = core.PathManager(cli_obj, unittest=unittest)
+    if paths:
+        pm.update(paths)
+    _ = core.VariableTranslator(code_root, unittest=unittest)
+    _ = core.TempDirManager(None, unittest=unittest)
+
+def tearDown_config_singletons():
     # clear Singletons
     try:
-        temp = configs.ConfigManager(unittest=True)
+        temp = core.ConfigManager(unittest=True)
         temp._reset()
-    except:
+    except Exception:
         pass
     try:
-        temp = configs.VariableTranslator(unittest=True)
+        temp = core.PathManager(unittest=True)
         temp._reset()
-    except:
+    except Exception:
         pass
     try:
-        temp = configs.TempDirManager()
+        temp = core.VariableTranslator(unittest=True)
         temp._reset()
-    except:
+    except Exception:
+        pass
+    try:
+        temp = core.TempDirManager(unittest=True)
+        temp._reset()
+    except Exception:
         pass
 
 # -------------------------------------------------------------

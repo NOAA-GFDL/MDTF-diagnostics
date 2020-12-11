@@ -1,7 +1,8 @@
+import os
 import io
 import unittest
 import unittest.mock as mock
-from framework import cli
+from src import cli
 
 def _parser_from_dict(d, add_site=True):
     p = cli.MDTFArgParser()
@@ -18,6 +19,14 @@ class TestCanonicalArgName(unittest.TestCase):
         self.assertEqual(cli.canonical_arg_name('-flag-three_3'), 'flag_three_3')
 
 class TestWordWrap(unittest.TestCase):
+    def tearDown(self):
+        # clear contents of Singleton
+        try:
+            c = cli.CLIConfigManager()
+            c._reset()
+        except:
+            pass
+
     def test_word_wrap(self):
         str1 = """
             Here's a multiline test string; we'll test to see 
@@ -44,6 +53,14 @@ class TestWordWrap(unittest.TestCase):
         self.assertEqual(cli.word_wrap(str1), str2)
 
 class TestMDTFArgParserBasic(unittest.TestCase):
+    def tearDown(self):
+        # clear contents of Singleton
+        try:
+            c = cli.CLIConfigManager()
+            c._reset()
+        except:
+            pass
+
     def test_flag_aliases(self):
         p = _parser_from_dict({
             "arguments": [{"name": "multi_word_flag", "short_name": "f"}]})
@@ -62,6 +79,14 @@ class TestMDTFArgParserBasic(unittest.TestCase):
 
 
 class TestMDTFArgParserHelpFormat(unittest.TestCase):
+    def tearDown(self):
+        # clear contents of Singleton
+        try:
+            c = cli.CLIConfigManager()
+            c._reset()
+        except:
+            pass
+
     def test_formatting(self):
         p = _parser_from_dict({
             "usage": 'foo',
@@ -79,7 +104,7 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
         str2 = ('usage: foo\n\nlong multiline description text, although strictly speaking we '
             'covered this in\nTestWordWrap, but why not test it again\n\nCOMMAND OPTIONS:\n  -h,'
             ' --help\n      show this help message and exit\n  --foo <foo metavar>\n      foo '
-            'help (default: bar)\n\nbaz\n')
+            "help (default: 'bar')\n\nbaz\n")
         str_ = io.StringIO()
         p.print_help(str_)
         self.assertEqual(str_.getvalue(), str2)
@@ -109,16 +134,24 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
             "epilog": 'baz'
         }, add_site=False)
         str2 = ('usage: foo\n\nbar\n\nCOMMAND OPTIONS:\n  -h, --help\n      show this'
-            ' help message and exit\n  --arg1 <arg1 metavar>\n      arg1 help (default:'
-            ' None)\n\nGROUP1:\n  group1 desc\n\n  --arg2 <arg2 metavar>\n      arg2 '
-            'help (default: None)\n\nGROUP2:\n  group2 desc\n\n  --arg3 <arg3 metavar>\n'
-            '      arg3 help (default: None)\n\nbaz\n')
+            ' help message and exit\n  --arg1 <arg1 metavar>\n      arg1 help'
+            '\n\nGROUP1:\n  group1 desc\n\n  --arg2 <arg2 metavar>\n      arg2 '
+            'help\n\nGROUP2:\n  group2 desc\n\n  --arg3 <arg3 metavar>\n'
+            '      arg3 help\n\nbaz\n')
         str_ = io.StringIO()
         p.print_help(str_)
         self.assertEqual(str_.getvalue(), str2)
 
 
 class TestMDTFArgParserRecordDefaults(unittest.TestCase):
+    def tearDown(self):
+        # clear contents of Singleton
+        try:
+            c = cli.CLIConfigManager()
+            c._reset()
+        except:
+            pass
+
     def test_string_defaults(self):
         p = _parser_from_dict({"arguments": [{"name": "foo", "default": "bar"}]})
         x = p.parse_args('')
@@ -152,7 +185,7 @@ class TestMDTFArgParserRecordDefaults(unittest.TestCase):
 
 class TestCLIConfigManager(unittest.TestCase):
     def setUp(self):
-        _ = cli.CLIConfigManager('dummy/test/path')
+        _ = cli.CLIConfigManager('dummy/test/path', skip_defaults=True)
 
     def tearDown(self):
         # clear contents of Singleton
@@ -242,3 +275,26 @@ class TestCLIConfigManager(unittest.TestCase):
         c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XXQ', 'foo2': 'baz','site':'local'})
+
+class TestParseDummyInput(unittest.TestCase):
+    def tearDown(self):
+        try:
+            temp = cli.CLIConfigManager()
+            temp._reset()
+        except Exception:
+            pass
+
+    def test_parse_dummy_input(self):
+        # get dir of currently executing script: 
+        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        code_root = os.path.dirname(os.path.dirname(cwd))
+        cli_obj = cli.MDTFTopLevelArgParser(
+            code_root, 
+            skip_defaults=True,
+            argv= f"-f {os.path.join(cwd, 'dummy_config.json')}"
+        )
+        config = vars(cli_obj.parse_args())
+        self.assertEqual(config["OBS_DATA_ROOT"], "/DUMMY/PATH/OBS_DATA_ROOT")
+        self.assertEqual(config["MODEL_DATA_ROOT"], "/DUMMY/PATH/MODEL_DATA_ROOT")
+        self.assertEqual(config["WORKING_DIR"], "/DUMMY/PATH/WORKING_DIR")
+        self.assertEqual(config["OUTPUT_DIR"], "/DUMMY/PATH/OUTPUT_DIR")

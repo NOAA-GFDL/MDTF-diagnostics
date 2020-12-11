@@ -3,7 +3,7 @@ import sys
 import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
-from src.environment_manager import EnvironmentManager
+from src.environment_manager import SubprocessRuntimeManager
 
 class TestEnvironmentManager(unittest.TestCase):
     test_config = {'case_list':[{}], 'pod_list':['X']}

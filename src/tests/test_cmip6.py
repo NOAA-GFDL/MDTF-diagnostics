@@ -3,17 +3,17 @@ import unittest
 import src.cmip6 as cmip6
 from src.cmip6 import CMIP6DateFrequency as dt_freq
 import src.datelabel as dl
-from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
+from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
 
 # really incomplete! Do more systematically.
 #@unittest.skipIf(True,
 #    "Skipping TestCMIP6_CVs since we don't want to read in the json")
 class TestCMIP6_CVs(unittest.TestCase):
     def setUp(self):
-        setUp_ConfigManager()
+        setUp_config_singletons()
 
     def tearDown(self):
-        tearDown_ConfigManager()
+        tearDown_config_singletons()
 
     def test_is_in_cv(self):
         x = cmip6.CMIP6_CVs()
@@ -35,7 +35,7 @@ class TestCMIP6_CVs(unittest.TestCase):
     def test_table_id_lookup(self):
         x = cmip6.CMIP6_CVs()
         self.assertEqual(
-            x.lookup('AERmon', 'table_id', 'date_freq'),
+            x.lookup('AERmon', 'table_id', 'frequency'),
             set([dt_freq('mon')])
         )
         self.assertEqual(
@@ -43,7 +43,7 @@ class TestCMIP6_CVs(unittest.TestCase):
             set(['mon'])
         )
         self.assertEqual(
-            x.lookup(dt_freq('mon'), 'date_freq', 'table_id'),
+            x.lookup(dt_freq('mon'), 'frequency', 'table_id'),
             set(['EmonZ', 'AERmon', 'SImon', 'Amon', 'CFmon', 'Omon', 
                 'ImonGre', 'Emon', 'ImonAnt', 'Lmon', 'LImon', 'Oclim', 
                 'AERmonZ'])
@@ -87,7 +87,7 @@ class TestMIPTableParsing(unittest.TestCase):
         for k in self.test_freqs:
             for tbl in self.test_freqs[k]:
                 d = cmip6.parse_mip_table_id(tbl)
-                self.assertEqual(dt_freq(k), d['date_freq'])
+                self.assertEqual(dt_freq(k), d['frequency'])
 
 class TestDRSFilename(unittest.TestCase):
     def test_all_attrs(self):

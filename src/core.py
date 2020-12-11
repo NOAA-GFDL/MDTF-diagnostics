@@ -40,8 +40,7 @@ class MDTFFramework(object):
         self.dispatch_classes(cli_obj)
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
-        config = ConfigManager(cli_obj, pod_info_tuple, self.case_list, 
-            self.global_env_vars)
+        config = ConfigManager(cli_obj, pod_info_tuple, self.global_env_vars)
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.WORKING_DIR)
@@ -179,6 +178,8 @@ class MDTFFramework(object):
             return case['pod_list']
 
     def verify_paths(self, config, p):
+        # needs to be here, instead of PathManager, because we subclass it in 
+        # NOAA_GFDL
         keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
         if os.path.exists(p.WORKING_DIR) and not \
@@ -205,7 +206,7 @@ class MDTFFramework(object):
         # make config nested dict for backwards compatibility
         # this is all temporary
         d = dict()
-        for n, case in enumerate(config.case_list):
+        for n, case in enumerate(self.case_list):
             key = 'case_list({})'.format(n)
             d[key] = case
         # d['pod_list'] = self.pod_list
@@ -262,12 +263,11 @@ class MDTFFramework(object):
 
 
 class ConfigManager(util.Singleton, util.NameSpace):
-    def __init__(self, cli_obj=None, pod_info_tuple=None, case_list=None, 
-        global_env_vars=None, unittest=False):
+    def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
+        unittest=False):
         self._unittest = unittest
         self.update(cli_obj.config)
         self.pods = pod_info_tuple.pod_data
-        self.case_list = case_list
         self.global_env_vars = global_env_vars
 
 
@@ -400,10 +400,10 @@ class VariableTranslator(util.Singleton):
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
-            config_files = ['dummy_filename']
+            config_files = []
         else:
             glob_pattern = os.path.join(
-                code_root, 'src', 'fieldlist_*.jsonc'
+                code_root, 'src', 'data', 'fieldlist_*.jsonc'
             )
             config_files = glob.glob(glob_pattern)
         # always have CF-compliant option, which does no translation
@@ -418,15 +418,18 @@ class VariableTranslator(util.Singleton):
         self.units = {'CF': dict()}
         for f in config_files:
             d = util.read_json(f)
-            for conv in util.to_iter(d['convention_name']):
-                _log.debug('Found convention %s', conv)
-                if conv in self.variables:
-                    _log.error("Convention %s defined in %s already exists.", conv, f)
-                    raise util.ConventionError
+            self.add_convention(d)
 
-                self.axes[conv] = d.get('axes', dict())
-                self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
-                self.units[conv] = util.MultiMap(d.get('units', dict()))
+    def add_convention(self, d):
+        for conv in util.to_iter(d['convention_name']):
+            _log.debug('Found convention %s', conv)
+            if conv in self.variables:
+                _log.error("Convention %s defined in %s already exists.", conv, f)
+                raise util.ConventionError
+
+            self.axes[conv] = d.get('axes', dict())
+            self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
+            self.units[conv] = util.MultiMap(d.get('units', dict()))
 
     def to_CF(self, convention, v_name):
         if convention == 'CF': 

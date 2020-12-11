@@ -22,7 +22,7 @@ class TestRegexPattern(unittest.TestCase):
             bar: int
 
         ppat.match('/123/456/other_text')
-        self.assertDictEqual(ppat.data, {'foo':123, 'bar': 456})
+        self.assertDictEqual(ppat.data, {'foo': '123', 'bar': '456'})
         a = A.from_string('/1/2/other_text')
         self.assertEqual(a.foo, 1)
         self.assertEqual(a.bar, 2)

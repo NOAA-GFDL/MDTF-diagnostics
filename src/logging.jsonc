@@ -41,7 +41,7 @@
   },
   "formatters": {
     "console_stdout": {
-      "format": "%(levelname)s: %(message)s"
+      "format": "%(message)s"
     },
     "console_stderr": {
       "format": "%(levelname)s: %(message)s"

@@ -80,25 +80,16 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
         """
         try:
             git_branch, git_hash, git_dirty = git_info()
-            if self.level <= logging.DEBUG:
-                str_ = (
-                    "MDTF PACKAGE DEBUG LOG"
-                    f"Started logging at {datetime.datetime.now()}\n"
-                    f"git hash/branch: {git_hash} (on {git_branch})\n"
-                    f"uncommitted files: {git_dirty}\n"
-                    f"sys.platform: '{sys.platform}'\n"
-                    f"sys.executable: '{sys.executable}'\n"
-                    f"sys.version: '{sys.version}'\n"
-                    f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
-                ) 
-            else:
-                str_ = (
-                    "MDTF PACKAGE LOG"
-                    f"Started logging at {datetime.datetime.now()}\n"
-                    f"git hash/branch: {git_hash} (on {git_branch})\n"
-                    f"sys.platform: '{sys.platform}'\n"
-                    f"sys.argv: {sys.argv}\n"
-                )
+            str_ = (
+                "MDTF PACKAGE LOG"
+                f"Started logging at {datetime.datetime.now()}\n"
+                f"git hash/branch: {git_hash} (on {git_branch})\n"
+                # f"uncommitted files: {git_dirty}\n"
+                f"sys.platform: '{sys.platform}'\n"
+                # f"sys.executable: '{sys.executable}'\n"
+                f"sys.version: '{sys.version}'\n"
+                # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
+            ) 
             return str_ + (80 * '-') + '\n\n'
         except Exception as exc:
             print(exc)
@@ -433,7 +424,7 @@ def _set_log_file_paths(d, new_paths):
         _log.warning("Couldn't find handlers for the following log files: %s",
             new_paths)
 
-def mdtf_log_config(root_logger, cli_obj, new_paths=None):
+def case_log_config(config_mgr, **new_paths):
     """Wrapper to handle logger configuration from a file and transfer of the 
     temporary log cache to the newly-configured loggers.
 
@@ -446,28 +437,33 @@ def mdtf_log_config(root_logger, cli_obj, new_paths=None):
             names of :py:class:`logging.Handler`s in the config file, and values
             are the new paths.
     """
-    # temporary cache handler should be the only handler attached to root_logger
-    # as of now
-    if len(root_logger.handlers) > 1 \
-        or not isinstance(root_logger.handlers[0], MultiFlushMemoryHandler):
-        _log.error("Unexpected handlers attached to root: %s", root_logger.handlers)
-    temp_log_cache = root_logger.handlers[0]
+    if config_mgr.log_config is None:
+        return
+
+    root_logger = logging.getLogger()
+    first_call = isinstance(root_logger.handlers[0], MultiFlushMemoryHandler)
+    if first_call:
+        # temporary cache handlers should be the only handlers attached to 
+        # root_logger as of now
+        # assert len(root_logger.handlers) == 2
+        temp_log_cache = root_logger.handlers[0]
+        # temp_stdout = root_logger.handlers[1]
 
     # log uncaught exceptions
     _set_excepthook(root_logger)
-
-    # set console verbosity level
-    stdout_level, stderr_level = _level_from_cli(cli_obj.config)
-
-    # read the config file, munge it according to CLI settings, configure loggers
+    # configure loggers from the specification we loaded
     try:
-        _set_console_log_level(cli_obj.log_config, stdout_level, stderr_level)
-        _set_log_file_paths(cli_obj.log_config, new_paths)
-        logging.config.dictConfig(cli_obj.log_config)
+        # set console verbosity level
+        stdout_level, stderr_level = _level_from_cli(config_mgr)
+        _set_console_log_level(config_mgr.log_config, stdout_level, stderr_level)
+        _set_log_file_paths(config_mgr.log_config, new_paths)
+        logging.config.dictConfig(config_mgr.log_config)
     except Exception as exc:
         _log.exception("Logging config failed.")
 
-    # transfer cache contents to newly-configured loggers and delete it
-    temp_log_cache.transfer_to_all(root_logger)
-    temp_log_cache.close()
-    root_logger.removeHandler(temp_log_cache)
+    if first_call:
+        # transfer cache contents to newly-configured loggers and delete it
+        # root_logger.removeHandler(temp_stdout)
+        temp_log_cache.transfer_to_all(root_logger)
+        temp_log_cache.close()
+        root_logger.removeHandler(temp_log_cache)

@@ -19,7 +19,7 @@ from .filesystem import (
     # is_subpath, 
 )
 from .logs import (
-    signal_logger, git_info, mdtf_log_config
+    signal_logger, git_info, case_log_config
 )
 from .processes import (
     ExceptionPropagatingThread, 

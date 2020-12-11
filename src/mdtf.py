@@ -47,12 +47,15 @@ def main():
         # run the actual framework
         # Cache log info in memory until log file is set up
         log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
+        # add temp handlers so stuff still printed to stdout/stderr
+        # temp_stdout = logging.StreamHandler(sys.stdout)
+        # temp_stdout.setLevel(logging.INFO)
         _log.addHandler(log_cache)
-
+        # _log.addHandler(temp_stdout)
+        
         # not printing help or info, setup CLI normally 
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         framework = cli_obj.dispatch()
-        print(framework)
         exit_code = framework.main()
         exit(exit_code)
 

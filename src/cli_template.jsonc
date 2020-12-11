@@ -121,11 +121,13 @@
         {
           "name": "data_manager",
           "help": "Method used to fetch model data.",
-          "default" : "Local_File"
+          "default" : "Localfile",
+          "action": "ClassImportAction"
         },{
           "name": "preprocessor",
           "help": "Format conversion operations to apply to model data before PODs are called.",
-          "default": "MDTFData"
+          "default": "MDTFData",
+          "action": "ClassImportAction"
         },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
@@ -161,6 +163,12 @@
           "help": "Method to manage POD runtime dependencies.",
           "default" : "Conda",
           "action": "PluginArgAction"
+        },{
+          "name": "runtime_manager",
+          "hidden" : true,
+          "help": "Method to run PODs.",
+          "default" : "Subprocess",
+          "action": "ClassImportAction"
         }
       ]
     },{

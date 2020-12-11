@@ -311,7 +311,7 @@ def write_json(struct, file_path, sort_keys=False):
         str_ = json.dumps(struct, 
             sort_keys=sort_keys, indent=2, separators=(',', ': '))
         with io.open(file_path, 'w', encoding='utf-8') as file_:
-            file_.write(str_.encode(encoding='utf-8', errors='strict'))
+            file_.write(str_)
     except IOError:
         _log.critical(f'Fatal IOError when trying to write {file_path}. Exiting.')
         exit(1)

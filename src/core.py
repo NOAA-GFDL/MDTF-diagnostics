@@ -3,6 +3,7 @@
 import os
 import sys
 import io
+import copy
 import re
 import glob
 import shutil
@@ -11,7 +12,6 @@ import string
 import tempfile
 import traceback
 from src import util, cli, mdtf_info
-from src.environment_manager import SubprocessRuntimeManager
 
 import logging
 _log = logging.getLogger(__name__)
@@ -27,20 +27,25 @@ class MDTFFramework(object):
         try:
             # load pod data
             pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
-            self.configure(cli_obj, pod_info_tuple)
+            # load log config
+            log_config = cli.read_config_file(
+                self.code_root, "logging.jsonc", site=cli_obj.site
+            )
+            self.configure(cli_obj, pod_info_tuple, log_config)
         except Exception as exc:
             wrapped_exc = traceback.TracebackException.from_exception(exc)
             _log.critical("Framework caught exception %s", repr(exc))
             print(''.join(wrapped_exc.format()))
         
-    def configure(self, cli_obj, pod_info_tuple):
+    def configure(self, cli_obj, pod_info_tuple, log_config):
         """Wrapper for all configuration done based on CLI arguments.
         """
         self._cli_post_parse_hook(cli_obj)
         self.dispatch_classes(cli_obj)
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
-        config = ConfigManager(cli_obj, pod_info_tuple, self.global_env_vars)
+        config = ConfigManager(cli_obj, pod_info_tuple, 
+            self.global_env_vars, self.case_list, log_config)
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.WORKING_DIR)
@@ -58,12 +63,12 @@ class MDTFFramework(object):
 
     def dispatch_classes(self, cli_obj):
         def _dispatch(setting):
-            return cli_obj.config[setting]
+            return cli_obj.imports[setting]
 
         self.DataManager = _dispatch('data_manager')
         self.Preprocessor = _dispatch('preprocessor')
         self.EnvironmentManager = _dispatch('environment_manager')
-        self.RuntimeManager = SubprocessRuntimeManager
+        self.RuntimeManager = _dispatch('runtime_manager')
 
     @staticmethod
     def _populate_from_cli(cli_obj, group_nm, target_d=None):
@@ -134,8 +139,8 @@ class MDTFFramework(object):
         else:
             case_list_in = util.to_iter(cli_obj.file_case_list)
         case_list = []
-        for case_tup in enumerate(case_list_in):
-            case_list.append(self.parse_case(case_tup, cli_d, cli_obj))
+        for i, case_d in enumerate(case_list_in):
+            case_list.append(self.parse_case(i, case_d, cli_obj))
         self.case_list = [case for case in case_list if case]
         if not self.case_list:
             _log.critical(("ERROR: no valid entries in case_list. Please specify "
@@ -143,12 +148,11 @@ class MDTFFramework(object):
                 f"\n{util.pretty_print_json(case_list_in)}"))
             exit(1)
 
-    def parse_case(self, case_tup, cli_d, cli_obj):
-        n, d = case_tup
+    def parse_case(self, n, d, cli_obj):
+        # really need to move this into init of DataManager
         if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
             d['CASE_ROOT_DIR'] = d.pop('root_dir')
         case_convention = d.get('convention', '')
-        d.update(cli_d)
         if case_convention:
             d['convention'] = case_convention
 
@@ -189,15 +193,6 @@ class MDTFFramework(object):
         util.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
             create=True)
 
-    def configure_logs(self, cli_obj):
-        root_logger = logging.getLogger()
-        paths = PathManager()
-        # configure the real loggers from a file
-        util.mdtf_log_config(
-            root_logger, cli_obj,
-            {"mdtf_log_file": os.path.join(paths.WORKING_DIR, "mdtf.log")}
-        )
-
     def _post_parse_hook(self, cli_obj, config, paths):
         # init other services
         pass
@@ -228,16 +223,16 @@ class MDTFFramework(object):
     # --------------------------------------------------------------------
 
     def run_case(self, case_name, case_d):
-        print(f"Framework: initialize {case_name}")
+        _log.info(f"Framework: initialize {case_name}")
         case = self.DataManager(case_d, self.Preprocessor)
         case.setup()
         self.cases.append(case)
 
-        print(f'Framework: get data for {case_name}')
+        _log.info(f'Framework: get data for {case_name}')
         case.query_and_fetch_data()
         case.preprocess_data()
 
-        print(f'Framework: run {case_name}')
+        _log.info(f'Framework: run {case_name}')
         run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
         run_mgr.setup()
         run_mgr.run()
@@ -245,9 +240,9 @@ class MDTFFramework(object):
         case.tear_down()
         return any(p.failed for p in case.pods.values())
 
-    def main(self):
+    def main(self, foo=None):
         failed = False
-        _log.info("\n======= Starting {__file__}")
+        _log.info("\n======= Starting %s", __file__)
         # only run first case in list until dependence on env vars cleaned up
         for d in self.case_list[0:1]:
             case_name = d.get('CASENAME', '')
@@ -264,11 +259,21 @@ class MDTFFramework(object):
 
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
-        unittest=False):
-        self._unittest = unittest
+        case_list=None, log_config=None, unittest=False):
         self.update(cli_obj.config)
-        self.pods = pod_info_tuple.pod_data
-        self.global_env_vars = global_env_vars
+        if pod_info_tuple is None:
+            self.pod_data = dict()
+        else:
+            self.pod_data = pod_info_tuple.pod_data
+        if global_env_vars is None:
+            self.global_env_vars = dict()
+        else:
+            self.global_env_vars = global_env_vars
+        self.log_config = log_config
+        # copy srializable version of parsed settings, in order to write 
+        # backup config file
+        self.backup_config = copy.deepcopy(cli_obj.config) 
+        self.backup_config['case_list'] = copy.deepcopy(case_list)
 
 
 class PathManager(util.Singleton, util.NameSpace):
@@ -418,14 +423,17 @@ class VariableTranslator(util.Singleton):
         self.units = {'CF': dict()}
         for f in config_files:
             d = util.read_json(f)
-            self.add_convention(d)
+            try:
+                self.add_convention(d)
+            except util.ConventionError as exc:
+                _log.error("Convention %s defined in %s already exists.", 
+                    exc.conv_name, f)
 
     def add_convention(self, d):
         for conv in util.to_iter(d['convention_name']):
             _log.debug('Found convention %s', conv)
             if conv in self.variables:
-                _log.error("Convention %s defined in %s already exists.", conv, f)
-                raise util.ConventionError
+                raise util.ConventionError(conv)
 
             self.axes[conv] = d.get('axes', dict())
             self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
@@ -459,26 +467,27 @@ class VariableTranslator(util.Singleton):
             raise
 
 
-def summary_info_tuple(case):
-    """Debug information; will clean this up.
-    """
-    if not hasattr(case, 'pods') or not case.pods:
-        return (
-            ['dummy sentinel string'], [],
-            getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
-        )
-    else:
-        return (
-            [p_name for p_name, p in case.pods.items() if p.failed],
-            [p_name for p_name, p in case.pods.items() if not p.failed],
-            getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
-        )
-
 def print_summary(fmwk):
+    def summary_info_tuple(case):
+        """Debug information; will clean this up.
+        """
+        if not hasattr(case, 'pods') or not case.pods:
+            return (
+                ['dummy sentinel string'], [],
+                getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+            )
+        else:
+            return (
+                [p_name for p_name, p in case.pods.items() if p.failed],
+                [p_name for p_name, p in case.pods.items() if not p.failed],
+                getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
+            )
+
     d = {c.case_name: summary_info_tuple(c) for c in fmwk.cases}
     failed = any(len(tup[0]) > 0 for tup in d.values())
+    print('\n' + (80 * '-'))
     if failed:
-        print(f"\nExiting with errors from {__file__}")
+        print(f"Exiting with errors from {__file__}")
         for case_name, tup in d.items():
             print(f"Summary for {case_name}:")
             if tup[0][0] == 'dummy sentinel string':
@@ -492,7 +501,7 @@ def print_summary(fmwk):
                         f"{', '.join(tup[0])}"))
             print(f"\tOutput written to {tup[2]}")
     else:
-        print(f"\nExiting normally from {__file__}")
+        print(f"Exiting normally from {__file__}")
         for case_name, tup in d.items():
             print(f"Summary for {case_name}:")
             print(f"\tAll PODs exited cleanly.")

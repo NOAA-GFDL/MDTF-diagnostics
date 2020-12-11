@@ -501,17 +501,28 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
 
 # ----------------------------------------------------
 
-def filter_dataclass(d, dc):
+def filter_dataclass(d, dc, init=False):
     """Given a dataclass dc (may be the class or an instance of it), and a dict,
     dataclass or dataclass instance d, return a dict of the subset of fields or 
     entries in d that correspond to the fields in dc.
+
+    If init=True, include any `init-only fields 
+    <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
+    that dc has in the returned dict.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
         if isinstance(d, type):
             d = d() # d is a class; instantiate with default field values
         d = dataclasses.asdict(d)
-    return {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
+    ans = {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
+    if init:
+        init_fields = filter(
+            (lambda f: f.type == dataclasses.InitVar), 
+            dc.__dataclass_fields__.values()
+        )
+        ans.update({f.name: d[f.name] for f in init_fields if f.name in d})
+    return ans
     
 def coerce_to_dataclass(d, dc, **kwargs):
     """Given a dataclass dc (may be the class or an instance of it), and a dict,
@@ -519,7 +530,7 @@ def coerce_to_dataclass(d, dc, **kwargs):
     field values initialized from those in d, along with any extra values
     passed in kwargs.
     """
-    new_kwargs = filter_dataclass(d, dc)
+    new_kwargs = filter_dataclass(d, dc, init=True)
     new_kwargs.update(kwargs)
     if not isinstance(dc, type):
         dc = dc.__class__

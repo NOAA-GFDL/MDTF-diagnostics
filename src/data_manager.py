@@ -77,7 +77,7 @@ def remote_file_dataset_factory(class_name, *key_classes):
     return util.dataclass_factory(util.mdtf_dataclass, class_name, *key_classes, 
         frozen=True)
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class DataManagerAttributesBase():
     """Attributes that any data source must specify.
     """
@@ -124,6 +124,12 @@ class DataManager(abc.ABC):
         self.MODEL_WK_DIR = d.MODEL_WK_DIR
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
         self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
+        util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
+
+        # configure logger
+        util.case_log_config(
+            config, mdtf_log_file= os.path.join(d.MODEL_WK_DIR, "mdtf.log")
+        )
 
         self.data_keys = collections.defaultdict(list)
         self.data_pods = util.MultiMap()
@@ -142,8 +148,6 @@ class DataManager(abc.ABC):
     # -------------------------------------
 
     def setup(self):
-        util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
-
         translate = core.VariableTranslator()
         # set env vars for unit conversion factors (TODO: honest unit conversion)
         if self.convention not in translate.units:
@@ -478,15 +482,13 @@ class DataManager(abc.ABC):
 
     def tear_down(self):
         # TODO: handle OSErrors in all of these
-        config = core.ConfigManager()
         paths = core.PathManager()
-        
         # create empty text file for PODs to append to
         open(self.TEMP_HTML, 'w').close()
         for p in self.pods.values():
             p.tear_down()
         self._make_html()
-        _ = self._backup_config_file(config)
+        self._backup_config_file()
         if self.make_variab_tar:
             _ = self._make_tar_file(paths.OUTPUT_DIR)
         self._copy_to_output()
@@ -515,16 +517,16 @@ class DataManager(abc.ABC):
             os.path.join(src_dir, 'mdtf_diag_banner.png'), self.MODEL_WK_DIR
         )
 
-    def _backup_config_file(self, config):
-        """Record settings in file variab_dir/config_save.json for rerunning
+    def _backup_config_file(self):
+        """Record settings in file config_save.json for rerunning
         """
+        config = core.ConfigManager()
         out_file = os.path.join(self.MODEL_WK_DIR, 'config_save.json')
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
             _log.info("%s: Overwriting %s.", self.case_name, out_file)
-        util.write_json(config.toDict(), out_file)
-        return out_file
+        util.write_json(config.backup_config, out_file)
 
     def _make_tar_file(self, tar_dest_dir):
         """Make tar file of web/bitmap output.
@@ -560,7 +562,7 @@ class DataManager(abc.ABC):
 
 # =================================================================
 
-@util.mdtf_dataclass(frozen=True)
+@util.mdtf_dataclass
 class LocalfileDataManagerAttributes(DataManagerAttributesBase):
     CASENAME: dataclasses.InitVar = util.MANDATORY
     sample_data_source: str = None

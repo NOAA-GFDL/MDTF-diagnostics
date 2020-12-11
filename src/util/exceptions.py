@@ -75,7 +75,11 @@ class MDTFFileExistsError(FileExistsError, MDTFBaseException):
 
 class ConventionError(MDTFBaseException):
     """Exception raised by a duplicate variable convention name."""
-    pass
+    def __init__(self, conv_name):
+        self.conv_name = conv_name
+
+    def __str__(self):
+        return f"Error in the definition of convention '{self.conv_name}'."
 
 class MixedDatePrecisionException(MDTFBaseException):
     """Exception raised when we attempt to operate on :class:`Date`s or 

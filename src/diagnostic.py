@@ -6,7 +6,6 @@ import glob
 import shutil
 import typing
 from src import util, core, verify_links, datelabel, data_model
-from src import cli # HACK for now
 
 import logging
 _log = logging.getLogger(__name__)
@@ -379,14 +378,8 @@ class Diagnostic(object):
         """
         config = core.ConfigManager()
         paths = core.PathManager()
-        # HACK - don't want to read config files twice, but this lets us
-        # propagate syntax errors
-        pod_config = cli.load_pod_settings(paths.CODE_ROOT, pod_name)
-        # # following should have been caught in user input validation
-        # assert pod_name in config.pods, \
-        #     f"POD name {pod_name} not recognized." 
         return cls.from_struct(
-            pod_name, pod_config,
+            pod_name, config.pod_data[pod_name],
             CODE_ROOT=paths.CODE_ROOT, 
             dry_run=config.get('dry_run', False)
         )

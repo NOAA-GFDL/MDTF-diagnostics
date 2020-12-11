@@ -42,7 +42,7 @@ class MDTFFramework(object):
         # init singletons
         config = ConfigManager(cli_obj, pod_info_tuple, self.case_list, 
             self.global_env_vars)
-        paths = PathManager(self.code_root, cli_obj)
+        paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.WORKING_DIR)
         _ = VariableTranslator(self.code_root)
@@ -70,7 +70,9 @@ class MDTFFramework(object):
     def _populate_from_cli(cli_obj, group_nm, target_d=None):
         if target_d is None:
             target_d = dict()
-        for key, val in cli_obj.iteritems_cli(group_nm):
+        for arg in cli_obj.iter_group_actions(subcommand=None, group=group_nm):
+            key = arg.dest
+            val = cli_obj.config.get(key, None)
             if val: # assign nonempty items only
                 target_d[key] = val
         return target_d
@@ -122,17 +124,20 @@ class MDTFFramework(object):
             exit(1)
 
     def parse_case_list(self, cli_obj):
-        case_list_in = util.to_iter(cli_obj.config.get('case_list', []))
-        cli_d = self._populate_from_cli(cli_obj, 'MODEL')
-        if 'CASE_ROOT_DIR' not in cli_d and cli_obj.config.get('root_dir', None): 
-            # CASE_ROOT was set positionally
-            cli_d['CASE_ROOT_DIR'] = cli_obj.config['root_dir']
-        if not case_list_in:
+        d = cli_obj.config # abbreviate
+        if 'CASENAME' in d and d['CASENAME']:
+            # defined case from CLI
+            cli_d = self._populate_from_cli(cli_obj, 'MODEL')
+            if 'CASE_ROOT_DIR' not in cli_d and d.get('root_dir', None): 
+                # CASE_ROOT was set positionally
+                cli_d['CASE_ROOT_DIR'] = d['root_dir']
             case_list_in = [cli_d]
+        else:
+            case_list_in = util.to_iter(cli_obj.file_case_list)
         case_list = []
         for case_tup in enumerate(case_list_in):
             case_list.append(self.parse_case(case_tup, cli_d, cli_obj))
-        self.case_list = [case for case in case_list if case is not None]
+        self.case_list = [case for case in case_list if case]
         if not self.case_list:
             _log.critical(("ERROR: no valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
@@ -207,12 +212,13 @@ class MDTFFramework(object):
         d['paths'] = paths.toDict()
         d['paths'].pop('_unittest', None)
         d['settings'] = dict()
-        settings_gps = set(cli_obj.parser_groups).difference(
-            set(['parser','PATHS','MODEL','DIAGNOSTICS'])
-        )
+        all_groups = set(arg_gp.title for arg_gp in \
+            cli_obj.iter_arg_groups(subcommand=None))
+        settings_gps = all_groups.difference(
+            ('parser','PATHS','MODEL','DIAGNOSTICS'))
         for group in settings_gps:
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
-        d['settings'] = {k:v for k,v in iter(d['settings'].items()) \
+        d['settings'] = {k:v for k,v in d['settings'].items() \
             if k not in d['paths']}
         d['env_vars'] = config.global_env_vars
         print('DEBUG: SETTINGS:')
@@ -258,6 +264,7 @@ class MDTFFramework(object):
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, case_list=None, 
         global_env_vars=None, unittest=False):
+        self._unittest = unittest
         self.update(cli_obj.config)
         self.pods = pod_info_tuple.pod_data
         self.case_list = case_list
@@ -268,17 +275,19 @@ class PathManager(util.Singleton, util.NameSpace):
     """:class:`~util.Singleton` holding root paths for the MDTF code. These are
     set in the ``paths`` section of ``defaults.jsonc``.
     """
-    def __init__(self, code_root=None, cli_obj=None, env=None, unittest=False):
-        self.CODE_ROOT = code_root
+    def __init__(self, cli_obj=None, env=None, unittest=False):
+        self.CODE_ROOT = cli_obj.code_root
+        self._unittest = unittest
         if not self._unittest:
             assert os.path.isdir(self.CODE_ROOT)
 
         d = cli_obj.config
         # set by CLI settings that have "parse_type": "path" in JSON entry
-        paths_to_parse = cli_obj.custom_types.get('path', [])
-        if not paths_to_parse:
+        cli_paths = [act.dest for act in cli_obj.iter_actions() \
+            if isinstance(act, cli.PathAction)]
+        if not cli_paths:
             _log.warning("Didn't get list of paths from CLI.")
-        for key in paths_to_parse:
+        for key in cli_paths:
             self[key] = self._init_path(key, d, env=env)
             if key in d:
                 d[key] = self[key]
@@ -339,10 +348,12 @@ class PathManager(util.Singleton, util.NameSpace):
 class TempDirManager(util.Singleton):
     _prefix = 'MDTF_temp_'
 
-    def __init__(self, temp_root=None):
+    def __init__(self, temp_root=None, unittest=False):
+        self._unittest = unittest
         if not temp_root:
             temp_root = tempfile.gettempdir()
-        assert os.path.isdir(temp_root)
+        if not self._unittest:
+            assert os.path.isdir(temp_root)
         self._root = temp_root
         self._dirs = []
 
@@ -385,6 +396,7 @@ class TempDirManager(util.Singleton):
 
 class VariableTranslator(util.Singleton):
     def __init__(self, code_root=None, unittest=False):
+        self._unittest = unittest
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

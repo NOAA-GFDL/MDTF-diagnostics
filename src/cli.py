@@ -492,9 +492,11 @@ class CLIConfigManager(util.Singleton):
        This is intended to be initialized by a calling script *before* being 
        referenced by the classes in this module.
     """
-    def __init__(self, code_root=None):
+    def __init__(self, code_root=None, skip_defaults=False):
         # singleton, so this will only be invoked once
+        
         self.code_root = code_root
+        self.skip_defaults = skip_defaults
         self.site = self.default_site
 
         self.subcommands = dict()
@@ -548,6 +550,8 @@ class CLIConfigManager(util.Singleton):
             except util.MDTFFileNotFoundError:
                 _log.debug('Config file %s not found; not updating defaults.', path_)
 
+        if self.skip_defaults:
+            return
         if def_type == DefaultsFileTypes.GLOBAL:
             # NB file lives in "sites_dir", not a "site_dir" for a given site
             _read_defaults(os.path.join(self.sites_dir, self.defaults_filename))
@@ -569,8 +573,10 @@ class CLIConfigManager(util.Singleton):
         fmwk_cmds = fmwk_d.pop('subcommands', dict())
         self.subparser_kwargs = fmwk_d
         self.subparser_kwargs.update(site_d)
-        self.subcommands = {k: CLICommand(name=k, **v, code_root=self.code_root) \
-            for k,v in fmwk_cmds.items()}
+        self.subcommands = {
+            k: CLICommand(name=k, **v, code_root=self.code_root) \
+                for k,v in fmwk_cmds.items()
+        }
         for k,v in site_cmds.items():
             if k in self.subcommands:
                 _log.debug('Replacing subcommand %s with site-specific version.', k)
@@ -584,8 +590,10 @@ class CLIConfigManager(util.Singleton):
             self.code_root, self.plugins_filename, self.site
         )
         for k, v in fmwk_d.items():
-            self.plugins[k] = {kk: CLICommand(name=kk, **vv, code_root=self.code_root) \
-                for kk,vv in v.items()}
+            self.plugins[k] = {
+                kk: CLICommand(name=kk, **vv, code_root=self.code_root) \
+                    for kk,vv in v.items()
+            }
         for k, v in site_d.items():
             for kk,vv in v.items():
                 if kk in self.plugins[v]:
@@ -798,8 +806,12 @@ class MDTFArgPreparser(MDTFArgParser):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args`
         used to determine what site to use.
         """
-        d = vars(self.parse_known_args(argv)[0])
-        return d.get('site', default_site)
+        namespace = self.parse_known_args(argv)[0]
+        return getattr(namespace, 'site', default_site)
+
+    def parse_input_file(self, argv=None):
+        namespace = self.parse_known_args(argv)[0]
+        return getattr(namespace, 'input_file', None)
 
     def parse_plugins(self, argv=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args`
@@ -815,8 +827,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
     """Class for constructing the command-line interface, parsing the options,
     and handing off execution to the selected subcommand.
     """
-    def __init__(self, code_root, argv=None):
-        _ = CLIConfigManager(code_root)
+    def __init__(self, code_root, skip_defaults=False, argv=None):
+        _ = CLIConfigManager(code_root, skip_defaults=skip_defaults)
         self.code_root = code_root
         self.installed = False
         self.sites = []
@@ -825,8 +837,29 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             self.argv = sys.argv[1:]
         else:
             self.argv = self.split_args(argv)
+        
+        self.file_case_list = []
         self.config = None
         self.setup()
+
+    def iter_arg_groups(self, subcommand=None):
+        config = CLIConfigManager()
+        if subcommand:
+            subcmds = config.subcommands.get(subcommand, [])
+        else:
+            subcmds = list(config.subcommands.values())
+        for cmd in subcmds:
+            if hasattr(cmd, 'cli') and cmd.cli:
+                yield from cmd.cli.argument_groups
+
+    def iter_group_actions(self, subcommand=None, group=None):
+        groups = util.to_iter(group)
+        for arg_gp in self.iter_arg_groups(subcommand=subcommand):
+            if groups: 
+                if arg_gp.title in groups:
+                    yield from arg_gp.arguments
+            else:
+                yield from arg_gp.arguments
 
     def add_input_file_arg(self, target_p):
         """Convenience method to add the flag to pass a user-designated defaults
@@ -865,9 +898,9 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         cannot be parsed.
         """
         config = CLIConfigManager()
-        user_file_p = argparse.ArgumentParser(add_help=False)
-        self.add_input_file_arg(user_file_p)
-        path = getattr(user_file_p.parse_known_args()[0], 'input_file', None)
+        input_p = MDTFArgPreparser()
+        self.add_input_file_arg(input_p)
+        path = input_p.parse_input_file(self.argv)
         if not path:
             return
         try:
@@ -880,15 +913,12 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             return
         # try to determine if file is json
         if 'json' in os.path.splitext(path)[1].lower():
+            # assume config_file a JSON dict of option:value pairs.
             try:
                 d = util.parse_json(str_)
-                # overwrite default case_list and pod_list, if given
-                # TODO HANDLE THIS
-                # if 'case_list' in file_input:
-                #     self.case_list = file_input.pop('case_list')
-                # if 'pod_list' in file_input:
-                #     self.pod_list = file_input.pop('pod_list')
-                # assume config_file a JSON dict of option:value pairs.
+                self.file_case_list = d.pop('case_list', [])
+                # 'pods' handled by normal CLI
+                # self.file_pod_list = d.pop('pods', [])
                 d = {canonical_arg_name(k): v for k,v in d.items()}
                 config.defaults[DefaultsFileTypes.USER].update(d)
             except Exception:
@@ -1029,27 +1059,28 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_args` which
         handles intermediate levels of default settings.
         """
-        if args:
-            args = self.split_args(args)
-        else:
+        print('')
+        if args is None:
             args = self.argv
+        else:
+            args = self.split_args(args)
         return super(MDTFTopLevelArgParser, self).parse_args(args, namespace)
 
     def parse_known_args(self, args=None, namespace=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args` which
         handles intermediate levels of default settings.
         """
-        if args:
-            args = self.split_args(args)
-        else:
+        if args is None:
             args = self.argv
+        else:
+            args = self.split_args(args)
         return super(MDTFTopLevelArgParser, self).parse_known_args(args, namespace)
 
-    def dispatch(self):
+    def dispatch(self, args=None):
         """Parse args, and call the subcommand that was selected.
         """
         config = CLIConfigManager()
-        self.config = vars(self.parse_args())
+        self.config = vars(self.parse_args(args))
         self.log_config = read_config_file(
             self.code_root, "logging.jsonc", site=self.site
         )

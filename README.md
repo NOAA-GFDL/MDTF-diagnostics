@@ -187,13 +187,6 @@ Development of this code framework for process-oriented diagnostics was supporte
 
 Many of the process-oriented diagnostics modules (PODs) were contributed by members of the NOAA [Model Diagnostics Task Force](https://cpo.noaa.gov/Meet-the-Divisions/Earth-System-Science-and-Modeling/MAPP/MAPP-Task-Forces/Model-Diagnostics-Task-Force) under MAPP support. Statements, findings or recommendations in these documents do not necessarily reflect the views of NOAA or the US Department of Commerce.
 
-## Dependencies
-
-This code base includes code from the following sources:
-
-- Portions of the [MetPy](https://github.com/Unidata/MetPy) package from [Unidata](https://www.unidata.ucar.edu/), copyright © 2008-2020 MetPy Developers and provided under the BSD 3-clause "revised" license. 
-- Portions of [xarray](https://github.com/pydata/xarray/tree/stable), from [pydata.org](https://pydata.org/), copyright © 2014-2019 xarray Developers and provided under the Apache license, version 2.0.
-
 ## Disclaimer
 
 This repository is a scientific product and is not an official communication of the National Oceanic and Atmospheric Administration, or the United States Department of Commerce. All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

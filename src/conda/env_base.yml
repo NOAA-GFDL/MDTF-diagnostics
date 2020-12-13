@@ -18,3 +18,5 @@ dependencies:
 # - cartopy=0.18
 - pint=0.16
 - dask=2.30
+# additions dec 2020
+- cf_xarray=0.3.1

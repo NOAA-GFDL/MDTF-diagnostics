@@ -325,7 +325,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
     chunks = [0, len(list_)]
     for k in splice_d:
         idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
-        if len(idx) != 1:
+        if len(idx) > 1:
             _log.debug('%s not unique (%s) in %s.', k, idx, list_)
         chunks.extend(idx)
     chunk_0, chunk_1 = itertools.tee(sorted(chunks))

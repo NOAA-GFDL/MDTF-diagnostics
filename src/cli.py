@@ -194,10 +194,12 @@ class ClassImportAction(RecordDefaultsAction):
     """
     call_on_defaults = False
 
-    def __init__(self, option_strings, dest, nargs=None, const=None, **kwargs):
-        # all plugins of this type accept only one value
-        super(ClassImportAction, self).__init__(
-            option_strings, dest, nargs=1, const=None, **kwargs
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Do case-insensitive matching on plugin names.
+        """
+        p_key = plugin_key(util.from_iter(values))
+        super(ClassImportAction, self).__call__(
+            parser, namespace, p_key, option_string
         )
 
 class PluginArgAction(ClassImportAction):
@@ -206,19 +208,7 @@ class PluginArgAction(ClassImportAction):
     """
     call_on_defaults = False
 
-    def __init__(self, option_strings, dest, tpye=None, **kwargs):
-        # all plugins of this type accept only one value
-        super(PluginArgAction, self).__init__(
-            option_strings, dest, type=plugin_key, **kwargs
-        )
 
-    def __call__(self, parser, namespace, values, option_string=None):
-        """Do case-insensitive matching on plugin names.
-        """
-        p_key = plugin_key(util.from_iter(values))
-        super(PluginArgAction, self).__call__(
-            parser, namespace, p_key, option_string
-        )
 
 # ===========================================================================
 # classes for represting CLI configuration information
@@ -297,6 +287,13 @@ class CLIArgument(object):
             'store_const','store_true','store_false','append','append_const',
             'count','help','version']:
             self.action = util.deserialize_class(self.action)
+        if isinstance(self.action, type) and issubclass(self.action, ClassImportAction):
+            # Enforce case-insensitive matching on plugin names.
+            self.nargs = 1
+            self.const = None
+            self.type = plugin_key
+            if self.default:
+                self.default = plugin_key(self.default)
 
         # do not list argument in "mdtf --help", but recognize it
         if self.hidden:
@@ -664,18 +661,24 @@ class CLIConfigManager(util.Singleton):
         """Populates ``plugins`` attribute with contents of CLI plugin files for
         the framework and site.
         """
+        def _add_new_plugin_type(plugin_arg, arg_choices):
+            self.plugins[plugin_arg] = {
+                plugin_key(k): CLICommand(name=k, **v, code_root=self.code_root) \
+                    for k,v in arg_choices.items()
+            }
+
         (site_d, fmwk_d) = read_config_files(
             self.code_root, self.plugins_filename, self.site
         )
         for k, v in fmwk_d.items():
-            self.plugins[k] = {
-                plugin_key(kk): CLICommand(name=kk, **vv, code_root=self.code_root) \
-                    for kk,vv in v.items()
-            }
+            _add_new_plugin_type(k, v)
         for k, v in site_d.items():
-            for kk,vv in v.items():
+            if k not in self.plugins:
+                _add_new_plugin_type(k, v)
+                continue
+            for kk, vv in v.items():
                 p_key = plugin_key(kk)
-                if p_key in self.plugins[v]:
+                if p_key in self.plugins[k]:
                     _log.debug(
                         'Replacing plugin %s (for %s) with site-specific version.',
                         kk, k
@@ -1052,7 +1055,10 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         if isinstance(target_p, MDTFTopLevelArgParser):
             kwargs.update({
                 'choices': self.sites,
-                'help': word_wrap("Site-specific functionality to use.")
+                'help': word_wrap(f"""
+                    Site-specific functionality to use. Options below are 
+                    specific to the selected value '{self.site}'.
+                """)
             })
         target_p.add_argument('--site', '-s', **kwargs)
 
@@ -1069,14 +1075,15 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         default_site = config.partial_defaults.get('site', config.default_site)
 
         self.sites = [d for d in os.listdir(config.sites_dir) \
-            if os.path.isdir(os.path.join(config.sites_dir, d))]
+            if os.path.isdir(os.path.join(config.sites_dir, d)) \
+                and not d.startswith(('.','_'))]
         # if default_site in self.sites:
         #     self.installed = True
         self.installed = True
 
         site_p = MDTFArgPreparser()
         self.add_site_arg(site_p)
-        site = site_p.parse_site(self.argv, default_site)
+        site = util.from_iter(site_p.parse_site(self.argv, default_site))
         if site not in self.sites \
             and not (site == default_site and not self.installed):
             _log.critical("Requested site %s not found in sites directory %s.", 

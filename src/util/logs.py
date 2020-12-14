@@ -2,6 +2,7 @@
 """
 import os
 import sys
+import argparse
 import datetime
 import subprocess
 import signal
@@ -37,8 +38,9 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
         finally:
             self.release()
 
-    def transfer_to_all(self, logger):
-        """Transfer contents of buffer to all handlers attached to logger.
+    def transfer_to_others(self, logger):
+        """Transfer contents of buffer to all non-console-based handlers attached 
+        to logger (handlers that aren't :py:class:`~logging.StreamHandler`.)
 
         If no handlers are attached to the logger, a warning is printed and the
         buffer is transferred to the :py:data:`logging.lastResort` handler, i.e.
@@ -50,11 +52,11 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
         """
         no_transfer_flag = True
         for handler in logger.handlers:
-            if handler is not self:
+            if handler is not self and not issubclass(handler, logging.StreamHandler):
                 self.transfer(handler)
                 no_transfer_flag = False
         if no_transfer_flag:
-            logger.warning("No loggers configured.")
+            logger.warning("No non-console-based loggers configured.")
             self.transfer(logging.lastResort)
 
 
@@ -227,6 +229,24 @@ class LtLevelFilter(logging.Filter):
 
     def filter(self, record):
         return record.levelno < self.levelno
+
+class EqLevelFilter(logging.Filter):
+    """:py:class:`logging.Filter` to include only log messages with a severity 
+    equal to level.
+    """
+    def __init__(self, name="", level=None):
+        super(EqLevelFilter, self).__init__(name=name)
+        if level is None:
+            level = logging.NOTSET
+        if not isinstance(level, int):
+            if hasattr(logging, str(level)):
+                level = getattr(logging, str(level))
+            else:
+                level = int(level)
+        self.levelno = level
+
+    def filter(self, record):
+        return record.levelno == self.levelno
 
 
 def git_info():
@@ -464,6 +484,80 @@ def case_log_config(config_mgr, **new_paths):
     if first_call:
         # transfer cache contents to newly-configured loggers and delete it
         # root_logger.removeHandler(temp_stdout)
-        temp_log_cache.transfer_to_all(root_logger)
+        temp_log_cache.transfer_to_others(root_logger)
         temp_log_cache.close()
         root_logger.removeHandler(temp_log_cache)
+
+def configure_console_loggers():
+    """Configure console loggers for top-level script. This is redundant with
+    what's in logging.jsonc, bu for debugging purposes we want to get console 
+    output set up before we've parsed input paths, read config files, etc.
+    """
+    logging.captureWarnings(True)
+    log_parser = argparse.ArgumentParser(add_help=False)
+    log_parser.add_argument('--verbose', '-v', default=0, action="count")
+    log_parser.add_argument('--quiet', '-q', default=0, action="count")
+    log_config, _ = log_parser.parse_known_args()
+    level = log_config.quiet - log_config.verbose # smaller = more verbose
+    if level <= 1:
+        stderr_level = logging.WARNING
+    elif level == 2:
+        stderr_level = logging.ERROR
+    else:
+        stderr_level = logging.CRITICAL
+    log_d = {
+        "version": 1,
+        "disable_existing_loggers":  False,
+        "root": {"level": "NOTSET", "handlers": ["debug", "stdout", "stderr"]},
+        "handlers": {
+            "debug": {
+                "class": "logging.StreamHandler",
+                "formatter": "level",
+                "level" : logging.DEBUG,
+                "stream" : "ext://sys.stdout",
+                "filters": ["debug_filter"]
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "normal",
+                "level" : logging.INFO,
+                "stream" : "ext://sys.stdout",
+                "filters": ["stdout_filter"]
+            },
+            "stderr": {
+                "class": "logging.StreamHandler",
+                "formatter": "level",
+                "level" : stderr_level,
+                "stream" : "ext://sys.stderr",
+                "filters": ["stderr_filter"]
+            }
+        },
+        "filters": {
+            "stderr_filter": {"()": GeqLevelFilter, "level": stderr_level},
+            "stdout_filter": {"()": EqLevelFilter, "level": logging.INFO},
+            "debug_filter": {"()": LtLevelFilter, "level": logging.INFO}
+        },
+        "formatters": {
+            "normal": {"format": "%(message)s"},
+            "level": {"format": "%(levelname)s: %(message)s"},
+            "debug": {
+                "()": HangingIndentFormatter,
+                "format": ("%(levelname)s: %(funcName)s (%(filename)s line "
+                    "%(lineno)d):\n%(message)s"),
+                "tabsize": 4,
+                "footer": "\n"
+            }
+        }
+    }
+    if level <= -2:
+        for d in log_d['handlers'].values():
+            d['formatter'] = 'debug'
+    if level == 0:
+        del log_d['handlers']['debug']
+        log_d['root']['handlers'] = ["stdout", "stderr"]
+    elif level == 1:
+        del log_d['handlers']['debug']
+        del log_d['handlers']['stdout']
+        log_d['root']['handlers'] = ["stderr"]
+    logging.config.dictConfig(log_d)
+    _log.debug('Console loggers configured.')

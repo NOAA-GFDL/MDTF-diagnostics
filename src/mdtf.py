@@ -1,17 +1,5 @@
 #!/usr/bin/env python
 
-# ======================================================================
-# NOAA Model Diagnotics Task Force (MDTF) Diagnostic Driver
-#
-# March 2019
-# Dani Coleman, NCAR
-# Chih-Chieh (Jack) Chen, NCAR, 
-# Yi-Hung Kuo, UCLA
-#
-# The MDTF code package and the participating PODs are distributed under
-# the LGPLv3 license (see LICENSE.txt).
-# ======================================================================
-
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 7:
@@ -23,10 +11,6 @@ import os
 import logging
 from src import cli, mdtf_info
 from src.util import logs
-
-_log = logging.getLogger()
-_log.setLevel(logging.INFO)
-logging.captureWarnings(True)
 
 def main():
     # get dir of currently executing script: 
@@ -46,23 +30,20 @@ def main():
     else:
         # run the actual framework
         # Cache log info in memory until log file is set up
+        _log = logging.getLogger()
+        _log.setLevel(logging.NOTSET)
         log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
-        # add temp handlers so stuff still printed to stdout/stderr
-        # temp_stdout = logging.StreamHandler(sys.stdout)
-        # temp_stdout.setLevel(logging.INFO)
         _log.addHandler(log_cache)
-        # _log.addHandler(temp_stdout)
-        
+
         # not printing help or info, setup CLI normally 
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         framework = cli_obj.dispatch()
         exit_code = framework.main()
         exit(exit_code)
 
-    logging.shutdown()
-
 # should move this out of "src" package, but need to create wrapper shell script
 # to set framework conda env.
 if __name__ == '__main__':
+    logs.configure_console_loggers()
     main()
     exit(0)

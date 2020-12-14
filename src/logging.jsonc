@@ -7,7 +7,8 @@
   "root": {
     "level" : "NOTSET",
     // define additional handlers in the section below and add them to this list
-    "handlers": ["console_stdout", "console_stderr", "mdtf_log_file"]
+    // "handlers": ["console_stdout", "console_stderr", "mdtf_log_file"]
+    "handlers": ["mdtf_log_file"]
   },
   "handlers": {
     "mdtf_log_file": {
@@ -48,10 +49,10 @@
     },
     "mdtf_log_file": {
       "()": "src.util.logs.HangingIndentFormatter",
-      "format": "%(asctime)s - %(levelname)s @ %(funcName)s [%(filename)s line %(lineno)d]:\n%(message)s",
-      "datefmt": "%Y-%m-%d %H:%M:%S",
+      "format": "%(levelname)s: %(funcName)s (%(filename)s line %(lineno)d):\n%(message)s",
+      "datefmt": "%H:%M:%S",
       "style": "%",
-      "tabsize": 3,
+      "tabsize": 8,
       "header": "",
       "footer": "\n"
     }

@@ -71,6 +71,18 @@ class TestMDTFArgParserBasic(unittest.TestCase):
         x = p.parse_args('--multi-word-flag bar')
         self.assertEqual(x.multi_word_flag, "bar")
 
+    def test_flag_synonyms(self):
+        p = _parser_from_dict({
+            "arguments": [{"name": ["flag", "multi_word_flag"], "short_name": "f"}]})
+        x = p.parse_args('-f bar')
+        self.assertEqual(x.flag, "bar")
+        x = p.parse_args('--flag bar')
+        self.assertEqual(x.flag, "bar")
+        x = p.parse_args('--multi_word_flag bar')
+        self.assertEqual(x.flag, "bar")
+        x = p.parse_args('--multi-word-flag bar')
+        self.assertEqual(x.flag, "bar")
+
     def test_iter_actions(self):
         p = _parser_from_dict({
             "arguments": [{"name": "foo"}, {"name": "foo_2"}]})

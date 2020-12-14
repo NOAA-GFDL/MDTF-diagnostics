@@ -9,6 +9,7 @@ import collections
 import dataclasses
 import enum
 import importlib
+import itertools
 import operator
 import shlex
 import re
@@ -220,24 +221,34 @@ class CLIArgument(object):
     def __post_init__(self):
         """Post-initialization type converstion of attributes.
         """
+        def _flag_names(_arg_name):
+            _arg_flags = [_arg_name]
+            if '_' in _arg_name:
+                # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
+                _arg_flags.append(_arg_name.replace('_', '-'))
+            return ['--'+s for s in _arg_flags]
+
         # Format flag name(s) and destination variables
-        arg_name = canonical_arg_name(self.name)
-        self.arg_flags = [arg_name]
         if self.is_positional:
+            assert isinstance(self.name, str) # not a list
+            arg_name = canonical_arg_name(self.name)
+            self.arg_flags = [arg_name]
             self.name = arg_name
             self.dest = None # positionals can't specify independent dest
             self.required = None # positionals always required
         else:
             # argument is a command-line flag (default)
+            # if self.name is a list, recognize all entries as synonyms
+            arg_flags = [canonical_arg_name(s) for s in util.to_iter(self.name)]
             if self.dest is None:
-                self.dest = arg_name
-            if '_' in arg_name:
-                # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
-                self.arg_flags = [arg_name.replace('_', '-'), arg_name]
-            self.arg_flags = ['--'+s for s in self.arg_flags]
+                # if synonyms provided, destination is first in list
+                self.dest = arg_flags[0]
+            self.arg_flags = list(itertools.chain.from_iterable(
+                _flag_names(s) for s in arg_flags
+            ))
             if self.short_name is not None:
                 # recognize both --option and -O, if short_name defined
-                self.arg_flags.append('-' + self.short_name)
+                self.arg_flags.insert(1, '-' + self.short_name)
 
         # Type conversion of default value:
         if self.type is not None:

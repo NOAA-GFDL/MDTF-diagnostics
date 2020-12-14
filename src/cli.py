@@ -29,6 +29,12 @@ def canonical_arg_name(str_):
     """
     return str_.lstrip('-').rstrip().replace('-', '_')
 
+def plugin_key(plugin_name):
+    """Ignore spaces and underscores in supplied choices for CLI plugins, and 
+    make matching of plugin names case-insensititve.
+    """
+    return re.sub(r"[\s_]+", "", plugin_name).lower()
+
 def word_wrap(str_):
     """Clean whitespace and produces better word wrapping for multi-line help
     and description strings. Explicit paragraph breaks must be encoded as a 
@@ -174,6 +180,8 @@ class PathAction(RecordDefaultsAction):
     def __call__(self, parser, namespace, values, option_string=None):
         config = CLIConfigManager()
         path = util.from_iter(values)
+        if path is None:
+            path = ''
         path = util.resolve_path(
             path, root_path=config.code_root, env=os.environ
         )
@@ -186,11 +194,31 @@ class ClassImportAction(RecordDefaultsAction):
     """
     call_on_defaults = False
 
+    def __init__(self, option_strings, dest, nargs=None, const=None, **kwargs):
+        # all plugins of this type accept only one value
+        super(ClassImportAction, self).__init__(
+            option_strings, dest, nargs=1, const=None, **kwargs
+        )
+
 class PluginArgAction(ClassImportAction):
     """:py:class:`~argparse.Action` to invoke the CLI plugin functionality.
     Placeholder used to trigger behavior when arguments are parsed.
     """
     call_on_defaults = False
+
+    def __init__(self, option_strings, dest, tpye=None, **kwargs):
+        # all plugins of this type accept only one value
+        super(PluginArgAction, self).__init__(
+            option_strings, dest, type=plugin_key, **kwargs
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Do case-insensitive matching on plugin names.
+        """
+        p_key = plugin_key(util.from_iter(values))
+        super(PluginArgAction, self).__call__(
+            parser, namespace, p_key, option_string
+        )
 
 # ===========================================================================
 # classes for represting CLI configuration information
@@ -424,15 +452,10 @@ class CLIParser(object):
         def _add_plugins_to_arg_list(arg_list, splice_d):
             # insert plugin args into arg_list
             return util.splice_into_list(
-                arg_list, splice_d, operator.attrgetter('name')
+                arg_list, splice_d, operator.attrgetter('dest')
             )
 
         config = CLIConfigManager()
-        for arg in self.iter_args(filter_class=PluginArgAction):
-            arg.help = arg.help + "\n\n" + word_wrap(f"""
-                NOTE: additional arguments below are specific to the 
-                chosen value '{preparsed_d[arg.name]}' of this option. 
-            """)
 
         d = dict()
         for flag_name, flag_value in preparsed_d.items():
@@ -448,6 +471,19 @@ class CLIParser(object):
         self.arguments = _add_plugins_to_arg_list(self.arguments, d)
         for arg_gp in self.argument_groups:
             arg_gp.arguments = _add_plugins_to_arg_list(arg_gp.arguments, d)
+
+        for arg in self.iter_args(filter_class=PluginArgAction):
+            flag_value = preparsed_d[arg.name]
+            plugin = config.get_plugin(arg.name, flag_value)
+            if plugin.help:
+                arg.help = arg.help.strip() + \
+                    f" Selected value = '{flag_value}': {plugin.help.strip()} "
+            else:
+                arg.help = arg.help.strip() + f" Selected value = '{flag_value}'. "
+            arg.help = arg.help + word_wrap(f"""
+                NOTE: flags below are specific to this value. Set a different
+                value along with '--help' to see flags for that option.
+            """)
 
 @dataclasses.dataclass
 class CLICommand(object):
@@ -633,17 +669,19 @@ class CLIConfigManager(util.Singleton):
         )
         for k, v in fmwk_d.items():
             self.plugins[k] = {
-                kk: CLICommand(name=kk, **vv, code_root=self.code_root) \
+                plugin_key(kk): CLICommand(name=kk, **vv, code_root=self.code_root) \
                     for kk,vv in v.items()
             }
         for k, v in site_d.items():
             for kk,vv in v.items():
-                if kk in self.plugins[v]:
+                p_key = plugin_key(kk)
+                if p_key in self.plugins[v]:
                     _log.debug(
                         'Replacing plugin %s (for %s) with site-specific version.',
                         kk, k
                     )
-                self.plugins[k][kk] = CLICommand(name=kk, **vv, code_root=self.code_root)
+                self.plugins[k][p_key] = \
+                    CLICommand(name=kk, **vv, code_root=self.code_root)
 
     def get_plugin(self, plugin_name, choice_of_plugin=None):
         """Lookup requested CLI plugin from ``plugins`` attribute, logging 
@@ -666,14 +704,15 @@ class CLIConfigManager(util.Singleton):
         if choice_of_plugin is None:
             # return entire dict
             return self.plugins[plugin_name]
-        if choice_of_plugin not in self.plugins[plugin_name]:
+        p_key = plugin_key(choice_of_plugin)
+        if p_key not in self.plugins[plugin_name]:
             _log.critical(("%s: error: argument --%s: invalid choice: '%s' "
                 "(choose from %s)"),
                 _SCRIPT_NAME, plugin_name, choice_of_plugin,
                 str(list(self.plugins[plugin_name].keys()))
             )
             exit(2) # exit code for  CLI syntax error
-        return self.plugins[plugin_name][choice_of_plugin]
+        return self.plugins[plugin_name][p_key]
 
 # ===========================================================================
 # CLI parsers
@@ -805,9 +844,10 @@ class MDTFArgParser(argparse.ArgumentParser):
             (parsed_args, remainder) = super(MDTFArgParser, self).parse_known_args(
                 self.split_args(args), None
             )
-        except SystemExit:
-            # hit a parse error; include description of the source of error.
-            print("Error occurred in user-supplied explict CLI flags.")
+        except SystemExit as exc:
+            if exc.code != 0:
+                # hit a parse error; include description of the source of error.
+                print("Error occurred in user-supplied explict CLI flags.")
             raise
         parsed_args = _to_dict(parsed_args)
         self._set_is_default(parsed_args)
@@ -821,9 +861,10 @@ class MDTFArgParser(argparse.ArgumentParser):
             parser_defaults, _ = super(MDTFArgParser, self).parse_known_args(
                 self._default_argv(parsed_args), None
             )
-        except SystemExit:
-            # hit a parse error; include description of the source of error.
-            print("Error occurred in CLI definitions.")
+        except SystemExit as exc:
+            if exc.code != 0:
+                # hit a parse error; include description of the source of error.
+                print("Error occurred in CLI definitions.")
             raise
         # CLI opts override options set from file, which override defaults
         parsed_args = _to_dict(collections.ChainMap(

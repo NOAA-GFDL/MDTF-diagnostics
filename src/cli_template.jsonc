@@ -28,13 +28,19 @@
       "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
       "arguments" : [
         {
-          "name": "MODEL_DATA_ROOT",
-          "help": "Parent directory containing results from different models.",
+          "name": "OBS_DATA_ROOT",
+          "help": "Parent directory containing observational data used by individual PODs.",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{
-          "name": "OBS_DATA_ROOT",
-          "help": "Parent directory containing observational data used by individual PODs.",
+          "name": "CASE_ROOT_DIR",
+          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
+          "metavar" : "<DIR>",
+          "dest": "flag_root_dir"
+        },{
+          "name": "WORKING_DIR",
+          "short_name" : "w",
+          "help": "Working directory. Defaults to output directory if unspecified.",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{
@@ -43,110 +49,50 @@
           "help": "Directory to write output files.",
           "metavar" : "<DIR>",
           "action": "PathAction"
-        },{
-          "name": "WORKING_DIR",
-          "short_name" : "w",
-          "help": "Working directory. Defaults to output directory if unspecified.",
-          "metavar" : "<DIR>",
-          "action": "PathAction"
         }
       ]
     },{
-      "title" : "MODEL",
+      "title" : "DATA",
       "description" : "Settings describing the input model data.",
       "arguments" : [
         {
-          "name": "CASE_ROOT_DIR",
-          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
-          "metavar" : "<DIR>",
-          "type" : "str",
-          "dest": "flag_root_dir"
-        },{
-          "name": "FIRSTYR",
-          "short_name" : "Y",
-          "help": "Starting year of analysis period.",
-          "type" : "int",
-          "metavar" : "<year>"
-        },{
-          "name": "LASTYR",
-          "short_name" : "Z",
-          "help": "Ending year of analysis period (inclusive).",
-          "type" : "int",
-          "metavar" : "<year>"
-        },{
-          "name": "CASENAME",
-          "short_name" : "n",
-          "help": "Identifier used to label the input model dataset.",
-          "type" : "str",
-          "metavar" : "<name>"
-        },{
           "name": "convention",
           "short_name" : "c",
           "help": "Variable name/unit convention used in model data.",
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
-          "name": "model",
-          "short_name" : "m",
-          "help": "Model name (only used in CMIP6 input).",
-          "type": "str",
-          "metavar" : "<source_id>"
-        },{
-          "name": "experiment",
-          "short_name" : "e",
-          "help": "Experiment ID (only used in CMIP6 input).",
-          "type" : "str",
-          "metavar" : "<experiment_id>"
-        },{
-          "name": "component",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
-        },{
-          "name": "data_freq",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
-        },{
-          "name": "chunk_freq",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
-        }
-      ]
-    },{
-      "title" : "DATA",
-      "description" : "Settings affecting the framework's retrieval of model data.",
-      "arguments" : [
-        {
           "name": "data_manager",
-          "help": "Method used to fetch model data.",
-          "default" : "Localfile",
-          "action": "ClassImportAction"
-        },{
-          "name": "preprocessor",
-          "help": "Format conversion operations to apply to model data before PODs are called.",
-          "default": "MDTFData",
-          "action": "ClassImportAction"
-        },{
-          "name": "file_transfer_timeout",
-          "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
-          "type" : "int",
-          "default" : 300,
-          "metavar" : "<seconds>"
-        },{
-          "name": "keep_temp",
-          "help": "Set to true to retain local temp directories of downloaded data.",
-          "default" : false
+          "help": "Source used to query and fetch model data.",
+          "default": "Local_file",
+          "action": "PluginArgAction"
         }
       ]
     },{
-      "title" : "DIAGNOSTICS",
+      "title" : "ANALYSIS",
+      "description" : "Settings describing what analyses the package should perform.",
       "arguments" : [
         {
+          "name": ["label", "CASENAME"],
+          "short_name" : "n",
+          "help": "Identifier used to label the package's output for the selected model data.",
+          "metavar" : "<name>"
+        },{
+          "name": ["start", "FIRSTYR"],
+          "short_name" : "Y",
+          "help": "Starting year of analysis period.",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": ["end", "LASTYR"],
+          "short_name" : "Z",
+          "help": "Ending year of analysis period (inclusive).",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
           "name": "pods",
           "short_name": "p",
-          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more diagnostic names, or one or more modeling  realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
           "default" : "all",
           "nargs" : "+",
           //"choices" : "self.get_pods_for_help_text()",
@@ -218,6 +164,16 @@
           "help": "Decrease console log verbosity level. -q prints warnings only, -qq prints errors only, and -qqq prints no output.",
           "default" : 0, 
           "action": "count" 
+        },{
+          "name": "file_transfer_timeout",
+          "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
+          "type" : "int",
+          "default" : 300,
+          "metavar" : "<seconds>"
+        },{
+          "name": "keep_temp",
+          "help": "Set to true to retain local temp directories of downloaded data.",
+          "default" : false
         },{
           "name": "test_mode",
           "help": "Set flag for framework test. Data is fetched but PODs are not run.",

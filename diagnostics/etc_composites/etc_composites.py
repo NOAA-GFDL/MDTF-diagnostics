@@ -439,6 +439,7 @@ model_data = pickle.load(open(model_file, 'rb'))
 
 # Creating the plots
 
+##################### SH ###########################################
 # MODEL - ERA-Interim PR (Total Precip)
 out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
 hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'tp'
@@ -470,6 +471,105 @@ plt.xlim(-1500, 1500)
 plt.colorbar()
 plt.savefig(out_file)
 plt.close('all')
+
+# MODEL - ERA-Interim W500 (Vertical Velocity at 500hPa)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_w500_SH_ocean_WARM.png"
+hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'w500'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - w500_sh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM Omega @ 500hPa")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MODEL - ERA-Interim UV10 (Wind Speeds)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_uv10_SH_ocean_WARM.png"
+hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'uv10'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - uv10_sh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nSH OCEAN WARM Wind Speeds")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+##################### NH ###########################################
+# MODEL - ERA-Interim PR (Total Precip)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'tp'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - tp_nh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nNH OCEAN WARM TP")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MODEL - ERA-Interim PRW (Total Column Water Vapor)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
+hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'prw'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - prw_nh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nNH OCEAN WARM PRW")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MODEL - ERA-Interim W500 (Vertical Velocity at 500hPa)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_w500_NH_ocean_WARM.png"
+hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'w500'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - w500_nh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nNH OCEAN WARM Omega @ 500hPa")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+# MODEL - ERA-Interim UV10 (Wind Speeds)
+out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_uv10_NH_ocean_WARM.png"
+hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'uv10'
+model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+plt.figure()
+diff_val = model_val - uv10_nh_ocean_warm
+vmax = np.nanpercentile(np.abs(diff_val).flatten(), 80)
+vmin = -1*vmax
+plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+plt.title(f"{os.environ['CASENAME']} - ERA-Interim\nNH OCEAN WARM Wind Speeds")
+plt.ylim(-1500, 1500)
+plt.xlim(-1500, 1500)
+plt.colorbar()
+plt.savefig(out_file)
+plt.close('all')
+
+####################### MERRA - ERA-Interim Difference
 
 # MERRA - ERA-Interim
 out_file = f"{os.environ['WK_DIR']}/obs/diff_merra_erai_prw_SH_ocean_WARM.png"

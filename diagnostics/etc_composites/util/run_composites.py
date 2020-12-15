@@ -121,8 +121,10 @@ for year in year_list:
   ############# Get Centers for the given date ######################
   in_file = os.path.join(defines.read_folder, f'{defines.model}_{year}.mat')
   all_centers = reader.read_center_from_mat_file(in_file)
-  if (not isinstance(ds.indexes['time'], pd.core.indexes.datetimes.DatetimeIndex)):
+  if (not isinstance(slp.indexes['time'], pd.core.indexes.datetimes.DatetimeIndex)):
     datetimeindex = slp.indexes['time'].to_datetimeindex()
+  else:
+    datetimeindex = slp.indexes['time']
 
 
   # loop through all time steps in the year

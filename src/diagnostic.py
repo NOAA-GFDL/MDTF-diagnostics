@@ -246,22 +246,18 @@ class Varlist(data_model.DMDataSet):
             values are :class:`PodDataDimension` objects.
         """
         def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': VarlistLongitudeCoordinate,
+                'Y': VarlistLatitudeCoordinate,
+                'Z': VarlistVerticalCoordinate,
+                'T': VarlistPlaceholderTimeCoordinate,
+                'OTHER': VarlistCoordinate
+            }
             try:
-                if dd.get('axis', None) == 'X' \
-                    or dd.get('standard_name', None) == 'longitude':
-                    return VarlistLongitudeCoordinate(name=name, **dd)
-                elif dd.get('axis', None) == 'Y' \
-                    or dd.get('standard_name', None) == 'latitude':
-                    return VarlistLatitudeCoordinate(name=name, **dd)
-                elif dd.get('axis', None) == 'Z':
-                    return VarlistVerticalCoordinate(name=name, **dd)
-                elif dd.get('axis', None) == 'T' \
-                    or dd.get('standard_name', None) == 'time':
-                    return VarlistPlaceholderTimeCoordinate(
-                        name=name, **dd, **(v_settings.time_settings)
-                    )
-                else:
-                    return VarlistCoordinate(name=name, **dd)
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **(v_settings.time_settings)
+                )
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
 

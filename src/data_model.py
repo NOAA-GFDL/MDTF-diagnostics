@@ -246,7 +246,7 @@ class DMTimeCoordinate(_DMCoordinateShared):
     standard_name: str = 'time'
     units: str = util.MANDATORY
     axis: DMAxis = DMAxis.T
-    calendar: str = util.MANDATORY
+    calendar: str = ""
     range: datelabel.AbstractDateRange = None
     frequency: datelabel.AbstractDateFrequency = None
 
@@ -265,6 +265,37 @@ AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
 AbstractDMCoordinate.register(DMGenericTimeCoordinate)
 AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
+
+def coordinate_from_struct(d, class_dict=None, **kwargs):
+    """Attempt to instantiate the correct :class:`DMCoordinate` class based on
+    information in d.
+
+    TODO: implement full cf_xarray/MetPy heuristics.
+    """
+    if class_dict is None:
+        class_dict = {
+            'X': DMLongitudeCoordinate,
+            'Y': DMLatitudeCoordinate,
+            'Z': DMVerticalCoordinate,
+            'T': DMGenericTimeCoordinate,
+            'OTHER': DMCoordinate
+        }
+    standard_names = {
+        'longitude': 'X',
+        'latitude': 'Y',
+        'time': 'T'
+    }
+    try:
+        ax = 'OTHER'
+        if 'axis' in d:
+            ax = d['axis']
+        elif d.get('standard_name', "") in standard_names:
+            ax = standard_names[d['standard_name']]
+        return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
+    except Exception:
+        raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
+
+# ------------------------------------------------------------------------------
 
 @util.mdtf_dataclass
 class _DMDimensionsMixin(object):
@@ -308,6 +339,10 @@ class _DMDimensionsMixin(object):
     @property
     def T(self):
         return self.axes.get(DMAxis.T, None)
+
+    @property
+    def axes_set(self):
+        return frozenset(self.axes.keys())
 
     @property
     def is_static(self):
@@ -374,6 +409,9 @@ class DMDependentVariable(_DMDimensionsMixin):
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: str = "" # util.MANDATORY
+    # dims: from _DMDimensionsMixin
+    # scalar_coords: from _DMDimensionsMixin
+    # axes: from _DMDimensionsMixin
     phys_axes: dict = dataclasses.field(init=False)
 
     def __post_init__(self, coords=None):

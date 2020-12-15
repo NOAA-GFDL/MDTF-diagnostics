@@ -3,7 +3,9 @@
 import os
 import sys
 import io
+import collections
 import copy
+import dataclasses
 import re
 import glob
 import shutil
@@ -11,7 +13,7 @@ import signal
 import string
 import tempfile
 import traceback
-from src import util, cli, mdtf_info
+from src import util, cli, mdtf_info, data_model
 
 import logging
 _log = logging.getLogger(__name__)
@@ -399,9 +401,112 @@ class TempDirManager(util.Singleton):
         util.signal_logger(self.__class__.__name__, signum, frame)
         self.cleanup()
 
+# --------------------------------------------------------------------
+
+@util.mdtf_dataclass
+class FieldlistEntry(object):
+    """Class corresponding to an entry in a fieldlist file.
+    """
+    name: str = util.MANDATORY           # = name according to this convention
+    standard_name: str = util.MANDATORY  # = CF conventions standard name
+    units: str = util.MANDATORY          # = units according to this convention
+    axes_set: frozenset = dataclasses.field(default_factory=frozenset)
+    ndim: dataclasses.InitVar = 4
+    regex: str = ""
+    scalar_coord_templates: dict = dataclasses.field(default_factory=dict)
+
+    def __post_init__(self, ndim=4):
+        if not self.axes_set:
+            if ndim == 4:
+                self.axes_set = ('T', 'X', 'Y', 'Z')
+            elif ndim == 3:
+                self.axes_set = ('T', 'X', 'Y')
+            elif ndim == 2:
+                self.axes_set = ('X', 'Y')
+            elif ndim == 1:
+                self.axes_set = ('T')
+        self.axes_set = frozenset(
+            data_model.DMAxis.from_struct(x) for x in self.axes_set
+        )
+        if not self.regex:
+            self.regex = self.name
+        
+@util.mdtf_dataclass
+class Fieldlist():
+    """Class corresponding to a single variable naming convention (single file
+    in src/data/fieldlist_*.jsonc).
+    """
+    name: str = util.MANDATORY
+    axes: dict = dataclasses.field(default_factory=dict)
+    data: util.WormDict = dataclasses.field(default_factory=util.WormDict)
+    other: dict = dataclasses.field(default_factory=dict)
+
+    @classmethod
+    def from_struct(cls, d):
+        def _process_one(section_name):
+            # build two-stage lookup table -- should just make FieldlistEntry 
+            # hashable
+            section_d = d.pop(section_name, dict())
+            dd = collections.defaultdict(util.WormDict)
+            for k,v in section_d.items():
+                entry = FieldlistEntry(name=k, **v)
+                dd[entry.standard_name][entry.axes_set] = entry
+            return dd
+
+        d['axes'] = {
+            v['axis']: data_model.coordinate_from_struct(v, name=k) \
+            for k,v in d['axes'].items() 
+        }
+        d['data'] = util.WormDict()
+        d['data'].update(_process_one('aux_coords'))
+        d['data'].update(_process_one('variables'))
+        return cls(**d)
+
+    def iter_entries(self):
+        for d in self.data.values():
+            yield from d.values()
+
+    def name_to_CF(self, name):
+        # inefficient - kept for unit tests, not used in production
+        for entry in self.iter_entries():
+            if entry.name == name:
+                return entry.standard_name
+        raise KeyError(name)
+
+    def name_from_CF(self, standard_name):
+        # not used in production
+        if standard_name not in self.data:
+            raise KeyError(standard_name)
+        entries = tuple(self.data[standard_name].values())
+        if len(entries) > 1:
+            raise ValueError((f"{self.name}: Variable name not uniquely "
+                f"determined by standard name '{standard_name}'."))
+        return entries[0].name
+
+    def lookup(self, var):
+        # use two-stage lookup table -- should just make FieldlistEntry 
+        # hashable
+        assert isinstance(var, data_model.DMDependentVariable)
+        key1 = var.standard_name
+        key2 = var.axes_set
+        if key1 not in self.data:
+            raise KeyError((f"Standard name '{key1}' not defined in convention "
+                f"'{self.name}'."))
+        d = self.data[key1] # abbreviate
+        if key2 not in d:
+            raise KeyError((f"Queried standard name '{key1}' with an unexpected "
+                f"set of axes {key2} not in convention '{self.name}'."))
+        return d[key2]
+
 class VariableTranslator(util.Singleton):
+    """:class:`~util.Singleton` containing information for different variable 
+    naming conventions. These are defined in the src/data/fieldlist_*.jsonc 
+    files.
+    """
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
+        self.conventions = util.WormDict()
+        self.aliases = util.WormDict()
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
@@ -411,61 +516,45 @@ class VariableTranslator(util.Singleton):
                 code_root, 'src', 'data', 'fieldlist_*.jsonc'
             )
             config_files = glob.glob(glob_pattern)
-        # always have CF-compliant option, which does no translation
-        self.axes = {
-            'CF': {
-                "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
-                "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
-                "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
-                "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
-        }}
-        self.variables = {'CF': dict()}
-        self.units = {'CF': dict()}
         for f in config_files:
-            d = util.read_json(f)
             try:
+                d = util.read_json(f)
                 self.add_convention(d)
-            except util.ConventionError as exc:
-                _log.error("Convention %s defined in %s already exists.", 
-                    exc.conv_name, f)
+            except Exception as exc:
+                _log.exception("Exception raised in loading fieldlist file %s", 
+                    f)
+                continue
 
     def add_convention(self, d):
-        for conv in util.to_iter(d['convention_name']):
-            _log.debug('Found convention %s', conv)
-            if conv in self.variables:
-                raise util.ConventionError(conv)
+        conv_name = d['name']
+        _log.debug("Adding variable name convention '%s'", conv_name)
+        for model in d.pop('models', []):
+            self.aliases[model] = conv_name
+        self.conventions[conv_name] = Fieldlist.from_struct(d)
 
-            self.axes[conv] = d.get('axes', dict())
-            self.variables[conv] = util.MultiMap(d.get('var_names', dict()))
-            self.units[conv] = util.MultiMap(d.get('units', dict()))
+    def _lookup_wrapper(self, conv_name, method_name, *args, **kwargs):
+        if conv_name not in self.conventions:
+            if conv_name in self.aliases:
+                _log.debug("Using convention '%s' based on alias '%s'.",
+                    self.aliases[conv_name], conv_name)
+                conv_name = self.aliases[conv_name]
+            else:
+                _log.error("Unrecognized variable name convention '%s'.", 
+                    conv_name)
+                raise KeyError(conv_name)
+        func = getattr(self.conventions[conv_name], method_name)
+        return func(*args, **kwargs)
 
-    def to_CF(self, convention, v_name):
-        if convention == 'CF': 
-            return v_name
-        if convention not in self.variables:
-            _log.error("Variable name translation doesn't recognize %s.", convention)
-            raise KeyError(convention)
-        inv_lookup = self.variables[convention].inverse()
-        try:
-            return util.from_iter(inv_lookup[v_name])
-        except KeyError:
-            _log.exception("Name '%s' not defined for convention '%s'.",
-                v_name, convention)
-            raise
-    
-    def from_CF(self, convention, v_name):
-        if convention == 'CF': 
-            return v_name
-        if convention not in self.variables:
-            _log.error("Variable name translation doesn't recognize %s.", convention)
-            raise KeyError(convention)
-        try:
-            return self.variables[convention].get_(v_name)
-        except KeyError:
-            _log.exception("Name '%s' not defined for convention '%s'.",
-                v_name, convention)
-            raise
+    def name_to_CF(self, conv_name, name):
+        return self._lookup_wrapper(conv_name, 'name_to_CF', name)
 
+    def name_from_CF(self, conv_name, standard_name):
+        return self._lookup_wrapper(conv_name, 'name_from_CF', standard_name)
+
+    def lookup(self, conv_name, var):
+        return self._lookup_wrapper(conv_name, 'lookup', var)
+
+# --------------------------------------------------------------------
 
 def print_summary(fmwk):
     def summary_info_tuple(case):

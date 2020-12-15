@@ -1,6 +1,7 @@
 import unittest
 import unittest.mock as mock
 from src.util import basic as util
+from src.util import exceptions
 
 
 class TestSingleton(unittest.TestCase):
@@ -78,6 +79,38 @@ class TestMultiMap(unittest.TestCase):
         self.assertCountEqual(temp_inv[2], set(['b','c']))
         self.assertIn(1, temp_inv)
         self.assertCountEqual(temp_inv[1], set(['a']))
+
+class TestWormDict(unittest.TestCase):
+    def test_normal_operation(self):
+        foo = util.WormDict(a=1, b=2)
+        self.assertTrue(isinstance(foo, dict)) # should really be testing for MutableMapping
+        self.assertEqual(foo['b'], 2)
+        # all dicts are OrderedDicts starting with 3.7
+        self.assertEqual(tuple(foo.keys()), ('a','b'))
+        self.assertEqual(tuple(foo.values()), (1,2))
+        self.assertEqual(tuple(str(k) + str(v) for k,v in foo.items()), ('a1', 'b2'))
+        foo.update({'c': 3, 'd': 4})
+        self.assertEqual(foo['d'], 4)
+        self.assertEqual(len(foo), 4)
+        test = foo.setdefault('d', 5)
+        self.assertEqual(test, 4)
+        self.assertEqual(foo['d'], 4)
+
+    def test_overwrite(self):
+        foo = util.WormDict(a=1, b=2)
+        with self.assertRaises(exceptions.WormKeyError):
+            foo['a'] = 3
+        with self.assertRaises(exceptions.WormKeyError):
+            foo.update({'c': 3, 'a': 4})
+
+    def test_delete(self):
+        foo = util.WormDict(a=1, b=2)
+        with self.assertRaises(exceptions.WormKeyError):
+            del foo['a']
+        with self.assertRaises(exceptions.WormKeyError):
+            _ = foo.pop('a')
+        with self.assertRaises(exceptions.WormKeyError):
+            _ = foo.popitem()
 
 class TestNameSpace(unittest.TestCase):
     def test_namespace_basic(self):

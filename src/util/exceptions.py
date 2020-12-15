@@ -73,6 +73,12 @@ class MDTFFileExistsError(FileExistsError, MDTFBaseException):
             errno.EEXIST, os.strerror(errno.EEXIST), path
         )
 
+class WormKeyError(KeyError, MDTFBaseException):
+    """Raised when attempting to overwrite or delete an entry in a
+    :class:`~src.util.basic.WormDict`.
+    """
+    pass
+
 class ConventionError(MDTFBaseException):
     """Exception raised by a duplicate variable convention name."""
     def __init__(self, conv_name):

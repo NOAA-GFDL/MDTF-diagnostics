@@ -5,6 +5,7 @@ import collections.abc
 import enum
 import itertools
 import unittest.mock
+from . import exceptions
 
 import logging
 _log = logging.getLogger(__name__)
@@ -80,6 +81,53 @@ class MultiMap(collections.defaultdict):
         inv_lookup = self.inverse()
         return from_iter(inv_lookup[val])
 
+class WormDict(collections.abc.MutableMapping, dict):
+    """Dict which raises eexceptions when trying to overwrite or delete an 
+    existing entry. "WORM" is an acronym for "write once, read many."
+
+    Based on `https://stackoverflow.com/a/30242860`__.
+    """
+    def __init__(self, *args, **kwargs):
+        self._dict = dict(*args, **kwargs)
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __setitem__(self, key, value):
+        if key in self:
+            raise exceptions.WormKeyError(("Attempting to overwrite entry for "
+                f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
+        self._dict[key] = value
+
+    def __delitem__(self, key):
+        raise exceptions.WormKeyError(("Attempting to delete entry for "
+                f"'{key}'. Existing value: '{self[key]}'."))
+
+    def __iter__(self):
+        return iter(self._dict)
+
+    def __len__(self):
+        return len(self._dict)
+
+    @classmethod
+    def from_struct(cls, d):
+        return cls(**d)
+
+class WormDefaultDict(WormDict):
+    """:class:`src.util.basic.WormDict` with :py:class:`collections.defaultdict`
+    functionality.
+    """
+    def __init__(self, default_factory=None, *args, **kwargs):
+        if not (default_factory is None or callable(default_factory)):
+            raise TypeError('First argument must be callable or None')
+        super(WormDefaultDict, self).__init__(*args, **kwargs)
+        self.default_factory = default_factory
+
+    def __missing__(self, key):
+        if self.default_factory is None:
+            raise KeyError(key) # normal KeyError
+        self[key] = self.default_factory()
+        return self[key]
 
 class NameSpace(dict):
     """ A dictionary that provides attribute-style access.

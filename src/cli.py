@@ -113,16 +113,19 @@ class CustomHelpFormatter(
         """Only print the argument's default in the help string if it's defined. 
         Based on `https://stackoverflow.com/a/34545549`__.
         """
-        help = action.help
-        if '%(default)' not in action.help and \
-            action.default not in (None, argparse.SUPPRESS):
+        help_str = action.help
+        if help_str == argparse.SUPPRESS:
+            # ignore hidden CLI items
+            return help_str
+        if action.default not in (None, argparse.SUPPRESS) \
+            and '%(default)' not in help_str:
             defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
             if action.option_strings or action.nargs in defaulting_nargs:
                 if isinstance(action.default, str):
-                    help += " (default: '%(default)s')"
+                    help_str += " (default: '%(default)s')"
                 else:
-                    help += " (default: %(default)s)"
-        return help
+                    help_str += " (default: %(default)s)"
+        return help_str
 
 
 class RecordDefaultsAction(argparse.Action):
@@ -470,6 +473,9 @@ class CLIParser(object):
             arg_gp.arguments = _add_plugins_to_arg_list(arg_gp.arguments, d)
 
         for arg in self.iter_args(filter_class=PluginArgAction):
+            if arg.help == argparse.SUPPRESS:
+                # skip hidden CLI items
+                continue
             flag_value = preparsed_d[arg.name]
             plugin = config.get_plugin(arg.name, flag_value)
             if plugin.help:

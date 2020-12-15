@@ -142,5 +142,36 @@
         ]
       }
     }
+  },
+  "output_manager": {
+    "HTML": {
+      "help": "",
+      "entry_point": "sites.NOAA_GFDL.gfdl:GFDLHTMLOutputManager",
+      "cli": {
+        "arguments": [
+          {
+            "name": "save_ps",
+            "help": "Set flag to have PODs save postscript figures in addition to bitmaps.",
+            "default" : false
+          },{
+            "name": "save_nc",
+            "help": "Set flag to have PODs save netCDF files of processed data.",
+            "default" : false
+          },{
+            "name": "save_non_nc",
+            "help": "Set flag to save all processed data except netcdf files.",
+            "default" : false
+          },{
+            "name": "make_variab_tar",
+            "help": "Set flag to save HTML and bitmap plots in a .tar file.",
+            "default" : true
+          },{
+            "name": "overwrite",
+            "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",
+            "default" : false
+          }
+        ]
+      }
+    }
   }
 }

@@ -10,51 +10,51 @@ import re
 import shutil
 import subprocess
 import typing
-from src import datelabel, util, core, cmip6, diagnostic, data_manager
+from src import (util, core, datelabel, cmip6, diagnostic, 
+    data_manager, environment_manager, output_manager)
 from sites.NOAA_GFDL import gfdl_util
 import src.conflict_resolution as choose
-from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 
 import logging
 _log = logging.getLogger(__name__)
 
+@util.mdtf_dataclass
 class GfdlDiagnostic(diagnostic.Diagnostic):
-    """Wrapper for Diagnostic that adds writing a placeholder directory to the
-    output as a lockfile if we're running in frepp cooperative mode.
+    """Wrapper for Diagnostic that adds writing a placeholder directory 
+    (POD_OUT_DIR) to the output as a lockfile if we're running in frepp 
+    cooperative mode.
     """
+    # extra dataclass fields
     _has_placeholder: bool = False
-    _already_made_POD_OUT_DIR: bool = False
 
     def pre_run_setup(self):
-        """Extra step needed for POD-specific output directory, which may be on
-        a remote filesystem.
+        """Extra code only applicable in frepp cooperative mode. If this code is 
+        called, all the POD's model data has been generated. Write a placeholder
+        directory to POD_OUT_DIR, so if frepp invokes the MDTF package again 
+        while we're running, only our results will be written to the overall 
+        output.
         """
-        config = core.ConfigManager()
-
         super(GfdlDiagnostic, self).pre_run_setup()
-        if self._already_made_POD_OUT_DIR:
-            return
-        try:
-            gfdl_util.make_remote_dir(
-                self.POD_OUT_DIR,
-                timeout=config.get('file_transfer_timeout', 0),
-                dry_run=config.get('dry_run', False)
-            )
-            self._has_placeholder = True
-            self._already_made_POD_OUT_DIR = True
-        except Exception as exc:
+
+        if not self._has_placeholder:
+            config = core.ConfigManager()
             try:
-                raise util.PodRuntimeError(self, (f"Caught exception "
-                    f"making output directory at {self.POD_OUT_DIR}.")) from exc
-            except Exception as chained_exc:
-                self.exceptions.log(chained_exc)    
+                gfdl_util.make_remote_dir(
+                    self.POD_OUT_DIR,
+                    timeout=config.get('file_transfer_timeout', 0),
+                    dry_run=config.get('dry_run', False)
+                )
+                self._has_placeholder = True
+            except Exception as exc:
+                try:
+                    raise util.PodRuntimeError(self, (f"Caught exception "
+                        f"making output directory at {self.POD_OUT_DIR}.")) from exc
+                except Exception as chained_exc:
+                    self.exceptions.log(chained_exc)    
 
-    def tear_down(self):
-        # only run teardown (including logging error on index.html) if POD ran
-        if self._has_placeholder:
-            super(GfdlDiagnostic, self).tear_down()
-
-class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
+class GfdlvirtualenvEnvironmentManager(
+    environment_manager.VirtualenvEnvironmentManager
+    ):
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.
 
@@ -109,7 +109,7 @@ class GfdlvirtualenvEnvironmentManager(VirtualenvEnvironmentManager):
         modMgr = gfdl_util.ModuleManager()
         modMgr.revert_state()
 
-class GfdlcondaEnvironmentManager(CondaEnvironmentManager):
+class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
     # Use mdteam's anaconda2
     def _call_conda_create(self, env_name):
         raise Exception(("Trying to create conda env {} "
@@ -353,106 +353,6 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             )
             new_files.append(file_ds.replace(local_path=local_path))
         self.data_files[d_key] = new_files
-
-    # HTML & PLOT OUTPUT -------------------------------------
-
-    def _make_html(self, cleanup=False):
-        # never cleanup html if we're in frepp_mode, since framework may run 
-        # later when another component finishes. Instead just append current
-        # progress to TEMP_HTML.
-        prev_html = os.path.join(self.MODEL_OUT_DIR, 'index.html')
-        if self.frepp_mode and os.path.exists(prev_html):
-            _log.debug("Appending previous index.html at {}".format(prev_html))
-            with io.open(prev_html, 'r', encoding='utf-8') as f1:
-                contents = f1.read()
-            contents = contents.split('<!--CUT-->')
-            assert len(contents) == 3
-            contents = contents[1]
-
-            if os.path.exists(self.TEMP_HTML):
-                mode = 'a'
-            else:
-                _log.warning("\tWARNING: No file at {}.".format(self.TEMP_HTML))
-                mode = 'w'
-            with io.open(self.TEMP_HTML, mode, encoding='utf-8') as f2:
-                f2.write(contents)
-        super(GfdlarchiveDataManager, self)._make_html(
-            cleanup=(not self.frepp_mode)
-        )
-
-    def _make_tar_file(self, tar_dest_dir):
-        # make locally in WORKING_DIR and gcp to destination,
-        # since OUTPUT_DIR might be mounted read-only
-        paths = core.PathManager()
-        out_file = super(GfdlarchiveDataManager, self)._make_tar_file(
-            paths.WORKING_DIR
-        )
-        gfdl_util.gcp_wrapper(
-            out_file, tar_dest_dir,
-            timeout=self.file_transfer_timeout, dry_run=self.dry_run
-        )
-        _, file_ = os.path.split(out_file)
-        return os.path.join(tar_dest_dir, file_)
-
-    def _copy_to_output(self):
-        # use gcp, since OUTPUT_DIR might be mounted read-only
-        if self.MODEL_WK_DIR == self.MODEL_OUT_DIR:
-            return # no copying needed
-        if self.frepp_mode:
-            # only copy PODs that ran, whether they succeeded or not
-            for pod in self.pods:
-                if pod._has_placeholder:
-                    gfdl_util.gcp_wrapper(
-                        pod.POD_WK_DIR, 
-                        pod.POD_OUT_DIR,
-                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
-                    )
-            # copy all case-level files
-            _log.debug("\tDEBUG: files in {}".format(self.MODEL_WK_DIR))
-            for f in os.listdir(self.MODEL_WK_DIR):
-                _log.debug("\t\tDEBUG: found {}".format(f))
-                if os.path.isfile(os.path.join(self.MODEL_WK_DIR, f)):
-                    _log.debug("\t\tDEBUG: found {}".format(f))
-                    gfdl_util.gcp_wrapper(
-                        os.path.join(self.MODEL_WK_DIR, f), 
-                        self.MODEL_OUT_DIR,
-                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
-                    )
-        else:
-            # copy everything at once
-            if os.path.exists(self.MODEL_OUT_DIR):
-                if self.overwrite:
-                    try:
-                        _log.error('Error: {} exists, attempting to remove.'.format(
-                            self.MODEL_OUT_DIR))
-                        shutil.rmtree(self.MODEL_OUT_DIR)
-                    except OSError:
-                        # gcp will not overwrite dirs, so forced to save under
-                        # a different name despite overwrite=True
-                        _log.error(("Error: couldn't remove {} (probably mounted read"
-                            "-only); will rename new directory.").format(
-                            self.MODEL_OUT_DIR))
-                else:
-                    _log.error("Error: {} exists; will rename new directory.".format(
-                        self.MODEL_OUT_DIR))
-            try:
-                if os.path.exists(self.MODEL_OUT_DIR):
-                    # check again, since rmtree() might have succeeded
-                    self.MODEL_OUT_DIR, version = \
-                        util.bump_version(self.MODEL_OUT_DIR)
-                    new_wkdir, _ = \
-                        util.bump_version(self.MODEL_WK_DIR, new_v=version)
-                    _log.debug("\tDEBUG: move {} to {}".format(self.MODEL_WK_DIR, new_wkdir))
-                    shutil.move(self.MODEL_WK_DIR, new_wkdir)
-                    self.MODEL_WK_DIR = new_wkdir
-                gfdl_util.gcp_wrapper(
-                    self.MODEL_WK_DIR, self.MODEL_OUT_DIR, 
-                    timeout=self.file_transfer_timeout,
-                    dry_run=self.dry_run
-                )
-            except Exception:
-                raise # only delete MODEL_WK_DIR if copied successfully
-            shutil.rmtree(self.MODEL_WK_DIR)
 
 
 class GfdlppDataManager(GfdlarchiveDataManager):
@@ -724,3 +624,128 @@ class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
     # be used as a data source unless explicitly requested by user
     _cmip6_root = os.sep + os.path.join('data_cmip6','CMIP6')
 
+# ------------------------------------------------------------------------
+
+class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
+    def __init__(self, pod, case_wk_dir):
+        """Only run output steps (including logging error on index.html) 
+        if POD ran on this invocation.
+        """
+        if pod._has_placeholder:
+            _log.debug('POD %s has placeholder, generating output.', pod.name)
+            super(GFDLHTMLPodOutputManager, self).__init__(pod, case_wk_dir)
+        else: 
+            _log.debug('POD %s does not have placeholder; not generating output.', 
+                pod.name)
+
+class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
+    _PodOutputManagerClass = GFDLHTMLPodOutputManager
+
+    def __init__(self, case):
+        config = core.ConfigManager()
+        try:
+            self.frepp_mode = case.frepp_mode
+            self.file_transfer_timeout = config['file_transfer_timeout']
+        except (AttributeError, KeyError) as exc:
+            _log.exception(exc)
+
+        super(GFDLHTMLOutputManager, self).__init__(case)
+
+    def make_html(self, case, cleanup=False):
+        """Never cleanup html if we're in frepp_mode, since framework may run 
+        later when another component finishes. Instead just append current
+        progress to CASE_TEMP_HTML.
+        """
+        prev_html = os.path.join(self.OUT_DIR, self._html_file_name)
+        if self.frepp_mode and os.path.exists(prev_html):
+            _log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
+            with io.open(prev_html, 'r', encoding='utf-8') as f1:
+                contents = f1.read()
+            contents = contents.split('<!--CUT-->')
+            assert len(contents) == 3
+            contents = contents[1]
+
+            if os.path.exists(self.CASE_TEMP_HTML):
+                mode = 'a'
+            else:
+                _log.warning("No file at %s.", self.CASE_TEMP_HTML)
+                mode = 'w'
+            with io.open(self.CASE_TEMP_HTML, mode, encoding='utf-8') as f2:
+                f2.write(contents)
+        super(GFDLHTMLOutputManager, self).make_html(
+            case, cleanup=(not self.frepp_mode)
+        )
+
+    def make_tar_file(self, tar_dest_dir):
+        """Make the tar file locally in WK_DIR and gcp to destination,
+        since OUT_DIR might be mounted read-only.
+        """
+        paths = core.PathManager()
+        out_file = super(GFDLHTMLOutputManager, self).make_tar_file(
+            paths.WORKING_DIR
+        )
+        gfdl_util.gcp_wrapper(
+            out_file, tar_dest_dir,
+            timeout=self.file_transfer_timeout, dry_run=self.dry_run
+        )
+        _, file_ = os.path.split(out_file)
+        return os.path.join(tar_dest_dir, file_)
+
+    def copy_to_output(self, case):
+        """Use gcp for transfer, since OUTPUT_DIR might be mounted read-only.
+        Also has special logic to handle frepp_mode.
+        """
+        if self.WK_DIR == self.OUT_DIR:
+            return # no copying needed
+        if self.frepp_mode:
+            # only copy PODs that ran, whether they succeeded or not
+            for pod in case.pods.values():
+                if pod._has_placeholder:
+                    gfdl_util.gcp_wrapper(
+                        pod.POD_WK_DIR, 
+                        pod.POD_OUT_DIR,
+                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                    )
+            # copy all case-level files
+            _log.debug("Copying case-level files in %s", self.WK_DIR)
+            for f in os.listdir(self.WK_DIR):
+                if os.path.isfile(os.path.join(self.WK_DIR, f)):
+                    _log.debug("Found case-level file %s", f)
+                    gfdl_util.gcp_wrapper(
+                        os.path.join(self.WK_DIR, f), 
+                        self.OUT_DIR,
+                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                    )
+        else:
+            # copy everything at once
+            if os.path.exists(self.OUT_DIR):
+                if self.overwrite:
+                    try:
+                        _log.error('%s exists, attempting to remove.', self.OUT_DIR)
+                        shutil.rmtree(self.OUT_DIR)
+                    except OSError:
+                        # gcp will not overwrite dirs, so forced to save under
+                        # a different name despite overwrite=True
+                        _log.error(("Couldn't remove %s (probably mounted read"
+                            "-only); will rename new directory."), self.OUT_DIR)
+                else:
+                    _log.error("%s exists; will rename new directory.", self.OUT_DIR)
+            try:
+                if os.path.exists(self.OUT_DIR):
+                    # check again, since rmtree() might have succeeded
+                    self.OUT_DIR, version = \
+                        util.bump_version(self.OUT_DIR)
+                    new_wkdir, _ = \
+                        util.bump_version(self.WK_DIR, new_v=version)
+                    _log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
+                    shutil.move(self.WK_DIR, new_wkdir)
+                    self.WK_DIR = new_wkdir
+                gfdl_util.gcp_wrapper(
+                    self.WK_DIR, self.OUT_DIR, 
+                    timeout=self.file_transfer_timeout,
+                    dry_run=self.dry_run
+                )
+            except Exception:
+                raise # only delete MODEL_WK_DIR if copied successfully
+            _log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
+            shutil.rmtree(self.WK_DIR)

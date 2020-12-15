@@ -3,85 +3,195 @@
 // in strings, so you'll want to turn word wrap on in your editor.
 //
 {
-  "convention_name" : "CMIP",
+  "name" : "CMIP",
+  "models": [],
   "axes" : {
-    "lon" : {"axis" : "X", "MDTF_envvar" : "lon_coord"},
-    "lat" : {"axis" : "Y", "MDTF_envvar" : "lat_coord"},
-    // TODO: Z should be plev, set here for compatibility w/CMORized CESM2
-    "lev" : {"axis" : "Z", "MDTF_envvar" : "lev_coord"},
-    "time" : {"axis" : "T", "MDTF_envvar" : "time_coord"}
+    // only used for taking slices, unit conversion
+    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"axis": "T", "standard_name": "time", "units": "days"}
   },
-  "var_names" : {
-    "hyam_var" : "hyam",
-    "hybm_var" : "hybm",
-    "ua_var" : "ua",
-    "va_var" : "va",
-    "zg_var" : "zg",
-    "qa_var" : "hus",
-    "omega_var" : "wap",
-    "wap_var" : "wap",
-    "ts_var" : "ts",
-    "pr_var" : "pr",
-    "prc_var" : "prc",
-    "prls_var" : "prls",
-    "FSNTOA_var" : "FSNTOA",
-    "tas_var" : "tas",
-    "LANDFRAC_var" : "LANDFRAC",
-    "tauu_var" : "tauu",
-    "CLDTOT_var" : "CLDTOT",
-    "ICEFRAC_var" : "ICEFRAC",
-    "ps_var" : "ps",
-    "psl_var" : "psl",
-    "u_var" : "ua",
-    "v_var" : "va",
-    "u200_var" : "U200",
-    "v200_var" : "V200",
-    "u250_var" : "U250",
-    "v250_var" : "V250",
-    "u850_var" : "U850",
-    "v850_var" : "V850",
-    "omega500_var" : "OMEGA500",
-    "z250_var" : "Z250",    
+  "aux_coords": {
+    "deptho": {
+      "standard_name": "sea_floor_depth_below_geoid",
+      "units": "m",
+      "ndim": 2
+    },
+    "thkcello": {
+      "standard_name": "cell_thickness",
+      "units": "m",
+      "ndim": 3
+    }
+  },
+  "variables" : {
+    "ua": {
+      "standard_name": "eastward_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"Z": "ua{value}"}
+    },
+    "va": {
+      "standard_name": "northward_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"Z": "va{value}"}
+    },
+    "zg": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "scalar_coord_templates": {"Z": "zg{value}"}
+    },
+    "hus": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "ndim": 3
+    },
+    "wap": {
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "units": "Pa s-1",
+      "scalar_coord_templates": {"Z": "wap{value}"}
+    },
+    "ts": {
+      "standard_name": "surface_temperature",
+      "units": "K",
+      "ndim": 3
+    },
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    "prc": {
+      "standard_name": "convective_precipitation_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    "tas" : {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "ndim": 3
+    },
+    "tauu": {
+      "standard_name": "surface_downward_eastward_stress",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "tauv": {
+      "standard_name": "surface_downward_northward_stress",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "ps": {
+      "standard_name": "surface_air_pressure",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "psl": {
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "ndim": 3
+    },
     // radiative fluxes:
-    "rsus_var" : "rsus",
-    "rsds_var" : "rsds",
-    "rsdt_var" : "rsdt",
-    "rsut_var" : "rsut",
-    "rlus_var" : "rlus",
-    "rlds_var" : "rlds",
-    "rlut_var" : "rlut",
-    "hfss_var" : "hfss",
-    "hfls_var" : "hfls",
+    "rsus": {
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsds": {
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsdt": {
+      "standard_name": "toa_incoming_shortwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsut": {
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlus": {
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlds": {
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlut": {
+      "standard_name": "toa_outgoing_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "hfss": {
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "hfls": {
+      "standard_name": "surface_upward_latent_heat_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
     // Variables for AMOC_3D_Structure module:
-    "vo_var" : "vo",
-    "so_var" : "so",
-    "vmo_var" : "vmo",
-    "thetao_var" : "thetao",
-    "bas_var" : "ind",
-    "deptho_var" : "deptho",
-    "thkcello_var" : "thkcello",
+    "uo": {
+      "standard_name": "sea_water_x_velocity",
+      "units": "m s-1"
+    },
+    "vo": {
+      "standard_name": "sea_water_y_velocity",
+      "units": "m s-1"
+    },
+    "so": {
+      "standard_name": "sea_water_salinity",
+      "units": "psu"
+    },
+    "umo": {
+      "standard_name": "ocean_mass_x_transport",
+      "units": "kg s-1"
+    },
+    "vmo": {
+      "standard_name": "ocean_mass_y_transport",
+      "units": "kg s-1"
+    },
+    "thetao": {
+      "standard_name": "sea_water_potential_temperature",
+      "units": "degC"
+    },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
-    "ta_var" : "ta",
+    "ta": {
+      "standard_name": "air_temperature",
+      "units": "K"
+    },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
-    "prw_var" : "prw",
-    // tave: Mass-Weighted Column Average Tropospheric Temperature, units = K
-    "tave_var" : "tave",
-    // Vertically-Integrated Saturation Specific Humidity, units = mm (or kg/m^2)
-    "qsat_int_var" : "qsat_int",
+    "prw": {
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2",
+      "ndim": 3
+    },
     // Variables for SM_ET_coupling module 
-    "mrsos_var" : "mrsos",
-    "evspsbl_var" : "evspsbl"
+    "mrsos": {
+      "standard_name": "mass_content_of_water_in_soil_layer",
+      "units": "kg m-2",
+      "ndim": 3
+    },
+    "evspsbl": {
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    }
   },
-  "units" : {
-    // TODO: assign to variables; do honest unit conversion
-    // factor * [model native unit] = flux in kg m-2 s-1
-    "pr_conversion_factor" : 1,
-    "prc_conversion_factor" : 1,
-    "prls_conversion_factor" : 1,
+  "other" : {
     // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
-    "date_int_offset" : 0,
-    // pressure axis: factor * [model native unit] = pressure in Pa
-    "pressure_to_Pa_factor" : 1
+    "date_int_offset" : 0
   }
 }

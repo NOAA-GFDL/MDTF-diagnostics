@@ -62,6 +62,23 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertEqual(temp.name_from_CF('A','pr_var'), 'PRECT')
         self.assertEqual(temp.name_from_CF('B','pr_var'), 'PRECT')
 
+class TestVariableTranslatorFiles(unittest.TestCase):
+    def tearDown(self):
+        # call _reset method deleting clearing Translator for unit testing, 
+        # otherwise the second, third, .. tests will use the instance created 
+        # in the first test instead of being properly initialized
+        tearDown_config_singletons()
+
+    def test_variabletranslator_load_files(self):
+        # run in non-unit-test mode to test loading of config files
+        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        code_root = os.path.dirname(os.path.dirname(cwd))
+        raised = False
+        try:
+            _ = core.VariableTranslator(code_root, unittest=False)
+        except Exception:
+            raised = True
+        self.assertFalse(raised)
 
 class TestPathManager(unittest.TestCase):
     # pylint: disable=maybe-no-member

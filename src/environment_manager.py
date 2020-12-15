@@ -388,8 +388,10 @@ class SubprocessRuntimePODWrapper(object):
             # just to be safe
             self.log_handle.close()
             self.log_handle = None
-        self.pod.tear_down()
 
+        _log.info("---  MDTF.py Finished POD %s", self.pod.name)
+        # elapsed = timeit.default_timer() - start_time
+        # print(pod+" Elapsed time ",elapsed)
 
 class SubprocessRuntimeManager(AbstractRuntimeManager):
     """:class:`AbstractRuntimeManager` that spawns a separate system subprocess

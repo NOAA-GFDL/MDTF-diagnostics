@@ -69,6 +69,7 @@ class MDTFFramework(object):
         self.Preprocessor = _dispatch('preprocessor')
         self.EnvironmentManager = _dispatch('environment_manager')
         self.RuntimeManager = _dispatch('runtime_manager')
+        self.OutputManager = _dispatch('output_manager')
 
     @staticmethod
     def _populate_from_cli(cli_obj, group_nm, target_d=None):
@@ -237,7 +238,7 @@ class MDTFFramework(object):
         run_mgr.setup()
         run_mgr.run()
         run_mgr.tear_down()
-        case.tear_down()
+        self.OutputManager(case)
         return any(p.failed for p in case.pods.values())
 
     def main(self, foo=None):
@@ -346,7 +347,6 @@ class PathManager(util.Singleton, util.NameSpace):
         d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
         d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
         d.DATADIR = d.POD_WK_DIR # synonym so we don't need to change docs
-        d.TEMP_HTML = case.TEMP_HTML
         return d
 
 

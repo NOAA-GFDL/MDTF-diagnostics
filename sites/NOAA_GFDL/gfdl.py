@@ -39,11 +39,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         if not self._has_placeholder:
             config = core.ConfigManager()
             try:
-                gfdl_util.make_remote_dir(
-                    self.POD_OUT_DIR,
-                    timeout=config.get('file_transfer_timeout', 0),
-                    dry_run=config.get('dry_run', False)
-                )
+                gfdl_util.make_remote_dir(self.POD_OUT_DIR)
                 self._has_placeholder = True
             except Exception as exc:
                 try:
@@ -684,10 +680,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         out_file = super(GFDLHTMLOutputManager, self).make_tar_file(
             paths.WORKING_DIR
         )
-        gfdl_util.gcp_wrapper(
-            out_file, tar_dest_dir,
-            timeout=self.file_transfer_timeout, dry_run=self.dry_run
-        )
+        gfdl_util.gcp_wrapper(out_file, tar_dest_dir)
         _, file_ = os.path.split(out_file)
         return os.path.join(tar_dest_dir, file_)
 
@@ -701,20 +694,14 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             # only copy PODs that ran, whether they succeeded or not
             for pod in case.pods.values():
                 if pod._has_placeholder:
-                    gfdl_util.gcp_wrapper(
-                        pod.POD_WK_DIR, 
-                        pod.POD_OUT_DIR,
-                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
-                    )
+                    gfdl_util.gcp_wrapper(pod.POD_WK_DIR, pod.POD_OUT_DIR)
             # copy all case-level files
             _log.debug("Copying case-level files in %s", self.WK_DIR)
             for f in os.listdir(self.WK_DIR):
                 if os.path.isfile(os.path.join(self.WK_DIR, f)):
                     _log.debug("Found case-level file %s", f)
                     gfdl_util.gcp_wrapper(
-                        os.path.join(self.WK_DIR, f), 
-                        self.OUT_DIR,
-                        timeout=self.file_transfer_timeout, dry_run=self.dry_run
+                        os.path.join(self.WK_DIR, f), self.OUT_DIR,
                     )
         else:
             # copy everything at once
@@ -740,11 +727,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
                     _log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
                     shutil.move(self.WK_DIR, new_wkdir)
                     self.WK_DIR = new_wkdir
-                gfdl_util.gcp_wrapper(
-                    self.WK_DIR, self.OUT_DIR, 
-                    timeout=self.file_transfer_timeout,
-                    dry_run=self.dry_run
-                )
+                gfdl_util.gcp_wrapper(self.WK_DIR, self.OUT_DIR)
             except Exception:
                 raise # only delete MODEL_WK_DIR if copied successfully
             _log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)

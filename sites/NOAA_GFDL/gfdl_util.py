@@ -160,9 +160,15 @@ class GFDLMDTFFramework(core.MDTFFramework):
 
 # ====================================================================
 
-def gcp_wrapper(source_path, dest_dir, timeout=0, dry_run=False):
+def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None):
     modMgr = ModuleManager()
     modMgr.load('gcp')
+    config = core.ConfigManager()
+    if timeout is None:
+        timeout = config.get('file_transfer_timeout', 0)
+    if dry_run is None:
+        dry_run = config.get('dry_run', False)
+
     source_path = os.path.normpath(source_path)
     dest_dir = os.path.normpath(dest_dir)
     # gcp requires trailing slash, ln ignores it
@@ -187,18 +193,13 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
-        config = core.ConfigManager()
         tmpdirs = core.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
-        if timeout is None:
-            timeout = config.get('file_transfer_timeout', 0)
-        if dry_run is None:
-            dry_run = config.get('dry_run', False)
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
         gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)
 
-def fetch_obs_data(source_dir, dest_dir, timeout=0, dry_run=False):
+def fetch_obs_data(source_dir, dest_dir, timeout=None, dry_run=None):
     if source_dir == dest_dir:
         return
     if not os.path.exists(source_dir) or not os.listdir(source_dir):

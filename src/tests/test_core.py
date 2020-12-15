@@ -26,8 +26,8 @@ class TestVariableTranslator(unittest.TestCase):
         temp.add_convention({
             'name':'not_CF', 'axes': {},
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "DUMMY"},
-                'PRECC': {"standard_name": "prc_var", "units": "DUMMY"}
+                'PRECT': {"standard_name": "pr_var", "units": "1"},
+                'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
         self.assertEqual(temp.name_to_CF('not_CF', 'PRECT'), 'pr_var')
@@ -38,8 +38,8 @@ class TestVariableTranslator(unittest.TestCase):
         temp.add_convention({
             'name':'not_CF', 'axes': {},
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "DUMMY"},
-                'PRECC': {"standard_name": "prc_var", "units": "DUMMY"}
+                'PRECT': {"standard_name": "pr_var", "units": "1"},
+                'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
         self.assertRaises(KeyError, temp.name_to_CF, 'B', 'PRECT')
@@ -54,8 +54,8 @@ class TestVariableTranslator(unittest.TestCase):
             'name':'not_CF', 'axes': {},
             'models': ['A', 'B'],
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "DUMMY"},
-                'PRECC': {"standard_name": "prc_var", "units": "DUMMY"}
+                'PRECT': {"standard_name": "pr_var", "units": "1"},
+                'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
         self.assertEqual(temp.name_from_CF('not_CF', 'pr_var'), 'PRECT')

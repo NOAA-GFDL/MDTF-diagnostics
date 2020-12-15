@@ -24,3 +24,4 @@ dependencies:
 - doc8
 # additions dec 2020
 - cf_xarray=0.3.1
+- cfunits=3.3.1

@@ -79,6 +79,12 @@ class WormKeyError(KeyError, MDTFBaseException):
     """
     pass
 
+class UnitsError(ValueError, MDTFBaseException):
+    """Raised when trying to convert between quantities with physically 
+    inequivalent units.
+    """
+    pass
+
 class ConventionError(MDTFBaseException):
     """Exception raised by a duplicate variable convention name."""
     def __init__(self, conv_name):

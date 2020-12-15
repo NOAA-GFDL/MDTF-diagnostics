@@ -14,6 +14,8 @@ import string
 import tempfile
 import traceback
 from src import util, cli, mdtf_info, data_model
+# --
+import cfunits
 
 import logging
 _log = logging.getLogger(__name__)
@@ -412,7 +414,6 @@ class FieldlistEntry(object):
     units: str = util.MANDATORY          # = units according to this convention
     axes_set: frozenset = dataclasses.field(default_factory=frozenset)
     ndim: dataclasses.InitVar = 4
-    regex: str = ""
     scalar_coord_templates: dict = dataclasses.field(default_factory=dict)
 
     def __post_init__(self, ndim=4):
@@ -428,8 +429,9 @@ class FieldlistEntry(object):
         self.axes_set = frozenset(
             data_model.DMAxis.from_struct(x) for x in self.axes_set
         )
-        if not self.regex:
-            self.regex = self.name
+        self.scalar_coord_templates = {
+            data_model.DMAxis(k): v for k,v in self.scalar_coord_templates.items()
+        }
         
 @util.mdtf_dataclass
 class Fieldlist():
@@ -454,7 +456,8 @@ class Fieldlist():
             return dd
 
         d['axes'] = {
-            v['axis']: data_model.coordinate_from_struct(v, name=k) \
+            data_model.DMAxis(v['axis']): \
+                data_model.coordinate_from_struct(v, name=k) \
             for k,v in d['axes'].items() 
         }
         d['data'] = util.WormDict()
@@ -497,6 +500,21 @@ class Fieldlist():
             raise KeyError((f"Queried standard name '{key1}' with an unexpected "
                 f"set of axes {key2} not in convention '{self.name}'."))
         return d[key2]
+
+    def lookup_axis(self, ax):
+        if not isinstance(ax, data_model.DMAxis):
+            ax = data_model.DMAxis(ax)
+        return self.axes.get(ax, None)
+
+    def lookup_variable(self, var):
+        """Returns DMVariable instance, with populated axes."""
+        conv_var = self.lookup(var)
+        coords = {ax: self.lookup_axis(ax) for ax in conv_var.axis_set}
+        for c in var.scalar_coords:
+            coords[c.axis].value = c.value
+        return util.coerce_to_dataclass(
+            conv_var, data_model.DMVariable, coords=tuple(coords.values())
+        )
 
 class VariableTranslator(util.Singleton):
     """:class:`~util.Singleton` containing information for different variable 
@@ -553,6 +571,63 @@ class VariableTranslator(util.Singleton):
 
     def lookup(self, conv_name, var):
         return self._lookup_wrapper(conv_name, 'lookup', var)
+
+    def lookup_axis(self, conv_name, axis):
+        return self._lookup_wrapper(conv_name, 'lookup_axis', axis)
+
+    def lookup_variable(self, conv_name, var):
+        return self._lookup_wrapper(conv_name, 'lookup_variable', var)
+
+    @staticmethod
+    def conversion_factor(source_unit, dest_unit):
+        """Defined so that (conversion factor) * (quantity in source_units) = 
+        (quantity in dest_units). 
+        """
+        if not source_unit.equivalent(dest_unit):
+            raise util.UnitsError((f"Units {repr(source_unit)} and "
+                f"{repr(dest_unit)} are inequivalent."))
+        return cfunits.conform(1.0, dest_unit, source_unit)
+
+    @staticmethod
+    def convert_array(array, source_unit, dest_unit):
+        """Wrapper for cfunits.conform() that does unit conversion in-place on a
+        numpy array.
+        """
+        if not source_unit.equivalent(dest_unit):
+            raise util.UnitsError((f"Units {repr(source_unit)} and "
+                f"{repr(dest_unit)} are inequivalent."))
+        cfunits.conform(array, source_unit, dest_unit, inplace=True)
+        
+    def translate(self, conv_name, var):
+        """Return a DMVariable corresponding to the translated version of var. 
+        """
+        conv_var = self.lookup_variable(conv_name, var)
+
+        if len(var.scalar_coords) > 1:
+            raise NotImplementedError()
+        elif len(var.scalar_coords) == 1:
+            c = var.scalar_coords[0]
+            if c.axis not in conv_var.scalar_coord_templates:
+                raise ValueError((
+                ))
+            name_template = conv_var.scalar_coord_templates[c.axis]
+            conv_ax = self.lookup_axis(conv_name, c.axis)
+            value_in_conv = c.value * self.conversion_factor(c.units, conv_ax.units)
+            new_name = name_template.format(value=int(value_in_conv))
+            conv_var.name = new_name
+        return conv_var
+
+    def remove_scalar(self, conv_name, var):
+        """If var has a scalar_coordinate defined, remove it and translate that,
+        else return None.
+        """
+        if len(var.scalar_coords) == 0:
+            return None
+        elif len(var.scalar_coords) > 1:
+            raise NotImplementedError()
+        c = var.scalar_coords[0]
+        new_var = var.remove_scalar(c.axis)
+        return self.lookup_variable(conv_name, new_var)
 
 # --------------------------------------------------------------------
 

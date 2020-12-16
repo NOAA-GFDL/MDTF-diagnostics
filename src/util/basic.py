@@ -131,7 +131,7 @@ class WormDict(collections.abc.MutableMapping, dict):
         return self._dict[key]
 
     def __setitem__(self, key, value):
-        if key in self:
+        if key in self._dict:
             raise exceptions.WormKeyError(("Attempting to overwrite entry for "
                 f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
         self._dict[key] = value
@@ -160,11 +160,13 @@ class WormDefaultDict(WormDict):
         super(WormDefaultDict, self).__init__(*args, **kwargs)
         self.default_factory = default_factory
 
-    def __missing__(self, key):
-        if self.default_factory is None:
-            raise KeyError(key) # normal KeyError
-        self[key] = self.default_factory()
-        return self[key]
+    def __getitem__(self, key):
+        try:
+            return super(WormDefaultDict, self).__getitem__(key)
+        except KeyError:
+            if self.default_factory is None:
+                raise KeyError(key) # normal KeyError for missing key
+            return self.default_factory()
 
 class NameSpace(dict):
     """ A dictionary that provides attribute-style access.

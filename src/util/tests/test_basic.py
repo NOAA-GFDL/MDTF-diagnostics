@@ -3,6 +3,30 @@ import unittest.mock as mock
 from src.util import basic as util
 from src.util import exceptions
 
+class TestMDTFABCMeta(unittest.TestCase):
+    def test_abstract_attribute(self):
+        class Foo(metaclass=util.MDTFABCMeta):
+            class_attr = util.abstract_attribute()
+    
+            def foo(self, x):
+                return self.class_attr + x
+    
+        class GoodChildClass(Foo):
+            class_attr = 5
+            
+        raised_exc = False
+        try:
+            b = GoodChildClass()
+            test = b.foo(23)
+        except Exception:
+            raised_exc = True
+        self.assertFalse(raised_exc)
+        self.assertEqual(test, 28)
+
+        class BadChildClass(Foo):
+            pass
+        with self.assertRaises(NotImplementedError):
+            b = BadChildClass()
 
 class TestSingleton(unittest.TestCase):
     def test_singleton(self):

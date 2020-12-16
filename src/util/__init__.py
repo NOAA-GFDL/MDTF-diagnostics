@@ -1,7 +1,8 @@
 # List public symbols for package import.
 
 from .basic import (
-    Singleton, MultiMap, WormDict, WormDefaultDict, NameSpace, MDTFEnum,
+    Singleton, abstract_attribute, MDTFABCMeta, MultiMap, 
+    WormDict, WormDefaultDict, NameSpace, MDTFEnum,
     sentinel_object_factory, is_iterable, to_iter, from_iter, remove_prefix, 
     remove_suffix, filter_kwargs, splice_into_list, deserialize_class
 )

@@ -1,5 +1,6 @@
 """Classes and functions that define and operate on basic data structures.
 """
+import abc
 import collections
 import collections.abc
 import enum
@@ -9,6 +10,42 @@ from . import exceptions
 
 import logging
 _log = logging.getLogger(__name__)
+
+class _AbstractAttributePlaceholder():
+    """Placeholder class used in the definition of the :func:`abstract_attribute`
+    decorator.
+    """
+    pass
+
+def abstract_attribute(obj=None):
+    """Decorator for abstract attributes in abstract base classes by analogy 
+    with :py:func:`abc.abstract_method`. Based on 
+    `https://stackoverflow.com/a/50381071`__.
+    """
+    if obj is None:
+        obj = _AbstractAttributePlaceholder()
+    obj.__is_abstract_attribute__ = True
+    return obj
+
+class MDTFABCMeta(abc.ABCMeta):
+    """Wrap the metaclass for abstract base classes to enable definition of 
+    abstract attributes; raises NotImplementedError if they aren't defined in
+    child classes. Based on 
+    `https://stackoverflow.com/a/50381071`__.
+    """
+    def __call__(cls, *args, **kwargs):
+        instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
+        abstract_attributes = {
+            name for name in dir(instance) \
+            if getattr(getattr(instance, name), '__is_abstract_attribute__', False)
+        }
+        if abstract_attributes:
+            raise NotImplementedError(("Can't instantiate abstract class {} with "
+                "abstract attributes: {}").format(
+                    cls.__name__, ', '.join(abstract_attributes)
+            ))
+        return instance
+
 
 class _Singleton(type):
     """Private metaclass that creates a :class:`~util.Singleton` base class when

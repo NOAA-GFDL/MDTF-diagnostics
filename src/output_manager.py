@@ -309,7 +309,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         dest = os.path.join(case.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
             _log.warning("%s: %s exists, deleting.", 
-                self._html_file_name, case.case_name)
+                self._html_file_name, case.name)
             os.remove(dest)
 
         template_dict = case.env_vars.copy()
@@ -334,7 +334,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
-            _log.info("%s: Overwriting %s.", case.case_name, out_file)
+            _log.info("%s: Overwriting %s.", case.name, out_file)
         util.write_json(config.backup_config, out_file)
 
     def make_tar_file(self, case):
@@ -344,9 +344,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         out_file = os.path.join(paths.OUTPUT_DIR, self._tarball_file_name)
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
-            _log.info("%s: Creating %s.", case.case_name, out_file)
+            _log.info("%s: Creating %s.", case.name, out_file)
         elif os.path.exists(out_file):
-            _log.info("%s: Overwriting %s.", case.case_name, out_file)
+            _log.info("%s: Overwriting %s.", case.name, out_file)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
@@ -361,12 +361,12 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
         _log.debug("%s: Copy %s to %s.", 
-            case.case_name, self.WK_DIR, self.OUT_DIR)
+            case.name, self.WK_DIR, self.OUT_DIR)
         try:
             if os.path.exists(self.OUT_DIR):
                 if not self.overwrite:
-                    _log.error("%s: %s exists, overwriting.", case.case_name,
-                        self.OUT_DIR)
+                    _log.error("%s: %s exists, overwriting.", 
+                        case.name, self.OUT_DIR)
                 shutil.rmtree(self.OUT_DIR)
         except Exception:
             raise

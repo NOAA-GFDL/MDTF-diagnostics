@@ -328,7 +328,7 @@ class PathManager(util.Singleton, util.NameSpace):
             yr1 = case['FIRSTYR']
             yr2 = case['LASTYR']
         else:
-            name = case.case_name
+            name = case.name
             yr1 = case.attrs.date_range.start.format(precision=1)
             yr2 = case.attrs.date_range.end.format(precision=1)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
@@ -610,6 +610,7 @@ class VariableTranslator(util.Singleton):
             if c.axis not in conv_var.scalar_coord_templates:
                 raise ValueError((
                 ))
+            # construct convention's name for this variable on a level
             name_template = conv_var.scalar_coord_templates[c.axis]
             conv_ax = self.lookup_axis(conv_name, c.axis)
             value_in_conv = c.value * self.conversion_factor(c.units, conv_ax.units)
@@ -647,7 +648,7 @@ def print_summary(fmwk):
                 getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
             )
 
-    d = {c.case_name: summary_info_tuple(c) for c in fmwk.cases}
+    d = {c.name: summary_info_tuple(c) for c in fmwk.cases}
     failed = any(len(tup[0]) > 0 for tup in d.values())
     print('\n' + (80 * '-'))
     if failed:

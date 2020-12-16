@@ -73,18 +73,18 @@
       "description" : "Settings describing what analyses the package should perform.",
       "arguments" : [
         {
-          "name": ["label", "CASENAME"],
+          "name": "CASENAME",
           "short_name" : "n",
           "help": "Identifier used to label the package's output for the selected model data.",
           "metavar" : "<name>"
         },{
-          "name": ["start", "FIRSTYR"],
+          "name": "FIRSTYR",
           "short_name" : "Y",
           "help": "Starting year of analysis period.",
           "type" : "int",
           "metavar" : "<year>"
         },{
-          "name": ["end", "LASTYR"],
+          "name": "LASTYR",
           "short_name" : "Z",
           "help": "Ending year of analysis period (inclusive).",
           "type" : "int",

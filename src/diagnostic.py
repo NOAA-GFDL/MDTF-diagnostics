@@ -95,7 +95,14 @@ class VarlistTimeCoordinate(data_model.DMTimeCoordinate, _VarlistTimeSettings,
 
 VarlistEntryRequirement = util.MDTFEnum(
     'VarlistEntryRequirement', 
-    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', module=__name__
+    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', 
+    module=__name__
+)
+
+VarlistEntryStatus = util.MDTFIntEnum(
+    'VarlistEntryStatus', 
+    'INITED QUERIED FETCHED PREPROCESSED', 
+    module=__name__
 )
 
 @util.mdtf_dataclass
@@ -109,7 +116,6 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
-    name_in_model: str = dataclasses.field(default="", compare=False)
     dest_path: str = ""
     env_var: str = ""
     path_variable: str = dataclasses.field(default="", compare=False)
@@ -117,8 +123,11 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     requirement: VarlistEntryRequirement = dataclasses.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
-    separate_query: bool = True
     alternates: list = dataclasses.field(default_factory=list, compare=False)
+    translation: typing.Any = None
+    status: VarlistEntryStatus = dataclasses.field(
+        default=VarlistEntryStatus.INITED, compare=False
+    )
     active: bool = dataclasses.field(init=False, compare=False)
     exception: Exception = dataclasses.field(init=False, compare=False)
 
@@ -139,6 +148,25 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     @property
     def failed(self):
         return (self.exception is not None)
+
+    def deactivate(self, exc):
+        """Mark request for this variable as having failed.
+
+        .. note::
+           This doesn't manipulate the ``active`` attribute directly: that's set
+           by :meth:`~Diagnostic.update_active_vars` after activating possible
+           alternates for this variable.
+        """
+        if self.exception is not None:
+            raise Exception(f"Var {self.short_format()} already deactivated.")
+        self.exception = exc
+
+    @property
+    def name_in_model(self):
+        if self.translation and self.translation.name:
+            return self.translation.name
+        else:
+            return ""
 
     @classmethod
     def from_struct(cls, global_settings_d, dims_d, name, **kwargs):
@@ -387,6 +415,8 @@ class Diagnostic(object):
             yield from self.varlist.active_vars
 
     def deactivate_if_failed(self):
+        """Deactivate all variables for this POD if the POD itself has failed.
+        """
         # should be called from a hook whenever we log an exception
         # only need to keep track of this up to pod execution
         if self.failed:

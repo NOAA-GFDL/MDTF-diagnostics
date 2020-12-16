@@ -643,7 +643,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             self.frepp_mode = case.frepp_mode
             self.file_transfer_timeout = config['file_transfer_timeout']
         except (AttributeError, KeyError) as exc:
-            _log.exception(exc)
+            _log.exception(f"Caught {repr(exc)}.")
 
         super(GFDLHTMLOutputManager, self).__init__(case)
 

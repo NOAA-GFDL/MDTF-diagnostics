@@ -62,7 +62,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.save_nc = config['save_nc']
             self.save_non_nc = config['save_non_nc']
         except KeyError as exc:
-            _log.exception(exc)
+            _log.exception(f"Caught {repr(exc)}.")
             raise
         self.CODE_ROOT = pod.CODE_ROOT
         self.WK_DIR = case_wk_dir
@@ -222,7 +222,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             self.overwrite = config['overwrite']
             self.file_overwrite = self.overwrite # overwrite both config and .tar
         except KeyError as exc:
-            _log.exception(exc)
+            _log.exception(f"Caught {repr(exc)}.")
         self.CODE_ROOT = case.code_root
         self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
         self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
@@ -235,7 +235,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                _log.exception(exc)
+                _log.exception(f"Caught {repr(exc)}.")
                 pod.exception.log(exc)
                 continue
         for pod in case.pods.values():
@@ -246,7 +246,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                _log.exception(exc)
+                _log.exception(f"Caught {repr(exc)}.")
                 pod.exception.log(exc)
                 continue
 

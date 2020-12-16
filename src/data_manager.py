@@ -1,129 +1,140 @@
+"""Classes for querying, fetching and preprocessing model data requested by the
+PODs.
+"""
 import os
 import abc
-import collections
-import copy
 import dataclasses
-import datetime
-import functools
-from itertools import chain
-from operator import attrgetter
-import shutil
-import signal
-from subprocess import CalledProcessError
-import typing
-from src import util, core, datelabel, preprocessor, data_model, diagnostic
+from src import util, diagnostic
+import pandas as pd
+import intake_esm
 
-import logging
-_log = logging.getLogger(__name__)
+class AbstractQueryMixin(abc.ABC):
+    @abc.abstractmethod
+    def query_dataset(self, var): pass
 
-@util.mdtf_dataclass(frozen=True)
-class DefaultDataKey(object):
-    """Minimal data_key that captures the relevant information for the data 
-    PODs require so far.
-    """
-    case_name: str = ""
-    date_range: datelabel.DateRange = None
-    name_in_model: str = ""
-    frequency: datelabel.DateFrequency = None
-    level: int = None
+    def setup_query(self):
+        """Called once, before the iterative query_and_fetch() process starts.
+        Use to, eg, initialize database or remote filesystem connections.
+        """
+        pass
 
-    def __str__(self):
-        s = f"<{self.name_in_model}"
-        attrs_ = []
-        if self.frequency and not self.frequency.is_static:
-            attrs_.append(f'{self.frequency}')
-        if self.level:
-            attrs_.append(f'{self.level}mb')
-        if attrs_:
-            return s + ' @ ' + ', '.join(attrs_) + '>'
-        else:
-            return s + '>'
+    def pre_query_hook(self):
+        """Called before querying the presence of a new batch of variables."""
+        pass
 
-    @property
-    def is_static(self):
-        return (not self.frequency) or self.frequency.is_static
+    def post_query_hook(self):
+        """Called after querying the presence of a new batch of variables."""
+        pass
 
-    @classmethod
-    def from_dataset(cls, dataset, data_mgr):
-        if isinstance(dataset, cls):
-            return util.coerce_to_dataclass(dataset, cls)
-        assert isinstance(dataset, diagnostic.VarlistEntry)
-        if dataset.is_static:
-            dt_range = datelabel.FXDateRange
-            freq = datelabel.FXDateFrequency
-        else:
-            dt_range = dataset.T.range
-            freq = dataset.T.frequency
-        return cls(
-            case_name = data_mgr.case_name,
-            date_range = dt_range,
-            name_in_model = dataset.name_in_model, 
-            frequency = freq
-        )
+    def tear_down_query(self):
+        """Called once, after the iterative query_and_fetch() process ends.
+        Use to, eg, close database or remote filesystem connections.
+        """
+        pass
 
-@util.mdtf_dataclass(frozen=True)
-class _RemoteFileDatasetBase(object):
-    """Base class for describing data contained in a single file.
-    """
-    remote_path: str = ""
-    local_path: str = ""
+class AbstractFetchMixin(abc.ABC):
+    @abc.abstractmethod
+    def fetch_dataset(self, var): pass
 
-def remote_file_dataset_factory(class_name, *key_classes):
-    """Factory returning a dataclass class that wraps whatever fields are used
-    in key_classes with the additional attributes in _RemoteFileDatasetBase.
-    """
-    key_classes = util.to_iter(key_classes, list)
-    key_classes.append(_RemoteFileDatasetBase)
-    return util.dataclass_factory(util.mdtf_dataclass, class_name, *key_classes, 
-        frozen=True)
+    def setup_fetch(self):
+        """Called once, before the iterative query_and_fetch() process starts.
+        Use to, eg, initialize database or remote filesystem connections.
+        """
+        pass
+
+    def pre_fetch_hook(self):
+        """Called before fetching each batch of query results."""
+        pass
+
+    def post_fetch_hook(self):
+        """Called after fetching each batch of query results."""
+        pass
+
+    def tear_down_fetch(self):
+        """Called once, after the iterative query_and_fetch() process ends.
+        Use to, eg, close database or remote filesystem connections.
+        """
+        pass
+
+class AbstractDataSource(abc.ABC):
+    @abc.abstractmethod
+    def query_dataset(self, var): pass
+
+    @abc.abstractmethod
+    def fetch_dataset(self, var): pass
+
+    def pre_query_and_fetch_hook(self):
+        """Called once, before the iterative query_and_fetch() process starts.
+        Use to, eg, initialize database or remote filesystem connections.
+        """
+        pass
+
+    def pre_query_hook(self):
+        """Called before querying the presence of a new batch of variables."""
+        pass
+
+    def pre_fetch_hook(self):
+        """Called before fetching each batch of query results."""
+        pass
+
+    def post_query_hook(self):
+        """Called after querying the presence of a new batch of variables."""
+        pass
+
+    def post_fetch_hook(self):
+        """Called after fetching each batch of query results."""
+        pass
+
+    def post_query_and_fetch_hook(self):
+        """Called once, after the iterative query_and_fetch() process ends.
+        Use to, eg, close database or remote filesystem connections.
+        """
+        pass
+
+# --------------------------------------------------------------------------
 
 @util.mdtf_dataclass
-class DataManagerAttributesBase():
+class DataSourceAttributesBase():
     """Attributes that any data source must specify.
     """
-    FIRSTYR: dataclasses.InitVar = util.MANDATORY
-    LASTYR: dataclasses.InitVar = util.MANDATORY
+    CASENAME: str = util.MANDATORY
+    FIRSTYR: str = util.MANDATORY
+    LASTYR: str = util.MANDATORY
+    convention: str = util.MANDATORY
     date_range: datelabel.DateRange = dataclasses.field(init=False)
 
-    def __post_init__(self, FIRSTYR, LASTYR):
+    def __post_init__(self):
         self.date_range = datelabel.DateRange(FIRSTYR, LASTYR)
 
-class DataManager(abc.ABC):
+class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
     """Base class for handling the data needs of PODs. Executes query for 
     requested model data against the remote data source, fetches the required 
     data locally, preprocesses it, and performs cleanup/formatting of the POD's 
     output.
     """
-    _AttributesClass = DataManagerAttributesBase
-    _DiagnosticClass = diagnostic.Diagnostic
+    _AttributesClass = util.abstract_attribute()
+    _DiagnosticClass = util.abstract_attribute()
+    _PreprocessorClass = util.abstract_attribute()
 
-    def __init__(self, case_dict, PreprocessorClass):
-        self.case_name = case_dict['CASENAME']
-        self.convention = case_dict.get('convention', 'CF')
+    def __init__(self, case_dict):
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
-        self._PreprocessorClass = PreprocessorClass
         self.pods = case_dict.get('pod_list', [])
 
+        # configure case-specific env vars
         config = core.ConfigManager()
         self.env_vars = config.global_env_vars.copy()
         self.env_vars.update({
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
-        # assign explicitly else linter complains
-        self.dry_run = config.dry_run
-        self.file_transfer_timeout = config.file_transfer_timeout
-        self.make_variab_tar = config.make_variab_tar
-        self.keep_temp = config.keep_temp
-        self.overwrite = config.overwrite
-        self.file_overwrite = self.overwrite # overwrite config and .tar
 
+        # configure paths
+        self.overwrite = config.overwrite
         paths = core.PathManager()
         d = paths.model_paths(case_dict, overwrite=self.overwrite)
         self.code_root = paths.CODE_ROOT
         self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
         self.MODEL_WK_DIR = d.MODEL_WK_DIR
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
-        self.TEMP_HTML = os.path.join(self.MODEL_WK_DIR, 'pod_output_temp.html')
         util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
 
         # configure logger
@@ -131,11 +142,13 @@ class DataManager(abc.ABC):
             config, mdtf_log_file= os.path.join(d.MODEL_WK_DIR, "mdtf.log")
         )
 
-        self.data_keys = collections.defaultdict(list)
-        self.data_pods = util.MultiMap()
-        self.queried_keys = set([])
-        self.fetched_keys = set([])
-        self.data_files = util.MultiMap()
+    @property
+    def name(self):
+        return self.attrs.CASENAME
+
+    @property
+    def convention(self):
+        return self.attrs.convention
 
     def iter_pods(self):
         """Generator iterating over all pods which haven't been
@@ -145,22 +158,18 @@ class DataManager(abc.ABC):
             if p.active:
                 yield p
 
+    def iter_vars(self, all_vars=False):
+        for p in self.iter_pods():
+            yield from p.iter_vars(all_vars=all_vars)
+
+    def iter_vars_with_pod(self):
+        for p in self.iter_pods():
+            for v in p.iter_vars():
+                yield (v,p)
+
     # -------------------------------------
 
     def setup(self):
-        translate = core.VariableTranslator()
-        # set env vars for unit conversion factors (TODO: honest unit conversion)
-        if self.convention not in translate.units:
-            raise AssertionError(("Variable name translation doesn't recognize "
-                f"{self.convention}."))
-        temp = translate.units[self.convention].to_dict()
-        self.env_vars.update(temp)
-        # shouldn't need to do this for *all* var names the mdoel defines, but 
-        # think a POD was testing for env var for a variable it didn't request
-        # TODO: fix this
-        temp = translate.variables[self.convention].to_dict()
-        self.env_vars.update(temp)
-
         self.pods = {
             pod_name: self._DiagnosticClass.from_config(pod_name) \
                 for pod_name in self.pods
@@ -178,16 +187,25 @@ class DataManager(abc.ABC):
                 continue
 
         print('####################')
-        for pod in self.pods.values():
-            for v in pod.iter_vars(all_vars=True):
-                v.print_debug()
+        for v in self.iter_vars(all_vars=True):
+            v.print_debug()
         print('####################')
 
     def setup_pod(self, pod):
+        """Update POD with information that only becomes available after 
+        DataManager and Diagnostic have been configured (ie, only known at 
+        runtime, not from settings.jsonc.)
+
+        Could arguably be moved into Diagnostic's init, at the cost of 
+        dependency inversion.
+        """
+        # set up paths/working directories
         paths = core.PathManager()
         paths = paths.pod_paths(pod, self)
         for k,v in paths.items():
             setattr(pod, k, v)
+        pod.setup_pod_directories()
+        # set up env vars
         pod.pod_env_vars.update(self.env_vars)
 
         for v in pod.iter_vars(all_vars=True):
@@ -207,6 +225,9 @@ class DataManager(abc.ABC):
         """Update VarlistEntry fields with information that only becomes 
         available after DataManager and Diagnostic have been configured (ie, 
         only known at runtime, not from settings.jsonc.)
+
+        Could arguably be moved into VarlistEntry's init, at the cost of 
+        dependency inversion.
         """
         translate = core.VariableTranslator()
         v.change_coord(
@@ -220,7 +241,7 @@ class DataManager(abc.ABC):
         )
         v.dest_path = self.variable_dest_path(pod, v)
         try:
-            v.name_in_model = translate.from_CF(self.convention, v.standard_name)
+            v.translation = translate.translate(self.convention, v)
         except KeyError:
             err_str = (f"CF name '{v.standard_name}' for varlist entry "
                 f"{v.name} in POD {pod.name} not recognized by naming "
@@ -236,87 +257,37 @@ class DataManager(abc.ABC):
         convention won't be found by the POD.
         """
         if var.is_static:
-            f_name = f"{self.case_name}.{var.name}.nc"
+            f_name = f"{self.name}.{var.name}.nc"
             return os.path.join(pod.POD_WK_DIR, f_name)
         else:
             freq = var.T.frequency.format_local()
-            f_name = f"{self.case_name}.{var.name}.{freq}.nc"
+            f_name = f"{self.name}.{var.name}.{freq}.nc"
             return os.path.join(pod.POD_WK_DIR, freq, f_name)
-
-    @staticmethod
-    def dataset_key(dataset):
-        """Return immutable representation of a :class:`DataSetBase` object. 
-        Two DataSets should have the same key if they can be retrieved from the 
-        remote data source with a single query/fetch operation.
-        """
-        return dataset._freeze()
-
-    def build_data_dicts(self):
-        """Initialize or update internal bookkeeping: which PODs use which 
-        variables, and which variables are contained in which files. Current 
-        implementation is needlessly opaque and should be replaced with sqlite
-        queries.
-
-        - A ``data_key`` is an object identifying a dataset for a single 
-            variable, in the sense that it can be retrieved from the remote data
-            source with a single query/fetch operation.
-        - ``data_keys`` maps a data_key to a list of 
-            :class:`~diagnostic.VarlistEntry` objects representing specific 
-            versions of that variable.
-        - ``data_pods`` is a reversible map (:class:`~util.MultiMap`) between a
-            data_key and a set of names of PODs that use that variable. The PODs
-            themselves can be accessed through the ``pods`` dict.
-        - ``data_files`` is a reversible map (:class:`~util.MultiMap`) between a
-            data_key and the set of files (represented as :class:`SingleFileDataSet` 
-            objects) that contain that variable's data.
-        """
-        self.data_keys = collections.defaultdict(list)
-        self.data_pods = util.MultiMap()
-        for pod in self.iter_pods():
-            pod.update_active_vars()
-            for var in pod.iter_vars():
-                key = self.dataset_key(var)
-                self.data_keys[key].append(var)
-                self.data_pods[key].update([pod.name])
-
-    def deactivate_key(self, data_key, exc):
-        """Deactivate all active variables corresponding to data_key.
-        """
-        for v in self.data_keys[data_key]:
-            v.exception = exc
         
-    # DATA QUERY -------------------------------------
-
-    def pre_query_hook(self):
-        """Called before querying the presence of a new batch of variables.
-        """
-        pass
-
-    # specific details that must be implemented in child class 
-    @abc.abstractmethod
-    def query_dataset(self, data_key):
-        pass
+    # DATA QUERY/FETCH/PREPROCESS -------------------------------------
 
     def query_data(self):
         update = True
         # really a while-loop, but we limit # of iterations to be safe
-        for _ in range(10): 
+        for _ in range(5): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time.
             if update:
-                self.build_data_dicts()
+                for pod in self.iter_pods():
+                    pod.update_active_vars()
                 update = False
-            keys_to_query = set(self.data_keys).difference(self.queried_keys)
-            if not keys_to_query:
+            vars_to_query = [v for v in self.iter_vars() \
+                if v.status < diagnostic.VarlistEntryStatus.QUERIED]
+            if not vars_to_query:
                 break # normal exit: queried everything
             
             self.pre_query_hook()
-            for d_key in keys_to_query:
+            for var in vars_to_query:
                 try:
-                    _log.info("    Querying '%s'", d_key)
+                    _log.info("    Querying '%s'", var.short_format())
                     # add before query, in case query raises an exc
-                    self.queried_keys.add(d_key) 
-                    files = util.to_iter(self.query_dataset(d_key))
+                    var.status = diagnostic.VarlistEntryStatus.QUERIED
+                    files = util.to_iter(self.query_dataset(var))
                     if not files:
                         raise util.DataQueryError(d_key, "No data found by query.")
                     self.data_files[d_key].update(files)
@@ -324,138 +295,108 @@ class DataManager(abc.ABC):
                     update = True
                     if not isinstance(exc, util.DataQueryError):
                         _log.exception("Caught exception querying %s: %s",
-                            d_key, repr(exc))
+                            var.short_format(), repr(exc))
                     try:
-                        raise util.DataQueryError(d_key, 
+                        raise util.DataQueryError(var, 
                             "Caught exception while querying data.") from exc
                     except Exception as chained_exc:
-                        self.deactivate_key(d_key, chained_exc)
+                        var.deactivate(chained_exc)
                     continue
             self.post_query_hook()
         else:
             # only hit this if we don't break
             raise Exception(
-                f'Too many iterations in {self.__class__.__name__}.query_data().'
+                f"Too many iterations in {self.__class__.__name__}.query_data()."
             )
 
-    def post_query_hook(self):
-        """Called after querying the presence of a new batch of variables.
-        """
-        pass
-
-    # FETCH REMOTE DATA -------------------------------------
-
-    def pre_query_and_fetch_hook(self):
-        """Called once, before the iterative query_and_fetch() process starts.
-        Use to, eg, initialize database or remote filesystem connections.
-        """
-        pass
-
-    def pre_fetch_hook(self):
-        """Called before fetching each batch of query results.
-        """
-        pass
-
-    def sort_dataset_files(self, d_key):
-        """Process list of requested data to make data fetching efficient.
-
-        This is intended as a hook to be used by subclasses. Default behavior is
-        to delete from the list duplicate datasets and datasets where a local
-        copy of the data already exists and is current (as determined by 
-        :meth:`~data_manager.DataManager.local_data_is_current`).
-        
-        Returns: collection of :class:`SingleFileDataSet` objects.
-        """
-        # flatten list of all data_files and remove duplicates
-        # filter out any data we've previously fetched that's up to date
-        unique_files = set(f for f in self.data_files[d_key] \
-            if not self.local_data_is_current(f))
-        # fetch data in sorted order to make interpreting logs easier
-        unique_files = list(unique_files)
-        sort_key = None
-        if unique_files:
-            if self._fetch_order_function is not None:
-                sort_key = self._fetch_order_function
-            elif hasattr(unique_files[0], 'remote_path'):
-                sort_key = attrgetter('remote_path')
-            else:
-                sort_key = None
-        return sorted(unique_files, key=sort_key)
-    
-    _fetch_order_function = None
-
-    def local_data_is_current(self, dataset_obj):
-        """Determine if local copy of data needs to be refreshed. This is 
-        intended as a hook to be used by subclasses. Default is to always
-        return `False`, ie always fetch remote data.
-
-        Returns: `True` if local copy of data exists and remote copy hasn't been
-            updated.
-        """
-        return False
-        # return os.path.getmtime(dataset.local_path) \
-        #     >= os.path.getmtime(dataset.remote_path)
-
-    # specific details that must be implemented in child class 
-    @abc.abstractmethod
-    def fetch_dataset(self, data_key):
-        pass
-
-    def query_and_fetch_data(self):
-        # Call cleanup method if we're killed
-        signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
-        signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
-        self.pre_query_and_fetch_hook()
-
+    def fetch_data(self):
         update = True
         # really a while-loop, but we limit # of iterations to be safe
-        for _ in range(10): 
+        for _ in range(5): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and query them.
             if update:
                 self.query_data()
                 update = False
-            keys_to_fetch = set(self.data_keys).difference(self.fetched_keys)
-            if not keys_to_fetch:
+            vars_to_fetch = [v for v in self.iter_vars() \
+                if v.status < diagnostic.VarlistEntryStatus.FETCHED]
+            if not vars_to_fetch:
                 break # normal exit: fetched everything
 
             self.pre_fetch_hook()
-            for d_key in keys_to_fetch:
+            for var in vars_to_fetch:
                 try:
-                    _log.info(f"    Fetching '%s'", d_key)
+                    _log.info("    Fetching '%s'", var.short_format())
                     # add before fetch, in case fetch raises an exc
-                    self.fetched_keys.add(d_key) 
-                    self.fetch_dataset(d_key)
+                    var.status = diagnostic.VarlistEntryStatus.FETCHED
+                    self.fetch_dataset(var)
                 except Exception as exc:
                     update = True
                     _log.exception("Caught exception fetching %s: %s",
-                        d_key, repr(exc))
+                        var.short_format(), repr(exc))
                     try:
-                        raise util.DataAccessError(d_key, 
+                        raise util.DataAccessError(var, 
                             "Caught exception while fetching data.") from exc
                     except Exception as chained_exc:
-                        self.deactivate_key(d_key, chained_exc)
+                        var.deactivate(chained_exc)
                     continue
             self.post_fetch_hook()
         else:
-            # Do cleanup regardless of success/fail
-            self.post_query_and_fetch_hook()
             # only hit this if we don't break
             raise Exception(
-                f'Too many iterations in {self.__class__.__name__}.fetch_data().'
+                f"Too many iterations in {self.__class__.__name__}.fetch_data()."
             )
-        self.post_query_and_fetch_hook()       
 
-    def post_fetch_hook(self):
-        """Called after fetching each batch of query results.
+    def preprocess_data(self):
+        """Hook to run the preprocessing function on all variables. The 
+        preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
         """
-        pass
+        update = True
+        # really a while-loop, but we limit # of iterations to be safe
+        for _ in range(5): 
+            # refresh list of active variables/PODs; find alternate vars for any
+            # vars that failed since last time and fetch them.
+            if update:
+                self.fetch_data()
+                update = False
+            vars_to_process = [vp for vp in self.iter_vars_with_pod() \
+                if vp[0].status < diagnostic.VarlistEntryStatus.PREPROCESSED]
+            if not vars_to_process:
+                break # normal exit: processed everything
 
-    def post_query_and_fetch_hook(self):
-        """Called once, after the iterative query_and_fetch() process ends.
-        Use to, eg, close database or remote filesystem connections.
-        """
-        pass
+            for var, pod in vars_to_process:
+                try:
+                    _log.info("    Processing '%s'", var.short_format())
+                    var.status = diagnostic.VarlistEntryStatus.PREPROCESSED
+                    pod.preprocessor.process(var, list(self.data_files[d_key]))
+                except Exception as exc:
+                    update = True
+                    _log.exception("Caught exception processing %s: %s",
+                        var.short_format(), repr(exc))
+                    try:
+                        raise util.DataPreprocessError(var, 
+                            "Caught exception while processing data.") from exc
+                    except Exception as chained_exc:
+                        var.deactivate(chained_exc)
+                    continue
+        else:
+            # only hit this if we don't break
+            raise Exception(
+                f"Too many iterations in {self.__class__.__name__}.preprocess_data()."
+            )
+
+    def data_pipeline(self):
+        # Call cleanup method if we're killed
+        signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
+        signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
+        self.pre_query_and_fetch_hook()
+        try:
+            self.preprocess_data()
+        except Exception as exc:
+            _log.exception(f"{repr(exc)}")
+            pass
+        # clean up regardless of success/fail
+        self.post_query_and_fetch_hook()
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
         """Called if framework is terminated abnormally. Not called during
@@ -464,79 +405,140 @@ class DataManager(abc.ABC):
         util.signal_logger(self.__class__.__name__, signum, frame)
         self.post_query_and_fetch_hook()
 
-    # -------------------------------------
+# --------------------------------------------------------------------------
 
-    def preprocess_data(self):
-        """Hook to run the preprocessing function on all variables. The 
-        preprocessor class to use is determined by :class:`~mdtf.MDTFFramework`.
-        """
-        for pod in self.iter_pods():
-            pod.setup_pod_directories()
-            pod.preprocessor.setup()
-            for var in pod.iter_vars():
-                d_key = self.dataset_key(var)
-                pod.preprocessor.process(var, list(self.data_files[d_key]))
-            pod.preprocessor.tear_down()
+class OnTheFlyCatalogQueryMixin(AbstractQueryMixin):
+    asset_file_format = "netcdf"
+        
+    @property
+    def df(self):
+        if self.catalog:
+            return self.catalog.df
+        else:
+            return None
+    
+    def iter_files(self):
+        root_dir = os.path.join(self.CATALOG_DIR, "") # adds separator if not present
+        for root, _, files in os.walk(root_dir):
+            for f in files:
+                if f.startswith('.'):
+                    continue
+                try:
+                    path = os.path.join(root, f)
+                    yield self._dataclass.from_string(path, len(root_dir))
+                except (ValueError):
+                    print('XXX', f)
+                    continue
+                
+    def _dummy_esmcol_spec(self):
+        pattern = self._dataclass._pattern # abbreviate
+        attr_fields = set(pattern.fields).remove(pattern.input_field)
+        attrs = [{"column_name":f, "vocabulary": ""} for f in attr_fields]
+        return {
+            "esmcat_version": "0.1.0",
+            "id": "MDTF_" + self.__class__.__name__,
+            "description": "",
+            "attributes": attrs,
+            "assets": {
+                "column_name": pattern.input_field,
+                "format": self.asset_file_format
+            },
+            "last_updated": "2020-12-06"   
+        }
 
-# =================================================================
-
-@util.mdtf_dataclass
-class LocalfileDataManagerAttributes(DataManagerAttributesBase):
-    CASENAME: dataclasses.InitVar = util.MANDATORY
-    sample_data_source: str = None
-
-    def __post_init__(self, FIRSTYR, LASTYR, CASENAME):
-        super(LocalfileDataManagerAttributes, self).__post_init__(FIRSTYR, LASTYR)
-        if not self.sample_data_source:
-            assert (CASENAME) # is not empty
-            self.sample_data_source = CASENAME
-
-class LocalfileDataManager(DataManager):
-    """:class:`DataManager` for working with input model data files that are 
-    already present in ``MODEL_DATA_DIR`` (on a local filesystem), for example
-    the PODs' sample model data.
-    """
-    _AttributesClass = LocalfileDataManagerAttributes
-    _DataKeyClass = DefaultDataKey
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
-
-    FileDataSet = remote_file_dataset_factory('FileDataSet', _DataKeyClass)
-
-    def dataset_key(self, varlist_entry):
-        return self._DataKeyClass.from_dataset(varlist_entry, self)
-
-    def remote_path(self, data_key):
-        """Returns the absolute path of the local copy of the file for dataset.
-
-        This determines the local sample model data directory structure, which 
-        is
-        ``$MODEL_DATA_ROOT/<CASENAME>/<freq>/<CASENAME>.<var name>.<freq>.nc'``.
-        Sample model data not following this convention won't be found.
-        """
-        freq = data_key.frequency.format_local()
-        return os.path.join(
-            self.MODEL_DATA_DIR, freq,
-            f"{data_key.case_name}.{data_key.name_in_model}.{freq}.nc"
+    def setup_query(self):
+        # verify parent class defined attributes correctly
+        assert hasattr(self, "CATALOG_DIR")
+        assert hasattr(self, "_dataclass")
+        # generate catalog
+        df = pd.DataFrame.from_records(
+            [dataclasses.todict(dc) for dc in self.iter_files()]
+        )
+        self.catalog = intake_esm.core.esm_datastore.from_df(
+            df, esmcol_data = self._dummy_esmcol_spec(), 
+            progressbar=False, sep='|'
         )
 
-    def query_dataset(self, data_key):
-        tmpdirs = core.TempDirManager()
+    def query_dataset(self, var): 
+        # TODO
+        pass
 
-        path = self.remote_path(data_key)
-        tmpdir = tmpdirs.make_tempdir(hash_obj = data_key)
-        if os.path.isfile(path):
-            return self.FileDataSet.from_dataclasses(
-                data_key,
-                remote_path = path,
-                local_path = os.path.join(tmpdir, os.path.basename(path))
-            )
-        else:
-            raise util.DataQueryError(data_key, f"File not found at {path}.")
-    
-    def local_data_is_current(self, dataset):
-        return False 
+class LocalFetchMixin(AbstractFetchMixin):
+    def fetch_dataset(self, var):
+        # TODO
+        pass
 
-    def fetch_dataset(self, data_key):
-        files = self.sort_dataset_files(data_key)
-        for file_ds in files:
-            shutil.copy2(file_ds.remote_path, file_ds.local_path)
+class LocalFileDataSource(OnTheFlyCatalogQueryMixin, LocalFetchMixin):
+    def __init__(self, data_root_dir, DataClass):
+        self.CATALOG_DIR = data_root_dir
+        self._dataclass = DataClass
+        self.catalog = None
+
+# --------------------------------------------------------------------------
+
+sample_data_regex = util.RegexPattern(
+    r"""
+        (?P<sample_dataset>\S+)/       # first directory: model name
+        (?P<frequency>\w+)/   # subdirectory: data frequency
+        # file name = model name + variable name + frequency
+        (?P=sample_dataset)\.(?P<variable>\w+)\.(?P=frequency)\.nc
+    """,
+    input_field="remote_path"
+)
+@util.regex_dataclass(sample_data_regex)
+@util.mdtf_dataclass()
+class SampleDataDataclass():
+    sample_dataset: str = util.MANDATORY # <- mark this as CLI attribute? 
+    frequency: datelabel.DateFrequency = util.MANDATORY
+    variable: str = util.MANDATORY
+    remote_path: str = util.MANDATORY
+    local_path: # XXX
+
+@util.mdtf_dataclass
+class SampleDataAttributes():
+    MODEL_DATA_ROOT: str = ""
+    sample_dataset: str = ""
+
+    def __post_init__(self):
+        if not os.path.isdir(self.MODEL_DATA_ROOT):
+            _log.critical("Data directory %s = '%s' not found.",
+                'MODEL_DATA_ROOT', self.MODEL_DATA_ROOT)
+            exit(1)
+        if not os.path.isdir(
+            os.path.join(self.MODEL_DATA_ROOT, self.sample_dataset)
+        ):
+            _log.critical("Sample dataset name '%s' not found in %s = '%s'.",
+                self.sample_dataset, 'MODEL_DATA_ROOT', self.MODEL_DATA_ROOT)
+            exit(1)
+
+
+class SampleDataDataSource(LocalFileDataSource):
+    pass
+
+
+# ---------------------------
+
+@util.mdtf_dataclass
+class CMIP6DataSourceAttributes():
+    activity_id: str = ""
+    institution_id: str = ""
+    source_id: str = ""
+    experiment_id: str = ""
+    member_id: str = ""
+    grid_label: str = ""
+    version_date: str = ""
+
+    def __post_init__(self):
+        cmip = cmip6.CMIP6_CVs()
+        for field_name, val in dataclasses.asdict(self).items():
+            if field_name in ('version_date', 'member_id'):
+                continue
+            if val and not cmip.is_in_cv(field_name, val):
+                _log.error(("Supplied value '%s' for '%s' is not recognized by "
+                    "the CMIP6 CV. Continuing, but queries will probably fail."),
+                    val, field_name)
+        # try to infer values:
+        cmip.lookup_single(self, 'experiment_id', 'activity_id')
+        cmip.lookup_single(self, 'source_id', 'institution_id')
+        # bail out if we're in strict mode with undetermined fields
+

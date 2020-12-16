@@ -311,7 +311,19 @@ class NameSpace(dict):
     def __hash__(self):
         return hash(self._freeze())
 
-class MDTFEnum(enum.Enum):
+class _MDTFEnumMixin():
+    def __str__(self):
+        return str(self.name).lower()
+
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+    @classmethod
+    def from_struct(cls, str_):
+        """Instantiate from string."""
+        return cls.__members__.get(str_.upper())
+
+class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
     to the members of the enumeration. 2) Provide a ``from_struct`` method to 
     simplify instantiating an instance from a string. To avoid potential 
@@ -325,16 +337,10 @@ class MDTFEnum(enum.Enum):
         obj._value_ = value
         return obj
 
-    def __str__(self):
-        return str(self.name).lower()
-
-    def __repr__(self):
-        return '<%s.%s>' % (self.__class__.__name__, self.name)
-
-    @classmethod
-    def from_struct(cls, str_):
-        """Instantiate from string."""
-        return cls.__members__.get(str_.upper())
+class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
+    """Customize :py:class:`~enum.IntEnum` analogous to :class:`MDTFEnum`.
+    """
+    pass 
 
 def sentinel_object_factory(obj_name):
     """Return a unique singleton object/class (same difference for singletons).

@@ -2,7 +2,7 @@
 
 from .basic import (
     Singleton, abstract_attribute, MDTFABCMeta, MultiMap, 
-    WormDict, WormDefaultDict, NameSpace, MDTFEnum, MDTFIntEnum,
+    WormDict, ConsistentDict, WormDefaultDict, NameSpace, MDTFEnum, MDTFIntEnum,
     sentinel_object_factory, is_iterable, to_iter, from_iter, remove_prefix, 
     remove_suffix, filter_kwargs, splice_into_list, deserialize_class
 )

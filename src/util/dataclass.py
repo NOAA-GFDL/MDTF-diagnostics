@@ -8,6 +8,7 @@ import functools
 import re
 import typing
 from . import basic
+from . import exceptions
 
 import logging
 _log = logging.getLogger(__name__)
@@ -101,12 +102,12 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         m = self.regex.fullmatch(str_, *args)
         if not m:
             if not self._match_error_filter:
-                raise ValueError("No match.")
+                raise ValueError(f"Couldn't match {str_} against {self.regex}.")
             elif hasattr(self._match_error_filter, 'match'):
                 try:
                     self._match_error_filter.match(str_, *args)
                 except Exception as exc:
-                    raise ValueError("No match.")
+                    raise ValueError(f"Couldn't match {str_} against {self.regex}.")
         else:    
             self.data = m.groupdict(default=NOTSET)
             for k,v in self._defaults.items():
@@ -117,7 +118,9 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             
             self._validate_match(m)
             if any(self.data[f] == NOTSET for f in self.fields):
-                raise ValueError("No match.")
+                bad_names = [f for f in self.fields if self.data[f] == NOTSET]
+                raise ValueError((f"Couldn't match the "
+                    f"following fields in {str_}: " + ', '.join(bad_names) ))
         
     def _validate_match(self, match_obj):
         """Hook for post-processing of match, running after all fields are
@@ -331,6 +334,77 @@ default fields in the dataclass-generated ``__init__`` method under
 we use the second solution described in `https://stackoverflow.com/a/53085935`__.
 """
 
+def _mdtf_dataclass_typecheck(self):
+    """Do type checking/coercion on all dataclass fields after init/post_init.
+    """
+    for f in dataclasses.fields(self):
+        if not f.init:
+            # ignore fields that aren't handled at init
+            continue
+        value = getattr(self, f.name)
+        # ignore unset field values, regardless of type
+        if value is None or value is NOTSET:
+            continue
+        if value is MANDATORY:
+            raise ValueError((f"{self.__class__.__name__}: No value supplied "
+                f"for mandatory field {f.name}."))
+        # guess what types are valid
+        new_type = None
+        if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
+            continue
+        if dataclasses.is_dataclass(f.type):
+            # ignore if type is a dataclass: use this type annotation to
+            # implement dataclass inheritance
+            if not isinstance(self, f.type):
+                raise TypeError((f"Field {f.name} specified as dataclass "
+                    f"{f.type.__name__} which isn't a parent class of "
+                    f"{self.__class__.__name__}."))
+            continue
+        elif isinstance(f.type, typing._GenericAlias) \
+            or isinstance(f.type, typing._SpecialForm):
+            # type is a generic from typing module, eg "typing.List"
+            if f.type.__origin__ is typing.Union:
+                new_type = None # can't do coercion, but can test type
+                valid_types = list(f.type.__args__)
+            elif issubclass(f.type.__origin__, typing.Generic):
+                continue # can't do anything in this case
+            else:
+                new_type = f.type.__origin__
+                valid_types = [new_type]
+        else:
+            new_type = f.type
+            valid_types = [new_type]
+        # Get types of field's default value, if present. Dataclass doesn't 
+        # require defaults to be same type as what's given for field.
+        if not isinstance(f.default, dataclasses._MISSING_TYPE):
+            valid_types.append(type(f.default))
+        if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+            valid_types.append(type(f.default_factory()))
+        
+        try:
+            if isinstance(value, tuple(valid_types)):
+                continue
+            if new_type is None or hasattr(new_type, '__abstract_methods__'):
+                continue
+                # # can't do type coercion, so print a warning
+                # print((f"\tWarning: {self.__class__.__name__}: type of "
+                #     f" {f.name} is ({f.type}), recieved {repr(value)} of "
+                #     "conflicting type."))
+            else:
+                if hasattr(new_type, 'from_struct'):
+                    new_value = new_type.from_struct(value)
+                elif isinstance(new_type, enum.Enum):
+                    # need to use item syntax to create enum from name
+                    new_value = new_type.__getitem__(value)
+                else:
+                    new_value = new_type(value)
+                # https://stackoverflow.com/a/54119384 for implementation
+                object.__setattr__(self, f.name, new_value)
+        except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
+            _log.exception("%s", repr(exc))
+            raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
+                f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
+
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
 def mdtf_dataclass(cls=None, **deco_kwargs):
@@ -370,77 +444,55 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     if cls is None:
         # called without arguments
         return functools.partial(mdtf_dataclass, **dc_kwargs)
-
     cls = dataclasses.dataclass(cls, **dc_kwargs)
-    _old_init = cls.__init__
 
+    _old_init = cls.__init__
     @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
         # Execute dataclass' auto-generated __init__ and __post_init__:
         _old_init(self, *args, **kwargs)
-        
-        for f in dataclasses.fields(self):
-            if not f.init:
-                # ignore fields that aren't handled at init
-                continue
-            value = getattr(self, f.name)
-            # ignore unset field values, regardless of type
-            if value is None or value is NOTSET:
-                continue
-            if value is MANDATORY:
-                raise ValueError((f"{self.__class__.__name__}: No value supplied "
-                    f"for mandatory field {f.name}."))
-            # guess what types are valid
-            new_type = None
-            if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
-                continue
-            elif isinstance(f.type, typing._GenericAlias) \
-                or isinstance(f.type, typing._SpecialForm):
-                # type is a generic from typing module, eg "typing.List"
-                if f.type.__origin__ is typing.Union:
-                    new_type = None # can't do coercion, but can test type
-                    valid_types = list(f.type.__args__)
-                elif issubclass(f.type.__origin__, typing.Generic):
-                    continue # can't do anything in this case
-                else:
-                    new_type = f.type.__origin__
-                    valid_types = [new_type]
-            else:
-                new_type = f.type
-                valid_types = [new_type]
-            # Get types of field's default value, if present. Dataclass doesn't 
-            # require defaults to be same type as what's given for field.
-            if not isinstance(f.default, dataclasses._MISSING_TYPE):
-                valid_types.append(type(f.default))
-            if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
-                valid_types.append(type(f.default_factory()))
-            
-            try:
-                if isinstance(value, tuple(valid_types)):
-                    continue
-                if new_type is None or hasattr(new_type, '__abstract_methods__'):
-                    continue
-                    # # can't do type coercion, so print a warning
-                    # print((f"\tWarning: {self.__class__.__name__}: type of "
-                    #     f" {f.name} is ({f.type}), recieved {repr(value)} of "
-                    #     "conflicting type."))
-                else:
-                    if hasattr(new_type, 'from_struct'):
-                        new_value = new_type.from_struct(value)
-                    elif isinstance(new_type, enum.Enum):
-                        # need to use item syntax to create enum from name
-                        new_value = new_type.__getitem__(value)
-                    else:
-                        new_value = new_type(value)
-                    # https://stackoverflow.com/a/54119384 for implementation
-                    object.__setattr__(self, f.name, new_value)
-            except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
-                _log.exception("%s", repr(exc))
-                raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
-                    f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
+        _mdtf_dataclass_typecheck(self)        
 
     type.__setattr__(cls, '__init__', _new_init)
     return cls
+
+def is_regex_dataclass(obj):
+    return hasattr(obj, '_is_regex_dataclass') and obj._is_regex_dataclass == True
+
+def _regex_dataclass_preprocess_kwargs(self, kwargs):
+    """Edit kwargs going to the auto-generated __init__ method of this dataclass.
+    If any fields are regex_dataclasses, construct and parse their values first.
+
+    Raises a WormKeyError if different regex_dataclasses (at any level of
+    inheritance) try to assign different values to a field of the same name. We
+    do this by assigning to a :class:`~src.util.basic.ConsistentDict`.
+    """
+    new_kw = filter_dataclass(kwargs, self, init=True)
+    new_kw = basic.ConsistentDict.from_struct(new_kw)
+    for f in dataclasses.fields(self):
+        if not is_regex_dataclass(f.type):
+            continue
+        if f.name in kwargs:
+            val = kwargs[f.name]
+        elif not isinstance(f.default, dataclasses._MISSING_TYPE):
+            val = f.default
+        elif not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+            val = f.default_factory()
+        else:
+            raise TypeError()
+        new_d = dataclasses.asdict(f.type.from_string(val))
+        new_d = filter_dataclass(new_d, self, init=True)
+        try:
+            new_kw.update(new_d)
+        except exceptions.WormKeyError as exc:
+            raise exceptions.WormKeyError((f"{self.__class__.__name__}: Tried to "
+                f"make inconsistent field assignment when parsing {f.name} using "
+                f"{f.type.__name__}.")) from exc
+    post_init = dict()
+    for f in dataclasses.fields(self):
+        if not f.init and f.name in new_kw:
+            post_init[f.name] = new_kw.pop(f.name)
+    return (new_kw, post_init)
 
 def regex_dataclass(pattern):
     """Decorator for a dataclass that adds a from_string classmethod which 
@@ -448,12 +500,39 @@ def regex_dataclass(pattern):
     :class:`RegexPattern` or :class:`ChainedRegexPattern`. The values of all
     fields returned by the match() method of the pattern are passed to the 
     __init__ method of the dataclass as kwargs.
+
+    Additionally, if the type of one or more fields is set to a class that's 
+    also been decorated with regex_dataclass, the parsing logic for that field's 
+    regex_dataclass will be invoked on that field's value (ie, a string obtained
+    by regex matching in *this* regex_dataclass), and the parsed values of those
+    fields will be supplied to this regex_dataclass constructor. This is our 
+    implementation of inheritance for regex_dataclasses.
     """
     def _dataclass_decorator(cls):
+        _old_init = cls.__init__
+        @functools.wraps(_old_init)
+        def _new_init(self, first_arg=None, *args, **kwargs):
+            if isinstance(first_arg, str) and not args and not kwargs:
+                # instantiate from running regex on string, if a string is the
+                # only argument to the constructor
+                self._pattern.match(first_arg)
+                first_arg = None
+                kwargs = self._pattern.data
+            new_kw, post_init = _regex_dataclass_preprocess_kwargs(self, kwargs)  
+            if first_arg is None:
+                _old_init(self, *args, **new_kw)
+            else:
+                _old_init(self, first_arg, *args, **new_kw)
+            for k,v in post_init.items():
+                # set field values that aren't arguments to _old_init
+                object.__setattr__(self, k, v)
+
         def _from_string(cls_, str_, *args):
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
 
+        type.__setattr__(cls, '__init__', _new_init)
+        type.__setattr__(cls, '_is_regex_dataclass', True)
         type.__setattr__(cls, '_pattern', pattern)
         type.__setattr__(cls, 'from_string', classmethod(_from_string))
         return cls

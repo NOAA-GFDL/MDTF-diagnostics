@@ -150,6 +150,19 @@ class WormDict(collections.abc.MutableMapping, dict):
     def from_struct(cls, d):
         return cls(**d)
 
+class ConsistentDict(WormDict):
+    """Like WormDict, but we only raise WormKeyError if we try to
+    reassign to a different value.
+    """
+    def __setitem__(self, key, value):
+        if key in self._dict and self[key] != value:
+            raise exceptions.WormKeyError(("Attempting to overwrite entry for "
+                f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
+        self._dict[key] = value
+
+    def __delitem__(self, key):
+        del self._dict[key]
+
 class WormDefaultDict(WormDict):
     """:class:`src.util.basic.WormDict` with :py:class:`collections.defaultdict`
     functionality.

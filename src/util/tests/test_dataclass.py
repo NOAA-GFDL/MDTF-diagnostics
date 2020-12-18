@@ -3,7 +3,7 @@ import unittest.mock as mock
 import dataclasses
 import typing
 import src.datelabel as dt # only used to construct one test instance
-from src.util import basic
+from src.util import basic, exceptions
 from src.util import dataclass as util
 
 
@@ -31,6 +31,110 @@ class TestRegexPattern(unittest.TestCase):
         self.assertEqual(a.bar, 2)
         self.assertEqual(b.foo, 3)
         self.assertEqual(b.bar, 4)
+
+class TestRegexDataclassInheritance(unittest.TestCase):
+    def test_initvar(self):
+        grid_label_regex = util.RegexPattern(r"""
+                g(?P<global_mean>m?)(?P<grid_number>\d?)
+            """,input_field="grid_label"
+        )
+        @util.regex_dataclass(grid_label_regex)
+        @util.mdtf_dataclass
+        class CMIP6_GridLabel():
+            grid_label: str = util.MANDATORY
+            global_mean: dataclasses.InitVar = ""
+            grid_number: int = 0
+            spatial_avg: str = dataclasses.field(init=False)
+
+            def __post_init__(self, global_mean=None):
+                if global_mean:
+                    self.spatial_avg = 'global_mean'
+                else:
+                    self.spatial_avg = None
+                    
+        drs_directory_regex = util.RegexPattern(r"""
+                /?(CMIP6/)?(?P<activity_id>\w+)/(?P<grid_label>\w+)/
+            """, input_field="directory"
+        )
+        @util.regex_dataclass(drs_directory_regex)
+        @util.mdtf_dataclass
+        class CMIP6_DRSDirectory(CMIP6_GridLabel):
+            directory: str = ""
+            activity_id: str = ""
+            grid_label: CMIP6_GridLabel = ""
+
+        foo = CMIP6_GridLabel('gm6')
+        self.assertDictEqual(
+            dataclasses.asdict(foo),
+            {'grid_label': 'gm6', 'grid_number': 6, 'spatial_avg': 'global_mean'}
+        )
+        bar = CMIP6_DRSDirectory('/CMIP6/bazinga/gm6/')
+        self.assertDictEqual(
+            dataclasses.asdict(bar),
+            {'grid_label': 'gm6', 'grid_number': 6, 'spatial_avg': 'global_mean',
+             'directory': '/CMIP6/bazinga/gm6/', 'activity_id': 'bazinga'}
+        )
+
+    def test_conflicts(self):
+        parent1_regex = util.RegexPattern(r"""
+                g(?P<global_mean>m?)(?P<grid_number>\d?)
+            """, input_field="parent1"
+        )
+        @util.regex_dataclass(parent1_regex)
+        @util.mdtf_dataclass
+        class Parent1():
+            parent1: str = util.MANDATORY
+            global_mean: dataclasses.InitVar = ""
+            grid_number: int = 0
+            spatial_avg: str = dataclasses.field(init=False)
+
+            def __post_init__(self, global_mean=None):
+                if global_mean:
+                    self.spatial_avg = 'global_mean'
+                else:
+                    self.spatial_avg = None
+                    
+        parent2_regex = util.RegexPattern(r"""
+                x(?P<grid_number>\d?)x(?P<spatial_avg>\w+)x
+            """, input_field="parent2"
+        )
+        @util.regex_dataclass(parent2_regex)
+        @util.mdtf_dataclass
+        class Parent2():
+            parent2: str = util.MANDATORY
+            grid_number: int = 0
+            spatial_avg: str = ""
+
+            def __post_init__(self):
+                if self.spatial_avg:
+                    self.spatial_avg += '_mean'
+                    
+        child_regex = util.RegexPattern(r"""
+                (?P<activity_id>\w+)/(?P<grid_label>\w+)/(?P<redundant_label>\w+)/
+            """, input_field="directory"
+        )
+        @util.regex_dataclass(child_regex)
+        @util.mdtf_dataclass
+        class Child(Parent1, Parent2):
+            directory: str = ""
+            activity_id: str = ""
+            grid_label: Parent1 = ""
+            redundant_label: Parent2 = ""
+
+        # consistent assignment to fields of same name in parent dataclasses
+        foo = Child('bazinga/gm6/x6xglobalx/')
+        self.assertDictEqual(
+            dataclasses.asdict(foo),
+            {'parent2': 'x6xglobalx', 'grid_number': 6, 'spatial_avg': 'global_mean', 
+            'parent1': 'gm6', 'directory': 'bazinga/gm6/x6xglobalx/', 
+            'activity_id': 'bazinga', 'grid_label': 'gm6', 
+            'redundant_label': 'x6xglobalx'}
+        )
+        # conflict in assignment to fields of same name in parent dataclasses
+        with self.assertRaises(exceptions.WormKeyError):
+            _ = Child('bazinga/gm6/x5xglobalx/')
+        with self.assertRaises(exceptions.WormKeyError):
+            _ = Child('bazinga/gm6/x6xNOT_THE_SAMEx/')
 
 class TestMDTFDataclass(unittest.TestCase):
     def test_builtin_coerce(self):

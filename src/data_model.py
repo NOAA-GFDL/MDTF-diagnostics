@@ -3,7 +3,7 @@ independent of any model, experiment, or hosting protocol.
 """
 import abc
 import collections
-import dataclasses
+import dataclasses as dc
 import itertools
 import typing
 from src import util, datelabel
@@ -162,7 +162,7 @@ class _DMCoordinateShared(object):
         return (self.value is not None)
 
     def make_scalar(self, new_value):
-        return dataclasses.replace(self, value=new_value)
+        return dc.replace(self, value=new_value)
 
 @util.mdtf_dataclass
 class DMCoordinate(_DMCoordinateShared):
@@ -208,7 +208,7 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     # reference different names for the aux coord variables.
     # TODO: resolve names in formula_terms to references to objects in the data
     # model.
-    formula_terms: str = dataclasses.field(default=None, compare=False)
+    formula_terms: str = dc.field(default=None, compare=False)
 
 @util.mdtf_dataclass
 class DMGenericTimeCoordinate(_DMCoordinateShared):
@@ -304,10 +304,10 @@ class _DMDimensionsMixin(object):
     associated with an array (eg a variable or auxiliary coordinate.) Needs to 
     be included as a parent class of a dataclass.
     """
-    coords: dataclasses.InitVar = None
-    dims: list = dataclasses.field(init=False, default_factory=list)
-    scalar_coords: list = dataclasses.field(init=False, default_factory=list)
-    axes: dict = dataclasses.field(init=False)
+    coords: dc.InitVar = None
+    dims: list = dc.field(init=False, default_factory=list)
+    scalar_coords: list = dc.field(init=False, default_factory=list)
+    axes: dict = dc.field(init=False)
 
     def __post_init__(self, coords=None):
         if coords is None:
@@ -386,11 +386,11 @@ class _DMDimensionsMixin(object):
             new_coord_class = new_class
         if new_coord_class is None and not isinstance(new_class, dict):
             # keep all classes
-            new_coord = dataclasses.replace(old_coord, **kwargs)
+            new_coord = dc.replace(old_coord, **kwargs)
         else:
             if new_coord_class is None:
                 new_coord_class = old_coord.__class__
-                new_kwargs = dataclasses.asdict(old_coord)
+                new_kwargs = dc.asdict(old_coord)
             else:
                 new_kwargs = util.filter_dataclass(old_coord, new_coord_class)
             new_kwargs.update(kwargs)
@@ -413,7 +413,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
     # axes: from _DMDimensionsMixin
-    phys_axes: dict = dataclasses.field(init=False)
+    phys_axes: dict = dc.field(init=False)
 
     def __post_init__(self, coords=None):
         super(DMDependentVariable, self).__post_init__(coords)
@@ -422,12 +422,12 @@ class DMDependentVariable(_DMDimensionsMixin):
     def add_scalar(self, ax, ax_value, **kwargs):
         assert ax in self.axes
         dim = self.axes[ax]
-        new_dim = dataclasses.replace(dim, value=ax_value)
+        new_dim = dc.replace(dim, value=ax_value)
         new_dims = self.dims.copy()
         new_dims.remove(dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.add(new_dim)
-        return dataclasses.replace(
+        return dc.replace(
             self,
             coords=(new_dims + new_scalars),
             **kwargs
@@ -436,12 +436,12 @@ class DMDependentVariable(_DMDimensionsMixin):
     def remove_scalar(self, ax, position=-1, **kwargs):
         dim = self.get_scalar(ax)
         assert dim is not None
-        new_dim = dataclasses.replace(dim, value=None)
+        new_dim = dc.replace(dim, value=None)
         new_dims = self.dims.copy()
         new_dims.insert(position, new_dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.remove(dim)
-        return dataclasses.replace(
+        return dc.replace(
             self,
             coords=(new_dims + new_scalars),
             **kwargs
@@ -495,6 +495,15 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
 class DMVariable(DMDependentVariable):
     """Class to describe general properties of data variables.
     """
+    # all fields inherited:
+    # name: str
+    # standard_name: str
+    # units: cfunits.Units
+    # coords: InitVar
+    # dims: from _DMDimensionsMixin
+    # scalar_coords: from _DMDimensionsMixin
+    # axes: from _DMDimensionsMixin
+    # phys_axes: dict 
     pass
 
 # Use the "register" method, instead of inheritance, to associate these classes
@@ -510,10 +519,10 @@ class DMDataSet(_DMDimensionsMixin):
     """Class to describe a collection of one or more variables sharing a set of
     common dimensions.
     """
-    contents: dataclasses.InitVar = util.MANDATORY
-    vars: list = dataclasses.field(init=False, default_factory=list)
-    coord_bounds: list = dataclasses.field(init=False, default_factory=list)
-    aux_coords: list = dataclasses.field(init=False, default_factory=list)
+    contents: dc.InitVar = util.MANDATORY
+    vars: list = dc.field(init=False, default_factory=list)
+    coord_bounds: list = dc.field(init=False, default_factory=list)
+    aux_coords: list = dc.field(init=False, default_factory=list)
 
     def __post_init__(self, coords=None, contents=None):
         assert coords is None # shouldn't be called with bare coordinates
@@ -545,8 +554,11 @@ class DMDataSet(_DMDimensionsMixin):
         # can't have duplicate dims, but duplicate scalar_coords are OK.
         super(DMDataSet, self).__post_init__(coords)
 
+    def iter_coords(self):
+        yield from itertools.chain(self.vars, self.aux_coords)
+
     def iter_contents(self):
-        yield from itertools.chain(self.vars, self.coord_bounds, self.aux_coords)
+        yield from itertools.chain(self.vars, self.aux_coords)
 
     def _classify(self, v):
         assert isinstance(v, DMDependentVariable)

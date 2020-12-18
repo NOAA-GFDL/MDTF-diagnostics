@@ -14,8 +14,6 @@ import string
 import tempfile
 import traceback
 from src import util, cli, mdtf_info, data_model
-# --
-import cfunits
 
 import logging
 _log = logging.getLogger(__name__)
@@ -69,8 +67,7 @@ class MDTFFramework(object):
         def _dispatch(setting):
             return cli_obj.imports[setting]
 
-        self.DataManager = _dispatch('data_manager')
-        self.Preprocessor = _dispatch('preprocessor')
+        self.DataSource = _dispatch('data_manager')
         self.EnvironmentManager = _dispatch('environment_manager')
         self.RuntimeManager = _dispatch('runtime_manager')
         self.OutputManager = _dispatch('output_manager')
@@ -229,13 +226,12 @@ class MDTFFramework(object):
 
     def run_case(self, case_name, case_d):
         _log.info(f"Framework: initialize {case_name}")
-        case = self.DataManager(case_d, self.Preprocessor)
+        case = self.DataSource(case_d)
         case.setup()
         self.cases.append(case)
 
-        _log.info(f'Framework: get data for {case_name}')
-        case.query_and_fetch_data()
-        case.preprocess_data()
+        _log.info(f'Framework: request data for {case_name}')
+        case.request_data()
 
         _log.info(f'Framework: run {case_name}')
         run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
@@ -256,10 +252,7 @@ class MDTFFramework(object):
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)
-        if failed:
-            return 1
-        else:
-            return 0
+        return (1 if failed else 0)
 
 
 class ConfigManager(util.Singleton, util.NameSpace):
@@ -350,7 +343,6 @@ class PathManager(util.Singleton, util.NameSpace):
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
         d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
         d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
-        d.DATADIR = d.POD_WK_DIR # synonym so we don't need to change docs
         return d
 
 
@@ -404,6 +396,25 @@ class TempDirManager(util.Singleton):
         self.cleanup()
 
 # --------------------------------------------------------------------
+
+@util.mdtf_dataclass
+class TranslatedVarlistEntry(data_model.DMVariable):
+    """Class returned by VarlistTranslator.lookup_variable(). Marks some 
+    attributes inherited from DMVariable as participating in 
+    DataSource.query_dataset().
+    """
+    # to be more correct, we should probably have VarlistTranslator return a
+    # DMVariable, which is converted to this type on assignment to the
+    # VarlistEntry, since metadata fields are specific to the VarlistEntry
+    # implementation
+    name: str = \
+        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+    standard_name: str = \
+        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+    units: cfunits.Units = \
+        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+    scalar_coords: list = \
+        dataclasses.field(init=False, default_factory=list, metadata={'query': True})
 
 @util.mdtf_dataclass
 class FieldlistEntry(object):
@@ -513,7 +524,7 @@ class Fieldlist():
         for c in var.scalar_coords:
             coords[c.axis].value = c.value
         return util.coerce_to_dataclass(
-            conv_var, data_model.DMVariable, coords=tuple(coords.values())
+            conv_var, TranslatedVarlistEntry, coords=tuple(coords.values())
         )
 
 class VariableTranslator(util.Singleton):
@@ -539,8 +550,8 @@ class VariableTranslator(util.Singleton):
                 d = util.read_json(f)
                 self.add_convention(d)
             except Exception as exc:
-                _log.exception("Exception raised in loading fieldlist file %s", 
-                    f)
+                _log.exception("Caught exception loading fieldlist file %s: %s", 
+                    f, repr(exc))
                 continue
 
     def add_convention(self, d):

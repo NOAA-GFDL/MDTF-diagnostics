@@ -1,14 +1,21 @@
 import os
 import collections
-import dataclasses
+import dataclasses as dc
 import enum
 import glob
 import shutil
 import typing
 from src import util, core, verify_links, datelabel, data_model
 
+import cfunits
+
 import logging
 _log = logging.getLogger(__name__)
+
+_coord_env_var_suffix = '_coord'
+_coord_bounds_env_var_suffix = '_bnds'
+_var_name_env_var_suffix = '_var'
+_file_env_var_suffix = '_FILE'
 
 PodDataFileFormat = util.MDTFEnum(
     'PodDataFileFormat', 
@@ -20,19 +27,22 @@ PodDataFileFormat = util.MDTFEnum(
 
 @util.mdtf_dataclass
 class _VarlistGlobalSettings(object):
-    format: PodDataFileFormat = PodDataFileFormat.ANY_NETCDF_CLASSIC
-    rename_dimensions: bool = False
+    format: PodDataFileFormat = \
+        dc.field(default=PodDataFileFormat.ANY_NETCDF_CLASSIC, metadata={'query': True})
     rename_variables: bool = False
     multi_file_ok: bool = False
     dimensions_ordered: bool = False
 
 @util.mdtf_dataclass
 class _VarlistTimeSettings(object):
-    frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
-    min_frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
-    max_frequency: typing.Any = "" # datelabel.AbstractDateFrequency = None
-    min_duration: str = 'any'
-    max_duration: str = 'any'
+    frequency:     datelabel.DateFrequency = \
+        dc.field(default=util.NOTSET, metadata={'query': True})
+    min_frequency: datelabel.DateFrequency = \
+        dc.field(default=util.NOTSET, metadata={'query': True})
+    max_frequency: datelabel.DateFrequency = \
+        dc.field(default=util.NOTSET, metadata={'query': True})
+    min_duration: str = util.NOTSET
+    max_duration: str = util.NOTSET
 
 @util.mdtf_dataclass
 class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
@@ -56,6 +66,22 @@ class VarlistCoordinateMixin(object):
     "dimensions" section of the POD's settings.jsonc file.
     """
     need_bounds: bool = False
+    name_in_model: str = ""
+    bounds_in_model: str = ""
+
+    @property
+    def env_vars(self):
+        """Get env var definitions for this coordinate's name in the data file, 
+        and the name of its associated 1d bounds variable (if present.)
+        """
+        if not self.name_in_model:
+            raise ValueError()
+        env_vars = {self.name + _coord_env_var_suffix : self.name_in_model}
+        if self.bounds_in_model:
+            env_vars[self.name + _coord_bounds_env_var_suffix] = self.bounds_in_model
+        else:
+            assert not self.need_bounds
+        return env_vars
 
 @util.mdtf_dataclass
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
@@ -105,7 +131,10 @@ VarlistEntryStatus = util.MDTFIntEnum(
     module=__name__
 )
 
-@util.mdtf_dataclass
+# unsafe_hash *only* used in data_manager.DataSourceBase.data dict, which is
+# only used during query/fetch/preprocess. Fields without compare=False remain
+# unchanged during this.
+@util.mdtf_dataclass(unsafe_hash=True)
 class VarlistEntry(data_model.DMVariable, VarlistSettings):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
@@ -116,34 +145,39 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
-    dest_path: str = ""
-    env_var: str = ""
-    path_variable: str = dataclasses.field(default="", compare=False)
     use_exact_name: bool = False
-    requirement: VarlistEntryRequirement = dataclasses.field(
+    dest_path: str = "" # important: VEs from different PODs have different hashes
+    env_var: str = dc.field(default="", compare=False)
+    path_variable: str = dc.field(default="", compare=False)
+    requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
-    alternates: list = dataclasses.field(default_factory=list, compare=False)
-    translation: typing.Any = None
-    status: VarlistEntryStatus = dataclasses.field(
+    alternates: list = dc.field(default_factory=list, compare=False)
+    translation: typing.Any = dc.field(default=None, compare=False)
+    remote_data: set = dc.field(default_factory=set, compare=False)
+    local_data: set = dc.field(default_factory=set, compare=False)
+    status: VarlistEntryStatus = dc.field(
         default=VarlistEntryStatus.INITED, compare=False
     )
-    active: bool = dataclasses.field(init=False, compare=False)
-    exception: Exception = dataclasses.field(init=False, compare=False)
+    active: bool = dc.field(init=False, compare=False)
+    exception: Exception = dc.field(init=False, compare=False)
 
     def __post_init__(self, coords=None):
         super(VarlistEntry, self).__post_init__(coords)
         self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
         self.exception = None
+
+        # env_vars
+        if not self.env_var:
+            self.env_var = self.name + _var_name_env_var_suffix
         if not self.path_variable:
-            self.path_variable = self.name.upper() + '_FILE'
+            self.path_variable = self.name.upper() + _file_env_var_suffix
+
         # self.alternates is either [] or a list of nonempty lists of VEs
         if self.alternates:
             if not isinstance(self.alternates[0], list):
                 self.alternates = [self.alternates]
             self.alternates = [vs for vs in self.alternates if vs]
-        if not self.env_var:
-            self.env_var = self.name # TODO: fix when we do standard_names right
 
     @property
     def failed(self):
@@ -167,6 +201,43 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
             return self.translation.name
         else:
             return ""
+
+    @property
+    def env_vars(self):
+        """Get env var definitions for this variable's name in the data file, 
+        and the path to the preprocessed data file.
+        """
+        if self.active:
+            assert self.name_in_model
+            assert self.dest_path
+            return {
+                self.env_var: self.name_in_model,
+                self.path_variable: self.dest_path
+            }
+        else:
+            # Signal to POD's code that vars are not provided by setting 
+            # variable to the empty string
+            return {self.env_var: "", self.path_variable: ""}
+
+    @property
+    def query_attrs(self):
+        """Returns a dict of attributes relevant for DataSource.query_dataset()
+        (ie, which describe the variable itself and aren't specific to the 
+        MDTF implementation.)
+        """
+        def iter_query_attrs(obj):
+            """Recursive generator yielding name:value pairs for all dataclass
+            fields marked with query attribute in their metadata.
+            """
+            for f in dc.fields(obj):
+                val = getattr(obj, f.name, None)
+                if dc.is_dataclass(val):
+                    yield from iter_query_attrs(val)
+                if f.metadata.get('query', False):
+                    yield (f.name, val)
+
+        # TODO: properly handle key collisions with WormDict
+        return dict(iter_query_attrs(self))
 
     @classmethod
     def from_struct(cls, global_settings_d, dims_d, name, **kwargs):
@@ -314,10 +385,6 @@ class Varlist(data_model.DMDataSet):
             v.alternates = linked_alts
         return cls(contents = list(vlist_vars.values()))
 
-    @property
-    def active_vars(self):
-        return [v for v in self.iter_contents() if v.active and v.separate_query]
-
     def find_var(self, v):
         """If a variable matching v is already present in the Varlist, return 
         (a reference to) it (so that we don't try to add duplicates), otherwise
@@ -347,16 +414,14 @@ class Diagnostic(object):
     realm: str = ""
 
     varlist: Varlist = None
-    preprocessor: typing.Any = dataclasses.field(default=None, compare=False)
-    exceptions: util.ExceptionQueue = dataclasses.field(init=False)
+    preprocessor: typing.Any = dc.field(default=None, compare=False)
+    exceptions: util.ExceptionQueue = dc.field(init=False)
 
     driver: str = ""
     program: str = ""
-    runtime_requirements: dict = dataclasses.field(default_factory=dict)
-    pod_env_vars: dict = dataclasses.field(default_factory=dict)
-    dry_run: bool = False
+    runtime_requirements: dict = dc.field(default_factory=dict)
+    pod_env_vars: util.WormDict = dc.field(default_factory=util.WormDict)
 
-    CODE_ROOT: str = ""
     POD_CODE_DIR = ""
     POD_OBS_DATA = ""
     POD_WK_DIR = ""
@@ -400,19 +465,17 @@ class Diagnostic(object):
         :class:`~core.ConfigManager`.
         """
         config = core.ConfigManager()
-        paths = core.PathManager()
-        return cls.from_struct(
-            pod_name, config.pod_data[pod_name],
-            CODE_ROOT=paths.CODE_ROOT, 
-            dry_run=config.get('dry_run', False)
-        )
+        return cls.from_struct(pod_name, config.pod_data[pod_name])
 
-    def iter_vars(self, all_vars=False):
-        if all_vars:
-            yield from self.varlist.vars
+    def iter_vars(self, active=None):
+        if active is None:
+            # default: all variables
+            yield from self.varlist.iter_contents()
         else:
-            # only active vars
-            yield from self.varlist.active_vars
+            # either all active or inactive vars
+            yield from filter(
+                (lambda v: v.active == active), self.varlist.iter_contents()
+            )
 
     def deactivate_if_failed(self):
         """Deactivate all variables for this POD if the POD itself has failed.
@@ -433,7 +496,7 @@ class Diagnostic(object):
         if self.failed:
             self.deactivate_if_failed()
             return
-        old_active_vars = self.varlist.active_vars
+        old_active_vars = list(self.iter_vars(active=True))
         for v in old_active_vars:
             if v.failed:
                 v_str = v.short_format()
@@ -493,27 +556,21 @@ class Diagnostic(object):
             subroutines.
         """
         try:
+            self.verify_coordinate_names()
             self.set_pod_env_vars()
             self.check_pod_driver()
         except Exception as exc:
             raise util.PodRuntimeError(self, 
                 "Caught exception during pre_run_setup") from exc
 
-    def set_pod_env_vars(self):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
-        Sets all environment variables for POD.
-        """
-        self.pod_env_vars.update({
-            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
-            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
-            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
-            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
-        })
+    def verify_coordinate_names(self):
+        # TODO: finish
+        # make sure coord names consistent for all VEs.
         # Set env vars for variable and axis names:
         ax_name_verify = collections.defaultdict(set)
         for k,v in self.varlist.axes.items():
             ax_name_verify[k].add(v.name)
-        for var in self.iter_vars():
+        for var in self.iter_vars(active=True):
             # env var for variable name currently set in data_manager, TODO: fix
             # env var for path to file:
             self.pod_env_vars[var.path_variable] = var.dest_path
@@ -525,11 +582,27 @@ class Diagnostic(object):
                 raise util.PodRuntimeError(self,
                     f"POD's variables have conflicting names for {ax} axis: {ax_set}"
                 )
-        for ax, ax_set in ax_name_verify.items():
-            ax_name = ax_set.pop()
-            self.pod_env_vars[ax_name + '_coord'] = ax_name
-            # Define ax bounds variables; TODO do this more honestly
-            self.pod_env_vars[ax_name + '_bnds'] = ax_name + '_bnds'
+
+    def set_pod_env_vars(self):
+        """Sets all environment variables for POD.
+        """
+        self.pod_env_vars.update({
+            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
+            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
+            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
+        })
+        for coord in self.varlist.axes.values():
+            self.pod_env_vars.update(coord.env_vars)
+        for var in self.iter_vars(active=True):
+            self.pod_env_vars.update(var.env_vars)
+        for var in self.iter_vars(active=False):
+            # define env vars for varlist entries without data. Name collisions
+            # are OK in this case.
+            try:
+                self.pod_env_vars.update(var.env_vars)
+            except util.WormKeyError as exc:
+                continue
 
     def check_pod_driver(self):
         """Private method called by :meth:`~diagnostic.Diagnostic.setup`.

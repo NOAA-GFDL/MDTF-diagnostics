@@ -152,7 +152,7 @@ class DataQueryError(DataExceptionBase):
     """
     _error_str = "Data query error"
 
-class DataAccessError(DataExceptionBase):
+class DataFetchError(DataExceptionBase):
     """Exception signaling a failure to obtain data from the remote location.
     """
     _error_str = "Data fetch error"

@@ -36,7 +36,7 @@ class TestRegexDataclassInheritance(unittest.TestCase):
     def test_initvar(self):
         grid_label_regex = util.RegexPattern(r"""
                 g(?P<global_mean>m?)(?P<grid_number>\d?)
-            """,input_field="grid_label"
+            """, input_field="grid_label"
         )
         @util.regex_dataclass(grid_label_regex)
         @util.mdtf_dataclass
@@ -47,7 +47,7 @@ class TestRegexDataclassInheritance(unittest.TestCase):
             spatial_avg: str = dataclasses.field(init=False)
 
             def __post_init__(self, global_mean=None):
-                if global_mean:
+                if global_mean == 'm':
                     self.spatial_avg = 'global_mean'
                 else:
                     self.spatial_avg = None
@@ -131,9 +131,9 @@ class TestRegexDataclassInheritance(unittest.TestCase):
             'redundant_label': 'x6xglobalx'}
         )
         # conflict in assignment to fields of same name in parent dataclasses
-        with self.assertRaises(exceptions.WormKeyError):
+        with self.assertRaises(exceptions.DataclassParseError):
             _ = Child('bazinga/gm6/x5xglobalx/')
-        with self.assertRaises(exceptions.WormKeyError):
+        with self.assertRaises(exceptions.DataclassParseError):
             _ = Child('bazinga/gm6/x6xNOT_THE_SAMEx/')
 
 class TestMDTFDataclass(unittest.TestCase):
@@ -173,7 +173,7 @@ class TestMDTFDataclass(unittest.TestCase):
         self.assertEqual(dummy.a, "foo")
         self.assertEqual(dummy.b, util.NOTSET)
         self.assertEqual(dummy.c, [])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.DataclassParseError):
             dummy = Dummy(b=5)
 
     def test_mandatory_arg_inheritance(self):
@@ -194,12 +194,12 @@ class TestMDTFDataclass(unittest.TestCase):
         dummy = Dummy12(a="foo")
         self.assertEqual(dummy.a, "foo")
         self.assertEqual(dummy.b, util.NOTSET)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.DataclassParseError):
             dummy = Dummy12(b=5)
         dummy = Dummy21(a="foo")
         self.assertEqual(dummy.a, "foo")
         self.assertEqual(dummy.b, util.NOTSET)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.DataclassParseError):
             dummy = Dummy21(b=5)
 
     def test_defaults_coerce(self):
@@ -269,7 +269,7 @@ class TestMDTFDataclass(unittest.TestCase):
         self.assertEqual(dummy.c, 5)
         dummy = Dummy(a=(1,2), b=(1,2), d=[1,2])
         self.assertEqual(dummy.d, [1,2])
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exceptions.DataclassParseError):
             _ = Dummy(a=(1,2), b=(1,2), d=(1,2))
 
     def test_typing_generics_2(self):

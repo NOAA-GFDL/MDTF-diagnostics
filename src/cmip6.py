@@ -13,6 +13,7 @@ repo, which is included as a submodule.
 """
 import os
 import re
+import dataclasses as dc
 from src import datelabel, util, core
 
 import logging
@@ -44,7 +45,7 @@ class CMIP6_CVs(util.Singleton):
         # munge table_ids
         self._contents['table_id'] = dict.fromkeys(self._contents['table_id'])
         for tbl in self._contents['table_id']:
-            self._contents['table_id'][tbl] = parse_mip_table_id(tbl)
+            self._contents['table_id'][tbl] = dc.asdict(CMIP6_MIPTable(tbl))
 
         self.cv = dict()
         self._lookups = dict()
@@ -145,8 +146,9 @@ class CMIP6_CVs(util.Singleton):
         """
         self._make_cv()
         assert 'table_id' in self.cv
-        return [tbl for tbl in self.cv['table_id'] \
-            if (parse_mip_table_id(tbl)['frequency'] == frequency)]
+        d = self.cv['table_id'] # abbreviate
+        return [tbl for tbl, tbl_d in d.items() \
+            if tbl_d.get('frequency', None) == frequency]
 
 
 class CMIP6DateFrequency(datelabel.DateFrequency):
@@ -234,211 +236,219 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
             raise ValueError("Malformed data {} {}".format(self.quantity, self.unit))
     __str__ = format
 
+    def __copy__(self):
+        return self.__class__(self.format())
+
+    def __deepcopy__(self, memo):
+        return self.__class__(self.format())
+
 # --------------------------------------
 
-mip_table_regex = re.compile(r"""
-    ^ # start of line
-    (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
-    # maybe a digit, followed by as few lowercase letters as possible:
-    (?P<table_freq>\d?[a-z]*?)
-    (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
-    (?P<table_qualifier>(Pt|Z|Off)?)
-    $ # end of line - necessary for lazy capture to work
-""", re.VERBOSE)
-
-def parse_mip_table_id(mip_table):
-    """Function to parse MIP table identifier string.
+mip_table_regex = util.RegexPattern(r"""
+        ^ # start of line
+        (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
+        # maybe a digit, followed by as few lowercase letters as possible:
+        (?P<table_freq>\d?[a-z]*?)
+        (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
+        (?P<table_qualifier>(Pt|Z|Off)?)
+        $ # end of line - necessary for lazy capture to work
+    """,
+    input_field="table_id"
+)
+@util.regex_dataclass(mip_table_regex)
+@util.mdtf_dataclass
+class CMIP6_MIPTable():
+    """Dataclass which represents and parses MIP table identifier string.
 
     Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
     although this doesn't document all cases used in CMIP6.
-
-    Args:
-        mip_table (str): MIP table name.
-
-    Returns:
-        dict of MIP attributes determined by the DRS naming convention.
     """
-    match = re.match(mip_table_regex, mip_table)
-    if match:
-        md = match.groupdict()
-        md['table_id'] = mip_table
-        if md['table_freq'] == 'clim':
-            md['frequency'] = CMIP6DateFrequency('mon')
-        else:
-            md['frequency'] = CMIP6DateFrequency(md['table_freq'])
-        if md['table_qualifier'] == 'Z':
-            md['spatial_avg'] = 'zonal_mean'
-        else:
-            md['spatial_avg'] = None
-        if md['table_qualifier'] == 'Pt':
-            md['temporal_avg'] = 'point'
-        else:
-            md['temporal_avg'] = 'interval'
-        if md['table_suffix'] == 'a':
-            md['region'] = 'Antarctica'
-        elif md['table_suffix'] == 'g':
-            md['region'] = 'Greenland'
-        else:
-            md['region'] = None
-        return md
-    else:
-        raise ValueError("Can't parse table {}.".format(mip_table))
+    table_id: str = util.MANDATORY
+    table_prefix: str = ""
+    table_freq: dc.InitVar = ""
+    table_suffix: str = ""
+    table_qualifier: str = ""
+    frequency: CMIP6DateFrequency = dc.field(init=False)
+    spatial_avg: str = dc.field(init=False)
+    temporal_avg: str = dc.field(init=False)
+    region: str = dc.field(init=False)
 
-grid_label_regex = re.compile(r"""
-    g
-    (?P<global_mean>m?)
-    (?P<regrid>n|r?)
-    (?P<num>\d?)
-    (?P<region>a|g?)
-    (?P<zonal_mean>z?)
-""", re.VERBOSE)
+    def __post_init__(self, table_freq=None):
+        if table_freq is None:
+            raise ValueError()
+        elif table_freq == 'clim':
+            self.frequency = CMIP6DateFrequency('mon')
+        else:
+            self.frequency = CMIP6DateFrequency(table_freq)
+        if self.table_qualifier == 'Z':
+            self.spatial_avg = 'zonal_mean'
+        else:
+            self.spatial_avg = None
+        if self.table_qualifier == 'Pt':
+            self.temporal_avg = 'point'
+        else:
+            self.temporal_avg = 'interval'
+        if self.table_suffix == 'a':
+            self.region = 'Antarctica'
+        elif self.table_suffix == 'g':
+            self.region = 'Greenland'
+        else: 
+            self.region = None
 
-def parse_grid_label(grid_label):
-    """Function to parse CMIP6 DRS grid label identifier string.
+grid_label_regex = util.RegexPattern(r"""
+        g
+        (?P<global_mean>m?)
+        (?P<regrid>n|r?)
+        (?P<grid_number>\d?)
+        (?P<region>a|g?)
+        (?P<zonal_mean>z?)
+    """,
+    input_field="grid_label"
+)
+@util.regex_dataclass(grid_label_regex)
+@util.mdtf_dataclass
+class CMIP6_GridLabel():
+    """Dataclass which represents and parses the CMIP6 DRS grid label identifier string.
 
     Reference: `<http://goo.gl/v1drZl>`__, note 11 on page 11.
-
-    Args:
-        grid_label (str): grid label string.
-
-    Returns:
-        dict of grid attributes determined by the DRS naming convention.
     """
-    match = re.match(grid_label_regex, grid_label)
-    if match:
-        md = match.groupdict()
-        ans = dict()
-        ans['grid_label'] = grid_label
-        if md['global_mean']:
-            ans['spatial_avg'] = 'global_mean'
-        elif md['zonal_mean']:
-            ans['spatial_avg'] = 'zonal_mean'
-        else:
-            ans['spatial_avg'] = None
-        ans['native_grid'] = not (md['regrid'] == 'r')
-        if not md['num']:
-            ans['grid_number'] = 0
-        else:
-            ans['grid_number'] = md['num']
-        if md['region'] == 'a':
-            ans['region'] = 'Antarctica'
-        elif md['region'] == 'g':
-            ans['region'] = 'Greenland'
-        else:
-            ans['region'] = None
-        return ans
-    else:
-        raise ValueError("Can't parse grid {}.".format(grid_label))
+    grid_label: str = util.MANDATORY
+    global_mean: dc.InitVar = ""
+    regrid: str = ""
+    grid_number: int = 0
+    region: str = ""
+    zonal_mean: dc.InitVar = ""
+    spatial_avg: str = dc.field(init=False)
+    native_grid: bool = dc.field(init=False)
 
-drs_directory_regex = re.compile(r"""
-    /?                      # maybe initial separator
-    (CMIP6/)?
-    (?P<activity_id>\w+)/
-    (?P<institution_id>[a-zA-Z0-9_-]+)/
-    (?P<source_id>[a-zA-Z0-9_-]+)/
-    (?P<experiment_id>[a-zA-Z0-9_-]+)/
-    (?P<member_id>\w+)/
-    (?P<table_id>\w+)/
-    (?P<variable_id>\w+)/
-    (?P<grid_label>\w+)/
-    v(?P<version_date>\d+)
-    /?                      # maybe final separator
-""", re.VERBOSE)
+    def __post_init__(self, global_mean=None, zonal_mean=None):
+        if not self.grid_number:
+            self.grid_number = 0
+        if global_mean:
+            self.spatial_avg = 'global_mean'
+        elif zonal_mean:
+            self.spatial_avg = 'zonal_mean'
+        else:
+            self.spatial_avg = None
+        self.native_grid = not (self.regrid == 'r')
+        if self.region == 'a':
+            self.region = 'Antarctica'
+        elif self.region == 'g':
+            self.region = 'Greenland'
+        else: 
+            self.region = None
 
-def parse_DRS_directory(dir_):
-    """Function to parse DRS directory, using regex defined above.
+drs_directory_regex = util.RegexPattern(r"""
+        /?                      # maybe initial separator
+        (CMIP6/)?
+        (?P<activity_id>\w+)/
+        (?P<institution_id>[a-zA-Z0-9_-]+)/
+        (?P<source_id>[a-zA-Z0-9_-]+)/
+        (?P<experiment_id>[a-zA-Z0-9_-]+)/
+        (?P<member_id>\w+)/
+        (?P<table_id>\w+)/
+        (?P<variable_id>\w+)/
+        (?P<grid_label>\w+)/
+        v(?P<version_date>\d+)
+        /? # maybe final separator
+    """,
+    input_field="directory"
+)
+@util.regex_dataclass(drs_directory_regex)
+@util.mdtf_dataclass
+class CMIP6_DRSDirectory(CMIP6_MIPTable, CMIP6_GridLabel):
+    """Dataclass which represents and parses the DRS directory, using regex 
+    defined above.
 
     Reference: `<http://goo.gl/v1drZl>`__, page 17.
 
     .. warning::
        This regex will fail on paths involving subexperiments.
-
-    Args:
-        dir_ (str): directory path to be parsed.
-
-    Returns:
-        dict of directory attributes determined by the DRS naming convention.
     """
-    match = re.match(drs_directory_regex, dir_)
-    if match:
-        md = match.groupdict()
-        md['version_date'] = datelabel.Date(md['version_date'])
-        md.update(parse_mip_table_id(md['table_id']))
-        return md
-    else:
-        raise ValueError("Can't parse dir {}.".format(dir_))
+    directory: str = util.MANDATORY
+    activity_id: str = ""
+    institution_id: str = ""
+    source_id: str = ""
+    experiment_id: str = ""
+    member_id: str = ""
+    table_id: CMIP6_MIPTable = ""
+    grid_label: CMIP6_GridLabel = ""
+    version_date: datelabel.Date = None
 
-drs_filename_regex = re.compile(r"""
-    (?P<variable_id>\w+)_       # field name
-    (?P<table_id>\w+)_       # field name
-    (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
-    (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
-    (?P<realization_code>\w+)_       # field name
-    (?P<grid_label>\w+)(_       # field name
+_drs_dates_filename_regex = util.RegexPattern(r"""
+        (?P<variable_id>\w+)_       # field name
+        (?P<table_id>\w+)_       # field name
+        (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
+        (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
+        (?P<member_id>\w+)_       # field name
+        (?P<grid_label>\w+)_       # field name
         (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
-    )? # date range group is optional (not included with fx frequency)
-    \.nc                      # netCDF file extension
-""", re.VERBOSE)
-
-def parse_DRS_filename(file_):
-    """Function to parse DRS filename, using regex defined above.
+        \.nc                      # netCDF file extension
+    """
+)
+_drs_static_filename_regex = util.RegexPattern(r"""
+        (?P<variable_id>\w+)_       # field name
+        (?P<table_id>\w+)_       # field name
+        (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
+        (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
+        (?P<member_id>\w+)_       # field name
+        (?P<grid_label>\w+)
+        \.nc                      # netCDF file extension, no dates
+    """,
+    defaults={'start_date': datelabel.FXDateMin, 'end_date': datelabel.FXDateMax},
+)
+drs_filename_regex = util.ChainedRegexPattern(
+    # try the first regex, and if no match, try second
+    _drs_dates_filename_regex, _drs_static_filename_regex,
+    input_field="filename"
+)
+@util.regex_dataclass(drs_filename_regex)
+@util.mdtf_dataclass
+class CMIP6_DRSFilename(CMIP6_MIPTable, CMIP6_GridLabel):
+    """Dataclass which represents and parses the DRS filename, using regex 
+    defined above.
 
     Reference: `<http://goo.gl/v1drZl>`__, page 14-15.
-
-    Args:
-        file_ (str): filename to be parsed.
-
-    Returns:
-        dict of file attributes determined by the DRS naming convention.
     """
-    match = re.match(drs_filename_regex, file_)
-    if match:
-        md = match.groupdict()
-        if md['start_date'] is not None and md['end_date'] is not None:
-            md['start_date'] = datelabel.Date(md['start_date'])
-            md['end_date'] = datelabel.Date(md['end_date'])
-            md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
-        else:
-            # We're dealing with static/fx-frequency data, so use special 
+    filename: str = util.MANDATORY
+    variable_id: str = ""
+    table_id: CMIP6_MIPTable = ""
+    source_id: str = ""
+    experiment_id: str = ""
+    member_id: str = ""
+    grid_label: CMIP6_GridLabel = ""
+    start_date: datelabel.Date = None
+    end_date: datelabel.Date = None
+    date_range: datelabel.DateRange = dc.field(init=False)
+
+    def __post_init__(self, *args):
+        if self.start_date == datelabel.FXDateMin \
+            and self.end_date == datelabel.FXDateMax:
+            # Assume we're dealing with static/fx-frequency data, so use special 
             # placeholder values
-            md['start_date'] = datelabel.FXDateMin
-            md['end_date'] = datelabel.FXDateMax
-            md['date_range'] = datelabel.FXDateRange
-        md.update(parse_mip_table_id(md['table_id']))
-        # verify consistency of FXDates and frequency == fx:
-        if md['date_range'].is_static != md['frequency'].is_static:
-            raise ValueError("Can't parse date range in filename {}.".format(file_))
-        return md
-    else:
-        raise ValueError("Can't parse filename {}.".format(file_))
+            self.date_range = datelabel.FXDateRange
+            if not self.frequency.is_static: # frequency inferred from table_id
+                raise util.DataclassParseError(("Inconsistent filename parse: "
+                    f"cannot determine if '{self.filename}' represents static data."))
+        else:
+            self.date_range = datelabel.DateRange(self.start_date, self.end_date)
+            if self.frequency.is_static: # frequency inferred from table_id
+                raise util.DataclassParseError(("Inconsistent filename parse: "
+                    f"cannot determine if '{self.filename}' represents static data."))
 
-def parse_DRS_path(*args):
-    """Function to parse complete DRS path.
-
-    Calls :func:`parse_DRS_directory` and :func:`parse_DRS_filename`, and 
-    ensures that data specified in both functions is consistent.
-
-    Args:
-        Either a (str) containing the complete path to be parsed, or two (str)s
-            consisting of the directory and filename.
-
-    Returns:
-        dict of file attributes determined by the DRS naming convention.
+drs_path_regex = util.RegexPattern(r"""
+    (?P<directory>\S+)/   # any non-whitespace
+    (?P<filename>[^/\s]+) # nonwhitespace and not directory separator
+    """,
+    input_field="path"
+)
+@util.regex_dataclass(drs_path_regex)
+@util.mdtf_dataclass
+class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
+    """Dataclass which represents and parses a full CMIP6 DRS path.
     """
-    if len(args) == 1:
-        dir_, file_ = os.path.split(args[0])
-    elif len(args) == 2:
-        dir_, file_ = args
-    else:
-        raise ValueError()
-    d1 = parse_DRS_directory(dir_)
-    d2 = parse_DRS_filename(file_)
-    common_keys = set(d1)
-    common_keys = common_keys.intersection(list(d2))
-    for key in common_keys:
-        if d1[key] != d2[key]:
-            raise ValueError("{} fields inconsistent in parsing {}".format(
-                key, args))
-    d1.update(d2)
-    return d1
+    path: str = util.MANDATORY
+    directory: CMIP6_DRSDirectory = ""
+    filename: CMIP6_DRSFilename = ""
+
     

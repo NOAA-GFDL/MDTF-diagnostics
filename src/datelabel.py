@@ -792,8 +792,11 @@ class _FXDateRange(DateRange, StaticTimeDependenceBase):
     def date_format(dt, precision=None):
         return "<N/A>"
 
-FXDateMin = _FXDateRange()
-FXDateMax = _FXDateRange()
+class _FXDate(_FXDateRange, Date):
+    pass 
+
+FXDateMin = _FXDate()
+FXDateMax = _FXDate()
 FXDateRange = _FXDateRange()
 
 class DateFrequency(datetime.timedelta):
@@ -971,5 +974,8 @@ class AbstractDateFrequency(abc.ABC):
 # DM*Dimension classes as implementations of AbstractDMDimension, because 
 # Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
 AbstractDateRange.register(DateRange)
+AbstractDateRange.register(_FXDateRange)
 AbstractDate.register(Date)
+AbstractDate.register(_FXDate)
 AbstractDateFrequency.register(DateFrequency)
+AbstractDateFrequency.register(_FXDateFrequency)

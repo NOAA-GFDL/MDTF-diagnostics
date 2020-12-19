@@ -79,6 +79,12 @@ class WormKeyError(KeyError, MDTFBaseException):
     """
     pass
 
+class DataclassParseError(ValueError, MDTFBaseException):
+    """Raised when parsing input data fails on a 
+    :func:`~src.util.dataclass.mdtf_dataclass` or :func:`~src.util.dataclass.regex_dataclass`.
+    """
+    pass
+
 class UnitsError(ValueError, MDTFBaseException):
     """Raised when trying to convert between quantities with physically 
     inequivalent units.

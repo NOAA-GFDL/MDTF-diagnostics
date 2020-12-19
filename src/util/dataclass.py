@@ -336,6 +336,11 @@ we use the second solution described in `https://stackoverflow.com/a/53085935`__
 
 def _mdtf_dataclass_typecheck(self):
     """Do type checking/coercion on all dataclass fields after init/post_init.
+
+    .. warning::
+       Type checking logic used is specific to the ``typing`` module in python 
+       3.7. It may or may not work on newer pythons, and definitely will not 
+       work with 3.5 or 3.6. See `https://stackoverflow.com/a/52664522`__.
     """
     for f in dataclasses.fields(self):
         if not f.init:
@@ -346,8 +351,8 @@ def _mdtf_dataclass_typecheck(self):
         if value is None or value is NOTSET:
             continue
         if value is MANDATORY:
-            raise ValueError((f"{self.__class__.__name__}: No value supplied "
-                f"for mandatory field {f.name}."))
+            raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
+                f"No value supplied for mandatory field {f.name}."))
         # guess what types are valid
         new_type = None
         if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
@@ -356,9 +361,9 @@ def _mdtf_dataclass_typecheck(self):
             # ignore if type is a dataclass: use this type annotation to
             # implement dataclass inheritance
             if not isinstance(self, f.type):
-                raise TypeError((f"Field {f.name} specified as dataclass "
-                    f"{f.type.__name__} which isn't a parent class of "
-                    f"{self.__class__.__name__}."))
+                raise exceptions.DataclassParseError((f"Field {f.name} specified "
+                    f"as dataclass {f.type.__name__} which isn't a parent class "
+                    f"of {self.__class__.__name__}."))
             continue
         elif isinstance(f.type, typing._GenericAlias) \
             or isinstance(f.type, typing._SpecialForm):
@@ -402,8 +407,9 @@ def _mdtf_dataclass_typecheck(self):
                 object.__setattr__(self, f.name, new_value)
         except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
             _log.exception("%s", repr(exc))
-            raise TypeError((f"{self.__class__.__name__}: Expected {f.name} "
-                f"to be {f.type}, got {type(value)} ({repr(value)}).")) from exc
+            raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
+                f"Expected {f.name} to be {f.type}, got {type(value)} "
+                f"({repr(value)}).")) from exc
 
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
@@ -421,22 +427,17 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
        leads to errors in the signature of the dataclass-generated ``__init__`` 
        method under inheritance (mandatory fields can't come after optional 
        fields.) Mandatory fields must be designated by setting their default to
-       ``MANDATORY``, and a ValueError is raised here if mandatory fields are
-       uninitialized.
+       ``MANDATORY``, and a DataclassParseError is raised here if mandatory fields 
+       are uninitialized.
 
     2. Check each field's value to see if it's consistent with known type info. 
        If not, attempt to coerce it to that type, using a ``from_struct`` method if
-       it exists. Raise ValueError if this fails.
+       it exists. Raise DataclassParseError if this fails.
 
     .. warning::
        Unlike :py:func:`~dataclasses.dataclass`, all fields **must** have a 
        *default* or *default_factory* defined. Fields which are mandatory must 
        have their default value set to the sentinel object ``MANDATORY``.
-
-    .. warning::
-       Type checking logic used is specific to the ``typing`` module in python 
-       3.7. It may or may not work on newer pythons, and definitely will not 
-       work with 3.5 or 3.6. See `https://stackoverflow.com/a/52664522`__.
     """
     dc_kwargs = {'init': True, 'repr': True, 'eq': True, 'order': False, 
         'unsafe_hash': False, 'frozen': False}
@@ -449,7 +450,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     _old_init = cls.__init__
     @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
-        # Execute dataclass' auto-generated __init__ and __post_init__:
+        # Execute type check after dataclass' __init__ and __post_init__:
         _old_init(self, *args, **kwargs)
         _mdtf_dataclass_typecheck(self)        
 
@@ -463,31 +464,34 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
     """Edit kwargs going to the auto-generated __init__ method of this dataclass.
     If any fields are regex_dataclasses, construct and parse their values first.
 
-    Raises a WormKeyError if different regex_dataclasses (at any level of
+    Raises a DataclassParseError if different regex_dataclasses (at any level of
     inheritance) try to assign different values to a field of the same name. We
     do this by assigning to a :class:`~src.util.basic.ConsistentDict`.
     """
     new_kw = filter_dataclass(kwargs, self, init=True)
     new_kw = basic.ConsistentDict.from_struct(new_kw)
-    for f in dataclasses.fields(self):
-        if not is_regex_dataclass(f.type):
+    for cls_ in self.__class__.__bases__:
+        if not is_regex_dataclass(cls_):
             continue
-        if f.name in kwargs:
-            val = kwargs[f.name]
-        elif not isinstance(f.default, dataclasses._MISSING_TYPE):
-            val = f.default
-        elif not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
-            val = f.default_factory()
-        else:
-            raise TypeError()
-        new_d = dataclasses.asdict(f.type.from_string(val))
-        new_d = filter_dataclass(new_d, self, init=True)
-        try:
-            new_kw.update(new_d)
-        except exceptions.WormKeyError as exc:
-            raise exceptions.WormKeyError((f"{self.__class__.__name__}: Tried to "
-                f"make inconsistent field assignment when parsing {f.name} using "
-                f"{f.type.__name__}.")) from exc
+        for f in dataclasses.fields(self):
+            if not f.type == cls_:
+                continue
+            if f.name in kwargs:
+                val = kwargs[f.name]
+            elif not isinstance(f.default, dataclasses._MISSING_TYPE):
+                val = f.default
+            elif not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+                val = f.default_factory()
+            else:
+                raise exceptions.DataclassParseError(f"Can't set value for {f.name}.")
+            new_d = dataclasses.asdict(f.type.from_string(val))
+            new_d = filter_dataclass(new_d, self, init=True)
+            try:
+                new_kw.update(new_d)
+            except exceptions.WormKeyError as exc:
+                raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
+                    f"Tried to make inconsistent field assignment when parsing "
+                    f"{f.name} as an instance of {f.type.__name__}.")) from exc
     post_init = dict()
     for f in dataclasses.fields(self):
         if not f.init and f.name in new_kw:
@@ -509,6 +513,13 @@ def regex_dataclass(pattern):
     implementation of inheritance for regex_dataclasses.
     """
     def _dataclass_decorator(cls):
+        # check that all DCs specified as fields are also in class hierarchy
+        # so that we inherit their fields; probably no way this could happen though
+        for f in dataclasses.fields(cls):
+            if is_regex_dataclass(f.type) and f.type not in cls.__mro__:
+                raise TypeError((f"{cls.__name__}: Field {f.name} specified as "
+                    f"{f.type.__name__}, but we don't inherit from it."))
+
         _old_init = cls.__init__
         @functools.wraps(_old_init)
         def _new_init(self, first_arg=None, *args, **kwargs):
@@ -518,14 +529,22 @@ def regex_dataclass(pattern):
                 self._pattern.match(first_arg)
                 first_arg = None
                 kwargs = self._pattern.data
-            new_kw, post_init = _regex_dataclass_preprocess_kwargs(self, kwargs)  
+            new_kw, other_kw = _regex_dataclass_preprocess_kwargs(self, kwargs)
+            for k,v in other_kw.items():
+                # set field values that aren't arguments to _old_init
+                object.__setattr__(self, k, v)
             if first_arg is None:
                 _old_init(self, *args, **new_kw)
             else:
                 _old_init(self, first_arg, *args, **new_kw)
-            for k,v in post_init.items():
-                # set field values that aren't arguments to _old_init
-                object.__setattr__(self, k, v)
+
+        if '__post_init__' not in cls.__dict__:
+            # Prevent class from inheriting __post_init__ from parents if it 
+            # doesn't overload it (which is why we use __dict__ and not
+            # hasattr().) __post_init__ of all parents will have been called when
+            # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
+            def _dummy_post_init(self, *args, **kwargs): pass
+            type.__setattr__(cls, '__post_init__', _dummy_post_init)
 
         def _from_string(cls_, str_, *args):
             cls_._pattern.match(str_, *args)

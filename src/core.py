@@ -5,7 +5,7 @@ import sys
 import io
 import collections
 import copy
-import dataclasses
+import dataclasses as dc
 import re
 import glob
 import shutil
@@ -13,7 +13,8 @@ import signal
 import string
 import tempfile
 import traceback
-from src import util, cli, mdtf_info, data_model
+from src import util, cli, mdtf_info, data_model, xr_util
+import cfunits
 
 import logging
 _log = logging.getLogger(__name__)
@@ -407,14 +408,16 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     # DMVariable, which is converted to this type on assignment to the
     # VarlistEntry, since metadata fields are specific to the VarlistEntry
     # implementation
+    convention: str = util.MANDATORY
     name: str = \
-        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+        dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
-        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+        dc.field(default=util.MANDATORY, metadata={'query': True})
     units: cfunits.Units = \
-        dataclasses.field(default=util.MANDATORY, metadata={'query': True})
+        dc.field(default=util.MANDATORY, metadata={'query': True})
+    axes_set: frozenset = dc.field(default_factory=frozenset)
     scalar_coords: list = \
-        dataclasses.field(init=False, default_factory=list, metadata={'query': True})
+        dc.field(init=False, default_factory=list, metadata={'query': True})
 
 @util.mdtf_dataclass
 class FieldlistEntry(object):
@@ -423,18 +426,18 @@ class FieldlistEntry(object):
     name: str = util.MANDATORY           # = name according to this convention
     standard_name: str = util.MANDATORY  # = CF conventions standard name
     units: str = util.MANDATORY          # = units according to this convention
-    axes_set: frozenset = dataclasses.field(default_factory=frozenset)
-    ndim: dataclasses.InitVar = 4
-    scalar_coord_templates: dict = dataclasses.field(default_factory=dict)
+    axes_set: frozenset = dc.field(default_factory=frozenset)
+    ndim: dc.InitVar = 4
+    scalar_coord_templates: dict = dc.field(default_factory=dict)
 
     def __post_init__(self, ndim=4):
         if not self.axes_set:
             if ndim == 4:
-                self.axes_set = ('T', 'X', 'Y', 'Z')
+                self.axes_set = ('T', 'Z', 'Y', 'X')
             elif ndim == 3:
-                self.axes_set = ('T', 'X', 'Y')
+                self.axes_set = ('T', 'Y', 'X')
             elif ndim == 2:
-                self.axes_set = ('X', 'Y')
+                self.axes_set = ('Y', 'X')
             elif ndim == 1:
                 self.axes_set = ('T')
         self.axes_set = frozenset(
@@ -450,67 +453,76 @@ class Fieldlist():
     in src/data/fieldlist_*.jsonc).
     """
     name: str = util.MANDATORY
-    axes: dict = dataclasses.field(default_factory=dict)
-    data: util.WormDict = dataclasses.field(default_factory=util.WormDict)
-    other: dict = dataclasses.field(default_factory=dict)
+    axes: dict = dc.field(default_factory=dict)
+    entries: util.WormDict = dc.field(default_factory=util.WormDict)
+    lut: util.WormDict = dc.field(default_factory=util.WormDict)
+    other: dict = dc.field(default_factory=dict)
 
     @classmethod
     def from_struct(cls, d):
-        def _process_one(section_name):
+        def _process_one(section_name, d, entry_d, lut_d):
             # build two-stage lookup table -- should just make FieldlistEntry 
             # hashable
             section_d = d.pop(section_name, dict())
-            dd = collections.defaultdict(util.WormDict)
             for k,v in section_d.items():
                 entry = FieldlistEntry(name=k, **v)
-                dd[entry.standard_name][entry.axes_set] = entry
-            return dd
+                entry_d[k] = entry
+                lut_d[entry.standard_name][entry.axes_set] = entry
 
         d['axes'] = {
             data_model.DMAxis(v['axis']): \
                 data_model.coordinate_from_struct(v, name=k) \
             for k,v in d['axes'].items() 
         }
-        d['data'] = util.WormDict()
-        d['data'].update(_process_one('aux_coords'))
-        d['data'].update(_process_one('variables'))
+        d['entries'] = util.WormDict()
+        d['lut'] = util.WormDict()
+        lut_temp = collections.defaultdict(util.WormDict)
+        _process_one('aux_coords', d,  d['entries'], lut_temp)
+        _process_one('variables', d, d['entries'], lut_temp)
+        d['lut'].update(lut_temp)
         return cls(**d)
 
-    def iter_entries(self):
-        for d in self.data.values():
-            yield from d.values()
+    def to_CF(self, name):
+        """FieldlistEntry for the variable having the given name in this convention.
+        """
+        return self.entries[name]
 
-    def name_to_CF(self, name):
-        # inefficient - kept for unit tests, not used in production
-        for entry in self.iter_entries():
-            if entry.name == name:
-                return entry.standard_name
-        raise KeyError(name)
+    def to_CF_name(self, name):
+        """Like :meth:`to_CF`, but only return the CF standard name, given the 
+        name in this convention.
+        """
+        return self.to_CF(name).standard_name
 
-    def name_from_CF(self, standard_name):
-        # not used in production
-        if standard_name not in self.data:
-            raise KeyError(standard_name)
-        entries = tuple(self.data[standard_name].values())
-        if len(entries) > 1:
-            raise ValueError((f"{self.name}: Variable name not uniquely "
-                f"determined by standard name '{standard_name}'."))
-        return entries[0].name
+    def from_CF(self, standard_name, axes_set=None):
+        """Look up FieldlistEntry corresponding to the given standard name,
+        optionally providing an axes_set to resolve ambiguity.
 
-    def lookup(self, var):
-        # use two-stage lookup table -- should just make FieldlistEntry 
-        # hashable
-        assert isinstance(var, data_model.DMDependentVariable)
-        key1 = var.standard_name
-        key2 = var.axes_set
-        if key1 not in self.data:
-            raise KeyError((f"Standard name '{key1}' not defined in convention "
-                f"'{self.name}'."))
-        d = self.data[key1] # abbreviate
-        if key2 not in d:
-            raise KeyError((f"Queried standard name '{key1}' with an unexpected "
-                f"set of axes {key2} not in convention '{self.name}'."))
-        return d[key2]
+        TODO: this is a hacky implementation; FieldlistEntry needs to be 
+        expanded with more ways to uniquely identify variable (eg cell methods).
+        """
+        if standard_name not in self.lut:
+            raise KeyError((f"Standard name '{standard_name}' not defined in "
+                f"convention '{self.name}'."))
+        lut1 = self.lut[standard_name] # abbreviate
+        if axes_set is None:
+            entries = tuple(lut1.values())
+            if len(entries) > 1:
+                raise ValueError((f"Variable name in convention '{self.name}' "
+                    f"not uniquely determined by standard name '{standard_name}'."))
+            return entries[0]
+        else:
+            axes_set = frozenset(axes_set)
+            if axes_set not in lut1:
+                raise KeyError((f"Queried standard name '{standard_name}' with an "
+                    f"unexpected set of axes {axes_set} not in convention "
+                    f"'{self.name}'."))
+            return lut1[axes_set]
+
+    def from_CF_name(self, standard_name, axes_set=None):
+        """Like :meth:`from_CF`, but only return the variable's name in this 
+        convention.
+        """
+        return self.from_CF(standard_name, axes_set=axes_set).name
 
     def lookup_axis(self, ax):
         if not isinstance(ax, data_model.DMAxis):
@@ -518,14 +530,55 @@ class Fieldlist():
         return self.axes.get(ax, None)
 
     def lookup_variable(self, var):
-        """Returns DMVariable instance, with populated axes."""
-        conv_var = self.lookup(var)
-        coords = {ax: self.lookup_axis(ax) for ax in conv_var.axis_set}
+        """Returns TranslatedVarlistEntry instance, with populated axes."""
+        fl_entry = self.from_CF(var.standard_name, var.axes_set)
+        coords = {ax: self.lookup_axis(ax) for ax in fl_entry.axis_set}
         for c in var.scalar_coords:
             coords[c.axis].value = c.value
         return util.coerce_to_dataclass(
-            conv_var, TranslatedVarlistEntry, coords=tuple(coords.values())
+            fl_entry, TranslatedVarlistEntry, 
+            coords=tuple(coords.values()), convention=self.name
         )
+
+    def translate(self, var):
+        """Return a DMVariable corresponding to the translated version of var. 
+        """
+        fl_entry = self.from_CF(var.standard_name, var.axes_set)
+        conv_var = self.lookup_variable(var)
+
+        if len(var.scalar_coords) > 1:
+            raise NotImplementedError()
+        elif len(var.scalar_coords) == 1:
+            # change name in convention, since we're dealing with a slice
+            c = var.scalar_coords[0]
+            if c.axis not in fl_entry.scalar_coord_templates:
+                raise ValueError((f"Don't know how to name {c.axis} slice of "
+                    f"{fl_entry.name}."
+                ))
+            # construct convention's name for this variable on a level
+            name_template = fl_entry.scalar_coord_templates[c.axis]
+            conv_ax = self.lookup_axis(c.axis)
+            value_in_conv = c.value \
+                * xr_util.conversion_factor(c.units, conv_ax.units)
+            new_name = name_template.format(value=int(value_in_conv))
+            _log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
+                c.axis, var.name, new_name, c.value, c.units, 
+                value_in_conv, conv_ax.units)
+            conv_var.name = new_name
+        return conv_var
+
+    def remove_scalar(self, var):
+        """If var has a scalar_coordinate defined, remove it and translate that,
+        else return None.
+        """
+        if len(var.scalar_coords) == 0:
+            return None
+        elif len(var.scalar_coords) > 1:
+            raise NotImplementedError()
+        c = var.scalar_coords[0]
+        new_var = var.remove_scalar(c.axis) # makes a copy
+        return self.lookup_variable(new_var)
+
 
 class VariableTranslator(util.Singleton):
     """:class:`~util.Singleton` containing information for different variable 
@@ -561,7 +614,10 @@ class VariableTranslator(util.Singleton):
             self.aliases[model] = conv_name
         self.conventions[conv_name] = Fieldlist.from_struct(d)
 
-    def _lookup_wrapper(self, conv_name, method_name, *args, **kwargs):
+    def get_convention(self, conv_name):
+        """Return the Fieldlist object itself, if we want to do lots of lookups
+        and want to keep code uncluttered.
+        """
         if conv_name not in self.conventions:
             if conv_name in self.aliases:
                 _log.debug("Using convention '%s' based on alias '%s'.",
@@ -571,75 +627,38 @@ class VariableTranslator(util.Singleton):
                 _log.error("Unrecognized variable name convention '%s'.", 
                     conv_name)
                 raise KeyError(conv_name)
-        func = getattr(self.conventions[conv_name], method_name)
-        return func(*args, **kwargs)
+        return self.conventions[conv_name]
 
-    def name_to_CF(self, conv_name, name):
-        return self._lookup_wrapper(conv_name, 'name_to_CF', name)
+    def _fieldlist_method(self, conv_name, method_name, *args, **kwargs):
+        meth = getattr(self.get_convention(conv_name), method_name)
+        return meth(*args, **kwargs)
 
-    def name_from_CF(self, conv_name, standard_name):
-        return self._lookup_wrapper(conv_name, 'name_from_CF', standard_name)
+    def to_CF(self, conv_name, name):
+        return self._fieldlist_method(conv_name, 'to_CF', name)
 
-    def lookup(self, conv_name, var):
-        return self._lookup_wrapper(conv_name, 'lookup', var)
+    def to_CF_name(self, conv_name, name):
+        return self._fieldlist_method(conv_name, 'to_CF_name', name)
+
+    def from_CF(self, conv_name, standard_name, axes_set=None):
+        return self._fieldlist_method(conv_name, 'from_CF', 
+            standard_name, axes_set=axes_set)
+
+    def from_CF_name(self, conv_name, standard_name, axes_set=None):
+        return self._fieldlist_method(conv_name, 'from_CF_name', 
+            standard_name, axes_set=axes_set)
 
     def lookup_axis(self, conv_name, axis):
-        return self._lookup_wrapper(conv_name, 'lookup_axis', axis)
+        return self._fieldlist_method(conv_name, 'lookup_axis', axis)
 
     def lookup_variable(self, conv_name, var):
-        return self._lookup_wrapper(conv_name, 'lookup_variable', var)
+        return self._fieldlist_method(conv_name, 'lookup_variable', var)
 
-    @staticmethod
-    def conversion_factor(source_unit, dest_unit):
-        """Defined so that (conversion factor) * (quantity in source_units) = 
-        (quantity in dest_units). 
-        """
-        if not source_unit.equivalent(dest_unit):
-            raise util.UnitsError((f"Units {repr(source_unit)} and "
-                f"{repr(dest_unit)} are inequivalent."))
-        return cfunits.conform(1.0, dest_unit, source_unit)
-
-    @staticmethod
-    def convert_array(array, source_unit, dest_unit):
-        """Wrapper for cfunits.conform() that does unit conversion in-place on a
-        numpy array.
-        """
-        if not source_unit.equivalent(dest_unit):
-            raise util.UnitsError((f"Units {repr(source_unit)} and "
-                f"{repr(dest_unit)} are inequivalent."))
-        cfunits.conform(array, source_unit, dest_unit, inplace=True)
-        
     def translate(self, conv_name, var):
-        """Return a DMVariable corresponding to the translated version of var. 
-        """
-        conv_var = self.lookup_variable(conv_name, var)
-
-        if len(var.scalar_coords) > 1:
-            raise NotImplementedError()
-        elif len(var.scalar_coords) == 1:
-            c = var.scalar_coords[0]
-            if c.axis not in conv_var.scalar_coord_templates:
-                raise ValueError((
-                ))
-            # construct convention's name for this variable on a level
-            name_template = conv_var.scalar_coord_templates[c.axis]
-            conv_ax = self.lookup_axis(conv_name, c.axis)
-            value_in_conv = c.value * self.conversion_factor(c.units, conv_ax.units)
-            new_name = name_template.format(value=int(value_in_conv))
-            conv_var.name = new_name
-        return conv_var
+        return self._fieldlist_method(conv_name, 'translate', var)
 
     def remove_scalar(self, conv_name, var):
-        """If var has a scalar_coordinate defined, remove it and translate that,
-        else return None.
-        """
-        if len(var.scalar_coords) == 0:
-            return None
-        elif len(var.scalar_coords) > 1:
-            raise NotImplementedError()
-        c = var.scalar_coords[0]
-        new_var = var.remove_scalar(c.axis)
-        return self.lookup_variable(conv_name, new_var)
+        return self._fieldlist_method(conv_name, 'remove_scalar', var)
+
 
 # --------------------------------------------------------------------
 

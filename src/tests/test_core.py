@@ -4,7 +4,7 @@ from collections import namedtuple
 import itertools
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.core as core
-from src.data_manager import DataManager
+# from src.data_manager import DataManager
 from src.diagnostic import Diagnostic
 from subprocess import CalledProcessError
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
@@ -30,8 +30,8 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
-        self.assertEqual(temp.name_to_CF('not_CF', 'PRECT'), 'pr_var')
-        self.assertEqual(temp.name_from_CF('not_CF', 'pr_var'), 'PRECT')
+        self.assertEqual(temp.to_CF_name('not_CF', 'PRECT'), 'pr_var')
+        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')
 
     def test_variabletranslator_no_key(self):
         temp = core.VariableTranslator()
@@ -42,10 +42,10 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
-        self.assertRaises(KeyError, temp.name_to_CF, 'B', 'PRECT')
-        self.assertRaises(KeyError, temp.name_to_CF, 'not_CF', 'nonexistent_var')
-        self.assertRaises(KeyError, temp.name_from_CF, 'B', 'PRECT')
-        self.assertRaises(KeyError, temp.name_from_CF, 'not_CF', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.to_CF_name, 'B', 'PRECT')
+        self.assertRaises(KeyError, temp.to_CF_name, 'not_CF', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.from_CF_name, 'B', 'PRECT')
+        self.assertRaises(KeyError, temp.from_CF_name, 'not_CF', 'nonexistent_var')
 
     def test_variabletranslator_aliases(self):
         # create multiple entries when multiple models specified
@@ -58,9 +58,9 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1"}
             }
         })
-        self.assertEqual(temp.name_from_CF('not_CF', 'pr_var'), 'PRECT')
-        self.assertEqual(temp.name_from_CF('A','pr_var'), 'PRECT')
-        self.assertEqual(temp.name_from_CF('B','pr_var'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('A','pr_var'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('B','pr_var'), 'PRECT')
 
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):
@@ -111,45 +111,45 @@ class TestPathManager(unittest.TestCase):
         #_ = core.PathManager(unittest = True) 
 
 
-@mock.patch.multiple(DataManager, __abstractmethods__=set())
-class TestPathManagerPodCase(unittest.TestCase):
-    def setUp(self):
-        # set up translation dictionary without calls to filesystem
-        setUp_config_singletons(
-            config=self.case_dict, 
-            paths={
-                'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
-                'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
-            },
-            pods={ 'AA':{
-                'settings':{}, 
-                'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
-                }
-            })
+# @mock.patch.multiple(DataManager, __abstractmethods__=set())
+# class TestPathManagerPodCase(unittest.TestCase):
+#     def setUp(self):
+#         # set up translation dictionary without calls to filesystem
+#         setUp_config_singletons(
+#             config=self.case_dict, 
+#             paths={
+#                 'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
+#                 'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
+#             },
+#             pods={ 'AA':{
+#                 'settings':{}, 
+#                 'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
+#                 }
+#             })
 
-    case_dict = {
-        'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
-        'pod_list': ['AA']
-    }
+#     case_dict = {
+#         'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
+#         'pod_list': ['AA']
+#     }
 
-    def tearDown(self):
-        tearDown_config_singletons()
+#     def tearDown(self):
+#         tearDown_config_singletons()
 
-    def test_pathmgr_model(self):
-        paths = core.PathManager()
-        case = DataManager(self.case_dict)
-        d = paths.model_paths(case)
-        self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
-        self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
+#     def test_pathmgr_model(self):
+#         paths = core.PathManager()
+#         case = DataManager(self.case_dict)
+#         d = paths.model_paths(case)
+#         self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
+#         self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
-    def test_pathmgr_pod(self):
-        paths = core.PathManager()
-        case = DataManager(self.case_dict)
-        pod = Diagnostic('AA')
-        d = paths.pod_paths(pod, case)
-        self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
-        self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
-        self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
+#     def test_pathmgr_pod(self):
+#         paths = core.PathManager()
+#         case = DataManager(self.case_dict)
+#         pod = Diagnostic('AA')
+#         d = paths.pod_paths(pod, case)
+#         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
+#         self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
+#         self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
 
 
 

@@ -7,8 +7,6 @@ import shutil
 import typing
 from src import util, core, verify_links, datelabel, data_model
 
-import cfunits
-
 import logging
 _log = logging.getLogger(__name__)
 
@@ -155,7 +153,7 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
     remote_data: set = dc.field(default_factory=set, compare=False)
-    local_data: set = dc.field(default_factory=set, compare=False)
+    local_data: list = dc.field(default_factory=list, compare=False)
     status: VarlistEntryStatus = dc.field(
         default=VarlistEntryStatus.INITED, compare=False
     )

@@ -67,79 +67,69 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so they can be compared with the model data's time axis.
         """
-        if 'T' not in ax_names or var.is_static:
-            _log.warning('Tried to crop time axis of time-independent variable.')
+        if 'T' not in ds.cf.axes:
+            _log.debug(f"Skipping date range crop for {var.name}: time-independent.")
             return ds
+        t_name = ds.cf.axes['T'][0]
+        t_coord = ds[t_name]
+        cal = t_coord.attrs['calendar']
         dt_range = var.T.range
-        # lower/upper are earliest/latest datetimes consistent with the datetime 
-        # we were given, to that precision (eg lower for "2000" would be 
-        # jan 1, 2000, and upper would be dec 31).
-        dt_start_lower = self.cast_to_cftime(dt_range.start.lower, calendar)
-        dt_start_upper = self.cast_to_cftime(dt_range.start.upper, calendar)
-        dt_end_lower = self.cast_to_cftime(dt_range.end.lower, calendar)
-        dt_end_upper = self.cast_to_cftime(dt_range.end.upper, calendar)
+        # lower/upper are earliest/latest datetimes consistent with the date we
+        # were given, up to the precision that was specified (eg lower for "2000"
+        # would be Jan 1, 2000, and upper would be Dec 31).
+        dt_start_lower = self.cast_to_cftime(dt_range.start.lower, cal)
+        dt_start_upper = self.cast_to_cftime(dt_range.start.upper, cal)
+        dt_end_lower = self.cast_to_cftime(dt_range.end.lower, cal)
+        dt_end_upper = self.cast_to_cftime(dt_range.end.upper, cal)
 
-        t_name = ax_names['T'] # abbreviate
-        time_ax = ds[t_name]  # abbreviate
-        if time_ax.values[0] > dt_start_upper:
-            error_str = ("Error: dataset start ({}) is after requested date "
-                "range start ({})").format(time_ax.values[0], dt_start_upper)
-            _log.error(error_str)
-            raise util.DataPreprocessError(var, error_str)
-        if time_ax.values[-1] < dt_end_lower:
-            error_str = ("Error: dataset end ({}) is before requested date "
-                "range end ({})").format(time_ax.values[-1], dt_end_lower)
-            _log.error(error_str)
-            raise util.DataPreprocessError(var, error_str)
+        if t_coord.values[0] > dt_start_upper:
+            err_str = (f"Error: dataset start ({t_coord.values[0]}) is after "
+                f"requested date range start ({dt_start_upper}).")
+            _log.error(err_str)
+            raise IndexError(var, err_str)
+        if t_coord.values[-1] < dt_end_lower:
+            err_str = (f"Error: dataset end ({t_coord.values[-1]}) is before "
+                f"requested date range end ({dt_end_lower}).")
+            _log.error(err_str)
+            raise IndexError(var, err_str)
         
         _log.info("Crop date range of %s from '%s -- %s' to '%s'.",
                 var.name,
-                time_ax.values[0].strftime('%Y-%m-%d'), 
-                time_ax.values[-1].strftime('%Y-%m-%d'), 
+                t_coord.values[0].strftime('%Y-%m-%d'), 
+                t_coord.values[-1].strftime('%Y-%m-%d'), 
                 dt_range
             )
-        return ds.sel(**({t_name: slice(dt_start_lower, dt_end_upper)}))
+        return ds.sel({t_name: slice(dt_start_lower, dt_end_upper)})
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a DataSet. Unit conversions of 
-    pressure are handled by metpy, but paramateric vertical coordinates are not
-    handled (since that would require interpolation.) If the exact level is not
-    provided by the data, DataPreprocessError is raised.  
-
-    Args:
-        ds: `xarray.Dataset 
-            <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ 
-            instance.
-
-    TODO: Properly translate vertical coordinate name and units. If passed 3D
-    data, verify that it's for the requested level. Rename variable according to
-    convention POD expects.
+    pressure are handled by cfunits, but paramateric vertical coordinates are 
+    **not** handled (interpolation is not implemented here.) If the exact level 
+    is not provided by the data, KeyError is raised.
     """
+
+    def remove_scalar(self, var):
+        """If a VarlistEntry has a scalar_coordinate defined, remove it and 
+        translate that (returning a TranslatedVarlistEntry), else return None.
+        """
+        if len(var.scalar_coords) == 0:
+            return None
+        elif len(var.scalar_coords) > 1:
+            raise NotImplementedError()
+        c = var.scalar_coords[0]
+        # wraps method in data_model; makes a copy
+        return var.remove_scalar(c.axis, alternates=[[var]]) 
+
     def edit_request(self, data_mgr, pod):
-        # WARNING: the following is a HACK until we get proper CF conventions
-        # implemented in the fieldlist_* files for model definition.
-        # HACK is: 
-        # name = u_var (4D); should be standard_name
-        # standard_name = "u200_var", should be env_var's name
-        # "query for 3D slice before 4D" means replace [u_var] -> {alts}
-        # with [u200_var] -> [u_var] -> {alts}.
-        name_suffix = '_var'
-        new_vars = []
+        new_varlist = []
         for v in pod.varlist.iter_contents():
             z_level = v.get_scalar('Z')
             if z_level is None:
-                new_vars.append(v)
+                new_varlist.append(v)
                 continue
-            # make new VarlistEntry to query for 3D slice directly
-            new_name = util.remove_suffix(v.standard_name, name_suffix)
-            new_name += str(int(z_level.value))  # TODO: proper units
-            if v.standard_name.endswith(name_suffix):
-                new_name += name_suffix
-            new_v = v.remove_scalar('Z', 
-                name=new_name, 
-                standard_name=new_name, 
-                alternates=[[v]]
-            )
+            # existing VarlistEntry queries for 3D slice directly; add a new
+            # VE to query for 4D data
+            new_v = self.remove_scalar(v)
             data_mgr.setup_var(pod, new_v)
             v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
             v.active = False
@@ -147,27 +137,33 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             print(f'DEBUG: ### add alts for <{new_v.short_format()} {new_v.requirement}>:')
             for vv in new_v.iter_alternate_entries():
                 print(f'DEBUG: ### <{vv.short_format()} {vv.requirement}>')
-            new_vars.append(new_v)
-            new_vars.append(v)
-        pod.varlist = diagnostic.Varlist(contents=new_vars)
+            new_varlist.append(new_v)
+            new_varlist.append(v)
+        pod.varlist = diagnostic.Varlist(contents=new_varlist)
 
     def process(self, var, ds):
         z_coord = var.get_scalar('Z')
         if not z_coord or not z_coord.value:
+            _log.debug(f"Skipping level extraction for {var.name}: no level requested.")
             return ds
-        if 'Z' not in ax_names:
-            raise util.DataPreprocessError(("Tried to extract level from data "
-                "with no Z axis."))
-        z_level = int(z_coord.value)
+        if 'Z' not in ds.cf.axes:
+            raise TypeError("No Z axis in data (%s).", ds.cf.axes)
+        z_name = ds.cf.axes['Z'][0]
         try:
-            _log.info("Extracting %s hPa level from %s", z_level, ax_names['var'])
-            ds = ds.metpy.sel(**({ax_names['Z']: z_level * units.hPa}))
+            _log.info("Extracting %s %s level from Z axis (%s) of '%s'.", 
+                z_coord.value, z_coord.units, z_name, var.name)
+            ds = ds.sel(
+                {z_name: z_coord.value},
+                method='nearest', # Allow for floating point roundoff in axis values
+                tolerance=1.0e-3,
+                drop=False
+            )
             # rename dependent variable
-            return ds.rename({ax_names['var']: ax_names['var']+str(z_level)})
+            return ds.rename({var.translation.name: var.name})
         except KeyError:
-            # level wasn't present in coordinate axis
-            raise util.DataPreprocessError(("Pressure axis of file didn't provide "
-                f"requested level {z_level}."))
+            # ds.sel failed; level wasn't present in coordinate axis
+            raise KeyError((f"Z axis '{z_name}' of '{var.name}' didn't provide "
+                f"requested level = {z_coord.value} {z_coord.units}."))
 
 # ==================================================
 
@@ -182,9 +178,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def __init__(self, data_mgr, pod):
         self.WK_DIR = data_mgr.MODEL_WK_DIR
         self.convention = data_mgr.convention
-        self.ax_names = dict()
-        self.calendar = None
-
         self.pod_name = pod.name
         self.pod_convention = pod.convention
 
@@ -217,6 +210,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:
             raise ValueError(f"{var.name}: Expected one file, got {path_list}.")
+        _log.debug("xr.open_dataset on %s", path_list[0])
         return xr.open_dataset(
             path_list[0], 
             **self.open_dataset_kwargs
@@ -226,15 +220,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_dataset(self, var):
         pass # return ds
 
-    def process_dataset(self, var, ds):
-        for f in self.functions:
-            ds = f.process(var, ds)
-        return ds
-
     def write_dataset(self, var, ds):
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
         _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
+        _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -242,17 +232,36 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # don't make time unlimited, since data might be static and we 
             # analyze a fixed date range
         )
-        ds.close() # save memory; shouldn't be necessary
+        ds.close()
 
     def process(self, var, local_files):
         """Top-level wrapper for doing all preprocessing of data files.
         """
-        _log.info("    Processing %s", var.name)
-        ds = self.read_dataset(var)
-        ds = xr_util.parse_dataset(ds)
-        ds = self.process_dataset(var, ds)
-        self.write_dataset(var, ds)
-        del ds # save memory; shouldn't be necessary
+        _log.info("    Processing %s for %s", var.short_format(), self.pod_name)
+        # load dataset
+        try:
+            ds = self.read_dataset(var)
+            ds = xr_util.DatasetParser.parse(ds, var)
+        except Exception as exc:
+            raise util.DataPreprocessError((f"Error in read/parse data for "
+                f"'{var.name}' for {self.pod_name}.")) from exc
+        # execute functions
+        for f in self.functions:
+            try:
+                _log.debug("Preprocess '%s': call %s", var.name, f.__class__.__name__)
+                ds = f.process(var, ds)
+            except Exception as exc:
+                raise util.DataPreprocessError((f"Preprocessing on '{var.name}' for "
+                    f"{self.pod_name} failed at {f.__class__.__name__}.")) from exc
+        # write dataset
+        try:
+            self.write_dataset(var, ds)
+        except Exception as exc:
+            raise util.DataPreprocessError((f"Error in writing data for "
+                f"'{var.name}' for {self.pod_name}. ")) from exc
+        del ds # shouldn't be necessary
+        _log.debug("Successful preprocessor exit on %s for %s", 
+            var.short_format(), self.pod_name)
 
 
 class SingleFilePreprocessor(MDTFPreprocessorBase):
@@ -276,6 +285,16 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         self.file_preproc_functions = \
             [cls_(data_mgr, pod) for cls_ in self._file_preproc_functions]
 
+    def edit_request(self, data_mgr, pod):
+        """Edit POD's data request, based on the child class's functionality. If
+        the child class has a function that can transform data in format X to 
+        format Y and the POD requests X, this method should insert a 
+        backup/fallback request for Y.
+        """
+        for func in self.file_preproc_functions:
+            func.edit_request(data_mgr, pod)
+        super(DaskMultiFilePreprocessor, self).edit_request(data_mgr, pod)
+
     def read_dataset(self, var):
         def _file_preproc(ds):
             for f in self.file_preproc_functions:
@@ -287,6 +306,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             return _file_preproc(ds)
         else:
             assert not var.is_static # just to be safe
+            _log.debug("xr.open_mfdataset on %d files: %s", 
+                len(var.local_data), var.local_data)
             return xr.open_mfdataset(
                 var.local_data,
                 combine="by_coords",

@@ -388,7 +388,7 @@ class Varlist(data_model.DMDataSet):
         (a reference to) it (so that we don't try to add duplicates), otherwise
         return None.
         """
-        for vv in self.iter_contents():
+        for vv in self.iter_vars():
             if v == vv:
                 return vv
         return None
@@ -468,11 +468,11 @@ class Diagnostic(object):
     def iter_vars(self, active=None):
         if active is None:
             # default: all variables
-            yield from self.varlist.iter_contents()
+            yield from self.varlist.iter_vars()
         else:
             # either all active or inactive vars
             yield from filter(
-                (lambda v: v.active == active), self.varlist.iter_contents()
+                (lambda v: v.active == active), self.varlist.iter_vars()
             )
 
     def deactivate_if_failed(self):

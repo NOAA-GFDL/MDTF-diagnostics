@@ -12,7 +12,7 @@ import cf_xarray
 import xarray as xr
 
 from src import data_model
-from src.util import exceptions
+from src.util import basic, exceptions
 
 import logging
 _log = logging.getLogger(__name__)
@@ -30,6 +30,46 @@ _cf_calendars = (
     "360_day",
     "none"
 )
+
+def _coerce_to_cfunits(*args):
+    def _coerce(x):
+        if isinstance(x, cfunits.Units):
+            return x
+        return cfunits.Units(x)
+
+    return [_coerce(arg) for arg in args]
+
+def are_units_equivalent(*args):
+    """Returns True if and only if all units in arguments are equivalent
+    (represent the same physical quantity, up to a multiplactive conversion 
+    factor.)
+    """
+    args = _coerce_to_cfunits(args)
+    ref_unit = args.pop()
+    return all(ref_unit.equivalent(unit) for unit in args)
+
+def _coerce_equivalent_units(*args):
+    args = _coerce_to_cfunits(args)
+    ref_unit = args.pop()
+    for unit in args:
+        if not ref_unit.equivalent(unit):
+            raise exceptions.UnitsError((f"Units {repr(ref_unit)} and "
+                f"{repr(unit)} are inequivalent."))
+    return args.append(ref_unit)
+
+def conversion_factor(source_unit, dest_unit):
+    """Defined so that (conversion factor) * (quantity in source_units) = 
+    (quantity in dest_units). 
+    """
+    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
+    return cfunits.Units.conform(1.0, dest_unit, source_unit)
+
+def convert_array(array, source_unit, dest_unit):
+    """Wrapper for cfunits.conform() that does unit conversion in-place on a
+    numpy array.
+    """
+    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
+    cfunits.Units.conform(array, source_unit, dest_unit, inplace=True)
 
 # ========================================================================
 # Customize behavior of cf_xarray accessor 
@@ -148,181 +188,235 @@ with warnings.catch_warnings():
 
 # ========================================================================
 
-def verify_calendar(ds):
-    """Parse the calendar for time-dependent data (assumes CF conventions).
-    Sets the "calendar" attr on the time coordinate, if it exists, in order
-    to be read by the calendar property. 
+class DatasetParser():
+    """Class which acts as a container for MDTF-specific dataset parsing logic.
+    Doesn't need to be instantiated, since all logic is done in terms of 
+    classmethods or staticmethods.
     """
-    _fallback_value = 'none'
-
-    def _validate_cal(cal_name):
-        def _str_xform(s):
-            # lowercase, drop non-alphanumeric
+    @staticmethod
+    def guess_attr(name, expected_val, options, default=None, comparison_func=None):
+        """Return element of options equal to expected_val. If none are equal, 
+        try case-insensititve match. (All arguments expected to be strings.)
+        """
+        def str_munge(s):
+            # comparison function: lowercase, drop non-alphanumeric chars
             return re.sub(r'[^a-z0-9]+', '', s.lower())
 
-        if cal_name in _cf_calendars:
-            return cal_name
-        _log.warning("Calendar '%s' not a recognized CF name.", cal_name)
-        for c in _cf_calendars:
-            if _str_xform(c) == _str_xform(cal_name):
-                _log.warning(("Guessing CF calendar '%s' was intended for "
-                    "calendar '%s'."), c, cal_name)
-                return c
-        _log.error("Failed to parse calendar '%s'; using '%s'.", 
-            cal_name, _fallback_value)
-        return _fallback_value
-
-    t_names = ds.cf.axes.get('T', [])
-    if not t_names:
-        return # assume static data
-    elif len(t_names) > 1:
-        _log.error("Found multiple time axes. Ignoring all but '%s'.", t_names[0])
-        t_names = t_names[:1]
-    
-    for t_name in t_names:
-        time_coord = ds.coords[t_name] # abbreviate
-        if hasattr(time_coord.values[0], 'calendar'):
-            # normal case: T axis has been parsed into cftime Datetime objects.
-            cftime_cal = getattr(time_coord.values[0], 'calendar')
-            time_coord.attrs['calendar'] = _validate_cal(cftime_cal)
+        if comparison_func is None:
+            comparison_func = (lambda x,y: x != y)
+        options = basic.to_iter(options)
+        test_count = sum(comparison_func(opt, expected_val) for opt in options)
+        if test_count > 1:
+            _log.error("Found multiple values of '%s' set for '%s'.", 
+                expected_val, name)
+        if test_count >= 1:
+            return expected_val
+        _log.warning("Expected value of '%s' for '%s' not found.", 
+            expected_val, name)
+        munged_opts = [
+            (comparison_func(str_munge(opt), str_munge(expected_val)), opt) \
+                for opt in options
+        ]
+        if sum(tup[0] for tup in munged_opts) == 1:
+            guessed_val = [tup[1] for tup in munged_opts if tup[0]][0]
+            _log.warning(("Guessing value '%s' was intended for '%s'."), 
+                guessed_val, name)
+            return guessed_val
+        if default is None:
+            _log.error("Failed to parse %s out of %s.", name, options)
+            raise KeyError(expected_val)
         else:
+            _log.error("Failed to parse '%s'; using fallback value '%s'.", 
+                name, default)
+            return default
+
+    @classmethod
+    def guess_key(cls, key_name, key_startswith, d, default=None):
+        try:
+            k = cls.guess_attr(key_name, key_name, d.keys(), 
+                default=None, comparison_func=None)
+        except KeyError:
+            k = cls.guess_attr(key_name, key_startswith, d.keys(), 
+                default=default, comparison_func=(lambda x,y: x.startswith(y)))
+        return (k, d.get(k, None))
+
+    @classmethod
+    def munge_ds_attrs(cls, ds):
+        """Initial munging of xarray Dataset attribute dicts, before any 
+        decoding or parsing.
+        """
+        def strip_(v):
+            return (v.strip() if isinstance(v, str) else v)
+        def strip_attrs(obj):
+            d = getattr(obj, 'attrs', dict())
+            return {strip_(k): strip_(v) for k,v in d.items()}
+
+        setattr(ds, 'attrs', strip_attrs(ds))
+        for var in ds.variables:
+            d = strip_attrs(ds[var])
+            # warning raised on missing std_name, units in check_variable
+            _, std_name = cls.guess_key('standard_name', 'standard', d, "")
+            d['standard_name'] = std_name
+            _, units = cls.guess_key('units', 'unit', d, "")
+            d['units'] = units
+            setattr(ds[var], 'attrs', d)
+
+    @classmethod
+    def check_calendar(cls, ds):
+        """Parse the calendar for time-dependent data (assumes CF conventions).
+        Sets the "calendar" attr on the time coordinate, if it exists, in order
+        to be read by the calendar property. 
+        """
+        _default_cal = 'none'
+        t_names = ds.cf.axes.get('T', [])
+        if not t_names:
+            return # assume static data
+        elif len(t_names) > 1:
+            _log.error("Found multiple time axes. Ignoring all but '%s'.", t_names[0])
+        t_name = t_names[0]
+        time_coord = ds.coords[t_name] # abbreviate
+
+        # normal case: T axis has been parsed into cftime Datetime objects.
+        cftime_cal = getattr(time_coord.values[0], 'calendar', None)
+        if not cftime_cal:
             _log.warning("cftime calendar info parse failed on '%s'.", t_name)
-            if 'calendar' in time_coord.attrs:
-                attr_cal = time_coord.attrs['calendar']
-            elif 'calendar' in ds.attrs:
-                attr_cal = ds.attrs['calendar']
-            else:
-                _log.error("No calendar associated with '%s' found; using '%s'.", 
-                    t_name, _fallback_value)
-                attr_cal = _fallback_value
-            time_coord.attrs['calendar'] = _validate_cal(attr_cal)
+            try:
+                _, cftime_cal = cls.guess_key('calendar', 'cal', time_coord.attrs)
+            except KeyError:
+                try:
+                    _, cftime_cal = cls.guess_key('calendar', 'cal', ds.attrs)
+                except KeyError:
+                    _log.error("No calendar associated with '%s' found; using '%s'.", 
+                        t_name, _default_cal)
+                    cftime_cal = _default_cal
+        time_coord.attrs['calendar'] = cls.guess_attr(
+            'calendar', cftime_cal, _cf_calendars, _default_cal)
 
-def parse_dataset(ds):
-    """Calls the above metadata parsing functions in the intended order; 
-    intended to be called immediately after the Dataset is opened.
+    @staticmethod
+    def check_attr(our_var, ds_var, our_attr_name, ds_attr_name=None, 
+        comparison_func=None):
+        """Compare attribute of a DMVariable (our_var) with what's set in the 
+        xarray.Dataset (ds_var). If there's a discrepancy, log an error but 
+        change the entry in our_var (ie take ds_var to be ground truth.)
+        """
+        our_name = our_var.name
+        if ds_attr_name is None:
+            ds_attr_name = our_attr_name
+        if comparison_func is None:
+            comparison_func = (lambda x,y: x != y)
 
-    - Strip whitespace from attributes as a precaution to avoid malformed metadata.
-    - Call xarray's 
-      `decode_cf <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
-      using `cftime <https://unidata.github.io/cftime/>`__ to decode CF-compliant
-      time axes. 
-    - Assign axis labels to dimension coordinates using cf_xarray.
-    - Verify that calendar and standard names are set correctly.
-
-    .. note::
-       ``decode_cf=False`` should be passed to the xarray open_dataset command,
-       since that parsing is done here instead.
-    """
-    def _strip(v):
-        return (v.strip() if isinstance(v, str) else v)
-    def _strip_dict(d):
-        return {_strip(k): _strip(v) for k,v in d.items()}
-
-    ds.attrs = _strip_dict(ds.attrs)
-    for var in ds.variables:
-        ds[var].attrs = _strip_dict(ds[var].attrs)
-    ds = xr.decode_cf(ds,         
-        decode_coords=True, # parse coords attr
-        decode_times=False, # don't decode time axis into default np.datetime64 objects
-        use_cftime=True     # use cftime library for dates/calendars instead
-    ) # 
-    ds = ds.cf.guess_coord_axis()
-    verify_calendar(ds)
-    return ds
-
-# ---------------------------------------------------------------
-
-def conversion_factor(source_unit, dest_unit):
-    """Defined so that (conversion factor) * (quantity in source_units) = 
-    (quantity in dest_units). 
-    """
-    if not source_unit.equivalent(dest_unit):
-        raise exceptions.UnitsError((f"Units {repr(source_unit)} and "
-            f"{repr(dest_unit)} are inequivalent."))
-    return cfunits.conform(1.0, dest_unit, source_unit)
-
-def convert_array(array, source_unit, dest_unit):
-    """Wrapper for cfunits.conform() that does unit conversion in-place on a
-    numpy array.
-    """
-    if not source_unit.equivalent(dest_unit):
-        raise exceptions.UnitsError((f"Units {repr(source_unit)} and "
-            f"{repr(dest_unit)} are inequivalent."))
-    cfunits.conform(array, source_unit, dest_unit, inplace=True)
-
-
-def verify_variable(ds, translated_var):
-    """Checks standard_name attribute of all variables and coordinates. If
-    not set, attempts to set it according to ``convention``. If different 
-    from ``convention``, raises a warning.
-    """
-    tv_name = translated_var.name          # abbreviate
-    convention = translated_var.convention # abbreviate
-    if tv_name not in ds:
-        raise exceptions.DataPreprocessError(translated_var, 
-            f"Variable name '{tv_name}' not found in dataset.")
-        # fallback -- try to match on standard name?
-    v = ds[tv_name].attrs # abbreviate
-
-    # check standard names agree
-    our_std_name = translated_var.standard_name
-    if "standard_name" not in v:
-        _log.warning("No standard name for '%s' in dataset, setting to '%s'.",
-            tv_name, our_std_name)
-        v["standard_name"] = our_std_name
-    elif v["standard_name"] != our_std_name:
-        _log.error(("Found unexpected standard name '%s' for variable "
-            "'%s': expected '%s' according to convention '%s'. Leaving "
-            "unchanged."),
-            v["standard_name"], tv_name, our_std_name, convention
-        )
-
-    # check units agree
-    our_units = translated_var.units
-    if "units" not in v:
-        _log.warning("No units for '%s' in dataset, setting to '%s'.",
-            tv_name, our_units)
-        v["units"] = str(our_units)
-    else:
-        ds_units = cfunits.Unit(v["units"])
-        if not our_units.equivalent(ds_units):
-            _log.error(("Found inequivalent units '%s' for variable "
-                "'%s': expected '%s' according to convention '%s'. Leaving "
-                "unchanged."),
-                ds_units, tv_name, our_units, convention
+        our_attr = getattr(our_var, our_attr_name)
+        ds_attr = ds_var.attrs.get(ds_attr_name, "")
+        if not ds_attr:
+            _log.warning("No %s found in dataset for '%s'; setting to '%s'.",
+                ds_attr_name, our_name, str(our_attr))
+            ds_var.attrs[ds_attr_name] = str(our_attr)
+        elif not comparison_func(our_attr, ds_attr):
+            _log.error(("Found unexpected %s for variable '%s': '%s' (expected "
+                "'%s'). Updating record according to info in dataset."),
+                ds_attr_name, our_name, ds_attr, our_attr
             )
+            our_var.our_attr_name = ds_attr
+            raise TypeError()
 
-    # check axes (array dimensionality) agree
-    our_axes = translated_var.axes_set
-    ds_axes = frozenset(ds[tv_name].axes_tuple)
-    if our_axes != ds_axes:
-        _log.error() 
+    @classmethod
+    def check_std_name_units(cls, our_var, ds_var):
+        try:
+            cls.check_attr(our_var, ds_var, 'standard_name')
+        except TypeError:
+            pass
+        try:
+            cls.check_attr(our_var, ds_var, 'units', 
+                comparison_func=are_units_equivalent)
+        except TypeError:
+            our_var.units = _coerce_to_cfunits(our_var.units)
 
+    @classmethod
+    def check_variable(cls, ds, translated_var):
+        """Checks standard_name attribute of all variables and coordinates. If
+        not set, attempts to set it according to ``convention``. If different 
+        from ``convention``, raises a warning.
+        """
+        tv_name = translated_var.name          # abbreviate
+        # convention = translated_var.convention # abbreviate
 
-        
-def get_unmapped_names(ds):
-    """Get a dict whose keys are variable or attribute names referred to by 
-    variables in the dataset, but not present in the dataset itself. Values of 
-    the dict are sets of names of variables in the dataset that referred to the
-    missing name.
-    """
-    all_arr_names = set(ds.dims).union(ds.variables)
-    all_attr_names = set(getattr(ds, 'attrs', []))
-    for name in all_arr_names:
-        all_attr_names.update(getattr(ds[name], 'attrs', []))
+        if tv_name not in ds:
+            raise ValueError(f"Variable name '{tv_name}' not found in dataset: "
+                f"({list(ds.variables)}).")
+            # fallback -- try to match on standard name?
 
-    # NOTE: will currently fail on CAM/CESM P0. Where do they store it?
-    missing_refs = dict()
-    lookup = collections.defaultdict(set)
-    for name in all_arr_names:
-        refs = set(getattr(ds[name], 'dims', []))
-        refs.update(itertools.chain.from_iterable(
-            ds.cf.get_associated_variable_names(name).values()
-        ))
-        refs.update(ds[name].cf.formula_terms.values())
-        for ref in refs:
-            lookup[ref].add(name)
-    for ref in lookup:
-        if (ref not in all_arr_names) and (ref not in all_attr_names):
-            missing_refs[ref] = lookup[ref]
-    return missing_refs
+        # check variable std_name, units
+        cls.check_std_name_units(translated_var, ds[tv_name])
+
+        # check XYZT axes all uniquely defined
+        for ax, coord_list in ds.cf.axes.items():
+            if len(coord_list) != 1:
+                raise TypeError(f"More than one {ax} axis found for '{tv_name}': "
+                    f"{coord_list}.")
+        # check axes_set (array dimensionality) agrees
+        our_axes = translated_var.axes_set
+        ds_axes = frozenset(ds[tv_name].axes_tuple)
+        if our_axes != ds_axes:
+            raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
+                f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
+        # check axis std_names, units
+        for ax, our_coord in translated_var.axes:
+            ds_coord = ds.cf.axes[ax][0]
+            cls.check_std_name_units(our_coord, ds_coord)
+
+    @classmethod
+    def parse(cls, ds, var=None):
+        """Calls the above metadata parsing functions in the intended order; 
+        intended to be called immediately after the Dataset is opened.
+
+        - Strip whitespace from attributes as a precaution to avoid malformed metadata.
+        - Call xarray's 
+        `decode_cf <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
+        using `cftime <https://unidata.github.io/cftime/>`__ to decode CF-compliant
+        time axes. 
+        - Assign axis labels to dimension coordinates using cf_xarray.
+        - Verify that calendar and standard names are set correctly.
+
+        .. note::
+           ``decode_cf=False`` should be passed to the xarray open_dataset command,
+           since that parsing is done here instead.
+        """
+        cls.munge_ds_attrs(ds)
+        ds = xr.decode_cf(ds,         
+            decode_coords=True, # parse coords attr
+            decode_times=False, # don't decode time axis into default np.datetime64 objects
+            use_cftime=True     # use cftime library for dates/calendars instead
+        )
+        ds = ds.cf.guess_coord_axis()
+        cls.check_calendar(ds)
+        if var is not None:
+            cls.check_variable(ds, var.translation)
+        return ds
+    
+    @staticmethod
+    def get_unmapped_names(ds):
+        """Get a dict whose keys are variable or attribute names referred to by 
+        variables in the dataset, but not present in the dataset itself. Values of 
+        the dict are sets of names of variables in the dataset that referred to the
+        missing name.
+        """
+        all_arr_names = set(ds.dims).union(ds.variables)
+        all_attr_names = set(getattr(ds, 'attrs', []))
+        for name in all_arr_names:
+            all_attr_names.update(getattr(ds[name], 'attrs', []))
+
+        # NOTE: will currently fail on CAM/CESM P0. Where do they store it?
+        missing_refs = dict()
+        lookup = collections.defaultdict(set)
+        for name in all_arr_names:
+            refs = set(getattr(ds[name], 'dims', []))
+            refs.update(itertools.chain.from_iterable(
+                ds.cf.get_associated_variable_names(name).values()
+            ))
+            refs.update(ds[name].cf.formula_terms.values())
+            for ref in refs:
+                lookup[ref].add(name)
+        for ref in lookup:
+            if (ref not in all_arr_names) and (ref not in all_attr_names):
+                missing_refs[ref] = lookup[ref]
+        return missing_refs

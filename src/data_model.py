@@ -359,7 +359,7 @@ class _DMDimensionsMixin(object):
 
     def build_axes(self, *coords):
         # validate that we don't have duplicate axes
-        d = dict()
+        d = util.WormDict()
         verify_d = dict()
         for c in itertools.chain(*coords):
             if c.axis != DMAxis.OTHER and c.axis in verify_d:
@@ -554,10 +554,12 @@ class DMDataSet(_DMDimensionsMixin):
         # can't have duplicate dims, but duplicate scalar_coords are OK.
         super(DMDataSet, self).__post_init__(coords)
 
-    def iter_coords(self):
-        yield from itertools.chain(self.vars, self.aux_coords)
-
     def iter_contents(self):
+        # all contents
+        yield from itertools.chain(self.vars, self.aux_coords, self.coord_bounds)
+
+    def iter_vars(self):
+        # dependent variables only
         yield from itertools.chain(self.vars, self.aux_coords)
 
     def _classify(self, v):

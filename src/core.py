@@ -541,7 +541,10 @@ class Fieldlist():
         )
 
     def translate(self, var):
-        """Return a DMVariable corresponding to the translated version of var. 
+        """Return a TranslatedVarlistEntry with translated names, units, 
+        etc. for var. Includes logic to translate and rename scalar coords/slices,
+        e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
+        TranslatedVarlistEntry for 'u500' (3D), depending on naming convention.
         """
         fl_entry = self.from_CF(var.standard_name, var.axes_set)
         conv_var = self.lookup_variable(var)
@@ -566,18 +569,6 @@ class Fieldlist():
                 value_in_conv, conv_ax.units)
             conv_var.name = new_name
         return conv_var
-
-    def remove_scalar(self, var):
-        """If var has a scalar_coordinate defined, remove it and translate that,
-        else return None.
-        """
-        if len(var.scalar_coords) == 0:
-            return None
-        elif len(var.scalar_coords) > 1:
-            raise NotImplementedError()
-        c = var.scalar_coords[0]
-        new_var = var.remove_scalar(c.axis) # makes a copy
-        return self.lookup_variable(new_var)
 
 
 class VariableTranslator(util.Singleton):
@@ -655,10 +646,6 @@ class VariableTranslator(util.Singleton):
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)
-
-    def remove_scalar(self, conv_name, var):
-        return self._fieldlist_method(conv_name, 'remove_scalar', var)
-
 
 # --------------------------------------------------------------------
 

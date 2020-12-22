@@ -451,6 +451,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
         # Execute type check after dataclass' __init__ and __post_init__:
+        # print('XXX', self.__class__.__name__, args, kwargs)
         _old_init(self, *args, **kwargs)
         _mdtf_dataclass_typecheck(self)        
 
@@ -629,7 +630,9 @@ def coerce_to_dataclass(d, dc, **kwargs):
     passed in kwargs.
     """
     new_kwargs = filter_dataclass(d, dc, init=True)
-    new_kwargs.update(kwargs)
+    if kwargs:
+        new_kwargs.update(kwargs)
+        new_kwargs = filter_dataclass(new_kwargs, dc, init=True)
     if not isinstance(dc, type):
         dc = dc.__class__
     return dc(**new_kwargs)

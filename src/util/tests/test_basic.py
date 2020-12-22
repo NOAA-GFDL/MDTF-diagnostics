@@ -105,7 +105,7 @@ class TestMultiMap(unittest.TestCase):
         self.assertCountEqual(temp_inv[1], set(['a']))
 
 class TestWormDict(unittest.TestCase):
-    def test_normal_operation(self):
+    def test_worm_normal_operation(self):
         foo = util.WormDict(a=1, b=2)
         self.assertTrue(isinstance(foo, dict)) # should really be testing for MutableMapping
         self.assertEqual(foo['b'], 2)
@@ -120,14 +120,14 @@ class TestWormDict(unittest.TestCase):
         self.assertEqual(test, 4)
         self.assertEqual(foo['d'], 4)
 
-    def test_overwrite(self):
+    def test_worm_overwrite(self):
         foo = util.WormDict(a=1, b=2)
         with self.assertRaises(exceptions.WormKeyError):
             foo['a'] = 3
         with self.assertRaises(exceptions.WormKeyError):
             foo.update({'c': 3, 'a': 4})
 
-    def test_delete(self):
+    def test_worm_delete(self):
         foo = util.WormDict(a=1, b=2)
         with self.assertRaises(exceptions.WormKeyError):
             del foo['a']
@@ -135,6 +135,62 @@ class TestWormDict(unittest.TestCase):
             _ = foo.pop('a')
         with self.assertRaises(exceptions.WormKeyError):
             _ = foo.popitem()
+
+    def test_consistentD_normal_operation(self):
+        foo = util.ConsistentDict(a=1, b=2)
+        self.assertTrue(isinstance(foo, dict)) # should really be testing for MutableMapping
+        self.assertEqual(foo['b'], 2)
+        # all dicts are OrderedDicts starting with 3.7
+        self.assertEqual(tuple(foo.keys()), ('a','b'))
+        self.assertEqual(tuple(foo.values()), (1,2))
+        self.assertEqual(tuple(str(k) + str(v) for k,v in foo.items()), ('a1', 'b2'))
+        foo.update({'c': 3, 'd': 4})
+        self.assertEqual(foo['d'], 4)
+        self.assertEqual(len(foo), 4)
+        test = foo.setdefault('d', 5)
+        self.assertEqual(test, 4)
+        self.assertEqual(foo['d'], 4)
+
+    def test_consistentD_overwrite_different(self):
+        foo = util.ConsistentDict(a=1, b=2)
+        with self.assertRaises(exceptions.WormKeyError):
+            foo['a'] = 3
+        with self.assertRaises(exceptions.WormKeyError):
+            foo.update({'c': 3, 'a': 4})
+
+    def test_consistentD_overwrite_same(self):
+        foo = util.ConsistentDict(a=1, b=2)
+        raised_exc = False
+        try:
+            foo['b'] = 2
+        except Exception:
+            raised_exc = True
+        self.assertFalse(raised_exc)
+        raised_exc = False
+        try:
+            foo.update({'c': 3, 'a': 1})
+        except Exception:
+            raised_exc = True
+        self.assertFalse(raised_exc)
+        self.assertEqual(foo['a'], 1)
+        self.assertEqual(foo['b'], 2)
+        self.assertEqual(foo['c'], 3)
+
+    def test_consistentD_delete(self):
+        foo = util.ConsistentDict(a=1, b=2)
+        del foo['a']
+        self.assertEqual(foo['b'], 2)
+        self.assertEqual(len(foo), 1)
+        foo = util.ConsistentDict(a=1, b=2)
+        bar = foo.pop('a')
+        self.assertEqual(bar, 1)
+        self.assertEqual(len(foo), 1)
+        foo = util.ConsistentDict(a=1, b=2)
+        bar, baz = foo.popitem()
+        self.assertEqual(bar, 'a')
+        self.assertEqual(baz, 1)
+        self.assertEqual(len(foo), 1)
+
 
 class TestNameSpace(unittest.TestCase):
     def test_namespace_basic(self):

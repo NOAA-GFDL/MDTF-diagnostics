@@ -118,33 +118,19 @@ class MultiMap(collections.defaultdict):
         inv_lookup = self.inverse()
         return from_iter(inv_lookup[val])
 
-class WormDict(collections.abc.MutableMapping, dict):
+class WormDict(collections.UserDict, dict):
     """Dict which raises eexceptions when trying to overwrite or delete an 
     existing entry. "WORM" is an acronym for "write once, read many."
-
-    Based on `https://stackoverflow.com/a/30242860`__.
     """
-    def __init__(self, *args, **kwargs):
-        self._dict = dict(*args, **kwargs)
-
-    def __getitem__(self, key):
-        return self._dict[key]
-
     def __setitem__(self, key, value):
-        if key in self._dict:
+        if key in self.data:
             raise exceptions.WormKeyError(("Attempting to overwrite entry for "
                 f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
-        self._dict[key] = value
+        self.data[key] = value
 
     def __delitem__(self, key):
         raise exceptions.WormKeyError(("Attempting to delete entry for "
                 f"'{key}'. Existing value: '{self[key]}'."))
-
-    def __iter__(self):
-        return iter(self._dict)
-
-    def __len__(self):
-        return len(self._dict)
 
     @classmethod
     def from_struct(cls, d):
@@ -155,13 +141,13 @@ class ConsistentDict(WormDict):
     reassign to a different value.
     """
     def __setitem__(self, key, value):
-        if key in self._dict and self[key] != value:
+        if key in self.data and self[key] != value:
             raise exceptions.WormKeyError(("Attempting to overwrite entry for "
                 f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
-        self._dict[key] = value
+        self.data[key] = value
 
     def __delitem__(self, key):
-        del self._dict[key]
+        del self.data[key]
 
 class WormDefaultDict(WormDict):
     """:class:`src.util.basic.WormDict` with :py:class:`collections.defaultdict`

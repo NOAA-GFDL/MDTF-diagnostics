@@ -75,10 +75,20 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         code_root = os.path.dirname(os.path.dirname(cwd))
         raised = False
         try:
-            _ = core.VariableTranslator(code_root, unittest=False)
+            translate = core.VariableTranslator(code_root, unittest=False)
         except Exception:
             raised = True
         self.assertFalse(raised)
+        self.assertIn('CMIP', translate.conventions)
+        self.assertIn('ua', translate.conventions['CMIP'].entries)
+        
+    def test_variabletranslator_real_data(self):
+        # run in non-unit-test mode to test loading of config files
+        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        code_root = os.path.dirname(os.path.dirname(cwd))
+        translate = core.VariableTranslator(code_root, unittest=False)
+        self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_flux")
+        self.assertEqual(translate.from_CF_name('CMIP', 'toa_outgoing_longwave_flux'), "rlut")
 
 class TestPathManager(unittest.TestCase):
     # pylint: disable=maybe-no-member

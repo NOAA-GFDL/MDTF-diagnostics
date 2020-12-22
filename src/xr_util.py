@@ -44,18 +44,19 @@ def are_units_equivalent(*args):
     (represent the same physical quantity, up to a multiplactive conversion 
     factor.)
     """
-    args = _coerce_to_cfunits(args)
+    args = _coerce_to_cfunits(*args)
     ref_unit = args.pop()
     return all(ref_unit.equivalent(unit) for unit in args)
 
 def _coerce_equivalent_units(*args):
-    args = _coerce_to_cfunits(args)
+    args = _coerce_to_cfunits(*args)
     ref_unit = args.pop()
     for unit in args:
         if not ref_unit.equivalent(unit):
             raise exceptions.UnitsError((f"Units {repr(ref_unit)} and "
                 f"{repr(unit)} are inequivalent."))
-    return args.append(ref_unit)
+    args.append(ref_unit)
+    return args
 
 def conversion_factor(source_unit, dest_unit):
     """Defined so that (conversion factor) * (quantity in source_units) = 

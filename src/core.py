@@ -415,7 +415,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: cfunits.Units = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    axes_set: frozenset = dc.field(default_factory=frozenset)
+    # axes_set: frozenset = dc.field(default_factory=frozenset)
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
 
@@ -444,7 +444,8 @@ class FieldlistEntry(object):
             data_model.DMAxis.from_struct(x) for x in self.axes_set
         )
         self.scalar_coord_templates = {
-            data_model.DMAxis(k): v for k,v in self.scalar_coord_templates.items()
+            data_model.DMAxis.from_struct(k): v for k,v \
+                in self.scalar_coord_templates.items()
         }
         
 @util.mdtf_dataclass
@@ -460,25 +461,26 @@ class Fieldlist():
 
     @classmethod
     def from_struct(cls, d):
-        def _process_one(section_name, d, entry_d, lut_d):
+        lut_temp = collections.defaultdict(util.WormDict)
+
+        def _process_one(section_name):
             # build two-stage lookup table -- should just make FieldlistEntry 
             # hashable
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
                 entry = FieldlistEntry(name=k, **v)
-                entry_d[k] = entry
-                lut_d[entry.standard_name][entry.axes_set] = entry
+                d['entries'][k] = entry
+                lut_temp[entry.standard_name][entry.axes_set] = entry
 
         d['axes'] = {
-            data_model.DMAxis(v['axis']): \
+            data_model.DMAxis.from_struct(v['axis']): \
                 data_model.coordinate_from_struct(v, name=k) \
             for k,v in d['axes'].items() 
         }
         d['entries'] = util.WormDict()
         d['lut'] = util.WormDict()
-        lut_temp = collections.defaultdict(util.WormDict)
-        _process_one('aux_coords', d,  d['entries'], lut_temp)
-        _process_one('variables', d, d['entries'], lut_temp)
+        _process_one('aux_coords')
+        _process_one('variables')
         d['lut'].update(lut_temp)
         return cls(**d)
 
@@ -526,13 +528,13 @@ class Fieldlist():
 
     def lookup_axis(self, ax):
         if not isinstance(ax, data_model.DMAxis):
-            ax = data_model.DMAxis(ax)
+            ax = data_model.DMAxis.from_struct(ax)
         return self.axes.get(ax, None)
 
     def lookup_variable(self, var):
         """Returns TranslatedVarlistEntry instance, with populated axes."""
-        fl_entry = self.from_CF(var.standard_name, var.axes_set)
-        coords = {ax: self.lookup_axis(ax) for ax in fl_entry.axis_set}
+        fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
+        coords = {ax: self.lookup_axis(ax) for ax in fl_entry.axes_set}
         for c in var.scalar_coords:
             coords[c.axis].value = c.value
         return util.coerce_to_dataclass(
@@ -546,7 +548,7 @@ class Fieldlist():
         e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
         TranslatedVarlistEntry for 'u500' (3D), depending on naming convention.
         """
-        fl_entry = self.from_CF(var.standard_name, var.axes_set)
+        fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
         conv_var = self.lookup_variable(var)
 
         if len(var.scalar_coords) > 1:

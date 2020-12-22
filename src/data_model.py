@@ -419,6 +419,10 @@ class DMDependentVariable(_DMDimensionsMixin):
         super(DMDependentVariable, self).__post_init__(coords)
         self.phys_axes = self.build_axes(self.dims, self.scalar_coords)
 
+    @property
+    def phys_axes_set(self):
+        return frozenset(self.phys_axes.keys())
+
     def add_scalar(self, ax, ax_value, **kwargs):
         assert ax in self.axes
         dim = self.axes[ax]

@@ -133,7 +133,7 @@ VarlistEntryStatus = util.MDTFIntEnum(
 # only used during query/fetch/preprocess. Fields without compare=False remain
 # unchanged during this.
 @util.mdtf_dataclass(unsafe_hash=True)
-class VarlistEntry(data_model.DMVariable, VarlistSettings):
+class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
     settings.jsonc file.
@@ -316,8 +316,8 @@ class VarlistEntry(data_model.DMVariable, VarlistSettings):
         def _format(v):
             act_str = ('active' if v.active else 'inactive')
             fail_str = ('failed' if v.failed else 'ok')
-            return (f"({v.name} {v.standard_name} {v.name_in_model} : "
-                f"{act_str}, {fail_str}, {v.requirement})")
+            return (f"<{v.short_format()} : "
+                f"{act_str}, {fail_str}, {v.requirement}>")
 
         print(_format(self))
         for i, altvs in enumerate(self.alternates):

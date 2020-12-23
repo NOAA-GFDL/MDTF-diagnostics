@@ -210,9 +210,6 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
     _backup_config_file_name = 'config_save.json'
-    @property
-    def _tarball_file_name(self):
-        return self.WK_DIR + '.tar'
 
     def __init__(self, case):
         config = core.ConfigManager()
@@ -236,7 +233,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
                 _log.exception(f"Caught {repr(exc)}.")
-                pod.exception.log(exc)
+                pod.exceptions.log(exc)
                 continue
         for pod in case.pods.values():
             try:
@@ -247,7 +244,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
                 _log.exception(f"Caught {repr(exc)}.")
-                pod.exception.log(exc)
+                pod.exceptions.log(exc)
                 continue
 
         self.make_html(case)
@@ -255,6 +252,11 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if self.make_variab_tar:
             _ = self.make_tar_file(case)
         self.copy_to_output(case)
+
+    @property
+    def _tarball_file_name(self):
+        assert hasattr(self, 'WK_DIR')
+        return self.WK_DIR + '.tar'
 
     def append_result_link(self, pod):
         """Update the top level index.html page with a link to this POD's results.
@@ -306,7 +308,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     def make_html(self, case, cleanup=True):
         """Add header and footer to CASE_TEMP_HTML.
         """
-        dest = os.path.join(case.WK_DIR, self._html_file_name)
+        dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
             _log.warning("%s: %s exists, deleting.", 
                 self._html_file_name, case.name)
@@ -330,7 +332,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """Record settings in file config_save.json for rerunning.
         """
         config = core.ConfigManager()
-        out_file = os.path.join(case.WK_DIR, self._backup_config_file_name)
+        out_file = os.path.join(self.WK_DIR, self._backup_config_file_name)
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):

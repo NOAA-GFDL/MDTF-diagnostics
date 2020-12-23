@@ -283,7 +283,7 @@ class SubprocessRuntimePODWrapper(object):
     """Wrapper for :class:`diagnostic.Diagnostic` that adds fields and methods
     used by :class:`SubprocessRuntimeManager`.
     """
-    pod: diagnostic.Diagnostic = util.MANDATORY
+    pod: typing.Any = util.MANDATORY
     env: typing.Any = None
     env_vars: dict = dataclasses.field(default_factory=dict)
     log_handle: io.IOBase = dataclasses.field(default=None, init=False)

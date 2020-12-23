@@ -132,26 +132,26 @@ class MDTFCFAccessorMixin(object):
         assert len(t_names) == 1
         return ds.coords[t_names[0]].attrs.get('calendar', None)
 
-class MDTFCFDatasetAccessorMixin(object):
-    """Methods we add for xarray Dataset objects only.
+class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
+    """Methods we add for xarray Dataset objects.
     """
     pass
 
-class MDTFDataArrayAccessorMixin(object):
-    """Methods we add for xarray DataArray objects only.
+class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
+    """Methods we add for xarray DataArray objects.
     """
     @property
     def axes_tuple(self):
         """Returns ordered tuple of DMAxis enums corresponding to dimensions.
-        eg. var.dims = ('time', 'lat', 'lon') gives an axes_tuple of ('T', 'Y', 'X').
+        eg. var.dims = ('time', 'lat', 'lon') gives an axes_tuple of 
+        (DMAxis.T, DMAxis.Y, DMAxis.X).
         """
-        def _lookup(dim_name):
-            for ax, dim_names in self.cf.axes.items():
-                if dim_name in dim_names:
-                    return data_model.DMAxis.from_struct(ax)
-            raise ValueError(dim_name)
-
-        return tuple(_lookup(dim) for dim in self.dims)
+        da = self._obj # abbreviate
+        lookup_d = basic.WormDict()
+        for ax in data_model.DMAxis.spatiotemporal:
+            dim_names = cf_xarray.accessor._get_axis_coord(da, str(ax))
+            lookup_d.update({name: ax for name in dim_names})
+        return tuple(lookup_d[dim] for dim in da.dims)
 
     @property
     def formula_terms(self):
@@ -175,15 +175,13 @@ with warnings.catch_warnings():
 
     @xr.register_dataset_accessor("cf")
     class MDTFCFDatasetAccessor(
-        MDTFCFDatasetAccessorMixin, MDTFCFAccessorMixin,
-        cf_xarray.accessor.CFDatasetAccessor
+        MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor
     ):
         pass
     
     @xr.register_dataarray_accessor("cf")
     class MDTFCFDataArrayAccessor(
-        MDTFDataArrayAccessorMixin, MDTFCFAccessorMixin,
-        cf_xarray.accessor.CFDataArrayAccessor
+        MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor
     ):
         pass
 
@@ -191,9 +189,11 @@ with warnings.catch_warnings():
 
 class DatasetParser():
     """Class which acts as a container for MDTF-specific dataset parsing logic.
-    Doesn't need to be instantiated, since all logic is done in terms of 
-    classmethods or staticmethods.
     """
+    def __init__(self):
+        self.attrs_backup = dict()
+        self.var_attrs_backup = dict()
+
     @staticmethod
     def guess_attr(name, expected_val, options, default=None, comparison_func=None):
         """Return element of options equal to expected_val. If none are equal, 
@@ -204,7 +204,7 @@ class DatasetParser():
             return re.sub(r'[^a-z0-9]+', '', s.lower())
 
         if comparison_func is None:
-            comparison_func = (lambda x,y: x != y)
+            comparison_func = (lambda x,y: x == y)
         options = basic.to_iter(options)
         test_count = sum(comparison_func(opt, expected_val) for opt in options)
         if test_count > 1:
@@ -212,8 +212,8 @@ class DatasetParser():
                 expected_val, name)
         if test_count >= 1:
             return expected_val
-        _log.warning("Expected value of '%s' for '%s' not found.", 
-            expected_val, name)
+        # _log.warning("Expected value of '%s' for '%s' not found.", 
+        #     expected_val, name)
         munged_opts = [
             (comparison_func(str_munge(opt), str_munge(expected_val)), opt) \
                 for opt in options
@@ -224,25 +224,28 @@ class DatasetParser():
                 guessed_val, name)
             return guessed_val
         if default is None:
-            _log.error("Failed to parse %s out of %s.", name, options)
+            _log.error("No string similar to '%s' in %s.", name, options)
             raise KeyError(expected_val)
         else:
-            _log.error("Failed to parse '%s'; using fallback value '%s'.", 
-                name, default)
+            # _log.error("Failed to parse '%s'; using fallback value '%s'.", 
+            #     name, default)
             return default
 
-    @classmethod
-    def guess_key(cls, key_name, key_startswith, d, default=None):
+    def guess_key(self, key_name, key_startswith, d, default=None):
+        """Attempts to return the (key, value) from dict d corresponding to
+        key_name. If key_name is not in d, we check possible nonstandard
+        representations of the key (eg case-insensitive match; whether the key
+        starts with the string key_startswith.)
+        """
         try:
-            k = cls.guess_attr(key_name, key_name, d.keys(), 
+            k = self.guess_attr(key_name, key_name, d.keys(), 
                 default=None, comparison_func=None)
         except KeyError:
-            k = cls.guess_attr(key_name, key_startswith, d.keys(), 
+            k = self.guess_attr(key_name, key_startswith, d.keys(), 
                 default=default, comparison_func=(lambda x,y: x.startswith(y)))
         return (k, d.get(k, None))
 
-    @classmethod
-    def munge_ds_attrs(cls, ds):
+    def munge_ds_attrs(self, ds):
         """Initial munging of xarray Dataset attribute dicts, before any 
         decoding or parsing.
         """
@@ -253,17 +256,30 @@ class DatasetParser():
             return {strip_(k): strip_(v) for k,v in d.items()}
 
         setattr(ds, 'attrs', strip_attrs(ds))
+        self.attrs_backup = ds.attrs.copy()
         for var in ds.variables:
-            d = strip_attrs(ds[var])
-            # warning raised on missing std_name, units in check_variable
-            _, std_name = cls.guess_key('standard_name', 'standard', d, "")
-            d['standard_name'] = std_name
-            _, units = cls.guess_key('units', 'unit', d, "")
-            d['units'] = units
-            setattr(ds[var], 'attrs', d)
+            setattr(ds[var], 'attrs', strip_attrs(ds[var]))
+            self.var_attrs_backup[var] = ds[var].attrs.copy()
 
-    @classmethod
-    def check_calendar(cls, ds):
+    def restore_attrs(self, ds):
+        """decode_cf and other functions appear to un-set some of the attributes
+        coming from the netcdf file. Restore them from the backups made in 
+        munge_ds_attrs, but only if the attribute was deleted.
+        """
+        def _restore_one(name, backup_d, attrs_d):
+            for k,v in backup_d.items():
+                if k not in attrs_d:
+                    _log.debug("%s: restore attr '%s' = '%s'.", name, k, v)
+                    attrs_d[k] = v
+                if v != attrs_d[k]:
+                    _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                        name, k, v, attrs_d[k])
+        
+        _restore_one('Dataset', self.attrs_backup, ds.attrs)
+        for var in ds.variables:
+            _restore_one(var, self.var_attrs_backup[var], ds[var].attrs)
+
+    def check_calendar(self, ds):
         """Parse the calendar for time-dependent data (assumes CF conventions).
         Sets the "calendar" attr on the time coordinate, if it exists, in order
         to be read by the calendar property. 
@@ -282,15 +298,15 @@ class DatasetParser():
         if not cftime_cal:
             _log.warning("cftime calendar info parse failed on '%s'.", t_name)
             try:
-                _, cftime_cal = cls.guess_key('calendar', 'cal', time_coord.attrs)
+                _, cftime_cal = self.guess_key('calendar', 'cal', time_coord.attrs)
             except KeyError:
                 try:
-                    _, cftime_cal = cls.guess_key('calendar', 'cal', ds.attrs)
+                    _, cftime_cal = self.guess_key('calendar', 'cal', ds.attrs)
                 except KeyError:
                     _log.error("No calendar associated with '%s' found; using '%s'.", 
                         t_name, _default_cal)
                     cftime_cal = _default_cal
-        time_coord.attrs['calendar'] = cls.guess_attr(
+        time_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, _default_cal)
 
     @staticmethod
@@ -304,7 +320,7 @@ class DatasetParser():
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
         if comparison_func is None:
-            comparison_func = (lambda x,y: x != y)
+            comparison_func = (lambda x,y: x == y)
 
         our_attr = getattr(our_var, our_attr_name)
         ds_attr = ds_var.attrs.get(ds_attr_name, "")
@@ -320,20 +336,31 @@ class DatasetParser():
             our_var.our_attr_name = ds_attr
             raise TypeError()
 
-    @classmethod
-    def check_std_name_units(cls, our_var, ds_var):
+    def check_std_name_units(self, our_var, ds_var):
+        d = ds_var.attrs # abbreviate
         try:
-            cls.check_attr(our_var, ds_var, 'standard_name')
+            try:
+                # see if standard_name has been stored in a nonstandard attribute
+                _, std_name = self.guess_key('standard_name', 'standard', d)
+                d['standard_name'] = std_name
+            except KeyError:
+                pass
+            self.check_attr(our_var, ds_var, 'standard_name')
         except TypeError:
             pass
         try:
-            cls.check_attr(our_var, ds_var, 'units', 
+            try:
+                # see if units has been stored in a nonstandard attribute
+                _, units = self.guess_key('units', 'unit', d, "")
+                d['units'] = units
+            except KeyError:
+                pass
+            self.check_attr(our_var, ds_var, 'units', 
                 comparison_func=are_units_equivalent)
         except TypeError:
             our_var.units = _coerce_to_cfunits(our_var.units)
 
-    @classmethod
-    def check_variable(cls, ds, translated_var):
+    def check_variable(self, ds, translated_var):
         """Checks standard_name attribute of all variables and coordinates. If
         not set, attempts to set it according to ``convention``. If different 
         from ``convention``, raises a warning.
@@ -347,7 +374,7 @@ class DatasetParser():
             # fallback -- try to match on standard name?
 
         # check variable std_name, units
-        cls.check_std_name_units(translated_var, ds[tv_name])
+        self.check_std_name_units(translated_var, ds[tv_name])
 
         # check XYZT axes all uniquely defined
         for ax, coord_list in ds.cf.axes.items():
@@ -356,17 +383,17 @@ class DatasetParser():
                     f"{coord_list}.")
         # check axes_set (array dimensionality) agrees
         our_axes = translated_var.axes_set
-        ds_axes = frozenset(ds[tv_name].axes_tuple)
+        ds_axes = frozenset(ds[tv_name].cf.axes_tuple)
         if our_axes != ds_axes:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
                 f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
         # check axis std_names, units
-        for ax, our_coord in translated_var.axes:
-            ds_coord = ds.cf.axes[ax][0]
-            cls.check_std_name_units(our_coord, ds_coord)
+        for ax, our_coord in translated_var.axes.items():
+            ds_coord_name = ds.cf.axes[str(ax)][0]
+            self.check_std_name_units(our_coord, ds[ds_coord_name])
 
-    @classmethod
-    def parse(cls, ds, var=None):
+
+    def parse(self, ds, var=None):
         """Calls the above metadata parsing functions in the intended order; 
         intended to be called immediately after the Dataset is opened.
 
@@ -382,16 +409,17 @@ class DatasetParser():
            ``decode_cf=False`` should be passed to the xarray open_dataset command,
            since that parsing is done here instead.
         """
-        cls.munge_ds_attrs(ds)
+        self.munge_ds_attrs(ds)
         ds = xr.decode_cf(ds,         
             decode_coords=True, # parse coords attr
-            decode_times=False, # don't decode time axis into default np.datetime64 objects
-            use_cftime=True     # use cftime library for dates/calendars instead
+            decode_times=True,
+            use_cftime=True     # use cftime instead of np.datetime64
         )
         ds = ds.cf.guess_coord_axis()
-        cls.check_calendar(ds)
+        self.restore_attrs(ds)
+        self.check_calendar(ds)
         if var is not None:
-            cls.check_variable(ds, var.translation)
+            self.check_variable(ds, var.translation)
         return ds
     
     @staticmethod

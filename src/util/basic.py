@@ -35,10 +35,13 @@ class MDTFABCMeta(abc.ABCMeta):
     """
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
-        abstract_attributes = {
-            name for name in dir(instance) \
-            if getattr(getattr(instance, name), '__is_abstract_attribute__', False)
-        }
+        abstract_attributes = set([])
+        for attr in dir(instance):
+            if isinstance(getattr(cls, attr, None), property):
+                # Don't call properties on instance before it's inited
+                continue
+            if getattr(getattr(instance, attr), '__is_abstract_attribute__', False):
+                abstract_attributes.add(attr)
         if abstract_attributes:
             raise NotImplementedError(("Can't instantiate abstract class {} with "
                 "abstract attributes: {}").format(

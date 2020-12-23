@@ -46,7 +46,7 @@ class HTMLSourceFileMixin():
         return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
 
 class HTMLPodOutputManager(HTMLSourceFileMixin):
-    def __init__(self, pod, case_wk_dir):
+    def __init__(self, pod, code_root, case_wk_dir):
         """Performs cleanup tasks when the POD has finished running.
 
         In order, this 1) creates the POD's HTML output page from its included
@@ -64,7 +64,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         except KeyError as exc:
             _log.exception(f"Caught {repr(exc)}.")
             raise
-        self.CODE_ROOT = pod.CODE_ROOT
+        self.CODE_ROOT = code_root
         self.WK_DIR = case_wk_dir
 
         if pod.active:
@@ -228,7 +228,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         open(self.CASE_TEMP_HTML, 'w').close()
         for pod in case.pods.values():
             try:
-                self._PodOutputManagerClass(pod, self.WK_DIR)
+                self._PodOutputManagerClass(pod, self.CODE_ROOT, self.WK_DIR)
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
@@ -254,9 +254,11 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         self.copy_to_output(case)
 
     @property
-    def _tarball_file_name(self):
+    def _tarball_file_path(self):
+        paths = core.PathManager()
         assert hasattr(self, 'WK_DIR')
-        return self.WK_DIR + '.tar'
+        file_name = self.WK_DIR + '.tar'
+        return os.path.join(paths.OUTPUT_DIR, file_name)
 
     def append_result_link(self, pod):
         """Update the top level index.html page with a link to this POD's results.
@@ -342,20 +344,19 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     def make_tar_file(self, case):
         """Make tar file of web/bitmap output.
         """
-        paths = core.PathManager()
-        out_file = os.path.join(paths.OUTPUT_DIR, self._tarball_file_name)
+        out_path = self._tarball_file_path
         if not self.file_overwrite:
-            out_file, _ = util.bump_version(out_file)
-            _log.info("%s: Creating %s.", case.name, out_file)
-        elif os.path.exists(out_file):
-            _log.info("%s: Overwriting %s.", case.name, out_file)
+            out_path, _ = util.bump_version(out_path)
+            _log.info("%s: Creating %s.", case.name, out_path)
+        elif os.path.exists(out_path):
+            _log.info("%s: Overwriting %s.", case.name, out_path)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
-            f'tar {tar_flags} -czf {out_file} -C {self.WK_DIR} .',
+            f'tar {tar_flags} -czf {out_path} -C {self.WK_DIR} .',
             dry_run = self.dry_run
         )
-        return out_file
+        return out_path
 
     def copy_to_output(self, case):
         """Copy all files to the specified output directory.

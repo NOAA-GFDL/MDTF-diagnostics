@@ -140,7 +140,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
 
         assert ('CASE_ROOT_DIR' in case_dict)
         if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
-            raise util.DataAccessError(None, 
+            raise util.DataFetchError(None, 
                 f"Can't access CASE_ROOT_DIR = '{case_dict['CASE_ROOT_DIR']}'.")
         self.data_root_dir = case_dict['CASE_ROOT_DIR']
         self.tape_filesystem = gfdl_util.is_on_tape_filesystem(self.data_root_dir)
@@ -295,7 +295,7 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             _log.info(f"\tSelected {u_key} for {d_key}")
             # check we didn't eliminate everything:
             if not self._catalog[d_key][u_key]:
-                raise util.DataAccessError(d_key,
+                raise util.DataFetchError(d_key,
                     f'Choosing {d_key}, {u_key} eliminated all files.')
             self.data_files[d_key] = self._catalog[d_key][u_key]
 
@@ -672,17 +672,23 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             case, cleanup=(not self.frepp_mode)
         )
 
-    def make_tar_file(self, tar_dest_dir):
+    @property
+    def _tarball_file_path(self):
+        paths = core.PathManager()
+        assert hasattr(self, 'WK_DIR')
+        file_name = self.WK_DIR + '.tar'
+        return os.path.join(paths.WORKING_DIR, file_name)
+
+    def make_tar_file(self, case):
         """Make the tar file locally in WK_DIR and gcp to destination,
         since OUT_DIR might be mounted read-only.
         """
         paths = core.PathManager()
-        out_file = super(GFDLHTMLOutputManager, self).make_tar_file(
-            paths.WORKING_DIR
-        )
-        gfdl_util.gcp_wrapper(out_file, tar_dest_dir)
-        _, file_ = os.path.split(out_file)
-        return os.path.join(tar_dest_dir, file_)
+        out_path = super(GFDLHTMLOutputManager, self).make_tar_file(case)
+        _, file_name = os.path.split(out_path)
+        tar_dest_path = os.path.join(paths.OUTPUT_DIR, file_name)
+        gfdl_util.gcp_wrapper(out_path, tar_dest_path)
+        return tar_dest_path
 
     def copy_to_output(self, case):
         """Use gcp for transfer, since OUTPUT_DIR might be mounted read-only.

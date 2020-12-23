@@ -142,7 +142,7 @@ def find_files(src_dirs, filename_globs, n_files=None):
             files.update(glob.glob(os.path.join(d, g)))
             files.update(glob.glob(os.path.join(d, '**', g), recursive=True))
     if n_files is not None and len(files) != n_files:
-        _log.debug('Expected to find %d files, instead found %d.', n_files, len(files))
+        # _log.debug('Expected to find %d files, instead found %d.', n_files, len(files))
         raise exceptions.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 

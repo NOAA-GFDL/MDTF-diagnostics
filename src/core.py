@@ -566,9 +566,13 @@ class Fieldlist():
             value_in_conv = c.value \
                 * xr_util.conversion_factor(c.units, conv_ax.units)
             new_name = name_template.format(value=int(value_in_conv))
-            _log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
-                c.axis, var.name, new_name, c.value, c.units, 
-                value_in_conv, conv_ax.units)
+            if xr_util.are_units_equal(c.units, conv_ax.units):
+                _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
+                    c.value, c.units, c.axis, var.name, new_name)
+            else:
+                _log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
+                    c.axis, var.name, new_name, c.value, c.units, 
+                    value_in_conv, conv_ax.units)
             conv_var.name = new_name
         return conv_var
 
@@ -607,19 +611,25 @@ class VariableTranslator(util.Singleton):
             self.aliases[model] = conv_name
         self.conventions[conv_name] = Fieldlist.from_struct(d)
 
+    def get_convention_name(self, conv_name):
+        """Return the Fieldlist object itself, if we want to do lots of lookups
+        and want to keep code uncluttered.
+        """
+        if conv_name in self.conventions:
+            return conv_name
+        if conv_name in self.aliases:
+            _log.debug("Using convention '%s' based on alias '%s'.",
+                self.aliases[conv_name], conv_name)
+            return self.aliases[conv_name]
+        _log.error("Unrecognized variable name convention '%s'.", 
+            conv_name)
+        raise KeyError(conv_name)
+
     def get_convention(self, conv_name):
         """Return the Fieldlist object itself, if we want to do lots of lookups
         and want to keep code uncluttered.
         """
-        if conv_name not in self.conventions:
-            if conv_name in self.aliases:
-                _log.debug("Using convention '%s' based on alias '%s'.",
-                    self.aliases[conv_name], conv_name)
-                conv_name = self.aliases[conv_name]
-            else:
-                _log.error("Unrecognized variable name convention '%s'.", 
-                    conv_name)
-                raise KeyError(conv_name)
+        conv_name = self.get_convention_name(conv_name)
         return self.conventions[conv_name]
 
     def _fieldlist_method(self, conv_name, method_name, *args, **kwargs):

@@ -41,12 +41,20 @@ def _coerce_to_cfunits(*args):
 
 def are_units_equivalent(*args):
     """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplactive conversion 
+    (represent the same physical quantity, up to a multiplicative conversion 
     factor.)
     """
     args = _coerce_to_cfunits(*args)
     ref_unit = args.pop()
     return all(ref_unit.equivalent(unit) for unit in args)
+
+def are_units_equal(*args):
+    """Returns True if and only if all units in arguments are strictly equal
+    (represent the same physical quantity *and* conversion factor = 1).
+    """
+    args = _coerce_to_cfunits(*args)
+    ref_unit = args.pop()
+    return all(ref_unit.equals(unit) for unit in args)
 
 def _coerce_equivalent_units(*args):
     args = _coerce_to_cfunits(*args)

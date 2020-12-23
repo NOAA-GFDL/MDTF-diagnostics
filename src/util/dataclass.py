@@ -60,10 +60,12 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         except re.error as exc:
             raise ValueError('Malformed input regex.') from exc
         if self.regex.groups != len(self.regex.groupindex):
-            _log.warning("Unnamed match groups in regex")
+            # _log.warning("Unnamed match groups in regex")
+            pass
         if self.regex.groups == 0:
-            _log.warning("No named match groups in regex")
-        
+            # _log.warning("No named match groups in regex")
+            pass
+
         if not defaults:
             self._defaults = dict()
         else:

@@ -270,7 +270,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     def short_format(self):
         str_ = self.name
         if self.name_in_model:
-            str_ += f" (= {self.name_in_model})"
+            str_ += f" (={self.name_in_model})"
         attrs_ = []
         if not self.is_static and hasattr(self.T, 'frequency'):
             attrs_.append(str(self.T.frequency))
@@ -316,14 +316,13 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         def _format(v):
             act_str = ('active' if v.active else 'inactive')
             fail_str = ('failed' if v.failed else 'ok')
-            return (f"<{v.short_format()} : "
-                f"{act_str}, {fail_str}, {v.requirement}>")
+            return (f"<{v.short_format()}: "
+                f"{act_str}, {fail_str} (exc={v.exception}), {v.requirement}>")
 
         print(_format(self))
         for i, altvs in enumerate(self.alternates):
             alt_names = [_format(vv) for vv in altvs]
             print(f"  Alternate set #{i+1}: [{', '.join(alt_names)}]")
-        print()
 
 
 class Varlist(data_model.DMDataSet):

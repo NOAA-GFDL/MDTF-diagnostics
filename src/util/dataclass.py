@@ -58,7 +58,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             else:
                 self.regex = re.compile(regex, re.VERBOSE)
         except re.error as exc:
-            raise exc
+            raise ValueError('Malformed input regex.') from exc
         if self.regex.groups != len(self.regex.groupindex):
             _log.warning("Unnamed match groups in regex")
         if self.regex.groups == 0:
@@ -101,13 +101,18 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         self.input_string = str_
         m = self.regex.fullmatch(str_, *args)
         if not m:
-            if not self._match_error_filter:
-                raise ValueError(f"Couldn't match {str_} against {self.regex}.")
-            elif hasattr(self._match_error_filter, 'match'):
+            if hasattr(self._match_error_filter, 'match'):
                 try:
                     self._match_error_filter.match(str_, *args)
                 except Exception as exc:
-                    raise ValueError(f"Couldn't match {str_} against {self.regex}.")
+                    raise exceptions.RegexParseError(
+                        f"Couldn't match {str_} against {self.regex}.")
+                raise exceptions.RegexSuppressedError(str_)
+            elif self._match_error_filter:
+                raise exceptions.RegexSuppressedError(str_)
+            else:
+                raise exceptions.RegexParseError(
+                    f"Couldn't match {str_} against {self.regex}.")
         else:    
             self.data = m.groupdict(default=NOTSET)
             for k,v in self._defaults.items():
@@ -119,7 +124,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             self._validate_match(m)
             if any(self.data[f] == NOTSET for f in self.fields):
                 bad_names = [f for f in self.fields if self.data[f] == NOTSET]
-                raise ValueError((f"Couldn't match the "
+                raise exceptions.RegexParseError((f"Couldn't match the "
                     f"following fields in {str_}: " + ', '.join(bad_names) ))
         
     def _validate_match(self, match_obj):

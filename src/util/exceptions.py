@@ -85,6 +85,19 @@ class DataclassParseError(ValueError, MDTFBaseException):
     """
     pass
 
+class RegexParseError(ValueError, MDTFBaseException):
+    """Raised when parsing input data fails on a 
+    :func:`~src.util.dataclass.RegexPattern`.
+    """
+    pass
+
+class RegexSuppressedError(ValueError, MDTFBaseException):
+    """Raised when parsing input data fails on a
+    :func:`~src.util.dataclass.RegexPattern`, but we've decided to supress 
+    error based on the associated RegexPattern's match_error_filter attribute.
+    """
+    pass
+
 class UnitsError(ValueError, MDTFBaseException):
     """Raised when trying to convert between quantities with physically 
     inequivalent units.

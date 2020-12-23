@@ -38,7 +38,7 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
         finally:
             self.release()
 
-    def transfer_to_others(self, logger):
+    def transfer_to_non_streams(self, logger):
         """Transfer contents of buffer to all non-console-based handlers attached 
         to logger (handlers that aren't :py:class:`~logging.StreamHandler`.)
 
@@ -51,14 +51,15 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
                 contents of buffer to.
         """
         no_transfer_flag = True
-        for handler in logger.handlers:
-            if handler is not self and not issubclass(handler, logging.StreamHandler):
-                self.transfer(handler)
+        for h in logger.handlers:
+            if not isinstance(h, MultiFlushMemoryHandler) \
+                and not (isinstance(h, logging.StreamHandler) \
+                    and not isinstance(h, logging.FileHandler)):
+                self.transfer(h)
                 no_transfer_flag = False
         if no_transfer_flag:
             logger.warning("No non-console-based loggers configured.")
             self.transfer(logging.lastResort)
-
 
 class HeaderFileHandler(logging.FileHandler):
     """Subclass :py:class:`logging.FileHandler` to print system information to
@@ -83,7 +84,7 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
         try:
             git_branch, git_hash, git_dirty = git_info()
             str_ = (
-                "MDTF PACKAGE LOG"
+                "MDTF PACKAGE LOG\n\n"
                 f"Started logging at {datetime.datetime.now()}\n"
                 f"git hash/branch: {git_hash} (on {git_branch})\n"
                 # f"uncommitted files: {git_dirty}\n"
@@ -93,9 +94,10 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
                 # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
             ) 
             return str_ + (80 * '-') + '\n\n'
-        except Exception as exc:
-            print(exc)
-            return "ERROR: couldn't gather header information.\n"
+        except Exception:
+            err_str = "Couldn't gather log file header information."
+            _log.exception(err_str)
+            return "ERROR: " + err_str + "\n"
     
 
 class HangingIndentFormatter(logging.Formatter):
@@ -117,7 +119,7 @@ class HangingIndentFormatter(logging.Formatter):
         """
         super(HangingIndentFormatter, self).__init__(fmt=fmt, datefmt=datefmt, style=style)
         self.indent = (tabsize * ' ')
-        self.stack_indent = self.indent + '|'
+        self.stack_indent = self.indent
         self.header = str(header)
         self.footer = str(footer)
 
@@ -258,11 +260,8 @@ def git_info():
     """
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
-        env = {'LANGUAGE':'C', 'LANG':'C', 'LC_ALL':'C'}
-        for k in ['SYSTEMROOT', 'PATH']:
-            v = os.environ.get(k)
-            if v is not None:
-                env[k] = v
+        env = os.environ.copy()
+        env.update({'LANGUAGE':'C', 'LANG':'C', 'LC_ALL':'C'})
         try:
             out = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env
@@ -322,105 +321,52 @@ def _set_excepthook(root_logger):
 
     See `https://docs.python.org/3/library/sys.html#sys.excepthook`__.
     """
-    def _handle_uncaught_exception(exc_type, exc_value, exc_traceback):
+    def uncaught_exception_handler(exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
             # Skip logging for user interrupt
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         root_logger.critical(
-            '\n' + (80*'*') + "\nUncaught exception:", # banner so it stands out 
+            (70*'*') + "\nUncaught exception:\n", # banner so it stands out 
             exc_info=(exc_type, exc_value, exc_traceback)
         )
     
-    sys.excepthook = _handle_uncaught_exception
+    sys.excepthook = uncaught_exception_handler
 
-def _level_from_cli(cli_d = None):
-    """Convert CLI flags (``--verbose``/``--quiet``) into log levels for 
-    :func:`_set_console_log_level`.
-
-    Args: 
-        cli_d (dict): Dict of parsed CLI settings, in particular 'verbose'/'quiet'.
-
-    Returns: 
-        Tuple of log levels for stdout loggers and stderr loggers, respectively.
+def _configure_logging_dict(log_d, log_args):
+    """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure 
+    log level and filters on console handlers in a logging config dictionary.
     """
-    # default case: INFO to stdout, WARNING and ERROR to stderr
-    default_ = (logging.INFO, logging.WARNING)
-
-    if not cli_d:
-        _log.error("CLI dict not set, using default verbosity.")
-        return default_
-    elif not (cli_d.get('verbose',0) or cli_d.get('quiet',0)):
-        return default_
-    elif cli_d.get('verbose',0) >= 1:
-        return (logging.DEBUG, logging.WARNING)
-    elif cli_d.get('quiet',0) >= 1:
-        return (None, logging.WARNING)
-    elif cli_d.get('quiet',0) >= 2:
-        return (None, logging.ERROR)
-    elif cli_d.get('quiet',0) >= 3:
-        return (None, None)
+    # smaller number = more verbose  
+    level = getattr(log_args, 'quiet', 0) - getattr(log_args, 'verbose', 0)
+    if level <= 1:
+        stderr_level = logging.WARNING
+    elif level == 2:
+        stderr_level = logging.ERROR
     else:
-        _log.warning("Couldn't parse log verbosity, using defaults.")
-        return default_
+        stderr_level = logging.CRITICAL
+    log_d['filters'] = {
+        "stderr_filter": {"()": GeqLevelFilter, "level": stderr_level},
+        "stdout_filter": {"()": EqLevelFilter, "level": logging.INFO},
+        "debug_filter": {"()": LtLevelFilter, "level": logging.INFO}
+    }
+    for h in ('stderr', 'stdout', 'debug'):
+        if h in log_d['handlers']:
+            log_d['handlers'][h]['filters'] = [h+'_filter']
+    if 'stderr' in log_d['handlers']:
+        log_d['handlers']['stderr']['level'] = stderr_level
 
-def _set_console_log_level(d, stdout_level, stderr_level, filter_=True):
-    """Configure log levels for handlers writing to stdout and stderr.
-
-    Levels are asummed to follow Python's numerical scale; see 
-    `https://docs.python.org/3.7/library/logging.html#logging-levels`__.
-
-    Args:
-        d (dict): Nested dict read from the log configuration file.
-        stdout_level (int): New log level to impose on handlers writing to stdout.
-            If 'None', deactivates these handlers.
-        stderr_level (int): New log level to impose on handlers writing to stderr.
-            If 'None', deactivates these handlers.
-        filter_ (bool, default True): If true, apply :py:class:`logging.Filter`s
-            to ensure that every log message is written to at most one of stdout
-            or stderr (in standard usage, this means errors are written to stderr
-            only).
-    """
-    def _set_handler_level(dd, type_, new_lev, new_filt):
-        if 'handlers' not in d or 'root' not in d:
-            _log.warning('No loggers configured.')
-            return
-        handlers = d['handlers']
-        type_handlers = [hk for (hk, hv) in handlers.items() \
-            if hv.get('stream','').lower().endswith(type_)]
-        # print('#', type_, type_handlers)
-        if len(type_handlers) > 1:
-            _log.warning('More than one handler using %s: %s', type_, type_handlers)
-        if new_lev is None:
-            _log.debug('Logging to %s suppressed.', type_)
-            for hk in type_handlers:
-                del handlers[hk]
-            new_root_handlers = set(d['root'].get('handlers', []))
-            d['root']['handlers'] = list(new_root_handlers.difference(type_handlers))
-        else:
-            for hk in type_handlers:
-                handlers[hk]['level'] = new_lev
-                if new_filt:
-                    _ = handlers[hk].setdefault('filters', [])
-                    handlers[hk]['filters'].append(new_filt)
-
-    if filter_ and stdout_level is not None and stderr_level is not None:
-        filter_lev = max(stdout_level, stderr_level)
-        _ = d.setdefault('filters', dict())
-        d['filters'].update({
-            "_geq_level_filter": {"()": GeqLevelFilter, "level": filter_lev},
-            "_lt_level_filter": {"()": LtLevelFilter, "level": filter_lev}
-        })
-        if stdout_level < stderr_level:
-            stdout_filt, stderr_filt = ("_lt_level_filter", "_geq_level_filter")
-        else:
-            stdout_filt, stderr_filt = ("_geq_level_filter", "_lt_level_filter")
-    else:
-        stdout_filt, stderr_filt = (None, None)
-
-    if 'handlers' in d:
-        _set_handler_level(d['handlers'], 'stdout', stdout_level, stdout_filt)
-        _set_handler_level(d['handlers'], 'stderr', stderr_level, stderr_filt)
+    if level <= -2:
+        for d in log_d['handlers'].values():
+            d['formatter'] = 'debug'
+    if level == 0:
+        del log_d['handlers']['debug']
+        log_d['root']['handlers'] = ["stdout", "stderr"]
+    elif level == 1:
+        del log_d['handlers']['debug']
+        del log_d['handlers']['stdout']
+        log_d['root']['handlers'] = ["stderr"]
+    return log_d
 
 def _set_log_file_paths(d, new_paths):
     """Assign paths to log files. Paths are assumed to be well-formed and in 
@@ -445,7 +391,7 @@ def _set_log_file_paths(d, new_paths):
             new_paths)
 
 def case_log_config(config_mgr, **new_paths):
-    """Wrapper to handle logger configuration from a file and transfer of the 
+    """Wrapper to handle logger configuration from a file and transferring the 
     temporary log cache to the newly-configured loggers.
 
     Args:
@@ -461,50 +407,37 @@ def case_log_config(config_mgr, **new_paths):
         return
 
     root_logger = logging.getLogger()
-    first_call = isinstance(root_logger.handlers[0], MultiFlushMemoryHandler)
+    cache_idx = [i for i,handler in enumerate(root_logger.handlers) \
+        if isinstance(handler, MultiFlushMemoryHandler)]
+    first_call = len(cache_idx) > 0
     if first_call:
-        # temporary cache handlers should be the only handlers attached to 
-        # root_logger as of now
-        # assert len(root_logger.handlers) == 2
-        temp_log_cache = root_logger.handlers[0]
-        # temp_stdout = root_logger.handlers[1]
+        temp_log_cache = root_logger.handlers[cache_idx[0]]
 
     # log uncaught exceptions
     _set_excepthook(root_logger)
     # configure loggers from the specification we loaded
     try:
         # set console verbosity level
-        stdout_level, stderr_level = _level_from_cli(config_mgr)
-        _set_console_log_level(config_mgr.log_config, stdout_level, stderr_level)
-        _set_log_file_paths(config_mgr.log_config, new_paths)
-        logging.config.dictConfig(config_mgr.log_config)
-    except Exception as exc:
+        log_d = config_mgr.log_config.copy()
+        log_d = _configure_logging_dict(log_d, config_mgr)
+        _set_log_file_paths(log_d, new_paths)
+        logging.config.dictConfig(log_d)
+    except Exception:
         _log.exception("Logging config failed.")
 
     if first_call:
         # transfer cache contents to newly-configured loggers and delete it
-        # root_logger.removeHandler(temp_stdout)
-        temp_log_cache.transfer_to_others(root_logger)
+        temp_log_cache.transfer_to_non_streams(root_logger)
         temp_log_cache.close()
         root_logger.removeHandler(temp_log_cache)
+        _log.debug('Contents of log cache transferred.')
 
 def configure_console_loggers():
     """Configure console loggers for top-level script. This is redundant with
-    what's in logging.jsonc, bu for debugging purposes we want to get console 
+    what's in logging.jsonc, but for debugging purposes we want to get console 
     output set up before we've parsed input paths, read config files, etc.
     """
     logging.captureWarnings(True)
-    log_parser = argparse.ArgumentParser(add_help=False)
-    log_parser.add_argument('--verbose', '-v', default=0, action="count")
-    log_parser.add_argument('--quiet', '-q', default=0, action="count")
-    log_config, _ = log_parser.parse_known_args()
-    level = log_config.quiet - log_config.verbose # smaller = more verbose
-    if level <= 1:
-        stderr_level = logging.WARNING
-    elif level == 2:
-        stderr_level = logging.ERROR
-    else:
-        stderr_level = logging.CRITICAL
     log_d = {
         "version": 1,
         "disable_existing_loggers":  False,
@@ -514,28 +447,20 @@ def configure_console_loggers():
                 "class": "logging.StreamHandler",
                 "formatter": "level",
                 "level" : logging.DEBUG,
-                "stream" : "ext://sys.stdout",
-                "filters": ["debug_filter"]
+                "stream" : "ext://sys.stdout"
             },
             "stdout": {
                 "class": "logging.StreamHandler",
                 "formatter": "normal",
                 "level" : logging.INFO,
-                "stream" : "ext://sys.stdout",
-                "filters": ["stdout_filter"]
+                "stream" : "ext://sys.stdout"
             },
             "stderr": {
                 "class": "logging.StreamHandler",
                 "formatter": "level",
-                "level" : stderr_level,
-                "stream" : "ext://sys.stderr",
-                "filters": ["stderr_filter"]
+                "level" : logging.WARNING,
+                "stream" : "ext://sys.stderr"
             }
-        },
-        "filters": {
-            "stderr_filter": {"()": GeqLevelFilter, "level": stderr_level},
-            "stdout_filter": {"()": EqLevelFilter, "level": logging.INFO},
-            "debug_filter": {"()": LtLevelFilter, "level": logging.INFO}
         },
         "formatters": {
             "normal": {"format": "%(message)s"},
@@ -549,15 +474,11 @@ def configure_console_loggers():
             }
         }
     }
-    if level <= -2:
-        for d in log_d['handlers'].values():
-            d['formatter'] = 'debug'
-    if level == 0:
-        del log_d['handlers']['debug']
-        log_d['root']['handlers'] = ["stdout", "stderr"]
-    elif level == 1:
-        del log_d['handlers']['debug']
-        del log_d['handlers']['stdout']
-        log_d['root']['handlers'] = ["stderr"]
+    log_parser = argparse.ArgumentParser(add_help=False)
+    log_parser.add_argument('--verbose', '-v', default=0, action="count")
+    log_parser.add_argument('--quiet', '-q', default=0, action="count")
+    log_args, _ = log_parser.parse_known_args()
+
+    log_d = _configure_logging_dict(log_d, log_args)
     logging.config.dictConfig(log_d)
     _log.debug('Console loggers configured.')

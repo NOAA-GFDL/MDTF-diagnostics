@@ -4,6 +4,7 @@ independent of any model, experiment, or hosting protocol.
 import abc
 import collections
 import dataclasses as dc
+import enum
 import itertools
 import typing
 from src import util, datelabel
@@ -110,14 +111,24 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 
 # ------------------------------------------------------------------------------
 
-DMAxis = util.MDTFEnum(
-    'DMAxis', 'X Y Z T BOUNDS OTHER', module=__name__
-)
-DMAxis.spatiotemporal_names = ('X', 'Y', 'Z', 'T')
+class DMAxis(util.MDTFEnum):
+    """:py:class:`~enum.Enum` encoding the recognized axis types
+    (dimension coordinates with a distinguished role.)
+    """
+    X = enum.auto()
+    Y = enum.auto()
+    Z = enum.auto()
+    T = enum.auto()
+    BOUNDS = enum.auto()
+    OTHER = enum.auto()
+
+    module = __name__
+    spatiotemporal_names = ('X', 'Y', 'Z', 'T')
+
+    def __str__(self):
+        return str(self.name)
+
 DMAxis.spatiotemporal = (DMAxis.X, DMAxis.Y, DMAxis.Z, DMAxis.T)
-DMAxis.__doc__ = """:py:class:`~enum.Enum` encoding the recognized axis types
-(dimension coordinates with a distinguished role.)
-"""
 
 @util.mdtf_dataclass
 class DMBoundsDimension(object):
@@ -307,7 +318,6 @@ class _DMDimensionsMixin(object):
     coords: dc.InitVar = None
     dims: list = dc.field(init=False, default_factory=list)
     scalar_coords: list = dc.field(init=False, default_factory=list)
-    axes: dict = dc.field(init=False)
 
     def __post_init__(self, coords=None):
         if coords is None:
@@ -323,7 +333,12 @@ class _DMDimensionsMixin(object):
                 self.scalar_coords.append(c)
             else:
                 self.dims.append(c)
-        self.axes = self.build_axes(self.dims)
+        # raises exceptions if axes are inconsistent
+        _ = self.build_axes(self.dims, verify=True)
+
+    @property
+    def axes(self):
+        return self.build_axes(self.dims, verify=False)
 
     @property
     def X(self):
@@ -357,19 +372,24 @@ class _DMDimensionsMixin(object):
                 return c
         return None
 
-    def build_axes(self, *coords):
-        # validate that we don't have duplicate axes
-        d = util.WormDict()
-        verify_d = dict()
-        for c in itertools.chain(*coords):
-            if c.axis != DMAxis.OTHER and c.axis in verify_d:
-                err_name = getattr(self, 'name', self.__class__.__name__)
-                raise ValueError((f"Duplicate definition of {c.axis} axis in "
-                    f"{err_name}: {c}, {verify_d[c.axis]}"))
-            verify_d[c.axis] = c
-            if c.axis in DMAxis.spatiotemporal:
-                d[c.axis] = c
-        return d
+    def build_axes(self, *coords, verify=True):
+        if verify:
+            # validate that we don't have duplicate axes
+            d = util.WormDict()
+            verify_d = util.WormDict()
+            for c in itertools.chain(*coords):
+                if c.axis != DMAxis.OTHER and c.axis in verify_d:
+                    err_name = getattr(self, 'name', self.__class__.__name__)
+                    raise ValueError((f"Duplicate definition of {c.axis} axis in "
+                        f"{err_name}: {c}, {verify_d[c.axis]}"))
+                verify_d[c.axis] = c
+                if c.axis in DMAxis.spatiotemporal:
+                    d[c.axis] = c
+            return d
+        else:
+            # assume we've already verified, so use a quicker version of same logic
+            return {c.axis: c for c in itertools.chain(*coords) \
+                if c.axis in DMAxis.spatiotemporal}
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
         """Replace attributes on a given coordinate, but also optionally cast 
@@ -412,12 +432,18 @@ class DMDependentVariable(_DMDimensionsMixin):
     units: cfunits.Units = "" # util.MANDATORY
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
-    # axes: from _DMDimensionsMixin
-    phys_axes: dict = dc.field(init=False)
 
     def __post_init__(self, coords=None):
         super(DMDependentVariable, self).__post_init__(coords)
-        self.phys_axes = self.build_axes(self.dims, self.scalar_coords)
+        # raises exceptions if axes are inconsistent
+        _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
+
+    @property
+    def phys_axes(self):
+        """Superset of axes (which lists coordinate dimensions only) that 
+        includes axes corresponding to scalar coordinates.
+        """
+        return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
     @property
     def phys_axes_set(self):

@@ -525,15 +525,11 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
 class DMVariable(DMDependentVariable):
     """Class to describe general properties of data variables.
     """
-    # all fields inherited:
-    # name: str
+    # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
     # units: cfunits.Units
-    # coords: InitVar
-    # dims: from _DMDimensionsMixin
-    # scalar_coords: from _DMDimensionsMixin
-    # axes: from _DMDimensionsMixin
-    # phys_axes: dict 
+    # dims: list            # fields inherited from _DMDimensionsMixin
+    # scalar_coords: list
     pass
 
 # Use the "register" method, instead of inheritance, to associate these classes

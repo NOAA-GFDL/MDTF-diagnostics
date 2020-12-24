@@ -83,6 +83,15 @@ class VarlistCoordinateMixin(object):
 
 @util.mdtf_dataclass
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
+    # name: str              # fields from data_model.DMCoordinate
+    # standard_name: str
+    # units: cfunits.Units
+    # axis: DMAxis
+    # bounds: AbstractDMCoordinateBounds
+    # value: typing.Union[int, float] # for scalar coordinates only
+    # need_bounds: bool      # fields from VarlistCoordinateMixin
+    # name_in_model: str
+    # bounds_in_model: str
     pass
 
 @util.mdtf_dataclass

@@ -6,8 +6,8 @@ import io
 import collections
 import copy
 import dataclasses as dc
-import re
 import glob
+import re
 import shutil
 import signal
 import string
@@ -419,67 +419,129 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(init=False, default_factory=list, metadata={'query': True})
 
 @util.mdtf_dataclass
-class FieldlistEntry(object):
+class FieldlistEntry(data_model.DMDependentVariable):
     """Class corresponding to an entry in a fieldlist file.
     """
-    name: str = util.MANDATORY           # = name according to this convention
-    standard_name: str = util.MANDATORY  # = CF conventions standard name
-    units: str = util.MANDATORY          # = units according to this convention
-    axes_set: frozenset = dc.field(default_factory=frozenset)
-    ndim: dc.InitVar = 4
+    # name: str             # fields inherited from DMDependentVariable
+    # standard_name: str
+    # units: cfunits.Units
+    # dims: list            # fields inherited from _DMDimensionsMixin
+    # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self, ndim=4):
-        if not self.axes_set:
-            if ndim == 4:
-                self.axes_set = ('T', 'Z', 'Y', 'X')
-            elif ndim == 3:
-                self.axes_set = ('T', 'Y', 'X')
-            elif ndim == 2:
-                self.axes_set = ('Y', 'X')
-            elif ndim == 1:
-                self.axes_set = ('T')
-        self.axes_set = frozenset(
-            data_model.DMAxis.from_struct(x) for x in self.axes_set
-        )
-        self.scalar_coord_templates = {
-            data_model.DMAxis.from_struct(k): v for k,v \
-                in self.scalar_coord_templates.items()
-        }
+    def __post_init__(self, coords=None):
+        super(FieldlistEntry, self).__post_init__(coords)
+        assert len(self.scalar_coords) == 0
+
+    _ndim_to_axes_set = {
+        # allow specifying dimensionality as shorthand for explicit list
+        # of coordinate dimension names
+        1: ('T'),
+        2: ('Y', 'X'),
+        3: ('T', 'Y', 'X'),
+        4: ('T', 'Z', 'Y', 'X')
+    }
+    @classmethod
+    def from_struct(cls, dims_lut_d, dims_d, name, **kwargs):
+        # if we only have ndim, map to axes names
+        if 'dimensions' not in kwargs and 'ndim' in kwargs:
+            kwargs['dimensions'] = []
+            axes_set = [data_model.DMAxis.from_struct(x) \
+                for x in cls._ndim_to_axes_set[kwargs.pop('ndims')]]
+            for ax in axes_set:
+                dims = dims_lut_d[ax]
+                if len(dims) != 1:
+                    raise ValueError(f"Can't parse multiple {ax} axes in fieldlist.")
+                kwargs['dimensions'].append(dims[0].name)
+    
+        # map dimension names to coordinate objects
+        kwargs['coords'] = []
+        if 'dimensions' not in kwargs or not kwargs['dimensions']:
+            raise ValueError(f"No dimensions specified for fieldlist entry {name}.")
+        for d_name in kwargs.pop('dimensions'):
+            if d_name not in dims_d:
+                raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
+                    f"entry for {name}."))
+            kwargs['coords'].append(dims_d[d_name])
+
+        filter_kw = util.filter_dataclass(kwargs, cls)
+        return cls(name=name, **filter_kw)
+
+    def scalar_name(self, old_coord, translated_coord):
+        """Uses one of the scalar_coord_templates to construct the translated
+        variable name for this variable on a scalar coordinate slice (eg.
+        pressure level).
+        """
+        c = old_coord # abbreviate
+        assert c.is_scalar
+        key = translated_coord.name
+        if key not in self.scalar_coord_templates:
+            raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
+                f"of {self.name}."
+            ))
+        # construct convention's name for this variable on a level
+        name_template = self.scalar_coord_templates[key]
+        new_name = name_template.format(value=int(translated_coord.value))
+        if xr_util.are_units_equal(c.units, translated_coord.units):
+            _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
+                c.value, c.units, c.axis, self.name, new_name)
+        else:
+            _log.debug(("Renaming %s slice of '%s' to '%s' "
+                "(@ %s %s = %s %s)."),
+                c.axis, self.name, new_name, c.value, c.units, 
+                translated_coord.value, translated_coord.units
+            )
+        return new_name
         
 @util.mdtf_dataclass
 class Fieldlist():
     """Class corresponding to a single variable naming convention (single file
     in src/data/fieldlist_*.jsonc).
+
+    TODO: implement more robust indexing/lookup scheme. standard_name is not
+    a unique identifier, but should include cell_methods, etc. as well as
+    dimensionality.
     """
     name: str = util.MANDATORY
-    axes: dict = dc.field(default_factory=dict)
+    axes: util.WormDict = dc.field(default_factory=util.WormDict)
+    axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     entries: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
     other: dict = dc.field(default_factory=dict)
 
     @classmethod
     def from_struct(cls, d):
+        axes_lut_temp = collections.defaultdict(util.WormDict)
         lut_temp = collections.defaultdict(util.WormDict)
 
-        def _process_one(section_name):
-            # build two-stage lookup table -- should just make FieldlistEntry 
-            # hashable
+        def _process_coord(section_name):
+            # build two-stage lookup table (by axis type, then standard name)
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
-                entry = FieldlistEntry(name=k, **v)
+                ax = data_model.DMAxis.from_struct(v['axis'])
+                entry = data_model.coordinate_from_struct(v, name=k)
+                d['axes'][k] = entry
+                axes_lut_temp[ax][entry.standard_name] = entry
+
+        def _process_var(section_name):
+            # build two-stage lookup table (by standard name, then data 
+            # dimensionality) -- should just make FieldlistEntry hashable
+            section_d = d.pop(section_name, dict())
+            for k,v in section_d.items():
+                entry = FieldlistEntry.from_struct(
+                    d['axes_lut'], d['axes'], name=k, **v
+                )
                 d['entries'][k] = entry
                 lut_temp[entry.standard_name][entry.axes_set] = entry
 
-        d['axes'] = {
-            data_model.DMAxis.from_struct(v['axis']): \
-                data_model.coordinate_from_struct(v, name=k) \
-            for k,v in d['axes'].items() 
-        }
+        d['axes_lut'] = util.WormDict()
+        _process_coord('axes')
+        d['axes_lut'].update(axes_lut_temp)
+
         d['entries'] = util.WormDict()
         d['lut'] = util.WormDict()
-        _process_one('aux_coords')
-        _process_one('variables')
+        _process_var('aux_coords')
+        _process_var('variables')
         d['lut'].update(lut_temp)
         return cls(**d)
 
@@ -504,6 +566,7 @@ class Fieldlist():
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
                 f"convention '{self.name}'."))
+
         lut1 = self.lut[standard_name] # abbreviate
         if axes_set is None:
             entries = tuple(lut1.values())
@@ -525,56 +588,65 @@ class Fieldlist():
         """
         return self.from_CF(standard_name, axes_set=axes_set).name
 
-    def lookup_axis(self, ax):
-        if not isinstance(ax, data_model.DMAxis):
+    def translate_coord(self, coord_or_ax):
+        """Given a DMCoordinate, DMAxis or axis name, look up the corresponding
+        DMCoordinate in this convention.
+        """
+        if isinstance(coord_or_ax, str):
             ax = data_model.DMAxis.from_struct(ax)
-        return self.axes.get(ax, None)
+        elif isinstance(coord_or_ax, data_model.DMAxis):
+            ax = coord_or_ax
+        else:
+            ax = coord_or_ax.axis
+        if ax not in self.axes_lut:
+            raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
 
-    def lookup_variable(self, var):
-        """Returns TranslatedVarlistEntry instance, with populated axes."""
-        fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
-        coords = {ax: self.lookup_axis(ax) for ax in fl_entry.axes_set}
-        for c in var.scalar_coords:
-            coords[c.axis].value = c.value
-        return util.coerce_to_dataclass(
-            fl_entry, TranslatedVarlistEntry, 
-            coords=tuple(coords.values()), convention=self.name
-        )
+        lut1 = self.axes_lut[ax] # abbreviate
+        if not hasattr(coord_or_ax, 'standard_name'):
+            coords = tuple(lut1.values())
+            if len(coords) > 1:
+                raise ValueError((f"Coordinate dimension in convention '{self.name}' "
+                    f"not uniquely determined by axis {ax}."))
+            translated_coord = coords[0]
+        else:
+            if coord_or_ax.standard_name not in lut1:
+                raise KeyError((f"Axis {ax} with standard name "
+                    f"'{coord_or_ax.standard_name}' not defined in convention "
+                    f"'{self.name}'."))
+            translated_coord = lut1[coord_or_ax.standard_name]
+
+        if hasattr(coord_or_ax, 'is_scalar') and coord_or_ax.is_scalar:
+            # convert units of scalar value to convention's coordinate's units
+            translated_coord.value = coord_or_ax.value \
+                    * xr_util.conversion_factor(
+                        coord_or_ax.units, translated_coord.units
+                    )
+        return translated_coord
 
     def translate(self, var):
-        """Return a TranslatedVarlistEntry with translated names, units, 
-        etc. for var. Includes logic to translate and rename scalar coords/slices,
-        e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
+        """Returns TranslatedVarlistEntry instance, with populated coordinate
+        axes. Units of scalar coord slices are translated to the units of the
+        conventions' coordinates. Includes logic to translate and rename scalar 
+        coords/slices, e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
         TranslatedVarlistEntry for 'u500' (3D), depending on naming convention.
         """
         fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
-        conv_var = self.lookup_variable(var)
-
-        if len(var.scalar_coords) > 1:
+        
+        dims = [self.translate_coord(dim) for dim in var.dims]
+        scalar_coords = [self.translate_coord(dim) for dim in var.scalar_coords]
+        if len(scalar_coords) > 1:
             raise NotImplementedError()
-        elif len(var.scalar_coords) == 1:
-            # change name in convention, since we're dealing with a slice
-            c = var.scalar_coords[0]
-            if c.axis not in fl_entry.scalar_coord_templates:
-                raise ValueError((f"Don't know how to name {c.axis} slice of "
-                    f"{fl_entry.name}."
-                ))
-            # construct convention's name for this variable on a level
-            name_template = fl_entry.scalar_coord_templates[c.axis]
-            conv_ax = self.lookup_axis(c.axis)
-            value_in_conv = c.value \
-                * xr_util.conversion_factor(c.units, conv_ax.units)
-            new_name = name_template.format(value=int(value_in_conv))
-            if xr_util.are_units_equal(c.units, conv_ax.units):
-                _log.debug("Renaming %s %s %s slice of varlist entry '%s' to '%s'.",
-                    c.value, c.units, c.axis, var.name, new_name)
-            else:
-                _log.debug(("Renaming %s slice of varlist entry '%s' to '%s' "
-                    "(@ %s %s = %s %s)."),
-                    c.axis, var.name, new_name, c.value, c.units, 
-                    value_in_conv, conv_ax.units)
-            conv_var.name = new_name
-        return conv_var
+        elif len(scalar_coords) == 1:
+            # change translated name, since we're dealing with a slice
+            new_name = fl_entry.scalar_name(
+                var.scalar_coords[0], scalar_coords[0])
+        else:
+            new_name = fl_entry.name
+
+        return util.coerce_to_dataclass(
+            fl_entry, TranslatedVarlistEntry, 
+            name=new_name, coords=(dims + scalar_coords), convention=self.name
+        )
 
 
 class VariableTranslator(util.Singleton):
@@ -633,6 +705,9 @@ class VariableTranslator(util.Singleton):
         return self.conventions[conv_name]
 
     def _fieldlist_method(self, conv_name, method_name, *args, **kwargs):
+        """Wrapper which determines the requested convention and calls the
+        requested method_name on the Fieldlist object for that convention.
+        """
         meth = getattr(self.get_convention(conv_name), method_name)
         return meth(*args, **kwargs)
 
@@ -650,11 +725,8 @@ class VariableTranslator(util.Singleton):
         return self._fieldlist_method(conv_name, 'from_CF_name', 
             standard_name, axes_set=axes_set)
 
-    def lookup_axis(self, conv_name, axis):
-        return self._fieldlist_method(conv_name, 'lookup_axis', axis)
-
-    def lookup_variable(self, conv_name, var):
-        return self._fieldlist_method(conv_name, 'lookup_variable', var)
+    def translate_coord(self, conv_name, coord_or_ax):
+        return self._fieldlist_method(conv_name, 'translate_coord', coord_or_ax)
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)

@@ -113,7 +113,7 @@ class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     axis = 'T'
 
 @util.mdtf_dataclass
-class VarlistTimeCoordinate(data_model.DMTimeCoordinate, _VarlistTimeSettings, 
+class VarlistTimeCoordinate(_VarlistTimeSettings, data_model.DMTimeCoordinate, 
     VarlistCoordinateMixin):
     pass
 
@@ -217,12 +217,14 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             # variable to the empty string
             return {self.env_var: "", self.path_variable: ""}
 
-    @property
-    def query_attrs(self):
+    def query_attrs(self, key_synonyms=None):
         """Returns a dict of attributes relevant for DataSource.query_dataset()
         (ie, which describe the variable itself and aren't specific to the 
         MDTF implementation.)
         """
+        if key_synonyms is None:
+            key_synonyms = dict()
+
         def iter_query_attrs(obj):
             """Recursive generator yielding name:value pairs for all dataclass
             fields marked with query attribute in their metadata.
@@ -232,10 +234,14 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
                 if dc.is_dataclass(val):
                     yield from iter_query_attrs(val)
                 if f.metadata.get('query', False):
-                    yield (f.name, val)
+                    key = key_synonyms.get(f.name, f.name)
+                    yield (key, val)
 
-        # TODO: properly handle key collisions with WormDict
-        return dict(iter_query_attrs(self))
+        d = util.ConsistentDict()
+        d.update(dict(iter_query_attrs(self)))
+        for dim in self.dims:
+            d.update(dict(iter_query_attrs(dim)))
+        return d
 
     @classmethod
     def from_struct(cls, global_settings_d, dims_d, name, **kwargs):

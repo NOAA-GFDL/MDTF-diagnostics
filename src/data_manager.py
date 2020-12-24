@@ -6,7 +6,7 @@ import abc
 import collections
 import dataclasses
 import signal
-from src import util, core, datelabel, diagnostic, preprocessor
+from src import util, core, datelabel, diagnostic, preprocessor, cmip6
 import pandas as pd
 import intake_esm
 
@@ -143,9 +143,7 @@ class DataSourceAttributesBase():
 
     def __post_init__(self):
         translate = core.VariableTranslator()
-        if self.convention not in translate.conventions:
-            _log.error(f'Unrecognized convention {self.convention}.')
-            raise KeyError()
+        self.convention = translate.get_convention_name(self.convention)
         self.date_range = datelabel.DateRange(self.FIRSTYR, self.LASTYR)
 
 class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
@@ -193,14 +191,17 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     @property
     def name(self):
+        assert (hasattr(self,'attrs') and hasattr(self.attrs, 'CASENAME'))
         return self.attrs.CASENAME
 
     @property
     def convention(self):
+        assert (hasattr(self,'attrs') and hasattr(self.attrs, 'convention'))
         return self.attrs.convention
 
     @property
     def failed(self):
+        assert hasattr(self,'exceptions')
         return not self.exceptions.is_empty
 
     def iter_pods(self, active=None):
@@ -244,7 +245,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             try:
                 self.setup_pod(pod)
             except Exception as exc:
-                raise
+                # raise
                 try:
                     raise util.PodConfigError(pod, 
                         "Caught exception in DataManager setup.") from exc
@@ -252,10 +253,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     pod.exceptions.log(chained_exc)    
                 continue
 
-        print('####################')
+        print('####################\n')
         for v in self.iter_vars(active=None, active_pods=None):
             v.print_debug()
-        print('####################')
+        print('\n####################')
 
     def setup_pod(self, pod):
         """Update POD with information that only becomes available after 
@@ -271,7 +272,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         for k,v in paths.items():
             setattr(pod, k, v)
         pod.setup_pod_directories()
-
         # set up env vars
         pod.pod_env_vars.update(self.env_vars)
 
@@ -297,7 +297,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         Could arguably be moved into VarlistEntry's init, at the cost of 
         dependency inversion.
         """
-        translate = core.VariableTranslator()
+        translate = core.VariableTranslator().get_convention(self.convention)
         try:
             v.change_coord(
                 'T',
@@ -309,7 +309,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 range=self.attrs.date_range
             )
             v.dest_path = self.variable_dest_path(pod, v)
-            v.translation = translate.translate(self.convention, v)
+            v.translation = translate.translate(v)
         except Exception as exc:
             v.exception = exc    # "caught" by pod.update_active_vars()
             raise exc
@@ -341,7 +341,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 update = False
             vars_to_query = [
                 v for v in self.iter_vars(active=True) \
-                    if v.status < diagnostic.VarlistEntryStatus.FETCHED
+                    if v.status < diagnostic.VarlistEntryStatus.QUERIED
             ]
             if not vars_to_query:
                 break # normal exit: queried everything
@@ -349,7 +349,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.pre_query_hook()
             for var in vars_to_query:
                 try:
-                    _log.info("    Querying '%s'", var.short_format())
+                    _log.info("    Querying <%s>", var.short_format())
                     # add before query, in case query raises an exc
                     var.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(var) # sets var.remote_data
@@ -369,7 +369,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.post_query_hook()
         else:
             # only hit this if we don't break
-            raise Exception(
+            raise util.DataQueryError(
                 f"Too many iterations in {self.__class__.__name__}.query_data()."
             )
 
@@ -392,7 +392,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.pre_fetch_hook()
             for var in vars_to_fetch:
                 try:
-                    _log.info("    Fetching '%s'", var.short_format())
+                    _log.info("    Fetching <%s>", var.short_format())
                     # add before fetch, in case fetch raises an exc
                     var.status = diagnostic.VarlistEntryStatus.FETCHED
                     for rd_key in var.remote_data:
@@ -408,7 +408,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.post_fetch_hook()
         else:
             # only hit this if we don't break
-            raise Exception(
+            raise util.DataFetchError(
                 f"Too many iterations in {self.__class__.__name__}.fetch_data()."
             )
 
@@ -445,9 +445,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_process:
                 break # normal exit: processed everything
 
-            for var, pod in vars_to_process:
+            for pod, var in vars_to_process:
                 try:
-                    _log.info("    Processing '%s'", var.short_format())
+                    _log.info("    Processing <%s> for %s", 
+                        var.short_format(), pod.name)
                     var.status = diagnostic.VarlistEntryStatus.PREPROCESSED
                     pod.preprocessor.process(var)
                 except Exception as exc:
@@ -462,7 +463,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     continue
         else:
             # only hit this if we don't break
-            raise Exception(
+            raise util.DataPreprocessError(
                 f"Too many iterations in {self.__class__.__name__}.preprocess_data()."
             )
 
@@ -478,6 +479,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.preprocess_data()
         except Exception as exc:
             _log.exception(f"{repr(exc)}")
+            self.exceptions.log(exc)    
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
 
@@ -501,10 +503,8 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         
     @property
     def df(self):
-        if self.catalog:
-            return self.catalog.df
-        else:
-            return None
+        assert (hasattr(self, 'catalog') and hasattr(self.catalog, 'df'))
+        return self.catalog.df
 
     @property
     def path_column_name(self):
@@ -518,7 +518,8 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         """Column names of the catalog (except for the path to the remote data.)
         """
         pat_fields = list(self._FileRegexClass._pattern.fields)
-        return pat_fields.remove(self.path_column_name)
+        pat_fields.remove(self.path_column_name)
+        return pat_fields
 
     def iter_files(self):
         """Generator that yields instances of FileRegexClass generated from 
@@ -533,8 +534,11 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
                 try:
                     path = os.path.join(root, f)
                     yield self._FileRegexClass.from_string(path, len(root_dir))
-                except (ValueError):
-                    print('XXX', f)
+                except util.RegexSuppressedError:
+                    # decided to silently ignore this file
+                    continue
+                except Exception:
+                    _log.info("Couldn't parse %s", path[len(root_dir):])
                     continue
                 
     def _dummy_esmcol_spec(self):
@@ -596,11 +600,12 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         query_d = util.WormDict.from_struct(
             util.filter_dataclass(self.attrs, self._FileRegexClass)
         )
-        query_d.update(
-            util.filter_dataclass(var.query_attrs, self._FileRegexClass)
+        var_attrs = var.query_attrs(
+            getattr(self._FileRegexClass, '_query_attrs_synonyms', None)
         )
+        query_d.update(util.filter_dataclass(var_attrs, self._FileRegexClass))
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
-        d = util.NameSpace.fromDict(query_d)
+        d = util.NameSpace.fromDict(query_d) # set local var for df.query()
         return self.df.query(' and '.join(clauses))
 
     def _group_query_results(self, query_df):
@@ -622,7 +627,8 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         # group result by column values
         q_groups = query_df.groupby(by=experiment_key_func)
         # return set of sets of catalog row indices
-        return set(q_groups.apply(self._query_group_hook).apply(self._rd_key_func))
+        return {self._rd_key_func(group.apply(self._query_group_hook)) \
+            for _, group in q_groups}
 
     def _query_group_hook(self, group_df):
         """Processing to do on query results for a single experiment.
@@ -643,8 +649,8 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         """
         query_df = self._query_result_dataframe(var)
         # assign set of sets of catalog row indices to var's remote_data attr
-        # filter out empty entries = quieries that failed.
-        var.remote_data = set(x for x in self._group_query_results(query_df) if x)
+        # filter out empty entries = queries that failed.
+        var.remote_data = {x for x in self._group_query_results(query_df) if x}
 
     def remote_data(self, rd_keys):
         """Given one or more row indices in the catalog's dataframe (rd_keys, 
@@ -677,7 +683,8 @@ class ChunkedDirectoryHierarchyQueryMixin(DirectoryHierarchyQueryMixin):
         and the file's date range, which get handled separately.)
         """
         col_names = super(ChunkedDirectoryHierarchyQueryMixin, self).data_column_names
-        return col_names.remove(self._date_range_col)
+        col_names.remove(self._date_range_col)
+        return col_names
 
     def _query_group_hook(self, group_df):
         """Sort the files found for each experiment by date, verify that
@@ -718,14 +725,15 @@ class LocalFetchMixin(AbstractFetchMixin):
             paths = (paths, )
         for path in paths:
             if not os.path.exists(path):
-                raise util.DataFetchError(var, f"File not found at {path}.")
+                raise util.DataFetchError(var, 
+                    f"Fetch {var.name}: File not found at {path}.")
             else:
-                _log.debug(f'Found {path}.')
-        var.local_data.update(paths)
+                _log.debug(f'Fetch {var.name}: found {path}.')
+        var.local_data.extend(paths)
 
 
 class SingleLocalFileDataSource(
-    AbstractDataSource, DirectoryHierarchyQueryMixin, LocalFetchMixin
+    DirectoryHierarchyQueryMixin, LocalFetchMixin, DataSourceBase
     ):
     """DataSource for dealing data in a regular directory hierarchy on a 
     locally mounted filesystem. Assumes all data for each variable (in each 
@@ -747,7 +755,7 @@ class SingleLocalFileDataSource(
                     "Query found multiple files when one was expected:", rd_key
                 )
             else:
-                new_keys.add(rd_key.pop())
+                new_keys.add(rd_key[0])
         return new_keys
 
     def remote_data(self, rd_key):
@@ -762,7 +770,7 @@ class SingleLocalFileDataSource(
         return super(SingleLocalFileDataSource, self).remote_data(rd_key)
 
 class ChunkedLocalFileDataSource(
-    AbstractDataSource, ChunkedDirectoryHierarchyQueryMixin, LocalFetchMixin
+    ChunkedDirectoryHierarchyQueryMixin, LocalFetchMixin, DataSourceBase
     ):
     """DataSource for dealing data in a regular directory hierarchy on a 
     locally mounted filesystem. Assumes data for each variable may be split into
@@ -775,6 +783,7 @@ class ChunkedLocalFileDataSource(
 
 # IMPLEMENTATION CLASSES ======================================================
 
+ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
 sample_data_regex = util.RegexPattern(
     r"""
         (?P<sample_dataset>\S+)/    # first directory: model name
@@ -782,7 +791,8 @@ sample_data_regex = util.RegexPattern(
         # file name = model name + variable name + frequency
         (?P=sample_dataset)\.(?P<variable>\w+)\.(?P=frequency)\.nc
     """,
-    input_field="remote_path"
+    input_field="remote_path",
+    match_error_filter=ignore_non_nc_regex
 )
 @util.regex_dataclass(sample_data_regex)
 @util.mdtf_dataclass
@@ -793,6 +803,9 @@ class SampleDataFile():
     frequency: datelabel.DateFrequency = util.MANDATORY
     variable: str = util.MANDATORY
     remote_path: str = util.MANDATORY
+
+    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
+    _query_attrs_synonyms = {'name': 'variable'}
 
 @util.mdtf_dataclass
 class SampleDataAttributes(DataSourceAttributesBase):
@@ -805,13 +818,19 @@ class SampleDataAttributes(DataSourceAttributesBase):
     def __post_init__(self):
         """Validate user input.
         """
+        super(SampleDataAttributes, self).__post_init__()
         config = core.ConfigManager()
+        paths = core.PathManager()
+        # set MODEL_DATA_ROOT
+        if not self.MODEL_DATA_ROOT:
+            self.MODEL_DATA_ROOT = getattr(paths, 'MODEL_DATA_ROOT', None)
         if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
             _log.debug(
                 "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
                 config.CASE_ROOT_DIR
             )
             self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
+        # set sample_dataset
         if not self.sample_dataset and self.CASENAME:
             _log.debug(
                 "sample_dataset not supplied, using CASENAME = '%s'.",
@@ -836,19 +855,21 @@ class SampleDataAttributes(DataSourceAttributesBase):
 class SampleDataDataSource(SingleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
+    _FileRegexClass = SampleDataFile
     _AttributesClass = SampleDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.SampleDataPreprocessor
-    _FileRegexClass = SampleDataFile
 
     @property
     def CATALOG_DIR(self):
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
         return self.attrs.MODEL_DATA_ROOT
 
-# ---------------------------
+# ----------------------------------------------------------------------------
 
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes():
+    MODEL_DATA_ROOT: str = ""
     activity_id: str = ""
     institution_id: str = ""
     source_id: str = ""
@@ -858,6 +879,17 @@ class CMIP6DataSourceAttributes():
     version_date: str = ""
 
     def __post_init__(self):
+        config = core.ConfigManager()
+        paths = core.PathManager()
+        if not self.MODEL_DATA_ROOT:
+            self.MODEL_DATA_ROOT = getattr(paths, 'MODEL_DATA_ROOT', None)
+        if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
+            _log.debug(
+                "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
+                config.CASE_ROOT_DIR
+            )
+            self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
+
         cmip = cmip6.CMIP6_CVs()
         for field_name, val in dataclasses.asdict(self).items():
             if field_name in ('version_date', 'member_id'):
@@ -867,7 +899,21 @@ class CMIP6DataSourceAttributes():
                     "the CMIP6 CV. Continuing, but queries will probably fail."),
                     val, field_name)
         # try to infer values:
-        cmip.lookup_single(self, 'experiment_id', 'activity_id')
-        cmip.lookup_single(self, 'source_id', 'institution_id')
+        # cmip.lookup_single(self, 'experiment_id', 'activity_id')
+        # cmip.lookup_single(self, 'source_id', 'institution_id')
         # bail out if we're in strict mode with undetermined fields
 
+
+class CMIP6LocalDataSource(ChunkedLocalFileDataSource):
+    """DataSource for handling model data named following the CMIP6 DRS and 
+    stored on a local filesystem.
+    """
+    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _AttributesClass = CMIP6DataSourceAttributes
+    _DiagnosticClass = diagnostic.Diagnostic
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+
+    @property
+    def CATALOG_DIR(self):
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
+        return self.attrs.MODEL_DATA_ROOT

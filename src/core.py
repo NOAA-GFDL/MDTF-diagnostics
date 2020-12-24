@@ -413,8 +413,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    units: cfunits.Units = \
-        dc.field(default=util.MANDATORY, metadata={'query': True})
+    units: cfunits.Units = util.MANDATORY
     # axes_set: frozenset = dc.field(default_factory=frozenset)
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
@@ -567,10 +566,11 @@ class Fieldlist():
                 * xr_util.conversion_factor(c.units, conv_ax.units)
             new_name = name_template.format(value=int(value_in_conv))
             if xr_util.are_units_equal(c.units, conv_ax.units):
-                _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
+                _log.debug("Renaming %s %s %s slice of varlist entry '%s' to '%s'.",
                     c.value, c.units, c.axis, var.name, new_name)
             else:
-                _log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
+                _log.debug(("Renaming %s slice of varlist entry '%s' to '%s' "
+                    "(@ %s %s = %s %s)."),
                     c.axis, var.name, new_name, c.value, c.units, 
                     value_in_conv, conv_ax.units)
             conv_var.name = new_name

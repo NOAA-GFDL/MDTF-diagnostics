@@ -109,16 +109,20 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     """
 
     def remove_scalar(self, var):
-        """If a VarlistEntry has a scalar_coordinate defined, remove it and 
-        translate that (returning a TranslatedVarlistEntry), else return None.
+        """If a VarlistEntry has a scalar_coordinate defined, return a copy to 
+        be used as an alternate varaible with that scalar_coordinate removed.
         """
         if len(var.scalar_coords) == 0:
             return None
         elif len(var.scalar_coords) > 1:
             raise NotImplementedError()
         c = var.scalar_coords[0]
-        # wraps method in data_model; makes a copy
-        return var.remove_scalar(c.axis, alternates=[[var]]) 
+        # wraps method in data_model; makes a copy of var
+        return var.remove_scalar(
+            c.axis, 
+            requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
+            alternates=var.alternates
+        )
 
     def edit_request(self, data_mgr, pod):
         new_varlist = []
@@ -131,14 +135,13 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             # VE to query for 4D data
             new_v = self.remove_scalar(v)
             data_mgr.setup_var(pod, new_v)
-            v.requirement = diagnostic.VarlistEntryRequirement.ALTERNATE
-            v.active = False
+            v.alternates = [[new_v]]
 
             print(f'DEBUG: ### add alts for <{new_v.short_format()} {new_v.requirement}>:')
             for vv in new_v.iter_alternate_entries():
                 print(f'DEBUG: ### <{vv.short_format()} {vv.requirement}>')
-            new_varlist.append(new_v)
             new_varlist.append(v)
+            new_varlist.append(new_v)
         pod.varlist = diagnostic.Varlist(contents=new_varlist)
 
     def process(self, var, ds):
@@ -225,6 +228,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
+        # need to clear units/calendar attrs on time coord when using cftime,
+        # otherwise we throw a ValueError on .to_netcdf
+        if 'T' in ds.cf.axes and ds.cf.axes['T']:
+            t_coord = ds[ds.cf.axes['T'][0]]
+            for attr in ('units', 'calendar'):
+                if attr in t_coord.attrs:
+                    del t_coord.attrs[attr]
         ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -234,14 +244,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         ds.close()
 
-    def process(self, var, local_files):
+    def process(self, var):
         """Top-level wrapper for doing all preprocessing of data files.
         """
-        _log.info("    Processing %s for %s", var.short_format(), self.pod_name)
         # load dataset
         try:
             ds = self.read_dataset(var)
-            ds = xr_util.DatasetParser.parse(ds, var)
+            ds = xr_util.DatasetParser().parse(ds, var)
         except Exception as exc:
             raise util.DataPreprocessError((f"Error in read/parse data for "
                 f"'{var.name}' for {self.pod_name}.")) from exc
@@ -260,7 +269,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             raise util.DataPreprocessError((f"Error in writing data for "
                 f"'{var.name}' for {self.pod_name}. ")) from exc
         del ds # shouldn't be necessary
-        _log.debug("Successful preprocessor exit on %s for %s", 
+        _log.debug("Successful preprocessor exit on <%s> for %s", 
             var.short_format(), self.pod_name)
 
 
@@ -333,5 +342,5 @@ class SampleDataPreprocessor(SingleFilePreprocessor):
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
-    _file_preproc_functions = (,)
+    _file_preproc_functions = []
     _functions = (CropDateRangeFunction, ExtractLevelFunction)

@@ -32,12 +32,22 @@ _cf_calendars = (
 )
 
 def _coerce_to_cfunits(*args):
-    def _coerce(x):
-        if isinstance(x, cfunits.Units):
-            return x
-        return cfunits.Units(x)
+    """Coerce string-valued units to cfunits.Units objects. Also coerces 
+    reference time units (eg 'days since 1970-01-01') to time units ('days'). 
+    The reference date aspect isn't used in the code here and is handled by
+    xarray parsing in the preprocessor.
+    """
+    def _coerce(u):
+        if not isinstance(u, cfunits.Units):
+            u = cfunits.Units(u)
+        if u.isreftime:
+            return cfunits.Units(u._units_since_reftime)
+        return u
 
-    return [_coerce(arg) for arg in args]
+    if len(args) == 1:
+        return _coerce(args[0])
+    else:
+        return [_coerce(arg) for arg in args]
 
 def are_units_equivalent(*args):
     """Returns True if and only if all units in arguments are equivalent
@@ -277,7 +287,7 @@ class DatasetParser():
         def _restore_one(name, backup_d, attrs_d):
             for k,v in backup_d.items():
                 if k not in attrs_d:
-                    _log.debug("%s: restore attr '%s' = '%s'.", name, k, v)
+                    # _log.debug("%s: restore attr '%s' = '%s'.", name, k, v)
                     attrs_d[k] = v
                 if v != attrs_d[k]:
                     _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",

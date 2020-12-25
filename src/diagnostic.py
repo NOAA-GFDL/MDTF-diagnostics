@@ -64,22 +64,6 @@ class VarlistCoordinateMixin(object):
     "dimensions" section of the POD's settings.jsonc file.
     """
     need_bounds: bool = False
-    name_in_model: str = ""
-    bounds_in_model: str = ""
-
-    @property
-    def env_vars(self):
-        """Get env var definitions for this coordinate's name in the data file, 
-        and the name of its associated 1d bounds variable (if present.)
-        """
-        if not self.name_in_model:
-            raise ValueError()
-        env_vars = {self.name + _coord_env_var_suffix : self.name_in_model}
-        if self.bounds_in_model:
-            env_vars[self.name + _coord_bounds_env_var_suffix] = self.bounds_in_model
-        else:
-            assert not self.need_bounds
-        return env_vars
 
 @util.mdtf_dataclass
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
@@ -207,24 +191,34 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         if self.translation and self.translation.name:
             return self.translation.name
         else:
-            return ""
+            raise ValueError(f"Translation not defined for {self.name}.")
 
     @property
     def env_vars(self):
-        """Get env var definitions for this variable's name in the data file, 
-        and the path to the preprocessed data file.
+        """Get env var definitions for:
+            - The path to the preprocessed data file for this variable,
+            - The name for this variable in that data file,
+            - The names for all of this variable's coordinate axes in that file,
+            - The names of the bounds variables for all of those coordinate
+                dimensions, if provided by the data.
         """
-        if self.active:
-            assert self.name_in_model
-            assert self.dest_path
-            return {
-                self.env_var: self.name_in_model,
-                self.path_variable: self.dest_path
-            }
-        else:
+        if not self.active:
             # Signal to POD's code that vars are not provided by setting 
             # variable to the empty string
             return {self.env_var: "", self.path_variable: ""}
+
+        assert self.dest_path
+        d = util.ConsistentDict()
+        d.update({
+            self.env_var: self.name_in_model,
+            self.path_variable: self.dest_path
+        })
+        for ax, dim in self.axes.items():
+            trans_dim = self.translation.axes[ax]
+            d[dim.name + _coord_env_var_suffix] = trans_dim.name
+            if trans_dim.bounds:
+                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+        return d
 
     def query_attrs(self, key_synonyms=None):
         """Returns a dict of attributes relevant for DataSource.query_dataset()
@@ -274,7 +268,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
                     raise ValueError((f"Unknown dimension name {d_name} in varlist "
                         f"entry for {name}."))
                 new_kw['coords'].append(dims_d[d_name].make_scalar(scalar_val))
-        filter_kw = util.filter_dataclass(kwargs, cls)
+        filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         obj = cls(name=name, **new_kw, **filter_kw)
         # specialize time coord
         time_kw = util.filter_dataclass(kwargs, _VarlistTimeSettings)
@@ -432,7 +426,7 @@ class Diagnostic(object):
     driver: str = ""
     program: str = ""
     runtime_requirements: dict = dc.field(default_factory=dict)
-    pod_env_vars: util.WormDict = dc.field(default_factory=util.WormDict)
+    pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
 
     POD_CODE_DIR = ""
     POD_OBS_DATA = ""
@@ -568,35 +562,16 @@ class Diagnostic(object):
             subroutines.
         """
         try:
-            self.verify_coordinate_names()
             self.set_pod_env_vars()
             self.check_pod_driver()
         except Exception as exc:
             raise util.PodRuntimeError(self, 
                 "Caught exception during pre_run_setup") from exc
 
-    def verify_coordinate_names(self):
-        # TODO: finish
-        # make sure coord names consistent for all VEs.
-        # Set env vars for variable and axis names:
-        ax_name_verify = collections.defaultdict(set)
-        for k,v in self.varlist.axes.items():
-            ax_name_verify[k].add(v.name)
-        for var in self.iter_vars(active=True):
-            # env var for variable name currently set in data_manager, TODO: fix
-            # env var for path to file:
-            self.pod_env_vars[var.path_variable] = var.dest_path
-            for k,v in var.axes.items():
-                ax_name_verify[k].add(v.name)
-        for ax, ax_set in ax_name_verify.items():
-            if len(ax_set) > 1:
-                # names found in two different files disagree - raise error
-                raise util.PodRuntimeError(self,
-                    f"POD's variables have conflicting names for {ax} axis: {ax_set}"
-                )
-
     def set_pod_env_vars(self):
-        """Sets all environment variables for POD.
+        """Sets all environment variables for the POD: paths and names of each
+        variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
+        if any of these definitions conflict.
         """
         self.pod_env_vars.update({
             "POD_HOME": self.POD_CODE_DIR, # location of POD's code
@@ -604,16 +579,19 @@ class Diagnostic(object):
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
             "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
         })
-        for coord in self.varlist.axes.values():
-            self.pod_env_vars.update(coord.env_vars)
         for var in self.iter_vars(active=True):
-            self.pod_env_vars.update(var.env_vars)
+            try:
+                self.pod_env_vars.update(var.env_vars)
+            except util.WormKeyError as exc:
+                raise util.WormKeyError((f"{var.name} defines coordinate names that "
+                    f"conflict with those previously set. (Tried to update "
+                    f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
         for var in self.iter_vars(active=False):
             # define env vars for varlist entries without data. Name collisions
             # are OK in this case.
             try:
                 self.pod_env_vars.update(var.env_vars)
-            except util.WormKeyError as exc:
+            except util.WormKeyError:
                 continue
 
     def check_pod_driver(self):

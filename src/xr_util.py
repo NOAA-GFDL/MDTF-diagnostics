@@ -328,44 +328,95 @@ class DatasetParser():
             'calendar', cftime_cal, _cf_calendars, _default_cal)
 
     @staticmethod
-    def check_attr(our_var, ds_var, our_attr_name, ds_attr_name=None, 
+    def _compare_attr(our_attr, ds_attr, comparison_func=None):
+        """Convenience function to compare two values. Returns tuple of updated
+        values, or None if no update is needed.
+        """
+        if comparison_func is None:
+            comparison_func = (lambda x,y: x == y)
+
+        if not ds_attr:
+            return (None, str(our_attr))
+        elif not our_attr:
+            return (ds_attr, None)
+        elif not comparison_func(our_attr, ds_attr):
+            return (ds_attr, ds_attr)
+        else:
+            return (None, None)
+
+    def check_name(self, our_var, ds_var_name):
+        """Reconcile the name of the variable between the 'ground truth' of the 
+        dataset we downloaded (ds_var) and our expectations based on the model's
+        convention (our_var).
+        """
+        our_attr_name = 'name'
+        our_attr = getattr(our_var, our_attr_name, "")
+        if our_attr.startswith('PLACEHOLDER'):
+            our_attr = ""
+        our_new_attr, ds_new_attr = self._compare_attr(our_attr, ds_var_name)
+
+        if our_new_attr is not None and ds_new_attr is not None:
+            setattr(our_var, our_attr_name, our_new_attr)
+            raise TypeError((f"Found unexpected {our_attr_name} for variable "
+                f"'{our_var.name}': '{our_new_attr}' (expected '{our_attr}'). "
+                "Updating record according to info in dataset."))
+        elif ds_new_attr is not None:
+            # should never get here
+            raise TypeError(f"No {our_attr_name} found in dataset for '{our_var.name}'.")
+        elif our_new_attr is not None:
+            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                our_attr_name, our_var.name, our_new_attr)
+            setattr(our_var, our_attr_name, our_new_attr)
+        else:
+            return
+
+    def check_attr(self, our_var, ds_var, our_attr_name, ds_attr_name=None, 
         comparison_func=None):
         """Compare attribute of a DMVariable (our_var) with what's set in the 
         xarray.Dataset (ds_var). If there's a discrepancy, log an error but 
         change the entry in our_var (ie take ds_var to be ground truth.)
         """
-        our_name = our_var.name
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
-        if comparison_func is None:
-            comparison_func = (lambda x,y: x == y)
-
         our_attr = getattr(our_var, our_attr_name)
         ds_attr = ds_var.attrs.get(ds_attr_name, "")
-        if not ds_attr:
-            _log.warning("No %s found in dataset for '%s'; setting to '%s'.",
-                ds_attr_name, our_name, str(our_attr))
-            ds_var.attrs[ds_attr_name] = str(our_attr)
-        elif not comparison_func(our_attr, ds_attr):
-            _log.error(("Found unexpected %s for variable '%s': '%s' (expected "
-                "'%s'). Updating record according to info in dataset."),
-                ds_attr_name, our_name, ds_attr, our_attr
-            )
-            our_var.our_attr_name = ds_attr
-            raise TypeError()
+        our_new_attr, ds_new_attr = self._compare_attr(our_attr, ds_attr, 
+            comparison_func=comparison_func)
 
-    def check_std_name_units(self, our_var, ds_var):
-        d = ds_var.attrs # abbreviate
+        if our_new_attr is not None and ds_new_attr is not None:
+            setattr(our_var, our_attr_name, our_new_attr)
+            raise TypeError((f"Found unexpected {our_attr_name} for variable "
+                f"'{our_var.name}': '{our_new_attr}' (expected '{our_attr}'). "
+                "Updating record according to info in dataset."))
+        elif ds_new_attr is not None:
+            _log.warning("No %s found in dataset for '%s'; setting to '%s'.",
+                ds_attr_name, our_var.name, str(ds_new_attr))
+            ds_var.attrs[ds_attr_name] = str(ds_new_attr)
+        elif our_new_attr is not None:
+            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                our_attr_name, our_var.name, our_new_attr)
+            setattr(our_var, our_attr_name, our_new_attr)
+        else:
+            return
+
+    def check_names_and_units(self, our_var, ds, ds_var_name):
+        """Reconcile the standard_name and units attributes between the
+        'ground truth' of the dataset we downloaded (ds_var) and our expectations
+        based on the model's convention (our_var).
+        """
+        if ds_var_name not in ds:
+            raise ValueError(f"Variable name '{ds_var_name}' not found in dataset: "
+                f"({list(ds.variables)}).")
+        self.check_name(our_var, ds_var_name)
+        ds_var = ds[ds_var_name] # abbreviate
+        d = ds_var.attrs         # abbreviate
         try:
-            try:
-                # see if standard_name has been stored in a nonstandard attribute
-                _, std_name = self.guess_key('standard_name', 'standard', d)
-                d['standard_name'] = std_name
-            except KeyError:
-                pass
-            self.check_attr(our_var, ds_var, 'standard_name')
-        except TypeError:
+            # see if standard_name has been stored in a nonstandard attribute
+            _, std_name = self.guess_key('standard_name', 'standard', d)
+            d['standard_name'] = std_name
+        except KeyError:
             pass
+        self.check_attr(our_var, ds_var, 'standard_name')
         try:
             try:
                 # see if units has been stored in a nonstandard attribute
@@ -375,24 +426,17 @@ class DatasetParser():
                 pass
             self.check_attr(our_var, ds_var, 'units', 
                 comparison_func=are_units_equivalent)
-        except TypeError:
+        except TypeError as exc:
             our_var.units = _coerce_to_cfunits(our_var.units)
+            raise exc
 
     def check_variable(self, ds, translated_var):
         """Checks standard_name attribute of all variables and coordinates. If
         not set, attempts to set it according to ``convention``. If different 
         from ``convention``, raises a warning.
         """
-        tv_name = translated_var.name          # abbreviate
-        # convention = translated_var.convention # abbreviate
-
-        if tv_name not in ds:
-            raise ValueError(f"Variable name '{tv_name}' not found in dataset: "
-                f"({list(ds.variables)}).")
-            # fallback -- try to match on standard name?
-
-        # check variable std_name, units
-        self.check_std_name_units(translated_var, ds[tv_name])
+        tv_name = translated_var.name            # abbreviate
+        self.check_names_and_units(translated_var, ds, tv_name)
 
         # check XYZT axes all uniquely defined
         for ax, coord_list in ds.cf.axes.items():
@@ -405,11 +449,18 @@ class DatasetParser():
         if our_axes != ds_axes:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
                 f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
-        # check axis std_names, units
-        for ax, our_coord in translated_var.axes.items():
+        # check axis names, std_names, units, bounds
+        for translated_coord in translated_var.axes.values():
+            ax = translated_coord.axis
             ds_coord_name = ds.cf.axes[str(ax)][0]
-            self.check_std_name_units(our_coord, ds[ds_coord_name])
-
+            self.check_names_and_units(translated_coord, ds, ds_coord_name)
+            try:
+                bounds_name = ds.cf.get_bounds(ds_coord_name).name
+                _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                    'bounds', translated_coord.name, bounds_name)
+                translated_coord.bounds = bounds_name
+            except KeyError:
+                continue
 
     def parse(self, ds, var=None):
         """Calls the above metadata parsing functions in the intended order; 

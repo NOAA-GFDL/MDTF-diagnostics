@@ -205,7 +205,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         return not self.exceptions.is_empty
 
     def iter_pods(self, active=None):
-        """Generator iterating over pods.
+        """Generator iterating over all PODs associated with this case.
+
+        Args:
+            active: bool or None, default None. Selects subset of PODs which are
+                returned.
+                - active = True: only iterate over currently active PODs.
+                - active = False: only iterate over inactive PODs (PODs which
+                    have experienced an error during query-fetch.)
+                - active = None: iterate over both active and inactive PODs.
         """
         if active is None:
             # default: all pods
@@ -217,10 +225,36 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             )
 
     def iter_vars(self, active=None, active_pods=True):
+        """Generator iterating over all VarlistEntries in all PODs associated 
+        with this case.
+
+        Args:
+            active: bool or None, default None. Selects subset of VarlistEntries
+                which are returned, *after* selecting a subset of PODs based on
+                active_pods.
+                - active = True: only iterate over currently active VarlistEntries.
+                - active = False: only iterate over inactive VarlistEntries 
+                    (Either alternates which have not yet been considered, or
+                    variables which have experienced an error during query-fetch.)
+                - active = None: iterate over all VarlistEntries.
+            active_pods: bool or None, default True. Selects subset of PODs which 
+                are returned.
+                - active = True: only iterate over currently active PODs.
+                - active = False: only iterate over inactive PODs (PODs which
+                    have experienced an error during query-fetch.)
+                - active = None: iterate over both active and inactive PODs.
+        """
         for p in self.iter_pods(active=active_pods):
             yield from p.iter_vars(active=active)
 
     def iter_pod_vars(self, active=None, active_pods=True):
+        """Generator similar to :meth:`DataSourceBase.iter_vars`, but returns a
+        namedtuple of the :class:`~diagnostic.Diagnostic` and 
+        :class:~diagnostic.VarlistEntry` objects corresponding to the POD and 
+        its variable, respectively.
+
+        Arguments are identical to :meth:`DataSourceBase.iter_vars`.
+        """
         for p in self.iter_pods(active=active_pods):
             for v in p.iter_vars(active=active):
                 yield PodVarTuple(pod=p, var=v)

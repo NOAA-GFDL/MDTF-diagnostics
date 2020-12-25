@@ -474,6 +474,19 @@ class Diagnostic(object):
         return cls.from_struct(pod_name, config.pod_data[pod_name])
 
     def iter_vars(self, active=None):
+        """Generator iterating over all VarlistEntries associated with this POD.
+
+        Args:
+            active: bool or None, default None. Selects subset of VarlistEntries
+                which are returned.
+                - active = True: only iterate over currently active VarlistEntries
+                    (variables that are currently being queried, fetched and
+                    preprocessed.)
+                - active = False: only iterate over inactive VarlistEntries 
+                    (Either alternates which have not yet been considered, or
+                    variables which have experienced an error during query-fetch.)
+                - active = None: iterate over all VarlistEntries.
+        """
         if active is None:
             # default: all variables
             yield from self.varlist.iter_vars()

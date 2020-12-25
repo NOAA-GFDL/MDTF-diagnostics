@@ -476,7 +476,7 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
     inheritance) try to assign different values to a field of the same name. We
     do this by assigning to a :class:`~src.util.basic.ConsistentDict`.
     """
-    new_kw = filter_dataclass(kwargs, self, init=True)
+    new_kw = filter_dataclass(kwargs, self, init='all')
     new_kw = basic.ConsistentDict.from_struct(new_kw)
     for cls_ in self.__class__.__bases__:
         if not is_regex_dataclass(cls_):
@@ -493,7 +493,7 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
             else:
                 raise exceptions.DataclassParseError(f"Can't set value for {f.name}.")
             new_d = dataclasses.asdict(f.type.from_string(val))
-            new_d = filter_dataclass(new_d, self, init=True)
+            new_d = filter_dataclass(new_d, self, init='all')
             try:
                 new_kw.update(new_d)
             except exceptions.WormKeyError as exc:
@@ -608,21 +608,36 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
 # ----------------------------------------------------
 
 def filter_dataclass(d, dc, init=False):
-    """Given a dataclass dc (may be the class or an instance of it), and a dict,
-    dataclass or dataclass instance d, return a dict of the subset of fields or 
-    entries in d that correspond to the fields in dc.
+    """Return a dict of the subset of fields or entries in d that correspond to 
+    the fields in dataclass dc.
 
-    If init=True, include any `init-only fields 
-    <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
-    that dc has in the returned dict.
+    Args:
+        d: (dict, dataclass or dataclass instance):
+        dc: (dataclass or dataclass instance): 
+        init: bool or 'all', default False:
+            - If False: Include only the fields of dc (as returned by 
+                :py:func:`dataclasses.fields`.)
+            - If True: Include only the arguments to dc's constructor (ie, include
+                any `init-only fields 
+                <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
+                and exclude any of dc's fields with init=False.
+            - If 'all': Include the union of the above two options.
+
+    Returns: dict containing the subset of key:value pairs from d such that the
+        keys are included in the set of dc's fields specified by the value of
+        init.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
         if isinstance(d, type):
             d = d() # d is a class; instantiate with default field values
         d = dataclasses.asdict(d)
-    ans = {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
-    if init:
+    if not init or (init == 'all'):
+        ans = {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
+    else:
+        ans = {f.name: d[f.name] for f in dataclasses.fields(dc) \
+            if (f.name in d and f.init)}
+    if init or (init == 'all'):
         init_fields = filter(
             (lambda f: f.type == dataclasses.InitVar), 
             dc.__dataclass_fields__.values()

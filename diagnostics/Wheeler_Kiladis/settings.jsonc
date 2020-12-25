@@ -35,31 +35,33 @@
     "time": {"standard_name": "time"}
   },
   "varlist": {
-    "rlut_var": {
-      "standard_name": "rlut_var",
+    "rlut": {
+      "standard_name": "toa_outgoing_longwave_flux",
+      "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
-    "pr_var": {
-      "standard_name" : "pr_var",
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1", //units?
       "dimensions": ["time", "lat", "lon"]
     },
-    "omega500_var": {
-      "standard_name" : "omega_var",
+    "omega500": {
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "units": "Pa s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 500}
-      // "alternates" : ["wap_var"]
     },
-    "u200_var": {
-      "standard_name" : "u_var",
+    "u200": {
+      "standard_name": "eastward_wind",
+      "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
-      // "alternates" : ["u_var"]
     },
-    "u850_var": {
-      "standard_name" : "u_var",
+    "u850": {
+      "standard_name": "eastward_wind",
+      "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 850}
-      // "alternates" : ["u_var"]
     }
   }
 }

@@ -49,8 +49,8 @@ os.chdir(os.environ["DATADIR"])
 
 #OLR
 
-if os.path.isfile(os.environ["RLUT_VAR_FILE"]):
-    os.environ["file_WK"] = os.path.basename(os.environ["RLUT_VAR_FILE"])
+if os.path.isfile(os.environ["RLUT_FILE"]):
+    os.environ["file_WK"] = os.path.basename(os.environ["RLUT_FILE"])
     os.environ["MVAR"] = os.environ["rlut_var"]
     os.environ["LEV"] = "sfc"
     os.environ['CESM_VAR'] = 'FLUT'
@@ -61,8 +61,8 @@ else:
 
 #Precipitation
 
-if os.path.isfile(os.environ["PR_VAR_FILE"]):
-    os.environ["file_WK"] = os.path.basename(os.environ["PR_VAR_FILE"])
+if os.path.isfile(os.environ["PR_FILE"]):
+    os.environ["file_WK"] = os.path.basename(os.environ["PR_FILE"])
     os.environ["MVAR"] = os.environ["pr_var"]
     os.environ["LEV"] = "sfc"
     os.environ['CESM_VAR'] = 'PRECT'
@@ -73,8 +73,8 @@ else:
 
 #Omega500
 
-if os.path.isfile(os.environ["OMEGA500_VAR_FILE"]):
-    os.environ["file_WK"] = os.path.basename(os.environ["OMEGA500_VAR_FILE"])
+if os.path.isfile(os.environ["OMEGA500_FILE"]):
+    os.environ["file_WK"] = os.path.basename(os.environ["OMEGA500_FILE"])
     os.environ["MVAR"] = os.environ["omega500_var"]
     os.environ["LEV"] = "500"
     os.environ['CESM_VAR'] = 'OMEGA500'
@@ -85,8 +85,8 @@ else:
 
 #U200
 
-if os.path.isfile(os.environ["U200_VAR_FILE"]):
-    os.environ["file_WK"] = os.path.basename(os.environ["U200_VAR_FILE"])
+if os.path.isfile(os.environ["U200_FILE"]):
+    os.environ["file_WK"] = os.path.basename(os.environ["U200_FILE"])
     os.environ["MVAR"] = os.environ["u200_var"]
     os.environ["LEV"] = "200"
     os.environ['CESM_VAR'] = 'U200'
@@ -97,8 +97,8 @@ else:
 
 #U850
 
-if os.path.isfile(os.environ["U850_VAR_FILE"]):
-    os.environ["file_WK"] = os.path.basename(os.environ["U850_VAR_FILE"])
+if os.path.isfile(os.environ["U850_FILE"]):
+    os.environ["file_WK"] = os.path.basename(os.environ["U850_FILE"])
     os.environ["MVAR"] = os.environ["u850_var"]
     os.environ["LEV"] = "850"
     os.environ['CESM_VAR'] = 'U850'

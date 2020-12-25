@@ -447,9 +447,9 @@ class FieldlistEntry(data_model.DMDependentVariable):
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
             kwargs['dimensions'] = []
             axes_set = [data_model.DMAxis.from_struct(x) \
-                for x in cls._ndim_to_axes_set[kwargs.pop('ndims')]]
+                for x in cls._ndim_to_axes_set[kwargs.pop('ndim')]]
             for ax in axes_set:
-                dims = dims_lut_d[ax]
+                dims = tuple(dims_lut_d[ax].values())
                 if len(dims) != 1:
                     raise ValueError(f"Can't parse multiple {ax} axes in fieldlist.")
                 kwargs['dimensions'].append(dims[0].name)
@@ -464,7 +464,13 @@ class FieldlistEntry(data_model.DMDependentVariable):
                     f"entry for {name}."))
             kwargs['coords'].append(dims_d[d_name])
 
-        filter_kw = util.filter_dataclass(kwargs, cls)
+        for d_name in kwargs.get('scalar_coord_templates', dict()):
+            if d_name not in dims_d:
+                raise ValueError((f"Unknown dimension name {d_name} in scalar "
+                    f"coord definition for fieldlist entry for {name}."))
+
+        filter_kw = util.filter_dataclass(kwargs, cls, init=True)
+        assert filter_kw['coords']
         return cls(name=name, **filter_kw)
 
     def scalar_name(self, old_coord, translated_coord):
@@ -511,19 +517,17 @@ class Fieldlist():
 
     @classmethod
     def from_struct(cls, d):
-        axes_lut_temp = collections.defaultdict(util.WormDict)
-        lut_temp = collections.defaultdict(util.WormDict)
-
-        def _process_coord(section_name):
+        def _process_coord(section_name, d, temp_d):
             # build two-stage lookup table (by axis type, then standard name)
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
                 ax = data_model.DMAxis.from_struct(v['axis'])
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
-                axes_lut_temp[ax][entry.standard_name] = entry
+                temp_d[ax][entry.standard_name] = entry
+            return (d, temp_d)
 
-        def _process_var(section_name):
+        def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data 
             # dimensionality) -- should just make FieldlistEntry hashable
             section_d = d.pop(section_name, dict())
@@ -532,17 +536,21 @@ class Fieldlist():
                     d['axes_lut'], d['axes'], name=k, **v
                 )
                 d['entries'][k] = entry
-                lut_temp[entry.standard_name][entry.axes_set] = entry
+                temp_d[entry.standard_name][entry.axes_set] = entry
+            return (d, temp_d)
 
+        temp_d = collections.defaultdict(util.WormDict)
+        d['axes'] = util.WormDict()
         d['axes_lut'] = util.WormDict()
-        _process_coord('axes')
-        d['axes_lut'].update(axes_lut_temp)
+        d, temp_d = _process_coord('coords', d, temp_d)
+        d['axes_lut'].update(temp_d)
 
+        temp_d = collections.defaultdict(util.WormDict)
         d['entries'] = util.WormDict()
         d['lut'] = util.WormDict()
-        _process_var('aux_coords')
-        _process_var('variables')
-        d['lut'].update(lut_temp)
+        d, temp_d = _process_var('aux_coords', d, temp_d)
+        d, temp_d = _process_var('variables', d, temp_d)
+        d['lut'].update(temp_d)
         return cls(**d)
 
     def to_CF(self, name):

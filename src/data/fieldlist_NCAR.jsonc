@@ -6,18 +6,20 @@
 // CF variables not on that list are commented out
 {
   "name" : "NCAR",
-  "models": ["CAM4", "CESM2"], // others?
-  "axes" : {
+  "models": ["CAM4", "CESM2", "CESM"], // others?
+  "coords" : {
     // only used for taking slices, unit conversion
-    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "lev": {
+    // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based 
+    // on their values in model data
+    "PLACEHOLDER_X": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "PLACEHOLDER_Y": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "PLACEHOLDER_Z": {
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
     },
-    "time": {"axis": "T", "standard_name": "time", "units": "days"}
+    "PLACEHOLDER_T": {"axis": "T", "standard_name": "time", "units": "days"}
   },
   "aux_coords": {
     // "deptho": {
@@ -41,18 +43,21 @@
     "U": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"Z": "U{value}"}
+      "scalar_coord_templates": {"PLACEHOLDER_Z": "U{value}"},
+      "ndim": 4
     },
     "V": {
       "standard_name": "northward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"Z": "V{value}"}
+      "scalar_coord_templates": {"PLACEHOLDER_Z": "V{value}"},
+      "ndim": 4
     },
     "Z3": {
       "standard_name": "geopotential_height",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
-      "scalar_coord_templates": {"Z": "Z{value}"} 
+      "scalar_coord_templates": {"PLACEHOLDER_Z": "Z{value}"},
+      "ndim": 4
     },
     "Q": {
       "standard_name": "specific_humidity",
@@ -62,7 +67,8 @@
     "OMEGA": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
-      "scalar_coord_templates": {"Z": "OMEGA{value}"}
+      "scalar_coord_templates": {"PLACEHOLDER_Z": "OMEGA{value}"},
+      "ndim": 4
     },
     "TS": {
       "standard_name": "surface_temperature",
@@ -172,13 +178,15 @@
     // },
     "THETAL": {
       "standard_name": "sea_water_potential_temperature",
-      "units": "K"
+      "units": "K",
+      "ndim": 4
     },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
     "T": {
       "standard_name": "air_temperature",
-      "units": "K"
+      "units": "K",
+      "ndim": 4
     },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "MQ": {

@@ -526,34 +526,219 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
 # --------------------------------------------------------------------------
 
-class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
-    """Wrapper that creates and queries an intake_esm.esm_datastore catalog 
-    made by crawling a directory hierarchy and populating catalog entry attributes
-    by running a regex against the paths of files in the directory hierarchy.
+class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
+    """Wrapper for performing queries on a data catalog made available as a
+    pandas DataFrame. 
     """
+    @property
+    @abc.abstractmethod
+    def df(self):
+        """Synonym for the DataFrame containing the catalog.
+
+        TODO: integrate better with Intake API.
+        """
+        pass
+
+    # column of the DataFrame containing datelabel.DateRange objects 
+    # If 'None', date range selection logic is skipped.
+    # TODO: generate DateRange from start/end date columns
+    daterange_column = None
+
+    # Columns of the DataFrame specifying the experiment. We assume that 
+    # specifying a valid value for each of the columns in this set uniquely 
+    # identifies an experiment. 
+    experiment_columns = util.abstract_attribute()
+
+    # Name of the column in the catalog containing the location (eg, the path)
+    # of the data for that row.
+    remote_data_column = util.abstract_attribute()
+
+    @property
+    def has_date_info(self):
+        return (self.daterange_column is not None)
+
+    @property
+    def all_columns(self):
+        return tuple(self.df.columns)
+
+    def _query_clause(self, col_name, k, v):
+        """Translate a single field value into a logical clause in the dataframe
+        catalog query. All queryable field values are assumed to be attribute
+        values on a local variable named _dict_var_name.
+        """
+        _dict_var_name = 'd'
+        if v == util.NOTSET:
+            return ""
+        if isinstance(v, datelabel.DateRange):
+            # return files having any date range overlap at all
+            return f"({col_name} in @{_dict_var_name}.{k})"
+        elif k == 'max_frequency':
+            return f"({col_name} <= @{_dict_var_name}.frequency)"
+        elif k == 'max_frequency':
+            return f"({col_name} <= @{_dict_var_name}.frequency)"
+        else:
+            return f"({col_name} == @{_dict_var_name}.{k})"
+
+    def _query_catalog(self, var):
+        """Construct and execute the query to determine whether data matching 
+        var is present in the catalog.
+        
+        Split off logic done here to perform the query against the catalog 
+        (returning a dataframe with results) from the processing of those 
+        results, in order to simplify overriding by child classes.
+        """
+        def _filter_columns(obj):
+            return {col: getattr(obj, col) for col in self.all_columns \
+                if hasattr(obj, col)}
+
+        query_d = util.WormDict()
+        query_d.update(_filter_columns(self.attrs))
+        query_d.update(_filter_columns(var.query_attrs))
+        clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
+        d = util.NameSpace.fromDict(query_d) # set local var for df.query()
+        return self.df.query(' and '.join(clauses))
+
+    def experiment_key(self, query_df, idx):
+        """Returns string-valued key for grouping files by experiment: all
+        values of all data columns must match.
+
+        .. note::
+           We can't just do a .groupby on column names, because pandas attempts 
+           to coerce DateFrequency to a timedelta64, which overflows for static 
+           DateFrequency. There doesn't seem to be a way to disable this type 
+           coercion.)
+        """
+        return '|'.join(
+            str(query_df[c].loc[idx]) for c in self.experiment_columns
+        )
+
+    @staticmethod
+    def _rd_key_func(group_df):
+        """Return tuple of row indices: this implementation's rd_key."""
+        return tuple(group_df.index.tolist())
+
+    def _check_group_daterange(self, group_df):
+        """Sort the files found for each experiment by date, verify that
+        the date ranges contained in the files are contiguous in time and that
+        the date range of the files spans the query date range.
+        """
+        if not self.has_date_info:
+            return group_df
+
+        rd_keys = self._rd_key_func(group_df)
+        try:
+            sorted_df = group_df.sort_values(by=[self.daterange_column])
+            # method throws ValueError if ranges aren't contiguous
+            files_date_range = datelabel.DateRange.from_contiguous_span(
+                *(sorted_df[self.daterange_column].to_list())
+            )
+            # throws AssertionError if we don't span the query range
+            assert files_date_range.contains(self.attrs.date_range)
+            return sorted_df
+        except ValueError:
+            self._query_error_logger(
+                "Noncontiguous or malformed date range in files:", rd_keys
+            )
+        except AssertionError:
+            self._query_error_logger(
+                f"Returned files don't span query date range ({self.attrs.date_range}):",
+                rd_keys
+            )
+        except Exception as exc:
+            self._query_error_logger(f"Caught exception {repr(exc)}:", rd_keys)
+        # hit an exception; return empty DataFrame to signify failure
+        return pd.DataFrame(columns=group_df.columns)
+
+    def _query_group_hook(self, group_df):
+        """Additional filtering to do on query results for a single experiment,
+        for use by child classes.
+        """
+        return group_df
+
+    def _group_query_results(self, query_df):
+        """Group query results by experiment, apply filtering on a per-experiment
+        basis, and return a set of tuples of rd_keys (one tuple per experiment).
+        """
+        # group result by column values
+        expt_groups = query_df.groupby(
+            by=(lambda idx: self.experiment_key(query_df, idx))
+        )
+        rd_keys = set([])
+        for _, group in expt_groups:
+            group = group.apply(self._check_group_daterange)
+            if group.empty:
+                continue
+            group = group.apply(self._query_group_hook)
+            if group.empty:
+                continue
+            rd_keys.add(self._rd_key_func(group))
+        # return set of tuples of catalog row indices
+        return rd_keys
+
+    def query_dataset(self, var):
+        """Find all rows of the catalog matching relevant attributes of the 
+        DataSource and of the variable. Obtain the set of matching row numbers
+        (the rd_keys for this query implementation) and store it in var's 
+        remote_data attribute. Store one set of row numbers for each distinct
+        experiment (ie set of column values in the catalog) matching the query.
+        """
+        query_df = self._query_catalog(var)
+        # assign set of sets of catalog row indices to var's remote_data attr
+        # filter out empty entries = queries that failed.
+        var.remote_data = {x for x in self._group_query_results(query_df) if x}
+
+    def remote_data(self, rd_keys):
+        """Given one or more row indices in the catalog's dataframe (rd_keys, 
+        as found by query_dataset()), return the corresponding remote_paths.
+        """
+        if util.is_iterable(rd_keys):
+            rd_keys = util.to_iter(rd_keys, list) # iloc requires list, not just iterable
+        return self.df[self.remote_data_column].iloc[rd_keys]
+
+    def _query_error_logger(self, msg, rd_keys):
+        """Log debugging message or raise an exception, depending on if we're
+        in strict mode.
+        """
+        rd_keys = util.to_iter(rd_keys, list)
+        err_str = '\n'.join(
+            [str(self.df.iloc[idx].to_dict()) for idx in rd_keys]
+        )
+        err_str = msg + '\n' + err_str
+        if self.strict:
+            raise util.DataQueryError(rd_keys, err_str)
+        else:
+            _log.warning(err_str)
+
+
+class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
+    """Mixin that creates an intake_esm.esm_datastore catalog by crawling a 
+    directory hierarchy and populating catalog entry attributes
+    by running a regex against the paths of files in the directory hierarchy.
+
+    .. note::
+       At time of writing, the `filename parsing 
+       <https://www.anaconda.com/blog/intake-parsing-data-from-filenames-and-paths>`__
+       functionality included in `intake <https://intake.readthedocs.io/en/latest/index.html>`__
+       is too limited to correctly parse our use cases, which is why we use the 
+       :class:`~src.util.RegexPattern` class instead.
+    """
+    # root directory to begin crawling at:
     CATALOG_DIR = util.abstract_attribute()
+    # regex to use to generate catalog entries from relative paths:
     _FileRegexClass = util.abstract_attribute()
     _asset_file_format = "netcdf"
-        
+
     @property
     def df(self):
         assert (hasattr(self, 'catalog') and hasattr(self.catalog, 'df'))
         return self.catalog.df
 
     @property
-    def path_column_name(self):
+    def remote_data_column(self):
         """Name of the column in the catalog containing the path to the remote 
         data file.
         """
         return self._FileRegexClass._pattern.input_field
-
-    @property
-    def data_column_names(self):
-        """Column names of the catalog (except for the path to the remote data.)
-        """
-        pat_fields = list(self._FileRegexClass._pattern.fields)
-        pat_fields.remove(self.path_column_name)
-        return pat_fields
 
     def iter_files(self):
         """Generator that yields instances of FileRegexClass generated from 
@@ -580,6 +765,8 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         machinery. The catalog is temporary and not retained after the code
         finishes running.
         """
+        data_columns = list(self._FileRegexClass._pattern.fields)
+        data_columns.remove(self.remote_data_column)
         # no aggregations, since for now we want to manually insert logic for
         # file fetching (& error handling etc.) before we load an xarray Dataset.
         return {
@@ -587,10 +774,10 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
             "id": "MDTF_" + self.__class__.__name__,
             "description": "",
             "attributes": [
-                {"column_name":c, "vocabulary": ""} for c in self.data_column_names
+                {"column_name":c, "vocabulary": ""} for c in data_columns
             ],
             "assets": {
-                "column_name": self.path_column_name,
+                "column_name": self.remote_data_column,
                 "format": self._asset_file_format
             },
             "last_updated": "2020-12-06"   
@@ -609,27 +796,13 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
             progressbar=False, sep='|'
         )
 
-    def _query_clause(self, col_name, k, v):
-        _dict_var_name = 'd'
-        if v == util.NOTSET:
-            return ""
-        if isinstance(v, datelabel.DateRange):
-            # return files having any date range overlap at all
-            return f"({col_name} in @{_dict_var_name}.{k})"
-        elif k == 'max_frequency':
-            return f"({col_name} <= @{_dict_var_name}.frequency)"
-        elif k == 'max_frequency':
-            return f"({col_name} <= @{_dict_var_name}.frequency)"
-        else:
-            return f"({col_name} == @{_dict_var_name}.{k})"
-
-    def _query_result_dataframe(self, var):
+    def _query_catalog(self, var):
         """Construct and execute the query to determine whether data matching 
         var is present in the catalog.
         
-        Split off logic performing the query against the catalog (returning a
-        dataframe with results) from the processing of those results, in order
-        to simplify overriding by child classes.
+        Split off logic done here to perform the query against the catalog 
+        (returning a dataframe with results) from the processing of those 
+        results, in order to simplify overriding by child classes.
         """
         query_d = util.WormDict.from_struct(
             util.filter_dataclass(self.attrs, self._FileRegexClass)
@@ -641,113 +814,6 @@ class DirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMet
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
         d = util.NameSpace.fromDict(query_d) # set local var for df.query()
         return self.df.query(' and '.join(clauses))
-
-    def _group_query_results(self, query_df):
-        """Split off logic constructing the rd_keys from the dataframe containing
-        query results in order to simplify overriding by child classes.
-        """
-        def experiment_key_func(idx):
-            """Returns string-valued key for grouping files by experiment: all
-            values of all data columns must match.
-            (We can't just do a .groupby on column names, because pandas attempts 
-            to coerce DateFrequency to a timedelta64, which overflows for static 
-            DateFrequency. There doesn't seem to be a way to disable this type 
-            coercion.)
-            """
-            return '|'.join(
-                str(query_df[c].loc[idx]) for c in self.data_column_names
-            )
-
-        # group result by column values
-        q_groups = query_df.groupby(by=experiment_key_func)
-        # return set of sets of catalog row indices
-        return {self._rd_key_func(group.apply(self._query_group_hook)) \
-            for _, group in q_groups}
-
-    def _query_group_hook(self, group_df):
-        """Processing to do on query results for a single experiment.
-        """
-        return group_df
-
-    @staticmethod
-    def _rd_key_func(group_df):
-        """Return tuple of row indices: this implementation's rd_key."""
-        return tuple(group_df.index.tolist())
-
-    def query_dataset(self, var):
-        """Find all rows of the catalog matching relevant attributes of the 
-        DataSource and of the variable. Obtain the set of matching row numbers
-        (the rd_keys for this query implementation) and store it in var's 
-        remote_data attribute. Store one set of row numbers for each distinct
-        experiment (ie set of column values in the catalog) matching the query.
-        """
-        query_df = self._query_result_dataframe(var)
-        # assign set of sets of catalog row indices to var's remote_data attr
-        # filter out empty entries = queries that failed.
-        var.remote_data = {x for x in self._group_query_results(query_df) if x}
-
-    def remote_data(self, rd_keys):
-        """Given one or more row indices in the catalog's dataframe (rd_keys, 
-        as found by query_dataset()), return the corresponding remote_paths.
-        """
-        if util.is_iterable(rd_keys):
-            rd_keys = util.to_iter(rd_keys, list) # iloc requires list, not just iterable
-        return self.df[self.path_column_name].iloc[rd_keys]
-
-    def _query_error_logger(self, msg, rd_keys):
-        """Log debugging message or raise an exception, depending on if we're
-        in strict mode.
-        """
-        rd_keys = util.to_iter(rd_keys, list)
-        err_str = '\n'.join(
-            [str(self.df.iloc[idx].to_dict()) for idx in rd_keys]
-        )
-        err_str = msg + '\n' + err_str
-        if self.strict:
-            raise util.DataQueryError(rd_keys, err_str)
-        else:
-            _log.warning(err_str)
-
-class ChunkedDirectoryHierarchyQueryMixin(DirectoryHierarchyQueryMixin):
-    _date_range_col = util.abstract_attribute()
-
-    @property
-    def data_column_names(self):
-        """Column names of the catalog (except for the path to the remote data,
-        and the file's date range, which get handled separately.)
-        """
-        col_names = super(ChunkedDirectoryHierarchyQueryMixin, self).data_column_names
-        col_names.remove(self._date_range_col)
-        return col_names
-
-    def _query_group_hook(self, group_df):
-        """Sort the files found for each experiment by date, verify that
-        the date ranges contained in the files are contiguous in time and that
-        the date range of the files spans the query date range.
-        """
-        rd_keys = self._rd_key_func(group_df)
-        try:
-            sorted_df = group_df.sort_values(by=[self._date_range_col])
-            # method throws ValueError if ranges aren't contiguous
-            files_date_range = datelabel.DateRange.from_contiguous_span(
-                *(sorted_df[self._date_range_col].to_list())
-            )
-            # throws AssertionError if we don't span the query range
-            assert files_date_range.contains(self.attrs.date_range)
-            return sorted_df
-        except ValueError:
-            self._query_error_logger(
-                "Noncontiguous or malformed date range in files:", rd_keys
-            )
-        except AssertionError:
-            self._query_error_logger(
-                f"Returned files don't span query date range ({self.attrs.date_range}):",
-                rd_keys
-            )
-        except Exception as exc:
-            self._query_error_logger(f"Caught exception {repr(exc)}:", rd_keys)
-        # hit an exception; return empty DataFrame to signify failure
-        return pd.DataFrame(columns=group_df.columns)
 
 
 class LocalFetchMixin(AbstractFetchMixin):
@@ -766,17 +832,23 @@ class LocalFetchMixin(AbstractFetchMixin):
         var.local_data.extend(paths)
 
 
-class SingleLocalFileDataSource(
-    DirectoryHierarchyQueryMixin, LocalFetchMixin, DataSourceBase
-    ):
+class LocalFileDataSource(
+    OnTheFlyDirectoryHierarchyQueryMixin, LocalFetchMixin, DataSourceBase
+):
+    """DataSource for dealing data in a regular directory hierarchy on a 
+    locally mounted filesystem. Assumes data for each variable may be split into
+    several files according to date, with the dates present in their filenames.
+    """
+    def __init__(self, case_dict):
+        self.catalog = None
+        super(LocalFileDataSource, self).__init__(case_dict)
+
+
+class SingleLocalFileDataSource(LocalFileDataSource):
     """DataSource for dealing data in a regular directory hierarchy on a 
     locally mounted filesystem. Assumes all data for each variable (in each 
     experiment) is contained in a single file.
     """
-    def __init__(self, case_dict):
-        self.catalog = None
-        super(SingleLocalFileDataSource, self).__init__(case_dict)
-
     def _group_query_results(self, query_df):
         """Verify that only a single file was found from each experiment.
         Convert set of (one-element) sets of row indices to set of row indices.
@@ -802,17 +874,6 @@ class SingleLocalFileDataSource(
                 "Requested multiple files when one was expected:", rd_key
             )
         return super(SingleLocalFileDataSource, self).remote_data(rd_key)
-
-class ChunkedLocalFileDataSource(
-    ChunkedDirectoryHierarchyQueryMixin, LocalFetchMixin, DataSourceBase
-    ):
-    """DataSource for dealing data in a regular directory hierarchy on a 
-    locally mounted filesystem. Assumes data for each variable may be split into
-    several files according to date, with the dates present in their filenames.
-    """
-    def __init__(self, case_dict):
-        self.catalog = None
-        super(ChunkedLocalFileDataSource, self).__init__(case_dict)
 
 
 # IMPLEMENTATION CLASSES ======================================================
@@ -886,13 +947,15 @@ class SampleDataAttributes(DataSourceAttributesBase):
             exit(1)
 
 
-class SampleDataDataSource(SingleLocalFileDataSource):
+class SampleLocalFileDataSource(SingleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
     _FileRegexClass = SampleDataFile
     _AttributesClass = SampleDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.SampleDataPreprocessor
+
+    experiment_columns = ("sample_dataset", )
 
     @property
     def CATALOG_DIR(self):
@@ -938,7 +1001,7 @@ class CMIP6DataSourceAttributes():
         # bail out if we're in strict mode with undetermined fields
 
 
-class CMIP6LocalDataSource(ChunkedLocalFileDataSource):
+class CMIP6LocalFileDataSource(LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and 
     stored on a local filesystem.
     """

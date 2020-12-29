@@ -138,14 +138,23 @@ class TestDRSPath(unittest.TestCase):
         self.assertEqual(d.table_id, 'Omon')
         self.assertEqual(d.variable_id, 'so')
         self.assertEqual(d.grid_label, 'gr')
-        self.assertEqual(d.native_grid, False)
-        self.assertEqual(d.temporal_avg, 'interval')
-        self.assertEqual(d.spatial_avg, None)
-        self.assertEqual(d.region, None)
         self.assertEqual(d.version_date, dl.Date('2019-11-12'))
         self.assertEqual(d.frequency, cmip6.CMIP6DateFrequency('mon'))
         self.assertEqual(d.start_date, dl.Date(1975, 1))
         self.assertEqual(d.end_date, dl.Date(1979, 12))
+
+    def test_path_derived_fields(self):
+        dir_ = "CMIP6/CMIP/E3SM-Project/E3SM-1-1/hist-bgc/r1i1p1f1/Omon/so/gr/v20191112"
+        file_ = "so_Omon_E3SM-1-1_hist-bgc_r1i1p1f1_gr_197501-197912.nc"
+        d = cmip6.CMIP6_DRSPath(os.path.join(dir_, file_))
+        self.assertEqual(d.realization_index, 1)
+        self.assertEqual(d.initialization_index, 1)
+        self.assertEqual(d.physics_index, 1)
+        self.assertEqual(d.forcing_index, 1)
+        self.assertEqual(d.native_grid, False)
+        self.assertEqual(d.temporal_avg, 'interval')
+        self.assertEqual(d.spatial_avg, None)
+        self.assertEqual(d.region, None)
         self.assertEqual(d.date_range, dl.DateRange('197501-197912'))
 
     def test_path_consistency(self):
@@ -170,6 +179,22 @@ class TestDRSPath(unittest.TestCase):
         with self.assertRaises(exceptions.DataclassParseError):
             _ = cmip6.CMIP6_DRSPath(os.path.join(dir_, file_))
 
+    def test_consistency_derived_fields(self):
+        # inconsistent realization_index
+        dir_ = "CMIP6/CMIP/E3SM-Project/E3SM-1-1/hist-bgc/r9i1p1f1/Omon/so/gr/v20191112"
+        file_ = "so_Omon_E3SM-1-1_hist-bgc_r1i1p1f1_gr_197501-197912.nc"
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = cmip6.CMIP6_DRSPath(os.path.join(dir_, file_))
+        # inconsistent spatial_avg
+        dir_ = "CMIP6/CMIP/E3SM-Project/E3SM-1-1/hist-bgc/r1i1p1f1/Omon/so/gmr/v20191112"
+        file_ = "so_Omon_E3SM-1-1_hist-bgc_r1i1p1f1_gr_197501-197912.nc"
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = cmip6.CMIP6_DRSPath(os.path.join(dir_, file_))
+        # inconsistent spatial_avg
+        dir_ = "CMIP6/CMIP/E3SM-Project/E3SM-1-1/hist-bgc/r1i1p1f1/OmonZ/so/gr/v20191112"
+        file_ = "so_Omon_E3SM-1-1_hist-bgc_r1i1p1f1_gr_197501-197912.nc"
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = cmip6.CMIP6_DRSPath(os.path.join(dir_, file_))
 
 
 if __name__ == '__main__':

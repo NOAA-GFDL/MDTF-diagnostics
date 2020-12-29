@@ -782,26 +782,40 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     _expt_key_col = 'expt_key'
 
-    def _expt_df(self, var_iterator, cols):
+    def _expt_df(self, obj, cols, *parent_ids):
         """Return a DataFrame of partial experiment attributes (as determined by
         cols) that are shared by the query results of all variables covered by
         var_iterator.
         """
-        expt_df = None
         cols = list(cols) # DataFrame requires list
         if not cols:
             # short-circuit construction for trivial case (empty key)
             return pd.DataFrame({self._expt_key_col: [""]}, dtype='object')
 
+        expt_df = None
+        parent_keys = tuple(self.expt_keys[id_] for id_ in parent_ids)
+        if hasattr(obj, 'iter_vars'):
+            var_iterator = obj.iter_vars(active=True)
+        else:
+            assert isinstance(obj, diagnostic.VarlistEntry)
+            var_iterator = tuple(obj)
+
         for v in var_iterator:
             if v.status < diagnostic.VarlistEntryStatus.QUERIED:
                 continue
-            rows = list(set(
-                itertools.chain.from_iterable(v.remote_data.values())
-            ))
-            v_expt_df = self.df[cols].loc[rows].drop_duplicates()
+            rows = set([])
+            for expt_key, data_key in v.remote_data.items():
+                # filter variables on the basis of previously selected expt 
+                # attributes
+                if expt_key[:len(parent_keys)] == parent_keys:
+                    rows.add(data_key)
+            v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates()
             v_expt_df[self._expt_key_col] = v_expt_df.apply(
                 (lambda df: self._experiment_key(df, idx=None, cols=cols)), axis=1)
+            if v_expt_df.empty:
+                # should never get here
+                raise util.DataExperimentError(v, ("No choices of experiment "
+                    f"attributes for '{v.name}' in {obj.name}."))
 
             # take intersection with possible values for other vars
             if expt_df is None:
@@ -812,24 +826,25 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
                     how='inner', on=self._expt_key_col, sort=False, validate='1:1'
                 )
             if expt_df.empty:
-                raise util.DataExperimentError(v, ("Eliminated all consistent "
-                    f"choices of experiment when adding '{v.name}'."))
+                raise util.DataExperimentError(v, ("Eliminated all choices of "
+                    f"experiment attributes for {obj.name} when adding '{v.name}'."))
         return expt_df
 
     def _set_expt_key(self, obj, expt_df_cols, resolve_func, *parent_ids):
-        if hasattr(obj, 'iter_vars'):
-            var_iterator = obj.iter_vars(active=True)
-        else:
-            assert isinstance(obj, diagnostic.VarlistEntry)
-            var_iterator = tuple(obj)
-        expt_df = self._expt_df(var_iterator, expt_df_cols)
+        """Set experiment attributes at the case, pod or variable level. Given obj,
+        construct a DataFrame of epxeriment attributes that are found in the 
+        queried data for all variables in obj. If more than one choice of 
+        experiment is possible, call DataSource-specific heuristics in resolve_func
+        to choose between them. 
+        """
+        expt_df = self._expt_df(obj, expt_df_cols, *parent_ids)
         
         if len(expt_df) > 1:
             if self.strict:
                 raise util.DataExperimentError(None, (f"Experiment for {obj.name} "
                     "not uniquely specified by user input in strict mode."))
             else:
-                expt_df = resolve_func(expt_df)
+                expt_df = resolve_func(expt_df, obj)
         if expt_df.empty:
             raise util.DataExperimentError(None, ("Eliminated all consistent "
                 f"choices of experiment for {obj.name}."))
@@ -848,29 +863,32 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         finished, either employ data source-specific heuristics to select one
         or return an error. 
         """
+        # set attributes that must be the same for all variables
         self._set_expt_key(self, self.expt_cols, self.resolve_expt)
         for p in self.iter_pods(active=True):
+            # set attributes that must be the same for all variables in each POD
             self._set_expt_key(
                 p, self.pod_expt_cols, self.resolve_pod_expt, self._id
             )
         for p, v in self.iter_pod_vars(active=True):
+            # resolve irrelevant attributes
             self._set_expt_key(
                 v, self.var_expt_cols, self.resolve_var_expt, self._id, p._id
             )
         
-    def resolve_expt(self, expt_df):
+    def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
         return expt_df
 
-    def resolve_pod_expt(self, expt_df):
+    def resolve_pod_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
         return expt_df
 
-    def resolve_var_expt(self, expt_df):
+    def resolve_var_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
@@ -1235,23 +1253,77 @@ class CMIP6LocalFileDataSource(LocalFileDataSource):
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
+    daterange_col = "date_range"
+    # Catalog columns whose values must be the same for all variables.
     expt_cols = (
         "activity_id", "institution_id", "source_id", "experiment_id",
-        "member_id", "table_id", "grid_label", "version_date"
+        "member_id", "version_date",
+        # derived columns
+        "region", "spatial_avg", 'realization_index', 'initialization_index', 
+        'physics_index', 'forcing_index'
     )
-    daterange_col = "date_range"
+    # Catalog columns whose values must be the same for each POD.
+    pod_expt_cols = ('grid_label',
+        # derived columns
+        'regrid', 'grid_number'
+    )
+    # Catalog columns whose values must "be the same for each variable", ie are 
+    # irrelevant but must be constrained to a unique value.
+    var_expt_cols = ("table_id", )
 
     @property
     def CATALOG_DIR(self):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
         return self.attrs.MODEL_DATA_ROOT
 
-    def resolve_experiment(self, df):
-        """Tiebreaker logic to resolve redundancies in experiments, to be 
-        specified by child classes.
-        """
+    @staticmethod
+    def _filter_column(df, col_name, func, obj_name):
+        values = list(df[col_name].drop_duplicates())
+        if len(values) <= 1:
+            # unique value, no need to filter
+            return df
+        if msg is None:
+            msg = ""
+        filter_val = func(values)
+        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
+            col_name, filter_val, obj_name, values)
+        return df[df[col_name] == filter_val]
+
+    def _filter_column_min(self, df, obj_name, *col_names):
+        for c in col_names:
+            df = self._filter_column(df, c, min, obj_name=obj_name)
+        return df
+
+    def _filter_column_max(self, df, obj_name, *col_names):
+        for c in col_names:
+            df = self._filter_column(df, c, max, obj_name=obj_name)
+        return df
+
+    def resolve_expt(self, df, obj):
         # No POD currently makes use of spatially averaged or subsetted data
         df = df[(df['region'].isnull()) & (df['spatial_avg'].isnull())]
-        if df.empty:
-            raise util.DataQueryError(None, ("Eliminated all consistent choices "
-                f"of experiment when adding '{v.name}' from {pod.name}."))
+
+        # If multiple ensemble/forcing members, choose lowest-numbered one
+        df = self._filter_column_min(df, obj.name,
+            'realization_index', 'initialization_index', 'physics_index', 'forcing_index'
+        )
+        # use most recent version_date
+        df = self._filter_column_max(df, obj.name, 'version_date')
+        return df
+
+    def resolve_pod_expt(self, df, obj):
+        # prefer regridded data
+        if any(df['regrid'] == 'r'):
+            df = df[df['regrid'] == 'r']
+        # if multiple regriddings, choose the lowest-numbered one
+        df = self._filter_column_min(df, obj.name, 'grid_number')
+        return df
+
+    def resolve_var_expt(self, df, obj):
+        # TODO: minimize number of MIP tables
+        col_name = 'table_id'
+        filter_val = df[col_name].iloc[0]
+        _log.debug("Selected experiment attribute %s='%s' for %s.", 
+            col_name, filter_val, obj.name)
+        return df.iloc[0]
+

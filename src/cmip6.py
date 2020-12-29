@@ -255,7 +255,28 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
     def __deepcopy__(self, memo):
         return self.__class__(self.format())
 
-# --------------------------------------
+# ===========================================================================
+
+variant_label_regex = util.RegexPattern(r"""
+        (r(?P<realization_index>\d+))?    # (optional) int prefixed with 'r'
+        (i(?P<initialization_index>\d+))? # (optional) int prefixed with 'i'
+        (p(?P<physics_index>\d+))?        # (optional) int prefixed with 'p'
+        (f(?P<forcing_index>\d+))?        # (optional) int prefixed with 'f'
+    """,
+    input_field="variant_label"
+)
+@util.regex_dataclass(variant_label_regex)
+@util.mdtf_dataclass
+class CMIP6_VariantLabel():
+    """Dataclass which represents and parses the CMIP6 DRS variant label identifier string.
+
+    Reference: `<http://goo.gl/v1drZl>`__, note 8 on page 9.
+    """
+    variant_label: str = util.MANDATORY
+    realization_index: int = None
+    initialization_index: int = None
+    physics_index: int = None
+    forcing_index: int = None
 
 mip_table_regex = util.RegexPattern(r"""
         ^ # start of line
@@ -369,7 +390,7 @@ drs_directory_regex = util.RegexPattern(r"""
 )
 @util.regex_dataclass(drs_directory_regex)
 @util.mdtf_dataclass
-class CMIP6_DRSDirectory(CMIP6_MIPTable, CMIP6_GridLabel):
+class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS directory, using regex 
     defined above.
 
@@ -383,7 +404,7 @@ class CMIP6_DRSDirectory(CMIP6_MIPTable, CMIP6_GridLabel):
     institution_id: str = ""
     source_id: str = ""
     experiment_id: str = ""
-    member_id: str = ""
+    member_id: CMIP6_VariantLabel = ""
     table_id: CMIP6_MIPTable = ""
     grid_label: CMIP6_GridLabel = ""
     version_date: datelabel.Date = None
@@ -417,7 +438,7 @@ drs_filename_regex = util.ChainedRegexPattern(
 )
 @util.regex_dataclass(drs_filename_regex)
 @util.mdtf_dataclass
-class CMIP6_DRSFilename(CMIP6_MIPTable, CMIP6_GridLabel):
+class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS filename, using regex 
     defined above.
 
@@ -428,7 +449,7 @@ class CMIP6_DRSFilename(CMIP6_MIPTable, CMIP6_GridLabel):
     table_id: CMIP6_MIPTable = ""
     source_id: str = ""
     experiment_id: str = ""
-    member_id: str = ""
+    member_id: CMIP6_VariantLabel = ""
     grid_label: CMIP6_GridLabel = ""
     start_date: datelabel.Date = None
     end_date: datelabel.Date = None

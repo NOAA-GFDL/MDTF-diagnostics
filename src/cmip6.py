@@ -99,8 +99,7 @@ class CMIP6_CVs(util.Singleton):
         elif source in self._contents:
             k = list(self._contents[source])[0]
             if dest not in self._contents[source][k]:
-                raise KeyError(
-                    "Can't find {} in attributes for {}.".format(dest, source))
+                raise KeyError(f"Can't find {dest} in attributes for {source}.")
             mm = util.MultiMap()
             for k in self._contents[source]:
                 mm[k].update(
@@ -111,7 +110,7 @@ class CMIP6_CVs(util.Singleton):
         elif dest in self._contents:
             return self._lookups[(dest, source)].inverse()
         else:
-            raise KeyError('Neither {} or {} in CV table list.'.format(source, dest))
+            raise KeyError(f"Neither {source} or {dest} in CV table list.")
 
     def lookup(self, source_items, source, dest):
         """Lookup the corresponding *dest* values for *source_items* (keys).
@@ -129,6 +128,20 @@ class CMIP6_CVs(util.Singleton):
             return [util.from_iter(_lookup[item]) for item in source_items]
         else:
             return util.from_iter(_lookup[source_items])
+
+    def lookup_single(self, source_item, source, dest):
+        """The same as :meth:`lookup`, but perform lookup for a single
+        *source_item*, and raise KeyError if the number of values returned is 
+        != 1.
+        """
+        _lookup = self.get_lookup(source, dest)
+        dest_items = _lookup[source_item]
+        if len(dest_items) != 1:
+            raise KeyError(f"Non-unique lookup for {dest} from {source}='{source_item}'.")
+        return dest_items[0]
+
+    # TODO: Represent contents as pandas DataFrame, allow pseudo-SQL multi-column
+    # lookups
 
     # ----------------------------------
 

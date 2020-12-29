@@ -560,23 +560,40 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
         """Synonym for the DataFrame containing the catalog."""
         pass
 
+    # Name of the column in the catalog containing the location (eg, the path)
+    # of the data for that row.
+    remote_data_col = util.abstract_attribute()
+
     # column of the DataFrame containing datelabel.DateRange objects 
     # If 'None', date range selection logic is skipped.
     # TODO: generate DateRange from start/end date columns
     daterange_col = None
 
-    # Columns of the DataFrame specifying the experiment. We assume that 
-    # specifying a valid value for each of the columns in this set uniquely 
-    # identifies an experiment. 
-    expt_cols = util.abstract_attribute()
-
-    # Name of the column in the catalog containing the location (eg, the path)
-    # of the data for that row.
-    remote_data_col = util.abstract_attribute()
-
     @property
     def has_date_info(self):
         return (self.daterange_col is not None)
+
+    # Catalog columns whose values must be the same for all varaibles being
+    # fetched. This is the most common sense in which we "specify an experiment."
+    case_expt_cols = util.abstract_attribute()
+
+    # Catalog columns whose values must be the same for each POD, but may differ
+    # between PODs. An example could be spatial grid resolution.
+    pod_expt_cols = tuple()
+
+    # Catalog columns whose values must "be the same for each variable", ie are 
+    # irrelevant differences for our purposes but must be constrained to a 
+    # unique value. An example is the CMIP6 MIP table: the same variable can 
+    # appear in multiple MIP tables, but the choice of table isn't relvant for PODs.
+    var_expt_cols = tuple()
+
+    @property
+    def expt_cols(self):
+        """Columns of the DataFrame specifying the experiment. We assume that 
+        specifying a valid value for each of the columns in this set uniquely 
+        identifies an experiment. 
+        """
+        return tuple(set(self.case_expt_cols + self.pod_expt_cols + self.var_expt_cols))
 
     @property
     def all_columns(self):
@@ -590,6 +607,9 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
         _dict_var_name = 'd'
         if v == util.NOTSET:
             return ""
+        elif v is None:
+            # In pandas filtering, ==, != fail on None; should convert Nones to np.nans
+            return f"({col_name}.isnull())"
         if isinstance(v, datelabel.DateRange):
             # return files having any date range overlap at all
             return f"({col_name} in @{_dict_var_name}.{k})"
@@ -1025,6 +1045,14 @@ class SampleLocalFileDataSource(SingleLocalFileDataSource):
 
 # ----------------------------------------------------------------------------
 
+@util.regex_dataclass(cmip6.drs_path_regex)
+@util.mdtf_dataclass
+class CMIP6DataSourceFile(cmip6.CMIP6_DRSPath):
+    """Dataclass which represents and parses a full CMIP6 DRS path.
+    """
+    # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
+    _query_attrs_synonyms = {'name': 'variable_id'}
+
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes():
     MODEL_DATA_ROOT: str = ""
@@ -1039,6 +1067,23 @@ class CMIP6DataSourceAttributes():
     def __post_init__(self):
         config = core.ConfigManager()
         paths = core.PathManager()
+        cv = cmip6.CMIP6_CVs()
+
+        def _init_x_from_y(source, dest):
+            if not getattr(self, dest, ""):
+                try:
+                    source_val = getattr(self, source, "")
+                    if not source_val:
+                        raise KeyError()
+                    dest_val = cv.lookup_single(source_val, source, dest)
+                    _log.debug("Set %s='%s' based on %s='%s'.", 
+                        dest, dest_val, source, source_val)
+                    setattr(self, dest, dest_val)
+                except KeyError:
+                    _log.debug("Couldn't set %s from %s='%s'.", 
+                        dest, source, source_val)
+                    setattr(self, dest, "")
+                    
         if not self.MODEL_DATA_ROOT:
             self.MODEL_DATA_ROOT = getattr(paths, 'MODEL_DATA_ROOT', None)
         if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
@@ -1048,27 +1093,58 @@ class CMIP6DataSourceAttributes():
             )
             self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
 
-        cmip = cmip6.CMIP6_CVs()
+        # validate non-empty field values
         for field_name, val in dataclasses.asdict(self).items():
             if field_name in ('version_date', 'member_id'):
                 continue
-            if val and not cmip.is_in_cv(field_name, val):
+            if val and not cv.is_in_cv(field_name, val):
                 _log.error(("Supplied value '%s' for '%s' is not recognized by "
                     "the CMIP6 CV. Continuing, but queries will probably fail."),
                     val, field_name)
         # currently no inter-field consistency checks: happens implicitly, since
         # filter_experiment will find zero experiments.
 
+        # Attempt to determine first few fields of DRS, to avoid having to crawl
+        # entire DRS structure
+        _init_x_from_y('experiment_id', 'activity_id')
+        _init_x_from_y('source_id', 'institution_id')
+        _init_x_from_y('institution_id', 'source_id')
+        # TODO: multi-column lookups
+
+        # set MODEL_DATA_ROOT to be further down the hierarchy if possible, to
+        # avoid having to crawl entire DRS strcture
+        for drs_dir in ("activity_id", "institution_id", "source_id", "experiment_id"):
+            if not getattr(self, drs_dir, ""):
+                break
+            self.MODEL_DATA_ROOT = os.path.join(self.MODEL_DATA_ROOT, drs_dir)
+
+
 class CMIP6LocalFileDataSource(LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and 
     stored on a local filesystem.
     """
-    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _FileRegexClass = CMIP6DataSourceFile
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+
+    expt_cols = (
+        "activity_id", "institution_id", "source_id", "experiment_id",
+        "member_id", "table_id", "grid_label", "version_date"
+    )
+    daterange_col = "date_range"
 
     @property
     def CATALOG_DIR(self):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
         return self.attrs.MODEL_DATA_ROOT
+
+    def resolve_experiment(self, df):
+        """Tiebreaker logic to resolve redundancies in experiments, to be 
+        specified by child classes.
+        """
+        # No POD currently makes use of spatially averaged or subsetted data
+        df = df[(df['region'].isnull()) & (df['spatial_avg'].isnull())]
+        if df.empty:
+            raise util.DataQueryError(None, ("Eliminated all consistent choices "
+                f"of experiment when adding '{v.name}' from {pod.name}."))

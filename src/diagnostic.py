@@ -122,10 +122,7 @@ VarlistEntryStatus = util.MDTFIntEnum(
     module=__name__
 )
 
-# unsafe_hash *only* used in data_manager.DataSourceBase.data dict, which is
-# only used during query/fetch/preprocess. Fields without compare=False remain
-# unchanged during this.
-@util.mdtf_dataclass(unsafe_hash=True)
+@util.mdtf_dataclass
 class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
@@ -145,7 +142,9 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     )
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
-    remote_data: set = dc.field(default_factory=set, compare=False)
+    remote_data: util.WormDict = dc.field(
+        default_factory=util.WormDict, compare=False
+    )
     local_data: list = dc.field(default_factory=list, compare=False)
     status: VarlistEntryStatus = dc.field(
         default=VarlistEntryStatus.INITED, compare=False

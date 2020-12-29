@@ -62,6 +62,10 @@
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
+          "name": "strict",
+          "help": "If set, disables experiment selection hueristics and raises error if experiment not uniquely specified by user input.",
+          "default" : false
+        },{
           "name": "data_manager",
           "help": "Source used to query and fetch model data.",
           "default": "Local_file",

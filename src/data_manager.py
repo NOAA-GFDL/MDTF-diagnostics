@@ -5,6 +5,7 @@ import os
 import abc
 import collections
 import dataclasses
+import itertools
 import signal
 from src import util, core, datelabel, diagnostic, preprocessor, cmip6
 import pandas as pd
@@ -20,8 +21,8 @@ class AbstractQueryMixin(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def remote_data(self, rd_key):
-        """Translates between rd_keys (output of query_data) and paths, urls, 
+    def remote_data(self, data_key):
+        """Translates between data_keys (output of query_data) and paths, urls, 
         etc. (input to fetch_data.)"""
         pass
 
@@ -35,8 +36,15 @@ class AbstractQueryMixin(abc.ABC):
         """Called before querying the presence of a new batch of variables."""
         pass
 
+    def filter_experiment(self):
+        """Called after querying the presence of a new batch of variables, to 
+        filter or otherwise ensure that the returned remote_data for *all* 
+        variables comes from the same experimental run of the model."""
+        pass
+
     def post_query_hook(self):
-        """Called after querying the presence of a new batch of variables."""
+        """Called after select_experiment(), after each query of a new batch of 
+        variables."""
         pass
 
     def tear_down_query(self):
@@ -86,8 +94,8 @@ class AbstractDataSource(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def remote_data(self, rd_key):
-        """Translates between rd_keys (output of query_data) and paths, urls, 
+    def remote_data(self, data_key):
+        """Translates between data_keys (output of query_data) and paths, urls, 
         etc. (input to fetch_data.)"""
         pass
 
@@ -109,8 +117,15 @@ class AbstractDataSource(abc.ABC):
         """Called before fetching each batch of query results."""
         pass
 
+    def filter_experiment(self):
+        """Called after querying the presence of a new batch of variables, to 
+        filter or otherwise ensure that the returned remote_data for *all* 
+        variables comes from the same experimental run of the model."""
+        pass
+
     def post_query_hook(self):
-        """Called after querying the presence of a new batch of variables."""
+        """Called after select_experiment(), after each query of a new batch of 
+        variables."""
         pass
 
     def post_fetch_hook(self):
@@ -130,6 +145,10 @@ class AbstractDataSource(abc.ABC):
 # --------------------------------------------------------------------------
 
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
+
+FetchStatus = util.MDTFEnum(
+    'FetchStatus', 'NOT_FETCHED SUCCEEDED FAILED', module=__name__
+)
 
 @util.mdtf_dataclass
 class DataSourceAttributesBase():
@@ -158,13 +177,14 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     def __init__(self, case_dict):
         config = core.ConfigManager()
+        self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
         self.pods = case_dict.get('pod_list', [])
-        self.data = dict() # VarlistEntry -> set of rd_keys
-        self.strict = config.get('strict', False)
-        # rd_key -> bool or None; None = fetch hasn't been tried yet
-        self.fetch_failed = util.WormDefaultDict((lambda: None))
+        self.expt_key = None
+        # data_key -> FetchStatus
+        self.fetch_status = util.WormDefaultDict((lambda: FetchStatus.NOT_FETCHED))
         self.exceptions: util.ExceptionQueue()
+
 
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
@@ -287,10 +307,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     pod.exceptions.log(chained_exc)    
                 continue
 
-        print('####################\n')
+        print('####################\nDEBUG varlist: ')
         for v in self.iter_vars(active=None, active_pods=None):
             v.print_debug()
-        print('\n####################')
+        print('####################')
 
     def setup_pod(self, pod):
         """Update POD with information that only becomes available after 
@@ -400,6 +420,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
+            self.filter_experiment()
             self.post_query_hook()
         else:
             # only hit this if we don't break
@@ -429,10 +450,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     _log.info("    Fetching <%s>", var.short_format())
                     # add before fetch, in case fetch raises an exc
                     var.status = diagnostic.VarlistEntryStatus.FETCHED
-                    for rd_key in var.remote_data:
-                        remote_data = self.remote_data(rd_key)
-                        self.fetch_dataset(var, remote_data)
-                        self.fetch_success(rd_key)
+                    if self.expt_key is None or self.expt_key not \
+                        in var.remote_data:
+                        raise util.DataFetchError(var, 
+                            f"Bad expt_key {self.expt_key}.")
+                    for data_key in var.remote_data[self.expt_key]:
+                        if self.fetch_status[data_key] != FetchStatus.NOT_FETCHED:
+                            continue
+                        self.fetch_dataset(var, self.remote_data(data_key))
+                        self.fetch_status[data_key] = FetchStatus.SUCCEEDED
                     if not var.local_data:
                         raise util.DataFetchError(var, "No data fetched.")
                 except Exception as exc:
@@ -446,20 +472,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 f"Too many iterations in {self.__class__.__name__}.fetch_data()."
             )
 
-    def fetch_success(self, rd_key):
-        self.fetch_failed[rd_key] = False
-
     def fetch_fail(self, var, exc):
-        for rd_key in var.remote_data:
-            self.fetch_failed[rd_key] = True
-        _log.exception("Caught exception fetching %s: %s",
+        for data_key in var.remote_data[self.expt_key]:
+            self.fetch_status[data_key] = FetchStatus.FAILED
+        _log.exception("Caught exception fetching <%s>: %s",
             var.short_format(), repr(exc))
         try:
             raise util.DataFetchError(var, 
                 "Caught exception while fetching data.") from exc
         except Exception as chained_exc:
             var.deactivate(chained_exc)
-
 
     def preprocess_data(self):
         """Hook to run the preprocessing function on all variables.
@@ -529,33 +551,32 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
     """Wrapper for performing queries on a data catalog made available as a
     pandas DataFrame. 
+
+    TODO: integrate better with Intake API.
     """
     @property
     @abc.abstractmethod
     def df(self):
-        """Synonym for the DataFrame containing the catalog.
-
-        TODO: integrate better with Intake API.
-        """
+        """Synonym for the DataFrame containing the catalog."""
         pass
 
     # column of the DataFrame containing datelabel.DateRange objects 
     # If 'None', date range selection logic is skipped.
     # TODO: generate DateRange from start/end date columns
-    daterange_column = None
+    daterange_col = None
 
     # Columns of the DataFrame specifying the experiment. We assume that 
     # specifying a valid value for each of the columns in this set uniquely 
     # identifies an experiment. 
-    experiment_columns = util.abstract_attribute()
+    expt_cols = util.abstract_attribute()
 
     # Name of the column in the catalog containing the location (eg, the path)
     # of the data for that row.
-    remote_data_column = util.abstract_attribute()
+    remote_data_col = util.abstract_attribute()
 
     @property
     def has_date_info(self):
-        return (self.daterange_column is not None)
+        return (self.daterange_col is not None)
 
     @property
     def all_columns(self):
@@ -598,7 +619,7 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
         d = util.NameSpace.fromDict(query_d) # set local var for df.query()
         return self.df.query(' and '.join(clauses))
 
-    def experiment_key(self, query_df, idx):
+    def _experiment_key(self, df=None, idx=None):
         """Returns string-valued key for grouping files by experiment: all
         values of all data columns must match.
 
@@ -606,15 +627,17 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
            We can't just do a .groupby on column names, because pandas attempts 
            to coerce DateFrequency to a timedelta64, which overflows for static 
            DateFrequency. There doesn't seem to be a way to disable this type 
-           coercion.)
+           coercion.
         """
-        return '|'.join(
-            str(query_df[c].loc[idx]) for c in self.experiment_columns
-        )
+        if df is None:        # df used when .apply()'ed across rows
+            df = self.df
+        if idx is not None:   # index used in groupby
+            df = df.loc[idx]
+        return '|'.join(str(df[c]) for c in self.expt_cols)
 
     @staticmethod
     def _rd_key_func(group_df):
-        """Return tuple of row indices: this implementation's rd_key."""
+        """Return tuple of row indices: this implementation's data_key."""
         return tuple(group_df.index.tolist())
 
     def _check_group_daterange(self, group_df):
@@ -625,27 +648,27 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
         if not self.has_date_info:
             return group_df
 
-        rd_keys = self._rd_key_func(group_df)
+        data_keys = self._rd_key_func(group_df)
         try:
-            sorted_df = group_df.sort_values(by=[self.daterange_column])
+            sorted_df = group_df.sort_values(by=[self.daterange_col])
             # method throws ValueError if ranges aren't contiguous
             files_date_range = datelabel.DateRange.from_contiguous_span(
-                *(sorted_df[self.daterange_column].to_list())
+                *(sorted_df[self.daterange_col].to_list())
             )
             # throws AssertionError if we don't span the query range
             assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
             self._query_error_logger(
-                "Noncontiguous or malformed date range in files:", rd_keys
+                "Noncontiguous or malformed date range in files:", data_keys
             )
         except AssertionError:
             self._query_error_logger(
                 f"Returned files don't span query date range ({self.attrs.date_range}):",
-                rd_keys
+                data_keys
             )
         except Exception as exc:
-            self._query_error_logger(f"Caught exception {repr(exc)}:", rd_keys)
+            self._query_error_logger(f"Caught exception {repr(exc)}:", data_keys)
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
@@ -655,60 +678,100 @@ class DataframeQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
         """
         return group_df
 
-    def _group_query_results(self, query_df):
-        """Group query results by experiment, apply filtering on a per-experiment
-        basis, and return a set of tuples of rd_keys (one tuple per experiment).
+    def query_dataset(self, var):
+        """Find all rows of the catalog matching relevant attributes of the 
+        DataSource and of the variable. Group these by experiments, and for each
+        experiment obtain the row indices in the the catalog DataFrame (the 
+        data_key for this query implementation) and store it in var's remote_data 
+        attribute. Specifically, the remote_data attribute is a dict mapping
+        experiments (labeled by experiment_keys) to data found for that variable
+        by this query (labeled by the data_keys).
         """
-        # group result by column values
+        query_df = self._query_catalog(var)
+        # assign set of sets of catalog row indices to var's remote_data attr
+        # filter out empty entries = queries that failed.
         expt_groups = query_df.groupby(
-            by=(lambda idx: self.experiment_key(query_df, idx))
+            by=(lambda idx: self._experiment_key(query_df, idx))
         )
-        rd_keys = set([])
-        for _, group in expt_groups:
+        var.remote_data = util.WormDict()
+        for expt_key, group in expt_groups:
             group = group.apply(self._check_group_daterange)
             if group.empty:
                 continue
             group = group.apply(self._query_group_hook)
             if group.empty:
                 continue
-            rd_keys.add(self._rd_key_func(group))
-        # return set of tuples of catalog row indices
-        return rd_keys
+            var.remote_data[expt_key] = self._rd_key_func(group)
 
-    def query_dataset(self, var):
-        """Find all rows of the catalog matching relevant attributes of the 
-        DataSource and of the variable. Obtain the set of matching row numbers
-        (the rd_keys for this query implementation) and store it in var's 
-        remote_data attribute. Store one set of row numbers for each distinct
-        experiment (ie set of column values in the catalog) matching the query.
-        """
-        query_df = self._query_catalog(var)
-        # assign set of sets of catalog row indices to var's remote_data attr
-        # filter out empty entries = queries that failed.
-        var.remote_data = {x for x in self._group_query_results(query_df) if x}
-
-    def remote_data(self, rd_keys):
-        """Given one or more row indices in the catalog's dataframe (rd_keys, 
+    def remote_data(self, data_keys):
+        """Given one or more row indices in the catalog's dataframe (data_keys, 
         as found by query_dataset()), return the corresponding remote_paths.
         """
-        if util.is_iterable(rd_keys):
-            rd_keys = util.to_iter(rd_keys, list) # iloc requires list, not just iterable
-        return self.df[self.remote_data_column].iloc[rd_keys]
+        if util.is_iterable(data_keys):
+            # iloc requires list, not just iterable
+            data_keys = util.to_iter(data_keys, list) 
+        return self.df[self.remote_data_col].loc[data_keys]
 
-    def _query_error_logger(self, msg, rd_keys):
+    def _query_error_logger(self, msg, data_keys):
         """Log debugging message or raise an exception, depending on if we're
         in strict mode.
         """
-        rd_keys = util.to_iter(rd_keys, list)
+        data_keys = util.to_iter(data_keys, list)
         err_str = '\n'.join(
-            [str(self.df.iloc[idx].to_dict()) for idx in rd_keys]
+            [str(self.df.loc[idx].to_dict()) for idx in data_keys]
         )
         err_str = msg + '\n' + err_str
         if self.strict:
-            raise util.DataQueryError(rd_keys, err_str)
+            raise util.DataQueryError(data_keys, err_str)
         else:
             _log.warning(err_str)
 
+    def filter_experiment(self):
+        """Ensure that all data we're about to fetch comes from the same experiment.
+        If data from multiple experiments was returned by the query that just
+        finished, either employ data source-specific heuristics to select one
+        or return an error. 
+        """
+        expt_df = None
+        for pod, v in self.iter_pod_vars(active=True):
+            if v.status < diagnostic.VarlistEntryStatus.QUERIED:
+                continue
+            rows = list(set(
+                itertools.chain.from_iterable(v.remote_data.values())
+            ))
+            v_expt_df = self.df[list(self.expt_cols)].loc[rows].drop_duplicates()
+            v_expt_df['expt_key'] = v_expt_df.apply(self._experiment_key, axis=1)
+
+            if expt_df is None:
+                expt_df = v_expt_df.copy()
+            else:
+                expt_df = pd.merge(
+                    expt_df, v_expt_df, 
+                    how='inner', on='expt_key', sort=False, validate='1:1'
+                )
+            if expt_df.empty:
+                raise util.DataQueryError(None, ("Eliminated all consistent choices "
+                    f"of experiment when adding '{v.name}' from {pod.name}."))
+            
+        if len(expt_df) > 1:
+            if self.strict:
+                raise util.DataQueryError(None, ("Experiment not uniquely specified "
+                    "by user input in strict mode."))
+            else:
+                expt_df = self.resolve_experiment(expt_df)
+        if len(expt_df) > 1:  
+            raise util.DataQueryError(None, ("Experiment not uniquely specified "
+                "by user input."))
+        # successful exit: we've narrowed down the experiment to a single value
+        self.expt_key = expt_df['expt_key'].iloc[0]
+        _log.debug("Setting experiment to %s", self.expt_key)
+
+    def resolve_experiment(self, expt_df):
+        """Tiebreaker logic to resolve redundancies in experiments, to be 
+        specified by child classes.
+        """
+        return expt_df
+  
 
 class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
     """Mixin that creates an intake_esm.esm_datastore catalog by crawling a 
@@ -734,7 +797,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
         return self.catalog.df
 
     @property
-    def remote_data_column(self):
+    def remote_data_col(self):
         """Name of the column in the catalog containing the path to the remote 
         data file.
         """
@@ -757,7 +820,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
                     # decided to silently ignore this file
                     continue
                 except Exception:
-                    _log.info("Couldn't parse %s", path[len(root_dir):])
+                    _log.info("Couldn't parse path %s", path[len(root_dir):])
                     continue
                 
     def _dummy_esmcol_spec(self):
@@ -765,8 +828,8 @@ class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
         machinery. The catalog is temporary and not retained after the code
         finishes running.
         """
-        data_columns = list(self._FileRegexClass._pattern.fields)
-        data_columns.remove(self.remote_data_column)
+        data_cols = list(self._FileRegexClass._pattern.fields)
+        data_cols.remove(self.remote_data_col)
         # no aggregations, since for now we want to manually insert logic for
         # file fetching (& error handling etc.) before we load an xarray Dataset.
         return {
@@ -774,10 +837,10 @@ class OnTheFlyDirectoryHierarchyQueryMixin(DataframeQueryMixin):
             "id": "MDTF_" + self.__class__.__name__,
             "description": "",
             "attributes": [
-                {"column_name":c, "vocabulary": ""} for c in data_columns
+                {"column_name":c, "vocabulary": ""} for c in data_cols
             ],
             "assets": {
-                "column_name": self.remote_data_column,
+                "column_name": self.remote_data_col,
                 "format": self._asset_file_format
             },
             "last_updated": "2020-12-06"   
@@ -849,36 +912,34 @@ class SingleLocalFileDataSource(LocalFileDataSource):
     locally mounted filesystem. Assumes all data for each variable (in each 
     experiment) is contained in a single file.
     """
-    def _group_query_results(self, query_df):
+    def query_dataset(self, var):
         """Verify that only a single file was found from each experiment.
-        Convert set of (one-element) sets of row indices to set of row indices.
         """
-        rd_keys = super(SingleLocalFileDataSource, self)._group_query_results(query_df)
-        new_keys = set([])
-        for rd_key in rd_keys:
-            if len(rd_key) != 1:
+        super(SingleLocalFileDataSource, self).query_dataset(var)
+        print('###', var.name, var.remote_data)
+        for data_key in var.remote_data.values():
+            if len(data_key) != 1:
                 self._query_error_logger(
-                    "Query found multiple files when one was expected:", rd_key
+                    "Query found multiple files when one was expected:", data_key
                 )
-            else:
-                new_keys.add(rd_key[0])
-        return new_keys
 
-    def remote_data(self, rd_key):
+    def remote_data(self, data_key):
         """Verify that only a single file is being requested.
         (Should be unnecessary given constraint enforced in _group_query_results, 
         but check here just to be safe.)
         """
-        if util.is_iterable(rd_key) and len(rd_key) != 1:
+        if util.is_iterable(data_key) and len(data_key) != 1:
             self._query_error_logger(
-                "Requested multiple files when one was expected:", rd_key
+                "Requested multiple files when one was expected:", data_key
             )
-        return super(SingleLocalFileDataSource, self).remote_data(rd_key)
+        return super(SingleLocalFileDataSource, self).remote_data(data_key)
 
 
 # IMPLEMENTATION CLASSES ======================================================
 
+# RegexPattern that matches any string (path) that doesn't end with ".nc".
 ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
+
 sample_data_regex = util.RegexPattern(
     r"""
         (?P<sample_dataset>\S+)/    # first directory: model name
@@ -955,7 +1016,7 @@ class SampleLocalFileDataSource(SingleLocalFileDataSource):
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.SampleDataPreprocessor
 
-    experiment_columns = ("sample_dataset", )
+    expt_cols = ("sample_dataset", )
 
     @property
     def CATALOG_DIR(self):
@@ -995,11 +1056,8 @@ class CMIP6DataSourceAttributes():
                 _log.error(("Supplied value '%s' for '%s' is not recognized by "
                     "the CMIP6 CV. Continuing, but queries will probably fail."),
                     val, field_name)
-        # try to infer values:
-        # cmip.lookup_single(self, 'experiment_id', 'activity_id')
-        # cmip.lookup_single(self, 'source_id', 'institution_id')
-        # bail out if we're in strict mode with undetermined fields
-
+        # currently no inter-field consistency checks: happens implicitly, since
+        # filter_experiment will find zero experiments.
 
 class CMIP6LocalFileDataSource(LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and 

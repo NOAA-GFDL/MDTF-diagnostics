@@ -133,8 +133,9 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
+    _id: int = dc.field(init=False) # assigned by DataSource (avoids unsafe_hash)
     use_exact_name: bool = False
-    dest_path: str = "" # important: VEs from different PODs have different hashes
+    dest_path: str = ""
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
     requirement: VarlistEntryRequirement = dc.field(
@@ -412,6 +413,7 @@ class Diagnostic(object):
     <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
     for documentation on attributes.
     """
+    _id: int = dc.field(init=False) # assigned by DataSource (avoids unsafe_hash)
     name: str = util.MANDATORY
     long_name: str = ""
     description: str = ""

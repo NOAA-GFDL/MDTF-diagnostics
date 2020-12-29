@@ -171,6 +171,12 @@ class DataQueryError(DataExceptionBase):
     """
     _error_str = "Data query error"
 
+class DataExperimentError(DataExceptionBase):
+    """Exception signaling a failure to uniquely select an experiment for all
+    variables based on query results.
+    """
+    _error_str = "Experiment selection error"
+
 class DataFetchError(DataExceptionBase):
     """Exception signaling a failure to obtain data from the remote location.
     """

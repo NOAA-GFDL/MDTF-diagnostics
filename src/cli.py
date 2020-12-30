@@ -526,7 +526,6 @@ class CLICommand(object):
         try:
             return getattr(mod_, cls_name)
         except Exception:
-            print(dir(mod_))
             _log.error('Unable to import %s in %s.', cls_name, mod_name)
             raise ValueError(self.entry_point)
 
@@ -720,7 +719,7 @@ class CLIConfigManager(util.Singleton):
                 _SCRIPT_NAME, plugin_name, choice_of_plugin,
                 str(list(self.plugins[plugin_name].keys()))
             )
-            exit(2) # exit code for  CLI syntax error
+            exit(2) # exit code for CLI syntax error
         return self.plugins[plugin_name][p_key]
 
 # ===========================================================================
@@ -816,7 +815,8 @@ class MDTFArgParser(argparse.ArgumentParser):
         :meth:`.MDTFArgParser.parse_known_args`.
         """
         config = CLIConfigManager()
-        return ['--site', parsed_args.get('site', config.default_site)]
+        default_site = parsed_args.get('site', config.default_site)
+        return ['--site', util.from_iter(default_site)]
 
     def parse_known_args(self, args=None, namespace=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args` which
@@ -904,17 +904,6 @@ class MDTFArgPreparser(MDTFArgParser):
     """
     def __init__(self):
         super(MDTFArgPreparser, self).__init__(add_help=False)
-
-    def _default_argv(self, parsed_args):
-        """Utility method returning the arguments passed to the parser for 
-        lowest-priority defaults in 
-        :meth:`.MDTFArgParser.parse_known_args`.
-        """
-        config = CLIConfigManager()
-        return [
-            '--site', parsed_args.get('site', config.default_site),
-            parsed_args.get('subcommand', 'help')
-        ]
 
     def parse_site(self, argv=None, default_site=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args`
@@ -1163,22 +1152,10 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             """)
         self.add_contents(self)
 
-    def _default_argv(self, parsed_args):
-        """Utility method returning the arguments passed to the parser for 
-        lowest-priority defaults in 
-        :meth:`.MDTFArgParser.parse_known_args`.
-        """
-        config = CLIConfigManager()
-        return [
-            '--site', parsed_args.get('site', config.default_site),
-            parsed_args.get('subcommand', 'help')
-        ]
-
     def parse_args(self, args=None, namespace=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_args` which
         handles intermediate levels of default settings.
         """
-        print('')
         if args is None:
             args = self.argv
         else:
@@ -1216,6 +1193,18 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
     """Implement top-level parser with multiple subcommands.
     """
+
+    def _default_argv(self, parsed_args):
+        """Utility method returning the arguments passed to the parser for 
+        lowest-priority defaults in 
+        :meth:`.MDTFArgParser.parse_known_args`.
+        """
+        config = CLIConfigManager()
+        return [
+            '--site', parsed_args.get('site', config.default_site),
+            parsed_args.get('subcommand', 'help')
+        ]
+
     def add_contents(self, target_p):
         """Convenience method to fully configure a parser ``target_p`` (either 
         the top-level parser, or the preparser), adding subparsers for all

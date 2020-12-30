@@ -639,7 +639,8 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             return f"({col_name}.isnull())"
         if isinstance(v, datelabel.DateRange):
             # return files having any date range overlap at all
-            return f"({col_name} in @{_dict_var_name}.{k})"
+            # pandas doesn't allow 'in' for non-list membership
+            return f"(@{_dict_var_name}.{k}.overlaps({col_name}))"
         elif k == 'max_frequency':
             return f"({col_name} <= @{_dict_var_name}.frequency)"
         elif k == 'max_frequency':
@@ -945,7 +946,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         in FileRegexClass are returned.
         """
         # in case CATALOG_DIR is subset of MODEL_ROOT
-        path_offset = len(os.path.join(self.attrs.MODEL_DATA_ROOT, "")) 
+        path_offset = len(os.path.join(self.attrs.MODEL_DATA_ROOT, ""))
         for root, _, files in os.walk(self.CATALOG_DIR):
             for f in files:
                 if f.startswith('.'):
@@ -989,11 +990,16 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         directory heirarchy structure of thier paths, which is encoded by
         FileRegexClass.
         """
-        df = pd.DataFrame(tuple(self.iter_files()), dtype='object')
+        _log.debug('Starting catalog directory crawl at %s', self.CATALOG_DIR)
+        df = pd.DataFrame(list(self.iter_files()), dtype='object')
         if len(df) == 0:
             _log.critical('Directory crawl did not find any files.')
         else:
             _log.debug("Directory crawl found %s files.", len(df))
+        print('\nXXXXX 0', df.iloc[0].to_dict())
+        print('\nXXXXX 69', df.iloc[69].to_dict())
+        print('\nXXXXX 420', df.iloc[420].to_dict())
+        exit(1)
         self.catalog = intake_esm.core.esm_datastore.from_df(
             df, 
             esmcol_data = self._dummy_esmcol_spec(), 
@@ -1011,9 +1017,12 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         query_d = util.WormDict.from_struct(
             util.filter_dataclass(self.attrs, self._FileRegexClass)
         )
-        var_attrs = var.query_attrs(
-            getattr(self._FileRegexClass, '_query_attrs_synonyms', None)
-        )
+        field_synonyms = getattr(self._FileRegexClass, '_query_attrs_synonyms', None)
+        if field_synonyms is None:
+            field_synonyms = getattr(self, '_query_attrs_synonyms', None)
+        if field_synonyms is None:
+            field_synonyms = dict()
+        var_attrs = var.query_attrs(field_synonyms)
         query_d.update(util.filter_dataclass(var_attrs, self._FileRegexClass))
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
         d = util.NameSpace.fromDict(query_d) # set local var for df.query()
@@ -1100,9 +1109,6 @@ class SampleDataFile():
     variable: str = util.MANDATORY
     remote_path: str = util.MANDATORY
 
-    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
-    _query_attrs_synonyms = {'name': 'variable'}
-
 @util.mdtf_dataclass
 class SampleDataAttributes(DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
@@ -1158,20 +1164,15 @@ class SampleLocalFileDataSource(SingleLocalFileDataSource):
 
     expt_cols = ("sample_dataset", )
 
+    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
+    _query_attrs_synonyms = {'name': 'variable'}
+
     @property
     def CATALOG_DIR(self):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
         return self.attrs.MODEL_DATA_ROOT
 
 # ----------------------------------------------------------------------------
-
-@util.regex_dataclass(cmip6.drs_path_regex)
-@util.mdtf_dataclass
-class CMIP6DataSourceFile(cmip6.CMIP6_DRSPath):
-    """Dataclass which represents and parses a full CMIP6 DRS path.
-    """
-    # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
-    _query_attrs_synonyms = {'name': 'variable_id'}
 
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes(DataSourceAttributesBase):
@@ -1270,10 +1271,13 @@ class CMIP6LocalFileDataSource(LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and 
     stored on a local filesystem.
     """
-    _FileRegexClass = CMIP6DataSourceFile
+    _FileRegexClass = cmip6.CMIP6_DRSPath
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+
+    # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
+    _query_attrs_synonyms = {'name': 'variable_id'}
 
     daterange_col = "date_range"
     # Catalog columns whose values must be the same for all variables.

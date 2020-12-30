@@ -280,13 +280,13 @@ class CMIP6_VariantLabel():
     forcing_index: int = None
 
 mip_table_regex = util.RegexPattern(r"""
-        ^ # start of line
+        # ^ # start of line
         (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
         # maybe a digit, followed by as few lowercase letters as possible:
         (?P<table_freq>\d?[a-z]*?)
         (?P<table_suffix>(ClimMon|Lev|Plev|Ant|Gre)?)
         (?P<table_qualifier>(Pt|Z|Off)?)
-        $ # end of line - necessary for lazy capture to work
+        # $ # end of line - necessary for lazy capture to work
     """,
     input_field="table_id"
 )

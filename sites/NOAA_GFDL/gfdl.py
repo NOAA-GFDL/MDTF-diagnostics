@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import typing
 from src import (util, core, datelabel, diagnostic, data_manager, 
-    preprocessor, environment_manager, output_manager)
+    preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
 import src.conflict_resolution as choose
 
@@ -140,7 +140,7 @@ class GFDLCMIP6LocalFileDataSource(
     GCPFetchMixin, 
     data_manager.DataframeQueryDataSource
 ):
-    _FileRegexClass = data_manager.CMIP6DataSourceFile
+    _FileRegexClass = cmip6.CMIP6_DRSPath
     _AttributesClass = data_manager.CMIP6DataSourceAttributes
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor

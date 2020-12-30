@@ -197,14 +197,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
         self.pods = case_dict.get('pod_list', [])
         # data_key -> FetchStatus
-        self.fetch_status = util.WormDefaultDict((lambda: FetchStatus.NOT_FETCHED))
-
-        self.expt_key = None
-        # pod._id -> 
-        self.pod_expt_key = dict()
-
-        self.exceptions: util.ExceptionQueue()
-
+        self.fetch_status = collections.defaultdict((lambda: FetchStatus.NOT_FETCHED))
+        self.exceptions = util.ExceptionQueue()
 
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
@@ -356,7 +350,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except Exception as exc:
                 try:
                     raise util.PodConfigError(pod, 
-                        f"Caught exception when configuring {v.name}.") from exc
+                        f"Caught exception when configuring <{v.full_name}>.") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)  
                 continue
@@ -430,15 +424,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     var.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(var) # sets var.remote_data
                     if not var.remote_data:
-                        raise util.DataQueryError(var, "No data found by query.")
+                        raise AssertionError("No data found by query.")
                 except Exception as exc:
                     update = True
                     if not isinstance(exc, util.DataQueryError):
                         _log.exception("Caught exception querying <%s>: %s",
                             var.short_format(), repr(exc))
                     try:
-                        raise util.DataQueryError(var, 
-                            "Caught exception while querying data.") from exc
+                        raise util.DataQueryError(var, (f"Caught exception while "
+                            f"querying data for <{var.full_name}>.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -479,19 +473,20 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     for data_key in self.iter_data_keys(var):
                         if self.fetch_status[data_key] != FetchStatus.NOT_FETCHED:
                             continue
+                        self.fetch_status[data_key] = FetchStatus.FAILED
                         self.fetch_dataset(var, self.remote_data(data_key))
                         self.fetch_status[data_key] = FetchStatus.SUCCEEDED
-                    if not var.local_data:
-                        raise util.DataFetchError(var, "No data fetched.")
+                    if not all(self.fetch_status[dk] == FetchStatus.SUCCEEDED \
+                        for dk in self.iter_data_keys(var)):
+                        raise AssertionError('Unreported fetch failure.')
                 except Exception as exc:
                     update = True
-                    self.fetch_status[data_key] = FetchStatus.FAILED
                     if not isinstance(exc, util.DataFetchError):
                         _log.exception("Caught exception fetching <%s>: %s",
                             var.short_format(), repr(exc))
                     try:
-                        raise util.DataFetchError(var, 
-                            "Caught exception while fetching data.") from exc
+                        raise util.DataFetchError(var, ("Caught exception while "
+                            f"fetching data for <{var.full_name}>.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -532,8 +527,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                         _log.exception("Caught exception processing %s: %s",
                             var.short_format(), repr(exc))
                     try:
-                        raise util.DataPreprocessError(var, 
-                            "Caught exception while processing data.") from exc
+                        raise util.DataPreprocessError(var, ("Caught exception "
+                            f"while processing data for <{var.full_name}>.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -554,8 +549,9 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         try:
             self.preprocess_data()
         except Exception as exc:
-            _log.exception(f"{repr(exc)}")
-            self.exceptions.log(exc)    
+            _log.exception(f"Caught DataSource-level exception: {repr(exc)}.")
+            self.exceptions.log(exc)
+            self.deactivate_if_failed()
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
 
@@ -762,7 +758,10 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             group = group.apply(self._query_group_hook)
             if group.empty:
                 continue
-            var.remote_data[expt_key] = self._data_key(group)
+            data_key = self._data_key(group)
+            _log.debug('Query found <expt_key=%s, data_key=%s> for <%s>',
+                expt_key, data_key, var.full_name)
+            var.remote_data[expt_key] = data_key
 
     def _query_error_logger(self, msg, data_key):
         """Log debugging message or raise an exception, depending on if we're
@@ -782,7 +781,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     _expt_key_col = 'expt_key'
 
-    def _expt_df(self, obj, cols, *parent_ids):
+    def _expt_df(self, obj, cols, parent_id=None):
         """Return a DataFrame of partial experiment attributes (as determined by
         cols) that are shared by the query results of all variables covered by
         var_iterator.
@@ -793,7 +792,10 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             return pd.DataFrame({self._expt_key_col: [""]}, dtype='object')
 
         expt_df = None
-        parent_keys = tuple(self.expt_keys[id_] for id_ in parent_ids)
+        if parent_id is None:
+            parent_key = tuple()
+        else:
+            parent_key = self.expt_keys[parent_id]
         if hasattr(obj, 'iter_vars'):
             var_iterator = obj.iter_vars(active=True)
         else:
@@ -807,15 +809,15 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             for expt_key, data_key in v.remote_data.items():
                 # filter variables on the basis of previously selected expt 
                 # attributes
-                if expt_key[:len(parent_keys)] == parent_keys:
-                    rows.add(data_key)
+                if expt_key[:len(parent_key)] == parent_key:
+                    rows.update(data_key)
             v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates()
             v_expt_df[self._expt_key_col] = v_expt_df.apply(
                 (lambda df: self._experiment_key(df, idx=None, cols=cols)), axis=1)
             if v_expt_df.empty:
                 # should never get here
                 raise util.DataExperimentError(v, ("No choices of experiment "
-                    f"attributes for '{v.name}' in {obj.name}."))
+                    f"attributes for <{v.full_name}> in {obj.name}."))
 
             # take intersection with possible values for other vars
             if expt_df is None:
@@ -827,17 +829,17 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
                 )
             if expt_df.empty:
                 raise util.DataExperimentError(v, ("Eliminated all choices of "
-                    f"experiment attributes for {obj.name} when adding '{v.name}'."))
+                    f"experiment attributes for {obj.name} when adding <{v.full_name}>."))
         return expt_df
 
-    def _set_expt_key(self, obj, expt_df_cols, resolve_func, *parent_ids):
+    def _set_expt_key(self, obj, expt_df_cols, resolve_func, parent_id=None):
         """Set experiment attributes at the case, pod or variable level. Given obj,
         construct a DataFrame of epxeriment attributes that are found in the 
         queried data for all variables in obj. If more than one choice of 
         experiment is possible, call DataSource-specific heuristics in resolve_func
         to choose between them. 
         """
-        expt_df = self._expt_df(obj, expt_df_cols, *parent_ids)
+        expt_df = self._expt_df(obj, expt_df_cols, parent_id)
         
         if len(expt_df) > 1:
             if self.strict:
@@ -852,8 +854,10 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             raise util.DataExperimentError(None, (f"Experiment for {obj.name} "
                 "not uniquely specified by user input."))
         # successful exit: we've narrowed down the experiment to a single value
-        this_key = tuple(expt_df[self._expt_key_col].iloc[0])
-        expt_key = tuple(self.expt_keys[id_] for id_ in parent_ids) + this_key
+        
+        expt_key = (expt_df[self._expt_key_col].iloc[0], )
+        if parent_id is not None:
+            expt_key = self.expt_keys[parent_id] + expt_key
         _log.debug("Setting experiment_key for %s to %s", obj.name, expt_key)
         self.expt_keys[obj._id] = expt_key
 
@@ -867,14 +871,10 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         self._set_expt_key(self, self.expt_cols, self.resolve_expt)
         for p in self.iter_pods(active=True):
             # set attributes that must be the same for all variables in each POD
-            self._set_expt_key(
-                p, self.pod_expt_cols, self.resolve_pod_expt, self._id
-            )
+            self._set_expt_key(p, self.pod_expt_cols, self.resolve_pod_expt, self._id)
         for p, v in self.iter_pod_vars(active=True):
             # resolve irrelevant attributes
-            self._set_expt_key(
-                v, self.var_expt_cols, self.resolve_var_expt, self._id, p._id
-            )
+            self._set_expt_key(v, self.var_expt_cols, self.resolve_var_expt, p._id)
         
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
@@ -908,7 +908,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         return self.df[self.remote_data_col].loc[data_key]
 
 
-class OnTheFlyDirectoryHierarchyQueryMixin(AbstractQueryMixin, metaclass=util.MDTFABCMeta):
+class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
     """Mixin that creates an intake_esm.esm_datastore catalog by crawling a 
     directory hierarchy and populating catalog entry attributes
     by running a regex against the paths of files in the directory hierarchy.
@@ -1024,9 +1024,9 @@ class LocalFetchMixin(AbstractFetchMixin):
         for path in paths:
             if not os.path.exists(path):
                 raise util.DataFetchError(var, 
-                    f"Fetch {var.name}: File not found at {path}.")
+                    f"Fetch <{var.full_name}>: File not found at {path}.")
             else:
-                _log.debug(f'Fetch {var.name}: found {path}.')
+                _log.debug(f'Fetch <{var.full_name}>: found {path}.')
         var.local_data.extend(paths)
 
 
@@ -1051,7 +1051,6 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         """Verify that only a single file was found from each experiment.
         """
         super(SingleLocalFileDataSource, self).query_dataset(var)
-        print('###', var.name, var.remote_data)
         for data_key in var.remote_data.values():
             if len(data_key) != 1:
                 self._query_error_logger(

@@ -134,6 +134,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     to two different locations.
     """
     _id: int = dc.field(init=False) # assigned by DataSource (avoids unsafe_hash)
+    pod_name: str = ""
     use_exact_name: bool = False
     dest_path: str = ""
     env_var: str = dc.field(default="", compare=False)
@@ -276,8 +277,12 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             obj.change_coord('T', None, **time_kw)
         return obj
 
+    @property
+    def full_name(self):
+        return self.pod_name + ':' + self.name
+
     def short_format(self):
-        str_ = self.name
+        str_ = self.full_name
         if self.name_in_model:
             str_ += f" (={self.name_in_model})"
         attrs_ = []
@@ -460,6 +465,8 @@ class Diagnostic(object):
                 "Caught exception while parsing settings") from exc
         try:
             pod.varlist = Varlist.from_struct(d)
+            for v in pod.iter_vars():
+                v.pod_name = pod_name
         except Exception as exc:
             raise util.PodConfigError(pod_name, 
                 "Caught exception while parsing varlist") from exc
@@ -597,8 +604,8 @@ class Diagnostic(object):
             try:
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError as exc:
-                raise util.WormKeyError((f"{var.name} defines coordinate names that "
-                    f"conflict with those previously set. (Tried to update "
+                raise util.WormKeyError((f"<{var.full_name}> defines coordinate names "
+                    f"that conflict with those previously set. (Tried to update "
                     f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
         for var in self.iter_vars(active=False):
             # define env vars for varlist entries without data. Name collisions
@@ -617,7 +624,7 @@ class Diagnostic(object):
         programs = util.get_available_programs()
 
         if not self.driver:  
-            _log.warning("No valid driver entry found for %s", self.name)
+            _log.warning("No valid driver entry found for %s", self.full_name)
             #try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \

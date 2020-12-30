@@ -39,7 +39,7 @@ class AbstractQueryMixin(abc.ABC):
         """
         pass
 
-    def pre_query_hook(self):
+    def pre_query_hook(self, vars):
         """Called before querying the presence of a new batch of variables."""
         pass
 
@@ -49,7 +49,7 @@ class AbstractQueryMixin(abc.ABC):
         variables comes from the same experimental run of the model."""
         pass
 
-    def post_query_hook(self):
+    def post_query_hook(self, vars):
         """Called after select_experiment(), after each query of a new batch of 
         variables."""
         pass
@@ -72,11 +72,11 @@ class AbstractFetchMixin(abc.ABC):
         """
         pass
 
-    def pre_fetch_hook(self):
+    def pre_fetch_hook(self, vars):
         """Called before fetching each batch of query results."""
         pass
 
-    def post_fetch_hook(self):
+    def post_fetch_hook(self, vars):
         """Called after fetching each batch of query results."""
         pass
 
@@ -123,11 +123,11 @@ class AbstractDataSource(abc.ABC):
         if hasattr(self, 'setup_fetch'):
             self.setup_fetch()
 
-    def pre_query_hook(self):
+    def pre_query_hook(self, vars):
         """Called before querying the presence of a new batch of variables."""
         pass
 
-    def pre_fetch_hook(self):
+    def pre_fetch_hook(self, vars):
         """Called before fetching each batch of query results."""
         pass
 
@@ -137,12 +137,12 @@ class AbstractDataSource(abc.ABC):
         variables comes from the same experimental run of the model."""
         pass
 
-    def post_query_hook(self):
+    def post_query_hook(self, vars):
         """Called after select_experiment(), after each query of a new batch of 
         variables."""
         pass
 
-    def post_fetch_hook(self):
+    def post_fetch_hook(self, vars):
         """Called after fetching each batch of query results."""
         pass
 
@@ -416,7 +416,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_query:
                 break # normal exit: queried everything
             
-            self.pre_query_hook()
+            self.pre_query_hook(vars_to_query)
             for var in vars_to_query:
                 try:
                     _log.info("    Querying <%s>", var.short_format())
@@ -438,7 +438,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     continue
             try:
                 self.set_experiment()
-                self.post_query_hook()
+                self.post_query_hook(vars_to_query)
             except Exception as exc:
                 _log.exception("Caught exception setting experiment: %s", repr(exc))
                 raise exc
@@ -464,7 +464,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_fetch:
                 break # normal exit: fetched everything
 
-            self.pre_fetch_hook()
+            self.pre_fetch_hook(vars_to_fetch)
             for var in vars_to_fetch:
                 try:
                     _log.info("    Fetching <%s>", var.short_format())
@@ -490,7 +490,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
-            self.post_fetch_hook()
+            self.post_fetch_hook(vars_to_fetch)
         else:
             # only hit this if we don't break
             raise util.DataFetchError(None, 

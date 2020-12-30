@@ -10,8 +10,8 @@ import re
 import shutil
 import subprocess
 import typing
-from src import (util, core, datelabel, cmip6, diagnostic, 
-    data_manager, environment_manager, output_manager)
+from src import (util, core, datelabel, diagnostic, data_manager, 
+    preprocessor, environment_manager, output_manager)
 from sites.NOAA_GFDL import gfdl_util
 import src.conflict_resolution as choose
 
@@ -48,106 +48,109 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
                 except Exception as chained_exc:
                     self.exceptions.log(chained_exc)    
 
-class GfdlvirtualenvEnvironmentManager(
-    environment_manager.VirtualenvEnvironmentManager
-    ):
-    # Use module files to switch execution environments, as defined on 
-    # GFDL workstations and PP/AN cluster.
+# ------------------------------------------------------------------------
 
-    def __init__(self):
-        _ = gfdl_util.ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__()
-
-    # manual-coded logic like this is not scalable
-    def set_pod_env(self, pod):
-        langs = [s.lower() for s in pod.runtime_requirements]
-        if pod.name == 'convective_transition_diag':
-            pod.env = 'py_convective_transition_diag'
-        elif pod.name == 'MJO_suite':
-            pod.env = 'ncl_MJO_suite'
-        elif ('r' in langs) or ('rscript' in langs):
-            pod.env = 'r_default'
-        elif 'ncl' in langs:
-            pod.env = 'ncl'
-        else:
-            pod.env = 'py_default'
-
-    # this is totally not scalable
-    _module_lookup = {
-        'ncl': ['ncl'],
-        'r_default': ['r'],
-        'py_default': ['python'],
-        'py_convective_transition_diag': ['python', 'ncl'],
-        'ncl_MJO_suite': ['python', 'ncl']
-    }
-
-    def create_environment(self, env_name):
-        modMgr = gfdl_util.ModuleManager()
-        modMgr.load(self._module_lookup[env_name])
-        super(GfdlvirtualenvEnvironmentManager, \
-            self).create_environment(env_name)
-
-    def activate_env_commands(self, env_name):
-        modMgr = gfdl_util.ModuleManager()
-        mod_list = modMgr.load_commands(self._module_lookup[env_name])
-        return ['source $MODULESHOME/init/bash'] \
-            + mod_list \
-            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(env_name)
-
-    def deactivate_env_commands(self, env_name):
-        modMgr = gfdl_util.ModuleManager()
-        mod_list = modMgr.unload_commands(self._module_lookup[env_name])
-        return super(GfdlvirtualenvEnvironmentManager, \
-            self).deactivate_env_commands(env_name) + mod_list
-
-    def tear_down(self):
-        super(GfdlvirtualenvEnvironmentManager, self).tear_down()
-        modMgr = gfdl_util.ModuleManager()
-        modMgr.revert_state()
-
-class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
-    # Use mdteam's anaconda2
-    def _call_conda_create(self, env_name):
-        raise Exception(("Trying to create conda env {} "
-            "in read-only mdteam account.").format(env_name)
-        )
-
-
-def GfdlautoDataManager(case_dict, pod_dict, PreprocessorClass):
+def GfdlautoDataManager(case_dict):
     """Wrapper for dispatching DataManager based on inputs.
     """
     test_root = case_dict.get('CASE_ROOT_DIR', None)
     if not test_root:
-        return Gfdludacmip6DataManager(case_dict, pod_dict, PreprocessorClass)
+        return GFDL_UDA_CMIP6DataSourceAttributes(case_dict)
     test_root = os.path.normpath(test_root)
     if 'pp' in os.path.basename(test_root):
-        return GfdlppDataManager(case_dict, pod_dict, PreprocessorClass)
+        return GfdlppDataManager(case_dict)
     else:
         _log.critical(("ERROR: Couldn't determine data fetch method from input."
             "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
             "'GFDL_data_cmip6', depending on the source you want."))
         exit(1)
 
-
-class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
-    def __init__(self, case_dict, pod_dict, PreprocessorClass):
-        # load required modules
+class GCPFetchMixin(data_manager.AbstractFetchMixin):
+    """Mixin implementing data fetch for netcdf files on filesystems accessible
+    from GFDL via GCP. Remote files are copies to a local temp directory. dmgets
+    are issued for remote files on tape filesystems.
+    """
+    def setup_fetch(self):
         modMgr = gfdl_util.ModuleManager()
-        modMgr.load('gcp') # should refactor
+        modMgr.load('gcp')
+
+    @property
+    def tape_filesystem(self):
+        return gfdl_util.is_on_tape_filesystem(self.MODEL_DATA_ROOT)
+
+    def pre_fetch_hook(self, vars_to_fetch):
+        """Issue dmget for all files we're about to fetch, if those files are
+        on a tape filesystem.
+        """
+        if self.tape_filesystem:
+            paths = set([])
+            for var in vars_to_fetch:
+                for data_key in self.iter_data_keys(var):
+                    paths.update(self.remote_data(data_key))
+
+            _log.info(f"Start dmget of {len(paths)} files.")
+            util.run_command(['dmget','-t','-v'] + list(paths),
+                timeout= len(paths) * self.file_transfer_timeout,
+                dry_run=self.dry_run
+            ) 
+            _log.info("Successful exit of dmget.")
+
+    def _get_fetch_method(self, method='auto'):
+        _methods = {
+            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
+            'cp':  {'command': ['cp'], 'site':''},
+            'ln':  {'command': ['ln', '-fs'], 'site':''}
+        }
+        if method not in _methods:
+            if self.tape_filesystem:
+                method = 'gcp' # use GCP for DMF filesystems
+            else:
+                method = 'ln' # symlink for local files
+        _log.debug("Selected fetch method '%s'.", method)
+        return (_methods[method]['command'], _methods[method]['site'])
+
+    def fetch_dataset(self, var, paths):
+        """Copy files to temporary directory.
+        (GCP can't copy to home dir, so always copy to a temp dir)
+        """
+        tmpdirs = core.TempDirManager()
+        # assign temp directory by case/DataSource attributes
+        tmpdir = tmpdirs.make_tempdir(hash_obj = self.attrs)
+        _log.debug("Created GCP fetch temp dir at %s.", tmpdir)
+        (cp_command, smartsite) = self._get_fetch_method(self.fetch_method)
+        if not util.is_iterable(paths):
+            paths = (paths, )
+
+        for path in paths:
+            # exceptions caught in parent loop in data_manager.DataSourceBase
+            local_path = os.path.join(tmpdir, os.path.basename(path))
+            _log.info(f"\tfetching {path[len(self.MODEL_DATA_ROOT):]}")
+            util.run_command(cp_command + [
+                smartsite + path, 
+                # gcp requires trailing slash, ln ignores it
+                smartsite + tmpdir + os.sep
+            ], 
+                timeout=self.file_transfer_timeout, 
+                dry_run=self.dry_run
+            )
+            var.local_data.append(local_path)
+
+class GFDLCMIP6LocalFileDataSource(
+    data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
+    GCPFetchMixin, 
+    data_manager.DataframeQueryDataSource
+):
+    _FileRegexClass = data_manager.CMIP6DataSourceFile
+    _AttributesClass = data_manager.CMIP6DataSourceAttributes
+    _DiagnosticClass = GfdlDiagnostic
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+
+    def __init__(self, case_dict):
+        self.catalog = None
+        super(GFDLCMIP6LocalFileDataSource, self).__init__(case_dict)
 
         config = core.ConfigManager()
-        super(GfdlarchiveDataManager, self).__init__(case_dict, pod_dict, PreprocessorClass)
-
-        assert ('CASE_ROOT_DIR' in case_dict)
-        if not os.path.isdir(case_dict['CASE_ROOT_DIR']):
-            raise util.DataFetchError(None, 
-                f"Can't access CASE_ROOT_DIR = '{case_dict['CASE_ROOT_DIR']}'.")
-        self.data_root_dir = case_dict['CASE_ROOT_DIR']
-        self.tape_filesystem = gfdl_util.is_on_tape_filesystem(self.data_root_dir)
-        self._catalog = collections.defaultdict(
-            lambda: collections.defaultdict(list)
-        )
-
+        self.fetch_method = 'auto'
         self.frepp_mode = config.get('frepp', False)
         if self.frepp_mode:
             paths = core.PathManager()
@@ -160,244 +163,55 @@ class GfdlarchiveDataManager(data_manager.DataManager, metaclass=abc.ABCMeta):
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
-    _DataKeyClass = data_manager.DefaultDataKey
-    _UndeterminedKeyClass = None
+@util.mdtf_dataclass
+class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+    def __post_init__(self):
+        self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
+        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__()
 
-    def dataset_key(self, varlist_entry):
-        return self._DataKeyClass.from_dataset(varlist_entry, self)
+class Gfdludacmip6DataManager(GFDLCMIP6LocalFileDataSource):
+    _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
 
-    # DATA QUERY -------------------------------------
+@util.mdtf_dataclass
+class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+    def __post_init__(self):
+        # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
+        # be used as a data source unless explicitly requested by user
+        self.MODEL_DATA_ROOT = os.sep + os.path.join('data_cmip6', 'CMIP6')
+        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__()
 
-    @abc.abstractmethod
-    def parse_relative_path(self, subdir, filename):
-        pass
-
-    def _listdir(self, dir_):
-        # print("\t\tDEBUG: listdir on ...{}".format(dir_[len(self.data_root_dir):]))
-        return os.listdir(dir_)
-
-    def list_filtered_subdirs(self, dirs_in, subdir_filter=None):
-        subdir_filter = util.to_iter(subdir_filter)
-        found_dirs = []
-        for dir_ in dirs_in:
-            found_subdirs = {d for d \
-                in self._listdir(os.path.join(self.data_root_dir, dir_)) \
-                if not (d.startswith('.') or d.endswith('.nc'))
-            }
-            if subdir_filter:
-                found_subdirs = found_subdirs.intersection(subdir_filter)
-            if not found_subdirs:
-                _log.warning("\tCouldn't find subdirs (in %s) at %s, skipping",
-                    subdir_filter, os.path.join(self.data_root_dir, dir_))
-                continue
-            found_dirs.extend([
-                os.path.join(dir_, subdir_) for subdir_ in found_subdirs \
-                if os.path.isdir(os.path.join(self.data_root_dir, dir_, subdir_))
-            ])
-        return found_dirs
-
-    @abc.abstractmethod
-    def subdirectory_filters(self):
-        pass
-
-    def pre_query_and_fetch_hook(self):
-        """Build data catalog on the fly from crawling directory tree.
-        """
-        # match files ending in .nc only if they aren't of the form .tile#.nc
-        # (negative lookback) 
-        regex_no_tiles = re.compile(r".*(?<!\.tile\d)\.nc$")
-
-        # generate data_keys for all files we might search for; will be wiped out
-        # when build_data_dicts() is called
-        for pod in self.iter_pods():
-            for var in pod.iter_vars(all_vars=True):
-                key = self.dataset_key(var)
-                self.data_keys[key].append(var)
-
-        print("keys dump:")
-        for k1,v1 in self.data_keys.items():
-            print(k1, len(v1))
-            if k1.name_in_model == 'rlut':
-                print('\t', repr(k1))
-
-        # crawl directory tree rooted at self.data_root_dir
-        pathlist = ['']
-        for filter_ in self.subdirectory_filters():
-            pathlist = self.list_filtered_subdirs(pathlist, filter_)
-        for dir_ in pathlist:
-            dir_contents = self._listdir(os.path.join(self.data_root_dir, dir_))
-            dir_contents = list(filter(regex_no_tiles.search, dir_contents))
-            files = [] # list of FileDataSets corresponding to files in this dir
-            file_keys = collections.defaultdict(list) # DataKeys of those files
-            for f in dir_contents:
-                try:
-                    files.append(self.parse_relative_path(dir_, f))
-                except ValueError as exc:
-                    # print('\tDEBUG:', exc)
-                    #print('\t\tDEBUG: ', exc, '\n\t\t', os.path.join(self.data_root_dir, dir_), f)
-                    continue
-            for file_ds in files:
-                data_key = self.dataset_key(file_ds)
-                if data_key.name_in_model == 'rlut':
-                    print('\t', repr(data_key))
-                file_keys[data_key].append(file_ds)
-
-                
-            for data_key in self.data_keys:
-                # in case data is chunked, only add files to _catalog if the
-                # date_range can be spanned with files we've found in this dir_.
-                # If yes, insert the list of files under a d_key with date_range
-
-                if data_key not in file_keys:
-                    continue
-                files = file_keys[data_key]
-                try:
-                    # method throws ValueError if ranges aren't contiguous
-                    files_date_range = datelabel.DateRange.from_contiguous_span(
-                        *[f.date_range for f in files]
-                    )
-                except ValueError:
-                    # Date range of remote files doesn't contain analysis range or 
-                    # is noncontiguous; should probably log an error
-                    continue
-                if not files_date_range.contains(self.attrs.date_range):
-                    # files we found don't span the query date range
-                    continue
-                for file_ds in files:
-                    if file_ds.date_range in self.attrs.date_range:
-                        d_key = file_ds.to_dataclass(self._DataKeyClass)
-                        u_key = file_ds.to_dataclass(self._UndeterminedKeyClass)
-                        self._catalog[d_key][u_key].append(file_ds)
-
-        print("catalog dump:")
-        for k1,v1 in self._catalog.items():
-            print(k1, len(v1.keys()))
-
-    def query_dataset(self, data_key):
-        if data_key in self._catalog:
-            return list(self._catalog[data_key].values())
-        else:
-            return None
-
-    # FETCH REMOTE DATA -------------------------------------
-
-    # specific details that must be implemented in child class 
-    @abc.abstractmethod
-    def select_undetermined(self):
-        pass
-
-    def pre_fetch_hook(self):
-        """Make assignments to u_keys, or fail. Issue dmget for selected files.
-        """
-        d_to_u_dict = self.select_undetermined()
-        for d_key in self.data_keys:
-            u_key = d_to_u_dict[d_key]
-            _log.info(f"\tSelected {u_key} for {d_key}")
-            # check we didn't eliminate everything:
-            if not self._catalog[d_key][u_key]:
-                raise util.DataFetchError(d_key,
-                    f'Choosing {d_key}, {u_key} eliminated all files.')
-            self.data_files[d_key] = self._catalog[d_key][u_key]
-
-        paths = set()
-        for data_key in self.data_keys:
-            paths.update([f.remote_path for f in self.data_files[data_key]])
-        if self.tape_filesystem:
-            _log.info(f"start dmget of {len(paths)} files")
-            util.run_command(['dmget','-t','-v'] + list(paths),
-                timeout= len(paths) * self.file_transfer_timeout,
-                dry_run=self.dry_run
-            ) 
-            _log.info("end dmget")
-
-    def determine_fetch_method(self, method='auto'):
-        _methods = {
-            'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
-            'cp':  {'command': ['cp'], 'site':''},
-            'ln':  {'command': ['ln', '-fs'], 'site':''}
-        }
-        if method not in _methods:
-            if self.tape_filesystem:
-                method = 'gcp' # use GCP for DMF filesystems
-            else:
-                method = 'ln' # symlink for local files
-        return (_methods[method]['command'], _methods[method]['site'])
-
-    def fetch_dataset(self, d_key, method='auto'):
-        """Copy files to temporary directory.
-        (GCP can't copy to home dir, so always copy to a temp dir)
-        """
-        tmpdirs = core.TempDirManager()
-        tmpdir = tmpdirs.make_tempdir(hash_obj = d_key)
-        (cp_command, smartsite) = self.determine_fetch_method(method)
-        # copy remote files
-        # TODO: Do something intelligent with logging, caught OSErrors
-        new_files = [] # file objects are immutable, must replace them
-        for file_ds in self.data_files[d_key]:
-            path = file_ds.remote_path
-            local_path = os.path.join(tmpdir, os.path.basename(path))
-            _log.info("\tcopying ...{} to {}".format(
-                path[len(self.data_root_dir):], tmpdir
-            ))
-            util.run_command(cp_command + [
-                smartsite + path, 
-                # gcp requires trailing slash, ln ignores it
-                smartsite + tmpdir + os.sep
-            ], 
-                timeout=self.file_transfer_timeout, 
-                dry_run=self.dry_run
-            )
-            new_files.append(file_ds.replace(local_path=local_path))
-        self.data_files[d_key] = new_files
+class Gfdldatacmip6DataManager(GFDLCMIP6LocalFileDataSource):
+    _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
 
 
-class GfdlppDataManager(GfdlarchiveDataManager):
+_pp_ts_regex = re.compile(r"""
+        /?                      # maybe initial separator
+        (?P<component>\w+)/     # component name
+        ts/                     # timeseries;
+        (?P<frequency>\w+)/     # ts freq
+        (?P<chunk_freq>\w+)/    # data chunk length   
+        (?P<component2>\w+)\.        # component name (again)
+        (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
+        (?P<name_in_model>\w+)\.       # field name
+        nc                      # netCDF file extension
+    """, re.VERBOSE)
+_pp_static_regex = re.compile(r"""
+        /?                      # maybe initial separator
+        (?P<component>\w+)/     # component name 
+        (?P<component2>\w+)     # component name (again)
+        \.static\.nc             # static frequency, netCDF file extension                
+    """, re.VERBOSE)
+
+class GfdlppDataManager(
+    data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
+    GCPFetchMixin, 
+    data_manager.DataframeQueryDataSource
+):
+    _FileRegexClass = NotImplementedError()
+    _AttributesClass = NotImplementedError()
     _DiagnosticClass = GfdlDiagnostic
-    _DateRangeClass = datelabel.DateRange
-    _DateFreqClass = datelabel.DateFrequency
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
-    def __init__(self, case_dict, pod_dict, PreprocessorClass):
-        # assign explicitly else linter complains
-        self.component = None
-        self.data_freq = None
-        self.chunk_freq = None
-        super(GfdlppDataManager, self).__init__(case_dict, pod_dict, PreprocessorClass)
-
-    _DataKeyClass = data_manager.DefaultDataKey
-
-    @util.mdtf_dataclass(frozen=True)
-    class UndeterminedKey(object):
-        component: str = ""
-        chunk_freq: datelabel.DateFrequency = None
-
-        def __str__(self):
-            if (not self.chunk_freq) or self.chunk_freq.is_static:
-                return f"{self.component} per {self.chunk_freq} chunks"
-            else:
-                return f"{self.component}"
-
-    FileDataSet = data_manager.remote_file_dataset_factory(
-        'FileDataSet', _DataKeyClass, UndeterminedKey
-    )
-
-    _pp_ts_regex = re.compile(r"""
-            /?                      # maybe initial separator
-            (?P<component>\w+)/     # component name
-            ts/                     # timeseries;
-            (?P<frequency>\w+)/     # ts freq
-            (?P<chunk_freq>\w+)/    # data chunk length   
-            (?P<component2>\w+)\.        # component name (again)
-            (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
-            (?P<name_in_model>\w+)\.       # field name
-            nc                      # netCDF file extension
-        """, re.VERBOSE)
-    _pp_static_regex = re.compile(r"""
-            /?                      # maybe initial separator
-            (?P<component>\w+)/     # component name 
-            (?P<component2>\w+)     # component name (again)
-            \.static\.nc             # static frequency, netCDF file extension                
-        """, re.VERBOSE)
-    
     def parse_relative_path(self, subdir, filename):
         rel_path = os.path.join(subdir, filename)
         path_d = {
@@ -476,160 +290,82 @@ class GfdlppDataManager(GfdlarchiveDataManager):
                 component=cmpt, chunk_freq=str(chunk_freq))
         return choices
 
-class Gfdlcmip6abcDataManager(GfdlarchiveDataManager, metaclass=abc.ABCMeta):
-    _DiagnosticClass = GfdlDiagnostic
-    _DateRangeClass = datelabel.DateRange
-    _DateFreqClass = cmip6.CMIP6DateFrequency
-
-    def __init__(self, case_dict, pod_dict, PreprocessorClass):
-        # set data_root_dir
-        # from experiment and model, determine institution and mip
-        # set realization code = 'r1i1p1f1' unless specified
-        cmip = cmip6.CMIP6_CVs()
-        if 'activity_id' not in case_dict:
-            if 'experiment_id' in case_dict:
-                key = case_dict['experiment_id']
-            elif 'experiment' in case_dict:
-                key = case_dict['experiment']
-            else:
-                raise Exception("Can't determine experiment.")
-        self.experiment_id = key
-        self.activity_id = cmip.lookup(key, 'experiment_id', 'activity_id')
-        if 'institution_id' not in case_dict:
-            if 'source_id' in case_dict:
-                key = case_dict['source_id']
-            elif 'model' in case_dict:
-                key = case_dict['model']
-            else:
-                raise Exception("Can't determine model/source.")
-        self.source_id = key
-        self.institution_id = cmip.lookup(key, 'source_id', 'institution_id')
-        if 'member_id' not in case_dict:
-            self.member_id = 'r1i1p1f1'
-        case_dict['CASE_ROOT_DIR'] = os.path.join(
-            self._cmip6_root, self.activity_id, self.institution_id, 
-            self.source_id, self.experiment_id, self.member_id)
-        # assign explicitly else linter complains
-        self.data_freq = None
-        self.table_id = None
-        self.grid_label = None
-        self.version_date = None
-        super(Gfdlcmip6abcDataManager, self).__init__(case_dict, pod_dict, PreprocessorClass)
-        if 'data_freq' in self.__dict__:
-            self.table_id = cmip.table_id_from_freq(self.data_freq)
-
-    @abc.abstractmethod # note: only using this as a property
-    def _cmip6_root(self):
-        pass
-
-    @util.mdtf_dataclass(frozen=True)
-    class CMIP6DataKey(data_manager.DefaultDataKey):
-        frequency: cmip6.CMIP6DateFrequency = cmip6.CMIP6DateFrequency('fx')
-
-    _DataKeyClass = CMIP6DataKey
-
-    @util.mdtf_dataclass(frozen=True)
-    class UndeterminedKey(object):
-        table_id: str = ""
-        grid_label: str = ""
-        version_date: str = ""
-
-        def __str__(self):
-            return f"({self.table_id}, {self.grid_label}, v{self.version_date})"
-
-    FileDataSet = data_manager.remote_file_dataset_factory(
-        'FileDataSet', _DataKeyClass, UndeterminedKey
-    )
-
-    def parse_relative_path(self, subdir, filename):
-        path_d = {
-            'case_name': self.case_name,
-            'remote_path': os.path.join(self.data_root_dir, subdir, filename),
-            'local_path': util.NOTSET
-        }
-        d = cmip6.parse_DRS_path(
-            os.path.join(self.data_root_dir, subdir)[len(self._cmip6_root):],
-            filename
-        )
-        d['name_in_model'] = d['variable_id']
-        d = util.filter_dataclass(d, self.FileDataSet)
-        return self.FileDataSet(**d, **path_d)
-
-    def subdirectory_filters(self):
-        return [self.table_id, None, # variable_id
-            self.grid_label, self.version_date]
-
-    @staticmethod
-    def _cmip6_table_tiebreaker(str_list):
-        # no suffix or qualifier, if possible
-        tbls = [cmip6.parse_mip_table_id(t) for t in str_list]
-        tbls = [t for t in tbls if (not t['spatial_avg'] and not t['region'] \
-            and t['temporal_avg'] == 'interval')]
-        if not tbls:
-            raise Exception('Need to refine table_id more carefully')
-        tbls = min(tbls, key=lambda t: len(t['table_prefix']))
-        return tbls['table_id']
-
-    @staticmethod
-    def _cmip6_grid_tiebreaker(str_list):
-        # no suffix or qualifier, if possible
-        grids = [cmip6.parse_grid_label(g) for g in str_list]
-        grids = [g for g in grids if (
-            not g['spatial_avg'] and not g['region']
-        )]
-        if not grids:
-            raise Exception('Need to refine grid_label more carefully')
-        grids = min(grids, key=op.itemgetter('grid_number'))
-        return grids['grid_label']
-
-    def select_undetermined(self):
-        d_to_u = dict.fromkeys(self.data_keys)
-        for d_key in d_to_u:
-            d_to_u[d_key] = {f.to_UndeterminedKey() for f in self.data_files[d_key]}
-        tables = choose.minimum_cover(
-            d_to_u,
-            op.attrgetter('table_id'), 
-            self._cmip6_table_tiebreaker
-        )
-        dkeys_for_each_pod = list(self.data_pods.inverse().values())
-        grid_lbl = choose.all_same_if_possible(
-            d_to_u,
-            dkeys_for_each_pod,
-            op.attrgetter('grid_label'), 
-            self._cmip6_grid_tiebreaker
-            )
-        version_date = choose.require_all_same(
-            d_to_u,
-            op.attrgetter('version_date'),
-            lambda dates: str(max(datelabel.Date(dt) for dt in dates))
-            )
-        choices = dict.fromkeys(self.data_files)
-        for data_key in choices:
-            choices[data_key] = self.UndeterminedKey(
-                table_id=str(tables[data_key]), 
-                grid_label=grid_lbl[data_key], 
-                version_date=version_date[data_key]
-            )
-        return choices
-
-class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
-    _cmip6_root = os.sep + os.path.join('uda', 'CMIP6')
-
-class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
-    # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
-    # be used as a data source unless explicitly requested by user
-    _cmip6_root = os.sep + os.path.join('data_cmip6','CMIP6')
-
 # ------------------------------------------------------------------------
 
+class GfdlvirtualenvEnvironmentManager(
+    environment_manager.VirtualenvEnvironmentManager
+    ):
+    # Use module files to switch execution environments, as defined on 
+    # GFDL workstations and PP/AN cluster.
+
+    def __init__(self):
+        _ = gfdl_util.ModuleManager()
+        super(GfdlvirtualenvEnvironmentManager, self).__init__()
+
+    # manual-coded logic like this is not scalable
+    def set_pod_env(self, pod):
+        langs = [s.lower() for s in pod.runtime_requirements]
+        if pod.name == 'convective_transition_diag':
+            pod.env = 'py_convective_transition_diag'
+        elif pod.name == 'MJO_suite':
+            pod.env = 'ncl_MJO_suite'
+        elif ('r' in langs) or ('rscript' in langs):
+            pod.env = 'r_default'
+        elif 'ncl' in langs:
+            pod.env = 'ncl'
+        else:
+            pod.env = 'py_default'
+
+    # this is totally not scalable
+    _module_lookup = {
+        'ncl': ['ncl'],
+        'r_default': ['r'],
+        'py_default': ['python'],
+        'py_convective_transition_diag': ['python', 'ncl'],
+        'ncl_MJO_suite': ['python', 'ncl']
+    }
+
+    def create_environment(self, env_name):
+        modMgr = gfdl_util.ModuleManager()
+        modMgr.load(self._module_lookup[env_name])
+        super(GfdlvirtualenvEnvironmentManager, \
+            self).create_environment(env_name)
+
+    def activate_env_commands(self, env_name):
+        modMgr = gfdl_util.ModuleManager()
+        mod_list = modMgr.load_commands(self._module_lookup[env_name])
+        return ['source $MODULESHOME/init/bash'] \
+            + mod_list \
+            + super(GfdlvirtualenvEnvironmentManager, self).activate_env_commands(env_name)
+
+    def deactivate_env_commands(self, env_name):
+        modMgr = gfdl_util.ModuleManager()
+        mod_list = modMgr.unload_commands(self._module_lookup[env_name])
+        return super(GfdlvirtualenvEnvironmentManager, \
+            self).deactivate_env_commands(env_name) + mod_list
+
+    def tear_down(self):
+        super(GfdlvirtualenvEnvironmentManager, self).tear_down()
+        modMgr = gfdl_util.ModuleManager()
+        modMgr.revert_state()
+
+class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
+    # Use mdteam's anaconda2
+    def _call_conda_create(self, env_name):
+        raise Exception(("Trying to create conda env {} "
+            "in read-only mdteam account.").format(env_name)
+        )
+
+
+
 class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
-    def __init__(self, pod, case_wk_dir):
+    def __init__(self, pod, code_root, case_wk_dir):
         """Only run output steps (including logging error on index.html) 
         if POD ran on this invocation.
         """
         if pod._has_placeholder:
             _log.debug('POD %s has placeholder, generating output.', pod.name)
-            super(GFDLHTMLPodOutputManager, self).__init__(pod, case_wk_dir)
+            super(GFDLHTMLPodOutputManager, self).__init__(pod, code_root, case_wk_dir)
         else: 
             _log.debug('POD %s does not have placeholder; not generating output.', 
                 pod.name)

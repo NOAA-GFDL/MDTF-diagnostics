@@ -75,7 +75,8 @@ class CMIP6_CVs(util.Singleton):
             the entries in *items*.
         """
         self._make_cv()
-        assert category in self.cv
+        if category not in self.cv:
+            raise KeyError(f"Unrecognized CMIP6 CV category {category}.")
         if util.is_iterable(items):
             return [(item in self.cv[category]) for item in items]
         else:
@@ -138,7 +139,7 @@ class CMIP6_CVs(util.Singleton):
         dest_items = _lookup[source_item]
         if len(dest_items) != 1:
             raise KeyError(f"Non-unique lookup for {dest} from {source}='{source_item}'.")
-        return dest_items[0]
+        return dest_items.pop()
 
     # TODO: Represent contents as pandas DataFrame, allow pseudo-SQL multi-column
     # lookups

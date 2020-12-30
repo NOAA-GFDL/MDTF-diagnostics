@@ -194,7 +194,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self._id = 0
         self.id_number = itertools.count(start=1) # IDs for PODs, vars
         self.strict = config.get('strict', False)
-        self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass)
+        self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass, init=True)
         self.pods = case_dict.get('pod_list', [])
         # data_key -> FetchStatus
         self.fetch_status = collections.defaultdict((lambda: FetchStatus.NOT_FETCHED))
@@ -313,7 +313,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             try:
                 self.setup_pod(pod)
             except Exception as exc:
-                # raise
+                _log.exception(exc)
                 try:
                     raise util.PodConfigError(pod, 
                         "Caught exception in DataManager setup.") from exc
@@ -348,6 +348,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             try:
                 self.setup_var(pod, v)
             except Exception as exc:
+                _log.exception(exc)
                 try:
                     raise util.PodConfigError(pod, 
                         f"Caught exception when configuring <{v.full_name}>.") from exc
@@ -943,19 +944,20 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         relative paths of files in CATALOG_DIR. Only paths that match the regex
         in FileRegexClass are returned.
         """
-        root_dir = os.path.join(self.CATALOG_DIR, "") # adds separator if not present
-        for root, _, files in os.walk(root_dir):
+        # in case CATALOG_DIR is subset of MODEL_ROOT
+        path_offset = len(os.path.join(self.attrs.MODEL_DATA_ROOT, "")) 
+        for root, _, files in os.walk(self.CATALOG_DIR):
             for f in files:
                 if f.startswith('.'):
                     continue
                 try:
                     path = os.path.join(root, f)
-                    yield self._FileRegexClass.from_string(path, len(root_dir))
+                    yield self._FileRegexClass.from_string(path, path_offset)
                 except util.RegexSuppressedError:
                     # decided to silently ignore this file
                     continue
                 except Exception:
-                    _log.info("Couldn't parse path %s", path[len(root_dir):])
+                    _log.info("Couldn't parse path %s", path[path_offset:])
                     continue
                 
     def _dummy_esmcol_spec(self):
@@ -988,6 +990,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         FileRegexClass.
         """
         df = pd.DataFrame(tuple(self.iter_files()), dtype='object')
+        _log.debug("Directory crawl found %s files.", len(df))
         self.catalog = intake_esm.core.esm_datastore.from_df(
             df, 
             esmcol_data = self._dummy_esmcol_spec(), 
@@ -1168,7 +1171,7 @@ class CMIP6DataSourceFile(cmip6.CMIP6_DRSPath):
     _query_attrs_synonyms = {'name': 'variable_id'}
 
 @util.mdtf_dataclass
-class CMIP6DataSourceAttributes():
+class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     MODEL_DATA_ROOT: str = ""
     activity_id: str = ""
     institution_id: str = ""
@@ -1177,8 +1180,12 @@ class CMIP6DataSourceAttributes():
     member_id: str = ""
     grid_label: str = ""
     version_date: str = ""
+    model: dataclasses.InitVar = ""      # synonym for source_id
+    experiment: dataclasses.InitVar = "" # synonym for experiment_id
+    CATALOG_DIR: str = dataclasses.field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self, model=None, experiment=None):
+        super(CMIP6DataSourceAttributes, self).__post_init__()
         config = core.ConfigManager()
         paths = core.PathManager()
         cv = cmip6.CMIP6_CVs()
@@ -1212,14 +1219,25 @@ class CMIP6DataSourceAttributes():
                 self.MODEL_DATA_ROOT)
             exit(1)
 
+        # should really fix this at the level of CLI flag synonyms
+        if model and not self.source_id:
+            self.source_id = model
+        if experiment and not self.experiment_id:
+            self.experiment_id = experiment
+
         # validate non-empty field values
-        for field_name, val in dataclasses.asdict(self).items():
-            if field_name in ('version_date', 'member_id'):
+        for field in dataclasses.fields(self):
+            val = getattr(self, field.name, "")
+            if not val:
                 continue
-            if val and not cv.is_in_cv(field_name, val):
-                _log.error(("Supplied value '%s' for '%s' is not recognized by "
-                    "the CMIP6 CV. Continuing, but queries will probably fail."),
-                    val, field_name)
+            try:
+                if not cv.is_in_cv(field.name, val):
+                    _log.error(("Supplied value '%s' for '%s' is not recognized by "
+                        "the CMIP6 CV. Continuing, but queries will probably fail."),
+                        val, field.name)
+            except KeyError: 
+                # raised if not a valid CMIP6 CV category
+                continue
         # currently no inter-field consistency checks: happens implicitly, since
         # set_experiment will find zero experiments.
 
@@ -1232,15 +1250,17 @@ class CMIP6DataSourceAttributes():
         # set MODEL_DATA_ROOT to be further down the hierarchy if possible, to
         # avoid having to crawl entire DRS strcture
         new_root = self.MODEL_DATA_ROOT
-        for drs_dir in ("activity_id", "institution_id", "source_id", "experiment_id"):
-            if not getattr(self, drs_dir, ""):
+        for drs_attr in ("activity_id", "institution_id", "source_id", "experiment_id"):
+            drs_val = getattr(self, drs_attr, "")
+            if not drs_val:
                 break
-            new_root = os.path.join(new_root, drs_dir)
+            new_root = os.path.join(new_root, drs_val)
         if not os.path.isdir(new_root):
-            _log.error("Data directory '%s' not found; reverting to '%s'.",
+            _log.error("Data directory '%s' not found; starting crawl at '%s'.",
                 new_root, self.MODEL_DATA_ROOT)
+            self.CATALOG_DIR = self.MODEL_DATA_ROOT
         else:
-            self.MODEL_DATA_ROOT = new_root
+            self.CATALOG_DIR = new_root
 
 
 class CMIP6LocalFileDataSource(LocalFileDataSource):
@@ -1272,8 +1292,8 @@ class CMIP6LocalFileDataSource(LocalFileDataSource):
 
     @property
     def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
-        return self.attrs.MODEL_DATA_ROOT
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CATALOG_DIR'))
+        return self.attrs.CATALOG_DIR
 
     @staticmethod
     def _filter_column(df, col_name, func, obj_name):

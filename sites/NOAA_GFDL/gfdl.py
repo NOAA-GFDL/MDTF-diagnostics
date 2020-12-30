@@ -145,6 +145,26 @@ class GFDLCMIP6LocalFileDataSource(
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
+    # following column groups the same as in data_manager.CMIP6LocalFileDataSource
+
+    daterange_col = "date_range"
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = (
+        "activity_id", "institution_id", "source_id", "experiment_id",
+        "member_id", "version_date",
+        # derived columns
+        "region", "spatial_avg", 'realization_index', 'initialization_index', 
+        'physics_index', 'forcing_index'
+    )
+    # Catalog columns whose values must be the same for each POD.
+    pod_expt_cols = ('grid_label',
+        # derived columns
+        'regrid', 'grid_number'
+    )
+    # Catalog columns whose values must "be the same for each variable", ie are 
+    # irrelevant but must be constrained to a unique value.
+    var_expt_cols = ("table_id", )
+
     def __init__(self, case_dict):
         self.catalog = None
         super(GFDLCMIP6LocalFileDataSource, self).__init__(case_dict)
@@ -163,22 +183,29 @@ class GFDLCMIP6LocalFileDataSource(
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
+    @property
+    def CATALOG_DIR(self):
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CATALOG_DIR'))
+        return self.attrs.CATALOG_DIR
+
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
-    def __post_init__(self):
+    def __post_init__(self, model=None, experiment=None):
         self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
-        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__()
+        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        import dataclasses
+        print('XXXX', [field.name for field in dataclasses.fields(self)])
 
 class Gfdludacmip6DataManager(GFDLCMIP6LocalFileDataSource):
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
-    def __post_init__(self):
+    def __post_init__(self, model=None, experiment=None):
         # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
         # be used as a data source unless explicitly requested by user
         self.MODEL_DATA_ROOT = os.sep + os.path.join('data_cmip6', 'CMIP6')
-        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__()
+        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdldatacmip6DataManager(GFDLCMIP6LocalFileDataSource):
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes

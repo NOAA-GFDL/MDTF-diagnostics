@@ -138,14 +138,20 @@
       "description" : "Settings specific to operation at GFDL.",
       "arguments" : [
         {
+          "name": "OBS_DATA_REMOTE",
+          "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
+          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+          "metavar" : "<DIR>",
+          "action": "PathAction"
+        },{
           "name": "GFDL_PPAN_TEMP",
-          "help": "If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "help": "If running on GFDL PPAN, set $MDTF_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
           "default": "$TMPDIR",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{
           "name": "GFDL_WS_TEMP",
-          "help": "If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
+          "help": "If running on a GFDL workstation, set $MDTF_TMPDIR to this location and create temp files here. Must be accessible via gcp.",
           "default": "/net2/$USER/tmp",
           "metavar" : "<DIR>",
           "action": "PathAction"

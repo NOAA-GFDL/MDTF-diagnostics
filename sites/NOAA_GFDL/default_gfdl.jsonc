@@ -38,17 +38,17 @@
   // resolved relative to the MDTF-diagnostics code directory.
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "$MDTF_GFDL_TMPDIR/inputdata/model",
+  "MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
 
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
   "OBS_DATA_REMOTE": "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "$MDTF_GFDL_TMPDIR/inputdata/obs_data",
+  "OBS_DATA_ROOT": "$MDTF_TMPDIR/inputdata/obs_data",
 
   // Working directory.
-  "WORKING_DIR": "$MDTF_GFDL_TMPDIR/wkdir",
+  "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
   "OUTPUT_DIR": "$HOME/mdtf_out",
@@ -56,11 +56,11 @@
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
 
-  // If running on GFDL PPAN, set $MDTF_GFDL_TMPDIR to this location and 
+  // If running on GFDL PPAN, set $MDTF_TMPDIR to this location and 
   // create temp files here. Must be accessible via gcp.
   "GFDL_PPAN_TEMP": "$TMPDIR",
 
-  // If running on a GFDL workstation, set $MDTF_GFDL_TMPDIR to this location 
+  // If running on a GFDL workstation, set $MDTF_TMPDIR to this location 
   // and create temp files here. Must be accessible via gcp.
   "GFDL_WS_TEMP": "/net2/$USER/tmp",
   

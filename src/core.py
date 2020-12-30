@@ -51,7 +51,7 @@ class MDTFFramework(object):
             self.global_env_vars, self.case_list, log_config)
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
-        _ = TempDirManager(paths.WORKING_DIR)
+        _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
         _ = VariableTranslator(self.code_root)
 
         # config should be read-only from here on
@@ -276,26 +276,19 @@ class ConfigManager(util.Singleton, util.NameSpace):
 
 
 class PathManager(util.Singleton, util.NameSpace):
-    """:class:`~util.Singleton` holding root paths for the MDTF code. These are
-    set in the ``paths`` section of ``defaults.jsonc``.
+    """:class:`~util.Singleton` holding the root directories for all paths used 
+    by the code.
     """
-    def __init__(self, cli_obj=None, env=None, unittest=False):
+    def __init__(self, cli_obj=None, env_vars=None, unittest=False):
         self.CODE_ROOT = cli_obj.code_root
         self._unittest = unittest
         if not self._unittest:
             assert os.path.isdir(self.CODE_ROOT)
 
         d = cli_obj.config
-        # set by CLI settings that have "parse_type": "path" in JSON entry
-        cli_paths = [act.dest for act in cli_obj.iter_actions() \
-            if isinstance(act, cli.PathAction)]
-        if not cli_paths:
-            _log.warning("Didn't get list of paths from CLI.")
-        for key in cli_paths:
-            self[key] = self._init_path(key, d, env=env)
-            if key in d:
-                d[key] = self[key]
-
+        env = os.environ.copy()
+        if env_vars:
+            env.update(env_vars)
         # set following explictly: redundant, but keeps linter from complaining
         self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
         self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
@@ -305,12 +298,31 @@ class PathManager(util.Singleton, util.NameSpace):
         if not self.WORKING_DIR:
             self.WORKING_DIR = self.OUTPUT_DIR
 
+        # set as attribute any CLI setting that has "action": "PathAction" 
+        # in its definition in the .jsonc file
+        cli_paths = [act.dest for act in cli_obj.iter_actions() \
+            if isinstance(act, cli.PathAction)]
+        if not cli_paths:
+            _log.warning("Didn't get list of paths from CLI.")
+        for key in cli_paths:
+            self[key] = self._init_path(key, d, env=env)
+            if key in d:
+                d[key] = self[key]
+
+        # set root directory for TempDirManager
+        if not getattr(self, 'TEMP_DIR_ROOT', ''):
+            if 'MDTF_TMPDIR' in env:
+                self.TEMP_DIR_ROOT = env['MDTF_TMPDIR']
+            else:
+                # default to writing temp files in working directory
+                self.TEMP_DIR_ROOT = self.WORKING_DIR
+
     def _init_path(self, key, d, env=None):
         if self._unittest: # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
-            assert key in d, 'Error: {} not initialized.'.format(key)
+            assert key in d, f"Error: {key} not initialized."
             return util.resolve_path(
                 util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env
             )

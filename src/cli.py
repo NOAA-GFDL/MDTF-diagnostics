@@ -185,9 +185,10 @@ class PathAction(RecordDefaultsAction):
         path = util.from_iter(values)
         if path is None:
             path = ''
-        path = util.resolve_path(
-            path, root_path=config.code_root, env=os.environ
-        )
+        # resolve paths in PathManager init, after env vars set
+        # path = util.resolve_path(
+        #     path, root_path=config.code_root, env=os.environ
+        # )
         super(PathAction, self).__call__(parser, namespace, path, option_string)
 
 class ClassImportAction(RecordDefaultsAction):

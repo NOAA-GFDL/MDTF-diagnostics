@@ -293,6 +293,10 @@ class TestFXDates(unittest.TestCase):
         with self.assertRaises(FXDateException):
             _ = dt_range.from_date_span(dt0, FXDateMax)
 
+    def test_format(self):
+        self.assertEqual(str(FXDateMin), "<N/A>")
+        self.assertEqual(str(FXDateMax), "<N/A>")
+        self.assertEqual(str(FXDateRange), "<N/A>")
 
 class TestDateFrequency(unittest.TestCase):
     def test_string_parsing(self):

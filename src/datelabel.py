@@ -421,7 +421,7 @@ class _DateMixin(object):
             td = datetime.timedelta(seconds = delta)
         else:
             # prec == 2 case handled in calling logic
-            raise ValueError("Malformed input")
+            raise ValueError(f"Malformed input: {repr(dt)} prec={precision} delta={delta}")
         return dt + td
 
 
@@ -781,9 +781,10 @@ class _FXDateRange(DateRange, StaticTimeDependenceBase):
     def end(self):
         raise util.FXDateException(func_name='end')
 
-    def format(self):
+    def format(self, precision=None):
         return "<N/A>"
     isoformat = format
+    __str__ = format
 
     def __repr__(self):
         return "_FXDateRange()"

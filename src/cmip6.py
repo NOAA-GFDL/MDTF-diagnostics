@@ -380,7 +380,7 @@ drs_directory_regex = util.RegexPattern(r"""
         (?P<institution_id>[a-zA-Z0-9_-]+)/
         (?P<source_id>[a-zA-Z0-9_-]+)/
         (?P<experiment_id>[a-zA-Z0-9_-]+)/
-        (?P<member_id>\w+)/
+        (?P<variant_label>\w+)/
         (?P<table_id>\w+)/
         (?P<variable_id>\w+)/
         (?P<grid_label>\w+)/
@@ -405,7 +405,7 @@ class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     institution_id: str = ""
     source_id: str = ""
     experiment_id: str = ""
-    member_id: CMIP6_VariantLabel = ""
+    variant_label: CMIP6_VariantLabel = ""
     table_id: CMIP6_MIPTable = ""
     grid_label: CMIP6_GridLabel = ""
     version_date: datelabel.Date = None
@@ -415,7 +415,7 @@ _drs_dates_filename_regex = util.RegexPattern(r"""
         (?P<table_id>\w+)_       # field name
         (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
         (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
-        (?P<member_id>\w+)_       # field name
+        (?P<variant_label>\w+)_       # field name
         (?P<grid_label>\w+)_       # field name
         (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
         \.nc                      # netCDF file extension
@@ -426,7 +426,7 @@ _drs_static_filename_regex = util.RegexPattern(r"""
         (?P<table_id>\w+)_       # field name
         (?P<source_id>[a-zA-Z0-9_-]+)_       # field name
         (?P<experiment_id>[a-zA-Z0-9_-]+)_       # field name
-        (?P<member_id>\w+)_       # field name
+        (?P<variant_label>\w+)_       # field name
         (?P<grid_label>\w+)
         \.nc                      # netCDF file extension, no dates
     """,
@@ -450,7 +450,7 @@ class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     table_id: CMIP6_MIPTable = ""
     source_id: str = ""
     experiment_id: str = ""
-    member_id: CMIP6_VariantLabel = ""
+    variant_label: CMIP6_VariantLabel = ""
     grid_label: CMIP6_GridLabel = ""
     start_date: datelabel.Date = None
     end_date: datelabel.Date = None

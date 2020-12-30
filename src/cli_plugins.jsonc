@@ -49,8 +49,8 @@
             "help": "CMIP6 experiment_id.",
             "default" : ""
           },{
-            "name": "member_id",
-            "help": "CMIP6 member_id.",
+            "name": "variant_label",
+            "help": "CMIP6 variant_label.",
             "default" : ""
           },{
             "name": "grid_label",

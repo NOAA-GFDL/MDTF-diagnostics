@@ -151,7 +151,7 @@ class GFDLCMIP6LocalFileDataSource(
     # Catalog columns whose values must be the same for all variables.
     expt_cols = (
         "activity_id", "institution_id", "source_id", "experiment_id",
-        "member_id", "version_date",
+        "variant_label", "version_date",
         # derived columns
         "region", "spatial_avg", 'realization_index', 'initialization_index', 
         'physics_index', 'forcing_index'
@@ -193,8 +193,6 @@ class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes)
     def __post_init__(self, model=None, experiment=None):
         self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
-        import dataclasses
-        print('XXXX', [field.name for field in dataclasses.fields(self)])
 
 class Gfdludacmip6DataManager(GFDLCMIP6LocalFileDataSource):
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes

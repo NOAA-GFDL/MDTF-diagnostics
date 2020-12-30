@@ -990,7 +990,10 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         FileRegexClass.
         """
         df = pd.DataFrame(tuple(self.iter_files()), dtype='object')
-        _log.debug("Directory crawl found %s files.", len(df))
+        if len(df) == 0:
+            _log.critical('Directory crawl did not find any files.')
+        else:
+            _log.debug("Directory crawl found %s files.", len(df))
         self.catalog = intake_esm.core.esm_datastore.from_df(
             df, 
             esmcol_data = self._dummy_esmcol_spec(), 
@@ -1177,7 +1180,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     institution_id: str = ""
     source_id: str = ""
     experiment_id: str = ""
-    member_id: str = ""
+    variant_label: str = ""
     grid_label: str = ""
     version_date: str = ""
     model: dataclasses.InitVar = ""      # synonym for source_id
@@ -1276,7 +1279,7 @@ class CMIP6LocalFileDataSource(LocalFileDataSource):
     # Catalog columns whose values must be the same for all variables.
     expt_cols = (
         "activity_id", "institution_id", "source_id", "experiment_id",
-        "member_id", "version_date",
+        "variant_label", "version_date",
         # derived columns
         "region", "spatial_avg", 'realization_index', 'initialization_index', 
         'physics_index', 'forcing_index'

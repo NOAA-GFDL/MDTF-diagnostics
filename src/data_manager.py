@@ -813,7 +813,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     # --------------------------------------------------------------
 
-    _expt_key_col = 'expt_key'
+    _expt_key_col = 'expt_key' # column name for DataSource-specific experiment identifier
 
     def _expt_df(self, obj, cols, parent_id=None):
         """Return a DataFrame of partial experiment attributes (as determined by
@@ -862,7 +862,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             _log.debug('%s expt attribute choices for %s from <%s>', 
                 len(v_expt_df),obj.name, v.full_name)
 
-            # take intersection with possible values for other vars
+            # take intersection with possible values of expt attrs from other vars
             if expt_df is None:
                 expt_df = v_expt_df.copy()
             else:
@@ -877,35 +877,49 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         _log.debug('%s expt attribute choices for %s', len(expt_df), obj.name)
         return expt_df
 
-    def _set_expt_key(self, obj, expt_df_cols, resolve_func, parent_id=None):
+    def _get_expt_key(self, stage, obj, parent_id=None):
         """Set experiment attributes at the case, pod or variable level. Given obj,
         construct a DataFrame of epxeriment attributes that are found in the 
         queried data for all variables in obj. If more than one choice of 
         experiment is possible, call DataSource-specific heuristics in resolve_func
         to choose between them. 
         """
+        # set columns and tiebreaker function based on the level of the 
+        # selection process we're at (case-wide, pod-wide or var-wide):
+        if stage == 'case':
+            expt_df_cols = self.expt_cols
+            resolve_func = self.resolve_expt
+        elif stage == 'pod':
+            expt_df_cols = self.pod_expt_cols
+            resolve_func = self.resolve_pod_expt
+        elif stage == 'var':
+            expt_df_cols = self.var_expt_cols
+            resolve_func = self.resolve_var_expt
+        else:
+            raise TypeError()
+
+        # get DataFrame of allowable (consistent) choices
         expt_df = self._expt_df(obj, expt_df_cols, parent_id)
         
         if len(expt_df) > 1:
             if self.strict:
-                raise util.DataExperimentError(None, (f"Experiment for {obj.name} "
-                    "not uniquely specified by user input in strict mode."))
+                raise util.DataExperimentError(None, (f"Experiment attributes for "
+                    f"{obj.name} not uniquely specified by user input in strict mode."))
             else:
                 expt_df = resolve_func(expt_df, obj)
         if expt_df.empty:
             raise util.DataExperimentError(None, ("Eliminated all consistent "
-                f"choices of experiment for {obj.name}."))
+                f"choices of experiment attributes for {obj.name}."))
         elif len(expt_df) > 1:  
-            raise util.DataExperimentError(None, (f"Experiment for {obj.name} "
-                "not uniquely specified by user input: "
+            raise util.DataExperimentError(None, (f"Experiment attributes for "
+                f"{obj.name} not uniquely specified by user input: "
                 f"{expt_df[self._expt_key_col].to_list()}"))
-        # successful exit: we've narrowed down the experiment to a single value
-        
+
+        # successful exit case: we've narrowed down the attrs to a single choice        
         expt_key = (expt_df[self._expt_key_col].iloc[0], )
         if parent_id is not None:
             expt_key = self.expt_keys[parent_id] + expt_key
-        _log.debug("Setting experiment_key for %s to %s", obj.name, expt_key)
-        self.expt_keys[obj._id] = expt_key
+        return expt_key
 
     def set_experiment(self):
         """Ensure that all data we're about to fetch comes from the same experiment.
@@ -913,14 +927,40 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         finished, either employ data source-specific heuristics to select one
         or return an error. 
         """
+        def _set_expt_key(obj_, key_):
+            _log.debug("Setting experiment_key for %s to %s", obj_.name, key_)
+            self.expt_keys[obj_._id] = key_
+
         # set attributes that must be the same for all variables
-        self._set_expt_key(self, self.expt_cols, self.resolve_expt)
-        for p in self.iter_pods(active=True):
-            # set attributes that must be the same for all variables in each POD
-            self._set_expt_key(p, self.pod_expt_cols, self.resolve_pod_expt, self._id)
-        for p, v in self.iter_pod_vars(active=True):
-            # resolve irrelevant attributes
-            self._set_expt_key(v, self.var_expt_cols, self.resolve_var_expt, p._id)
+        key = self._get_expt_key('case', self)
+        _set_expt_key(self, key)
+
+        # set attributes that must be the same for all variables in each POD
+        try:
+            # attempt to choose same values for all PODs
+            key = self._get_expt_key('pod', self, self._id)
+            for p in self.iter_pods(active=True):
+                _set_expt_key(p, key)
+        except Exception: # util.DataExperimentError:
+            # couldn't do that, so allow different choices for each POD
+            for p in self.iter_pods(active=True):
+                key = self._get_expt_key('pod', p, self._id)
+                _set_expt_key(p, key)
+
+        # resolve irrelevant attributes -- still try to choose as many values to
+        # be the same as possible, to minimize the number of unique data files we
+        # need to fetch
+        try:
+            # attempt to choose same values for each POD:
+            for p in self.iter_pods(active=True):
+                key = self._get_expt_key('var', p, p._id)
+                for v in p.iter_vars(active=True):
+                    _set_expt_key(v, key)
+        except Exception: # util.DataExperimentError:
+            # couldn't do that, so allow different choices for each variable
+            for p, v in self.iter_pod_vars(active=True):
+                key = self._get_expt_key('var', v, p._id)
+                _set_expt_key(v, key)
         
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
@@ -1270,8 +1310,9 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
         _init_x_from_y('source_id', 'institution_id')
         _init_x_from_y('institution_id', 'source_id')
         # TODO: multi-column lookups
-        # set MODEL_DATA_ROOT to be further down the hierarchy if possible, to
-        # avoid having to crawl entire DRS strcture
+        # set CATALOG_DIR to be further down the hierarchy if possible, to
+        # avoid having to crawl entire DRS strcture; MODEL_DATA_ROOT remains the
+        # root of the DRS hierarchy
         new_root = self.MODEL_DATA_ROOT
         for drs_attr in ("activity_id", "institution_id", "source_id", "experiment_id"):
             drs_val = getattr(self, drs_attr, "")

@@ -299,7 +299,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         # should be called from a hook whenever we log an exception
         # only need to keep track of this up to pod execution
         if self.failed:
-            for v in self.iter_pods():
+            _log.debug("Request for CASENAME '%s' failed.", self.name)
+            for v in self.iter_vars():
                 v.active = False
 
     # -------------------------------------
@@ -457,6 +458,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # vars that failed since last time and query them.
             if update:
                 self.query_data()
+                for pod in self.iter_pods(active=True):
+                    pod.update_active_vars()
                 try:
                     self.set_experiment()
                 except Exception as exc:
@@ -528,15 +531,13 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
             for pod, var in vars_to_process:
                 try:
-                    _log.info("    Processing <%s> for %s", 
-                        var.short_format(), pod.name)
+                    _log.info("    Processing <%s>", var.short_format())
                     var.status = diagnostic.VarlistEntryStatus.PREPROCESSED
                     pod.preprocessor.process(var)
                 except Exception as exc:
                     update = True
-                    if not isinstance(exc, util.DataPreprocessError):
-                        _log.exception("Caught exception processing %s: %s",
-                            var.short_format(), repr(exc))
+                    _log.exception("Caught exception processing <%s>: %s",
+                        var.short_format(), repr(exc))
                     try:
                         raise util.DataPreprocessError(var, ("Caught exception "
                             f"while processing data for <{var.full_name}>.")) from exc
@@ -873,7 +874,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 raise util.DataExperimentError(v, ("Eliminated all choices of "
                     f"experiment attributes for {obj.name} when adding <{v.full_name}>."))
 
-        _log.debug('%s expt attribute choices for %s', len(v_expt_df), obj.name)
+        _log.debug('%s expt attribute choices for %s', len(expt_df), obj.name)
         return expt_df
 
     def _set_expt_key(self, obj, expt_df_cols, resolve_func, parent_id=None):
@@ -1341,6 +1342,14 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
     def resolve_expt(self, df, obj):
+        """Disambiguate experiment attributes that must be the same for all 
+        variables in this case: 
+ 
+        - Eliminate regional (Antarctic/Greenland) and spatially averaged data
+        - If variant_id (realization, forcing, etc.) not specified by user, 
+            choose the lowest-numbered variant
+        - If version_date not set by user, choose the most recent revision
+        """
         # No POD currently makes use of spatially averaged or subsetted data
         df = df[(df['region'].isnull()) & (df['spatial_avg'].isnull())]
 
@@ -1353,6 +1362,12 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
     def resolve_pod_expt(self, df, obj):
+        """Disambiguate experiment attributes that must be the same for all 
+        variables for each POD:
+ 
+        - Prefer regridded to native-grid data (questionable)
+        - If multiple regriddings available, pick the lowest-numbered one
+        """
         # prefer regridded data
         if any(df['regrid'] == 'r'):
             df = df[df['regrid'] == 'r']
@@ -1361,6 +1376,11 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
     def resolve_var_expt(self, df, obj):
+        """Disambiguate arbitrary experiment attributes on a per-variable basis:
+ 
+        - If the same variable appears in multiple MIP tables, select the first
+            MIP table in alphabetical order.
+        """
         # TODO: minimize number of MIP tables
         col_name = 'table_id'
         # select first MIP table (out of available options) by alpha order

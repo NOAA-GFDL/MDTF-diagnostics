@@ -330,8 +330,8 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         def _format(v):
             act_str = ('active' if v.active else 'inactive')
             fail_str = ('failed' if v.failed else 'ok')
-            return (f"<{v.short_format()}: "
-                f"{act_str}:{v.status}, {fail_str} (exc={v.exception}), {v.requirement}>")
+            return (f"<{v.short_format()}: {act_str}:{v.status.name}, "
+                f"{fail_str} (exc={v.exception}), {v.requirement}>")
 
         print(_format(self))
         for i, altvs in enumerate(self.alternates):
@@ -510,6 +510,7 @@ class Diagnostic(object):
         # should be called from a hook whenever we log an exception
         # only need to keep track of this up to pod execution
         if self.failed:
+            _log.debug('Request for POD %s failed.', self.name)
             for v in self.iter_vars():
                 v.active = False
 
@@ -520,6 +521,7 @@ class Diagnostic(object):
         VarlistEntries. If successful, activate them; if not, raise a 
         :class:`PodDataError`.
         """
+        _log.debug('Updating active vars for POD %s', self.name)
         if self.failed:
             self.deactivate_if_failed()
             return

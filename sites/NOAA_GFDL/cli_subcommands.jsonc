@@ -31,7 +31,7 @@
     // },
     "run": {
       "help": "Run the framework on model data.",
-      "entry_point": "sites.NOAA_GFDL.gfdl_util:GFDLMDTFFramework",
+      "entry_point": "sites.NOAA_GFDL.gfdl:GFDLMDTFFramework",
       "cli_file": "sites/NOAA_GFDL/cli_gfdl.jsonc"
     }
   }

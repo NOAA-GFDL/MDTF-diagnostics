@@ -9,6 +9,7 @@ import operator as op
 import re
 import shutil
 import subprocess
+import tempfile
 import typing
 from src import (util, core, datelabel, diagnostic, data_manager, 
     preprocessor, environment_manager, output_manager, cmip6)
@@ -17,6 +18,75 @@ import src.conflict_resolution as choose
 
 import logging
 _log = logging.getLogger(__name__)
+
+
+class GFDLMDTFFramework(core.MDTFFramework):
+    def parse_mdtf_args(self, cli_obj, pod_info_tuple):
+        super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj, pod_info_tuple)
+        # set up cooperative mode -- hack to pass config settings
+        self.frepp_mode = cli_obj.config.get('frepp', False)
+        if self.frepp_mode:
+            cli_obj.config['diagnostic'] = 'Gfdl'
+
+    def parse_env_vars(self, cli_obj):
+        super(GFDLMDTFFramework, self).parse_env_vars(cli_obj)
+        # set temp directory according to where we're running
+        if gfdl_util.running_on_PPAN():
+            gfdl_tmp_dir = cli_obj.config.get('GFDL_PPAN_TEMP', '$TMPDIR')
+        else:
+            gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
+        gfdl_tmp_dir = util.resolve_path(
+            gfdl_tmp_dir, root_path=self.code_root, env=self.global_env_vars
+        )
+        if not os.path.isdir(gfdl_tmp_dir):
+            gfdl_util.make_remote_dir(gfdl_tmp_dir)
+        tempfile.tempdir = gfdl_tmp_dir
+        os.environ['MDTF_TMPDIR'] = gfdl_tmp_dir
+        self.global_env_vars['MDTF_TMPDIR'] = gfdl_tmp_dir
+
+    def _post_parse_hook(self, cli_obj, config, paths):
+        ### call parent class method
+        super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
+
+        self.reset_case_pod_list(cli_obj, config, paths)
+        self.dry_run = config.get('dry_run', False)
+        self.timeout = config.get('file_transfer_timeout', 0)
+        # copy obs data from site install
+        gfdl_util.fetch_obs_data(
+            paths.OBS_DATA_REMOTE, paths.OBS_DATA_ROOT,
+            timeout=self.timeout, dry_run=self.dry_run
+        )
+
+    def reset_case_pod_list(self, cli_obj, config, paths):
+        if self.frepp_mode:
+            for case in self.case_list:
+                # frepp mode:only attempt PODs other instances haven't already done
+                case_outdir = paths.modelPaths(case, overwrite=True)
+                case_outdir = case_outdir.MODEL_OUT_DIR
+                pod_list = case['pod_list']
+                for p in pod_list:
+                    if os.path.isdir(os.path.join(case_outdir, p)):
+                        _log.info(("\tPreexisting {} in {}; "
+                            "skipping b/c frepp mode").format(p, case_outdir))
+                case['pod_list'] = [p for p in pod_list if not \
+                    os.path.isdir(os.path.join(case_outdir, p))
+                ]
+
+    def verify_paths(self, config, p):
+        keep_temp = config.get('keep_temp', False)
+        # clean out WORKING_DIR if we're not keeping temp files:
+        if os.path.exists(p.WORKING_DIR) and not \
+            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+            shutil.rmtree(p.WORKING_DIR)
+        util.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
+        util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
+            create=True)
+        # Use GCP to create OUTPUT_DIR on a volume that may be read-only
+        if not os.path.exists(p.OUTPUT_DIR):
+            gfdl_util.make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run)
+
+
+# ====================================================================
 
 @util.mdtf_dataclass
 class GfdlDiagnostic(diagnostic.Diagnostic):
@@ -357,7 +427,7 @@ class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
             "in read-only mdteam account.").format(env_name)
         )
 
-
+# ------------------------------------------------------------------------
 
 class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
     def __init__(self, pod, code_root, case_wk_dir):

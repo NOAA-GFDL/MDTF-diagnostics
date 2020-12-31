@@ -322,10 +322,11 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     pod.exceptions.log(chained_exc)    
                 continue
 
-        print('####################\nDEBUG varlist: ')
+        _log.debug('#' * 70)
+        _log.debug('Pre-query varlists for %s:', self.name)
         for v in self.iter_vars(active=None, active_pods=None):
-            v.print_debug()
-        print('####################')
+            _log.debug("%s", v.debug_str())
+        _log.debug('#' * 70)
 
     def setup_pod(self, pod):
         """Update POD with information that only becomes available after 
@@ -352,7 +353,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 _log.exception(exc)
                 try:
                     raise util.PodConfigError(pod, 
-                        f"Caught exception when configuring <{v.full_name}>.") from exc
+                        f"Caught exception when configuring {v.full_name}.") from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)  
                 continue
@@ -418,11 +419,12 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_query:
                 break # normal exit: queried everything
             
-            _log.debug('Query batch: %s', [v.full_name for v in vars_to_query])
+            _log.debug('Query batch: [%s]', 
+                ', '.join(v.full_name for v in vars_to_query))
             self.pre_query_hook(vars_to_query)
             for var in vars_to_query:
                 try:
-                    _log.info("    Querying <%s>", var.short_format())
+                    _log.info("    Querying %s", var)
                     # add before query, in case query raises an exc
                     var.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(var) # sets var.remote_data
@@ -430,16 +432,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                         raise util.DataQueryError(var, "No data found.")
                 except util.DataQueryError as exc:
                     update = True
-                    _log.info("    No data found for <%s>.", var.short_format())
+                    _log.info("    No data found for %s.", var)
                     var.deactivate(exc)
                     continue
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception querying <%s>: %s",
-                        var.short_format(), repr(exc))
+                    _log.exception("Caught exception querying %s: %r", var, exc)
                     try:
-                        raise util.DataQueryError(var, (f"Caught exception while "
-                            f"querying data for <{var.full_name}>.")) from exc
+                        raise util.DataQueryError(var, ("Caught exception while "
+                            f"querying data for {var.full_name}.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -463,7 +464,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 try:
                     self.set_experiment()
                 except Exception as exc:
-                    _log.exception("Caught exception setting experiment: %s", repr(exc))
+                    _log.exception("Caught exception setting experiment: %r", exc)
                     raise exc
                 update = False
             vars_to_fetch = [
@@ -473,11 +474,12 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_fetch:
                 break # normal exit: fetched everything
 
-            _log.debug('Fetch batch: %s', [v.full_name for v in vars_to_fetch])
+            _log.debug('Fetch batch: [%s]', 
+                ', '.join(v.full_name for v in vars_to_fetch))
             self.pre_fetch_hook(vars_to_fetch)
             for var in vars_to_fetch:
                 try:
-                    _log.info("    Fetching <%s>", var.short_format())
+                    _log.info("    Fetching %s", var)
                     # add before fetch, in case fetch raises an exc
                     var.status = diagnostic.VarlistEntryStatus.FETCHED
                     for data_key in self.iter_data_keys(var):
@@ -491,16 +493,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                         raise util.DataFetchError(var, "Fetch failed.")
                 except util.DataFetchError as exc:
                     update = True
-                    _log.info("    Fetch failed for <%s>.", var.short_format())
+                    _log.info("    Fetch failed for %s.", var)
                     var.deactivate(exc)
                     continue
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception fetching <%s>: %s",
-                        var.short_format(), repr(exc))
+                    _log.exception("Caught exception fetching %s: %r", var, exc)
                     try:
                         raise util.DataFetchError(var, ("Caught exception while "
-                            f"fetching data for <{var.full_name}>.")) from exc
+                            f"fetching data for {var.full_name}.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -531,16 +532,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
             for pod, var in vars_to_process:
                 try:
-                    _log.info("    Processing <%s>", var.short_format())
+                    _log.info("    Processing %s", var)
                     var.status = diagnostic.VarlistEntryStatus.PREPROCESSED
                     pod.preprocessor.process(var)
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception processing <%s>: %s",
-                        var.short_format(), repr(exc))
+                    _log.exception("Caught exception processing %s: %r", var, exc)
                     try:
                         raise util.DataPreprocessError(var, ("Caught exception "
-                            f"while processing data for <{var.full_name}>.")) from exc
+                            f"while processing data for {var.full_name}.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
@@ -793,7 +793,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 _log.debug('Expt_key %s failed _query_group_hook', expt_key)
                 continue
             data_key = self._data_key(group)
-            _log.debug('Query found <expt_key=%s, data_key=%s> for <%s>',
+            _log.debug('Query found <expt_key=%s, data_key=%s> for %s',
                 expt_key, data_key, var.full_name)
             var.remote_data[expt_key] = data_key
 
@@ -858,8 +858,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if v_expt_df.empty:
                 # should never get here
                 raise util.DataExperimentError(v, ("No choices of experiment "
-                    f"attributes for <{v.full_name}> in {obj.name}."))
-            _log.debug('%s expt attribute choices for %s from <%s>', 
+                    f"attributes for {v.full_name} in {obj.name}."))
+            _log.debug('%s expt attribute choices for %s from %s', 
                 len(v_expt_df),obj.name, v.full_name)
 
             # take intersection with possible values of expt attrs from other vars
@@ -872,7 +872,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 )
             if expt_df.empty:
                 raise util.DataExperimentError(v, ("Eliminated all choices of "
-                    f"experiment attributes for {obj.name} when adding <{v.full_name}>."))
+                    f"experiment attributes for {obj.name} when adding {v.full_name}."))
 
         _log.debug('%s expt attribute choices for %s', len(expt_df), obj.name)
         return expt_df
@@ -1079,7 +1079,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         if len(df) == 0:
             _log.critical('Directory crawl did not find any files.')
         else:
-            _log.debug("Directory crawl found %s files.", len(df))
+            _log.debug("Directory crawl found %d files.", len(df))
         self.catalog = intake_esm.core.esm_datastore.from_df(
             df, 
             esmcol_data = self._dummy_esmcol_spec(), 
@@ -1097,9 +1097,9 @@ class LocalFetchMixin(AbstractFetchMixin):
         for path in paths:
             if not os.path.exists(path):
                 raise util.DataFetchError(var, 
-                    f"Fetch <{var.full_name}>: File not found at {path}.")
+                    f"Fetch {var.full_name}: File not found at {path}.")
             else:
-                _log.debug(f'Fetch <{var.full_name}>: found {path}.')
+                _log.debug("Fetch %s: found %s.", var.full_name, path)
         var.local_data.extend(paths)
 
 

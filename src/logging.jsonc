@@ -53,18 +53,18 @@
     "level": {"format": "%(levelname)s: %(message)s"},
     "debug": {
       "()": "src.util.logs.HangingIndentFormatter",
-      "format": "%(levelname)s: %(funcName)s (%(filename)s line %(lineno)d):\n%(message)s",
+      "format": "%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line %(lineno)d):\n%(message)s",
+      "datefmt": "%H:%M:%S",
+      "style": "%",
       "tabsize": 4,
+      "header": "",
       "footer": "\n"
     },
     "mdtf_log_file": {
-      "()": "src.util.logs.HangingIndentFormatter",
-      "format": "%(levelname)s: %(funcName)s (%(filename)s line %(lineno)d):\n%(message)s",
+      "format": "%(asctime)s %(levelname)s: %(message)s",
       "datefmt": "%H:%M:%S",
       "style": "%",
-      "tabsize": 8,
-      "header": "",
-      "footer": "\n"
+      "tabsize": 4
     }
   }
 }

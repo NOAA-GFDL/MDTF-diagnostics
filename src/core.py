@@ -37,7 +37,7 @@ class MDTFFramework(object):
             self.configure(cli_obj, pod_info_tuple, log_config)
         except Exception as exc:
             wrapped_exc = traceback.TracebackException.from_exception(exc)
-            _log.critical("Framework caught exception %s", repr(exc))
+            _log.critical("Framework caught exception %r", exc)
             print(''.join(wrapped_exc.format()))
         
     def configure(self, cli_obj, pod_info_tuple, log_config):
@@ -692,8 +692,7 @@ class VariableTranslator(util.Singleton):
                 d = util.read_json(f)
                 self.add_convention(d)
             except Exception as exc:
-                _log.exception("Caught exception loading fieldlist file %s: %s", 
-                    f, repr(exc))
+                _log.exception("Caught exception loading fieldlist file %s: %r", f, exc)
                 continue
 
     def add_convention(self, d):

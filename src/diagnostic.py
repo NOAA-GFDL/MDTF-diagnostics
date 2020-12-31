@@ -184,7 +184,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
            alternates for this variable.
         """
         if self.exception is not None:
-            raise Exception(f"Var {self.short_format()} already deactivated.")
+            raise Exception(f"Var {str(self)} already deactivated.")
         self.exception = exc
 
     @property
@@ -279,22 +279,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
     @property
     def full_name(self):
-        return self.pod_name + ':' + self.name
-
-    def short_format(self):
-        str_ = self.full_name
-        if self.name_in_model:
-            str_ += f" (={self.name_in_model})"
-        attrs_ = []
-        if not self.is_static and hasattr(self.T, 'frequency'):
-            attrs_.append(str(self.T.frequency))
-        if self.get_scalar('Z'):
-            lev = self.get_scalar('Z')
-            attrs_.append(f"{lev.value} {lev.units}")
-        if attrs_:
-            str_ += " @ "
-            str_ += ", ".join(attrs_)
-        return str_
+        return '<' + self.pod_name + ':' + self.name + '>'
 
     def iter_alternate_entries(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 
@@ -326,18 +311,21 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
                     if alt_of_alt not in already_encountered:
                         stack.append(alt_of_alt)
 
-    def print_debug(self):
+    def debug_str(self):
+        """String representation with more debugging information.
+        """
         def _format(v):
+            str_ = str(v)[1:-1]
             act_str = ('active' if v.active else 'inactive')
             fail_str = ('failed' if v.failed else 'ok')
-            return (f"<{v.short_format()}: {act_str}:{v.status.name}, "
+            return (f"<{str_}; {act_str}:{v.status.name}, "
                 f"{fail_str} (exc={v.exception}), {v.requirement}>")
 
-        print(_format(self))
+        s = _format(self)
         for i, altvs in enumerate(self.alternates):
-            alt_names = [_format(vv) for vv in altvs]
-            print(f"  Alternate set #{i+1}: [{', '.join(alt_names)}]")
-
+            alt_names = ', '.join(_format(vv) for vv in altvs)
+            s += f"\n    Alternate set #{i+1}: [{alt_names}]"
+        return s
 
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a 
@@ -528,8 +516,7 @@ class Diagnostic(object):
         old_active_vars = list(self.iter_vars(active=True))
         for v in old_active_vars:
             if v.failed:
-                v_str = v.short_format()
-                _log.info("Request for <%s> failed; finding alternate vars.", v_str)
+                _log.info("Request for %s failed; finding alternate vars.", v)
                 v.active = False
                 alt_success_flag = False
                 for alts in v.iter_alternates():
@@ -540,10 +527,10 @@ class Diagnostic(object):
                     for v in alts:
                         v.active = True
                 if not alt_success_flag:
-                    _log.info("No alternates available for <%s>.", v_str)
+                    _log.info("No alternates available for %s.", v.full_name)
                     try:
                         raise util.PodDataError(self, 
-                            f"No alternates available for <{v_str}>.") from v.exception
+                            f"No alternates available for {str(v)}.") from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
                     continue
@@ -604,7 +591,7 @@ class Diagnostic(object):
             try:
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError as exc:
-                raise util.WormKeyError((f"<{var.full_name}> defines coordinate names "
+                raise util.WormKeyError((f"{var.full_name} defines coordinate names "
                     f"that conflict with those previously set. (Tried to update "
                     f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
         for var in self.iter_vars(active=False):

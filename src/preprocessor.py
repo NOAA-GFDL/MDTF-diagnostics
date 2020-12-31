@@ -68,8 +68,8 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         objects so they can be compared with the model data's time axis.
         """
         if 'T' not in ds.cf.axes:
-            _log.debug("Skipping date range crop for <%s>: time-independent.", 
-                var.full_name)
+            _log.debug("Exit %s for %s: time-independent.", 
+                self.__class__.__name__, var.full_name)
             return ds
         t_name = ds.cf.axes['T'][0]
         t_coord = ds[t_name]
@@ -94,7 +94,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             _log.error(err_str)
             raise IndexError(var, err_str)
         
-        _log.info("Crop date range of <%s> from '%s -- %s' to '%s'.",
+        _log.info("Crop date range of %s from '%s -- %s' to '%s'.",
                 var.full_name,
                 t_coord.values[0].strftime('%Y-%m-%d'), 
                 t_coord.values[-1].strftime('%Y-%m-%d'), 
@@ -111,7 +111,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
 
     def remove_scalar(self, var):
         """If a VarlistEntry has a scalar_coordinate defined, return a copy to 
-        be used as an alternate varaible with that scalar_coordinate removed.
+        be used as an alternate variable with that scalar_coordinate removed.
         """
         if len(var.scalar_coords) == 0:
             return None
@@ -126,6 +126,11 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         )
 
     def edit_request(self, data_mgr, pod):
+        """Edit the POD's Varlist prior to query. If any VarlistEntry specifies
+        a scalar Z coordinate, insert a VarlistEntry for the full-dimensional 
+        variable as an alternate for it, since this function can extract the 
+        requested level from the latter to produce the former.
+        """
         new_varlist = []
         for v in pod.varlist.iter_contents():
             z_level = v.get_scalar('Z')
@@ -138,9 +143,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             data_mgr.setup_var(pod, new_v)
             v.alternates = [[new_v]]
 
-            print(f'DEBUG: ### add alts for <{new_v.short_format()} {new_v.requirement}>:')
-            for vv in new_v.iter_alternate_entries():
-                print(f'DEBUG: ### <{vv.short_format()} {vv.requirement}>')
+            for vv in v.iter_alternate_entries():
+                _log.debug("%s: add %s as alternate for %s", 
+                    self.__class__.__name__, vv, v)
             new_varlist.append(v)
             new_varlist.append(new_v)
         pod.varlist = diagnostic.Varlist(contents=new_varlist)
@@ -148,14 +153,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     def process(self, var, ds):
         z_coord = var.get_scalar('Z')
         if not z_coord or not z_coord.value:
-            _log.debug("Skipping level extraction for <%s>: no level requested.",
-                var.full_name)
+            _log.debug("Exit %s for %s: no level requested.", 
+                self.__class__.__name__, var.full_name)
             return ds
         if 'Z' not in ds.cf.axes:
             raise TypeError("No Z axis in data (%s).", ds.cf.axes)
         z_name = ds.cf.axes['Z'][0]
         try:
-            _log.info("Extracting %s %s level from Z axis (%s) of <%s>.", 
+            _log.info("Extracting %s %s level from Z axis (%s) of %s.", 
                 z_coord.value, z_coord.units, z_name, var.full_name)
             ds = ds.sel(
                 {z_name: z_coord.value},
@@ -167,7 +172,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             return ds.rename({var.translation.name: var.name})
         except KeyError:
             # ds.sel failed; level wasn't present in coordinate axis
-            raise KeyError((f"Z axis '{z_name}' of <{var.full_name}> didn't "
+            raise KeyError((f"Z axis '{z_name}' of {var.full_name} didn't "
                 f"provide requested level = {z_coord.value} {z_coord.units}."))
 
 # ==================================================
@@ -213,7 +218,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:
-            raise ValueError(f"<{var.full_name}>: Expected one file, got {path_list}.")
+            raise ValueError(f"{var.full_name}: Expected one file, got {path_list}.")
         _log.debug("xr.open_dataset on %s", path_list[0])
         return xr.open_dataset(
             path_list[0], 
@@ -254,23 +259,23 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             ds = xr_util.DatasetParser().parse(ds, var)
         except Exception as exc:
             raise util.DataPreprocessError((f"Error in read/parse data for "
-                f"<{var.full_name}>.")) from exc
+                f"{var.full_name}.")) from exc
         # execute functions
         for f in self.functions:
             try:
-                _log.debug("Preprocess '%s': call %s", var.full_name, f.__class__.__name__)
+                _log.debug("Preprocess %s: call %s", var.full_name, f.__class__.__name__)
                 ds = f.process(var, ds)
             except Exception as exc:
-                raise util.DataPreprocessError((f"Preprocessing on <{var.full_name}> "
+                raise util.DataPreprocessError((f"Preprocessing on {var.full_name} "
                     f"failed at {f.__class__.__name__}.")) from exc
         # write dataset
         try:
             self.write_dataset(var, ds)
         except Exception as exc:
             raise util.DataPreprocessError((f"Error in writing data for "
-                f"<{var.full_name}>.")) from exc
+                f"{var.full_name}.")) from exc
         del ds # shouldn't be necessary
-        _log.debug("Successful preprocessor exit on <%s>.", var.short_format())
+        _log.debug("Successful preprocessor exit on %s.", var)
 
 
 class SingleFilePreprocessor(MDTFPreprocessorBase):
@@ -310,6 +315,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 ds = f.process(var, ds)
             return ds
 
+        assert var.local_data
         if len(var.local_data) == 1:
             ds = self.read_one_file(var, var.local_data)
             return _file_preproc(ds)

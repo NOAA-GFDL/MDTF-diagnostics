@@ -413,7 +413,7 @@ def _mdtf_dataclass_typecheck(self):
                 # https://stackoverflow.com/a/54119384 for implementation
                 object.__setattr__(self, f.name, new_value)
         except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
-            _log.exception("%s", repr(exc))
+            _log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
                 f"({repr(value)}).")) from exc

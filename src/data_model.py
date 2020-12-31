@@ -445,6 +445,29 @@ class DMDependentVariable(_DMDimensionsMixin):
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
 
     @property
+    def full_name(self):
+        return '<' + self.name + '>'# synonym here; child classes override
+
+    def __str__(self):
+        """Condensed string representation.
+        """
+        str_ = self.full_name[1:-1]
+        if hasattr(self, 'name_in_model') and self.name_in_model:
+            str_ += f" (={self.name_in_model})"
+        else:
+            str_ += f" (={self.standard_name})"
+        attrs_ = []
+        if not self.is_static and hasattr(self.T, 'frequency'):
+            attrs_.append(str(self.T.frequency))
+        if self.get_scalar('Z'):
+            lev = self.get_scalar('Z')
+            attrs_.append(f"{lev.value} {lev.units}")
+        if attrs_:
+            str_ += " @ "
+            str_ += ", ".join(attrs_)
+        return '<' + str_ + '>'
+
+    @property
     def phys_axes(self):
         """Superset of the .axes dict (whose values contain coordinate dimensions 
         only) that includes axes corresponding to scalar coordinates.

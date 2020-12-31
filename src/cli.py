@@ -660,7 +660,7 @@ class CLIConfigManager(util.Singleton):
         }
         for k,v in site_cmds.items():
             if k in self.subcommands:
-                _log.debug('Replacing subcommand %s with site-specific version.', k)
+                _log.debug("Replacing subcommand '%s' with site-specific version.", k)
             self.subcommands[k] = CLICommand(name=k, **v, code_root=self.code_root)
 
     def read_plugins(self):

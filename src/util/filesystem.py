@@ -278,8 +278,7 @@ def read_json(file_path):
     except Exception as exc:
         # something more serious than missing file
         wrapped_exc = traceback.TracebackException.from_exception(exc)
-        _log.critical("Caught exception when trying to load %s: %s",
-            file_path, repr(exc))
+        _log.critical("Caught exception when trying to load %s: %r", file_path, exc)
         print(''.join(wrapped_exc.format()))
         exit(1)
 

@@ -365,6 +365,9 @@ class _DMDimensionsMixin(object):
         return (self.T is None) or (self.T.is_static)
 
     def get_scalar(self, ax_name):
+        """If the axis label *ax_name* is a scalar coordinate, return the
+        corresponding :class:`AbstractDMCoordinate` object, otherwise return None.
+        """
         if isinstance(ax_name, str):
             ax_name = DMAxis.from_struct(ax_name)
         for c in self.scalar_coords:
@@ -373,6 +376,9 @@ class _DMDimensionsMixin(object):
         return None
 
     def build_axes(self, *coords, verify=True):
+        """Constructs a dict mapping axes labels (:class:`DMAxis` enums) to 
+        dimension coordinates (of type :class:`AbstractDMCoordinate`.)
+        """
         if verify:
             # validate that we don't have duplicate axes
             d = util.WormDict()
@@ -440,16 +446,25 @@ class DMDependentVariable(_DMDimensionsMixin):
 
     @property
     def phys_axes(self):
-        """Superset of axes (which lists coordinate dimensions only) that 
-        includes axes corresponding to scalar coordinates.
+        """Superset of the .axes dict (whose values contain coordinate dimensions 
+        only) that includes axes corresponding to scalar coordinates.
         """
         return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
     @property
     def phys_axes_set(self):
+        """Superset of the .axes_set frozenset (which contains axes labels 
+        corresponding to coordinate dimensions only) that includes axes labels
+        corresponding to scalar coordinates.
+        """
         return frozenset(self.phys_axes.keys())
 
     def add_scalar(self, ax, ax_value, **kwargs):
+        """Metadata operation corresponding to taking a slice of a higher-dimensional
+        variable (extracting its values at axis *ax* = *ax_value*). The
+        coordinate corresponding to ax is removed from the list of coordinate
+        dimensions and added to the list of scalar coordinates.
+        """
         assert ax in self.axes
         dim = self.axes[ax]
         new_dim = dc.replace(dim, value=ax_value)
@@ -464,6 +479,11 @@ class DMDependentVariable(_DMDimensionsMixin):
         )
         
     def remove_scalar(self, ax, position=-1, **kwargs):
+        """Metadata operation that's the inverse of :meth:`add_scalar`. Given an 
+        axis label *ax* that's currently a scalar coordinate, remove the slice 
+        value and add it to the list of dimension coordinates at *position* 
+        (default end of the list.)
+        """
         dim = self.get_scalar(ax)
         assert dim is not None
         new_dim = dc.replace(dim, value=None)
@@ -581,11 +601,15 @@ class DMDataSet(_DMDimensionsMixin):
         super(DMDataSet, self).__post_init__(coords)
 
     def iter_contents(self):
-        # all contents
+        """Generator iterating over the full contents of the DataSet (variables,
+        auxiliary coordinates and coordinate bounds.)
+        """
         yield from itertools.chain(self.vars, self.aux_coords, self.coord_bounds)
 
     def iter_vars(self):
-        # dependent variables only
+        """Generator iterating over variables and auxiliary coordinates but
+        excluding coordinate bounds.
+        """
         yield from itertools.chain(self.vars, self.aux_coords)
 
     def _classify(self, v):

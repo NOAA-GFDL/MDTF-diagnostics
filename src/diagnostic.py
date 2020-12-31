@@ -331,7 +331,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             act_str = ('active' if v.active else 'inactive')
             fail_str = ('failed' if v.failed else 'ok')
             return (f"<{v.short_format()}: "
-                f"{act_str}, {fail_str} (exc={v.exception}), {v.requirement}>")
+                f"{act_str}:{v.status}, {fail_str} (exc={v.exception}), {v.requirement}>")
 
         print(_format(self))
         for i, altvs in enumerate(self.alternates):
@@ -527,8 +527,7 @@ class Diagnostic(object):
         for v in old_active_vars:
             if v.failed:
                 v_str = v.short_format()
-                _log.info(("%s: request for '%s' failed; "
-                    "finding alternate vars."), self.name, v_str)
+                _log.info("Request for <%s> failed; finding alternate vars.", v_str)
                 v.active = False
                 alt_success_flag = False
                 for alts in v.iter_alternates():
@@ -539,11 +538,10 @@ class Diagnostic(object):
                     for v in alts:
                         v.active = True
                 if not alt_success_flag:
-                    _log.info("%s: no alternates available for '%s'.", 
-                        self.name, v_str)
+                    _log.info("No alternates available for <%s>.", v_str)
                     try:
                         raise util.PodDataError(self, 
-                            f"No alternates available for '{v_str}'.") from v.exception
+                            f"No alternates available for <{v_str}>.") from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
                     continue

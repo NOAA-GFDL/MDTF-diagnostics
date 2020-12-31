@@ -76,7 +76,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
     @property
     def tape_filesystem(self):
-        return gfdl_util.is_on_tape_filesystem(self.MODEL_DATA_ROOT)
+        return gfdl_util.is_on_tape_filesystem(self.attrs.MODEL_DATA_ROOT)
 
     def pre_fetch_hook(self, vars_to_fetch):
         """Issue dmget for all files we're about to fetch, if those files are
@@ -124,7 +124,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         for path in paths:
             # exceptions caught in parent loop in data_manager.DataSourceBase
             local_path = os.path.join(tmpdir, os.path.basename(path))
-            _log.info(f"\tfetching {path[len(self.MODEL_DATA_ROOT):]}")
+            _log.info(f"\tfetching {path[len(self.attrs.MODEL_DATA_ROOT):]}")
             util.run_command(cp_command + [
                 smartsite + path, 
                 # gcp requires trailing slash, ln ignores it
@@ -135,39 +135,20 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             )
             var.local_data.append(local_path)
 
-class GFDLCMIP6LocalFileDataSource(
+class GFDL_CMIP6_GCP_FileDataSource(
+    data_manager.CMIP6ExperimentSelectionMixin,
     data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
     GCPFetchMixin, 
-    data_manager.DataframeQueryDataSource
+    data_manager.DataframeQueryDataSourceBase
 ):
     _FileRegexClass = cmip6.CMIP6_DRSPath
-    _AttributesClass = data_manager.CMIP6DataSourceAttributes
+    _AttributesClass = util.abstract_attribute()
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
-    # following column groups the same as in data_manager.CMIP6LocalFileDataSource
-
-    daterange_col = "date_range"
-    # Catalog columns whose values must be the same for all variables.
-    expt_cols = (
-        "activity_id", "institution_id", "source_id", "experiment_id",
-        "variant_label", "version_date",
-        # derived columns
-        "region", "spatial_avg", 'realization_index', 'initialization_index', 
-        'physics_index', 'forcing_index'
-    )
-    # Catalog columns whose values must be the same for each POD.
-    pod_expt_cols = ('grid_label',
-        # derived columns
-        'regrid', 'grid_number'
-    )
-    # Catalog columns whose values must "be the same for each variable", ie are 
-    # irrelevant but must be constrained to a unique value.
-    var_expt_cols = ("table_id", )
-
     def __init__(self, case_dict):
         self.catalog = None
-        super(GFDLCMIP6LocalFileDataSource, self).__init__(case_dict)
+        super(GFDL_CMIP6_GCP_FileDataSource, self).__init__(case_dict)
 
         config = core.ConfigManager()
         self.fetch_method = 'auto'
@@ -183,18 +164,13 @@ class GFDLCMIP6LocalFileDataSource(
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
-    @property
-    def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CATALOG_DIR'))
-        return self.attrs.CATALOG_DIR
-
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
-class Gfdludacmip6DataManager(GFDLCMIP6LocalFileDataSource):
+class Gfdludacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
 
 @util.mdtf_dataclass
@@ -205,7 +181,7 @@ class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes
         self.MODEL_DATA_ROOT = os.sep + os.path.join('data_cmip6', 'CMIP6')
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
-class Gfdldatacmip6DataManager(GFDLCMIP6LocalFileDataSource):
+class Gfdldatacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
 
 
@@ -230,7 +206,7 @@ _pp_static_regex = re.compile(r"""
 class GfdlppDataManager(
     data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
     GCPFetchMixin, 
-    data_manager.DataframeQueryDataSource
+    data_manager.DataframeQueryDataSourceBase
 ):
     _FileRegexClass = NotImplementedError()
     _AttributesClass = NotImplementedError()

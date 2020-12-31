@@ -417,6 +417,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_query:
                 break # normal exit: queried everything
             
+            _log.debug('Query batch: %s', [v.full_name for v in vars_to_query])
             self.pre_query_hook(vars_to_query)
             for var in vars_to_query:
                 try:
@@ -425,24 +426,23 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     var.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(var) # sets var.remote_data
                     if not var.remote_data:
-                        raise AssertionError("No data found by query.")
+                        raise util.DataQueryError(var, "No data found.")
+                except util.DataQueryError as exc:
+                    update = True
+                    _log.info("    No data found for <%s>.", var.short_format())
+                    var.deactivate(exc)
+                    continue
                 except Exception as exc:
                     update = True
-                    if not isinstance(exc, util.DataQueryError):
-                        _log.exception("Caught exception querying <%s>: %s",
-                            var.short_format(), repr(exc))
+                    _log.exception("Caught exception querying <%s>: %s",
+                        var.short_format(), repr(exc))
                     try:
                         raise util.DataQueryError(var, (f"Caught exception while "
                             f"querying data for <{var.full_name}>.")) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
-            try:
-                self.set_experiment()
-                self.post_query_hook(vars_to_query)
-            except Exception as exc:
-                _log.exception("Caught exception setting experiment: %s", repr(exc))
-                raise exc
+            self.post_query_hook(vars_to_query)
         else:
             # only hit this if we don't break
             raise util.DataQueryError(None,
@@ -457,6 +457,11 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # vars that failed since last time and query them.
             if update:
                 self.query_data()
+                try:
+                    self.set_experiment()
+                except Exception as exc:
+                    _log.exception("Caught exception setting experiment: %s", repr(exc))
+                    raise exc
                 update = False
             vars_to_fetch = [
                 v for v in self.iter_vars(active=True) \
@@ -465,6 +470,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_fetch:
                 break # normal exit: fetched everything
 
+            _log.debug('Fetch batch: %s', [v.full_name for v in vars_to_fetch])
             self.pre_fetch_hook(vars_to_fetch)
             for var in vars_to_fetch:
                 try:
@@ -479,12 +485,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                         self.fetch_status[data_key] = FetchStatus.SUCCEEDED
                     if not all(self.fetch_status[dk] == FetchStatus.SUCCEEDED \
                         for dk in self.iter_data_keys(var)):
-                        raise AssertionError('Unreported fetch failure.')
+                        raise util.DataFetchError(var, "Fetch failed.")
+                except util.DataFetchError as exc:
+                    update = True
+                    _log.info("    Fetch failed for <%s>.", var.short_format())
+                    var.deactivate(exc)
+                    continue
                 except Exception as exc:
                     update = True
-                    if not isinstance(exc, util.DataFetchError):
-                        _log.exception("Caught exception fetching <%s>: %s",
-                            var.short_format(), repr(exc))
+                    _log.exception("Caught exception fetching <%s>: %s",
+                        var.short_format(), repr(exc))
                     try:
                         raise util.DataFetchError(var, ("Caught exception while "
                             f"fetching data for <{var.full_name}>.")) from exc
@@ -565,7 +575,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
 # --------------------------------------------------------------------------
 
-class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
+class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     """DataSource which queries a data catalog made available as a pandas 
     DataFrame, and includes logic for selecting experiment based on column values.
 
@@ -578,7 +588,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
        TODO: integrate better with general Intake API.
     """
     def __init__(self, case_dict):
-        super(DataframeQueryDataSource, self).__init__(case_dict)
+        super(DataframeQueryDataSourceBase, self).__init__(case_dict)
         self.expt_keys = dict() # _id -> expt_key tuple
 
     @property
@@ -626,27 +636,36 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
     def all_columns(self):
         return tuple(self.df.columns)
 
-    def _query_clause(self, col_name, k, v):
+    def _query_clause(self, col_name, query_attr_name, query_attr_val):
         """Translate a single field value into a logical clause in the dataframe
         catalog query. All queryable field values are assumed to be attribute
         values on a local variable named _dict_var_name.
         """
-        _dict_var_name = 'd'
-        if v == util.NOTSET:
+        _attrs = 'd' # local var name used in _query_catalog
+
+        if query_attr_name in ('min_frequency', 'max_frequency'):
+            col_name = 'frequency'  # need to avoid hardcoding this
+
+        if col_name not in self.all_columns:
             return ""
-        elif v is None:
+        if query_attr_val == util.NOTSET \
+            or (isinstance(query_attr_val, str) and not query_attr_val):
+            return ""
+        elif query_attr_val is None:
             # In pandas filtering, ==, != fail on None; should convert Nones to np.nans
-            return f"({col_name}.isnull())"
-        if isinstance(v, datelabel.DateRange):
-            # return files having any date range overlap at all
-            # pandas doesn't allow 'in' for non-list membership
-            return f"(@{_dict_var_name}.{k}.overlaps({col_name}))"
-        elif k == 'max_frequency':
-            return f"({col_name} <= @{_dict_var_name}.frequency)"
-        elif k == 'max_frequency':
-            return f"({col_name} <= @{_dict_var_name}.frequency)"
+            return f"(`{col_name}`.isnull())"
+
+        if isinstance(query_attr_val, datelabel.DateRange):
+            # # return files having any date range overlap at all
+            # # pandas doesn't allow 'in' for non-list membership
+            # return f"({col_name} in @{_dict_var_name}.{k})"
+            return ""
+        elif query_attr_name == 'min_frequency':
+            return f"(`{col_name}` >= @{_attrs}.{query_attr_name})"
+        elif query_attr_name == 'max_frequency':
+            return f"(`{col_name}` <= @{_attrs}.{query_attr_name})"
         else:
-            return f"({col_name} == @{_dict_var_name}.{k})"
+            return f"(`{col_name}` == @{_attrs}.{query_attr_name})"
 
     def _query_catalog(self, var):
         """Construct and execute the query to determine whether data matching 
@@ -656,16 +675,26 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         (returning a dataframe with results) from the processing of those 
         results, in order to simplify overriding by child classes.
         """
-        def _filter_columns(obj):
-            return {col: getattr(obj, col) for col in self.all_columns \
-                if hasattr(obj, col)}
-
+        # contruct query string for non-DateRange attributes
         query_d = util.WormDict()
-        query_d.update(_filter_columns(self.attrs))
-        query_d.update(_filter_columns(var.query_attrs))
-        clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
+        query_d.update(dataclasses.asdict(self.attrs))
+        field_synonyms = getattr(self, '_query_attrs_synonyms', dict())
+        query_d.update(var.query_attrs(field_synonyms))
         d = util.NameSpace.fromDict(query_d) # set local var for df.query()
-        return self.df.query(' and '.join(clauses))
+        clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
+        query_str = '&'.join(c for c in clauses if c)
+
+        # need to do filtering on DateRange separately due to limitations on
+        # pd.query()/pd.eval() -- arbitrary methods not supported, at least not
+        # efficiently. TODO: better implementation with <=/>= separate start/end
+        # date columns.
+        catalog_df = self.df
+        for col_name, v in query_d.items():
+            if isinstance(v, datelabel.DateRange):
+                row_sel = catalog_df.apply((lambda r: v in r[col_name]), axis=1)
+                catalog_df = catalog_df[row_sel]
+
+        return catalog_df.query(query_str)
 
     def _experiment_key(self, df=None, idx=None, cols=None):
         """Returns tuple of string-valued keys for grouping files by experiment:
@@ -704,12 +733,12 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
         """
-        if not self.has_date_info:
+        if not self.has_date_info or self.daterange_col not in group_df:
             return group_df
 
         data_key = self._data_key(group_df)
         try:
-            sorted_df = group_df.sort_values(by=[self.daterange_col])
+            sorted_df = group_df.sort_values(by=self.daterange_col)
             # method throws ValueError if ranges aren't contiguous
             files_date_range = datelabel.DateRange.from_contiguous_span(
                 *(sorted_df[self.daterange_col].to_list())
@@ -756,9 +785,11 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         for expt_key, group in expt_groups:
             group = group.apply(self._check_group_daterange)
             if group.empty:
+                _log.debug('Expt_key %s failed _check_group_daterange', expt_key)
                 continue
             group = group.apply(self._query_group_hook)
             if group.empty:
+                _log.debug('Expt_key %s failed _query_group_hook', expt_key)
                 continue
             data_key = self._data_key(group)
             _log.debug('Query found <expt_key=%s, data_key=%s> for <%s>',
@@ -771,7 +802,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         """
         data_key = util.to_iter(data_key, list)
         err_str = '\n'.join(
-            str(self.df.loc[idx].to_dict()) for idx in data_key
+            '\t'+str(self.df[self.remote_data_col].loc[idx]) for idx in data_key
         )
         err_str = msg + '\n' + err_str
         if self.strict:
@@ -793,6 +824,14 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             # short-circuit construction for trivial case (empty key)
             return pd.DataFrame({self._expt_key_col: [""]}, dtype='object')
 
+        def _key_col_func(df):
+            """Function that constructs the appropriate experiment_key column 
+            when apply()'ed to the query results DataFrame.
+            """
+            return pd.Series({
+                self._expt_key_col: self._experiment_key(df, idx=None, cols=cols)
+            }, dtype='object')
+
         expt_df = None
         if parent_id is None:
             parent_key = tuple()
@@ -802,7 +841,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             var_iterator = obj.iter_vars(active=True)
         else:
             assert isinstance(obj, diagnostic.VarlistEntry)
-            var_iterator = tuple(obj)
+            var_iterator = [obj]
 
         for v in var_iterator:
             if v.status < diagnostic.VarlistEntryStatus.QUERIED:
@@ -813,13 +852,14 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
                 # attributes
                 if expt_key[:len(parent_key)] == parent_key:
                     rows.update(data_key)
-            v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates()
-            v_expt_df[self._expt_key_col] = v_expt_df.apply(
-                (lambda df: self._experiment_key(df, idx=None, cols=cols)), axis=1)
+            v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates().copy()
+            v_expt_df[self._expt_key_col] = v_expt_df.apply(_key_col_func, axis=1)
             if v_expt_df.empty:
                 # should never get here
                 raise util.DataExperimentError(v, ("No choices of experiment "
                     f"attributes for <{v.full_name}> in {obj.name}."))
+            _log.debug('%s expt attribute choices for %s from <%s>', 
+                len(v_expt_df),obj.name, v.full_name)
 
             # take intersection with possible values for other vars
             if expt_df is None:
@@ -832,6 +872,8 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
             if expt_df.empty:
                 raise util.DataExperimentError(v, ("Eliminated all choices of "
                     f"experiment attributes for {obj.name} when adding <{v.full_name}>."))
+
+        _log.debug('%s expt attribute choices for %s', len(v_expt_df), obj.name)
         return expt_df
 
     def _set_expt_key(self, obj, expt_df_cols, resolve_func, parent_id=None):
@@ -854,7 +896,8 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
                 f"choices of experiment for {obj.name}."))
         elif len(expt_df) > 1:  
             raise util.DataExperimentError(None, (f"Experiment for {obj.name} "
-                "not uniquely specified by user input."))
+                "not uniquely specified by user input: "
+                f"{expt_df[self._expt_key_col].to_list()}"))
         # successful exit: we've narrowed down the experiment to a single value
         
         expt_key = (expt_df[self._expt_key_col].iloc[0], )
@@ -905,7 +948,7 @@ class DataframeQueryDataSource(DataSourceBase, metaclass=util.MDTFABCMeta):
         as found by query_dataset()), return the corresponding remote_paths.
         """
         if util.is_iterable(data_key):
-            # iloc requires list, not just iterable
+            # loc requires list, not just iterable
             data_key = util.to_iter(data_key, list) 
         return self.df[self.remote_data_col].loc[data_key]
 
@@ -996,37 +1039,11 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
             _log.critical('Directory crawl did not find any files.')
         else:
             _log.debug("Directory crawl found %s files.", len(df))
-        print('\nXXXXX 0', df.iloc[0].to_dict())
-        print('\nXXXXX 69', df.iloc[69].to_dict())
-        print('\nXXXXX 420', df.iloc[420].to_dict())
-        exit(1)
         self.catalog = intake_esm.core.esm_datastore.from_df(
             df, 
             esmcol_data = self._dummy_esmcol_spec(), 
             progressbar=False, sep='|'
         )
-
-    def _query_catalog(self, var):
-        """Construct and execute the query to determine whether data matching 
-        var is present in the catalog.
-        
-        Split off logic done here to perform the query against the catalog 
-        (returning a dataframe with results) from the processing of those 
-        results, in order to simplify overriding by child classes.
-        """
-        query_d = util.WormDict.from_struct(
-            util.filter_dataclass(self.attrs, self._FileRegexClass)
-        )
-        field_synonyms = getattr(self._FileRegexClass, '_query_attrs_synonyms', None)
-        if field_synonyms is None:
-            field_synonyms = getattr(self, '_query_attrs_synonyms', None)
-        if field_synonyms is None:
-            field_synonyms = dict()
-        var_attrs = var.query_attrs(field_synonyms)
-        query_d.update(util.filter_dataclass(var_attrs, self._FileRegexClass))
-        clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
-        d = util.NameSpace.fromDict(query_d) # set local var for df.query()
-        return self.df.query(' and '.join(clauses))
 
 
 class LocalFetchMixin(AbstractFetchMixin):
@@ -1046,7 +1063,8 @@ class LocalFetchMixin(AbstractFetchMixin):
 
 
 class LocalFileDataSource(
-    OnTheFlyDirectoryHierarchyQueryMixin, LocalFetchMixin, DataframeQueryDataSource
+    OnTheFlyDirectoryHierarchyQueryMixin, LocalFetchMixin, 
+    DataframeQueryDataSourceBase
 ):
     """DataSource for dealing data in a regular directory hierarchy on a 
     locally mounted filesystem. Assumes data for each variable may be split into
@@ -1266,16 +1284,13 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
         else:
             self.CATALOG_DIR = new_root
 
+class CMIP6ExperimentSelectionMixin():
+    """Encapsulate attributes and logic used for CMIP6 experiment disambiguation
+    so that it can be reused in DataSources with different parents (eg. different
+    FetchMixins for different data fetch protocols.)
 
-class CMIP6LocalFileDataSource(LocalFileDataSource):
-    """DataSource for handling model data named following the CMIP6 DRS and 
-    stored on a local filesystem.
+    Assumes inheritance from DataframeQueryDataSourceBase -- should enforce this.
     """
-    _FileRegexClass = cmip6.CMIP6_DRSPath
-    _AttributesClass = CMIP6DataSourceAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
-
     # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
     _query_attrs_synonyms = {'name': 'variable_id'}
 
@@ -1348,8 +1363,19 @@ class CMIP6LocalFileDataSource(LocalFileDataSource):
     def resolve_var_expt(self, df, obj):
         # TODO: minimize number of MIP tables
         col_name = 'table_id'
-        filter_val = df[col_name].iloc[0]
+        # select first MIP table (out of available options) by alpha order
+        # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
+        df = df.sort_values(col_name).iloc[[0]]
         _log.debug("Selected experiment attribute %s='%s' for %s.", 
-            col_name, filter_val, obj.name)
-        return df.iloc[0]
+            col_name, df[col_name].iloc[0], obj.name)
+        return df
+
+class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, LocalFileDataSource):
+    """DataSource for handling model data named following the CMIP6 DRS and 
+    stored on a local filesystem.
+    """
+    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _AttributesClass = CMIP6DataSourceAttributes
+    _DiagnosticClass = diagnostic.Diagnostic
+    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 

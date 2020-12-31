@@ -485,29 +485,28 @@ class FieldlistEntry(data_model.DMDependentVariable):
         assert filter_kw['coords']
         return cls(name=name, **filter_kw)
 
-    def scalar_name(self, old_coord, translated_coord):
+    def scalar_name(self, old_coord, new_coord):
         """Uses one of the scalar_coord_templates to construct the translated
         variable name for this variable on a scalar coordinate slice (eg.
         pressure level).
         """
         c = old_coord # abbreviate
         assert c.is_scalar
-        key = translated_coord.name
+        key = new_coord.name
         if key not in self.scalar_coord_templates:
             raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
                 f"of {self.name}."
             ))
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
-        new_name = name_template.format(value=int(translated_coord.value))
-        if xr_util.are_units_equal(c.units, translated_coord.units):
+        new_name = name_template.format(value=int(new_coord.value))
+        if xr_util.are_units_equal(c.units, new_coord.units):
             _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                 c.value, c.units, c.axis, self.name, new_name)
         else:
-            _log.debug(("Renaming %s slice of '%s' to '%s' "
-                "(@ %s %s = %s %s)."),
+            _log.debug(("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s)."),
                 c.axis, self.name, new_name, c.value, c.units, 
-                translated_coord.value, translated_coord.units
+                new_coord.value, new_coord.units
             )
         return new_name
         
@@ -593,14 +592,16 @@ class Fieldlist():
             if len(entries) > 1:
                 raise ValueError((f"Variable name in convention '{self.name}' "
                     f"not uniquely determined by standard name '{standard_name}'."))
-            return entries[0]
+            fl_entry = entries[0]
         else:
             axes_set = frozenset(axes_set)
             if axes_set not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
                     f"unexpected set of axes {axes_set} not in convention "
                     f"'{self.name}'."))
-            return lut1[axes_set]
+            fl_entry = lut1[axes_set]
+
+        return copy.deepcopy(fl_entry)
 
     def from_CF_name(self, standard_name, axes_set=None):
         """Like :meth:`from_CF`, but only return the variable's name in this 
@@ -608,40 +609,44 @@ class Fieldlist():
         """
         return self.from_CF(standard_name, axes_set=axes_set).name
 
-    def translate_coord(self, coord_or_ax):
-        """Given a DMCoordinate, DMAxis or axis name, look up the corresponding
-        DMCoordinate in this convention.
+    def translate_coord(self, coord):
+        """Given a DMCoordinate, look up the corresponding translated DMCoordinate 
+        in this convention.
         """
-        if isinstance(coord_or_ax, str):
+        ax = coord.axis
+        if isinstance(ax, str):
             ax = data_model.DMAxis.from_struct(ax)
-        elif isinstance(coord_or_ax, data_model.DMAxis):
-            ax = coord_or_ax
-        else:
-            ax = coord_or_ax.axis
         if ax not in self.axes_lut:
             raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
 
         lut1 = self.axes_lut[ax] # abbreviate
-        if not hasattr(coord_or_ax, 'standard_name'):
+        if not hasattr(coord, 'standard_name'):
             coords = tuple(lut1.values())
             if len(coords) > 1:
                 raise ValueError((f"Coordinate dimension in convention '{self.name}' "
-                    f"not uniquely determined by axis {ax}."))
-            translated_coord = coords[0]
+                    f"not uniquely determined by coordinate {coord.name}."))
+            new_coord = coords[0]
         else:
-            if coord_or_ax.standard_name not in lut1:
-                raise KeyError((f"Axis {ax} with standard name "
-                    f"'{coord_or_ax.standard_name}' not defined in convention "
-                    f"'{self.name}'."))
-            translated_coord = lut1[coord_or_ax.standard_name]
-
-        if hasattr(coord_or_ax, 'is_scalar') and coord_or_ax.is_scalar:
-            # convert units of scalar value to convention's coordinate's units
-            translated_coord.value = coord_or_ax.value \
-                    * xr_util.conversion_factor(
-                        coord_or_ax.units, translated_coord.units
-                    )
-        return translated_coord
+            if coord.standard_name not in lut1:
+                raise KeyError((f"Coordinate {coord.name} with standard name "
+                    f"'{coord.standard_name}' not defined in convention '{self.name}'."))
+            new_coord = lut1[coord.standard_name]
+        
+        new_coord = copy.deepcopy(new_coord)
+        if hasattr(coord, 'is_scalar') and coord.is_scalar:
+            if not xr_util.are_units_equal(coord.units, new_coord.units):
+                # convert units of scalar value to convention's coordinate's units
+                new_coord.value = coord.value \
+                    * xr_util.conversion_factor(coord.units, new_coord.units)
+                _log.debug("Converted %s %s %s slice of '%s' to %s %s in '%s'.",
+                    coord.value, coord.units, ax, coord.name, 
+                    new_coord.value, new_coord.units, new_coord.name)
+            else:
+                # identical units
+                _log.debug("Copied value (=%s %s) of %s slice of '%s' to '%s'.",
+                    coord.value, coord.units, ax, coord.name, new_coord.name)
+                new_coord.value = coord.value
+        return new_coord
 
     def translate(self, var):
         """Returns TranslatedVarlistEntry instance, with populated coordinate
@@ -652,20 +657,20 @@ class Fieldlist():
         """
         fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
         
-        dims = [self.translate_coord(dim) for dim in var.dims]
-        scalar_coords = [self.translate_coord(dim) for dim in var.scalar_coords]
-        if len(scalar_coords) > 1:
+        new_dims = [self.translate_coord(dim) for dim in var.dims]
+        new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
+        if len(new_scalars) > 1:
             raise NotImplementedError()
-        elif len(scalar_coords) == 1:
+        elif len(new_scalars) == 1:
             # change translated name, since we're dealing with a slice
-            new_name = fl_entry.scalar_name(
-                var.scalar_coords[0], scalar_coords[0])
+            # keep the scalar_coordinate, though
+            new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
         else:
             new_name = fl_entry.name
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry, 
-            name=new_name, coords=(dims + scalar_coords), convention=self.name
+            name=new_name, coords=(new_dims + new_scalars), convention=self.name
         )
 
 
@@ -744,8 +749,8 @@ class VariableTranslator(util.Singleton):
         return self._fieldlist_method(conv_name, 'from_CF_name', 
             standard_name, axes_set=axes_set)
 
-    def translate_coord(self, conv_name, coord_or_ax):
-        return self._fieldlist_method(conv_name, 'translate_coord', coord_or_ax)
+    def translate_coord(self, conv_name, coord):
+        return self._fieldlist_method(conv_name, 'translate_coord', coord)
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)

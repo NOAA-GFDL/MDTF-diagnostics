@@ -547,7 +547,7 @@ class Fieldlist():
                     d['axes_lut'], d['axes'], name=k, **v
                 )
                 d['entries'][k] = entry
-                temp_d[entry.standard_name][entry.axes_set] = entry
+                temp_d[entry.standard_name][entry.dim_axes_set] = entry
             return (d, temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)
@@ -655,7 +655,7 @@ class Fieldlist():
         coords/slices, e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
         TranslatedVarlistEntry for 'u500' (3D), depending on naming convention.
         """
-        fl_entry = self.from_CF(var.standard_name, var.phys_axes_set)
+        fl_entry = self.from_CF(var.standard_name, var.axes_set)
         
         new_dims = [self.translate_coord(dim) for dim in var.dims]
         new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]

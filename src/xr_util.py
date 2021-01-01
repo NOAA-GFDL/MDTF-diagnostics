@@ -214,8 +214,8 @@ class DatasetParser():
 
     @staticmethod
     def guess_attr(name, expected_val, options, default=None, comparison_func=None):
-        """Return element of options equal to expected_val. If none are equal, 
-        try case-insensititve match. (All arguments expected to be strings.)
+        """Return element of *options* equal to *expected_val*. If none are equal, 
+        try a looser, case-insensititve match. (All arguments expected to be strings.)
         """
         def str_munge(s):
             # comparison function: lowercase, drop non-alphanumeric chars
@@ -226,7 +226,7 @@ class DatasetParser():
         options = basic.to_iter(options)
         test_count = sum(comparison_func(opt, expected_val) for opt in options)
         if test_count > 1:
-            _log.error("Found multiple values of '%s' set for '%s'.", 
+            _log.debug("Found multiple values of '%s' set for '%s'.", 
                 expected_val, name)
         if test_count >= 1:
             return expected_val
@@ -238,11 +238,11 @@ class DatasetParser():
         ]
         if sum(tup[0] for tup in munged_opts) == 1:
             guessed_val = [tup[1] for tup in munged_opts if tup[0]][0]
-            _log.warning(("Guessing value '%s' was intended for '%s'."), 
+            _log.debug(("Guessing value '%s' was intended for '%s'."), 
                 guessed_val, name)
             return guessed_val
         if default is None:
-            _log.error("No string similar to '%s' in %s.", name, options)
+            _log.debug("No string similar to '%s' in %s.", name, options)
             raise KeyError(expected_val)
         else:
             # _log.error("Failed to parse '%s'; using fallback value '%s'.", 
@@ -250,10 +250,10 @@ class DatasetParser():
             return default
 
     def guess_key(self, key_name, key_startswith, d, default=None):
-        """Attempts to return the (key, value) from dict d corresponding to
-        key_name. If key_name is not in d, we check possible nonstandard
-        representations of the key (eg case-insensitive match; whether the key
-        starts with the string key_startswith.)
+        """Attempts to return the (key, value) tuple from dict *d* corresponding to
+        *key_name*. If *key_name* is not in *d*, we check possible nonstandard
+        representations of the key (case-insensitive match via :meth:`guess_attr`
+        and whether the key starts with the string *key_startswith*.)
         """
         try:
             k = self.guess_attr(key_name, key_name, d.keys(), 
@@ -444,13 +444,13 @@ class DatasetParser():
                 raise TypeError(f"More than one {ax} axis found for '{tv_name}': "
                     f"{coord_list}.")
         # check axes_set (array dimensionality) agrees
-        our_axes = translated_var.axes_set
+        our_axes = translated_var.dim_axes_set
         ds_axes = frozenset(ds[tv_name].cf.axes_tuple)
         if our_axes != ds_axes:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
                 f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
         # check axis names, std_names, units, bounds
-        for translated_coord in translated_var.axes.values():
+        for translated_coord in translated_var.dim_axes.values():
             ax = translated_coord.axis
             ds_coord_name = ds.cf.axes[str(ax)][0]
             self.check_names_and_units(translated_coord, ds, ds_coord_name)

@@ -158,7 +158,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             return ds
         if 'Z' not in ds.cf.axes:
             raise TypeError("No Z axis in data (%s).", ds.cf.axes)
-        z_name = ds.cf.axes['Z'][0]
+        z_name = ds.cf.dim_axes['Z'][0]
         try:
             _log.info("Extracting %s %s level from Z axis (%s) of %s.", 
                 z_coord.value, z_coord.units, z_name, var.full_name)

@@ -214,8 +214,8 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             self.env_var: self.name_in_model,
             self.path_variable: self.dest_path
         })
-        for ax, dim in self.axes.items():
-            trans_dim = self.translation.axes[ax]
+        for ax, dim in self.dim_axes.items():
+            trans_dim = self.translation.dim_axes[ax]
             d[dim.name + _coord_env_var_suffix] = trans_dim.name
             if trans_dim.bounds:
                 d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds

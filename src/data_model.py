@@ -79,7 +79,7 @@ class AbstractDMDependentVariable(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def phys_axes(self): pass
+    def all_axes(self): pass
 
     @property
     @abc.abstractmethod
@@ -337,28 +337,28 @@ class _DMDimensionsMixin(object):
         _ = self.build_axes(self.dims, verify=True)
 
     @property
-    def axes(self):
+    def dim_axes(self):
         return self.build_axes(self.dims, verify=False)
 
     @property
     def X(self):
-        return self.axes.get(DMAxis.X, None)
+        return self.dim_axes.get(DMAxis.X, None)
 
     @property
     def Y(self):
-        return self.axes.get(DMAxis.Y, None)
+        return self.dim_axes.get(DMAxis.Y, None)
 
     @property
     def Z(self):
-        return self.axes.get(DMAxis.Z, None)
+        return self.dim_axes.get(DMAxis.Z, None)
 
     @property
     def T(self):
-        return self.axes.get(DMAxis.T, None)
+        return self.dim_axes.get(DMAxis.T, None)
 
     @property
-    def axes_set(self):
-        return frozenset(self.axes.keys())
+    def dim_axes_set(self):
+        return frozenset(self.dim_axes.keys())
 
     @property
     def is_static(self):
@@ -468,19 +468,19 @@ class DMDependentVariable(_DMDimensionsMixin):
         return '<' + str_ + '>'
 
     @property
-    def phys_axes(self):
-        """Superset of the .axes dict (whose values contain coordinate dimensions 
+    def axes(self):
+        """Superset of the .dim_axes dict (whose values contain coordinate dimensions 
         only) that includes axes corresponding to scalar coordinates.
         """
         return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
     @property
-    def phys_axes_set(self):
-        """Superset of the .axes_set frozenset (which contains axes labels 
+    def axes_set(self):
+        """Superset of the .dim_axes_set frozenset (which contains axes labels 
         corresponding to coordinate dimensions only) that includes axes labels
         corresponding to scalar coordinates.
         """
-        return frozenset(self.phys_axes.keys())
+        return frozenset(self.axes.keys())
 
     def add_scalar(self, ax, ax_value, **kwargs):
         """Metadata operation corresponding to taking a slice of a higher-dimensional
@@ -488,8 +488,8 @@ class DMDependentVariable(_DMDimensionsMixin):
         coordinate corresponding to ax is removed from the list of coordinate
         dimensions and added to the list of scalar coordinates.
         """
-        assert ax in self.axes
-        dim = self.axes[ax]
+        assert ax in self.dim_axes
+        dim = self.dim_axes[ax]
         new_dim = dc.replace(dim, value=ax_value)
         new_dims = self.dims.copy()
         new_dims.remove(dim)

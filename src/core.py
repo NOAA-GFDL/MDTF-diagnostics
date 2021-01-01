@@ -458,9 +458,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         # if we only have ndim, map to axes names
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
             kwargs['dimensions'] = []
-            axes_set = [data_model.DMAxis.from_struct(x) \
-                for x in cls._ndim_to_axes_set[kwargs.pop('ndim')]]
-            for ax in axes_set:
+            for ax in cls._ndim_to_axes_set[kwargs.pop('ndim')]:
                 dims = tuple(dims_lut_d[ax].values())
                 if len(dims) != 1:
                     raise ValueError(f"Can't parse multiple {ax} axes in fieldlist.")
@@ -532,7 +530,7 @@ class Fieldlist():
             # build two-stage lookup table (by axis type, then standard name)
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
-                ax = data_model.DMAxis.from_struct(v['axis'])
+                ax = v['axis']
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
                 temp_d[ax][entry.standard_name] = entry
@@ -614,8 +612,6 @@ class Fieldlist():
         in this convention.
         """
         ax = coord.axis
-        if isinstance(ax, str):
-            ax = data_model.DMAxis.from_struct(ax)
         if ax not in self.axes_lut:
             raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
 

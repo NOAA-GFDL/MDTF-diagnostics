@@ -139,6 +139,10 @@ class MDTFCFAccessorMixin(object):
     intended use case will be to call them once per Dataset.
     """
     @property
+    def is_static(self):
+        return bool(cf_xarray.accessor._get_axis_coord(self._obj, "T"))
+
+    @property
     def calendar(self):
         """Reads 'calendar' attribute on time axis (intended to have been set
         by set_calendar()). Returns None if no time axis.
@@ -150,26 +154,126 @@ class MDTFCFAccessorMixin(object):
         assert len(t_names) == 1
         return ds.coords[t_names[0]].attrs.get('calendar', None)
 
+    @property
+    def _old_axes_dict(self):
+        """cf_xarray accessor behavior: return dict mapping axes labels to lists
+        of variable names.
+        """
+        vardict = {
+            key: cf_xarray.accessor.apply_mapper(
+                cf_xarray.accessor._get_axis_coord, self._obj, key, error=False
+            ) for key in cf_xarray.accessor._AXIS_NAMES
+        }
+        return {k: sorted(v) for k, v in vardict.items() if v}
+
 class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
     """Methods we add for xarray Dataset objects.
     """
-    pass
+    def scalar_coords(self, var_name=None):
+        """Return a list of the Dataset variables corresponding to scalar coordinates.
+        """
+        ds = self._obj
+        if var_name is None:
+            axes_d = ds.cf._old_axes_dict
+        else:
+            axes_d = ds[var_name].cf._old_axes_dict
+        return [
+            ds[coord_name] for coord_name \
+            in itertools.chain.from_iterable(axes_d.values()) \
+            if (coord_name not in ds.dims or ds[coord_name].size == 1)
+        ]
+
+    def dim_axes(self,  var_name=None):
+        """Override cf_xarray accessor behavior by having values of the 'axes'
+        dict be the Dataset variables themselves, instead of their names.
+        """
+        ds = self._obj
+        if var_name is None:
+            axes_d = ds.cf._old_axes_dict
+        else:
+            axes_d = ds[var_name].cf._old_axes_dict
+        d = dict()
+        # filter coordinate dimensions only
+        for ax, coord_list in axes_d.items():
+            new_coords = [ds[c] for c in coord_list if (c and c in ds.dims)]
+            if new_coords:
+                if var_name is not None:
+                    assert len(new_coords) == 1
+                    d[ax] = new_coords[0]
+                else:
+                    d[ax] = new_coords
+        return d
+
+    @property
+    def dim_axes_set(self):
+        return frozenset(self.dim_axes().keys())
+
+    def axes(self, var_name=None):
+        """Override cf_xarray accessor behavior by having values of the 'axes'
+        dict be the Dataset variables themselves, instead of their names.
+        """
+        ds = self._obj
+        if var_name is None:
+            axes_d = ds.cf._old_axes_dict
+        else:
+            axes_d = ds[var_name].cf._old_axes_dict
+        d = dict()
+        for ax, coord_list in axes_d.items():
+            new_coords = [ds[c] for c in coord_list if c]
+            if new_coords:
+                if var_name is not None:
+                    assert len(new_coords) == 1
+                    d[ax] = new_coords[0]
+                else:
+                    d[ax] = new_coords
+        return d
+
+    @property
+    def axes_set(self):
+        return frozenset(self.axes().keys())
 
 class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
     """Methods we add for xarray DataArray objects.
     """
     @property
-    def axes_tuple(self):
-        """Returns ordered tuple of DMAxis enums corresponding to dimensions.
-        eg. var.dims = ('time', 'lat', 'lon') gives an axes_tuple of 
-        (DMAxis.T, DMAxis.Y, DMAxis.X).
+    def dim_axes(self):
+        """Map axes labels to the (unique) coordinate variable name,
+        instead of a list of names as in cf_xarray. Filter on dimension coordinates
+        only (eliminating any scalar coordinates.)
         """
-        da = self._obj # abbreviate
-        lookup_d = basic.WormDict()
-        for ax in data_model.DMAxis.spatiotemporal:
-            dim_names = cf_xarray.accessor._get_axis_coord(da, str(ax))
-            lookup_d.update({name: ax for name in dim_names})
-        return tuple(lookup_d[dim] for dim in da.dims)
+        return {k:v for k,v in self._obj.cf.axes.items() if v in self._obj.dims}
+
+    @property
+    def dim_axes_set(self):
+        return frozenset(self._obj.cf.dim_axes.keys())
+
+    @property
+    def axes(self):
+        """Map axes labels to the (unique) coordinate variable name,
+        instead of a list of names as in cf_xarray.
+        """
+        d = self._obj.cf._old_axes_dict
+        if any(len(coord_list) != 1 for coord_list in d.values()):
+            raise TypeError() # never get here; should have already been validated
+        return {k: v[0] for k,v in d.items()}
+
+    @property
+    def axes_set(self):
+        return frozenset(self._obj.cf.axes.keys())
+
+    # @property
+    # def dim_axes_set(self):
+    #     """Returns frozenset of axis names corresponding to dimensions.
+    #     eg. var.dims = ('time', 'lat', 'lon') gives an axes_set of 
+    #     frozenset('T', 'Y', 'X'). Defined analogously to 
+    #     :meth:`~src.data_model.DMDependentVariable.axes_set`.
+    #     """
+    #     da = self._obj # abbreviate
+    #     lookup_d = basic.WormDict()
+    #     for ax in data_model._AXIS_NAMES:
+    #         dim_names = cf_xarray.accessor._get_axis_coord(da, str(ax))
+    #         lookup_d.update({name: ax for name in dim_names})
+    #     return frozenset(lookup_d[dim] for dim in da.dims)
 
     @property
     def formula_terms(self):
@@ -303,28 +407,27 @@ class DatasetParser():
         to be read by the calendar property. 
         """
         _default_cal = 'none'
-        t_names = ds.cf.axes.get('T', [])
-        if not t_names:
+        t_coords = ds.cf.axes().get('T', [])
+        if not t_coords:
             return # assume static data
-        elif len(t_names) > 1:
-            _log.error("Found multiple time axes. Ignoring all but '%s'.", t_names[0])
-        t_name = t_names[0]
-        time_coord = ds.coords[t_name] # abbreviate
+        elif len(t_coords) > 1:
+            _log.error("Found multiple time axes. Ignoring all but '%s'.", t_coords[0].name)
+        t_coord = t_coords[0]
 
         # normal case: T axis has been parsed into cftime Datetime objects.
-        cftime_cal = getattr(time_coord.values[0], 'calendar', None)
+        cftime_cal = getattr(t_coord.values[0], 'calendar', None)
         if not cftime_cal:
-            _log.warning("cftime calendar info parse failed on '%s'.", t_name)
+            _log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
             try:
-                _, cftime_cal = self.guess_key('calendar', 'cal', time_coord.attrs)
+                _, cftime_cal = self.guess_key('calendar', 'cal', t_coord.attrs)
             except KeyError:
                 try:
                     _, cftime_cal = self.guess_key('calendar', 'cal', ds.attrs)
                 except KeyError:
                     _log.error("No calendar associated with '%s' found; using '%s'.", 
-                        t_name, _default_cal)
+                        t_coord.name, _default_cal)
                     cftime_cal = _default_cal
-        time_coord.attrs['calendar'] = self.guess_attr(
+        t_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, _default_cal)
 
     @staticmethod
@@ -439,20 +542,20 @@ class DatasetParser():
         self.check_names_and_units(translated_var, ds, tv_name)
 
         # check XYZT axes all uniquely defined
-        for ax, coord_list in ds.cf.axes.items():
+        for ax, coord_list in ds.cf.axes(tv_name).items():
             if len(coord_list) != 1:
                 raise TypeError(f"More than one {ax} axis found for '{tv_name}': "
                     f"{coord_list}.")
         # check axes_set (array dimensionality) agrees
         our_axes = translated_var.dim_axes_set
-        ds_axes = frozenset(ds[tv_name].cf.axes_tuple)
+        ds_axes = ds[tv_name].cf.dim_axes_set
         if our_axes != ds_axes:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
                 f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
         # check axis names, std_names, units, bounds
         for translated_coord in translated_var.dim_axes.values():
             ax = translated_coord.axis
-            ds_coord_name = ds.cf.axes[str(ax)][0]
+            ds_coord_name = ds[tv_name].cf.dim_axes[ax]
             self.check_names_and_units(translated_coord, ds, ds_coord_name)
             try:
                 bounds_name = ds.cf.get_bounds(ds_coord_name).name

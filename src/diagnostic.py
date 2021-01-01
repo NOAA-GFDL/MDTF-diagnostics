@@ -70,7 +70,7 @@ class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     # name: str              # fields from data_model.DMCoordinate
     # standard_name: str
     # units: cfunits.Units
-    # axis: DMAxis
+    # axis: str
     # bounds: AbstractDMCoordinateBounds
     # value: typing.Union[int, float] # for scalar coordinates only
     # need_bounds: bool      # fields from VarlistCoordinateMixin

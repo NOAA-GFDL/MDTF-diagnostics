@@ -111,24 +111,8 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 
 # ------------------------------------------------------------------------------
 
-class DMAxis(util.MDTFEnum):
-    """:py:class:`~enum.Enum` encoding the recognized axis types
-    (dimension coordinates with a distinguished role.)
-    """
-    X = enum.auto()
-    Y = enum.auto()
-    Z = enum.auto()
-    T = enum.auto()
-    BOUNDS = enum.auto()
-    OTHER = enum.auto()
-
-    module = __name__
-    spatiotemporal_names = ('X', 'Y', 'Z', 'T')
-
-    def __str__(self):
-        return str(self.name)
-
-DMAxis.spatiotemporal = (DMAxis.X, DMAxis.Y, DMAxis.Z, DMAxis.T)
+_AXIS_NAMES = ('X', 'Y', 'Z', 'T')
+_ALL_AXIS_NAMES = _AXIS_NAMES + ('BOUNDS', 'OTHER')
 
 @util.mdtf_dataclass
 class DMBoundsDimension(object):
@@ -140,7 +124,7 @@ class DMBoundsDimension(object):
     
     standard_name = 'bounds'
     units = cfunits.Units('1')
-    axis = DMAxis.BOUNDS
+    axis = 'BOUNDS'
     bounds = None
     value = None
 
@@ -182,19 +166,19 @@ class DMCoordinate(_DMCoordinateShared):
     """
     standard_name: str = util.MANDATORY
     units: cfunits.Units = util.MANDATORY
-    axis: DMAxis = DMAxis.OTHER
+    axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'longitude'
     units: cfunits.Units = 'degrees_east'
-    axis: DMAxis = DMAxis.X
+    axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'latitude'
     units: cfunits.Units = 'degrees_north'
-    axis: DMAxis = DMAxis.Y
+    axis: str = 'Y'
 
 @util.mdtf_dataclass
 class DMVerticalCoordinate(_DMCoordinateShared):
@@ -203,7 +187,7 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     """
     standard_name: str = util.MANDATORY
     units: cfunits.Units = "1" # dimensionless vertical coords OK
-    axis: DMAxis = DMAxis.Z
+    axis: str = 'Z'
     positive: str = util.MANDATORY
 
 @util.mdtf_dataclass
@@ -228,7 +212,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
     """
     standard_name: str = 'time'
     units: cfunits.Units = ""
-    axis: DMAxis = DMAxis.T
+    axis: str = 'T'
     calendar: str = ""
     range: typing.Any = None
 
@@ -257,7 +241,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
 class DMTimeCoordinate(_DMCoordinateShared):
     standard_name: str = 'time'
     units: cfunits.Units = util.MANDATORY
-    axis: DMAxis = DMAxis.T
+    axis: str = 'T'
     calendar: str = ""
     range: datelabel.AbstractDateRange = None
     frequency: datelabel.AbstractDateFrequency = None
@@ -327,8 +311,6 @@ class _DMDimensionsMixin(object):
         self.dims = []
         self.scalar_coords = []
         for c in coords:
-            if isinstance(c.axis, str):
-                c.axis = DMAxis.from_struct(c.axis)
             if c.is_scalar:
                 self.scalar_coords.append(c)
             else:
@@ -342,19 +324,19 @@ class _DMDimensionsMixin(object):
 
     @property
     def X(self):
-        return self.dim_axes.get(DMAxis.X, None)
+        return self.dim_axes.get('X', None)
 
     @property
     def Y(self):
-        return self.dim_axes.get(DMAxis.Y, None)
+        return self.dim_axes.get('Y', None)
 
     @property
     def Z(self):
-        return self.dim_axes.get(DMAxis.Z, None)
+        return self.dim_axes.get('Z', None)
 
     @property
     def T(self):
-        return self.dim_axes.get(DMAxis.T, None)
+        return self.dim_axes.get('T', None)
 
     @property
     def dim_axes_set(self):
@@ -368,15 +350,13 @@ class _DMDimensionsMixin(object):
         """If the axis label *ax_name* is a scalar coordinate, return the
         corresponding :class:`AbstractDMCoordinate` object, otherwise return None.
         """
-        if isinstance(ax_name, str):
-            ax_name = DMAxis.from_struct(ax_name)
         for c in self.scalar_coords:
             if c.axis == ax_name:
                 return c
         return None
 
     def build_axes(self, *coords, verify=True):
-        """Constructs a dict mapping axes labels (:class:`DMAxis` enums) to 
+        """Constructs a dict mapping axes labels to 
         dimension coordinates (of type :class:`AbstractDMCoordinate`.)
         """
         if verify:
@@ -384,18 +364,18 @@ class _DMDimensionsMixin(object):
             d = util.WormDict()
             verify_d = util.WormDict()
             for c in itertools.chain(*coords):
-                if c.axis != DMAxis.OTHER and c.axis in verify_d:
+                if c.axis != 'OTHER' and c.axis in verify_d:
                     err_name = getattr(self, 'name', self.__class__.__name__)
                     raise ValueError((f"Duplicate definition of {c.axis} axis in "
                         f"{err_name}: {c}, {verify_d[c.axis]}"))
                 verify_d[c.axis] = c
-                if c.axis in DMAxis.spatiotemporal:
+                if c.axis in _AXIS_NAMES:
                     d[c.axis] = c
             return d
         else:
             # assume we've already verified, so use a quicker version of same logic
             return {c.axis: c for c in itertools.chain(*coords) \
-                if c.axis in DMAxis.spatiotemporal}
+                if c.axis in _AXIS_NAMES}
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
         """Replace attributes on a given coordinate, but also optionally cast 
@@ -540,7 +520,7 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
             raise ValueError(("Attempted to create DMCoordinateBounds "
                 f"{self.name} with scalar coordinates: {self.scalar_coords}."))
         if len(self.dims) != 2 or \
-            DMAxis.BOUNDS not in {c.axis for c in self.dims}:
+            'BOUNDS' not in {c.axis for c in self.dims}:
             raise ValueError(("Attempted to create DMCoordinateBounds "
                 f"{self.name} with improper dimensions: {self.dims}."))
 
@@ -549,7 +529,7 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
         """CF dimension coordinate for which this is the bounds.
         """
         for c in self.dims:
-            if c.axis != DMAxis.BOUNDS:
+            if c.axis != 'BOUNDS':
                 return c
         raise ValueError()
 

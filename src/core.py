@@ -648,8 +648,9 @@ class Fieldlist():
         """Returns TranslatedVarlistEntry instance, with populated coordinate
         axes. Units of scalar coord slices are translated to the units of the
         conventions' coordinates. Includes logic to translate and rename scalar 
-        coords/slices, e.g. VarlistEntry for 'ua' (4D) @ 500mb could produce a 
-        TranslatedVarlistEntry for 'u500' (3D), depending on naming convention.
+        coords/slices, e.g. VarlistEntry for 'ua' (intrinsically 4D) @ 500mb 
+        could produce a TranslatedVarlistEntry for 'u500' (3D slice), depending 
+        on naming convention.
         """
         fl_entry = self.from_CF(var.standard_name, var.axes_set)
         
@@ -658,8 +659,8 @@ class Fieldlist():
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
-            # change translated name, since we're dealing with a slice
-            # keep the scalar_coordinate, though
+            # change translated name to request the slice instead of the full var
+            # keep the scalar_coordinate value attribute on the translated var
             new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
         else:
             new_name = fl_entry.name

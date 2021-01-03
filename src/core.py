@@ -236,17 +236,24 @@ class MDTFFramework(object):
             case.setup()
             self.cases.append(case)
 
-            _log.info(f'Framework: request data for {case_name}')
-            case.request_data()
+            if not case.failed:
+                _log.info(f'Framework: request data for {case_name}')
+                case.request_data()
+            else:
+                _log.info(f'Framework: {case_name} failed, skipping data request.')
 
-            _log.info(f'Framework: run {case_name}')
-            run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
-            run_mgr.setup()
-            run_mgr.run()
-            run_mgr.tear_down()
+            if not case.failed:
+                _log.info(f'Framework: run {case_name}')
+                run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
+                run_mgr.setup()
+                run_mgr.run()
+                run_mgr.tear_down()
+            else:
+                _log.info(f'Framework: {case_name} failed, skipping execution.')
+
             out_mgr = self.OutputManager(case)
             out_mgr.make_output()
-            case.deactivate_if_failed()
+            case.deactivate_if_failed() # in case we hit more errors generating output
             failed = (failed or case.failed)
 
         tempdirs = TempDirManager()

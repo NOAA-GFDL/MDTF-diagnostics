@@ -350,6 +350,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     pod.exceptions.log(chained_exc)    
                 continue
 
+        self.deactivate_if_failed()
         _log.debug('#' * 70)
         _log.debug('Pre-query varlists for %s:', self.name)
         for v in self.iter_vars(active=None, active_pods=None):
@@ -848,7 +849,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     _expt_key_col = 'expt_key' # column name for DataSource-specific experiment identifier
 
-    def _expt_df(self, obj, cols, parent_id=None):
+    def _expt_df(self, obj, cols, parent_id=None, obj_name=None):
         """Return a DataFrame of partial experiment attributes (as determined by
         cols) that are shared by the query results of all variables covered by
         var_iterator.
@@ -871,6 +872,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             parent_key = tuple()
         else:
             parent_key = self.expt_keys[parent_id]
+        if obj_name is None:
+            obj_name = obj.name
         if hasattr(obj, 'iter_vars'):
             var_iterator = obj.iter_vars(active=True)
         else:
@@ -890,10 +893,10 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             v_expt_df[self._expt_key_col] = v_expt_df.apply(_key_col_func, axis=1)
             if v_expt_df.empty:
                 # should never get here
-                raise util.DataExperimentError(("No choices of experiment "
-                    f"attributes for {v.full_name} in {obj.name}."), v)
-            _log.debug('%s expt attribute choices for %s from %s', 
-                len(v_expt_df),obj.name, v.full_name)
+                raise util.DataExperimentError(("No choices of expt attrs "
+                    f"for {v.full_name} in {obj_name}."), v)
+            _log.debug('%s expt attr choices for %s from %s', 
+                len(v_expt_df), obj_name, v.full_name)
 
             # take intersection with possible values of expt attrs from other vars
             if expt_df is None:
@@ -905,9 +908,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 )
             if expt_df.empty:
                 raise util.DataExperimentError(("Eliminated all choices of experiment "
-                    f"attributes for {obj.name} when adding {v.full_name}."), v)
+                    f"attributes for {obj_name} when adding {v.full_name}."), v)
 
-        _log.debug('%s expt attribute choices for %s', len(expt_df), obj.name)
+        _log.debug('%s expt attr choices for %s', len(expt_df), obj_name)
         return expt_df
 
     def _get_expt_key(self, stage, obj, parent_id=None):
@@ -922,30 +925,39 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         if stage == 'case':
             expt_df_cols = self.expt_cols
             resolve_func = self.resolve_expt
+            obj_name = obj.name
         elif stage == 'pod':
             expt_df_cols = self.pod_expt_cols
             resolve_func = self.resolve_pod_expt
+            if isinstance(obj, diagnostic.Diagnostic):
+                obj_name = obj.name
+            else:
+                obj_name = 'all PODs'
         elif stage == 'var':
             expt_df_cols = self.var_expt_cols
             resolve_func = self.resolve_var_expt
+            if isinstance(obj, diagnostic.VarlistEntry):
+                obj_name = obj.name
+            else:
+                obj_name = "all POD's variables"
         else:
             raise TypeError()
 
         # get DataFrame of allowable (consistent) choices
-        expt_df = self._expt_df(obj, expt_df_cols, parent_id)
+        expt_df = self._expt_df(obj, expt_df_cols, parent_id, obj_name)
         
         if len(expt_df) > 1:
             if self.strict:
-                raise util.DataExperimentError((f"Experiment attributes for {obj.name} "
+                raise util.DataExperimentError((f"Experiment attributes for {obj_name} "
                     f"not uniquely specified by user input in strict mode."))
             else:
                 expt_df = resolve_func(expt_df, obj)
         if expt_df.empty:
             raise util.DataExperimentError(("Eliminated all consistent "
-                f"choices of experiment attributes for {obj.name}."))
+                f"choices of experiment attributes for {obj_name}."))
         elif len(expt_df) > 1:  
             raise util.DataExperimentError((f"Experiment attributes for "
-                f"{obj.name} not uniquely specified by user input: "
+                f"{obj_name} not uniquely specified by user input: "
                 f"{expt_df[self._expt_key_col].to_list()}"))
 
         # successful exit case: we've narrowed down the attrs to a single choice        
@@ -961,12 +973,12 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         or return an error. 
         """
         def _set_expt_key(obj_, key_):
-            _log.debug("Setting experiment_key for %s to %s", obj_.name, key_)
+            _log.debug("Setting experiment_key for %s to %s", obj_.name, key_[-1])
             self.expt_keys[obj_._id] = key_
 
         # set attributes that must be the same for all variables
         if self.failed:
-            raise util.DataExperimentError((f"Aborting experiment selection"
+            raise util.DataExperimentError((f"Aborting experiment selection "
                 f"for CASENAME '{self.name}' due to failure."))
         key = self._get_expt_key('case', self)
         _set_expt_key(self, key)

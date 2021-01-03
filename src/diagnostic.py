@@ -498,6 +498,7 @@ class Diagnostic(object):
         # should be called from a hook whenever we log an exception
         # only need to keep track of this up to pod execution
         if self.failed:
+            # Originating exception will have been logged at a higher priority?
             _log.debug('Request for POD %s failed.', self.name)
             for v in self.iter_vars():
                 v.active = False

@@ -295,15 +295,41 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             for v in p.iter_vars(active=active):
                 yield PodVarTuple(pod=p, var=v)
 
-    def deactivate_if_failed(self):
-        """Deactivate all PODs for this case if the case itself has failed.
-        """
-        # should be called from a hook whenever we log an exception
-        # only need to keep track of this up to pod execution
+    def update_active_pods(self):
+        # logic differs from VarlistEntry->POD propagation
+        # because POD is active if & only if it hasn't failed
+        _log.debug("Updating active PODs for CASENAME '%s'", self.name)
         if self.failed:
+            self.deactivate_if_failed()
+            return
+        for pod in self.iter_pods(active=True):
+            pod.update_active_vars()
+        self.deactivate_if_failed()
+
+    def deactivate_if_failed(self):
+        """Deactivate this DataSource if all requested PODs have failed, and
+        deactivate all PODs for this DataSource if the DataSource has failed 
+        through a non-POD-specific mechanism.
+        """
+        # logic differs from VarlistEntry->POD propagation
+        # because POD is active if & only if it hasn't failed
+        if not any(self.iter_pods(active=True)):
+            try:
+                raise util.GenericDataSourceError(None,
+                    f"No active PODs remaining for CASENAME {self.name}.")
+            except Exception as exc:
+                self.exceptions.log(exc)
+
+        if self.failed:
+            # Originating exception will have been logged at a higher priority?
             _log.debug("Request for CASENAME '%s' failed.", self.name)
-            for v in self.iter_vars():
-                v.active = False
+            for p in self.iter_pods(active=True):
+                try:
+                    raise util.GenericDataSourceError(None, (f"Deactivating POD '{p.name}' "
+                        f"due to unrecoverable error processing CASENAME {self.name}."))
+                except Exception as exc:
+                    p.exceptions.log(exc)
+                p.deactivate_if_failed()
 
     # -------------------------------------
 
@@ -411,8 +437,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time.
             if update:
-                for pod in self.iter_pods(active=True):
-                    pod.update_active_vars()
+                self.update_active_pods()
                 update = False
             vars_to_query = [
                 v for v in self.iter_vars(active=True) \
@@ -462,9 +487,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # vars that failed since last time and query them.
             if update:
                 self.query_data()
-                for pod in self.iter_pods(active=True):
-                    pod.update_active_vars()
                 try:
+                    self.update_active_pods()
                     self.set_experiment()
                 except Exception as exc:
                     _log.exception("Caught exception setting experiment: %r", exc)
@@ -529,6 +553,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # vars that failed since last time and fetch them.
             if update:
                 self.fetch_data()
+                self.update_active_pods()
                 update = False
             vars_to_process = [
                 pv for pv in self.iter_pod_vars(active=True) \
@@ -565,13 +590,14 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
         signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
         self.pre_query_and_fetch_hook()
+        self.deactivate_if_failed()
         try:
             self.preprocess_data()
         except Exception as exc:
             _log.exception(f"Caught DataSource-level exception: {repr(exc)}.")
             self.exceptions.log(exc)
-            self.deactivate_if_failed()
         # clean up regardless of success/fail
+        self.deactivate_if_failed()
         self.post_query_and_fetch_hook()
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
@@ -939,6 +965,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             self.expt_keys[obj_._id] = key_
 
         # set attributes that must be the same for all variables
+        if self.failed:
+            raise util.DataExperimentError(None, (f"Aborting experiment selection"
+                f"for CASENAME '{self.name}' due to failure."))
         key = self._get_expt_key('case', self)
         _set_expt_key(self, key)
 

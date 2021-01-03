@@ -182,6 +182,12 @@ class DataFetchError(DataExceptionBase):
     """
     _error_str = "Data fetch error"
 
+class GenericDataSourceError(DataExceptionBase):
+    """Exception signaling a failure originating in the DataSource query/fetch
+    pipeline whose cause doesn't fall into the above categories.
+    """
+    _error_str = "General DataSource error"
+
 class PodExceptionBase(MDTFBaseException):
     """Base class and common formatting code for exceptions affecting a single
     POD.

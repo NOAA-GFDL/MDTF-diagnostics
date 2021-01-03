@@ -449,15 +449,15 @@ class Diagnostic(object):
             kwargs.update(d.get('settings', dict()))
             pod = cls(name=pod_name, **kwargs)
         except Exception as exc:
-            raise util.PodConfigError(pod_name, 
-                "Caught exception while parsing settings") from exc
+            raise util.PodConfigError("Caught exception while parsing settings",
+                pod_name) from exc
         try:
             pod.varlist = Varlist.from_struct(d)
             for v in pod.iter_vars():
                 v.pod_name = pod_name
         except Exception as exc:
-            raise util.PodConfigError(pod_name, 
-                "Caught exception while parsing varlist") from exc
+            raise util.PodConfigError("Caught exception while parsing varlist", 
+                pod_name) from exc
         return pod
 
     @classmethod
@@ -530,8 +530,8 @@ class Diagnostic(object):
                 if not alt_success_flag:
                     _log.info("No alternates available for %s.", v.full_name)
                     try:
-                        raise util.PodDataError(self, 
-                            f"No alternates available for {str(v)}.") from v.exception
+                        raise util.PodDataError((f"No alternates available for "
+                            f"{str(v)}."), self) from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
                     continue
@@ -574,8 +574,8 @@ class Diagnostic(object):
             self.set_pod_env_vars()
             self.check_pod_driver()
         except Exception as exc:
-            raise util.PodRuntimeError(self, 
-                "Caught exception during pre_run_setup") from exc
+            raise util.PodRuntimeError("Caught exception during pre_run_setup", 
+                self) from exc
 
     def set_pod_env_vars(self):
         """Sets all environment variables for the POD: paths and names of each
@@ -630,26 +630,23 @@ class Diagnostic(object):
                 else:
                     _log.debug("\t "+try_path+" not found...")
         if self.driver == '':
-            raise util.PodRuntimeError(self, 
-                """No driver script found in {}. Specify 'driver' in 
-                settings.jsonc.""".format(self.POD_CODE_DIR)
-                )
+            raise util.PodRuntimeError((f"No driver script found in "
+                f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
+                self)
 
         if not os.path.isabs(self.driver): # expand relative path
             self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
         if not os.path.exists(self.driver):
-            raise util.PodRuntimeError(self, 
-                "Unable to locate driver script {}.".format(self.driver)
-                )
+            raise util.PodRuntimeError(f"Unable to locate driver script {self.driver}.", 
+                self)
 
         if self.program == '':
             # Find ending of filename to determine the program that should be used
             driver_ext  = self.driver.split('.')[-1]
             # Possible error: Driver file type unrecognized
             if driver_ext not in programs:
-                raise util.PodRuntimeError(self, 
-                    (f"Don't know how to call a .{driver_ext} file.\nSupported "
-                        f"programs: {programs}"))
+                raise util.PodRuntimeError((f"Don't know how to call a .{driver_ext} "
+                        f"file.\nSupported programs: {programs}"), self)
             self.program = programs[driver_ext]
             _log.debug("Found program "+programs[driver_ext])
 

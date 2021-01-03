@@ -144,23 +144,29 @@ class DataExceptionBase(MDTFBaseException):
     """
     _error_str = ""
 
-    def __init__(self, dataset, msg=None):
-        self.dataset = dataset
+    def __init__(self, msg=None, dataset=None):
         self.msg = msg
+        self.dataset = dataset
 
     def __str__(self):
-        if hasattr(self.dataset, 'remote_path'):
-            data_id = self.dataset.remote_path
-        elif hasattr(self.dataset, 'name'):
-            data_id = self.dataset.name
-        else:
-            data_id = str(self.dataset)
-        s = self._error_str + f" for {data_id}"
+        s = self._error_str
+        if self.dataset is not None:
+            if hasattr(self.dataset, 'remote_path'):
+                data_id = self.dataset.remote_path
+            elif hasattr(self.dataset, 'name'):
+                data_id = self.dataset.name
+            else:
+                data_id = str(self.dataset)
+            s += f" for data in {data_id}"
         if self.msg is not None:
-            s += f": {self.msg}."
-        else:
+            s += f": {self.msg}"
+        if not s.endswith('.'):
             s += "."
         return s
+
+    def __repr__(self):
+        # full repr of dataset may take lots of space to print
+        return f"{self.__class__.__name__}({str(self)})"
 
 class DataQueryError(DataExceptionBase):
     """Exception signaling a failure to find requested data in the remote location. 
@@ -182,6 +188,12 @@ class DataFetchError(DataExceptionBase):
     """
     _error_str = "Data fetch error"
 
+class DataPreprocessError(DataExceptionBase):
+    """Exception signaling an error in preprocessing data after it's been 
+    fetched, but before any PODs run.
+    """
+    _error_str = "Data preprocessing error"
+
 class GenericDataSourceError(DataExceptionBase):
     """Exception signaling a failure originating in the DataSource query/fetch
     pipeline whose cause doesn't fall into the above categories.
@@ -194,18 +206,22 @@ class PodExceptionBase(MDTFBaseException):
     """
     _error_str = ""
 
-    def __init__(self, pod, msg=None):
+    def __init__(self, msg=None, pod=None):
         self.pod = pod
         self.msg = msg
 
     def __str__(self):
-        if hasattr(self.pod, 'name'):
-            pod_name = self.pod.name
-        else:
-            pod_name = self.pod
-        s = f"Error in {pod_name}: " + self._error_str
+        s = self._error_str
+        if self.pod is not None:
+            if hasattr(self.pod, 'name'):
+                pod_name = self.pod.name
+            else:
+                pod_name = self.pod
+            s += f" for POD '{pod_name}'"
         if self.msg is not None:
-            s += f"\nReason: {self.msg}."
+            s += f": {self.msg}"
+        if not s.endswith('.'):
+            s += "."
         return s
 
     def __repr__(self):
@@ -218,34 +234,14 @@ class PodConfigError(PodExceptionBase):
     :py:class:`~json.JSONDecodeError` when :func:`~util.parse_json` attempts to
     parse the file.
     """
-    _error_str = "Couldn't parse configuration in settings.jsonc file."
+    _error_str = "Couldn't parse the settings.jsonc file"
 
 class PodDataError(PodExceptionBase):
     """Exception raised if POD doesn't have required data to run. 
     """
-    _error_str = "Requested data not available."
+    _error_str = "Requested data not available"
 
 class PodRuntimeError(PodExceptionBase):
     """Exception raised if POD doesn't have required resources to run. 
     """
-    _error_str = "An error occurred in setting up the POD's runtime environment."
-
-class PodExecutionError(PodExceptionBase):
-    """Exception raised if POD doesn't have required resources to run. 
-    """
-    _error_str = "An error occurred during the POD's execution."
-
-class DataPreprocessError(MDTFBaseException):
-    """Exception signaling an error in preprocessing data after it's been 
-    fetched, but before any PODs run.
-    """
-    def __init__(self, dataset, msg=''):
-        self.dataset = dataset
-        self.msg = msg
-
-    def __str__(self):
-        if hasattr(self.dataset, 'name'):
-            return 'Data preprocessing error for {}: {}.'.format(
-                self.dataset.name, self.msg)
-        else:
-            return 'Data preprocessing error: {}.'.format(self.msg)
+    _error_str = "Error in setting the runtime environment"

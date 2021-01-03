@@ -315,8 +315,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         # because POD is active if & only if it hasn't failed
         if not any(self.iter_pods(active=True)):
             try:
-                raise util.GenericDataSourceError(None,
-                    f"No active PODs remaining for CASENAME {self.name}.")
+                raise util.GenericDataSourceError((f"No active PODs remaining "
+                    f"for CASENAME {self.name}."))
             except Exception as exc:
                 self.exceptions.log(exc)
 
@@ -325,7 +325,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             _log.debug("Request for CASENAME '%s' failed.", self.name)
             for p in self.iter_pods(active=True):
                 try:
-                    raise util.GenericDataSourceError(None, (f"Deactivating POD '{p.name}' "
+                    raise util.GenericDataSourceError((f"Deactivating POD '{p.name}' "
                         f"due to unrecoverable error processing CASENAME {self.name}."))
                 except Exception as exc:
                     p.exceptions.log(exc)
@@ -344,8 +344,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except Exception as exc:
                 _log.exception(exc)
                 try:
-                    raise util.PodConfigError(pod, 
-                        "Caught exception in DataManager setup.") from exc
+                    raise util.PodConfigError((f"Caught exception in DataManager "
+                        f"setup."), pod) from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)    
                 continue
@@ -380,8 +380,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except Exception as exc:
                 _log.exception(exc)
                 try:
-                    raise util.PodConfigError(pod, 
-                        f"Caught exception when configuring {v.full_name}.") from exc
+                    raise util.PodConfigError((f"Caught exception when configuring "
+                        f"{v.full_name}."), pod) from exc
                 except Exception as chained_exc:
                     pod.exceptions.log(chained_exc)  
                 continue
@@ -456,7 +456,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     v.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
-                        raise util.DataQueryError(v, "No data found.")
+                        raise util.DataQueryError("No data found.", v)
                 except util.DataQueryError as exc:
                     update = True
                     _log.info("    No data found for %s.", v.translation)
@@ -467,15 +467,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     _log.exception("Caught exception querying %s: %r", 
                         v.translation, exc)
                     try:
-                        raise util.DataQueryError(v, ("Caught exception while "
-                            f"querying {v.translation} for {v.full_name}.")) from exc
+                        raise util.DataQueryError(("Caught exception while querying "
+                            f"{v.translation} for {v.full_name}."), v) from exc
                     except Exception as chained_exc:
                         v.deactivate(chained_exc)
                     continue
             self.post_query_hook(vars_to_query)
         else:
             # only hit this if we don't break
-            raise util.DataQueryError(None,
+            raise util.DataQueryError(
                 f"Too many iterations in {self.__class__.__name__}.query_data()."
             )
 
@@ -519,7 +519,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                         paths = util.to_iter(self.local_data[data_key])
                         if any(p in (FetchStatus.NOT_FETCHED, FetchStatus.FAILED) \
                             for p in paths):
-                            raise util.DataFetchError(data_key, "Fetch failed.")
+                            raise util.DataFetchError("Fetch failed.", data_key)
                         else:
                             v.local_data.extend(paths)
                 except util.DataFetchError as exc:
@@ -531,15 +531,15 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     update = True
                     _log.exception("Caught exception fetching %s: %r", v, exc)
                     try:
-                        raise util.DataFetchError(v, ("Caught exception while "
-                            f"fetching data for {v.full_name}.")) from exc
+                        raise util.DataFetchError(("Caught exception while "
+                            f"fetching data for {v.full_name}."), v) from exc
                     except Exception as chained_exc:
                         v.deactivate(chained_exc)
                     continue
             self.post_fetch_hook(vars_to_fetch)
         else:
             # only hit this if we don't break
-            raise util.DataFetchError(None, 
+            raise util.DataFetchError(
                 f"Too many iterations in {self.__class__.__name__}.fetch_data()."
             )
 
@@ -571,14 +571,14 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     update = True
                     _log.exception("Caught exception processing %s: %r", var, exc)
                     try:
-                        raise util.DataPreprocessError(var, ("Caught exception "
-                            f"while processing data for {var.full_name}.")) from exc
+                        raise util.DataPreprocessError(("Caught exception while "
+                            f"processing data for {var.full_name}."), var) from exc
                     except Exception as chained_exc:
                         var.deactivate(chained_exc)
                     continue
         else:
             # only hit this if we don't break
-            raise util.DataPreprocessError(None, 
+            raise util.DataPreprocessError( 
                 f"Too many iterations in {self.__class__.__name__}.preprocess_data()."
             )
 
@@ -840,7 +840,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         )
         err_str = msg + '\n' + err_str
         if self.strict:
-            raise util.DataQueryError(data_key, err_str)
+            raise util.DataQueryError(err_str, data_key)
         else:
             _log.warning(err_str)
 
@@ -890,8 +890,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             v_expt_df[self._expt_key_col] = v_expt_df.apply(_key_col_func, axis=1)
             if v_expt_df.empty:
                 # should never get here
-                raise util.DataExperimentError(v, ("No choices of experiment "
-                    f"attributes for {v.full_name} in {obj.name}."))
+                raise util.DataExperimentError(("No choices of experiment "
+                    f"attributes for {v.full_name} in {obj.name}."), v)
             _log.debug('%s expt attribute choices for %s from %s', 
                 len(v_expt_df),obj.name, v.full_name)
 
@@ -904,8 +904,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     how='inner', on=self._expt_key_col, sort=False, validate='1:1'
                 )
             if expt_df.empty:
-                raise util.DataExperimentError(v, ("Eliminated all choices of "
-                    f"experiment attributes for {obj.name} when adding {v.full_name}."))
+                raise util.DataExperimentError(("Eliminated all choices of experiment "
+                    f"attributes for {obj.name} when adding {v.full_name}."), v)
 
         _log.debug('%s expt attribute choices for %s', len(expt_df), obj.name)
         return expt_df
@@ -936,15 +936,15 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         
         if len(expt_df) > 1:
             if self.strict:
-                raise util.DataExperimentError(None, (f"Experiment attributes for "
-                    f"{obj.name} not uniquely specified by user input in strict mode."))
+                raise util.DataExperimentError((f"Experiment attributes for {obj.name} "
+                    f"not uniquely specified by user input in strict mode."))
             else:
                 expt_df = resolve_func(expt_df, obj)
         if expt_df.empty:
-            raise util.DataExperimentError(None, ("Eliminated all consistent "
+            raise util.DataExperimentError(("Eliminated all consistent "
                 f"choices of experiment attributes for {obj.name}."))
         elif len(expt_df) > 1:  
-            raise util.DataExperimentError(None, (f"Experiment attributes for "
+            raise util.DataExperimentError((f"Experiment attributes for "
                 f"{obj.name} not uniquely specified by user input: "
                 f"{expt_df[self._expt_key_col].to_list()}"))
 
@@ -966,7 +966,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
         # set attributes that must be the same for all variables
         if self.failed:
-            raise util.DataExperimentError(None, (f"Aborting experiment selection"
+            raise util.DataExperimentError((f"Aborting experiment selection"
                 f"for CASENAME '{self.name}' due to failure."))
         key = self._get_expt_key('case', self)
         _set_expt_key(self, key)
@@ -1133,8 +1133,10 @@ class LocalFetchMixin(AbstractFetchMixin):
             paths = (paths, )
         for path in paths:
             if not os.path.exists(path):
-                raise util.DataFetchError(var, 
-                    f"Fetch {var.full_name}: File not found at {path}.")
+                raise util.DataFetchError(
+                    f"Fetch {var.full_name}: File not found at {path}.", 
+                    var
+                )
             else:
                 _log.debug("Fetch %s: found %s.", var.full_name, path)
         return paths

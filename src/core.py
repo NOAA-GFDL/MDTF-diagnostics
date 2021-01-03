@@ -630,18 +630,7 @@ class Fieldlist():
         
         new_coord = copy.deepcopy(new_coord)
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
-            if not xr_util.are_equal(coord.units, new_coord.units):
-                # convert units of scalar value to convention's coordinate's units
-                new_coord.value = coord.value \
-                    * xr_util.conversion_factor(coord.units, new_coord.units)
-                _log.debug("Converted %s %s %s slice of '%s' to %s %s in '%s'.",
-                    coord.value, coord.units, ax, coord.name, 
-                    new_coord.value, new_coord.units, new_coord.name)
-            else:
-                # identical units
-                _log.debug("Copied value (=%s %s) of %s slice of '%s' to '%s'.",
-                    coord.value, coord.units, ax, coord.name, new_coord.name)
-                new_coord.value = coord.value
+            new_coord.value = xr_util.convert_scalar_coord(coord, new_coord.units)
         return new_coord
 
     def translate(self, var):

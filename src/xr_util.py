@@ -56,24 +56,10 @@ def _coerce_to_cfunits(*args):
     else:
         return [_coerce(arg) for arg in args]
 
-def are_equivalent(*args):
-    """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplicative conversion 
-    factor.)
-    """
-    args = _coerce_to_cfunits(*args)
-    ref_unit = args.pop()
-    return all(ref_unit.equivalent(unit) for unit in args)
-
-def are_equal(*args, rtol=None, atol=None):
-    """Returns True if and only if all quantities in arguments are strictly equal
-    (represent the same physical quantity *and* conversion factor = 1).
-    """
-    args = _coerce_to_cfunits(*args)
-    ref_unit = args.pop()
-    return all(ref_unit.equals(unit, rtol=rtol, atol=atol) for unit in args)
-
 def _coerce_equivalent_units(*args):
+    """Same as _coerce_to_cfunits, but raise TypeError if units of all
+    quantities not equivalent.
+    """
     args = _coerce_to_cfunits(*args)
     ref_unit = args.pop()
     for unit in args:
@@ -83,12 +69,70 @@ def _coerce_equivalent_units(*args):
     args.append(ref_unit)
     return args
 
+def relative_tol(x, y):
+    """HACK to return max(|x-y|/x, |x-y|/y) for unit-ful quantities x,y. 
+    Vulnerable to underflow in principle.
+    """
+    x, y = _coerce_equivalent_units(x,y)
+    tol_1 = cfunits.Units.conform(1.0, x, y) # = float(x/y)
+    tol_2 = cfunits.Units.conform(1.0, y, x) # = float(y/x)
+    return max(abs(tol_1 - 1.0), abs(tol_2 - 1.0))
+
+def are_equivalent(*args):
+    """Returns True if and only if all units in arguments are equivalent
+    (represent the same physical quantity, up to a multiplicative conversion 
+    factor.)
+    """
+    args = _coerce_to_cfunits(*args)
+    ref_unit = args.pop()
+    return all(ref_unit.equivalent(unit) for unit in args)
+
+def are_equal(*args, rtol=None):
+    """Returns True if and only if all quantities in arguments are strictly equal
+    (represent the same physical quantity *and* conversion factor = 1).
+
+    .. note::
+       rtol, atol tolerances on floating-point equality not currently implemented
+       in cfunits, so we implement rtol in a hacky way here.
+    """
+    args = _coerce_to_cfunits(*args)
+    ref_unit = args.pop()
+    if rtol is None:
+        # no tolerances: comparing units w/o quantities (or integer quantities)
+        return all(ref_unit.equals(unit) for unit in args)
+    else:
+        for unit in args:
+            try:
+                if not (relative_tol(ref_unit, unit) <= rtol):
+                    return False # outside tolerance
+            except TypeError:
+                return False # inequivalent units
+        return True
+
 def conversion_factor(source_unit, dest_unit):
     """Defined so that (conversion factor) * (quantity in source_units) = 
     (quantity in dest_units). 
     """
     source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
     return cfunits.Units.conform(1.0, dest_unit, source_unit)
+
+def convert_scalar_coord(coord, dest_units):
+    """Given scalar coordinate *coord*, return the appropriate scalar value in
+    new units *dest_units*. 
+    """
+    assert hasattr(coord, 'is_scalar') and coord.is_scalar
+    if not are_equal(coord.units, dest_units):
+        # convert units of scalar value to convention's coordinate's units
+        dest_value = coord.value * conversion_factor(coord.units, dest_units)
+        _log.debug("Converted %s %s %s slice of '%s' to %s %s.",
+            coord.value, coord.units, coord.axis, coord.name, 
+            dest_value, dest_units)
+    else:
+        # identical units
+        _log.debug("Copied value (=%s %s) of %s slice of '%s' (identical units).",
+            coord.value, coord.units, coord.axis, coord.name)
+        dest_value = coord.value
+    return dest_value
 
 def convert_array(array, source_unit, dest_unit):
     """Wrapper for cfunits.conform() that does unit conversion in-place on a
@@ -532,13 +576,14 @@ class DatasetParser():
         ds_attr = (float(ds_var), ds_var.attrs.get('units', ''))
         self._compare_attr(
             (our_var, attr_name, our_attr), (ds_var, attr_name, ds_attr),
-            comparison_func=are_equal, change_ds=False
+            comparison_func=(lambda x,y: are_equal(x,y, rtol=1.0e-5)),
+            change_ds=False
         )
         if hasattr(our_var, attr_name):
             # cleanup if our var was altered
             our_var.value, new_units = getattr(our_var, attr_name)
             our_var.units = _coerce_to_cfunits(new_units)
-            _log.debug("Updated (value, units of '%s' to (%s, %s).",
+            _log.debug("Updated (value, units) of '%s' to (%s, %s).",
                 our_var.name, our_var.value, our_var.units)
             delattr(our_var, attr_name)
 

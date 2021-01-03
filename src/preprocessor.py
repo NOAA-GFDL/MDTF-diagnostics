@@ -3,6 +3,7 @@ once it's been download to local storage.
 """
 import os
 import abc
+import dataclasses
 import itertools
 from src import util, core, data_model, diagnostic, xr_util
 import cftime
@@ -109,20 +110,26 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     is not provided by the data, KeyError is raised.
     """
 
-    def remove_scalar(self, var):
+    def remove_scalar_on_translation(self, v):
         """If a VarlistEntry has a scalar_coordinate defined, return a copy to 
         be used as an alternate variable with that scalar_coordinate removed.
         """
-        if len(var.scalar_coords) == 0:
-            return None
-        elif len(var.scalar_coords) > 1:
+        tv = v.translation # abbreviate
+        if len(tv.scalar_coords) == 0:
+            raise AssertionError # should never get here
+        elif len(tv.scalar_coords) > 1:
             raise NotImplementedError()
-        c = var.scalar_coords[0]
-        # wraps method in data_model; makes a copy of var
-        return var.remove_scalar(
-            c.axis, 
-            requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
-            alternates=var.alternates
+        # wraps method in data_model; makes a modified copy of translated var
+        # restore name to that of 4D data (eg. 'u500' -> 'ua')
+        new_tv = tv.remove_scalar(
+            tv.scalar_coords[0].axis,
+            name=v.name
+        )
+        return dataclasses.replace(
+            v,
+            translation=new_tv,
+            requirement=diagnostic.VarlistEntryRequirement.ALTERNATE,
+            alternates=v.alternates
         )
 
     def edit_request(self, data_mgr, pod):
@@ -133,14 +140,15 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         """
         new_varlist = []
         for v in pod.varlist.iter_contents():
-            z_level = v.get_scalar('Z')
+            z_level = v.translation.get_scalar('Z')
             if z_level is None:
+                # pass through VE unaltered
                 new_varlist.append(v)
                 continue
             # existing VarlistEntry queries for 3D slice directly; add a new
             # VE to query for 4D data
-            new_v = self.remove_scalar(v)
-            data_mgr.setup_var(pod, new_v)
+            new_v = self.remove_scalar_on_translation(v)
+            new_v._id = next(data_mgr.id_number)
             v.alternates = [[new_v]]
 
             for vv in v.iter_alternate_entries():
@@ -151,29 +159,57 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         pod.varlist = diagnostic.Varlist(contents=new_varlist)
 
     def process(self, var, ds):
-        z_coord = var.get_scalar('Z')
-        if not z_coord or not z_coord.value:
+        """Determine if level extraction is needed, and return appropriate slice 
+        of Dataset if it is.
+        """
+        _atol = 1.0e-3 # absolute tolerance for floating-point equality
+
+        tv_name = var.name_in_model
+        our_z = var.get_scalar('Z')
+        if not our_z or not our_z.value:
             _log.debug("Exit %s for %s: no level requested.", 
                 self.__class__.__name__, var.full_name)
             return ds
-        if 'Z' not in ds.cf.axes:
-            raise TypeError("No Z axis in data (%s).", ds.cf.axes)
-        z_name = ds.cf.dim_axes['Z'][0]
+        if 'Z' not in ds[tv_name].cf.dim_axes_set:
+            # maybe the ds we received has this level extracted already
+            ds_z = ds.cf.get_scalar('Z', tv_name) 
+            if ds_z is None or isinstance(ds_z, xr_util.PlacholderScalarCoordinate):
+                _log.debug(("Exit %s for %s: %s %s Z level requested but value not "
+                    "provided in scalar coordinate information; assuming correct."), 
+                    self.__class__.__name__, var.full_name, our_z.value, our_z.unit)
+                return ds
+            else:
+                # value (on var.translation) has already been checked by 
+                # xr_util.DatasetParser
+                _log.debug(("Exit %s for %s: %s %s Z level requested and provided "
+                    "by dataset."), 
+                    self.__class__.__name__, var.full_name, our_z.value, our_z.unit)
+                return ds
+
+        # final case: Z coordinate present in data, so actually extract the level
+        # TODO: if units disagree, change value
+        ds_z = ds.cf.dim_axes(tv_name)['Z']
+        if ds_z is None:
+            raise TypeError("No Z axis in dataset for %s.", var.full_name)
         try:
-            _log.info("Extracting %s %s level from Z axis (%s) of %s.", 
-                z_coord.value, z_coord.units, z_name, var.full_name)
+            ds_z_value = xr_util.convert_scalar_coord(our_z, ds_z.units)
+            _log.info("Extracting %s %s level from Z axis ('%s') of %s.", 
+                ds_z_value, ds_z.units, ds_z.name, var.full_name)
             ds = ds.sel(
-                {z_name: z_coord.value},
+                {ds_z.name: ds_z_value},
                 method='nearest', # Allow for floating point roundoff in axis values
-                tolerance=1.0e-3,
+                tolerance=_atol,
                 drop=False
             )
             # rename dependent variable
-            return ds.rename({var.translation.name: var.name})
+            return ds.rename({tv_name: var.name})
         except KeyError:
             # ds.sel failed; level wasn't present in coordinate axis
-            raise KeyError((f"Z axis '{z_name}' of {var.full_name} didn't "
-                f"provide requested level = {z_coord.value} {z_coord.units}."))
+            raise KeyError((f"Z axis '{ds_z.name}' of {var.full_name} didn't "
+                f"provide requested level ({our_z.value} {our_z.units})."))
+        except Exception as exc:
+            raise ValueError((f"Caught exception extracting {our_z.value} {our_z.units} "
+                f"level from '{ds_z.name}' coord of {var.full_name}.")) from exc
 
 # ==================================================
 
@@ -230,14 +266,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         pass # return ds
 
     def write_dataset(self, var, ds):
+        # TODO: remove any netcdf Variables that were present in file (and ds) 
+        # but not needed for request
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
         _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
-        # need to clear units/calendar attrs on time coord when using cftime,
+        # HACK: need to clear units/calendar attrs on time coord when using cftime,
         # otherwise we throw a ValueError on .to_netcdf
-        if 'T' in ds.cf.axes and ds.cf.axes['T']:
-            t_coord = ds[ds.cf.axes['T'][0]]
+        if 'T' in ds.cf.axes_set:
+            t_coord = ds.cf.axes().get('T')[0]
             for attr in ('units', 'calendar'):
                 if attr in t_coord.attrs:
                     del t_coord.attrs[attr]
@@ -245,8 +283,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             path=var.dest_path,
             mode='w',
             **self.save_dataset_kwargs
-            # don't make time unlimited, since data might be static and we 
-            # analyze a fixed date range
+            # Currently don't make time unlimited, since data might be static 
+            # and we analyze a fixed date range
         )
         ds.close()
 

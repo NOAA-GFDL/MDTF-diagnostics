@@ -39,11 +39,11 @@ def main():
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         framework = cli_obj.dispatch()
         exit_code = framework.main()
-        exit(exit_code)
+        return exit_code
 
 # should move this out of "src" package, but need to create wrapper shell script
 # to set framework conda env.
 if __name__ == '__main__':
     logs.configure_console_loggers()
-    main()
-    exit(0)
+    exit_code = main()
+    sys.exit(exit_code)

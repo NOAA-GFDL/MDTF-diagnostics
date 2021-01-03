@@ -225,36 +225,34 @@ class MDTFFramework(object):
 
     # --------------------------------------------------------------------
 
-    def run_case(self, case_name, case_d):
-        _log.info(f"Framework: initialize {case_name}")
-        case = self.DataSource(case_d)
-        case.setup()
-        self.cases.append(case)
-
-        _log.info(f'Framework: request data for {case_name}')
-        case.request_data()
-
-        _log.info(f'Framework: run {case_name}')
-        run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
-        run_mgr.setup()
-        run_mgr.run()
-        run_mgr.tear_down()
-        out_mgr = self.OutputManager(case)
-        out_mgr.make_output()
-        return any(p.failed for p in case.pods.values())
-
-    def main(self, foo=None):
+    def main(self):
         failed = False
         _log.info("\n======= Starting %s", __file__)
         # only run first case in list until dependence on env vars cleaned up
-        for d in self.case_list[0:1]:
-            case_name = d.get('CASENAME', '')
-            failed = failed or self.run_case(case_name, d)
+        for case_d in self.case_list[0:1]:
+            case_name = case_d.get('CASENAME', '<untitled>')
+            _log.info(f"Framework: initialize {case_name}")
+            case = self.DataSource(case_d)
+            case.setup()
+            self.cases.append(case)
+
+            _log.info(f'Framework: request data for {case_name}')
+            case.request_data()
+
+            _log.info(f'Framework: run {case_name}')
+            run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
+            run_mgr.setup()
+            run_mgr.run()
+            run_mgr.tear_down()
+            out_mgr = self.OutputManager(case)
+            out_mgr.make_output()
+            case.deactivate_if_failed()
+            failed = (failed or case.failed)
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)
-        return (1 if failed else 0)
+        return (1 if failed else 0) # exit code
 
 
 class ConfigManager(util.Singleton, util.NameSpace):

@@ -191,6 +191,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         if not util.is_iterable(paths):
             paths = (paths, )
 
+        local_paths = []
         for path in paths:
             # exceptions caught in parent loop in data_manager.DataSourceBase
             local_path = os.path.join(tmpdir, os.path.basename(path))
@@ -203,7 +204,8 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
                 timeout=self.file_transfer_timeout, 
                 dry_run=self.dry_run
             )
-            var.local_data.append(local_path)
+            local_paths.append(local_path)
+        return local_paths
 
 class GFDL_CMIP6_GCP_FileDataSource(
     data_manager.CMIP6ExperimentSelectionMixin,

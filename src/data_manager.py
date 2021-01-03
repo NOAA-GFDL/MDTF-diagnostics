@@ -63,7 +63,8 @@ class AbstractQueryMixin(abc.ABC):
 class AbstractFetchMixin(abc.ABC):
     @abc.abstractmethod
     def fetch_dataset(self, var, remote_data): 
-        """Sets local_data attribute on var or raises an exception."""
+        """Returns list of identifiers for fetched data (paths to locally 
+        downloaded copies of data) or raises an exception."""
         pass
 
     def setup_fetch(self):
@@ -97,7 +98,8 @@ class AbstractDataSource(abc.ABC):
 
     @abc.abstractmethod
     def fetch_dataset(self, var, remote_data): 
-        """Sets local_data attribute on var or raises an exception."""
+        """Returns list of identifiers for fetched data (paths to locally 
+        downloaded copies of data) or raises an exception."""
         pass
 
     @abc.abstractmethod
@@ -197,7 +199,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass, init=True)
         self.pods = case_dict.get('pod_list', [])
         # data_key -> FetchStatus
-        self.fetch_status = collections.defaultdict((lambda: FetchStatus.NOT_FETCHED))
+        self.local_data = collections.defaultdict((lambda: FetchStatus.NOT_FETCHED))
         self.exceptions = util.ExceptionQueue()
 
         # configure case-specific env vars
@@ -483,14 +485,18 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     # add before fetch, in case fetch raises an exc
                     var.status = diagnostic.VarlistEntryStatus.FETCHED
                     for data_key in self.iter_data_keys(var):
-                        if self.fetch_status[data_key] != FetchStatus.NOT_FETCHED:
+                        if self.local_data[data_key] != FetchStatus.NOT_FETCHED:
                             continue
-                        self.fetch_status[data_key] = FetchStatus.FAILED
-                        self.fetch_dataset(var, self.remote_data(data_key))
-                        self.fetch_status[data_key] = FetchStatus.SUCCEEDED
-                    if not all(self.fetch_status[dk] == FetchStatus.SUCCEEDED \
-                        for dk in self.iter_data_keys(var)):
-                        raise util.DataFetchError(var, "Fetch failed.")
+                        self.local_data[data_key] = FetchStatus.FAILED
+                        self.local_data[data_key] = \
+                            self.fetch_dataset(var, self.remote_data(data_key))
+                    for data_key in self.iter_data_keys(var):
+                        paths = util.to_iter(self.local_data[data_key])
+                        if any(p in (FetchStatus.NOT_FETCHED, FetchStatus.FAILED) \
+                            for p in paths):
+                            raise util.DataFetchError(data_key, "Fetch failed.")
+                        else:
+                            var.local_data.extend(paths)
                 except util.DataFetchError as exc:
                     update = True
                     _log.info("    Fetch failed for %s.", var)
@@ -1090,6 +1096,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
 class LocalFetchMixin(AbstractFetchMixin):
     """Mixin implementing data fetch for files on a locally mounted filesystem. 
     No data is transferred; we assume that xarray can open the paths directly.
+    Paths are returned unaltered, to be set as variable's local_data.
     """
     def fetch_dataset(self, var, paths):
         if not util.is_iterable(paths):
@@ -1100,7 +1107,7 @@ class LocalFetchMixin(AbstractFetchMixin):
                     f"Fetch {var.full_name}: File not found at {path}.")
             else:
                 _log.debug("Fetch %s: found %s.", var.full_name, path)
-        var.local_data.extend(paths)
+        return paths
 
 
 class LocalFileDataSource(

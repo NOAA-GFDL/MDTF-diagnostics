@@ -498,7 +498,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
-        if xr_util.are_units_equal(c.units, new_coord.units):
+        if xr_util.are_equal(c.units, new_coord.units):
             _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                 c.value, c.units, c.axis, self.name, new_name)
         else:
@@ -630,7 +630,7 @@ class Fieldlist():
         
         new_coord = copy.deepcopy(new_coord)
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
-            if not xr_util.are_units_equal(coord.units, new_coord.units):
+            if not xr_util.are_equal(coord.units, new_coord.units):
                 # convert units of scalar value to convention's coordinate's units
                 new_coord.value = coord.value \
                     * xr_util.conversion_factor(coord.units, new_coord.units)

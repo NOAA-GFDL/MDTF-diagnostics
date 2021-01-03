@@ -68,12 +68,12 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so they can be compared with the model data's time axis.
         """
-        if 'T' not in ds.cf.axes:
+        tv_name = var.name_in_model
+        t_coord = ds.cf.dim_axes(tv_name).get('T', None)
+        if t_coord is None:
             _log.debug("Exit %s for %s: time-independent.", 
                 self.__class__.__name__, var.full_name)
             return ds
-        t_name = ds.cf.axes['T'][0]
-        t_coord = ds[t_name]
         cal = t_coord.attrs['calendar']
         dt_range = var.T.range
         # lower/upper are earliest/latest datetimes consistent with the date we
@@ -101,7 +101,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 t_coord.values[-1].strftime('%Y-%m-%d'), 
                 dt_range
             )
-        return ds.sel({t_name: slice(dt_start_lower, dt_end_upper)})
+        return ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a DataSet. Unit conversions of 
@@ -110,7 +110,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     is not provided by the data, KeyError is raised.
     """
 
-    def remove_scalar_on_translation(self, v):
+    def remove_scalar_on_translation(self, v, data_mgr):
         """If a VarlistEntry has a scalar_coordinate defined, return a copy to 
         be used as an alternate variable with that scalar_coordinate removed.
         """
@@ -121,16 +121,23 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             raise NotImplementedError()
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
+        new_ax_set = set(v.axes_set).add('Z')
+        new_tv_name = core.VariableTranslator().from_CF_name(
+            data_mgr.convention, v.standard_name, new_ax_set
+        )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
-            name=v.name
+            name = new_tv_name
         )
-        return dataclasses.replace(
+        new_v = dataclasses.replace(
             v,
-            translation=new_tv,
-            requirement=diagnostic.VarlistEntryRequirement.ALTERNATE,
-            alternates=v.alternates
+            coords = (v.dims + v.scalar_coords),
+            translation = new_tv,
+            requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
+            alternates = v.alternates
         )
+        new_v._id = next(data_mgr.id_number)
+        return new_v
 
     def edit_request(self, data_mgr, pod):
         """Edit the POD's Varlist prior to query. If any VarlistEntry specifies
@@ -147,13 +154,12 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 continue
             # existing VarlistEntry queries for 3D slice directly; add a new
             # VE to query for 4D data
-            new_v = self.remove_scalar_on_translation(v)
-            new_v._id = next(data_mgr.id_number)
+            new_v = self.remove_scalar_on_translation(v, data_mgr)
             v.alternates = [[new_v]]
 
             for vv in v.iter_alternate_entries():
-                _log.debug("%s: add %s as alternate for %s", 
-                    self.__class__.__name__, vv, v)
+                _log.debug("%s for %s: add translated %s as alternate for %s", 
+                    self.__class__.__name__, v.full_name, vv.translation, v.translation)
             new_varlist.append(v)
             new_varlist.append(new_v)
         pod.varlist = diagnostic.Varlist(contents=new_varlist)
@@ -176,18 +182,17 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             if ds_z is None or isinstance(ds_z, xr_util.PlacholderScalarCoordinate):
                 _log.debug(("Exit %s for %s: %s %s Z level requested but value not "
                     "provided in scalar coordinate information; assuming correct."), 
-                    self.__class__.__name__, var.full_name, our_z.value, our_z.unit)
+                    self.__class__.__name__, var.full_name, our_z.value, our_z.units)
                 return ds
             else:
                 # value (on var.translation) has already been checked by 
                 # xr_util.DatasetParser
                 _log.debug(("Exit %s for %s: %s %s Z level requested and provided "
                     "by dataset."), 
-                    self.__class__.__name__, var.full_name, our_z.value, our_z.unit)
+                    self.__class__.__name__, var.full_name, our_z.value, our_z.units)
                 return ds
 
         # final case: Z coordinate present in data, so actually extract the level
-        # TODO: if units disagree, change value
         ds_z = ds.cf.dim_axes(tv_name)['Z']
         if ds_z is None:
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
@@ -265,6 +270,28 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_dataset(self, var):
         pass # return ds
 
+    def clean_encoding(self, ds):
+        """Xarray .to_netcdf raises an error if attributes set on a variable have
+        the same name as those used in its encoding, even if their values are the
+        same. Delete these attributes from the attrs dict prior to writing, after
+        checking equality of values.
+        """
+        def _clean_dict(obj):
+            name = getattr(obj, 'name', 'dataset')
+            encoding = getattr(obj, 'encoding', dict())
+            attrs = getattr(obj, 'attrs', dict())
+            for k,v in encoding.items():
+                if k in attrs:
+                    if attrs[k] != v and k.lower() != 'source':
+                        _log.warning("Conflict in '%s' attribute of %s: %s != %s.",
+                            k, name, v, attrs[k])
+                    del attrs[k]   
+            
+        for var in ds.variables.values():
+            _clean_dict(var)
+        _clean_dict(ds)
+        return ds
+
     def write_dataset(self, var, ds):
         # TODO: remove any netcdf Variables that were present in file (and ds) 
         # but not needed for request
@@ -272,13 +299,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
-        # HACK: need to clear units/calendar attrs on time coord when using cftime,
-        # otherwise we throw a ValueError on .to_netcdf
-        if 'T' in ds.cf.axes_set:
-            t_coord = ds.cf.axes().get('T')[0]
-            for attr in ('units', 'calendar'):
-                if attr in t_coord.attrs:
-                    del t_coord.attrs[attr]
+        ds = self.clean_encoding(ds)
         ds.to_netcdf(
             path=var.dest_path,
             mode='w',

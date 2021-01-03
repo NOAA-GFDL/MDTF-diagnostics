@@ -46,15 +46,8 @@ class HTMLSourceFileMixin():
         return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
 
 class HTMLPodOutputManager(HTMLSourceFileMixin):
-    def __init__(self, pod, code_root, case_wk_dir):
+    def __init__(self, pod, output_mgr):
         """Performs cleanup tasks when the POD has finished running.
-
-        In order, this 1) creates the POD's HTML output page from its included
-        template, replacing ``CASENAME`` and other template variables with their
-        current values, and adds a link to the POD's page from the top-level HTML
-        report; 2) converts the POD's output plots (in PS or EPS vector format) 
-        to a bitmap format for webpage display; 3) Copies all requested files to
-        the output directory and deletes temporary files.
         """
         config = core.ConfigManager()
         try:
@@ -64,14 +57,9 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         except KeyError as exc:
             _log.exception(f"Caught {repr(exc)}.")
             raise
-        self.CODE_ROOT = code_root
-        self.WK_DIR = case_wk_dir
-
-        if pod.active:
-            self.make_pod_html(pod)
-            self.convert_pod_figures(pod, os.path.join('model', 'PS'), 'model')
-            self.convert_pod_figures(pod, os.path.join('obs', 'PS'), 'obs')
-            self.cleanup_pod_files(pod)
+        self.CODE_ROOT = output_mgr.CODE_ROOT
+        self.WK_DIR = output_mgr.WK_DIR
+        self._pod = pod
 
     def make_pod_html(self, pod):
         """Perform templating on POD's html results page(s).
@@ -203,6 +191,22 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             for f in util.find_files(pod.POD_WK_DIR, '*.nc'):
                 os.remove(f)
 
+    def make_output(self):
+        """Top-level method to make POD-specific output, post-init. Split off 
+        into its own method to make subclassing easier.
+        
+        In order, this 1) creates the POD's HTML output page from its included
+        template, replacing ``CASENAME`` and other template variables with their
+        current values, and adds a link to the POD's page from the top-level HTML
+        report; 2) converts the POD's output plots (in PS or EPS vector format) 
+        to a bitmap format for webpage display; 3) Copies all requested files to
+        the output directory and deletes temporary files.
+        """
+        if self._pod.active:
+            self.make_pod_html(self._pod)
+            self.convert_pod_figures(self._pod, os.path.join('model', 'PS'), 'model')
+            self.convert_pod_figures(self._pod, os.path.join('obs', 'PS'), 'obs')
+            self.cleanup_pod_files(self._pod)
 
 class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     """OutputManager that collects all the PODs' output as HTML pages.
@@ -223,35 +227,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         self.CODE_ROOT = case.code_root
         self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
         self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
-
-        # create empty text file for PODs to append to; equivalent of 'touch'
-        open(self.CASE_TEMP_HTML, 'w').close()
-        for pod in case.pods.values():
-            try:
-                self._PodOutputManagerClass(pod, self.CODE_ROOT, self.WK_DIR)
-            except Exception as exc:
-                # won't go into the HTML output, but will be present in the 
-                # summary for the case
-                _log.exception(f"Caught {repr(exc)}.")
-                pod.exceptions.log(exc)
-                continue
-        for pod in case.pods.values():
-            try:
-                self.append_result_link(pod)
-                if pod.active:
-                    self.verify_pod_links(pod)
-            except Exception as exc:
-                # won't go into the HTML output, but will be present in the 
-                # summary for the case
-                _log.exception(f"Caught {repr(exc)}.")
-                pod.exceptions.log(exc)
-                continue
-
-        self.make_html(case)
-        self.backup_config_file(case)
-        if self.make_variab_tar:
-            _ = self.make_tar_file(case)
-        self.copy_to_output(case)
+        self._case = case
 
     @property
     def _tarball_file_path(self):
@@ -374,3 +350,37 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         except Exception:
             raise
         shutil.move(self.WK_DIR, self.OUT_DIR)
+
+    def make_output(self):
+        """Top-level method for doing all output activity post-init. Spun into a
+        separate method to make subclassing easier.
+        """
+        # create empty text file for PODs to append to; equivalent of 'touch'
+        open(self.CASE_TEMP_HTML, 'w').close()
+        for pod in self._case.pods.values():
+            try:
+                pod_output = self._PodOutputManagerClass(pod, self)
+                pod_output.make_output()
+            except Exception as exc:
+                # won't go into the HTML output, but will be present in the 
+                # summary for the case
+                _log.exception(f"Caught {repr(exc)}.")
+                pod.exceptions.log(exc)
+                continue
+        for pod in self._case.pods.values():
+            try:
+                self.append_result_link(pod)
+                if pod.active:
+                    self.verify_pod_links(pod)
+            except Exception as exc:
+                # won't go into the HTML output, but will be present in the 
+                # summary for the case
+                _log.exception(f"Caught {repr(exc)}.")
+                pod.exceptions.log(exc)
+                continue
+
+        self.make_html(self._case)
+        self.backup_config_file(self._case)
+        if self.make_variab_tar:
+            _ = self.make_tar_file(self._case)
+        self.copy_to_output(self._case)

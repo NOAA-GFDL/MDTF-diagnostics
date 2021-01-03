@@ -239,7 +239,8 @@ class MDTFFramework(object):
         run_mgr.setup()
         run_mgr.run()
         run_mgr.tear_down()
-        self.OutputManager(case)
+        out_mgr = self.OutputManager(case)
+        out_mgr.make_output()
         return any(p.failed for p in case.pods.values())
 
     def main(self, foo=None):

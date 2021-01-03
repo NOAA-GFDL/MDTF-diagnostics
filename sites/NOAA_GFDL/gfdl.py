@@ -5,6 +5,7 @@ import os
 import io
 import abc
 import collections
+import dataclasses
 import operator as op
 import re
 import shutil
@@ -183,9 +184,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         """Copy files to temporary directory.
         (GCP can't copy to home dir, so always copy to a temp dir)
         """
-        tmpdirs = core.TempDirManager()
-        # assign temp directory by case/DataSource attributes
-        tmpdir = tmpdirs.make_tempdir(hash_obj = self.attrs)
+        tmpdir = core.TempDirManager().make_tempdir()
         _log.debug("Created GCP fetch temp dir at %s.", tmpdir)
         (cp_command, smartsite) = self._get_fetch_method(self.fetch_method)
         if not util.is_iterable(paths):
@@ -195,7 +194,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         for path in paths:
             # exceptions caught in parent loop in data_manager.DataSourceBase
             local_path = os.path.join(tmpdir, os.path.basename(path))
-            _log.info(f"\tfetching {path[len(self.attrs.MODEL_DATA_ROOT):]}")
+            _log.info(f"\tFetching {path[len(self.attrs.MODEL_DATA_ROOT):]}")
             util.run_command(cp_command + [
                 smartsite + path, 
                 # gcp requires trailing slash, ln ignores it
@@ -225,6 +224,9 @@ class GFDL_CMIP6_GCP_FileDataSource(
         config = core.ConfigManager()
         self.fetch_method = 'auto'
         self.frepp_mode = config.get('frepp', False)
+        self.dry_run = config.get('dry_run', False)
+        self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
+
         if self.frepp_mode:
             paths = core.PathManager()
             self.overwrite = True
@@ -432,16 +434,23 @@ class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
 # ------------------------------------------------------------------------
 
 class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
-    def __init__(self, pod, code_root, case_wk_dir):
+    def __init__(self, pod, output_mgr):
+        super(GFDLHTMLPodOutputManager, self).__init__(pod, output_mgr)
+        self.frepp_mode = output_mgr.frepp_mode
+
+    def make_output(self):
         """Only run output steps (including logging error on index.html) 
         if POD ran on this invocation.
         """
-        if pod._has_placeholder:
-            _log.debug('POD %s has placeholder, generating output.', pod.name)
-            super(GFDLHTMLPodOutputManager, self).__init__(pod, code_root, case_wk_dir)
+        if not self.frepp_mode:
+            super(GFDLHTMLPodOutputManager, self).make_output()
+        elif self._pod._has_placeholder:
+            _log.debug('POD %s has frepp placeholder, generating output.', 
+                self._pod.name)
+            super(GFDLHTMLPodOutputManager, self).make_output()
         else: 
-            _log.debug('POD %s does not have placeholder; not generating output.', 
-                pod.name)
+            _log.debug('POD %s does not have frepp placeholder; not generating output.', 
+                self._pod.name)
 
 class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
     _PodOutputManagerClass = GFDLHTMLPodOutputManager
@@ -450,7 +459,8 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         config = core.ConfigManager()
         try:
             self.frepp_mode = case.frepp_mode
-            self.file_transfer_timeout = config['file_transfer_timeout']
+            self.dry_run = config.get('dry_run', False)
+            self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
             _log.exception(f"Caught {repr(exc)}.")
 

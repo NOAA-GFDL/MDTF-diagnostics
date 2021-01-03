@@ -317,14 +317,14 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         def _format(v):
             str_ = str(v)[1:-1]
             act_str = ('active' if v.active else 'inactive')
-            fail_str = ('failed' if v.failed else 'ok')
-            return (f"<{str_}; {act_str}:{v.status.name}, "
-                f"{fail_str} (exc={v.exception}), {v.requirement}>")
+            fail_str = (f"failed (exc={v.exception})" if v.failed else 'ok')
+            return (f"<{str_}; {act_str}:{v.status.name}, {fail_str}, "
+                f"{v.requirement}>\n    Translation: {v.translation}")
 
         s = _format(self)
         for i, altvs in enumerate(self.alternates):
-            alt_names = ', '.join(_format(vv) for vv in altvs)
-            s += f"\n    Alternate set #{i+1}: [{alt_names}]"
+            s += f"\n  Alternate set #{i+1}:"
+            s += '\n'.join(_format(vv) for vv in altvs)
         return s
 
 class Varlist(data_model.DMDataSet):

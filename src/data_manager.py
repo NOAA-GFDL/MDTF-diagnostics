@@ -424,27 +424,28 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             _log.debug('Query batch: [%s]', 
                 ', '.join(v.full_name for v in vars_to_query))
             self.pre_query_hook(vars_to_query)
-            for var in vars_to_query:
+            for v in vars_to_query:
                 try:
-                    _log.info("    Querying %s", var)
+                    _log.info("    Querying %s", v.translation)
                     # add before query, in case query raises an exc
-                    var.status = diagnostic.VarlistEntryStatus.QUERIED
-                    self.query_dataset(var) # sets var.remote_data
-                    if not var.remote_data:
-                        raise util.DataQueryError(var, "No data found.")
+                    v.status = diagnostic.VarlistEntryStatus.QUERIED
+                    self.query_dataset(v) # sets v.remote_data
+                    if not v.remote_data:
+                        raise util.DataQueryError(v, "No data found.")
                 except util.DataQueryError as exc:
                     update = True
-                    _log.info("    No data found for %s.", var)
-                    var.deactivate(exc)
+                    _log.info("    No data found for %s.", v.translation)
+                    v.deactivate(exc)
                     continue
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception querying %s: %r", var, exc)
+                    _log.exception("Caught exception querying %s: %r", 
+                        v.translation, exc)
                     try:
-                        raise util.DataQueryError(var, ("Caught exception while "
-                            f"querying data for {var.full_name}.")) from exc
+                        raise util.DataQueryError(v, ("Caught exception while "
+                            f"querying {v.translation} for {v.full_name}.")) from exc
                     except Exception as chained_exc:
-                        var.deactivate(chained_exc)
+                        v.deactivate(chained_exc)
                     continue
             self.post_query_hook(vars_to_query)
         else:
@@ -479,37 +480,37 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             _log.debug('Fetch batch: [%s]', 
                 ', '.join(v.full_name for v in vars_to_fetch))
             self.pre_fetch_hook(vars_to_fetch)
-            for var in vars_to_fetch:
+            for v in vars_to_fetch:
                 try:
-                    _log.info("    Fetching %s", var)
+                    _log.info("    Fetching %s", v)
                     # add before fetch, in case fetch raises an exc
-                    var.status = diagnostic.VarlistEntryStatus.FETCHED
-                    for data_key in self.iter_data_keys(var):
+                    v.status = diagnostic.VarlistEntryStatus.FETCHED
+                    for data_key in self.iter_data_keys(v):
                         if self.local_data[data_key] != FetchStatus.NOT_FETCHED:
                             continue
                         self.local_data[data_key] = FetchStatus.FAILED
                         self.local_data[data_key] = \
-                            self.fetch_dataset(var, self.remote_data(data_key))
-                    for data_key in self.iter_data_keys(var):
+                            self.fetch_dataset(v, self.remote_data(data_key))
+                    for data_key in self.iter_data_keys(v):
                         paths = util.to_iter(self.local_data[data_key])
                         if any(p in (FetchStatus.NOT_FETCHED, FetchStatus.FAILED) \
                             for p in paths):
                             raise util.DataFetchError(data_key, "Fetch failed.")
                         else:
-                            var.local_data.extend(paths)
+                            v.local_data.extend(paths)
                 except util.DataFetchError as exc:
                     update = True
-                    _log.info("    Fetch failed for %s.", var)
-                    var.deactivate(exc)
+                    _log.info("    Fetch failed for %s.", v)
+                    v.deactivate(exc)
                     continue
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception fetching %s: %r", var, exc)
+                    _log.exception("Caught exception fetching %s: %r", v, exc)
                     try:
-                        raise util.DataFetchError(var, ("Caught exception while "
-                            f"fetching data for {var.full_name}.")) from exc
+                        raise util.DataFetchError(v, ("Caught exception while "
+                            f"fetching data for {v.full_name}.")) from exc
                     except Exception as chained_exc:
-                        var.deactivate(chained_exc)
+                        v.deactivate(chained_exc)
                     continue
             self.post_fetch_hook(vars_to_fetch)
         else:
@@ -617,7 +618,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     def has_date_info(self):
         return (self.daterange_col is not None)
 
-    # Catalog columns whose values must be the same for all varaibles being
+    # Catalog columns whose values must be the same for all variables being
     # fetched. This is the most common sense in which we "specify an experiment."
     expt_cols = util.abstract_attribute()
 

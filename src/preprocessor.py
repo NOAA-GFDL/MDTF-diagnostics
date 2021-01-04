@@ -151,6 +151,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             alternates = v.alternates
         )
         new_v._id = next(data_mgr.id_number)
+        new_v.status = diagnostic.VarlistEntryStatus.INITED
         return new_v
 
     def edit_request(self, data_mgr, pod):

@@ -118,7 +118,7 @@ VarlistEntryRequirement = util.MDTFEnum(
 
 VarlistEntryStatus = util.MDTFIntEnum(
     'VarlistEntryStatus', 
-    'INITED QUERIED FETCHED PREPROCESSED', 
+    'NOTSET INITED QUERIED FETCHED PREPROCESSED', 
     module=__name__
 )
 
@@ -149,7 +149,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     )
     local_data: list = dc.field(default_factory=list, compare=False)
     status: VarlistEntryStatus = dc.field(
-        default=VarlistEntryStatus.INITED, compare=False
+        default=VarlistEntryStatus.NOTSET, compare=False
     )
     active: bool = dc.field(init=False, compare=False)
     exception: Exception = dc.field(init=False, compare=False)

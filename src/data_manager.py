@@ -162,10 +162,6 @@ class AbstractDataSource(abc.ABC):
 
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 
-FetchStatus = util.MDTFEnum(
-    'FetchStatus', 'NOT_FETCHED SUCCEEDED FAILED', module=__name__
-)
-
 @util.mdtf_dataclass
 class DataSourceAttributesBase():
     """Attributes that any DataSource must specify.
@@ -198,8 +194,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass, init=True)
         self.pods = case_dict.get('pod_list', [])
-        # data_key -> FetchStatus
-        self.local_data = collections.defaultdict((lambda: FetchStatus.NOT_FETCHED))
+        # data_key -> local path of successfully fetched data
+        self.local_data = dict()
+        # VarlistEntry _id -> list of data_keys for which preprocessing failed
+        self.failed_data = collections.defaultdict(list)
         self.exceptions = util.ExceptionQueue()
 
         # configure case-specific env vars
@@ -412,6 +410,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             )
             v.dest_path = self.variable_dest_path(pod, v)
             v.translation = translate.translate(v)
+            v.status = diagnostic.VarlistEntryStatus.INITED
         except Exception as exc:
             v.exception = exc    # "caught" by pod.update_active_vars()
             raise exc
@@ -431,9 +430,65 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         
     # DATA QUERY/FETCH/PREPROCESS -------------------------------------
 
+    def is_fetch_necessary(self, d_key, var=None):
+        if d_key in self.local_data:
+            # already successfully fetched
+            return False
+        if d_key in self.failed_data[self._id]:
+            # previously tried and failed to fetch
+            return False
+        if var is not None and (d_key in self.failed_data[var._id]):
+            # preprocessing failed on this d_key for this var (redundant condition)
+            return False
+        return True
+
+    def iter_valid_remote_data(self, v):
+        """Yield expt_key:data_key tuples from v's remote_data dict, filtering 
+        out those data_keys that have been eliminated via previous failures in
+        fetching or preprocessing.
+        """
+        failed_dkeys = set(self.failed_data[self._id])
+        failed_dkeys.update(self.failed_data[v._id])
+        yield from filter(
+            (lambda kv: kv[1] not in failed_dkeys), 
+            v.remote_data.items()
+        )
+
+    def eliminate_data_key(self, d_key, var=None):
+        """Mark a query result (represented by a data_key) as invalid due to 
+        failures in fetch or preprocessing. If all query results for a 
+        VarlidstEntry are invalidated, deactivate it.
+        """
+        def _check_variable(v):
+            if v.status < diagnostic.VarlistEntryStatus.QUERIED:
+                return
+            if not any(self.iter_valid_remote_data(v)):
+                # all data_keys obtained for this var during query have
+                # been eliminated, so need to deactivate var
+                dk_list = list(v.remote_data.values())
+                _log.debug("Deactivating %s since all data_keys eliminated (%s).",
+                    v.full_name, dk_list)
+                try:
+                    raise util.GenericDataSourceError((f"Deactivating {v.full_name} "
+                        f"since all data_keys eliminated ({dk_list})."), v)
+                except Exception as exc:
+                    v.deactivate(exc)
+
+        if var is None:
+            # eliminate data_key for all vars (failed during fetch)
+            _log.debug("Eliminating data_key=%s for all vars.", d_key)
+            self.failed_data[self._id].append(d_key)
+            for v in self.iter_vars(active=True):
+                _check_variable(v)
+        else:
+            # eliminate data_key for this var only (failed during preprocess)
+            _log.debug("Eliminating data_key=%s for %s.", d_key, var.full_name)
+            self.failed_data[var._id].append(d_key)
+            _check_variable(var)
+
     def query_data(self):
         update = True
-        # really a while-loop, but we limit # of iterations to be safe
+        # really a while-loop, but limit # of iterations to be safe
         for _ in range(5): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time.
@@ -445,7 +500,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     if v.status < diagnostic.VarlistEntryStatus.QUERIED
             ]
             if not vars_to_query:
-                break # normal exit: queried everything
+                break # exit: queried everything or nothing active
             
             _log.debug('Query batch: [%s]', 
                 ', '.join(v.full_name for v in vars_to_query))
@@ -453,11 +508,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             for v in vars_to_query:
                 try:
                     _log.info("    Querying %s", v.translation)
-                    # add before query, in case query raises an exc
-                    v.status = diagnostic.VarlistEntryStatus.QUERIED
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
                         raise util.DataQueryError("No data found.", v)
+                    v.status = diagnostic.VarlistEntryStatus.QUERIED
                 except util.DataQueryError as exc:
                     update = True
                     _log.info("    No data found for %s.", v.translation)
@@ -482,7 +536,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     def fetch_data(self):
         update = True
-        # really a while-loop, but we limit # of iterations to be safe
+        # really a while-loop, but limit # of iterations to be safe
         for _ in range(5): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and query them.
@@ -500,7 +554,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     if v.status < diagnostic.VarlistEntryStatus.FETCHED
             ]
             if not vars_to_fetch:
-                break # normal exit: fetched everything
+                break # exit: fetched everything or nothing active
 
             _log.debug('Fetch batch: [%s]', 
                 ', '.join(v.full_name for v in vars_to_fetch))
@@ -508,21 +562,28 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             for v in vars_to_fetch:
                 try:
                     _log.info("    Fetching %s", v)
-                    # add before fetch, in case fetch raises an exc
-                    v.status = diagnostic.VarlistEntryStatus.FETCHED
+
+                    # fetch on a per-data_key basis
                     for data_key in self.iter_data_keys(v):
-                        if self.local_data[data_key] != FetchStatus.NOT_FETCHED:
-                            continue
-                        self.local_data[data_key] = FetchStatus.FAILED
-                        self.local_data[data_key] = \
-                            self.fetch_dataset(v, self.remote_data(data_key))
+                        try:
+                            if not self.is_fetch_necessary(data_key):
+                                continue
+                            _log.debug("Fetching data_key=%s", data_key)
+                            self.local_data[data_key] = \
+                                self.fetch_dataset(v, self.remote_data(data_key))
+                        except Exception as exc:
+                            update = True
+                            self.eliminate_data_key(data_key)
+                            break # no point continuing
+
+                    # check if var received everything
                     for data_key in self.iter_data_keys(v):
-                        paths = util.to_iter(self.local_data[data_key])
-                        if any(p in (FetchStatus.NOT_FETCHED, FetchStatus.FAILED) \
-                            for p in paths):
+                        if not self.local_data.get(data_key, None):
                             raise util.DataFetchError("Fetch failed.", data_key)
                         else:
+                            paths = util.to_iter(self.local_data[data_key])
                             v.local_data.extend(paths)
+                    v.status = diagnostic.VarlistEntryStatus.FETCHED
                 except util.DataFetchError as exc:
                     update = True
                     _log.info("    Fetch failed for %s.", v)
@@ -548,7 +609,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         """Hook to run the preprocessing function on all variables.
         """
         update = True
-        # really a while-loop, but we limit # of iterations to be safe
+        # really a while-loop, but limit # of iterations to be safe
         for _ in range(5): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and fetch them.
@@ -561,21 +622,19 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     if pv.var.status < diagnostic.VarlistEntryStatus.PREPROCESSED
             ]
             if not vars_to_process:
-                break # normal exit: processed everything
+                break # exit: processed everything or nothing active
 
-            for pod, var in vars_to_process:
+            for pod, v in vars_to_process:
                 try:
-                    _log.info("    Processing %s", var)
-                    var.status = diagnostic.VarlistEntryStatus.PREPROCESSED
-                    pod.preprocessor.process(var)
+                    _log.info("    Processing %s", v)
+                    pod.preprocessor.process(v)
+                    v.status = diagnostic.VarlistEntryStatus.PREPROCESSED
                 except Exception as exc:
                     update = True
-                    _log.exception("Caught exception processing %s: %r", var, exc)
-                    try:
-                        raise util.DataPreprocessError(("Caught exception while "
-                            f"processing data for {var.full_name}."), var) from exc
-                    except Exception as chained_exc:
-                        var.deactivate(chained_exc)
+                    _log.exception("Caught exception processing %s with data_key=%s: %r", 
+                        v, ', '.join(str(k) for k in self.iter_data_keys(v)), exc)
+                    for k in self.iter_data_keys(v):
+                        self.eliminate_data_key(k, v)
                     continue
         else:
             # only hit this if we don't break
@@ -786,10 +845,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 "Noncontiguous or malformed date range in files:", data_key
             )
         except AssertionError:
-            self._query_error_logger(
-                f"Returned files don't span query date range ({self.attrs.date_range}):",
-                data_key
-            )
+            _log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
+                "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
             self._query_error_logger(f"Caught exception {repr(exc)}:", data_key)
         # hit an exception; return empty DataFrame to signify failure
@@ -820,11 +877,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         for expt_key, group in expt_groups:
             group = self._check_group_daterange(group)
             if group.empty:
-                _log.debug('Expt_key %s failed _check_group_daterange', expt_key)
+                _log.debug('Expt_key %s eliminated by _check_group_daterange', expt_key)
                 continue
             group = self._query_group_hook(group)
             if group.empty:
-                _log.debug('Expt_key %s failed _query_group_hook', expt_key)
+                _log.debug('Expt_key %s eliminated by _query_group_hook', expt_key)
                 continue
             data_key = self._data_key(group)
             _log.debug('Query found <expt_key=%s, data_key=%s> for %s',
@@ -884,7 +941,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if v.status < diagnostic.VarlistEntryStatus.QUERIED:
                 continue
             rows = set([])
-            for expt_key, data_key in v.remote_data.items():
+            for expt_key, data_key in self.iter_valid_remote_data(v):
                 # filter variables on the basis of previously selected expt 
                 # attributes
                 if expt_key[:len(parent_key)] == parent_key:
@@ -1029,8 +1086,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         return expt_df
 
     def iter_data_keys(self, var):
+        """Generator iterating over data_keys belonging to the experiment 
+        attributes selected for the variable var.
+        """
         expt_key = self.expt_keys[var._id]
-        yield from var.remote_data[expt_key]
+        yield var.remote_data[expt_key]
   
     def remote_data(self, data_key):
         """Given one or more row indices in the catalog's dataframe (data_keys, 
@@ -1126,6 +1186,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         df = pd.DataFrame(list(self.iter_files()), dtype='object')
         if len(df) == 0:
             _log.critical('Directory crawl did not find any files.')
+            raise AssertionError('Directory crawl did not find any files.')
         else:
             _log.debug("Directory crawl found %d files.", len(df))
         self.catalog = intake_esm.core.esm_datastore.from_df(
@@ -1145,10 +1206,8 @@ class LocalFetchMixin(AbstractFetchMixin):
             paths = (paths, )
         for path in paths:
             if not os.path.exists(path):
-                raise util.DataFetchError(
-                    f"Fetch {var.full_name}: File not found at {path}.", 
-                    var
-                )
+                raise util.DataFetchError((f"Fetch {var.full_name}: File not "
+                    f"found at {path}."), var)
             else:
                 _log.debug("Fetch %s: found %s.", var.full_name, path)
         return paths
@@ -1410,6 +1469,26 @@ class CMIP6ExperimentSelectionMixin():
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CATALOG_DIR'))
         return self.attrs.CATALOG_DIR
 
+    def _query_group_hook(self, group_df):
+        """Eliminate regional (Antarctic/Greenland) and spatially averaged data
+        from consideration for data fetch, since no POD currently makes use of
+        data of this type.
+        """
+        has_region = not (group_df['region'].isnull().all())
+        has_spatial_avg = not (group_df['spatial_avg'].isnull().all())
+        if not has_region and not has_spatial_avg:
+            # correct values, pass this group through
+            return group_df
+        else:
+            # return empty DataFrame to signify failure
+            if has_region:
+                _log.debug("Eliminating expt_key for regional data (%s).", 
+                    group_df['region'].drop_duplicates())
+            elif has_spatial_avg:
+                _log.debug("Eliminating expt_key for spatially averaged data (%s).", 
+                    group_df['spatial_avg'].drop_duplicates())
+            return pd.DataFrame(columns=group_df.columns)
+
     @staticmethod
     def _filter_column(df, col_name, func, obj_name):
         values = list(df[col_name].drop_duplicates())
@@ -1437,14 +1516,10 @@ class CMIP6ExperimentSelectionMixin():
         """Disambiguate experiment attributes that must be the same for all 
         variables in this case: 
  
-        - Eliminate regional (Antarctic/Greenland) and spatially averaged data
         - If variant_id (realization, forcing, etc.) not specified by user, 
             choose the lowest-numbered variant
         - If version_date not set by user, choose the most recent revision
         """
-        # No POD currently makes use of spatially averaged or subsetted data
-        df = df[(df['region'].isnull()) & (df['spatial_avg'].isnull())]
-
         # If multiple ensemble/forcing members, choose lowest-numbered one
         df = self._filter_column_min(df, obj.name,
             'realization_index', 'initialization_index', 'physics_index', 'forcing_index'

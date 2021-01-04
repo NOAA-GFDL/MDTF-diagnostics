@@ -69,7 +69,7 @@ class VarlistCoordinateMixin(object):
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     # name: str              # fields from data_model.DMCoordinate
     # standard_name: str
-    # units: cfunits.Units
+    # units: util.Units
     # axis: str
     # bounds: AbstractDMCoordinateBounds
     # value: typing.Union[int, float] # for scalar coordinates only

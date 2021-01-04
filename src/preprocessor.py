@@ -7,7 +7,6 @@ import dataclasses
 import itertools
 from src import util, core, data_model, diagnostic, xr_util
 import cftime
-import cfunits
 import xarray as xr
 
 import logging
@@ -212,7 +211,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if ds_z is None:
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
         try:
-            ds_z_value = xr_util.convert_scalar_coord(our_z, ds_z.units)
+            ds_z_value = util.convert_scalar_coord(our_z, ds_z.units)
             _log.info("Extracting %s %s level from Z axis ('%s') of %s.", 
                 ds_z_value, ds_z.units, ds_z.name, var.full_name)
             ds = ds.sel(

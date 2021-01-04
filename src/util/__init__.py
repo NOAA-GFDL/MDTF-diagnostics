@@ -26,3 +26,8 @@ from .processes import (
     ExceptionPropagatingThread, 
     poll_command, run_command, run_shell_command
 )
+from .units import (
+    Units,
+    to_cfunits, relative_tol, units_equivalent, units_equal, conversion_factor,
+    convert_array, convert_scalar_coord
+)

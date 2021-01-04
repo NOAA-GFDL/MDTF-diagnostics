@@ -13,8 +13,7 @@ import signal
 import string
 import tempfile
 import traceback
-from src import util, cli, mdtf_info, data_model, xr_util
-import cfunits
+from src import util, cli, mdtf_info, data_model
 
 import logging
 _log = logging.getLogger(__name__)
@@ -431,7 +430,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    units: cfunits.Units = util.MANDATORY
+    units: util.Units = util.MANDATORY
     # axes_set: frozenset = dc.field(default_factory=frozenset)
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
@@ -442,7 +441,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: cfunits.Units
+    # units: util.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
@@ -504,7 +503,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
-        if xr_util.are_equal(c.units, new_coord.units):
+        if util.units_equal(c.units, new_coord.units):
             _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                 c.value, c.units, c.axis, self.name, new_name)
         else:
@@ -636,7 +635,7 @@ class Fieldlist():
         
         new_coord = copy.deepcopy(new_coord)
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
-            new_coord.value = xr_util.convert_scalar_coord(coord, new_coord.units)
+            new_coord.value = util.convert_scalar_coord(coord, new_coord.units)
         return new_coord
 
     def translate(self, var):

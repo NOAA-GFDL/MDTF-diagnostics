@@ -8,7 +8,6 @@ import enum
 import itertools
 import typing
 from src import util, datelabel
-import cfunits
 
 import logging
 _log = logging.getLogger(__name__)
@@ -123,7 +122,7 @@ class DMBoundsDimension(object):
     name: str = util.MANDATORY
     
     standard_name = 'bounds'
-    units = cfunits.Units('1')
+    units = util.Units('1')
     axis = 'BOUNDS'
     bounds = None
     value = None
@@ -165,19 +164,19 @@ class DMCoordinate(_DMCoordinateShared):
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
     standard_name: str = util.MANDATORY
-    units: cfunits.Units = util.MANDATORY
+    units: util.Units = util.MANDATORY
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'longitude'
-    units: cfunits.Units = 'degrees_east'
+    units: util.Units = 'degrees_east'
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
     standard_name: str = 'latitude'
-    units: cfunits.Units = 'degrees_north'
+    units: util.Units = 'degrees_north'
     axis: str = 'Y'
 
 @util.mdtf_dataclass
@@ -186,7 +185,7 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
     standard_name: str = util.MANDATORY
-    units: cfunits.Units = "1" # dimensionless vertical coords OK
+    units: util.Units = "1" # dimensionless vertical coords OK
     axis: str = 'Z'
     positive: str = util.MANDATORY
 
@@ -211,7 +210,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
     (or other attributes).
     """
     standard_name: str = 'time'
-    units: cfunits.Units = ""
+    units: util.Units = ""
     axis: str = 'T'
     calendar: str = ""
     range: typing.Any = None
@@ -240,7 +239,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
 @util.mdtf_dataclass
 class DMTimeCoordinate(_DMCoordinateShared):
     standard_name: str = 'time'
-    units: cfunits.Units = util.MANDATORY
+    units: util.Units = util.MANDATORY
     axis: str = 'T'
     calendar: str = ""
     range: datelabel.AbstractDateRange = None
@@ -415,7 +414,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: cfunits.Units = "" # util.MANDATORY
+    units: util.Units = "" # util.MANDATORY
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -550,7 +549,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: cfunits.Units
+    # units: util.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     pass

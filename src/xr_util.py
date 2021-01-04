@@ -5,8 +5,7 @@ import functools
 import itertools
 import re
 import warnings
-# 
-import cfunits
+
 import cftime
 import cf_xarray
 import xarray as xr
@@ -29,117 +28,6 @@ _cf_calendars = (
     "360_day",
     "none"
 )
-
-# -----------------------------------------------------------
-# unit manipulation convenience functions
-
-def _coerce_to_cfunits(*args):
-    """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units 
-    objects. Also coerces reference time units (eg 'days since 1970-01-01') to 
-    time units ('days'). 
-    The reference date aspect isn't used in the code here and is handled by
-    xarray parsing in the preprocessor.
-    """
-    def _coerce(u):
-        if isinstance(u, tuple):
-            # (quantity, unit) tuple
-            assert len(u) == 2
-            u = u[0] * cfunits.Units(u[1])
-        if not isinstance(u, cfunits.Units):
-            u = cfunits.Units(u)
-        if u.isreftime:
-            return cfunits.Units(u._units_since_reftime)
-        return u
-
-    if len(args) == 1:
-        return _coerce(args[0])
-    else:
-        return [_coerce(arg) for arg in args]
-
-def _coerce_equivalent_units(*args):
-    """Same as _coerce_to_cfunits, but raise TypeError if units of all
-    quantities not equivalent.
-    """
-    args = _coerce_to_cfunits(*args)
-    ref_unit = args.pop()
-    for unit in args:
-        if not ref_unit.equivalent(unit):
-            raise util.UnitsError((f"Units {repr(ref_unit)} and "
-                f"{repr(unit)} are inequivalent."))
-    args.append(ref_unit)
-    return args
-
-def relative_tol(x, y):
-    """HACK to return max(|x-y|/x, |x-y|/y) for unit-ful quantities x,y. 
-    Vulnerable to underflow in principle.
-    """
-    x, y = _coerce_equivalent_units(x,y)
-    tol_1 = cfunits.Units.conform(1.0, x, y) # = float(x/y)
-    tol_2 = cfunits.Units.conform(1.0, y, x) # = float(y/x)
-    return max(abs(tol_1 - 1.0), abs(tol_2 - 1.0))
-
-def are_equivalent(*args):
-    """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplicative conversion 
-    factor.)
-    """
-    args = _coerce_to_cfunits(*args)
-    ref_unit = args.pop()
-    return all(ref_unit.equivalent(unit) for unit in args)
-
-def are_equal(*args, rtol=None):
-    """Returns True if and only if all quantities in arguments are strictly equal
-    (represent the same physical quantity *and* conversion factor = 1).
-
-    .. note::
-       rtol, atol tolerances on floating-point equality not currently implemented
-       in cfunits, so we implement rtol in a hacky way here.
-    """
-    args = _coerce_to_cfunits(*args)
-    ref_unit = args.pop()
-    if rtol is None:
-        # no tolerances: comparing units w/o quantities (or integer quantities)
-        return all(ref_unit.equals(unit) for unit in args)
-    else:
-        for unit in args:
-            try:
-                if not (relative_tol(ref_unit, unit) <= rtol):
-                    return False # outside tolerance
-            except TypeError:
-                return False # inequivalent units
-        return True
-
-def conversion_factor(source_unit, dest_unit):
-    """Defined so that (conversion factor) * (quantity in source_units) = 
-    (quantity in dest_units). 
-    """
-    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
-    return cfunits.Units.conform(1.0, source_unit, dest_unit)
-
-def convert_scalar_coord(coord, dest_units):
-    """Given scalar coordinate *coord*, return the appropriate scalar value in
-    new units *dest_units*. 
-    """
-    assert hasattr(coord, 'is_scalar') and coord.is_scalar
-    if not are_equal(coord.units, dest_units):
-        # convert units of scalar value to convention's coordinate's units
-        dest_value = coord.value * conversion_factor(coord.units, dest_units)
-        _log.debug("Converted %s %s %s slice of '%s' to %s %s.",
-            coord.value, coord.units, coord.axis, coord.name, 
-            dest_value, dest_units)
-    else:
-        # identical units
-        _log.debug("Copied value (=%s %s) of %s slice of '%s' (identical units).",
-            coord.value, coord.units, coord.axis, coord.name)
-        dest_value = coord.value
-    return dest_value
-
-def convert_array(array, source_unit, dest_unit):
-    """Wrapper for cfunits.conform() that does unit conversion in-place on a
-    numpy array.
-    """
-    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
-    cfunits.Units.conform(array, source_unit, dest_unit, inplace=True)
 
 @util.mdtf_dataclass
 class PlacholderScalarCoordinate():
@@ -604,16 +492,16 @@ class DatasetParser():
             if hasattr(var_, attr_name):
                 # cleanup placeholder attr if our var was altered
                 var_.value, new_units = getattr(var_, attr_name)
-                var_.units = _coerce_to_cfunits(new_units)
+                var_.units = util.to_cfunits(new_units)
                 _log.debug("Updated (value, units) of '%s' to (%s, %s).",
                     var_.name, var_.value, var_.units)
                 delattr(var_, attr_name)
 
         assert ds_var.size == 1
         if equivalent:
-            comparison_func = are_equivalent
+            comparison_func = util.units_equivalent
         else:
-            comparison_func = (lambda x,y: are_equal(x,y, rtol=1.0e-5))
+            comparison_func = (lambda x,y: util.units_equal(x,y, rtol=1.0e-5))
         
         our_attr = (our_var.value, our_var.units)
         ds_attr = (float(ds_var), ds_var.attrs.get('units', ''))
@@ -658,7 +546,7 @@ class DatasetParser():
             self.check_scalar_coord_value(our_var, ds_var, equivalent=True)
         else:
             self.check_attr(our_var, ds_var, 'units', 
-                comparison_func=are_equivalent,
+                comparison_func=util.units_equivalent,
                 update_our_var=True, update_ds=True
         )
         # now check equality of units - not an error, since we can convert
@@ -669,12 +557,12 @@ class DatasetParser():
             else:
                 # test units only, not quantities+units
                 self.check_attr(our_var, ds_var, 'units', 
-                    comparison_func=are_equal, 
+                    comparison_func=util.units_equal, 
                     update_our_var=True, update_ds=True
                 )
         except TypeError as exc:
             _log.warning(exc)
-            our_var.units = _coerce_to_cfunits(our_var.units)
+            our_var.units = util.to_cfunits(our_var.units)
 
 
     def check_variable(self, ds, translated_var):

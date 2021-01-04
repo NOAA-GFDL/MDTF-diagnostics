@@ -130,10 +130,11 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
     """
     try:
         os.makedirs(dest_dir)
-    except OSError:
+    except OSError as exc:
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than 
         # just catching the error
+        _log.debug("os.makedirs at %s failed (%r); trying GCP.", dest_dir, exc)
         tmpdirs = core.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))

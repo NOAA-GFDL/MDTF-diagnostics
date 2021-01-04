@@ -107,8 +107,9 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         """
         super(GfdlDiagnostic, self).pre_run_setup()
 
-        if not self._has_placeholder:
-            config = core.ConfigManager()
+        config = core.ConfigManager()
+        frepp_mode = config.get('frepp', False)
+        if frepp_mode and not os.path.exists(self.POD_OUT_DIR):
             try:
                 gfdl_util.make_remote_dir(self.POD_OUT_DIR)
                 self._has_placeholder = True
@@ -258,112 +259,194 @@ class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes
 class Gfdldatacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
 
+# RegexPattern that matches any string (path) that doesn't end with ".nc".
+ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
 
-_pp_ts_regex = re.compile(r"""
+_pp_ts_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
-        (?P<component>\w+)/     # component name
+        (?P<component>[a-zA-Z0-9_-]+)/     # component name
         ts/                     # timeseries;
         (?P<frequency>\w+)/     # ts freq
         (?P<chunk_freq>\w+)/    # data chunk length   
-        (?P<component2>\w+)\.        # component name (again)
+        (?P=component)\.        # component name (again)
         (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
-        (?P<name_in_model>\w+)\.       # field name
+        (?P<variable>[a-zA-Z0-9_-]+)\.       # field name
         nc                      # netCDF file extension
-    """, re.VERBOSE)
-_pp_static_regex = re.compile(r"""
+    """
+)
+_pp_static_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
-        (?P<component>\w+)/     # component name 
-        (?P<component2>\w+)     # component name (again)
+        (?P<component>[a-zA-Z0-9_-]+)/     # component name 
+        (?P=component)     # component name (again)
         \.static\.nc             # static frequency, netCDF file extension                
-    """, re.VERBOSE)
+    """,
+    defaults={
+        'variable': 'static',
+        'start_date': datelabel.FXDateMin, 'end_date': datelabel.FXDateMax,
+        'frequency': datelabel.FXDateFrequency, 'chunk_freq': datelabel.FXDateFrequency
+    }
+)
+pp_path_regex = util.ChainedRegexPattern(
+    # try the first regex, and if no match, try second
+    _pp_ts_regex, _pp_static_regex,
+    input_field="remote_path",
+    match_error_filter=ignore_non_nc_regex
+)
+@util.regex_dataclass(pp_path_regex)
+@util.mdtf_dataclass
+class PPTimeseriesDataFile():
+    """Dataclass describing catalog entries for /pp/ directory timeseries data.
+    """
+    component: str = ""
+    frequency: datelabel.DateFrequency = None
+    chunk_freq: datelabel.DateFrequency = None
+    start_date: datelabel.Date = None
+    end_date: datelabel.Date = None
+    variable: str = ""
+    remote_path: str = util.MANDATORY
+    date_range: datelabel.DateRange = dataclasses.field(init=False)
+
+    def __post_init__(self, *args):
+        if self.start_date == datelabel.FXDateMin \
+            and self.end_date == datelabel.FXDateMax:
+            # Assume we're dealing with static/fx-frequency data, so use special 
+            # placeholder values
+            self.date_range = datelabel.FXDateRange
+            if not self.frequency.is_static: # frequency inferred from table_id
+                raise util.DataclassParseError(("Inconsistent filename parse: "
+                    f"cannot determine if '{self.remote_path}' represents static data."))
+        else:
+            self.date_range = datelabel.DateRange(self.start_date, self.end_date)
+            if self.frequency.is_static: # frequency inferred from table_id
+                raise util.DataclassParseError(("Inconsistent filename parse: "
+                    f"cannot determine if '{self.remote_path}' represents static data."))
+
+@util.mdtf_dataclass
+class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
+    """Data-source-specific attributes for the DataSource corresponding to 
+    model data in the /pp/ directory hierarchy.
+    """
+    MODEL_DATA_ROOT: str = ""
+
+    def __post_init__(self):
+        """Validate user input.
+        """
+        super(PPDataSourceAttributes, self).__post_init__()
+        config = core.ConfigManager()
+        paths = core.PathManager()
+        # set MODEL_DATA_ROOT
+        if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
+            _log.debug(
+                "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
+                config.CASE_ROOT_DIR
+            )
+            self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
+        # verify model data root dir exists
+        if not os.path.isdir(self.MODEL_DATA_ROOT):
+            _log.critical("Data directory MODEL_DATA_ROOT = '%s' not found.",
+                self.MODEL_DATA_ROOT)
+            exit(1)
 
 class GfdlppDataManager(
     data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
     GCPFetchMixin, 
     data_manager.DataframeQueryDataSourceBase
 ):
-    _FileRegexClass = NotImplementedError()
-    _AttributesClass = NotImplementedError()
+    _FileRegexClass = PPTimeseriesDataFile
+    _AttributesClass = PPDataSourceAttributes
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
-    def parse_relative_path(self, subdir, filename):
-        rel_path = os.path.join(subdir, filename)
-        path_d = {
-            'case_name': self.case_name,
-            'remote_path': os.path.join(self.data_root_dir, rel_path),
-            'local_path': util.NOTSET
-        }
-        match = re.match(self._pp_ts_regex, rel_path)
-        if match:
-            md = match.groupdict()
-            md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
-            md = util.filter_dataclass(md, self.FileDataSet)
-            return self.FileDataSet(**md, **path_d)
-        # match failed, try static file regex instead
-        match = re.match(self._pp_static_regex, rel_path)
-        if match:
-            md = match.groupdict()
-            md['start_date'] = datelabel.FXDateMin
-            md['end_date'] = datelabel.FXDateMax
-            md['date_range'] = datelabel.FXDateRange
-            # TODO: fix this: static vars combined in one file;
-            # must extract them in preprocessor
-            md['name_in_model'] = util.NOTSET 
-            md = util.filter_dataclass(md, self.FileDataSet)
-            return self.FileDataSet(**md, **path_d)
-        raise ValueError("Can't parse {}, skipping.".format(rel_path))
+    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
+    _query_attrs_synonyms = {'name': 'variable'}
 
-    def subdirectory_filters(self):
-        return [self.component, 'ts', gfdl_util.frepp_freq(self.data_freq), 
-                gfdl_util.frepp_freq(self.chunk_freq)]
-                
+    daterange_col = "date_range"
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = tuple()
+    # Catalog columns whose values must be the same for each POD.
+    pod_expt_cols = ('component', )
+    # Catalog columns whose values must "be the same for each variable", ie are 
+    # irrelevant but must be constrained to a unique value.
+    var_expt_cols = ("chunk_freq", )
+
+    @property
+    def CATALOG_DIR(self):
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
+        return self.attrs.MODEL_DATA_ROOT
+
     @staticmethod
-    def _heuristic_component_tiebreaker(str_list):
-        """Determine experiment component(s) from heuristics.
+    def _filter_column(df, col_name, func, obj_name):
+        values = list(df[col_name].drop_duplicates())
+        if len(values) <= 1:
+            # unique value, no need to filter
+            return df
+        if msg is None:
+            msg = ""
+        filter_val = func(values)
+        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
+            col_name, filter_val, obj_name, values)
+        return df[df[col_name] == filter_val]
 
-        1. If we're passed multiple components, select those containing 'cmip'.
+    def _filter_column_min(self, df, obj_name, *col_names):
+        for c in col_names:
+            df = self._filter_column(df, c, min, obj_name=obj_name)
+        return df
 
-        2. If that selects multiple components, break the tie by selecting the 
+    def _filter_column_max(self, df, obj_name, *col_names):
+        for c in col_names:
+            df = self._filter_column(df, c, max, obj_name=obj_name)
+        return df
+
+    def resolve_expt(self, df, obj):
+        """Disambiguate experiment attributes that must be the same for all 
+        variables.
+        """
+        # no-op since no attributes in this category
+        return df
+
+    def resolve_pod_expt(self, df, obj):
+        """Disambiguate experiment attributes that must be the same for all 
+        variables for each POD:
+
+        - Select the model component name according to the following heuristics:
+            i) select component names containing 'cmip' (case-insensitive). ii)
+            if that selects multiple components, break the tie by selecting the 
             component with the fewest words (separated by '_'), or, failing that, 
             the shortest overall name.
-
-        Args:
-            str_list (:py:obj:`list` of :py:obj:`str`:): list of component names.
-
-        Returns: :py:obj:`str`: name of component that breaks the tie.
         """
-        def _heuristic_tiebreaker_sub(strs):
-            min_len = min(len(s.split('_')) for s in strs)
-            strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
-            if len(strs2) == 1:
-                return strs2[0]
+        def _heuristic_tiebreaker(str_list):
+            def _heuristic_tiebreaker_sub(strs):
+                min_len = min(len(s.split('_')) for s in strs)
+                strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
+                if len(strs2) == 1:
+                    return strs2[0]
+                else:
+                    return min(strs2, key=len)
+
+            cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+            if cmip_list:
+                return _heuristic_tiebreaker_sub(cmip_list)
             else:
-                return min(strs2, key=len)
+                return _heuristic_tiebreaker_sub(str_list)
 
-        cmip_list = [s for s in str_list if ('cmip' in s.lower())]
-        if cmip_list:
-            return _heuristic_tiebreaker_sub(cmip_list)
-        else:
-            return _heuristic_tiebreaker_sub(str_list)
+        df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
+        return df
 
-    def select_undetermined(self):
-        d_to_u = dict.fromkeys(self.data_keys)
-        for d_key in d_to_u:
-            d_to_u[d_key] = {f.to_UndeterminedKey() for f in self.data_files[d_key]}
-        choices = dict.fromkeys(self.data_keys)
-        cmpt_choices = choose.minimum_cover(
-            d_to_u,
-            op.attrgetter('component'),
-            self._heuristic_component_tiebreaker
-        )
-        for d_key, cmpt in iter(cmpt_choices.items()):
-            # take shortest chunk frequency (revisit?)
-            chunk_freq = min(u_key.chunk_freq for u_key in d_to_u[d_key] \
-                if u_key.component == cmpt)
-            choices[d_key] = self.UndeterminedKey(
-                component=cmpt, chunk_freq=str(chunk_freq))
-        return choices
+        # prefer regridded data
+        if any(df['regrid'] == 'r'):
+            df = df[df['regrid'] == 'r']
+        # if multiple regriddings, choose the lowest-numbered one
+        df = self._filter_column_min(df, obj.name, 'grid_number')
+        return df
+
+    def resolve_var_expt(self, df, obj):
+        """Disambiguate arbitrary experiment attributes on a per-variable basis:
+ 
+        - Take the shortest chunk_frequency, to minimize transferring data that's
+            outside of the query date range.
+        """
+        df = self._filter_column_min(df, obj.name, 'chunk_freq')
+        return df
 
 # ------------------------------------------------------------------------
 

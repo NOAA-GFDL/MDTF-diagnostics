@@ -221,6 +221,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 tolerance=_atol,
                 drop=False
             )
+            # rename translated var to reflect renaming we're going to do
+            # recall POD variable name env vars are set on this attribute
+            var.translation.name = var.name
             # rename dependent variable
             return ds.rename({tv_name: var.name})
         except KeyError:

@@ -83,29 +83,39 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         dt_start_upper = self.cast_to_cftime(dt_range.start.upper, cal)
         dt_end_lower = self.cast_to_cftime(dt_range.end.lower, cal)
         dt_end_upper = self.cast_to_cftime(dt_range.end.upper, cal)
+        t_start = t_coord.values[0]
+        t_end = t_coord.values[-1]
+        t_size = t_coord.size
 
-        _log.debug("Start date for %s: %s (%s, %s)", 
-            var.full_name, t_coord.values[0], dt_start_lower, dt_start_upper)
-        _log.debug("End date for %s: %s (%s, %s)", 
-            var.full_name, t_coord.values[-1], dt_end_lower, dt_end_upper)
-        if t_coord.values[0] > dt_start_upper:
-            err_str = (f"Error: dataset start ({t_coord.values[0]}) is after "
+        if t_start > dt_start_upper:
+            err_str = (f"Error: dataset start ({t_start}) is after "
                 f"requested date range start ({dt_start_upper}).")
             _log.error(err_str)
             raise IndexError(err_str)
-        if t_coord.values[-1] < dt_end_lower:
-            err_str = (f"Error: dataset end ({t_coord.values[-1]}) is before "
+        if t_end < dt_end_lower:
+            err_str = (f"Error: dataset end ({t_end}) is before "
                 f"requested date range end ({dt_end_lower}).")
             _log.error(err_str)
             raise IndexError(err_str)
-        
-        _log.info("Crop date range of %s from '%s -- %s' to '%s'.",
+
+        ds = ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
+        new_t = ds.cf.dim_axes(tv_name).get('T')
+        if t_size == new_t.size:
+            _log.info(("Requested dates for %s coincide with range of dataset "
+                "'%s -- %s'; leaving unmodified."),
                 var.full_name,
-                t_coord.values[0].strftime('%Y-%m-%d'), 
-                t_coord.values[-1].strftime('%Y-%m-%d'), 
-                dt_range
+                new_t.values[0].strftime('%Y-%m-%d'), 
+                new_t.values[-1].strftime('%Y-%m-%d'), 
             )
-        return ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
+        else:
+            _log.info("Crop date range of %s from '%s -- %s' to '%s -- %s'.",
+                    var.full_name,
+                    t_start.strftime('%Y-%m-%d'), 
+                    t_end.strftime('%Y-%m-%d'), 
+                    new_t.values[0].strftime('%Y-%m-%d'), 
+                    new_t.values[-1].strftime('%Y-%m-%d'), 
+                )
+        return ds
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a DataSet. Unit conversions of 
@@ -215,7 +225,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         except KeyError:
             # ds.sel failed; level wasn't present in coordinate axis
             raise KeyError((f"Z axis '{ds_z.name}' of {var.full_name} didn't "
-                f"provide requested level ({our_z.value} {our_z.units})."))
+                f"provide requested level ({our_z.value} {our_z.units}).\n"
+                f"(Axis values ({ds_z.units}): {ds_z.values})"))
         except Exception as exc:
             raise ValueError((f"Caught exception extracting {our_z.value} {our_z.units} "
                 f"level from '{ds_z.name}' coord of {var.full_name}.")) from exc

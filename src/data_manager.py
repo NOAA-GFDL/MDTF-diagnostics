@@ -818,11 +818,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         )
         var.remote_data = util.WormDict()
         for expt_key, group in expt_groups:
-            group = group.apply(self._check_group_daterange)
+            group = self._check_group_daterange(group)
             if group.empty:
                 _log.debug('Expt_key %s failed _check_group_daterange', expt_key)
                 continue
-            group = group.apply(self._query_group_hook)
+            group = self._query_group_hook(group)
             if group.empty:
                 _log.debug('Expt_key %s failed _query_group_hook', expt_key)
                 continue

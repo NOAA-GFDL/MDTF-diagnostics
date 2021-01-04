@@ -114,7 +114,7 @@ def conversion_factor(source_unit, dest_unit):
     (quantity in dest_units). 
     """
     source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
-    return cfunits.Units.conform(1.0, dest_unit, source_unit)
+    return cfunits.Units.conform(1.0, source_unit, dest_unit)
 
 def convert_scalar_coord(coord, dest_units):
     """Given scalar coordinate *coord*, return the appropriate scalar value in

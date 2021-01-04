@@ -785,6 +785,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         catalog_df = self.df
         for col_name, v in query_d.items():
             if isinstance(v, datelabel.DateRange):
+                if col_name not in catalog_df:
+                    # e.g., for sample model data where date_range not in catalog
+                    continue
                 row_sel = catalog_df.apply((lambda r: v in r[col_name]), axis=1)
                 catalog_df = catalog_df[row_sel]
 
@@ -1202,6 +1205,8 @@ class LocalFetchMixin(AbstractFetchMixin):
     Paths are returned unaltered, to be set as variable's local_data.
     """
     def fetch_dataset(self, var, paths):
+        if isinstance(paths, pd.Series):
+            paths = paths.to_list()
         if not util.is_iterable(paths):
             paths = (paths, )
         for path in paths:

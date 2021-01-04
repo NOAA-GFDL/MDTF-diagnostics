@@ -683,12 +683,6 @@ class DatasetParser():
         coordinates in *translated_var* (our expectation, based on the DataSource's
         naming convention) with attributes actually present in the Dataset *ds*.
         """
-        # .. note::
-        #    In all cases, attributes of *ds* are taken to be the "ground truth" 
-        #    and are never modified. If the conflict with *translated_var* is 
-        #    irreconcilable, an exception is raised, otherwise attributes on 
-        #    *translated_var* are modified to accurately describe *ds*.
-
         # check name, std_name, units on variable itself
         tv_name = translated_var.name # abbreviate
         self.check_names_and_units(translated_var, ds, tv_name)
@@ -737,6 +731,8 @@ class DatasetParser():
                 list(zip(our_names, our_axes)), list(zip(ds_names, ds_axes))
             )
         for coord in our_scalars:
+            if coord.axis not in ds[tv_name].cf.axes:
+                continue # already logged
             ds_coord_name = ds[tv_name].cf.axes[coord.axis]
             if ds_coord_name in ds:
                 if ds[ds_coord_name].size != 1:

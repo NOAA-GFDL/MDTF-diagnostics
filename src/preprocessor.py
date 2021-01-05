@@ -155,6 +155,38 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         _log.info("Converted units on %s.", var.full_name)
         return ds
 
+class RenameVariablesFunction(PreprocessorFunctionBase):
+    def process(self, var, ds):
+        tv = var.translation # abbreviate
+        rename_d = dict()
+        # rename var
+        if tv.name != var.name:
+            _log.debug("Rename '%s' variable in %s to '%s'.", 
+                tv.name, var.full_name, var.name)
+            rename_d[tv.name] = var.name
+            tv.name = var.name
+
+        # rename coords
+        for c in tv.dim_axes.values():
+            dest_c = var.dim_axes[c.axis]
+            if c.name != dest_c.name:
+                _log.debug("Rename %s axis of %s from '%s' to '%s'.", 
+                    c.axis, var.full_name, c.name, dest_c.name)
+                rename_d[c.name] = dest_c.name
+                c.name = dest_c.name
+        # TODO: bounds??
+
+        # rename scalar coords
+        for c in tv.scalar_coords:
+            if c.name in ds:
+                dest_c = var.axes[c.axis]
+                _log.debug("Rename %s scalar coordinate of %s from '%s' to '%s'.", 
+                    c.axis, var.full_name, c.name, dest_c.name)
+                rename_d[c.name] = dest_c.name
+                c.name = dest_c.name
+
+        return ds.rename(rename_d)
+
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a DataSet. Unit conversions of 
     pressure are handled by cfunits, but paramateric vertical coordinates are 
@@ -459,10 +491,15 @@ class SampleDataPreprocessor(SingleFilePreprocessor):
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
-    _functions = (CropDateRangeFunction, ConvertUnitsFunction)
+    _functions = (
+        CropDateRangeFunction, ConvertUnitsFunction, RenameVariablesFunction
+    )
 
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
     _file_preproc_functions = []
-    _functions = (CropDateRangeFunction, ConvertUnitsFunction, ExtractLevelFunction)
+    _functions = (
+        CropDateRangeFunction, ConvertUnitsFunction, 
+        RenameVariablesFunction, ExtractLevelFunction
+    )

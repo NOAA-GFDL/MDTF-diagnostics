@@ -18,7 +18,9 @@ def html_templating_dict(pod):
     config = core.ConfigManager()
     template = config.global_env_vars.copy()
     template.update(pod.pod_env_vars)
-    return {str(k): str(v) for k,v in template.items()}
+    d = {str(k): str(v) for k,v in template.items()}
+    for attr in ('name', 'long_name', 'description', 'convention', 'realm'):
+        d[attr] = str(getattr(pod, attr, ""))
 
 class HTMLSourceFileMixin():
     """Convienience method to define location of HTML templates in one place.

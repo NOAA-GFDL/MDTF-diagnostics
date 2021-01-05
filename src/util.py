@@ -438,6 +438,25 @@ def resolve_path(path, root_path="", env=None):
     assert os.path.isabs(root_path)
     return os.path.normpath(os.path.join(root_path, path))
 
+def is_subpath(path, *subpaths):
+    """Test if any of ``subpaths`` is contained within ``path``. See 
+    `https://stackoverflow.com/a/37095733`__.
+
+    Args:
+        path (:obj:`str`): path to resolve.
+        subpaths (:obj:`str`): one or more paths to test for inclusion relative 
+            to ``path``.
+
+    Returns: bool, True if any member of ``subpaths`` is contained in ``path``.
+    """
+    # resolve symlinks and convert to absolute paths
+    path = os.path.realpath(path)
+    subpaths = [os.path.realpath(p) for p in subpaths]
+    # Using the commonpath method on just the parent path regularizes the path 
+    # name in the same way as the comparison that deals with both paths
+    return any(os.path.commonpath([path]) == os.path.commonpath([path, p]) \
+        for p in subpaths)
+
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 

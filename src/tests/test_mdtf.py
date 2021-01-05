@@ -1,8 +1,7 @@
 import os
 import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
-from src.mdtf import MDTFFramework
-import src.configs as configs
+from src.core import MDTFFramework
 import src.util as util
 
 @unittest.skip("")

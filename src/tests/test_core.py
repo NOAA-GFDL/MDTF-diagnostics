@@ -21,13 +21,25 @@ class TestVariableTranslator(unittest.TestCase):
         # in the first test instead of being properly initialized
         tearDown_config_singletons()
 
+    _dummy_coords_d = {
+        "PLACEHOLDER_X": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+        "PLACEHOLDER_Y": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+        "PLACEHOLDER_Z": {
+        "standard_name": "air_pressure",
+        "units": "hPa",
+        "positive": "down",
+        "axis": "Z"
+        },
+        "PLACEHOLDER_T": {"axis": "T", "standard_name": "time", "units": "days"}
+    }
+
     def test_variabletranslator(self):
         temp = core.VariableTranslator()
         temp.add_convention({
-            'name':'not_CF', 'axes': {},
+            'name':'not_CF', 'coords': self._dummy_coords_d,
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "1"},
-                'PRECC': {"standard_name": "prc_var", "units": "1"}
+                'PRECT': {"standard_name": "pr_var", "units": "1", "ndim": 3},
+                'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         })
         self.assertEqual(temp.to_CF_name('not_CF', 'PRECT'), 'pr_var')
@@ -36,10 +48,10 @@ class TestVariableTranslator(unittest.TestCase):
     def test_variabletranslator_no_key(self):
         temp = core.VariableTranslator()
         temp.add_convention({
-            'name':'not_CF', 'axes': {},
+            'name':'not_CF', 'coords': self._dummy_coords_d,
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "1"},
-                'PRECC': {"standard_name": "prc_var", "units": "1"}
+                'PRECT': {"standard_name": "pr_var", "units": "1", "ndim": 3},
+                'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         })
         self.assertRaises(KeyError, temp.to_CF_name, 'B', 'PRECT')
@@ -51,11 +63,11 @@ class TestVariableTranslator(unittest.TestCase):
         # create multiple entries when multiple models specified
         temp = core.VariableTranslator()
         temp.add_convention({
-            'name':'not_CF', 'axes': {},
+            'name':'not_CF', 'coords': self._dummy_coords_d,
             'models': ['A', 'B'],
             'variables':{
-                'PRECT': {"standard_name": "pr_var", "units": "1"},
-                'PRECC': {"standard_name": "prc_var", "units": "1"}
+                'PRECT': {"standard_name": "pr_var", "units": "1", "ndim": 3},
+                'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         })
         self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')

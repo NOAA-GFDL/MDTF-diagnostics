@@ -4,8 +4,9 @@ import unittest
 import subprocess
 from src.tests import shared_test_utils as shared
 import sites.NOAA_GFDL.gfdl as gfdl
+import sites.NOAA_GFDL.gfdl_util as gfdl_util
 import src.datelabel as dt
-from src.mdtf import MDTFFramework
+from src.core import MDTFFramework
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
@@ -43,13 +44,13 @@ class TestModuleManager(unittest.TestCase):
     test_mod_name = 'latexdiff/1.2.0' # least likely to cause side effects?
 
     def setUp(self):
-        _ = gfdl.ModuleManager()
+        _ = gfdl_util.ModuleManager()
 
     def tearDown(self):
         # call _reset method clearing ModuleManager for unit testing, 
         # otherwise the second, third, .. tests will use the instance created 
         # in the first test instead of being properly initialized
-        temp = gfdl.ModuleManager()
+        temp = gfdl_util.ModuleManager()
         temp.revert_state()
         temp._reset()
 
@@ -79,18 +80,18 @@ class TestModuleManager(unittest.TestCase):
             stderr=subprocess.STDOUT).splitlines()
         del list1[0]
         list1 = set([s.replace('(default)','') for s in list1])
-        modMgr = gfdl.ModuleManager()
+        modMgr = gfdl_util.ModuleManager()
         list2 = set(modMgr._list())
         self.assertEqual(list1, list2)
 
     def test_module_load(self):
-        modMgr = gfdl.ModuleManager()
+        modMgr = gfdl_util.ModuleManager()
         modMgr.load(self.test_mod_name)
         mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
 
     def test_module_unload(self):
-        modMgr = gfdl.ModuleManager()
+        modMgr = gfdl_util.ModuleManager()
         modMgr.load(self.test_mod_name)
         mod_list = modMgr._list()
         self.assertIn(self.test_mod_name, mod_list)
@@ -123,7 +124,7 @@ class TestFreppArgParsing(unittest.TestCase):
             set foo5 = # comment
             set foo6 = not a #comment
         """
-        d = gfdl.parse_frepp_stub(frepp_stub)
+        d = gfdl_util.parse_frepp_stub(frepp_stub)
         self.assertEqual(d['foo1'], 'bar')
         self.assertEqual(d['foo2'], '/complicated/path_name/1-2.3')
         self.assertEqual(d['foo3'], '"./relative path/with spaces.txt"')
@@ -132,7 +133,7 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(d['foo6'], 'not a #comment')
 
     def test_parse_frepp_stub_substitution(self):
-        d = gfdl.parse_frepp_stub(self.frepp_stub)
+        d = gfdl_util.parse_frepp_stub(self.frepp_stub)
         self.assertNotIn('in_data_dir', d)
         self.assertEqual(d['OUTPUT_DIR'], '/foo/bar')
         self.assertEqual(d['CASENAME'], 'baz.r1i1p1f1')
@@ -141,13 +142,13 @@ class TestFreppArgParsing(unittest.TestCase):
         self.assertEqual(d['make_variab_tar'], True)
 
     def test_parse_frepp_stub_mode(self):
-        d = gfdl.parse_frepp_stub(self.frepp_stub)
+        d = gfdl_util.parse_frepp_stub(self.frepp_stub)
         self.assertEqual(d['frepp'], True)
 
     @unittest.skip("")
     def test_parse_mdtf_args_frepp_overwrite(self):
         # overwrite defaults
-        d = gfdl.parse_frepp_stub(self.frepp_stub)
+        d = gfdl_util.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True}
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
@@ -159,7 +160,7 @@ class TestFreppArgParsing(unittest.TestCase):
     @unittest.skip("")
     def test_parse_mdtf_args_frepp_overwrite_both(self):
         # overwrite defaults and command-line
-        d = gfdl.parse_frepp_stub(self.frepp_stub)
+        d = gfdl_util.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True, 'OUTPUT_DIR':'/X', 'E':'Y'}
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
@@ -171,7 +172,7 @@ class TestFreppArgParsing(unittest.TestCase):
     @unittest.skip("")
     def test_parse_mdtf_args_frepp_caselist(self):
         # overwrite defaults and command-line
-        d = gfdl.parse_frepp_stub(self.frepp_stub)
+        d = gfdl_util.parse_frepp_stub(self.frepp_stub)
         args = {'frepp': True}        
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
@@ -193,6 +194,7 @@ class _DummyGfdlppDataManager(gfdl.GfdlppDataManager):
         self.data_freq = data_freq
         self.chunk_freq = chunk_freq
 
+@unittest.skip("")
 class TestPPPathParsing(unittest.TestCase):
     def test_ts_parse(self):
         dm = _DummyGfdlppDataManager()

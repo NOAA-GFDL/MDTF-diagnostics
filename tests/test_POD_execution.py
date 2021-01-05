@@ -3,7 +3,7 @@ import sys
 import unittest
 import subprocess
 from src.util import write_json
-from tests import shared_test_utils as shared
+from src.tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)

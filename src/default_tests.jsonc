@@ -69,7 +69,7 @@
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory. Defaults to working directory if blank.
+  // Working directory. Defaults to OUTPUT_DIR if blank.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
@@ -93,9 +93,6 @@
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
-
-  // Method used to preprocess data.
-  "preprocessor": "MDTFData",
 
   // Method used to manage dependencies.
   "environment_manager": "Conda",

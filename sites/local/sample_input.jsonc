@@ -94,9 +94,6 @@
   // Method used to fetch model data.
   "data_manager": "Local_File",
 
-  // Method used to preprocess data.
-  "preprocessor": "MDTFData",
-
   // Method used to manage dependencies.
   "environment_manager": "Conda",
 

@@ -101,19 +101,58 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         new_t = ds.cf.dim_axes(tv_name).get('T')
         if t_size == new_t.size:
             _log.info(("Requested dates for %s coincide with range of dataset "
-                "'%s -- %s'; leaving unmodified."),
+                "'%s -- %s'; left unmodified."),
                 var.full_name,
                 new_t.values[0].strftime('%Y-%m-%d'), 
                 new_t.values[-1].strftime('%Y-%m-%d'), 
             )
         else:
-            _log.info("Crop date range of %s from '%s -- %s' to '%s -- %s'.",
+            _log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
                     var.full_name,
                     t_start.strftime('%Y-%m-%d'), 
                     t_end.strftime('%Y-%m-%d'), 
                     new_t.values[0].strftime('%Y-%m-%d'), 
                     new_t.values[-1].strftime('%Y-%m-%d'), 
                 )
+        return ds
+
+class ConvertUnitsFunction(PreprocessorFunctionBase):
+    """Convert units on the dependent variable of var, as well as its
+    (non-time) dimension coordinate axes, from what's specified in the dataset
+    attributes to what's given in the VarlistEntry.
+    """
+    def process(self, var, ds):
+        """Convert units on the dependent variable and coordinates of var from 
+        what's specified in the dataset attributes to what's given in the 
+        VarlistEntry. Units attributes are updated on the translated VarlistEntry.
+        """
+        tv = var.translation # abbreviate
+        # convert dependent variable
+        ds[tv.name] = util.convert_dataarray(ds[tv.name], var.units, allow_h2o=True)
+        tv.units = var.units
+
+        # convert coordinate dimensions and bounds
+        for c in tv.dim_axes.values():
+            if c.axis == 'T':
+                continue # handle calendar stuff etc. in another function
+            dest_c = var.dim_axes[c.axis]
+            ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units, 
+                allow_h2o=False)
+            if c.bounds and c.bounds in ds:
+                ds[c.bounds] = util.convert_dataarray(ds[c.bounds], dest_c.units, 
+                    allow_h2o=False)
+            c.units = dest_c.units
+
+        # convert scalar coordinates
+        for c in tv.scalar_coords:
+            if c.name in ds:
+                dest_c = var.axes[c.axis]
+                ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units, 
+                    allow_h2o=False)
+                c.units = dest_c.units
+                c.value = ds[c.name].item()
+
+        _log.info("Converted units on %s.", var.full_name)
         return ds
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
@@ -212,14 +251,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
         try:
             ds_z_value = util.convert_scalar_coord(our_z, ds_z.units)
-            _log.info("Extracting %s %s level from Z axis ('%s') of %s.", 
-                ds_z_value, ds_z.units, ds_z.name, var.full_name)
             ds = ds.sel(
                 {ds_z.name: ds_z_value},
                 method='nearest', # Allow for floating point roundoff in axis values
                 tolerance=_atol,
                 drop=False
             )
+            _log.info("Extracted %s %s level from Z axis ('%s') of %s.", 
+                ds_z_value, ds_z.units, ds_z.name, var.full_name)
             # rename translated var to reflect renaming we're going to do
             # recall POD variable name env vars are set on this attribute
             var.translation.name = var.name
@@ -420,10 +459,10 @@ class SampleDataPreprocessor(SingleFilePreprocessor):
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
-    _functions = (CropDateRangeFunction, )
+    _functions = (CropDateRangeFunction, ConvertUnitsFunction)
 
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     """A :class:`MDTFPreprocessorBase` for general, multi-file data.
     """
     _file_preproc_functions = []
-    _functions = (CropDateRangeFunction, ExtractLevelFunction)
+    _functions = (CropDateRangeFunction, ConvertUnitsFunction, ExtractLevelFunction)

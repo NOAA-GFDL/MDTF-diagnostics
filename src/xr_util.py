@@ -595,6 +595,7 @@ class DatasetParser():
                     'bounds', coord.name, bounds_name)
                 coord.bounds = bounds_name
             except KeyError:
+                coord.bounds = None
                 continue
         for c_name in ds[tv_name].dims:
             if ds[c_name].size == 1:

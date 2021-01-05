@@ -7,11 +7,6 @@ from . import exceptions
 import logging
 _log = logging.getLogger(__name__)
 
-# Used in overridden methods in Units, below, to attempt to convert eg precip 
-# flux to precip mass flux. 
-# Value is incorrect but matches convention for this conversion.
-_water_density = cfunits.Units('1000.0 kg m-3')
-
 class Units(cfunits.Units):
     """Wrap `Units <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__
     class of cfunits to isolate dependence of the framework on cfunits to this
@@ -25,17 +20,30 @@ class Units(cfunits.Units):
 
         Returns equivalent Units object corresponding to *second* argument, or None.
         """
-        _method = super(Units, from_units).equivalent
-        bool_ = _method(to_units, verbose=verbose)
+        def _make_quantity(u):
+            # workaround for cfunits implementation of arithmetic
+            if not str(u)[0].isdigit():
+                return cls('1.0 '+ str(u))
+            return u
+
+        bool_ = super(Units, from_units).equivalent(to_units, verbose=verbose)
         if bool_ or not allow_h2o:
             return (to_units if bool_ else None)
         else:
             # HACK: throw in factor of _water_density to attempt to get unit
-            # agreement. We assume calling funciton will have raised a warning
+            # agreement. We assume calling function will have raised a warning
             # that we're doing this.
-            if _method(to_units * _water_density, verbose=False):
+
+            # Value is incorrect but matches convention for this conversion.
+            _water_density = cls('1000.0 kg m-3')
+
+            from_units = _make_quantity(from_units)
+            to_units = _make_quantity(to_units)
+            _method = super(Units, from_units).equivalent
+
+            if _method(from_units, to_units * _water_density):
                 return to_units * _water_density
-            if _method(to_units / _water_density, verbose=False):
+            if _method(from_units, to_units / _water_density):
                 return to_units / _water_density
             return None
 
@@ -169,6 +177,11 @@ def convert_dataarray(da, dest_unit, allow_h2o=False):
     xarray DataArray, updating its units attribute.
     """
     assert 'units' in da.attrs
+    if units_equal(da.attrs['units'], dest_unit):
+        _log.debug(("Source, dest units of '%s' (%s) identical (%s); no conversion "
+            "done."), da.name, da.standard_name, dest_unit)
+        return da
+
     try:
         source_unit, dest_unit = to_equivalent_units(
             da.attrs['units'], dest_unit, allow_h2o=False)

@@ -7,12 +7,55 @@ from . import exceptions
 import logging
 _log = logging.getLogger(__name__)
 
+# Used in overridden methods in Units, below, to attempt to convert eg precip 
+# flux to precip mass flux. 
+# Value is incorrect but matches convention for this conversion.
+_water_density = cfunits.Units('1000.0 kg m-3')
+
 class Units(cfunits.Units):
     """Wrap `Units <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__
     class of cfunits to isolate dependence of the framework on cfunits to this
     module.
     """
-    pass
+    @classmethod
+    def _h2o_equivalent_unit(cls, from_units, to_units, verbose=False, allow_h2o=False):
+        """Extend *equivalent* method on parent class to allow equivalence up to
+        the density of water; eg. if allow_h2o=True, 'kg m-2 s-1' and 'mm day-1'
+        will be reported as equivalent.
+
+        Returns equivalent Units object corresponding to *second* argument, or None.
+        """
+        _method = super(Units, from_units).equivalent
+        bool_ = _method(to_units, verbose=verbose)
+        if bool_ or not allow_h2o:
+            return (to_units if bool_ else None)
+        else:
+            # HACK: throw in factor of _water_density to attempt to get unit
+            # agreement. We assume calling funciton will have raised a warning
+            # that we're doing this.
+            if _method(to_units * _water_density, verbose=False):
+                return to_units * _water_density
+            if _method(to_units / _water_density, verbose=False):
+                return to_units / _water_density
+            return None
+
+    def equivalent(self, other, verbose=False, allow_h2o=False):
+        """Extend *equivalent* method on parent class to allow equivalence up to
+        the density of water; eg. if allow_h2o=True, 'kg m-2 s-1' and 'mm day-1'
+        will be reported as equivalent.
+        """
+        return (self._h2o_equivalent_unit(self, other, 
+            verbose=verbose, allow_h2o=allow_h2o) is not None)
+
+    @classmethod
+    def conform(cls, x, from_units, to_units, inplace=False, allow_h2o=False):
+        """Extend *conform* method on parent class to allow equivalence up to
+        the density of water; eg. if allow_h2o=True, converting '1.0 kg m-2 s-1' 
+        to 'mm day-1' will not raise a ValueError and instead return 86400.0.
+        """
+        equiv_to_units = cls._h2o_equivalent_unit(from_units, to_units, 
+            verbose=False, allow_h2o=allow_h2o)
+        return super(Units, cls).conform(x, from_units, equiv_to_units, inplace=inplace)
 
 def to_cfunits(*args):
     """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units 
@@ -24,11 +67,11 @@ def to_cfunits(*args):
         if isinstance(u, tuple):
             # (quantity, unit) tuple
             assert len(u) == 2
-            u = u[0] * cfunits.Units(u[1])
-        if not isinstance(u, cfunits.Units):
-            u = cfunits.Units(u)
+            u = u[0] * Units(u[1])
+        if not isinstance(u, Units):
+            u = Units(u)
         if u.isreftime:
-            return cfunits.Units(u._units_since_reftime)
+            return Units(u._units_since_reftime)
         return u
 
     if len(args) == 1:
@@ -36,36 +79,39 @@ def to_cfunits(*args):
     else:
         return [_coerce(arg) for arg in args]
 
-def _coerce_equivalent_units(*args):
+def to_equivalent_units(*args, allow_h2o=False):
     """Same as to_cfunits, but raise TypeError if units of all
     quantities not equivalent.
     """
     args = to_cfunits(*args)
-    ref_unit = args.pop()
+    ref_unit = args.pop() # last entry in list
+    new_args = []
     for unit in args:
-        if not ref_unit.equivalent(unit):
-            raise exceptions.UnitsError((f"Units {repr(ref_unit)} and "
-                f"{repr(unit)} are inequivalent."))
-    args.append(ref_unit)
-    return args
+        new_unit = Units._h2o_equivalent_unit(ref_unit, unit, allow_h2o=allow_h2o)
+        if new_unit is None:
+            raise TypeError((f"Units {repr(ref_unit)} and {repr(unit)} are "
+                "inequivalent."))
+        new_args.append(new_unit)
+    new_args.append(ref_unit)
+    return new_args
 
 def relative_tol(x, y):
     """HACK to return max(|x-y|/x, |x-y|/y) for unit-ful quantities x,y. 
     Vulnerable to underflow in principle.
     """
-    x, y = _coerce_equivalent_units(x,y)
-    tol_1 = cfunits.Units.conform(1.0, x, y) # = float(x/y)
-    tol_2 = cfunits.Units.conform(1.0, y, x) # = float(y/x)
+    x, y = to_equivalent_units(x,y)
+    tol_1 = Units.conform(1.0, x, y) # = float(x/y)
+    tol_2 = Units.conform(1.0, y, x) # = float(y/x)
     return max(abs(tol_1 - 1.0), abs(tol_2 - 1.0))
 
-def units_equivalent(*args):
+def units_equivalent(*args, allow_h2o=False):
     """Returns True if and only if all units in arguments are equivalent
     (represent the same physical quantity, up to a multiplicative conversion 
     factor.)
     """
     args = to_cfunits(*args)
     ref_unit = args.pop()
-    return all(ref_unit.equivalent(unit) for unit in args)
+    return all(ref_unit.equivalent(unit, allow_h2o=allow_h2o) for unit in args)
 
 def units_equal(*args, rtol=None):
     """Returns True if and only if all quantities in arguments are strictly equal
@@ -89,19 +135,14 @@ def units_equal(*args, rtol=None):
                 return False # inequivalent units
         return True
 
-def conversion_factor(source_unit, dest_unit):
+def conversion_factor(source_unit, dest_unit, allow_h2o=False):
     """Defined so that (conversion factor) * (quantity in source_units) = 
     (quantity in dest_units). 
     """
-    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
-    return cfunits.Units.conform(1.0, source_unit, dest_unit)
-
-def convert_array(array, source_unit, dest_unit):
-    """Wrapper for cfunits.conform() that does unit conversion in-place on a
-    numpy array.
-    """
-    source_unit, dest_unit = _coerce_equivalent_units(source_unit, dest_unit)
-    cfunits.Units.conform(array, source_unit, dest_unit, inplace=True)
+    source_unit, dest_unit = to_equivalent_units(
+        source_unit, dest_unit, allow_h2o=allow_h2o
+    )
+    return Units.conform(1.0, source_unit, dest_unit, allow_h2o=allow_h2o)
 
 # --------------------------------------------------------------------
 
@@ -122,3 +163,27 @@ def convert_scalar_coord(coord, dest_units):
             coord.value, coord.units, coord.axis, coord.name)
         dest_value = coord.value
     return dest_value
+
+def convert_dataarray(da, dest_unit, allow_h2o=False):
+    """Wrapper for cfunits.conform() that does unit conversion in-place on an
+    xarray DataArray, updating its units attribute.
+    """
+    assert 'units' in da.attrs
+    try:
+        source_unit, dest_unit = to_equivalent_units(
+            da.attrs['units'], dest_unit, allow_h2o=False)
+    except TypeError as exc:
+        if not allow_h2o:
+            raise exc
+        # modification is done on the first unit
+        source_unit, dest_unit = to_equivalent_units(
+            da.attrs['units'], dest_unit, allow_h2o=True)
+        _log.warning(("Assumed implicit factor of water density in units for '%s' "
+            "(%s): given %s, assuming %s."), da.name, da.standard_name, 
+            da.attrs['units'], source_unit)
+
+    _log.debug("Convert units of '%s' (%s) from '%s' to '%s'.", 
+        da.name, da.standard_name, source_unit, dest_unit)
+    Units.conform(da.values, source_unit, dest_unit, inplace=True, allow_h2o=False)
+    da.attrs['units'] = str(dest_unit)
+    return da

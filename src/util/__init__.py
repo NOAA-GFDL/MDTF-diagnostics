@@ -28,6 +28,6 @@ from .processes import (
 )
 from .units import (
     Units,
-    to_cfunits, relative_tol, units_equivalent, units_equal, conversion_factor,
-    convert_array, convert_scalar_coord
+    to_cfunits, to_equivalent_units, units_equivalent, units_equal, 
+    conversion_factor, convert_scalar_coord, convert_dataarray
 )

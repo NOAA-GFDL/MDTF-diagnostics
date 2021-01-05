@@ -35,29 +35,29 @@
     "time": {"standard_name": "time"}
   },
   "varlist": {
-    "rlut": {
+    "FLUT": {
       "standard_name": "toa_outgoing_longwave_flux",
       "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
-    "pr": {
+    "PRECT": {
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1", //units?
       "dimensions": ["time", "lat", "lon"]
     },
-    "omega500": {
+    "OMEGA500": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 500}
     },
-    "u200": {
+    "U200": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
     },
-    "u850": {
+    "U850": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],

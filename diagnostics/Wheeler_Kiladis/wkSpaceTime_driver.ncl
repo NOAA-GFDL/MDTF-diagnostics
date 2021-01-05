@@ -79,18 +79,30 @@ print("In wkSpaceTime_driver")
         i2 = i
      end if
   end do 
-  delete(f)
+  ; delete(f)
 
   spd = tointeger(1.0/(time(1)-time(0)))
 
-; get subset of variable
+; ; get subset of variable
 
-  x=getVarSlice( fili, varName, level, latS, latN, lonL, lonR, tstride, i1, i2)
+;   x=getVarSlice( fili, varName, level, latS, latN, lonL, lonR, tstride, i1, i2)
 
-  if(varName.eq.getenv("pr_var")) then
-    conversion_factor = tofloat(getenv("pr_conversion_factor"))
-    x = x*conversion_factor*0.001
-  end if
+;   if(varName.eq.getenv("pr_var")) then
+;     conversion_factor = tofloat(getenv("pr_conversion_factor"))
+;     x = x*conversion_factor*0.001
+;   end if
+
+x = f->$varName$(i1:i2,{latS:latN},{lonL:lonR})
+
+    if (isatt(x,"_FillValue")) then
+       nMsg = num(ismissing(x))
+       if (nMsg.gt.0) then
+           print("nMsg="+nMsg+"  User must preprocess to remove _FillValue")
+           print("               FFTs do not allow missing values!!       ")
+           ; exit
+       end if
+       delete(x@_FillValue)     ; avoid warning messages from fft
+   end if
 ;-------------------------------------------------------------------
 ; make sure that "x" has full days of data and update spd to reflect
 ; any user specified stride for time

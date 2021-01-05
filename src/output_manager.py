@@ -21,6 +21,7 @@ def html_templating_dict(pod):
     d = {str(k): str(v) for k,v in template.items()}
     for attr in ('name', 'long_name', 'description', 'convention', 'realm'):
         d[attr] = str(getattr(pod, attr, ""))
+    return d
 
 class HTMLSourceFileMixin():
     """Convienience method to define location of HTML templates in one place.

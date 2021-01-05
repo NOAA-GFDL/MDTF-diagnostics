@@ -137,6 +137,8 @@ else
     echo "conda activate ${_CONDA_ENV_ROOT}/_MDTF_base" >> "$_CONDA_WRAPPER"
 fi
 echo "/usr/bin/env python -m src.mdtf \"\$@\"" >> "$_CONDA_WRAPPER"
+echo "exit_code=\$?" >> "$_CONDA_WRAPPER"
 echo "popd > /dev/null" >> "$_CONDA_WRAPPER"
+echo "exit \$exit_code" >> "$_CONDA_WRAPPER"
 chmod +x "$_CONDA_WRAPPER"
 echo "Created MDTF wrapper script at ${_CONDA_WRAPPER}"

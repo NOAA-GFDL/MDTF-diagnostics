@@ -176,27 +176,31 @@ def convert_dataarray(da, dest_unit, allow_h2o=False):
     """Wrapper for cfunits.conform() that does unit conversion in-place on an
     xarray DataArray, updating its units attribute.
     """
-    assert 'units' in da.attrs
-    if units_equal(da.attrs['units'], dest_unit):
-        _log.debug(("Source, dest units of '%s' (%s) identical (%s); no conversion "
-            "done."), da.name, da.standard_name, dest_unit)
+    da_unit = da.attrs.get('units', "")
+    assert da_unit
+    if 'standard_name' in da.attrs:
+        std_name = f" ({da.attrs['standard_name']})"
+    else:
+        std_name = ""
+    if units_equal(da_unit, dest_unit):
+        _log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
+            "done."), da.name, std_name, dest_unit)
         return da
 
     try:
         source_unit, dest_unit = to_equivalent_units(
-            da.attrs['units'], dest_unit, allow_h2o=False)
+            da_unit, dest_unit, allow_h2o=False)
     except TypeError as exc:
         if not allow_h2o:
             raise exc
         # modification is done on the first unit
         source_unit, dest_unit = to_equivalent_units(
-            da.attrs['units'], dest_unit, allow_h2o=True)
-        _log.warning(("Assumed implicit factor of water density in units for '%s' "
-            "(%s): given %s, assuming %s."), da.name, da.standard_name, 
-            da.attrs['units'], source_unit)
+            da_unit, dest_unit, allow_h2o=True)
+        _log.warning(("Assumed implicit factor of water density in units for '%s'%s: "
+            "given %s, assuming %s."), da.name, std_name, da_unit, source_unit)
 
-    _log.debug("Convert units of '%s' (%s) from '%s' to '%s'.", 
-        da.name, da.standard_name, source_unit, dest_unit)
+    _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
+        da.name, std_name, source_unit, dest_unit)
     Units.conform(da.values, source_unit, dest_unit, inplace=True, allow_h2o=False)
     da.attrs['units'] = str(dest_unit)
     return da

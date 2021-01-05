@@ -135,7 +135,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         for c in tv.dim_axes.values():
             if c.axis == 'T':
                 continue # handle calendar stuff etc. in another function
-            dest_c = var.dim_axes[c.axis]
+            dest_c = var.axes[c.axis]
             ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units, 
                 allow_h2o=False)
             if c.bounds and c.bounds in ds:
@@ -168,7 +168,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 
         # rename coords
         for c in tv.dim_axes.values():
-            dest_c = var.dim_axes[c.axis]
+            dest_c = var.axes[c.axis]
             if c.name != dest_c.name:
                 _log.debug("Rename %s axis of %s from '%s' to '%s'.", 
                     c.axis, var.full_name, c.name, dest_c.name)
@@ -501,5 +501,5 @@ class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     _file_preproc_functions = []
     _functions = (
         CropDateRangeFunction, ConvertUnitsFunction, 
-        RenameVariablesFunction, ExtractLevelFunction
+        ExtractLevelFunction, RenameVariablesFunction
     )

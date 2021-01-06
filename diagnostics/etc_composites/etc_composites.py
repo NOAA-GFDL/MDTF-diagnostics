@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr 
 import pandas as pd
 import os 
+import glob
 import matplotlib.pyplot as plt 
 import netCDF4 as nc
 from scipy import interpolate
@@ -12,6 +13,22 @@ sys.path.append(os.environ['POD_HOME']+'/util')
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
 os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
 import run_tracker_setup 
+
+##################################
+###### Running Cython
+##################################
+cwd = os.getcwd()
+if (os.environ['RUN_MCMS'] == 'True'):
+  print('Running the cythonize code...')
+  
+  so_files = ['g2l', 'gcd', 'rhumb_line_nav']
+  for i_so_file in so_files: 
+    cmd = f"cd {os.environ['POD_HOME']}/util/tracker; python setup_{i_so_file}_v4.py build_ext --inplace"
+    os.system(cmd)
+    output_file = glob.glob(f"{os.environ['POD_HOME']}/util/tracker/{i_so_file}_v4.*.so")
+    cmd = f"mv {output_file[0]} {os.environ['POD_HOME']}/util/tracker/{i_so_file}_v4.so; cd {cwd}"
+    os.system(cmd)
+
 
 ##################################
 ###### Function to plot composites

@@ -11,3 +11,4 @@ dependencies:
   - numpy
   - cartopy
   - pandas
+  - Cython

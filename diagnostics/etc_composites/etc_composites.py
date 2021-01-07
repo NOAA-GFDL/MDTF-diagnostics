@@ -13,6 +13,7 @@ sys.path.append(os.environ['POD_HOME']+'/util')
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
 os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
 import run_tracker_setup 
+import defines
 
 ##################################
 ###### Running Cython
@@ -43,6 +44,85 @@ def plot_area_fig(x,y,data,title,out_file):
   plt.xlabel('Distance [km]')
   plt.savefig(out_file)
   plt.close('all')
+
+def plot_empty(out_file):
+  plt.figure()
+  plt.plot(0, 0, 'w.')
+  plt.text(0, 0, 'Run Composites part of the POD for this Figure!', va='center', ha='center')
+  plt.xticks([])
+  plt.yticks([])
+  plt.savefig(out_file)
+  plt.close('all')
+
+def create_empty_figs():
+
+  print('Creating Empty Figures...')
+
+  # Creating empty figures
+  for hemis in defines.composite_hem_list: 
+    for var in defines.composite_var_list:
+      for season in defines.composite_season_list:
+        for lm_type in ['land', 'ocean']:
+          out_file = os.path.join(defines.model_images_folder, f"{os.environ['CASENAME']}_area_{var}_{hemis}_{lm_type}_{season.upper()}.png")
+          plot_empty(out_file)
+
+  # Plotting empty obs figures
+  out_file = f"{os.environ['WK_DIR']}/obs/diff_merra_erai_prw_SH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  # SH
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_modis_cld_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_pw_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_omega_SH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_uv10_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_w500_SH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  # NH
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_modis_cld_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_pw_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_omega_NH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_uv10_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_w500_NH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  # Plotting empty diff plots 
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_w500_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_uv10_SH_ocean_WARM.png"
+  plot_empty(out_file)
+
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_w500_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_uv10_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  
 
 ##################################
 ###### Main Code
@@ -331,7 +411,9 @@ else:
 cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])
 os.system(cmd)
 
-if (os.environ['RUN_COMPOSITES'] == 'True'): 
+if (os.environ['RUN_COMPOSITES'] == 'False'): 
+  create_empty_figs()
+else:
   print('Running the Composites Code and creating the figures...')
 
   # Running the composites code

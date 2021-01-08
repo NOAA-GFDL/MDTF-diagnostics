@@ -39,14 +39,11 @@ def generate_R_plots(RPlotFile):
 
     return 0
 
-if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
+if os.path.isfile(os.environ["MRSOS_FILE"]):
     print("monthly soil moisture file found")
 
-#if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
-#      print("monthly soil moisture file found")
-
-#if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["evspsbl_var"]+".mon.nc"):
-#      print("monthly evapotranspiration file found")
+if os.path.isfile(os.environ["EVSPSBL_FILE"]):
+    print("monthly evapotranspiration file found")
 
     print("computing SM-ET coupling")
 

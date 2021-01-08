@@ -238,33 +238,61 @@ def bump_version(path, new_v=None, extra_dirs=None):
 def strip_comments(str_, delimiter=None):
     # would be better to use shlex, but that doesn't support multi-character
     # comment delimiters like '//'
+    ESCAPED_QUOTE_PLACEHOLDER = '\v' # no one uses vertical tab
+    
     if not delimiter:
         return str_
-    s = str_.splitlines()
-    for i in list(range(len(s))):
-        if s[i].startswith(delimiter):
-            s[i] = ''
+    lines = str_.splitlines()
+    for i in range(len(lines)):
+        # get rid of lines starting with delimiter
+        if lines[i].startswith(delimiter):
+            lines[i] = ''
             continue
+        # handle delimiters midway through a line:
         # If delimiter appears quoted in a string, don't want to treat it as
         # a comment. So for each occurrence of delimiter, count number of 
         # "s to its left and only truncate when that's an even number.
-        # TODO: handle ' as well as ", for non-JSON applications
-        s_parts = s[i].split(delimiter)
-        s_counts = [ss.count('"') for ss in s_parts]
+        # First we get rid of \-escaped single "s.
+        replaced_line = lines[i].replace('\\\"', ESCAPED_QUOTE_PLACEHOLDER)
+        line_parts = replaced_line.split(delimiter)
+        quote_counts = [s.count('"') for s in line_parts]
         j = 1
-        while sum(s_counts[:j]) % 2 != 0:
+        while sum(quote_counts[:j]) % 2 != 0:
+            if j >= len(quote_counts):
+                raise ValueError(f"Couldn't parse line {i+1} of string.")
             j += 1
-        s[i] = delimiter.join(s_parts[:j])
+        replaced_line = delimiter.join(line_parts[:j])
+        lines[i] = replaced_line.replace(ESCAPED_QUOTE_PLACEHOLDER, '\\\"')
+    # make lookup table of correct line numbers, taking into account lines we
+    # dropped
+    line_nos = [i for i, s in enumerate(lines) if (s and not s.isspace())]
     # join lines, stripping blank lines
-    return '\n'.join([ss for ss in s if (ss and not ss.isspace())])
+    new_str = '\n'.join([s for s in lines if (s and not s.isspace())])
+    return (new_str, line_nos)
 
 def parse_json(str_):
-    str_ = strip_comments(str_, delimiter= '//') # JSONC quasi-standard
+    def _pos_from_lc(lineno, colno, str_):
+        # fix line number, since we stripped commented-out lines. JSONDecodeError 
+        # computes line/col no. in error message from character position in string.
+        lines = str_.splitlines()
+        return (colno - 1) + sum( (len(line) + 1) for line in lines[:lineno])
+
+    (strip_str, line_nos) = strip_comments(str_, delimiter= '//')
     try:
-        parsed_json = json.loads(str_, object_pairs_hook=collections.OrderedDict)
-    except UnicodeDecodeError:
-        _log.critical(f'{str_} contains non-ascii characters. Exiting.')
-        exit(1)
+        parsed_json = json.loads(strip_str, 
+            object_pairs_hook=collections.OrderedDict)
+    except json.JSONDecodeError as exc:
+        # fix reported line number, since we stripped commented-out lines. 
+        assert exc.lineno <= len(line_nos)
+        raise json.JSONDecodeError(
+            msg=exc.msg, doc=str_, 
+            pos=_pos_from_lc(line_nos[exc.lineno-1], exc.colno, str_)
+        )
+    except UnicodeDecodeError as exc:
+        raise json.JSONDecodeError(
+            msg=f"parse_json received UnicodeDecodeError:\n{exc}", 
+            doc=strip_str, pos=0
+        )
     return parsed_json
 
 def read_json(file_path):
@@ -274,13 +302,11 @@ def read_json(file_path):
     try:    
         with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
-        return parse_json(str_)
     except Exception as exc:
         # something more serious than missing file
-        wrapped_exc = traceback.TracebackException.from_exception(exc)
-        _log.critical("Caught exception when trying to load %s: %r", file_path, exc)
-        print(''.join(wrapped_exc.format()))
+        _log.critical("Caught exception when trying to read %s: %r", file_path, exc)
         exit(1)
+    return parse_json(str_)
 
 def find_json(dir_, file_name, exit_if_missing=True):
     """Wrap read_json with more elaborate error handling. find_files() will find

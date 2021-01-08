@@ -1,3 +1,5 @@
+import json
+import textwrap
 import unittest
 import unittest.mock as mock
 from src.util import filesystem as util
@@ -154,8 +156,93 @@ class TestJSONC(unittest.TestCase):
         self.assertEqual(d['e'], False)
         self.assertEqual(d['f'], "ff")
 
-    def test_write_json(self):
-        pass
+    def test_parse_json_syntax_lineno(self):
+        s = 'SYNTAX_ERROR\n{"a": 1, "e": false}'
+        try:
+            flag = False
+            _ = util.parse_json(textwrap.dedent(s))
+        except json.JSONDecodeError as exc:
+            flag = True
+            self.assertEqual(exc.lineno, 1)
+            self.assertEqual(exc.colno, 1)
+        self.assertTrue(flag)
+
+        s = '{"a"  :  1  "e"  : false  }'
+        # missing ',' triggers on first " in "e"
+        try:
+            flag = False
+            _ = util.parse_json(textwrap.dedent(s))
+        except json.JSONDecodeError as exc:
+            flag = True
+            self.assertEqual(exc.lineno, 1)
+            self.assertEqual(exc.colno, 13)
+        self.assertTrue(flag)
+
+        s = '//COMMENT\n{"a"  :  1  "e"  : false  }'
+        # missing ',' triggers on first " in "e"
+        try:
+            flag = False
+            _ = util.parse_json(textwrap.dedent(s))
+        except json.JSONDecodeError as exc:
+            flag = True
+            self.assertEqual(exc.lineno, 2)
+            self.assertEqual(exc.colno, 13)
+        self.assertTrue(flag)
+
+        s = """        // comment 1
+
+        { // comment 1.5
+            // comment 2
+            "a" : 1, // comment 6 " unbalanced quote in a comment
+            "e" : false
+        } // comment 7
+
+        SYNTAX_ERROR
+        """
+        try:
+            flag = False
+            _ = util.parse_json(textwrap.dedent(s))
+        except json.JSONDecodeError as exc:
+            flag = True
+            self.assertEqual(exc.lineno, 9)
+            self.assertEqual(exc.colno, 1)
+        self.assertTrue(flag)
+
+        s = """        // comment 1
+
+        { // comment 1.5
+            // comment 2
+            "a" : 1 // comment 3
+            "e" : false
+        } // comment 7
+        """
+        # missing ',' triggers on first " in "e"
+        try:
+            flag = False
+            _ = util.parse_json(textwrap.dedent(s))
+        except json.JSONDecodeError as exc:
+            flag = True
+            self.assertEqual(exc.lineno, 6)
+            self.assertEqual(exc.colno, 5) 
+        self.assertTrue(flag)
+
+    def test_strip_comments_quote_escape(self):
+        str_ = '"foo": "bar\\\"ba//z\\\""'
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": "bar\\"ba//z\\""', [0])
+        )
+        str_ = '"foo": "bar\\\"ba//z\\\"" //comment \\\" '
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": "bar\\"ba//z\\"" ', [0])
+        )
+        # old code breaks on this case - unbalanced
+        str_ = '"foo": bar\\\"ba//z\\\""'
+        self.assertEqual(
+            util.strip_comments(str_, delimiter='//'),
+            ('"foo": bar\\"ba', [0])
+        )
 
 class TestDoubleBraceTemplate(unittest.TestCase):
     def sub(self, template_text, template_dict=dict()):

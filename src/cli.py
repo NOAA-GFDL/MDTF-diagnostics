@@ -5,6 +5,11 @@ import os
 import sys
 import io
 import argparse
+<<<<<<< HEAD
+=======
+import json
+import shlex
+>>>>>>> develop
 import collections
 import dataclasses
 import enum
@@ -1027,6 +1032,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                 # self.file_pod_list = d.pop('pods', [])
                 d = {canonical_arg_name(k): v for k,v in d.items()}
                 config.defaults[DefaultsFileTypes.USER].update(d)
+            except json.JSONDecodeError as exc:
+                sys.exit(f"ERROR: JSON syntax error in {config_path}:\n\t{exc}")
             except Exception:
                 _log.exception('Attempted to parse %s as JSONC; failed.', path)
                 raise ValueError()

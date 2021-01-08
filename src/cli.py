@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import sys
 import io
 from src import six
 if six.PY2:
@@ -7,6 +8,7 @@ if six.PY2:
 else:
     from collections import ChainMap
 import argparse
+import json
 import shlex
 import collections
 from src import util
@@ -327,8 +329,9 @@ class FrameworkCLIHandler(CLIHandler):
                 with io.open(config_path, 'r', encoding='utf-8') as f:
                     config_str = f.read()
             except Exception:
-                print("ERROR: Can't read input file at {}.".format(config_path))
-        if config_str:
+                sys.exit(f"ERROR: Can't read input file at {config_path}.")
+        if 'json' in os.path.splitext(config_path)[1].lower():
+            # assume config file is JSON or JSON with //-comments
             try:
                 file_input = util.parse_json(config_str)
                 # overwrite default case_list and pod_list, if given
@@ -340,16 +343,20 @@ class FrameworkCLIHandler(CLIHandler):
                 self.partial_defaults = [{
                     self.canonical_arg_name(k): v for k,v in file_input.items()
                 }]
-            except Exception:
-                if 'json' in os.path.splitext('config_path')[1].lower():
-                    print("ERROR: Couldn't parse JSON in {}.".format(config_path))
-                    raise
-                # assume config_file is a plain text file containing flags, etc.
-                # as they would be passed on the command line.
+            except json.JSONDecodeError as exc:
+                sys.exit(f"ERROR: JSON syntax error in {config_path}:\n\t{exc}")
+            except Exception as exc:
+                sys.exit(f"ERROR: Couldn't parse JSON in {config_path}.")
+        else:
+            # assume config_file is a plain text file containing flags, etc.
+            # as they would be passed on the command line.
+            try:
                 config_str = util.strip_comments(config_str, '#')
                 self.partial_defaults = [vars(
                     self.parser.parse_args(shlex.split(config_str))
                 )]
+            except Exception as exc:
+                sys.exit(f"ERROR: Couldn't parse flags in {config_path}.")
         # CLI opts override options set from file, which override defaults
         super(FrameworkCLIHandler, self).parse_cli(args)
 

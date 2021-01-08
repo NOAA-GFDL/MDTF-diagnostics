@@ -104,14 +104,17 @@ else:
 print("=======================================================================")
 print("    Execution of MJO Teleconnection Diagnotics is started from here")
 print("-----------------------------------------------------------------------")
-os.environ["prec_file"] = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
-os.environ["olr_file"]  = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"
-os.environ["u850_file"] = os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"
-os.environ["u250_file"] = os.environ["CASENAME"]+"."+os.environ["u250_var"]+".day.nc"
-os.environ["z250_file"] = os.environ["CASENAME"]+"."+os.environ["z250_var"]+".day.nc"
+# create synonyms for env var names to avoid changes to rest of this POD's code
+os.environ["prec_file"] = os.environ["PR_FILE"]
+os.environ["olr_file"]  = os.environ["RLUT_FILE"]
+os.environ["u850_file"] = os.environ["U850_FILE"]
+os.environ["u250_file"] = os.environ["U250_FILE"]
+os.environ["z250_file"] = os.environ["Z250_FILE"]
 
 
-if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ ["olr_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["u850_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["u250_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["z250_file"]):
+if os.path.isfile(os.environ["prec_file"]) & os.path.isfile(os.environ["olr_file"]) \
+    & os.path.isfile(os.environ["u850_file"]) & os.path.isfile(os.environ["u250_file"]) \
+    & os.path.isfile(os.environ["z250_file"]):
 
     print("Following input data file are found ")
     print(os.environ["prec_file"])

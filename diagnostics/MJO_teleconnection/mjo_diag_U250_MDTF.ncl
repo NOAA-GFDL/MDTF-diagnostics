@@ -95,15 +95,7 @@ print("Reading Model 250hPa zonal wind data")
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
 
-   ; HACK for merging in SPEAR code before we have general level extraction working
-   if (getenv("MDTF_3D_UV").eq."0") then
-      ; extract level from 4D data
-      Ut  = tofloat(b->$u250var$(iStrt:iLast,{25000/lev_factor},:,:))	 	;type: double orig.
-   else
-      ; 3D data
-      Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
-   end if
-   ; end HACK
+    Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
  Ut@_FillValue=-999
 
 

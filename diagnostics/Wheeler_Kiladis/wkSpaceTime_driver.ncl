@@ -230,15 +230,6 @@ begin
   tstride = 1  ; Use all indices
   x=getVarSlice( fili, varName, level, latS, latN, lonL, lonR, tstride, i1, i2,debug)
 
-  if(varName.eq.getenv("pr_var")) then
-    conversion_factor = tofloat(getenv("pr_conversion_factor"))
-    new_fact = conversion_factor*0.001 ;convert units
-    x = x*new_fact
-    print("Multiplied precip by conversion_factor "+new_fact+" to get new  max "+max(x))
-    varName@units = "m/day"
-
-  end if
-
   if (typeof(x).eq."short") then
     debug_print ("Converting short to float",routine_name,debug)
     y = short2flt(x)

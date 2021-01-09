@@ -148,8 +148,8 @@ begin
        rank = dimsizes( filevardimsizes(f,varName) )
     end if 
 
-    if (rank.lt.3 .or. rank.gt.4) then
-        print("getVarSlice: only 3D and 4D supported: rank="+rank+"D")
+    if (rank.ne.3) then
+        print("getVarSlice: only 3D supported: rank="+rank+"D. 3D data should have been supplied by the MDTF preprocessor.")
         exit
     end if
 
@@ -177,22 +177,6 @@ begin
 ;save
              x  = f->$varName$(i1:i2,{latS:latN},{lonL:lonR})
              x@name = "PRECT"  ;try to get same contour ints
-           end if
-       else
-           if (combine_precs) then
-              tmpp  = f->PRECC(i1:i2,{level},{latS:latN},{lonL:lonR})
-              precc  = tmpp(::tstride,:,:,:)
-              tmpp  = f->PRECL(i1:i2,{level},{latS:latN},{lonL:lonR})
-              precl  = tmpp(::tstride,:,:,:)
-              x  = precc
-              x  = (/precc+precl/)
-              delete(tmpp)
-              delete(precc)
-              delete(precl)
-           else
-              tmpx  = f->$varName$(i1:i2,{level},{latS:latN},{lonL:lonR})
-              x  = tmpx(::tstride,:,:,:)
-              delete(tmpx)
            end if
        end if
     else      ; multiple files
@@ -243,26 +227,6 @@ begin
           x!1 = dNam(1)
           x!2 = dNam(2)
  
-       else
-         debug_print("getVarSlice rank.ne.3",routine_name,debug_flag)
-          if (combine_precs) then
-             tmpp   = flist[:]->PRECC(i1:i2,{level},{latS:latN},{lonL:lonR})
-             precc   = tmpp(::tstride,:,:,:)
-             tmpp   = flist[:]->PRECL(i1:i2,{level},{latS:latN},{lonL:lonR})
-             precl   = tmpp(::tstride,:,:,:)
-             x  = precc
-             x  = (/precc+precl/)
-             delete(tmpp)
-             delete(precc)
-             delete(precl)
-          else
-             tmpx   = flist[:]->$varName$(i1:i2,{level},{latS:latN},{lonL:lonR})
-             x   = flist[:]->$varName$(::tstride,:,:,:)
-             delete(tmpx)
-          end if
-          x!0 = dNam(0)
-          x!1 = dNam(2)
-          x!2 = dNam(3)
        end if
 
     ; NOT required but create meta data

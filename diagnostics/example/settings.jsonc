@@ -40,22 +40,40 @@
     }
   },
 
+  // In this section, you define the names and units for the coordinates used by
+  // the variables defined below in the "varlist" section. Names in the 
+  // "dimensions" attribute for each variable must correspond to a coordinate
+  // named here.
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"}
+  },
+
   // In this section, you describe what model data your diagnostic uses. Add one
   // list entry (the section in curly braces) for each variable, separated by 
   // commas.
-  "varlist" : [
-    {
-      // Variable identifier. An environment variable with this name will be set
-      // to what the corresponding field is called in the model being analyzed.
-      // For example, if this diagnostic were run on CESM2, the variable $tas_var
-      // would be set to "TREFHT".
-      "var_name" : "tas_var",
+  "varlist" : {
+    // Variable identifier. An environment variable with this name will be set
+    // to what the corresponding field is called in the model being analyzed.
+    "tas": {
+      // Standard name for the variable according to the CF conventions. This
+      // is used to reliably identify the variable if it's called by a different
+      // name in the output format of the model being analyzed.
+      "standard_name" : "air_temperature",
+
+      // Units the script expects this variable to be in (UDUnits2- compatible
+      // string). If the model being analyzed provides the variable in different
+      // units, the MDTF package will do unit conversion before calling the script.
+      "units": "K",
 
       // Time frequency the data should be sampled at. Currently recognized
       // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
-      "freq" : "mon",
-      "requirement" : "required"
+      "frequency" : "day",
+
+      // Coordinates of the variable (defined in the section above.)
+      "dimensions": ["time", "lat", "lon"]
     }
     // If we needed a second variable, we'd list it here.
-  ]
+  }
 }

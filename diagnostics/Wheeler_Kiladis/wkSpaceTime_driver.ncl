@@ -175,7 +175,7 @@ begin
 
 ; Read in files from file list created by script
 
-  fili = diri+getenv("file_WK")
+  fili = getenv("file_WK")
 
   latN    = latBound
   latS    =-latBound ; make symmetric about the equator

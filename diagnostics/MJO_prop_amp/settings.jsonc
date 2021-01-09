@@ -28,7 +28,7 @@
     "lon": {"standard_name": "longitude"},
     "lev": {
       "standard_name": "air_pressure",
-      "units": "hPa",
+      "units": "Pa",
       "positive": "down",
       "axis": "Z"
     },

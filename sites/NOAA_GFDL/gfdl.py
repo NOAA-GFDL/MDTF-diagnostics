@@ -498,13 +498,6 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
         return df
 
-        # prefer regridded data
-        if any(df['regrid'] == 'r'):
-            df = df[df['regrid'] == 'r']
-        # if multiple regriddings, choose the lowest-numbered one
-        df = self._filter_column_min(df, obj.name, 'grid_number')
-        return df
-
     def resolve_var_expt(self, df, obj):
         """Disambiguate arbitrary experiment attributes on a per-variable basis:
  

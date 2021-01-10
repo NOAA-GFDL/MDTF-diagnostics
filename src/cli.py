@@ -5,16 +5,12 @@ import os
 import sys
 import io
 import argparse
-<<<<<<< HEAD
-=======
-import json
-import shlex
->>>>>>> develop
 import collections
 import dataclasses
 import enum
 import importlib
 import itertools
+import json
 import operator
 import shlex
 import re
@@ -1033,7 +1029,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                 d = {canonical_arg_name(k): v for k,v in d.items()}
                 config.defaults[DefaultsFileTypes.USER].update(d)
             except json.JSONDecodeError as exc:
-                sys.exit(f"ERROR: JSON syntax error in {config_path}:\n\t{exc}")
+                sys.exit(f"ERROR: JSON syntax error in {path}:\n\t{exc}")
             except Exception:
                 _log.exception('Attempted to parse %s as JSONC; failed.', path)
                 raise ValueError()

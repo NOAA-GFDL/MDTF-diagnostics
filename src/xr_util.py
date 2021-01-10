@@ -10,7 +10,7 @@ import cftime
 import cf_xarray
 import xarray as xr
 
-from src import util, data_model
+from src import util
 
 import logging
 _log = logging.getLogger(__name__)

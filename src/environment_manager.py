@@ -6,7 +6,7 @@ from distutils.spawn import find_executable
 import signal
 import typing
 import subprocess
-from src import util, core, diagnostic
+from src import util, core
 
 import logging
 _log = logging.getLogger(__name__)
@@ -326,9 +326,8 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        raise exc
         self.pod.exceptions.log(exc)
-        
+        raise exc # include in production, or just for debugging?
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
@@ -380,8 +379,8 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        raise exc
         self.pod.exceptions.log(exc)
+        raise exc # include in production, or just for debugging?
 
     def tear_down(self):
         if self.log_handle is not None:

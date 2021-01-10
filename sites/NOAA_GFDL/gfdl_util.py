@@ -2,7 +2,6 @@
 """
 import os
 import re
-import shutil
 import subprocess
 from src import util, core, datelabel
 

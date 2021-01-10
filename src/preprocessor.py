@@ -4,8 +4,7 @@ once it's been download to local storage.
 import os
 import abc
 import dataclasses
-import itertools
-from src import util, core, data_model, diagnostic, xr_util
+from src import util, core, diagnostic, xr_util
 import cftime
 import xarray as xr
 

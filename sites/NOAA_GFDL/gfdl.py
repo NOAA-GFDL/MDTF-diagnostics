@@ -3,19 +3,12 @@ Dynamics Laboratory (Princeton, NJ, USA).
 """
 import os
 import io
-import abc
-import collections
 import dataclasses
-import operator as op
-import re
 import shutil
-import subprocess
 import tempfile
-import typing
 from src import (util, core, datelabel, diagnostic, data_manager, 
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
-import src.conflict_resolution as choose
 
 import logging
 _log = logging.getLogger(__name__)
@@ -446,8 +439,6 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        if msg is None:
-            msg = ""
         filter_val = func(values)
         _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
             col_name, filter_val, obj_name, values)

@@ -2,7 +2,6 @@
 files.
 """
 import os
-import sys
 import io
 import collections
 from distutils.spawn import find_executable
@@ -11,7 +10,6 @@ import json
 import re
 import shutil
 import string
-import traceback
 from . import basic
 from . import exceptions
 

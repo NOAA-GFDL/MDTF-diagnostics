@@ -1,11 +1,7 @@
 import os
-import collections
 import dataclasses as dc
-import enum
-import glob
-import shutil
 import typing
-from src import util, core, verify_links, datelabel, data_model
+from src import util, core, datelabel, data_model
 
 import logging
 _log = logging.getLogger(__name__)
@@ -47,8 +43,6 @@ class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
     """Class to describe options affecting all variables requested by this POD.
     Corresponds to the "data" section of the POD's settings.jsonc file.
     """
-    pass
-
     @property
     def global_settings(self):
         return util.filter_dataclass(self, _VarlistGlobalSettings)
@@ -525,13 +519,13 @@ class Diagnostic(object):
                         continue
                     # found a viable set of alternates
                     alt_success_flag = True
-                    for v in alts:
-                        v.active = True
+                    for alt_v in alts:
+                        alt_v.active = True
                 if not alt_success_flag:
                     _log.info("No alternates available for %s.", v.full_name)
                     try:
-                        raise util.PodDataError((f"No alternates available for "
-                            f"{str(v)}."), self) from v.exception
+                        raise util.PodDataError(f"No alternates available for {v}.", 
+                            self) from v.exception
                     except Exception as exc:
                         self.exceptions.log(exc)    
                     continue

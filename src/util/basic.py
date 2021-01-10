@@ -464,5 +464,4 @@ def deserialize_class(name):
                 continue
             else:
                 raise
-    else:
-        raise ValueError('No such type: %r' % name)
+    raise ValueError('No such type: %r' % name)

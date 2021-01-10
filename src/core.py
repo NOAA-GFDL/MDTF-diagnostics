@@ -1,16 +1,12 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
 import os
-import sys
-import io
 import collections
 import copy
 import dataclasses as dc
 import glob
-import re
 import shutil
 import signal
-import string
 import tempfile
 import traceback
 from src import util, cli, mdtf_info, data_model
@@ -20,7 +16,6 @@ _log = logging.getLogger(__name__)
 
 class MDTFFramework(object):
     def __init__(self, cli_obj):
-        # print('\tDEBUG: argv = {}'.format(sys.argv[1:]))
         self.code_root = cli_obj.code_root
         self.pod_list = []
         self.case_list = []

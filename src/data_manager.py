@@ -774,7 +774,6 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         query_d.update(dataclasses.asdict(self.attrs))
         field_synonyms = getattr(self, '_query_attrs_synonyms', dict())
         query_d.update(var.query_attrs(field_synonyms))
-        d = util.NameSpace.fromDict(query_d) # set local var for df.query()
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
         query_str = '&'.join(c for c in clauses if c)
 
@@ -791,7 +790,10 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 row_sel = catalog_df.apply((lambda r: v in r[col_name]), axis=1)
                 catalog_df = catalog_df[row_sel]
 
-        return catalog_df.query(query_str)
+        return catalog_df.query(
+            query_str, 
+            local_dict={'d': util.NameSpace.fromDict(query_d)}
+        )
 
     def _experiment_key(self, df=None, idx=None, cols=None):
         """Returns tuple of string-valued keys for grouping files by experiment:
@@ -1509,8 +1511,6 @@ class CMIP6ExperimentSelectionMixin():
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        if msg is None:
-            msg = ""
         filter_val = func(values)
         _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
             col_name, filter_val, obj_name, values)

@@ -2,7 +2,6 @@
 `cfunits <https://ncas-cms.github.io/cfunits/index.html>`__ library.
 """
 import cfunits
-from . import exceptions
 
 import logging
 _log = logging.getLogger(__name__)

@@ -803,9 +803,9 @@ FXDateRange = _FXDateRange()
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 
-    Note:
-        Period lengths are *not* defined accurately, eg. a year is taken as
-        365 days and a month is taken as 30 days. 
+    .. warning::
+       Period lengths are *not* defined accurately, eg. a year is taken as
+       365 days and a month is taken as 30 days. 
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
@@ -931,11 +931,11 @@ class DateFrequency(datetime.timedelta):
         return (not self.__eq__(other)) # more foolproof
 
     def __copy__(self):
-        return self.__class__(self.quantity, self.unit)
+        return self.__class__.__new__(self.__class__, self.quantity, unit=self.unit)
 
     def __deepcopy__(self, memo):
-        return self.__class__(
-            copy.deepcopy(self.quantity, memo), copy.deepcopy(self.unit, memo)
+        return self.__class__.__new__(self.__class__, 
+            copy.deepcopy(self.quantity, memo), unit=copy.deepcopy(self.unit, memo)
         )
 
     def __hash__(self):
@@ -952,6 +952,12 @@ class _FXDateFrequency(DateFrequency, StaticTimeDependenceBase):
     @property
     def is_static(self):
         return True
+
+    def __copy__(self):
+        return self.__class__.__new__(self.__class__)
+
+    def __deepcopy__(self, memo):
+        return self.__class__.__new__(self.__class__)
 
 FXDateFrequency = _FXDateFrequency()
 

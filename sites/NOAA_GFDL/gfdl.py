@@ -273,6 +273,29 @@ pp_ignore_regex = util.ChainedRegexPattern(
     _ignore_time_avg_regex, _ignore_tiles_regex, _ignore_non_nc_regex
 )
 
+# can't combine these with the path regexes (below) since static dir regex should
+# only be used with static files 
+_pp_dir_regex = util.RegexPattern(r"""
+        /?                      # maybe initial separator
+        (?P<component>[a-zA-Z0-9_-]+)/     # component name
+        ts/                     # timeseries;
+        (?P<frequency>\w+)/     # ts freq
+        (?P<chunk_freq>\w+)     # data chunk length
+    """
+)
+_pp_static_dir_regex = util.RegexPattern(r"""
+        /?                      # maybe initial separator
+        (?P<component>[a-zA-Z0-9_-]+)     # component name             
+    """,
+    defaults={
+        'frequency': datelabel.FXDateFrequency, 'chunk_freq': datelabel.FXDateFrequency
+    }
+)
+pp_dir_regex = util.ChainedRegexPattern(
+    # try the first regex, and if no match, try second
+    _pp_dir_regex, _pp_static_dir_regex
+)
+
 _pp_ts_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)/     # component name
@@ -365,6 +388,7 @@ class GfdlppDataManager(
     data_manager.DataframeQueryDataSourceBase
 ):
     _FileRegexClass = PPTimeseriesDataFile
+    _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor

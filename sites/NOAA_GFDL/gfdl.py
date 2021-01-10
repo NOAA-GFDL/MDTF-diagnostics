@@ -207,20 +207,25 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             local_paths.append(local_path)
         return local_paths
 
-class GFDL_CMIP6_GCP_FileDataSource(
-    data_manager.CMIP6ExperimentSelectionMixin,
+
+class GFDL_GCP_FileDataSourceBase(
     data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
     GCPFetchMixin, 
     data_manager.DataframeQueryDataSourceBase
 ):
-    _FileRegexClass = cmip6.CMIP6_DRSPath
-    _AttributesClass = util.abstract_attribute()
+    """Base class for DataSources that access data on GFDL's internal filesystems
+    using GCP, and which may be invoked via frepp.
+    """
     _DiagnosticClass = GfdlDiagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
+    _FileRegexClass = util.abstract_attribute()
+    _DirectoryRegex = util.abstract_attribute()
+    _AttributesClass = util.abstract_attribute()
+
     def __init__(self, case_dict):
         self.catalog = None
-        super(GFDL_CMIP6_GCP_FileDataSource, self).__init__(case_dict)
+        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict)
 
         config = core.ConfigManager()
         self.fetch_method = 'auto'
@@ -245,18 +250,49 @@ class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes)
         self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
-class Gfdludacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
+class Gfdludacmip6DataManager(
+    data_manager.CMIP6ExperimentSelectionMixin, 
+    GFDL_GCP_FileDataSourceBase
+):
+    """DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.
+    """
+    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
+
+
+@util.mdtf_dataclass
+class GFDL_archive_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+    def __post_init__(self, model=None, experiment=None):
+        self.MODEL_DATA_ROOT = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+
+class Gfdlarchivecmip6DataManager(
+    data_manager.CMIP6ExperimentSelectionMixin, 
+    GFDL_GCP_FileDataSourceBase
+):
+    """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
+    storage at /archive/pcmdi/repo/CMIP6.
+    """
+    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _DirectoryRegex = cmip6.drs_directory_regex
+    _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
+
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
-        # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't
-        # be used as a data source unless explicitly requested by user
         self.MODEL_DATA_ROOT = os.sep + os.path.join('data_cmip6', 'CMIP6')
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
-class Gfdldatacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
+class Gfdldatacmip6DataManager(
+    data_manager.CMIP6ExperimentSelectionMixin, 
+    GFDL_GCP_FileDataSourceBase
+):
+    """DataSource for accessing pre-publication CMIP6 data on /data_cmip6.
+    """
+    _FileRegexClass = cmip6.CMIP6_DRSPath
+    _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
@@ -382,16 +418,10 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
                 self.MODEL_DATA_ROOT)
             exit(1)
 
-class GfdlppDataManager(
-    data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
-    GCPFetchMixin, 
-    data_manager.DataframeQueryDataSourceBase
-):
+class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
-    _DiagnosticClass = GfdlDiagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}

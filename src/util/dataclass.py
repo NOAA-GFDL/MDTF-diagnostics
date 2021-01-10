@@ -74,15 +74,12 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         self._match_error_filter = match_error_filter
         self._update_fields()
     
-    @property
-    def is_matched(self):
-        return bool(self.data)
-    
     def clear(self):
         """Erase an existing match.
         """
         self.data = dict()
         self.input_string = ""
+        self.is_matched = False
         
     def _update_fields(self):
         self.regex_fields = frozenset(self.regex.groupindex.keys())
@@ -103,6 +100,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         self.input_string = str_
         m = self.regex.fullmatch(str_, *args)
         if not m:
+            self.is_matched = False
             if hasattr(self._match_error_filter, 'match'):
                 try:
                     self._match_error_filter.match(str_, *args)
@@ -128,6 +126,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
                 bad_names = [f for f in self.fields if self.data[f] == NOTSET]
                 raise exceptions.RegexParseError((f"Couldn't match the "
                     f"following fields in {str_}: " + ', '.join(bad_names) ))
+            self.is_matched = True
         
     def _validate_match(self, match_obj):
         """Hook for post-processing of match, running after all fields are
@@ -238,6 +237,8 @@ class ChainedRegexPattern(RegexPatternBase):
             else:
                 raise ValueError("Bad input")
         self._patterns = tuple(string_patterns)
+        if input_field:
+            self.input_field = input_field
         self._match_error_filter = match_error_filter
         for pat in self._patterns:
             if defaults:
@@ -290,13 +291,18 @@ class ChainedRegexPattern(RegexPatternBase):
             except ValueError:
                 continue
         if not self.is_matched:
-            if not self._match_error_filter:
-                raise ValueError("No match.")
-            elif hasattr(self._match_error_filter, 'match'):
+            if hasattr(self._match_error_filter, 'match'):
                 try:
                     self._match_error_filter.match(str_, *args)
                 except Exception as exc:
-                    raise ValueError("No match.")
+                    raise exceptions.RegexParseError((f"Couldn't match {str_} "
+                        f"against any pattern in {self.__class__.__name__}."))
+                raise exceptions.RegexSuppressedError(str_)
+            elif self._match_error_filter:
+                raise exceptions.RegexSuppressedError(str_)
+            else:
+                raise exceptions.RegexParseError((f"Couldn't match {str_} "
+                    f"against any pattern in {self.__class__.__name__}."))
     
     def __str__(self):
         if not self.is_matched:

@@ -260,7 +260,18 @@ class Gfdldatacmip6DataManager(GFDL_CMIP6_GCP_FileDataSource):
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
-ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
+_ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
+# match files ending in .nc only if they aren't of the form .tile#.nc
+# (negative lookback) 
+_ignore_tiles_regex = util.RegexPattern(r".*\.tile\d\.nc$")
+# match any paths corresponding to time average data (/av/), since currently 
+# we only deal with timeseries data (/ts/)
+_ignore_time_avg_regex = util.RegexPattern(r"/?([a-zA-Z0-9_-]+)/av/\S*")
+# RegexPattern matching any of the above -- description of files that are OK
+# to silently ignore during /pp/ directory crawl
+pp_ignore_regex = util.ChainedRegexPattern(
+    _ignore_time_avg_regex, _ignore_tiles_regex, _ignore_non_nc_regex
+)
 
 _pp_ts_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
@@ -290,7 +301,7 @@ pp_path_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
     _pp_ts_regex, _pp_static_regex,
     input_field="remote_path",
-    match_error_filter=ignore_non_nc_regex
+    match_error_filter=pp_ignore_regex
 )
 @util.regex_dataclass(pp_path_regex)
 @util.mdtf_dataclass
@@ -307,17 +318,19 @@ class PPTimeseriesDataFile():
     date_range: datelabel.DateRange = dataclasses.field(init=False)
 
     def __post_init__(self, *args):
+        if isinstance(self.frequency, str):
+            self.frequency = datelabel.DateFrequency(self.frequency)
         if self.start_date == datelabel.FXDateMin \
             and self.end_date == datelabel.FXDateMax:
             # Assume we're dealing with static/fx-frequency data, so use special 
             # placeholder values
             self.date_range = datelabel.FXDateRange
-            if not self.frequency.is_static: # frequency inferred from table_id
+            if not self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
                     f"cannot determine if '{self.remote_path}' represents static data."))
         else:
             self.date_range = datelabel.DateRange(self.start_date, self.end_date)
-            if self.frequency.is_static: # frequency inferred from table_id
+            if self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
                     f"cannot determine if '{self.remote_path}' represents static data."))
 
@@ -333,7 +346,6 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
         """
         super(PPDataSourceAttributes, self).__post_init__()
         config = core.ConfigManager()
-        paths = core.PathManager()
         # set MODEL_DATA_ROOT
         if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
             _log.debug(

@@ -1,7 +1,7 @@
 # This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 
 # ======================================================================
-# convective_transition_diag_v1r3.py
+# convective_transition_diag_v2.py
 #
 #   Convective Transition Diagnostic Package
 #   
@@ -14,7 +14,7 @@
 #    the conditionally averaged precipitation sharply increases as CWV exceeds the 
 #    critical threshold are also computed (provided the model exhibits such an increase).
 #
-#   Version 1 revision 3 13-Nov-2017 Yi-Hung Kuo (UCLA)
+#   Version 2 02-Dec-2020 Yi-Hung Kuo (UCLA)
 #   PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
 #   Current developer: Yi-Hung Kuo (yhkuo@atmos.ucla.edu)
 #   Contributors: K. A. Schiro (UCLA), B. Langenbrunner (UCLA), F. Ahmed (UCLA),
@@ -26,20 +26,18 @@
 #   Currently consists of following functionalities:
 #    (1) Convective Transition Basic Statistics (convecTransBasic.py)
 #    (2) Convective Transition Critical Collapse (convecTransCriticalCollapse.py)
-#    *(3) Moisture Precipitation Joint Probability Density Function (cwvPrecipJPDF.py)
-#    *(4) Super Critical Precipitation Probability (supCriticPrecipProb.py)
+#    *(3) Precipitation Contribution Function (cwvPrecipContrib.py)
 #    More on the way...(* under development)
 #
 #   As a module of the MDTF code package, all scripts of this package can be found under
-#    MDTF-diagnostics/diagnostics/convective_transition_diag**
-#   and pre-digested observational data under 
+#    MDTF-diagnostics/diagnostics/convective_transition_diag
+#   and digested observational data under 
 #    mdtf/inputdata/obs_data/convective_transition_diag
-#   (**$ver depends on the actual version of the MDTF code package)
 #
-#   This package is written in Python 2, and requires the following Python packages:
-#    os,glob,json,Dataset,numpy,scipy,matplotlib, networkx,warnings,numba, netcdf4
-#   The plotting functions in this package depend on an older version of matplotlib, 
-#    thus an older version of the Anaconda 2 installer (ver. 5.0.1) is recommended
+#   This package is written in Python 3.7, and requires the following Python packages:
+#    os,glob,json,Dataset,numpy,scipy,matplotlib,networkx,warnings,numba,netcdf4.
+#    These dependencies are included in the python3_base environment provided by 
+#    the automated installation script for the MDTF Framework.
 #
 #   The following three 3-D (lat-lon-time) high-frequency model fields are required:
 #     (1) precipitation rate (units: mm/s = kg/m^2/s; 6-hrly avg. or shorter)
@@ -52,11 +50,14 @@
 #     (4) air temperature (units: K)
 #
 #   Reference: 
+#    Kuo, Y.-H., J. D. Neelin, and C. R. Mechoso, 2017: Tropical Convective Transition 
+#      Statistics and Causality in the Water Vapor-Precipitation Relation. J. Atmos. Sci., 
+#      74, 915-931.
 #    Kuo, Y.-H., K. A. Schiro, and J. D. Neelin, 2018: Convective transition statistics 
 #      over tropical oceans for climate model diagnostics: Observational baseline. 
 #      J. Atmos. Sci., 75, 1553-1570.
-#    Kuo, Y.-H., and Coauthors: Convective transition statistics over tropical oceans
-#      for climate model diagnostics: GCM performance. In preparation.***
+#    Kuo, Y.-H., and Coauthors: Convective Transition Statistics over Tropical Oceans 
+#      for Climate Model Diagnostics: GCM Evaluation. J. Atmos. Sci., 77, 379-403.
 #    ***See http://research.atmos.ucla.edu/csi//REF/pub.html for updates.
 # ======================================================================
 # Import standard Python packages

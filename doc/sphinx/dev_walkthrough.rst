@@ -14,6 +14,7 @@ We begin with a reminder that there are 2 essential files for the operation of t
 - ``src/default_tests.jsonc``: configuration input for the framework.
 - ``diagnostics/example/settings.jsonc``: settings file for the example POD.
 
+To setup for running the example POD, (1) download the necessary `supporting <ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data.example.tar>`__ and `NCAR-CAM5.timeslice sample data <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.NCAR-CAM5.timeslice.tar>`__ and unzip them under ``inputdata/``, and (2) open ``default_tests.jsonc``, uncomment the whole ``NCAR-CAM5.timeslice`` section in ``case_list``, and comment out the other cases in the list. We also recommend setting both ``save_ps`` and ``save_nc`` to ``true``.
 
 Step 1: Framework invocation
 ----------------------------

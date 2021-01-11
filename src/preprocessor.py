@@ -205,9 +205,12 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
         new_ax_set = set(v.axes_set).add('Z')
-        new_tv_name = core.VariableTranslator().from_CF_name(
-            data_mgr.convention, v.standard_name, new_ax_set
-        )
+        if v.use_exact_name:
+            new_tv_name = v.name
+        else:
+            new_tv_name = core.VariableTranslator().from_CF_name(
+                data_mgr.convention, v.standard_name, new_ax_set
+            )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
             name = new_tv_name

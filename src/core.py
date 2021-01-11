@@ -641,13 +641,17 @@ class Fieldlist():
         could produce a TranslatedVarlistEntry for 'u500' (3D slice), depending 
         on naming convention.
         """
-        fl_entry = self.from_CF(var.standard_name, var.axes_set)
+        if var.use_exact_name:
+            fl_entry = var
+        else:
+            fl_entry = self.from_CF(var.standard_name, var.axes_set)
         
         new_dims = [self.translate_coord(dim) for dim in var.dims]
         new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
+            assert not var.use_exact_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
             new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])

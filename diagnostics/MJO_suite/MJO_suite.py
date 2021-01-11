@@ -31,21 +31,11 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
-# HACK for merging in SPEAR code before we have general level extraction working
-if '200' in os.environ.get('u200_var','') and '200' in os.environ.get('v200_var',''):
-    print('\t U,V found on pressure levels ({},{})'.format(
-        os.environ['u200_var'], os.environ['v200_var']
-    ))
-    os.environ['MDTF_3D_UV'] = '1'
-else:
-    print('\t Since no {},{} settings found, will interpolate from full vertical fields)'.format(
-        os.environ['u200_var'], os.environ['v200_var']
-    ))
-    os.environ['MDTF_3D_UV'] = '0'
-
 #============================================================
 # Call NCL code here
 #============================================================
+os.makedirs(os.path.join(os.environ['DATADIR'], 'day'), exist_ok=True)
+
 print("OBTAINING DAILY OUTPUT")
 generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl")
 

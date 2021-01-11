@@ -153,8 +153,6 @@ end if
 
 plevs = (/850,200/)       ;this package expects new files to be written with these names
 var_names = (/"u","v"/)
-source = (/datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc",datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"/)
-
 do i=0,dimsizes(plevs)-1
    plev = plevs(i)
    do j=0,dimsizes(var_names)-1
@@ -171,44 +169,14 @@ do i=0,dimsizes(plevs)-1
       ; DRB: TO DO: move this into read_model_file and only use in the
       ;      case that PS file isn't found. Also change hard-coded PS var
       ;      name and require PS file if level files aren't found
-      ;      
-      ; HACK for merging in SPEAR code before we have general level extraction working
-      ; DRB: General level extraction works just fine in the
-      ; read_model_file call below, however it requires a PS file (at the
-      ; very least the name shouldn't be hardcoded, and in fact it should
-      ; be an addititonal necessary file if the plev files aren't given
-      if (getenv("MDTF_3D_UV").eq."0") then
-        print("WARNING: MJO_suite/daily_netcdf.ncl is using nco's ")
-        print("         for pressure-level extraction. ")
-        print("         Highly recommended to turn MDTF_3D_UV = 1 ")
-        print("         in order to let read_model_file do a vertical interpolation")
-        print("         (Requires a PS file, under hard-coded name)")
-        ; extract level from 4D data with NCO
-        LEV = tostring(plevs(i)*100)+"." 
-        src = source(j)
-        temp_file = datadir+"/day/"+var_name_plev_package+".temp.nc"
-        dst = datadir+"/day/"+casename+"."+var_name_plev_package+".day.nc"
-        ; extract level
-        nco_call = "ncks --no_tmp_fl -O -d "+level+","+LEV+","+LEV+"  "+src+" "+temp_file
-        print(nco_call)
-        system(nco_call)
-        ; flatten to 3D
-        nco_call = "ncwa --no_tmp_fl -O -a "+level+" -d "+level+",0,0 "+temp_file+" "+dst
-        print(nco_call)
-        system(nco_call)
-      else
-        ; 3D data
-        dst = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
-      end if
-      ; end HACK
 
       file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
       file_out = wk_dir+casename+"."+var_name_plev_package+".day.nc"
+      ; All files supplied to POD are 3D slices; PS not part of varlist request
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"
       file_in_ps =  datadir+"/day/"+casename+".PS.day.nc"  ;drbdbg needs a getenv
 
-
-      read_model_file (var_name_plev_model, dst,\
+      read_model_file (var_name_plev_model, file_in,\
       		      var_name_plev_package,file_out,\
 		      delete_existing, \
       		      i1,i2,time_coord,lat_coord,lon_coord,date,\  ; better moved to another function for slicing

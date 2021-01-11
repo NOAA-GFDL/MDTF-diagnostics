@@ -1,4 +1,4 @@
-# This file is part of the SM_ET_coupling module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the SM_ET_coupling module of the MDTF code package (see LICENSE.txt)
 
 #============================================================
 # Coupling between soil moisture (SM) and evapotanspiration (ET) in summer

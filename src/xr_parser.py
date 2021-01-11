@@ -1044,7 +1044,7 @@ class DefaultDatasetParser():
         ds_var = ds[our_var.name]
         ds_scalars = ds.cf.scalar_coords(our_var.name)
         ds_names = [c.name for c in ds_scalars]
-        ds_axes = [c.axis for c in ds_scalars]
+        ds_axes = [c.axis for c in ds_scalars if "axis" in c.attrs]
         if our_axes and (set(our_axes) != set(['Z'])):
             # should never encounter this
             self.log.error('Scalar coordinates on non-vertical axes not supported.')

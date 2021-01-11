@@ -75,17 +75,17 @@ print("*******Now I am here")
 
 
 # this part will be done by the framework for us
-os.environ['DATADIR']='/glade/work/bitz/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/'
-os.environ['WK_DIR']='/glade/work/bitz/mdtf/wkdir/'
+#os.environ['DATADIR']='/glade/work/bitz/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/'
+#os.environ['WK_DIR']='/glade/work/bitz/mdtf/wkdir/'
 
-os.environ['CASENAME']='SAM0-UNICON_r1i1p1f1_gn'
-os.environ['model']='SAM0-UNICON'
-os.environ['conventions']='SAM0-UNICON'
-os.environ['FIRSTYR']='1979'
-os.environ['LASTYR']='2014'
-os.environ['siconc_var']='siconc'
+#os.environ['CASENAME']='SAM0-UNICON_r1i1p1f1_gn'
+#os.environ['model']='SAM0-UNICON'
+#os.environ['conventions']='SAM0-UNICON'
+#os.environ['FIRSTYR']='1979'
+#os.environ['LASTYR']='2014'
+#os.environ['siconc_var']='siconc'
 
-
+print("{WK_DIR}")
 # In[3]:
 
 
@@ -110,8 +110,8 @@ def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
 ### 1) Loading model data files: ###############################################
 
 input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
-output_dir = "{WK_DIR}/{model}/seaice_suite/processed_data/".format(**os.environ)
-figures_dir = "{WK_DIR}/{model}/seaice_suite/figures/".format(**os.environ)
+output_dir = "{WK_DIR}".format(**os.environ) #LR
+figures_dir = "{WK_DIR}".format(**os.environ) #LR
 obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_ice_1979-2016_grid_nh.nc'
 
 proc_obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_stats_1979-2014.nc'

@@ -47,9 +47,6 @@ print("Input data file for Z250 :" + filz250)
 print("t-statistics data table is read from:"+diro+tfile)
 
 
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
-
 z250var = getenv("z250_var")
 
 
@@ -73,15 +70,7 @@ print("data table for t stat is read in ")
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
    
-    ; HACK for merging in SPEAR code before we have general level extraction working
-    if (getenv("MDTF_3D_Z").eq."0") then
-      ; extract level from 4D data
-      zgt = a->$z250var$(iStrt:iLast,{25000/lev_factor},:,:)     ;time,lat,lon
-    else
-      ; 3D data
-      zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
-    end if
-    ; end HACK
+    zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
     zgt@_FillValue = -999
 
     lon = tofloat(a->lon)

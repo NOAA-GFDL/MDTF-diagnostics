@@ -294,7 +294,7 @@ res@tmXBOn              = True
 
     this_var = vars(ivars)
     var_plot = f->$this_var$
-    var_plot = var_plot*tofloat(getenv("pr_conversion_factor"))*0.001
+    var_plot = var_plot*0.001
     var_plot@long_name = "Total precipitation rate" 
     var_plot@units = "mm/day"      
     res@tiYAxisString = "Total precipitation rate"+" ("+var_plot@units+")"

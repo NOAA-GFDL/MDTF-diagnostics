@@ -11,14 +11,11 @@ print_clock("Starting model data inteperation")
 wk_dir = getenv("WK_DIR")
 pr_name  = getenv("pr_var")
 prw_name = getenv("prw_var")
-hus_name = getenv("qa_var")
+hus_name = getenv("hus_var")
 pres_level_name = getenv("lev_coord")
 file_pr = getenv("file_pr")
 file_prw = getenv("file_prw")
 file_hus = getenv("file_hus")
-
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
 
 print_clock("Precipitation ...")
 print("   Opening file_pr = "+file_pr)
@@ -105,7 +102,6 @@ filein_hus = addfile(file_hus,"r")
 
 time = filein_hus->time 
 lev = filein_hus->$pres_level_name$
-lev = lev_factor * lev
 lon = filein_hus->lon 
 lat = filein_hus->lat 
 ntim = dimsizes(time)

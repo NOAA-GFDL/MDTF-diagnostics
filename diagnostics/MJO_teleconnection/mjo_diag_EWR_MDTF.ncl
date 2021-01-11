@@ -13,8 +13,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 
-  Model = getenv("CASENAME") 
-  pr_conv=stringtofloat(getenv("pr_conversion_factor"))
+  Model = getenv("CASENAME")
   latS   = -10.
   latN   =  10.
 print("----------------------------------------------------------------------------------")
@@ -77,7 +76,7 @@ print("-------------------------------------------------------------------------
   
 ; if(m .gt. 0)
     print("convert kg m-2 s-1 flux to mm/day rate")
-    P = P *pr_conv * 86400.0
+    P = P * 86400.0
 ; end if
 
    P@_FillValue = -999.0  

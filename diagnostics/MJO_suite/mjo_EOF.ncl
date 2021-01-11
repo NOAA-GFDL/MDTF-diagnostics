@@ -11,6 +11,7 @@ begin
 ; ===========================================================
 ; input data
 ;============================================================
+routine_name = "mjo_EOF.ncl"
 vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
@@ -86,14 +87,14 @@ gw0 = f[0]->gw
 do ivars = 0,dimsizes(vars)-1
   
   vName = vars(ivars)
-
+  print("Starting "+vName)
 ;***********************************************************
 ; Read anomalies
 ;***********************************************************
 ;   X       = f->$vName$(iStrt:iLast,{latS:latN},:) ; U_anom_sm
    X = f[ivars]->$vars(ivars)$(:,{latS:latN},:)
-   printVarSummary(X)
-   printMinMax(X, True)
+;   printVarSummary(X)
+;   printMinMax(X, True)
 
 ;   time    = f->time(iStrt:iLast)             ; days since ...
    time    = f[ivars]->time
@@ -139,11 +140,16 @@ do ivars = 0,dimsizes(vars)-1
   time0 = new((/count(0)/),"double")
   time1 = new((/count(1)/),"double")
 
+if ( dimsizes(time) .gt. 1000 ) then
+  time_warning = dimsizes(time)+" time samples, may take a while. Check "+pltDir
+else
+  time_warning = " no time warning, nt "+dimsizes(time)
+end if
   
 do season = 0,1
 
 pltName = casename+".MJO.EOF."+vars(ivars)+"."+seasons_name(season)
-
+print("Computing "+vars(ivars)+", "+seasons_name(season)+". "+time_warning) 
 x_season = new((/count(season),nlat,mlon/),"float")
 x_season!0 = "time"
 x_season!1 = "lat"
@@ -197,8 +203,8 @@ end if
   delete(x_season)
   delete(x_season_w)
 
-  printVarSummary( eof )
-  printVarSummary( eof_ts )
+;  printVarSummary( eof )
+;  printVarSummary( eof_ts )
 
 ;------------------------------------------------------------
 ; PLOTS
@@ -209,10 +215,10 @@ end if
       pltTypeLocal = pltType
   end if
 
-  print(pltDir)
-  print(pltName)
+;  print(pltDir)
+;  print(pltName)
   pltPath = pltDir+pltName
-  print(pltPath)
+
 
   wks = gsn_open_wks(pltTypeLocal,pltPath)
   gsn_define_colormap(wks,"BlwhRe") 
@@ -334,6 +340,7 @@ delete(work)
 ; delete(yyyymmdd)
 delete(yrfrac)
 
+print(routine_name+" wrote "+pltPath)
 end do ; season loop
 end do ; variable loop
 

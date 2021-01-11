@@ -11,6 +11,7 @@ begin
 ; each daily file has 30 days of data
 ; U200(time,lat,lon)
 
+routine_name = "mjo.ncl"
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
 file_dir = getenv("WK_DIR")+"/model/netCDF/"
@@ -22,7 +23,7 @@ firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
 ndays = (lastyr-firstyr+1)*365  ; noleap years in model
 
-f = addfile(file_dir+casename+".u200.day.nc","r")
+f = addfile(getenv("U200_FILE"))
 gw = f->gw
 date = f->date
 maxdays = dimsizes(date)
@@ -86,15 +87,16 @@ res@vpHeightF = 0.30
 res@trXMinF = firstyr
 res@trXMaxF = lastyr+1
 
-print("DEBUG yrfrac")
-print(getvardims(yrfrac)+": "+dimsizes(yrfrac))
-print("DEBUG data")
-print(getvardims(data)+": "+dimsizes(data))
-print("DEBUG filtered")
-print(getvardims(filtered)+": "+dimsizes(filtered))
-print("DEBUG var_fil")
-print(getvardims(var_fil)+": "+dimsizes(var_fil))
-
+if ( False ) then
+  print("DEBUG yrfrac")
+  print(getvardims(yrfrac)+": "+dimsizes(yrfrac))
+  print("DEBUG data")
+  print(getvardims(data)+": "+dimsizes(data))
+  print("DEBUG filtered")
+  print(getvardims(filtered)+": "+dimsizes(filtered))
+  print("DEBUG var_fil")
+  print(getvardims(var_fil)+": "+dimsizes(var_fil))
+end if
 
 ; First Plot
 res@gsnCenterString = casename+" Mean of Daily 200 mb Zonal Wind (10S-10N)" 
@@ -123,4 +125,5 @@ pan@gsnPaperOrientation = "portrait"
 pan@gsnPanelYWhiteSpacePercent = 2.0
 gsn_panel(wks,plot,(/3,1/),pan)
 
+print(routine_name+" wrote "+psplot+".ps")
 end

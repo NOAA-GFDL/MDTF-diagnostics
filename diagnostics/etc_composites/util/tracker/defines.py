@@ -147,6 +147,8 @@ else:
   ########################## COMPOSITE ANALYSIS SETTINGS ##################################
   #########################################################################################
 
+  composite_years = over_write_years
+  composite_years = [int(os.environ['FIRSTYR']),  int(os.environ['FIRSTYR'])]
   # Number of cores used to process the datacyc creation, set it to 1 for serial processing
   # num_cores = mp.cpu_count() - 2
   # if I am running the new code, then I can't really do the parallel processing 
@@ -157,7 +159,7 @@ else:
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
   # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
-  composite_var_list = ['tp', 'prw', 'w500', 'uv10']
+  composite_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

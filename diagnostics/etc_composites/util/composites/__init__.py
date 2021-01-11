@@ -210,13 +210,13 @@ def area_avg_one_step(lat, lon, values, centerLat, centerLon, bins=None):
   return H
 
 def test_plot(val, lon=None, lat=None):
-  plt.style.use(['classic', 'ggplot'])
+  # plt.style.use(['classic', 'ggplot'])
   plt.ion()
   plt.figure()
   if (lat is None) | (lon is None):
-    plt.pcolormesh(val)
+    plt.pcolormesh(val, cmap='jet')
   else:
-    plt.pcolormesh(lon, lat, val)
+    plt.pcolormesh(lon, lat, val, cmap='jet')
   plt.colorbar()
   # plt.show()
 
@@ -224,7 +224,7 @@ def plot_polar(theta, r, values, type='pcolormesh'):
   '''
   Plots the figure in polar cordinates given theta and r values
   '''
-  plt.style.use('ggplot')
+  # plt.style.use('ggplot')
   r, theta = np.meshgrid(r,theta)
 
   # x = r * np.cos(theta)
@@ -244,15 +244,17 @@ def plot_area(X, Y, values, type='pcolormesh'):
   '''
   Plots the figure in equal area grid
   '''
-  plt.style.use('ggplot')
+  # plt.style.use('ggplot')
   fig, ax = plt.subplots()
   if (type == 'contourf'):
     pc = ax.contourf(X, Y, values, cmap='jet')
   elif (type == 'pcolormesh'):
     pc = ax.pcolormesh(X, Y, values, cmap='jet')
   plt.colorbar(pc)
+  plt.ylabel('Distance [km]')
+  plt.xlabel('Distance [km]')
   # plt.show()
-
+    
 def compute_dist_from_cdt(lat, lon, centerLat, centerLon):
 
     # km per degree value

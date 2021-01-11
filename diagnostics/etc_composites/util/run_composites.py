@@ -61,7 +61,7 @@ print('Done symlinking the data files...')
 # ------------------------------------------------------------
 
 # defining the years to run the code for 
-year_list = range(defines.over_write_years[0], defines.over_write_years[1]+1)
+year_list = range(defines.composite_years[0], defines.composite_years[1]+1)
 
 # land mask 
 ds = xr.open_dataset(defines.topo_file)
@@ -267,7 +267,7 @@ for hemis_type in defines.composite_hem_list:
         # plt.close('all')
         # tmp = tmp_dict['circ_sum']/tmp_dict['circ_cnt']
         # composites.plot_polar(circ_H.y,  circ_H.x, tmp)
-        # plt.title(f'{var.upper()} {lm_type} {hemis_type}')
+        #ERA-Interim plt.title(f'{var.upper()} {lm_type} {hemis_type}')
         # out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_circ_{var}_{hemis_type}_{lm_type}.png')
         # plt.savefig(out_file, dpi=300.)
 
@@ -277,8 +277,8 @@ for hemis_type in defines.composite_hem_list:
         plt.title(f'{var.upper()} {lm_type} {hemis_type}')
         # out_file = os.path.join(defines.images_folder, f'{defines.model}_{defines.over_write_years[0]}_{defines.over_write_years[1]}_area_{var}_{hemis_type}_{lm_type}_{season.upper()}.png')
         out_file = os.path.join(defines.model_images_folder, f'{os.environ["CASENAME"]}_area_{var}_{hemis_type}_{lm_type}_{season.upper()}.png')
-        plt.savefig(out_file, dpi=300.)
-
+        plt.title(f'{os.environ["CASENAME"]} {var.upper()} [{hemis_type.upper()}-{lm_type.upper()}-{season.upper()}]')
+        plt.savefig(out_file, dpi=100.)
 
 
 

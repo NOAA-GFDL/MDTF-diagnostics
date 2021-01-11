@@ -34,7 +34,8 @@ def generate_ncl_plots(nclPlotFile):
 #============================================================
 # Call NCL code here
 #============================================================
-os.makedirs(os.path.join(os.environ['DATADIR'], 'day'), exist_ok=True)
+if not os.path.exists(os.path.join(os.environ['DATADIR'], 'day')):
+    os.makedirs(os.path.join(os.environ['DATADIR'], 'day'))
 
 print("OBTAINING DAILY OUTPUT")
 generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl")

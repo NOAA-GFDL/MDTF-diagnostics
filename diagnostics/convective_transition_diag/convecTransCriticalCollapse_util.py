@@ -217,7 +217,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         al=numpy.zeros(t_reg_I.shape[0]) # al:alpha, slope of pickup asymptote
         cwvRange=numpy.linspace(CWV_FIT_RANGE_MIN,\
                                 CWV_FIT_RANGE_MAX,\
-                                (CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH+1)
+                                int((CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH+1))
 
         # Use the 3 most probable Temperature bins only
         #  These should best capture the pickup over tropical oceans
@@ -334,7 +334,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         fig_obs_cts = mp.figure(figsize=(figsize1,figsize2))
 
         #title_text=fig_obs_cts.text(s='Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_obs_cts.transFigure, fontsize=16)
-        fig_obs_cts.suptitle('Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', y=1.04, fontsize=16) ###Change y=1.04 to 1.02 for Python3.
+        fig_obs_cts.suptitle('Convective Transition Collapsed Statistics ('+OBS+', '+RES+'$^{\circ}$)', y=1.02, fontsize=16) ###Change y=1.04 to 1.02 for Python3.
 
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             # create figure 1
@@ -511,7 +511,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ##### Figure Critical CWV (WC) #####
         fig_obs_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
 
-        fig_obs_wc.text(s='Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', x=0.5, y=1.03, ha='center', va='bottom', transform=fig_obs_wc.transFigure, fontsize=16)
+        fig_obs_wc.suptitle('Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)', y=1.02, fontsize=16)
 
         reg_color=[-1,-2,-3,0]
 
@@ -586,7 +586,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         elif (BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2):
             footnote_str+='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) as the bulk tropospheric temperature measure'
         footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-        ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs_wc.transFigure, ha='left', va='top', fontsize=12)
+        #ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_obs_wc.transFigure, ha='left', va='top', fontsize=12)
 
         # set layout to tight (so that space between figures is minimized)
         fig_obs_wc.tight_layout()
@@ -618,7 +618,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     # create figure canvas
     fig_cts = mp.figure(figsize=(figsize1,figsize2))
     
-    fig_cts.text(s='Convective Transition Collapsed Statistics ('+MODEL+')', x=0.5, y=1.02, ha='center', va='bottom', transform=fig_cts.transFigure, fontsize=16)
+    fig_cts.suptitle('Convective Transition Collapsed Statistics ('+MODEL+')', y=1.02, fontsize=16)
 
     for reg in numpy.arange(NUMBER_OF_REGIONS):
         # create figure 1
@@ -791,7 +791,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     ##### Figure Critical CWV (WC) #####
     fig_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
 
-    title_text=fig_wc.text(s='Critical CWV, Col. Satn., & Critical Col. RH ('+MODEL+')', x=0.5, y=1.03, ha='center', va='bottom', transform=fig_wc.transFigure, fontsize=16)
+    fig_wc.suptitle('Critical CWV, Col. Satn., & Critical Col. RH ('+MODEL+')', y=1.02, fontsize=16)
 
     reg_color=[-1,-2,-3,0]
 
@@ -891,7 +891,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
     if (OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0):
         footnote_str+='\nCorresponding results from '+OBS+' (spatial resolution: '+RES+'$^{\circ}$) plotted in gray'
-    ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_wc.transFigure, ha='left', va='top', fontsize=12)
+    #ax1.text(s=footnote_str, x=0, y=-0.02, transform=fig_wc.transFigure, ha='left', va='top', fontsize=12)
 
     # set layout to tight (so that space between figures is minimized)
     fig_wc.tight_layout()

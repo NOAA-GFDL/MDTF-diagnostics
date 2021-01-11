@@ -17,7 +17,7 @@
     "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
     "runtime_requirements": {
       "python2": [],
-      "ncl": ["contributed", "gsn_code", "gsn_csm", "diagnostics_cam"]
+      "ncl": ["contributed", "gsn_code", "gsn_csm"]
     }
   },
   "data": {
@@ -35,29 +35,29 @@
     "time": {"standard_name": "time"}
   },
   "varlist": {
-    "FLUT": {
+    "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
       "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
-    "PRECT": {
+    "pr": {
       "standard_name": "precipitation_flux",
-      "units": "kg m-2 s-1", //units?
+      "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     },
-    "OMEGA500": {
+    "omega500": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 500}
     },
-    "U200": {
+    "u200": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
     },
-    "U850": {
+    "u850": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],

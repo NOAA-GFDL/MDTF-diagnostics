@@ -1,0 +1,33 @@
+// seaice_suite MDTF diagnostic settings file
+//
+{
+  "settings" : {
+    "driver" : "seaice_suite_sic_mean_sigma.py",
+    "long_name" : "Arctic Sea Ice Suite Diagnostics",
+    "realm" : "seaIce",
+    "description" : "Sea Ice Concentration Mean, Std, etc",
+    "pod_env_vars" : {
+      "EXAMPLE_FAV_COLOR": "blue",
+      "EXAMPLE_NEXT_FAV_COLOR": "red"
+    },
+    "runtime_requirements": {
+        "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy"]
+    }
+  },
+
+  // In this section, you describe what model data your diagnostic uses. Add one
+  // list entry (the section in curly braces) for each variable, separated by 
+  // commas.
+  "varlist" : [
+    {
+      // Variable identifier. An environment variable with this name will be set
+      // to what the corresponding field is called in the model being analyzed.
+      // For example, if this diagnostic were run on CESM2, the variable $tas_var
+      // would be set to "TREFHT".
+      "var_name" : "siconc_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    }
+    // If we needed a second variable, we'd list it here.
+  ]
+}

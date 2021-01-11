@@ -220,7 +220,7 @@ begin
   res1@cnMaxLevelValF       =  1.0          ; set max contour level
   res1@cnLevelSpacingF      =  0.1          ; set contour spacing
 
-  res1@cnLabelBarEndLabelsOn= True
+;  res1@cnLabelBarEndLabelsOn= True
   res1@cnLabelBarEndStyle   = "ExcludeOuterBoxes"
   res1@cnInfoLabelOn        = False
 

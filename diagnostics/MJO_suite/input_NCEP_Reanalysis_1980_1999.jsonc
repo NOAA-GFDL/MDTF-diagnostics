@@ -14,17 +14,17 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD, 
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "OBS_WK",
-      "model" : "OBS_WK",
-      "convention" : "OBS_WK",
-      "FIRSTYR" : 1979,
+      "CASENAME" : "NCEP_Reanalysis",
+      "model" : "trash2",
+      "convention" : "NCEP_Reanalysis",  //this reads from fieldlist_$convention.jscon
+      "FIRSTYR" : 1980,
       "LASTYR" : 1999,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
+//          "Wheeler_Kiladis",
 //          "EOF_500hPa",
 //          "convective_transition_diag",
-//          "MJO_suite",
+          "MJO_suite"
 //          "MJO_teleconnection",
 //          "precip_diurnal_cycle"
       ]

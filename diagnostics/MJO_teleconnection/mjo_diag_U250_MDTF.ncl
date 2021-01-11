@@ -30,10 +30,7 @@ dim_mo = tointeger(dim_yrs * 3.)
    print("Last year"+yrLast)
 g   = 9.81              ;- Gravity acceleration [m/s^2]
 ;-----Model------
-Model= getenv("CASENAME") 
-
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
+Model= getenv("CASENAME")
 
 ;-----------------------------------------------------------------------------------------
 ;-- read in reanalysis values of monthly zonal wind --

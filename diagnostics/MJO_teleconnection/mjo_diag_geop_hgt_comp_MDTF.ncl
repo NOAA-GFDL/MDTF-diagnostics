@@ -47,9 +47,6 @@ print("Input data file for Z250 :" + filz250)
 print("t-statistics data table is read from:"+diro+tfile)
 
 
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
-
 z250var = getenv("z250_var")
 
 

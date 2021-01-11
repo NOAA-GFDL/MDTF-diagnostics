@@ -55,9 +55,6 @@ olrvar = getenv("rlut_var")
 u250var = getenv("u250_var")
 u850var = getenv("u850_var")
 
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
-
 print("Input data path(Model) :" + diri)
 print("Input data path(obs) :" + diri1)
 print("Output data path :" + diro)

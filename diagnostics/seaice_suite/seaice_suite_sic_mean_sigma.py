@@ -36,7 +36,7 @@
 # 
 #   References
 # 
-#      Roach, L.R. and Co-authors, 2021: Process-oriented evaluation of Sea Ice 
+#      Roach, L.A. and Co-authors, 2021: Process-oriented evaluation of Sea Ice 
 #         and Mixed Layer Depth in MDTF Special Issue
 #
 
@@ -85,7 +85,6 @@ print("*******Now I am here")
 #os.environ['LASTYR']='2014'
 #os.environ['siconc_var']='siconc'
 
-print("{WK_DIR}")
 # In[3]:
 
 

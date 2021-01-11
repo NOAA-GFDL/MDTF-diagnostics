@@ -409,7 +409,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
         else  ; ************* CAM/CCSM ***********
           print("** model output")
 ;          if  (any(var_name.eq.(/"PRECT","PRECC","PRECL","PRECSH"/))) then
-            vscale = 86400.*1000.*tofloat(getenv("pr_conversion_factor"))*0.001
+            vscale = 86400.0
 ;          end if
           run_years = mrun_years
         end if

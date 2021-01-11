@@ -44,8 +44,7 @@ end
 procedure deal_with_var_specifics(var,var_name_in)
 begin
   if (var_name_in .eq. getenv("pr_var")) then
-    pr_conversion_factor = stringtofloat(getenv("pr_conversion_factor"))
-    var = (/var*pr_conversion_factor*0.001/)            ; m/s
+    var = (/var*0.001/)            ; kg m-2 s-1 to m/s
     var@units = "m/s"
   end if
 

@@ -22,8 +22,7 @@ begin
  Mean = False  ;True only for variance calculation for difference of means test
 print("--------------------------------------------------------------------------")  
 
-Model = getenv("CASENAME") 
-pr_conv=stringtofloat(getenv("pr_conversion_factor"))
+Model = getenv("CASENAME")
 
 print("Model: " + Model)
 ;-------------------------------------------------------------------------------------
@@ -71,7 +70,7 @@ prvar = getenv("pr_var")
     pr@_FillValue = -999
 
     print("convert kg m-2 s-1 flux to mm/day rate")
-    pr = pr *pr_conv * 86400.0
+    pr = pr * 86400.0
 
     lon = tofloat(a->lon)
     lat = tofloat(a->lat)

@@ -30,11 +30,11 @@ level = getenv("lev_coord")
 wk_dir = getenv("WK_DIR")+"/model/netCDF/"
 
 
-file_u200 = datadir+"/day/"+casename+"."+getenv("u200_var")+".day.nc"
-file_v200 = datadir+"/day/"+casename+"."+getenv("v200_var")+".day.nc"
-file_u850 = datadir+"/day/"+casename+"."+getenv("u850_var")+".day.nc"
-file_rlut = datadir+"/day/"+casename+"."+getenv("rlut_var")+".day.nc"
-file_pr = datadir+"/day/"+casename+"."+getenv("pr_var")+".day.nc"
+file_u200 = getenv("U200_FILE")
+file_v200 = getenv("V200_FILE")
+file_u850 = getenv("U850_FILE")
+file_rlut = getenv("RLUT_FILE")
+file_pr = getenv("PR_FILE")
 
 print("daily_netcdf.ncl reading "+file_pr+" for time coordinates.")
 print("   Assuming without checking that all have same time coordinates!")

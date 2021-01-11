@@ -87,7 +87,8 @@ os.environ["qsat_int_file"] = os.environ["QSAT_INT_FILE"]
 
 ## Model output filename convention
 os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
-os.makedirs(os.environ["MODEL_OUTPUT_DIR"], exist_ok=True)
+if not os.path.exists(os.environ["MODEL_OUTPUT_DIR"]):
+    os.makedirs(os.environ["MODEL_OUTPUT_DIR"])
 #os.environ["pr_file"] = "*."+os.environ["pr_var"]+".1hr.nc"
 #os.environ["prw_file"] = "*."+os.environ["prw_var"]+".1hr.nc"
 #os.environ["ta_file"] = "*."+os.environ["ta_var"]+".1hr.nc"

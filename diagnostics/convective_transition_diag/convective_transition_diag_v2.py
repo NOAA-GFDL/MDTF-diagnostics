@@ -79,14 +79,15 @@ else:
         os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR',''))
     )
 
-os.environ["pr_file"] = "*."+os.environ["pr_var"]+".1hr.nc"
-os.environ["prw_file"] = "*."+os.environ["prw_var"]+".1hr.nc"
-os.environ["ta_file"] = "*."+os.environ["ta_var"]+".1hr.nc"
-os.environ["tave_file"] = "*."+os.environ["tave_var"]+".1hr.nc"
-os.environ["qsat_int_file"] = "*."+os.environ["qsat_int_var"]+".1hr.nc"
+os.environ["pr_file"] = os.environ["PR_FILE"]
+os.environ["prw_file"] = os.environ["PRW_FILE"]
+os.environ["ta_file"] = os.environ["TA_FILE"]
+os.environ["tave_file"] = os.environ["TAVE_FILE"]
+os.environ["qsat_int_file"] = os.environ["QSAT_INT_FILE"]
 
 ## Model output filename convention
 os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
+os.makedirs(os.environ["MODEL_OUTPUT_DIR"], exist_ok=True)
 #os.environ["pr_file"] = "*."+os.environ["pr_var"]+".1hr.nc"
 #os.environ["prw_file"] = "*."+os.environ["prw_var"]+".1hr.nc"
 #os.environ["ta_file"] = "*."+os.environ["ta_var"]+".1hr.nc"

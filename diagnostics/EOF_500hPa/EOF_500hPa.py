@@ -32,8 +32,8 @@ def generate_ncl_plots(nclPlotFile):
     return 0
 
 print "Entered "+__file__
-filename1 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["zg_var"]+".mon.nc"
-filename2 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["ps_var"]+".mon.nc"
+filename1 = os.environ["ZG_FILE"]
+filename2 = os.environ["PS_FILE"]
 print "Looking for"+filename1
 if not os.path.isfile( filename1 ):
     print ("ERROR missing file "+filename1)

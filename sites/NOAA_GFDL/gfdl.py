@@ -252,6 +252,7 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -270,6 +271,7 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -287,6 +289,7 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -391,6 +394,7 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource corresponding to 
     model data in the /pp/ directory hierarchy.
     """
+    convention: str = util.MANDATORY
     MODEL_DATA_ROOT: str = ""
 
     def __post_init__(self):

@@ -169,12 +169,9 @@ class DataSourceAttributesBase():
     CASENAME: str = util.MANDATORY
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
-    convention: str = util.MANDATORY
     date_range: datelabel.DateRange = dataclasses.field(init=False)
 
     def __post_init__(self):
-        translate = core.VariableTranslator()
-        self.convention = translate.get_convention_name(self.convention)
         self.date_range = datelabel.DateRange(self.FIRSTYR, self.LASTYR)
 
 class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
@@ -189,6 +186,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     def __init__(self, case_dict):
         config = core.ConfigManager()
+        translate = core.VariableTranslator()
         self._id = 0
         self.id_number = itertools.count(start=1) # IDs for PODs, vars
         self.strict = config.get('strict', False)
@@ -200,6 +198,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.failed_data = collections.defaultdict(list)
         self.exceptions = util.ExceptionQueue()
 
+        # set variable name convention
+        if hasattr(self, '_convention'):
+            self.convention = self._convention
+        elif hasattr(self.attrs, 'convention'):
+            self.convention = self.attrs.convention
+        else:
+            raise util.GenericDataSourceError((f"'convention' not configured "
+                f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)   
+
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
             config.global_env_vars.copy()
@@ -208,7 +216,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
         # add naming-convention-specific env vars 
-        translate = core.VariableTranslator()
         self.env_vars.update(
             getattr(translate.get_convention(self.convention), 'env_vars', dict())
         )
@@ -232,11 +239,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
     def name(self):
         assert (hasattr(self,'attrs') and hasattr(self.attrs, 'CASENAME'))
         return self.attrs.CASENAME
-
-    @property
-    def convention(self):
-        assert (hasattr(self,'attrs') and hasattr(self.attrs, 'convention'))
-        return self.attrs.convention
 
     @property
     def failed(self):
@@ -1305,6 +1307,7 @@ class SampleDataAttributes(DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
     data.
     """
+    convention: str = util.MANDATORY
     MODEL_DATA_ROOT: str = ""
     sample_dataset: str = ""
 
@@ -1586,4 +1589,5 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, LocalFileDataSourc
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    _convention = "CMIP" # hard-code naming convention
 

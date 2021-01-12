@@ -18,3 +18,4 @@ dependencies:
 - esmpy=8.0.1
 - xesmf=0.3.0
 - dask=2.21.0
+- gsw=3.3

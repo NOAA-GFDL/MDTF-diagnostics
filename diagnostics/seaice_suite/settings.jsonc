@@ -2,7 +2,7 @@
 //
 {
   "settings" : {
-    "driver" : "seaice_suite_sic_mean_sigma.py",
+    "driver" : "seaice_suite_mld_mean_sigma.py",
     "long_name" : "Arctic Sea Ice Suite Diagnostics",
     "realm" : "seaIce",
     "description" : "Sea Ice Concentration Mean, Std, etc",
@@ -24,7 +24,7 @@
       // to what the corresponding field is called in the model being analyzed.
       // For example, if this diagnostic were run on CESM2, the variable $tas_var
       // would be set to "TREFHT".
-      "var_name" : "siconc_var",
+      "var_name" : "so_var",
       "freq" : "mon",
       "requirement" : "required"
     }

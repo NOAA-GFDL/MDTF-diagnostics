@@ -52,7 +52,9 @@
     "CLDTOT_var" : "CLDTOT",
     "ICEFRAC_var" : "ICEFRAC",
     "psl_var" : "PSL",
-    "siconc_var" : "siconc"
+    "siconc_var" : "siconc",
+    "so_var" : "so",
+    "thetao_var" : "thetao" 
   },
   "units" : {
     // TODO: assign to variables; do honest unit conversion

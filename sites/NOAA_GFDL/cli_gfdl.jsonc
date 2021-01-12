@@ -185,7 +185,7 @@
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
           "type" : "int",
-          "default" : 300,
+          "default" : 450,
           "metavar" : "<seconds>"
         },{
           "name": "keep_temp",

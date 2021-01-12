@@ -160,12 +160,14 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             ) 
             _log.info("Successful exit of dmget.")
 
-    def _get_fetch_method(self, method='auto'):
+    def _get_fetch_method(self, method=None):
         _methods = {
             'gcp': {'command': ['gcp', '--sync', '-v', '-cd'], 'site':'gfdl:'},
             'cp':  {'command': ['cp'], 'site':''},
             'ln':  {'command': ['ln', '-fs'], 'site':''}
         }
+        if method is None:
+            method = getattr(self, "_fetch_method", 'auto')
         if method not in _methods:
             if self.tape_filesystem:
                 method = 'gcp' # use GCP for DMF filesystems
@@ -180,7 +182,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         """
         tmpdir = core.TempDirManager().make_tempdir()
         _log.debug("Created GCP fetch temp dir at %s.", tmpdir)
-        (cp_command, smartsite) = self._get_fetch_method(self.fetch_method)
+        (cp_command, smartsite) = self._get_fetch_method(self._fetch_method)
         if not util.is_iterable(paths):
             paths = (paths, )
 
@@ -215,13 +217,13 @@ class GFDL_GCP_FileDataSourceBase(
     _FileRegexClass = util.abstract_attribute()
     _DirectoryRegex = util.abstract_attribute()
     _AttributesClass = util.abstract_attribute()
+    _fetch_method = 'auto' # symlink if not on /archive, else gcp
 
     def __init__(self, case_dict):
         self.catalog = None
         super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict)
 
         config = core.ConfigManager()
-        self.fetch_method = 'auto'
         self.frepp_mode = config.get('frepp', False)
         self.dry_run = config.get('dry_run', False)
         self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
@@ -252,6 +254,7 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
+    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
 
 
 @util.mdtf_dataclass
@@ -270,7 +273,7 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
-
+    _fetch_method = "gcp" 
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):

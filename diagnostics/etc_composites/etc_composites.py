@@ -111,6 +111,13 @@ def create_empty_figs():
   plot_empty(out_file)
 
   # Plotting empty diff plots 
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_vars_SH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_vars_NH_ocean_WARM.png"
+  plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_merra_vars_SH_ocean_WARM.png"
+  plot_empty(out_file)
+
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
@@ -895,4 +902,4 @@ end_time = timelib.time()
 run_time = timelib.gmtime(end_time - start_time)
 
 # Completed Code
-print(f'Done Completing ETC-composites driver code in {timelib.strftime("%H:%M:%S", run_time)} seconds.')
+print(f'Done Completing ETC-composites driver code in {timelib.strftime("%H:%M:%S", run_time)}')

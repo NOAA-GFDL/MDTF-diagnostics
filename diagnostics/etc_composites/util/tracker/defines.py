@@ -148,7 +148,7 @@ else:
   #########################################################################################
 
   composite_years = over_write_years
-  composite_years = [int(os.environ['FIRSTYR']),  int(os.environ['FIRSTYR'])]
+  # composite_years = [int(os.environ['FIRSTYR']),  int(os.environ['FIRSTYR'])]
   # Number of cores used to process the datacyc creation, set it to 1 for serial processing
   # num_cores = mp.cpu_count() - 2
   # if I am running the new code, then I can't really do the parallel processing 

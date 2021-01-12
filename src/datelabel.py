@@ -525,12 +525,21 @@ class DateRange(AtomicInterval, _DateMixin):
                 return (tmp.upper, tmp.precision)
 
     @classmethod
-    def _coerce_to_self(cls, item):
-        # got to be a better way to write this
+    def _coerce_to_self(cls, item, precision=None):
+        # hacky; should to be a better way to write this
         if isinstance(item, cls) or getattr(item, 'is_static', False):
+            if precision is not None:
+                item.precision = precision
             return item
         else:
-            return cls(item)
+            try:
+                if precision is not None:
+                    return cls(item, precision=precision)
+                else: 
+                    return cls(item)
+            except Exception:
+                raise TypeError((f"Comparison not supported between {cls.__name__} "
+                    f"and {type(item).__name__} ({repr(item)})."))
 
     @property
     def start_datetime(self):
@@ -622,27 +631,30 @@ class DateRange(AtomicInterval, _DateMixin):
         return DateRange(interval.lower, interval.upper, precision=precision)
 
     # for comparsions, coerce to DateRange first & use inherited interval math
-    def _date_range_compare_common(self, other):
+    def _date_range_compare_common(self, other, func_name):
         if self.is_static or getattr(other, 'is_static', False):
             raise util.FXDateException(func_name='_date_range_compare_common')
-        return self._coerce_to_self(other)
+        _other = self._coerce_to_self(other)
+        _meth = getattr(super(DateRange, self), func_name)
+        return _meth(_other)
 
     def __lt__(self, other): 
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__lt__(other)
+        return self._date_range_compare_common(other, '__lt__')
     def __le__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__le__(other)
+        return self._date_range_compare_common(other, '__le__')
     def __gt__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__gt__(other)
+        return self._date_range_compare_common(other, '__gt__')
     def __ge__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__ge__(other)
+        return self._date_range_compare_common(other, '__ge__')
     def __eq__(self, other):
         # Don't want check for static date in this case
-        other = self._coerce_to_self(other)
-        return super(DateRange, self).__eq__(other)
+        try:
+            other = self._coerce_to_self(other)
+        except TypeError:
+            return False
+        prec_other = getattr(other, 'precision', -1)
+        return (super(DateRange, self).__eq__(other)) \
+            and (self.precision == prec_other)
 
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
@@ -738,8 +750,8 @@ class Date(DateRange):
                 return (self.is_static and getattr(other, 'is_static', False))
             else:
                 raise util.FXDateException(func_name='_tuple_compare')
-        if not isinstance(other, Date):
-            other = Date(other, precision=self.precision)
+        if not isinstance(other, self.__class__):
+            other = self.__class__._coerce_to_self(other, precision=self.precision)
         # only compare most signifcant fields of tuple representation
         return func(
             self.lower.timetuple()[:self.precision],
@@ -763,7 +775,10 @@ class Date(DateRange):
         well as date, but *only up to stated precision*, eg Date(2019,5) will == 
         datetime.datetime(2019,05,18).
         """
-        return self._tuple_compare(other, op.eq)
+        try:
+            return self._tuple_compare(other, op.eq)
+        except TypeError:
+            return False
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
@@ -818,7 +833,9 @@ class _FXDateRange(StaticTimeDependenceBase, DateRange):
 class _FXDate(StaticTimeDependenceBase, Date):
     def __init__(self):
         # call DateRange's init
-        super(_FXDate, self).__init__(datetime.datetime.min, precision=DatePrecision.STATIC)
+        super(_FXDate, self).__init__(
+            datetime.datetime.min, precision=DatePrecision.STATIC
+        )
         self.precision = DatePrecision.STATIC
 
     def __repr__(self):

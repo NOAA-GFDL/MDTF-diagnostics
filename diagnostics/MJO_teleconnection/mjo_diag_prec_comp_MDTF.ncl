@@ -34,12 +34,10 @@ print("Model: " + Model)
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
 ;-------------------------------------------------------------------------------------
-diri  = getenv("DATADIR")+"/day/"                               ;Input data directory
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
 diro  = getenv("WK_DIR")+"/model/netCDF/" 
 filpr = getenv("prec_file")                   ; input file
 
-print("Input data path :" + diri)
 print("Output data path :" + diro)
 print("Input data file for Precip :" + filpr)
 
@@ -48,7 +46,7 @@ prvar = getenv("pr_var")
 ;------------------read in geopotential height data --------------------
 
 
-    a = addfile(diri+filpr, "r") 
+    a = addfile(filpr, "r") 
 ;   print(a)
 
 ;--- read in time ---

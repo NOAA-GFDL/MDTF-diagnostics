@@ -346,7 +346,24 @@ class DatasetParser():
         self.attrs_backup = ds.attrs.copy()
         for var in ds.variables:
             setattr(ds[var], 'attrs', strip_attrs(ds[var]))
+            unit_str = self.normalize_attr('units', 'unit', ds[var].attrs)
+            if unit_str is not None:
+                ds[var].attrs['units'] = self.munge_unit(unit_str)
             self.var_attrs_backup[var] = ds[var].attrs.copy()
+
+    def munge_unit(self, unit_str):
+        """HACK to convert unit strings to values that are correctly parsed by
+        cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
+        as "millibarn", a unit of area (see UDUnits `mailing list 
+        <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
+        """
+        # regex matches "mb", case-insensitive, provided the preceding and following
+        # characters aren't also letters; expression replaces "mb" with "millibar"
+        unit_str = re.sub(
+            r"(?<![^a-zA-Z])([mM][bB])(?![^a-zA-Z])", "millibar", unit_str
+        )
+        # insert other cases here as they're discovered
+        return unit_str
 
     def restore_attrs(self, ds):
         """decode_cf and other functions appear to un-set some of the attributes
@@ -563,7 +580,6 @@ class DatasetParser():
         except TypeError as exc:
             _log.warning(exc)
             our_var.units = util.to_cfunits(our_var.units)
-
 
     def check_variable(self, ds, translated_var):
         """Top-level method for the MDTF-specific dataset validation: attempts to

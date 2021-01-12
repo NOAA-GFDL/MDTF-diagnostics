@@ -373,7 +373,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             attrs = getattr(obj, 'attrs', dict())
             for k,v in encoding.items():
                 if k in attrs:
-                    if attrs[k] != v and k.lower() != 'source':
+                    if isinstance(attrs[k], str) and isinstance(v, str):
+                        compare_ = (attrs[k].lower() != v.lower())
+                    else:
+                        compare_ = (attrs[k] != v)
+                    if compare_ and k.lower() != 'source':
                         _log.warning("Conflict in '%s' attribute of %s: %s != %s.",
                             k, name, v, attrs[k])
                     del attrs[k]   

@@ -36,12 +36,10 @@ old_model = True
    yrLast  = ymdLast/10000
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
-diri     = getenv("DATADIR")+"/day/"                                           ;Input data directory
 dirobs   = getenv("OBS_DATA")+"/"                      ;Obs input directory
 diro     = getenv("WK_DIR")+"/model/netCDF/"        ;Output data directory
 filz250  = getenv("z250_file")                                              ; input file
 tfile    = "t_table_data.txt"
-print("Input data path :" + diri)
 print("Output data path :" + diro)
 print("Input data file for Z250 :" + filz250)
 print("t-statistics data table is read from:"+diro+tfile)
@@ -59,7 +57,7 @@ print("data table for t stat is read in ")
 ;------------------read in geopotential height data --------------------
 
 
-    a = addfile(diri+filz250 , "r")
+    a = addfile(filz250 , "r")
   ;  print(a)
 ;--- read in time ---
    temp_time = a->time

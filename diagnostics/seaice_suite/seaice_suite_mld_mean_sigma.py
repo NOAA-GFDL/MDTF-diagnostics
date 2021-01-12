@@ -117,7 +117,7 @@ output_dir = "{WK_DIR}".format(**os.environ) #LR
 figures_dir = "{WK_DIR}".format(**os.environ) #LR
 obs_file = "/glade/work/lettier/mdtf/inputdata/obs_data/seaice_suite/mld_computed_obs_EN4_1979-2014.nc" # need to generalize this
 
-proc_obs_file = "/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/EN4_mld_stats.nc" #ditto
+proc_obs_file = "/glade/work/lettier/mdtf/inputdata/obs_data/seaice_suite/EN4_mld_stats.nc" #ditto
 
 proc_mod_file=output_dir+'mld_fullfield_stats.nc'
 
@@ -393,20 +393,20 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
 
 
 figfile=figures_dir+'themean_'+firstyr+'-'+lastyr+'.png'
-monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
+monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='viridis', statname='Mean', unitname='meters',vmin=0.,vmax=500.)
 
 
 # In[13]:
 
 
-monthlyplot(obsmean, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
+monthlyplot(obsmean, cmapname='viridis', statname='Mean', unitname='meters',vmin=0.,vmax=500.)
 
 
 # In[14]:
 
 
 figfile=figures_dir+'themean_anomalies'+firstyr+'-'+lastyr+'.png'
-monthlyplot(modmean-obsmean, obsmean, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
+monthlyplot(modmean-obsmean, obsmean, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='meters',vmin=-100,vmax=100)
 
 
 # In[15]:

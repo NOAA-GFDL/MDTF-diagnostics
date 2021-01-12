@@ -424,7 +424,7 @@ for year in range(sYear, eYear+1):
       ###### Outputting the CLT file
       # creating the xarray dataset
       out_var_ds = xr.Dataset(
-          {'clt': (('time', 'lat', 'lon'), w500_sel)}, 
+          {'clt': (('time', 'lat', 'lon'), clt_sel)}, 
           coords={
               'time': time, 
               'lat': lat, 
@@ -892,6 +892,44 @@ else:
 
   plt.tight_layout()
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_merra_vars_SH_ocean_WARM.png"
+  plt.savefig(out_file)
+  plt.close('all')
+
+
+  ####################### MODEL - MODIS variables
+  plt.figure(figsize=(12,3))
+
+  plt.subplot(1,3,1)
+  hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'clt'
+  model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
+  plt.pcolormesh(erai_x, erai_y, model_val, cmap='jet', vmin=0, vmax=100)
+  plt.colorbar()
+  plt.title(f'{os.environ["CASENAME"]}\nCLT [SH-OCEAN-WARM]')
+  plt.ylabel('Distance [km]')
+  plt.ylim(-1500, 1500)
+  plt.xlim(-1500, 1500)
+
+  plt.subplot(1,3,2)
+  tmp = erai_modis_cld.copy()
+  tmp[np.isnan(model_val)] = np.nan
+  plt.pcolormesh(erai_x, erai_y, tmp, cmap='jet', vmin=0, vmax=100)
+  plt.colorbar()
+  plt.title('MODIS\nCLT [SH-OCEAN-WARM]')
+  plt.ylim(-1500, 1500)
+  plt.xlim(-1500, 1500)
+
+  plt.subplot(1,3,3)
+  diff_val = model_val - erai_modis_cld
+  vmax = np.nanpercentile(np.abs(diff_val).flatten(), 95)
+  vmin = -1*vmax
+  plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
+  plt.colorbar()
+  plt.title(f'{os.environ["CASENAME"]} - MODIS\nCLT [SH-OCEAN-WARM]')
+  plt.ylim(-1500, 1500)
+  plt.xlim(-1500, 1500)
+
+  plt.tight_layout()
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_modis_vars_SH_ocean_WARM.png"
   plt.savefig(out_file)
   plt.close('all')
 

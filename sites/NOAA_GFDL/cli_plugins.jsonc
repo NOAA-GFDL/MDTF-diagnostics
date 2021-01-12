@@ -22,7 +22,7 @@
     },
     "CMIP6_UDA": {
       "help": "DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdlarchivecmip6DataManager",
+      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdludacmip6DataManager",
       "cli": {
         "arguments": [
           {
@@ -61,7 +61,7 @@
     },
     "CMIP6_archive": {
       "help": "DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed storage at /archive/pcmdi/repo/CMIP6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdldatacmip6DataManager",
+      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdlarchivecmip6DataManager",
       "cli": {
         "arguments": [
           {

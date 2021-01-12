@@ -320,7 +320,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
         if self.failed:
             # Originating exception will have been logged at a higher priority?
-            _log.debug("Request for CASENAME '%s' failed.", self.name)
+            _log.debug("Execution for CASENAME '%s' couldn't be completed successfully.", 
+                self.name)
             for p in self.iter_pods(active=True):
                 try:
                     raise util.GenericDataSourceError((f"Deactivating POD '{p.name}' "

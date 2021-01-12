@@ -234,7 +234,8 @@ class MDTFFramework(object):
                 _log.info(f'Framework: request data for {case_name}')
                 case.request_data()
             else:
-                _log.info(f'Framework: {case_name} failed, skipping data request.')
+                _log.info((f"Framework: initialization for {case_name} failed, skipping "
+                    f"data request."))
 
             if not case.failed:
                 _log.info(f'Framework: run {case_name}')
@@ -243,7 +244,8 @@ class MDTFFramework(object):
                 run_mgr.run()
                 run_mgr.tear_down()
             else:
-                _log.info(f'Framework: {case_name} failed, skipping execution.')
+                _log.info((f"Framework: Data request for {case_name} failed, "
+                    f"skipping execution."))
 
             out_mgr = self.OutputManager(case)
             out_mgr.make_output()
@@ -765,24 +767,24 @@ def print_summary(fmwk):
 
     d = {c.name: summary_info_tuple(c) for c in fmwk.cases}
     failed = any(len(tup[0]) > 0 for tup in d.values())
-    print('\n' + (80 * '-'))
+    _log.info('\n' + (80 * '-'))
     if failed:
-        print(f"Exiting with errors from {__file__}")
+        _log.info(f"Exiting with errors from {__file__}")
         for case_name, tup in d.items():
-            print(f"Summary for {case_name}:")
+            _log.info(f"Summary for {case_name}:")
             if tup[0][0] == 'dummy sentinel string':
-                print('\tAn error occurred in setup. No PODs were run.')
+                _log.info('\tAn error occurred in setup. No PODs were run.')
             else:
                 if tup[1]:
-                    print((f"\tThe following PODs exited cleanly: "
+                    _log.info((f"\tThe following PODs exited cleanly: "
                         f"{', '.join(tup[1])}"))
                 if tup[0]:
-                    print((f"\tThe following PODs raised errors: "
+                    _log.info((f"\tThe following PODs raised errors: "
                         f"{', '.join(tup[0])}"))
-            print(f"\tOutput written to {tup[2]}")
+            _log.info(f"\tOutput written to {tup[2]}")
     else:
-        print(f"Exiting normally from {__file__}")
+        _log.info(f"Exiting normally from {__file__}")
         for case_name, tup in d.items():
-            print(f"Summary for {case_name}:")
-            print(f"\tAll PODs exited cleanly.")
-            print(f"\tOutput written to {tup[2]}")
+            _log.info(f"Summary for {case_name}:")
+            _log.info(f"\tAll PODs exited cleanly.")
+            _log.info(f"\tOutput written to {tup[2]}")

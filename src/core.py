@@ -524,7 +524,7 @@ class Fieldlist():
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     entries: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
-    other: dict = dc.field(default_factory=dict)
+    env_vars: dict = dc.field(default_factory=dict)
 
     @classmethod
     def from_struct(cls, d):

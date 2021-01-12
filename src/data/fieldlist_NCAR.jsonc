@@ -207,7 +207,7 @@
     //   "ndim": 3
     // }
   },
-  "other" : {
+  "env_vars" : {
     // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
     "date_int_offset" : 1
   }

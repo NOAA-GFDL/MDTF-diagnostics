@@ -207,6 +207,11 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.env_vars.update({
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
+        # add naming-convention-specific env vars 
+        translate = core.VariableTranslator()
+        self.env_vars.update(
+            getattr(translate.get_convention(self.convention), 'env_vars', dict())
+        )
 
         # configure paths
         self.overwrite = config.overwrite

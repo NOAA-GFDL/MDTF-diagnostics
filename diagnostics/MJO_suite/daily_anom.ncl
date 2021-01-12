@@ -34,7 +34,7 @@ do i=0,dimsizes(var_names)-1
   var_name = var_names(i)
   print(routine_name+" starting variable "+var_name)
 
-  file_in   = getenv(str_upper(var_name)+"_FILE")
+  file_in   = file_dir +"/"+casename+"."+var_name+".day.nc"
   file_out  = file_dir +"/"+casename+"."+var_name+".day.anom.nc"
 
   if( isfilepresent(file_out) .and. (.not.delete_existing)) then

@@ -23,7 +23,7 @@ firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
 ndays = (lastyr-firstyr+1)*365  ; noleap years in model
 
-f = addfile(getenv("U200_FILE"))
+f = addfile(file_dir+casename+".u200.day.nc","r")
 gw = f->gw
 date = f->date
 maxdays = dimsizes(date)

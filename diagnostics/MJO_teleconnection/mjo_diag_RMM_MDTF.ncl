@@ -44,7 +44,6 @@ print("Model: " + Model)
 
 ;------------ Read in zonal wind and olr --------------------
 
-diri    = getenv("DATADIR")+"/day/"     ;Input data directory
 diri1   = getenv("OBS_DATA")+"/"         ;Observed Input data directory
 diro    = getenv("WK_DIR")+"/model/netCDF/" 
 filolr  = getenv("olr_file")          ; input file
@@ -55,7 +54,6 @@ olrvar = getenv("rlut_var")
 u250var = getenv("u250_var")
 u850var = getenv("u850_var")
 
-print("Input data path(Model) :" + diri)
 print("Input data path(obs) :" + diri1)
 print("Output data path :" + diro)
 print("Input data file for OLR :" + filolr)
@@ -70,7 +68,7 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------------
 
 ;-- Reading U250 data --
-    a  = addfile (diri+filu250 , "r")      
+    a  = addfile (filu250 , "r")      
 ;    print(a)
      latt = a->lat
 ;     print(latt)
@@ -163,7 +161,7 @@ print("U250 data has been read")
 print("Reading data for 850mb wind")
 ;-------------------------------------
 
-  b = addfile(diri+filu850,"r")
+  b = addfile(filu850,"r")
  
  ;-check lats, lons, and time -
  
@@ -257,7 +255,7 @@ print("-------------------------------------------")
 print("Now reading OLR data")
 
   
-  b = addfile(diri+filolr,"r")
+  b = addfile(filolr,"r")
 
  ;-check lats, lons, and time -
  
@@ -300,7 +298,6 @@ print("Now reading OLR data")
   ;clean up
   delete(b)
   delete(lat_ind)
-  delete(diri)
 print("OLR data has been read")
 
 print("-------------------------------------------")

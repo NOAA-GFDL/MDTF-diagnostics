@@ -39,8 +39,10 @@
     "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
-      "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {"lev": 500}
+      "dimensions": ["time", "lev", "lat", "lon"]
+      // HACK: until we handle hybrid sigma coord, do level extraction in 
+      // compute_anomalies.ncl
+      // "scalar_coordinates": {"lev": 500}
     },
     "ps": {
       "standard_name": "surface_air_pressure",

@@ -61,7 +61,7 @@
     "sphum": {
       "standard_name": "specific_humidity",
       "units": "1",
-      "ndim": 3
+      "ndim": 4
     },
     // "OMEGA": {
     //   "standard_name": "lagrangian_tendency_of_air_pressure",
@@ -76,7 +76,7 @@
     "precip": {
       "standard_name": "precipitation_flux",
       // NOTE: not a mass flux, will probably need special case in unit conversion
-      "units": "m s-1",
+      "units": "kg m-2 s-1",
       "ndim": 3
     },
     // "PRECC": {
@@ -190,14 +190,12 @@
       "standard_name": "air_temperature",
       "units": "K",
       "ndim": 4
+    },
+    "WVP": {
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2",
+      "ndim": 3
     }
-    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
-    // "MQ": {
-    //   // check name: is this column integrated?
-    //   "standard_name": "atmosphere_mass_content_of_water_vapor",
-    //   "units": "kg m-2",
-    //   "ndim": 3
-    // }
     // Variables for SM_ET_coupling module 
     // "mrsos": {
     //   "standard_name": "mass_content_of_water_in_soil_layer",

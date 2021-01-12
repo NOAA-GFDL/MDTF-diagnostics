@@ -62,7 +62,7 @@
     "Q": {
       "standard_name": "specific_humidity",
       "units": "1",
-      "ndim": 3
+      "ndim": 4
     },
     "OMEGA": {
       "standard_name": "lagrangian_tendency_of_air_pressure",

@@ -458,7 +458,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
             if (model_fstruc.eq.0) then
 ; 0 = Single file containing data.
 ;           infiles =  getenv("file_path")+"/"+getenv("CASENAME")+"."+getenv("PRECT_var")+".3hr.nc"
-           infiles =  getenv("DATADIR")+"/3hr/"+getenv("CASENAME")+"."+getenv("pr_var")+".3hr.nc"
+           infiles = getenv("PR_FILE")
 ;              infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir+run_name+".cam2.h"+hchan+"."+srun_year+"."+var_name+".nc") ; Single file.
 ;           infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir++run_name+".cam2.h"+hchan+".{"+ym1+","+srun_year+"}-??-??-?????.nc") ; this year+ previous year.
             end if      

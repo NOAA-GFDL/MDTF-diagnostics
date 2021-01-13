@@ -12,7 +12,7 @@ begin
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
 dir_stub = getenv("WK_DIR")
-filename = getenv("DATADIR")+"/3hr/"+casename+"."+getenv("pr_var")+".3hr.nc"
+filename = getenv("PR_FILE")
 ;fincl = getenv("fincl")
 ver = getenv("ver")
 file_obs_DJF = getenv("OBS_DATA")+"/TRMM_DJF.nc"

@@ -33,7 +33,7 @@ end ;replace_missing_with_zeros
 undef("replace_missing_with_zonal_avg")
 function replace_missing_with_zonal_avg( x, array_missing, debug_flag )
 begin
-
+  routine_name = "replace_missing_with_zonal_avg"
   debug_print("Into replace_missing_with_zonal_avg",routine_name,debug_flag)
 
 dim_i = 2 ; this is the dimension to average

@@ -141,7 +141,6 @@ class _DMCoordinateShared(object):
     ``value`` is our mechanism for implementing CF convention `scalar coordinates 
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__.
     """
-    name: str = util.MANDATORY
     bounds: AbstractDMCoordinateBounds = None
     value: typing.Union[int, float] = None
 
@@ -161,18 +160,21 @@ class DMCoordinate(_DMCoordinateShared):
     """Class to describe a single coordinate variable (in the sense used by the
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
+    name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: util.Units = util.MANDATORY
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
+    name: str = 'lon'
     standard_name: str = 'longitude'
     units: util.Units = 'degrees_east'
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
+    name: str = 'lat'
     standard_name: str = 'latitude'
     units: util.Units = 'degrees_north'
     axis: str = 'Y'
@@ -182,6 +184,7 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
+    name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: util.Units = "1" # dimensionless vertical coords OK
     axis: str = 'Z'
@@ -207,6 +210,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
     """Applies to collections of variables, which may be at different frequencies
     (or other attributes).
     """
+    name: str = 'time'
     standard_name: str = 'time'
     units: util.Units = ""
     axis: str = 'T'
@@ -236,6 +240,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
 
 @util.mdtf_dataclass
 class DMTimeCoordinate(_DMCoordinateShared):
+    name: str = util.MANDATORY
     standard_name: str = 'time'
     units: util.Units = util.MANDATORY
     axis: str = 'T'
@@ -287,6 +292,62 @@ def coordinate_from_struct(d, class_dict=None, **kwargs):
         return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
     except Exception:
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
+
+class _DMPlaceholderCoordinateBase(object):
+    """Dummy base class for placeholder coordinates. Placeholder coordinates are
+    only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
+    replaced by the appropriate translated coordinates when that object is used 
+    to create a :class:`~src.core.TranslatedVarlistEntry` object.
+    """
+    pass
+
+@util.mdtf_dataclass
+class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    name: str = 'PLACEHOLDER_COORD'
+    standard_name: str = NotImplemented
+    units: util.Units = NotImplemented
+    axis: str = 'OTHER'
+
+@util.mdtf_dataclass
+class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    name: str = 'PLACEHOLDER_X_COORD'
+    standard_name: str = NotImplemented
+    units: util.Units = NotImplemented
+    axis: str = 'X'
+
+@util.mdtf_dataclass
+class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    name: str = 'PLACEHOLDER_Y_COORD'
+    standard_name: str = NotImplemented
+    units: util.Units = NotImplemented
+    axis: str = 'Y'
+
+@util.mdtf_dataclass
+class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    name: str = 'PLACEHOLDER_Z_COORD'
+    standard_name: str = NotImplemented
+    units: util.Units = NotImplemented
+    axis: str = 'Z'
+    positive: str = NotImplemented
+
+@util.mdtf_dataclass
+class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    name: str = 'PLACEHOLDER_T_COORD'
+    standard_name: str = NotImplemented
+    units: util.Units = NotImplemented
+    axis: str = 'T'
+    calendar: str = NotImplemented
+    range: typing.Any = None
+
+    @property
+    def is_static(self):
+        """Check for time-independent data ('fx' in CMIP6 DRS.) Do the comparison
+        by checking date_range against the placeholder value because that's
+        unique -- we may be using a different DateFrequency depending on the
+        data source.
+        """
+        return (self.range == datelabel.FXDateRange)
+
 
 # ------------------------------------------------------------------------------
 

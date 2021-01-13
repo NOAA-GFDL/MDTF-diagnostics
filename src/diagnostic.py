@@ -1,5 +1,6 @@
 import os
 import dataclasses as dc
+import itertools
 import typing
 from src import util, core, datelabel, data_model
 
@@ -251,12 +252,24 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for varlist entry {name}.")
+        # validate: check for duplicate coord names
+        scalars = kwargs.get('scalar_coordinates', dict())
+        seen = set()
+        dupe_names = set(x for x \
+            in itertools.chain(kwargs['dimensions'], scalars.keys()) \
+            if x in seen or seen.add(x))
+        if dupe_names:
+            raise ValueError((f"Repeated coordinate names {list(dupe_names)} in "
+                    f"varlist entry for {name}."))
+
+        # add dimensions
         for d_name in kwargs.pop('dimensions'):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in varlist "
                     f"entry for {name}."))
             new_kw['coords'].append(dims_d[d_name])
 
+        # add scalar coords
         if 'scalar_coordinates' in kwargs:
             for d_name, scalar_val in kwargs.pop('scalar_coordinates').items():
                 if d_name not in dims_d:
@@ -317,8 +330,8 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
         s = _format(self)
         for i, altvs in enumerate(self.alternates):
-            s += f"\n  Alternate set #{i+1}:"
-            s += '\n'.join(_format(vv) for vv in altvs)
+            alt_str = ', '.join(str(vv) for vv in altvs)
+            s += f"\n    Alternate set #{i+1}: [{alt_str}]"
         return s
 
 class Varlist(data_model.DMDataSet):

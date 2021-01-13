@@ -89,7 +89,7 @@ class MDTFFramework(object):
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
         # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
-        self.global_env_vars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        self.global_env_vars['RGB'] = os.path.join(self.code_root,'shared','rgb')
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.global_env_vars['MPLBACKEND'] = "Agg"
@@ -450,31 +450,38 @@ class FieldlistEntry(data_model.DMDependentVariable):
     _ndim_to_axes_set = {
         # allow specifying dimensionality as shorthand for explicit list
         # of coordinate dimension names
-        1: ('T'),
-        2: ('Y', 'X'),
-        3: ('T', 'Y', 'X'),
-        4: ('T', 'Z', 'Y', 'X')
+        1: ('PLACEHOLDER_T_COORD'),
+        2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
+        3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
+        4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD', 
+            'PLACEHOLDER_X_COORD')
+    }
+    _placeholder_class_dict = {
+        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderXCoordinate,
+        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
+        'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
+        'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
+        'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
     }
     @classmethod
-    def from_struct(cls, dims_lut_d, dims_d, name, **kwargs):
+    def from_struct(cls, dims_d, name, **kwargs):
         # if we only have ndim, map to axes names
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
-            kwargs['dimensions'] = []
-            for ax in cls._ndim_to_axes_set[kwargs.pop('ndim')]:
-                dims = tuple(dims_lut_d[ax].values())
-                if len(dims) != 1:
-                    raise ValueError(f"Can't parse multiple {ax} axes in fieldlist.")
-                kwargs['dimensions'].append(dims[0].name)
+            kwargs['dimensions'] = cls._ndim_to_axes_set[kwargs.pop('ndim')]
     
         # map dimension names to coordinate objects
         kwargs['coords'] = []
         if 'dimensions' not in kwargs or not kwargs['dimensions']:
             raise ValueError(f"No dimensions specified for fieldlist entry {name}.")
         for d_name in kwargs.pop('dimensions'):
-            if d_name not in dims_d:
+            if d_name in cls._placeholder_class_dict:
+                coord_cls = cls._placeholder_class_dict[d_name]
+                kwargs['coords'].append(coord_cls())
+            elif d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
                     f"entry for {name}."))
-            kwargs['coords'].append(dims_d[d_name])
+            else:
+                kwargs['coords'].append(dims_d[d_name])
 
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
@@ -524,7 +531,7 @@ class Fieldlist():
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     entries: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
-    other: dict = dc.field(default_factory=dict)
+    env_vars: dict = dc.field(default_factory=dict)
 
     @classmethod
     def from_struct(cls, d):
@@ -543,9 +550,7 @@ class Fieldlist():
             # dimensionality) -- should just make FieldlistEntry hashable
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
-                entry = FieldlistEntry.from_struct(
-                    d['axes_lut'], d['axes'], name=k, **v
-                )
+                entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
                 temp_d[entry.standard_name][entry.dim_axes_set] = entry
             return (d, temp_d)
@@ -644,9 +649,13 @@ class Fieldlist():
         on naming convention.
         """
         if var.use_exact_name:
-            fl_entry = var
+            # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
+            fl_entry = {f.name: getattr(var, f.name, util.NOTSET) \
+                for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
+            new_name = var.name
         else:
             fl_entry = self.from_CF(var.standard_name, var.axes_set)
+            new_name = fl_entry.name
         
         new_dims = [self.translate_coord(dim) for dim in var.dims]
         new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
@@ -657,8 +666,6 @@ class Fieldlist():
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
             new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
-        else:
-            new_name = fl_entry.name
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry, 

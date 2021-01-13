@@ -458,7 +458,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
             if (model_fstruc.eq.0) then
 ; 0 = Single file containing data.
 ;           infiles =  getenv("file_path")+"/"+getenv("CASENAME")+"."+getenv("PRECT_var")+".3hr.nc"
-           infiles =  getenv("DATADIR")+"/3hr/"+getenv("CASENAME")+"."+getenv("pr_var")+".3hr.nc"
+           infiles = getenv("PR_FILE")
 ;              infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir+run_name+".cam2.h"+hchan+"."+srun_year+"."+var_name+".nc") ; Single file.
 ;           infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir++run_name+".cam2.h"+hchan+".{"+ym1+","+srun_year+"}-??-??-?????.nc") ; this year+ previous year.
             end if      
@@ -515,14 +515,27 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
          end if
  
 ; Requested start time and index in data
-          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
-          
-; Adjust for cd_calendar problems in cam/climo runs as the first year is usually 0000 and
-; cd_calendar changes this to 0001 !! So adjust tstart forward by 1 year.
-          if (time@units.eq."days since 0000-01-01 00:00:00") then
-            tstart = tstart + 1000000
-            print("- Adjusting start date for CAM standalone runs which begin 0000 and cd_calendar switches in to 0001")
+          if (date_offset.eq.0) then
+            ; CMIP / GFDL date index
+            tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*101) 
+          else if (date_offset.eq.1) then
+            ; CESM native date index
+            tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
           end if
+          end if
+          print(tstart)
+
+; TSJ edit 2021-01-12: This step no longer necessary with the replacement of 
+; ut_calendar by cd_calendar. See 
+; https://www.ncl.ucar.edu/Document/Functions/Built-in/cd_calendar.shtml ,
+; in particulare Example 5.
+;
+; ; Adjust for ut_calendar problems in cam/climo runs as the first year is usually 0000 and
+; ; ut_calendar changes this to 0001 !! So adjust tstart forward by 1 year.
+;           if (time@units.eq."days since 0000-01-01 00:00:00") then
+;             tstart = tstart + 1000000
+;             print("- Adjusting start date for CAM standalone runs which begin 0000 and ut_calendar switches in to 0001")
+;           end if
 
          ; print(t_utc)
          ; print(tstart)

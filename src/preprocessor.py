@@ -220,7 +220,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             coords = (v.dims + v.scalar_coords),
             translation = new_tv,
             requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
-            alternates = v.alternates
+            alternates = []
         )
         new_v._id = next(data_mgr.id_number)
         new_v.status = diagnostic.VarlistEntryStatus.INITED
@@ -242,7 +242,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             # existing VarlistEntry queries for 3D slice directly; add a new
             # VE to query for 4D data
             new_v = self.remove_scalar_on_translation(v, data_mgr)
-            v.alternates = [[new_v]]
+            v.alternates = [[new_v]] + v.alternates
 
             for vv in v.iter_alternate_entries():
                 _log.debug("%s for %s: add translated %s as alternate for %s", 

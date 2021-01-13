@@ -22,15 +22,15 @@ class TestVariableTranslator(unittest.TestCase):
         tearDown_config_singletons()
 
     _dummy_coords_d = {
-        "PLACEHOLDER_X": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-        "PLACEHOLDER_Y": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-        "PLACEHOLDER_Z": {
+        "PLACEHOLDER_X_COORD": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+        "PLACEHOLDER_Y_COORD": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+        "PLACEHOLDER_Z_COORD": {
         "standard_name": "air_pressure",
         "units": "hPa",
         "positive": "down",
         "axis": "Z"
         },
-        "PLACEHOLDER_T": {"axis": "T", "standard_name": "time", "units": "days"}
+        "PLACEHOLDER_T_COORD": {"axis": "T", "standard_name": "time", "units": "days"}
     }
 
     def test_variabletranslator(self):

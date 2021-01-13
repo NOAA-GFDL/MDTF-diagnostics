@@ -169,12 +169,9 @@ class DataSourceAttributesBase():
     CASENAME: str = util.MANDATORY
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
-    convention: str = util.MANDATORY
     date_range: datelabel.DateRange = dataclasses.field(init=False)
 
     def __post_init__(self):
-        translate = core.VariableTranslator()
-        self.convention = translate.get_convention_name(self.convention)
         self.date_range = datelabel.DateRange(self.FIRSTYR, self.LASTYR)
 
 class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
@@ -189,6 +186,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     def __init__(self, case_dict):
         config = core.ConfigManager()
+        translate = core.VariableTranslator()
         self._id = 0
         self.id_number = itertools.count(start=1) # IDs for PODs, vars
         self.strict = config.get('strict', False)
@@ -200,6 +198,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.failed_data = collections.defaultdict(list)
         self.exceptions = util.ExceptionQueue()
 
+        # set variable name convention
+        if hasattr(self, '_convention'):
+            self.convention = self._convention
+        elif hasattr(self.attrs, 'convention'):
+            self.convention = self.attrs.convention
+        else:
+            raise util.GenericDataSourceError((f"'convention' not configured "
+                f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)   
+
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
             config.global_env_vars.copy()
@@ -207,6 +215,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.env_vars.update({
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
+        # add naming-convention-specific env vars 
+        self.env_vars.update(
+            getattr(translate.get_convention(self.convention), 'env_vars', dict())
+        )
 
         # configure paths
         self.overwrite = config.overwrite
@@ -227,11 +239,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
     def name(self):
         assert (hasattr(self,'attrs') and hasattr(self.attrs, 'CASENAME'))
         return self.attrs.CASENAME
-
-    @property
-    def convention(self):
-        assert (hasattr(self,'attrs') and hasattr(self.attrs, 'convention'))
-        return self.attrs.convention
 
     @property
     def failed(self):
@@ -1036,7 +1043,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         or return an error. 
         """
         def _set_expt_key(obj_, key_):
-            _log.debug("Setting experiment_key for %s to %s", obj_.name, key_[-1])
+            key_str = str(key_[-1])
+            if key_str:
+                _log.debug("Setting experiment_key for %s to %s", obj_.name, key_str)
             self.expt_keys[obj_._id] = key_
 
         # set attributes that must be the same for all variables
@@ -1146,8 +1155,8 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         relative paths of files in CATALOG_DIR. Only paths that match the regex
         in FileRegexClass are returned.
         """
-        # in case CATALOG_DIR is subset of MODEL_ROOT
-        path_offset = len(os.path.join(self.attrs.MODEL_DATA_ROOT, ""))
+        # in case CATALOG_DIR is subset of CASE_ROOT_DIR
+        path_offset = len(os.path.join(self.attrs.CASE_ROOT_DIR, ""))
         for root, _, files in os.walk(self.CATALOG_DIR):
             try:
                 self._DirectoryRegex.match(root[path_offset:])
@@ -1300,7 +1309,8 @@ class SampleDataAttributes(DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
     data.
     """
-    MODEL_DATA_ROOT: str = ""
+    convention: str = util.MANDATORY
+    CASE_ROOT_DIR: str = ""
     sample_dataset: str = ""
 
     def __post_init__(self):
@@ -1309,34 +1319,33 @@ class SampleDataAttributes(DataSourceAttributesBase):
         super(SampleDataAttributes, self).__post_init__()
         config = core.ConfigManager()
         paths = core.PathManager()
-        # set MODEL_DATA_ROOT
-        if not self.MODEL_DATA_ROOT:
-            self.MODEL_DATA_ROOT = getattr(paths, 'MODEL_DATA_ROOT', None)
-        if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
-            _log.debug(
-                "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
-                config.CASE_ROOT_DIR
-            )
-            self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
+        # set CASE_ROOT_DIR
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        if not self.CASE_ROOT_DIR:
+            model_root = getattr(paths, 'MODEL_DATA_ROOT', None)
+            _log.debug("Setting CASE_ROOT_DIR to MODEL_DATA_ROOT = '%s'.", model_root)
+            self.CASE_ROOT_DIR = model_root
         # set sample_dataset
         if not self.sample_dataset and self.CASENAME:
             _log.debug(
-                "sample_dataset not supplied, using CASENAME = '%s'.",
+                "'sample_dataset' not supplied, using CASENAME = '%s'.",
                 self.CASENAME
             )
             self.sample_dataset = self.CASENAME
 
-        # verify model data root dir exists
-        if not os.path.isdir(self.MODEL_DATA_ROOT):
-            _log.critical("Data directory MODEL_DATA_ROOT = '%s' not found.",
-                self.MODEL_DATA_ROOT)
+        # verify CASE_ROOT_DIR exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
             exit(1)
         if not os.path.isdir(
-            os.path.join(self.MODEL_DATA_ROOT, self.sample_dataset)
+            os.path.join(self.CASE_ROOT_DIR, self.sample_dataset)
         ):
             _log.critical(
-                "Sample dataset '%s' not found in MODEL_DATA_ROOT = '%s'.",
-                self.sample_dataset, self.MODEL_DATA_ROOT)
+                "Sample dataset '%s' not found in CASE_ROOT_DIR = '%s'.",
+                self.sample_dataset, self.CASE_ROOT_DIR)
             exit(1)
 
 
@@ -1355,14 +1364,14 @@ class SampleLocalFileDataSource(SingleLocalFileDataSource):
 
     @property
     def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
-        return self.attrs.MODEL_DATA_ROOT
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
+        return self.attrs.CASE_ROOT_DIR
 
 # ----------------------------------------------------------------------------
 
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes(DataSourceAttributesBase):
-    MODEL_DATA_ROOT: str = ""
+    CASE_ROOT_DIR: str = ""
     activity_id: str = ""
     institution_id: str = ""
     source_id: str = ""
@@ -1395,18 +1404,13 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
                         dest, source, source_val)
                     setattr(self, dest, "")
                     
-        if not self.MODEL_DATA_ROOT:
-            self.MODEL_DATA_ROOT = getattr(paths, 'MODEL_DATA_ROOT', None)
-        if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
-            _log.debug(
-                "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
-                config.CASE_ROOT_DIR
-            )
-            self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
-        # verify model data root dir exists
-        if not os.path.isdir(self.MODEL_DATA_ROOT):
-            _log.critical("Data directory MODEL_DATA_ROOT = '%s' not found.",
-                self.MODEL_DATA_ROOT)
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        # verify case root dir exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
             exit(1)
 
         # should really fix this at the level of CLI flag synonyms
@@ -1438,9 +1442,9 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
         _init_x_from_y('institution_id', 'source_id')
         # TODO: multi-column lookups
         # set CATALOG_DIR to be further down the hierarchy if possible, to
-        # avoid having to crawl entire DRS strcture; MODEL_DATA_ROOT remains the
+        # avoid having to crawl entire DRS strcture; CASE_ROOT_DIR remains the
         # root of the DRS hierarchy
-        new_root = self.MODEL_DATA_ROOT
+        new_root = self.CASE_ROOT_DIR
         for drs_attr in ("activity_id", "institution_id", "source_id", "experiment_id"):
             drs_val = getattr(self, drs_attr, "")
             if not drs_val:
@@ -1448,8 +1452,8 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
             new_root = os.path.join(new_root, drs_val)
         if not os.path.isdir(new_root):
             _log.error("Data directory '%s' not found; starting crawl at '%s'.",
-                new_root, self.MODEL_DATA_ROOT)
-            self.CATALOG_DIR = self.MODEL_DATA_ROOT
+                new_root, self.CASE_ROOT_DIR)
+            self.CATALOG_DIR = self.CASE_ROOT_DIR
         else:
             self.CATALOG_DIR = new_root
 
@@ -1581,4 +1585,5 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, LocalFileDataSourc
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    _convention = "CMIP" # hard-code naming convention
 

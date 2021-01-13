@@ -32,17 +32,24 @@ def generate_ncl_plots(nclPlotFile):
     return 0
 
 print "Entered "+__file__
-filename1 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["zg_var"]+".mon.nc"
-filename2 = os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["ps_var"]+".mon.nc"
+filename1 = os.environ["ZG_FILE"]
+filename2a = os.environ["ZG_HYBRID_SIGMA_FILE"]
+filename2b = os.environ["PS_FILE"]
 print "Looking for"+filename1
 if not os.path.isfile( filename1 ):
     print ("ERROR missing file "+filename1)
-print "Looking for"+filename2
-if not os.path.isfile( filename2 ):
-    print ("ERROR missing file "+filename2)
+    os.environ['USE_HYBRID_SIGMA'] = "1"
+print "Looking for"+filename2a
+if not os.path.isfile( filename2a ):
+    print ("ERROR missing file "+filename2a)
+    os.environ['USE_HYBRID_SIGMA'] = "0"
+print "Looking for"+filename2b
+if not os.path.isfile( filename2b ):
+    print ("ERROR missing file "+filename2b)
 
 
-if os.path.isfile( filename1 ) & os.path.isfile( filename2 ):
+if os.path.isfile(filename1) \
+    or (os.path.isfile(filename2a) and os.path.isfile(filename2b)):
     print("height and surface pressure files found") 
     print("computing EOF of geopotential height anomalies of 500 hPa")
 

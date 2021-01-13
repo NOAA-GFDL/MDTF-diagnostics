@@ -141,7 +141,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
     @property
     def tape_filesystem(self):
-        return gfdl_util.is_on_tape_filesystem(self.attrs.MODEL_DATA_ROOT)
+        return gfdl_util.is_on_tape_filesystem(self.attrs.CASE_ROOT_DIR)
 
     def pre_fetch_hook(self, vars_to_fetch):
         """Issue dmget for all files we're about to fetch, if those files are
@@ -190,7 +190,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         for path in paths:
             # exceptions caught in parent loop in data_manager.DataSourceBase
             local_path = os.path.join(tmpdir, os.path.basename(path))
-            _log.info(f"\tFetching {path[len(self.attrs.MODEL_DATA_ROOT):]}")
+            _log.info(f"\tFetching {path[len(self.attrs.CASE_ROOT_DIR):]}")
             util.run_command(cp_command + [
                 smartsite + path, 
                 # gcp requires trailing slash, ln ignores it
@@ -242,7 +242,7 @@ class GFDL_GCP_FileDataSourceBase(
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
-        self.MODEL_DATA_ROOT = os.sep + os.path.join('uda', 'CMIP6')
+        self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdludacmip6DataManager(
@@ -255,12 +255,13 @@ class Gfdludacmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
     _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
+    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
 class GFDL_archive_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
-        self.MODEL_DATA_ROOT = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+        self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdlarchivecmip6DataManager(
@@ -274,11 +275,13 @@ class Gfdlarchivecmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
     _fetch_method = "gcp" 
+    _convention = "CMIP" # hard-code naming convention
+
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
-        self.MODEL_DATA_ROOT = os.sep + os.path.join('data_cmip6', 'CMIP6')
+        self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdldatacmip6DataManager(
@@ -290,6 +293,7 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -394,24 +398,22 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource corresponding to 
     model data in the /pp/ directory hierarchy.
     """
-    MODEL_DATA_ROOT: str = ""
+    convention: str = util.MANDATORY
+    CASE_ROOT_DIR: str = ""
 
     def __post_init__(self):
         """Validate user input.
         """
         super(PPDataSourceAttributes, self).__post_init__()
         config = core.ConfigManager()
-        # set MODEL_DATA_ROOT
-        if not self.MODEL_DATA_ROOT and config.CASE_ROOT_DIR:
-            _log.debug(
-                "MODEL_DATA_ROOT not supplied, using CASE_ROOT_DIR = '%s'.",
-                config.CASE_ROOT_DIR
-            )
-            self.MODEL_DATA_ROOT = config.CASE_ROOT_DIR
-        # verify model data root dir exists
-        if not os.path.isdir(self.MODEL_DATA_ROOT):
-            _log.critical("Data directory MODEL_DATA_ROOT = '%s' not found.",
-                self.MODEL_DATA_ROOT)
+
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        # verify case root dir exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
             exit(1)
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
@@ -433,8 +435,8 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
 
     @property
     def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'MODEL_DATA_ROOT'))
-        return self.attrs.MODEL_DATA_ROOT
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
+        return self.attrs.CASE_ROOT_DIR
 
     @staticmethod
     def _filter_column(df, col_name, func, obj_name):

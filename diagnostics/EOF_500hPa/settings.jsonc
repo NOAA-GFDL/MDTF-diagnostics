@@ -25,9 +25,15 @@
   "dimensions": {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
-    "lev": {
+    "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "lev": {
+      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "units": "level",
       "positive": "down",
       "axis": "Z"
     },
@@ -39,15 +45,21 @@
     "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
-      "dimensions": ["time", "lev", "lat", "lon"]
-      // HACK: until we handle hybrid sigma coord, do level extraction in 
-      // compute_anomalies.ncl
-      // "scalar_coordinates": {"lev": 500}
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 500},
+      "alternates": ["zg_hybrid_sigma", "ps"]
+    },
+    "zg_hybrid_sigma": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "alternate"
     },
     "ps": {
       "standard_name": "surface_air_pressure",
       "units": "Pa",
-      "dimensions": ["time", "lat", "lon"]
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "alternate"
     }
   }
 }

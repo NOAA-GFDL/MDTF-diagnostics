@@ -3,6 +3,29 @@
 Git-based development workflow
 ==============================
 
+Steps for brand new users:
+------------------------------
+1. Fork the MDTF-diagnostics branch to your GitHub account
+2. Clone your fork of the MDTF-diagnostics repository (repo) to your local machine
+3. Check out a new branch from the local develop branch :: `git checkout -b feature/[my POD name] develop
+4. Start coding
+5. Commit the changes in your feature branch
+6. Push the changes to the copy of the feature branch on your remote fork
+
+Steps for users continuing work on an existing feature branch
+-------------------------------------------------------------
+1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
+2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote fork
+3. Pull in updates from develop branch in your remote fork into the develop branch in your local repository
+4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase or merge
+5. Initialize and update the submodules
+6. Test your updated feature branch and resolve any outstanding issues
+7. Commit any modifications you made while testing
+8. Push the updates in your feature branch to your remote fork
+9. Continue working on your feature branch
+10. Commit the changes in your feature branch
+11. Push the changes to the copy of the feature branch in your remote fork
+
 We recommend developers to manage the MDTF package using the GitHub webpage interface:
 
 - If you have no prior experience with `GitHub <https://github.com/>`__, create an account first.
@@ -112,7 +135,7 @@ or consult the commit log in the web interface
 ::
   git push origin feature/<my_feature_name> --force
 
-Updating a branch with a 2-step merge 
+Updating a branch with a 2-step merge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If you are concerned with updates breaking your development branch, but don't want to deal with undoing commits, you can test the updates in a copy of your feature branch, then merge the copy branch into your feature branch:
 
@@ -145,7 +168,7 @@ Updating your feature branch by rebasing it onto the develop branch (preferred m
 --------------------------------------------------------------------------------------
 Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the develop branch.
 
-1. Update the local and remote develop branches on your fork as described steps 1--3  
+1. Update the local and remote develop branches on your fork as described steps 1--3
 of the **Start Coding** section, then check out your feature branch
 ::
   git checkout feature/<my_feature_name>
@@ -233,7 +256,7 @@ Git Tips and Tricks
 * A useful command is ``git status`` to remind you what branch you're on and changes you've made (but have not committed yet).
 
 * ``git branch -a`` lists all branches with ``*`` indicating the branch you're on.
-     
+
 * Push your changes to your remote fork often (at least daily) even if your changes aren't "clean", or you are in the middle of a task. Your commit history does not need to look like a polished document, and nobody is judging your coding prowess by your development branch. Frequently pushing to your remote branch ensures that you have an easily accessible recent snapshot of your code in the event that your system goes down, or you go crazy with ``rm -f *``.
 
 * A commit creates a snapshot of the code into the history in your local repo.
@@ -247,7 +270,7 @@ Git Tips and Tricks
 
 * To configure git to launch your text editor of choice: ``git config --global core.editor "<command string to launch your editor>"``.
 
-* To set your email: ``git config --global user.email "myemail@somedomain.com"`` You can use the masked email github provides if you don't want your work email included in the commit log message. The masked email address is located in the `Primary email address` section under Settings>emails. 
+* To set your email: ``git config --global user.email "myemail@somedomain.com"`` You can use the masked email github provides if you don't want your work email included in the commit log message. The masked email address is located in the `Primary email address` section under Settings>emails.
 
 * When the feature branch is no longer needed, delete the branch locally with ``git branch -d feature/<my_feature_name>``.
  If you pushed the feature branch to your fork, you can delete it remotely with ``git push --delete origin feature/<my_feature_name>``.

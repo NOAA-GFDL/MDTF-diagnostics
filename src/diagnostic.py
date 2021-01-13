@@ -187,7 +187,8 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         if self.translation and self.translation.name:
             return self.translation.name
         else:
-            raise ValueError(f"Translation not defined for {self.name}.")
+            return "(not translated)"
+            # raise ValueError(f"Translation not defined for {self.name}.")
 
     @property
     def env_vars(self):
@@ -325,8 +326,10 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             str_ = str(v)[1:-1]
             act_str = ('active' if v.active else 'inactive')
             fail_str = (f"failed (exc={v.exception})" if v.failed else 'ok')
+            trans_str = (str(v.translation) \
+                if getattr(v, 'translation', None) is not None else "(not translated)")
             return (f"<{str_}; {act_str}:{v.status.name}, {fail_str}, "
-                f"{v.requirement}>\n    Translation: {v.translation}")
+                f"{v.requirement}>\n    Translation: {trans_str}")
 
         s = _format(self)
         for i, altvs in enumerate(self.alternates):

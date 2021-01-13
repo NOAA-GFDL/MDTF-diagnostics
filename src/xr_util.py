@@ -297,8 +297,8 @@ class DatasetParser():
         ]
         if sum(tup[0] for tup in munged_opts) == 1:
             guessed_val = [tup[1] for tup in munged_opts if tup[0]][0]
-            _log.debug(("Guessing value '%s' was intended for '%s'."), 
-                guessed_val, name)
+            _log.debug(("Correcting '%s' to '%s' as the intended value for '%s'."), 
+                expected_val, guessed_val, name)
             return guessed_val
         if default is None:
             # _log.debug("No string similar to '%s' in %s.", name, options)
@@ -345,25 +345,37 @@ class DatasetParser():
         setattr(ds, 'attrs', strip_attrs(ds))
         self.attrs_backup = ds.attrs.copy()
         for var in ds.variables:
-            setattr(ds[var], 'attrs', strip_attrs(ds[var]))
-            unit_str = self.normalize_attr('units', 'unit', ds[var].attrs)
-            if unit_str is not None:
-                ds[var].attrs['units'] = self.munge_unit(unit_str)
+            d = strip_attrs(ds[var])
+            d = self.munge_unit(d)
+            d = self.munge_calendar(d)
+            setattr(ds[var], 'attrs', d)
             self.var_attrs_backup[var] = ds[var].attrs.copy()
 
-    def munge_unit(self, unit_str):
+    def munge_unit(self, attr_d):
         """HACK to convert unit strings to values that are correctly parsed by
         cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
         as "millibarn", a unit of area (see UDUnits `mailing list 
         <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
         """
-        # regex matches "mb", case-insensitive, provided the preceding and following
-        # characters aren't also letters; expression replaces "mb" with "millibar"
-        unit_str = re.sub(
-            r"(?<![^a-zA-Z])([mM][bB])(?![^a-zA-Z])", "millibar", unit_str
-        )
-        # insert other cases here as they're discovered
-        return unit_str
+        unit_str = self.normalize_attr('units', 'unit', attr_d)
+        if unit_str is not None:
+            # regex matches "mb", case-insensitive, provided the preceding and following
+            # characters aren't also letters; expression replaces "mb" with "millibar"
+            unit_str = re.sub(
+                r"(?<![^a-zA-Z])([mM][bB])(?![^a-zA-Z])", "millibar", unit_str
+            )
+            # insert other cases here as they're discovered
+            attr_d['units'] = unit_str
+        return attr_d
+
+    def munge_calendar(self, attr_d):
+        """Calendar attribute string needs to be normalized before xarray.decode_cf
+        sees it.
+        """
+        cal_str = self.normalize_attr('calendar', 'cal', attr_d)
+        if cal_str is not None:
+            attr_d['calendar'] = self.guess_attr('calendar', cal_str, _cf_calendars, 'none')
+        return attr_d
 
     def restore_attrs(self, ds):
         """decode_cf and other functions appear to un-set some of the attributes

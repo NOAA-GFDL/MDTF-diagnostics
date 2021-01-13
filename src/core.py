@@ -649,9 +649,13 @@ class Fieldlist():
         on naming convention.
         """
         if var.use_exact_name:
-            fl_entry = var
+            # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
+            fl_entry = {f.name: getattr(var, f.name, util.NOTSET) \
+                for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
+            new_name = var.name
         else:
             fl_entry = self.from_CF(var.standard_name, var.axes_set)
+            new_name = fl_entry.name
         
         new_dims = [self.translate_coord(dim) for dim in var.dims]
         new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
@@ -662,8 +666,6 @@ class Fieldlist():
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
             new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
-        else:
-            new_name = fl_entry.name
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry, 

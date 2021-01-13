@@ -11,12 +11,6 @@
       "cli": {
         "arguments": [
           {
-            "name": "CASE_ROOT_DIR",
-            "help": "Parent directory containing sample model data from different models.",
-            "default" : "../inputdata/model/",
-            "metavar" : "<DIR>",
-            "action": "PathAction"
-          },{
             "name": ["sample_dataset", "experiment"],
             "short_name" : "e",
             "help": "Name of sample model data source.",
@@ -31,12 +25,6 @@
       "cli": {
         "arguments": [
           {
-            "name": "CASE_ROOT_DIR",
-            "help": "Parent directory containing sample model data from different models.",
-            "default" : "../inputdata/model/",
-            "metavar" : "<DIR>",
-            "action": "PathAction"
-          },{
             "name": "activity_id",
             "help": "CMIP6 activity ID.",
             "default" : ""

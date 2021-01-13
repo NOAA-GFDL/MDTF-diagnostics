@@ -469,14 +469,14 @@ class DatasetParser():
             # comparison passed, no changes needed
             return
 
-    def check_name(self, our_var, ds_var_name):
+    def check_name(self, our_var, ds_var_name, update_name=False):
         """Reconcile the name of the variable between the 'ground truth' of the 
         dataset we downloaded (*ds_var*) and our expectations based on the model's
         convention (*our_var*).
         """
         attr_name = 'name'
         our_attr = getattr(our_var, attr_name, "")
-        if our_attr.startswith('PLACEHOLDER'):
+        if update_name:
             our_attr = ""
         self._compare_attr(
             (our_var, attr_name, our_attr), (None, attr_name, ds_var_name),
@@ -533,7 +533,7 @@ class DatasetParser():
             _cleanup_our_var(our_var)
             raise exc
 
-    def check_names_and_units(self, our_var, ds, ds_var_name):
+    def check_names_and_units(self, our_var, ds, ds_var_name, update_name=False):
         """Reconcile the standard_name and units attributes between the
         'ground truth' of the dataset we downloaded (*ds_var*) and our expectations
         based on the model's convention (*our_var*).
@@ -543,7 +543,7 @@ class DatasetParser():
             raise ValueError(f"Variable name '{ds_var_name}' not found in dataset: "
                 f"({list(ds.variables)}).")
             # attempt to match on standard_name?
-        self.check_name(our_var, ds_var_name)
+        self.check_name(our_var, ds_var_name, update_name=update_name)
         ds_var = ds[ds_var_name] # abbreviate
 
         # check CF standard_name
@@ -589,7 +589,7 @@ class DatasetParser():
         """
         # check name, std_name, units on variable itself
         tv_name = translated_var.name # abbreviate
-        self.check_names_and_units(translated_var, ds, tv_name)
+        self.check_names_and_units(translated_var, ds, tv_name, update_name=False)
 
         # check variable's dimension coordinates
         for coord in ds.cf.axes(tv_name).values():
@@ -604,7 +604,7 @@ class DatasetParser():
         # check dimension coordinate names, std_names, units, bounds
         for coord in translated_var.dim_axes.values():
             ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
-            self.check_names_and_units(coord, ds, ds_coord_name)
+            self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
             try:
                 bounds_name = ds.cf.get_bounds(ds_coord_name).name
                 _log.debug("Updating %s for '%s' to value '%s' from dataset.",
@@ -646,7 +646,7 @@ class DatasetParser():
                 self.check_names_and_units(coord, ds, ds_coord_name)
             else:
                 # placheholder object; only have name, assume everything else OK
-                self.check_name(coord, ds_coord_name)
+                self.check_name(coord, ds_coord_name, update_name=True)
 
     def parse(self, ds, var=None):
         """Calls the above metadata parsing functions in the intended order; 

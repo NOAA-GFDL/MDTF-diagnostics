@@ -10,15 +10,15 @@
     // only used for taking slices, unit conversion
     // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based 
     // on their values in model data
-    "PLACEHOLDER_X_COORD": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "PLACEHOLDER_Y_COORD": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "PLACEHOLDER_Z_COORD": {
+    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
     },
-    "PLACEHOLDER_T_COORD": {"axis": "T", "standard_name": "time", "units": "days"}
+    "time": {"axis": "T", "standard_name": "time", "units": "days"}
   },
   "aux_coords": {
     // "deptho": {
@@ -42,20 +42,20 @@
     "u": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "u{value}"},
+      "scalar_coord_templates": {"plev": "u{value}"},
       "ndim": 4
     },
     "v": {
       "standard_name": "northward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "v{value}"},
+      "scalar_coord_templates": {"plev": "v{value}"},
       "ndim": 4
     },
     "hght": {
       "standard_name": "geopotential_height",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
-      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "hght{value}"},
+      "scalar_coord_templates": {"plev": "hght{value}"},
       "ndim": 4
     },
     "sphum": {

@@ -450,31 +450,38 @@ class FieldlistEntry(data_model.DMDependentVariable):
     _ndim_to_axes_set = {
         # allow specifying dimensionality as shorthand for explicit list
         # of coordinate dimension names
-        1: ('T'),
-        2: ('Y', 'X'),
-        3: ('T', 'Y', 'X'),
-        4: ('T', 'Z', 'Y', 'X')
+        1: ('PLACEHOLDER_T_COORD'),
+        2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
+        3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
+        4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD', 
+            'PLACEHOLDER_X_COORD')
+    }
+    _placeholder_class_dict = {
+        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderXCoordinate,
+        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
+        'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
+        'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
+        'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
     }
     @classmethod
-    def from_struct(cls, dims_lut_d, dims_d, name, **kwargs):
+    def from_struct(cls, dims_d, name, **kwargs):
         # if we only have ndim, map to axes names
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
-            kwargs['dimensions'] = []
-            for ax in cls._ndim_to_axes_set[kwargs.pop('ndim')]:
-                dims = tuple(dims_lut_d[ax].values())
-                if len(dims) != 1:
-                    raise ValueError(f"Can't parse multiple {ax} axes in fieldlist.")
-                kwargs['dimensions'].append(dims[0].name)
+            kwargs['dimensions'] = cls._ndim_to_axes_set[kwargs.pop('ndim')]
     
         # map dimension names to coordinate objects
         kwargs['coords'] = []
         if 'dimensions' not in kwargs or not kwargs['dimensions']:
             raise ValueError(f"No dimensions specified for fieldlist entry {name}.")
         for d_name in kwargs.pop('dimensions'):
-            if d_name not in dims_d:
+            if d_name in cls._placeholder_class_dict:
+                coord_cls = cls._placeholder_class_dict[d_name]
+                kwargs['coords'].append(coord_cls())
+            elif d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
                     f"entry for {name}."))
-            kwargs['coords'].append(dims_d[d_name])
+            else:
+                kwargs['coords'].append(dims_d[d_name])
 
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
@@ -543,9 +550,7 @@ class Fieldlist():
             # dimensionality) -- should just make FieldlistEntry hashable
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
-                entry = FieldlistEntry.from_struct(
-                    d['axes_lut'], d['axes'], name=k, **v
-                )
+                entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
                 temp_d[entry.standard_name][entry.dim_axes_set] = entry
             return (d, temp_d)

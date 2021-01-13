@@ -193,7 +193,7 @@
       "ndim": 4
     },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
-    "MQ": {
+    "prw": {
       // check name: is this column integrated?
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "units": "kg m-2",

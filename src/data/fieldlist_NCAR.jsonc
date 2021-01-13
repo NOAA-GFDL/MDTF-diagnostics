@@ -11,15 +11,15 @@
     // only used for taking slices, unit conversion
     // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based 
     // on their values in model data
-    "PLACEHOLDER_X": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "PLACEHOLDER_Y": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "PLACEHOLDER_Z": {
+    "PLACEHOLDER_X_COORD": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "PLACEHOLDER_Y_COORD": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "PLACEHOLDER_Z_COORD": {
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
     },
-    "PLACEHOLDER_T": {"axis": "T", "standard_name": "time", "units": "days"}
+    "PLACEHOLDER_T_COORD": {"axis": "T", "standard_name": "time", "units": "days"}
   },
   "aux_coords": {
     // "deptho": {
@@ -43,20 +43,20 @@
     "U": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"PLACEHOLDER_Z": "U{value}"},
+      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "U{value}"},
       "ndim": 4
     },
     "V": {
       "standard_name": "northward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"PLACEHOLDER_Z": "V{value}"},
+      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "V{value}"},
       "ndim": 4
     },
     "Z3": {
       "standard_name": "geopotential_height",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
-      "scalar_coord_templates": {"PLACEHOLDER_Z": "Z{value}"},
+      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "Z{value}"},
       "ndim": 4
     },
     "Q": {
@@ -67,7 +67,7 @@
     "OMEGA": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
-      "scalar_coord_templates": {"PLACEHOLDER_Z": "OMEGA{value}"},
+      "scalar_coord_templates": {"PLACEHOLDER_Z_COORD": "OMEGA{value}"},
       "ndim": 4
     },
     "TS": {

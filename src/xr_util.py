@@ -301,7 +301,7 @@ class DatasetParser():
                 guessed_val, name)
             return guessed_val
         if default is None:
-            _log.debug("No string similar to '%s' in %s.", name, options)
+            # _log.debug("No string similar to '%s' in %s.", name, options)
             raise KeyError(expected_val)
         else:
             # _log.error("Failed to parse '%s'; using fallback value '%s'.", 

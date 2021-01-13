@@ -166,8 +166,8 @@ def convert_scalar_coord(coord, dest_units):
             dest_value, dest_units)
     else:
         # identical units
-        _log.debug("Copied value (=%s %s) of %s slice of '%s' (identical units).",
-            coord.value, coord.units, coord.axis, coord.name)
+        _log.debug("Copied value of %s slice (=%s %s) of '%s' (identical units).",
+             coord.axis, coord.value, coord.units, coord.name)
         dest_value = coord.value
     return dest_value
 

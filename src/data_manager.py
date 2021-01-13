@@ -1043,7 +1043,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         or return an error. 
         """
         def _set_expt_key(obj_, key_):
-            _log.debug("Setting experiment_key for %s to %s", obj_.name, key_[-1])
+            key_str = str(key_[-1])
+            if key_str:
+                _log.debug("Setting experiment_key for %s to %s", obj_.name, key_str)
             self.expt_keys[obj_._id] = key_
 
         # set attributes that must be the same for all variables
@@ -1329,7 +1331,7 @@ class SampleDataAttributes(DataSourceAttributesBase):
         # set sample_dataset
         if not self.sample_dataset and self.CASENAME:
             _log.debug(
-                "sample_dataset not supplied, using CASENAME = '%s'.",
+                "'sample_dataset' not supplied, using CASENAME = '%s'.",
                 self.CASENAME
             )
             self.sample_dataset = self.CASENAME

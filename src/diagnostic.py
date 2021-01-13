@@ -317,8 +317,8 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
         s = _format(self)
         for i, altvs in enumerate(self.alternates):
-            s += f"\n  Alternate set #{i+1}:"
-            s += '\n'.join(_format(vv) for vv in altvs)
+            alt_str = ', '.join(str(vv) for vv in altvs)
+            s += f"\n    Alternate set #{i+1}: [{alt_str}]"
         return s
 
 class Varlist(data_model.DMDataSet):

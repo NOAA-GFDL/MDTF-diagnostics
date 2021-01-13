@@ -89,7 +89,7 @@ class MDTFFramework(object):
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
         # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
-        self.global_env_vars['RGB'] = os.path.join(self.code_root,'src','rgb')
+        self.global_env_vars['RGB'] = os.path.join(self.code_root,'shared','rgb')
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.global_env_vars['MPLBACKEND'] = "Agg"

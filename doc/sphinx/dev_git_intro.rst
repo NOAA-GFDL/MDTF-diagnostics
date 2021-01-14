@@ -7,29 +7,30 @@ Steps for brand new users:
 ------------------------------
 1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
 2. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine (if you are not using the web interface for development)
-3. Check out a new branch from the local develop branch (:ref:`new-feature`)
+3. Check out a new branch from the local develop branch (:ref:`ref-new-feature`)
 4. Start coding
-5. Commit the changes in your feature branch (:ref:`new-feature`)
-6. Push the changes to the copy of the feature branch on your remote fork (:ref:`new-feature`)
+5. Commit the changes in your feature branch (:ref:`ref-new-feature`)
+6. Push the changes to the copy of the feature branch on your remote fork (:ref:`ref-new-feature`)
 7. Repeat steps 4--6 until you are finished working
 8. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
 
 Steps for users continuing work on an existing feature branch
 -------------------------------------------------------------
 1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
-2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote fork
-3. Pull in updates from develop branch in your remote fork into the develop branch in your local repository
-4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase or merge
+2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (:ref:`ref-update-develop`) 
+3. Pull in updates from develop branch in your remote fork into the develop branch in your local repo (:ref:`ref-update-develop`)
+4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`).
 5. Initialize and update the submodules
 6. Test your updated feature branch and resolve any outstanding issues
 7. Commit any modifications you made while testing
 8. Push the updates in your feature branch to your remote fork
 9. Continue working on your feature branch
 10. Commit the changes in your feature branch
-11. Push the changes to the copy of the feature branch in your remote fork
+11. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
 12. Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (:ref:`ref-pull-request`)
 
 .. _ref-fork-code:
+
 Creating a fork of the MDTF-diagnostics repository
 --------------------------------------------------
 - If you have no prior experience with `GitHub <https://github.com/>`__, create an account first.
@@ -37,21 +38,28 @@ Creating a fork of the MDTF-diagnostics repository
 - Create a *fork* of the project by clicking the ``Fork`` button in the upper-right corner of `NOAA's MDTF GitHub page <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. This will create a copy (also known as *repository*, or simply *repo*) in your own GitHub account which you have full control over.
 
 .. _ref-clone:
+
 Clone a repository onto your machine
 ------------------------------------------
+Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git`` command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
+
 - *Clone* your fork onto your computer: ``git clone git@github.com:<your_github_account>/MDTF-diagnostics.git``. This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.
 - Enter the project directory: ``cd MDTF-diagnostics``.
 - Clone additional dependencies of the code: ``git submodule update --recursive --init``.
 - Git knows about your fork, but you need to tell it about NOAA's repo if you wish to contribute changes back to the code base. To do this, type ``git remote add upstream git@github.com:NOAA-GFDL/MDTF-diagnostics.git``. Now you have two remote repos: ``origin``, your GitHub fork which you can read and write to, and ``upstream``, NOAA's code base which you can only read from.
+Another approach is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
 
 .. _ref-new-feature:
+
 Working on a brand new feature
 ------------------------------
 Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
 Whichever method you choose, remember to create your feature/[POD name] branch from the develop branch, not the main branch.
 Since developers commonly work on their own machines, this manual provides command line instructions.
 
-1. Check out a branch for your POD from the develop branch :: git checkout -b feature/[POD name] develop
+1. Check out a branch for your POD from the develop branch
+::
+  git checkout -b feature/[POD name] develop
 
 2. Write code, add files, etc...
 
@@ -61,11 +69,32 @@ Since developers commonly work on their own machines, this manual provides comma
   git add [file 2]
   ...
 
-4. Commit your changes, including a brief description :: git commit -m "description of my changes"
+4. Commit your changes, including a brief description
+::
+  git commit -m "description of my changes"
 
-5. Push the updates to your remote repository :: git push -u origin feature/[POD name]
+5. Push the updates to your remote repository
+::
+  git push -u origin feature/[POD name]
+
+.. _ref-push:
+
+Pushing to your remote POD development branch on your fork
+----------------------------------------------------------
+When you are ready to push your updates to the remote branch on your fork
+
+1. type ``git status`` to list the file(s) that have been updated
+
+2. type ``git add <file>`` to add individual files, or ``git add --all`` to add all files, that have been updated to the staging area
+
+3. Commit the changes with ``git commit -m "your commit message"``. You can also type ``git commit`` to launch an editor in the terminal where you can enter your message.
+
+If you use the editor or BASH shell, you can easily break up your message over multiple lines for better readability.
+
+4. Push the updates to your fork: ``git push -u origin feature/[POD name]`` (The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
 
 .. _ref-pull-request:
+
 Submitting Pull Requests
 ------------------------
 A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo. When your feature is ready, submit a PR by going to the GitHub page of your fork and clicking on **Pull request** to the right of the branch description. Make sure you are submitting the PR to NOAA-GFDL/develop. Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks. If you are still working on your POD, but want to test it with the CI, you can select the *Create Draft Pull Request* option from the dropdown menu by clicking the green button with the arrow to the right of the **Create Pull Request Button**.
@@ -74,11 +103,38 @@ Your changes will not affect the official NOAA's repo until the PR is accepted b
 
 Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
 
-Another approach, unfortunately with a steeper learning curve, is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
+.. _ref-update-develop:
 
-Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git`` command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
+Updating your remote and local develop branches
+-----------------------------------------------
+
+Method 1: Web interface+command line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__  presentation for instructions with figures.
+
+1. Click the *Pull request* link on the main page of your MDTF-diagnostics fork
+2. Select your fork as the **base** repository, and *develop* as the **base branch**
+3. Select *compare across forks* to switch the head repository to *NOAA-GFDL*
+4. Set *NOAA-GFDL* as the **head repository**, and *develop* as the **head** branch
+5. Add a brief description to the PR header, and click **Create pull request**
+6. Click **Merge pull request**.
+
+Your remote develop branch is now up-to-date with the NOAA-GFDL/develop branch.
+
+7. On your machine, open a terminal and check out the develop branch
+::
+  git checkout develop
+8. Fetch the updates to the develop branch from your remote fork
+::
+  git fetch
+9. Pull in the updates from the remote develop branch.
+:: 
+  git pull
+Your local develop branch is now up-to-date with the NOAA-GFDL/develop branch.
 
 .. (TODO: `pip install -v .`, other installation instructions...)
+
+.. _ref-rebase:
 
 Updating your feature branch by rebasing it onto the develop branch (preferred method)
 --------------------------------------------------------------------------------------
@@ -141,6 +197,8 @@ The ``--force`` option is necessary because rebasing modified the commit history
 
 6. Now that your branch is up-to-date, write your code!
 
+.. _ref-merge:
+
 Updating your feature branch by merging in changes from the develop branch
 ---------------------------------------------------------------------------
 1. Update the local and remote develop branches on your fork as described steps 1--3  of the **Start Coding** section, check out your feature branch, and merge the develop branch into your feature branch
@@ -178,21 +236,6 @@ or consult the commit log in the web interface
 3. Push the updates to the remote branch
 ::
   git push origin feature/[POD name]
-
-Pushing to your remote POD development branch on your fork
-----------------------------------------------------------
-When you are ready to push your updates to the remote branch on your fork
-
-1. type ``git status`` to list the file(s) that have been updated
-
-2. type ``git add <file>`` to add individual files, or ``git add --all`` to add all files, that have been updated to the staging area
-
-3. Commit the changes with ``git commit -m <your commit message>``. You can also type ``git commit`` to launch an editor in the terminal where you can enter your message.
-
-If you use the editor or BASH shell, you can easily break up your message over multiple lines for better readability.
-
-4. Push the updates to your fork: ``git push -u origin feature/[POD name]`` (The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
-
 
 Set up SSH with GitHub
 ----------------------

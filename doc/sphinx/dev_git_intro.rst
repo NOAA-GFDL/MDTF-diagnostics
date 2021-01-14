@@ -5,12 +5,14 @@ Git-based development workflow
 
 Steps for brand new users:
 ------------------------------
-1. Fork the MDTF-diagnostics branch to your GitHub account
-2. Clone your fork of the MDTF-diagnostics repository (repo) to your local machine
-3. Check out a new branch from the local develop branch :: `git checkout -b feature/[my POD name] develop
+1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
+2. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine (if you are not using the web interface for development)
+3. Check out a new branch from the local develop branch (:ref:`new-feature`)
 4. Start coding
-5. Commit the changes in your feature branch
-6. Push the changes to the copy of the feature branch on your remote fork
+5. Commit the changes in your feature branch (:ref:`new-feature`)
+6. Push the changes to the copy of the feature branch on your remote fork (:ref:`new-feature`)
+7. Repeat steps 4--6 until you are finished working
+8. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
 
 Steps for users continuing work on an existing feature branch
 -------------------------------------------------------------
@@ -25,144 +27,58 @@ Steps for users continuing work on an existing feature branch
 9. Continue working on your feature branch
 10. Commit the changes in your feature branch
 11. Push the changes to the copy of the feature branch in your remote fork
+12. Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (:ref:`ref-pull-request`)
 
-We recommend developers to manage the MDTF package using the GitHub webpage interface:
-
+.. _ref-fork-code:
+Creating a fork of the MDTF-diagnostics repository
+--------------------------------------------------
 - If you have no prior experience with `GitHub <https://github.com/>`__, create an account first.
 
 - Create a *fork* of the project by clicking the ``Fork`` button in the upper-right corner of `NOAA's MDTF GitHub page <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. This will create a copy (also known as *repository*, or simply *repo*) in your own GitHub account which you have full control over.
 
-- Before you start working on the code, remember to switch to the ``develop`` branch (instead of ``main``) as expected from a POD developer.
-
-It should be easy to figure out how to add/edit files through your repo webpage interface.
-
-- After updating the code in your repo, submit a ``Pull request`` so that the changes you have made can be incorporated into the official NOAA's repo.
-
-- Your changes will not affect the official NOAA's repo until the pull request is accepted by the lead-team programmer.
-
-Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
-
-Managing through the webpage interface as described above is quick and easy. Another approach, unfortunately with a steeper learning curve, is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
-
-Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git`` command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
-
-Some online git resources
--------------------------
-
-If you are new to git and unfamiliar with many of the terminologies, `Dangit, Git?! <https://dangitgit.com/>`__ provides solutions *in plain English* to many common mistakes people have made.
-
-There are many comprehensive online git tutorials, such as:
-
-- The official `git tutorial <https://git-scm.com/docs/gittutorial>`__.
-- A more verbose `introduction <https://www.atlassian.com/git/tutorials/what-is-version-control>`__ to the ideas behind git and version control.
-- A still more detailed `walkthrough <http://swcarpentry.github.io/git-novice/>`__, assuming no prior knowledge.
-
-Set up SSH with GitHub
-----------------------
-
-- You have to generate an `SSH key <https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`__ and `add it <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`__ to your GitHub account. This will save you from having to re-enter your GitHub username and password every time you interact with their servers.
-- When generating the SSH key, you'll be asked to pick a *passphrase* (i.e., password).
-- The following instructions assume you've generated an SSH key. If you're using manual authentication instead, replace the "``git@github.com:``" addresses in what follows with "``https://github.com/``".
-
-Clone a local repository onto your machine
+.. _ref-clone:
+Clone a repository onto your machine
 ------------------------------------------
-
 - *Clone* your fork onto your computer: ``git clone git@github.com:<your_github_account>/MDTF-diagnostics.git``. This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.
 - Enter the project directory: ``cd MDTF-diagnostics``.
 - Clone additional dependencies of the code: ``git submodule update --recursive --init``.
 - Git knows about your fork, but you need to tell it about NOAA's repo if you wish to contribute changes back to the code base. To do this, type ``git remote add upstream git@github.com:NOAA-GFDL/MDTF-diagnostics.git``. Now you have two remote repos: ``origin``, your GitHub fork which you can read and write to, and ``upstream``, NOAA's code base which you can only read from.
 
-.. (TODO: `pip install -v .`, other installation instructions...)
+.. _ref-new-feature:
+Working on a brand new feature
+------------------------------
+Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
+Whichever method you choose, remember to create your feature/[POD name] branch from the develop branch, not the main branch.
+Since developers commonly work on their own machines, this manual provides command line instructions.
 
-Start coding
-------------
+1. Check out a branch for your POD from the develop branch :: git checkout -b feature/[POD name] develop
 
-1. Switch to the ``develop`` branch
+2. Write code, add files, etc...
+
+3. Add the files you created and/or modified to the staging area
 ::
-  git checkout develop
-
-2. Make sure that you pull in changes from the develop branch frequently to simplify the merge process after you submit a PR. Update your local copy (the copy on your computer) of the develop branch
-::
-  git fetch upstream develop
-  git pull upstream develop
-  git submodule update --recursive --remote
-
-3. Next, update your remote copy (the branch on your Github fork)
-::
-  git push origin develop
-
-4. Now your branch is up-to-date, and you are ready to start working on a new feature
-::
-  git checkout -b feature/<my_feature_name>
-
-will create a new branch (``-b`` flag) off of ``develop`` and switch you to working on that branch.
-
-Updating your feature branch by merging in changes from the develop branch
----------------------------------------------------------------------------
-1. Update the local and remote develop branches on your fork as described steps 1--3  of the **Start Coding** section, check out your feature branch, and merge the develop branch into your feature branch
-::
-  git checkout feature/<my_feature_name>
-  git merge develop
-
-2. Resolve any conflicts that occur from the merge
-
-3. Add the updated files to the staging area
-::
-  git add file1
-  git add file2
+  git add [file 1]
+  git add [file 2]
   ...
 
-4. Push the branch updates to your remote fork
-::
-  git push origin feature/<my_feature_name>
+4. Commit your changes, including a brief description :: git commit -m "description of my changes"
 
-Reverting commits
-^^^^^^^^^^^^^^^^^
-If you want to revert to the commit(s) before you pulled in updates:
+5. Push the updates to your remote repository :: git push -u origin feature/[POD name]
 
-1. Find the commit hash(es) with the updates, in your git log
-::
-  git log
+.. _ref-pull-request:
+Submitting Pull Requests
+------------------------
+A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo. When your feature is ready, submit a PR by going to the GitHub page of your fork and clicking on **Pull request** to the right of the branch description. Make sure you are submitting the PR to NOAA-GFDL/develop. Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks. If you are still working on your POD, but want to test it with the CI, you can select the *Create Draft Pull Request* option from the dropdown menu by clicking the green button with the arrow to the right of the **Create Pull Request Button**.
 
-or consult the commit log in the web interface
+Your changes will not affect the official NOAA's repo until the PR is accepted by the lead-team programmer.
 
-2. Revert each commit in order from newest to oldest
-::
-  git revert <newer commit hash>
-  git revert <older commit hash>
+Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
 
-3. Push the updates to the remote branch
-::
-  git push origin feature/<my_feature_name> --force
+Another approach, unfortunately with a steeper learning curve, is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
 
-Updating a branch with a 2-step merge
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you are concerned with updates breaking your development branch, but don't want to deal with undoing commits, you can test the updates in a copy of your feature branch, then merge the copy branch into your feature branch:
+Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git`` command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
 
-1. Check out your feature branch
-::
-  git checkout feature/<my_feature_name>
-
-2. Check out a new branch from the feature branch
-::
-  git checkout -b <test_branch_name>
-
-3. Merge develop into the test branch using the procedure described in the previous section
-
-4. Test the branch with the MDTF framework software
-
-5. Check out your feature branch, then merge the test branch into the feature branch
-::
-  git checkout feature/<my_feature_name>
-  git merge <test_branch_name>
-
-6. Push the updates to your remote branch
-::
-  git push origin feature/<my_feature_name>
-
-7. Delete the test branch
-::
-  git branch -D <test_branch_name>
+.. (TODO: `pip install -v .`, other installation instructions...)
 
 Updating your feature branch by rebasing it onto the develop branch (preferred method)
 --------------------------------------------------------------------------------------
@@ -171,11 +87,9 @@ Rebasing is procedure to integrate the changes from one branch into another bran
 1. Update the local and remote develop branches on your fork as described steps 1--3
 of the **Start Coding** section, then check out your feature branch
 ::
-  git checkout feature/<my_feature_name>
+  git checkout feature/[POD name]
 
-and launch an interactive rebase of your branch onto the develop branch.
-::
-  git rebase -i develop
+and launch an interactive rebase of your branch onto the develop branch:: git rebase -i develop
 2. Your text editor will open in the terminal (Vim by default)
 and display your commit hashes with the oldest commit at the top
 ::
@@ -222,10 +136,48 @@ Note that if you want to stop the rebase at any time and revert to the original 
 
 5. Once the rebase has completed, push your changes to the remote copy of your branch
 ::
-  git push origin feature/<my_feature_name> --force
+  git push -u origin feature/[POD name] --force
 The ``--force`` option is necessary because rebasing modified the commit history.
 
 6. Now that your branch is up-to-date, write your code!
+
+Updating your feature branch by merging in changes from the develop branch
+---------------------------------------------------------------------------
+1. Update the local and remote develop branches on your fork as described steps 1--3  of the **Start Coding** section, check out your feature branch, and merge the develop branch into your feature branch
+::
+  git checkout feature/[POD name]
+  git merge develop
+
+2. Resolve any conflicts that occur from the merge
+
+3. Add the updated files to the staging area
+::
+  git add file1
+  git add file2
+  ...
+
+4. Push the branch updates to your remote fork
+::
+  git push -u origin feature/[POD name]
+
+Reverting commits
+^^^^^^^^^^^^^^^^^
+If you want to revert to the commit(s) before you pulled in updates:
+
+1. Find the commit hash(es) with the updates, in your git log
+::
+  git log
+
+or consult the commit log in the web interface
+
+2. Revert each commit in order from newest to oldest
+::
+  git revert <newer commit hash>
+  git revert <older commit hash>
+
+3. Push the updates to the remote branch
+::
+  git push origin feature/[POD name]
 
 Pushing to your remote POD development branch on your fork
 ----------------------------------------------------------
@@ -239,11 +191,27 @@ When you are ready to push your updates to the remote branch on your fork
 
 If you use the editor or BASH shell, you can easily break up your message over multiple lines for better readability.
 
-4. Push the updates to your fork: ``git push -u origin feature/<my_feature_name>`` (The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
+4. Push the updates to your fork: ``git push -u origin feature/[POD name]`` (The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
 
-Pull Requests
--------------
-A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo. When your feature is ready, submit a PR by going to the GitHub page of your fork and clicking on **Pull request** to the right of the branch description. Make sure you are submitting the PR to NOAA-GFDL/develop. Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks. If you are still working on your POD, but want to test it with the CI, you can select the *Create Draft Pull Request* option from the dropdown menu by clicking the green button with the arrow to the right of the **Create Pull Request Button**.
+
+Set up SSH with GitHub
+----------------------
+
+- You have to generate an `SSH key <https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`__ and `add it <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`__ to your GitHub account. This will save you from having to re-enter your GitHub username and password every time you interact with their servers.
+- When generating the SSH key, you'll be asked to pick a *passphrase* (i.e., password).
+- The following instructions assume you've generated an SSH key. If you're using manual authentication instead, replace the "``git@github.com:``" addresses in what follows with "``https://github.com/``".
+
+
+Some online git resources
+-------------------------
+
+If you are new to git and unfamiliar with many of the terminologies, `Dangit, Git?! <https://dangitgit.com/>`__ provides solutions *in plain English* to many common mistakes people have made.
+
+There are many comprehensive online git tutorials, such as:
+
+- The official `git tutorial <https://git-scm.com/docs/gittutorial>`__.
+- A more verbose `introduction <https://www.atlassian.com/git/tutorials/what-is-version-control>`__ to the ideas behind git and version control.
+- A still more detailed `walkthrough <http://swcarpentry.github.io/git-novice/>`__, assuming no prior knowledge.
 
 Git Tips and Tricks
 -------------------

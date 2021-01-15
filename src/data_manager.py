@@ -1208,7 +1208,6 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         """
         _log.debug('Starting catalog directory crawl at %s', self.CATALOG_DIR)
         df = pd.DataFrame(list(self.iter_files()), dtype='object')
-        print(df.to_string())
         if len(df) == 0:
             _log.critical('Directory crawl did not find any files.')
             raise AssertionError('Directory crawl did not find any files.')

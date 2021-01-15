@@ -1,17 +1,17 @@
-// seaice_suite MDTF diagnostic settings file
+// mixed_layer_depth MDTF diagnostic settings file
 //
 {
   "settings" : {
-    "driver" : "seaice_suite_mld_mean_sigma.py",
-    "long_name" : "Arctic Sea Ice Suite Diagnostics",
-    "realm" : "seaIce",
-    "description" : "Sea Ice Concentration Mean, Std, etc",
+    "driver" : "mixed_layer_depth.py",
+    "long_name" : "Mixed Layer Depth Calculation",
+    "realm" : "ocean",
+    "description" : "Compute Mixed Layer Depth Mean from 3D Ocean Variables",
     "pod_env_vars" : {
       "EXAMPLE_FAV_COLOR": "blue",
       "EXAMPLE_NEXT_FAV_COLOR": "red"
     },
     "runtime_requirements": {
-        "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy"]
+        "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy","gsw"]
     }
   },
 
@@ -29,5 +29,10 @@
       "requirement" : "required"
     }
     // If we needed a second variable, we'd list it here.
+   // {
+   //   "var_name" : "thetao_var",
+   //   "freq" : "mon",
+   //   "requirement" : "required"
+   // }
   ]
 }

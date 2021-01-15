@@ -1,4 +1,4 @@
-name: _MDTF_seaice_suite
+name: _MDTF_mixed_layer_depth
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults

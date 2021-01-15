@@ -19,15 +19,11 @@ Steps for users continuing work on an existing feature branch
 1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
 2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (:ref:`ref-update-develop`) 
 3. Pull in updates from develop branch in your remote fork into the develop branch in your local repo (:ref:`ref-update-develop`)
-4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`).
-5. Initialize and update the submodules
-6. Test your updated feature branch and resolve any outstanding issues
-7. Commit any modifications you made while testing
-8. Push the updates in your feature branch to your remote fork
-9. Continue working on your feature branch
-10. Commit the changes in your feature branch
-11. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
-12. Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (:ref:`ref-pull-request`)
+4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step. 
+5. Continue working on your feature branch
+6. Commit the changes in your feature branch
+7. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
+8. Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (:ref:`ref-pull-request`)
 
 .. _ref-fork-code:
 
@@ -39,7 +35,7 @@ Creating a fork of the MDTF-diagnostics repository
 
 .. _ref-clone:
 
-Clone a repository onto your machine
+Cloning a repository onto your machine
 ------------------------------------------
 Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git`` command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
 
@@ -79,9 +75,9 @@ Since developers commonly work on their own machines, this manual provides comma
 
 .. _ref-push:
 
-Pushing to your remote POD development branch on your fork
+Pushing to your remote feature branch on your fork
 ----------------------------------------------------------
-When you are ready to push your updates to the remote branch on your fork
+When you are ready to push your updates to the remote feature branch on your fork
 
 1. type ``git status`` to list the file(s) that have been updated
 
@@ -132,6 +128,11 @@ Your remote develop branch is now up-to-date with the NOAA-GFDL/develop branch.
   git pull
 Your local develop branch is now up-to-date with the NOAA-GFDL/develop branch.
 
+Method 2: Command line only
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This method requires adding the *NOAA-GFDL/MDTF-diagnostics* repo to the *.git/config* file in your local repo, and is described in the GitHub discussion post `Working with multiple remote repositories in your git config file <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/96>`__.
+
+
 .. (TODO: `pip install -v .`, other installation instructions...)
 
 .. _ref-rebase:
@@ -139,14 +140,14 @@ Your local develop branch is now up-to-date with the NOAA-GFDL/develop branch.
 Updating your feature branch by rebasing it onto the develop branch (preferred method)
 --------------------------------------------------------------------------------------
 Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the develop branch.
+1. Create a backup copy of your MDTF-diagnostics repo on your local machine
 
-1. Update the local and remote develop branches on your fork as described steps 1--3
-of the **Start Coding** section, then check out your feature branch
+2. Update the local and remote develop branches on your fork as described in :ref:`ref-update-develop`, then check out your feature branch
 ::
   git checkout feature/[POD name]
 
 and launch an interactive rebase of your branch onto the develop branch:: git rebase -i develop
-2. Your text editor will open in the terminal (Vim by default)
+3. Your text editor will open in the terminal (Vim by default)
 and display your commit hashes with the oldest commit at the top
 ::
   pick 39n3b42 oldest commit
@@ -168,7 +169,7 @@ combines 20ac93c and 320cnyn with 39n3b42.
 
 Note that squashing commits is not required. However, doing so creates a more streamlined commit history.
 
-3. Once you're done squashing commits (if you chose to do so), save your changes and close the editor ``ESC + SHIFT + wq`` to save and quit in Vim), and the rebase will launch. If the rebase stops because there are merge conficts and resolve the conflicts. To show the files with merge conflicts, type
+4. Once you're done squashing commits (if you chose to do so), save your changes and close the editor ``ESC + SHIFT + wq`` to save and quit in Vim), and the rebase will launch. If the rebase stops because there are merge conficts and resolve the conflicts. To show the files with merge conflicts, type
 ::
 git status
 
@@ -178,7 +179,7 @@ This will show files with a message that there are merge conflicts, or that a fi
   git add file2
   ...
   git rm file3
-4. Next, continue the rebase
+5. Next, continue the rebase
 ::
   git rebase --continue
 
@@ -190,31 +191,35 @@ Note that if you want to stop the rebase at any time and revert to the original 
 ::
   git rebase --abort
 
-5. Once the rebase has completed, push your changes to the remote copy of your branch
+6. Once the rebase has completed, push your changes to the remote copy of your branch
 ::
   git push -u origin feature/[POD name] --force
 The ``--force`` option is necessary because rebasing modified the commit history.
 
-6. Now that your branch is up-to-date, write your code!
+7. Now that your branch is up-to-date, write your code!
 
 .. _ref-merge:
 
 Updating your feature branch by merging in changes from the develop branch
 ---------------------------------------------------------------------------
-1. Update the local and remote develop branches on your fork as described steps 1--3  of the **Start Coding** section, check out your feature branch, and merge the develop branch into your feature branch
+1. Create a backup copy of your repo on your machine.
+
+2. Update the local and remote develop branches on your fork as described in :ref:`ref-update-develop`.
+
+3. Check out your feature branch, and merge the develop branch into your feature branch
 ::
   git checkout feature/[POD name]
   git merge develop
 
-2. Resolve any conflicts that occur from the merge
+4. Resolve any conflicts that occur from the merge
 
-3. Add the updated files to the staging area
+5. Add the updated files to the staging area
 ::
   git add file1
   git add file2
   ...
 
-4. Push the branch updates to your remote fork
+6. Push the branch updates to your remote fork
 ::
   git push -u origin feature/[POD name]
 

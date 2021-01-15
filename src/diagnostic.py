@@ -137,12 +137,10 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
-    alternates: list = dc.field(default_factory=list, compare=False)
-    translation: typing.Any = dc.field(default=None, compare=False)
-    remote_data: util.WormDict = dc.field(
-        default_factory=util.WormDict, compare=False
-    )
-    local_data: list = dc.field(default_factory=list, compare=False)
+    alternates: list = dc.field(init=False, compare=False)
+    translation: typing.Any = dc.field(init=False, compare=False)
+    remote_data: util.WormDict = dc.field(init=False, compare=False)
+    local_data: list = dc.field(init=False, compare=False)
     status: VarlistEntryStatus = dc.field(
         default=VarlistEntryStatus.NOTSET, compare=False
     )
@@ -153,6 +151,14 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         super(VarlistEntry, self).__post_init__(coords)
         self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
         self.exception = None
+        # instantiate mutable fields here so that if we copy VE (eg with .replace)
+        # the fields on the copy won't point to the same object as the fields on
+        # the original
+        self._id = util.NOTSET
+        self.alternates = []
+        self.translation = None
+        self.remote_data: util.WormDict()
+        self.local_data = []
 
         # env_vars
         if not self.env_var:
@@ -287,7 +293,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
     @property
     def full_name(self):
-        return '<' + self.pod_name + ':' + self.name + '>'
+        return f"<{self.pod_name}:{self.name} ({self._id})>"
 
     def iter_alternate_entries(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 

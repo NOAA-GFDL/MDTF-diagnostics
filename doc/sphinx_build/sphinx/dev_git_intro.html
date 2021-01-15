@@ -1,0 +1,417 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>9. Git-based development workflow &#8212; MDTF Diagnostics 3.0 beta 2 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Diagnostics reference" href="pod_toc.html" />
+    <link rel="prev" title="8. POD coding best practices" href="dev_coding_tips.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="git-based-development-workflow">
+<span id="ref-dev-git-intro"></span><h1>9. Git-based development workflow<a class="headerlink" href="#git-based-development-workflow" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="steps-for-brand-new-users">
+<h2>9.1. Steps for brand new users:<a class="headerlink" href="#steps-for-brand-new-users" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Fork the MDTF-diagnostics branch to your GitHub account (<a class="reference internal" href="#ref-fork-code"><span class="std std-ref">Creating a fork of the MDTF-diagnostics repository</span></a>)</li>
+<li>Clone (<a class="reference internal" href="#ref-clone"><span class="std std-ref">Cloning a repository onto your machine</span></a>) your fork of the MDTF-diagnostics repository (repo) to your local machine (if you are not using the web interface for development)</li>
+<li>Check out a new branch from the local develop branch (<a class="reference internal" href="#ref-new-feature"><span class="std std-ref">Working on a brand new feature</span></a>)</li>
+<li>Start coding</li>
+<li>Commit the changes in your feature branch (<a class="reference internal" href="#ref-new-feature"><span class="std std-ref">Working on a brand new feature</span></a>)</li>
+<li>Push the changes to the copy of the feature branch on your remote fork (<a class="reference internal" href="#ref-new-feature"><span class="std std-ref">Working on a brand new feature</span></a>)</li>
+<li>Repeat steps 4–6 until you are finished working</li>
+<li>Submit a pull request to the NOAA-GFDL repo for review (<a class="reference internal" href="#ref-pull-request"><span class="std std-ref">Submitting Pull Requests</span></a>).</li>
+</ol>
+</div>
+<div class="section" id="steps-for-users-continuing-work-on-an-existing-feature-branch">
+<h2>9.2. Steps for users continuing work on an existing feature branch<a class="headerlink" href="#steps-for-users-continuing-work-on-an-existing-feature-branch" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Create a backup copy of the MDTF-Diagnostics repo on your local machine</li>
+<li>Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (<a class="reference internal" href="#ref-update-develop"><span class="std std-ref">Updating your remote and local develop branches</span></a>)</li>
+<li>Pull in updates from develop branch in your remote fork into the develop branch in your local repo (<a class="reference internal" href="#ref-update-develop"><span class="std std-ref">Updating your remote and local develop branches</span></a>)</li>
+<li>Sync your feature branch in your local repository with the local develop branch using an interactive rebase (<a class="reference internal" href="#ref-rebase"><span class="std std-ref">Updating your feature branch by rebasing it onto the develop branch (preferred method)</span></a>) or merge (<a class="reference internal" href="#ref-merge"><span class="std std-ref">Updating your feature branch by merging in changes from the develop branch</span></a>). Be sure to make a backup copy of of your local <em>MDTF-diagnostics</em> repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.</li>
+<li>Continue working on your feature branch</li>
+<li>Commit the changes in your feature branch</li>
+<li>Push the changes to the copy of the feature branch in your remote fork (<a class="reference internal" href="#ref-push"><span class="std std-ref">Pushing to your remote feature branch on your fork</span></a>)</li>
+<li>Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (<a class="reference internal" href="#ref-pull-request"><span class="std std-ref">Submitting Pull Requests</span></a>)</li>
+</ol>
+</div>
+<div class="section" id="creating-a-fork-of-the-mdtf-diagnostics-repository">
+<span id="ref-fork-code"></span><h2>9.3. Creating a fork of the MDTF-diagnostics repository<a class="headerlink" href="#creating-a-fork-of-the-mdtf-diagnostics-repository" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>If you have no prior experience with <a class="reference external" href="https://github.com/">GitHub</a>, create an account first.</li>
+<li>Create a <em>fork</em> of the project by clicking the <code class="docutils literal notranslate"><span class="pre">Fork</span></code> button in the upper-right corner of <a class="reference external" href="https://github.com/NOAA-GFDL/MDTF-diagnostics">NOAA’s MDTF GitHub page</a>. This will create a copy (also known as <em>repository</em>, or simply <em>repo</em>) in your own GitHub account which you have full control over.</li>
+</ul>
+</div>
+<div class="section" id="cloning-a-repository-onto-your-machine">
+<span id="ref-clone"></span><h2>9.4. Cloning a repository onto your machine<a class="headerlink" href="#cloning-a-repository-onto-your-machine" title="Permalink to this headline">¶</a></h2>
+<p>Before following the instructions below, make sure that a) you’ve created a fork of the project, and b) the <code class="docutils literal notranslate"><span class="pre">git</span></code> command is available on your machine (<a class="reference external" href="https://git-scm.com/download/">installation instructions</a>).</p>
+<ul class="simple">
+<li><em>Clone</em> your fork onto your computer: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;github.com:&lt;your_github_account&gt;/MDTF-diagnostics.git</span></code>. This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.</li>
+<li>Enter the project directory: <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">MDTF-diagnostics</span></code>.</li>
+<li>Clone additional dependencies of the code: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">update</span> <span class="pre">--recursive</span> <span class="pre">--init</span></code>.</li>
+<li>Git knows about your fork, but you need to tell it about NOAA’s repo if you wish to contribute changes back to the code base. To do this, type <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">remote</span> <span class="pre">add</span> <span class="pre">upstream</span> <span class="pre">git&#64;github.com:NOAA-GFDL/MDTF-diagnostics.git</span></code>. Now you have two remote repos: <code class="docutils literal notranslate"><span class="pre">origin</span></code>, your GitHub fork which you can read and write to, and <code class="docutils literal notranslate"><span class="pre">upstream</span></code>, NOAA’s code base which you can only read from.</li>
+</ul>
+<p>Another approach is to create a local repo on your machine and manage the code using the <code class="docutils literal notranslate"><span class="pre">git</span></code> command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.</p>
+</div>
+<div class="section" id="working-on-a-brand-new-feature">
+<span id="ref-new-feature"></span><h2>9.5. Working on a brand new feature<a class="headerlink" href="#working-on-a-brand-new-feature" title="Permalink to this headline">¶</a></h2>
+<p>Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
+Whichever method you choose, remember to create your feature/[POD name] branch from the develop branch, not the main branch.
+Since developers commonly work on their own machines, this manual provides command line instructions.</p>
+<p>1. Check out a branch for your POD from the develop branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="o">-</span><span class="n">b</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span> <span class="n">develop</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li>Write code, add files, etc…</li>
+</ol>
+<p>3. Add the files you created and/or modified to the staging area</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">add</span> <span class="p">[</span><span class="n">file</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">git</span> <span class="n">add</span> <span class="p">[</span><span class="n">file</span> <span class="mi">2</span><span class="p">]</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>4. Commit your changes, including a brief description</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">m</span> <span class="s2">&quot;description of my changes&quot;</span>
+</pre></div>
+</div>
+<p>5. Push the updates to your remote repository</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">-</span><span class="n">u</span> <span class="n">origin</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pushing-to-your-remote-feature-branch-on-your-fork">
+<span id="ref-push"></span><h2>9.6. Pushing to your remote feature branch on your fork<a class="headerlink" href="#pushing-to-your-remote-feature-branch-on-your-fork" title="Permalink to this headline">¶</a></h2>
+<p>When you are ready to push your updates to the remote feature branch on your fork</p>
+<ol class="arabic simple">
+<li>type <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> to list the file(s) that have been updated</li>
+<li>type <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">&lt;file&gt;</span></code> to add individual files, or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">--all</span></code> to add all files, that have been updated to the staging area</li>
+<li>Commit the changes with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-m</span> <span class="pre">&quot;your</span> <span class="pre">commit</span> <span class="pre">message&quot;</span></code>. You can also type <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span></code> to launch an editor in the terminal where you can enter your message.</li>
+</ol>
+<p>If you use the editor or BASH shell, you can easily break up your message over multiple lines for better readability.</p>
+<ol class="arabic simple" start="4">
+<li>Push the updates to your fork: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">-u</span> <span class="pre">origin</span> <span class="pre">feature/[POD</span> <span class="pre">name]</span></code> (The <code class="docutils literal notranslate"><span class="pre">-u</span></code> flag is for creating a new branch remotely and only needs to be used the first time.)</li>
+</ol>
+</div>
+<div class="section" id="submitting-pull-requests">
+<span id="ref-pull-request"></span><h2>9.7. Submitting Pull Requests<a class="headerlink" href="#submitting-pull-requests" title="Permalink to this headline">¶</a></h2>
+<p>A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA’s repo. When your feature is ready, submit a PR by going to the GitHub page of your fork and clicking on <strong>Pull request</strong> to the right of the branch description. Make sure you are submitting the PR to NOAA-GFDL/develop. Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks. If you are still working on your POD, but want to test it with the CI, you can select the <em>Create Draft Pull Request</em> option from the dropdown menu by clicking the green button with the arrow to the right of the <strong>Create Pull Request Button</strong>.</p>
+<p>Your changes will not affect the official NOAA’s repo until the PR is accepted by the lead-team programmer.</p>
+<p>Note that if any buttons are missing, try <code class="docutils literal notranslate"><span class="pre">CRTL</span></code> + <code class="docutils literal notranslate"><span class="pre">+</span></code> or <code class="docutils literal notranslate"><span class="pre">CRTL</span></code> + <code class="docutils literal notranslate"><span class="pre">-</span></code> to adjust the webpage font size so the missing buttons may magically appear.</p>
+</div>
+<div class="section" id="updating-your-remote-and-local-develop-branches">
+<span id="ref-update-develop"></span><h2>9.8. Updating your remote and local develop branches<a class="headerlink" href="#updating-your-remote-and-local-develop-branches" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="method-1-web-interface-command-line">
+<h3>Method 1: Web interface+command line<a class="headerlink" href="#method-1-web-interface-command-line" title="Permalink to this headline">¶</a></h3>
+<p>See the <a class="reference external" href="https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing">MDTF Best Practices Overview</a>  presentation for instructions with figures.</p>
+<ol class="arabic simple">
+<li>Click the <em>Pull request</em> link on the main page of your MDTF-diagnostics fork</li>
+<li>Select your fork as the <strong>base</strong> repository, and <em>develop</em> as the <strong>base branch</strong></li>
+<li>Select <em>compare across forks</em> to switch the head repository to <em>NOAA-GFDL</em></li>
+<li>Set <em>NOAA-GFDL</em> as the <strong>head repository</strong>, and <em>develop</em> as the <strong>head</strong> branch</li>
+<li>Add a brief description to the PR header, and click <strong>Create pull request</strong></li>
+<li>Click <strong>Merge pull request</strong>.</li>
+</ol>
+<p>Your remote develop branch is now up-to-date with the NOAA-GFDL/develop branch.</p>
+<p>7. On your machine, open a terminal and check out the develop branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="n">develop</span>
+</pre></div>
+</div>
+<p>8. Fetch the updates to the develop branch from your remote fork</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">fetch</span>
+</pre></div>
+</div>
+<p>9. Pull in the updates from the remote develop branch.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">pull</span>
+</pre></div>
+</div>
+<p>Your local develop branch is now up-to-date with the NOAA-GFDL/develop branch.</p>
+</div>
+<div class="section" id="method-2-command-line-only">
+<h3>Method 2: Command line only<a class="headerlink" href="#method-2-command-line-only" title="Permalink to this headline">¶</a></h3>
+<p>This method requires adding the <em>NOAA-GFDL/MDTF-diagnostics</em> repo to the <em>.git/config</em> file in your local repo, and is described in the GitHub discussion post <a class="reference external" href="https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/96">Working with multiple remote repositories in your git config file</a>.</p>
+</div>
+</div>
+<div class="section" id="updating-your-feature-branch-by-rebasing-it-onto-the-develop-branch-preferred-method">
+<span id="ref-rebase"></span><h2>9.9. Updating your feature branch by rebasing it onto the develop branch (preferred method)<a class="headerlink" href="#updating-your-feature-branch-by-rebasing-it-onto-the-develop-branch-preferred-method" title="Permalink to this headline">¶</a></h2>
+<p>Rebasing is procedure to integrate the changes from one branch into another branch. <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rebase</span></code> differs from <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">merge</span></code> in that it reorders the commit history so that commits from the branch that is being updated are moved to the <cite>tip</cite> of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the develop branch.
+1. Create a backup copy of your MDTF-diagnostics repo on your local machine</p>
+<p>2. Update the local and remote develop branches on your fork as described in <a class="reference internal" href="#ref-update-develop"><span class="std std-ref">Updating your remote and local develop branches</span></a>, then check out your feature branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>and launch an interactive rebase of your branch onto the develop branch:: git rebase -i develop
+3. Your text editor will open in the terminal (Vim by default)
+and display your commit hashes with the oldest commit at the top</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pick</span> <span class="mi">39</span><span class="n">n3b42</span> <span class="n">oldest</span> <span class="n">commit</span>
+<span class="n">pick</span> <span class="mi">320</span><span class="n">cnyn</span> <span class="n">older</span> <span class="n">commit</span>
+<span class="n">pick</span> <span class="mi">20</span><span class="n">ac93c</span> <span class="n">newest</span> <span class="n">commit</span>
+</pre></div>
+</div>
+<p>You may squash commits by replacing <em>pick</em> with <em>squash</em> for the commit(s) that are newer than the commit you want to combine with (i.e., the commits below the target commit).
+For example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pick</span> <span class="mi">39</span><span class="n">n3b42</span> <span class="n">oldest</span> <span class="n">commit</span>
+<span class="n">squash</span> <span class="mi">320</span><span class="n">cnyn</span> <span class="n">older</span> <span class="n">commit</span>
+<span class="n">pick</span> <span class="mi">20</span><span class="n">ac93c</span> <span class="n">newest</span> <span class="n">commit</span>
+</pre></div>
+</div>
+<p>combines commit 320cnyn with commit 29n3b42, while</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pick</span> <span class="mi">39</span><span class="n">n3b42</span> <span class="n">oldest</span> <span class="n">commit</span>
+<span class="n">squash</span> <span class="mi">320</span><span class="n">cnyn</span> <span class="n">older</span> <span class="n">commit</span>
+<span class="n">squash</span> <span class="mi">20</span><span class="n">ac93c</span> <span class="n">newest</span> <span class="n">commit</span>
+</pre></div>
+</div>
+<p>combines 20ac93c and 320cnyn with 39n3b42.</p>
+<p>Note that squashing commits is not required. However, doing so creates a more streamlined commit history.</p>
+<p>4. Once you’re done squashing commits (if you chose to do so), save your changes and close the editor <code class="docutils literal notranslate"><span class="pre">ESC</span> <span class="pre">+</span> <span class="pre">SHIFT</span> <span class="pre">+</span> <span class="pre">wq</span></code> to save and quit in Vim), and the rebase will launch. If the rebase stops because there are merge conficts and resolve the conflicts. To show the files with merge conflicts, type
+::
+git status</p>
+<p>This will show files with a message that there are merge conflicts, or that a file has been added/deleted by only one of the branches. Open the files in an editor, resolve the conflicts, then add edited (or remove deleted) files to the staging area</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">add</span> <span class="n">file1</span>
+<span class="n">git</span> <span class="n">add</span> <span class="n">file2</span>
+<span class="o">...</span>
+<span class="n">git</span> <span class="n">rm</span> <span class="n">file3</span>
+</pre></div>
+</div>
+<p>5. Next, continue the rebase</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">rebase</span> <span class="o">--</span><span class="k">continue</span>
+</pre></div>
+</div>
+<p>The editor will open with the modified commit history. Simply save the changes and close the editor (<code class="docutils literal notranslate"><span class="pre">ESC+SHIFT+wq</span></code>), and the rebase will continue. If the rebase stops with errors, repeat the merge conflict resolution process, add/remove the files to staging area, type <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rebase</span> <span class="pre">--continue</span></code>, and proceed.</p>
+<p>If you have not updated your branch in a long time, you’ll likely find that you have to keep fixing the same conflicts over and over again (every time your commits collide with the commits on the main branch). This is why we strongly advise POD developers to pull updates into their forksand rebase their branches onto the develop branch frequently.</p>
+<p>Note that if you want to stop the rebase at any time and revert to the original state of your branch, type</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">rebase</span> <span class="o">--</span><span class="n">abort</span>
+</pre></div>
+</div>
+<p>6. Once the rebase has completed, push your changes to the remote copy of your branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">-</span><span class="n">u</span> <span class="n">origin</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span> <span class="o">--</span><span class="n">force</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--force</span></code> option is necessary because rebasing modified the commit history.</p>
+<ol class="arabic simple" start="7">
+<li>Now that your branch is up-to-date, write your code!</li>
+</ol>
+</div>
+<div class="section" id="updating-your-feature-branch-by-merging-in-changes-from-the-develop-branch">
+<span id="ref-merge"></span><h2>9.10. Updating your feature branch by merging in changes from the develop branch<a class="headerlink" href="#updating-your-feature-branch-by-merging-in-changes-from-the-develop-branch" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Create a backup copy of your repo on your machine.</li>
+<li>Update the local and remote develop branches on your fork as described in <a class="reference internal" href="#ref-update-develop"><span class="std std-ref">Updating your remote and local develop branches</span></a>.</li>
+</ol>
+<p>3. Check out your feature branch, and merge the develop branch into your feature branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span>
+<span class="n">git</span> <span class="n">merge</span> <span class="n">develop</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li>Resolve any conflicts that occur from the merge</li>
+</ol>
+<p>5. Add the updated files to the staging area</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">add</span> <span class="n">file1</span>
+<span class="n">git</span> <span class="n">add</span> <span class="n">file2</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>6. Push the branch updates to your remote fork</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">-</span><span class="n">u</span> <span class="n">origin</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="reverting-commits">
+<h3>Reverting commits<a class="headerlink" href="#reverting-commits" title="Permalink to this headline">¶</a></h3>
+<p>If you want to revert to the commit(s) before you pulled in updates:</p>
+<p>1. Find the commit hash(es) with the updates, in your git log</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">log</span>
+</pre></div>
+</div>
+<p>or consult the commit log in the web interface</p>
+<p>2. Revert each commit in order from newest to oldest</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">revert</span> <span class="o">&lt;</span><span class="n">newer</span> <span class="n">commit</span> <span class="nb">hash</span><span class="o">&gt;</span>
+<span class="n">git</span> <span class="n">revert</span> <span class="o">&lt;</span><span class="n">older</span> <span class="n">commit</span> <span class="nb">hash</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>3. Push the updates to the remote branch</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="n">origin</span> <span class="n">feature</span><span class="o">/</span><span class="p">[</span><span class="n">POD</span> <span class="n">name</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="set-up-ssh-with-github">
+<h2>9.11. Set up SSH with GitHub<a class="headerlink" href="#set-up-ssh-with-github" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You have to generate an <a class="reference external" href="https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent">SSH key</a> and <a class="reference external" href="https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account">add it</a> to your GitHub account. This will save you from having to re-enter your GitHub username and password every time you interact with their servers.</li>
+<li>When generating the SSH key, you’ll be asked to pick a <em>passphrase</em> (i.e., password).</li>
+<li>The following instructions assume you’ve generated an SSH key. If you’re using manual authentication instead, replace the “<code class="docutils literal notranslate"><span class="pre">git&#64;github.com:</span></code>” addresses in what follows with “<code class="docutils literal notranslate"><span class="pre">https://github.com/</span></code>”.</li>
+</ul>
+</div>
+<div class="section" id="some-online-git-resources">
+<h2>9.12. Some online git resources<a class="headerlink" href="#some-online-git-resources" title="Permalink to this headline">¶</a></h2>
+<p>If you are new to git and unfamiliar with many of the terminologies, <a class="reference external" href="https://dangitgit.com/">Dangit, Git?!</a> provides solutions <em>in plain English</em> to many common mistakes people have made.</p>
+<p>There are many comprehensive online git tutorials, such as:</p>
+<ul class="simple">
+<li>The official <a class="reference external" href="https://git-scm.com/docs/gittutorial">git tutorial</a>.</li>
+<li>A more verbose <a class="reference external" href="https://www.atlassian.com/git/tutorials/what-is-version-control">introduction</a> to the ideas behind git and version control.</li>
+<li>A still more detailed <a class="reference external" href="http://swcarpentry.github.io/git-novice/">walkthrough</a>, assuming no prior knowledge.</li>
+</ul>
+</div>
+<div class="section" id="git-tips-and-tricks">
+<h2>9.13. Git Tips and Tricks<a class="headerlink" href="#git-tips-and-tricks" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA’s repo until you’ve submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.</li>
+<li>GUI applications can be helpful when trying to resolve merge conflicts.Git packages for IDEs such as VSCode and Eclipse often include tools for merge conflict resolution. You can also install free versions of merge-conflict tools like <a class="reference external" href="https://www.perforce.com/products/helix-core-apps/merge-diff-tool-p4merge">P4merge</a> and <a class="reference external" href="https://www.sublimemerge.com/">Sublime merge</a>.</li>
+<li>If you encounter problems during practice, you can first try looking for <em>plain English</em> instructions to fix the situation at <a class="reference external" href="https://dangitgit.com/">Dangit, Git?!</a>.</li>
+<li>A useful command is <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">status</span></code> to remind you what branch you’re on and changes you’ve made (but have not committed yet).</li>
+<li><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">branch</span> <span class="pre">-a</span></code> lists all branches with <code class="docutils literal notranslate"><span class="pre">*</span></code> indicating the branch you’re on.</li>
+<li>Push your changes to your remote fork often (at least daily) even if your changes aren’t “clean”, or you are in the middle of a task. Your commit history does not need to look like a polished document, and nobody is judging your coding prowess by your development branch. Frequently pushing to your remote branch ensures that you have an easily accessible recent snapshot of your code in the event that your system goes down, or you go crazy with <code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-f</span> <span class="pre">*</span></code>.</li>
+<li><dl class="first docutils">
+<dt>A commit creates a snapshot of the code into the history in your local repo.</dt>
+<dd><ul class="first last">
+<li>The snapshot will exist until you intentionally delete it (after confirming a warning message). You can always revert to a previous snapshot.</li>
+<li>Don’t commit code that you know is buggy or non-functional!</li>
+<li>You’ll be asked to enter a commit message. Good commit messages are key to making the project’s history useful.</li>
+<li>Write in <em>present tense</em> describing what the commit, when applied, does to the code – not what you did to the code.</li>
+<li>Messages should start with a brief, one-line summary, less than 80 characters. If this is too short, you may want to consider entering your changes as multiple commits.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>Good commit messages are key to making the project’s history useful. To make this easier, instead of using the <code class="docutils literal notranslate"><span class="pre">-m</span></code> flag, To provide further information, add a blank line after the summary and wrap text to 72 columns if your editor supports it (this makes things display nicer on some tools). Here’s an <a class="reference external" href="https://github.com/NOAA-GFDL/MDTF-diagnostics/commit/225b29f30872b60621a5f1c55a9f75bbcf192e0b">example</a>.</li>
+<li>To configure git to launch your text editor of choice: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">config</span> <span class="pre">--global</span> <span class="pre">core.editor</span> <span class="pre">&quot;&lt;command</span> <span class="pre">string</span> <span class="pre">to</span> <span class="pre">launch</span> <span class="pre">your</span> <span class="pre">editor&gt;&quot;</span></code>.</li>
+<li>To set your email: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">config</span> <span class="pre">--global</span> <span class="pre">user.email</span> <span class="pre">&quot;myemail&#64;somedomain.com&quot;</span></code> You can use the masked email github provides if you don’t want your work email included in the commit log message. The masked email address is located in the <cite>Primary email address</cite> section under Settings&gt;emails.</li>
+<li>When the feature branch is no longer needed, delete the branch locally with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">branch</span> <span class="pre">-d</span> <span class="pre">feature/&lt;my_feature_name&gt;</span></code>.</li>
+</ul>
+<blockquote>
+<div><dl class="docutils">
+<dt>If you pushed the feature branch to your fork, you can delete it remotely with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">--delete</span> <span class="pre">origin</span> <span class="pre">feature/&lt;my_feature_name&gt;</span></code>.</dt>
+<dd><ul class="first last simple">
+<li>Remember that branches in git are just pointers to a particular commit, so by deleting a branch you <em>don’t</em> lose any history.</li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<ul class="simple">
+<li>If you want to let others work on your feature, push its branch to your GitHub fork with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">-u</span> <span class="pre">origin</span> <span class="pre">feature/&lt;my_feature_name&gt;</span></code>.</li>
+<li>For additional ways to undo changes in your branch, see <a class="reference external" href="https://github.blog/2015-06-08-how-to-undo-almost-anything-with-git/">How to undo (almost) anything with Git</a>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">MDTF Diagnostics</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="start_toc.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="site_toc.html">Site-specific information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="dev_toc.html">Developer information</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="dev_overview.html">1. Introduction for POD developers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_migration.html">2. Migration from framework v2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_checklist.html">3. POD development checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_start.html">4. Developer quickstart guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_guidelines.html">5. POD development guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_settings_quick.html">6. POD settings file summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_walkthrough.html">7. Walkthrough of framework operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_coding_tips.html">8. POD coding best practices</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9. Git-based development workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pod_toc.html">Diagnostics reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref_toc.html">Framework reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="src_autodoc.html">Internal framework code</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf">Getting Started (PDF)</a></li>
+    
+    <li class="toctree-l1"><a href="https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf">Developer's Walkthough (PDF)</a></li>
+    
+    <li class="toctree-l1"><a href="https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/">Full documentation (PDF)</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="dev_toc.html">Developer information</a><ul>
+      <li>Previous: <a href="dev_coding_tips.html" title="previous chapter">8. POD coding best practices</a></li>
+      <li>Next: <a href="pod_toc.html" title="next chapter">Diagnostics reference</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Model Diagnostics Task Force.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/sphinx/dev_git_intro.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

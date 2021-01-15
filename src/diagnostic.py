@@ -128,7 +128,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
-    _id: int = dc.field(init=False) # assigned by DataSource (avoids unsafe_hash)
+    _id: int = util.NOTSET # assigned by DataSource (avoids unsafe_hash)
     pod_name: str = ""
     use_exact_name: bool = False
     dest_path: str = ""
@@ -137,28 +137,26 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
-    alternates: list = dc.field(init=False, compare=False)
-    translation: typing.Any = dc.field(init=False, compare=False)
-    remote_data: util.WormDict = dc.field(init=False, compare=False)
-    local_data: list = dc.field(init=False, compare=False)
+    alternates: list = dc.field(default_factory=list, compare=False)
+    translation: typing.Any = dc.field(default=None, compare=False)
+    remote_data: util.WormDict = dc.field(default_factory=util.WormDict, compare=False)
+    local_data: list = dc.field(default_factory=list, compare=False)
     status: VarlistEntryStatus = dc.field(
         default=VarlistEntryStatus.NOTSET, compare=False
     )
-    active: bool = dc.field(init=False, compare=False)
-    exception: Exception = dc.field(init=False, compare=False)
+    active: bool = dc.field(default=util.NOTSET, compare=False)
+    exception: Exception = dc.field(default=None, compare=False)
 
     def __post_init__(self, coords=None):
         super(VarlistEntry, self).__post_init__(coords)
-        self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
-        self.exception = None
-        # instantiate mutable fields here so that if we copy VE (eg with .replace)
+        # (re)initialize mutable fields here so that if we copy VE (eg with .replace)
         # the fields on the copy won't point to the same object as the fields on
-        # the original
-        self._id = util.NOTSET
-        self.alternates = []
+        # the original.
         self.translation = None
         self.remote_data: util.WormDict()
         self.local_data = []
+        if self.active == util.NOTSET:
+            self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
 
         # env_vars
         if not self.env_var:

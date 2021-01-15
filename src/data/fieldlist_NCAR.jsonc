@@ -19,7 +19,7 @@
     },
     "lev": {
       "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
-      "units": "level",
+      "units": "level", // equivalent to '1'
       "positive": "down",
       "axis": "Z"
     },

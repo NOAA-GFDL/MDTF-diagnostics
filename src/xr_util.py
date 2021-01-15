@@ -655,7 +655,7 @@ class DatasetParser():
                 if ds[ds_coord_name].size != 1:
                     _log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
                         ds_coord_name, ds[ds_coord_name].size)
-                self.check_names_and_units(coord, ds, ds_coord_name)
+                self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
             else:
                 # placheholder object; only have name, assume everything else OK
                 self.check_name(coord, ds_coord_name, update_name=True)

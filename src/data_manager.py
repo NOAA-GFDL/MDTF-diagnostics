@@ -404,7 +404,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         Could arguably be moved into VarlistEntry's init, at the cost of 
         dependency inversion.
         """
-        v._id = next(self.id_number)
         translate = core.VariableTranslator().get_convention(self.convention)
         try:
             v.change_coord(
@@ -416,6 +415,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 },
                 range=self.attrs.date_range
             )
+            v._id = next(self.id_number)
             v.dest_path = self.variable_dest_path(pod, v)
             v.translation = translate.translate(v)
             v.status = diagnostic.VarlistEntryStatus.INITED

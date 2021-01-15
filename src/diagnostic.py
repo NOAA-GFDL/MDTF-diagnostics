@@ -293,7 +293,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
 
     @property
     def full_name(self):
-        return f"<{self.pod_name}:{self.name} ({self._id})>"
+        return f"<#{self._id}.{self.pod_name}:{self.name}>"
 
     def iter_alternate_entries(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 

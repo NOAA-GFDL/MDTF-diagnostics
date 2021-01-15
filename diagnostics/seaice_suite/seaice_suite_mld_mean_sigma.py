@@ -61,6 +61,7 @@ import pandas as pd
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import gsw
+import time
 #import glob
 
 # homegrown this code also imports pandas and scipy
@@ -112,12 +113,13 @@ def readinocndata(file, varname='so',firstyr='1979',lastyr='2014'):
 
 input_file_so = "{DATADIR}/mon/{CASENAME}.{so_var}.mon.nc".format(**os.environ)
 input_file_thetao = "{DATADIR}/mon/{CASENAME}.{thetao_var}.mon.nc".format(**os.environ)
-
-output_dir = "{WK_DIR}".format(**os.environ) #LR
-figures_dir = "{WK_DIR}".format(**os.environ) #LR
-obs_file = "/glade/work/lettier/mdtf/inputdata/obs_data/seaice_suite/mld_computed_obs_EN4_1979-2014.nc" # need to generalize this
-
-proc_obs_file = "/glade/work/lettier/mdtf/inputdata/obs_data/seaice_suite/EN4_mld_stats.nc" #ditto
+print(input_file_so)
+output_dir = "{WK_DIR}/model/".format(**os.environ) #LR
+figures_dir = "{WK_DIR}/model/".format(**os.environ) #LR
+obs_file = "{DATADIR}/../../obs_data/seaice_suite/mld_computed_obs_EN4_1979-2014.nc".format(**os.environ)
+proc_obs_file = "{DATADIR}/../../obs_data/seaice_suite/EN4_mld_stats.nc".format(**os.environ)
+#print('test'+test)
+#proc_obs_file = "/glade/work/lettier/mdtf/inputdata/obs_data/seaice_suite/EN4_mld_stats.nc" #ditto
 
 proc_mod_file=output_dir+'mld_fullfield_stats.nc'
 
@@ -125,7 +127,10 @@ modelname = "{model}".format(**os.environ)
 so_var = "{so_var}".format(**os.environ)
 firstyr = "{FIRSTYR}".format(**os.environ)
 lastyr = "{LASTYR}".format(**os.environ)
+
 print(so_var,firstyr,lastyr)
+start = time.time()
+
 processmod= not(os.path.isfile(proc_mod_file)) # check if obs proc file exists
 if processmod:
     fieldso = readinocndata(input_file_so, 'so',firstyr,lastyr)
@@ -135,9 +140,9 @@ processobs= not(os.path.isfile(proc_obs_file)) # check if obs proc file exists
 if processobs: # if no proc file then must get obs and process
     obs = readinocndata(obs_file, 'mld',firstyr,lastyr)
 
+end = time.time()
+print(f'Time to read in files  = {end-start}')
 
-# In[5]:
-print('read in files!')
 
 def computemld (fieldso, fieldthetao):
     """Compute mixed layer depth from so and thetao
@@ -155,19 +160,20 @@ def computemld (fieldso, fieldthetao):
 
     """
     pressure = xr.apply_ufunc(gsw.p_from_z, -fieldthetao.lev, fieldthetao.latitude, output_dtypes=[float,]).rename('pressure')
-    print(pressure.max())
     # absolute salinity from practical salinity
     abs_salinity = xr.apply_ufunc(gsw.SA_from_SP, fieldso, pressure, fieldso.longitude, fieldso.latitude, output_dtypes=[float,]).rename('abs_salinity')
-    print(abs_salinity.max())
+
     #calculate cthetao - conservative temperature - from potential temperature
     cthetao = xr.apply_ufunc(gsw.CT_from_pt, abs_salinity, fieldthetao, output_dtypes=[float,]).rename('cthetao')
-    print(cthetao.max())
+
     # calculate sigma0 - potential density anomaly with reference pressure of 0 dbar, 
+
     # this being this particular potential density minus 1000 kg/m^3.
     sigma0 = xr.apply_ufunc(gsw.density.sigma0, abs_salinity, cthetao, output_dtypes=[float, ]).rename('sigma0')
-    print(sigma0.max())
+
     # interpolate density data to 10m
     surf_dens = sigma0.interp(lev=10)
+
 
     # density difference between surface and whole field
     dens_diff = sigma0 - surf_dens
@@ -177,12 +183,13 @@ def computemld (fieldso, fieldthetao):
 
     # level of smallest difference between (density difference to 10m) and (threshold)
     mld = dens_diff.lev.where(dens_diff==dens_diff.min(['lev'])).max(['lev']).rename('mld')
-    print(mld)
-    print(mld.max())
 
     return mld
 
+start = time.time()
 field = computemld(fieldso,fieldthetao)
+end = time.time()
+print(f'Time for MLD calc  = {end-start}')
 
 def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     """Compute mean, std, trend, std of detrended, residuals
@@ -201,6 +208,7 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     print(firstyr,lastyr,field.shape,np.arange(firstyr,lastyr+1))    
     field=xr_reshape(field,'time',['year','month'],[np.arange(firstyr,lastyr+1),np.arange(12)])
     print('computing trend, this may take a few minutes')
+    start = time.time()
     trend, intercept = xr.apply_ufunc(_lrm, field.year, field,
                            input_core_dims=[['year'], ['year']],
                            output_core_dims=[[],[]],
@@ -208,6 +216,8 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
                            vectorize=True)
                            #dask='parallelized')
 
+    end = time.time()
+    print(f'Time for trend  = {end-start}')
     print('computing the rest')
     residuals = field - (field.year*trend+ intercept)
 

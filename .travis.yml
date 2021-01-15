@@ -49,7 +49,9 @@ install:
   - curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/pub/thomas.jackson/travis_test.tar --output travis_test.tar
   - tar -xvf travis_test.tar
   - mkdir wkdir
+  - pwd # debug
   - ls # debug
+  - ls -R travis_test
 
   - df -h # Log space remaining
 
@@ -57,14 +59,17 @@ before_script:
   - cd "$TRAVIS_BUILD_DIR"
   - pwd # debug
   - ls #debug
-  - cat ./mdtf
 
 script:
   # trivial check that install script worked
   - ./mdtf --version
 
+  # run unit tests
+  - conda activate _MDTF_base
+  - python -m unittest discover
+
   # try running EOF_500hPa and example PODs
-  - ./mdtf -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
+  - ./mdtf -v -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
   # EOF_500hPa 
   - ls "${POD_OUTPUT}/EOF_500hPa/obs"
   - ls "${POD_OUTPUT}/EOF_500hPa/model"
@@ -73,7 +78,3 @@ script:
   - ls "${POD_OUTPUT}/example/obs"
   - ls "${POD_OUTPUT}/example/model"
   - cat "${POD_OUTPUT}/example/example.log"
-
-  # run unit tests
-  - conda activate _MDTF_base
-  - python -m unittest discover

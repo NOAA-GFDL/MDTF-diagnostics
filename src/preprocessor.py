@@ -218,12 +218,12 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         new_v = dataclasses.replace(
             v,
             coords = (v.dims + v.scalar_coords),
-            translation = new_tv,
             requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
-            alternates = []
         )
         new_v._id = next(data_mgr.id_number)
         new_v.status = diagnostic.VarlistEntryStatus.INITED
+        new_v.translation = new_tv
+        new_v.alternates = []
         return new_v
 
     def edit_request(self, data_mgr, pod):
@@ -482,7 +482,9 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 combine="by_coords",
                 # only time-dependent variables and coords are concat'ed:
                 data_vars="minimal", coords="minimal",
-                compat="identical",  # all non-concat'ed vars, attrs must be the same
+                # all non-concat'ed vars must be the same; global attrs can differ
+                # from file to file; values in ds are taken from first file
+                compat="equals",
                 join="exact",        # raise ValueError if non-time dims conflict
                 parallel=True,       # use dask
                 preprocess=_file_preproc,

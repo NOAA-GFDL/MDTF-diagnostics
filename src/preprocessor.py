@@ -499,8 +499,10 @@ class SampleDataPreprocessor(SingleFilePreprocessor):
     only. Assumes all data is in one netCDF file and only truncates the date
     range.
     """
+    # ExtractLevelFunction needed for NCAR-CAM5.timeslice for Travis
     _functions = (
-        CropDateRangeFunction, ConvertUnitsFunction, RenameVariablesFunction
+        CropDateRangeFunction, ConvertUnitsFunction, ExtractLevelFunction,
+        RenameVariablesFunction
     )
 
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):

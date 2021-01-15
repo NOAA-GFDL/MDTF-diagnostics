@@ -8,17 +8,7 @@
     "GFDL_PP": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
       "entry_point": "sites.NOAA_GFDL.gfdl:GfdlppDataManager",
-      "cli": {
-        "arguments": [
-          {
-            "name": "CASE_ROOT_DIR",
-            "help": "Parent directory containing sample model data from different models.",
-            "default" : "../inputdata/model/",
-            "metavar" : "<DIR>",
-            "action": "PathAction"
-          }
-        ]
-      }
+      "cli": {"arguments": []}
     },
     "CMIP6_UDA": {
       "help": "DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.",

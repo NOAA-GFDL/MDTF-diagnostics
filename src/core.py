@@ -219,8 +219,20 @@ class MDTFFramework(object):
 
     # --------------------------------------------------------------------
 
+    def _failed(self):
+        """Overall success/failure of this run of the framework. Return True if 
+        any case or any POD has failed, else return False.
+        """
+        if not self.cases:
+            return True
+        for case in self.cases:
+            if case.failed or not hasattr(case, 'pods') or not case.pods:
+                return True
+            if any(p.failed for p in case.pods.values()):
+                return True
+        return False
+
     def main(self):
-        failed = False
         _log.info("\n======= Starting %s", __file__)
         # only run first case in list until dependence on env vars cleaned up
         for case_d in self.case_list[0:1]:
@@ -250,12 +262,11 @@ class MDTFFramework(object):
             out_mgr = self.OutputManager(case)
             out_mgr.make_output()
             case.deactivate_if_failed() # in case we hit more errors generating output
-            failed = (failed or case.failed)
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)
-        return (1 if failed else 0) # exit code
+        return (1 if self._failed() else 0) # exit code
 
 
 class ConfigManager(util.Singleton, util.NameSpace):

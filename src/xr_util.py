@@ -471,12 +471,8 @@ class DatasetParser():
             if update_our_var:
                 # update our attr with value from ds, but raise error
                 setattr(our_var, our_attr_name, ds_attr)
-                log_str = "Updating our value according to dataset."
-            else:
-                # don't update, raise exception
-                log_str = ""
             raise TypeError((f"Found unexpected {our_attr_name} for variable "
-                f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}'). {log_str}"))
+                f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
         else:
             # comparison passed, no changes needed
             return

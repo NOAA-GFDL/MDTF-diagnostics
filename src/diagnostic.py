@@ -165,10 +165,12 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             self.path_variable = self.name.upper() + _file_env_var_suffix
 
         # self.alternates is either [] or a list of nonempty lists of VEs
+        print('XXXXXXX', self.full_name, self.alternates)
         if self.alternates:
             if not isinstance(self.alternates[0], list):
                 self.alternates = [self.alternates]
             self.alternates = [vs for vs in self.alternates if vs]
+        print('XXXXXXX', self.full_name, self.alternates)
 
     @property
     def failed(self):
@@ -293,7 +295,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     def full_name(self):
         return f"<#{self._id}.{self.pod_name}:{self.name}>"
 
-    def iter_alternate_entries(self):
+    def iter_shallow_alternates(self):
         """Iterator over all VarlistEntries referenced as parts of "sets" of 
         alternates. ("Sets" is in quotes because they're implemented as lists 
         here, since VarlistEntries aren't immutable.) 
@@ -305,23 +307,32 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         """Breadth-first traversal of "sets" of alternate VarlistEntries, 
         alternates for those alternates, etc. ("Sets" is in quotes because 
         they're implemented as lists here, since VarlistEntries aren't immutable.)
-        Unlike :meth:`iter_alternate_entries`, this is a "deep" iterator and 
-        yields the "sets" of alternates instead of the VarlistEntries themselves.
+        Unlike :meth:`iter_shallow_alternates`, this is a "deep" iterator, 
+        yielding alternates of alternates, alternates of those, ... etc. until
+        variables with no alternates are encountered or all variables have been
+        yielded. In addition, it yields the "sets" of alternates instead of the 
+        VarlistEntries themselves.
 
-        Note that all local state (``stack`` and ``already_encountered``) is 
-        maintained across successive calls -- see docs on python generators.
+        (Recall that all local state (``stack`` and ``already_encountered``) is 
+        maintained across successive calls.)
         """
-        stack = [[self]]
-        already_encountered = []
-        while stack:
-            alt_vs = stack.pop(0)
-            if alt_vs not in already_encountered:
-                yield alt_vs
-            already_encountered.append(alt_vs)
-            for ve in alt_vs:
-                for alt_of_alt in ve.alternates:
-                    if alt_of_alt not in already_encountered:
-                        stack.append(alt_of_alt)
+        def _iter_alternates():
+            stack = [[self]]
+            already_encountered = []
+            while stack:
+                alt_v_set = stack.pop(0)
+                if alt_v_set not in already_encountered:
+                    yield alt_v_set
+                already_encountered.append(alt_v_set)
+                for ve in alt_v_set:
+                    for alt_v_set_of_ve in ve.alternates:
+                        if alt_v_set_of_ve not in already_encountered:
+                            stack.append(alt_v_set_of_ve)
+        # first value yielded by _iter_alternates is the var itself, so drop 
+        # that and then start by returning var's alternates
+        iterator_ = iter(_iter_alternates())
+        next(iterator_)
+        yield from iterator_
 
     def debug_str(self):
         """String representation with more debugging information.
@@ -336,7 +347,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
                 f"{v.requirement}>\n    Translation: {trans_str}")
 
         s = _format(self)
-        for i, altvs in enumerate(self.alternates):
+        for i, altvs in enumerate(self.iter_alternates()):
             alt_str = ', '.join(str(vv) for vv in altvs)
             s += f"\n    Alternate set #{i+1}: [{alt_str}]"
         return s
@@ -388,7 +399,7 @@ class Varlist(data_model.DMDataSet):
         }
         for v in vlist_vars.values():
             # validate & replace names of alt vars with references to VE objects
-            for altv_name in v.iter_alternate_entries():
+            for altv_name in v.iter_shallow_alternates():
                 if altv_name not in vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
                         f"in alternates for varlist entry {v.name}."))

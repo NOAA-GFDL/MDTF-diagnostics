@@ -244,7 +244,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             new_v = self.remove_scalar_on_translation(v, data_mgr)
             v.alternates = [[new_v]] + v.alternates
 
-            for vv in v.iter_alternate_entries():
+            for vv in v.iter_shallow_alternates():
                 _log.debug("%s for %s: add translated %s as alternate for %s", 
                     self.__class__.__name__, v.full_name, vv.translation, v.translation)
             new_varlist.append(v)

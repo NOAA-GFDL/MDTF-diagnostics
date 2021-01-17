@@ -235,6 +235,11 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         """
         new_varlist = []
         for v in pod.varlist.iter_contents():
+            if not v.translation:
+                # hit this if VE not defined for this model naming convention;
+                # still pass through VE unaltered
+                new_varlist.append(v)
+                continue
             z_level = v.translation.get_scalar('Z')
             if z_level is None:
                 # pass through VE unaltered

@@ -183,7 +183,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
            alternates for this variable.
         """
         if self.exception is not None:
-            raise Exception(f"Var {str(self)} already deactivated.")
+            raise util.MDTFBaseException(f"Var {str(self)} already deactivated.")
         self.exception = exc
 
     @property

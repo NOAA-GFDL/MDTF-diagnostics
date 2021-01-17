@@ -350,9 +350,10 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except Exception as exc:
                 _log.exception(exc)
                 try:
-                    raise util.PodConfigError((f"Caught exception in DataManager "
-                        f"setup."), pod) from exc
+                    raise util.PodConfigError((f"Caught {repr(exc)} in DataManager "
+                        f"setup. Deactivating {pod.name}."), pod) from exc
                 except Exception as chained_exc:
+                    _log.error(chained_exc)
                     pod.exceptions.log(chained_exc)    
                 continue
 
@@ -387,10 +388,12 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except Exception as exc:
                 _log.exception(exc)
                 try:
-                    raise util.PodConfigError((f"Caught exception when configuring "
-                        f"{v.full_name}."), pod) from exc
+                    raise util.PodConfigError((f"Caught {repr(exc)} when configuring "
+                        f"{v.full_name}; deactivating."), pod) from exc
                 except Exception as chained_exc:
-                    pod.exceptions.log(chained_exc)  
+                    _log.error(chained_exc)
+                v.deactivate(exc)  
+                # pod.update_active_vars() "catches" this and sets v.active=False
                 continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
@@ -405,23 +408,19 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         dependency inversion.
         """
         translate = core.VariableTranslator().get_convention(self.convention)
-        try:
-            v.change_coord(
-                'T',
-                new_class = {
-                    'self': diagnostic.VarlistTimeCoordinate,
-                    'range': datelabel.DateRange,
-                    'frequency': datelabel.DateFrequency
-                },
-                range=self.attrs.date_range
-            )
-            v._id = next(self.id_number)
-            v.dest_path = self.variable_dest_path(pod, v)
-            v.translation = translate.translate(v)
-            v.status = diagnostic.VarlistEntryStatus.INITED
-        except Exception as exc:
-            v.exception = exc    # "caught" by pod.update_active_vars()
-            raise exc
+        v.change_coord(
+            'T',
+            new_class = {
+                'self': diagnostic.VarlistTimeCoordinate,
+                'range': datelabel.DateRange,
+                'frequency': datelabel.DateFrequency
+            },
+            range=self.attrs.date_range
+        )
+        v._id = next(self.id_number)
+        v.dest_path = self.variable_dest_path(pod, v)
+        v.translation = translate.translate(v)
+        v.status = diagnostic.VarlistEntryStatus.INITED
 
     def variable_dest_path(self, pod, var):
         """Returns the absolute path of the POD's preprocessed, local copy of 

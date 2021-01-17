@@ -109,8 +109,10 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
             except Exception as exc:
                 try:
                     raise util.PodRuntimeError((f"Caught exception making output "
-                        f"directory at {self.POD_OUT_DIR}."), self) from exc
+                        f"directory at {self.POD_OUT_DIR}; deactivating {self.name}."),
+                        self) from exc
                 except Exception as chained_exc:
+                    _log.error(chained_exc)
                     self.exceptions.log(chained_exc)    
 
 # ------------------------------------------------------------------------

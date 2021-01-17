@@ -4,12 +4,75 @@ once it's been download to local storage.
 import os
 import abc
 import dataclasses
+import functools
 from src import util, core, diagnostic, xr_util
 import cftime
 import xarray as xr
 
 import logging
 _log = logging.getLogger(__name__)
+
+def copy_as_alternate(old_v, data_mgr, **kwargs):
+    """Wrapper for :py:func:`~dataclasses.replace` that creates a copy of an
+    existing :class:`~VarlistEntry` *old_v* and sets appropriate attributes
+    to designate it as an alternate variable.
+    """
+    if 'coords' not in kwargs:
+        # dims, scalar_coords are derived attributes set by __post_init__
+        # if we aren't changing them, must use this syntax to pass them through
+        kwargs['coords'] = (old_v.dims + old_v.scalar_coords)
+    new_v = dataclasses.replace(
+        old_v,
+        # reset state from old_v
+        status = diagnostic.VarlistEntryStatus.INITED,
+        exception = None,
+        # new VE meant as an alternate
+        active = False,
+        requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
+        # plus the specific replacements we want to make
+        **kwargs
+    )
+    # assign unique ID number; could also do this with UUIDs
+    new_v._id = next(data_mgr.id_number)
+    return new_v
+
+def edit_request_wrapper(wrapped_edit_request_func):
+    """Decorator implementing the most typical (so far) use case for 
+    :meth:`PreprocessorFunctionBase.edit_request`, in which we look at each 
+    variable request in the varlist separately and, optionally, add a new 
+    alternate :class:`~VarlistEntry` based on that request.
+
+    This decorator wraps a function which either constructs and returns the
+    desired new alternate :class:`~VarlistEntry`, or None if no alternates are
+    to be added for the given variable request. It adds logic for updating the
+    list of alternates for the pod's varlist.
+    """
+    @functools.wraps(wrapped_edit_request_func)
+    def wrapped_edit_request(self, data_mgr, pod):
+        new_varlist = []
+        for v in pod.varlist.iter_contents():
+            new_v = wrapped_edit_request_func(self, v, pod, data_mgr)
+            if new_v is None:
+                # no change, pass through VE unaltered
+                new_varlist.append(v)
+                continue
+            else:
+                # insert new_v between v itself and v's old alternate sets
+                # in varlist query order
+                new_v.alternates = v.alternates
+                v.alternates = [[new_v]]
+                new_v_t_name = (str(new_v.translation) \
+                    if getattr(new_v, 'translation', None) is not None \
+                    else "(not translated)")
+                v_t_name = (str(v.translation) \
+                    if getattr(v, 'translation', None) is not None else "(not translated)")
+                _log.debug("%s for %s: add translated %s as alternate for %s", 
+                    self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                new_varlist.append(v)
+                new_varlist.append(new_v)
+        pod.varlist = diagnostic.Varlist(contents=new_varlist)
+    
+    return wrapped_edit_request
 
 class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
@@ -115,6 +178,93 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 )
         return ds
 
+class PrecipRateToFluxFunction(PreprocessorFunctionBase):
+    """Convert units on the dependent variable of var, as well as its
+    (non-time) dimension coordinate axes, from what's specified in the dataset
+    attributes to what's given in the VarlistEntry.
+    """
+    # Incorrect but matches convention for this conversion.
+    _liquid_water_density = util.Units('1000.0 kg m-3')
+    # list of regcognized standard_names for which transformation is applicable
+    # NOTE: not exhaustive
+    _std_name_tuples = [
+        # flux in CF, rate is not
+        ("precipitation_rate", "precipitation_flux"),
+        # both in CF
+        ("convective_precipitation_rate", "convective_precipitation_flux"),
+        # not in CF; here for compatibility with NCAR-CAM
+        ("large_scale_precipitation_rate", "large_scale_precipitation_flux")
+    ]
+    _rate_d = {tup[0]:tup[1] for tup in _std_name_tuples}
+    _flux_d = {tup[1]:tup[0] for tup in _std_name_tuples}
+
+    @edit_request_wrapper
+    def edit_request(self, v, pod, data_mgr):
+        """Edit the POD's Varlist prior to query. If v has a standard_name in the
+        list above, insert an alternate varlist entry whose translation requests
+        the complementary type of variable (ie, if given rate, add an entry for 
+        flux; if given flux, add an entry for rate.)
+        """
+        std_name = getattr(v, 'standard_name', "")
+        if std_name not in self._rate_d and std_name not in self._flux_d:
+            # logic not applicable to this VE; do nothing
+            return None
+        # construct dummy var to translate (rather than modifying std_name & units)
+        # on v's translation) because v may not have a translation
+        if std_name in self._rate_d:
+            # requested rate, so add alternate for flux
+            v_to_translate = copy_as_alternate(
+                v, data_mgr,
+                standard_name = self._rate_d[std_name],
+                units = util.to_cfunits(v.units) / self._liquid_water_density
+            )
+        elif std_name in self._flux_d:
+            # requested flux, so add alternate for rate
+            v_to_translate = copy_as_alternate(
+                v, data_mgr,
+                standard_name = self._flux_d[std_name],
+                units = util.to_cfunits(v.units) * self._liquid_water_density
+            )
+        
+        translate = core.VariableTranslator()
+        try:
+            new_tv = translate.translate(data_mgr.convention, v_to_translate)
+        except KeyError as exc:
+            _log.debug(("%s edit_request on %s: caught %r when trying to translate "
+                "'%s'; varlist unaltered."), self.__class__.__name__, 
+                v.full_name, exc, v_to_translate.standard_name)
+            return None
+        new_v = copy_as_alternate(v, data_mgr)
+        new_v.translation = new_tv
+        return new_v
+
+    def process(self, var, ds):
+        std_name = getattr(var, 'standard_name', "")
+        if std_name not in self._rate_d and std_name not in self._flux_d:
+            # logic not applicable to this VE; do nothing
+            return ds
+        if util.units_equivalent(var.units, var.translation.units):
+            # units can be converted by ConvertUnitsFunction; do nothing
+            return ds
+
+        # var.translation.units set by edit_request will have been overwritten by
+        # DatasetParser to whatever they are in ds. Change them back.
+        tv = var.translation # abbreviate
+        if std_name in self._rate_d:
+            # requested rate, received alternate for flux
+            new_units = tv.units / self._liquid_water_density
+        elif std_name in self._flux_d:
+            # requested flux, received alternate for rate
+            new_units = tv.units * self._liquid_water_density
+
+        _log.debug(("Assumed implicit factor of water density in units for %s: "
+            "given %s, will convert as %s."), var.full_name, tv.units, new_units)  
+        ds[tv.name].attrs['units'] = str(new_units)
+        tv.units = new_units
+        # actual conversion done by ConvertUnitsFunction; this assures 
+        # util.convert_dataarray is called with correct parameters.
+        return ds
+
 class ConvertUnitsFunction(PreprocessorFunctionBase):
     """Convert units on the dependent variable of var, as well as its
     (non-time) dimension coordinate axes, from what's specified in the dataset
@@ -127,7 +277,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         tv = var.translation # abbreviate
         # convert dependent variable
-        ds[tv.name] = util.convert_dataarray(ds[tv.name], var.units, allow_h2o=True)
+        ds[tv.name] = util.convert_dataarray(ds[tv.name], var.units)
         tv.units = var.units
 
         # convert coordinate dimensions and bounds
@@ -135,19 +285,16 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.axis == 'T':
                 continue # handle calendar stuff etc. in another function
             dest_c = var.axes[c.axis]
-            ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units, 
-                allow_h2o=False)
+            ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units)
             if c.bounds and c.bounds in ds:
-                ds[c.bounds] = util.convert_dataarray(ds[c.bounds], dest_c.units, 
-                    allow_h2o=False)
+                ds[c.bounds] = util.convert_dataarray(ds[c.bounds], dest_c.units)
             c.units = dest_c.units
 
         # convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
-                ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units, 
-                    allow_h2o=False)
+                ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units)
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
 
@@ -192,11 +339,21 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     **not** handled (interpolation is not implemented here.) If the exact level 
     is not provided by the data, KeyError is raised.
     """
-
-    def remove_scalar_on_translation(self, v, data_mgr):
-        """If a VarlistEntry has a scalar_coordinate defined, return a copy to 
-        be used as an alternate variable with that scalar_coordinate removed.
+    @edit_request_wrapper
+    def edit_request(self, v, pod, data_mgr):
+        """Edit the POD's Varlist prior to query. If given a 
+        :class:`~diagnostic.VarlistEntry` v which specifies a scalar Z coordinate,
+        return a copy with that scalar_coordinate removed to be used as an 
+        alternate variable for v.
         """
+        if not v.translation:
+            # hit this if VE not defined for this model naming convention;
+            # do nothing for this v
+            return None
+        elif v.translation.get_scalar('Z') is None:
+            # hit this if VE didn't request Z level extraction; do nothing
+            return None
+
         tv = v.translation # abbreviate
         if len(tv.scalar_coords) == 0:
             raise AssertionError # should never get here
@@ -215,47 +372,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             tv.scalar_coords[0].axis,
             name = new_tv_name
         )
-        new_v = dataclasses.replace(
-            v,
-            coords = (v.dims + v.scalar_coords),
-            active = False,
-            status = diagnostic.VarlistEntryStatus.INITED,
-            requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
-        )
-        new_v._id = next(data_mgr.id_number)
+        new_v = copy_as_alternate(v, data_mgr)
         new_v.translation = new_tv
-        new_v.alternates = v.alternates
         return new_v
-
-    def edit_request(self, data_mgr, pod):
-        """Edit the POD's Varlist prior to query. If any VarlistEntry specifies
-        a scalar Z coordinate, insert a VarlistEntry for the full-dimensional 
-        variable as an alternate for it, since this function can extract the 
-        requested level from the latter to produce the former.
-        """
-        new_varlist = []
-        for v in pod.varlist.iter_contents():
-            if not v.translation:
-                # hit this if VE not defined for this model naming convention;
-                # still pass through VE unaltered
-                new_varlist.append(v)
-                continue
-            z_level = v.translation.get_scalar('Z')
-            if z_level is None:
-                # pass through VE unaltered
-                new_varlist.append(v)
-                continue
-            # existing VarlistEntry queries for 3D slice directly; add a new
-            # VE to query for 4D data
-            new_v = self.remove_scalar_on_translation(v, data_mgr)
-            # insert new_v between v itself and v's old alternate sets
-            v.alternates = [[new_v]]
-
-            _log.debug("%s for %s: add translated %s as alternate for %s", 
-                self.__class__.__name__, v.full_name, new_v.translation, v.translation)
-            new_varlist.append(v)
-            new_varlist.append(new_v)
-        pod.varlist = diagnostic.Varlist(contents=new_varlist)
 
     def process(self, var, ds):
         """Determine if level extraction is needed, and return appropriate slice 
@@ -507,8 +626,9 @@ class SampleDataPreprocessor(SingleFilePreprocessor):
     """
     # ExtractLevelFunction needed for NCAR-CAM5.timeslice for Travis
     _functions = (
-        CropDateRangeFunction, ConvertUnitsFunction, ExtractLevelFunction,
-        RenameVariablesFunction
+        CropDateRangeFunction, 
+        PrecipRateToFluxFunction, ConvertUnitsFunction, 
+        ExtractLevelFunction, RenameVariablesFunction
     )
 
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
@@ -516,6 +636,7 @@ class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
     """
     _file_preproc_functions = []
     _functions = (
-        CropDateRangeFunction, ConvertUnitsFunction, 
+        CropDateRangeFunction, 
+        PrecipRateToFluxFunction, ConvertUnitsFunction, 
         ExtractLevelFunction, RenameVariablesFunction
     )

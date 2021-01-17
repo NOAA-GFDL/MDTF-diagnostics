@@ -80,14 +80,12 @@
       "ndim": 3
     },
     "PRECT": {
-      "standard_name": "precipitation_flux",
-      // NOTE: not a mass flux, will probably need special case in unit conversion
+      "standard_name": "precipitation_rate",
       "units": "m s-1",
       "ndim": 3
     },
     "PRECC": {
-      "standard_name": "convective_precipitation_flux",
-      // NOTE: not a mass flux, will probably need special case in unit conversion
+      "standard_name": "convective_precipitation_rate",
       "units": "m s-1",
       "ndim": 3
     },

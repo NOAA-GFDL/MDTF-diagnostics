@@ -419,7 +419,13 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         )
         v._id = next(self.id_number)
         v.dest_path = self.variable_dest_path(pod, v)
-        v.translation = translate.translate(v)
+        try:
+            trans_v = translate.translate(v)
+            v.translation = trans_v
+        except KeyError as exc:
+            _log.warning("Deactivating %s due to translation failure (%s).", 
+                v.full_name, exc)
+            v.deactivate(exc) 
         v.status = diagnostic.VarlistEntryStatus.INITED
 
     def variable_dest_path(self, pod, var):

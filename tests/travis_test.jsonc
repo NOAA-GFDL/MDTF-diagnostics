@@ -20,7 +20,7 @@
       "model" : "NCAR-CAM5",
       "convention" : "CMIP",
       "FIRSTYR" : 2000,
-      "LASTYR" : 2004,
+      "LASTYR" : 2003, // test date range is 2000-2004
       "pod_list": [
         // Optional: PODs to run for this model only (defaults to all)
         "EOF_500hPa",

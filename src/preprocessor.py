@@ -218,12 +218,13 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         new_v = dataclasses.replace(
             v,
             coords = (v.dims + v.scalar_coords),
+            active = False,
+            status = diagnostic.VarlistEntryStatus.INITED,
             requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
         )
         new_v._id = next(data_mgr.id_number)
-        new_v.status = diagnostic.VarlistEntryStatus.INITED
         new_v.translation = new_tv
-        new_v.alternates = []
+        new_v.alternates = v.alternates
         return new_v
 
     def edit_request(self, data_mgr, pod):
@@ -242,11 +243,11 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             # existing VarlistEntry queries for 3D slice directly; add a new
             # VE to query for 4D data
             new_v = self.remove_scalar_on_translation(v, data_mgr)
-            v.alternates = [[new_v]] + v.alternates
+            # insert new_v between v itself and v's old alternate sets
+            v.alternates = [[new_v]]
 
-            for vv in v.iter_shallow_alternates():
-                _log.debug("%s for %s: add translated %s as alternate for %s", 
-                    self.__class__.__name__, v.full_name, vv.translation, v.translation)
+            _log.debug("%s for %s: add translated %s as alternate for %s", 
+                self.__class__.__name__, v.full_name, new_v.translation, v.translation)
             new_varlist.append(v)
             new_varlist.append(new_v)
         pod.varlist = diagnostic.Varlist(contents=new_varlist)

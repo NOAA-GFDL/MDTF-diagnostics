@@ -165,12 +165,10 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             self.path_variable = self.name.upper() + _file_env_var_suffix
 
         # self.alternates is either [] or a list of nonempty lists of VEs
-        print('XXXXXXX', self.full_name, self.alternates)
         if self.alternates:
             if not isinstance(self.alternates[0], list):
                 self.alternates = [self.alternates]
             self.alternates = [vs for vs in self.alternates if vs]
-        print('XXXXXXX', self.full_name, self.alternates)
 
     @property
     def failed(self):
@@ -553,6 +551,7 @@ class Diagnostic(object):
                     alt_success_flag = True
                     for alt_v in alts:
                         alt_v.active = True
+                    break
                 if not alt_success_flag:
                     _log.info("No alternates available for %s.", v.full_name)
                     try:

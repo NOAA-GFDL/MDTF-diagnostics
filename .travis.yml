@@ -20,7 +20,7 @@ jobs:
 before_install: 
   # TRAVIS_BUILD_DIR = abs path to checked-out repo
   - BUILD_PARENT="$( cd "$( dirname "$TRAVIS_BUILD_DIR" )" >/dev/null 2>&1 && pwd )"
-  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_NCAR-CAM5.timeslice_2000_2004"
+  - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_NCAR-CAM5.timeslice_2000_2003"
   - echo "$TRAVIS_BUILD_DIR" # debug
   - echo "$BUILD_PARENT"
   - echo "$POD_OUTPUT"

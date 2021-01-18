@@ -65,7 +65,7 @@
       // Variable doesn't have a CF standard name
       // Column taken to be 1000-200 hPa
       "standard_name": "mass_weighted_column_average_temperature",
-      "units": "1",
+      "units": "K",
       "dimensions": ["time", "lat", "lon"],
       "alternates" : ["ta"]
     },
@@ -74,7 +74,7 @@
       // Variable doesn't have a CF standard name
       // Column taken to be 1000-200 hPa
       "standard_name": "column_integrated_saturation_humidity",
-      "units": "1",
+      "units": "kg m-2",
       "dimensions": ["time", "lat", "lon"],
       "alternates" : ["ta"]
     },

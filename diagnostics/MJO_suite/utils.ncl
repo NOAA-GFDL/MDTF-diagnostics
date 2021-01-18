@@ -41,17 +41,6 @@ begin
 end
 
 ;================================================================================
-procedure deal_with_var_specifics(var,var_name_in)
-begin
-  if (var_name_in .eq. getenv("pr_var")) then
-    var = (/var*0.001/)            ; kg m-2 s-1 to m/s
-    var@units = "m/s"
-  end if
-
-end ;function deal_with_var_specifics
-
-
-;================================================================================
 function read_dim(f,var_name,opt)
 begin 
 
@@ -252,7 +241,6 @@ else  ; DO WRITE NEW FILE
     gw = get_gw(f_in,latS,latN) 
 
     var = f_in->$var_name_in$($time_coord$|i1:i2,{$lat_coord$|-40:40},$lon_coord$|:)
-    deal_with_var_specifics(var,var_name_in)
 
    else; if( isfilepresent(file_in) ) then
 

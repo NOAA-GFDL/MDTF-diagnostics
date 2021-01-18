@@ -133,6 +133,6 @@ def convert_dataarray(da, dest_unit):
     source_unit, dest_unit = to_equivalent_units(da_unit, dest_unit)
     _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
         da.name, std_name, source_unit, dest_unit)
-    Units.conform(da.values, source_unit, dest_unit, inplace=True)
+    da.values = Units.conform(da.values, source_unit, dest_unit, inplace=True)
     da.attrs['units'] = str(dest_unit)
     return da

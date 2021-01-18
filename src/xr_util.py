@@ -30,7 +30,7 @@ _cf_calendars = (
 )
 
 @util.mdtf_dataclass
-class PlacholderScalarCoordinate():
+class PlaceholderScalarCoordinate():
     """Dummy object used to describe scalar coordinates referred to by name only
     in the 'coordinates' attribute of a variable or dataset. We do this so that
     the attributes match those of coordinates represented by real netcdf Variables.
@@ -140,13 +140,13 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                     if c not in ds.dims:
                         # scalar coord set from Dataset attribute, so we only 
                         # have name and axis
-                        dummy_coord = PlacholderScalarCoordinate(name=c, axis=ax)
+                        dummy_coord = PlaceholderScalarCoordinate(name=c, axis=ax)
                         scalars.append(dummy_coord)
         return scalars
 
     def get_scalar(self, ax_name, var_name=None):
         """If the axis label *ax_name* is a scalar coordinate, return the 
-        corresponding xarray DataArray (or PlacholderScalarCoordinate), otherwise 
+        corresponding xarray DataArray (or PlaceholderScalarCoordinate), otherwise 
         return None.
         """
         for c in self.scalar_coords(var_name=var_name):
@@ -173,7 +173,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                     # have name and axis
                     if var_name is not None:
                         assert c not in ds[var_name].dims
-                    dummy_coord = PlacholderScalarCoordinate(name=c, axis=ax)
+                    dummy_coord = PlaceholderScalarCoordinate(name=c, axis=ax)
                     new_coords.append(dummy_coord)
             if new_coords:
                 if var_name is not None:
@@ -441,7 +441,7 @@ class DatasetParser():
             comparison_func = (lambda x,y: x == y)
         if ds_attr == util.NOTSET:
             # skip comparison & make no changes
-            # Currently only used by PlacholderScalarCoordinate
+            # Currently only used by PlaceholderScalarCoordinate
             return
 
         if not ds_attr:

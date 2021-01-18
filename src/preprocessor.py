@@ -392,7 +392,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if 'Z' not in ds[tv_name].cf.dim_axes_set:
             # maybe the ds we received has this level extracted already
             ds_z = ds.cf.get_scalar('Z', tv_name) 
-            if ds_z is None or isinstance(ds_z, xr_util.PlacholderScalarCoordinate):
+            if ds_z is None or isinstance(ds_z, xr_util.PlaceholderScalarCoordinate):
                 _log.debug(("Exit %s for %s: %s %s Z level requested but value not "
                     "provided in scalar coordinate information; assuming correct."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)

@@ -7,6 +7,7 @@ import dataclasses
 import functools
 from src import util, core, diagnostic, xr_util
 import cftime
+import numpy as np
 import xarray as xr
 
 import logging
@@ -447,6 +448,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         self.convention = data_mgr.convention
         self.pod_convention = pod.convention
 
+        # HACK only used for _FillValue workaround in clean_output_encoding
+        self.output_to_ncl = ('ncl' in pod.runtime_requirements)
+
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
 
@@ -486,7 +490,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_dataset(self, var):
         pass # return ds
 
-    def clean_encoding(self, ds):
+    def clean_output_encoding(self, var, ds):
         """Xarray .to_netcdf raises an error if attributes set on a variable have
         the same name as those used in its encoding, even if their values are the
         same. Delete these attributes from the attrs dict prior to writing, after
@@ -507,9 +511,33 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             k, name, v, attrs[k])
                     del attrs[k]   
             
-        for var in ds.variables.values():
-            _clean_dict(var)
+        for vv in ds.variables.values():
+            _clean_dict(vv)
         _clean_dict(ds)
+
+        if not getattr(var, 'is_static', True):
+            t_coord = var.T
+            ds_T = ds[t_coord.name]
+            # ensure we set time units in as many places as possible
+            if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
+                ds_T.encoding['units'] = ds_T.attrs['units']
+            if t_coord.has_bounds:
+                ds[t_coord.bounds].encoding['units'] = ds_T.encoding['units']
+
+        for k, v in ds.variables.items():
+            # First condition: unset _FillValue attribute for all independent 
+            # variables (coordinates and their bounds) as per CF convention but 
+            # contrary to xarray default; see 
+            # https://github.com/pydata/xarray/issues/1598.
+            # Second condition: 'NaN' not a valid _FillValue in NCL for any
+            # variable; see 
+            # https://www.ncl.ucar.edu/Support/talk_archives/2012/1689.html
+            old_fillvalue = v.encoding.get('_FillValue', np.nan)
+            if k != var.translation.name \
+                or (self.output_to_ncl and np.isnan(old_fillvalue)):
+                v.encoding['_FillValue'] = None
+                if '_FillValue' in v.attrs:
+                    del v.attrs['_FillValue']
         return ds
 
     def write_dataset(self, var, ds):
@@ -519,17 +547,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         _log.info("    Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
-        ds = self.clean_encoding(ds)
+        ds = self.clean_output_encoding(var, ds)
         if var.is_static:
             unlimited_dims = []
         else:
-            t_coord = var.T
-            ds_T = ds[t_coord.name]
-            unlimited_dims = [t_coord.name]
-            if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
-                ds_T.encoding['units'] = ds_T.attrs['units']
-            if t_coord.has_bounds:
-                ds[t_coord.bounds].encoding['units'] = ds_T.encoding['units']
+            unlimited_dims = [var.T.name]
 
         ds.to_netcdf(
             path=var.dest_path,

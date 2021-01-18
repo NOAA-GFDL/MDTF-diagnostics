@@ -79,6 +79,9 @@ else:
         os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR',''))
     )
 
+os.environ["lev_coord"] = 'lev'
+os.environ["ta_var"] = 'ta'
+
 os.environ["pr_file"] = os.environ["PR_FILE"]
 os.environ["prw_file"] = os.environ["PRW_FILE"]
 os.environ["ta_file"] = os.environ["TA_FILE"]
@@ -96,18 +99,18 @@ if not os.path.exists(os.environ["MODEL_OUTPUT_DIR"]):
 #os.environ["qsat_int_file"] = "*."+os.environ["qsat_int_var"]+".1hr.nc"
 
 missing_file=0
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["pr_file"]))==0:
+if len(glob.glob(os.environ["pr_file"]))==0:
     print("Required Precipitation data missing!")
     missing_file=1
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["prw_file"]))==0:
+if len(glob.glob(os.environ["prw_file"]))==0:
     print("Required Precipitable Water Vapor (CWV) data missing!")
     missing_file=1
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["ta_file"]))==0:
+if len(glob.glob(os.environ["ta_file"]))==0:
     if (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"]=="2" and \
-       len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["qsat_int_file"]))==0) \
+       len(glob.glob(os.environ["qsat_int_file"]))==0) \
     or (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"]=="1" and \
-       (len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["qsat_int_file"]))==0 or \
-        len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["tave_file"]))==0)):
+       (len(glob.glob(os.environ["qsat_int_file"]))==0 or \
+        len(glob.glob(os.environ["tave_file"]))==0)):
         print("Required Temperature data missing!")
         missing_file=1
 

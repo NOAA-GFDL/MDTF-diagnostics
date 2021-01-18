@@ -470,7 +470,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     # arguments passed to xr.to_netcdf
     save_dataset_kwargs = {
         "engine": "netcdf4",
-        "format": "NETCDF4" # required by this choice of engine (?)
+        "format": "NETCDF4_CLASSIC" # NETCDF3* not supported by this engine (?)
     }
 
     def read_one_file(self, var, path_list):
@@ -520,12 +520,22 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         ds = self.clean_encoding(ds)
+        if var.is_static:
+            unlimited_dims = []
+        else:
+            t_coord = var.T
+            ds_T = ds[t_coord.name]
+            unlimited_dims = [t_coord.name]
+            if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
+                ds_T.encoding['units'] = ds_T.attrs['units']
+            if t_coord.has_bounds:
+                ds[t_coord.bounds].encoding['units'] = ds_T.encoding['units']
+
         ds.to_netcdf(
             path=var.dest_path,
             mode='w',
-            **self.save_dataset_kwargs
-            # Currently don't make time unlimited, since data might be static 
-            # and we analyze a fixed date range
+            **self.save_dataset_kwargs,
+            unlimited_dims=unlimited_dims
         )
         ds.close()
 

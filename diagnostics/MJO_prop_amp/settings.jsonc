@@ -1,0 +1,53 @@
+// Diagnostic package for MJO propagation and amplitude in GCMs
+//
+// Version 2.1 September 25, 2018.
+// Alex Gonzalez (UCLA, now at IA State) and Xianan Jiang (UCLA)
+// Contributors: M. Zhao (GFDL), E. Maloney (CSU)
+// PI: Xianan Jiang (UCLA)
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings": {
+    "driver": "MJO_prop_amp.py",
+    "long_name": "MJO propagation and amplitude in GCMs",
+    "realm" : "atmos",
+    "description": "Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)",
+    "runtime_requirements": {
+      "python2": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm"]
+    }
+  },
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
+  "varlist" : [
+    {
+      "var_name": "pr_var",
+      "freq": "day",
+      "requirement": "required"
+    },{
+      "var_name": "prw_var",
+      "freq": "day",
+      "requirement": "required"
+    },{
+      "var_name": "qa_var",
+      "freq": "day",
+      "requirement": "required"
+    }
+  ]
+}

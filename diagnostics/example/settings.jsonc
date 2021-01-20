@@ -1,0 +1,61 @@
+// Example MDTF diagnostic settings file
+//
+// This should be an ascii text file in JSON format 
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes 
+// called "JSONC" format).
+// 
+{
+  "settings" : {
+    // Name of the driver script. This should be a single script, taking no 
+    // command-line arguments, which runs the entire analysis (calling any other
+    // scripts or subroutines as needed.)
+    "driver" : "example_diag.py",
+
+    // Human-readable name of the diagnostic. May contain spaces. 
+    "long_name" : "Example diagnostic",
+    
+    // Modeling realm. If your diagnostic uses data from multiple realms, give
+    // this as a list.
+    "realm" : "atmos",
+
+    // Human-readable name of the diagnostic. May contain spaces. This
+    // is used to describe your diagnostic on the top-level index.html page.
+    "description" : "Example diagnostic",
+
+    // (optional) Any diagnostic-specific environment variables, given as 
+    // key:value pairs. The user can't change these at runtime, but they can be 
+    // used to set site-specific installation settings for your diagnostic.
+    "pod_env_vars" : {
+      "EXAMPLE_FAV_COLOR": "blue"
+    },
+
+    // Programs and third-party libraries your diagnostic needs to run. This is
+    // a set of key:value pairs, where "key" is the name of a language's 
+    // executable and "value" is a list of all the libraries that language needs.
+    // The framework will ensure everything listed here is on your diagnostic's
+    // $PATH when it runs.
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4"]
+    }
+  },
+
+  // In this section, you describe what model data your diagnostic uses. Add one
+  // list entry (the section in curly braces) for each variable, separated by 
+  // commas.
+  "varlist" : [
+    {
+      // Variable identifier. An environment variable with this name will be set
+      // to what the corresponding field is called in the model being analyzed.
+      // For example, if this diagnostic were run on CESM2, the variable $tas_var
+      // would be set to "TREFHT".
+      "var_name" : "tas_var",
+
+      // Time frequency the data should be sampled at. Currently recognized
+      // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
+      "freq" : "mon",
+      "requirement" : "required"
+    }
+    // If we needed a second variable, we'd list it here.
+  ]
+}

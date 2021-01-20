@@ -1,0 +1,3 @@
+[submodule "src/cmip6-cmor-tables"]
+	path = src/cmip6-cmor-tables
+	url = https://github.com/tsjackson-noaa/cmip6-cmor-tables.git

@@ -1,0 +1,48 @@
+// EOF of geopotential height anomalies of 500 hPa. 
+//
+// This requires two files: 1) monthly averaged surface pressure (ps),
+// 2) monthly averaged geopotential height (zg).
+// The code is in NCL.   
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings" : {
+    "driver" : "EOF_500hPa.py",
+    "long_name" : "EOF of geopotential height anomalies of 500 hPa",
+    "realm" : "atmos",
+    "description" : "EOF of geopotential height anomalies for 500 hPa",
+    "runtime_requirements": {
+      "python2": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm"]
+    }
+  },
+  //
+  // USAGE varlist
+  // var_name time-frequency [requirement]
+  // - var_name: as found in src/fieldlist_*.json
+  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
+  // - requirement = blank  (default = optional),
+  //                 required (package cannot run without this)
+  //                 required unless field_name field_name2 ...
+  // - alternates:
+  //
+  // nb. if a variable is required at multiple time frequencies, list it 
+  // separately for each one. Clearly the developer can just leave out 
+  // optional files. However, it is always nice to get an upfront warning of
+  // missing files.
+  //
+  "varlist" : [
+    {
+      "var_name" : "zg_var",
+      "freq" : "mon",
+      "requirement": "required"
+    },{
+      "var_name": "ps_var",
+      "freq": "mon",
+      "requirement": "required"
+    }
+  ]
+}

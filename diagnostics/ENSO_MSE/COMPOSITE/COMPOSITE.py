@@ -19,7 +19,8 @@
 #       A Framework for Dynamical Seasonal Prediction of Precipitation
 #       over the Pacific Islands. J. Climate, 27 (9), 3272-3297,
 #       doi:10.1175/JCLI-D-13-00379.1. IPRC-1041.
-#
+#   
+#    updated 2021-11-20
 ##      This package is distributed under the LGPLv3 license (see LICENSE.txt) 
 
 import numpy as np

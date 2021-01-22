@@ -70,6 +70,11 @@ class TestCMIP6DateFrequency(unittest.TestCase):
                 dt_freq(self.all_freqs[i]) >= dt_freq(self.all_freqs[i+1])
             )
 
+    def test_is_static(self):
+        self.assertTrue(dt_freq(self.all_freqs[0]).is_static)
+        for i in range(1, len(self.all_freqs) - 1):
+            self.assertFalse(dt_freq(self.all_freqs[i]).is_static)
+
 class TestMIPTableParsing(unittest.TestCase):
     test_freqs = {
         'fx': ['fx', 'Ofx', 'IfxAnt'],
@@ -107,9 +112,9 @@ class TestDRSFilename(unittest.TestCase):
         self.assertEqual(d['experiment_id'], 'historical')
         self.assertEqual(d['realization_code'], 'r1i1p1f1')
         self.assertEqual(d['grid_label'], 'gn')
-        self.assertEqual(d['start_date'], None)
-        self.assertEqual(d['end_date'], None)
-        self.assertEqual(d['date_range'], None)
+        self.assertEqual(d['start_date'], dl.FXDateMin)
+        self.assertEqual(d['end_date'], dl.FXDateMax)
+        self.assertEqual(d['date_range'], dl.FXDateRange)
 
     def test_fx_consistency_check(self):
         file_ = 'areacello_3hr_GFDL-ESM4_historical_r1i1p1f1_gn.nc'

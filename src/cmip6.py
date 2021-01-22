@@ -194,7 +194,7 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
                 md['quantity'] = 0
                 md['unit'] = 'fx'
 
-            if not md['quantity']:
+            if md['quantity'] == '' or md['quantity'] is None:
                 md['quantity'] = 1
             else:
                 md['quantity'] = int(md['quantity'])
@@ -401,11 +401,14 @@ def parse_DRS_filename(file_):
             md['end_date'] = datelabel.Date(md['end_date'])
             md['date_range'] = datelabel.DateRange(md['start_date'], md['end_date'])
         else:
-            # no date range for fx-frequency data
-            md['date_range'] = None
+            # We're dealing with static/fx-frequency data, so use special 
+            # placeholder values
+            md['start_date'] = datelabel.FXDateMin
+            md['end_date'] = datelabel.FXDateMax
+            md['date_range'] = datelabel.FXDateRange
         md.update(parse_mip_table_id(md['table_id']))
-        if md['start_date'] is None and md['date_freq'] != CMIP6DateFrequency('fx') \
-            or md['date_freq'] == CMIP6DateFrequency('fx') and md['start_date'] is not None:
+        # verify consistency of FXDates and frequency == fx:
+        if md['date_range'].is_static != md['date_freq'].is_static:
             raise ValueError("Can't parse date range in filename {}.".format(file_))
         return md
     else:

@@ -2,8 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import io
 from src import six
-import glob
-import shutil
 import atexit
 import signal
 from abc import ABCMeta, abstractmethod
@@ -307,7 +305,7 @@ class CondaEnvironmentManager(EnvironmentManager):
                     assert os.path.exists(self.conda_exe)
                 elif key == '_CONDA_ROOT':
                     self.conda_root = val
-        except:
+        except Exception:
             print("Error: can't find conda.")
             raise
 
@@ -327,7 +325,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             _ = util.run_shell_command(
                 '{} env list | grep -qF "{}"'.format(self.conda_exe, conda_prefix)
             )
-        except:
+        except Exception:
             print('Conda env {} not found (grepped for {})'.format(env_name,conda_prefix))
             #self._call_conda_create(env_name)
 
@@ -350,7 +348,7 @@ class CondaEnvironmentManager(EnvironmentManager):
             )
         try:
             _ = util.run_shell_command(command)
-        except:
+        except Exception:
             raise
 
     def create_all_environments(self):
@@ -359,7 +357,7 @@ class CondaEnvironmentManager(EnvironmentManager):
                 '{}/conda_env_setup.sh -c "{}" -d "{}" --all'.format(
                     self.conda_dir, self.conda_exe, self.conda_env_root
             ))
-        except:
+        except Exception:
             raise
 
     def destroy_environment(self, env_name):

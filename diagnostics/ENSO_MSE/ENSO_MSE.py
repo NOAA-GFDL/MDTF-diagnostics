@@ -45,15 +45,15 @@ for subpack in subpackages:
 
 
 #     user selectable  domain for MSE variance plots
-slon1 = "160"
-slon2 = "200"
-slat1 = "-10"
-slat2 =   "+5"
+#slon1 = "160"
+#slon2 = "200"
+#slat1 = "-10"
+#slat2 =   "+5"
 
-os.environ["slon1"]  = slon1
-os.environ["slon2"]  = slon2
-os.environ["slat1"]  = slat1
-os.environ["slat2"]  = slat2
+#os.environ["slon1"]  = slon1
+#os.environ["slon2"]  = slon2
+#os.environ["slat1"]  = slat1
+#os.environ["slat2"]  = slat2
 
 
 #DRB: unfortunately these don't get copied to namelist_save, which means

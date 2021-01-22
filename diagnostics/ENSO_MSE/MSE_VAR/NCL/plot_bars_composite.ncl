@@ -13,6 +13,9 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin 
+ 
+     ff = 2.6E+06
+      factor  = 1./ff
 
       dyy = 0.4
 ;;  read  in the data from MSE_VAR
@@ -22,7 +25,7 @@ begin
 
       composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/netCDF/DATA/"
       varcode  = getenv("POD_HOME")
-       model = getenv( "CASENAME")
+      model = getenv( "CASENAME")
 
 
       parameter_name = varcode + "/shared/parameters.txt"
@@ -52,8 +55,8 @@ begin
        namein1 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/netCDF/" +  mode +  "/MSE_variance_C.out"
        namein2 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/netCDF/" +  mode +  "/MSE_variance_E.out"
 
-       nameout = getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/MSE_VAR_comp_" + mode
-
+;;       nameout = getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/PS/MSE_VAR_comp_" + mode
+         nameout = getenv("ENSO_MSE_WKDIR")+"/model/PS/MSE_VAR_comp_" + mode
 ;;;      maintitle = "MSE variance budget " + title_modes(n)
 ;;;  construct the main title based on model, season and region
 ;;;       maintitle2 = maintitle + " " + season
@@ -61,17 +64,19 @@ begin
        ydim = 8
        dims = ( [ydim] ) 
        datain1  = fbindirread (namein1, 0, dims , "float")
-        
+       datain1(0) =  factor * datain1(0)
+ 
         data2       = new( (/  ydim-2 /), float) 
         data2(0)    =  datain1(1)/datain1(0)     ;;  omse
         data2(1)    =  datain1(2)/datain1(0)     ;;  moist adv. 
         data2(2)    =  datain1(3)/datain1(0)     ;;  temp adv.
         data2(3)    =  datain1(4)/datain1(0)      ;;   SW
         data2(4)    =  datain1(5)/datain1(0)      ;;   Lw  
-        data2(5)    = (datain1(6)+datain1(7))/datain1(0) ;; THF
+        data2(5)    =  (datain1(6)+datain1(7))/datain1(0) ;; THF
 
 	 datain2  = fbindirread (namein2, 0, dims , "float")
-        
+        datain2(0) = factor * datain2(0) 
+
         data22       = new( (/  ydim-2 /), float) 
         data22(0)    =  datain2(1)/datain2(0)     ;;  omse
         data22(1)    =  datain2(2)/datain2(0)     ;;  moist adv.
@@ -112,12 +117,13 @@ begin
 
 
 ;======================================================================================	
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout)
+   wks_type@wkOrientation = "portrait"
 
-;;   wks = gsn_open_wks ("X11", "scatter")
    gsn_define_colormap(wks, "grads_default")
 
 
@@ -130,10 +136,12 @@ begin
      ndim2 = ydim -2 -1 ; dimensions to display 
 
      sres = True
-     sres@tmYLMode   = "Manual" ;;; "Automatic" ;;   "Manual"
-     sres@vpWidthF = 0.7
+     sres@tmYLMode   = "Automatic" ;;; "Automatic" ;;   "Manual"
+     sres@vpWidthF = 0.8 ;;  0.9 ;;  0.7
      sres@vpHeightF = 0.5
-     sres@vpXF = 0.15
+     sres@vpXF = 0.10 ;;  0.15
+     sres@vpYF = 0.8
+
      sres@trXMinF = 0
      sres@trXMaxF = ydim - 1
      sres@trYMinF = ymin2 ;;; ymin2(n)
@@ -147,9 +155,10 @@ begin
 
      sres@gsnXYBarChart = True
      sres@gsnYRefLine      = 0. ; reference line  
-     sres@gsnMaximize      = True      
+     sres@gsnPaperOrientation = "portrait" 
+;;     sres@gsnMaximize      = True      
 
-      sres@tmXBValues = ispan( 1, ydim-2, 1 )
+     sres@tmXBValues = ispan( 1, ydim-2, 1 )
 
      sres@gsnXYBarChartBarWidth = width           ; change bar widths
 
@@ -158,8 +167,8 @@ begin
      sres@tmXBLabelFuncCode  = "~"
 
      sres@tmXBLabels = tlabels ;
-     sres@tmXBLabelFontHeightF = 0.0105
-     sres@tmXTLabelFontHeightF = 0.015   ;; 0.0205
+     sres@tmXBLabelFontHeightF = 0.018  ;;  0.0105
+     sres@tmXTLabelFontHeightF = 0.018  ;;  0.015   ;; 0.0205
      sres@tmYLLabelFontHeightF = 0.015   ;;  0.0225
      sres@tiMainFontHeightF = 0.025
      sres@tiMainFont = "helvetica"
@@ -180,14 +189,14 @@ begin
      plot1 = gsn_csm_xy(wks,fspan(xl1, xl2, nxl), data22(ndim1:ndim2),sres)
 
 ;;;; 
-     xlb1 = 0.7
-     ylb1 = 0.85 ;;; 0.35
+     xlb1 = 0.60 ;; 0.74 ;;  0.7
+     ylb1 = 0.8 ;;  0.9 ;;   0.85 ;;; 0.35
      nbox = 2
      lbres                    = True          ; labelbar only resources
      lbres@txFuncCode    = "~"
      lbres@vpWidthF           = 0.25           ; labelbar width
      lbres@vpHeightF          = 0.12           ; labelbar height
-     lbres@lbBoxMajorExtentF  = 0.4          ; puts space between color boxes
+     lbres@lbBoxMajorExtentF  = 0.35 ;;  0.4          ; puts space between color boxes
      lbres@lbMonoFillPattern  = True          ; Solid fill pattern
      lbres@lbLabelFontHeightF = 0.015         ; font height. default is small
      lbres@lbLabelJust        = "CenterLeft"  ; left justify labels
@@ -206,7 +215,7 @@ begin
       txres1@txJust        = "CenterLeft"
       txres1@txFuncCode    = "~"
       xs1 = 0.08
-      ys1 = 0.90
+      ys1 = 0.85 ;;  0.95 ;;  0.90
       dy2 = 0.0
       dx2 = 0.65
       label2 = "MSE variance"
@@ -229,10 +238,16 @@ begin
 ;;     label1 =  "Months/Season= " + season +  "       " +   model
 ;;     new_label1 = str_concat(label1)
      xs1 = 0.1
-     ys1 = 0.12
+     ys1 = 0.15 ;;   0.12
      dy2 = 0.0
      dx2 = 0.3
      gsn_text_ndc (wks, label1, xs1, ys1, txres2)
+
+;;;
+    label2 = "scaled by "  + ff
+     xs1 = 0.8
+     ys1 = ys1 ;; 0.05
+     gsn_text_ndc (wks, label2, xs1, ys1, txres2)
 
 ;;;
    

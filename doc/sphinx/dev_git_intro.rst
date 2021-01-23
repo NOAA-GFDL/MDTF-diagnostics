@@ -46,7 +46,6 @@ Clone a local repository onto your machine
 
 - *Clone* your fork onto your computer: ``git clone git@github.com:<your_github_account>/MDTF-diagnostics.git``. This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.
 - Enter the project directory: ``cd MDTF-diagnostics``.
-- Clone additional dependencies of the code: ``git submodule update --recursive --init``.
 - Git knows about your fork, but you need to tell it about NOAA's repo if you wish to contribute changes back to the code base. To do this, type ``git remote add upstream git@github.com:NOAA-GFDL/MDTF-diagnostics.git``. Now you have two remote repos: ``origin``, your GitHub fork which you can read and write to, and ``upstream``, NOAA's code base which you can only read from.
 
 .. (TODO: `pip install -v .`, other installation instructions...)
@@ -62,7 +61,6 @@ Start coding
 ::
   git fetch upstream develop
   git pull upstream develop
-  git submodule update --recursive --remote
 
 3. Next, update your remote copy (the branch on your Github fork)
 ::

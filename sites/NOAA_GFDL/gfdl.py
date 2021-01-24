@@ -576,7 +576,8 @@ class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
 class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
     def __init__(self, pod, output_mgr):
         super(GFDLHTMLPodOutputManager, self).__init__(pod, output_mgr)
-        self.frepp_mode = output_mgr.frepp_mode
+        config = core.ConfigManager()
+        self.frepp_mode = config.get('frepp', False)
 
     def make_output(self):
         """Only run output steps (including logging error on index.html) 
@@ -598,7 +599,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
     def __init__(self, case):
         config = core.ConfigManager()
         try:
-            self.frepp_mode = case.frepp_mode
+            self.frepp_mode = config.get('frepp', False)
             self.dry_run = config.get('dry_run', False)
             self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:

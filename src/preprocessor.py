@@ -278,7 +278,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         tv = var.translation # abbreviate
         # convert dependent variable
-        ds[tv.name] = util.convert_dataarray(ds[tv.name], var.units)
+        ds = util.convert_dataarray(ds, tv.name, var.units)
         tv.units = var.units
 
         # convert coordinate dimensions and bounds
@@ -286,16 +286,16 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.axis == 'T':
                 continue # handle calendar stuff etc. in another function
             dest_c = var.axes[c.axis]
-            ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units)
+            ds = util.convert_dataarray(ds, c.name, dest_c.units)
             if c.bounds and c.bounds in ds:
-                ds[c.bounds] = util.convert_dataarray(ds[c.bounds], dest_c.units)
+                ds = util.convert_dataarray(ds, c.bounds, dest_c.units)
             c.units = dest_c.units
 
         # convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
-                ds[c.name] = util.convert_dataarray(ds[c.name], dest_c.units)
+                ds = util.convert_dataarray(ds, c.name, dest_c.units)
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
 

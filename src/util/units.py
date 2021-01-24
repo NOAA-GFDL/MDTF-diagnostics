@@ -115,24 +115,27 @@ def convert_scalar_coord(coord, dest_units):
         dest_value = coord.value
     return dest_value
 
-def convert_dataarray(da, dest_unit):
-    """Wrapper for cfunits.conform() that does unit conversion in-place on an
-    xarray DataArray, updating its units attribute.
+def convert_dataarray(ds, da_name, dest_unit):
+    """Wrapper for cfunits.conform() that does unit conversion in-place on a
+    member of an xarray Dataset, updating its units attribute.
     """
-    da_unit = da.attrs.get('units', "")
-    assert da_unit
+    da = ds.get(da_name, None)
+    if da is None:
+        raise ValueError(f"convert_dataarray: '{da_name}' not found in dataset.")
+    src_unit = da.attrs.get('units', "")
+    assert src_unit
     if 'standard_name' in da.attrs:
         std_name = f" ({da.attrs['standard_name']})"
     else:
         std_name = ""
-    if units_equal(da_unit, dest_unit):
+    if units_equal(src_unit, dest_unit):
         _log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
             "done."), da.name, std_name, dest_unit)
-        return da
+        return ds
 
-    source_unit, dest_unit = to_equivalent_units(da_unit, dest_unit)
     _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
-        da.name, std_name, source_unit, dest_unit)
-    da.values = Units.conform(da.values, source_unit, dest_unit, inplace=True)
-    da.attrs['units'] = str(dest_unit)
-    return da
+        da.name, std_name, src_unit, dest_unit)
+    fac = conversion_factor(src_unit, dest_unit)
+    ds = ds.assign({da_name: fac * ds[da_name]})
+    ds[da_name].attrs['units'] = str(dest_unit)
+    return ds

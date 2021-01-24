@@ -445,13 +445,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
     def is_fetch_necessary(self, d_key, var=None):
         if d_key in self.local_data:
-            # already successfully fetched
+            _log.debug("Already successfully downloaded data_key=%s.", d_key)
             return False
         if d_key in self.failed_data[self._id]:
-            # previously tried and failed to fetch
+            _log.debug("Already failed to fetch data_key=%s; not retrying.", 
+                d_key)
             return False
         if var is not None and (d_key in self.failed_data[var._id]):
             # preprocessing failed on this d_key for this var (redundant condition)
+            _log.debug("Preprocessing failed for data_key=%s; not retrying fetch.", 
+                d_key)
             return False
         return True
 

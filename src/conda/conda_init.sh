@@ -128,7 +128,9 @@ fi
 # https://github.com/conda/conda/issues/9392#issuecomment-617345019
 unset CONDA_SHLVL
 # finally run conda's init script
-__conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+##__conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+__conda_setup="$( $CONDA_EXE 'shell.bash' 'hook'  )"
+echo "HERE"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else

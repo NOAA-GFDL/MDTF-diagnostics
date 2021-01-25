@@ -16,17 +16,18 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
-      "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
+      "CASENAME" : "GFDL.CM4.c96L32_am4g9",
+      "model" : "AM4",
+      "convention" : "AM4",
+      "FIRSTYR" : 2009,
+      "LASTYR" : 2010,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
+          //"Wheeler_Kiladis",
+          //"EOF_500hPa",
+          //"MJO_suite",
+          //"MJO_teleconnection",
+          "precip_buoy_diag"
           // "convective_transition_diag"
           // "precip_diurnal_cycle"
       ]
@@ -67,7 +68,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
+  "MODEL_DATA_ROOT": "/scratch/neelin/MDTF_TIMESLICE_EXP/c96L32_am4g9_fullaero_MDTF/segmented_files",
 
   // Working directory.
   "WORKING_DIR": "../wkdir",

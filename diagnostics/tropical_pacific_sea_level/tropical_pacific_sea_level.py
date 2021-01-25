@@ -45,8 +45,9 @@ from dynamical_balance2 import curl_var, curl_var_3d
 import warnings
 warnings.simplefilter("ignore")
 
-# from mem_track import used_memory
-# used_memory()
+######
+# testing parameter before combining with MDTF framework
+#####
 
 
 # #### possible input info from external text file
@@ -62,8 +63,6 @@ warnings.simplefilter("ignore")
 # # Model label
 # Model_name = ['CESM2_CORE']        # model name in the dictionary
 # Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
-
-
 
 # # initialization
 # modelin = {}
@@ -88,8 +87,6 @@ warnings.simplefilter("ignore")
 print('--------------------------')
 print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
-# print(str(os.getenv('OBS_DATA')))
-#### possible input info from external text file
 # constant setting
 syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
 fyear = np.int(os.getenv('fyear'))                  # crop model and obs data to year
@@ -114,7 +111,6 @@ path = {}
 ori_syear = int(os.getenv('FIRSTYR'))
 ori_fyear = int(os.getenv('LASTYR'))
 modeldir = str(os.getenv('DATADIR'))+"/../"+str(os.getenv('Model_path'))
-# print(modeldir)
 modelfile = [[os.getenv('tauuo_file')],
              [os.getenv('tauvo_file')],
              [os.getenv('zos_file')]]
@@ -169,12 +165,6 @@ for nmodel,model in enumerate(Model_name):
     for nvar,var in enumerate(Model_varname):
         print('read %s %s'%(model,var))
 
-#         # read input data
-#         ds_model = xr.open_mfdataset(modelin[model][nvar],
-#                                      chunks={Model_dimname[0]:100,
-#                                              Model_dimname[1]:100,
-#                                              Model_dimname[2]:100},
-#                                      use_cftime=True)
         print(modelin[model][nvar][0])
         # read input data
         ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
@@ -212,16 +202,6 @@ for nmodel,model in enumerate(Model_name):
     mean_mlist[model] = mean_list
     season_mlist[model] = season_list
     ds_model_mlist[model] = ds_model_list
-
-#
-# # detrend
-# for nmodel,model in enumerate(Model_name):
-#     for nvar,var in enumerate(Model_varname):
-#         da_time = ds_model_mlist[model][var].time.copy()
-#         year = ds_model_mlist[model][var]['time.year'].values
-#         month = ds_model_mlist[model][var]['time.month'].values
-#         da_time.values = year+month/12.
-#         ds_model_mlist[model][var] = ds_model_mlist[model][var]-                                     (da_time*linear_mlist[model][var]['slope']+linear_mlist[model][var]['intercept'])
 
 
 # # Observation
@@ -282,7 +262,6 @@ for nobs,obs in enumerate(Obs_name):
             da = xr.open_dataset(obsin[obs][nvar][0])
             obsdims = list(da[var].dims)
 
-#             ds_obs = xr.open_dataset(obsin[obs][nvar][0],chunks={obsdims[0]:50,obsdims[1]:50,obsdims[2]:50},use_cftime=True)
             ds_obs = xr.open_dataset(obsin[obs][nvar][0])
 
         #-- multi-file merge (same variable)
@@ -292,7 +271,6 @@ for nobs,obs in enumerate(Obs_name):
                 da = xr.open_dataset(file,chunks={})
                 obsdims = list(da[var].dims)
 
-#                 ds_obs_sub = xr.open_dataset(file,chunks={obsdims[0]:50,obsdims[1]:50,obsdims[2]:50},use_cftime=True)
                 ds_obs_sub = xr.open_dataset(file,use_cftime=True)
                 if nf == 0 :
                     ds_obs = ds_obs_sub
@@ -364,36 +342,7 @@ for nobs,obs in enumerate(Obs_name):
     ds_obs_mlist[obs] = ds_obs_list
 
 
-# # detrend
-# for nobs,obs in enumerate(Obs_name):
-#     for nvar,var in enumerate(Obs_varname[nobs]):
-#         da_time = ds_obs_mlist[obs][var].time.copy()
-#         year = ds_obs_mlist[obs][var]['time.year'].values
-#         month = ds_obs_mlist[obs][var]['time.month'].values
-#         da_time.values = year+month/12.
-#         ds_obs_mlist[obs][var] = ds_obs_mlist[obs][var]-                                     (da_time*obs_linear_mlist[obs][var]['slope']+obs_linear_mlist[obs][var]['intercept'])
-
-
-
-# # Ocean basin mask
-# from create_ocean_mask import levitus98
-#
-# # # calculate zonal mean in the Pacific Basin
-# # from create_ocean_mask import levitus98
-#
-# da_pacific = levitus98(da_model_standard,
-#                        basin=['pac'],
-#                        reuse_weights=True,
-#                        newvar=True,
-#                        lon_name='nlon',
-#                        lat_name='nlat',
-#                        new_regridder_name='')
-#
-# da_pacific = da_pacific*da_model_standard[Variable_standard]/da_model_standard[Variable_standard]
-
-
-
-# # Derive Ekman upwelling/downwelling and wind stress curl
+# # Derive wind stress curl
 #########
 # Model
 #########
@@ -572,14 +521,12 @@ ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
 ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
 ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
 ax1.set_title("Mean state",{'size':'24'},pad=24)
-# ax1.legend(loc='upper left',bbox_to_anchor=(1.05, 1),fontsize=14,frameon=False)
 ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 #########
 # Linear
 #########
 ax1 = fig.add_axes([1.3,0,1,1])
-# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -618,7 +565,6 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual amp
 #########
 ax1 = fig.add_axes([0,-1.5,1,1])
-# obscolor = 'k'
 
 all_wsc = []
 all_ssh = []
@@ -658,7 +604,6 @@ ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
 ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
 ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
 ax1.set_title("Annual amplitude",{'size':'24'},pad=24)
-# ax1.legend(loc='upper left',fontsize=14,frameon=False)
 ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 
@@ -666,7 +611,6 @@ ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 # Annual phase
 #########
 ax1 = fig.add_axes([1.3,-1.5,1,1])
-# obscolor = 'k'
 
 
 all_wsc = []
@@ -713,7 +657,6 @@ ax1.set_xlim([0.5,12.5])
 ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
 ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
 ax1.set_title("Annual phase",{'size':'24'},pad=24)
-# ax1.legend(loc='upper left',fontsize=14,frameon=False)
 ax1.grid(linestyle='dashed',alpha=0.5,color='grey')
 
 

@@ -8,10 +8,10 @@ def setenv (varname,varvalue,env_dict,verbose=0):
     # automatically get written to the file
     "replaces os.environ to set the variable AND save it to write out in namelist"
 
-    if (verbose > 2 ): print "Saving ",varname," = ",varvalue
+    if (verbose > 2 ): print ("Saving ",varname," = ",varvalue)
     os.environ[varname] = varvalue
     env_dict[varname]   = varvalue
-    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
+    if ( verbose > 2) : print ("Check ",varname," ",env_dict[varname])
 
 
 

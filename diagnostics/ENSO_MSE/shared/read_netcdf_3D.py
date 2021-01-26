@@ -10,7 +10,7 @@ from scipy.io import netcdf
 def read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, dataout, undef):
 
 ##  read in  data from NetCDF file 
- print( namein) 
+# print( namein) 
  if(os.path.exists( namein)):
      nc = netcdf.netcdf_file( namein, 'r')
      vvar2 = nc.variables[ variable][:]
@@ -20,9 +20,9 @@ def read_netcdf_3D(imax, jmax,  zmax, tmax,  variable,  namein, dataout, undef):
      vvar2 = []
      nc.close()
  else:
-     print " missing file " +  namein 
-     print " needed for the calculations "
-     print " exiting read_netcdf.py "
+     print (" missing file " +  namein )
+     print (" needed for the calculations ")
+     print (" exiting read_netcdf.py ")
      sys.exit()
 
 # if( byteorder == 'little' ):

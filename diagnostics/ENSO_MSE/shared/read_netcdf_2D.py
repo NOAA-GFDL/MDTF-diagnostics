@@ -20,9 +20,9 @@ def read_netcdf_2D(imax, jmax, tmax,  variable,  namein, dataout, undef):
      nc.close()
 
  else:
-     print " missing file " +  namein 
-     print " needed for the calculations "
-     print " exiting read_netcdf.py "
+     print (" missing file " +  namein )
+     print (" needed for the calculations ")
+     print (" exiting read_netcdf.py ")
      sys.exit()
 
 # if( byteorder == 'little' ):

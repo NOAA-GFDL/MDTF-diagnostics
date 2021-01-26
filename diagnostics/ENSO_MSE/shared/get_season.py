@@ -40,8 +40,8 @@ def get_season( season, prefix):
 
     else:
         ffile = prefix + "../shared/season.txt"
-        print " missing file: "  + prefix + "../shared/season.txt"
-        print " exiting get_season.py "
+        print (" missing file: "  + prefix + "../shared/season.txt")
+        print (" exiting get_season.py ")
         sys.exit()
     return season
  

@@ -11,8 +11,8 @@ def get_lon_lat_plevels_in( imax, jmax, zmax, lon, lat, plevs, prefix):
         lon = np.fromfile(file, dtype='float32')
         file.close()
     else:
-        print " missing file "+  prefix+"longitude.out"
-        print " exiting get_plevels_in.py "
+        print (" missing file "+  prefix+"longitude.out")
+        print (" exiting get_plevels_in.py ")
         sys.exit()
 
 ###    latitude
@@ -21,8 +21,8 @@ def get_lon_lat_plevels_in( imax, jmax, zmax, lon, lat, plevs, prefix):
         lat = np.fromfile(file, dtype='float32')
         file.close()
     else:
-        print " missing file "+  prefix+"latitude.out"
-        print " exiting get_plevels_in.py "
+        print (" missing file "+  prefix+"latitude.out")
+        print (" exiting get_plevels_in.py ")
         sys.exit()
 ###   plevs
     if (os.path.exists(prefix+"plevels.out")):
@@ -30,8 +30,8 @@ def get_lon_lat_plevels_in( imax, jmax, zmax, lon, lat, plevs, prefix):
         plevs = np.fromfile(file, dtype='float32')
         file.close()
     else:
-        print " missing file "+  prefix+"plevels.out"
-        print " exiting get_plevels_in.py "
+        print (" missing file "+  prefix+"plevels.out")
+        print (" exiting get_plevels_in.py ")
         sys.exit()
 
     return lon, lat, plevs

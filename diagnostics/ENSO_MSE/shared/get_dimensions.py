@@ -24,9 +24,9 @@ def get_dimensions(imax, jmax,  zmax, prefix):
         zmax = int( column[0])
         file.close()
     else:
-        print " missing file "+  prefix +" xyz_dimensions.txt"
-        print " needed for the code "  
-        print " exiting get_dimensions.py "
+        print (" missing file "+  prefix +" xyz_dimensions.txt")
+        print (" needed for the code "  )
+        print (" exiting get_dimensions.py ")
         sys.exit()
 
     return imax, jmax,  zmax

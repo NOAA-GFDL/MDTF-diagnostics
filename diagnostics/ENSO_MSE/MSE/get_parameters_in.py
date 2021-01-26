@@ -2,9 +2,9 @@ import numpy as np
 import os.path
 import sys
 
-def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation,   undef2, prefix):
+def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation,  undef, prefix):
 ##  read in all  parameter data 
-    undef2 = float( 1.1E+20)
+    undef = float( 1.1E+20)
 
     if (os.path.exists(prefix+"../shared/parameters.txt")):
         file = open(prefix+'../shared/parameters.txt', 'r')
@@ -99,8 +99,8 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
 
     else:
         ffile = prefix + "../shared/parameters.txt"
-        print " missing file: "  + prefix + "../shared/parameters.txt"
-        print " exiting get_parameters_in.py "
+        print (" missing file: "  + prefix + "../shared/parameters.txt")
+        print (" exiting get_parameters_in.py ")
         sys.exit()
-    return lon1, lon2, lat1, lat2, sigma, imindx1, imindx2, composite, im1, im2, season,  composite24, regression, correlation,  undef2
+    return lon1, lon2, lat1, lat2, sigma, imindx1, imindx2, composite, im1, im2, season,  composite24, regression, correlation,  undef
  

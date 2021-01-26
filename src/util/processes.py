@@ -187,7 +187,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
             proc.kill()
         stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
-        _log.error('run_shell_command on %s (pid %s) exit status=%s:%s\n',
+        _log.error('run_shell_command on %s (pid %s) exit status=%s:\n%s\n',
             command, pid, retcode, stderr)
         raise subprocess.CalledProcessError(
             returncode=retcode, cmd=command, output=stderr)

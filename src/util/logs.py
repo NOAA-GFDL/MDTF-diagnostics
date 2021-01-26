@@ -309,11 +309,11 @@ def signal_logger(log, caller_name, signum=None, frame=None):
             k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
                 if v.startswith('SIG') and not v.startswith('SIG_')
         }
-        log.info(
+        _log.info(
             "%s caught signal %s (%s)",
             caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
         )
-        # log.debug("%s frame: %s", caller_name, frame)
+        # _log.debug("%s frame: %s", caller_name, frame)
 
 def _set_excepthook(root_logger):
     """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are 

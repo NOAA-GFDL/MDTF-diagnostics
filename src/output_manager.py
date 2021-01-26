@@ -274,7 +274,8 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            _log.error('POD %s has missing output files.', pod.name)
+            _log.error('POD %s has missing output files:\n%s', 
+                pod.name, '    \n'.join(missing_out))
             template_d = html_templating_dict(pod)
             template_d['missing_output'] = '<br>'.join(missing_out)
             util.append_html_template(

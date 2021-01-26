@@ -142,28 +142,64 @@ class TestDateRange(unittest.TestCase):
             _ = dt_range.from_contiguous_span(dtr3, dtr1, dt_range('20181214', '20190215'), dtr2)
 
     def test_overlaps(self):
-        r1 = dt_range(dt(2010), dt(2019))
-        self.assertFalse(r1.overlaps(dt_range('2007-2009')))
-        self.assertTrue(r1.overlaps(dt_range('2009-2011')))
-        self.assertTrue(r1.overlaps(dt_range('2011-2018')))
-        self.assertTrue(r1.overlaps(dt_range('2011-2019')))
-        self.assertTrue(r1.overlaps(dt_range('2009-2021')))
-        self.assertTrue(r1.overlaps(dt_range('2015-2021')))
-        self.assertFalse(r1.overlaps(dt_range('2020-2021')))
+        r1 = dt_range(dt(2010), dt(2020))
+        # move right endpoint, then left endpoint of test interval
+        self.assertEqual(r1.overlaps(dt_range('2008-2009')), False)
+        self.assertEqual(r1.overlaps(dt_range('2008-2010')), True)
+        self.assertEqual(r1.overlaps(dt_range('2008-2019')), True)
+        self.assertEqual(r1.overlaps(dt_range('2008-2020')), True)
+        self.assertEqual(r1.overlaps(dt_range('2008-2022')), True)
 
-        self.assertFalse(r1 in dt_range('2007-2009'))
-        self.assertTrue(r1 in dt_range('2009-2011'))
-        self.assertTrue(r1 in dt_range('2011-2019'))
+        self.assertEqual(r1.overlaps(dt_range('2010-2019')), True)
+        self.assertEqual(r1.overlaps(dt_range('2010-2020')), True)
+        self.assertEqual(r1.overlaps(dt_range('2010-2022')), True)
+
+        self.assertEqual(r1.overlaps(dt_range('2011-2019')), True)
+        self.assertEqual(r1.overlaps(dt_range('2011-2020')), True)
+        self.assertEqual(r1.overlaps(dt_range('2011-2022')), True)
+
+        self.assertEqual(r1.overlaps(dt_range('2020-2022')), True)
+        self.assertEqual(r1.overlaps(dt_range('2021-2022')), False)
 
     def test_contains(self):
-        r1 = dt_range(dt(2010), dt(2019))
-        self.assertFalse(r1.contains(dt_range('2007-2009')))
-        self.assertFalse(r1.contains(dt_range('2009-2011')))
-        self.assertTrue(r1.contains(dt_range('2011-2018')))
-        self.assertTrue(r1.contains(dt_range('2011-2019')))
-        self.assertFalse(r1.contains(dt_range('2009-2021')))
-        self.assertFalse(r1.contains(dt_range('2015-2021')))
-        self.assertFalse(r1.contains(dt_range('2020-2021')))
+        r1 = dt_range(dt(2010), dt(2020))
+        # move right endpoint, then left endpoint of test interval
+        self.assertEqual(r1.contains(dt_range('2008-2009')), False)
+        self.assertEqual(r1.contains(dt_range('2008-2010')), False)
+        self.assertEqual(r1.contains(dt_range('2008-2019')), False)
+        self.assertEqual(r1.contains(dt_range('2008-2020')), False)
+        self.assertEqual(r1.contains(dt_range('2008-2022')), False)
+
+        self.assertEqual(r1.contains(dt_range('2010-2019')), True)
+        self.assertEqual(r1.contains(dt_range('2010-2020')), True)
+        self.assertEqual(r1.contains(dt_range('2010-2022')), False)
+
+        self.assertEqual(r1.contains(dt_range('2011-2019')), True)
+        self.assertEqual(r1.contains(dt_range('2011-2020')), True)
+        self.assertEqual(r1.contains(dt_range('2011-2022')), False)
+
+        self.assertEqual(r1.contains(dt_range('2020-2022')), False)
+        self.assertEqual(r1.contains(dt_range('2021-2022')), False)
+
+    def test_in_contains(self):
+        r1 = dt_range(dt(2010), dt(2020))
+        # move right endpoint, then left endpoint of test interval
+        self.assertEqual(r1 in dt_range('2008-2009'), False)
+        self.assertEqual(r1 in dt_range('2008-2010'), False)
+        self.assertEqual(r1 in dt_range('2008-2019'), False)
+        self.assertEqual(r1 in dt_range('2008-2020'), True)
+        self.assertEqual(r1 in dt_range('2008-2022'), True)
+
+        self.assertEqual(r1 in dt_range('2010-2019'), False)
+        self.assertEqual(r1 in dt_range('2010-2020'), True)
+        self.assertEqual(r1 in dt_range('2010-2022'), True)
+
+        self.assertEqual(r1 in dt_range('2011-2019'), False)
+        self.assertEqual(r1 in dt_range('2011-2020'), False)
+        self.assertEqual(r1 in dt_range('2011-2022'), False)
+
+        self.assertEqual(r1 in dt_range('2020-2022'), False)
+        self.assertEqual(r1 in dt_range('2021-2022'), False)
 
     def test_intersect(self):
         r1 = dt_range('2000-2010')
@@ -215,6 +251,12 @@ class TestDateRange(unittest.TestCase):
         ]
         for d in rng2:
             self.assertTrue(rng1.intersection(d) == d.intersection(rng1))
+
+    def test_more_contains(self):
+        # mixed precision
+        self.assertTrue(dt_range('198001010130-199912312230').contains(dt_range('1992-1999')))
+        self.assertTrue(dt_range('199201010130-199912312230').contains(dt_range('1992-1999')))
+        self.assertTrue(dt_range('1980-1999').contains(dt_range('19800101-19991231')))
 
     def test_repr(self):
         globs = {'DateRange': dt_range, 'Date': dt}

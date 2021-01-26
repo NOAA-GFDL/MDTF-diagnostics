@@ -362,7 +362,7 @@ class DatePrecision(enum.IntEnum):
     for date intervals. For example, Date('200012') has DatePrecision.MONTH since
     the length of the corresponding interval is a month.
     """
-    STATIC = 0
+    STATIC = -1
     YEAR = 1
     MONTH = 2
     DAY = 3
@@ -423,10 +423,10 @@ class _DateMixin(object):
     def _inc_dec_common(dt, precision, delta):
         if precision == DatePrecision.STATIC:
             if delta == 1:
-                assert dt == datetime.datetime.min
+                # assert dt == datetime.datetime.min
                 return datetime.datetime.max
             elif delta == -1:
-                assert dt == datetime.datetime.max
+                # assert dt == datetime.datetime.max
                 return datetime.datetime.min
         if precision == DatePrecision.YEAR:
             # nb: can't handle this with timedeltas
@@ -552,6 +552,8 @@ class DateRange(AtomicInterval, _DateMixin):
 
     @property
     def end_datetime(self):
+        # don't decrement here, even though interval is closed, because of how
+        # adjoins_left and adjoins_right are implemented
         return self.upper
 
     @property
@@ -560,7 +562,7 @@ class DateRange(AtomicInterval, _DateMixin):
         # input is the start of the interval (set by precision)
         assert self.precision
         return Date(
-            self.decrement(self.end_datetime, self.precision), 
+            self.decrement(self.end_datetime, self.precision + 1), 
             precision=self.precision
         )
 
@@ -602,24 +604,31 @@ class DateRange(AtomicInterval, _DateMixin):
             return "DateRange('{}', precision=None)".format(self)
 
     def __contains__(self, item):
-        """Comparison returning `True` if `item` has any overlap at all with the
-        date range.
-
-        This method overrides the `__contains__` method, so, e.g., 
-        datetime.date('2019-09-18') in DateRange('2018-2019') will give
-        `True`.
+        """Override :meth:`AtomicInterval.__contains__` to handle differences
+        in datelabel precision. Finite precision means that the interval endpoints
+        are ranges, not points (which is why :class:`Date` inherits from
+        :class:`DateRange` and not vice-versa). We replace strict equality of
+        endpoints (==) with appropriate conditions on the overlap of these
+        ranges.
         """
         item = self._coerce_to_self(item)
-        return super(DateRange, self).overlaps(item, adjacent=False)
+        left_gt = item._lower > self._lower
+        left_eq = self.start.overlaps(item.start) \
+            and (item._left == self._left or self._left == self.CLOSED)
+        right_lt = item._upper < self._upper
+        right_eq = self.end.overlaps(item.end) \
+            and (item._right == self._right or self._right == self.CLOSED)
+        return (left_gt or left_eq) and (right_lt or right_eq)
+    contains = __contains__
 
     def overlaps(self, item):
         item = self._coerce_to_self(item)
         return super(DateRange, self).overlaps(item, adjacent=False)
 
-    def contains(self, item):
-        # strict containments
-        item = self._coerce_to_self(item)
-        return super(DateRange, self).__contains__(item)
+    # def contains(self, item):
+    #     # strict containments
+    #     item = self._coerce_to_self(item)
+    #     return super(DateRange, self).__contains__(item)
     
     def intersection(self, item, precision=None):
         item = self._coerce_to_self(item)
@@ -800,14 +809,6 @@ class StaticTimeDependenceBase(object):
     def _coerce_to_self(cls, item):
         # got to be a better way to write this
         return item
-        
-    @property
-    def start(self):
-        raise util.FXDateException(func_name='start')
-
-    @property
-    def end(self):
-        raise util.FXDateException(func_name='end')
 
     def format(self, precision=None):
         return "<N/A>"
@@ -817,6 +818,46 @@ class StaticTimeDependenceBase(object):
     @staticmethod
     def date_format(dt, precision=None):
         return "<N/A>"
+
+class _FXDateMin(StaticTimeDependenceBase, Date):
+    def __init__(self):
+        # call DateRange's init
+        super(_FXDateMin, self).__init__(
+            datetime.datetime.min, precision=DatePrecision.STATIC
+        )
+        self.precision = DatePrecision.STATIC
+
+    def __repr__(self):
+        return "_FXDate()" 
+
+    @property
+    def start(self):
+        return self.lower
+
+    @property
+    def end(self):
+        return self.lower
+FXDateMin = _FXDateMin()
+
+class _FXDateMax(StaticTimeDependenceBase, Date):
+    def __init__(self):
+        # call DateRange's init
+        super(_FXDateMax, self).__init__(
+            datetime.datetime.max, precision=DatePrecision.STATIC
+        )
+        self.precision = DatePrecision.STATIC
+
+    def __repr__(self):
+        return "_FXDateMax()" 
+
+    @property
+    def start(self):
+        return self.upper
+
+    @property
+    def end(self):
+        return self.upper
+FXDateMax = _FXDateMax()
 
 class _FXDateRange(StaticTimeDependenceBase, DateRange):
     """Singleton placeholder/sentinel object for use in describing static data 
@@ -830,19 +871,13 @@ class _FXDateRange(StaticTimeDependenceBase, DateRange):
     def __repr__(self):
         return "_FXDateRange()"
 
-class _FXDate(StaticTimeDependenceBase, Date):
-    def __init__(self):
-        # call DateRange's init
-        super(_FXDate, self).__init__(
-            datetime.datetime.min, precision=DatePrecision.STATIC
-        )
-        self.precision = DatePrecision.STATIC
+    @property
+    def start(self):
+        return FXDateMin
 
-    def __repr__(self):
-        return "_FXDate()" 
-
-FXDateMin = _FXDate()
-FXDateMax = _FXDate()
+    @property
+    def end(self):
+        return FXDateMax
 FXDateRange = _FXDateRange()
 
 class DateFrequency(datetime.timedelta):
@@ -1028,6 +1063,7 @@ class AbstractDateFrequency(abc.ABC):
 AbstractDateRange.register(DateRange)
 AbstractDateRange.register(_FXDateRange)
 AbstractDate.register(Date)
-AbstractDate.register(_FXDate)
+AbstractDate.register(_FXDateMin)
+AbstractDate.register(_FXDateMax)
 AbstractDateFrequency.register(DateFrequency)
 AbstractDateFrequency.register(_FXDateFrequency)

@@ -40,14 +40,14 @@ OUTPUT:   variances of input variables (over selected area)
 
 def moisture_variance(imax, jmax, zmax, lon1, lon2, lat1, lat2, lon, lat, plev, ts, pr, shf, lhf, sw, lw, mse, madv, omse,  tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var, undef):
     
-    shf_var = undef
-    lhf_var = undef
-    sw_var = undef
-    lw_var = undef
-    mse_var = undef
-    madv_var = undef
-    omse_var = undef
-    tadv_var = undef
+#    shf_var = undef
+#    lhf_var = undef
+#    sw_var = undef
+#    lw_var = undef
+#    mse_var = undef
+#    madv_var = undef
+#    omse_var = undef
+#    tadv_var = undef
    
 ##    
 #     select the averaging indexes  over the respective boxes 

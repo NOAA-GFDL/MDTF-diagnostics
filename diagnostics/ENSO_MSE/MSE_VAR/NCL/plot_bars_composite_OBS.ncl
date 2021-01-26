@@ -243,10 +243,10 @@ begin
      gsn_text_ndc (wks, label1, xs1, ys1, txres2)
 
 ;;; add the text of scaling
-     label2 = "scaled by "  + ff
+     label2 = "relative units"
      xs1 = 0.8
      ys1 = ys1 ;;  0.05
-     gsn_text_ndc (wks, label2, xs1, ys1, txres2)
+;;;     gsn_text_ndc (wks, label2, xs1, ys1, txres2)
 
 ;;;
    

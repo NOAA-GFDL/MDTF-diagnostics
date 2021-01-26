@@ -37,24 +37,6 @@ for subpack in subpackages:
     else:
         print(" ENSO_MSE subpackage ENSO_"+subpack+" off. Turn on by adding line to namelist input: VAR ENSO_"+subpack+" 1 ")
 
-#os.environ["ENSO_COMPOSITE"] = "1"
-#os.environ["ENSO_MSE"] = "1"
-#os.environ["ENSO_MSE_VAR"] = "1"
-#os.environ["ENSO_SCATTER"] = "1"
-#os.environ["ENSO_OBS"] = "1"
-
-
-#     user selectable  domain for MSE variance plots
-#slon1 = "160"
-#slon2 = "200"
-#slat1 = "-10"
-#slat2 =   "+5"
-
-#os.environ["slon1"]  = slon1
-#os.environ["slon2"]  = slon2
-#os.environ["slat1"]  = slat1
-#os.environ["slat2"]  = slat2
-
 
 #DRB: unfortunately these don't get copied to namelist_save, which means
 #debugging requires starting from this script. To add them here requires
@@ -72,7 +54,7 @@ if os.environ["ENSO_COMPOSITE"] == "1":
 
         print("=================================================================")
         print(" General information is in README_general.docx/README_general.pdf files under")
-        print("  var_code/ENSO_MSE                                              ")
+        print("  ~/diagnostics/ENSO_MSE                                              ")
         print("=================================================================")
 
         print("=================================================================")
@@ -102,7 +84,7 @@ if os.environ["ENSO_COMPOSITE"] == "1":
 
         print("=================================================================")
         print(" More detailed information regarding the COMPOSITE module is in  ")
-        print(" README_LEVEL_01.docx/README_LEVEL_01.pdf files under ~/var_code/ENSO_MSE/COMPOSITE/")
+        print(" README_LEVEL_01.docx/README_LEVEL_01.pdf files under ~/diagnostics/ENSO_MSE/COMPOSITE/")
         print("=================================================================")
        
 ###  set if to run Observational Preprocessing :
@@ -159,7 +141,7 @@ if os.environ["ENSO_MSE"] == "1":
         print("=================================================================")
         print(" More detailed information regarding the MSE module is in        ")
         print(" README_LEVEL_02.docx/README_LEVEL_02.pdf  files under           ")
-        print(" ~/var_code/ENSO_MSE/MSE/                                        ")
+        print(" ~/diagnostics/ENSO_MSE/MSE/                                        ")
         print("=================================================================")
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
@@ -194,7 +176,7 @@ if os.environ["ENSO_MSE_VAR"] == "1":
         print("=================================================================")
         print(" More detailed information regarding the MSE_VAR module is in    ")
         print(" README_LEVEL_03.docx/README_LEVEL_03.pdf files under            ")
-        print("  ~/var_code/ENSO_MSE/MSE_VAR/                                   ")
+        print("  ~/diagnostics/ENSO_MSE/MSE_VAR/                                   ")
         print("=================================================================")
 
         if os.environ["ENSO_OBS"] == "1":
@@ -228,7 +210,7 @@ if os.environ["ENSO_SCATTER"] == "1":
         print("=================================================================")
         print(" More detailed information regarding the SCATTER module is in    ")
         print(" README_LEVEL_04.docx/README_LEVEL_04.pdf files under            ")
-        print(" ~/var_code/ENSO_MSE/SCATTER/                                    ")
+        print(" ~/diagnostics/ENSO_MSE/SCATTER/                                    ")
         print("=================================================================")
       
         os.system("python "+os.environ["POD_HOME"]+"/SCATTER/check_input_files.py")

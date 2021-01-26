@@ -6,18 +6,19 @@
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
+; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
-print("Starting plot_regression_all.ncl")
+;;  print("Starting plot_regression_all.ncl")
 ;; select the  cmin, cmax, cint
-   cmin =  -1.2 ; min(datain)
-   cmax =   1.2 ; max(datain)
-   cint = 0.1
+
+   cmin = (/  -2.8,  -2.4, -22.5, -18,  -12 /) ; min(datain)
+   cmax = (/   2.8,   2.4,  22.5,  18,   12 /) ; max(datain)
+   cint = (/   0.4,   0.4,  2.5,    2,    2 /)
    ccenter = 0
-   clevs = 20
+  
 
    variables = (/ "PR" , "SW", "LW", "LHF", "SHF" /)
    varinames = (/ "PRECIP" , "SW~B~net~N", "LW~B~net~N", "LHF", "SHF" /)
@@ -27,7 +28,8 @@ print("Starting plot_regression_all.ncl")
 ;;  read  in the data from 
 
       varcode  = getenv("POD_HOME")
-      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py
+      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model/" ; envvar set in ENSO_MSE.py
+      outdir2 = getenv("ENSO_MSE_WKDIR") +"/model/"
       model = getenv( "CASENAME")
 
       parameter_name = varcode + "/shared/parameters.txt"
@@ -37,7 +39,7 @@ print("Starting plot_regression_all.ncl")
       name_plevs = outdir + "/netCDF/DATA/plevels.out"
 
       namein = outdir + "/netCDF/"  
-      nameout = outdir +  "/regression" 
+      nameout = outdir2 +  "/PS/regression" 
 	 
       maintitle = "NINO3.4 SST on "
 
@@ -78,9 +80,8 @@ print("Starting plot_regression_all.ncl")
 ;;  the title 
 
      namein1 = namein + "/REGRESS_" + variable + ".grd"  ;;  str_concat( string)
-     print( "reading from "+namein1) 
+;;     print( "reading from "+namein1) 
      nameout12 = nameout + "_" + variable
-
 
  
 ;;   read in the data
@@ -98,10 +99,11 @@ print("Starting plot_regression_all.ncl")
 
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
-   print( " writing figure to   "+nameout12+"."+wks_type )
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+;;    print( " writing figure to   "+nameout12+"."+wks_type )
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
@@ -122,10 +124,10 @@ print("Starting plot_regression_all.ncl")
 ;;  res@cnFillPalette        = colormap        ; set color map
   res@cnLinesOn            = False
 
-  symMinMaxPlt ( datain1, clevs, False,res)  
-; res@cnMinLevelValF        = cmin
-; res@cnMaxLevelValF        = cmax
-; res@cnLevelSpacingF       = cint
+;;   symMinMaxPlt ( datain1, clevs, False, res)  
+  res@cnMinLevelValF        = cmin(iv)
+  res@cnMaxLevelValF        = cmax(iv)
+  res@cnLevelSpacingF       = cint(iv)
 
  res@gsnMaximize         = True
 ; res@gsnSpreadColors     = True
@@ -171,8 +173,6 @@ print("Starting plot_regression_all.ncl")
      ys1 = 0.18
      dy2 = 0.0
      dx2 = 0.3
-;;     label2 = (/ "Months/Season= ", season, " Model: ", model, " units:" , units /)
-;;     new_label2 = str_concat(label2)
      label4 = "Months/Season= " +  season +  " Model: " + model + " units:" + units
      gsn_text_ndc (wks, label4, xs1, ys1, txres2)
 ;;;;;    

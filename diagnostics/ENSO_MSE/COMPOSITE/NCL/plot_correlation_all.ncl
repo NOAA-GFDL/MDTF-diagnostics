@@ -1,4 +1,4 @@
-;;;*******************************************************
+;;*******************************************************
 ;
 ;
 ;*******************************************************
@@ -6,7 +6,7 @@
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
@@ -23,9 +23,11 @@ begin
 
 ;;  read  in the data 
       varcode  = getenv("POD_HOME")
+      outdir2   = getenv("ENSO_MSE_WKDIR")+"/model/"
       outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/"  ; set in ENSO_MSE.py
-      model = getenv( "CASENAME")
+      model    = getenv( "CASENAME")
 
+;;;     print( " model = " +  model) 
 
       parameter_name = varcode + "/shared/parameters.txt"
       name_dimensions = outdir + "/netCDF/DATA/xyz_dimensions.txt"
@@ -36,7 +38,7 @@ begin
       nameclima = outdir +  "/netCDF/"
 
         namein  = outdir + "/netCDF/"  
-        nameout = outdir +  "/correlation" 
+        nameout = outdir2 +  "/PS/correlation" 
 
        maintitle = "NINO3.4 SST vs "  
 
@@ -44,6 +46,7 @@ begin
 
        data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(12), 3," ")
+
 
 ;;;   read the lat/lon and dimensions from external files - in DATA
        dataxyz  = asciiread(name_dimensions,-1,"string")
@@ -95,9 +98,10 @@ begin
 
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
@@ -162,17 +166,16 @@ begin
       txres2@txFont   = "helvetica"
       txres2@txFontHeightF = 0.016
       txres2@txJust        = "CenterLeft"
+      txres2@txFuncCode    = "~"
 
      xs1 = 0.1
      ys1 = 0.18
      dy2 = 0.0
      dx2 = 0.3
-;;     label2 = (/ "Months/Season= ", season, " Model: ", model  /)
-;;     new_label2 = str_concat(label2)
-     label4 = "Months/Season= " +  season +  " Model: " + model 
+
+     label4 = "Months/Season= " +  season +  " Model: " + model + " " 
 
 ;;;;;;;;;;  for ERA-INTERIM only 
-;;;;      label4 = "Months/Season= " +  season +  "       " + model
      gsn_text_ndc (wks, label4, xs1, ys1, txres2)
 ;;;;;    
 

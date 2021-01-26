@@ -6,17 +6,23 @@
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
+; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
 ;; select the  cmin, cmax, cint
-   cmin =  -2 ; min(datain)
-   cmax =   2 ; max(datain)
-   cint = 0.1
-   ccenter = 0
-   clevs = 20
+;; select the  cmin, cmax, cint
+;;;    need the two rows El Nino/La Nina
+   cmin = (/  (/  -3.2,   -8,   -60,   -40,  -32,  -8,  -60 /) ,  \
+              (/  -3.2,  -3.6, -50,   -32,  -28,  -7,  -50 /) /)
+
+   cmax = (/  (/ 3.2,   8,     60,   40,     32,   8,   60 /) ,  \
+              (/ 3.2,   3.6,  50,    32,     28,   7,   50 /)  /)
+
+   cint = (/  (/ 0.4,   1,    10,    5,     4,    1,  10 /),  \
+              (/ 0.4,   0.4,  10,    4,     4,    1,  10 /)  /)
+
 
    modes = (/ "ELNINO", "LANINA" /) 
 
@@ -26,7 +32,8 @@ begin
    varunits =  (/ "[deg. C]", "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]", "[mm/day]",  "[W/m2]" /)
 
    title_mode = (/ "El Nino",  "La Nina" /)
-
+  
+      outdir2 = getenv("ENSO_MSE_WKDIR") + "/model"
       outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py
       varcode  = getenv("POD_HOME")
       model = getenv( "CASENAME")
@@ -85,8 +92,8 @@ begin
     end if 
 ;;  read  in the data from 
 
-	namein  = outdir + "/netCDF/"  + mode
-	nameout = outdir + "/composite_"  + mode
+	namein  = outdir  + "/netCDF/"  + mode
+	nameout = outdir2 + "/PS/composite_"  + mode
 
 ;;      maintitle = "Composite " + title_mode(n)  + " " + varinames(iv)
 ;;;   read in various variables then  plot 
@@ -126,9 +133,10 @@ begin
     datain = ff *( datain1  - datain2) 
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
@@ -149,10 +157,10 @@ begin
 ;;  res@cnFillPalette        = colormap        ; set color map
   res@cnLinesOn            = False
 
-  symMinMaxPlt ( datain, clevs, False,res)  
-; res@cnMinLevelValF        = cmin
-; res@cnMaxLevelValF        = cmax
-; res@cnLevelSpacingF       = cint
+;;  symMinMaxPlt ( datain, clevs, False,res)  
+ res@cnMinLevelValF        = cmin(n, iv)
+ res@cnMaxLevelValF        = cmax(n, iv)
+ res@cnLevelSpacingF       = cint(n, iv) 
 
  res@gsnMaximize         = True
 ; res@gsnSpreadColors     = True
@@ -199,9 +207,7 @@ begin
      ys1 = 0.18
      dy2 = 0.0
      dx2 = 0.3
-;;     label4 = (/ datamode, " ",  "Months/Season= ", season, " Model: ", model, "  units:" , units /)
        label4 = "  Months/Season= " + season + " Model: " + model + "  units:" +  units
-;;     new_label2 = str_concat(label2)
      gsn_text_ndc (wks, label4, xs1, ys1, txres2)
 ;;;;;    
 	plot = gsn_csm_contour_map(wks, datain, res)

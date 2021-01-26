@@ -6,7 +6,7 @@
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 ;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
@@ -18,25 +18,24 @@ begin
    ccenter = 0
    clevs = 20
 
-   variables = (/ "PR" , "SW", "LW", "LHF", "SHF" /)
+   variables2 = (/ "PR" , "SW", "LW", "LHF", "SHF" /)
+   variables = (/ "pr",  "sw", "lw", "hfls", "hfss" /)
    varinames = (/ "PRECIP" , "SW~B~net~N", "LW~B~net~N", "LHF", "SHF" /)
 
 ;;  read  in the data 
 
+      obsdir  = getenv("OBS_DATA") +"/DATA/"
+      outdir2   = getenv("ENSO_MSE_WKDIR")+"/obs/"
       outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/"  ; set in ENSO_MSE.py
       varcode  = getenv("POD_HOME")
       model =  " "   ;;;;   leave blank for observations  getenv( "CASENAME")
 
       parameter_name = varcode + "/shared/parameters.txt"
-      name_dimensions =  outdir + "/netCDF/DATA/xyz_dimensions.txt"
-      name_lon = outdir + "/netCDF/DATA/longitude.out"
-      name_lat = outdir + "/netCDF/DATA/latitude.out"
-      name_plevs = outdir + "/netCDF/DATA/plevels.out"
 
-      nameclima = outdir +  "/netCDF/"
+      nameclima = obsdir +  "/netCDF/"
+      namein  = obsdir + "/netCDF/"  
 
-       namein  = outdir + "/netCDF/"  
-       nameout = outdir + "/correlation" 
+       nameout = outdir2 + "/PS/correlation" 
 
        maintitle = "NINO3.4 SST vs "  
 
@@ -45,23 +44,6 @@ begin
 
        data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(12), 3," ")
-
-;;;   read the lat/lon and dimensions from external files - in DATA
-       dataxyz  = asciiread(name_dimensions,-1,"string")
-       xdum  = str_get_field(dataxyz(0), 1," ")
-       xmax =  stringtointeger( xdum)
-       ydum  = str_get_field(dataxyz(1), 1," ")
-       ymax =  stringtointeger( ydum)
-       zdum  = str_get_field(dataxyz(2), 1," ")
-       zmax =  stringtointeger( zdum)
-
-;;;  read in the lon/lat plevs here !!
-       lon = fbindirread (name_lon, 0, (/ xmax /) , "float")
-       lat = fbindirread (name_lat, 0, (/ ymax /) , "float")
-       lon@units = "degrees_east"
-       lon@long_name = "lon"
-       lat@units = "degrees_north"
-       lat@long_name = "lat"
 
        xlon1 = 0
        xlon2 = 360
@@ -76,29 +58,35 @@ begin
      colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
 ;;  the title 
 
-   namein1 = namein + "/CORR_" + variable + ".grd"  ;;  str_concat( string)
+   namein1 = namein + "/CORR_" + variable + ".nc"  ;;  str_concat( string)
 
-   nameout12 = nameout + "_" + variable
+   nameout12 = nameout + "_" + variables2(iv) 
 ;;  print( namein1) 
 ;;   print( namein2 ) 
 ;;   read in the data
+     fin1 = addfile( namein1, "r")
+
+     lon = fin1->lon
+     lat = fin1->lat
+
+     xmax = dimsizes( lon)
+     ymax = dimsizes( lat)
+     dims = (/  ymax, xmax /)
+
      dims = (/  ymax, xmax /)
      datain1 =  new(  dims, "float")
      datain1@_FillValue = undef2
-     datain1  = fbindirread (namein1, 0, dims , "float")
+     datain1 = fin1->$variable$
 
-;;  make the anomaly for plotting
-
-       datain1!0="lat"
- 	datain1!1="lon"
-	datain1&lat = lat
-	datain1&lon = lon 
+    datain1@units = " "
+    datain1@long_name = " "
 
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
@@ -169,7 +157,7 @@ begin
      dy2 = 0.0
      dx2 = 0.3
 
-     label4 = "Months/Season= " +  season +  "  " + model 
+     label4 = "Months/Season= " +  season 
 
 ;;;;;;;;;;  for ERA-INTERIM only 
 ;;;;      label4 = "Months/Season= " +  season +  "       " + model

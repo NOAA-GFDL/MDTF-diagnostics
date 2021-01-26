@@ -16,7 +16,9 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin 
 
 ;;  read  in the data from MSE
-        varcode  = getenv("POD_HOME")
+        varcode = getenv("POD_HOME")
+        outdir  =  getenv("ENSO_MSE_WKDIR") +"/model/"
+
         composite_dir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model/"
         mse_dir  = getenv("ENSO_MSE_WKDIR_MSE") +"/model/"
         model = getenv( "CASENAME")
@@ -31,18 +33,11 @@ begin
        nameclima = mse_dir + "netCDF/"
 
 
-;; select the  cmin, cmax, cint
-   cmin =  -2 ; min(datain)
-   cmax =   2 ; max(datain)
-   cint = 0.1
    ccenter = 0
    clevs = 20
 
-;;   cmins = (/ -70., -240., -160., -160.,  -6E+07 /)
-;;   cmaxs = (/  70.,  240.,  160.,  160.,   6E+07 /)
-;;   cints = (/  10.,   40.,   20.,   20.,   1E+07 /)
-
 ;;    set the levels  :
+
    cmins1 = (/ -70., -240., -160., -160.,  -5E+07 /)
    cmaxs1 = (/  70.,  240.,  160.,  160.,   5E+07 /)
    cints1 = (/  10.,   40.,   20.,   20.,   1E+07 /)
@@ -100,9 +95,9 @@ begin
       do  n = 0, 1
       mode  = modes(n)  ;;; 
 
-       namein    = mse_dir +  "/netCDF/" + mode
+       namein  = mse_dir +  "/netCDF/" + mode
 
-       nameout = mse_dir +  "/" + mode
+       nameout = outdir +  "/PS/" + mode ;;;   mse_dir +  "/PS/" + mode
 
        maintitle = "Composite " + title_mode(n)
 
@@ -129,8 +124,8 @@ begin
 
 
    nameout12 = nameout + "_" + variable
-;;  print( namein1) 
-;;   print( namein2 ) 
+;   print( namein1) 
+;   print( namein2 ) 
 ;;   read in the data
      dims = (/ zmax+1,  ymax, xmax /)
      dims2 = (/ ymax, xmax /)
@@ -141,6 +136,8 @@ begin
      datain2@_FillValue = undef2
      datain1  = fbindirread (namein1, 0, dims2 , "float")
      datain2  = fbindirread (namein2, 0, dims2 , "float")
+
+;;     print( datain1)
 
 ;;  make the anomaly for plotting
     datain =  new(  dims2, "float")
@@ -162,9 +159,10 @@ begin
        
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 

@@ -7,41 +7,30 @@
 ;   - Using bar charts to draw standard deviations for four timeseries
 ;*******************************************************
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;;load "$POD_HOME/shared/gsnColorRange.ncl"
+;; These files are loaded by default in NCL V6.2.0 and newer
+;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
+;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
+;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+;; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
-;;  read  in the data from MSE
+;;  read  in the data from  inputdata  obs_data  - predigested 
         varcode  = getenv("POD_HOME")
-        composite_dir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs/"
-        mse_dir  = getenv("ENSO_MSE_WKDIR_MSE") +"/obs/"
- 
-        model = "  "  ;; leave blank for OBS
+        obs_dir  = getenv("OBS_DATA") +"/DATA/"
+        mse_dir =  getenv("ENSO_MSE_WKDIR_MSE") +"/obs/"
+        outdir =  getenv("ENSO_MSE_WKDIR") +"/obs/"
 
+     model = "  "  ;; leave blank for OBS
 
-       parameter_name = varcode + "/shared/parameters.txt"
-       name_dimensions =  composite_dir + "netCDF/DATA/xyz_dimensions.txt"
-       name_lon = composite_dir + "netCDF/DATA/longitude.out"
-       name_lat = composite_dir + "netCDF/DATA/latitude.out"
-       name_plevs = composite_dir + "netCDF/DATA/plevels.out"
-
-       nameclima = mse_dir +  "/netCDF/"
+     parameter_name = varcode + "/shared/parameters.txt"
+     nameclima = obs_dir  +  "/netCDF/"
 
 
 ;; select the  cmin, cmax, cint
-   cmin =  -2 ; min(datain)
-   cmax =   2 ; max(datain)
-   cint = 0.1
    ccenter = 0
    clevs = 20
 
-;;   cmins = (/ -70., -240., -160., -160.,  -6E+07 /)
-;;   cmaxs = (/  70.,  240.,  160.,  160.,   6E+07 /)
-;;   cints = (/  10.,   40.,   20.,   20.,   1E+07 /)
 
 ;;    set the levels  :
    cmins1 = (/ -70., -240., -160., -160.,  -5E+07 /)
@@ -51,7 +40,6 @@ begin
    cmins2 = (/ -70., -200., -100., -120.,  -4E+07 /)
    cmaxs2 = (/  70.,  200.,  100.,  120.,   4E+07 /)
    cints2 = (/  10.,   40.,   20.,   20.,   1E+07 /)
-
 
    modes = (/ "ELNINO", "LANINA" /)
 
@@ -70,41 +58,19 @@ begin
 ;;;  construct the main title based on model, season and region
       season = "XXX"
       datamode = "Anomaly"
-      lon1 = -9999.
-      lon2 = -9999.
-      lat1 = -9999.
-      lat2 = -9999.
       undef2 = 1.1E+20
 	
        data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(12), 3," ")
 
-;;;   read the lat/lon and dimensions from external files - in DATA
-       dataxyz  = asciiread(name_dimensions,-1,"string")
-       xdum  = str_get_field(dataxyz(0), 1," ")
-       xmax =  stringtointeger( xdum)
-       ydum  = str_get_field(dataxyz(1), 1," ")
-       ymax =  stringtointeger( ydum)
-       zdum  = str_get_field(dataxyz(2), 1," ")
-       zmax =  stringtointeger( zdum)
-
-;;;  read in the lon/lat plevs here !!
-       lon = fbindirread (name_lon, 0, (/ xmax /) , "float")
-       lat = fbindirread (name_lat, 0, (/ ymax /) , "float")
-       lon@units = "degrees_east"
-       lon@long_name = "lon"
-       lat@units = "degrees_north"
-       lat@long_name = "lat"
-
+;;;  
 ;;;   read in various variables then  plot 
 ;;    
       do  n = 0, 1
       mode  = modes(n)  ;;; 
 
-       namein    = mse_dir +  "/netCDF/" + mode
-
-       nameout = mse_dir +  "/" + mode
-
+       namein  = obs_dir +  "/netCDF/" + mode
+       nameout = outdir  +  "/PS/" + mode ;;;;  mse_dir +  "/PS/" + mode
        maintitle = "Composite " + title_mode(n)
 
      do iv = 0, 4
@@ -121,25 +87,41 @@ begin
         cmaxs = cmaxs2(iv)
         cints = cints2(iv)
       end if
-	 
+
+;;;     print( cmins + " " +  cmaxs + " " + cints )	 
+
      colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
 ;;  the title 
 ;;    maintitle2 = maintitle + " " + season  +  " " + varinames(iv)
-    namein1 = namein + "/MSE_" + variable + ".out"  ;;  str_concat( string)
-    namein2 = nameclima+ "/MSE_" + variable + "_clim.out"  ;;; str_concat( string)
+    namein1 = namein + "/MSE_" + variable + ".nc"  ;;  str_concat( string)
+    namein2 = nameclima + "/MSE_" + variable + "_clim.nc"  ;;; str_concat( string)
 
-   nameout12 = nameout + "_" + variable
-;;  print( namein1) 
+    nameout12 = nameout + "_" + variable
+
+;;;   print( nameout12  + " " )
+ 
 ;;   print( namein2 ) 
 ;;   read in the data
+
+;;;;  read in data and dimensions lon/lat  etc
+     
+     fin1 = addfile( namein1, "r")
+     fin2 = addfile( namein2, "r")
+
+     lon = fin1->lon
+     lat = fin1->lat 
+     
+     xmax = dimsizes( lon)
+     ymax = dimsizes( lat)
+     
      dims2 = (/ ymax, xmax /)
 
      datain1 =  new(  dims2, "float")
      datain2 =  new(  dims2, "float")
      datain1@_FillValue = undef2
      datain2@_FillValue = undef2
-     datain1  = fbindirread (namein1, 0, dims2, "float")
-     datain2  = fbindirread (namein2, 0, dims2, "float")
+     datain1 = fin1->$variables(iv)$
+     datain2 = fin2->$variables(iv)$
 
 ;;  make the anomaly for plotting
     datain =  new(  dims2, "float")
@@ -161,9 +143,10 @@ begin
        
 ;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 

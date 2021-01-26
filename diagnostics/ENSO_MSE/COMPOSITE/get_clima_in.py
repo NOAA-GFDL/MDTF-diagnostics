@@ -28,8 +28,8 @@ def get_clima_in(imax, jmax, zmax, im1, im2, variable,  dataout, prefixclim,  un
             dataout[:,:,:] += vvar[:,:,:, imm-1]
             ss[:,:,:] += vvar_valid[:,:,:, imm-1]
     else:
-        print " missing file " +  namein
-        print " exiting  get_clima_in.py"
+        print (" missing file " +  namein)
+        print (" exiting  get_clima_in.py")
         sys.exit()
 
 

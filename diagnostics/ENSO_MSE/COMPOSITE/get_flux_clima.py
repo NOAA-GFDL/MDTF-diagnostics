@@ -31,8 +31,8 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef):
             ss[:,:] += vvar_valid[:,:, imm-1]
 
     else:
-        print " missing file " +  namein
-        print " exiting get_flux_clima.py "
+        print (" missing file " +  namein )
+        print (" exiting get_flux_clima.py ")
         sys.exit()
 
 ###  

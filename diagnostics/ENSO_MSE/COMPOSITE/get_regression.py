@@ -16,8 +16,6 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
     ff = 1.
     if( variable1 ==  "pr"):    
         ff = 24.*60.*60.
-    print(  variable1)
-    print( ff)
     
     vvar1  = np.zeros( (imax,jmax),dtype='float32', order='F')
     vvar2  = np.zeros( (imax,jmax),dtype='float32', order='F')
@@ -49,9 +47,9 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
         #clima2[clima2_invalid] = 0.
 
     else:
-        print " missing file 1 " + namein1
-        print " or missing file 2 " + namein2
-        print " exiting get_regression.py "
+        print (" missing file 1 " + namein1 )
+        print (" or missing file 2 " + namein2 )
+        print (" exiting get_regression.py ")
         sys.exit()
 
 ###################################################
@@ -70,8 +68,8 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
                 year = str(yy)
                 namein1 = prefix + year+"/"+variable1+"_"+year+".nc"
                 namein2 = prefix + year+"/"+variable2+"_"+year+".nc"
-                print( namein1)
-                print( namein2)
+                #print( namein1)
+                #print( namein2)
                 if (os.path.exists( namein1) and os.path.exists( namein1)):
                     vvar1 = read_netcdf_2D(imax, jmax, tmax12,  variable1,  namein1, vvar1, undef)
                     vvar2 = read_netcdf_2D(imax, jmax, tmax12,  variable2,  namein2, vvar2, undef)
@@ -91,16 +89,11 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
                     tvar2[it2] = sst_anom
                 ###    collect  global anomaly variable1 
                     tvar1[:,:, it2]  = ff * (vvar1[:,:,imm-1] - clima1[:,:,imm-1])
-                    #print( imm , ff)
-                    #print(  vvar1[3, 52, imm-1] )
-                    #print( clima1[3, 52, imm-1] )
-                    #print(  tvar1[3, 52, it2] )
-                    #print(  tvar2[it2] )
                     it2 = it2 + 1
                 else:
-                    print " missing file 1 " + namein1
-                    print " of missing file 2 " + namein2
-                    print " exiting get_regression.py"
+                    print (" missing file 1 " + namein1 )
+                    print (" of missing file 2 " + namein2 )
+                    print (" exiting get_regression.py" )
                     sys.exit()
                         
 
@@ -110,8 +103,8 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
 ######         (a_s, b_s, r, tt, stderr) = stats.linregress(t, xn)
 
     for j in range (0, jmax):
-	for i in range (0, imax):
-          aregress[i,j], intercept, r_value, p_value, std_err = stats.linregress( tvar2[0:tmax2-1], tvar1[i,j,0:tmax2-1])
+        for i in range (0, imax):
+            aregress[i,j], intercept, r_value, p_value, std_err = stats.linregress( tvar2[0:tmax2-1], tvar1[i,j,0:tmax2-1])
 
     return aregress.filled(fill_value = undef)
 

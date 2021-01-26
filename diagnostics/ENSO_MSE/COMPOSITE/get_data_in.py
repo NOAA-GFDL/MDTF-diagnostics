@@ -42,8 +42,8 @@ def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datou
                         ss[:,:,:] += vvar_valid[:,:,:, imm-1]
                         #file_count += 1
                 else:
-                        print " missing file " + namein
-                        print " exiting get_data_in.py "
+                        print (" missing file " + namein )
+                        print (" exiting get_data_in.py ")
                         sys.exit()
 
 #                dataout[:,:,:] += vvar[:,:,:, imm-1]

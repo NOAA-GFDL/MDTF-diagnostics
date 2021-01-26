@@ -5,6 +5,7 @@ import math
 import datetime
  
 import os
+
 shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     'shared'
@@ -29,6 +30,7 @@ print("      Based on the years, and domain selected                  ")
 print("      the preprocessing calculations may take many minutes,    ")
 print("      in some cases up to 20-30  minutes.                       ")
 print("===============================================================")
+
 
 prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
 
@@ -59,14 +61,14 @@ if( os.path.isfile( convert_file) ):
 
 if( flag0 == '1'):
 ### print diagnostic message
-    print "  The NetCDF data have already been converted (preprocess.py)  "
-    print "   "
-    print " "
+    print ("  The NetCDF data have already been converted (preprocess.py)  ")
+    print ("   ")
+    print (" ")
 else:
 ### print diagnostic message 
-    print "  The NetCDF data are being converted (preprocess.py) "
-    print "   "
-    print " " 
+    print ("  The NetCDF data are being converted (preprocess.py) ")
+    print ("   ")
+    print (" " )
 ###   prepare the directories 
 
 #os.system("mkdir " +  os.environ["DATADIR"]  + "/DATA/" + " 2> /dev/null") 
@@ -82,22 +84,22 @@ else:
         os.system("mkdir " + prefix1 + str(iy) + " 2> /dev/null" ) 
 
 ## print os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine.ncl"
-    print " conversion routine started  "
-    print " 3-D atmospheric variables conversion "
-    print " depending on the data input volume the process can take over 15 minutes "
+    print (" conversion routine started  ")
+    print (" 3-D atmospheric variables conversion ")
+    print (" depending on the data input volume the process can take over 15 minutes ")
     generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_routine.ncl")
     now = datetime.datetime.now()
-    print"  conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") 
+    print("  conversion routine finished " + now.strftime("%Y-%m-%d %H:%M") )
 
-    print " NET radiation routine started "
+    print (" NET radiation routine started ")
     generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/data_radiation_routine.ncl")
     now = datetime.datetime.now()
-    print"  NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M")      
+    print ("  NET radiation routine finished " + now.strftime("%Y-%m-%d %H:%M") )
 
-    print " clima routine started "
+    print (" clima routine started ")
     generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_CONVERT/clima_routine.ncl")
     now = datetime.datetime.now()
-    print"  clima routine finished " + now.strftime("%Y-%m-%d %H:%M")
+    print ("  clima routine finished " + now.strftime("%Y-%m-%d %H:%M") )
 
 ###     print " preprocessing completed "
 ##  print the flag to  external file so once preprocess it could be skipped
@@ -109,5 +111,5 @@ else:
 ##  os.system("cp +os.environ["DATADIR"]+/COMPOSITE/DATA/* "+os.environ["WK_DIR"]+"/COMPOSITE/model/netCDF/DATA/.")
 
     now = datetime.datetime.now()
-    print " Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M")
-    print " ===========================================  " 
+    print (" Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M") )
+    print ( " ===========================================  " )

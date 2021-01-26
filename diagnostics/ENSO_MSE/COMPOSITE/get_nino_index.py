@@ -17,6 +17,9 @@ from read_netcdf_3D import read_netcdf_3D
 from read_netcdf_2D import read_netcdf_2D
 
 def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2,  sigma, tmax1, tmax2, years1,  years2, prefix, undef):
+
+    tmax1 = 0
+    tmax2 = 0 
 ####   need to select the indexes  ii1, ii2,   jj1, jj2  of the area to calculate the sigmas etc
     for i in range(0, imax):
         if( lon[i] <= llon1 and lon[i+1] >= llon1):
@@ -48,8 +51,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
         clima = read_netcdf_2D(imax, jmax, im12,  "ts",  nameclima, clima, undef)
         clima = np.ma.masked_greater_equal(clima, undef, copy=False)
     else:
-        print " missing file " + nameclima
-        print " exiting get_nino_index.py "
+        print (" missing file " + nameclima)
+        print (" exiting get_nino_index.py ")
         sys.exit()
     ssigma = 0.
     ss = 0.
@@ -80,8 +83,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 #   make the average and swrt to have just SIGMA
             
                 else:    
-                    print " missing file " + namein 
-                    print " exiting get_nino_index.py " 
+                    print( " missing file " + namein )
+                    print( " exiting get_nino_index.py ") 
                     sys.exit()
     if( ss > 0.):
         ssigma = ssigma/ss
@@ -89,7 +92,7 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
     else:
         ssigma = undef 
 
-    print "In reference area the calculated SST r.m.s  = ",  ssigma , " deg. C"
+    print ("In reference area the calculated SST r.m.s  = ",  ssigma , " deg. C")
 ####   
 ##       loop over years and select years with SST anomaly  over +1. sigma 
 ##     the  selected year refers to  first month in the season (e.g. Dec in DJF)
@@ -119,8 +122,8 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                           anom = anom +  (sst[i,j, imm-1] - clima[i, j, imm-1])
                           ss = ss + 1.
                 else: 
-                    print " missing file " + namein
-                    print " exiting get_nino_index.py " 
+                    print( " missing file " + namein )
+                    print( " exiting get_nino_index.py " )
                     sys.exit()
 
 ######   average and select      

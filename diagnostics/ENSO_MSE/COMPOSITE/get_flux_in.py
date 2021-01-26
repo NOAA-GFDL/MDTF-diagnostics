@@ -30,7 +30,6 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                 # data files now per-year, not per-month, so only load when year changes
                 namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
                 if (os.path.exists( namein)):
-                        print( namein )
                         vvar = read_netcdf_2D(imax, jmax, im12, variable, namein, vvar, undef)
                         vvar_valid = (vvar < undef)
                         vvar_invalid = (vvar >= undef)
@@ -40,8 +39,8 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                         dataout[:,:] += vvar[:,:, imm-1]
                         ss[:,:] += vvar_valid[:,:, imm-1]
                 else:
-                        print " missing file " + namein
-                        print " exiting get_flux_in.py "
+                        print (" missing file " + namein )
+                        print (" exiting get_flux_in.py ")
                         sys.exit()
 
 #                dataout[:,:] += vvar[:,:, imm-1]

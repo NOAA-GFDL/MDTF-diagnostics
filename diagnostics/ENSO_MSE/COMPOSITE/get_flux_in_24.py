@@ -21,8 +21,8 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
     if (os.path.exists( nameclima)):
         clima = read_netcdf_2D(imax, jmax, tmax12,  variable,  nameclima, clima, undef)
     else:
-        print " missing file " + nameclima
-        print " exiting get_flux_in_24.py "
+        print (" missing file " + nameclima )
+        print (" exiting get_flux_in_24.py ")
         sys.exit()
 
     for it in range(0, ttmax):
@@ -51,8 +51,8 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
                         dataout[:,:, im-1] += vvar[:,:, imm-1]
                         ss[:,:, im-1] += vvar_valid[:,:, imm-1]
                     else:
-                        print " missing file " + namein
-                        print " exiting get_flux_in_24.py "
+                        print (" missing file " + namein )
+                        print (" exiting get_flux_in_24.py ")
                         sys.exit()
 
 #### 

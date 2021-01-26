@@ -16,7 +16,6 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
     vvar2  = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     correl = np.ma.zeros( (imax,jmax),dtype='float32', order='F')
     variance1 = np.ma.zeros((imax,jmax),dtype='float32')
-##    variance2 = np.zeros((imax,jmax),dtype='float32')
     variance2 = 0.
     ss22 = 0.
 
@@ -38,9 +37,9 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
         clima2_invalid = (clima2 >= undef)
         clima2[clima2_invalid] = 0.
     else:
-        print "    missing file 1 " + namein1 
-        print " or missing file 2 " + namein2
-        print "exiting get_correlation.py "
+        print ("    missing file 1 " + namein1 )
+        print (" or missing file 2 " + namein2)
+        print ("exiting get_correlation.py ")
         sys.exit()
 
     for iy in range(iy1, iy2):
@@ -80,16 +79,16 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                     correl = correl + ( (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) * sst_anom )
                     ss[:,:] += vvar1_valid[:,:, imm-1]
                 else:
-                    print "    missing file 1 " + namein1
-                    print " or missing file 2 " + namein2
-                    print "exiting get_correlation.py"
+                    print ("    missing file 1 " + namein1)
+                    print (" or missing file 2 " + namein2)
+                    print ("exiting get_correlation.py")
                     sys.exit()
 
 ############# average and output  
  
     variance2 = variance2/ss22
     variance2 = math.sqrt(variance2)
-    print( variance2)
+    #print( variance2)
     correl = correl/ss22
     variance1 = variance1/ss22
     variance1 = np.sqrt(variance1) 

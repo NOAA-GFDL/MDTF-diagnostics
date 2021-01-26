@@ -1,5 +1,6 @@
-;;;   to convert binary to easy netcdf for 24 month ENSO evolution 
+;;;;;;  to convert binary to easy netcdf for 24 month ENSO evolution 
 ;;;; 
+;;;
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"

@@ -1,7 +1,5 @@
 ;;***************************************************
 ;
-;   to regrid the original NetCDF files to pre-defined 
-;           +  climatologies NetCDF 
 ;*******************************************************
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
@@ -23,28 +21,37 @@ begin
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars
-       zg  = getenv("zg_var")
-       ua  = getenv("ua_var")
-       va  = getenv("va_var")
-       ta  = getenv("ta_var")
-       hus = getenv("qa_var")
-       wap = getenv("omega_var")
+       zgv  = getenv("zg_var")
+       uav  = getenv("ua_var")
+       vav  = getenv("va_var")
+       tav  = getenv("ta_var")
+       husv = getenv("qa_var")
+       wapv = getenv("omega_var")
+
+;;       print( zgv )
+
 ;;     2D  vars
-       pr = getenv("pr_var")
-       ts = getenv("ts_var")
-       pr_conversion = getenv("pr_conversion_factor")
-       hfss = getenv("hfss_var")
-       hfls = getenv("hfls_var")
+       prv = getenv("pr_var")
+       tsv = getenv("ts_var")
+       pr_conversionv = getenv("pr_conversion_factor")
+       hfssv = getenv("hfss_var")
+       hflsv = getenv("hfls_var")
 
 ;;       coordinate vars
-       lev  = getenv("lev_coord")
-       lon  = getenv("lon_coord")
-       lat  = getenv("lat_coord")
-       time = getenv("time_coord")
+       levx  = getenv("lev_coord")
+       lonx  = getenv("lon_var")
+       latx  = getenv("lat_var")
+       timex = getenv("time_var")
 
-       hyam = getenv("hyam_var")
-       hybm = getenv("hybm_var")
-
+       hyamx = getenv("hyam_var")
+       hybmx = getenv("hybm_var")
+       
+	levx = "lev"
+       lonx = "lon"
+       latx = "lat"
+       timex = "time"
+       hyamx = "hyam"
+       hybmx = "hybm"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels
        plevels_name  =  codedata + "/shared/plevs.txt"
@@ -54,7 +61,7 @@ begin
        nameclima =  outdir + "/netCDF/CLIMA/"
 ;;;;   
 ;;   	     Varnamesin3   = (/ "zg", "ua", "va", "ta", "hus", "wap" /)
-            Varnamesin3   = (/ zg, ua, va, ta, hus, wap /)
+       Varnamesin3   = (/ zgv, uav, vav, tav, husv, wapv /)
 
 	Varnamesout3  = (/ "zg", "ua", "va", "ta", "hus", "wap" /)
  	ivar3 = dimsizes( Varnamesin3)
@@ -63,7 +70,7 @@ begin
 
 ;;  2 D fluxes 
 ;;        Varnamesin2   = (/ "pr",  "hfss", "hfls", "ts"/)
-       Varnamesin2   = (/ pr,  hfss, hfls, ts/)
+       Varnamesin2   = (/ prv,  hfssv, hflsv, tsv /)
        Varnamesout2  = (/ "pr",  "hfss" , "hfls" , "ts" /)
        ivar2 = dimsizes( Varnamesin2)
        ivar32 = ivar3 + ivar2 
@@ -75,7 +82,7 @@ begin
 	ivar = 0
        Varname =   Varnamesin3(ivar)
         namein = namein1 + case +"." + Varname + ".mon.nc"
-        print( namein + " " ) 
+       ;;  print( namein + " " ) 
 
         fin = addfile( namein, "r")
         setfileoption("nc", "Format",  "Classic")  ;   "NetCDF4Classic"
@@ -83,13 +90,13 @@ begin
 ;;;      check if the data are on hybrid levels - if  hyam and hybm define
          ihyam = 0
          ihybm = 0
-        if (isfilevar(fin, hyam)) then
-         hyam4 = fin->$hyam$
+        if (isfilevar(fin, hyamx)) then
+         hyam4 = fin->$hyamx$
          hyam2 = tofloat(hyam4)
          ihyam = 1
         end if
-        if (isfilevar(fin, hybm)) then
-         hybm4 = fin->$hybm$
+        if (isfilevar(fin, hybmx)) then
+         hybm4 = fin->$hybmx$
          hybm2 = tofloat(hybm4)
          ihybm = 1
         end if
@@ -112,15 +119,14 @@ begin
            end if
 
        end if
-
 ;;;;  get the dimensions and write out 
-       dlat = fin->$lat$
+       dlat = fin->$latx$
        lat2 =  tofloat ( dlat)
  
-       dlon = fin->$lon$
+       dlon = fin->$lonx$
        lon2 =  tofloat ( dlon)
 
-       time0 = fin->$time$
+       time0 = fin->$timex$
        time2 = calendar_decode2 ( time0 ,  -5)
 	
 
@@ -177,21 +183,21 @@ begin
     print( " Started preprocessing variable : " + Varname + "  " +  ivv1 + "/" + ivar32 )
 
         namein = namein1 + case +"." + Varname + ".mon.nc"
-        print("namein: "+ namein)           
+        ; print("namein: "+ namein)           
         fin = addfile( namein, "r")
         setfileoption("nc", "Format",  "Classic")  ;   "NetCDF4Classic"
 
 ;;;     check if the data are on hybrid levels - if  hyam and hybm define
          ihyam = 0
          ihybm = 0
-	 if (isfilevar(fin, hyam)) then
-         hyam4 = fin->$hyam$
+	 if (isfilevar(fin, hyamx)) then
+         hyam4 = fin->$hyamx$
          hyam2 = tofloat(hyam4)
          ihyam = 1
         end if
 
-	 if (isfilevar(fin, hybm)) then
-         hybm4 = fin->$hybm$
+	 if (isfilevar(fin, hybmx)) then
+         hybm4 = fin->$hybmx$
          hybm2 = tofloat(hybm4)
          ihybm = 1
         end if
@@ -213,7 +219,7 @@ begin
        end if
 ;;         vNames = getfilevarnames (fin)
 ;;   the time attribute here :
-       time0 = fin->$time$
+       time0 = fin->$timex$
        
        time2 = calendar_decode2 ( time0 ,  -5)
 
@@ -227,10 +233,10 @@ begin
         lev2 =  0.01 * tofloat ( dlev)
        end if
 
-        dlat = fin->$lat$
+        dlat = fin->$latx$
  	 lat2 =  tofloat ( dlat)
  
-       dlon = fin->$lon$
+       dlon = fin->$lonx$
 	lon2 =  tofloat ( dlon)
 
 ;;      tdate = fin->date
@@ -267,7 +273,7 @@ begin
 
        if(  year22 .eq. year)  then
         it2 = month - 1
-       Vin(it2, :, :,:)  = fin->$Varname$(it,:, :, :)
+       Vin(it2, :, :,:)  = fin->$Varname$(it:it,:, :, :)
        timeout(it2)  = time0(it)
        end if
        end do   ;;  over all time steps in the file
@@ -439,20 +445,20 @@ begin
 
 ;;   the time attribute here :
 
-       time0 = fin->$time$
+       time0 = fin->$timex$
        time2 = calendar_decode2 ( time0 ,  -5)
 
-       dlat = fin->$lat$
+       dlat = fin->$latx$
        lat2 =  tofloat ( dlat)
 
-       dlon = fin->$lon$
+       dlon = fin->$lonx$
        lon2 =  tofloat ( dlon)
 
 ;;        tdate = fin->date
 ;;	 conversion - needed for PR
 	ff = 1.
-       if( Varname .eq. pr) then
-	  ff = tofloat(pr_conversion)
+       if( Varname .eq. prv) then
+	  ff = tofloat(pr_conversionv)
        end if 
 
        ntim  = dimsizes(time0)      ; get dimension sizes
@@ -484,7 +490,7 @@ begin
        if(  year22 .eq. year)  then
 
        it2 = month - 1
-       Vin2(it2, :,:)  = fin->$Varname$(it, :, :)
+       Vin2(it2, :,:)  = fin->$Varname$(it:it, :, :)
        timeout(it2)  = time0(it)
 
        end if
@@ -584,7 +590,7 @@ begin
        clima = clima/ss2
 ;;;   define attributes    and nameout
 ;;      fileout  = nameclima + "/" + Varout + "_clim" + ".nc"
-       print("fileout: " + fileout )
+       ; print("fileout: " + fileout )
        n = systemfunc( " rm " +  fileout + " 2> /dev/null")
 
        fout = addfile( fileout ,"c")

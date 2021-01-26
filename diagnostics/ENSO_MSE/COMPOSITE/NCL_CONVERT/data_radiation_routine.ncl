@@ -1,7 +1,4 @@
 ;;;*******************************************************
-;
-;   to regrid the original NetCDF files to pre-defined 
-;            data +  climatologies  as netCDF
 ;*******************************************************
 ; These files are loaded by default in NCL V6.2.0 and newer
 ; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
@@ -14,8 +11,8 @@ begin
 ;;  read  in the data from  NetCDF directory : 
 
       vardata  = getenv("DATADIR")  ; model data
-      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ;
-      case =  getenv( "CASENAME")
+      outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE") + "/model" ;
+      case     =  getenv( "CASENAME")
       codedata = getenv ("POD_HOME")  ;; not used
 
       iy1 =  toint (( getenv("FIRSTYR")) )
@@ -64,7 +61,6 @@ begin
        time0 = fin1->time
        time2 = calendar_decode2 ( time0 ,  -5)
        
-
        dlat = fin1->lat
        lat2 =  tofloat ( dlat)
 
@@ -124,14 +120,14 @@ begin
        if(  year22 .eq. year)  then
        it2 = month - 1
 
-       Vin1(it2, :,:) = fin1->$Varname1$(it, :,:)
-       Vin2(it2, :,:) = fin2->$Varname2$(it, :,:)
-       Vin3(it2, :,:) = fin3->$Varname3$(it, :,:)
-       Vin4(it2, :,:) = fin4->$Varname4$(it, :,:)
+       Vin1(it2, :,:) = fin1->$Varname1$(it:it, :,:)
+       Vin2(it2, :,:) = fin2->$Varname2$(it:it, :,:)
+       Vin3(it2, :,:) = fin3->$Varname3$(it:it, :,:)
+       Vin4(it2, :,:) = fin4->$Varname4$(it:it, :,:)
  
-       Vin5(it2, :,:) = fin5->$Varname5$(it, :,:)
-       Vin6(it2, :,:) = fin6->$Varname6$(it, :,:)
-       Vin7(it2, :,:) = fin7->$Varname7$(it, :,:)
+       Vin5(it2, :,:) = fin5->$Varname5$(it:it, :,:)
+       Vin6(it2, :,:) = fin6->$Varname6$(it:it, :,:)
+       Vin7(it2, :,:) = fin7->$Varname7$(it:it, :,:)
        timeout(it2)  = time0(it)
 
 	end if

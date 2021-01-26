@@ -22,10 +22,9 @@ begin
   ivar2 = 6
     variables2 = (/ "ts" , "sw", "lw", "hfls", "hfss", "pr" /)
     varnames2 = (/ "ts" , "sw", "lw", "hfls",  "hfss" , "pr" /)
-    varunits2 =  (/ "[deg. C]", "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]", "[mm/day]" /)
+    varunits2 =  (/ "[deg. C]", "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]", "[kg/m2/sec]" /)
     long_name2 = (/ "skin surface temperature ", "net shortwave radiation", "net longwave radiation",  "latent heat flux ", "sensible heat flux", "precipitation " /) 
 
-     pr_conversion = 24.*60.*60.
      mode = (/ "ELNINO", "LANINA" /)
 
       parameter_name = varcode + "/shared/parameters.txt"
@@ -170,10 +169,6 @@ begin
        datain2@units     = varunits2(iv)
        datain2@long_name = long_name2(iv)
 
-       datain2  = fbindirread (namein, 0, dims2 , "float")
-       if(  variables2(iv)  .eq. "PR") 
-	 datain2 = datain2 * pr_conversion
-       end if 
 ;;  set the dimensions and units
 ;===================================================================
 ; create global attributes of the file

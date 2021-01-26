@@ -1,6 +1,6 @@
 import numpy as np
 
-def write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var ,  tadv_var, prefix, undef):
+def write_out_general(imax, jmax, zmax, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var ,  tadv_var, prefix, undef):
 
     nameout = prefix + "/MSE_general_variance.out"
     fh = open(nameout, "wb")

@@ -1,6 +1,6 @@
 import numpy as np
 
-def write_out(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var ,  tadv_var, prefix, nameout,  undef):
+def write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var ,  tadv_var, prefix, nameout,  undef):
 
     nameout2 = prefix + nameout
     fh = open(nameout2, "wb")

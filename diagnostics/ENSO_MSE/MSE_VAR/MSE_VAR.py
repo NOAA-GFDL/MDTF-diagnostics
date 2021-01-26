@@ -28,7 +28,7 @@ from get_anomaly import get_anomaly
 
 import sys
 import subprocess
-import commands
+##import commands
 
 import datetime
  
@@ -99,17 +99,17 @@ if( os.path.isfile( convert_file) ):
 #############################################3
 if( flag0 == '1'):
 ### print diagnostic message
-    print "  The NetCDF data have already been converted  "
-    print "   "
-    print " "
+    print ("  The NetCDF data have already been converted ")
+    print ("   ")
+    print (" ")
 else:
 ### print diagnostic message
-    print "  NOTE  the MSE package requires pre-processed data. "
-    print "  The pre-processed input data are not completed  "
-    print "  Please, run the COMPOSITE element with COMPOSITE = 1 "
-    print "  in mdtf.py script.                                  "
-    print "   "
-    print "   "
+    print ("  NOTE:  the MSE package requires pre-processed data " )
+    print ("  The pre-processed input data are not completed  " )
+    print ("  Please, run the COMPOSITE element with COMPOSITE = 1 ")
+    print ("  in mdtf.py script.                                  ")
+    print ("   ")
+    print ("   ")
     sys.exit()
 
 #################  set the default domain lat/lon boxes 
@@ -150,15 +150,7 @@ rearth = 6378000.0
 dx = -9999.
 dy = -9999.
 
-undef = float(99999999999.)
-undef2 = float(1.1e+20)
-
-undef = 1.1E+20
-undef2 = -999999999.
-dummy1 = undef
-dummy2 = undef
-dummy3 = undef
-dummy4 = undef
+undef = float(1.1e+20)
 season = "NIL"
 model = "NIL"
 llon1 = undef
@@ -186,7 +178,7 @@ model = os.environ["CASENAME"]
 ###  reading  in selected  parameters  from parameter.txt file 
 ##   read in parameters    and the actual array dimensions imax, jmax, zmax,
 ##    longitudes, latitudes,  plevels
-llon1, llon2, llat1, llat2, sigma, imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation,  undef, undef2 =  get_parameters_in(llon1, llon2, llat1, llat2, sigma, imindx1, imindx2, composite, im1, im2, season, composite24, regression, correlation,  undef, undef2, prefix)
+llon1, llon2, llat1, llat2, sigma, imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation,  undef =  get_parameters_in(llon1, llon2, llat1, llat2, sigma, imindx1, imindx2, composite, im1, im2, season, composite24, regression, correlation,  undef, prefix)
 
 ###  reading in the domensions and the actual lon/lat/plev data
 imax = 0
@@ -213,7 +205,6 @@ lw   = np.zeros((imax,jmax),dtype='float32', order='F')
 mse  = np.zeros((imax,jmax),dtype='float32', order='F')
 madv = np.zeros((imax,jmax),dtype='float32', order='F')
 omse = np.zeros((imax,jmax),dtype='float32', order='F')
-mdiv = np.zeros((imax,jmax),dtype='float32', order='F')
 tadv = np.zeros((imax,jmax),dtype='float32', order='F')
 
 ts_clim   = np.zeros((imax,jmax),dtype='float32', order='F')
@@ -225,25 +216,22 @@ lw_clim   = np.zeros((imax,jmax),dtype='float32', order='F')
 mse_clim  = np.zeros((imax,jmax),dtype='float32', order='F')
 madv_clim = np.zeros((imax,jmax),dtype='float32', order='F')
 omse_clim = np.zeros((imax,jmax),dtype='float32', order='F')
-mdiv_clim = np.zeros((imax,jmax),dtype='float32', order='F')
 tadv_clim = np.zeros((imax,jmax),dtype='float32', order='F')
 
 
 #   and corresponding variances
-ts_var  = undef2
-pr_var  = undef2
-shf_var = undef2
-lhf_var = undef2
-sw_var  = undef2
-lw_var  = undef2
-mse_var = undef2
-madv_var= undef2
-omse_var= undef2
-tadv_var = undef2
+shf_var = undef
+lhf_var = undef
+sw_var  = undef
+lw_var  = undef
+mse_var = undef
+madv_var= undef
+omse_var= undef
+tadv_var = undef
 
 ##   reading in climatology of MSE components
-mse_clim, omse_clim, madv_clim, mdiv_clim, tadv_clim =  get_clima_in(imax, jmax, mse_clim, omse_clim, madv_clim, mdiv_clim, tadv_clim, prefix2, undef)
 
+mse_clim, omse_clim, madv_clim, tadv_clim =  get_clima_in(imax, jmax, mse_clim, omse_clim, madv_clim,  tadv_clim, prefix2, undef)
 ##   reading in  climatological  fluxes 
 pr_clim, ts_clim, lhf_clim, shf_clim, sw_clim, lw_clim = get_clima_flux_in(imax, jmax,  pr_clim, ts_clim, lhf_clim, shf_clim, sw_clim, lw_clim, prefix12, undef)
 
@@ -263,10 +251,10 @@ slat2 =  float(slat2)
 
 if( composite == 1):
     now = datetime.datetime.now()
-    print "   Seasonal ENSO MSE Variance composites started  " + now.strftime("%Y-%m-%d %H:%M")
+    print ("   Seasonal ENSO MSE Variance composites started  " + now.strftime("%Y-%m-%d %H:%M") )
 
 ##   read in the El Nino composite data of MSE budget components + fluxes
-    mse, omse, madv, mdiv, tadv  =  get_data_in(imax, jmax,  mse, omse, madv, mdiv, tadv,  prefix22, undef)
+    mse, omse, madv,  tadv  =  get_data_in(imax, jmax,  mse, omse, madv, tadv,  prefix22, undef)
 
     pr, ts, lhf, shf, sw, lw = get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix11, undef)
 
@@ -284,32 +272,32 @@ if( composite == 1):
 
 ## variance and co-variance calculations for default domains Central and Eastern Pacific:
 ###        Central Pacif: 
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ####    output written out 
     nameout  = 'MSE_variance_C.out'
-    write_out(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1,  nameout,  undef)
+    write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1,  nameout,  undef)
 
 ####  repeat for the Eastern 
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, elon1, elon2, elat1, elat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, elon1, elon2, elat1, elat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ####    output written out
     nameout  = 'MSE_variance_E.out'
-    write_out(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1,  nameout,  undef)
+    write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1,  nameout,  undef)
 
 
 ######################################################################3
 ##  the same calculations for user selected  domain
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, slon1, slon2, slat1, slat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, slon1, slon2, slat1, slat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ###  selected domain data output 
-    write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1, undef)
+    write_out_general(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1, undef)
 
 ########   La Nina case   similar as for El Nino case 
 ######
 ##          reading data in 
 #############################################
-    mse, omse, madv, mdiv, tadv  =  get_data_in(imax, jmax,  mse, omse, madv, mdiv, tadv, prefix222, undef)
+    mse, omse, madv,  tadv  =  get_data_in(imax, jmax,  mse, omse, madv, tadv, prefix222, undef)
 
     pr, ts, lhf, shf, sw, lw = get_flux_in(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix111, undef)
 
@@ -327,23 +315,23 @@ if( composite == 1):
 
 ## variance and co-variance calculations for default domains Central and Eastern Pacific:
 ###        Central Pacif:
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ####    output written out
     nameout  = 'MSE_variance_C.out'
-    write_out(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2,  nameout,  undef)
+    write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2,  nameout,  undef)
 
 ####  repeat for the Eastern
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, elon1, elon2, elat1, elat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, elon1, elon2, elat1, elat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ####    output written out
     nameout  = 'MSE_variance_E.out'
-    write_out(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2,  nameout,  undef)
+    write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2,  nameout,  undef)
 
 ##  calculation of variances and co-variances - user selected domain
-    ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, slon1, slon2, slat1, slat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef, undef2)
+    shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, slon1, slon2, slat1, slat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
-    write_out_general(imax, jmax, zmax,  ts_var, pr_var, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
+    write_out_general(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
 
 ###########  plot the default domain NINO3.4 bar plots  
     generate_ncl_call(os.environ["POD_HOME"]+ "/MSE_VAR/NCL/plot_bars_composite.ncl")
@@ -354,11 +342,19 @@ if( composite == 1):
 ############
 ##################################
     now = datetime.datetime.now()
-    print "   Seasonal ENSO MSE Variance composites finished  " + now.strftime("%Y-%m-%d %H:%M")
+    print ("   Seasonal ENSO MSE Variance composites finished  " + now.strftime("%Y-%m-%d %H:%M") )
 
-    print "   resulting plots are located in : " +mse_var_dir
+    print ( "   resulting plots are located in : " +mse_var_dir )
 
-print " " 
+print( " " )
+##########################
+###    copy html files
+###########  copy html files 
+##file = mse_var_dir + "/../MSE_VAR.html"
+file =  os.environ["ENSO_MSE_WKDIR"] + "/MSE_VAR.html"
+if os.path.isfile( file ):
+    os.system("rm -f "+file)
+os.system("cp "+os.environ["POD_HOME"]+"/MSE_VAR/MSE_VAR.html " + file)
 
 #============================================================
 # DRB: no longer necessary to add a link to top index.html 
@@ -367,7 +363,7 @@ print " "
 
 
 now = datetime.datetime.now()
-print " ==================================================================="
-print "         MSE Variances Finished     " + now.strftime("%Y-%m-%d %H:%M")
-print " ==================================================================="
+print (" ===================================================================" )
+print ("         MSE Variances Finished     " + now.strftime("%Y-%m-%d %H:%M") )
+print (" ===================================================================")
 

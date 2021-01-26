@@ -14,6 +14,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin 
 
+     ff = 2.6E+06
+     factor  = 1./ff
 ;; print( " in NCL ")
 ;;;   get in the general  custom selectable domain lat/lons
 
@@ -48,7 +50,8 @@ begin
 	mode =  modes(n) ;;
 	
        namein =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/netCDF/" +  mode +  "/MSE_general_variance.out"
-       nameout = getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/MSE_VAR_comp_general_" + mode
+;;       nameout = getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/PS/MSE_VAR_comp_general_" + model
+     nameout = getenv("ENSO_MSE_WKDIR")+"/model/PS/MSE_VAR_comp_general_" + mode 
 
 ;;;  construct the main title based on model, season and region
 
@@ -56,6 +59,7 @@ begin
        ydim = 8
        dims = ( [ydim] ) 
        datain  = fbindirread (namein, 0, dims , "float")
+       datain(0) = factor * datain(0) 
 
         data2       = new( (/  ydim-2 /), float) 
         data2(0)    =  datain(1)/datain(0)     ;;  omse
@@ -66,10 +70,12 @@ begin
         data2(5)    = (datain(6)+datain(7))/datain(0) ;; THF
 
 ;======================================================================================	
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000
+;;   wks_type = "png"
+;;   wks_type@wkWidth = 1000
+;;   wks_type@wkHeight = 1000
+   wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout)
+   wks_type@wkOrientation = "portrait" ;; "landscape"
 
 ;;   wks = gsn_open_wks ("X11", "scatter")
    gsn_define_colormap(wks, "grads_default")
@@ -84,9 +90,11 @@ begin
 
      sres = True
      sres@tmYLMode   = "Automatic" ;;   "Manual"
-     sres@vpWidthF = 0.7
+     sres@vpWidthF = 0.8 ;;  0.7
      sres@vpHeightF = 0.5
-     sres@vpXF = 0.15
+     sres@vpXF = 0.10 ;;  0.15
+     sres@vpYF = 0.8
+
      sres@trXMinF = 0
      sres@trXMaxF = ydim - 1
 ;;     sres@trYMinF = ymin
@@ -101,7 +109,8 @@ begin
 
      sres@gsnXYBarChart = True
      sres@gsnYRefLine           = 0. ; reference line  
-     sres@gsnMaximize      = True      
+     sres@gsnPaperOrientation = "portrait"
+;;     sres@gsnMaximize      = True      
 
       sres@tmXBValues = ispan( 1, ydim-2, 1 )
 
@@ -112,8 +121,8 @@ begin
      sres@txFuncCode    = "~"
      sres@tmXBLabelFuncCode  = "~"
      sres@tmXBLabels = tlabels ;
-     sres@tmXBLabelFontHeightF = 0.0105
-     sres@tmXTLabelFontHeightF = 0.015   ;; 0.0205
+     sres@tmXBLabelFontHeightF = 0.018 ;; 0.0105
+     sres@tmXTLabelFontHeightF = 0.018 ;;  0.015   ;; 0.0205
      sres@tmYLLabelFontHeightF = 0.015   ;;  0.0225
      sres@tiMainFontHeightF = 0.025
      sres@tiMainFont = "helvetica"
@@ -129,15 +138,13 @@ begin
      nxl =  nxl ; 
      plot1 = gsn_csm_xy(wks,fspan(xl1, xl2, nxl), data2(ndim1:ndim2),sres)	
 ;;;; 
-     xlb1 = 0.1 ;  0.65
-     ylb1 = 0.8
      xlb1 = 0.72
      ylb1 = 0.35
      nbox = 1
      lbres                    = True          ; labelbar only resources
      lbres@vpWidthF           = 0.25           ; labelbar width
      lbres@vpHeightF          = 0.12           ; labelbar height
-     lbres@lbBoxMajorExtentF  = 0.4          ; puts space between color boxes
+     lbres@lbBoxMajorExtentF  = 0.35 ;;  0.4          ; puts space between color boxes
      lbres@lbMonoFillPattern  = True          ; Solid fill pattern
      lbres@lbLabelFontHeightF = 0.015         ; font height. default is small
      lbres@lbLabelJust        = "CenterLeft"  ; left justify labels
@@ -153,7 +160,7 @@ begin
       txres1@txJust        = "CenterLeft"
       txres1@txFuncCode    = "~"
       xs1 = 0.08
-      ys1 = 0.90
+      ys1 = 0.85 ;;  0.90
       dy2 = 0.0
       dx2 = 0.65
       label2 = "MSE variance    User Selected Domain"
@@ -204,7 +211,13 @@ begin
        xs4 = xs1 
        ys4 = ys1 + dy2
        gsn_text_ndc (wks, label4, xs4, ys4, txres2)
-   
+ 
+;;; add the text of scaling
+     label2 = "relative units"
+     xs1 = 0.8
+     ys1 = 0.15 ;;0.05
+;;     gsn_text_ndc (wks, label2, xs1, ys1, txres2)
+  
   
      frame(wks)      
 

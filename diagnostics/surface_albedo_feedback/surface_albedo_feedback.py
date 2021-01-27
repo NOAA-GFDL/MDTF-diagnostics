@@ -10,8 +10,8 @@
 # 
 #   - Version/revision information: version 1 (1/31/2021)
 #   - PI Cecilia Bitz, University of Washington bitz@uw.edu
-#   - Developer/point Lettie Roach, Aaron Donohoe, and Cecilia Bitz
-#   - Lettie Roach, University of Washington, lroach@uw.edu
+#   - Developer/point of contact Aaron Donohoe, U. Washington adonohoe@u.washington.edu
+#   - Other contributors Ed Blanchardd, Lettie Roach, Wei Cheng
 # 
 #   Open source copyright agreement
 # 

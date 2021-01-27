@@ -43,49 +43,22 @@
 #from __future__ import print_function
 import os
 
-# undo these for the framework version
 import matplotlib
 matplotlib.use('Agg') # non-X windows backend
 
-print("********I am here")
-
-# Commands to load third-party libraries. Any code you don't include that's 
-# not part of your language's standard library should be listed in the 
-# settings.jsonc file.
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
-#from matplotlib import cm
 import xesmf as xe
 import numpy as np
 import pandas as pd
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-#import glob
 
-# homegrown this code also imports pandas and scipy
 from seaice_MLD_stats import (
     xr_reshape,
     _lrm,
     _lagcorr,
 )
-
-print("*******Now I am here")
-
-# In[2]:
-
-
-# this part will be done by the framework for us
-#os.environ['DATADIR']='/glade/work/bitz/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/'
-#os.environ['WK_DIR']='/glade/work/bitz/mdtf/wkdir/'
-
-#os.environ['CASENAME']='SAM0-UNICON_r1i1p1f1_gn'
-#os.environ['model']='SAM0-UNICON'
-#os.environ['conventions']='SAM0-UNICON'
-#os.environ['FIRSTYR']='1979'
-#os.environ['LASTYR']='2014'
-#os.environ['siconc_var']='siconc'
-
-# In[3]:
 
 
 def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):

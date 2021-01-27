@@ -292,7 +292,6 @@ class MDTFFramework(object):
             case.fetch_data()
             caselist.append(case)
 
-
         for case in caselist:
             env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
@@ -302,6 +301,7 @@ class MDTFFramework(object):
             #     netcdf_mixin=nc_helper, environment_manager=env_mgr
             # )
             env_mgr.setUp()
+            ## FA: Intercept here.
             env_mgr.run()
             env_mgr.tearDown()
 

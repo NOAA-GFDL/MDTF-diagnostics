@@ -1,0 +1,18 @@
+name: _MDTF_precip_buoy_diag
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.7
+- nco>=4.7.6,<=4.8.1
+- netCDF4=1.5
+- cython
+- xarray
+- numpy=1.18.5
+- scipy
+- matplotlib
+- netCDF4
+- networkx
+- numba
+- pandas
+- seaborn

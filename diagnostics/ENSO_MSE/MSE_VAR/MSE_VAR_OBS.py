@@ -53,7 +53,7 @@ sys.path.insert(0, shared_dir)
 
 ##from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 ###from get_dimensions import get_dimensions
-from get_season import get_season
+##from get_season import get_season
 
 from generate_ncl_call import generate_ncl_call
 

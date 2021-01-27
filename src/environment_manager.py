@@ -4,10 +4,40 @@ import abc
 import dataclasses
 from distutils.spawn import find_executable
 import signal
-import typing
-import subprocess
-from src import util, core
+from abc import ABCMeta, abstractmethod
+if os.name == 'posix' and six.PY2:
+    try:
+        import subprocess32 as subprocess
+    except ImportError:
+        import subprocess
+else:
+    import subprocess
+from src import util
+from src import util_mdtf
+from src.shared_diagnostic import PodRequirementFailure
+#FA
+from sys import exit
+class EnvironmentManager(six.with_metaclass(ABCMeta)):
+    # analogue of TestSuite in xUnit - abstract base class
 
+    def __init__(self, verbose=0):
+        config = util_mdtf.ConfigManager()
+        self.test_mode = config.config.test_mode
+        self.pods = []
+        self.envs = set()
+
+        # kill any subprocesses that are still active if we exit normally 
+        # (shouldn't be necessary) or are killed
+        atexit.register(self.subprocess_cleanup)
+        signal.signal(signal.SIGTERM, self.subprocess_cleanup)
+        signal.signal(signal.SIGINT, self.subprocess_cleanup)
+
+    # -------------------------------------
+    # following are specific details that must be implemented in child class 
+
+    @abstractmethod
+    def create_environment(self, env_name):
+        pass 
 import logging
 _log = logging.getLogger(__name__)
 
@@ -31,6 +61,7 @@ class AbstractEnvironmentManager(abc.ABC):
     @abc.abstractmethod
     def deactivate_env_commands(self, env_name): pass 
 
+<<<<<<< HEAD
     @abc.abstractmethod
     def destroy_environment(self, env_name): pass 
 
@@ -41,6 +72,109 @@ class NullEnvironmentManager(AbstractEnvironmentManager):
     switching. Useful only as a dummy setting for building framework test 
     harnesses.
     """
+=======
+            pod.logfile_obj = io.open(
+                os.path.join(pod.POD_WK_DIR, pod.name+".log"), 
+                'w', encoding='utf-8'
+            )
+            log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
+            pod.logfile_obj.write(log_str)
+            if verbose > 0: print(log_str)
+            
+            try:
+                pod.setUp()
+            except PodRequirementFailure as exc:
+                log_str = "\nSkipping execution of {}.\nReason: {}\n".format(
+                    exc.pod.name, str(exc))
+                pod.logfile_obj.write(log_str)
+                pod.logfile_obj.close()
+                pod.logfile_obj = None
+                print(log_str)
+                pod.skipped = exc
+                continue
+            print("{} will run in env: {}".format(pod.name, pod.env))
+            pod.logfile_obj.write("\n".join(
+                ["Found files: "] + pod.found_files + [" "]))
+            env_list = ["{}: {}". format(k,v) for k,v in iter(pod.pod_env_vars.items())]
+            pod.logfile_obj.write("\n".join(
+                ["Env vars: "] + sorted(env_list) + [" "]))
+            try:
+
+                pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
+                pod.logfile_obj.flush()
+                pod.process_obj = self.spawn_subprocess(
+                    pod.validate_commands() + pod.run_commands(),
+                    pod.env,
+                    env = os.environ, cwd = pod.POD_WK_DIR,
+                    stdout = pod.logfile_obj, stderr = subprocess.STDOUT
+                )
+                
+
+            except OSError as exc:
+                print('ERROR :', exc.errno, exc.strerror)
+                print(" occured with call: {}".format(pod.run_commands()))
+                pod.skipped = exc
+                pod.logfile_obj.close()
+                pod.logfile_obj = None
+                continue
+
+        # if this were python3 we'd have asyncio, instead wait for each process
+        # to terminate and close all log files
+        for pod in self.pods:
+            if pod.process_obj is not None:
+                pod.process_obj.wait()
+                pod.process_obj = None
+            if pod.logfile_obj is not None:
+                pod.logfile_obj.close()
+                pod.logfile_obj = None
+
+    def spawn_subprocess(self, cmd_list, env_name,
+        env=None, cwd=None, stdout=None, stderr=None):
+        if stdout is None:
+            stdout = subprocess.STDOUT
+        if stderr is None:
+            stderr = subprocess.STDOUT
+        run_cmds = util.coerce_to_iter(cmd_list, list)
+        if self.test_mode:
+            run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
+        commands = self.activate_env_commands(env_name) \
+            + run_cmds \
+            + self.deactivate_env_commands(env_name)
+        # '&&' so we abort if any command in the sequence fails.
+        if self.test_mode:
+            for cmd in commands:
+                print('TEST MODE: call {}'.format(cmd))
+        else:
+            print("Calling : {}".format(run_cmds[-1]))
+        commands = ' && '.join([s for s in commands if s])
+
+        # Need to run bash explicitly because 'conda activate' sources 
+        # env vars (can't do that in posix sh). tcsh could also work.
+        return subprocess.Popen(
+            ['bash', '-c', commands],
+            env=env, cwd=cwd, stdout=stdout, stderr=stderr 
+        )
+        
+    # -------------------------------------
+
+    def tearDown(self):
+        # call diag's tearDown to clean up
+        for pod in self.pods:
+            pod.tearDown()
+        for env in self.envs:
+            self.destroy_environment(env)
+
+    def subprocess_cleanup(self, signum=None, frame=None):
+        util.signal_logger(self.__class__.__name__, signum, frame)
+        # kill any active subprocesses
+        for pod in self.pods:
+            if pod.process_obj is not None:
+                pod.process_obj.kill()
+
+
+class NoneEnvironmentManager(EnvironmentManager):
+    # Do not attempt to switch execution environments for each POD.
+>>>>>>> 821886d... Edits
     def create_environment(self, env_name):
         pass 
     
@@ -261,6 +395,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     def deactivate_env_commands(self, env_name):
         return [] 
     
+<<<<<<< HEAD
 # ============================================================================
 
 class AbstractRuntimeManager(abc.ABC):
@@ -513,3 +648,5 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.process is not None:
                 p.process.kill()
         exit(1)
+=======
+>>>>>>> 821886d... Edits

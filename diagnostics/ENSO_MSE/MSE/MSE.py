@@ -17,7 +17,7 @@
 
 import numpy as np
 import sys
-import math
+#import math
 
 
 from get_data_in import get_data_in
@@ -98,12 +98,6 @@ print("      Start of  Moist Static Energy  Module Calculation " +  now.strftime
 print("===============================================================")
 print( "  ")
 
-imax = 180
-jmax = 90
-zmax = 17
-
-###  plev = [1000.0, 925.0, 850.0, 700.0, 600.0, 500.0, 400.0, 300.0, 250.0, 200.0, 150.0, 100.0, 70.0,  50.0,  30.0,  20.0,  10.0]
-
 undef =  float(1.1E+20)
 
 ### declaration and set up of relavant directories 
@@ -143,7 +137,7 @@ lon1 = 0.0 + 0.5 * dx
 lat1 = -90.0 + 0.5 * dy
 
 season = "NIL"
-model = "NIL"
+##model = "NIL"
 llon1 = undef
 llon2 = undef
 llat1 = undef

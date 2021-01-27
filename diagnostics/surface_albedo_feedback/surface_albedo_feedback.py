@@ -74,7 +74,7 @@ lastyr = "{LASTYR}".format(**os.environ)
 
 obsdir="{OBS_DATA}/".format(**os.environ)
 output_dir = wk_dir+'/model/'
-figures_dir = wk_dir+'/'
+figures_dir = wk_dir+'/model/'
 
 
 # In[4]:

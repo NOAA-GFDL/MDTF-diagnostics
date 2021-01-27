@@ -82,8 +82,8 @@ def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
 ### 1) Loading model data files: ###############################################
 
 input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
-output_dir = "{WK_DIR}".format(**os.environ) #LR
-figures_dir = "{WK_DIR}".format(**os.environ) #LR
+output_dir = "{WK_DIR}".format(**os.environ) 
+figures_dir = "{WK_DIR}/seaice_suite/".format(**os.environ) 
 obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_ice_1979-2016_grid_nh.nc'
 
 proc_obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_stats_1979-2014.nc'

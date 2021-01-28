@@ -15,40 +15,49 @@ REFERENCES:
 # Import standard Python packages
 import os
 import glob
-from sys import exit, path
+from sys import exit, path, stdout
 import subprocess
 
 ### Set environment variables pointing to pr, hus, ta and ps. 
 ### Once path variables from settings.jsonc are available, this step is redundant.
-os.environ["pr_file"] = "{DATADIR}/1hr/{CASENAME}.{pr_var}.1hr.nc".format(**os.environ)
 os.environ["ta_file"] = "{DATADIR}/1hr/{CASENAME}.{ta_var}.1hr.nc".format(**os.environ)
 os.environ["hus_file"] = "{DATADIR}/1hr/{CASENAME}.{qa_var}.1hr.nc".format(**os.environ)
+os.environ["pr_file"] = "{DATADIR}/1hr/{CASENAME}.{pr_var}.1hr.nc".format(**os.environ)
 os.environ["ps_file"] = "{DATADIR}/1hr/{CASENAME}.{ps_var}.1hr.nc".format(**os.environ)
 
-### A cython executable must first be created.
+### This POD produces intermediate files that are worth saving. 
+### Here we specify the save directory. 
+### Can include option to obtain this from settings.jsonc.
+os.environ["temp_dir"] =os.environ["WK_DIR"]+'/model' 
+os.environ["temp_file"] = "{temp_dir}/{CASENAME}.buoy_var.1hr.nc".format(**os.environ)
+
+### A cython executable must be created.
 ### First delete any existing builds ###
 
 try:
-    os.remove()
+    os.remove(os.environ["POD_HOME"]+'/*.c')
+    os.remove(os.environ["POD_HOME"]+'/*.so')
+except:
+    pass
 
+### Compiling cython 
 try:
-    build_cython=subprocess.call(['python', os.environ["POD_HOME"]+"/precip_buoy_diag_setup_cython.py", 
+    build_cython=subprocess.run(['python', os.environ["POD_HOME"]+"/precip_buoy_diag_setup_cython.py", 
     'build_ext','--build-lib='+os.environ['POD_HOME']])
     if (build_cython.returncode)==0:
-        print(build_cython)
         print('>>>>>>>Successfully compiled cython file')
         
 except subprocess.CalledProcessError as e:
     print ("PODError > ",e.output)
     print ("PODError > ",e.stderr)
  
-### Call the POD ###
-# try:
-#     run_POD=subprocess.run(["python", os.environ["POD_HOME"]+"/precip_buoy_diag_main.py"],
-#     capture_output=True, check=True)
-# 
-# except subprocess.CalledProcessError as e:
-#     print ("PODError > ",e.output)
-#     print ("PODError > ",e.stderr)
+## Calling POD ###
+try:
+    run_POD=subprocess.run(["python", os.environ["POD_HOME"]+"/precip_buoy_diag_main.py"],
+    capture_output=True, check=True, text=True)
+    print(run_POD.stdout)  
+except subprocess.CalledProcessError as e:
+    print ("PODError > ",e.output)
+    print ("PODError > ",e.stderr)
     
     

@@ -20,7 +20,9 @@
 		"realm": "atmos",
 		"description": "Precipitation Buoyancy Diagnostics",
 		// threshold precipitation value to compute precipitating pdfs
-		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25"},
+		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 
+		// option to handle sigma co-ordinates. Change VERT_TYPE to "sigma"
+		"VERT_TYPE" : "pres"},
 		"runtime_requirements": {
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
@@ -31,7 +33,8 @@
 			"requirement": "required",
 			"path_variable": "pr_file",
 			"units": "kg m-2 s-1",
-            "dimensions" : ["time", "lat", "lon"]
+            "dimensions" : ["time", "lat", "lon"],
+            "multi_file_ok" : true
 		},
 		{
 			"var_name": "ta_var",
@@ -39,8 +42,8 @@
 			"requirement": "required",
             "path_variable": "ta_file",
 			"units": "K",
-            "dimensions" : ["time", "lev", "lat", "lon"]
-
+            "dimensions" : ["time", "lev", "lat", "lon"],
+            "multi_file_ok" : true
 		},
 		{
 			"var_name": "qa_var",
@@ -48,15 +51,19 @@
 			"requirement": "required",
             "path_variable": "hus_file",
 			"units": "kg/kg",
-            "dimensions" : ["time", "lev", "lat", "lon"]
+            "dimensions" : ["time", "lev", "lat", "lon"],
+            "multi_file_ok" : true
 		},
 		{
 			"var_name": "ps_var",
 			"freq": "1hr",
-			"requirement": " ",
+			// this is optional only if height co-ordinates are on pressure levels
+			// if height co-ordinates are sigma, then surface pressure is required.
+			"requirement": "optional",
             "path_variable": "ps_file",
 			"units": "Pa",
-            "dimensions" : ["time", "lat", "lon"]
+            "dimensions" : ["time", "lat", "lon"],
+            "multi_file_ok" : true
 		}
 	]
 }

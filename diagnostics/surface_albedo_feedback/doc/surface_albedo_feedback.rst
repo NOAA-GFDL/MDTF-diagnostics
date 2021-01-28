@@ -19,12 +19,6 @@ All calculated quantities are averages over the boreal summer, defined as May, J
 Version & Contact info
 ----------------------
 
-.. '-' starts items in a bulleted list: 
-   https://docutils.sourceforge.io/docs/user/rst/quickref.html#bullet-lists
-
-Here you should describe who contributed to the diagnostic, and who should be
-contacted for further information:
-
 - Version 1 (1/26/2021)
 - PI (Cecilia Bitz, University of Washington, bitz@uw.edu)
 - Developer/point of contact (Aaron Donohoe, University of Washington, adonohoe@u.washington.edu)
@@ -48,13 +42,13 @@ The radiative sensitivity is the local product of the radiative sensitivity and 
 Required programming language and libraries
 -------------------------------------------
 
-Standard Python libraries.
+
+Python version 3, numpy, pandas, scipy, netCDF4, cftime, xarray, dask, esmpy, xesmf, matplotlib, cartopy
 
 Required model output variables
 -------------------------------
 
-Monthly mean shortwave radiative fluxes at the top of atmosphere and surface (FSDT, FSUT, FSDS, FSUS) and surface air temperature (TAS) from pre-industrial simulations and abrupt :math:`4XCO_{2}` simulations are used.  
-
+Monthly mean shortwave radiative fluxes at the top of atmosphere and surface (FSDT, FSUT, FSDS, FSUS) and surface air temperature (TAS) from historical (1996-2014) and 50-years of pre-industrial simulations and abrupt :math:`4XCO_{2}` simulations are used.  
 
 References
 ----------

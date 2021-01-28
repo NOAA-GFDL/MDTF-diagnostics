@@ -13,7 +13,7 @@ This POD calculates maps of the sea ice concentration (SIC)  for the period 1979
 
 - **standard deviation after detrending**: the standard deviation of detrended data by month :math:`\%`.
 
- - **one-lag correlation**: the correlation at a lag of one month and one year of detrended data by month :math:`\fraction`.  For a one-month lag, the map for January shows the correlation of January and February. The map for February shows the correlation of February and March. And so forth. For a one-year lag, the map for January shows the correlation of January and January a year later. And so forth.
+- **one-lag correlation**: the correlation at a lag of one month and one year of detrended data by month :math:`\fraction`.  For a one-month lag, the map for January shows the correlation of January and February. The map for February shows the correlation of February and March. And so forth. For a one-year lag, the map for January shows the correlation of January and January a year later. And so forth.
 
 All calculated are maps shown for each month. Observations of sea ice concentration are from HadISST1.1 (Rayner et al, 2003).
 

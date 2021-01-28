@@ -15,7 +15,6 @@ REFERENCES:
 
 '''
 
-import os
 from precip_buoy_diag_util import precipbuoy
 
 

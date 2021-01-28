@@ -71,22 +71,452 @@ import matplotlib.rcsetup as rcsetup
 
 class precipbuoy:
 
-    def __init__(self, paths, temp_dir):
+    def __init__(self, temp_file):
         ### read in the primary input variable paths
-        self.ta_var = paths[0]
-        self.hus_var = paths[1]
-        self.pr_var = paths[2]
-        self.ps_var = paths[3]
         
         ### temporary directory where the preprocessed output will be stored
-        self.temp_dir=temp_dir
+        self.temp_file=temp_file
 
-        ### flag to check if the raw inputs have been pre-processed
-        ### check if temp_dir is empty
-        if glob.glob(temp_dir):
+        ### flag to check if a pre-processed file exists
+        if glob.glob(temp_file):
             self.preprocessed=True
         else:
             self.preprocessed=False  
+            
+    # #  takes in 3D tropospheric temperature and specific humidity fields on model levels, 
+    # # and calculates: thetae_LFT, thetae_sat_LFT & thetae_BL.
+    # # As in the convective transition statistics POD,
+    ##  calculations will be broken up into chunks of time-period corresponding
+    ##  to time_idx_delta with a default of 1000 time steps
+# 
+    def preprocess(self):
+        ### LOAD temp. and q datasets ###
+        ta_ds=xr.open_mfdataset(os.environ['ta_file'])
+        hus_ds=xr.open_mfdataset(os.environ['hus_file'])
+                                
+        ### rename dimensions to internal names for ease of use
+        LAT_VAR_NEW='lat'
+        LON_VAR_NEW='lon'
+        TIME_VAR_NEW='time'
+        LEV_VAR_NEW='lev'
+        
+        ta_ds=ta_ds.rename({os.environ['time_coord']:TIME_VAR_NEW,os.environ['lat_coord']:LAT_VAR_NEW,os.environ['lon_coord']:LON_VAR_NEW,
+        os.environ['lev_coord']:LEV_VAR_NEW})
+        hus_ds=hus_ds.rename({os.environ['time_coord']:TIME_VAR_NEW,os.environ['lat_coord']:LAT_VAR_NEW,os.environ['lon_coord']:LON_VAR_NEW,
+        os.environ['lev_coord']:LEV_VAR_NEW})
+        
+        ### set time and latitudinal slices for extraction ###
+        
+        strt_dt=dt.datetime.strptime(str(os.environ['FIRSTYR'])+'010100',"%Y%m%d%H")
+        end_dt=dt.datetime.strptime(str(os.environ['LASTYR'])+'123123',"%Y%m%d%H")
+        time_slice=slice(strt_dt, end_dt)  ## set time slice      
+         
+        lat_slice=slice(-20,20) ## set latitudinal slice
+
+        ### Ensure that start and end dates span more than 1 day.
+        if (time_slice.stop-time_slice.start).days<1:
+            exit('Please set time range greater than 1 day. Exiting now')
+
+        ### specify datetime format
+        DATE_FORMAT='%Y%m%d'
+
+        ### Ensure that times are in datetime format ###
+        self._fix_datetime(ta_ds, DATE_FORMAT)
+        self._fix_datetime(hus_ds, DATE_FORMAT)
+
+        print("....SLICING DATA")
+        ### select subset ###
+        ta_ds_subset=ta_ds.sel(time=time_slice,lat=lat_slice)
+        hus_ds_subset=hus_ds.sel(time=time_slice,lat=lat_slice)
+
+        ### check to ensure that time subsets are non-zero ###
+        assert ta_ds_subset.time.size>0 , 'specified time range is zero!!'
+            
+        ### Load arrays into memory ###
+    
+        lat=ta_ds_subset['lat']
+        lon=ta_ds_subset['lon']
+        ta=ta_ds_subset[os.environ['ta_var']]
+        hus=hus_ds_subset[os.environ['qa_var']]
+        lev=ta_ds_subset['lev']
+        
+        
+        ### Is surface pressure is available, extract it
+        ### if not set ps_ds to None
+        if os.environ['ps_file']:
+            ps_ds=xr.open_mfdataset(os.environ['ps_file'])
+            ps_ds=ps_ds.rename({os.environ['time_coord']:TIME_VAR_NEW,os.environ['lat_coord']:LAT_VAR_NEW,os.environ['lon_coord']:LON_VAR_NEW})
+            self._fix_datetime(ps_ds, DATE_FORMAT)
+            ps_ds_subset=ps_ds.sel(time=time_slice,lat=lat_slice)
+
+        else:
+            ps_ds_subset=None
+
+        ### extract pressure levels 
+        pres,ps=self._return_pres_levels(lev,ta,ps_ds_subset)  
+    
+        assert(ta['time'].size==hus['time'].size)
+
+        ### setting parameters for buoyancy calculations
+    
+        ## setting the pressure level at the top of a nominal boundary layer
+        pbl_top=ps-100e2 ## The BL is 100 mb thick ##
+        pbl_top=np.float_(pbl_top.values.flatten()) ### overwriting pbl top xarray with numpy array
+        
+        ## setting the pressure level at the top of a nominal lower free troposphere (LFT) 
+        low_top=np.zeros_like(ps)
+        low_top[:]=500e2  # the LFT top is fixed at 500 mb
+        low_top=np.float_(low_top.flatten())
+
+        ### LOAD data arrays into memory###
+        print('...LOADING ARRAYS INTO MEMORY')
+        ta=ta.transpose('lev','time','lat','lon')
+        hus=hus.transpose('lev','time','lat','lon')
+        pres=pres.transpose('lev','time','lat','lon')
+        ps=ps.transpose('time','lat','lon')
+
+        pres=pres.values   
+        ta=np.asarray(ta.values,dtype='float')
+        hus=np.asarray(hus.values,dtype='float')
+
+        print('...DONE LOADING')
+
+        ta_ds.close()
+        hus_ds.close()
+        
+        ### Check if pressure array is descending 
+        ### since this is an implicit assumption
+
+        if (np.all(np.diff(pres,axis=0)<0)):
+            print('     pressure levels strictly decreasing')
+        elif (np.all(np.diff(pres,axis=0)>0)):
+            print('     pressure levels strictly increasing')
+            print('     reversing the pressure dimension')
+            pres=pres[::-1,:,:,:]
+            ta=ta[::-1,:,:,:]
+            hus=hus[::-1,:,:,:]
+        else:
+            exit('......Check pressure level ordering. Exiting now..')
+
+        ### Reshape arrays to 2D ###
+        
+        print('...COMPUTING THETAE VARIABLES')
+
+        lev=pres.reshape(*lev.shape[:1],-1)
+        ta_flat=ta.reshape(*ta.shape[:1],-1)
+        hus_flat=hus.reshape(*hus.shape[:1],-1)
+
+        pbl_ind=np.zeros(pbl_top.size,dtype=np.int64)
+        low_ind=np.zeros(low_top.size,dtype=np.int64)
+
+        ### Find the closest pressure level to pbl_top and low_top
+        ### using a cython routine 'find_closest_index_2D'
+        find_closest_index_2D(pbl_top,lev,pbl_ind)
+        find_closest_index_2D(low_top,lev,low_ind)
+
+        ### Declare empty arrays to hold thetae variables
+        thetae_bl=np.zeros_like(pbl_top)
+        thetae_lt=np.zeros_like(pbl_top)
+        thetae_sat_lt=np.zeros_like(pbl_top)
+
+        ### the fractional weighting of the boundary layer in 
+        ### buoyancy computation
+        wb=np.zeros_like(pbl_top)
+
+        ### Use trapezoidal rule for approximating the vertical integral ###
+        ### vert. integ.=(b-a)*(f(a)+f(b))/2
+        ### using a cython routine 'compute_layer_thetae'
+        compute_layer_thetae(ta_flat, hus_flat, lev, pbl_ind, low_ind, thetae_bl, thetae_lt, thetae_sat_lt, wb)
+
+        ### if thetae_bl is zero set it to nan
+        ### masking is an option.
+        thetae_bl[thetae_bl==0]=np.nan
+        thetae_lt[thetae_lt==0]=np.nan
+        thetae_sat_lt[thetae_sat_lt==0]=np.nan
+        
+        ### Unflatten the space dimension to lat,lon ###
+        thetae_bl=thetae_bl.reshape(ps.shape)
+        thetae_lt=thetae_lt.reshape(ps.shape)
+        thetae_sat_lt=thetae_sat_lt.reshape(ps.shape)
+
+        print('.....'+os.environ['ta_file']+" & "+os.environ['hus_file']+" pre-processed!")
+
+        ### SAVING INTERMEDIATE FILE TO DISK ###
+
+        data_set=xr.Dataset(data_vars={"thetae_bl":(ta_ds_subset[os.environ['ta_var']].isel(lev=0).dims, thetae_bl),
+                              "thetae_lt":(ta_ds_subset[os.environ['ta_var']].isel(lev=0).dims, thetae_lt),
+                              "thetae_sat_lt":(ta_ds_subset[os.environ['ta_var']].isel(lev=0).dims, thetae_sat_lt),
+                              "ps":(ta_ds_subset[os.environ['ta_var']].isel(lev=0).dims, ps)},
+                   coords=ta_ds_subset[os.environ['ta_var']].isel(lev=0).drop('lev').coords)
+        data_set.thetae_bl.attrs['long_name']="theta_e averaged in the BL (100 hPa above surface)"
+        data_set.thetae_lt.attrs['long_name']="theta_e averaged in the LFT (100 hPa above surface to 500 hPa)"
+        data_set.thetae_sat_lt.attrs['long_name']="theta_e_sat averaged in the LFT (100 hPa above surface to 500 hPa)"
+        data_set.ps.attrs['long_name']="surface pressure"
+
+        data_set.thetae_bl.attrs['units']="K"
+        data_set.thetae_lt.attrs['units']="K"
+        data_set.thetae_sat_lt.attrs['units']="K"
+        data_set.ps.attrs['units']='Pa'
+
+        data_set.attrs['source']="Precipiation Buoyancy Diagnostics \
+        - as part of the NOAA Model Diagnostic Task Force (MDTF)"
+
+        data_set.to_netcdf(os.environ["temp_file"],mode='w')
+        print('...'+os.environ["temp_file"]+" saved!")
+
+
+
+        
+
+#     def preprocess(, ta_netcdf_filename, TA_VAR, hus_netcdf_filename, HUS_VAR,\
+#                             LEV_VAR, PS_VAR, A_VAR, B_VAR, VERT_TYPE, MODEL_NAME, p_lev_mid, time_idx_delta,\
+#                             START_DATE, END_DATE, DATE_FORMAT,\
+#                             SAVE_THETAE,PREPROCESSING_OUTPUT_DIR, THETAE_OUT,\
+#                             THETAE_LT_VAR,THETAE_SAT_LT_VAR,THETAE_BL_VAR,\
+#                             TIME_VAR,LAT_VAR,LON_VAR):
+# 
+
+#         ### select subset ###
+#         ta_ds_subset=ta_ds.sel(time=time_slice,lat=lat_slice)
+#         hus_ds_subset=hus_ds.sel(time=time_slice,lat=lat_slice)
+# 
+#     
+#         ### if the dataset falls within specified time range: ###
+#         if(ta_ds_subset.time.size)>0:
+#     
+#             print("     pre-processing "+ta_netcdf_filename)
+#  
+#             print('LOADING ARRAYS')
+#             ### Load arrays into memory ###
+#         
+#             lat=ta_ds_subset['lat']
+#             lon=ta_ds_subset['lon']
+#             ta=ta_ds_subset[TA_VAR]
+#             hus=hus_ds_subset[HUS_VAR]
+# 
+#         #     time_arr=ta_ds_subset.[TIME_VAR]
+#             lev=ta_ds_subset['lev']
+#         
+#             ### Check if pressure or sigma co-ordinates ###
+#         
+#             if VERT_TYPE=='pres':
+# 
+#                 pres=ta_ds_subset['lev']
+#             
+#                 ### Convert units ###
+#                 if(pres.units=='hPa'):
+#                     pres=pres*100
+#                 ### Convert data type
+#                 pres=pres.astype('float')
+#             
+#                 pres,dummy=xr.broadcast(pres,ta_ds_subset.isel(lev=0,drop=True))
+# 
+#             
+#                 try:
+#                     ps=ta_ds_subset[PS_VAR]
+#                     if(ps.units=='hPa'):
+#                         ps=ps*100
+#                 except:        
+#                     ps=pres.sel(lev=lev.max().values)
+# 
+#         
+#             elif VERT_TYPE=='sigma':
+#                 a=ta_ds_subset[A_VAR]
+#                 b=ta_ds_subset[B_VAR] ## comment this if using F-GOALS
+#                 ps=ta_ds_subset[PS_VAR]
+# 
+#             ### for IPSL SSP585, a and b have one extra dimension ###
+#     #         a=a[:-1]
+#     #         b=b[:-1]
+# 
+#             ### for CNRM-CM6-1-HR tackle with changed co-ordinate names###
+#     #                         
+#     #         a=a.rename({'ap':LEV_VAR_NEW})
+#     #         a=a.assign_coords({LEV_VAR_NEW:lev})
+#     #         
+#     #         b=b.rename({'b':LEV_VAR_NEW})
+#     #         b=b.assign_coords({LEV_VAR_NEW:lev})
+#             
+#             
+#             ### Create pressure data ###
+# 
+#                 pres=b*ps+a     ### Comment for F-GOALS
+#         #         pres=a+lev*(ps-a) ### Uncomment for F-GOALS
+#                 ### Define the layers for averaging ###    
+# 
+#  
+#             else:
+#                 exit('     Please select either "pres" or "sigma" for vertical co-ordinate type. Exiting now')
+# 
+#         
+#             assert(ta_ds_subset['time'].size==hus_ds_subset['time'].size)
+#             
+# 
+#             pbl_top=ps-100e2 ## The BL is 100 mb thick ##
+#             pbl_top=np.float_(pbl_top.values.flatten()) ### overwriting pbl top xarray with numpy array
+#             low_top=np.zeros_like(ps)
+#             low_top[:]=500e2  # the LFT top is fixed at 500 mb
+# 
+#             low_top=np.float_(low_top.flatten())
+#         
+# 
+#             ### LOAD data arrays into memory###
+#             print('LOADING VALUES')
+#             ta=ta.transpose('lev','time','lat','lon')
+#             hus=hus.transpose('lev','time','lat','lon')
+#             pres=pres.transpose('lev','time','lat','lon')
+#             ps=ps.transpose('time','lat','lon')
+# 
+#             pres=pres.values   
+#             ta=np.asarray(ta.values,dtype='float')
+#             hus=np.asarray(hus.values,dtype='float')
+# 
+# 
+#             ### Snippet to find the closet pressure level to pbl_top and
+#             ### the freezing level.
+#     
+#             ### Reshape arrays to 2D for more efficient search ###
+#     
+#             ### Check if pressure array is descending ###
+#             ### since this is an implicit assumption
+# 
+#             if (np.all(np.diff(pres,axis=0)<0)):
+#                 print('     pressure levels strictly decreasing')
+#             elif (np.all(np.diff(pres,axis=0)>0)):
+#                 print('     pressure levels strictly increasing')
+#                 print('     reversing the pressure dimension')
+#                 pres=pres[::-1,:,:,:]
+#                 ta=ta[::-1,:,:,:]
+#                 hus=hus[::-1,:,:,:]
+#             else:
+#                 exit('     Check pressure level ordering. Exiting now..')
+#             
+#             lev=pres.reshape(*lev.shape[:1],-1)
+#             ta_flat=ta.reshape(*ta.shape[:1],-1)
+#             hus_flat=hus.reshape(*hus.shape[:1],-1)
+# 
+#             pbl_ind=np.zeros(pbl_top.size,dtype=np.int64)
+#             low_ind=np.zeros(low_top.size,dtype=np.int64)
+# 
+#             find_closest_index_2D(pbl_top,lev,pbl_ind)
+#             find_closest_index_2D(low_top,lev,low_ind)
+# 
+#             stdout.flush()
+#         
+#             thetae_bl=np.zeros_like(pbl_top)
+#             thetae_lt=np.zeros_like(pbl_top)
+#             thetae_sat_lt=np.zeros_like(pbl_top)
+#             wb=np.zeros_like(pbl_top)
+# 
+#             ### Use trapezoidal rule for approximating the vertical integral ###
+#             ### vert. integ.=(b-a)*(f(a)+f(b))/2
+#             compute_layer_thetae(ta_flat, hus_flat, lev, pbl_ind, low_ind, thetae_bl, thetae_lt, thetae_sat_lt, wb)
+# 
+#             thetae_bl[thetae_bl==0]=np.nan
+#             thetae_lt[thetae_lt==0]=np.nan
+#             thetae_sat_lt[thetae_sat_lt==0]=np.nan
+#     
+#             ### Reshape all arrays ###
+#             thetae_bl=thetae_bl.reshape(ps.shape)
+#             thetae_lt=thetae_lt.reshape(ps.shape)
+#             thetae_sat_lt=thetae_sat_lt.reshape(ps.shape)
+#     
+#             print('      '+ta_netcdf_filename+" & "+hus_netcdf_filename+" pre-processed!")
+# 
+#         #     Save Pre-Processed tave & qsat_int Fields
+#             if SAVE_THETAE==1:
+#         #         Create PREPROCESSING_OUTPUT_DIR
+#                 os.system("mkdir -p "+PREPROCESSING_OUTPUT_DIR)
+#                 ## Create output file name
+#                 thetae_output_filename=PREPROCESSING_OUTPUT_DIR+ta_netcdf_filename.split('/')[-1].replace(TA_VAR,THETAE_OUT)
+# 
+#                 data_set=xr.Dataset(data_vars={"thetae_bl":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_bl),
+#                                       "thetae_lt":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_lt),
+#                                       "thetae_sat_lt":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_sat_lt),
+#                                       "ps":(ta_ds_subset[TA_VAR].isel(lev=0).dims, ps)},
+#                            coords=ta_ds_subset[TA_VAR].isel(lev=0).drop('lev').coords)
+#                 data_set.thetae_bl.attrs['long_name']="theta_e averaged in the BL (100 hPa above surface)"
+#                 data_set.thetae_lt.attrs['long_name']="theta_e averaged in the LFT (100 hPa above surface to 500 hPa)"
+#                 data_set.thetae_sat_lt.attrs['long_name']="theta_e_sat averaged in the LFT (100 hPa above surface to 500 hPa)"
+#                 data_set.ps.attrs['long_name']="surface pressure"
+# 
+#                 data_set.thetae_bl.attrs['units']="K"
+#                 data_set.thetae_lt.attrs['units']="K"
+#                 data_set.thetae_sat_lt.attrs['units']="K"
+#                 data_set.ps.attrs['units']='Pa'
+#         
+#                 data_set.attrs['source']="Convective Onset Statistics Diagnostic Package \
+#                 - as part of the NOAA Model Diagnostic Task Force (MDTF) effort"
+# 
+#                 data_set.to_netcdf(thetae_output_filename,mode='w')
+#                 print('      '+thetae_output_filename+" saved!")
+# 
+# 
+# 
+
+    ### function to fix datetime formats 
+    def _fix_datetime(self, ds,date_format=None):
+        try:      
+            if ds.indexes['time'].dtype=='float64' or ds.indexes['time'].dtype=='int64':
+                ds['time']=[dt.datetime.strptime(str(int(i.values)),date_format) for i in ds.time]
+            else:
+                datetimeindex = ds.indexes['time'].to_datetimeindex()
+                ds['time'] = datetimeindex
+        except:
+            pass
+    
+
+    def _return_pres_levels(self, lev, da, ps_ds):
+        
+        '''
+        Function to set pressure levels and surface pressure
+        depending on whether incoming levels are on pressure or sigma co-ordinates.     
+        '''
+        
+    ### Check if pressure or sigma co-ordinates ###
+
+        if os.environ['VERT_TYPE']=='pres':
+
+            pres=lev
+            ### Check if units are in hPa (or mb)
+            ### Convert units to Pa if required ###
+            if(str(pres.units).lower() in [i.lower() for i in ['hPa','mb']]):
+                pres=pres*100
+                
+            ### Convert data type
+            pres=pres.astype('float')
+            
+            
+            ## broadcast pressure to a 4D array to mimic sigma levels
+            ## this step is computationally inefficient, but helps retain 
+            ## portability between pressure and sigma level handling
+            
+            pres,dummy=xr.broadcast(pres,da.isel(lev=0,drop=True))             
+
+
+            ### Read surface pressure values if available          
+            if ps_ds:
+                ps=ps_ds[os.environ['ps_var']]
+                if(ps.units=='hPa'):
+                    ps=ps*100
+            ### if unavailable, set surface pressure to maximum pressure level
+            else:        
+                ps=pres.sel(lev=lev.max().values)
+
+        
+        elif os.environ['VERT_TYPE']=='sigma':
+            ### currently written so that coefficients a and b are 
+            ### stored in the surface pressure file
+            a=ps_ds[os.environ['a_var']]
+            b=ps_ds[os.environ['b_var']] 
+            ps=ps_ds[os.environ['ps_var']]
+            
+            ### Create pressure data ###
+            pres=b*ps+a     
+
+        return pres, ps
+ 
+            
 
 
 
@@ -247,247 +677,10 @@ class precipbuoy:
 #     return REGION
 # 
 # 
-# ### function to fix datetime formats in fiesl
-# # def fix_datetime(ds):
-# #     try:
-# #         datetimeindex = ds.indexes['time'].to_datetimeindex()
-# #         ds['time'] = datetimeindex
-# #     except:
-# #         pass
-# #         
-# def fix_datetime(ds,date_format=None):
-#     try:      
-#         if ds.indexes['time'].dtype=='float64' or ds.indexes['time'].dtype=='int64':
-#             ds['time']=[dt.datetime.strptime(str(int(i.values)),date_format) for i in ds.time]
-#         else:
-#             datetimeindex = ds.indexes['time'].to_datetimeindex()
-#             ds['time'] = datetimeindex
-#     except:
-#         pass
-# 
+
 # # =====================
 # # =================================================
-# # precipbuoy_calcthetae_ML
-# #  takes in 3D tropospheric temperature and specific humidity fields on model levels, 
-# # and calculates: thetae_LFT, thetae_sat_LFT & thetae_BL.
-# # Calculations will be broken up into chunks of time-period corresponding
-# #  to time_idx_delta with a default of 1000 time steps
-# 
-# def precipbuoy_calcthetae_ML(ta_netcdf_filename, TA_VAR, hus_netcdf_filename, HUS_VAR,\
-#                         LEV_VAR, PS_VAR, A_VAR, B_VAR, VERT_TYPE, MODEL_NAME, p_lev_mid, time_idx_delta,\
-#                         START_DATE, END_DATE, DATE_FORMAT,\
-#                         SAVE_THETAE,PREPROCESSING_OUTPUT_DIR, THETAE_OUT,\
-#                         THETAE_LT_VAR,THETAE_SAT_LT_VAR,THETAE_BL_VAR,\
-#                         TIME_VAR,LAT_VAR,LON_VAR):
-# 
-#     strt_dt=dt.datetime.strptime(str(START_DATE),"%Y%m%d%H")
-#     end_dt=dt.datetime.strptime(str(END_DATE),"%Y%m%d%H")
-# 
-#     ### LOAD temp. and q datasets ###
-#         
-#     ta_ds=xr.open_mfdataset(ta_netcdf_filename)
-#     hus_ds=xr.open_mfdataset(hus_netcdf_filename)
-#     
-#     ### rename dimensions to correct non-standard names
-#     LAT_VAR_NEW='lat'
-#     LON_VAR_NEW='lon'
-#     TIME_VAR_NEW='time'
-#     LEV_VAR_NEW='lev'
-#     
-#     ta_ds=ta_ds.rename({TIME_VAR:TIME_VAR_NEW,LAT_VAR:LAT_VAR_NEW,LON_VAR:LON_VAR_NEW,LEV_VAR:LEV_VAR_NEW})
-#     hus_ds=hus_ds.rename({TIME_VAR:TIME_VAR_NEW,LAT_VAR:LAT_VAR_NEW,LON_VAR:LON_VAR_NEW,LEV_VAR:LEV_VAR_NEW})
-# 
-#     ### set time and latitudinal slices for extraction ###
-#     time_slice=slice(dt.datetime.strptime(START_DATE,'%Y%m%d%H'),
-#     dt.datetime.strptime(END_DATE,'%Y%m%d%H'))
-#     
-#     lat_slice=slice(-20,20) ## Set latitudinal slice
-#     
-#     ### Ensure that start and end dates span more than 1 day.
-#     if (time_slice.stop-time_slice.start).days<1:
-#         exit('     Please set time range greater than 1 day. Exiting now')
-# 
-#     ### Ensure that times are in datetime format. ###
-#     fix_datetime(ta_ds, DATE_FORMAT)
-#     fix_datetime(hus_ds, DATE_FORMAT)
-#     
-# 
-#     ### select subset ###
-#     ta_ds_subset=ta_ds.sel(time=time_slice,lat=lat_slice)
-#     hus_ds_subset=hus_ds.sel(time=time_slice,lat=lat_slice)
-# 
-#     
-#     ### if the dataset falls within specified time range: ###
-#     if(ta_ds_subset.time.size)>0:
-#     
-#         print("     pre-processing "+ta_netcdf_filename)
-#  
-#         print('LOADING ARRAYS')
-#         ### Load arrays into memory ###
-#         
-#         lat=ta_ds_subset['lat']
-#         lon=ta_ds_subset['lon']
-#         ta=ta_ds_subset[TA_VAR]
-#         hus=hus_ds_subset[HUS_VAR]
-# 
-#     #     time_arr=ta_ds_subset.[TIME_VAR]
-#         lev=ta_ds_subset['lev']
-#         
-#         ### Check if pressure or sigma co-ordinates ###
-#         
-#         if VERT_TYPE=='pres':
-# 
-#             pres=ta_ds_subset['lev']
-#             
-#             ### Convert units ###
-#             if(pres.units=='hPa'):
-#                 pres=pres*100
-#             ### Convert data type
-#             pres=pres.astype('float')
-#             
-#             pres,dummy=xr.broadcast(pres,ta_ds_subset.isel(lev=0,drop=True))
-# 
-#             
-#             try:
-#                 ps=ta_ds_subset[PS_VAR]
-#                 if(ps.units=='hPa'):
-#                     ps=ps*100
-#             except:        
-#                 ps=pres.sel(lev=lev.max().values)
-# 
-#         
-#         elif VERT_TYPE=='sigma':
-#             a=ta_ds_subset[A_VAR]
-#             b=ta_ds_subset[B_VAR] ## comment this if using F-GOALS
-#             ps=ta_ds_subset[PS_VAR]
-# 
-#         ### for IPSL SSP585, a and b have one extra dimension ###
-# #         a=a[:-1]
-# #         b=b[:-1]
-# 
-#         ### for CNRM-CM6-1-HR tackle with changed co-ordinate names###
-# #                         
-# #         a=a.rename({'ap':LEV_VAR_NEW})
-# #         a=a.assign_coords({LEV_VAR_NEW:lev})
-# #         
-# #         b=b.rename({'b':LEV_VAR_NEW})
-# #         b=b.assign_coords({LEV_VAR_NEW:lev})
-#             
-#             
-#         ### Create pressure data ###
-# 
-#             pres=b*ps+a     ### Comment for F-GOALS
-#     #         pres=a+lev*(ps-a) ### Uncomment for F-GOALS
-#             ### Define the layers for averaging ###    
-# 
-#  
-#         else:
-#             exit('     Please select either "pres" or "sigma" for vertical co-ordinate type. Exiting now')
-# 
-#         
-#         assert(ta_ds_subset['time'].size==hus_ds_subset['time'].size)
-#             
-# 
-#         pbl_top=ps-100e2 ## The BL is 100 mb thick ##
-#         pbl_top=np.float_(pbl_top.values.flatten()) ### overwriting pbl top xarray with numpy array
-#         low_top=np.zeros_like(ps)
-#         low_top[:]=500e2  # the LFT top is fixed at 500 mb
-# 
-#         low_top=np.float_(low_top.flatten())
-#         
-# 
-#         ### LOAD data arrays into memory###
-#         print('LOADING VALUES')
-#         ta=ta.transpose('lev','time','lat','lon')
-#         hus=hus.transpose('lev','time','lat','lon')
-#         pres=pres.transpose('lev','time','lat','lon')
-#         ps=ps.transpose('time','lat','lon')
-# 
-#         pres=pres.values   
-#         ta=np.asarray(ta.values,dtype='float')
-#         hus=np.asarray(hus.values,dtype='float')
-# 
-# 
-#         ### Snippet to find the closet pressure level to pbl_top and
-#         ### the freezing level.
-#     
-#         ### Reshape arrays to 2D for more efficient search ###
-#     
-#         ### Check if pressure array is descending ###
-#         ### since this is an implicit assumption
-# 
-#         if (np.all(np.diff(pres,axis=0)<0)):
-#             print('     pressure levels strictly decreasing')
-#         elif (np.all(np.diff(pres,axis=0)>0)):
-#             print('     pressure levels strictly increasing')
-#             print('     reversing the pressure dimension')
-#             pres=pres[::-1,:,:,:]
-#             ta=ta[::-1,:,:,:]
-#             hus=hus[::-1,:,:,:]
-#         else:
-#             exit('     Check pressure level ordering. Exiting now..')
-#             
-#         lev=pres.reshape(*lev.shape[:1],-1)
-#         ta_flat=ta.reshape(*ta.shape[:1],-1)
-#         hus_flat=hus.reshape(*hus.shape[:1],-1)
-# 
-#         pbl_ind=np.zeros(pbl_top.size,dtype=np.int64)
-#         low_ind=np.zeros(low_top.size,dtype=np.int64)
-# 
-#         find_closest_index_2D(pbl_top,lev,pbl_ind)
-#         find_closest_index_2D(low_top,lev,low_ind)
-# 
-#         stdout.flush()
-#         
-#         thetae_bl=np.zeros_like(pbl_top)
-#         thetae_lt=np.zeros_like(pbl_top)
-#         thetae_sat_lt=np.zeros_like(pbl_top)
-#         wb=np.zeros_like(pbl_top)
-# 
-#         ### Use trapezoidal rule for approximating the vertical integral ###
-#         ### vert. integ.=(b-a)*(f(a)+f(b))/2
-#         compute_layer_thetae(ta_flat, hus_flat, lev, pbl_ind, low_ind, thetae_bl, thetae_lt, thetae_sat_lt, wb)
-# 
-#         thetae_bl[thetae_bl==0]=np.nan
-#         thetae_lt[thetae_lt==0]=np.nan
-#         thetae_sat_lt[thetae_sat_lt==0]=np.nan
-#     
-#         ### Reshape all arrays ###
-#         thetae_bl=thetae_bl.reshape(ps.shape)
-#         thetae_lt=thetae_lt.reshape(ps.shape)
-#         thetae_sat_lt=thetae_sat_lt.reshape(ps.shape)
-#     
-#         print('      '+ta_netcdf_filename+" & "+hus_netcdf_filename+" pre-processed!")
-# 
-#     #     Save Pre-Processed tave & qsat_int Fields
-#         if SAVE_THETAE==1:
-#     #         Create PREPROCESSING_OUTPUT_DIR
-#             os.system("mkdir -p "+PREPROCESSING_OUTPUT_DIR)
-#             ## Create output file name
-#             thetae_output_filename=PREPROCESSING_OUTPUT_DIR+ta_netcdf_filename.split('/')[-1].replace(TA_VAR,THETAE_OUT)
-# 
-#             data_set=xr.Dataset(data_vars={"thetae_bl":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_bl),
-#                                   "thetae_lt":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_lt),
-#                                   "thetae_sat_lt":(ta_ds_subset[TA_VAR].isel(lev=0).dims, thetae_sat_lt),
-#                                   "ps":(ta_ds_subset[TA_VAR].isel(lev=0).dims, ps)},
-#                        coords=ta_ds_subset[TA_VAR].isel(lev=0).drop('lev').coords)
-#             data_set.thetae_bl.attrs['long_name']="theta_e averaged in the BL (100 hPa above surface)"
-#             data_set.thetae_lt.attrs['long_name']="theta_e averaged in the LFT (100 hPa above surface to 500 hPa)"
-#             data_set.thetae_sat_lt.attrs['long_name']="theta_e_sat averaged in the LFT (100 hPa above surface to 500 hPa)"
-#             data_set.ps.attrs['long_name']="surface pressure"
-# 
-#             data_set.thetae_bl.attrs['units']="K"
-#             data_set.thetae_lt.attrs['units']="K"
-#             data_set.thetae_sat_lt.attrs['units']="K"
-#             data_set.ps.attrs['units']='Pa'
-#         
-#             data_set.attrs['source']="Convective Onset Statistics Diagnostic Package \
-#             - as part of the NOAA Model Diagnostic Task Force (MDTF) effort"
-# 
-#             data_set.to_netcdf(thetae_output_filename,mode='w')
-#             print('      '+thetae_output_filename+" saved!")
-# 
-# 
+
 #     
 #     
 # def precipbuoy_matchpcpta(ta_netcdf_filename, TA_VAR, pr_list, PR_VAR,\

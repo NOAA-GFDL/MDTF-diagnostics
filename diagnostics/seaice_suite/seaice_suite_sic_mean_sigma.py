@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 # In[1]:
 
 
@@ -36,13 +39,12 @@
 # 
 #   References
 # 
-#      Roach, L.A. and Co-authors, 2021: Process-oriented evaluation of Sea Ice 
+#      Roach, L.R. and Co-authors, 2021: Process-oriented evaluation of Sea Ice 
 #         and Mixed Layer Depth in MDTF Special Issue
 #
 
 #from __future__ import print_function
 import os
-
 import matplotlib
 matplotlib.use('Agg') # non-X windows backend
 
@@ -54,11 +56,14 @@ import pandas as pd
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
+# homegrown this code also imports pandas and scipy
 from seaice_MLD_stats import (
     xr_reshape,
     _lrm,
     _lagcorr,
 )
+
+# In[3]:
 
 
 def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
@@ -76,19 +81,18 @@ def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
     return field
 
 
-# In[4]:
+# In[10]:
 
 
 ### 1) Loading model data files: ###############################################
 
 input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
-output_dir = "{WK_DIR}".format(**os.environ) 
-figures_dir = "{WK_DIR}/seaice_suite/".format(**os.environ) 
-obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_ice_1979-2016_grid_nh.nc'
-
-proc_obs_file = '/glade/work/bitz/mdtf/inputdata/obs_data/seaice_suite/HadISST_stats_1979-2014.nc'
-
-proc_mod_file=output_dir+'seaice_fullfield_stats.nc'
+obsoutput_dir = "{WK_DIR}/obs/".format(**os.environ)
+modoutput_dir = "{WK_DIR}/model/".format(**os.environ)
+figures_dir = "{WK_DIR}/model/".format(**os.environ)
+obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
+proc_obs_file = obsoutput_dir+'/HadISST_stats_1979-2014.nc'.format(**os.environ)
+proc_mod_file = modoutput_dir+'/seaice_fullfield_stats.nc'
 
 modelname = "{model}".format(**os.environ)
 siconc_var = "{siconc_var}".format(**os.environ)
@@ -104,7 +108,7 @@ if processobs: # if no proc file then must get obs and process
     obs = readindata(obs_file, 'sic',firstyr,lastyr)
 
 
-# In[5]:
+# In[6]:
 
 
 def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
@@ -147,7 +151,7 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     return themean, thestd, trend, detrendedstd, residuals
 
 
-# In[6]:
+# In[7]:
 
 
 def lagcorr(residuals,lag=1):
@@ -183,7 +187,7 @@ def lagcorr(residuals,lag=1):
     return rlag
 
 
-# In[7]:
+# In[8]:
 
 
 def processandsave(field,file_out,firstyr=1979,lastyr=2014):
@@ -210,7 +214,7 @@ def processandsave(field,file_out,firstyr=1979,lastyr=2014):
     allstats.to_netcdf(file_out)
 
 
-# In[8]:
+# In[11]:
 
 
 if processmod:
@@ -220,7 +224,7 @@ if processobs:
     processandsave(obs,proc_obs_file,firstyr,lastyr)
 
 
-# In[10]:
+# In[12]:
 
 
 ### 4) Read processed data, regrid model to obs grid, plot, saving figures: #######################################
@@ -262,7 +266,7 @@ obsstats.close()
 modstats.close()
 
 
-# In[11]:
+# In[13]:
 
 
 #import copy
@@ -312,7 +316,7 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
     return
 
 
-# In[12]:
+# In[14]:
 
 
 figfile=figures_dir+'themean_'+firstyr+'-'+lastyr+'.png'
@@ -322,14 +326,28 @@ monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='Blues_r', statname=
 # In[13]:
 
 
-monthlyplot(obsmean, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
+#monthlyplot(obsmean, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
 
 
-# In[14]:
+# In[22]:
 
 
-figfile=figures_dir+'themean_anomalies'+firstyr+'-'+lastyr+'.png'
-monthlyplot(modmean-obsmean, obsmean, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
+figfile=figures_dir+'themean_anomalies_'+firstyr+'-'+lastyr+'.png'
+monthlyplot(modmean-obsmean, obsmean, figfile=figfile, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
+
+
+# In[21]:
+
+
+figfile=figures_dir+'trend_'+firstyr+'-'+lastyr+'.png'
+monthlyplot(modtrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
+
+
+# In[24]:
+
+
+figfile=figures_dir+'trend_anomalies_'+firstyr+'-'+lastyr+'.png'
+monthlyplot(modtrend-obstrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Minus Obs Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
 
 
 # In[15]:
@@ -342,7 +360,7 @@ monthlyplot(moddetrendedstd, obs=modmean, edgec='silver', figfile=figfile, cmapn
 # In[16]:
 
 
-figfile=figures_dir+'detrendedstd_anomalies'+firstyr+'-'+lastyr+'.png'
+figfile=figures_dir+'detrendedstd_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(moddetrendedstd-obsdetrendedstd, obsmean, edgec='gray', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs Detrended Std Dev', unitname='Fraction',vmin=-0.3,vmax=0.3)
 
 

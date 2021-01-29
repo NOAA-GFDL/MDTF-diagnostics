@@ -19,8 +19,7 @@
       "pod_list": ["surface_albedo_feedback"]
     }
   ],
-  //    "FIRSTYR" : 1979,
-  //      "pod_list": ["seaice_suite"]
+  //
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
 

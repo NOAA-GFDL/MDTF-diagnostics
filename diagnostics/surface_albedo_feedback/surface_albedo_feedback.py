@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 # This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
@@ -61,8 +60,6 @@ matplotlib.use('Agg') # non-X windows backend
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
 import xesmf as xe
-import numpy as np
-import pandas as pd
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import surface_albedo_feedback_calcs
@@ -75,6 +72,7 @@ surface_albedo_feedback_calcs.process_data()
 wk_dir="{WK_DIR}".format(**os.environ)
 model="{model}".format(**os.environ)
 modelname = "{model}".format(**os.environ)
+
 # these yrs only refer to the hist period for comparing kernel of mod to CERES
 # this pod also uses piControl and 4XCO2 output, the years will differ with model
 firstyr = "{FIRSTYR}".format(**os.environ)
@@ -85,7 +83,6 @@ output_dir = wk_dir+'/model/'
 figures_dir = wk_dir+'/model/'
 
 
-# In[4]:
 
 
 ### model and obs data files and varnames: ###############################################
@@ -98,7 +95,6 @@ kernel_pimod_file=output_dir+'surface_albedo_kernel_piControl.nc'
 albedo_abmod_file=output_dir+'surface_albedo_abrupt-4xCO2.nc'
 
 
-# In[5]:
 
 
 obs = xr.open_dataset(kernel_obs_file)
@@ -134,7 +130,6 @@ obs=None
 modregrid=None
 
 
-# In[1]:
 
 
 # info about the 3 panel figs
@@ -155,7 +150,6 @@ def pltpanel(field,title=None,subs=(1,3,1),cmap_c='plasma'):
     return pl
 
 
-# In[7]:
 
 
 fig = plt.figure(figsize=figsize)
@@ -187,7 +181,6 @@ plt.subplots_adjust(bottom=0.21,top=0.85)
 plt.savefig(figures_dir+'historical_albedo_kernel_'+modelname+'.png', format='png',dpi=300)
 
 
-# In[8]:
 
 
 fig = plt.figure(figsize=figsize)
@@ -218,7 +211,6 @@ plt.subplots_adjust(bottom=0.21,top=0.85)
 plt.savefig(figures_dir+'piControl_and_historical_albedo_kernel_'+modelname+'.png', format='png',dpi=300)
 
 
-# In[9]:
 
 
 fig = plt.figure(figsize=figsize)
@@ -250,7 +242,6 @@ plt.subplots_adjust(bottom=0.21,top=0.85)
 plt.savefig(figures_dir+'piControl_and_abrupt4xCO2_albedo_'+modelname+'.png', format='png',dpi=300)
 
 
-# In[10]:
 
 
 # ice sensitivity
@@ -283,7 +274,6 @@ plt.subplots_adjust(bottom=0.21,top=0.85)
 plt.savefig(figures_dir+'historical_surface_albedo_'+modelname+'.png', format='png',dpi=300)
 
 
-# In[11]:
 
 
 # ice sensitivity
@@ -309,7 +299,6 @@ plt.subplots_adjust(bottom=0.21,top=0.85)
 plt.savefig(figures_dir+'Ice_Sensitivity_'+modelname+'.png', format='png',dpi=300)
 
 
-# In[12]:
 
 
 # Surface Albedo Feedback

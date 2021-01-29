@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 # This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
@@ -46,14 +45,12 @@ import os
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
 import xarray as xr                # python library we use to read netcdf files
-import xesmf as xe
 import numpy as np
 import pandas as pd
 
 
 # reads in model data and computes stuff
 
-# In[ ]:
 
 
 def xr_reshape(A, dim, newdims, coords):
@@ -139,7 +136,6 @@ def readandclimo(vname,file):
     return field
 
 
-# In[9]:
 
 
 def process_data():
@@ -150,11 +146,8 @@ def process_data():
     FSUS_var = "{FSUS_var}".format(**os.environ)
     TAS_var  = "{TAS_var}".format(**os.environ)
 
-    podname='surface_albedo_feedback'
-
     wk_dir="{WK_DIR}".format(**os.environ)
-    model="{model}".format(**os.environ)
-    modelname = "{model}".format(**os.environ)
+    
     # these yrs only refer to the hist period for comparing kernel of mod to CERES
     # this pod also uses piControl and 4XCO2 output, the years will differ with model
     firstyr = "{FIRSTYR}".format(**os.environ)
@@ -166,12 +159,9 @@ def process_data():
     ### model and obs data files and varnames: ###############################################
 
     # procesed output file names
-    kernel_obs_file = obsdir+'CERES40_surface_albedo_kernel_2000-2018_MJJA.nc'
-    sensitivity_obs_file = obsdir+'CERES40_ice_sensitivity_MJJA.nc'
     kernel_histmod_file=output_dir+'surface_albedo_kernel_'+firstyr+'-'+lastyr+'.nc'
     kernel_pimod_file=output_dir+'surface_albedo_kernel_piControl.nc'
     albedo_abmod_file=output_dir+'surface_albedo_abrupt-4xCO2.nc'
-    IS_mod_file=output_dir+'surface_albedo_sensitivity_abrupt-4xCO2_minus_piControl.nc'
 
 
     # process model piControl data to compute kerel, albedo, and Tglob
@@ -182,8 +172,6 @@ def process_data():
     tas=tas[TAS_var]
     fx=fx['areacella']
     Tglob=globaltimemean(tas, fx)
-    tas=None
-    fx=None
 
     # process model piControl calc kernel and albedo
     piFSDT_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSDT_var}.piControl.nc".format(**os.environ)
@@ -248,19 +236,7 @@ def process_data():
         obs=xr.merge([kernel,albedo])
         obs.to_netcdf(kernel_obs_file)
 
-    dt=None
-    ds=None
-    ut=None
-    us=None
-    kernel=None
-    albedo=None
 
-    obs=None
-    histmod=None
-    abmod=None
-    pimod=None
-
-    cires=None
     
 if __name__ == '__main__':
 

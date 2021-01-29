@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 # This file is part of the Sea Ice Suite Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
@@ -67,7 +66,6 @@ import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
 import xesmf as xe
 import numpy as np
-import pandas as pd
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
@@ -78,7 +76,6 @@ from seaice_MLD_stats import (
     _lagcorr,
 )
 
-# In[3]:
 
 
 def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
@@ -96,7 +93,6 @@ def readindata(file, varname='siconc',firstyr='1979',lastyr='2014'):
     return field
 
 
-# In[10]:
 
 
 ### 1) Loading model data files: ###############################################
@@ -123,7 +119,6 @@ if processobs: # if no proc file then must get obs and process
     obs = readindata(obs_file, 'sic',firstyr,lastyr)
 
 
-# In[6]:
 
 
 def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
@@ -166,7 +161,6 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     return themean, thestd, trend, detrendedstd, residuals
 
 
-# In[7]:
 
 
 def lagcorr(residuals,lag=1):
@@ -202,7 +196,6 @@ def lagcorr(residuals,lag=1):
     return rlag
 
 
-# In[8]:
 
 
 def processandsave(field,file_out,firstyr=1979,lastyr=2014):
@@ -229,7 +222,6 @@ def processandsave(field,file_out,firstyr=1979,lastyr=2014):
     allstats.to_netcdf(file_out)
 
 
-# In[11]:
 
 
 if processmod:
@@ -239,7 +231,6 @@ if processobs:
     processandsave(obs,proc_obs_file,firstyr,lastyr)
 
 
-# In[12]:
 
 
 ### 4) Read processed data, regrid model to obs grid, plot, saving figures: #######################################
@@ -263,7 +254,7 @@ if 'longitude' in coords:
     modstats=modstats.rename({'longitude':'lon'})
 
 # regrid model data to obs grid
-method = 'nearest_s2d'       #method = 'nearest_d2s'  # this was bad do not use
+method = 'nearest_s2d'
 regridder = xe.Regridder(modstats, obsstats, method, periodic=False, reuse_weights=False)
 modstats=regridder(modstats)
 
@@ -281,23 +272,18 @@ obsstats.close()
 modstats.close()
 
 
-# In[13]:
 
 
-#import copy
 
 def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
                 cmapname='PuBu_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.):
     fig = plt.figure(figsize=(12,10))
     cmap_c = cmapname
-    #cmap = plt.get_cmap(cmapname)
-    #cmap_c = copy.copy(cmap)
-    #cmap_c.set_bad(color = 'lightgrey')
 
     try: 
         obs.any()
         edge=True
-        if edgec==None:
+        if edgec is None:
             edgec='yellow'
     except:
         edge=False
@@ -310,7 +296,7 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
         pl = field.sel(month=m).plot(x='lon', y='lat', vmin=vmin, vmax=vmax, 
                         transform=ccrs.PlateCarree(),cmap=cmap_c,add_colorbar=False)
         if edge:
-            ed = obs.sel(month=m).plot.contour(levels=[.15],x='lon', y='lat', linewidths=2, 
+            obs.sel(month=m).plot.contour(levels=[.15],x='lon', y='lat', linewidths=2, 
                         transform=ccrs.PlateCarree(),colors=[edgec])
   
         ax.set_title(themonth,fontsize=14)
@@ -331,83 +317,65 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
     return
 
 
-# In[14]:
 
 
 figfile=figures_dir+'themean_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
 
 
-# In[13]:
-
-
-#monthlyplot(obsmean, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
-
-
-# In[22]:
-
 
 figfile=figures_dir+'themean_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modmean-obsmean, obsmean, figfile=figfile, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
 
 
-# In[21]:
 
 
 figfile=figures_dir+'trend_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modtrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
 
 
-# In[24]:
 
 
 figfile=figures_dir+'trend_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modtrend-obstrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Minus Obs Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
 
 
-# In[15]:
 
 
 figfile=figures_dir+'detrendedstd_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(moddetrendedstd, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='Detrended Std Dev', unitname='Fraction',vmin=0.,vmax=0.3)
 
 
-# In[16]:
 
 
 figfile=figures_dir+'detrendedstd_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(moddetrendedstd-obsdetrendedstd, obsmean, edgec='gray', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs Detrended Std Dev', unitname='Fraction',vmin=-0.3,vmax=0.3)
 
 
-# In[17]:
 
 
 figfile=figures_dir+'onemolagcorr_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modonemolagcorr, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='One-Month Lag Correlation', unitname='Correlation',vmin=0.,vmax=1.)
 
 
-# In[18]:
 
 
 figfile=figures_dir+'onemolagcorr_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modonemolagcorr-obsonemolagcorr, obs=obsmean, edgec='silver', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs One-Mon. Lag Corr.', unitname='Correlation',vmin=-1.,vmax=1.)
 
 
-# In[19]:
 
 
 figfile=figures_dir+'oneyrlagcorr_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modoneyrlagcorr, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='One-Yr. Lag Corr.', unitname='Correlation',vmin=-0.,vmax=0.5)
 
 
-# In[20]:
 
 
 figfile=figures_dir+'oneyrlagcorr_anomalies_'+firstyr+'-'+lastyr+'.png'
 monthlyplot(modoneyrlagcorr-obsoneyrlagcorr, obs=obsmean, edgec='silver', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs One-Yr. Lag Corr.', unitname='Correlation',vmin=-0.5,vmax=0.5)
 
 
-# In[ ]:
 
 
 

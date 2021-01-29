@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 import numpy as np
@@ -9,7 +8,6 @@ import pandas as pd
 from scipy import stats
 
 
-# In[11]:
 
 
 def xr_reshape(A, dim, newdims, coords):
@@ -43,7 +41,6 @@ def xr_reshape(A, dim, newdims, coords):
     return A1.transpose(*dims)
 
 
-# In[ ]:
 
 
 def _lrm(x=None, y=None):
@@ -54,7 +51,6 @@ def _lrm(x=None, y=None):
     return slope, intercept
 
 
-# In[5]:
 
 
 def _lagcorr(a,lag=1):
@@ -72,7 +68,6 @@ def _lagcorr(a,lag=1):
     scipy.stats.pearsonr '''
 
     sumfunc = np.nansum
-    meanfunc = np.nanmean
  
     NN=a.shape
     NYR=NN[0]

@@ -16,8 +16,8 @@ Version & Contact info
 
 - Version 1 (1/26/2021)
 - PI (Cecilia Bitz, University of Washington, bitz@uw.edu)
-- Developer/point of contact (Cecilia Bitz, University of Washington, bitz@uw.edu)
-- Other contributors: Lettie Roach  
+- Developer/point of contact (Lettie Roach, University of Washington, lroach@uw.edu)
+- Other contributors: Cecilia Bitz 
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

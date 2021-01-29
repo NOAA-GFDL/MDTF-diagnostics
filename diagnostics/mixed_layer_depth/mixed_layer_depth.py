@@ -1,5 +1,12 @@
 # This file is part of the Mixed Layer Depth Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
-# 
+#
+#This POD computes mixed layer depth from CMIP6 monthly temperature and salinity. Mixed layer depth computed from
+# the EN4 reanalysis temperature and salinity is included to compare with models
+#
+# These figures show the mixed layer depth climatology for each month. Note that the 
+# colorbar varies between subplots. Users may wish to modify this.
+
+
 #   Last update: 1/25/2021
 # 
 #   - Version/revision information: version 1 (1/31/2021)

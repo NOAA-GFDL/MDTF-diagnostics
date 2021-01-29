@@ -5,6 +5,14 @@
 
 
 # This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+#
+# This POD calculates the top of atmosphere radiative impact of
+# surface albedo changes associated with Arctic sea ice loss under
+# global warming. Four quantities are calculated:
+# - Climatological surface albedo
+# - Radiative sensitivity
+# - Ice sensitivity
+# - Radiative impact of sea ice loss
 # 
 #   Last update: 1/25/2021
 # 

@@ -153,7 +153,6 @@ def process_data():
     firstyr = "{FIRSTYR}".format(**os.environ)
     lastyr = "{LASTYR}".format(**os.environ)
 
-    obsdir="{OBS_DATA}/".format(**os.environ)
     output_dir = wk_dir+'/model/'
 
     ### model and obs data files and varnames: ###############################################
@@ -196,8 +195,6 @@ def process_data():
     tas=tas[TAS_var]
     fx=fx['areacella']
     Tglob=globaltimemean(tas, fx)
-    tas=None
-    fx=None
 
     abFSDS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSDS_var}.abrupt-4xCO2.nc".format(**os.environ)
     abFSUS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSUS_var}.abrupt-4xCO2.nc".format(**os.environ)

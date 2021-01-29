@@ -5,6 +5,21 @@
 
 
 # This file is part of the Sea Ice Suite Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+#
+# This POD calculates maps of the sea ice concentration mean, trend,
+# standard deviation, and one-lag correlation by month. Sea ice
+# concentration from passive microwave satellite from HadISSTv1.1 is
+# included to compare with model. The observed ice edge is shown for
+# reference.
+#
+# All correlations are computed after detrending.  For a one-month lag, 
+# the map for January shows the correlation of January and February. The 
+# map for February shows the correlation of February and March. And so forth. 
+# For a one-year lag, the map for January shows the correlation of January
+# and January a year later. And so forth.
+#
+# The results from this POD are to be appear in a paper being prepared
+# for the MAPP team special issue.
 # 
 #   Last update: 1/25/2021
 # 

@@ -61,7 +61,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import gsw
 import time
-
+import cmath
 
 months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -162,7 +162,7 @@ def computemld (fieldso, fieldthetao):
     bottom_depth = sigma2.lev.where(test == test.max(dim='lev')).max(dim='lev').rename('bottom_depth') # units 'meters'
     
     # set MLD to water depth where MLD is NaN
-    mld = mld.where(mld==mld, bottom_depth)
+    mld = mld.where(~cmath.isnan(mld), bottom_depth)
 
     return mld
 
@@ -248,7 +248,7 @@ if 'longitude' in coords:
     modmean=modmean.rename({'longitude':'lon'})
 
 # regrid model data to obs grid
-method = 'nearest_s2d'       #method = 'nearest_d2s'  # this was bad do not use
+method = 'nearest_s2d'       
 regridder = xe.Regridder(modmean, obsmean, method, periodic=False, reuse_weights=False)
 modmean=regridder(modmean)
 modmean.attrs['units'] = 'm'
@@ -264,20 +264,12 @@ def monthlyplot(field, edgec=None, figfile=None, cmapname='PuBu_r',myname=modeln
         ax.add_feature(cfeature.LAND,zorder=100,edgecolor='k',facecolor='darkgrey')
 
         ax.set_extent([0.005, 360, 50, 90], crs=ccrs.PlateCarree())
-        pl = field.sel(month=m).plot(x='lon', y='lat',  
+        field.sel(month=m).plot(x='lon', y='lat',  
                         transform=ccrs.PlateCarree(),cmap=cmap_c,add_colorbar=True)
  
         ax.set_title(themonth,fontsize=14)
 
-
     fig.suptitle(myname+' mean Mixed Layer Depth (m) '+str(firstyr)+'-'+str(lastyr), fontsize=18)
-
-    #cbar_ax = fig.add_axes([0.315, 0.08, 0.4, 0.02]) #[left, bottom, width, height]
-    #cbar = fig.colorbar(pl, cax=cbar_ax,  orientation='horizontal')
-    
-    #cbar.ax.set_title(unitname,fontsize=14)
-    #cbar.ax.tick_params(labelsize=12)
-    #plt.subplots_adjust(bottom=0.15)
     plt.tight_layout()
     plt.savefig(figfile, format='png',dpi=300)
     plt.show()

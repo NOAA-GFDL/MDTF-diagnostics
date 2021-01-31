@@ -27,8 +27,8 @@ os.system('python3 center_finder_v4.py')
 os.system('python3 track_finder_v4.py')
 os.system('python3 read_mcms_v4.py template_temp_multi_1.py')
 os.system('python3 read_mcms_v4.py template_temp_multi_2.py')
-if (defines.create_matlab_dictionaries):
-  os.system('python3 main_create_dict.py')
+# if (defines.create_matlab_dictionaries):
+#   os.system('python3 main_create_dict.py')
 
 
 ####todo list

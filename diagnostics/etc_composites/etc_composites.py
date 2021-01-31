@@ -13,6 +13,7 @@ sys.path.append(os.environ['POD_HOME']+'/util')
 
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
 os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+os.environ['obs_lat_distrib_file'] = os.environ['DATADIR'] + '/erai_lat_distrib.pkl'
 import run_tracker_setup 
 import defines
 
@@ -117,6 +118,8 @@ def create_empty_figs():
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_merra_vars_SH_ocean_WARM.png"
   plot_empty(out_file)
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_modis_vars_SH_ocean_WARM.png"
+  plot_empty(out_file)
 
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
   plot_empty(out_file)
@@ -199,35 +202,35 @@ if (calendar == 'noleap'):
   time = in_ds.time.values
 else:
   time = [pd.to_datetime(i) for i in in_ds.time.values]
-slp = in_ds.SLP
-lat = in_ds.lat.values
-lon = in_ds.lon.values
+slp = in_ds[os.environ['slp_var']]
+lat = in_ds[os.environ['lat_var']].values
+lon = in_ds[os.environ['lon_var']].lon.values
 in_ds.close()
 
 if (os.environ['RUN_COMPOSITES'] == 'True'):
   # Reading in total precipitation
   in_ds = xr.open_dataset(tp_file)
-  tp = in_ds.PRECT
+  tp = in_ds[os.environ['tp_var']]
   in_ds.close()
 
   # Reading in total column water vapor
   in_ds = xr.open_dataset(prw_file)
-  prw = in_ds.PRW
+  prw = in_ds[os.environ['prw_var']]
   in_ds.close()
 
   # Reading in wind speed
   in_ds = xr.open_dataset(uv10_file)
-  uv10 = in_ds.UV10
+  uv10 = in_ds[os.environ['uv10_var']]
   in_ds.close()
 
   # Reading in wind speed
   in_ds = xr.open_dataset(w500_file)
-  w500 = in_ds.W500
+  w500 = in_ds[os.environ['w500_var']]
   in_ds.close()
   
   # Reading in total cloud fraction
   in_ds = xr.open_dataset(clt_file)
-  clt = in_ds.CLT
+  clt = in_ds[os.environ['clt_var']]
   in_ds.close()
 
 # creating the year_list to chunk out the yearly sections of the files
@@ -461,9 +464,11 @@ else:
   print('Running the code using different tracker outputs...')
   run_tracker_setup.init_setup()
   run_tracker_setup.copy_code_over()
-  cmd = "python %s/util/run_create_dict.py"%(os.environ['POD_HOME'])
-  os.system(cmd)
-  print('Completed creating the mat file used for the analysis.')
+
+# I have to create the matlab dictionaries from the track output file
+cmd = "python %s/util/run_create_dict.py"%(os.environ['POD_HOME'])
+os.system(cmd)
+print('Completed creating the mat file used for the analysis.')
 
 # Running the track stats 
 cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])
@@ -595,7 +600,7 @@ else:
 
   # Creating the plots
   ##################### Model - ERA-Interim SH [All vars] ###########################################
-  plt.figure(figsize=(12,8))
+  plt.figure(figsize=(12,12))
 
   plt.subplot(4,3,1)
   hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'prw'
@@ -712,7 +717,7 @@ else:
 
   ##################### NH ###########################################
   ##################### Model - ERA-Interim NH [All vars] ###########################################
-  plt.figure(figsize=(12,8))
+  plt.figure(figsize=(12,12))
 
   plt.subplot(4,3,1)
   hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'prw'

@@ -98,6 +98,9 @@ for hemis in defines.composite_hem_list:
         comp[hemis][lm_type][season][var]['area_sum'] = np.zeros(area_H_sum.shape)
         comp[hemis][lm_type][season][var]['area_cnt'] = np.zeros(area_H_cnt.shape)
 
+# Read in the lat distribution from ERA-Interim/OBS
+obs_distrib = pickle.load(open(os.environ['obs_lat_distrib_file'], 'r'))
+
 # loop through all the years and create the composite
 for year in year_list: 
   # print('Debug: Reading in data ...', end=" ")
@@ -125,6 +128,8 @@ for year in year_list:
     datetimeindex = slp.indexes['time'].to_datetimeindex()
   else:
     datetimeindex = slp.indexes['time']
+
+  # Creating the lat/lon flag
 
 
   # loop through all time steps in the year

@@ -24,8 +24,8 @@ def hist_2d(lon, lat, val=None, bins=None):
 
   if (bins is None): 
     # creating my bins
-    lat_div = 5.
-    lon_div = 5.
+    lat_div = 10.
+    lon_div = 10.
     bins = (np.arange(-180, 180+lon_div, lon_div), np.arange(-90, 90+lat_div, lat_div))
 
   # convert lat and lon into 2d array
@@ -136,7 +136,7 @@ def track_feature_density_2d(lon, lat, ax=None):
 mat_file = os.path.join(defines.read_folder, f'{defines.model}_{defines.over_write_years[0]}.mat') 
 if (not os.path.exists(mat_file)):
   print('No MAT file, create the mat file from tracker output')
-  os.system('python3 main_create_dict.py')
+  os.system(f"python3 {os.environ['POD_HOME']}/util/run_create_dict.py")
 
 # data = {'genesis': {'lat': [], 'lon': [], 'slp': []}, \
 #       'lysis': {'lat': [], 'lon': [], 'slp': []}, \
@@ -155,8 +155,8 @@ if (not os.path.exists(mat_file)):
 # because now we only have to count one occurence per grid, not all occurences
 
 # Defining the bins
-lat_div = 5.
-lon_div = 5.
+lat_div = 10.
+lon_div = 10.
 bins = (np.arange(-180, 180+lon_div, lon_div), np.arange(-90, 90+lat_div, lat_div))
 lon_mids = bins[0][:-1] + (bins[0][1] - bins[0][0])/2.
 lat_mids = bins[1][:-1] + (bins[1][1] - bins[1][0])/2.
@@ -224,35 +224,41 @@ out_file = os.path.join(defines.model_images_folder, f"{os.environ['CASENAME']}_
 cmap = 'jet'
 
 # creating the 2x2 plot
-fig, axes = plt.subplots(ncols=2, nrows=2, subplot_kw={'projection': cartopy.crs.PlateCarree()}, figsize=(12,8))
+fig, axes = plt.subplots(ncols=2, nrows=2, subplot_kw={'projection': cartopy.crs.PlateCarree()}, figsize=(16,8))
 
 ax = global_map(axes[0, 0])
-levels = np.linspace(0, 0.0025, 10)
-levels = np.linspace(0, 0.005, 10)
+# levels = np.linspace(0, 0.0025, 10)
+# levels = np.linspace(0, 0.005, 10)
+levels = np.arange(0, 0.011, 0.001)
 ax.set_title(f'Feature Density')
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['feature_density'], cmap=cmap, extend='max', levels=levels)
-plt.colorbar(cf, ax=ax, shrink=0.7)
+plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
+ax.set_ylim(-60, 60)
 
 ax = global_map(axes[0, 1])
 ax.set_title(f'Track Density')
-levels = np.linspace(0, 0.0025, 10)
-levels = np.linspace(0, 0.005, 10)
+# levels = np.linspace(0, 0.0025, 10)
+# levels = np.linspace(0, 0.005, 10)
+levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['track_density'], cmap=cmap, extend='max', levels=levels)
-plt.colorbar(cf, ax=ax, shrink=0.7)
+plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
+ax.set_ylim(-60, 60)
 
 ax = global_map(axes[1, 0])
 ax.set_title(f'Genesis')
-levels = np.linspace(0, 0.0025, 10)
-levels = 20
+# levels = 20
+levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['genesis'], cmap=cmap, extend='max', levels=levels)
-plt.colorbar(cf, ax=ax, shrink=0.7)
+plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
+ax.set_ylim(-60, 60)
 
 ax = global_map(axes[1, 1])
 ax.set_title(f'Lysis')
-levels = np.linspace(0, 0.0025, 10)
 levels = 20
+levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['lysis'], cmap=cmap, extend='max', levels=levels)
-plt.colorbar(cf, ax=ax, shrink=0.7)
+plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
+ax.set_ylim(-60, 60)
 
 plt.suptitle(f'{os.environ["CASENAME"]} ({defines.over_write_years[0]} - {defines.over_write_years[1]})')
 plt.tight_layout()

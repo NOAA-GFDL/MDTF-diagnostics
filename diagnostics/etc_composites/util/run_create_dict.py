@@ -4,6 +4,8 @@ import numpy as np
 import os
 import pandas as pd
 import defines
+import xarray as xr
+import composites
 
 from scipy.stats import mode
 from datetime import date
@@ -41,6 +43,26 @@ def read_in_txt_file(start_year, end_year):
   df.lon = df.lon/100.
 
   return df
+  
+def read_in_MCMS_txt_file(base_dir, in_model, start_year, end_year):
+
+  # Read in the cyc file
+  if (start_year == end_year):
+    in_file = os.path.join(base_dir, 'out_%s_output_%04d.txt'%(in_model, start_year))
+  else:
+    in_file = os.path.join(base_dir, 'out_%s_output_%04d_%04d.txt'%(in_model, start_year, end_year))
+
+  main_df = pd.read_csv(in_file, sep='\s+') 
+
+  # extracting only the certain columns I need from the main dataframe
+  df = main_df.iloc[:, [0, 1, 2, 3, 5, 6, 8, 11, 14, 15]].copy()
+
+  # naming the dataframe columns
+  df.columns = ['yy', 'mm', 'dd', 'hh', 'lat', 'lon', 'slp', 'flags', 'csi', 'usi']
+  df.lat = 90. - df.lat/100.
+  df.lon = df.lon/100.
+
+  return df
 
 ########################################
 ################ Main Code #############
@@ -55,7 +77,20 @@ if (not os.path.exists(base_dir)):
   os.makedirs(base_dir)
 
 # reading in txt file with the tracks for all the years
-df = read_in_txt_file(start_year, end_year)
+# This depends on which tracker I am using 
+# If the MCMS tracker is run then read in the MCMS output
+if (os.environ['RUN_MCMS'] == 'True'): 
+  df = read_in_MCMS_txt_file(base_dir, in_model, start_year, end_year)
+elif (os.environ['RUN_MCMS'] == 'False'): 
+  df = read_in_txt_file(start_year, end_year)
+
+# Reading in the topographic information
+ds = xr.open_dataset(defines.topo_file)
+reflat = ds.lat.values
+reflon = ds.lon.values
+reflon, reflat = np.meshgrid(reflon, reflat)
+lm = ds.lsm.isel(time=0).values
+lm = (lm > defines.thresh_landsea)
 
 # loop through all the years and create the datacycs
 for i_year in range(start_year, end_year+1):
@@ -69,7 +104,6 @@ for i_year in range(start_year, end_year+1):
   temp_fulllon = []
   temp_fulllat = []
   temp_fullslp = []
-  temp_flag = []
   
   temp_fulldate = []
   temp_date1 = []
@@ -79,6 +113,10 @@ for i_year in range(start_year, end_year+1):
   temp_fullhr = []
   temp_mon_mode = []
   temp_yr_mode = []
+  
+  temp_lm_flag = []
+  temp_warm_flag = []
+  temp_obs_flag = []
 
   # loop through all the unique usi values that have a cyclone for the given i_year
   for i_ind, i_usi in enumerate(uni_usi): 
@@ -123,11 +161,33 @@ for i_year in range(start_year, end_year+1):
     temp_fulllon.append(np.asarray(df.lon[usi_ind], dtype=float))
     temp_fulllat.append(np.asarray(df.lat[usi_ind], dtype=float))
     temp_fullslp.append(np.asarray(df.slp[usi_ind], dtype=float))
+    
+    # creating flags that will be used in the POD
+    # sh_ocean_warm called the obs_flag
+    # land/ocean called the lm_flag
+    lm_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
+    warm_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
+    obs_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
+    for i, ilon, ilat, imm in enumearate(zip(df.lon[usi_ind], df.lat[usi_ind], mm)):
+      dist_grid = composites.compute_dist_from_cdt(reflat, reflon, ilat, ilon)
+      c_ind = np.nanargmin(dist_grid)
+      cx, cy = np.unravel_index(c_ind, dist_grid.shape)
+      lm_flag[i] = int(lm[cx, cy])
+      if ((imm == 11) | (imm == 12) | (imm == 1) | (imm == 2) | (imm == 3)):
+        warm_flag[i] = 1
+      if (lat < 0) & (warm_flag[i] == 1) & (lm_flag[i] == 0):
+        obs_flag[i] = 1
+        
+
+    temp_lm_flag.append(np.asarray(lm_flag, dtype=int))
+    temp_warm_flag.append(np.asarray(warm_flag, dtype=int))
+    temp_obs_flag.append(np.asarray(obs_flag, dtype=int))
+
 
     # print ('%d in %d'%(i_ind, uni_usi.shape[0]))
 
   # creating a record to save mat files, like the one jimmy creates using matlab
-  out_cyc = fromarrays([temp_uid, temp_uidsingle, temp_fulllon, temp_fulllat, temp_fullslp, temp_fulldate, temp_date1, temp_fullyr, temp_fullmon, temp_fullday, temp_fullhr, temp_mon_mode, temp_yr_mode], names=['UID', 'UIDsingle', 'fulllon', 'fulllat', 'fullslp', 'fulldate', 'date1', 'fullyr', 'fullmon', 'fullday', 'fullhr', 'mon_mode', 'yr_mode'])
+  out_cyc = fromarrays([temp_uid, temp_uidsingle, temp_fulllon, temp_fulllat, temp_fullslp, temp_fulldate, temp_date1, temp_fullyr, temp_fullmon, temp_fullday, temp_fullhr, temp_mon_mode, temp_yr_mode, temp_lm_flag, temp_warm_flag, temp_obs_flag], names=['UID', 'UIDsingle', 'fulllon', 'fulllat', 'fullslp', 'fulldate', 'date1', 'fullyr', 'fullmon', 'fullday', 'fullhr', 'mon_mode', 'yr_mode', 'lm_flag', 'warm_flag', 'obs_flag'])
 
   # saving mat files for each year
   out_mat_file = os.path.join(defines.main_folder_location, '%s/read_%s/%s_%d.mat'%(in_model, in_model, in_model, i_year))

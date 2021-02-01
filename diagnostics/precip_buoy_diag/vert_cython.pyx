@@ -59,18 +59,12 @@ np.ndarray[DTYPE_t, ndim=1] op2,
 np.ndarray[DTYPE_t, ndim=1] op3,
 np.ndarray[DTYPE1_t, ndim=1] ind_low):
 
-#       cdef unsigned int vector_size = var_ps.size
-#       cdef unsigned int ht_size = lev.size
-
     cdef unsigned int vector_size = len(var_ps)
     cdef unsigned int ht_size = len(lev)
 
     cdef Py_ssize_t i,j,ind,il,ctr
     cdef Py_ssize_t im
 
-    #       il=ind_low
-#   im=ind_low
-          
     for i in range(vector_size):
   
         ind=pbl_ind[i]
@@ -88,85 +82,6 @@ np.ndarray[DTYPE1_t, ndim=1] ind_low):
                 op2[i]+=var[j,i]*dp[j,i]
                 op3[i]+=var1[j,i]*dp[j,i]
                 
-# def vert_integ_variable_bl(np.ndarray[DTYPE_t, ndim=2] var,
-# np.ndarray[DTYPE1_t, ndim=1] lev):
-# 
-# 
-# #   cdef unsigned int vector_size = var_ps.size
-#   cdef unsigned int ht_size = lev.size
-# 
-# #   cdef unsigned int vector_size = len(var_ps)
-# #   cdef unsigned int ht_size = len(lev)
-# # 
-# #   cdef Py_ssize_t i,j,ind,ctr
-# #   cdef Py_ssize_t im
-# #   
-# # #       il=ind_low
-# #   im=ind_low
-# #               
-# #   for i in range(vector_size):
-# #       
-# #       ind=pbl_ind[i]
-# #       il=ind_low[i]
-# #       op1[i]=var_ps[i]
-# #       
-# #       for j in range(ht_size-1):
-# # 
-# #           ## PBL ##            
-# #           if j>=ind:
-# #               op1[i]+=var[j,i]*dp[j,i]
-# # 
-# #           ## Low-level ##
-# # #              if (j<ind) & (j>=il):
-# # #                  op2[i]+=var1[j,i]*dp[j,i]
-# #  
-# #           ## Mid-level ##
-# # #              if (j<il) & (j>=im):
-# # #                  op3[i]+=var1[j,i]*dp[j,i]
-# # #                   
-# #            ## Mid and low-level ##
-# #           if (j<ind) & (j>=im):
-# #               op2[i]+=var[j,i]*dp[j,i]
-# #               op3[i]+=var1[j,i]*dp[j,i]
- 
-
-# def vert_integ_variable_trad(np.ndarray[DTYPE_t, ndim=2] var,
-# np.ndarray[DTYPE_t, ndim=2] var1,
-# np.ndarray[DTYPE1_t, ndim=1] pbl_ind,
-# np.ndarray[DTYPE_t, ndim=1] lev, 
-# np.ndarray[DTYPE_t, ndim=2] dp,
-#  
-# np.ndarray[DTYPE_t, ndim=1] op1,
-# np.ndarray[DTYPE_t, ndim=1] op2,
-# 
-# np.ndarray[DTYPE1_t, ndim=1] ind_mid,
-# np.ndarray[DTYPE1_t, ndim=1] ind_low):
-# 
-#   cdef unsigned int vector_size = len(pbl_ind)
-#   cdef unsigned int ht_size = len(lev)
-# 
-#   cdef Py_ssize_t i,j,ind,ctr
-#   cdef Py_ssize_t il,im
-#   
-#   im=ind_mid
-#               
-#   for i in range(vector_size):
-#       
-#       ind=pbl_ind[i]
-#       il=ind_low[i]
-#       
-#       for j in range(ht_size-1):
-# 
-#           ## Mid and low-level ##
-#           if (j<ind) & (j>=im):
-#               op2[i]+=var[j,i]*dp[j,i]
-# 
-#           ## Low-level ##
-#           if (j<ind) & (j>=il):
-#               op1[i]+=var1[j,i]*dp[j,i]
-                  
-
-
 def vert_integ_variable_bl(np.ndarray[DTYPE_t, ndim=2] var,
 np.ndarray[DTYPE_t, ndim=1] var_ps,
 np.ndarray[DTYPE_t, ndim=2] var1,
@@ -187,10 +102,7 @@ np.ndarray[DTYPE1_t, ndim=1] ind_low):
 
     cdef Py_ssize_t i,j,ind,ctr
     cdef Py_ssize_t il,im
-    
-##     il=ind_low
-#     im=ind_mid
-                
+                    
     for i in range(vector_size):
     
         ind=pbl_ind[i]

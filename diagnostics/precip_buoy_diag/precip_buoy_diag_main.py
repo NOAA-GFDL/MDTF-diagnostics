@@ -16,11 +16,6 @@ REFERENCES:
 '''
 
 from precip_buoy_diag_util import precipbuoy
-
-
-### Feed the temporary output directory ###
-### 
-
 ### initialize pod
 pb_pod=precipbuoy()
 

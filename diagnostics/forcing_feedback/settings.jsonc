@@ -1,0 +1,69 @@
+// Forcing and Feedbacks Module
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "settings" : {
+    "driver" : "forcing_feedback.py",
+    "long_name" : "Forcing and Feedbacks",
+    "realm" : "atmos",
+    "description" : "Radiative forcing and feedback diagnostics",
+    "runtime_requirements": {
+      "python3": ["os", "sys", "numpy", "xarray", "pandas", "netCDF4", "scipy", "matplotlib"]
+    }
+  },
+  //
+  "varlist" : [
+    {
+      "var_name" : "ta_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "ts_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "hus_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsus_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsuscs_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsds_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsdscs_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsdt_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsut_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rsutcs_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rlut_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    },{
+      "var_name" : "rlutcs_var",
+      "freq" : "mon",
+      "requirement" : "required"
+    }
+  ]
+}

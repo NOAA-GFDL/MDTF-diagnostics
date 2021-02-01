@@ -68,7 +68,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "/scratch/neelin/mdtf/inputdata/model",
+  "MODEL_DATA_ROOT": "/scratch/neelin/MDTF_TIMESLICE_EXP/c96L32_am4g9_fullaero_MDTF/segmented_files",
 
   // Working directory. Defaults to OUTPUT_DIR if blank.
   "WORKING_DIR": "/scratch/neelin/mdtf/fiaz",

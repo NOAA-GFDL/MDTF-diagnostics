@@ -23,8 +23,6 @@ from vert_cython import find_closest_index_2D, compute_layer_thetae
 import xarray as xr
 import matplotlib
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-
 
 # ======================================================================
 # precipbuoy_binThetae

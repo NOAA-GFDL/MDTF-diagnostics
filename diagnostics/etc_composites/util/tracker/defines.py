@@ -56,6 +56,9 @@ else:
   topo_file = os.environ['topo_file']
   model = 'tmprun'
 
+  # the latitude distribution file for ERA-Interim/MERRA
+  obs_lat_distrib_file = os.environ['obs_lat_distrib_file']
+
   # over write years have to changed from firstyr to last year
   # over_write_years = [2019, 2019]
   over_write_years = [int(os.environ['FIRSTYR']), int(os.environ['LASTYR'])]
@@ -101,7 +104,8 @@ else:
   ################ ADDITIONAL OPTIONS
   # set this flag to create the tracked cyclones into matlab dictionaries
   # the .mat files are required to compute statistics and create plots
-  create_matlab_dictionaries = True
+  # create_matlab_dictionaries = True
+  # removed aboved flag because we have to always create the matlab dictionaries
 
   #########################################################################################
   ####################### FRONT DETECTION MODULE SETTINGS #################################

@@ -85,11 +85,15 @@ elif (os.environ['RUN_MCMS'] == 'False'):
   df = read_in_txt_file(start_year, end_year)
 
 # Reading in the topographic information
+# also reading in the lat/lon values for the topo file
 ds = xr.open_dataset(defines.topo_file)
 reflat = ds.lat.values
 reflon = ds.lon.values
 reflon, reflat = np.meshgrid(reflon, reflat)
-lm = ds.lsm.isel(time=0).values
+if ('time' in ds.coords.keys()): 
+  lm = ds.lsm.isel(time=0).values
+else: 
+  lm = ds.lsm.values
 lm = (lm > defines.thresh_landsea)
 
 # loop through all the years and create the datacycs
@@ -168,14 +172,14 @@ for i_year in range(start_year, end_year+1):
     lm_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
     warm_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
     obs_flag = np.zeros((len(df.lat[usi_ind])), dtype=int)
-    for i, ilon, ilat, imm in enumearate(zip(df.lon[usi_ind], df.lat[usi_ind], mm)):
+    for i, (ilon, ilat, imm) in enumerate(zip(df.lon[usi_ind], df.lat[usi_ind], mm)):
       dist_grid = composites.compute_dist_from_cdt(reflat, reflon, ilat, ilon)
       c_ind = np.nanargmin(dist_grid)
       cx, cy = np.unravel_index(c_ind, dist_grid.shape)
       lm_flag[i] = int(lm[cx, cy])
       if ((imm == 11) | (imm == 12) | (imm == 1) | (imm == 2) | (imm == 3)):
         warm_flag[i] = 1
-      if (lat < 0) & (warm_flag[i] == 1) & (lm_flag[i] == 0):
+      if (ilat < 0) & (warm_flag[i] == 1) & (lm_flag[i] == 0):
         obs_flag[i] = 1
         
 

@@ -13,7 +13,7 @@ sys.path.append(os.environ['POD_HOME']+'/util')
 
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
 os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
-os.environ['obs_lat_distrib_file'] = os.environ['DATADIR'] + '/erai_lat_distrib.pkl'
+os.environ['obs_lat_distrib_file'] = os.environ['OBS_DATA'] + '/erai_lat_distrib.pkl'
 import run_tracker_setup 
 import defines
 
@@ -466,6 +466,7 @@ else:
   run_tracker_setup.copy_code_over()
 
 # I have to create the matlab dictionaries from the track output file
+print('Creating matlab dict...')
 cmd = "python %s/util/run_create_dict.py"%(os.environ['POD_HOME'])
 os.system(cmd)
 print('Completed creating the mat file used for the analysis.')

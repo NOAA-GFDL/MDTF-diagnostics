@@ -19,18 +19,34 @@ import os
 from precip_buoy_diag_util import precipbuoy
 
 
-### Feed input paths and temporary output directory ###
-input_paths=[os.environ["ta_file"],os.environ["hus_file"],
-os.environ["pr_file"],os.environ["ps_file"]]
+### Feed the temporary output directory ###
+### 
 
 ### initialize pod
-pb_pod=precipbuoy(os.environ["temp_file"])
+pb_pod=precipbuoy()
 
-### Check if pre-processed files are available.
-### This is done crudely: we check if the temp_dir is empty.
-if pb_pod.preprocessed:
-    print('PREPROCESSED FILES AVAILABLE. MOVING ONTO BINNING...')
+if pb_pod.binned:
+    print('BINNED OUTPUT AVAILABLE. MOVING ONTO PLOTTING...')
+    pb_pod.plot()
+
 else:
-    print('PREPROCESSING REQUIRED....')
-    pb_pod.preprocess()
+    print('BINNED OUTPUT UNAVAILABLE. CHECKING FOR PREPROCESSED FILES')
+        
+    ### Check if pre-processed files are available.
+
+    if pb_pod.preprocessed:
+        print('PREPROCESSED FILES AVAILABLE. MOVING ONTO BINNING...')
+        pb_pod.bin()
+        print('BINNING DONE. NOW PLOTTING...')
+        pb_pod.plot()
+    
+    else:
+        print('PREPROCESSING REQUIRED....')
+        pb_pod.preprocess()
+        print('PREPROCESSING DONE. NOW BINNING...')
+        pb_pod.bin()
+        print('BINNING DONE. NOW PLOTTING...')
+        pb_pod.plot()
+
+
 

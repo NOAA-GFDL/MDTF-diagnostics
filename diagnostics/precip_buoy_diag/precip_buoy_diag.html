@@ -6,36 +6,24 @@
 <P>
 The precipitation-buoyancy diagnostics module relates precipitation to a
 measure of lower-tropospheric averaged buoyancy and its two components:
-a measure of lower-tropospheric Convective Available Potential Energy (CAPE) and
-lower-tropospheric sub saturation (SUBSAT). The module evaluates the
+a measure of lower-tropospheric Convective Available Potential Energy (CAPE<sub>L</sub>) and
+lower-tropospheric sub saturation (SUBSAT<sub>L</sub>). The module evaluates the
 model precipitation sensitivity to thermodynamic variations by
-conditionally-averaging tropical oceanic precipitation by CAPE and
-SUBSAT, and visualizing the result in 3D as a precipitation surface. A
-metric that captures the CAPE vs. SUBSAT precipitation sensitivity is
+conditionally-averaging tropical oceanic precipitation by CAPE<sub>L</sub> and
+SUBSAT<sub>L</sub>, and visualizing the result in 3D as a precipitation surface. A
+metric called &gamma;<sub>Tq</sub> assesses the CAPE<sub>L</sub> vs. SUBSAT<sub>L</sub> precipitation sensitivity. This metric is
 used to assess model performance compared to observations and a suite of
 CMIP6 models.
 <p>
 <a href="MDTF_Documentation_precipitation_buoyancy.pdf">Full Documentation and Contact Information</a>
 <P>
+<TH ALIGH=LEFT><font color=navy> Precipitation Buoyancy Statistics for {{CASENAME}}
 <TABLE>
-<TR>
-<TH ALIGH=LEFT><font color=navy> Precipitation Buoyancy Statistics
-<TH ALIGH=LEFT>{{CASENAME}}
-<TH ALIGH=LEFT>OBS
-<TR>
-<TH ALIGH=LEFT>Precipitation-buoyancy curves
-<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.PrecipBuoyBasic_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/PrecipBuoyBasic_R2TMIv7r1_200206_201405_res={{RES}}_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
+<TD>Precipitation-buoyancy curve
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.PrecipBuoyCurve.png>plot</A>
 <TR>
 <TR>
-<TH ALIGH=LEFT>Precipitation-buoyancy surfaces
-<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.PrecipBuoysurface_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/PrecipBuoyCriticalCollapse_stats_R2TMIv7r1_200206_201405_res=0.25_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
+<TD>Precipitation-buoyancy surface
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.PrecipBuoySurf.png>plot</A>
 <TR>
-<!-- 
-<TH ALIGH=LEFT>Critical column water vapor (CWV)
-<TH ALIGH=CENTER><A HREF=model/{{CASENAME}}.convecTransCriticalCollapse_wc_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
-<TH ALIGH=CENTER><A HREF=obs/convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res=0.25_fillNrCWV_{{BULK_TROPOSPHERIC_TEMPERATURE_VAR}}.png>plot</A>
-<TR>
- -->
 </TABLE>

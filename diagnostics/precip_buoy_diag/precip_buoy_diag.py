@@ -42,7 +42,7 @@ os.environ["region_mask"]=os.environ["WK_DIR"]+'/model/'+'region_0.25x0.25_costa
 try:
     os.remove(os.environ["POD_HOME"]+'/*.c')
     os.remove(os.environ["POD_HOME"]+'/*.so')
-except:
+except Exception:
     pass
 
 ### Compiling cython

@@ -524,6 +524,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             for v in vars_to_query:
                 try:
                     _log.info("    Querying %s", v.translation)
+                    print('XXXX', str(v.translation), getattr(v.translation, "T", "NO T"))
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
                         raise util.DataQueryError("No data found.", v)
@@ -868,6 +869,10 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         except AssertionError:
             _log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                 "span query range (%s)."), files_date_range, self.attrs.date_range)
+            print('XXXX\n', sorted_df.to_string())
+            print('XXXX', sorted_df[self.daterange_col].to_list())
+            print('XXXX', files_date_range.start, files_date_range.end, files_date_range.precision)
+            print('XXXX', self.attrs.date_range.start, self.attrs.date_range.end, self.attrs.date_range.precision)
         except Exception as exc:
             self._query_error_logger(f"Caught exception {repr(exc)}:", data_key)
         # hit an exception; return empty DataFrame to signify failure
@@ -1512,10 +1517,10 @@ class CMIP6ExperimentSelectionMixin():
             # return empty DataFrame to signify failure
             if has_region:
                 _log.debug("Eliminating expt_key for regional data (%s).", 
-                    group_df['region'].drop_duplicates())
+                    group_df['region'].drop_duplicates().to_list())
             elif has_spatial_avg:
                 _log.debug("Eliminating expt_key for spatially averaged data (%s).", 
-                    group_df['spatial_avg'].drop_duplicates())
+                    group_df['spatial_avg'].drop_duplicates().to_list())
             return pd.DataFrame(columns=group_df.columns)
 
     @staticmethod

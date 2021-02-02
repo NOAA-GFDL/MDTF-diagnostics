@@ -19,7 +19,7 @@ class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_exitcode(self):
         input = 'echo "foo"; false'
         with self.assertRaises(Exception):
-            # I couldn't get this to catch CalledProcessError specifically,
+            # I couldn't get this to catch MDTFCalledProcessError specifically,
             # maybe because it takes args?
             util.run_shell_command(input)
 
@@ -53,7 +53,7 @@ class TestSubprocessInteraction(unittest.TestCase):
     def test_run_command_exitcode(self):
         input = ['exit', '1']
         with self.assertRaises(Exception):
-            # I couldn't get this to catch CalledProcessError specifically,
+            # I couldn't get this to catch MDTFCalledProcessError specifically,
             # maybe because it takes args?
             util.run_command(input)
 

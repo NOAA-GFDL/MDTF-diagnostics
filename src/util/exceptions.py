@@ -3,6 +3,7 @@ imports.
 """
 import os
 import errno
+from subprocess import CalledProcessError
 import traceback
 
 import logging
@@ -72,6 +73,10 @@ class MDTFFileExistsError(FileExistsError, MDTFBaseException):
         super(MDTFFileExistsError, self).__init__(
             errno.EEXIST, os.strerror(errno.EEXIST), path
         )
+
+class MDTFCalledProcessError(CalledProcessError, MDTFBaseException):
+    """Wrapper for :py:class:`subprocess.CalledProcessError`."""
+    pass
 
 class WormKeyError(KeyError, MDTFBaseException):
     """Raised when attempting to overwrite or delete an entry in a

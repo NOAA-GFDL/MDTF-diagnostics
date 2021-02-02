@@ -42,7 +42,7 @@ class ModuleManager(util.Singleton):
         proc = subprocess.Popen([cmd, 'python'] + args, stdout=subprocess.PIPE)
         (output, error) = proc.communicate()
         if proc.returncode != 0:
-            raise subprocess.CalledProcessError(
+            raise util.MDTFCalledProcessError(
                 returncode=proc.returncode, 
                 cmd=' '.join([cmd, 'python'] + args), output=error)
         exec(output)

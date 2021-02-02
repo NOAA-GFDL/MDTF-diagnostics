@@ -646,9 +646,12 @@ class Fieldlist():
                     f"'{coord.standard_name}' not defined in convention '{self.name}'."))
             new_coord = lut1[coord.standard_name]
         
-        new_coord = copy.deepcopy(new_coord)
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
+            new_coord = copy.deepcopy(new_coord)
             new_coord.value = util.convert_scalar_coord(coord, new_coord.units)
+        else:
+            new_coord = dc.replace(coord, 
+                **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
     def translate(self, var):

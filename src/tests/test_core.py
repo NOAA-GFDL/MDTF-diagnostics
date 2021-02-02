@@ -6,7 +6,6 @@ import unittest.mock as mock # define mock os.environ so we don't mess up real e
 import src.core as core
 # from src.data_manager import DataManager
 from src.diagnostic import Diagnostic
-from subprocess import CalledProcessError
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
 
 

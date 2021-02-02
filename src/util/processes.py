@@ -77,7 +77,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
         timeout (:py:obj:`int`, optional): Optionally, kill the command's subprocess
-            and raise a CalledProcessError if the command doesn't finish in 
+            and raise a MDTFCalledProcessError if the command doesn't finish in 
             `timeout` seconds.
 
     Returns:
@@ -85,7 +85,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
-        CalledProcessError: If any commands return with nonzero exit code.
+        MDTFCalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
     def _timeout_handler(signum, frame):
@@ -126,7 +126,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     if retcode != 0:
         _log.error('run_command on %s (pid %s) exit status=%s:%s\n',
             cmd_str, pid, retcode, stderr)
-        raise subprocess.CalledProcessError(
+        raise exceptions.MDTFCalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
     if '\0' in stdout:
         return stdout.split('\0')
@@ -153,7 +153,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
         given.
 
     Raises:
-        CalledProcessError: If any commands return with nonzero exit code.
+        MDTFCalledProcessError: If any commands return with nonzero exit code.
             Stderr for that command is stored in `output` attribute.
     """
     # shouldn't lookup on each invocation, but need abs path to bash in order
@@ -189,7 +189,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     if retcode != 0:
         _log.error('run_shell_command on %s (pid %s) exit status=%s:\n%s\n',
             command, pid, retcode, stderr)
-        raise subprocess.CalledProcessError(
+        raise exceptions.MDTFCalledProcessError(
             returncode=retcode, cmd=command, output=stderr)
     if '\0' in stdout:
         return stdout.split('\0')

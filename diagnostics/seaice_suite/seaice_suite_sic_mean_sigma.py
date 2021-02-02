@@ -280,13 +280,12 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
     fig = plt.figure(figsize=(12,10))
     cmap_c = cmapname
 
-    try: 
-        obs.any()
-        edge=True
-        if edgec is None:
-            edgec='yellow'
-    except:
+    if obs is None:
         edge=False
+    else:
+        edge=True
+        if edgec==None:
+            edgec='yellow'
             
     for m, themonth in enumerate(monthabbrev):
         ax = plt.subplot(3,4,m+1,projection = ccrs.NorthPolarStereo())
@@ -325,7 +324,7 @@ monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='Blues_r', statname=
 
 
 figfile=figures_dir+'themean_anomalies_'+firstyr+'-'+lastyr+'.png'
-monthlyplot(modmean-obsmean, obsmean, figfile=figfile, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
+monthlyplot(modmean-obsmean, obs=obsmean, figfile=figfile, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
 
 
 
@@ -349,7 +348,7 @@ monthlyplot(moddetrendedstd, obs=modmean, edgec='silver', figfile=figfile, cmapn
 
 
 figfile=figures_dir+'detrendedstd_anomalies_'+firstyr+'-'+lastyr+'.png'
-monthlyplot(moddetrendedstd-obsdetrendedstd, obsmean, edgec='gray', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs Detrended Std Dev', unitname='Fraction',vmin=-0.3,vmax=0.3)
+monthlyplot(moddetrendedstd-obsdetrendedstd, obs=obsmean, edgec='gray', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs Detrended Std Dev', unitname='Fraction',vmin=-0.3,vmax=0.3)
 
 
 

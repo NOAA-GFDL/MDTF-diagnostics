@@ -261,7 +261,7 @@ class precipbuoy:
             else:
                 datetimeindex = ds.indexes['time'].to_datetimeindex()
                 ds['time'] = datetimeindex
-        except:
+        except Exception:
             pass
     
     def _slice_data(self,ds,dimsize=4):
@@ -585,7 +585,7 @@ class precipbuoy:
     
         try:
             os.remove(os.environ["binned_output"])
-        except:
+        except Exception:
             pass
     
         data_set.to_netcdf(os.environ["binned_output"],

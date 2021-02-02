@@ -68,14 +68,14 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "/scratch/neelin/MDTF_TIMESLICE_EXP/c96L32_am4g9_fullaero_MDTF/segmented_files",
+  "MODEL_DATA_ROOT": "../input/model_data",
 
   // Working directory. Defaults to OUTPUT_DIR if blank.
-  "WORKING_DIR": "/scratch/neelin/mdtf/fiaz",
+  "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory.
-  "OUTPUT_DIR": "/scratch/neelin/mdtf/fiaz",
+  "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,

@@ -92,10 +92,6 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             overwrite=True
         )
 
-    # Flags to pass to ghostscript PS -> PNG conversion in convert_pod_figures().
-    _ghostscript_flags = ("-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 "
-        "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
-
     def convert_pod_figures(self, pod, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
         ghostscript.
@@ -114,6 +110,11 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
                 bitmap files to.
         """
+        # Flags to pass to ghostscript for PS -> PNG conversion (in particular
+        # bitmap resolution.)
+        eps_convert_flags = ("-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 "
+        "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
+
         abs_src_subdir = os.path.join(pod.POD_WK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(pod.POD_WK_DIR, dest_subdir)
         files = util.find_files(
@@ -122,17 +123,25 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
         for f in files:
             f_stem, _  = os.path.splitext(f)
-            gs_flags = self._ghostscript_flags
-            # %d = ghostscript's template for multi-page output
-            f_out = f_stem + '_MDTF_TEMP_%d.png' 
-            util.run_shell_command(f'gs {gs_flags} -sOutputFile="{f_out}" {f}')
-            # syntax for f_out above appends "_MDTF_TEMP" + page number to 
-            # output files. If input .ps/.pdf file had multiple pages, this will
-            # generate 1 png per page. Page numbering starts at 1. Now check 
-            # how many files gs created:
+            # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's 
+            # template for multi-page output). If input .ps/.pdf file has multiple 
+            # pages, this will generate 1 png per page, counting from 1.
+            f_out = f_stem + '_MDTF_TEMP_%d.png'
+            try:
+                util.run_shell_command(
+                    f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
+                )
+            except Exception as exc:
+                _log.error("%s produced malformed plot: %s", 
+                    pod.name, f[len(abs_src_subdir):])
+                if isinstance(exc, util.MDTFCalledProcessError):
+                    _log.debug("gs error encountered when converting %s for %s:\n%s",
+                        pod.name, f[len(abs_src_subdir):], getattr(exc, "output", ""))
+                continue
+            # gs ran successfully; check how many files it created:
             out_files = glob.glob(f_stem + '_MDTF_TEMP_?.png')
             if not out_files:
-                raise OSError(f"Error: no png generated from {f}")
+                raise util.MDTFFileNotFoundError(f"No .png generated from {f}.")
             elif len(out_files) == 1:
                 # got one .png, so remove suffix.
                 os.rename(out_files[0], f_stem + '.png')

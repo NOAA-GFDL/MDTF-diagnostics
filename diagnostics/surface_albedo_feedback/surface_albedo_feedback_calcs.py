@@ -220,20 +220,10 @@ def process_data():
     histmod=xr.merge([kernel,albedo])
     histmod.to_netcdf(kernel_histmod_file)
 
-    processraw=False
-    if processraw: # this is only here FYI, this calc is provided in file kernel_obs_file
-        # obs raw input file name
-        radiation_obs_file = obsdir+'CERES40_climatology_2000-2018.nc'
-        cires = xr.open_dataset(radiation_obs_file) # climatology file
-        dt=cires.CDT
-        ds=cires.CDS
-        ut=cires.CUT
-        us=cires.CUS
-        kernel,albedo=kernelalbedo(dt, ds, ut, us)
-        obs=xr.merge([kernel,albedo])
-        obs.to_netcdf(kernel_obs_file)
-
-
+    # the same function was used to compute the kernel and albedo 
+    # from a climatology constructed from 2000-2018 of CERES40
+    # it has been saved to kernel_obs_file
+    # and is provided with this POD
     
 if __name__ == '__main__':
 

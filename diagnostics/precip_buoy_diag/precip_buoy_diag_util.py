@@ -15,7 +15,6 @@ import glob
 from sys import exit
 import datetime as dt
 import numpy as np
-import numba
 from numba import jit
 import scipy.io
 from scipy.interpolate import NearestNDInterpolator
@@ -121,8 +120,6 @@ class precipbuoy:
             
         ### Load arrays into memory ###
     
-        lat=ta_ds_subset['lat']
-        lon=ta_ds_subset['lon']
         ta=ta_ds_subset[os.environ['ta_var']]
         hus=hus_ds_subset[os.environ['qa_var']]
         lev=ta_ds_subset['lev']
@@ -770,14 +767,9 @@ class precipbuoy:
 
         subsat_y0=subsat_bin_center[fin0[0]]
         cape_x0=cape_bin_center[fin0[1]]
-    
-#         subsat_y1=subsat_bin_center[fin1[0]]
         cape_x1=cape_bin_center[fin1[1]]
-
         subsat_y2=subsat_bin_center[fin2[0]]
-#         cape_x2=cape_bin_center[fin2[1]]
 
-    
         ### Get a distance measure between the overlapping region to the cape and subsat regions
 
         dcape=abs(cape_x0.mean()-cape_x1.mean())
@@ -809,7 +801,7 @@ class precipbuoy:
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list('name', colors_trunc)
     
         colors=cmap(normed(Z.T))
-        surf=ax.plot_surface(X,Y,Z.T,facecolors=colors,alpha=0.75)
+        ax.plot_surface(X,Y,Z.T,facecolors=colors,alpha=0.75)
     
         if plot_ref:
             X_ref, Y_ref = np.meshgrid(xbin_ref,ybin_ref)

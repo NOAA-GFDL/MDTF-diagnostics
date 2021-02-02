@@ -302,7 +302,6 @@ class MDTFFramework(object):
             #     netcdf_mixin=nc_helper, environment_manager=env_mgr
             # )
             env_mgr.setUp()
-            ## FA: Intercept here.
             env_mgr.run()
             env_mgr.tearDown()
 

@@ -1,0 +1,46 @@
+{
+    "settings" : {
+        "long_name" : "Flow-Dependent, Cross-Timescale Model Diagnostics Documentation",
+        "driver" : "flow_dep_diag.py",
+        "realm" : ["weather"], //should there be additional tags?
+        "runtime_requirements" : {
+        "python" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib"]
+        // I could add here that you need an IRI login?
+        },
+        "pod_env_vars" : { //names and values of shell env vars used by diagnostic
+        // could add spatial resolution but not required
+        "RES" : "1"
+        }
+    },
+    "data" : {
+        "format" : "any_netcdf",
+    },
+    "dimensions" : {
+        "lat" : "latitude",
+        
+    },
+  // properties applying to data the diag is requesting
+  "data" : {
+    <...properties for all requested model data...>
+  },
+  // apply to dimesnions (netDCF terms) of model data
+  "dimensions" : {
+    "my_first_dimension": {
+      <...properties describing this dimension...>
+    },
+    "my_second_dimension": {
+      <...properties describing this dimension...>
+    },
+    ...
+  },
+  // describe individual vars  
+  "varlist" : {
+    "my_first_variable": {
+      <...properties describing this variable...>
+    },
+    "my_second_variable": {
+      <...properties describing this variable...>
+    },
+    ...
+  }
+}

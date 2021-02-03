@@ -135,7 +135,9 @@ def convert_dataarray(ds, da_name, dest_unit):
 
     _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
         da.name, std_name, src_unit, dest_unit)
+    da_attrs = da.attrs.copy()
     fac = conversion_factor(src_unit, dest_unit)
     ds = ds.assign({da_name: fac * ds[da_name]})
+    ds[da_name].attrs = da_attrs
     ds[da_name].attrs['units'] = str(dest_unit)
     return ds

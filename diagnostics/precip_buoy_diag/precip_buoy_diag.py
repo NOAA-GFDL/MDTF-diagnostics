@@ -16,6 +16,7 @@ REFERENCES:
 # Import standard Python packages
 import os
 import subprocess
+from precip_buoy_diag_util import precipbuoy
 
 ### Set environment variables pointing to pr, hus, ta and ps. 
 ### Once path variables from settings.jsonc are available, this step is redundant.
@@ -55,11 +56,33 @@ try:
 except subprocess.CalledProcessError as err:
     print ("PODError > ",err.output)
     print ("PODError > ",err.stderr)
+
+
 ## Calling POD ###
-try:
-    run_POD=subprocess.run(["python", os.environ["POD_HOME"]+"/precip_buoy_diag_main.py"],
-    capture_output=True, check=True, text=True)
-    print(run_POD.stdout)
-except subprocess.CalledProcessError as err:
-    print ("PODError > ",err.output)
-    print ("PODError > ",err.stderr)
+
+### initialize pod ###
+pb_pod=precipbuoy()
+
+if pb_pod.binned:
+    print('BINNED OUTPUT AVAILABLE. MOVING ONTO PLOTTING...')
+    pb_pod.plot()
+
+else:
+    print('BINNED OUTPUT UNAVAILABLE. CHECKING FOR PREPROCESSED FILES')
+        
+    ### Check if pre-processed files are available.
+
+    if pb_pod.preprocessed:
+        print('PREPROCESSED FILES AVAILABLE. MOVING ONTO BINNING...')
+        pb_pod.bin()
+        print('BINNING DONE. NOW PLOTTING...')
+        pb_pod.plot()
+    
+    else:
+        print('PREPROCESSING REQUIRED....')
+        pb_pod.preprocess()
+        print('PREPROCESSING DONE. NOW BINNING...')
+        pb_pod.bin()
+        print('BINNING DONE. NOW PLOTTING...')
+        pb_pod.plot()
+

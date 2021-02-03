@@ -185,7 +185,7 @@ def is_on_tape_filesystem(path):
     """
     # handle eg. /arch0 et al as well as /archive.
     return any(os.path.realpath(path).startswith(s) \
-        for s in ['/arch', '/ptmp', '/work'])
+        for s in ['/arch', '/ptmp', '/work', '/uda'])
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

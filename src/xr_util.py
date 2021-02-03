@@ -119,6 +119,39 @@ class MDTFCFAccessorMixin(object):
                 cf_xarray.accessor._get_axis_coord, axes_obj, key, error=False
             ) for key in cf_xarray.accessor._AXIS_NAMES
         }
+        if var_name is None:
+            return {k: sorted(v) for k, v in vardict.items() if v}
+        # case where var_name given:    
+        # do validation on cf_xarray.accessor's work, since it turns out it
+        # can get confused on real-world data
+        empty_keys = []
+        delete_keys = []
+        dims_list = list(axes_obj.dims)
+        for k,v in vardict.items():
+            if len(v) > 1 and var_name is not None: 
+                _log.error('Too many %s axes found for %s: %s', k, var_name, v)
+                raise TypeError(f"Too many {k} axes for {var_name}.")
+            elif len(v) == 1:
+                if v[0] not in dims_list:
+                    _log.warning(("cf_xarray fix: %s axis %s not in dimensions "
+                        "for %s; dropping."), k, v[0], var_name)
+                    delete_keys.append(k)
+                else:
+                    dims_list.remove(v[0])
+            else:
+                empty_keys.append(k)
+        if len(dims_list) > 0:
+            # didn't assign all dims for this var
+            if len(dims_list) == 1 and len(empty_keys) == 1:
+                _log.warning('cf_xarray fix: assuming %s is %s axis for %s',
+                    dims_list[0], empty_keys[0], var_name)
+                vardict[empty_keys[0]] = [dims_list[0]]
+            else:
+                _log.error(("cf_xarray error: couldn't assign %s to axes for %s"
+                    "(assigned axes: %s)"), dims_list, var_name, vardict)
+                raise TypeError(f"Missing axes for {var_name}.")
+        for k in delete_keys:
+            vardict[k] = []
         return {k: sorted(v) for k, v in vardict.items() if v}
 
 class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
@@ -222,8 +255,6 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
         instead of a list of names as in cf_xarray.
         """
         d = self._obj.cf._old_axes_dict()
-        if any(len(coord_list) != 1 for coord_list in d.values()):
-            raise TypeError() # never get here; should have already been validated
         return {k: v[0] for k,v in d.items()}
 
     @property

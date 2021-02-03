@@ -147,7 +147,7 @@ def find_files(src_dirs, filename_globs, n_files=None):
 def check_dirs(*dirs, create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a 
-    :py:exception:`FileNotFoundError` or cause the creation of that directory.
+    :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
 
     Args:
         dirs: iterable of absolute paths to check.
@@ -160,12 +160,12 @@ def check_dirs(*dirs, create=False):
                 if create:
                     os.makedirs(dir_, exist_ok=False)
                 else:
-                    raise FileNotFoundError(f"Directory {dir_} not found.")
+                    raise exceptions.MDTFFileNotFoundError(f"Directory {dir_} not found.")
         except Exception as exc:
             if isinstance(exc, FileNotFoundError):
-                raise exc
+                raise exceptions.MDTFFileNotFoundError(getattr(exc,'filename',''))
             else:
-                raise OSError(f"Caught exception when checking {dir_}") from exc
+                raise OSError(f"Caught exception when checking {dir_}.") from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):
     """Return a filename that doesn't conflict with existing files.

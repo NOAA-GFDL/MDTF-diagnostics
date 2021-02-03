@@ -33,6 +33,7 @@ class MDTFFramework(object):
             wrapped_exc = traceback.TracebackException.from_exception(exc)
             _log.critical("Framework caught exception %r", exc)
             print(''.join(wrapped_exc.format()))
+            exit(1)
         
     def configure(self, cli_obj, pod_info_tuple, log_config):
         """Wrapper for all configuration done based on CLI arguments.

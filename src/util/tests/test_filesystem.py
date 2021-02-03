@@ -3,7 +3,7 @@ import textwrap
 import unittest
 import unittest.mock as mock
 from src.util import filesystem as util
-
+from src.util import exceptions
 class TestCheckDirs(unittest.TestCase):
     @mock.patch('os.path.isdir', return_value = True)
     @mock.patch('os.makedirs')
@@ -20,7 +20,7 @@ class TestCheckDirs(unittest.TestCase):
     @mock.patch('os.makedirs')
     def test_check_dirs_not_found(self, mock_makedirs, mock_isdir):
         # try to exit() if any directories not found
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(exceptions.MDTFFileNotFoundError):
             util.check_dirs('DUMMY/PATH/NAME', create=False)
         mock_makedirs.assert_not_called()
 

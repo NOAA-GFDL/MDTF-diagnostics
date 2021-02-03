@@ -121,7 +121,7 @@ else
 end if
 ; end TSJ edit
 
-anom = (/rmMonAnnCycTLL(z500(:,0,:,:))/)
+anom = (/rmMonAnnCycTLL(z500(:,:,:))/)
 delete (z500)
 n = 11
 do yr = firstyr+1,lastyr

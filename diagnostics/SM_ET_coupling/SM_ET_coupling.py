@@ -30,7 +30,7 @@ def generate_R_plots(RPlotFile):
         pipe = subprocess.Popen([
             'Rscript --verbose --vanilla {}'.format(RPlotFile)
         ] , shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('R routine {0} \n {1}'.format(RPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)

@@ -11,7 +11,7 @@
     "realm" : ["atmos", "land"],
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "runtime_requirements": {
-      "python2": [],
+      "python3": [],
       "Rscript": ["colorRamps", "maps", "fields", "akima", "ncdf4"]
     }
   },

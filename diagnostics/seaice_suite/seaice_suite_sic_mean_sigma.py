@@ -284,7 +284,7 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
         edge=False
     else:
         edge=True
-        if edgec==None:
+        if edgec is None:
             edgec='yellow'
             
     for m, themonth in enumerate(monthabbrev):

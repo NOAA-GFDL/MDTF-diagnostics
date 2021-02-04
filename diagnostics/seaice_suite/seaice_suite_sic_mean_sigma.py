@@ -302,7 +302,7 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
         ax.set_title(themonth,fontsize=14)
 
 
-    fig.suptitle(modelname+' '+statname+' Sea Ice Concentration '+str(firstyr)+'-'+str(lastyr), fontsize=18)
+    fig.suptitle(f"{modelname} {statname} Sea Ice Concentration {firstyr}-{lastyr}",fontsize=18)
 
     cbar_ax = fig.add_axes([0.315, 0.08, 0.4, 0.02]) #[left, bottom, width, height]
     cbar = fig.colorbar(pl, cax=cbar_ax,  orientation='horizontal')
@@ -319,60 +319,43 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
 
 
 
-figfile=figures_dir+'themean_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}themean_{firstyr}-{lastyr}.png"
 monthlyplot(modmean, obs=obsmean, figfile=figfile, cmapname='Blues_r', statname='Mean', unitname='Fraction',vmin=0.,vmax=1.)
 
 
-
-figfile=figures_dir+'themean_anomalies_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}themean_anomalies_{firstyr}-{lastyr}.png"
 monthlyplot(modmean-obsmean, obsmean, figfile=figfile, edgec='gray', cmapname='RdBu_r', statname='Minus Obs Mean', unitname='Fraction',vmin=-0.8,vmax=0.8)
 
 
-
-
-figfile=figures_dir+'trend_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}trend_{firstyr}-{lastyr}.png"
 monthlyplot(modtrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
 
 
-
-
-figfile=figures_dir+'trend_anomalies_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}trend_anomalies_{firstyr}-{lastyr}.png"
 monthlyplot(modtrend-obstrend, obs=obsmean, figfile=figfile, cmapname='RdBu_r', edgec='silver', statname='Minus Obs Trend in', unitname='Fraction per year',vmin=-0.03,vmax=0.03)
 
 
-
-
-figfile=figures_dir+'detrendedstd_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}detrendedstd_{firstyr}-{lastyr}.png"
 monthlyplot(moddetrendedstd, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='Detrended Std Dev', unitname='Fraction',vmin=0.,vmax=0.3)
 
 
-
-
-figfile=figures_dir+'detrendedstd_anomalies_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}detrendedstd_anomalies_{firstyr}-{lastyr}.png"
 monthlyplot(moddetrendedstd-obsdetrendedstd, obsmean, edgec='gray', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs Detrended Std Dev', unitname='Fraction',vmin=-0.3,vmax=0.3)
 
 
-
-
-figfile=figures_dir+'onemolagcorr_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}onemolagcorr_{firstyr}-{lastyr}.png"
 monthlyplot(modonemolagcorr, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='One-Month Lag Correlation', unitname='Correlation',vmin=0.,vmax=1.)
 
 
-
-
-figfile=figures_dir+'onemolagcorr_anomalies_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}onemolagcorr_anomalies_{firstyr}-{lastyr}.png"
 monthlyplot(modonemolagcorr-obsonemolagcorr, obs=obsmean, edgec='silver', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs One-Mon. Lag Corr.', unitname='Correlation',vmin=-1.,vmax=1.)
 
 
-
-
-figfile=figures_dir+'oneyrlagcorr_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}oneyrlagcorr_{firstyr}-{lastyr}.png"
 monthlyplot(modoneyrlagcorr, obs=modmean, edgec='silver', figfile=figfile, cmapname='hot_r', statname='One-Yr. Lag Corr.', unitname='Correlation',vmin=-0.,vmax=0.5)
 
 
-
-
-figfile=figures_dir+'oneyrlagcorr_anomalies_'+firstyr+'-'+lastyr+'.png'
+figfile = f"{figures_dir}oneyrlagcorr_anomalies_{firstyr}-{lastyr}.png"
 monthlyplot(modoneyrlagcorr-obsoneyrlagcorr, obs=obsmean, edgec='silver', figfile=figfile, cmapname='RdBu_r', statname='Minus Obs One-Yr. Lag Corr.', unitname='Correlation',vmin=-0.5,vmax=0.5)
 
 

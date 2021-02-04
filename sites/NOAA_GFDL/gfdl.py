@@ -428,12 +428,15 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
 
     daterange_col = "date_range"
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = tuple()
+    expt_key_cols = tuple()
+    expt_cols = expt_key_cols
     # Catalog columns whose values must be the same for each POD.
-    pod_expt_cols = ('component', )
+    pod_expt_key_cols = ('component', )
+    pod_expt_cols = pod_expt_key_cols
     # Catalog columns whose values must "be the same for each variable", ie are 
     # irrelevant but must be constrained to a unique value.
-    var_expt_cols = ("chunk_freq", )
+    var_expt_key_cols = ("chunk_freq", )
+    var_expt_cols = var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):

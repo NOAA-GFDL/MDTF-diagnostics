@@ -723,16 +723,19 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     # Catalog columns whose values must be the same for all variables being
     # fetched. This is the most common sense in which we "specify an experiment."
+    expt_key_cols = util.abstract_attribute()
     expt_cols = util.abstract_attribute()
 
     # Catalog columns whose values must be the same for each POD, but may differ
     # between PODs. An example could be spatial grid resolution.
+    pod_expt_key_cols = tuple()
     pod_expt_cols = tuple()
 
     # Catalog columns whose values must "be the same for each variable", ie are 
     # irrelevant differences for our purposes but must be constrained to a 
     # unique value. An example is the CMIP6 MIP table: the same variable can 
     # appear in multiple MIP tables, but the choice of table isn't relvant for PODs.
+    var_expt_key_cols = tuple()
     var_expt_cols = tuple()
 
     @property
@@ -814,8 +817,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     def _experiment_key(self, df=None, idx=None, cols=None):
         """Returns tuple of string-valued keys for grouping files by experiment:
-        (<values of case_expt_cols>, <values of pod_expt_cols>, 
-        <values of var_expt_cols>).
+        (<values of expt_key_cols>, <values of pod_expt_key_cols>, 
+        <values of var_expt_key_cols>), or individual entries in that tuple if
+        *cols* is specified.
 
         .. note::
            We can't just do a .groupby on column names, because pandas attempts 
@@ -832,9 +836,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             return '|'.join(str(df[c]) for c in cols_)
 
         if cols is None:
-            # full key
-            return tuple(_key_str(x) for x in \
-                (self.expt_cols, self.pod_expt_cols, self.var_expt_cols))
+            # return full key
+            return tuple(
+                _key_str(x) for x in \
+                (self.expt_key_cols, self.pod_expt_key_cols, self.var_expt_key_cols)
+            )
         else:
             # computing one of the entries in the tuple
             return _key_str(cols)
@@ -928,7 +934,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     _expt_key_col = 'expt_key' # column name for DataSource-specific experiment identifier
 
-    def _expt_df(self, obj, cols, parent_id=None, obj_name=None):
+    def _expt_df(self, obj, cols, key_cols, parent_id=None, obj_name=None):
         """Return a DataFrame of partial experiment attributes (as determined by
         cols) that are shared by the query results of all variables covered by
         var_iterator.
@@ -943,7 +949,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             when apply()'ed to the query results DataFrame.
             """
             return pd.Series({
-                self._expt_key_col: self._experiment_key(df, idx=None, cols=cols)
+                self._expt_key_col: self._experiment_key(df, idx=None, cols=key_cols)
             }, dtype='object')
 
         expt_df = None
@@ -1002,18 +1008,21 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # set columns and tiebreaker function based on the level of the 
         # selection process we're at (case-wide, pod-wide or var-wide):
         if stage == 'case':
-            expt_df_cols = self.expt_cols
+            df_cols = self.expt_cols
+            df_key_cols = self.expt_key_cols
             resolve_func = self.resolve_expt
             obj_name = obj.name
         elif stage == 'pod':
-            expt_df_cols = self.pod_expt_cols
+            df_cols = self.pod_expt_cols
+            df_key_cols = self.pod_expt_key_cols
             resolve_func = self.resolve_pod_expt
             if isinstance(obj, diagnostic.Diagnostic):
                 obj_name = obj.name
             else:
                 obj_name = 'all PODs'
         elif stage == 'var':
-            expt_df_cols = self.var_expt_cols
+            df_cols = self.var_expt_cols
+            df_key_cols = self.var_expt_key_cols
             resolve_func = self.resolve_var_expt
             if isinstance(obj, diagnostic.VarlistEntry):
                 obj_name = obj.name
@@ -1023,7 +1032,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             raise TypeError()
 
         # get DataFrame of allowable (consistent) choices
-        expt_df = self._expt_df(obj, expt_df_cols, parent_id, obj_name)
+        expt_df = self._expt_df(obj, df_cols, df_key_cols, parent_id, obj_name)
         
         if len(expt_df) > 1:
             if self.strict:
@@ -1366,7 +1375,9 @@ class SampleLocalFileDataSource(SingleLocalFileDataSource):
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.SampleDataPreprocessor
 
-    expt_cols = ("sample_dataset", )
+    # Catalog columns whose values must be the same for all variables.
+    expt_key_cols = ("sample_dataset", )
+    expt_cols = expt_key_cols
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}
@@ -1478,21 +1489,25 @@ class CMIP6ExperimentSelectionMixin():
 
     daterange_col = "date_range"
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = (
+    expt_key_cols = (
         "activity_id", "institution_id", "source_id", "experiment_id",
-        "variant_label", "version_date",
-        # derived columns
+        "variant_label", "version_date"
+    )
+    expt_cols = expt_key_cols + (
+        # columns whose values are derived from those in expt_key_cols
         "region", "spatial_avg", 'realization_index', 'initialization_index', 
         'physics_index', 'forcing_index'
     )
     # Catalog columns whose values must be the same for each POD.
-    pod_expt_cols = ('grid_label',
-        # derived columns
+    pod_expt_key_cols = ('grid_label',)
+    pod_expt_cols = pod_expt_key_cols + (
+        # columns whose values are derived from those in pod_expt_key_cols
         'regrid', 'grid_number'
     )
     # Catalog columns whose values must "be the same for each variable", ie are 
     # irrelevant but must be constrained to a unique value.
-    var_expt_cols = ("table_id", )
+    var_expt_key_cols = ("table_id", )
+    var_expt_cols = var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):

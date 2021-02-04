@@ -77,7 +77,7 @@ def generate_ncl_plots(nclPlotFile):
     try:
         print("Calling ",nclPlotFile)
         pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)

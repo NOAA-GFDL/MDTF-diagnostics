@@ -280,13 +280,12 @@ def monthlyplot(field, obs=None, edgec=None, figfile='./figure.png',
     fig = plt.figure(figsize=(12,10))
     cmap_c = cmapname
 
-    try: 
-        obs.any()
-        edge=True
-        if edgec is None:
-            edgec='yellow'
-    except:
+    if obs is None:
         edge=False
+    else:
+        edge=True
+        if edgec==None:
+            edgec='yellow'
             
     for m, themonth in enumerate(monthabbrev):
         ax = plt.subplot(3,4,m+1,projection = ccrs.NorthPolarStereo())

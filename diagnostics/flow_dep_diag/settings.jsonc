@@ -14,33 +14,33 @@
     },
     "data" : {
         "format" : "any_netcdf",
+        "frequency" : "day"
     },
-    "dimensions" : {
-        "lat" : "latitude",
-        
+    "dimensions" : { //should these be labeled X Y etc as in the data? or as lat lon etc
+        "Y" : {
+            "standard_name" : "latitude",
+            "units" : "degrees_N"
+        },
+        "X" : {
+            "standard_name" : "longitude",
+            "units" : "degrees_E"
+        },
+        "P" : {
+            "standard_name" : "air_pressure",
+            "units" : "hPa",
+            "positive" : "down"
+        },
+        "T" : {
+            "standard_name" : "time",
+            "units" : "days"
+        }
     },
-  // properties applying to data the diag is requesting
-  "data" : {
-    <...properties for all requested model data...>
-  },
-  // apply to dimesnions (netDCF terms) of model data
-  "dimensions" : {
-    "my_first_dimension": {
-      <...properties describing this dimension...>
-    },
-    "my_second_dimension": {
-      <...properties describing this dimension...>
-    },
-    ...
-  },
-  // describe individual vars  
-  "varlist" : {
-    "my_first_variable": {
-      <...properties describing this variable...>
-    },
-    "my_second_variable": {
-      <...properties describing this variable...>
-    },
-    ...
-  }
+    "varlist" : [
+        {
+            "adif" : {
+            "standard_name" : "geopotential_height"
+            "path_variable" : "hgt_NNRP_rean.nc"
+            }
+        }
+    ]
 }

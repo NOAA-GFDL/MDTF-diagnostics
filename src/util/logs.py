@@ -296,13 +296,12 @@ def git_info():
 
 # ------------------------------------------------------------------------------
 
-def signal_logger(log, caller_name, signum=None, frame=None):
+def signal_logger(caller_name, signum=None, frame=None):
     """Lookup signal name from number and write to log.
     
     Taken from `<https://stackoverflow.com/a/2549950>`__.
 
     Args:
-        log (:py:class:`logging.Logger`): Log to write information to.
         caller_name (str): Calling function name, only used in log message.
         signum, frame: parameters of the signal we recieved.
     """
@@ -315,7 +314,8 @@ def signal_logger(log, caller_name, signum=None, frame=None):
             "%s caught signal %s (%s)",
             caller_name, sig_lookup.get(signum, 'UNKNOWN'), signum
         )
-        # _log.debug("%s frame: %s", caller_name, frame)
+    else:
+        _log.info("%s caught unknown signal.", caller_name)
 
 def _set_excepthook(root_logger):
     """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are 

@@ -682,6 +682,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         """
         util.signal_logger(self.__class__.__name__, signum, frame)
         self.post_query_and_fetch_hook()
+        exit(1)
 
 # --------------------------------------------------------------------------
 

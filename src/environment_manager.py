@@ -514,4 +514,4 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.log_handle.close()
             if p.process is not None:
                 p.process.kill()
-
+        exit(1)

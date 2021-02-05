@@ -1,0 +1,29 @@
+<title>MDTF example diagnostic</title>
+<!--Does this need to point to a different place / where the figure would output? -->
+<img src="../mdtf_diag_banner.png">
+<h3>Flow-Dependent, Cross-Timescale Model Diagnostics </h3>
+<p>
+The flow-dependent model diagnostics compares daily atmospheric circulation pattern,
+or weather types, characteristics in reanalyses and models to analyze misrepresented
+physical processes related to spatiotemporal systematic errors in those models.
+Relationships between these biases and climate teleconnections
+(e.g., SST patterns, ENSO, MJO, etc.) can be explored in different models.
+</p>
+<p>
+The names of any environment variables set for the diagnostic (enclosed in
+curly braces) will be replaced by the same values they had when the diagnostic
+was run. For example, this diagnostic's favorite color is "{EXAMPLE_FAV_COLOR}."
+</p>
+<TABLE>
+<TR>
+<TH align=left><font color=navy>Time averages, {FIRSTYR}-{LASTYR}
+<TH align=left>{CASENAME}
+<TH align=left>OBS
+<TR>
+<TH align=left>Near-surface temperature (K)
+<!--
+    "model/wt_composite.pdf" I think it would be in model subd?
+-->
+<TH align=center><A href=model/example_model_plot.png>plot</A>
+<TH align=center><A href=obs/example_obs_plot.png>plot</A>
+</TABLE>

@@ -49,7 +49,7 @@ Unless you've distirbuted your script elsewhere, you don't need to change this.
 Functionality
 -------------
 
-The main script generate the tropical Pacific dynamic sea level
+The main script generates the tropical Pacific dynamic sea level
 and wind stress curl scatter plots at different time scale
 due to their strong dependency from Ekman pumping/suction
 and barotropic response over the ocean

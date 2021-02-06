@@ -1,12 +1,12 @@
 import numpy as np
 
-def cal_area(lon,lat,dlon,dlat) :
+def cal_area(lon,lat,dlon,dlat,r_earth = 6.371*1E8) :
 # input : lon, lat (not array, but single element)
 # output : area that matches the [lon,lat] coordinate 
 #          units in cm^2
 
     # constant
-    arad = np.float64(6.371E8) #cm
+    arad = r_earth
     dlon = np.float64(dlon*np.pi/180.)
     dlat = np.float64(dlat*np.pi/180.)
     lat = (90.-lat)*np.pi/180.
@@ -16,12 +16,12 @@ def cal_area(lon,lat,dlon,dlat) :
 
 
 
-def da_area(da_var, lonname='lon', latname='lat', xname='x', yname='y', model=None):
+def da_area(da_var, lonname='lon', latname='lat', xname='x', yname='y', model=None, r_earth = 6.371*1E8):
     """
     calculate spherical area
     
     """
-    r_earth = 6.371*1E8         # cm
+#     r_earth = 6.371*1E8         # cm
 
     if model in ['gfdl']:
         

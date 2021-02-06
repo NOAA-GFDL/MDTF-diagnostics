@@ -79,9 +79,9 @@ With monthly frequency from the model output. This diagnostic needs
 
 input model variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- tauuo (surface wind stress in the x direction) 
-- tauvo (surface wind stress in the y direction) 
-- zos (dynamic sea level height in the model) 
+- tauuo (surface wind stress in the x direction from native model output resolution/grid) 
+- tauvo (surface wind stress in the y direction from native model output resolution/grid) 
+- zos (dynamic sea level height in the model from native model output resolution/grid) 
 
 The script is written based on the CESM2-OMIP1 download provided by CMIP6-OMIP 
 hosted by WCRP.
@@ -100,6 +100,17 @@ References
    
 1. C.-W. Hsu et al. (2020): A Mechanistic Analysis of Tropical Pacific Dynamic 
    Sea Level in GFDL-OM4 under OMIP-I and OMIP-II Forcings. *GMD*, under review.
+   
+2. S. M. Griffies et al. (2016): OMIP contribution to CMIP6: experimental and 
+   diagnostic protocol for the physical component of the Ocean Model Intercomparison 
+   Project. *GMD*, `https://doi.org/10.5194/gmd-9-3231-2016 <https://doi.org/10.5194/gmd-9-3231-2016>`_
+   
+3. S. Kobayashi et al., (2015): The JRA-55 Reanalysis: General Specifications and Basic Characteristics.
+   *Journal of the Meteorological Society of Japan. Ser. II*, 
+   `https://doi.org/10.2151/jmsj.2015-001<https://doi.org/10.2151/jmsj.2015-001>`_ 
+   
+4. W. G. Large and S. G. Yeager, (2009): The global climatology of an interannually varying air–sea flux data set.
+   *Climate Dynamics*,`https://doi.org/10.1007/s00382-008-0441-3<https://doi.org/10.1007/s00382-008-0441-3>`_
 
 
 More about this diagnostic

@@ -54,7 +54,7 @@ and wind stress curl scatter plots at different time scales
 due to their strong dependency from Ekman pumping/suction
 and barotropic response over the ocean.
 
-python function used
+Python function used
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - spherical_area.cal_area     : generate area array based on the lon lat of data
 - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)

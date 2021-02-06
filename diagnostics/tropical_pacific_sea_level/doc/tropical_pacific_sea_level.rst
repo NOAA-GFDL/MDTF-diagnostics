@@ -52,7 +52,7 @@ Functionality
 The main script generates the tropical Pacific dynamic sea level
 and wind stress curl scatter plots at different time scales
 due to their strong dependency from Ekman pumping/suction
-and barotropic response over the ocean
+and barotropic response over the ocean.
 
 python function used
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

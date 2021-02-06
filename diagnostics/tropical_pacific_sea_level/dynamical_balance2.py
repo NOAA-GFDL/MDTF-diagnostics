@@ -7,9 +7,9 @@ import numpy as np
 
 ####
 # constant 
-r_earth = 6.371*1E8         # cm
+# r_earth = 6.371*1E8         # cm
 
-def curl_var(da_uo,da_vo,x_name='lon',y_name='lat'):
+def curl_var(da_uo,da_vo,x_name='lon',y_name='lat',r_earth = 6.371*1E8):
     """
     Calculate the curl of the vector field 
     
@@ -71,7 +71,7 @@ def curl_var(da_uo,da_vo,x_name='lon',y_name='lat'):
     return curl_u, curl_v
 
 
-def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y'):
+def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     """
     Calculate wind stress curl 
     
@@ -135,7 +135,7 @@ def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y'):
      
     return curltau_u, curltau_v
 
-def curl_var_3d(da_varx,da_vary,xname='lon',yname='lat'):
+def curl_var_3d(da_varx,da_vary,xname='lon',yname='lat',r_earth = 6.371*1E8):
     """
     Calculate wind stress curl 
     
@@ -201,7 +201,7 @@ def curl_var_3d(da_varx,da_vary,xname='lon',yname='lat'):
     return curlvar_u, curlvar_v
     
     
-def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y'):
+def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     """
     Calculate wind stress curl 
     

@@ -497,15 +497,15 @@ obscolor = 'k'
 all_wsc = []
 all_ssh = []
 
-wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_mean'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
-ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_mean'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+wsc = obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean']
+ssh = obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean']
 ax1.scatter(wsc,ssh,c='k',label='Observation')
 all_wsc.append(wsc)
 all_ssh.append(ssh)
 
 for nmodel,model in enumerate(Model_name):
-    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_mean'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
-    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_mean'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
+    wsc = regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean']
+    ssh = regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean']
     ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
     all_wsc.append(wsc)
     all_ssh.append(ssh)
@@ -531,15 +531,15 @@ ax1 = fig.add_axes([1.3,0,1,1])
 all_wsc = []
 all_ssh = []
 
-wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_linear'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
-ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_linear'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].slope
+wsc = obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear']
+ssh = obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear'].slope
 ax1.scatter(wsc,ssh,c='k',label='Observation')
 all_wsc.append(wsc)
 all_ssh.append(ssh)
 
 for nmodel,model in enumerate(Model_name):
-    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_linear'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]
-    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_linear'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].slope
+    wsc = regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear']
+    ssh = regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear'].slope
     ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
     all_wsc.append(wsc)
     all_ssh.append(ssh)
@@ -569,10 +569,10 @@ ax1 = fig.add_axes([0,-1.5,1,1])
 all_wsc = []
 all_ssh = []
 
-wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
-      -obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
-ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
-      -obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+wsc = obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].max()\
+      -obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].min()
+ssh = obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].max()\
+      -obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].min()
 wsc = np.abs(wsc)
 ssh = np.abs(ssh)
 ax1.scatter(wsc,ssh,c='k',label='Observation')
@@ -580,10 +580,10 @@ all_wsc.append(wsc)
 all_ssh.append(ssh)
 
 for nmodel,model in enumerate(Model_name):
-    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
-          -regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
-    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].max()\
-          -regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])].min()
+    wsc = regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].max()\
+          -regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].min()
+    ssh = regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].max()\
+          -regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season'].min()
     ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))
     wsc = np.abs(wsc)
     ssh = np.abs(ssh)
@@ -616,13 +616,13 @@ ax1 = fig.add_axes([1.3,-1.5,1,1])
 all_wsc = []
 all_ssh = []
 
-ind = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+ind = obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
       .argmax()
-wsc = obs_regionalavg_mlist['WASwind']['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+wsc = obs_regionalavg_mlist['WASwind'][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
       .isel(month=ind).month.values
-ind = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+ind = obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
       .argmax()
-ssh = obs_regionalavg_mlist['CMEMS']['%s_%i_%i_%i_%i_season'%('adt',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+ssh = obs_regionalavg_mlist['CMEMS'][f'adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
       .isel(month=ind).month.values
 
 ax1.scatter(wsc,ssh,c='k',label='Observation')
@@ -630,13 +630,13 @@ all_wsc.append(wsc)
 all_ssh.append(ssh)
 
 for nmodel,model in enumerate(Model_name):
-    ind = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+    ind = regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
           .argmax()
-    wsc = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('curl_tau',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+    wsc = regionalavg_mlist[model][f'curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
           .isel(month=ind).month.values
-    ind = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+    ind = regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
           .argmax()
-    ssh = regionalavg_mlist[model]['%s_%i_%i_%i_%i_season'%('zos',lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
+    ssh = regionalavg_mlist[model][f'zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season']\
           .isel(month=ind).month.values
 
     ax1.scatter(wsc,ssh,label='%s'%(Model_legend_name[nmodel]))

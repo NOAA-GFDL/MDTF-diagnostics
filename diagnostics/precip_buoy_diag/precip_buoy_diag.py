@@ -45,9 +45,9 @@ except Exception:
 try:
     build_cython=subprocess.run(['python', 
     os.environ["POD_HOME"]+"/precip_buoy_diag_setup_cython.py",
-    'build_ext','--build-lib='+os.environ['POD_HOME']],check=True)
+    "build_ext","--build-lib="+os.environ["POD_HOME"]],check=True)
     if (build_cython.returncode)==0:
-        print('>>>>>>>Successfully compiled cython file')
+        print(">>>>>>>Successfully compiled cython file")
 except subprocess.CalledProcessError as err:
     print ("PODError > ",err.output)
     print ("PODError > ",err.stderr)

@@ -10,6 +10,6 @@ dependencies:
 - numpy=1.18.5
 - scipy=1.5.3
 - matplotlib=3.3.3
-- numba
+- numba=0.52
 - pandas
 - dask

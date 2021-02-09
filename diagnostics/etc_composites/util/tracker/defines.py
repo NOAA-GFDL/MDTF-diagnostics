@@ -92,7 +92,8 @@ else:
   # threshold for height to defining land mask and topo.
   # JJJ - b/c of interpolation and non-zero height of some SST region,
   # need to use a value larger than 0 otherwise parts of the ocean become land.
-  thresh_landsea = 50.0/100.0
+  # thresh_landsea = 50.0/100.0
+  thresh_landsea = 0.0/100.0
 
   # Print a lot to screen to debug
   verbose = 0

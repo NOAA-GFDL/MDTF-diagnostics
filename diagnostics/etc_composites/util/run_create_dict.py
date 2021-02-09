@@ -3,6 +3,18 @@ import scipy.io as sio
 import numpy as np
 import os
 import pandas as pd
+
+# # temp stuff
+# os.environ['DATADIR'] = '/localdrive/drive10/jj/mdtf/inputdata/model/ERA5.ALL.DEG15.001'
+# # os.environ['WK_DIR'] = '/localdrive/drive10/jj/mdtf/wkdir/MDTF_ERA5.ALL.DEG15.001_1950_1950/etc_composites'
+# os.environ['WK_DIR'] = '/localdrive/drive10/jj/mdtf/wkdir/MDTF_ERA5.ALL.DEG15.001_1950_2019/etc_composites'
+# os.environ['POD_HOME'] = '/localdrive/drive10/jj/mdtf/MDTF-diagnostics/diagnostics/etc_composites'
+# os.environ['topo_file'] = '/localdrive/drive10/jj/mdtf/inputdata/model/ERA5.ALL.DEG15.001/topo.nc'
+# os.environ['obs_lat_distrib_file'] = '/localdrive/drive10/jj/mdtf/inputdata/obs_data/etc_composites/erai_lat_distrib.pkl'
+# os.environ['FIRSTYR'] = '1950'
+# os.environ['LASTYR'] = '2019'
+# os.environ['RUN_MCMS'] = 'True'
+
 import defines
 import xarray as xr
 import composites
@@ -10,6 +22,7 @@ import composites
 from scipy.stats import mode
 from datetime import date
 from numpy.core.records import fromarrays
+
 
 def read_in_txt_file(start_year, end_year):
   ''' Code used to read in a text file with the tracks. 
@@ -131,10 +144,10 @@ for i_year in range(start_year, end_year+1):
     # check if the total track time extends atleast 36 hours
     # we have to account for the detla_t in this case
     # because we run for hourly and six-hourly
-    hh = np.asarray(df.hh[usi_ind],dtype=int)
-    delta_t = hh[1] - hh[0]
-    if (len(hh)*delta_t) < 36: 
-      continue
+    # hh = np.asarray(df.hh[usi_ind],dtype=int)
+    # delta_t = 6.0
+    # if (len(hh)*delta_t) < 36: 
+    #   continue
     
     # creating numpy arrays from dataframe for processing full_date
     yy = np.asarray(df.yy[usi_ind],dtype=int)
@@ -145,6 +158,12 @@ for i_year in range(start_year, end_year+1):
     # creating full_date 
     # matlab datenum format
     full_date = [date.toordinal(date(i_yy, i_mm, i_dd))+366.+i_hh/24. for i_yy, i_mm, i_dd, i_hh in zip(yy, mm, dd, hh)]
+
+    # check if the total track time extends atleast 36 hours
+    # we have to account for delta_t to have the capability to run the tracker for hourly or 6-hourly data
+    delta_t = (full_date[1] - full_date[0])*24
+    if (len(hh)*delta_t) < 36: 
+      continue
   
     # checking if the mode year is the current year, if not this track will be passed onto the next year or previous year accordingly
     if (mode(yy).mode[0] != i_year):

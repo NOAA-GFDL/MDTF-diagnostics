@@ -27,6 +27,36 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
+	
+	"dimensions": {
+      "lat": {
+          "standard_name": "latitude",
+          "units": "degrees_N",
+          "range": [-20, 20],
+          "need_bounds": false
+      },
+      "lon": {
+          "standard_name": "longitude",
+          "units": "degrees_E",
+          "range": [-180, 180],
+          "need_bounds": false
+      },
+      "plev": {
+          "standard_name": "air_pressure",
+          "units": "hPa",
+          // POD can also handle pressure ordering that increases away from surface
+          "positive": "down",
+          "need_bounds": false
+      },
+      "time": {
+          "standard_name": "time",
+          "units": "days",
+          "calendar": "standard",
+          "need_bounds": false
+      }
+    },
+	
+	
 	"varlist": [{
 			"var_name": "pr_var",
 			"freq": "1hr",

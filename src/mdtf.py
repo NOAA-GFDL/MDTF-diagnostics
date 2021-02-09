@@ -84,7 +84,6 @@ class MDTFFramework(object):
         self._post_parse_hook(cli_obj, config)
         self._print_config(cli_obj, config)
 
-
     def _cli_pre_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler before parsing
         # although most of the work done by parse_mdtf_args
@@ -292,7 +291,6 @@ class MDTFFramework(object):
             case.fetch_data()
             caselist.append(case)
 
-
         for case in caselist:
             env_mgr = self.EnvironmentManager()
             env_mgr.pods = case.pods # best way to do this?
@@ -320,7 +318,6 @@ if __name__ == '__main__':
     if not os.path.exists(defaults_rel_path):
         # print('Warning: site-specific cli.jsonc not found, using template.')
         defaults_rel_path = os.path.join(src_dir, 'cli_template.jsonc')
-    print(code_root, defaults_rel_path)
     mdtf = MDTFFramework(code_root, defaults_rel_path)
     print("\n======= Starting {}".format(__file__))
     mdtf.main_loop()

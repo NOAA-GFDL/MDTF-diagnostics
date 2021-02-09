@@ -15,6 +15,7 @@ else:
 from src import util
 from src import util_mdtf
 from src.shared_diagnostic import PodRequirementFailure
+
 class EnvironmentManager(six.with_metaclass(ABCMeta)):
     # analogue of TestSuite in xUnit - abstract base class
 
@@ -75,7 +76,7 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
             log_str = "--- MDTF.py Starting POD {}\n".format(pod.name)
             pod.logfile_obj.write(log_str)
             if verbose > 0: print(log_str)
-            
+
             try:
                 pod.setUp()
             except PodRequirementFailure as exc:
@@ -93,8 +94,8 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
             env_list = ["{}: {}". format(k,v) for k,v in iter(pod.pod_env_vars.items())]
             pod.logfile_obj.write("\n".join(
                 ["Env vars: "] + sorted(env_list) + [" "]))
-            try:
 
+            try:
                 pod.logfile_obj.write("--- MDTF.py calling POD {}\n\n".format(pod.name))
                 pod.logfile_obj.flush()
                 pod.process_obj = self.spawn_subprocess(
@@ -103,8 +104,6 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
                     env = os.environ, cwd = pod.POD_WK_DIR,
                     stdout = pod.logfile_obj, stderr = subprocess.STDOUT
                 )
-                
-
             except OSError as exc:
                 print('ERROR :', exc.errno, exc.strerror)
                 print(" occured with call: {}".format(pod.run_commands()))
@@ -149,7 +148,7 @@ class EnvironmentManager(six.with_metaclass(ABCMeta)):
             ['bash', '-c', commands],
             env=env, cwd=cwd, stdout=stdout, stderr=stderr 
         )
-        
+
     # -------------------------------------
 
     def tearDown(self):

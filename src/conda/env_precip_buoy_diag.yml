@@ -4,7 +4,6 @@ channels:
 - defaults
 dependencies:
 - python=3.7
-- nco>=4.7.6,<=4.8.1
 - cython=0.29.21
 - xarray=0.16.2
 - numpy=1.18.5

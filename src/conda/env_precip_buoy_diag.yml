@@ -5,15 +5,11 @@ channels:
 dependencies:
 - python=3.7
 - nco>=4.7.6,<=4.8.1
-- netCDF4=1.5
-- cython
-- xarray
+- cython=0.29.21
+- xarray=0.16.2
 - numpy=1.18.5
-- scipy
-- matplotlib
-- netCDF4
-- networkx
+- scipy=1.5.3
+- matplotlib=3.3.3
 - numba
 - pandas
-- seaborn
 - dask

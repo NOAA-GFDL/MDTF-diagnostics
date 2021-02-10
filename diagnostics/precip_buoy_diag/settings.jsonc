@@ -22,6 +22,7 @@
 		// threshold precipitation value to compute precipitating pdfs
 		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 
 		// option to handle sigma co-ordinates. Change VERT_TYPE to "sigma"
+		// sigma conversion assumes p=ps*b+a
 		"VERT_TYPE" : "pres"},
 		"runtime_requirements": {
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]

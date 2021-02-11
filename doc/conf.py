@@ -367,7 +367,7 @@ todo_include_todos = True
 def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
-    app.connect('autodoc-skip-member', autodoc_skip_member)
+    # app.connect('autodoc-skip-member', autodoc_skip_member)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829

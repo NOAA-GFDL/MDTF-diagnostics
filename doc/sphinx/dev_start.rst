@@ -15,7 +15,9 @@ Obtaining the source code
 
 POD developers should create their branches from the `develop branch <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop>`__ of the framework code
 ::
-  git checkout -b feature/[POD name] develop
+
+   git checkout -b feature/[POD name] develop
+
 This is the "beta test" version, used for testing changes before releasing them to end users
 
 Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the develop branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
@@ -30,8 +32,8 @@ We recommend that new PODs be written in Python 3. We provide a developer versio
 
 ::
 
-% cd $CODE_ROOT
-% ./src/conda/conda_env_setup.sh --all-dev --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+   % cd $CODE_ROOT
+   % ./src/conda/conda_env_setup.sh --all-dev --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 
 POD development using existing Conda environments
@@ -48,7 +50,7 @@ The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDT
 
 ::
 
-% source activate $CONDA_ENV_DIR/_MDTF_python3_base
+   % source activate $CONDA_ENV_DIR/_MDTF_python3_base
 
 where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments. After you've finished working under this environment, run ``% conda deactivate`` or simply close the terminal.
 
@@ -85,9 +87,9 @@ As  described in :ref:`ref-execute`, when you run the ``mdtf`` executable, among
 
 2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME/``. The ``runtime_requirements`` section in ``settings.jsonc`` specifies the programming language(s) adopted by the POD:
 
-    a). If purely Python 3, the framework will look for ``src/conda/env_python3_base.yml`` and check its content to determine whether the POD's requirements are met, and then switch to ``_MDTF_python3_base`` and run the POD.
+   a). If purely Python 3, the framework will look for ``src/conda/env_python3_base.yml`` and check its content to determine whether the POD's requirements are met, and then switch to ``_MDTF_python3_base`` and run the POD.
 
-    b). Similarly, if NCL or R is used, then ``NCL_base`` or ``R_base``.
+   b). Similarly, if NCL or R is used, then ``NCL_base`` or ``R_base``.
 
 Note that for the 6 existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to ``_MDTF_NCL_base`` when seeing both NCL and Python in ``settings.jsonc``.
 
@@ -109,8 +111,8 @@ Recall how the framework finds a proper Conda environment for a POD. First, it s
 
    ::
 
-   % cd $CODE_ROOT
-   % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+      % cd $CODE_ROOT
+      % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 - Have the framework run your POD on suitable test data.
 

@@ -122,10 +122,11 @@ After making sure that Conda is available, run ``% conda info --base`` as the us
 - If this path points to ``/usr/`` or a subdirectory therein, we recomnend having a separate Miniconda/Anaconda installation of your own following :ref:`ref-conda-install`.
 
 Next, run
+
 ::
 
-% cd $CODE_ROOT
-% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+   % cd $CODE_ROOT
+   % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
@@ -135,7 +136,7 @@ to install all necessary environments (and create an executable; :ref:`ref-locat
 
 - The ``--all`` flag makes the script install all environments prescribed by the YAML (.yml) files under ``src/conda/`` (one YAML for one environment). You can install the environments selectively by using the ``--env`` flag instead. For instance, ``% ./src/conda/conda_env_setup.sh --env base --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`` will install the "_MDTF_base" environment prescribed by ``env_base.yml``, and so on. With ``--env``, the current script can install one environment at a time. Repeat the command for multiple environments.
 
-- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :erf:`ref-interaction-conda-env`.
+- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :ref:`ref-interaction-conda-env`.
 
 After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run ``conda update`` on them). To update the environments after updating the framework code, re-run the above commands. These environments can be uninstalled by simply deleting "_MDTF" directories under ``$CONDA_ENV_DIR`` (or ``$CONDA_ROOT/envs/`` for default setting).
 
@@ -181,8 +182,8 @@ If you've installed the Conda environments using the ``--all`` flag (:ref:`ref-c
 
 ::
 
-% cd $CODE_ROOT
-% ./mdtf -f src/default_tests.jsonc
+   % cd $CODE_ROOT
+   % ./mdtf -f src/default_tests.jsonc
 
 Run time may be 10-20 minutes, depending on your system.
 
@@ -205,9 +206,9 @@ As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` exec
 
 2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in the settings file specifies the programming language(s) adopted by the POD:
 
-    a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD.
+   a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD.
 
-    b). If NCL is used, then ``_MDTF_NCL_base``.
+   b). If NCL is used, then ``_MDTF_NCL_base``.
 
 If you choose to selectively install Conda environments using the ``--env`` flag (:ref:`ref-conda-env-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
 

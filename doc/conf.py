@@ -36,13 +36,13 @@ from recommonmark.transform import AutoStructify
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF Diagnostics'
-copyright = u'2020, Model Diagnostics Task Force'
+copyright = u'2021, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 2'
+release = u'3.0 beta 3'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use

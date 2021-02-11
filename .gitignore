@@ -69,6 +69,9 @@ __pycache__/
 #Create by VSCode
 .vscode
 
+# mac os
+.DS_Store
+
 #pytest
 .cache
 .pytest_cache

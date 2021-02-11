@@ -7,8 +7,6 @@
     "realm" : "ocean",
     "description" : "Compute Mixed Layer Depth Mean from 3D Ocean Variables",
     "pod_env_vars" : {
-      "EXAMPLE_FAV_COLOR": "blue",
-      "EXAMPLE_NEXT_FAV_COLOR": "red"
     },
     "runtime_requirements": {
         "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy","gsw"]

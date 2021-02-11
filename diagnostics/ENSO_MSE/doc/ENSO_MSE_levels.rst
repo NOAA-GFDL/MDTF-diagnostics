@@ -1,5 +1,5 @@
 Instructions for ENSO Moist Static Energy Process­-oriented diagnostics (POD)
-============================================================================
+==============================================================================
 
 This POD package consists of four levels. With a focus on identifying leading processes that
 determine ENSO­-related precipitation anomalies, main module of the POD estimates
@@ -181,6 +181,7 @@ follows:
 =============== ==================================================================================================================
 **regression**  switch to calculate and plot regressions: 0 : off [no regression output], 1 : on [ regression output].
                 Based on Nino3.4 reference index POD calculates and plots the simultaneous regression for the following variables:
+                
                    - precipitation
                    - sensible heat flux
                    - latent heat flux
@@ -189,6 +190,7 @@ follows:
 
 **correlation** ­switch to calculate and plot correlations: 0 : off [no correlation output], 1 : on [ correlation output].
                 Based on Nino3.4 reference index POD calculates and plots the simultaneous regression for the following variables:
+
                    - precipitation
                    - sensible heat flux
                    - latent heat flux

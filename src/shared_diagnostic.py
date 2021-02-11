@@ -591,23 +591,16 @@ class Diagnostic(object):
     def cleanup_pod_files(self):
         """Copy and remove remaining files to `POD_WK_DIR`.
 
-        In order, this 1) copies .pdf documentation (if any) from 
-        `POD_CODE_DIR/doc`, 2) copies any bitmap figures in any subdirectory of
+        In order, this 1) copies any bitmap figures in any subdirectory of
         `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without 
-        digested observational data), 3) removes vector graphics if requested,
-        4) removes netCDF scratch files in `POD_WK_DIR` if requested.
+        digested observational data), 2) removes vector graphics if requested,
+        3) removes netCDF scratch files in `POD_WK_DIR` if requested.
 
         Settings are set at runtime, when :class:`~util_mdtf.ConfigManager` is 
         initialized.
         """
         config = util_mdtf.ConfigManager()
-        # copy PDF documentation (if any) to output
-        files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
-        for f in files:
-            shutil.copy2(f, self.POD_WK_DIR)
-
         # copy premade figures (if any) to output 
-        # NOTE this will not respect 
         files = util.find_files(
             self.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )

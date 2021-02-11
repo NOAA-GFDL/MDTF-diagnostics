@@ -354,8 +354,8 @@ class AtomicInterval(object):
 
 @six.python_2_unicode_compatible
 class MixedDatePrecisionException(Exception):
-    """Exception raised when we attempt to operate on :class:`Date`s or 
-    :class:`DateRange`s with differing levels of precision, which shouldn't
+    """Exception raised when we attempt to operate on :class:`Date` or 
+    :class:`DateRange` objects with differing levels of precision, which shouldn't
     happen with data sampled at a single frequency.
     """
     def __init__(self, func_name='', msg=''):
@@ -368,9 +368,10 @@ class MixedDatePrecisionException(Exception):
 
 @six.python_2_unicode_compatible
 class FXDateException(Exception):
-    """Exception raised when :class:`FXDate`s or :class:`FXDateRange:s, which are
-    placeholder/sentinel classes used to indicate static data with no time 
-    dependence, are accessed like real :class:`Date`s or :class:`DateRange`s.
+    """Exception raised when :class:`FXDate` or :class:`FXDateRange: classes, 
+    which are placeholder/sentinel classes used to indicate static data with no 
+    time dependence, are accessed like real :class:`Date` or :class:`DateRange`
+    objects.
     """
     def __init__(self, func_name='', msg=''):
         self.func_name = func_name

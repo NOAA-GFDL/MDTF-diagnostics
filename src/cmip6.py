@@ -158,7 +158,7 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 16.
+    Reference: `<http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
@@ -251,7 +251,7 @@ mip_table_regex = re.compile(r"""
 def parse_mip_table_id(mip_table):
     """Function to parse MIP table identifier string.
 
-    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    Reference: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6.
 
     Args:

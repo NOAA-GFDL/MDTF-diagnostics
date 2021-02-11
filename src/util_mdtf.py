@@ -337,8 +337,8 @@ class _DoubleBraceTemplate(string.Template):
     string templating with double curly brackets as delimiters, since single
     brackets are also used in css.
 
-    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
-    `https://stackoverflow.com/a/34362892`__.
+    See `<https://docs.python.org/3.7/library/string.html#string.Template>`__ and 
+    `<https://stackoverflow.com/a/34362892>`__.
     """
     flags = re.VERBOSE # matching is case-sensitive, unlike default
     delimiter = '{{' # starting delimter is two braces, then apply

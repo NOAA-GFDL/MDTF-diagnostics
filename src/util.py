@@ -468,7 +468,7 @@ def resolve_path(path, root_path="", env=None):
 
 def is_subpath(path, *subpaths):
     """Test if any of ``subpaths`` is contained within ``path``. See 
-    `https://stackoverflow.com/a/37095733`__.
+    `<https://stackoverflow.com/a/37095733>`__.
 
     Args:
         path (:obj:`str`): path to resolve.

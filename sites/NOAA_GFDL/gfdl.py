@@ -117,21 +117,6 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
 
 # ------------------------------------------------------------------------
 
-def GfdlautoDataManager(case_dict):
-    """Wrapper for dispatching DataManager based on inputs.
-    """
-    test_root = case_dict.get('CASE_ROOT_DIR', None)
-    if not test_root:
-        return GFDL_UDA_CMIP6DataSourceAttributes(case_dict)
-    test_root = os.path.normpath(test_root)
-    if 'pp' in os.path.basename(test_root):
-        return GfdlppDataManager(case_dict)
-    else:
-        _log.critical(("ERROR: Couldn't determine data fetch method from input."
-            "Please set '--data_manager GFDL_pp', 'GFDL_UDA_CMP6', or "
-            "'GFDL_data_cmip6', depending on the source you want."))
-        exit(1)
-
 class GCPFetchMixin(data_manager.AbstractFetchMixin):
     """Mixin implementing data fetch for netcdf files on filesystems accessible
     from GFDL via GCP. Remote files are copies to a local temp directory. dmgets
@@ -507,6 +492,35 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
         return df
+
+class GfdlautoDataManager(object):
+    """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR
+    ends in "pp", use :class:`GfdlppDataManager`, otherwise use CMIP6 data on
+    /uda via :class:`Gfdludacmip6DataManager`.
+    """
+    def __new__(cls, case_dict, *args, **kwargs):
+        """Dispatch DataManager instance creation based on the contents of 
+        case_dict."""
+        config = core.ConfigManager()
+        dir_ = case_dict.get('CASE_ROOT_DIR', config.CASE_ROOT_DIR)
+        if 'pp' in os.path.basename(os.path.normpath(dir_)):
+            dispatched_cls = GfdlppDataManager
+        else:
+            dispatched_cls = Gfdludacmip6DataManager
+            # _log.critical(("%s: Couldn't determine data fetch method from input."
+            #     "Please set '--data_manager GFDL_pp', 'GFDL_UDA_cmip6', or "
+            #     "'GFDL_data_cmip6', depending on the source you want."),
+            #     cls.__name__)
+            # exit(2)
+            
+        _log.debug("%s: Dispatched DataManager to %s.", 
+            cls.__name__, dispatched_cls.__name__)
+        obj = dispatched_cls.__new__(dispatched_cls)
+        obj.__init__(case_dict)
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        pass
 
 # ------------------------------------------------------------------------
 

@@ -172,7 +172,7 @@ class CMIP6DateFrequency(util.DateFrequency):
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 16.
+    Reference: `<http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,

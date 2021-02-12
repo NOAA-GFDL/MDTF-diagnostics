@@ -298,7 +298,7 @@ mip_table_regex = util.RegexPattern(r"""
 class CMIP6_MIPTable():
     """Dataclass which represents and parses MIP table identifier string.
 
-    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    Reference: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6.
     """
     table_id: str = util.MANDATORY

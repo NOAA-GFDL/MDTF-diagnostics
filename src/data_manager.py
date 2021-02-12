@@ -251,10 +251,12 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         Args:
             active: bool or None, default None. Selects subset of PODs which are
                 returned.
+
                 - active = True: only iterate over currently active PODs.
                 - active = False: only iterate over inactive PODs (PODs which
                     have experienced an error during query-fetch.)
                 - active = None: iterate over both active and inactive PODs.
+
         """
         if active is None:
             # default: all pods
@@ -273,17 +275,21 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             active: bool or None, default None. Selects subset of VarlistEntries
                 which are returned, *after* selecting a subset of PODs based on
                 active_pods.
+
                 - active = True: only iterate over currently active VarlistEntries.
                 - active = False: only iterate over inactive VarlistEntries 
                     (Either alternates which have not yet been considered, or
                     variables which have experienced an error during query-fetch.)
                 - active = None: iterate over all VarlistEntries.
+
             active_pods: bool or None, default True. Selects subset of PODs which 
                 are returned.
+
                 - active = True: only iterate over currently active PODs.
                 - active = False: only iterate over inactive PODs (PODs which
                     have experienced an error during query-fetch.)
                 - active = None: iterate over both active and inactive PODs.
+
         """
         for p in self.iter_pods(active=active_pods):
             yield from p.iter_vars(active=active)

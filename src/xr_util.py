@@ -693,9 +693,9 @@ class DatasetParser():
 
         - Strip whitespace from attributes as a precaution to avoid malformed metadata.
         - Call xarray's 
-        `decode_cf <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
-        using `cftime <https://unidata.github.io/cftime/>`__ to decode CF-compliant
-        time axes. 
+            `decode_cf <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
+            using `cftime <https://unidata.github.io/cftime/>`__ to decode CF-compliant
+            time axes. 
         - Assign axis labels to dimension coordinates using cf_xarray.
         - Verify that calendar is set correctly.
         - Verify that the name, standard_name and units for the variable and its

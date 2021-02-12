@@ -550,6 +550,36 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                 f"Too many iterations in {self.__class__.__name__}.query_data()."
             )
 
+    def select_data(self):
+        update = True
+        # really a while-loop, but limit # of iterations to be safe
+        for _ in range(5): 
+            # refresh list of active variables/PODs; find alternate vars for any
+            # vars that failed since last time.
+            if update:
+                self.query_data()
+                self.update_active_pods()
+                update = False
+            # this loop differs from the others in that logic isn't/can't be 
+            # done on a per-variable basis, so we just try to execute
+            # set_experiment() successfully
+            try:
+                self.set_experiment()
+            except util.DataExperimentError:
+                # couldn't set consistent experiment attributes, so deactivate
+                # problematic pods/vars and try again
+                self.update_active_pods()
+                update = True
+            except Exception as exc:
+                _log.exception("Caught exception setting experiment: %r", exc)
+                raise exc
+            break # successful exit
+        else:
+            # only hit this if we don't break
+            raise util.DataQueryError(
+                f"Too many iterations in {self.__class__.__name__}.select_data()."
+            )
+
     def fetch_data(self):
         update = True
         # really a while-loop, but limit # of iterations to be safe
@@ -557,13 +587,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and query them.
             if update:
-                self.query_data()
-                try:
-                    self.update_active_pods()
-                    self.set_experiment()
-                except Exception as exc:
-                    _log.exception("Caught exception setting experiment: %r", exc)
-                    raise exc
+                self.select_data()
+                self.update_active_pods()
                 update = False
             vars_to_fetch = [
                 v for v in self.iter_vars(active=True) \
@@ -1063,7 +1088,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         def _set_expt_key(obj_, key_):
             key_str = str(key_[-1])
             if key_str:
-                _log.debug("Setting experiment_key for %s to %s", obj_.name, key_str)
+                _log.debug("Setting experiment_key for %s to '%s'", obj_.name, key_str)
             self.expt_keys[obj_._id] = key_
 
         # set attributes that must be the same for all variables
@@ -1082,8 +1107,14 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each POD
             for p in self.iter_pods(active=True):
-                key = self._get_expt_key('pod', p, self._id)
-                _set_expt_key(p, key)
+                try:
+                    key = self._get_expt_key('pod', p, self._id)
+                    _set_expt_key(p, key)
+                except Exception as exc:
+                    _log.debug(('set_experiment on pod-level experiment attributes: '
+                        '%s caught %r; deactivating.'), p.name, exc)
+                    p.exceptions.log(exc)
+                    continue
 
         # resolve irrelevant attributes -- still try to choose as many values to
         # be the same as possible, to minimize the number of unique data files we
@@ -1097,8 +1128,12 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each variable
             for p, v in self.iter_pod_vars(active=True):
-                key = self._get_expt_key('var', v, p._id)
-                _set_expt_key(v, key)
+                try:
+                    key = self._get_expt_key('var', v, p._id)
+                    _set_expt_key(v, key)
+                except Exception as exc:
+                    v.exception = exc
+                    continue
         
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
@@ -1541,7 +1576,7 @@ class CMIP6ExperimentSelectionMixin():
             # unique value, no need to filter
             return df
         filter_val = func(values)
-        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
+        _log.debug("Selected experiment attribute '%s'='%s' for %s (out of %s).", 
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
 
@@ -1596,7 +1631,7 @@ class CMIP6ExperimentSelectionMixin():
         # select first MIP table (out of available options) by alpha order
         # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
         df = df.sort_values(col_name).iloc[[0]]
-        _log.debug("Selected experiment attribute %s='%s' for %s.", 
+        _log.debug("Selected experiment attribute '%s'='%s' for %s.", 
             col_name, df[col_name].iloc[0], obj.name)
         return df
 

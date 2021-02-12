@@ -47,7 +47,7 @@ Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-Unless you've distirbuted your script elsewhere, you don't need to change this.
+Unless you've distributed your script elsewhere, you don't need to change this.
 
 Functionality
 -------------

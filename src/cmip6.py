@@ -172,7 +172,7 @@ class CMIP6DateFrequency(datelabel.DateFrequency):
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 16.
+    Reference: `<http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
@@ -269,9 +269,12 @@ variant_label_regex = util.RegexPattern(r"""
 @util.regex_dataclass(variant_label_regex)
 @util.mdtf_dataclass
 class CMIP6_VariantLabel():
-    """Dataclass which represents and parses the CMIP6 DRS variant label identifier string.
-
-    Reference: `<http://goo.gl/v1drZl>`__, note 8 on page 9.
+    """Dataclass which represents and parses the CMIP6 DRS variant label identifier 
+    string.
+    
+    References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
+    although this doesn't document all cases used in CMIP6. See also note 8 on 
+    page 9 of `<http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
     realization_index: int = None

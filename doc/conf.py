@@ -163,19 +163,20 @@ latex_elements = {
     'pointsize': '11pt',
     # fonts
     'fontpkg': r'''
-        \usepackage{fontspec}
+        \RequirePackage{fontspec}
         % RTD uses a texlive installation on linux; apparently xelatex can only
         % find fonts by filename in this situation.
         \setmainfont{texgyretermes-regular.otf}
         \setsansfont{Heuristica-Bold.otf}
     ''',
+    'geometry': r"\usepackage[xetex,letterpaper]{geometry}",
     # chapter style
-    'fncychap': '\\usepackage[Bjarne]{fncychap}',
+    'fncychap': r"\usepackage[Bjarne]{fncychap}",
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
     'preamble': r"""
-        \usepackage{unicode-math}
+        \RequirePackage{unicode-math}
         \makeatletter
         \fancypagestyle{normal}{
             \fancyhf{}
@@ -192,6 +193,7 @@ latex_elements = {
             \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
             \renewcommand{\footrulewidth}{0pt}
         }
+        \setlength{\headheight}{13.61pt} % otherwise get errors from fancyhdr
         \makeatother
     """,
     'extraclassoptions': 'openany'
@@ -231,13 +233,8 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    'latex/sphinxmdtfhowto.cls',
     'latex/latexmkrc'
 ]
-
-# latex_docclass = {
-#     'mdtfhowto': 'mdtfhowto'
-# }
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 

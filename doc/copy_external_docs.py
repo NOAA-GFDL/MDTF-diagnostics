@@ -24,6 +24,7 @@ Diagnostics reference
 ---------------------
 .. toctree::
    :maxdepth: 2
+
    pod_summary
 """
 
@@ -34,6 +35,7 @@ Site-specific information
 .. toctree::
    :maxdepth: 1
    :numbered: 2
+
 """
 
 def find_copy_make_toc(type_, docs_dir, search_root, header):

@@ -11,6 +11,10 @@
       "cli": {
         "arguments": [
           {
+            "name": "any_components",
+            "help": "Set flag to permit PODs to use variables from multiple /pp/ model components. Variables will be chosen from the same component if possible.",
+            "default" : false
+          },{
             "name": "activity_id",
             "help": "CMIP6 activity ID.",
             "default" : ""
@@ -47,7 +51,15 @@
     "GFDL_PP": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
       "entry_point": "sites.NOAA_GFDL.gfdl:GfdlppDataManager",
-      "cli": {"arguments": []}
+      "cli": {
+        "arguments": [
+          {
+            "name": "any_components",
+            "help": "Set flag to permit PODs to use variables from multiple /pp/ model components. Variables will be chosen from the same component if possible.",
+            "default" : false
+          }
+        ]
+      }
     },
     "CMIP6_UDA": {
       "help": "DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.",

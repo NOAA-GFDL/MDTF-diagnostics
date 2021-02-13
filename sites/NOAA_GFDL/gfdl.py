@@ -415,13 +415,30 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     # Catalog columns whose values must be the same for all variables.
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
-    # Catalog columns whose values must be the same for each POD.
-    pod_expt_key_cols = ('component', )
-    pod_expt_cols = pod_expt_key_cols
-    # Catalog columns whose values must "be the same for each variable", ie are 
-    # irrelevant but must be constrained to a unique value.
-    var_expt_key_cols = ("chunk_freq", )
-    var_expt_cols = var_expt_key_cols
+
+    def __init__(self, case_dict):
+        super(GfdlppDataManager, self).__init__(case_dict)
+        config = core.ConfigManager()
+        self.any_components = config.get('any_components', False)
+
+    @property
+    def pod_expt_key_cols(self):
+        return (tuple() if self.any_components else ('component', ))
+
+    @property
+    def pod_expt_cols(self):
+        # Catalog columns whose values must be the same for each POD.
+        return self.pod_expt_key_cols
+
+    @property
+    def var_expt_key_cols(self):
+        return (('chunk_freq', 'component') if self.any_components else ('chunk_freq', ))
+
+    @property
+    def var_expt_cols(self):
+        # Catalog columns whose values must "be the same for each variable", ie  
+        # are irrelevant but must be constrained to a unique value.
+        return self.var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):
@@ -481,7 +498,9 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             else:
                 return _heuristic_tiebreaker_sub(str_list)
 
-        df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
+        if 'component' in self.pod_expt_cols:
+            df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
+        # otherwise no-op
         return df
 
     def resolve_var_expt(self, df, obj):
@@ -491,6 +510,11 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
+        if 'component' in self.var_expt_cols:
+            col_name = 'component'
+            df = df.sort_values(col_name).iloc[[0]]
+            _log.debug("Selected experiment attribute '%s'='%s' for %s.", 
+                col_name, df[col_name].iloc[0], obj.name)
         return df
 
 class GfdlautoDataManager(object):

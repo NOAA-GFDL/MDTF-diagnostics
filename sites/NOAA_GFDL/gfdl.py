@@ -71,7 +71,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
         # clean out WORKING_DIR if we're not keeping temp files:
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
-            shutil.rmtree(p.WORKING_DIR)
+            gfdl_util.rmtree_wrapper(p.WORKING_DIR)
         util.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
         util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
             create=True)
@@ -716,7 +716,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
                 if self.overwrite:
                     try:
                         _log.error('%s exists, attempting to remove.', self.OUT_DIR)
-                        shutil.rmtree(self.OUT_DIR)
+                        gfdl_util.rmtree_wrapper(self.OUT_DIR)
                     except OSError:
                         # gcp will not overwrite dirs, so forced to save under
                         # a different name despite overwrite=True
@@ -738,4 +738,4 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             except Exception:
                 raise # only delete MODEL_WK_DIR if copied successfully
             _log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
-            shutil.rmtree(self.WK_DIR)
+            gfdl_util.rmtree_wrapper(self.WK_DIR)

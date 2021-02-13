@@ -2,7 +2,9 @@
 """
 import os
 import re
+import shutil
 import subprocess
+import time
 from src import util, core, datelabel
 
 import logging
@@ -186,6 +188,20 @@ def is_on_tape_filesystem(path):
     # handle eg. /arch0 et al as well as /archive.
     return any(os.path.realpath(path).startswith(s) \
         for s in ['/arch', '/ptmp', '/work', '/uda'])
+
+def rmtree_wrapper(path):
+    """Attempt to workaround errors with :py:func:`shutil.rmtree` on NFS 
+    filesystems.
+    """
+    # Standard shutil.rmtree raises ``OSError: [Errno 39] Directory not empty``,
+    # presumably due to a .nfsXXXX lock file still being present. Don't know of
+    # a better workaround than to wait and retry.
+    # https://stackoverflow.com/q/58943374
+    # https://github.com/astropy/astropy/issues/9970
+    shutil.rmtree(path, ignore_errors=True)
+    time.sleep(1)
+    if os.path.exists(path):
+        shutil.rmtree(path, ignore_errors=True)
 
 def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)

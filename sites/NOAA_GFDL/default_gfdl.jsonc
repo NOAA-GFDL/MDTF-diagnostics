@@ -15,11 +15,11 @@
   "case_list" : [
     {
       "CASENAME" : "ESM4_historical_D1",
-      "model" : "ESM4",
+      "model" : "GFDL-ESM4",
       "convention" : "CMIP",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "CASE_ROOT_DIR" : "/archive/cm6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
+      "FIRSTYR" : 1996,
+      "LASTYR" : 1999,
+      "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           "Wheeler_Kiladis",
@@ -117,9 +117,6 @@
 
   // Set flag to have PODs save netCDF files of processed data.
   "save_nc": false,
-
-  // Set flag to save all processed data except netcdf files.
-  "save_non_nc": false,
 
   // Set flag to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,

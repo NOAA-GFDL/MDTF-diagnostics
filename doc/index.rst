@@ -20,7 +20,7 @@ This site contains documentation for the MDTF Diagnostics framework. The code is
    sphinx/dev_toc
    sphinx/pod_toc
    sphinx/ref_toc
-   sphinx/src_autodoc
+   sphinx/fmwk_autodoc_toc
 
 
 Acknowledgements

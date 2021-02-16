@@ -72,5 +72,3 @@ that some subset of available PODs should be run; after being initialized, the
 DataManager initializes these POD objects from the data in their settings files.
 The PODs, in turn, initialize VarlistEntry objects.
 
-<< preprocessor does its shit here >>
-

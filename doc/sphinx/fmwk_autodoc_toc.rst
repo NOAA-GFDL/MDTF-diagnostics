@@ -6,4 +6,4 @@ Internal framework code
 
    fmwk_intro
    fmwk_data
-   src_autodoc
+   fmwk_autodoc

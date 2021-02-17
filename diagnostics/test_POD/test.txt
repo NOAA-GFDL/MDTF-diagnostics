@@ -1,1 +1,3 @@
 test commit
+Extra commit after `git merge --no-ff feature/submodule_to_subtree`
+

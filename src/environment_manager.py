@@ -292,7 +292,7 @@ class SubprocessRuntimePODWrapper(object):
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'
         )
-        log_str = f"--- MDTF.py Starting POD {self.pod.name}\n"
+        log_str = f"### Starting {self.pod.name}\n"
         self.log_handle.write(log_str)
         _log.info(log_str)
         self.pod.pre_run_setup()
@@ -386,7 +386,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.close()
             self.log_handle = None
 
-        _log.info("---  MDTF.py Finished POD %s", self.pod.name)
+        _log.info("### Finished %s", self.pod.name)
         # elapsed = timeit.default_timer() - start_time
         # print(pod+" Elapsed time ",elapsed)
 
@@ -470,7 +470,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.setup_exception_handler(exc)
                 continue
             try:
-                p.log_handle.write(f"--- MDTF.py calling POD {p.pod.name}\n\n")
+                p.log_handle.write(f"### Running {p.pod.name}\n\n")
                 p.log_handle.flush()
                 p.process = self.spawn_subprocess(p, env_vars_base)
             except Exception as exc:

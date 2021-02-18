@@ -544,7 +544,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # TODO: remove any netcdf Variables that were present in file (and ds) 
         # but not needed for request
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
-        _log.info("    Writing to %s", path_str)
+        _log.info("Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         ds = self.clean_output_encoding(var, ds)

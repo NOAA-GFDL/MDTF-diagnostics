@@ -234,30 +234,29 @@ class MDTFFramework(object):
         return False
 
     def main(self):
-        _log.info("\n======= Starting %s", __file__)
         # only run first case in list until dependence on env vars cleaned up
         for case_d in self.case_list[0:1]:
             case_name = case_d.get('CASENAME', '<untitled>')
-            _log.info(f"Framework: initialize {case_name}")
+            _log.info(f"### Framework: initialize {case_name}")
             case = self.DataSource(case_d)
             case.setup()
             self.cases.append(case)
 
             if not case.failed:
-                _log.info(f'Framework: request data for {case_name}')
+                _log.info(f'### Framework: request data for {case_name}')
                 case.request_data()
             else:
-                _log.info((f"Framework: initialization for {case_name} failed, skipping "
+                _log.info((f"### Framework: initialization for {case_name} failed, skipping "
                     f"data request."))
 
             if not case.failed:
-                _log.info(f'Framework: run {case_name}')
+                _log.info(f'### Framework: run {case_name}')
                 run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
                 run_mgr.setup()
                 run_mgr.run()
                 run_mgr.tear_down()
             else:
-                _log.info((f"Framework: Data request for {case_name} failed, "
+                _log.info((f"### Framework: Data request for {case_name} failed, "
                     f"skipping execution."))
 
             out_mgr = self.OutputManager(case)

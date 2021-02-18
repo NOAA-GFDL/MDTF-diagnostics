@@ -33,7 +33,8 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
             self.setTarget(target_handler)
             if self.target:
                 for record in self.buffer:
-                    self.target.handle(record)
+                    if self.target.level <= record.levelno:
+                        self.target.handle(record)
                 # self.buffer = [] # don't clear buffer!
         finally:
             self.release()
@@ -82,7 +83,7 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
         Calls :func:`git_info`.
         """
         try:
-            git_branch, git_hash, git_dirty = git_info()
+            git_branch, git_hash, _ = git_info()
             str_ = (
                 "MDTF PACKAGE LOG\n\n"
                 f"Started logging at {datetime.datetime.now()}\n"

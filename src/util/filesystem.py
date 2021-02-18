@@ -340,12 +340,14 @@ def write_json(struct, file_path, sort_keys=False):
         exit(1)
 
 def pretty_print_json(struct, sort_keys=False):
-    """Pseudo-YAML output for human-readable debugging output only - 
-    not valid JSON"""
+    """Convert struct to a pseudo-YAML string for human-readable debugging 
+    purposes only. Output is not valid JSON (or YAML).
+    """
     str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
-    for char in ['"', ',', '}', '[', ']']:
+    for char in [',', '{', '}', '[', ']']:
         str_ = str_.replace(char, '')
-    str_ = re.sub(r"{\s+", "- ", str_)
+    # remove isolated double quotes, but keep ""
+    str_ = re.sub(r'(?<!\")\"(?!\")', "", str_)
     # remove lines containing only whitespace
     return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
 

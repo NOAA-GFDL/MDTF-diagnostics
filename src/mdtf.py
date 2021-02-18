@@ -35,6 +35,7 @@ def main():
         log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
         _log.addHandler(log_cache)
 
+        _log.info("\n======= Starting %s", __file__)
         # not printing help or info, setup CLI normally 
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         framework = cli_obj.dispatch()

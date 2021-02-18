@@ -523,14 +523,14 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.pre_query_hook(vars_to_query)
             for v in vars_to_query:
                 try:
-                    _log.info("    Querying %s", v.translation)
+                    _log.info("Querying %s", v.translation)
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
                         raise util.DataQueryError("No data found.", v)
                     v.status = diagnostic.VarlistEntryStatus.QUERIED
                 except util.DataQueryError as exc:
                     update = True
-                    _log.info("    No data found for %s.", v.translation)
+                    _log.info("No data found for %s.", v.translation)
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
@@ -602,7 +602,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             self.pre_fetch_hook(vars_to_fetch)
             for v in vars_to_fetch:
                 try:
-                    _log.info("    Fetching %s", v)
+                    _log.info("Fetching %s", v)
 
                     # fetch on a per-data_key basis
                     for data_key in self.iter_data_keys(v):
@@ -627,7 +627,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
                     v.status = diagnostic.VarlistEntryStatus.FETCHED
                 except util.DataFetchError as exc:
                     update = True
-                    _log.info("    Fetch failed for %s.", v)
+                    _log.info("Fetch failed for %s.", v)
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
@@ -667,7 +667,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
 
             for pod, v in vars_to_process:
                 try:
-                    _log.info("    Processing %s", v)
+                    _log.info("Processing %s", v)
                     pod.preprocessor.process(v)
                     v.status = diagnostic.VarlistEntryStatus.PREPROCESSED
                 except Exception as exc:

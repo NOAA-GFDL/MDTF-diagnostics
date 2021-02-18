@@ -53,9 +53,9 @@ Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/
 
 ### 1.1 Obtaining the code
 
-The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that end users download and test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.1).
+The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that end users download and test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3).
 
-To install the MDTF package on a local machine, create a directory named `mdtf` and unzip the code downloaded from the [release page](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.2) there. This will create a directory titled `MDTF-diagnostics-3.0-beta.2` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
+To install the MDTF package on a local machine, create a directory named `mdtf` and unzip the code downloaded from the [release page](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3) there. This will create a directory titled `MDTF-diagnostics-3.0-beta.3` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
 
 - `diagnostics/`: directory containing source code and documentation of individual PODs.
 - `doc/`: directory containing documentation (a local mirror of the documentation site).

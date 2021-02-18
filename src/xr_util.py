@@ -6,7 +6,7 @@ import itertools
 import re
 import warnings
 
-import cftime
+import cftime # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
 

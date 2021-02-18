@@ -14,7 +14,6 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     _pod_dir = 'diagnostics'
     _pod_settings = 'settings.jsonc'
     def _load_one_json(pod):
-        d = dict()
         try:
             d = util.read_json(
                 os.path.join(code_root, _pod_dir, pod, _pod_settings)

@@ -10,8 +10,6 @@ import logging
 import logging.config
 import logging.handlers
 
-from . import exceptions
-
 _log = logging.getLogger(__name__)
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):

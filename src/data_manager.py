@@ -568,8 +568,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             except util.DataExperimentError:
                 # couldn't set consistent experiment attributes, so deactivate
                 # problematic pods/vars and try again
-                self.update_active_pods()
                 update = True
+                self.update_active_pods()
             except Exception as exc:
                 _log.exception("Caught exception setting experiment: %r", exc)
                 raise exc
@@ -1441,7 +1441,6 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     def __post_init__(self, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__()
         config = core.ConfigManager()
-        paths = core.PathManager()
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):

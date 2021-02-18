@@ -24,6 +24,7 @@ clean:
 clean_all:
 	-rm -rf $(BUILDDIR)
 	-rm -rf sphinx_pods
+	-rm -rf sphinx_sites
 	-rm sphinx/src.*
 
 html:

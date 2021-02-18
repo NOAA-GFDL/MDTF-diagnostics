@@ -13,12 +13,17 @@ Note:
 Note: 
     Timezone support is not currently implemented.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-from src import six
+import abc
+import copy
+import enum
 import re
 import datetime
 import operator as op
 import warnings
+from src import util
+
+import logging
+_log = logging.getLogger(__name__)
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
@@ -352,33 +357,18 @@ class AtomicInterval(object):
 
 # ===============================================================
 
-@six.python_2_unicode_compatible
-class MixedDatePrecisionException(Exception):
-    """Exception raised when we attempt to operate on :class:`Date`s or 
-    :class:`DateRange`s with differing levels of precision, which shouldn't
-    happen with data sampled at a single frequency.
+class DatePrecision(enum.IntEnum):
+    """:py:class:`~enum.IntEnum` to encode the recognized levels of precision 
+    for date intervals. For example, Date('200012') has DatePrecision.MONTH since
+    the length of the corresponding interval is a month.
     """
-    def __init__(self, func_name='', msg=''):
-        self.func_name = func_name
-        self.msg = msg
-
-    def __str__(self):
-        return ("Attempted datelabel method '{}' on FXDate "
-            "placeholder: {}.").format(self.func_name, self.msg)
-
-@six.python_2_unicode_compatible
-class FXDateException(Exception):
-    """Exception raised when :class:`FXDate`s or :class:`FXDateRange:s, which are
-    placeholder/sentinel classes used to indicate static data with no time 
-    dependence, are accessed like real :class:`Date`s or :class:`DateRange`s.
-    """
-    def __init__(self, func_name='', msg=''):
-        self.func_name = func_name
-        self.msg = msg
-
-    def __str__(self):
-        return ("Attempted datelabel method '{}' on FXDate "
-            "placeholder: {}.").format(self.func_name, self.msg)
+    STATIC = -1
+    YEAR = 1
+    MONTH = 2
+    DAY = 3
+    HOUR = 4
+    MINUTE = 5
+    SECOND = 6
 
 class _DateMixin(object):
     """Utility methods for dealing with dates.
@@ -399,7 +389,6 @@ class _DateMixin(object):
         str_ = '{0.tm_year:04}{0.tm_mon:02}{0.tm_mday:02}'.format(tup_)
         str_ = str_ + '{0.tm_hour:02}{0.tm_min:02}{0.tm_sec:02}'.format(tup_)
         if precision:
-            assert precision > 0 and precision <= 6
             return str_[:2*(precision + 1)]
         else:
             return str_
@@ -409,7 +398,7 @@ class _DateMixin(object):
         """Return a copy of dt advanced by one time unit as specified by
         the `precision` attribute.
         """
-        if precision == 2: # nb: can't handle this with timedeltas
+        if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 12:
                 return dt.replace(year=(dt.year + 1), month=1)
             else:
@@ -422,7 +411,7 @@ class _DateMixin(object):
         """Return a copy of Date moved back by one time unit as specified by
         the `precision` attribute.
         """
-        if precision == 2: # nb: can't handle this with timedeltas
+        if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 1:
                 return dt.replace(year=(dt.year - 1), month=12)
             else:
@@ -432,24 +421,30 @@ class _DateMixin(object):
 
     @staticmethod
     def _inc_dec_common(dt, precision, delta):
-        if precision == 1:
+        if precision == DatePrecision.STATIC:
+            if delta == 1:
+                # assert dt == datetime.datetime.min
+                return datetime.datetime.max
+            elif delta == -1:
+                # assert dt == datetime.datetime.max
+                return datetime.datetime.min
+        if precision == DatePrecision.YEAR:
             # nb: can't handle this with timedeltas
             return dt.replace(year=(dt.year + delta)) 
-        elif precision == 3:
+        elif precision == DatePrecision.DAY:
             td = datetime.timedelta(days = delta)
-        elif precision == 4:
+        elif precision == DatePrecision.HOUR:
             td = datetime.timedelta(hours = delta)
-        elif precision == 5:
+        elif precision == DatePrecision.MINUTE:
             td = datetime.timedelta(minutes = delta)
-        elif precision == 6:
+        elif precision == DatePrecision.SECOND:
             td = datetime.timedelta(seconds = delta)
         else:
             # prec == 2 case handled in calling logic
-            raise ValueError("Malformed input")
+            raise ValueError(f"Malformed input: {repr(dt)} prec={precision} delta={delta}")
         return dt + td
 
 
-@six.python_2_unicode_compatible
 class DateRange(AtomicInterval, _DateMixin):
     """Class representing a range of variable-precision dates. 
 
@@ -458,13 +453,12 @@ class DateRange(AtomicInterval, _DateMixin):
         Eg, DateRange('1990-1999') starts at 0:00 on 1 Jan 1990 and 
         ends at 23:59 on 31 Dec 1999.
     """
-
     _range_sep = '-'
 
     def __init__(self, start, end=None, precision=None):
         "Init method for DateRange."
         if not end:
-            if isinstance(start, six.string_types):
+            if isinstance(start, str):
                 (start, end) = start.split(self._range_sep)
             elif len(start) == 2:
                 (start, end) = start
@@ -474,19 +468,17 @@ class DateRange(AtomicInterval, _DateMixin):
         dt0, prec0 = self._coerce_to_datetime(start, is_lower=True)
         dt1, prec1 = self._coerce_to_datetime(end, is_lower=False)
         if not (dt0 < dt1):
-            print('\tWarning: args to DateRange out of order ({} >= {})'.format(
-                start, end
-            ))
+            _log.warning('Args to DateRange out of order (%s >= %s)',
+                start, end)
             dt0, prec0 = self._coerce_to_datetime(end, is_lower=True)
             dt1, prec1 = self._coerce_to_datetime(start, is_lower=False)
-        self._left = self.CLOSED
-        self._lower = dt0
-        self._upper = dt1
-        self._right = self.OPEN
-        if precision:
-            assert precision >= 0 and precision <= 6
+        # call AtomicInterval's init
+        super(DateRange, self).__init__(self.CLOSED, dt0, dt1, self.OPEN)   
+        if precision is not None:
+            if not isinstance(precision, DatePrecision):
+                precision = (DatePrecision)
             if precision > prec0 or precision > prec1:
-                raise MixedDatePrecisionException((
+                raise util.MixedDatePrecisionException((
                     "Attempted to init DateRange with manual prec {}, but date "
                     "arguments have precs {}, {}").format(precision, prec0, prec1)
                 )
@@ -504,8 +496,8 @@ class DateRange(AtomicInterval, _DateMixin):
     def _precision_check(*args):
         min_ = min(args)
         max_ = max(args)
-        if min_ == 0:
-            raise FXDateException(
+        if min_ == DatePrecision.STATIC:
+            raise util.FXDateException(
                 func_name='_precision_check', msg='Recieved {}'.format(args)
             )
         if min_ != max_:
@@ -517,9 +509,14 @@ class DateRange(AtomicInterval, _DateMixin):
     @staticmethod
     def _coerce_to_datetime(dt, is_lower):
         if isinstance(dt, datetime.datetime):
-            return (dt, 6)
+            # datetime specifies time to within second
+            return (dt, DatePrecision.SECOND)
         if isinstance(dt, datetime.date):
-            return (datetime.datetime.combine(dt, datetime.datetime.min.time()), 3)
+            # date specifies time to within day
+            return (
+                datetime.datetime.combine(dt, datetime.datetime.min.time()), 
+                DatePrecision.DAY
+            )
         else:
             tmp = Date._coerce_to_self(dt)
             if is_lower:
@@ -528,23 +525,46 @@ class DateRange(AtomicInterval, _DateMixin):
                 return (tmp.upper, tmp.precision)
 
     @classmethod
-    def _coerce_to_self(cls, item):
-        # got to be a better way to write this
+    def _coerce_to_self(cls, item, precision=None):
+        # hacky; should to be a better way to write this
         if isinstance(item, cls) or getattr(item, 'is_static', False):
+            if precision is not None:
+                item.precision = precision
             return item
         else:
-            return cls(item)
+            try:
+                if precision is not None:
+                    return cls(item, precision=precision)
+                else: 
+                    return cls(item)
+            except Exception:
+                raise TypeError((f"Comparison not supported between {cls.__name__} "
+                    f"and {type(item).__name__} ({repr(item)})."))
+
+    @property
+    def start_datetime(self):
+        return self.lower
 
     @property
     def start(self):
         assert self.precision
-        return Date(self.lower, precision=self.precision)
+        return Date(self.start_datetime, precision=self.precision)
+
+    @property
+    def end_datetime(self):
+        # don't decrement here, even though interval is closed, because of how
+        # adjoins_left and adjoins_right are implemented
+        return self.upper
 
     @property
     def end(self):
-        # raise warning?
+        # need to decrement because interval is closed, but Date() assumes its
+        # input is the start of the interval (set by precision)
         assert self.precision
-        return Date(self.upper, precision=self.precision)
+        return Date(
+            self.decrement(self.end_datetime, self.precision + 1), 
+            precision=self.precision
+        )
 
     @classmethod
     def from_contiguous_span(cls, *args):
@@ -584,24 +604,31 @@ class DateRange(AtomicInterval, _DateMixin):
             return "DateRange('{}', precision=None)".format(self)
 
     def __contains__(self, item):
-        """Comparison returning `True` if `item` has any overlap at all with the
-        date range.
-
-        This method overrides the `__contains__` method, so, e.g., 
-        datetime.date('2019-09-18') in DateRange('2018-2019') will give
-        `True`.
+        """Override :meth:`AtomicInterval.__contains__` to handle differences
+        in datelabel precision. Finite precision means that the interval endpoints
+        are ranges, not points (which is why :class:`Date` inherits from
+        :class:`DateRange` and not vice-versa). We replace strict equality of
+        endpoints (==) with appropriate conditions on the overlap of these
+        ranges.
         """
         item = self._coerce_to_self(item)
-        return super(DateRange, self).overlaps(item, adjacent=False)
+        left_gt = item._lower > self._lower
+        left_eq = self.start.overlaps(item.start) \
+            and (item._left == self._left or self._left == self.CLOSED)
+        right_lt = item._upper < self._upper
+        right_eq = self.end.overlaps(item.end) \
+            and (item._right == self._right or self._right == self.CLOSED)
+        return (left_gt or left_eq) and (right_lt or right_eq)
+    contains = __contains__
 
     def overlaps(self, item):
         item = self._coerce_to_self(item)
         return super(DateRange, self).overlaps(item, adjacent=False)
 
-    def contains(self, item):
-        # strict containments
-        item = self._coerce_to_self(item)
-        return super(DateRange, self).__contains__(item)
+    # def contains(self, item):
+    #     # strict containments
+    #     item = self._coerce_to_self(item)
+    #     return super(DateRange, self).__contains__(item)
     
     def intersection(self, item, precision=None):
         item = self._coerce_to_self(item)
@@ -613,25 +640,34 @@ class DateRange(AtomicInterval, _DateMixin):
         return DateRange(interval.lower, interval.upper, precision=precision)
 
     # for comparsions, coerce to DateRange first & use inherited interval math
-    def _date_range_compare_common(self, other):
+    def _date_range_compare_common(self, other, func_name):
         if self.is_static or getattr(other, 'is_static', False):
-            raise FXDateException(func_name='_date_range_compare_common')
-        return self._coerce_to_self(other)
+            raise util.FXDateException(func_name='_date_range_compare_common')
+        _other = self._coerce_to_self(other)
+        _meth = getattr(super(DateRange, self), func_name)
+        return _meth(_other)
 
     def __lt__(self, other): 
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__lt__(other)
+        return self._date_range_compare_common(other, '__lt__')
     def __le__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__le__(other)
+        return self._date_range_compare_common(other, '__le__')
     def __gt__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__gt__(other)
+        return self._date_range_compare_common(other, '__gt__')
     def __ge__(self, other):
-        other = self._date_range_compare_common(other)
-        return super(DateRange, self).__ge__(other)
+        return self._date_range_compare_common(other, '__ge__')
+    def __eq__(self, other):
+        # Don't want check for static date in this case
+        try:
+            other = self._coerce_to_self(other)
+        except TypeError:
+            return False
+        prec_other = getattr(other, 'precision', -1)
+        return (super(DateRange, self).__eq__(other)) \
+            and (self.precision == prec_other)
 
-@six.python_2_unicode_compatible
+    def __hash__(self):
+        return hash((self.__class__, self.lower, self.upper, self.precision))
+
 class Date(DateRange):
     """Define a date with variable level precision.
 
@@ -648,7 +684,7 @@ class Date(DateRange):
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
-        elif isinstance(args[0], six.string_types):
+        elif isinstance(args[0], str):
             dt_args = self._parse_input_string(args[0])
             single_arg_flag = True
         else:
@@ -661,6 +697,8 @@ class Date(DateRange):
             prec = args[1]
         else:
             prec = len(dt_args)
+        if prec is not None and not isinstance(prec, DatePrecision):
+            prec = DatePrecision(prec)
 
         assert prec <= 6 # other values not supported
         for i in list(range(prec)):
@@ -670,12 +708,9 @@ class Date(DateRange):
         elif prec == 2:
             dt_args = (dt_args[0], dt_args[1], 1) # missing day
 
-        dt = datetime.datetime(*dt_args) 
-        self._left = self.CLOSED
-        self._lower = dt
-        self._upper = self.increment(dt, prec)
-        self._right = self.OPEN
-        self.precision = prec
+        dt = datetime.datetime(*dt_args)
+        # call DateRange's init
+        super(Date, self).__init__(dt, self.increment(dt, prec), precision=prec)
 
     @classmethod
     def _parse_datetime(cls, dt):
@@ -723,9 +758,9 @@ class Date(DateRange):
                 # True only if both values are FXDates
                 return (self.is_static and getattr(other, 'is_static', False))
             else:
-                raise FXDateException(func_name='_tuple_compare')
-        if not isinstance(other, Date):
-            other = Date(other, precision=self.precision)
+                raise util.FXDateException(func_name='_tuple_compare')
+        if not isinstance(other, self.__class__):
+            other = self.__class__._coerce_to_self(other, precision=self.precision)
         # only compare most signifcant fields of tuple representation
         return func(
             self.lower.timetuple()[:self.precision],
@@ -749,22 +784,21 @@ class Date(DateRange):
         well as date, but *only up to stated precision*, eg Date(2019,5) will == 
         datetime.datetime(2019,05,18).
         """
-        return self._tuple_compare(other, op.eq)
+        try:
+            return self._tuple_compare(other, op.eq)
+        except TypeError:
+            return False
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
 
-class _FXDateRange(DateRange):
-    """Singleton placeholder/sentinel object for use in describing static data 
+    def __hash__(self):
+        return hash((self.__class__, self.lower, self.upper, self.precision))
+
+class StaticTimeDependenceBase(object):
+    """Dummy class to label sentinel objects for use in describing static data 
     with no time dependence.
     """
-    def __init__(self):
-        self._left = self.CLOSED
-        self._lower = datetime.datetime.min
-        self._upper = datetime.datetime.max
-        self._right = self.OPEN
-        self.precision = 0
-
     @property
     def is_static(self):
         """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
@@ -775,53 +809,112 @@ class _FXDateRange(DateRange):
     def _coerce_to_self(cls, item):
         # got to be a better way to write this
         return item
-        
-    @property
-    def start(self):
-        raise FXDateException(func_name='start')
 
-    @property
-    def end(self):
-        raise FXDateException(func_name='end')
-
-    def format(self):
+    def format(self, precision=None):
         return "<N/A>"
     isoformat = format
-
-    def __repr__(self):
-        return "_FXDateRange()"
+    __str__ = format
     
     @staticmethod
     def date_format(dt, precision=None):
         return "<N/A>"
 
-FXDateMin = _FXDateRange()
-FXDateMax = _FXDateRange()
+class _FXDateMin(StaticTimeDependenceBase, Date):
+    def __init__(self):
+        # call DateRange's init
+        super(_FXDateMin, self).__init__(
+            datetime.datetime.min, precision=DatePrecision.STATIC
+        )
+        self.precision = DatePrecision.STATIC
+
+    def __repr__(self):
+        return "_FXDate()" 
+
+    @property
+    def start(self):
+        return self.lower
+
+    @property
+    def end(self):
+        return self.lower
+FXDateMin = _FXDateMin()
+
+class _FXDateMax(StaticTimeDependenceBase, Date):
+    def __init__(self):
+        # call DateRange's init
+        super(_FXDateMax, self).__init__(
+            datetime.datetime.max, precision=DatePrecision.STATIC
+        )
+        self.precision = DatePrecision.STATIC
+
+    def __repr__(self):
+        return "_FXDateMax()" 
+
+    @property
+    def start(self):
+        return self.upper
+
+    @property
+    def end(self):
+        return self.upper
+FXDateMax = _FXDateMax()
+
+class _FXDateRange(StaticTimeDependenceBase, DateRange):
+    """Singleton placeholder/sentinel object for use in describing static data 
+    with no time dependence.
+    """
+    def __init__(self):
+        # call DateRange's init
+        super(_FXDateRange, self).__init__(datetime.datetime.min, datetime.datetime.max)
+        self.precision = DatePrecision.STATIC
+
+    def __repr__(self):
+        return "_FXDateRange()"
+
+    @property
+    def start(self):
+        return FXDateMin
+
+    @property
+    def end(self):
+        return FXDateMax
 FXDateRange = _FXDateRange()
 
-@six.python_2_unicode_compatible
 class DateFrequency(datetime.timedelta):
     """Class representing a date frequency or period.
 
-    Note:
-        Period lengths are *not* defined accurately, eg. a year is taken as
-        365 days and a month is taken as 30 days. 
+    .. warning::
+       Period lengths are *not* defined accurately, eg. a year is taken as
+       365 days and a month is taken as 30 days. 
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
-        if isinstance(quantity, six.string_types) and (unit is None):
+        if isinstance(quantity, str) and (unit is None):
             (kwargs, attrs) = cls._parse_input_string(None, quantity)
-        elif not isinstance(quantity, int) or not isinstance(unit, six.string_types):
-            raise ValueError("Malformed input")
+        elif not isinstance(quantity, int) or not isinstance(unit, str):
+            raise ValueError(f"Malformed input: '{quantity}' '{unit}'")
         else:
             (kwargs, attrs) = cls._parse_input_string(quantity, unit)
         obj = super(DateFrequency, cls).__new__(cls, **kwargs)
         obj.quantity = None
         obj.unit = None
         # actually set attributes, as well as any others child classes may add
-        for key, val in iter(attrs.items()):
+        for key, val in attrs.items():
             obj.__setattr__(key, val)
         return obj
+
+    @property
+    def is_static(self):
+        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """
+        return (self.quantity == 0 and self.unit == "fx")
+
+    @classmethod
+    def from_struct(cls, str_):
+        """Workaround for object creation, using the method mdtf_dataclass is
+        looking for. 
+        """
+        return cls.__new__(cls, str_, None)
 
     @classmethod
     def _parse_input_string(cls, quantity, unit):
@@ -856,12 +949,6 @@ class DateFrequency(datetime.timedelta):
         else:
             raise ValueError("Malformed input {} {}".format(quantity, unit))
         return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
-
-    @property
-    def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
-        """
-        return (self.quantity == 0 and self.unit == "fx")
 
     @classmethod
     def _get_timedelta_kwargs(cls, q, s):
@@ -898,7 +985,7 @@ class DateFrequency(datetime.timedelta):
 
     def format_local(self):
         """Format frequency as used in framework's local directory hierarchy
-        (defined in :meth:`src.data_manager.DataManager.local_path`.)
+        (defined in :meth:`src.data_manager.DataManager.dest_path`.)
         """
         if self.quantity == 1:
             if self.unit == 'mo':
@@ -922,3 +1009,61 @@ class DateFrequency(datetime.timedelta):
 
     def __ne__(self, other):
         return (not self.__eq__(other)) # more foolproof
+
+    def __copy__(self):
+        return self.__class__.__new__(self.__class__, self.quantity, unit=self.unit)
+
+    def __deepcopy__(self, memo):
+        return self.__class__.__new__(self.__class__, 
+            copy.deepcopy(self.quantity, memo), unit=copy.deepcopy(self.unit, memo)
+        )
+
+    def __hash__(self):
+        return hash((self.__class__, self.quantity, self.unit))
+
+class _FXDateFrequency(DateFrequency, StaticTimeDependenceBase):
+    """Singleton placeholder/sentinel object for use in describing static data 
+    with no time dependence.
+    """
+    # define __new__, not __init__, because timedelta is immutable
+    def __new__(cls):
+        return super(_FXDateFrequency, cls).__new__(cls, 'static')
+
+    @property
+    def is_static(self):
+        return True
+
+    def __copy__(self):
+        return self.__class__.__new__(self.__class__)
+
+    def __deepcopy__(self, memo):
+        return self.__class__.__new__(self.__class__)
+
+FXDateFrequency = _FXDateFrequency()
+
+class AbstractDateRange(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+class AbstractDate(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+class AbstractDateFrequency(abc.ABC):
+    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """
+    pass
+
+
+# Use the "register" method, instead of inheritance, to identify the 
+# DM*Dimension classes as implementations of AbstractDMDimension, because 
+# Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
+AbstractDateRange.register(DateRange)
+AbstractDateRange.register(_FXDateRange)
+AbstractDate.register(Date)
+AbstractDate.register(_FXDateMin)
+AbstractDate.register(_FXDateMax)
+AbstractDateFrequency.register(DateFrequency)
+AbstractDateFrequency.register(_FXDateFrequency)

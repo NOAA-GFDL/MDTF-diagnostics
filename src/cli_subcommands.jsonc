@@ -1,0 +1,38 @@
+// Configuration for the top-level subcommands offered by the mdtf.py driver
+// script. This is read by MDTFSubcommandDispatch. 
+//
+// DO NOT modify this file. Instead, run 'mdtf install', which will generate a
+// copy in /sites which you can edit.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
+{
+  "title": "COMMANDS", 
+  "description": "Subcommand functionality. Use '%(prog)s <command> --help' to get help on options specific to each command.",
+  "help": null,
+  "metavar": "<command> is one of:",
+  "subcommands": {
+    // "install": {
+    //   "help": "Configure paths for the package; optionally download supporting data.",
+    //   "class": "framework.install.install",
+    //   "cli_file": "framework/install/install_cli.jsonc"
+    // },
+    // "info": {
+    //   "help": "Get info on installed PODs.",
+    //   "module": "framework.info.info",
+    //   "entry_point": "main",
+    //   "cli_file": "framework/info/info_cli.jsonc"
+    // },
+    // "verify": {
+    //   "help": "Check the output of the framework for errors in the output.",
+    //   "module": "framework.verify_links",
+    //   "entry_point": "main",
+    //   "cli_file": "framework/verify_cli.jsonc"
+    // },
+    "run": {
+      "help": "Run the framework on model data.",
+      "entry_point": "src.core:MDTFFramework",
+      "cli_file": "src/cli_template.jsonc"
+    }
+  }
+}

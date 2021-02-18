@@ -1,0 +1,93 @@
+version: 2
+
+checkout:
+  post:
+    - ./ci-support/checkout_merge_commit.sh
+        
+aliases:
+
+  - &setup_miniconda
+    name: setup_miniconda
+    command: |
+      mkdir -p $WORKDIR
+      if [[ $OS == 'osx-64' ]]; then
+        curl -L https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o miniconda.sh
+      else
+        curl -L https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
+      fi
+      bash miniconda.sh -b -p $WORKDIR/miniconda
+      
+  - &create_conda_env
+    name: create_conda_env
+    command: |
+       export PATH=$WORKDIR/miniconda/bin:$PATH
+       conda config --set always_yes yes --set changeps1 no
+       conda update -y -q conda
+       conda config --set anaconda_upload no
+       conda create -q -n py3 -c cdat/label/nightly -c pcmdi/label/nightly -c conda-forge -c cdat lazy-object-proxy cmor=3.6.0 python=3.8 testsrunner
+
+  - &setup_cmor
+    name: setup_cmor
+    command: |
+       export PATH=$WORKDIR/miniconda/bin:$PATH
+       set +e
+       source activate py3
+       echo "ACTIVATE RETURN CODE $?"
+       set -e
+       git clone https://github.com/PCMDI/cmor
+       cd cmor
+       # update cmip6-cmor-tables submodule with the current branch
+       git submodule init
+       git submodule update
+       cd cmip6-cmor-tables
+       git checkout $CIRCLE_BRANCH
+       exit 0
+
+  - &run_prepare_tests
+    name: run_prepare_tests
+    command: |
+       export PATH=$WORKDIR/miniconda/bin:$PATH
+       export UVCDAT_ANONYMOUS_LOG=False
+       set +e
+       source activate py3
+       set -e
+       cp Tables/* cmor/Tables
+       cd cmor
+       export PYTHONPATH=Test
+       python run_tests.py -v2 -H -n1 Test/test_python_CMIP6_CV*.py
+
+jobs:
+  macos_cmip6:
+    macos:
+      xcode: "11.1.0"
+    environment:
+      WORKDIR: "workspace/test_macos_cmor"
+      UVCDAT_ANONYMOUS_LOG: "False"
+      OS: "osx-64"
+    steps:
+      - checkout
+      - run: *setup_miniconda
+      - run: *create_conda_env
+      - run: *setup_cmor
+      - run: *run_prepare_tests
+
+  linux_cmip6:
+    machine:
+      image: circleci/classic:latest
+    environment:
+      WORKDIR: "workspace/test_linux_cmor"
+      UVCDAT_ANONYMOUS_LOG: "False"
+      OS: "linux-64"
+    steps:
+      - checkout
+      - run: *setup_miniconda
+      - run: *create_conda_env
+      - run: *setup_cmor
+      - run: *run_prepare_tests
+
+workflows:
+  version: 2
+  nightly:
+    jobs:
+      - macos_cmip6
+      - linux_cmip6

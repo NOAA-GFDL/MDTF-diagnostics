@@ -1,0 +1,32 @@
+{
+  "case_list" : [
+    {
+      "CASENAME" : "DUMMY.CASENAME",
+      "model" : "DUMMY_MODEL",
+      "convention" : "CF",
+      "FIRSTYR" : 0,
+      "LASTYR" : 100,
+      "pod_list": [
+          "example"
+      ]
+    }
+  ],
+  "OBS_DATA_ROOT": "/DUMMY/PATH/OBS_DATA_ROOT",
+  "MODEL_DATA_ROOT": "/DUMMY/PATH/MODEL_DATA_ROOT",
+  "WORKING_DIR": "/DUMMY/PATH/WORKING_DIR",
+  "OUTPUT_DIR": "/DUMMY/PATH/OUTPUT_DIR",
+  "data_manager": "Local_File",
+  "environment_manager": "Conda",
+  "conda_root": "/DUMMY/PATH/conda_root",
+  "conda_env_root": "/DUMMY/PATH/conda_env_root",
+  "preprocessor": "SampleModelData",
+  "file_transfer_timeout": 300,
+  "save_ps": true,
+  "save_nc": false,
+  "make_variab_tar": false,
+  "overwrite": false,
+  "verbose": 1,
+  "test_mode": false,
+  "dry_run": false,
+  "keep_temp": false
+}

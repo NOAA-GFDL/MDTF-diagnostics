@@ -1,0 +1,158 @@
+{
+    "Header": {
+        "data_specs_version": "01.00.33", 
+        "table_id": "Table grids", 
+        "cmor_version": "3.5", 
+        "table_date": "18 November 2020", 
+        "missing_value": "1e20", 
+        "product": "output", 
+        "Conventions": "CF-1.7 CMIP-6.2"
+    }, 
+    "mapping_entry": {
+        "sample_user_mapping": {
+            "parameter1": "false_easting", 
+            "parameter2": "false_northing", 
+            "coordinates": "rlon rlat"
+        }
+    }, 
+    "axis_entry": {
+        "grid_latitude": {
+            "standard_name": "grid_latitude", 
+            "units": "degrees", 
+            "axis": "Y", 
+            "long_name": "latitude in rotated pole grid", 
+            "out_name": "rlat", 
+            "type": "double"
+        }, 
+        "grid_longitude": {
+            "standard_name": "grid_longitude", 
+            "units": "degrees", 
+            "axis": "X", 
+            "long_name": "longitude in rotated pole grid", 
+            "out_name": "rlon", 
+            "type": "double"
+        }, 
+        "i_index": {
+            "standard_name": "", 
+            "units": "1", 
+            "axis": "", 
+            "long_name": "first spatial index for variables stored on an unstructured grid", 
+            "out_name": "i", 
+            "type": "integer"
+        }, 
+        "j_index": {
+            "standard_name": "", 
+            "units": "1", 
+            "axis": "", 
+            "long_name": "second spatial index for variables stored on an unstructured grid", 
+            "out_name": "j", 
+            "type": "integer"
+        }, 
+        "k_index": {
+            "standard_name": "", 
+            "units": "1", 
+            "axis": "", 
+            "long_name": "third spatial index for variables stored on an unstructured grid", 
+            "out_name": "k", 
+            "type": "integer"
+        }, 
+        "l_index": {
+            "standard_name": "", 
+            "units": "1", 
+            "axis": "", 
+            "long_name": "fourth spatial index for variables stored on an unstructured grid", 
+            "out_name": "l", 
+            "type": "integer"
+        }, 
+        "m_index": {
+            "standard_name": "", 
+            "units": "1", 
+            "axis": "", 
+            "long_name": "fifth spatial index for variables stored on an unstructured grid", 
+            "out_name": "m", 
+            "type": "integer"
+        }, 
+        "vertices": {
+            "standard_name": "", 
+            "units": "", 
+            "axis": "", 
+            "long_name": "", 
+            "out_name": "", 
+            "type": ""
+        }, 
+        "x": {
+            "standard_name": "projection_x_coordinate", 
+            "units": "m", 
+            "axis": "X", 
+            "long_name": "x coordinate of projection", 
+            "out_name": "", 
+            "type": "double"
+        }, 
+        "x_deg": {
+            "standard_name": "projection_x_coordinate", 
+            "units": "degrees", 
+            "axis": "X", 
+            "long_name": "x coordinate of projection", 
+            "out_name": "x", 
+            "type": "double"
+        }, 
+        "y": {
+            "standard_name": "projection_y_coordinate", 
+            "units": "m", 
+            "axis": "Y", 
+            "long_name": "y coordinate of projection", 
+            "out_name": "", 
+            "type": "double"
+        }, 
+        "y_deg": {
+            "standard_name": "projection_y_coordinate", 
+            "units": "degrees", 
+            "axis": "Y", 
+            "long_name": "y coordinate of projection", 
+            "out_name": "y", 
+            "type": "double"
+        }
+    }, 
+    "variable_entry": {
+        "latitude": {
+            "standard_name": "latitude", 
+            "units": "degrees_north", 
+            "long_name": "latitude", 
+            "dimensions": "longitude latitude", 
+            "out_name": "latitude", 
+            "valid_min": "-90.0", 
+            "valid_max": "90.0", 
+            "type": "double"
+        }, 
+        "longitude": {
+            "standard_name": "longitude", 
+            "units": "degrees_east", 
+            "long_name": "longitude", 
+            "dimensions": "longitude latitude", 
+            "out_name": "longitude", 
+            "valid_min": "0.0", 
+            "valid_max": "360.0", 
+            "type": "double"
+        }, 
+        "vertices_latitude": {
+            "standard_name": "", 
+            "units": "degrees_north", 
+            "long_name": "", 
+            "dimensions": "vertices longitude latitude", 
+            "out_name": "vertices_latitude", 
+            "valid_min": "-90.0", 
+            "valid_max": "90.0", 
+            "type": "double"
+        }, 
+        "vertices_longitude": {
+            "standard_name": "", 
+            "units": "degrees_east", 
+            "long_name": "", 
+            "dimensions": "vertices longitude latitude", 
+            "out_name": "vertices_longitude", 
+            "valid_min": "0.0", 
+            "valid_max": "360.0", 
+            "type": "double"
+        }
+    }
+}

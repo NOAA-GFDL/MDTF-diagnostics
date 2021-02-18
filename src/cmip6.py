@@ -5,7 +5,7 @@ Specifications for the above were taken from the planning document
 CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
 are derived from data in the 
 `PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__ 
-repo, which is included as a submodule.
+repo, which is included as a subtree under ``/data``.
 
 .. warning::
    Functionality here has been added as needed for the project and is incomplete,
@@ -33,7 +33,7 @@ class CMIP6_CVs(util.Singleton):
             file_ = 'dummy_filename'
         else:
             paths = core.PathManager()
-            file_ = os.path.join(paths.CODE_ROOT, 'src', 
+            file_ = os.path.join(paths.CODE_ROOT, 'data', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_)
         self._contents = self._contents['CV']

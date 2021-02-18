@@ -532,7 +532,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
 @util.mdtf_dataclass
 class Fieldlist():
     """Class corresponding to a single variable naming convention (single file
-    in src/data/fieldlist_*.jsonc).
+    in data/fieldlist_*.jsonc).
 
     TODO: implement more robust indexing/lookup scheme. standard_name is not
     a unique identifier, but should include cell_methods, etc. as well as
@@ -690,7 +690,7 @@ class Fieldlist():
 
 class VariableTranslator(util.Singleton):
     """:class:`~util.Singleton` containing information for different variable 
-    naming conventions. These are defined in the src/data/fieldlist_*.jsonc 
+    naming conventions. These are defined in the data/fieldlist_*.jsonc 
     files.
     """
     def __init__(self, code_root=None, unittest=False):
@@ -703,7 +703,7 @@ class VariableTranslator(util.Singleton):
             config_files = []
         else:
             glob_pattern = os.path.join(
-                code_root, 'src', 'data', 'fieldlist_*.jsonc'
+                code_root, 'data', 'fieldlist_*.jsonc'
             )
             config_files = glob.glob(glob_pattern)
         for f in config_files:

@@ -1,3 +1,4 @@
 test commit
 Extra commit after `git merge --no-ff feature/submodule_to_subtree`
+3rd commit after merging develop into submodule_to_subtree, and that into this branch
 

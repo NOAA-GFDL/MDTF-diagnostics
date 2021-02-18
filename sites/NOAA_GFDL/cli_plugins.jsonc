@@ -201,6 +201,28 @@
         ]
       }
     },
+    // Alias for "conda" above; defined for backwards compatibility. Will be removed.
+    "GFDL_conda": {
+      "help": "Manages dependencies with Conda.",
+      "entry_point": "sites.NOAA_GFDL.gfdl:GfdlcondaEnvironmentManager",
+      "cli": {
+        "arguments": [
+          {
+            "name": "conda_root",
+            "help": "Path to the conda installation. Set equal to '' to use conda from your system's $PATH.",
+            "default" : "/home/mdteam/anaconda",
+            "metavar" : "<DIR>",
+            "action": "PathAction"
+          },{
+            "name": "conda_env_root",
+            "help": "Root directory for conda environment installs. Set equal to '' to install in your system's default location.",
+            "default" : "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
+            "metavar" : "<DIR>",
+            "action": "PathAction"
+          }
+        ]
+      }
+    },
     "Virtualenv": {
       "help": "foo",
       "entry_point": "sites.NOAA_GFDL.gfdl:GfdlvirtualenvEnvironmentManager",

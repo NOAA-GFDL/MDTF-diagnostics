@@ -4,7 +4,7 @@
 //
 {
   "name" : "CMIP",
-  "models": [],
+  "models": ["CMIP_GFDL"], // alias for backwards compatibility; will be removed
   "coords" : {
     // only used for taking slices, unit conversion
     "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},

@@ -25,6 +25,8 @@ force=True
 
 with open('.IRIDLAUTH') as file:
     authkey = file.read() 
+    
+#NEED TO CHANGE OUTFILE PATHS FOR POD
 
 reanalysis = download_data( #Anomaly data for physical field used to build 
                             # weather types (geopotential height)

@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 # This file is part of the convective_transition_diag module of the MDTF code package (see LICENSE.txt)
+=======
+
+# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+>>>>>>> b4c88bf... editing files to include environment variables
 
 # ======================================================================
 # convecTransCriticalCollapse_usp.py

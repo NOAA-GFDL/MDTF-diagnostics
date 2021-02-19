@@ -41,35 +41,24 @@
     {
       "var_name" : "hgt_var",
       "standard_name" : "geopotential_height_anomaly",
-      "path_variable" : "HGT_FILE",
+      "path_variable" : "HGT_ANOM_FILE",
       "freq" : "day",
       "requirement" : "required"
     },{
-        "var_name" : "t2m_var",
+        "var_name" : "t2m_var", //this could be at other heights 
+                                //so perhaps shouldnt put @2m
         "standard_name" : "air_temperature_anomaly",
-        "path_variable" : "T2M_FILE",
+        "path_variable" : "T2M_ANOM_FILE",
         "freq" : "day",
-        "requirement" : "required"
+        "requirement" : "required",
+        "alternatives" : ["t_var"] //others?
     },{
         "var_name" : "pr_var",
         "standard_name" : "lwe_precipitation_rate_anomaly", //Is this okay?
-        "path_variable" : "PR_FILE",
+        "path_variable" : "PR_ANOM_FILE",
       //anomaly standard name not available for precip in CF standard
         "freq" : "day",
         "requirement" : "required"
-    },{
-        "var_name" : "vwnd_var",
-        "standard_name" : "eastward_wind", //this is also anomaly data
-        "path_variable" : "VWND_FILE",
-        "freq" : "day",
-        "requirement" : "optional"
-    },{
-        "var_name" : "uwnd_var",
-        "standard_name" : "northward_wind", //this is also anomaly data
-        "path_variable" : "UWND_FILE",
-        "freq" : "day",
-        "requirement" : "optional" ,
-        "use_exact_name" : "false",
     }
   ]
 }

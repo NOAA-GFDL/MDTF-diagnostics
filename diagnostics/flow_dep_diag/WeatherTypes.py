@@ -19,7 +19,6 @@ from PyWR import *
 #If data of a similar nature is desired, refer to the prep_data.py file for instructions on how to download anomaly data from the http server
 
 
-#HOW WOULD THE DATA FILE BE INPUT IN THIS NAME FORMAT
 hgt_input_path = "{DATADIR}/day/{CASENAME}.{hgt_var}.day.nc".format(**os.environ)
 t2m_input_path = "{DATADIR}/day/{CASENAME}.{t2m_var}.day.nc".format(**os.environ)
 pr_input_path = "{DATADIR}/day/{CASENAME}.{pr_var}.day.nc".format(**os.environ)
@@ -29,25 +28,22 @@ pr_input_path = "{DATADIR}/day/{CASENAME}.{pr_var}.day.nc".format(**os.environ)
 reanalysis = xr.open_dataset(hgt_input_path, decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
 #reanalysis = xr.open_dataset('WUS/data/hgt_NNRP_rean.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
 
-#old code still retained
-rainfall = xr.open_dataset('WUS/data/rainfall_cpc.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
-t2m = xr.open_dataset('WUS/data/t2m_cpc.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
-uwnd = xr.open_dataset('WUS/data/u_NNRP_rean.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
-vwnd = xr.open_dataset('WUS/data/v_NNRP_rean.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
+rainfall = xr.open_dataset(pr_input_path, decode_cd = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
+#rainfall = xr.open_dataset('WUS/data/rainfall_cpc.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
+
+t2m = xr.open_dataset(t2m_input_path, decode_cd = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
+#t2m = xr.open_dataset('WUS/data/t2m_cpc.nc', decode_cf = True, decode_times = True).stack(time=['T'], grid=['Y', 'X'])
 
 
 #get rid of dummy pressure coordinate
 reanalysis=reanalysis.isel(P=0) 
-uwnd=uwnd.isel(P=0)
-vwnd=vwnd.isel(P=0)
+
 
 
 #viewing the data
 print(reanalysis)
 print(rainfall)
 print(t2m)
-print(vwnd)
-print(uwnd)
 
 
 #DIMENSION REDUCTION: choose a percentage of variance explained that we will require
@@ -212,6 +208,7 @@ cbar2.ax.get_yaxis().labelpad = 20
 
 # Add a quiver key
 #k = plt.quiverkey(Q, 0.9, 0.7, 1, '1 m/s', labelpos='E', coordinates='figure')
+plot_path = "{WK_DIR}/model/PS/WeatherTypes_plot.eps".format(**os.environ)
 
-fig.savefig('figs/wt_composite.pdf', bbox_inches='tight') #this needs to be changed to appropriate folder in framework
+fig.savefig(plot_path, bbox_inches='tight')
 plt.show()

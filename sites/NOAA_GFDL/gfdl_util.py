@@ -11,17 +11,12 @@ import logging
 _log = logging.getLogger(__name__)
 
 class ModuleManager(util.Singleton):
+    # conda used for all POD dependencies instead of environment module-provided
+    # executables; following only used for GFDL-specific data handling.
+    # Use most recent versions available on both RDHPCS and workstations
     _current_module_versions = {
-        'python2':   'python/2.7.12',
-        # most recent version common to analysis and workstations; use conda anyway
-        'python3':   'python/3.4.3',
-        'ncl':      'ncarg/6.5.0',
-        'r':        'R/3.4.4',
-        'anaconda': 'anaconda2/5.1',
+        'git':      'git/2.4.6',
         'gcp':      'gcp/2.3',
-        # install nco in conda environment, rather than using GFDL module
-        # 'nco':      'nco/4.5.4', # 4.7.6 still broken on workstations
-        'netcdf':   'netcdf/4.2'
     }
 
     def __init__(self):

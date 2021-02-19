@@ -320,8 +320,6 @@ class DatasetParser():
                 expected_val, name)
         if test_count >= 1:
             return expected_val
-        # _log.warning("Expected value of '%s' for '%s' not found.", 
-        #     expected_val, name)
         munged_opts = [
             (comparison_func(str_munge(opt), str_munge(expected_val)), opt) \
                 for opt in options
@@ -332,11 +330,8 @@ class DatasetParser():
                 expected_val, guessed_val, name)
             return guessed_val
         if default is None:
-            # _log.debug("No string similar to '%s' in %s.", name, options)
             raise KeyError(expected_val)
         else:
-            # _log.error("Failed to parse '%s'; using fallback value '%s'.", 
-            #     name, default)
             return default
 
     def normalize_attr(self, key_name, key_startswith, d, default=None, update=True):
@@ -416,7 +411,6 @@ class DatasetParser():
         def _restore_one(name, backup_d, attrs_d):
             for k,v in backup_d.items():
                 if k not in attrs_d:
-                    # _log.debug("%s: restore attr '%s' = '%s'.", name, k, v)
                     attrs_d[k] = v
                 if v != attrs_d[k]:
                     _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",

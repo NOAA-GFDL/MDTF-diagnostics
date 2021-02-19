@@ -186,10 +186,8 @@ class PathAction(RecordDefaultsAction):
         path = util.from_iter(values)
         if path is None:
             path = ''
-        # resolve paths in PathManager init, after env vars set
-        # path = util.resolve_path(
-        #     path, root_path=config.code_root, env=os.environ
-        # )
+        # Don't do anything else here: may need to use env vars to properly 
+        # resolve paths, so that's now done later, in core.PathManager.__init__()
         super(PathAction, self).__call__(parser, namespace, path, option_string)
 
 class ClassImportAction(RecordDefaultsAction):
@@ -1024,8 +1022,6 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             try:
                 d = util.parse_json(str_)
                 self.file_case_list = d.pop('case_list', [])
-                # 'pods' handled by normal CLI
-                # self.file_pod_list = d.pop('pods', [])
                 d = {canonical_arg_name(k): v for k,v in d.items()}
                 config.defaults[DefaultsFileTypes.USER].update(d)
             except json.JSONDecodeError as exc:
@@ -1076,8 +1072,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         self.sites = [d for d in os.listdir(config.sites_dir) \
             if os.path.isdir(os.path.join(config.sites_dir, d)) \
                 and not d.startswith(('.','_'))]
-        # if default_site in self.sites:
-        #     self.installed = True
+        # TODO: if we're checking to see if installer has been run, only set 
+        # self.installed = True if default_site in self.sites
         self.installed = True
 
         site_p = MDTFArgPreparser()

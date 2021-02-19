@@ -531,11 +531,8 @@ class GfdlautoDataManager(object):
             dispatched_cls = GfdlppDataManager
         else:
             dispatched_cls = Gfdludacmip6DataManager
-            # _log.critical(("%s: Couldn't determine data fetch method from input."
-            #     "Please set '--data_manager GFDL_pp', 'GFDL_UDA_cmip6', or "
-            #     "'GFDL_data_cmip6', depending on the source you want."),
-            #     cls.__name__)
-            # exit(2)
+            # could use more careful logic here, but for now assume CMIP6 on 
+            # /uda as a fallback
             
         _log.debug("%s: Dispatched DataManager to %s.", 
             cls.__name__, dispatched_cls.__name__)
@@ -558,7 +555,7 @@ class GfdlvirtualenvEnvironmentManager(
         _ = gfdl_util.ModuleManager()
         super(GfdlvirtualenvEnvironmentManager, self).__init__()
 
-    # manual-coded logic like this is not scalable
+    # TODO: manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
         langs = [s.lower() for s in pod.runtime_requirements]
         if pod.name == 'convective_transition_diag':
@@ -572,7 +569,7 @@ class GfdlvirtualenvEnvironmentManager(
         else:
             pod.env = 'py_default'
 
-    # this is totally not scalable
+    # TODO: manual-coded logic like this is not scalable
     _module_lookup = {
         'ncl': ['ncl'],
         'r_default': ['r'],

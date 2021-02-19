@@ -196,13 +196,15 @@ class MDTFFramework(object):
         pass
 
     def _print_config(self, cli_obj, config, paths):
-        # make config nested dict for backwards compatibility
-        # this is all temporary
+        """Log end result of parsing package settings. This is only for the user's
+        benefit; a machine-readable version which is usable for 
+        provenance/reproducibilityis saved by the OutputManager as 
+        config_save.jsonc.
+        """
         d = dict()
         for n, case in enumerate(self.case_list):
             key = 'case_list({})'.format(n)
             d[key] = case
-        # d['pod_list'] = self.pod_list
         d['paths'] = paths.toDict()
         d['paths'].pop('_unittest', None)
         d['settings'] = dict()
@@ -215,8 +217,8 @@ class MDTFFramework(object):
         d['settings'] = {k:v for k,v in d['settings'].items() \
             if k not in d['paths']}
         d['env_vars'] = config.global_env_vars
-        print('DEBUG: SETTINGS:')
-        print(util.pretty_print_json(d))
+        _log.info('PACKAGE SETTINGS:')
+        _log.info(util.pretty_print_json(d))
 
     # --------------------------------------------------------------------
 
@@ -439,7 +441,6 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: util.Units = util.MANDATORY
-    # axes_set: frozenset = dc.field(default_factory=frozenset)
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
 

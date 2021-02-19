@@ -624,11 +624,6 @@ class DateRange(AtomicInterval, _DateMixin):
     def overlaps(self, item):
         item = self._coerce_to_self(item)
         return super(DateRange, self).overlaps(item, adjacent=False)
-
-    # def contains(self, item):
-    #     # strict containments
-    #     item = self._coerce_to_self(item)
-    #     return super(DateRange, self).__contains__(item)
     
     def intersection(self, item, precision=None):
         item = self._coerce_to_self(item)

@@ -24,9 +24,6 @@ lon_coord = getenv("lon_coord")
 lev_coord = getenv("lev_coord")
 file_path = getenv("DATADIR")
 
-print("IS LOG SHIT WORKING")
-print(use_hybrid_sigma)
-
 ; Z500 
 if( fileexists(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then
 

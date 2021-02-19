@@ -24,14 +24,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 import recommonmark
 from recommonmark.transform import AutoStructify
 
-# mock out imports of non-standard library modules
-# Modules in this list are mocked out due to an error encountered in running 
-# autodoc on six.py with python 3.7. None of the modules are used by the
-# framework: they're only referenced by six.py.
-# autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
-# import unittest.mock as mock
-# for module in autodoc_mock_imports:
-#     sys.modules[module] = mock.Mock()
+# mock out imports of non-standard library modules here if needed in future
+autodoc_mock_imports = []
+import unittest.mock as mock
+for module_name in autodoc_mock_imports:
+    sys.modules[module_name] = mock.Mock()
 
 # -- Project information -----------------------------------------------------
 

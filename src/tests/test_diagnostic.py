@@ -8,7 +8,7 @@ from src.datelabel import DateFrequency
 # from src.diagnostic import Diagnostic, PodRuntimeError
 # from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticInit(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod_CF = {
@@ -83,7 +83,7 @@ class TestDiagnosticInit(unittest.TestCase):
         }
         self.assertRaises(AssertionError, Diagnostic, 'A')
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticSetUp(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod = {'settings':{}, 'varlist':[]}
@@ -168,7 +168,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         pod = Diagnostic('DUMMY_POD')  
         self.assertRaises(PodRuntimeError, pod._check_pod_driver)
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticCheckVarlist(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod = {'settings':{}, 'varlist':[]}
@@ -273,7 +273,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECC.mon.nc'])
         self.assertEqual(missing, [])
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod = {'settings':{}, 'varlist':[]}
@@ -335,7 +335,7 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
         pod = Diagnostic('DUMMY_POD') 
         self.assertRaises(PodRuntimeError, pod._check_pod_driver)
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticTearDown(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod = {'settings':{}, 'varlist':[]}

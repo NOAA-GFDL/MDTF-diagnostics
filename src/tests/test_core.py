@@ -132,45 +132,46 @@ class TestPathManager(unittest.TestCase):
         #_ = core.PathManager(unittest = True) 
 
 
-# @mock.patch.multiple(DataManager, __abstractmethods__=set())
-# class TestPathManagerPodCase(unittest.TestCase):
-#     def setUp(self):
-#         # set up translation dictionary without calls to filesystem
-#         setUp_config_singletons(
-#             config=self.case_dict, 
-#             paths={
-#                 'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
-#                 'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
-#             },
-#             pods={ 'AA':{
-#                 'settings':{}, 
-#                 'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
-#                 }
-#             })
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
+#@mock.patch.multiple(DataManager, __abstractmethods__=set())
+class TestPathManagerPodCase(unittest.TestCase):
+    def setUp(self):
+        # set up translation dictionary without calls to filesystem
+        setUp_config_singletons(
+            config=self.case_dict, 
+            paths={
+                'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
+                'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
+            },
+            pods={ 'AA':{
+                'settings':{}, 
+                'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
+                }
+            })
 
-#     case_dict = {
-#         'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
-#         'pod_list': ['AA']
-#     }
+    case_dict = {
+        'CASENAME': 'A', 'model': 'B', 'FIRSTYR': 1900, 'LASTYR': 2100,
+        'pod_list': ['AA']
+    }
 
-#     def tearDown(self):
-#         tearDown_config_singletons()
+    def tearDown(self):
+        tearDown_config_singletons()
 
-#     def test_pathmgr_model(self):
-#         paths = core.PathManager()
-#         case = DataManager(self.case_dict)
-#         d = paths.model_paths(case)
-#         self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
-#         self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
+    def test_pathmgr_model(self):
+        paths = core.PathManager()
+        case = DataManager(self.case_dict)
+        d = paths.model_paths(case)
+        self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
+        self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
 
-#     def test_pathmgr_pod(self):
-#         paths = core.PathManager()
-#         case = DataManager(self.case_dict)
-#         pod = Diagnostic('AA')
-#         d = paths.pod_paths(pod, case)
-#         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
-#         self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
-#         self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
+    def test_pathmgr_pod(self):
+        paths = core.PathManager()
+        case = DataManager(self.case_dict)
+        pod = Diagnostic('AA')
+        d = paths.pod_paths(pod, case)
+        self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
+        self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
+        self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
 
 
 

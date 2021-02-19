@@ -795,9 +795,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             return f"(`{col_name}`.isnull())"
 
         if isinstance(query_attr_val, datelabel.DateRange):
-            # # return files having any date range overlap at all
-            # # pandas doesn't allow 'in' for non-list membership
-            # return f"({col_name} in @{_dict_var_name}.{k})"
+            # skip, since filtering on DateRange is done separately in 
+            # _query_catalog, since pandas doesn't allow use of 'in' for 
+            # non-list membership
             return ""
         elif query_attr_name == 'min_frequency':
             return f"(`{col_name}` >= @{_attrs}.{query_attr_name})"

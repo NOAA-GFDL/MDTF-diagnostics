@@ -4,7 +4,7 @@ import unittest.mock as mock # define mock os.environ so we don't mess up real e
 from src.core import MDTFFramework
 import src.util as util
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestMDTFArgParsing(unittest.TestCase):
     def setUp(self):
         _ = configs.PathManager(unittest = True)

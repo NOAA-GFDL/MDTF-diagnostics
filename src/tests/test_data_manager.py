@@ -6,7 +6,7 @@ from src.diagnostic import Diagnostic
 # from src.data_manager import DataManager
 # from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 #@mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetup(unittest.TestCase):
     # pylint: disable=abstract-class-instantiated
@@ -80,7 +80,7 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(pod.varlist[0].CF_name, 'pr_var')
         self.assertEqual(pod.varlist[0].name_in_model, 'PRECT')
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 #@mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestDataManagerSetupNonCFPod(unittest.TestCase):
     # pylint: disable=abstract-class-instantiated
@@ -139,7 +139,7 @@ class TestDataManagerSetupNonCFPod(unittest.TestCase):
         self.assertEqual(pod.conda_env, '_MDTF-diagnostics-B')
 
 
-@unittest.skip("")
+@unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDataManagerFetchData(unittest.TestCase):    
     @mock.patch('src.util.read_json', 
         return_value = {

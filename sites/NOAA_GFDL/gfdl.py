@@ -142,7 +142,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
             _log.info(f"Start dmget of {len(paths)} files.")
             util.run_command(['dmget','-t','-v'] + list(paths),
-                timeout= len(paths) * self.file_transfer_timeout,
+                timeout= len(paths) * self.timeout,
                 dry_run=self.dry_run
             ) 
             _log.info("Successful exit of dmget.")
@@ -183,7 +183,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
                 # gcp requires trailing slash, ln ignores it
                 smartsite + tmpdir + os.sep
             ], 
-                timeout=self.file_transfer_timeout, 
+                timeout=self.timeout, 
                 dry_run=self.dry_run
             )
             local_paths.append(local_path)
@@ -213,7 +213,7 @@ class GFDL_GCP_FileDataSourceBase(
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
         self.dry_run = config.get('dry_run', False)
-        self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
+        self.timeout = config.get('file_transfer_timeout', 0)
 
         if self.frepp_mode:
             paths = core.PathManager()
@@ -639,7 +639,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         try:
             self.frepp_mode = config.get('frepp', False)
             self.dry_run = config.get('dry_run', False)
-            self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
+            self.timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
             _log.exception(f"Caught {repr(exc)}.")
 

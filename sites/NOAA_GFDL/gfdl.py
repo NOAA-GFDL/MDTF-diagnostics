@@ -17,6 +17,9 @@ _log = logging.getLogger(__name__)
 class GFDLMDTFFramework(core.MDTFFramework):
     def parse_mdtf_args(self, cli_obj, pod_info_tuple):
         super(GFDLMDTFFramework, self).parse_mdtf_args(cli_obj, pod_info_tuple)
+
+        self.dry_run = cli_obj.config.get('dry_run', False)
+        self.timeout = cli_obj.config.get('file_transfer_timeout', 0)
         # set up cooperative mode -- hack to pass config settings
         self.frepp_mode = cli_obj.config.get('frepp', False)
         if self.frepp_mode:
@@ -43,8 +46,6 @@ class GFDLMDTFFramework(core.MDTFFramework):
         super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
 
         self.reset_case_pod_list(cli_obj, config, paths)
-        self.dry_run = config.get('dry_run', False)
-        self.timeout = config.get('file_transfer_timeout', 0)
         # copy obs data from site install
         gfdl_util.fetch_obs_data(
             paths.OBS_DATA_REMOTE, paths.OBS_DATA_ROOT,

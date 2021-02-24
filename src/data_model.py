@@ -5,7 +5,7 @@ import abc
 import dataclasses as dc
 import itertools
 import typing
-from src import util, datelabel
+from src import util
 
 import logging
 _log = logging.getLogger(__name__)
@@ -224,7 +224,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
     
     @classmethod
     def from_instances(cls, *t_coords):
@@ -245,12 +245,12 @@ class DMTimeCoordinate(_DMCoordinateShared):
     units: util.Units = util.MANDATORY
     axis: str = 'T'
     calendar: str = ""
-    range: datelabel.AbstractDateRange = None
-    frequency: datelabel.AbstractDateFrequency = None
+    range: util.AbstractDateRange = None
+    frequency: util.AbstractDateFrequency = None
 
     @property
     def is_static(self):
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields 
@@ -346,7 +346,7 @@ class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
 
 
 # ------------------------------------------------------------------------------

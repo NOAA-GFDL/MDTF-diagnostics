@@ -11,6 +11,11 @@ from .dataclass import (
     NOTSET, MANDATORY, mdtf_dataclass, regex_dataclass, dataclass_factory,
     filter_dataclass, coerce_to_dataclass
 )
+from .datelabel import (
+    DatePrecision, DateRange, Date, DateFrequency,
+    FXDateMin, FXDateMax, FXDateRange, FXDateFrequency,
+    AbstractDateRange, AbstractDate, AbstractDateFrequency
+)
 from .exceptions import *
 from .filesystem import (
     abbreviate_path, resolve_path, recursive_copy, 
@@ -25,9 +30,4 @@ from .logs import (
 from .processes import (
     ExceptionPropagatingThread, 
     poll_command, run_command, run_shell_command
-)
-from .units import (
-    Units,
-    to_cfunits, to_equivalent_units, units_equivalent, units_equal, 
-    conversion_factor, convert_scalar_coord, convert_dataarray
 )

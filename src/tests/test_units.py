@@ -1,6 +1,6 @@
 import unittest
 import unittest.mock as mock
-from src.util import units as util
+from src import units as util
 from src.util import exceptions
 
 # TODO: better tests

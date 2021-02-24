@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 import time
-from src import util, core, datelabel
+from src import util, core
 
 import logging
 _log = logging.getLogger(__name__)
@@ -202,7 +202,7 @@ def frepp_freq(date_freq):
     # logic as written would give errors for 1yr chunks (?)
     if date_freq is None:
         return date_freq
-    assert isinstance(date_freq, datelabel.DateFrequency)
+    assert isinstance(date_freq, util.DateFrequency)
     if date_freq.unit == 'hr' or date_freq.quantity != 1:
         return date_freq.format()
     else:

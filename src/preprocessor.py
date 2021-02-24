@@ -5,7 +5,7 @@ import os
 import abc
 import dataclasses
 import functools
-from src import util, core, diagnostic, xr_util
+from src import util, core, diagnostic, xr_parser, units
 import cftime
 import numpy as np
 import xarray as xr
@@ -185,7 +185,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     attributes to what's given in the VarlistEntry.
     """
     # Incorrect but matches convention for this conversion.
-    _liquid_water_density = util.Units('1000.0 kg m-3')
+    _liquid_water_density = units.Units('1000.0 kg m-3')
     # list of regcognized standard_names for which transformation is applicable
     # NOTE: not exhaustive
     _std_name_tuples = [
@@ -392,14 +392,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if 'Z' not in ds[tv_name].cf.dim_axes_set:
             # maybe the ds we received has this level extracted already
             ds_z = ds.cf.get_scalar('Z', tv_name) 
-            if ds_z is None or isinstance(ds_z, xr_util.PlaceholderScalarCoordinate):
+            if ds_z is None or isinstance(ds_z, xr_parser.PlaceholderScalarCoordinate):
                 _log.debug(("Exit %s for %s: %s %s Z level requested but value not "
                     "provided in scalar coordinate information; assuming correct."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)
                 return ds
             else:
                 # value (on var.translation) has already been checked by 
-                # xr_util.DatasetParser
+                # xr_parser.DatasetParser
                 _log.debug(("Exit %s for %s: %s %s Z level requested and provided "
                     "by dataset."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)
@@ -466,7 +466,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     # arguments passed to xr.open_dataset and xr.open_mfdataset
     open_dataset_kwargs = {
         "engine": "netcdf4",
-        "decode_cf": False,     # all decoding done by xr_utils.parse_dataset
+        "decode_cf": False,     # all decoding done by DatasetParser
         "decode_coords": False, # so disable it here
         "decode_times": False,
         "use_cftime": False
@@ -567,7 +567,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # load dataset
         try:
             ds = self.read_dataset(var)
-            ds = xr_util.DatasetParser().parse(ds, var)
+            ds = xr_parser.DatasetParser().parse(ds, var)
         except Exception as exc:
             raise util.DataPreprocessError((f"Error in read/parse data for "
                 f"{var.full_name}."), var) from exc

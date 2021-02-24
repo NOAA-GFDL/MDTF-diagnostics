@@ -2,9 +2,9 @@ import unittest
 import unittest.mock as mock
 import dataclasses
 import typing
-import src.datelabel as dt # only used to construct one test instance
 from src.util import basic, exceptions
 from src.util import dataclass as util
+from src.util import datelabel as dt # only used to construct one test instance
 
 
 class TestRegexPattern(unittest.TestCase):

@@ -9,7 +9,8 @@ import shutil
 import signal
 import tempfile
 import traceback
-from src import util, cli, mdtf_info, data_model
+from src import util, cli, mdtf_info, data_model, units
+from src.units import Units
 
 import logging
 _log = logging.getLogger(__name__)
@@ -440,7 +441,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    units: util.Units = util.MANDATORY
+    units: Units = util.MANDATORY
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
 
@@ -450,7 +451,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: util.Units
+    # units: Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
@@ -519,7 +520,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
-        if util.units_equal(c.units, new_coord.units):
+        if units.units_equal(c.units, new_coord.units):
             _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                 c.value, c.units, c.axis, self.name, new_name)
         else:
@@ -649,7 +650,7 @@ class Fieldlist():
         
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = util.convert_scalar_coord(coord, new_coord.units)
+            new_coord.value = units.convert_scalar_coord(coord, new_coord.units)
         else:
             new_coord = dc.replace(coord, 
                 **(util.filter_dataclass(new_coord, coord)))

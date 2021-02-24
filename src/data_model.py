@@ -5,7 +5,8 @@ import abc
 import dataclasses as dc
 import itertools
 import typing
-from src import util, datelabel
+from src import util
+from src.units import Units
 
 import logging
 _log = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class DMBoundsDimension(object):
     name: str = util.MANDATORY
     
     standard_name = 'bounds'
-    units = util.Units('1')
+    units = Units('1')
     axis = 'BOUNDS'
     bounds = None
     value = None
@@ -162,21 +163,21 @@ class DMCoordinate(_DMCoordinateShared):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: util.Units = util.MANDATORY
+    units: Units = util.MANDATORY
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
     name: str = 'lon'
     standard_name: str = 'longitude'
-    units: util.Units = 'degrees_east'
+    units: Units = 'degrees_east'
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
     name: str = 'lat'
     standard_name: str = 'latitude'
-    units: util.Units = 'degrees_north'
+    units: Units = 'degrees_north'
     axis: str = 'Y'
 
 @util.mdtf_dataclass
@@ -186,7 +187,7 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: util.Units = "1" # dimensionless vertical coords OK
+    units: Units = "1" # dimensionless vertical coords OK
     axis: str = 'Z'
     positive: str = util.MANDATORY
 
@@ -212,7 +213,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
     """
     name: str = 'time'
     standard_name: str = 'time'
-    units: util.Units = ""
+    units: Units = ""
     axis: str = 'T'
     calendar: str = ""
     range: typing.Any = None
@@ -224,7 +225,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
     
     @classmethod
     def from_instances(cls, *t_coords):
@@ -242,15 +243,15 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
 class DMTimeCoordinate(_DMCoordinateShared):
     name: str = util.MANDATORY
     standard_name: str = 'time'
-    units: util.Units = util.MANDATORY
+    units: Units = util.MANDATORY
     axis: str = 'T'
     calendar: str = ""
-    range: datelabel.AbstractDateRange = None
-    frequency: datelabel.AbstractDateFrequency = None
+    range: util.AbstractDateRange = None
+    frequency: util.AbstractDateFrequency = None
 
     @property
     def is_static(self):
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields 
@@ -305,28 +306,28 @@ class _DMPlaceholderCoordinateBase(object):
 class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_COORD'
     standard_name: str = NotImplemented
-    units: util.Units = NotImplemented
+    units: Units = NotImplemented
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_X_COORD'
     standard_name: str = NotImplemented
-    units: util.Units = NotImplemented
+    units: Units = NotImplemented
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_Y_COORD'
     standard_name: str = NotImplemented
-    units: util.Units = NotImplemented
+    units: Units = NotImplemented
     axis: str = 'Y'
 
 @util.mdtf_dataclass
 class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_Z_COORD'
     standard_name: str = NotImplemented
-    units: util.Units = NotImplemented
+    units: Units = NotImplemented
     axis: str = 'Z'
     positive: str = NotImplemented
 
@@ -334,7 +335,7 @@ class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
 class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_T_COORD'
     standard_name: str = NotImplemented
-    units: util.Units = NotImplemented
+    units: Units = NotImplemented
     axis: str = 'T'
     calendar: str = NotImplemented
     range: typing.Any = None
@@ -346,7 +347,7 @@ class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == datelabel.FXDateRange)
+        return (self.range == util.FXDateRange)
 
 
 # ------------------------------------------------------------------------------
@@ -473,7 +474,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: util.Units = "" # not MANDATORY since may be set later from var translation
+    units: Units = "" # not MANDATORY since may be set later from var translation
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -608,7 +609,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: util.Units
+    # units: Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     pass

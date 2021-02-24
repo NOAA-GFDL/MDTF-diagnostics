@@ -6,7 +6,7 @@ import io
 import dataclasses
 import shutil
 import tempfile
-from src import (util, core, datelabel, diagnostic, data_manager, 
+from src import (util, core, diagnostic, data_manager, 
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
 
@@ -142,7 +142,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
             _log.info(f"Start dmget of {len(paths)} files.")
             util.run_command(['dmget','-t','-v'] + list(paths),
-                timeout= len(paths) * self.file_transfer_timeout,
+                timeout= len(paths) * self.timeout,
                 dry_run=self.dry_run
             ) 
             _log.info("Successful exit of dmget.")
@@ -183,7 +183,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
                 # gcp requires trailing slash, ln ignores it
                 smartsite + tmpdir + os.sep
             ], 
-                timeout=self.file_transfer_timeout, 
+                timeout=self.timeout, 
                 dry_run=self.dry_run
             )
             local_paths.append(local_path)
@@ -213,7 +213,7 @@ class GFDL_GCP_FileDataSourceBase(
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
         self.dry_run = config.get('dry_run', False)
-        self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
+        self.timeout = config.get('file_transfer_timeout', 0)
 
         if self.frepp_mode:
             paths = core.PathManager()
@@ -311,7 +311,7 @@ _pp_static_dir_regex = util.RegexPattern(r"""
         (?P<component>[a-zA-Z0-9_-]+)     # component name             
     """,
     defaults={
-        'frequency': datelabel.FXDateFrequency, 'chunk_freq': datelabel.FXDateFrequency
+        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
     }
 )
 pp_dir_regex = util.ChainedRegexPattern(
@@ -339,8 +339,8 @@ _pp_static_regex = util.RegexPattern(r"""
     """,
     defaults={
         'variable': 'static',
-        'start_date': datelabel.FXDateMin, 'end_date': datelabel.FXDateMax,
-        'frequency': datelabel.FXDateFrequency, 'chunk_freq': datelabel.FXDateFrequency
+        'start_date': util.FXDateMin, 'end_date': util.FXDateMax,
+        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
     }
 )
 pp_path_regex = util.ChainedRegexPattern(
@@ -355,27 +355,27 @@ class PPTimeseriesDataFile():
     """Dataclass describing catalog entries for /pp/ directory timeseries data.
     """
     component: str = ""
-    frequency: datelabel.DateFrequency = None
-    chunk_freq: datelabel.DateFrequency = None
-    start_date: datelabel.Date = None
-    end_date: datelabel.Date = None
+    frequency: util.DateFrequency = None
+    chunk_freq: util.DateFrequency = None
+    start_date: util.Date = None
+    end_date: util.Date = None
     variable: str = ""
     remote_path: str = util.MANDATORY
-    date_range: datelabel.DateRange = dataclasses.field(init=False)
+    date_range: util.DateRange = dataclasses.field(init=False)
 
     def __post_init__(self, *args):
         if isinstance(self.frequency, str):
-            self.frequency = datelabel.DateFrequency(self.frequency)
-        if self.start_date == datelabel.FXDateMin \
-            and self.end_date == datelabel.FXDateMax:
+            self.frequency = util.DateFrequency(self.frequency)
+        if self.start_date == util.FXDateMin \
+            and self.end_date == util.FXDateMax:
             # Assume we're dealing with static/fx-frequency data, so use special 
             # placeholder values
-            self.date_range = datelabel.FXDateRange
+            self.date_range = util.FXDateRange
             if not self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
                     f"cannot determine if '{self.remote_path}' represents static data."))
         else:
-            self.date_range = datelabel.DateRange(self.start_date, self.end_date)
+            self.date_range = util.DateRange(self.start_date, self.end_date)
             if self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
                     f"cannot determine if '{self.remote_path}' represents static data."))
@@ -639,7 +639,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         try:
             self.frepp_mode = config.get('frepp', False)
             self.dry_run = config.get('dry_run', False)
-            self.file_transfer_timeout = config.get('file_transfer_timeout', 0)
+            self.timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
             _log.exception(f"Caught {repr(exc)}.")
 

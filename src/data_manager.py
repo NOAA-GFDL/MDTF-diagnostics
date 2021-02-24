@@ -7,7 +7,7 @@ import collections
 import dataclasses
 import itertools
 import signal
-from src import util, core, datelabel, diagnostic, preprocessor, cmip6
+from src import util, core, diagnostic, preprocessor, cmip6
 import pandas as pd
 import intake_esm
 
@@ -169,10 +169,10 @@ class DataSourceAttributesBase():
     CASENAME: str = util.MANDATORY
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
-    date_range: datelabel.DateRange = dataclasses.field(init=False)
+    date_range: util.DateRange = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.date_range = datelabel.DateRange(self.FIRSTYR, self.LASTYR)
+        self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
 class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
     """Base class for handling the data needs of PODs. Executes query for 
@@ -412,8 +412,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             'T',
             new_class = {
                 'self': diagnostic.VarlistTimeCoordinate,
-                'range': datelabel.DateRange,
-                'frequency': datelabel.DateFrequency
+                'range': util.DateRange,
+                'frequency': util.DateFrequency
             },
             range=self.attrs.date_range
         )
@@ -737,7 +737,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     # of the data for that row.
     remote_data_col = util.abstract_attribute()
 
-    # column of the DataFrame containing datelabel.DateRange objects 
+    # column of the DataFrame containing util.DateRange objects 
     # If 'None', date range selection logic is skipped.
     # TODO: generate DateRange from start/end date columns
     daterange_col = None
@@ -794,7 +794,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             # In pandas filtering, ==, != fail on None; should convert Nones to np.nans
             return f"(`{col_name}`.isnull())"
 
-        if isinstance(query_attr_val, datelabel.DateRange):
+        if isinstance(query_attr_val, util.DateRange):
             # skip, since filtering on DateRange is done separately in 
             # _query_catalog, since pandas doesn't allow use of 'in' for 
             # non-list membership
@@ -828,7 +828,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # date columns.
         catalog_df = self.df
         for col_name, v in query_d.items():
-            if isinstance(v, datelabel.DateRange):
+            if isinstance(v, util.DateRange):
                 if col_name not in catalog_df:
                     # e.g., for sample model data where date_range not in catalog
                     continue
@@ -887,7 +887,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         try:
             sorted_df = group_df.sort_values(by=self.daterange_col)
             # method throws ValueError if ranges aren't contiguous
-            files_date_range = datelabel.DateRange.from_contiguous_span(
+            files_date_range = util.DateRange.from_contiguous_span(
                 *(sorted_df[self.daterange_col].to_list())
             )
             # throws AssertionError if we don't span the query range
@@ -1111,7 +1111,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self._get_expt_key('pod', p, self._id)
                     _set_expt_key(p, key)
                 except Exception as exc:
-                    _log.debug(('set_experiment on pod-level experiment attributes: '
+                    _log.warning(('set_experiment on pod-level experiment attributes: '
                         '%s caught %r; deactivating.'), p.name, exc)
                     p.exceptions.log(exc)
                     continue
@@ -1353,7 +1353,7 @@ class SampleDataFile():
     """Dataclass describing catalog entries for sample model data files.
     """
     sample_dataset: str = util.MANDATORY
-    frequency: datelabel.DateFrequency = util.MANDATORY
+    frequency: util.DateFrequency = util.MANDATORY
     variable: str = util.MANDATORY
     remote_path: str = util.MANDATORY
 

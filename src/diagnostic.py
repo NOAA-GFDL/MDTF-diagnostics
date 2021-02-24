@@ -2,7 +2,7 @@ import os
 import dataclasses as dc
 import itertools
 import typing
-from src import util, core, datelabel, data_model
+from src import util, core, data_model
 
 import logging
 _log = logging.getLogger(__name__)
@@ -30,11 +30,11 @@ class _VarlistGlobalSettings(object):
 
 @util.mdtf_dataclass
 class _VarlistTimeSettings(object):
-    frequency:     datelabel.DateFrequency = \
+    frequency:     util.DateFrequency = \
         dc.field(default=util.NOTSET, metadata={'query': True})
-    min_frequency: datelabel.DateFrequency = \
+    min_frequency: util.DateFrequency = \
         dc.field(default=util.NOTSET, metadata={'query': True})
-    max_frequency: datelabel.DateFrequency = \
+    max_frequency: util.DateFrequency = \
         dc.field(default=util.NOTSET, metadata={'query': True})
     min_duration: str = util.NOTSET
     max_duration: str = util.NOTSET
@@ -64,7 +64,7 @@ class VarlistCoordinateMixin(object):
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     # name: str              # fields from data_model.DMCoordinate
     # standard_name: str
-    # units: util.Units
+    # units: units.Units
     # axis: str
     # bounds: AbstractDMCoordinateBounds
     # value: typing.Union[int, float] # for scalar coordinates only
@@ -522,8 +522,8 @@ class Diagnostic(object):
         # only need to keep track of this up to pod execution
         if self.failed:
             # Originating exception will have been logged at a higher priority?
-            _log.debug("Execution of POD %s couldn't be completed successfully.", 
-                self.name)
+            _log.warning("Execution of POD %s couldn't be completed:\n%s.", 
+                self.name, self.exceptions.format())
             for v in self.iter_vars():
                 v.active = False
 

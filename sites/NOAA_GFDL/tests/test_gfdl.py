@@ -5,7 +5,7 @@ import subprocess
 from src.tests import shared_test_utils as shared
 import sites.NOAA_GFDL.gfdl as gfdl
 import sites.NOAA_GFDL.gfdl_util as gfdl_util
-import src.datelabel as dt
+from src.util import datelabel as dt
 from src.core import MDTFFramework
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')

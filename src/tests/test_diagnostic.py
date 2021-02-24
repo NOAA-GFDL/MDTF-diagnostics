@@ -4,7 +4,7 @@ import unittest
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.util as util
 #from src.data_manager import DataSet, DataManager
-from src.datelabel import DateFrequency
+from src.util.datelabel import DateFrequency
 # from src.diagnostic import Diagnostic, PodRuntimeError
 # from src.tests.shared_test_utils import setUp_ConfigManager, tearDown_ConfigManager
 

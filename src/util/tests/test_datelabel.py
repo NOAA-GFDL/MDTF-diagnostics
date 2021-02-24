@@ -1,10 +1,10 @@
 import os
 import unittest
 import datetime
-from src.datelabel import Date as dt
-from src.datelabel import DateRange as dt_range
-from src.datelabel import DateFrequency as dt_freq
-from src.datelabel import FXDateMin, FXDateMax, FXDateRange
+from src.util.datelabel import Date as dt
+from src.util.datelabel import DateRange as dt_range
+from src.util.datelabel import DateFrequency as dt_freq
+from src.util.datelabel import FXDateMin, FXDateMax, FXDateRange
 from src.util.exceptions import FXDateException, MixedDatePrecisionException
 
 class TestDate(unittest.TestCase):

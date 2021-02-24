@@ -10,6 +10,7 @@ import signal
 import tempfile
 import traceback
 from src import util, cli, mdtf_info, data_model
+from src.units import Units
 
 import logging
 _log = logging.getLogger(__name__)
@@ -440,7 +441,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    units: util.Units = util.MANDATORY
+    units: Units = util.MANDATORY
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
 
@@ -450,7 +451,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: util.Units
+    # units: Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)

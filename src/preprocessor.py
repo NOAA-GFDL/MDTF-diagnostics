@@ -217,14 +217,14 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
                 standard_name = self._rate_d[std_name],
-                units = util.to_cfunits(v.units) / self._liquid_water_density
+                units = units.to_cfunits(v.units) / self._liquid_water_density
             )
         elif std_name in self._flux_d:
             # requested flux, so add alternate for rate
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
                 standard_name = self._flux_d[std_name],
-                units = util.to_cfunits(v.units) * self._liquid_water_density
+                units = units.to_cfunits(v.units) * self._liquid_water_density
             )
         
         translate = core.VariableTranslator()
@@ -244,7 +244,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing
             return ds
-        if util.units_equivalent(var.units, var.translation.units):
+        if units.units_equivalent(var.units, var.translation.units):
             # units can be converted by ConvertUnitsFunction; do nothing
             return ds
 
@@ -263,7 +263,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         ds[tv.name].attrs['units'] = str(new_units)
         tv.units = new_units
         # actual conversion done by ConvertUnitsFunction; this assures 
-        # util.convert_dataarray is called with correct parameters.
+        # units.convert_dataarray is called with correct parameters.
         return ds
 
 class ConvertUnitsFunction(PreprocessorFunctionBase):
@@ -278,7 +278,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         tv = var.translation # abbreviate
         # convert dependent variable
-        ds = util.convert_dataarray(ds, tv.name, var.units)
+        ds = units.convert_dataarray(ds, tv.name, var.units)
         tv.units = var.units
 
         # convert coordinate dimensions and bounds
@@ -286,16 +286,16 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.axis == 'T':
                 continue # handle calendar stuff etc. in another function
             dest_c = var.axes[c.axis]
-            ds = util.convert_dataarray(ds, c.name, dest_c.units)
+            ds = units.convert_dataarray(ds, c.name, dest_c.units)
             if c.bounds and c.bounds in ds:
-                ds = util.convert_dataarray(ds, c.bounds, dest_c.units)
+                ds = units.convert_dataarray(ds, c.bounds, dest_c.units)
             c.units = dest_c.units
 
         # convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
-                ds = util.convert_dataarray(ds, c.name, dest_c.units)
+                ds = units.convert_dataarray(ds, c.name, dest_c.units)
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
 
@@ -410,7 +410,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if ds_z is None:
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
         try:
-            ds_z_value = util.convert_scalar_coord(our_z, ds_z.units)
+            ds_z_value = units.convert_scalar_coord(our_z, ds_z.units)
             ds = ds.sel(
                 {ds_z.name: ds_z_value},
                 method='nearest', # Allow for floating point roundoff in axis values

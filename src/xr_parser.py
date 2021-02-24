@@ -10,7 +10,7 @@ import cftime # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
 
-from src import util
+from src import util, units
 
 import logging
 _log = logging.getLogger(__name__)
@@ -542,16 +542,16 @@ class DatasetParser():
             if hasattr(var_, attr_name):
                 # cleanup placeholder attr if our var was altered
                 var_.value, new_units = getattr(var_, attr_name)
-                var_.units = util.to_cfunits(new_units)
+                var_.units = units.to_cfunits(new_units)
                 _log.debug("Updated (value, units) of '%s' to (%s, %s).",
                     var_.name, var_.value, var_.units)
                 delattr(var_, attr_name)
 
         assert ds_var.size == 1
         if equivalent:
-            comparison_func = util.units_equivalent
+            comparison_func = units.units_equivalent
         else:
-            comparison_func = (lambda x,y: util.units_equal(x,y, rtol=1.0e-5))
+            comparison_func = (lambda x,y: units.units_equal(x,y, rtol=1.0e-5))
         
         our_attr = (our_var.value, our_var.units)
         ds_attr = (float(ds_var), ds_var.attrs.get('units', ''))
@@ -596,7 +596,7 @@ class DatasetParser():
             self.check_scalar_coord_value(our_var, ds_var, equivalent=True)
         else:
             self.check_attr(our_var, ds_var, 'units', 
-                comparison_func=util.units_equivalent,
+                comparison_func=units.units_equivalent,
                 update_our_var=True, update_ds=True
         )
         # now check equality of units - not an error, since we can convert
@@ -607,12 +607,12 @@ class DatasetParser():
             else:
                 # test units only, not quantities+units
                 self.check_attr(our_var, ds_var, 'units', 
-                    comparison_func=util.units_equal, 
+                    comparison_func=units.units_equal, 
                     update_our_var=True, update_ds=True
                 )
         except TypeError as exc:
             _log.warning(exc)
-            our_var.units = util.to_cfunits(our_var.units)
+            our_var.units = units.to_cfunits(our_var.units)
 
     def check_variable(self, ds, translated_var):
         """Top-level method for the MDTF-specific dataset validation: attempts to

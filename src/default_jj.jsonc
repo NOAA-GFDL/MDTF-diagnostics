@@ -18,17 +18,17 @@
     {
       // "CASENAME" : "QBOi.EXP1.AMIP.001",
       // "CASENAME" : "LEOC.EXP1.MPM.001",
-      "CASENAME" : "GFDL.EXP1.2PM.001",
+      // "CASENAME" : "GFDL.EXP1.2PM.001",
       // "CASENAME" : "ERAI.EXP1.TEST.001",
       // "CASENAME" : "ERA5.MTPR.DEG10.001",
       // "CASENAME" : "ERA5.MTPR.DEG15.001",
       // "CASENAME" : "ERA5.TP.DEG10.001",
       // "CASENAME" : "ERA5.TP.DEG15.001",
-      // "CASENAME" : "ERA5.ALL.DEG15.001",
+      "CASENAME" : "ERA5.ALL.DEG15.001",
       "model" : "CESM",
       "convention" : "CESM",
-      "FIRSTYR" : 2008,
-      "LASTYR" : 2012,
+      "FIRSTYR" : 2020,
+      "LASTYR" : 2020,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",

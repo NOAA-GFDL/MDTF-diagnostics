@@ -522,8 +522,8 @@ class Diagnostic(object):
         # only need to keep track of this up to pod execution
         if self.failed:
             # Originating exception will have been logged at a higher priority?
-            _log.debug("Execution of POD %s couldn't be completed successfully.", 
-                self.name)
+            _log.warning("Execution of POD %s couldn't be completed:\n%s.", 
+                self.name, self.exceptions.format())
             for v in self.iter_vars():
                 v.active = False
 

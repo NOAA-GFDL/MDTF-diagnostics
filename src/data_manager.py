@@ -1111,7 +1111,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self._get_expt_key('pod', p, self._id)
                     _set_expt_key(p, key)
                 except Exception as exc:
-                    _log.debug(('set_experiment on pod-level experiment attributes: '
+                    _log.warning(('set_experiment on pod-level experiment attributes: '
                         '%s caught %r; deactivating.'), p.name, exc)
                     p.exceptions.log(exc)
                     continue

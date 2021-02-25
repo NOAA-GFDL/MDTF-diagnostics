@@ -218,6 +218,7 @@ class Diagnostic(object):
 
         # Set env vars for variable and axis names:
         axes = dict()
+        ax_bnds = dict()
         ax_status = dict()
         for var in self.iter_vars_and_alts():
             # util_mdtf.setenv(var.original_name, var.name_in_model, 
@@ -248,7 +249,12 @@ class Diagnostic(object):
                             "({}!={})").format(
                                 envvar_name, axes[envvar_name], ax_name
                     ))
-        for key, val in iter(axes.items()): 
+        for key, val in axes.items():
+            # Define ax bounds variables; TODO do this more honestly
+            ax_bnds[key+'_bnds'] = val + '_bnds'
+        for key, val in axes.items(): 
+            util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
+        for key, val in ax_bnds.items(): 
             util_mdtf.setenv(key, val, self.pod_env_vars, verbose=verbose)
 
     def _setup_pod_directories(self, verbose =0):
@@ -585,23 +591,16 @@ class Diagnostic(object):
     def cleanup_pod_files(self):
         """Copy and remove remaining files to `POD_WK_DIR`.
 
-        In order, this 1) copies .pdf documentation (if any) from 
-        `POD_CODE_DIR/doc`, 2) copies any bitmap figures in any subdirectory of
+        In order, this 1) copies any bitmap figures in any subdirectory of
         `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without 
-        digested observational data), 3) removes vector graphics if requested,
-        4) removes netCDF scratch files in `POD_WK_DIR` if requested.
+        digested observational data), 2) removes vector graphics if requested,
+        3) removes netCDF scratch files in `POD_WK_DIR` if requested.
 
         Settings are set at runtime, when :class:`~util_mdtf.ConfigManager` is 
         initialized.
         """
         config = util_mdtf.ConfigManager()
-        # copy PDF documentation (if any) to output
-        files = util.find_files(os.path.join(self.POD_CODE_DIR, 'doc'), '*.pdf')
-        for f in files:
-            shutil.copy2(f, self.POD_WK_DIR)
-
         # copy premade figures (if any) to output 
-        # NOTE this will not respect 
         files = util.find_files(
             self.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )

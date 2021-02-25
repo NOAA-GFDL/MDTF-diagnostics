@@ -4,6 +4,8 @@ Last update 02/22/2019
 
 ENSO moist static energy (MSE) diagnostic package consists of four levels. With a focus on identifying leading processes that determine ENSO-related precipitation anomalies, main module of the POD estimates vertically MSE budget and its variance analysis to account for relative contribution of each MSE term to column MSE. In that pursuit, POD is applied to monthly data (climate model or reanalysis products), and budget terms are estimated for “composite” El Niño or La Nina events. To estimate MSE budget, along with surface and radiation fluxes, 3-dimensional atmospheric variables are required. Hence, ERA-Interim is “considered” as “observations” here, and diagnostics obtained from ERA-Interim are used for model validation. In this general document, brief descriptions of the four levels of the POD are provided but detailed information (e.g., equations and input variables) is provided at each level. For the four levels of diagnostics, selected results are illustrated here.
 
+See also :doc:`detailed documentation <./ENSO_MSE_levels>` on each level of the diagnostic.
+
 Version & Contact info
 ----------------------
 
@@ -29,7 +31,7 @@ The currently package consists of following functionalities:
 Required programming language and libraries
 -------------------------------------------
 
-This package is coded in Python  2.7.12  and requires the following packages: scipy, numpy, os, math.
+This package is coded in Python 2.7.12 and requires the following packages: scipy, numpy, os, math.
 
 The pre-processing and plotting is coded in NCAR Command Language Version 6.3.0.
 
@@ -89,7 +91,7 @@ At this level, POD calculates simple seasonal averages, composites, regression a
 
    Figure 1: Boreal winter (DJF) composites of net radiative flux divergence in the column (F\ :subscript:`rad`\ ) constructed from CCSM4 historical simulations (1950-2005): (a) El Niño and (b) La Nina.
 
-More details on Level 1 diagnostics can be found in the README file located in ``diagnostics/ENSO_MSE/doc/README_LEVEL_01.pdf``.
+More details on Level 1 diagnostics can be found in :ref:`enso_mse_sec_level_1`.
 
 Level 2 – MSE (Moist Static Energy) budget analysis (for composite ENSO)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,7 +106,7 @@ In Level 2, for the composites constructed in Level 1, vertically integrated MSE
 
    Figure 2: (a) Vertically integrated anomalous MSE (contours, J/m², and scaled by 10E-7) and precipitable water (shaded, mm) and (b) vertical advection of MSE (W/m²). Results are for composite El Niño winters.
 
-More details on Level 2 diagnostics can be found in the README file located in ``diagnostics/ENSO_MSE/doc/README_LEVEL_02.pdf``.
+More details on Level 2 diagnostics can be found in :ref:`enso_mse_sec_level_2`.
 
 Level 3 – MSE variance diagnostics (for composite ENSO)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -125,7 +127,7 @@ Here, in Fig. 3 results for both composite El Niño and La Nina winters, and fro
 
    Figure 3: Relative contributions of various MSE terms to column MSE averaged for equatorial central (red) and eastern (blue) Pacific regions estimated from CCSM4 historical solutions for composite: (a) El Niño winter and (b) La Nina winter.
 
-More details on Level 3 diagnostics can be found in the README file located in ``diagnostics/ENSO_MSE/doc/README_LEVEL_03.pdf``.
+More details on Level 3 diagnostics can be found in :ref:`enso_mse_sec_level_3`.
 
 Level 4 – MSE scatter plots (Metrics)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -140,7 +142,7 @@ At this level, results from Level 2 (CMIP-era models) are condensed into scatter
 
    Figure 4. Scatter plots between anomalous net radiative flux divergence (F\ :subscript:`rad`\ ) and precipitation for composite El Niño winters estimated from historical simulations of CMIP5 models: (a) Central Pacific and (b) Eastern Pacific. In the panels, inter-model correlations and best regression fit lines are also provided.
 
-More details on Level 4 diagnostics can be found in the README file located in ``diagnostics/ENSO_MSE/doc/README_LEVEL_04.pdf``.
+More details on Level 4 diagnostics can be found in :ref:`enso_mse_sec_level_4`.
 
 .. |^2| replace:: \ :sup:`2`\ 
 .. |^3| replace:: \ :sup:`3`\ 

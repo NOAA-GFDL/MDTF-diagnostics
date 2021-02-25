@@ -51,8 +51,8 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         print("=================================================================")
 
         print("=================================================================")
-        print(" General information is in README_general.docx/README_general.pdf files under")
-        print("  var_code/ENSO_MSE                                              ")
+        print(" General information is at")
+        print(" https://mdtf-diagnostics.rtfd.io/en/latest/sphinx_pods/ENSO_MSE.html")
         print("=================================================================")
 
         print("=================================================================")
@@ -81,8 +81,8 @@ if os.environ["ENSO_COMPOSITE"] == "1":
 
 
         print("=================================================================")
-        print(" More detailed information regarding the COMPOSITE module is in  ")
-        print(" README_LEVEL_01.docx/README_LEVEL_01.pdf files under ~/var_code/ENSO_MSE/COMPOSITE/")
+        print(" More detailed information regarding the COMPOSITE module is at  ")
+        print(" https://mdtf-diagnostics.rtfd.io/en/latest/sphinx_pods/ENSO_MSE_levels.html")
         print("=================================================================")
        
 ###  set if to run Observational Preprocessing :
@@ -126,9 +126,8 @@ if os.environ["ENSO_MSE"] == "1":
         print("=================================================================")
 
         print("=================================================================")
-        print(" More detailed information regarding the MSE module is in        ")
-        print(" README_LEVEL_02.docx/README_LEVEL_02.pdf  files undef           ")
-        print(" ~/var_code/ENSO_MSE/MSE/                                        ")
+        print(" More detailed information regarding the MSE module is at        ")
+        print(" https://mdtf-diagnostics.rtfd.io/en/latest/sphinx_pods/ENSO_MSE_levels.html")
         print("=================================================================")
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
@@ -159,9 +158,8 @@ if os.environ["ENSO_MSE_VAR"] == "1":
         print("=================================================================")
 
         print("=================================================================")
-        print(" More detailed information regarding the MSE_VAR module is in    ")
-        print(" README_LEVEL_03.docx/README_LEVEL_03.pdf files under            ")
-        print("  ~/var_code/ENSO_MSE/MSE_VAR/                                   ")
+        print(" More detailed information regarding the MSE_VAR module is at    ")
+        print(" https://mdtf-diagnostics.rtfd.io/en/latest/sphinx_pods/ENSO_MSE_levels.html")
         print("=================================================================")
 
         if os.environ["ENSO_OBS"] == "1":
@@ -193,9 +191,8 @@ if os.environ["ENSO_SCATTER"] == "1":
         print("=================================================================")
 
         print("=================================================================")
-        print(" More detailed information regarding the SCATTER module is in    ")
-        print(" README_LEVEL_04.docx/README_LEVEL_04.pdf files under            ")
-        print(" ~/var_code/ENSO_MSE/SCATTER/                                    ")
+        print(" More detailed information regarding the SCATTER module is at    ")
+        print(" https://mdtf-diagnostics.rtfd.io/en/latest/sphinx_pods/ENSO_MSE_levels.html")
         print("=================================================================")
       
         os.system("python "+os.environ["POD_HOME"]+"/SCATTER/check_input_files.py")

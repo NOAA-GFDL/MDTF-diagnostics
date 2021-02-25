@@ -12,9 +12,8 @@ if os.name == 'posix' and six.PY2:
 else:
     import subprocess
 from collections import defaultdict, namedtuple
-from itertools import chain
 from operator import attrgetter, itemgetter
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from src import datelabel
 from src import util
 from src import util_mdtf
@@ -23,7 +22,6 @@ from src import cmip6
 from src.data_manager import DataSet, DataManager, DataAccessError
 from src.environment_manager import VirtualenvEnvironmentManager, CondaEnvironmentManager
 from src.shared_diagnostic import Diagnostic, PodRequirementFailure
-from src.netcdf_helper import NcoNetcdfHelper # only option currently implemented
 
 class ModuleManager(util.Singleton):
     _current_module_versions = {
@@ -897,7 +895,7 @@ class Gfdlcmip6abcDataManager(six.with_metaclass(ABCMeta, GfdlarchiveDataManager
         return choices
 
 class Gfdludacmip6DataManager(Gfdlcmip6abcDataManager):
-    _cmip6_root = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
+    _cmip6_root = os.sep + os.path.join('uda', 'CMIP6')
 
 class Gfdldatacmip6DataManager(Gfdlcmip6abcDataManager):
     # Kris says /data_cmip6 used to stage pre-publication data, so shouldn't

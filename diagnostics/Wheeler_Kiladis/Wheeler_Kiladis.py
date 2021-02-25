@@ -1,4 +1,4 @@
-# This file is part of the Wheeler_Kiladis module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the Wheeler_Kiladis module of the MDTF code package (see LICENSE.txt)
 
 #============================================================
 # Wheeler-Kiladis Plots
@@ -16,7 +16,6 @@
 
 import os
 import subprocess
-import commands
 import time
 
 #============================================================
@@ -32,7 +31,7 @@ def generate_ncl_plots(nclPlotFile):
     # don't exit if it does not exists just print a warning.
     try:
         pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)
@@ -46,84 +45,21 @@ print("COMPUTING THE SPACE-TIME SPECTRA")
 #============================================================
 # Check data exists and Call NCL code
 #============================================================
-os.chdir(os.environ["DATADIR"])
+os.chdir(os.environ["DATADIR"])  # inputdata
 
 #OLR
 
-if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"):
-    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"
-    os.environ["MVAR"] = os.environ["rlut_var"]
-    print("file of "+os.environ["rlut_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-    generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
-else:  
-    print("file of "+os.environ["rlut_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
+varlist = [("u200_var","U200_FILE"), ("u850_var","U850_FILE"), ("omega500_var", "OMEGA500_FILE"), 
+    ("rlut_var", "RLUT_FILE"), ("pr_var", "PR_FILE")]
 
-#Precipitation
 
-if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"):
-    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
-    os.environ["MVAR"] = os.environ["pr_var"]
-    print("file of "+os.environ["pr_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-    generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
-else:  
-    print("file of "+os.environ["pr_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
+for var, file_ in varlist:
+   print("starting var "+var)
+   if os.path.isfile(os.environ[file_]):
+       os.environ["file_WK"] = os.environ[file_]
+       os.environ["MVAR"] = os.environ[var]
+       #print("file of "+os.environ[var]+" for Wheeler-Kiladis plots found, computing wave spectra")
+       generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
+   else:  
+       print("WARNING: file not found ("+os.environ[var]+") skipping wave spectra computation")
 
-#Omega500
-
-if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["omega500_var"]+".day.nc"):
-    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["omega500_var"]+".day.nc"
-    os.environ["MVAR"] = os.environ["omega500_var"]
-    print("file of "+os.environ["omega500_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-    generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
-else:  
-    print("file of "+os.environ["omega500_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
-
-#U200
-
-if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["u200_var"]+".day.nc"):
-    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u200_var"]+".day.nc"
-    os.environ["MVAR"] = os.environ["u200_var"]
-    print("file of "+os.environ["u200_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-    generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
-else:  
-    print("file of "+os.environ["u200_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
-
-#U850
-
-if os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"):
-    os.environ["file_WK"] = os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"
-    os.environ["MVAR"] = os.environ["u850_var"]
-    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots found, computing wave spectra")
-    generate_ncl_plots(os.environ["POD_HOME"]+"/wkSpaceTime_driver.ncl")
-else:  
-    print("file of "+os.environ["u850_var"]+" for Wheeler-Kiladis plots NOT found, skip computing wave spectra")
-
-#============================================================
-# Rename PS files
-#============================================================
-files = os.listdir(os.environ["WK_DIR"]+"/model/PS")
-a = 0
-while a < len(files):
-    file0 = files[a]
-    file1 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["rlut_var"]+"/rlut/g")   
-    file2 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["pr_var"]+"/pr/g")  
-    file3 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["omega500_var"]+"/omega500/g") 
-    file4 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u200_var"]+"/u200/g") 
-    file5 = commands.getoutput("echo "+file0+"|sed -e s/"+os.environ["u850_var"]+"/u850/g")
-
-    if file0 != file1:
-        os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file1)
-
-    if file0 != file2:
-        os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file2)
-
-    if file0 != file3:
-        os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file3)
-
-    if file0 != file4:
-        os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file4)
-
-    if file0 != file5:
-        os.system("mv -f "+os.environ["WK_DIR"]+"/model/PS/"+file0+" "+os.environ["WK_DIR"]+"/model/PS/"+file5)
- 
-    a = a+1

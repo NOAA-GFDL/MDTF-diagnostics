@@ -11,38 +11,33 @@
     "realm" : ["atmos", "land"],
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "runtime_requirements": {
-      "python2": [],
+      "python3": [],
       "Rscript": ["colorRamps", "maps", "fields", "akima", "ncdf4"]
     }
   },
-  //
-  // USAGE varlist
-  // var_name time-frequency [requirement]
-  // - var_name: as found in src/fieldlist_*.json
-  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
-  // - requirement = blank  (default = optional),
-  //                 required (package cannot run without this)
-  //                 required unless field_name field_name2 ...
-  // - alternates:
-  //
-  // nb. if a variable is required at multiple time frequencies, list it 
-  // separately for each one. Clearly the developer can just leave out 
-  // optional files. However, it is always nice to get an upfront warning of
-  // missing files.
-  //
-  "varlist" : [
-    {
-      "var_name" : "mrsos_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "evspsbl_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "pr_var",
-      "freq" : "mon",
-      "requirement" : "required"
+  "data": {
+    "frequency": "mon"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"}
+  },
+  "varlist" : {
+    "mrsos": {
+      "standard_name": "mass_content_of_water_in_soil_layer",
+      "units": "kg m-2",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "evspsbl": {
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": ["time", "lat", "lon"]
     }
-  ]
+  }
 }

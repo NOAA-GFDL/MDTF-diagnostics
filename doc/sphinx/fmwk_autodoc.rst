@@ -1,13 +1,11 @@
 Internal API documentation
 ==========================
 
-Top-level modules
------------------
+Main framework modules
+----------------------
 
 .. autosummary::
 
-   src.mdtf
-   src.cli
    src.core
    src.data_manager
    src.diagnostic
@@ -15,21 +13,28 @@ Top-level modules
    src.preprocessor
    src.output_manager
 
-Supporting and utility modules
-------------------------------
+Supporting framework modules
+----------------------------
 
 .. autosummary::
 
+   src.cli
    src.cmip6
    src.conflict_resolution
    src.data_model
-   src.datelabel
+   src.units
    src.verify_links
-   src.xr_util
+   src.xr_parser
+
+Utility modules
+---------------
+
+.. autosummary::
+
    src.util.basic
    src.util.dataclass
+   src.util.datelabel
    src.util.exceptions
    src.util.filesystem
    src.util.logs
    src.util.processes
-   src.util.units

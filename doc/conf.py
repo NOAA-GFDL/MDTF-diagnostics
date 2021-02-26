@@ -33,7 +33,7 @@ for module_name in autodoc_mock_imports:
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF Diagnostics'
-copyright = u'2020, Model Diagnostics Task Force'
+copyright = u'2021, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
@@ -92,7 +92,9 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [u'_build', 'Thumbs.db',
+    '**/test_*'
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'default'
@@ -301,6 +303,11 @@ autodoc_default_options = {
     'undoc-members': True,
     'show-inheritance': True
 }
+
+# exclude unit tests from docs
+# https://stackoverflow.com/a/21449475
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    return skip or name.startswith("test_")
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449

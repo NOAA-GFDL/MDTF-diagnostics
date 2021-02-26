@@ -1,4 +1,4 @@
-"""Extensions to :py:module:`dataclasses`, for streamlined class definition.
+"""Extensions to :py:mod:`dataclasses`, for streamlined class definition.
 """
 import collections
 import copy
@@ -344,7 +344,7 @@ Sentinel object to mark :func:`mdtf_dataclass` fields that do not take a default
 value. This is a workaround to avoid errors with non-default fields coming after
 default fields in the dataclass-generated ``__init__`` method under 
 `inheritance <https://docs.python.org/3/library/dataclasses.html#inheritance>`__:
-we use the second solution described in `https://stackoverflow.com/a/53085935`__.
+we use the second solution described in `<https://stackoverflow.com/a/53085935>`__.
 """
 
 def _mdtf_dataclass_typecheck(self):
@@ -353,7 +353,7 @@ def _mdtf_dataclass_typecheck(self):
     .. warning::
        Type checking logic used is specific to the ``typing`` module in python 
        3.7. It may or may not work on newer pythons, and definitely will not 
-       work with 3.5 or 3.6. See `https://stackoverflow.com/a/52664522`__.
+       work with 3.5 or 3.6. See `<https://stackoverflow.com/a/52664522>`__.
     """
     for f in dataclasses.fields(self):
         if not f.init:
@@ -621,6 +621,7 @@ def filter_dataclass(d, dc, init=False):
         d: (dict, dataclass or dataclass instance):
         dc: (dataclass or dataclass instance): 
         init: bool or 'all', default False:
+
             - If False: Include only the fields of dc (as returned by 
                 :py:func:`dataclasses.fields`.)
             - If True: Include only the arguments to dc's constructor (ie, include

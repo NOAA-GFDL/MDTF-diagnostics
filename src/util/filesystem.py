@@ -122,13 +122,14 @@ def find_files(src_dirs, filename_globs, n_files=None):
     """Return list of files in ``src_dirs``, or any subdirectories, matching any
     of ``filename_globs``. Wraps :py:class:`glob.glob`.
     Args:
-        src_dirs: Directory, or a list of directories, to search for files in.
-            The function will also search all subdirectories.
+        src_dirs: Directory, or a list of directories, to search for files in. The 
+            function will also search all subdirectories.
         filename_globs: Glob, or a list of globs, for filenames to match. This 
             is a shell globbing pattern, not a full regex.
         n_files (int, optional): If supplied, raise 
             :class:`~framework.util.exceptions.MDTFFileNotFoundError` if the 
             number of files found is not equal to this number.
+
     Returns: :py:obj:`list` of paths to files matching any of the criteria.
         If no files are found, the list is empty.
     """
@@ -307,8 +308,8 @@ def read_json(file_path):
     return parse_json(str_)
 
 def find_json(dir_, file_name, exit_if_missing=True):
-    """Wrap read_json with more elaborate error handling. find_files() will find
-    a file named file_name at any level within dir_.
+    """Wrap :func:`read_json` with more elaborate error handling. find_files() 
+    will find a file named file_name at any level within dir\_.
     """
     try:
         f = find_files(dir_, file_name, n_files=1)
@@ -360,8 +361,8 @@ class _DoubleBraceTemplate(string.Template):
     string templating with double curly brackets as delimiters, since single
     brackets are also used in css.
 
-    See `https://docs.python.org/3.7/library/string.html#string.Template`_ and 
-    `https://stackoverflow.com/a/34362892`__.
+    See `<https://docs.python.org/3.7/library/string.html#string.Template>`_ and 
+    `<https://stackoverflow.com/a/34362892>`__.
     """
     flags = re.VERBOSE # matching is case-sensitive, unlike default
     delimiter = '{{' # starting delimter is two braces, then apply

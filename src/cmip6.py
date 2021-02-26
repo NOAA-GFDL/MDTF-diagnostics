@@ -269,9 +269,12 @@ variant_label_regex = util.RegexPattern(r"""
 @util.regex_dataclass(variant_label_regex)
 @util.mdtf_dataclass
 class CMIP6_VariantLabel():
-    """Dataclass which represents and parses the CMIP6 DRS variant label identifier string.
-
-    Reference: `<http://goo.gl/v1drZl>`__, note 8 on page 9.
+    """Dataclass which represents and parses the CMIP6 DRS variant label identifier 
+    string.
+    
+    References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
+    although this doesn't document all cases used in CMIP6. See also note 8 on 
+    page 9 of `<http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
     realization_index: int = None
@@ -295,7 +298,7 @@ mip_table_regex = util.RegexPattern(r"""
 class CMIP6_MIPTable():
     """Dataclass which represents and parses MIP table identifier string.
 
-    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    Reference: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6.
     """
     table_id: str = util.MANDATORY

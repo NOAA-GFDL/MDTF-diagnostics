@@ -1,4 +1,4 @@
-.. :orphan:
+:orphan:
 
 Documentation for the MDTF diagnostics framework
 ================================================

@@ -99,8 +99,8 @@ lat_range_list = [np.float(os.getenv('lat_min')),
                   np.float(os.getenv('lat_max'))]
 
 # Model label
-Model_name = [os.getenv('Model_name')]        # model name in the dictionary
-Model_legend_name = [os.getenv('Model_legend_name')] # model name appeared on the plot legend
+Model_name = [os.getenv('CASENAME')]        # model name in the dictionary
+Model_legend_name = [os.getenv('CASENAME')] # model name appeared on the plot legend
 
 
 

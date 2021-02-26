@@ -237,7 +237,7 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    'latex/latexmkrc'
+    './latexmkrc'
 ]
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'

@@ -24,11 +24,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 import recommonmark
 from recommonmark.transform import AutoStructify
 
-# mock out imports of non-standard library modules here if needed in future
-autodoc_mock_imports = []
+# mock out imports of non-standard library modules
+autodoc_mock_imports = ['numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray']
+# need to manually mock out explicit patching of cf_xarray.accessor done 
+# on import in xr_parser
 import unittest.mock as mock
-for module_name in autodoc_mock_imports:
-    sys.modules[module_name] = mock.Mock()
+from src import xr_parser
+xr_parser.functools.wraps = mock.Mock(return_value=mock.Mock())
 
 # -- Project information -----------------------------------------------------
 

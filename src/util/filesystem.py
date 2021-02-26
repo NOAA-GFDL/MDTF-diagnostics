@@ -121,6 +121,7 @@ def check_executable(exec_name):
 def find_files(src_dirs, filename_globs, n_files=None):
     """Return list of files in ``src_dirs``, or any subdirectories, matching any
     of ``filename_globs``. Wraps :py:class:`glob.glob`.
+
     Args:
         src_dirs: Directory, or a list of directories, to search for files in. The 
             function will also search all subdirectories.

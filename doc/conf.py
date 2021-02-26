@@ -104,18 +104,18 @@ pygments_style = 'default'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'alabaster'
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
+# Theme options are theme-specific.
+# See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
+    'page_width': '1024px',
+    'sidebar_collapse': True,
+    'fixed_sidebar': True,
     'extra_nav_links' : {
-        "Getting Started (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
-        "Developer's Walkthough (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
-        "Full documentation (PDF)": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
+        "Getting Started [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
+        "Developer's Walkthough [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
+        "Full documentation [PDF]": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
     }
 }
 
@@ -127,7 +127,7 @@ html_static_path = ['_static']
 
 # # Paths (filenames) here must be relative to (under) html_static_path as above:
 # html_css_files = [
-#     'custom.css',
+#     '_static/custom.css',
 # ]
 
 # Custom sidebar templates, must be a dictionary that maps document names
@@ -297,11 +297,11 @@ epub_exclude_files = ['search.html']
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
+    'autoclass_content': 'both',
     'member-order': 'bysource',
-    'special-members': '__init__',
     'private-members': False,
-    'undoc-members': True,
-    'show-inheritance': True
+    'undoc-members': False,
+    'show-inheritance': False
 }
 
 # exclude unit tests from docs

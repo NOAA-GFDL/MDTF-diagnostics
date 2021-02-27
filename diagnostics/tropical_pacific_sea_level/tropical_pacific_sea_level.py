@@ -1,33 +1,52 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# # MDTF tool
-#
-#
-# The script generate the tropical Pacific dynamic sea level
-# and wind stress curl scatter plots at different time scale
-# due to their strong dependency from Ekman pumping/suction
-# and barotropic response over the ocean
-#
-# input files
-# ============
-# Ocean model : tauuo, tauvo, zos
-#
-#
-# function used
-# ==================
-# - spherical_area.da_area     : generate area array based on the lon lat of data
-# - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)
-# - dynamical_balance2.curl_var    : calculate wind stress curl in obs (for Dataset without time dim)
-# - dynamical_balance2.curl_tau_3d : calculate wind stress curl in model (for Dataset with time dim)
-# - dynamical_balance2.curl_tau    : calculate wind stress curl in model (for Dataset without time dim)
-# - xr_ufunc.da_linregress : linregress for Dataset with time dim
-#
+"""
+# MDTF tool
 
 
+The script generate the tropical Pacific dynamic sea level
+and wind stress curl scatter plots at different time scale
+due to their strong dependency from Ekman pumping/suction
+and barotropic response over the ocean
+
+input files
+============
+Ocean model : tauuo, tauvo, zos
+
+Observational data : adt, tx, ty
+- adt (absolute dynamic topography from CMEMS)
+    preprocessing from daily to monthly mean is needed (use 'io_cmems_adt.py')
+- tx (surface wind stress in the x direction from WASwind)
+    no preprocessing needed
+- ty (surface wind stress in the y direction from WASwind)
+    no preprocessing needed
+    
+    data access :
+    **********************
+
+    - adt : 
+        Ftp server is the fastest way to manage download
+        http://marine.copernicus.eu/services-portfolio/access-to-products/
+        search for product ID - "SEALEVEL_GLO_PHY_L4_REP_OBSERVATIONS_008_047"
+        Need to download the daily data with adt (absolute dynamic topography) available 
+
+    - tx,ty :
+        https://www.riam.kyushu-u.ac.jp/oed/tokinaga/waswind.html
+
+
+ function used
+ ==================
+ - spherical_area.da_area     : generate area array based on the lon lat of data
+ - dynamical_balance2.curl_var_3d : calculate wind stress curl in obs (for Dataset with time dim)
+ - dynamical_balance2.curl_var    : calculate wind stress curl in obs (for Dataset without time dim)
+ - dynamical_balance2.curl_tau_3d : calculate wind stress curl in model (for Dataset with time dim)
+ - dynamical_balance2.curl_tau    : calculate wind stress curl in model (for Dataset without time dim)
+ - xr_ufunc.da_linregress : linregress for Dataset with time dim
+
+
+"""
 import os
 import cftime
-# import dask
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,10 +55,6 @@ import spherical_area as sa
 from xr_ufunc import da_linregress
 from dynamical_balance2 import curl_tau, curl_tau_3d
 from dynamical_balance2 import curl_var, curl_var_3d
-
-# from dask.distributed import Client
-# client = Client(n_workers=1, threads_per_worker=8, processes=False)
-# client
 
 
 import warnings
@@ -89,7 +104,7 @@ print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
 # constant setting
 syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
-fyear = np.int(os.getenv('fyear'))                  # crop model and obs data to year
+fyear = np.int(os.getenv('fyear'))                 # crop model and obs data to year
 tp_lat_region = [-30,30]                 # extract model till latitude
 
 # regional average box
@@ -255,6 +270,8 @@ for nobs,obs in enumerate(Obs_name):
         print('read %s %s'%(obs,var))
 
         # read input data
+        
+        
         #-- single file
         if len(obsin[obs][nvar]) == 1 :
 

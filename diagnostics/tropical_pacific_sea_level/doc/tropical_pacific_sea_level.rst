@@ -90,6 +90,35 @@ The dimension of all variable is 3-D with (time,nlat,nlon) in dimension and 2-D
 array for lat and lon as coordinate.
 
 
+Required observational data 
+-------------------------------
+
+This diagnostic needs
+
+input observational variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- adt (absolute dynamic topography from CMEMS)
+    preprocessing from daily to monthly mean is needed (use 'io_cmems_adt.py')
+- tx (surface wind stress in the x direction from WASwind)
+    no preprocessing needed
+- ty (surface wind stress in the y direction from WASwind)
+    no preprocessing needed
+
+data access :
+**********************
+     
+- adt : 
+    Ftp server is the fastest way to manage download
+    `http://marine.copernicus.eu/services-portfolio/access-to-products/  <http://marine.copernicus.eu/services-portfolio/access-to-products/>`_
+    search for product ID - "SEALEVEL_GLO_PHY_L4_REP_OBSERVATIONS_008_047"
+    Need to download the daily data with adt (absolute dynamic topography) available 
+    
+- tx,ty :
+    `https://www.riam.kyushu-u.ac.jp/oed/tokinaga/waswind.html  <https://www.riam.kyushu-u.ac.jp/oed/tokinaga/waswind.html>`_
+    
+
+The dimension of all variable is 3-D with 2-D in space and time
+
 References
 ----------
 

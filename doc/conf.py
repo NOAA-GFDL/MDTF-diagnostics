@@ -32,8 +32,14 @@ autodoc_mock_imports = [
 # need to manually mock out explicit patching of cf_xarray.accessor done 
 # on import in xr_parser
 import unittest.mock as mock
-import functools
-functools.wraps = mock.Mock(return_value=mock.Mock())
+mock_accessor = mock.Mock()
+mock_attrs = {
+    '__name__': 'accessor', '__doc__': '', # for functools.wraps
+    'CFDatasetAccessor': object, 'CFDataArrayAccessor': object
+}
+mock_accessor.configure_mock(**mock_attrs)
+sys.modules['cf_xarray'] = mock.Mock()
+setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
 
 # -- Project information -----------------------------------------------------
 
@@ -237,7 +243,7 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    './latexmkrc'
+    'latex/latexmkrc'
 ]
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'

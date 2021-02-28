@@ -1,12 +1,12 @@
 # Convective Transition Diagnostic Package
 
-Last update: 5/31/2020
+Last update: 12/2/2020
 
 The convective transition diagnostic package computes statistics that relate precipitation to measures of tropospheric temperature and moisture, as an evaluation of the interaction of parameterized convective processes with the large-scale environment. Here the basic statistics include the conditional average and probability of precipitation, PDF of column water vapor (CWV) for all events and precipitating events, evaluated over tropical oceans. The critical values at which the conditionally averaged precipitation sharply increases as CWV exceeds the critical threshold are also computed (provided the model exhibits such an increase).
 
 ## Version & Contact info
 
-- Version 2 31-May-2020 Yi-Hung Kuo (UCLA)
+- Version 2 2-Dec-2020 Yi-Hung Kuo (UCLA)
 - PI: J. David Neelin (UCLA; neelin@atmos.ucla.edu)
 - Current developer: Yi-Hung Kuo (yhkuo@atmos.ucla.edu)
 - Contributors: K. A. Schiro (UCLA), B. Langenbrunner (UCLA), F. Ahmed (UCLA), C. Martinez (UCLA), and C.-C. (Jack) Chen (NCAR)
@@ -25,11 +25,11 @@ The currently package consists of following functionalities:
 
 More on the way... (\* under development)
 
-As a module of the MDTF code package, all scripts of this POD can be found under the [convective_transition_diag](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/var_code/convective_transition_diag) directory and digested observational data under `inputdata/obs_data/convective_transition_diag`.
+As a module of the MDTF code package, all scripts of this POD can be found under the [convective_transition_diag](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/convective_transition_diag) directory and digested observational data under `inputdata/obs_data/convective_transition_diag`.
 
 ## Required programming language and libraries
 
-The is POD is written in Python 2, and requires the following Python packages: os, glob, json, Dataset, numpy, scipy, matplotlib, networkx, warnings, numba, & netcdf4. The environment necessary for running this POD will be provided by the automated installation script for the MDTF Framework. Note that running this POD outside the provided environment may result in figures different from the [samples](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html) because of different matplotlib version.
+The is POD is written in Python 3.7, and requires the following Python packages: os, glob, json, Dataset, numpy, scipy, matplotlib, networkx, warnings, numba, & netcdf4. These dependencies are included in the `python3_base` environment provided by the automated installation script for the MDTF Framework. Note that running this POD outside the provided environment may result in figures different from the [samples](http://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html).
 
 ## Required model output variables
 

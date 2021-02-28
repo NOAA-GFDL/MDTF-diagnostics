@@ -24,14 +24,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 import recommonmark
 from recommonmark.transform import AutoStructify
 
-# mock out imports of non-standard library modules
-# Modules in this list are mocked out due to an error encountered in running 
-# autodoc on six.py with python 3.7. None of the modules are used by the
-# framework: they're only referenced by six.py.
-autodoc_mock_imports = ['subprocess32', '_gdbm', '_dbm']
-import mock # do this twice just to be safe
-for module in autodoc_mock_imports:
-    sys.modules[module] = mock.Mock()
+# mock out imports of non-standard library modules here if needed in future
+autodoc_mock_imports = []
+import unittest.mock as mock
+for module_name in autodoc_mock_imports:
+    sys.modules[module_name] = mock.Mock()
 
 # -- Project information -----------------------------------------------------
 
@@ -42,7 +39,7 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 2'
+release = u'3.0 beta 3'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -58,7 +55,7 @@ _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develo
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'copy_pod_docs',
+    'copy_external_docs',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
@@ -307,11 +304,6 @@ autodoc_default_options = {
     'undoc-members': True,
     'show-inheritance': True
 }
-# For simplicty, the six.py library is included directly in the /src module, 
-# but we don't want to document it.
-# https://stackoverflow.com/a/21449475
-def autodoc_skip_member(app, what, name, obj, skip, options):
-    return skip or ('six' in name) or ('_MovedItems' in name)
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
@@ -372,7 +364,7 @@ todo_include_todos = True
 def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
-    app.connect('autodoc-skip-member', autodoc_skip_member)
+    # app.connect('autodoc-skip-member', autodoc_skip_member)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829

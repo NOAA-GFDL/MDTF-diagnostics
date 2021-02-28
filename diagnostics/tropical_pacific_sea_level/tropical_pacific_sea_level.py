@@ -103,9 +103,9 @@ print('--------------------------')
 print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
 # constant setting
-syear = np.int(os.getenv('syear'))                 # crop model and obs data from year
-fyear = np.int(os.getenv('fyear'))                 # crop model and obs data to year
-tp_lat_region = [-30,30]                 # extract model till latitude
+syear = np.int(os.getenv('FIRSTYR'))                 # crop model and obs data from year
+fyear = np.int(os.getenv('LASTYR'))                 # crop model and obs data to year
+
 
 # regional average box
 lon_range_list = [np.float(os.getenv('lon_min')),
@@ -123,18 +123,19 @@ Model_legend_name = [os.getenv('CASENAME')] # model name appeared on the plot le
 modelin = {}
 path = {}
 #####################
-ori_syear = int(os.getenv('FIRSTYR'))
-ori_fyear = int(os.getenv('LASTYR'))
-modeldir = str(os.getenv('DATADIR'))+"/../"+str(os.getenv('Model_path'))
-modelfile = [[os.getenv('tauuo_file')],
-             [os.getenv('tauvo_file')],
-             [os.getenv('zos_file')]]
-areafile = os.getenv('areacello_file')
+ori_syear = 1948
+ori_fyear = 2009
+
+modelfile = [[os.getenv('TAUUO_FILE')],
+             [os.getenv('TAUVO_FILE')],
+             [os.getenv('ZOS_FILE')]]
+areafile = os.getenv('AREACELLO_FILE')
+
 path[Model_name[0]]=[modeldir,modelfile]
 
 Model_varname = [os.getenv('tauuo_var'),os.getenv('tauvo_var'),os.getenv('zos_var')]
-Model_dimname = [os.getenv('Model_dim0'),os.getenv('Model_dim1'),os.getenv('Model_dim2')]
-Model_coordname = [os.getenv('Model_coord0'),os.getenv('Model_coord1')]
+Model_dimname = [os.getenv('time_coord'),os.getenv('nlat_coord'),os.getenv('nlon_coord')]
+Model_coordname = [os.getenv('lat_coord_name'),os.getenv('lon_coord_name')]
 
 xname = Model_dimname[2]
 yname = Model_dimname[1]
@@ -190,14 +191,10 @@ for nmodel,model in enumerate(Model_name):
         da_model = ds_model[var].where((ds_model['time.year'] >= syear)&
                                        (ds_model['time.year'] <= fyear)
                                        ,drop=True)
-        # crop data (space)
-        da_model = da_model.where((ds_model.lat >= np.min(np.array(tp_lat_region)))&
-                                  (ds_model.lat <= np.max(np.array(tp_lat_region)))
-                                  ,drop=True)
 
         # remove land value
-        da_model['lon'] = da_model.lon.where(da_model.lon<1000.,other=np.nan)
-        da_model['lat'] = da_model.lat.where(da_model.lat<1000.,other=np.nan)
+        da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
+        da_model[Model_coordname[0]] = da_model[Model_coordname[0]].where(da_model[Model_coordname[0]]<1000.,other=np.nan)
 
         # store all model data
         ds_model_list[var] = da_model
@@ -334,10 +331,7 @@ for nobs,obs in enumerate(Obs_name):
                           .where((ds_obs['time.year'] >= syear)&
                                  (ds_obs['time.year'] <= fyear)
                                  ,drop=True)
-        ds_obs = ds_obs\
-                          .where((ds_obs.lat >= np.min(np.array(tp_lat_region)))&
-                                 (ds_obs.lat <= np.max(np.array(tp_lat_region)))
-                                 ,drop=True)
+
 
         # store all model data
         ds_obs_list[var] = ds_obs
@@ -436,10 +430,10 @@ for nmodel,model in enumerate(Model_name):
 
         # crop region
         ds_mask = mean_mlist[model][var].where(
-                      (mean_mlist[model][var].lon>=np.min(lon_range_mod))&
-                      (mean_mlist[model][var].lon<=np.max(lon_range_mod))&
-                      (mean_mlist[model][var].lat>=np.min(lat_range))&
-                      (mean_mlist[model][var].lat<=np.max(lat_range))
+                      (mean_mlist[model][var][Model_coordname[1]]>=np.min(lon_range_mod))&
+                      (mean_mlist[model][var][Model_coordname[1]]<=np.max(lon_range_mod))&
+                      (mean_mlist[model][var][Model_coordname[0]]>=np.min(lat_range))&
+                      (mean_mlist[model][var][Model_coordname[0]]<=np.max(lat_range))
                       ,drop=True).compute()
         ds_mask = ds_mask/ds_mask
 

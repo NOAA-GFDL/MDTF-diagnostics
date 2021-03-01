@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 from src.util import read_json
-from tests import shared_test_utils as shared
+from src.tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)

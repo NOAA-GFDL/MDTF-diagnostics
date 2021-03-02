@@ -66,7 +66,6 @@
 #         and wether forcasting models. BAMS, 100(9), 1665-1686,
 #         doi:10.1175/BAMS-D-18-0042.1.
 #
-from __future__ import print_function
 import os
 import matplotlib
 matplotlib.use('Agg') # non-X windows backend
@@ -84,9 +83,11 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
 
-# The following command replaces the substrings "{DATA_DIR}", "{CASENAME}", etc.
-# with the values of the corresponding environment variables:
-input_path = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
+# The following command sets input_path to the value of the shell environment
+# variable called TAS_FILE. This variable is set by the framework to let the 
+# script know where the locally downloaded copy of the data for this variable
+# (which we called "tas") is.
+input_path = os.environ["TAS_FILE"]
 
 # command to load the netcdf file
 model_dataset = xr.open_dataset(input_path)

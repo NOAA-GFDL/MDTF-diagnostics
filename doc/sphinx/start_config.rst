@@ -85,7 +85,7 @@ The framework requires specifying a convention for variable names used in the mo
 
 We hope to offer support for the variable naming conventions of a wider range of models in the future. For the time being, please process output of models not on this list with `CMOR <https://cmor.llnl.gov/>`__ to make them CF-compliant.
 
-Alternatively, the framework will load any lookup tables of the form ``src/fieldlist_$convention.jsonc`` and use them for variable name conversion. Users can add new files in this format to specify new conventions. For example, in ``src/fieldlist_CESM.jsonc`` the line ``"pr_var" : "PRECT"`` means that the CESM name for the precipitation rate is PRECT (case sensitive). In addition, ``"pr_conversion_factor" : 1000`` specifies the conversion factor to CF standard units for this variable.
+Alternatively, the framework will load any lookup tables of the form ``data/fieldlist_$convention.jsonc`` and use them for variable name conversion. Users can add new files in this format to specify new conventions. For example, in ``data/fieldlist_NCAR.jsonc`` the line ``"pr_var" : "PRECT"`` means that the CESM name for the precipitation rate is PRECT (case sensitive). In addition, ``"pr_conversion_factor" : 1000`` specifies the conversion factor to CF standard units for this variable.
 
 Running the code on your data
 -----------------------------

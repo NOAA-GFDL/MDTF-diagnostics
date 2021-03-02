@@ -8,21 +8,24 @@ Based on test_website by Dani Coleman, bundy@ucar.edu
 """
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 3 or sys.version_info[1] < 6:
-    print(("ERROR: MDTF currently only supports python >= 3.6.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)"))
-    print("Attempted to run with following python version:\n{}".format(sys.version))
-    exit(1)
+if sys.version_info[0] != 3 or sys.version_info[1] < 7:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.7.*. Please check "
+    "which version is on your $PATH (e.g. with `which python`.)\n"
+    f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import argparse
 import collections
 import itertools
 from html.parser import HTMLParser
+import re
 import urllib.parse
 import urllib.request
 import urllib.error
 from src import util
+
+import logging
+_log = logging.getLogger(__name__)
 
 Link = collections.namedtuple('Link', ['origin', 'target'])
 Link.__doc__ = """
@@ -80,14 +83,17 @@ class LinkVerifier(object):
             if not path_.endswith('/'):
                 path_ = path_ + '/'
             url_parts = url_parts._replace(path=path_)
-            return (urllib.parse.urlunsplit(url_parts), file_)
+            return (urllib.parse.urlunsplit(url_parts), path_, file_)
 
         self.verbose = verbose
-        (self.root_dir, self.root_file) = munge_input_url(root)
+        self.pod_name = None
+        # NB: WK_DIR isn't a "working directory"; it's just the base path
+        # relative to which paths are reported 
+        (self.root_url, self.WK_DIR, self.root_file) = munge_input_url(root)
         if rel_path_root:
-            self.rel_path_root, _ = munge_input_url(rel_path_root)
+            self.rel_path_root, _, _ = munge_input_url(rel_path_root)
         else:
-            self.rel_path_root = self.root_dir
+            self.rel_path_root = self.root_url
 
     @staticmethod
     def gen_links(f, parser):
@@ -137,8 +143,15 @@ class LinkVerifier(object):
             print('Error code: ', e.code)
             return None
         except urllib.error.URLError as e:
-            print('\nFailed to find file or connect to server.')
-            print('Reason: ', e.reason)
+            # print('\nFailed to find file or connect to server.')
+            # print('Reason: ', e.reason)
+            tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'", 
+                str(e.reason))
+            if len(tup) == 3:
+                str_ = util.abbreviate_path(tup[1], self.WK_DIR, '$WK_DIR')
+            else:
+                str_ = str(e.reason)
+            print(f"  Missing: {str_}")
             return None
         if f.info().get_content_subtype() != 'html':
             return []
@@ -234,9 +247,13 @@ class LinkVerifier(object):
             A list of the files that POD is missing. Missing files are listed by
                 their path relative to the POD's output directory.
         """
+        self.pod_name = pod_name
+        self.WK_DIR = util.remove_suffix(
+            util.remove_suffix(self.WK_DIR, os.sep), pod_name
+        )
         if not self.root_file:
             self.root_file = pod_name+'.html'
-        root_url = urllib.parse.urljoin(self.root_dir, self.root_file)
+        root_url = urllib.parse.urljoin(self.root_url, self.root_file)
         missing = self.breadth_first(root_url)
         missing_dict = self.group_relative_links(missing)
         return missing_dict.get(pod_name, [])
@@ -253,7 +270,7 @@ class LinkVerifier(object):
         """
         if not self.root_file:
             self.root_file = 'index.html'
-        root_url = urllib.parse.urljoin(self.root_dir, self.root_file)
+        root_url = urllib.parse.urljoin(self.root_url, self.root_file)
         missing = self.breadth_first(root_url)
         return self.group_relative_links(missing)
 

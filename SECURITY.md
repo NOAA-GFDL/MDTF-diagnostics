@@ -16,6 +16,7 @@ and climate model analysis code from the community, we adopt the following secur
 
 | Version    | Supported          |
 | ---------- | ------------------ |
+| 3.0 beta 3 | :white_check_mark: |
 | 3.0 beta 2 | :white_check_mark: |
 | 3.0 beta 1 | :x:                |
 | 2.0        | :x:                |

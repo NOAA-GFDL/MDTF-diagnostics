@@ -1,4 +1,4 @@
-# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the convective_transition_diag module of the MDTF code package (see LICENSE.txt)
 
 # ======================================================================
 # convecTransBasic_util.py
@@ -440,7 +440,7 @@ def convecTransBasic_calc_model(REGION,*argsv):
         pr=numpy.squeeze(numpy.asarray(pr_netcdf.variables[PR_VAR][:,:,:],dtype="float"))
         pr_netcdf.close()
         # Units: mm/s --> mm/h
-        pr=pr[:,numpy.logical_and(lat>=-20.0,lat<=20.0),:]*3.6e3*float(os.environ["pr_conversion_factor"])
+        pr=pr[:,numpy.logical_and(lat>=-20.0,lat<=20.0),:]*3.6e3
         print("      "+pr_list[li]+" Loaded!")
 
         prw_netcdf=Dataset(prw_list[li],"r")

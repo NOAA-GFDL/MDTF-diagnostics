@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    print(("ERROR: MDTF currently only supports python 2.7.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)"))
-    print("Attempted to run with following python version:\n{}".format(sys.version))
-    exit(1)
+if sys.version_info[0] != 3 or sys.version_info[1] < 7:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.7.*. Please check "
+    "which version is on your $PATH (e.g. with `which python`.)\n"
+    f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import io
@@ -235,7 +233,7 @@ def framework_test(code_root, output_dir, cli_config):
             ), 
             cwd=code_root
         )
-        log_str = util.coerce_to_iter(log_str)
+        log_str = util.to_iter(log_str)
         # write to most recent directory in output_dir
         runs = [d for d in glob.glob(os.path.join(abs_out_dir,'*')) if os.path.isdir(d)]
         if not runs:
@@ -374,7 +372,7 @@ class MDTFInstaller(object):
         print(util.pretty_print_json(_tmp, sort_keys=True))
 
     def makedirs(self, path_keys, delete_existing):
-        path_keys = util.coerce_to_iter(path_keys)
+        path_keys = util.to_iter(path_keys)
         for key in path_keys:
             path = self.config[key]
             if path:

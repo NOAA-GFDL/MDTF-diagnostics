@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-# CMEMS Sea Level data IO
+""" CMEMS Sea Level data IO
 
-
-"""
 Data is downloaded from CMEMS (the original AVISO dataset)
 
 Ftp server is the fastest way to manage download
@@ -25,59 +23,81 @@ import os
 import cftime
 
 
+def scantree(path):
+    """Recursively yield DirEntry objects for given directory.
+    From: https://bit.ly/3b3wxAW
+    """
+    for entry in os.scandir(path):
+        if entry.is_dir(follow_symlinks=False):
+            yield from scantree(entry.path)
+        else:
+            yield entry
 
-# absolute path to the data directory
-basedir='/storage1/home1/chiaweih/Research/proj3_omip_sl/data/CMEMS/'   
 
-# data file name starts with 
-dataname_begin='dt_global_allsat_phy_l4_'
+def annual_to_monthly(basedir, year):
 
-# variable name
-var='adt'        
-
-# time period for processing the daily output
-#  this can be changed based on used download period
-
-start_year=1993
-start_month=1
-end_year=2018
-end_month=9
-
-for yind,year in enumerate(np.arange(start_year,end_year+1,1)):
-    datasets=[]
-    path=os.path.join(basedir,'%0.4i'%year)
+    # construct the path for each year
+    path = os.path.join(basedir, "%0.4i" % year)
     print(path)
-    if os.path.isdir(path):
-        for file in os.listdir(path):
-            if file.startswith(dataname_begin):
-                datasets.append(os.path.join(basedir,'%0.4i'%year,file))
 
-    # open dataset
-    datasets = sorted(datasets)
-    for nfile,file in enumerate(datasets):
-        da = xr.open_dataset(file)[var]
-        if nfile == 0 :
-            da_concat = da.copy()
-        else :
-            da_concat = xr.concat([da_concat,da],dim='time')
-    del da
-    da = da_concat
-#     da=xr.open_mfdataset(datasets,combine='by_coords',chunks={'latitude':50,'longitude':50})[var]
+    # obtain a list of files for each year
+    files = list(scantree(path))
+    files = [x.path for x in list(scantree(path)) if x.path.endswith(".nc")]
+
+    # open a multi-file dataset and extract the variable
+    da = xr.open_mfdataset(files, combine="by_coords", use_cftime=True)[var]
+
+    # save variable attributes for use later
+    attrs = da.attrs
 
     # calculate monthly mean of each year
-    da_mon = da.groupby('time.month').mean('time')
-    time=xr.cftime_range(start=cftime.datetime(year,1,1),end=cftime.datetime(year,12,1),freq='MS',calendar='standard')
-    time=time.to_datetimeindex()
-    da_mon['month'] = time
-    da_mon = da_mon.rename({'month':'time'})
+    da = da.resample(time="1M")
 
-    # assign to the monthly xr.DataArray
-    if year == start_year :
-        da_mon_total = da_mon.copy()
-    else:
-        da_mon_total = xr.concat([da_mon_total,da_mon],dim='time')
-        
-ds_total = xr.Dataset()
-ds_total[var]=da_mon_total
-outputname=dataname_begin+'monthly_%s.nc'%var
-ds_total.to_netcdf(os.path.join(basedir,outputname))
+    return (da, attrs)
+
+
+def main(basedir, dataname_begin, var, start_year, end_year):
+
+    # use list comprehension to loop over years
+    arr = [
+        annual_to_monthly(basedir, year) for year in np.arange(start_year, end_year + 1)
+    ]
+
+    # separate attribute dictionary from the data arrays
+    attrs = arr[0][1]
+    arr = [x[0] for x in arr]
+
+    # concatenate along existing time dimension
+    arr = xr.concat([x.mean(dim="time") for x in arr], dim="time")
+    arr = arr.assign_attrs(attrs)
+
+    # create an empty dataset to hold the new array
+    ds_total = xr.Dataset()
+
+    # associate variable with new dataset and set fill value
+    ds_total[var] = xr.where(arr.isnull(), 1.0e20, arr)
+    ds_total[var] = arr.astype(np.float32)
+    ds_total[var].encoding["_FillValue"] = 1.0e20
+
+    # output file to netcdf
+    outputname = dataname_begin + "monthly_%s.nc" % var
+    ds_total.to_netcdf(os.path.join(basedir, outputname))
+
+
+if __name__ == "__main__":
+    # absolute path to the data directory
+    basedir = "/net2/jpk/aviso/my.cmems-du.eu/Core/SEALEVEL_GLO_PHY_L4_REP_OBSERVATIONS_008_047/dataset-duacs-rep-global-merged-allsat-phy-l4/"
+
+    # data file name starts with
+    dataname_begin = "dt_global_allsat_phy_l4_"
+
+    # variable name
+    var = "adt"
+
+    # time period for processing the daily output
+    #  this can be changed based on used download period
+
+    start_year = 1993
+    end_year = 2018
+
+    result = main(basedir, dataname_begin, var, start_year, end_year)

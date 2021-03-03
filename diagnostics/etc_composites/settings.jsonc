@@ -10,12 +10,12 @@
     "pod_env_vars": {
       "lat_var": "lat", 
       "lon_var": "lon",
-      "RUN_MCMS": "True",
+      "RUN_MCMS": "False",
       "RUN_COMPOSITES": "False"
     } 
   },
 
   
-  "varlist" : [
-  ]
+  /* "varlist" : [ */
+  /* ] */
 }

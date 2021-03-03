@@ -27,15 +27,16 @@
       // "CASENAME" : "ERA5.ALL.DEG15.001",
       "model" : "CESM",
       "convention" : "CESM",
-      "FIRSTYR" : 2008,
-      "LASTYR" : 2012,
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",
-          // "MJO_suite",
+          // "MJO_suite"
           // "MJO_teleconnection"
           // "convective_transition_diag", 
           // "precip_diurnal_cycle"
+          // "eulerian_storm_track" 
           "etc_composites" 
       ]
     }

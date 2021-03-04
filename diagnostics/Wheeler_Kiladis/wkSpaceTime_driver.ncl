@@ -1,4 +1,4 @@
-; This file is part of the Wheeler_Kiladis module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the Wheeler_Kiladis module of the MDTF code package (see LICENSE.txt)
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
@@ -175,7 +175,7 @@ begin
 
 ; Read in files from file list created by script
 
-  fili = diri+getenv("file_WK")
+  fili = getenv("file_WK")
 
   latN    = latBound
   latS    =-latBound ; make symmetric about the equator
@@ -229,15 +229,6 @@ begin
   spd = calculate_samples_per_day(time_array,debug)    ; samples per day
   tstride = 1  ; Use all indices
   x=getVarSlice( fili, varName, level, latS, latN, lonL, lonR, tstride, i1, i2,debug)
-
-  if(varName.eq.getenv("pr_var")) then
-    conversion_factor = tofloat(getenv("pr_conversion_factor"))
-    new_fact = conversion_factor*0.001 ;convert units
-    x = x*new_fact
-    print("Multiplied precip by conversion_factor "+new_fact+" to get new  max "+max(x))
-    varName@units = "m/day"
-
-  end if
 
   if (typeof(x).eq."short") then
     debug_print ("Converting short to float",routine_name,debug)

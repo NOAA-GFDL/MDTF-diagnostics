@@ -57,7 +57,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
-  "WORKING_DIR": "/project/amp/bundy/mdtf/MDTF_v3.0beta.OBS_WK.20201001",
+  "WORKING_DIR": "../wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
   "OUTPUT_DIR": "",
@@ -102,26 +102,27 @@
   // Settings affecting what output is generated.
 
   // Set flag to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": true,
+  "save_ps": false,
 
   // Set flag to have PODs save netCDF files of processed data.
   "save_nc": true,
 
   // Set flag to save all processed data except netcdf files.
-  "save_non_nc": true,
+  // SETTING +ve actually reverses above save_nc setting and DELETES nc files
+  "save_non_nc": false,
 
   // Set flag to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": true,
 
   // Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under 
   // a unique name.
-  "overwrite": true,
+  "overwrite": false,
 
   // DEBUG ---------------------------------------------------------------------
   // Settings used in debugging.
 
   // Log verbosity level.
-  "verbose": 2, 
+  "verbose": 1, 
 
   // Set flag for framework test. Data is fetched but PODs are not run.
   "test_mode": false,

@@ -2,11 +2,12 @@
 //
 // This requires sub-daily-timescale precipitation rate, precipitable
 // water vapor, air temperature. For further documentation and user
-// options, see comments in convective_transition_diag_v1r3.py.
+// options, see comments in convective_transition_diag_v2.py.
 // This also requires the following Python modules:
 // os, glob, json, dataset, numpy, scipy, matplotlib, networkx, warnings,
-// numba, netcdf4.
-// The code is in Python (2.7).
+// numba, netcdf4. These are included in the python3_base environment 
+// provided with the MDTF framework.
+// The code is in Python (3.7).
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
@@ -14,7 +15,7 @@
 //
 {
   "settings" : {
-    "driver" : "convective_transition_diag_v1r3.py",
+    "driver" : "convective_transition_diag_v2.py",
     "long_name" : "Convection Transition",
     "realm" : "atmos",
     "description" : "Convective transition diagnostics",
@@ -31,49 +32,57 @@
       "SAVE_TAVE_QSAT_INT" : "0"
     },
     "runtime_requirements": {
-      "python2": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
+      "python3": ["numpy", "scipy", "matplotlib", "netCDF4", "numba", "networkx"]
     }
   },
-  //
-  // USAGE varlist
-  // var_name time-frequency [requirement]
-  // - var_name: as found in src/fieldlist_*.json
-  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
-  // - requirement = blank  (default = optional),
-  //                 required (package cannot run without this)
-  //                 required unless field_name field_name2 ...
-  // - alternates:
-  //
-  // nb. if a variable is required at multiple time frequencies, list it 
-  // separately for each one. Clearly the developer can just leave out 
-  // optional files. However, it is always nice to get an upfront warning of
-  // missing files.
-  //
-  "varlist" : [
-    {
-      "var_name" : "pr_var",
-      "freq" : "1hr",
-      "requirement" : "required"
-    },{
-      "var_name" : "ta_var",
-      "freq" : "1hr",
-      "requirement" : "required",
-      "alternates" : ["tave_var"]
-    },{
-      "var_name" : "prw_var",
-      "freq" : "1hr",
-      "requirement" : "required",
-      "alternates" : ["ta_var", "qa_var"]
-    },{
-      "var_name" : "tave_var",
-      "freq" : "1hr",
-      "requirement" : "required",
-      "alternates" : ["ta_var", "qa_var"]
-    },{
-      "var_name" : "qsat_int_var",
-      "freq" : "1hr",
-      "requirement" : "required",
-      "alternates" : ["ta_var", "qa_var"]
+  "data": {
+    "frequency": "1hr"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "prw": {
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "tave": {
+      "use_exact_name": true,
+      // Variable doesn't have a CF standard name
+      // Column taken to be 1000-200 hPa
+      "standard_name": "mass_weighted_column_average_temperature",
+      "units": "K",
+      "dimensions": ["time", "lat", "lon"],
+      "alternates" : ["ta"]
+    },
+    "qsat_int": {
+      "use_exact_name": true,
+      // Variable doesn't have a CF standard name
+      // Column taken to be 1000-200 hPa
+      "standard_name": "column_integrated_saturation_humidity",
+      "units": "kg m-2",
+      "dimensions": ["time", "lat", "lon"],
+      "alternates" : ["ta"]
+    },
+    "ta": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement" : "alternate"
     }
-  ]
+  }
 }

@@ -167,7 +167,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
         for ax, coord_names in axes_d.items():
             for c in coord_names:
                 if c in ds:
-                    if (c not in ds.dims or ds[c].size == 1):
+                    if (c not in ds.dims or (ds[c].size == 1 and ax == 'Z')):
                         scalars.append(ds[c])
                 else:
                     if c not in ds.dims:
@@ -629,14 +629,15 @@ class DatasetParser():
             # .axes() will have thrown TypeError if XYZT axes not all uniquely defined
             assert isinstance(coord, xr.core.dataarray.DataArray)
         # check set of dimension coordinates (array dimensionality) agrees
-        our_axes = translated_var.dim_axes_set
-        ds_axes = ds[tv_name].cf.dim_axes_set
-        if our_axes != ds_axes:
+        our_axes_set = translated_var.dim_axes_set
+        ds_axes = ds[tv_name].cf.dim_axes
+        ds_axes_set = ds[tv_name].cf.dim_axes_set
+        if our_axes_set != ds_axes_set:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
-                f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
+                f" expected axes {list(our_axes_set)}, got {list(ds_axes_set)}.") 
         # check dimension coordinate names, std_names, units, bounds
         for coord in translated_var.dim_axes.values():
-            ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
+            ds_coord_name = ds_axes[coord.axis]
             self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
             try:
                 bounds_name = ds.cf.get_bounds(ds_coord_name).name
@@ -648,8 +649,14 @@ class DatasetParser():
                 continue
         for c_name in ds[tv_name].dims:
             if ds[c_name].size == 1:
-                _log.warning(("Dataset has dimension coordinate '%s' of size 1 "
-                    "not identified as scalar coord."), c_name)
+                if c_name == ds_axes['Z']:
+                    # mis-identified scalar coordinate
+                    _log.warning(("Dataset has dimension coordinate '%s' of size "
+                        "1 not identified as scalar coord."), c_name)
+                else:
+                    # encounter |X|,|Y| = 1 for single-column models; regardless,
+                    # assume user knows what they're doing
+                    _log.debug("Dataset has dimension coordinate '%s' of size 1.")
 
         # check variable's scalar coords: names, std_names, units
         our_scalars = translated_var.scalar_coords
@@ -658,6 +665,9 @@ class DatasetParser():
         ds_scalars = ds.cf.scalar_coords(tv_name)
         ds_names = [c.name for c in ds_scalars]
         ds_axes = [c.axis for c in ds_scalars]
+        if set(our_axes) != set(['Z']):
+            # should never encounter this
+            _log.error('Scalar coordinates on non-vertical axes not supported.')
         if len(our_axes) != 0 and len(ds_axes) == 0:
             # warning but not necessarily an error if coordinate dims agree
             _log.debug(("Dataset did not provide any scalar coordinate information, "

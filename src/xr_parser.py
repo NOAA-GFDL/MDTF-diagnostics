@@ -343,8 +343,6 @@ class DatasetParser():
         representations of the key (case-insensitive match via :meth:`guess_attr`
         and whether the key starts with the string *key_startswith*.)
 
-        If *update* is True 
-
         Args:
             key_name (str): Expected name of the key.
             key_startswith (str): If *key_name* isn't found in *d*, a key 
@@ -588,6 +586,31 @@ class DatasetParser():
             _log.warning(exc)
             our_var.units = units.to_cfunits(our_var.units)
 
+    def check_coord_bounds(self, our_coord, ds, ds_coord_name):
+        """Reconcile standard_name and units attributes between the
+        'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
+        expectations based on the model's convention (*our_var*), for the bounds
+        on the dimension coordinate *our_coord*.
+        """
+        try:
+            bounds = ds.cf.get_bounds(ds_coord_name)
+            # Inherit standard_name from our_coord if not present
+            _ = self.normalize_standard_name(bounds.attrs)
+            self.check_attr(our_coord, bounds, 'standard_name',
+                update_our_var=False, update_ds=True)
+            # Inherit units from our_coord if not present
+            _ = self.normalize_units(bounds.attrs)
+            self.check_attr(our_coord, bounds, 'units', 
+                comparison_func=units.units_equal,
+                update_our_var=False, update_ds=True
+            )
+            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                'bounds', our_coord.name, bounds.name)
+            our_coord.bounds = bounds.name
+        except KeyError:
+            # cf accessor could't find associated bounds variable
+            our_coord.bounds = None
+
     def check_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
@@ -614,15 +637,8 @@ class DatasetParser():
         for coord in our_var.dim_axes.values():
             ds_coord_name = ds_axes[coord.axis]
             self.check_names(coord, ds, ds_coord_name, update_name=True)
-            self.check_units(our_var, ds[ds_coord_name])
-            try:
-                bounds_name = ds.cf.get_bounds(ds_coord_name).name
-                _log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                    'bounds', coord.name, bounds_name)
-                coord.bounds = bounds_name
-            except KeyError:
-                coord.bounds = None
-                continue
+            self.check_units(coord, ds[ds_coord_name])
+            self.check_coord_bounds(coord, ds, ds_coord_name)
         for c_name in ds_var.dims:
             if ds[c_name].size == 1:
                 if c_name == ds_axes['Z']:

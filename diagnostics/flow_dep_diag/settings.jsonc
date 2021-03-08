@@ -6,11 +6,10 @@
         "realm" : ["weather"], //should there be additional tags?
         "runtime_requirements" : {
         "python" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib"]
-        // I could add here that you need an IRI login?
         },
         "pod_env_vars" : { //names and values of shell env vars used by diagnostic
-        // could add spatial resolution but not required
-        "VWIND_PATH_VAR" : "/Users/drewr/mdtf/inputdata/model/IRI/v_NNRP_rean.nc"
+        // Number of ensemble members in model data
+        "NENS" : "3"
         }
     },
     "data" : {
@@ -45,7 +44,7 @@
       "freq" : "day",
       "requirement" : "required"
     },{
-        "var_name" : "t2m_var", //this could be at other heights 
+        "var_name" : "t2m_var", //this could be at other heights
                                 //so perhaps shouldnt put @2m
         "standard_name" : "air_temperature_anomaly",
         "path_variable" : "T2M_ANOM_FILE",

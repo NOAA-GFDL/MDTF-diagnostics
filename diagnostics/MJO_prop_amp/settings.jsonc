@@ -16,38 +16,39 @@
     "realm" : "atmos",
     "description": "Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)",
     "runtime_requirements": {
-      "python2": [],
+      "python3": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm"]
     }
   },
-  //
-  // USAGE varlist
-  // var_name time-frequency [requirement]
-  // - var_name: as found in src/fieldlist_*.json
-  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
-  // - requirement = blank  (default = optional),
-  //                 required (package cannot run without this)
-  //                 required unless field_name field_name2 ...
-  // - alternates:
-  //
-  // nb. if a variable is required at multiple time frequencies, list it 
-  // separately for each one. Clearly the developer can just leave out 
-  // optional files. However, it is always nice to get an upfront warning of
-  // missing files.
-  //
-  "varlist" : [
-    {
-      "var_name": "pr_var",
-      "freq": "day",
-      "requirement": "required"
-    },{
-      "var_name": "prw_var",
-      "freq": "day",
-      "requirement": "required"
-    },{
-      "var_name": "qa_var",
-      "freq": "day",
-      "requirement": "required"
+  "data": {
+    "frequency": "day"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "Pa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "prw": {
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "hus": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "dimensions": ["time", "lev", "lat", "lon"]
     }
-  ]
+  }
 }

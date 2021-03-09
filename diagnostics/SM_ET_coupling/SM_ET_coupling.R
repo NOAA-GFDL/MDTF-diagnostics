@@ -12,18 +12,21 @@ DATADIR <- Sys.getenv("DATADIR")
 CASENAME <- Sys.getenv("CASENAME")
 yr1 <- Sys.getenv("FIRSTYR")
 yr2 <- Sys.getenv("LASTYR")
+MRSOS_FILE <- Sys.getenv("MRSOS_FILE")
+EVSPSBL_FILE <- Sys.getenv("EVSPSBL_FILE")
+PR_FILE <- Sys.getenv("PR_FILE")
 
 ##########################################
 print("Taking lon/lat from model")
-print(paste(DATADIR,"/mon/",CASENAME,".mrsos.mon.nc",sep=""))
-data_mrsos <- nc_open(paste(DATADIR,"/mon/",CASENAME,".mrsos.mon.nc",sep=""))
+print(MRSOS_FILE)
+data_mrsos <- nc_open(MRSOS_FILE)
 lon_model <- ncvar_get(data_mrsos, "lon")
 lat_model <- ncvar_get(data_mrsos, "lat")
 nc_close(data_mrsos) 
 
 print("Taking soil moisture from model, top-10cm")
 print("Taking lon/lat from model")
-data_mrsos <- nc_open(paste(DATADIR,"/mon/",CASENAME,".mrsos.mon.nc",sep=""))
+data_mrsos <- nc_open(MRSOS_FILE)
 print("Getting the number of years in the model file... should be 35 (i.e., 1980-2014)" )
 ## Here we read all years
 mrsos <- ncvar_get(data_mrsos, "mrsos")[,,] 
@@ -40,7 +43,7 @@ mask_model <- mrsos[,,1]
 mask_model[which(is.na(mask_model)==F)] <- 1
 
 print("Taking ET from model")
-data_evspsbl <- nc_open(paste(DATADIR,"/mon/",CASENAME,".evspsbl.mon.nc",sep=""))
+data_evspsbl <- nc_open(EVSPSBL_FILE)
 evspsbl <- ncvar_get(data_evspsbl, "evspsbl")[,,] 
 evspsbl_JJA <- array(NA, dim=c(dim(mrsos)[1],dim(mrsos)[2], years1))
 evspsbl_DJF <- array(NA, dim=c(dim(mrsos)[1],dim(mrsos)[2], years2))
@@ -133,7 +136,7 @@ dev.off()
 ### Model:
 
 print("Take precipitation from model")
-data_pr <- nc_open(paste(DATADIR,"/mon/",CASENAME,".pr.mon.nc",sep=""))
+data_pr <- nc_open(PR_FILE)
 pr <- ncvar_get(data_pr, "pr")[,,] *86400
 pr_JJA <- array(NA, dim=c(dim(pr)[1],dim(pr)[2], years1))
 pr_DJF <- array(NA, dim=c(dim(pr)[1],dim(pr)[2], years2))

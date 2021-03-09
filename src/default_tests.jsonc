@@ -34,9 +34,9 @@
     // {
     //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
     //   "model" : "AM4",
-    //   "convention" : "AM4",
-    //   "FIRSTYR" : 1977,
-    //   "LASTYR" : 1981,
+    //   "convention" : "GFDL",
+    //   "FIRSTYR" : 1,
+    //   "LASTYR" : 10,
     //   "pod_list" : ["MJO_prop_amp"]
     // }
     // {

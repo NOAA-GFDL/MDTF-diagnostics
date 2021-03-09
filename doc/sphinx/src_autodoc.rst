@@ -6,8 +6,7 @@ Internal framework code
    src.mdtf
    src.data_manager
    src.environment_manager
-   src.shared_diagnostic
-   src.util
+   src.diagnostic
 
 .. toctree::
    :maxdepth: 4
@@ -15,5 +14,4 @@ Internal framework code
    src.mdtf
    src.data_manager
    src.environment_manager
-   src.shared_diagnostic
-   src.util
+   src.diagnostic

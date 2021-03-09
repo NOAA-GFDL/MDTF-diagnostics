@@ -25,7 +25,7 @@ _SCRIPT_NAME = 'mdtf.py' # mimick argparse error message text
 
 def canonical_arg_name(str_):
     """Convert a flag or other specification to a destination variable name.
-    The destination variable name always has ``_``s, never ``-``s, in
+    The destination variable name always has underscores, never hyphens, in
     accordance with PEP8. Eg., "--GNU-style-flag" -> "GNU_style_flag".
     """
     return str_.lstrip('-').rstrip().replace('-', '_')
@@ -39,7 +39,7 @@ def plugin_key(plugin_name):
 def word_wrap(str_):
     """Clean whitespace and produces better word wrapping for multi-line help
     and description strings. Explicit paragraph breaks must be encoded as a 
-    double newline (``\n\n``).
+    double newline ( ``\n\n`` ).
     """
     paragraphs = textwrap.dedent(str_).split('\n\n')
     paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
@@ -52,8 +52,8 @@ def read_config_files(code_root, file_name, site=""):
 
     Args:
         file_name (str): Name of file to search for. We search for the file
-            in all subdirectories of :class:meth:`._CLIConfigHandler.site_dir`
-            and :class:meth:`._CLIConfigHandler.framework_dir`, respectively.
+            in all subdirectories of :meth:`._CLIConfigHandler.site_dir`
+            and :meth:`._CLIConfigHandler.framework_dir`, respectively.
 
     Returns: a tuple of the two files' contents. First entry is the 
         site specific file (empty dict if that file isn't found) and second 
@@ -112,7 +112,7 @@ class CustomHelpFormatter(
 
     def _get_help_string(self, action):
         """Only print the argument's default in the help string if it's defined. 
-        Based on `https://stackoverflow.com/a/34545549`__.
+        Based on `<https://stackoverflow.com/a/34545549>`__.
         """
         help_str = action.help
         if help_str == argparse.SUPPRESS:

@@ -1,4 +1,4 @@
-.. :orphan:
+:orphan:
 
 Documentation for the MDTF diagnostics framework
 ================================================
@@ -11,5 +11,5 @@ Documentation for the MDTF diagnostics framework
    sphinx/dev_toc
    sphinx/pod_toc
    sphinx/ref_toc
-   sphinx/src_autodoc
+   sphinx/fmwk_toc
    sphinx/tex_acknowledgements

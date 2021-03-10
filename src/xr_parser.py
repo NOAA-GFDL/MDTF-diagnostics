@@ -10,7 +10,7 @@ import cftime # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
 
-from src import util, units
+from src import util, units, core
 
 import logging
 _log = logging.getLogger(__name__)
@@ -299,7 +299,11 @@ class DatasetParser():
     """Class which acts as a container for MDTF-specific dataset parsing logic.
     """
     def __init__(self):
-        self._default_cal = 'none' # calendar used if no attribute found
+        config = core.ConfigManager()
+        self.skip_std_name = config.get('disable_CF_name_checks', False)
+        self.skip_units = config.get('disable_unit_checks', False)
+
+        self._fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
         self.attrs_backup = dict()
         self.var_attrs_backup = dict()
 
@@ -373,7 +377,7 @@ class DatasetParser():
                     comparison_func=(lambda x,y: x.startswith(y))
                 )
             except KeyError:
-                return None
+                raise
         value = d.get(k, default)
         if update and (value is not None) and (k != key_name):
             d[key_name] = value
@@ -383,13 +387,36 @@ class DatasetParser():
         """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
         case of getting a variable's standard_name.
         """
-        return self._normalize_attr(d, 'standard_name', 'standard', update=True)
+        try:
+            return self._normalize_attr(d, 'standard_name', 'standard', 
+                update=True)
+        except KeyError:
+            if self.skip_std_name:
+                _log.debug("'standard_name' attribute not found; skipping checks.")
+                d['standard_name'] = None
+                return d['standard_name']
+            else:
+                # normal operation
+                raise TypeError(("Netcdf metadata attribute 'standard_name' not "
+                    "found. Please provide this attribute in input model data or "
+                    "run with --disable_CF_name_checks."))
 
     def normalize_units(self, d):
         """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
         case of getting a variable's units.
         """
-        return self._normalize_attr(d, 'units', 'unit', update=True)
+        try:
+            return self._normalize_attr(d, 'units', 'unit', update=True)
+        except KeyError:
+            if self.skip_units:
+                _log.debug("'units' attribute not found; skipping checks.")
+                d['units'] = None
+                return d['units']
+            else:
+                # normal operation
+                raise TypeError(("Netcdf metadata attribute 'units' not found. "
+                    "Please provide this attribute in input model data or run "
+                    "with --disable_unit_checks."))
 
     def get_calendar(self, d):
         """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
@@ -424,8 +451,8 @@ class DatasetParser():
                 ds_var.attrs[ds_attr_name] = str(our_attr)
             else:
                 # don't change ds, raise exception
-                raise TypeError((f"No {ds_attr_name} found in dataset for '{our_var.name}' "
-                    f"(= {our_attr})."))
+                raise TypeError((f"No {ds_attr_name} found in dataset for "
+                    f"'{our_var.name}' (= {our_attr})."))
         elif not our_attr:
             # our_attr wasn't defined
             if update_our_var:
@@ -501,6 +528,8 @@ class DatasetParser():
         # normalize_standard_name will set standard_name on ds if it's been 
         # stored in a nonstandard location
         _ = self.normalize_standard_name(ds_var.attrs)
+        if self.skip_std_name:
+            return
         self.check_attr(our_var, ds_var, 'standard_name',
             update_our_var=True, update_ds=True)
 
@@ -517,6 +546,8 @@ class DatasetParser():
         # normalize_units will set units on ds if it's been stored in a 
         # nonstandard location
         _ = self.normalize_units(ds_var.attrs)
+        if self.skip_units:
+            return
         # Check equivalence of units: if units inequivalent, raise TypeError
         self.check_attr(our_var, ds_var, 'units', 
             comparison_func=units.units_equivalent,
@@ -550,6 +581,13 @@ class DatasetParser():
                     var_.name, var_.value, var_.units)
                 delattr(var_, attr_name)
 
+        def _compare_value_only(our_var, ds_var):
+            self._compare_attr(
+                (our_var, attr_name, our_var.value), 
+                (ds_var, attr_name, float(ds_var)),
+                update_our_var=True, update_ds=False
+            )
+
         def _compare_value_and_units(our_var, ds_var, comparison_func=None):
             # "attribute" to compare is tuple of (numerical value, units string)      
             our_attr = (our_var.value, our_var.units)
@@ -570,6 +608,9 @@ class DatasetParser():
         # normalize_units will set units on ds if it's been stored in a 
         # nonstandard location
         _ = self.normalize_units(ds_var.attrs)
+        if self.skip_units:
+            _compare_value_only(our_var, ds_var)
+            return
         # Check equivalence of units: if units inequivalent, raise TypeError
         _compare_value_and_units(
             our_var, ds_var, 
@@ -596,14 +637,16 @@ class DatasetParser():
             bounds = ds.cf.get_bounds(ds_coord_name)
             # Inherit standard_name from our_coord if not present
             _ = self.normalize_standard_name(bounds.attrs)
-            self.check_attr(our_coord, bounds, 'standard_name',
-                update_our_var=False, update_ds=True)
+            if not self.skip_std_name:
+                self.check_attr(our_coord, bounds, 'standard_name',
+                    update_our_var=False, update_ds=True)
             # Inherit units from our_coord if not present
             _ = self.normalize_units(bounds.attrs)
-            self.check_attr(our_coord, bounds, 'units', 
-                comparison_func=units.units_equal,
-                update_our_var=False, update_ds=True
-            )
+            if not self.skip_units:
+                self.check_attr(our_coord, bounds, 'units', 
+                    comparison_func=units.units_equal,
+                    update_our_var=False, update_ds=True
+                )
             _log.debug("Updating %s for '%s' to value '%s' from dataset.",
                 'bounds', our_coord.name, bounds.name)
             our_coord.bounds = bounds.name
@@ -760,7 +803,7 @@ class DatasetParser():
         cal_str = self.get_calendar(attr_d)
         if cal_str is not None:
             attr_d['calendar'] = self.guess_attr(
-                'calendar', cal_str, _cf_calendars, self._default_cal)
+                'calendar', cal_str, _cf_calendars, self._fallback_cal)
         return attr_d
 
     def restore_attrs(self, ds):
@@ -804,10 +847,10 @@ class DatasetParser():
             cftime_cal = self.get_calendar(ds.attrs)
         if not cftime_cal:
             _log.error("No calendar associated with '%s' found; using '%s'.", 
-                t_coord.name, self._default_cal)
-            cftime_cal = self._default_cal
+                t_coord.name, self._fallback_cal)
+            cftime_cal = self._fallback_cal
         t_coord.attrs['calendar'] = self.guess_attr(
-            'calendar', cftime_cal, _cf_calendars, self._default_cal)
+            'calendar', cftime_cal, _cf_calendars, self._fallback_cal)
 
     # --------------------------------------------------
 

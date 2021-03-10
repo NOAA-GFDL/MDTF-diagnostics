@@ -55,7 +55,7 @@ Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/
 
 The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that all users test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3).
 
-To install the MDTF package on a local machine, open a terminal and create a directory named `mdtf`. Instructions for end-users and new developers is as follows:
+To install the MDTF package on a local machine, open a terminal and create a directory named `mdtf`. Instructions for end-users and new developers are as follows:
 - end users:
   1. `cd mdtf`, then clone your fork of the MDTF repo on your machine: `git clone https://github.com/[your fork name]/MDTF-diagnostics`
   2. Verify that you are on the main branch: `git branch` 

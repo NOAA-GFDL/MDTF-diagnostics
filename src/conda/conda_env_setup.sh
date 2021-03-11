@@ -93,7 +93,9 @@ while (( "$#" )); do
 done
 popd > /dev/null   # restore CWD
 
-# setup conda in non-interactive shell
+# setup conda for non-interactive shell
+# NB: 'conda' isn't an executable; it's created as a shell alias. This is why we
+# invoke it as 'conda' below, instead of the absolute path in $CONDA_EXE.
 if [ -z "$_MDTF_CONDA_ROOT" ]; then
     set -- # clear cmd line
     . "${script_dir}/conda_init.sh" -v
@@ -117,15 +119,13 @@ if [ "$make_envs" = "true" ]; then
     # present
     _INSTALL_EXE=$( command -v mamba ) || true
     mamba_temp="false"
-    echo "$CONDA_EXE"
-    echo "$_INSTALL_EXE"
     if [[ ! -x "$_INSTALL_EXE" ]]; then
         echo "Couldn't find mamba executable; installing in temp environment."
         mamba_temp="true"
-        "$CONDA_EXE" create --force -qy -n _MDTF_install_temp
-        "$CONDA_EXE" install -qy mamba -n _MDTF_install_temp -c conda-forge
+        conda create --force -qy -n _MDTF_install_temp
+        conda install -qy mamba -n _MDTF_install_temp -c conda-forge
         # still no idea why this works but "conda activate" doesn't
-        . "${_CONDA_ROOT}/bin/activate" _MDTF_install_temp
+        conda activate _MDTF_install_temp
         _INSTALL_EXE=$( command -v mamba ) || true
     fi
     if [[ ! -x "$_INSTALL_EXE" ]]; then
@@ -140,21 +140,22 @@ if [ "$make_envs" = "true" ]; then
         # get env name from reading "name:" attribute of yaml file 
         env_name=$( sed -n "s/^[[:space:]]*name:[[:space:]]*\([[:alnum:]_\-]*\)[[:space:]]*/\1/p" "$env_file" )
         if [ -z "$_CONDA_ENV_ROOT" ]; then
-            echo "Creating conda env ${env_name}..."
-            "$_INSTALL_EXE" env create --force -q -f="$env_file"
+            # need to set manually, otherwise mamba will install in a subdir
+            # of its env's directory
+            conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
         else
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
-            echo "Creating conda env ${env_name} in ${conda_prefix}..."
-            "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         fi
+        echo "Creating conda env ${env_name} in ${conda_prefix}..."
+        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         echo "... conda env ${env_name} created."
     done
-    "$_INSTALL_EXE" clean -ay
+    "$_INSTALL_EXE" clean -aqy
 
     if [ "$mamba_temp" = "true" ]; then
         # delete the temp env we used for the install
-        . "${_CONDA_ROOT}/bin/deactivate" _MDTF_install_temp
-        "$CONDA_EXE" env remove -y -n _MDTF_install_temp
+        conda deactivate
+        conda env remove -y -n _MDTF_install_temp
     fi
 fi
 

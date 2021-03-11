@@ -1,3 +1,5 @@
+:orphan:
+
 Non-conda installation instructions
 ===================================
 

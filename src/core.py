@@ -189,8 +189,7 @@ class MDTFFramework(object):
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
         util.check_dirs(p.CODE_ROOT, p.OBS_DATA_ROOT, create=False)
-        util.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, p.OUTPUT_DIR,
-            create=True)
+        util.check_dirs(p.MODEL_DATA_ROOT, p.WORKING_DIR, create=True)
 
     def _post_parse_hook(self, cli_obj, config, paths):
         # init other services
@@ -311,8 +310,8 @@ class PathManager(util.Singleton, util.NameSpace):
         self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
         self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
-        if not self.WORKING_DIR:
-            self.WORKING_DIR = self.OUTPUT_DIR
+        if not self.OUTPUT_DIR:
+            self.OUTPUT_DIR = self.WORKING_DIR
 
         # set as attribute any CLI setting that has "action": "PathAction" 
         # in its definition in the .jsonc file

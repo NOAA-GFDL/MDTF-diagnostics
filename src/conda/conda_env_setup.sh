@@ -28,6 +28,7 @@ pushd "$PWD" > /dev/null
 _MDTF_CONDA_ROOT=""
 _CONDA_ENV_ROOT=""
 make_envs="true"
+use_mamba="false"
 env_glob=""
 while (( "$#" )); do
     case "$1" in
@@ -83,6 +84,13 @@ while (( "$#" )); do
             make_envs="false"
             shift 1
             ;;
+        --mamba)
+            # Install envs with mamba package manager 
+            # (https://github.com/mamba-org/mamba), assumed to be on $PATH
+            echo "Using `mamba` instead of `conda` for installation."
+            use_mamba="true"
+            shift 1
+            ;;
         -?*)
             echo "$0: Unknown option (ignored): $1\n" >&2
             shift 1
@@ -112,23 +120,35 @@ if [ "$make_envs" = "true" ]; then
         echo "To use envs interactively, run \"conda config --append envs_dirs $_CONDA_ENV_ROOT\""
     fi
 
+    if [ "$use_mamba" = "true" ]; then
+        # install envs with mamba; need to find mamba executable
+        _INSTALL_EXE=$( command -v mamba )
+        if [[ ! -x "$_INSTALL_EXE" ]]; then
+            echo "Couldn't find mamba executable."
+            exit 1 # could also fall back to using conda
+        fi
+    else
+        # use conda for install (& dependency resolution)
+        _INSTALL_EXE="$CONDA_EXE"
+    fi
+
     # create all envs in a loop
-    "$CONDA_EXE" clean -i
+    "$_INSTALL_EXE" clean -i
     for env_file in "${script_dir}/"${env_glob}; do
         [ -e "$env_file" ] || continue # catch the case where nothing matches
         # get env name from reading "name:" attribute of yaml file 
         env_name=$( sed -n "s/^[[:space:]]*name:[[:space:]]*\([[:alnum:]_\-]*\)[[:space:]]*/\1/p" "$env_file" )
         if [ -z "$_CONDA_ENV_ROOT" ]; then
             echo "Creating conda env ${env_name}..."
-            "$CONDA_EXE" env create --force -q -f="$env_file"
+            "$_INSTALL_EXE" env create --force -q -f="$env_file"
         else
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
             echo "Creating conda env ${env_name} in ${conda_prefix}..."
-            "$CONDA_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+            "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         fi
         echo "... conda env ${env_name} created."
     done
-    "$CONDA_EXE" clean -ay
+    "$_INSTALL_EXE" clean -ay
 fi
 
 # create script wrapper to activate base environment

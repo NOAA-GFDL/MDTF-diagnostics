@@ -28,7 +28,6 @@ pushd "$PWD" > /dev/null
 _MDTF_CONDA_ROOT=""
 _CONDA_ENV_ROOT=""
 make_envs="true"
-use_mamba="false"
 env_glob=""
 while (( "$#" )); do
     case "$1" in
@@ -84,13 +83,6 @@ while (( "$#" )); do
             make_envs="false"
             shift 1
             ;;
-        --mamba)
-            # Install envs with mamba package manager 
-            # (https://github.com/mamba-org/mamba), assumed to be on $PATH
-            echo "Using `mamba` instead of `conda` for installation."
-            use_mamba="true"
-            shift 1
-            ;;
         -?*)
             echo "$0: Unknown option (ignored): $1\n" >&2
             shift 1
@@ -120,20 +112,29 @@ if [ "$make_envs" = "true" ]; then
         echo "To use envs interactively, run \"conda config --append envs_dirs $_CONDA_ENV_ROOT\""
     fi
 
-    if [ "$use_mamba" = "true" ]; then
-        # install envs with mamba; need to find mamba executable
-        _INSTALL_EXE=$( command -v mamba )
-        if [[ ! -x "$_INSTALL_EXE" ]]; then
-            echo "Couldn't find mamba executable."
-            exit 1 # could also fall back to using conda
-        fi
-    else
-        # use conda for install (& dependency resolution)
-        _INSTALL_EXE="$CONDA_EXE"
+    # install envs with mamba (https://github.com/mamba-org/mamba) for 
+    # performance reasons; need to find mamba executable, or install it if not
+    # present
+    _INSTALL_EXE=$( command -v mamba ) || true
+    mamba_temp="false"
+    echo "$CONDA_EXE"
+    echo "$_INSTALL_EXE"
+    if [[ ! -x "$_INSTALL_EXE" ]]; then
+        echo "Couldn't find mamba executable; installing in temp environment."
+        mamba_temp="true"
+        "$CONDA_EXE" create --force -qy -n _MDTF_install_temp
+        "$CONDA_EXE" install -qy mamba -n _MDTF_install_temp -c conda-forge
+        # still no idea why this works but "conda activate" doesn't
+        . "${_CONDA_ROOT}/bin/activate" _MDTF_install_temp
+        _INSTALL_EXE=$( command -v mamba ) || true
+    fi
+    if [[ ! -x "$_INSTALL_EXE" ]]; then
+        echo "Mamba installation failed."
+        exit 1
     fi
 
     # create all envs in a loop
-    "$_INSTALL_EXE" clean -i
+    "$_INSTALL_EXE" clean -qi
     for env_file in "${script_dir}/"${env_glob}; do
         [ -e "$env_file" ] || continue # catch the case where nothing matches
         # get env name from reading "name:" attribute of yaml file 
@@ -149,6 +150,12 @@ if [ "$make_envs" = "true" ]; then
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -ay
+
+    if [ "$mamba_temp" = "true" ]; then
+        # delete the temp env we used for the install
+        . "${_CONDA_ROOT}/bin/deactivate" _MDTF_install_temp
+        "$CONDA_EXE" env remove -y -n _MDTF_install_temp
+    fi
 fi
 
 # create script wrapper to activate base environment

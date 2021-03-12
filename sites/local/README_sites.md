@@ -19,4 +19,4 @@ framework.
 In turn, options you explicitly specify on the command line will override any
 defaults defined from files in this directory.
 
-This feature will be fully documented and announced in v3.0 beta 4.
+This feature will be fully documented and announced in the following release.

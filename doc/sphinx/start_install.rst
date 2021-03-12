@@ -8,19 +8,16 @@ Throughout this document, ``%`` indicates the UNIX/LINUX command line prompt and
 - ``conda_env_setup.sh``: automated script for installing necessary Conda environments.
 - ``default_tests.jsonc``: configuration file for running the framework.
 
-Summary of steps for running the package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Summary of steps for installing the framework**
 
 You will need to download a) the source code, b) digested observational data, and c) two sets of sample model data (:numref:`ref-download`). Afterwards, we describe how to install necessary Conda environments and languages (:numref:`ref-install`) and run the framework on the default test case (:numref:`ref-configure` and :numref:`ref-execute`).
-
-**Summary of steps for installing the framework**
 
 You will need to download the source code, digested observational data, and sample model data (:numref:`ref-download`). Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__ package manager (:numref:`ref-install`, :numref:`ref-conda-env-install`) and run the framework on sample model data (:numref:`ref-configure` and :numref:`ref-execute`).
 
 .. _ref-download:
 
 Obtaining the code
-^^^^^^^^^^^^^^^^^^
+------------------
 
 The official repo for the MDTF code is hosted at the GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. We recommend that end users download and test the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3>`__.
 
@@ -35,12 +32,12 @@ To install the MDTF framework, create a directory named ``mdtf`` and unzip the c
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``main`` branch contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.
 
-For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin by locally cloning the repo and checking out this branch, as described in :ref:`ref-dev-git-intro`.
+For POD developers, the ``develop`` branch is the “beta test” version of the framework. POD developers should begin by locally cloning the repo and checking out this branch, as described in :doc:`dev_git_intro`.
 
 .. _ref-supporting-data:
 
 Obtaining supporting data
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 Supporting observational data and sample model data are available via anonymous FTP at ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is provided for default test/demonstration purposes. The files most relevant for package installation and default tests are:
 
@@ -54,6 +51,29 @@ Download these three files and extract the contents in the following hierarchy u
 
 ::
 
+   mdtf
+   ├── MDTF-diagnostics
+   ├── inputdata
+       ├── model ( = $MODEL_DATA_ROOT)
+       │   ├── GFDL.CM4.c96L32.am4g10r8
+       │   │   └── day
+       │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
+       │   │       └── (... other .nc files )
+       │   └── QBOi.EXP1.AMIP.001
+       │       ├── 1hr
+       │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
+       │       │   └── (... other .nc files )
+       │       ├── 3hr
+       │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
+       │       ├── day
+       │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
+       │       │   └── (... other .nc files )
+       │       └── mon
+       │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
+       │           └── (... other .nc files )
+       └── obs_data ( = $OBS_DATA_ROOT)
+           ├── (... supporting data for individual PODs )
+
 The default test case uses the QBOi.EXP1.AMIP.001 sample. The GFDL.CM4.c96L32.am4g10r8 sample is only for testing the MJO Propagation and Amplitude POD. Note that ``mdtf`` now contains both ``MDTF-diagnostics`` and ``inputdata`` directories.
 
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described below in :numref:`ref-configure`.
@@ -63,7 +83,7 @@ You can put the observational data and model output in different locations (e.g.
 Install the conda package manager, if needed
 --------------------------------------------
 
-*For users unfamiliar with Conda, :numref:`ref-conda-install` can be skipped if Conda has been installed, but :numref:`ref-conda-env-install` CANNOT be skipped regardless.*
+For users unfamiliar with Conda, :numref:`ref-conda-install` can be skipped if Conda has been installed, but :numref:`ref-conda-env-install` should not be skipped.
 
 The MDTF framework code is written in Python 2.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. We use `Conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager to install and manage these dependencies. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distribution, so having Miniconda/Anaconda is sufficient but not necessary.
 
@@ -74,8 +94,9 @@ If these space requirements are prohibitive, we provide an alternate method of o
 .. _ref-conda-install:
 
 Conda installation
-^^^^^^^^^^^^^^^^^^
-Here we are checking that the Conda command is available on your system. We recommend doing this via Miniconda or Anaconda installation. You can proceed directly to section 2.2 if Conda is already installed.
+------------------
+
+Here we are checking that the Conda command is available on your system. We recommend doing this via Miniconda or Anaconda installation. You can proceed directly to :numref:`ref-conda-env-install` if Conda is already installed.
 
 - To determine if conda is installed, run ``% conda --version`` as the user who will be using the framework. The framework has been tested against versions of conda >= 4.7.5.
 
@@ -90,21 +111,22 @@ The framework’s environments will co-exist with an existing Miniconda/Anaconda
 .. _ref-conda-env-install:
 
 Framework-specific environment installation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------
 
 Here we set up the necessary environments needed for running the framework and individual PODs via the provided script. These are sometimes referred to as "Conda environments" conventionally.
 
 After making sure that Conda is available, run ``% conda info --base`` as the user who will be using the framework to determine the location of your Conda installation. This path will be referred to as ``$CONDA_ROOT`` below.
 
-- If this path points to ``/usr/`` or a subdirectory therein, we recomnend having a separate Miniconda/Anaconda installation of your own following :ref:`ref-conda-install`.
+- If this path points to ``/usr/`` or a subdirectory therein, we recomnend having a separate Miniconda/Anaconda installation of your own following :numref:`ref-conda-install`.
 
 Next, run
+
 ::
 
-% cd $CODE_ROOT
-% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+   % cd $CODE_ROOT
+   % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
-to install all necessary environments (and create an executable; :ref:`ref-location-execute`), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
+to install all necessary environments (and create an executable; :numref:`ref-location-execute`), which takes ~10 min. The names of all framework-created environments begin with “_MDTF”, so as not to conflict with any other environments.
 
 - Substitute the actual paths for ``$CODE_ROOT``, ``$CONDA_ROOT``, and ``$CONDA_ENV_DIR``.
 
@@ -112,7 +134,7 @@ to install all necessary environments (and create an executable; :ref:`ref-locat
 
 - The ``--all`` flag makes the script install all environments prescribed by the YAML (.yml) files under ``src/conda/`` (one YAML for one environment). You can install the environments selectively by using the ``--env`` flag instead. For instance, ``% ./src/conda/conda_env_setup.sh --env base --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`` will install the "_MDTF_base" environment prescribed by ``env_base.yml``, and so on. With ``--env``, the current script can install one environment at a time. Repeat the command for multiple environments.
 
-- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :erf:`ref-interaction-conda-env`.
+- Note that _MDTF_base is mandatory for the framework's operation, and the other environments are optional, see :numref:`ref-interaction-conda-env`.
 
 After installing the framework-specific Conda environments, you shouldn't manually alter them (i.e., never run ``conda update`` on them). To update the environments after updating the framework code, re-run the above commands. These environments can be uninstalled by simply deleting "_MDTF" directories under ``$CONDA_ENV_DIR`` (or ``$CONDA_ROOT/envs/`` for default setting).
 
@@ -125,11 +147,11 @@ The MDTF framework supports setting configuration options in a file as well as o
 
 ``src/default_tests.jsonc`` is a template/example for configuration options that will be passed to the executable as an input. Open it in an editor (we recommend working on a copy). The following adjustments are necessary before running the framework:
 
-- If you've saved the supporting data in the directory structure described in :ref:`ref-supporting-data`, the default values for ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` pointing to ``mdtf/inputdata/obs_data/`` and ``mdtf/inputdata/model/`` will be correct. If you put the data in a different location, these values should be changed accordingly.
+- If you've saved the supporting data in the directory structure described in :numref:`ref-supporting-data`, the default values for ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` pointing to ``mdtf/inputdata/obs_data/`` and ``mdtf/inputdata/model/`` will be correct. If you put the data in a different location, these values should be changed accordingly.
 
 - ``OUTPUT_DIR`` should be set to the location you want the output files to be written to (default: ``mdtf/wkdir/``; will be created by the framework). The output of each run of the framework will be saved in a different subdirectory in this location.
 
-- ``conda_root`` should be set to the value of ``$CONDA_ROOT`` used above in :ref:`ref-conda-env-install`.
+- ``conda_root`` should be set to the value of ``$CONDA_ROOT`` used above in :numref:`ref-conda-env-install`.
 
 - If you specified a custom environment location with ``$CONDA_ENV_DIR``, set ``conda_env_root`` to that value; otherwise, leave it blank.
 
@@ -145,7 +167,7 @@ Run the MDTF framework on sample data
 Location of the MDTF executable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The setup script (:ref:`ref-conda-env-install`) will have created an executable at ``$CODE_ROOT/mdtf`` which sets the correct Conda environments before running the framework and individual PODs. To test the installation, ``% $CODE_ROOT/mdtf --help`` will print help text on the command-line options. Note that, if your current working directory is ``$CODE_ROOT``, you will need to run ``% ./mdtf --help``.
+The setup script (:numref:`ref-conda-env-install`) will have created an executable at ``$CODE_ROOT/mdtf`` which sets the correct Conda environments before running the framework and individual PODs. To test the installation, ``% $CODE_ROOT/mdtf --help`` will print help text on the command-line options. Note that, if your current working directory is ``$CODE_ROOT``, you will need to run ``% ./mdtf --help``.
 
 For interested users, the ``mdtf`` executable is also a script, which calls ``src/conda/conda_init.sh`` and ``src/mdtf.py``.
 
@@ -154,12 +176,12 @@ For interested users, the ``mdtf`` executable is also a script, which calls ``sr
 Run the framework on sample data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you've installed the Conda environments using the ``--all`` flag (:ref:`ref-conda-env-install`), you can now run the framework on the CESM sample model data:
+If you've installed the Conda environments using the ``--all`` flag (:numref:`ref-conda-env-install`), you can now run the framework on the CESM sample model data:
 
 ::
 
-% cd $CODE_ROOT
-% ./mdtf -f src/default_tests.jsonc
+   % cd $CODE_ROOT
+   % ./mdtf -f src/default_tests.jsonc
 
 Run time may be 10-20 minutes, depending on your system.
 
@@ -176,19 +198,19 @@ Run time may be 10-20 minutes, depending on your system.
 Framework interaction with Conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As just described in :ref:`ref-framework-sample`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
+As described in the previous section, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in the configuration file and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):
 
 1. The framework will first try to determine whether there is a Conda environment named ``_MDTF_$POD_NAME`` under ``$CONDA_ENV_DIR``. If yes, the framework will switch to this environment and run the POD.
 
 2. If not, the framework will then look into the POD's ``settings.jsonc`` file in ``$CODE_ROOT/diagnostics/$POD_NAME``. ``runtime_requirements`` in the settings file specifies the programming language(s) adopted by the POD:
 
-    a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD.
+   a). If purely Python, the framework will switch to ``_MDTF_python_base`` and run the POD.
 
-    b). If NCL is used, then ``_MDTF_NCL_base``.
+   b). If NCL is used, then ``_MDTF_NCL_base``.
 
-If you choose to selectively install Conda environments using the ``--env`` flag (:ref:`ref-conda-env-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
+If you choose to selectively install Conda environments using the ``--env`` flag (:numref:`ref-conda-env-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
 
-- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs`` requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag`` (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag`` to the ``--env`` flag one at a time (:ref:`ref-conda-env-install`).
+- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs`` requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag`` (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag`` to the ``--env`` flag one at a time (:numref:`ref-conda-env-install`).
 
 - The framework defaults to running all available PODs, which is overridden by the ``pod_list`` option in the ``src/default_tests.jsonc`` configuration file. Individual PODs can be specified as a comma-delimited list of POD names.
 

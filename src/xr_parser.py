@@ -29,6 +29,12 @@ _cf_calendars = (
     "none"
 )
 
+ATTR_NOT_FOUND = util.sentinel_object_factory('AttrNotFound')
+ATTR_NOT_FOUND.__doc__ = """
+Sentinel object serving as a placeholder for netCDF metadata attributes that 
+are expected, but not present in the data. 
+"""
+
 @util.mdtf_dataclass
 class PlaceholderScalarCoordinate():
     """Dummy object used to describe scalar coordinates referred to by name only
@@ -37,8 +43,8 @@ class PlaceholderScalarCoordinate():
     """
     name: str
     axis: str
-    standard_name: str = util.NOTSET
-    units: str = util.NOTSET
+    standard_name: str = ATTR_NOT_FOUND
+    units: str = ATTR_NOT_FOUND
 
 # ========================================================================
 # Customize behavior of cf_xarray accessor 
@@ -299,134 +305,195 @@ class DatasetParser():
     """Class which acts as a container for MDTF-specific dataset parsing logic.
     """
     def __init__(self):
-        config = core.ConfigManager()
+        config = dict() # core.ConfigManager()
         self.skip_std_name = config.get('disable_CF_name_checks', False)
         self.skip_units = config.get('disable_unit_checks', False)
 
-        self._fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
+        self.fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
         self.attrs_backup = dict()
-        self.var_attrs_backup = dict()
+        self.var_attrs_restore = dict()
 
-    # xarray DataArray attribute munging methods ------------------------------
+    # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
     @staticmethod
-    def guess_attr(name, expected_val, options, default=None, comparison_func=None):
-        """Select and return element of *options* equal to *expected_val*. 
+    def guess_attr(attr_desc, attr_name, options, default=None, comparison_func=None):
+        """Select and return element of *options* equal to *attr_name*. 
         If none are equal, try a case-insensititve string match.
+
+        Args:
+            attr_desc (str): Description of the attribute (only used for log
+                messages.)
+            attr_name (str): Expected name of the attribute.
+            options (iterable of str): Attribute names that are present in the 
+                data.
+            default (str, default None): If supplied, default value to return if
+                no match.
+            comparison_func (optional, default None): String comparison function
+                to use.
+
+        Raises:
+            KeyError if no element of *options* can be coerced to match *key_name*.
         """
         def str_munge(s):
-            # comparison function: lowercase, drop non-alphanumeric chars
+            # for case-insensitive comparison function: make string lowercase
+            # and drop non-alphanumeric chars
             return re.sub(r'[^a-z0-9]+', '', s.lower())
 
         if comparison_func is None:
             comparison_func = (lambda x,y: x == y)
         options = util.to_iter(options)
-        test_count = sum(comparison_func(opt, expected_val) for opt in options)
+        test_count = sum(comparison_func(opt, attr_name) for opt in options)
         if test_count > 1:
             _log.debug("Found multiple values of '%s' set for '%s'.", 
-                expected_val, name)
+                attr_name, attr_desc)
         if test_count >= 1:
-            return expected_val
+            return attr_name
         munged_opts = [
-            (comparison_func(str_munge(opt), str_munge(expected_val)), opt) \
+            (comparison_func(str_munge(opt), str_munge(attr_name)), opt) \
                 for opt in options
         ]
         if sum(tup[0] for tup in munged_opts) == 1:
-            guessed_val = [tup[1] for tup in munged_opts if tup[0]][0]
+            guessed_attr = [tup[1] for tup in munged_opts if tup[0]][0]
             _log.debug("Correcting '%s' to '%s' as the intended value for '%s'.", 
-                expected_val, guessed_val, name)
-            return guessed_val
-        if default is None:
-            raise KeyError(expected_val)
-        else:
+                attr_name, guessed_attr, attr_desc)
+            return guessed_attr
+        # Couldn't find a match
+        if default is not None:
             return default
+        raise KeyError(attr_name)
 
-    def _normalize_attr(self, d, key_name, key_startswith, default=None, update=True):
-        """Attempts to get the value from dict *d* corresponding to the key 
-        *key_name*. If *key_name* is not in *d*, we check possible nonstandard
-        representations of the key (case-insensitive match via :meth:`guess_attr`
-        and whether the key starts with the string *key_startswith*.)
+    def normalize_attr(self, new_attr_d, d, key_name, key_startswith=None):
+        """Sets the value in dict *d* corresponding to the key *key_name*. 
+        
+        If *key_name* is in *d*, no changes are made. If *key_name* is not in 
+        *d*, we check possible nonstandard representations of the key 
+        (case-insensitive match via :meth:`guess_attr` and whether the key 
+        starts with the string *key_startswith*.) If no match is found for
+        *key_name*, its value is set to the sentinel value ATTR_NOT_FOUND.
 
         Args:
+            new_attr_d (dict): dict to store all found attributes. We don't 
+                change attributes on *d* here, since that can interfere with
+                xarray.decode_cf(), but instead pass this to :meth:`restore_attrs`
+                so they can be set once that's done.
+            d (dict): dict of DataSet attributes, whose keys are to be searched 
+                for *key_name*.
             key_name (str): Expected name of the key.
-            key_startswith (str): If *key_name* isn't found in *d*, a key 
-                starting with this string will be accepted instead.
-            d: dict (of DataSet attributes), whose keys are to be searched for
-                *key_name*.
-            default (optional, default None): Default value to return if key isn't
-                present in *d*.
-            update (bool, default True): If True and the idenitifed key name 
-                wasn't *key_name*, set *d*[*key_name*] to the obtained value. 
-
-        Returns:
-            Value of *d* corresponding to the requested key, if a key 
-            identification was made, otherwise *default*.
+            key_startswith (optional, str): If provided and if *key_name* isn't 
+                found in *d*, a key starting with this string will be accepted 
+                instead.
         """
         try:
             k = self.guess_attr(
                 key_name, key_name, d.keys(), 
-                default=None, comparison_func=None
+                comparison_func=None
             )
         except KeyError:
             if key_startswith is None:
-                return None
-            try:
-                k = self.guess_attr(
-                    key_name, key_startswith, d.keys(), 
-                    default=default, 
-                    comparison_func=(lambda x,y: x.startswith(y))
-                )
-            except KeyError:
-                raise
-        value = d.get(k, default)
-        if update and (value is not None) and (k != key_name):
-            d[key_name] = value
-        return value
-
-    def normalize_standard_name(self, d):
-        """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
-        case of getting a variable's standard_name.
-        """
-        try:
-            return self._normalize_attr(d, 'standard_name', 'standard', 
-                update=True)
-        except KeyError:
-            if self.skip_std_name:
-                _log.debug("'standard_name' attribute not found; skipping checks.")
-                d['standard_name'] = None
-                return d['standard_name']
+                k = None
             else:
-                # normal operation
-                raise TypeError(("Netcdf metadata attribute 'standard_name' not "
-                    "found. Please provide this attribute in input model data or "
-                    "run with --disable_CF_name_checks."))
+                try:
+                    k = self.guess_attr(
+                        key_name, key_startswith, d.keys(),
+                        comparison_func=(lambda x,y: x.startswith(y))
+                    )
+                except KeyError:
+                    k = None
+        if k is None:
+            # key wasn't found
+            new_attr_d[key_name] = ATTR_NOT_FOUND
+        elif k != key_name:
+            # key found with a different name than expected
+            new_attr_d[key_name] = d.get(k, ATTR_NOT_FOUND)
+        else:
+            # key was found with expected name; copy to new_attr_d
+            new_attr_d[key_name] = d[key_name]
 
-    def normalize_units(self, d):
-        """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
-        case of getting a variable's units.
+    def normalize_standard_name(self, new_attr_d, attr_d):
+        """Method for munging standard_name attribute prior to parsing.
         """
-        try:
-            return self._normalize_attr(d, 'units', 'unit', update=True)
-        except KeyError:
-            if self.skip_units:
-                _log.debug("'units' attribute not found; skipping checks.")
-                d['units'] = None
-                return d['units']
-            else:
-                # normal operation
-                raise TypeError(("Netcdf metadata attribute 'units' not found. "
-                    "Please provide this attribute in input model data or run "
-                    "with --disable_unit_checks."))
+        self.normalize_attr(new_attr_d, attr_d, 'standard_name', 'standard')
 
-    def get_calendar(self, d):
-        """Wrapper for :meth:`~DatasetParser._normalize_attr`, specialized to the
-        case of getting a DataSet's calendar. Note that *update* = False, because
-        we want to make sure this attribute is set to a recognized calendar.
+    def normalize_unit(self, new_attr_d, attr_d):
+        """HACK to convert unit strings to values that are correctly parsed by
+        cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
+        as "millibarn", a unit of area (see UDUnits `mailing list 
+        <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
         """
-        return self._normalize_attr(d, 'calendar', 'cal', update=False)
+        self.normalize_attr(new_attr_d, attr_d, 'units', 'unit')
+        unit_str = new_attr_d['units']
+        if unit_str is not ATTR_NOT_FOUND:
+            # regex matches "mb", case-insensitive, provided the preceding and 
+            # following characters aren't also letters; expression replaces 
+            # "mb" with "millibar", which is interpreted correctly.
+            unit_str = re.sub(
+                r"(?<![^a-zA-Z])([mM][bB])(?![^a-zA-Z])", "millibar", unit_str
+            )
+            # TODO: insert other cases of misidentified units here as they're 
+            # discovered
+            new_attr_d['units'] = unit_str
+
+    def normalize_calendar(self, attr_d):
+        """Finds the calendar attribute, if present, and normalizes it to one of
+        the values in the CF standard before xarray.decode_cf decodes the 
+        time axis.
+        """
+        self.normalize_attr(attr_d, attr_d, 'calendar', 'cal')
+        if attr_d['calendar'] == ATTR_NOT_FOUND:
+            # in normal operation, this is because we're looking at a non-time-
+            # related variable. Calendar assignment is finalized by check_calendar().
+            del attr_d['calendar']
+        else:
+            # Make sure it's set to a recognized value
+            attr_d['calendar'] = self.guess_attr(
+                'calendar', attr_d['calendar'], _cf_calendars, 
+                default=self.fallback_cal
+            )
+
+    def restore_attrs(self, ds):
+        """xarray.decode_cf() and other functions appear to un-set some of the 
+        attributes defined in the netcdf file. Restore them from the backups 
+        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
+        """
+        def _restore_one(name, backup_d, attrs_d):
+            for k,v in backup_d.items():
+                if k not in attrs_d:
+                    attrs_d[k] = v
+                if v != attrs_d[k] and v != ATTR_NOT_FOUND:
+                    _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                        name, k, v, attrs_d[k])
+        
+        _restore_one('Dataset', self.attrs_backup, ds.attrs)
+        for var in ds.variables:
+            _restore_one(var, self.var_attrs_restore[var], ds[var].attrs)
+
+    def normalize_ds_attrs(self, ds):
+        """Initial munging of xarray Dataset attribute dicts, before any 
+        parsing by xarray.decode_cf() or the cf_xarray accessor.
+        """
+        def strip_(v):
+            # strip leading, trailing whitespace from all string-valued attributes
+            return (v.strip() if isinstance(v, str) else v)
+        def strip_attrs(obj):
+            d = getattr(obj, 'attrs', dict())
+            return {strip_(k): strip_(v) for k,v in d.items()}
+
+        setattr(ds, 'attrs', strip_attrs(ds))
+        self.attrs_backup = ds.attrs.copy()
+        for var in ds.variables:
+            new_d = dict()
+            d = strip_attrs(ds[var])
+            self.normalize_standard_name(new_d, d)
+            self.normalize_unit(new_d, d)
+            self.normalize_calendar(d)
+            # setattr(ds[var], 'attrs', d) # do later & all at once, in restore_attrs
+            self.var_attrs_restore[var] = d.copy()
+            self.var_attrs_restore[var].update(new_d)
+
+    # --- Methods for comparing attrs against our record (TranslatedVarlistEntry) ---
 
     @staticmethod
-    def _compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None, 
+    def compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None, 
         update_our_var=True, update_ds=False):
         """Convenience function to compare two values. Returns tuple of updated
         values, or None if no update is needed.
@@ -434,48 +501,48 @@ class DatasetParser():
         # unpack tuples
         our_var, our_attr_name, our_attr = our_attr_tuple
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
-
+        can_update_our_var = (update_our_var and ds_attr != ATTR_NOT_FOUND) # abbreviate
         if comparison_func is None:
             comparison_func = (lambda x,y: x == y)
-        if ds_attr == util.NOTSET:
-            # skip comparison & make no changes
-            # Currently only used by PlaceholderScalarCoordinate
-            return
 
-        if not ds_attr:
+        if ds_attr == ATTR_NOT_FOUND or (not ds_attr):
             # ds_attr wasn't defined
             if update_ds:
                 # update ds with our value
-                _log.warning("No %s found in dataset for '%s'; setting to '%s'.",
+                _log.warning("No %s for '%s' found in dataset; setting to '%s'.",
                     ds_attr_name, our_var.name, str(our_attr))
                 ds_var.attrs[ds_attr_name] = str(our_attr)
+                return
             else:
                 # don't change ds, raise exception
-                raise TypeError((f"No {ds_attr_name} found in dataset for "
-                    f"'{our_var.name}' (= {our_attr})."))
-        elif not our_attr:
+                raise TypeError((f"No {ds_attr_name} for '{our_var.name}' "
+                    f"(= {our_attr}) found in dataset."))
+
+        if not our_attr:
             # our_attr wasn't defined
-            if update_our_var:
-                # update our attr with value from ds
-                _log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                    our_attr_name, our_var.name, ds_attr)
+            if can_update_our_var:
+                if not (our_attr_name == 'name' and our_var.name == ds_attr):
+                    _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                        our_attr_name, our_var.name, ds_attr)
                 setattr(our_var, our_attr_name, ds_attr)
+                return
             else:
                 # don't change ds, raise exception
                 raise TypeError((f"'{our_var.name}' not set but {ds_attr_name} "
                     f"(= {ds_attr}) present in dataset."))
-        elif not comparison_func(our_attr, ds_attr):
-            # both attrs present, but different
-            if update_our_var:
-                # update our attr with value from ds, but raise error
+
+        if not comparison_func(our_attr, ds_attr):
+            # both attrs present, but have different values
+            if can_update_our_var:
+                # update our attr with value from ds, but also raise error
                 setattr(our_var, our_attr_name, ds_attr)
-            raise TypeError((f"Found unexpected {our_attr_name} for variable "
+            raise ValueError((f"Found unexpected {our_attr_name} for variable "
                 f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
         else:
             # comparison passed, no changes needed
             return
 
-    def check_name(self, our_var, ds_var_name, update_name=False):
+    def reconcile_name(self, our_var, ds_var_name, update_name=False):
         """Reconcile the name of the variable between the 'ground truth' of the 
         dataset we downloaded (*ds_var*) and our expectations based on the model's
         convention (*our_var*).
@@ -483,13 +550,13 @@ class DatasetParser():
         attr_name = 'name'
         our_attr = getattr(our_var, attr_name, "")
         if update_name:
-            our_attr = ""
-        self._compare_attr(
+            our_attr = "" # forces update from ds
+        self.compare_attr(
             (our_var, attr_name, our_attr), (None, attr_name, ds_var_name),
             update_our_var=True, update_ds=False
         )
 
-    def check_attr(self, our_var, ds_var, our_attr_name, ds_attr_name=None, 
+    def reconcile_attr(self, our_var, ds_var, our_attr_name, ds_attr_name=None, 
         comparison_func=None, update_our_var=True, update_ds=False):
         """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*) 
         with what's set in the xarray.Dataset (*ds_var*).
@@ -497,14 +564,14 @@ class DatasetParser():
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
         our_attr = getattr(our_var, our_attr_name)
-        ds_attr = ds_var.attrs.get(ds_attr_name, "")
-        self._compare_attr(
+        ds_attr = ds_var.attrs.get(ds_attr_name, ATTR_NOT_FOUND)
+        self.compare_attr(
             (our_var, our_attr_name, our_attr), (ds_var, ds_attr_name, ds_attr),
             comparison_func=comparison_func, 
             update_our_var=update_our_var, update_ds=update_ds
         )
 
-    def check_names(self, our_var, ds, ds_var_name, update_name=False):
+    def reconcile_names(self, our_var, ds, ds_var_name, update_name=False):
         """Reconcile the name and standard_name attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
         expectations based on the model's convention (*our_var*).
@@ -523,49 +590,44 @@ class DatasetParser():
             raise ValueError(f"Variable name '{ds_var_name}' not found in dataset: "
                 f"({list(ds.variables)}).")
             # TODO: attempt to match on standard_name?
-        self.check_name(our_var, ds_var_name, update_name=update_name)
-        ds_var = ds[ds_var_name] # abbreviate
-        # normalize_standard_name will set standard_name on ds if it's been 
-        # stored in a nonstandard location
-        _ = self.normalize_standard_name(ds_var.attrs)
-        if self.skip_std_name:
-            return
-        self.check_attr(our_var, ds_var, 'standard_name',
+        self.reconcile_name(our_var, ds_var_name, update_name=update_name)
+        self.reconcile_attr(our_var, ds[ds_var_name], 'standard_name',
             update_our_var=True, update_ds=True)
 
-    def check_units(self, our_var, ds_var):
+    def reconcile_units(self, our_var, ds_var):
         """Reconcile the units attribute between the 'ground truth' of the 
         dataset we downloaded (*ds_var*) and our expectations based on the 
         model's convention (*our_var*).
+
+        Normal operation is to raise a TypeError for missing 'units' attributes 
+        in the DataSet. This can be reduced to a warning by setting the
+        ``disable_unit_checks`` CLI flag, which sets skip_units=True here.
 
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds_var: xarray DataArray.
         """
-        # normalize_units will set units on ds if it's been stored in a 
-        # nonstandard location
-        _ = self.normalize_units(ds_var.attrs)
-        if self.skip_units:
-            return
-        # Check equivalence of units: if units inequivalent, raise TypeError
-        self.check_attr(our_var, ds_var, 'units', 
+        # will raise TypeError or log warning if unit attribute missing
+        self.check_unit(ds_var)
+        # Check equivalence of units: if units inequivalent, raise ValueError
+        self.reconcile_attr(our_var, ds_var, 'units', 
             comparison_func=units.units_equivalent,
-            update_our_var=True, update_ds=True
+            update_our_var=True, update_ds=(self.skip_units)
         )
         # If that passed, check equality of units. Log unequal units as a warning.
         # not an exception, since preprocessor can/will convert them.
         try:
             # test units only, not quantities+units
-            self.check_attr(our_var, ds_var, 'units', 
+            self.reconcile_attr(our_var, ds_var, 'units', 
                 comparison_func=units.units_equal, 
-                update_our_var=True, update_ds=True
+                update_our_var=True, update_ds=(self.skip_units)
             )
-        except TypeError as exc:
+        except ValueError as exc:
             _log.warning(exc)
             our_var.units = units.to_cfunits(our_var.units)
 
-    def check_scalar_value_and_units(self, our_var, ds_var):
+    def reconcile_scalar_value_and_units(self, our_var, ds_var):
         """Compare scalar coordinate value of a :class:`~src.data_model.DMVariable` 
         (*our_var*) with what's set in the xarray.Dataset (*ds_var*). If there's a 
         discrepancy, log an error but change the entry in *our_var*.
@@ -582,40 +644,51 @@ class DatasetParser():
                 delattr(var_, attr_name)
 
         def _compare_value_only(our_var, ds_var):
-            self._compare_attr(
+            # may not have units info on ds_var, so only compare the numerical 
+            # values and assume the units are the same
+            self.compare_attr(
                 (our_var, attr_name, our_var.value), 
                 (ds_var, attr_name, float(ds_var)),
                 update_our_var=True, update_ds=False
             )
+            # update 'units' attribute on ds_var with info from our_var
+            self.compare_attr(
+                (our_var, attr_name, our_var.units), 
+                (ds_var, attr_name, ds_var.attrs.get('units', ATTR_NOT_FOUND)),
+                update_our_var=False, update_ds=True
+            )
 
         def _compare_value_and_units(our_var, ds_var, comparison_func=None):
-            # "attribute" to compare is tuple of (numerical value, units string)      
+            # "attribute" to compare is tuple of (numerical value, units string),
+            # which is converted to unit-ful object by src.units.to_cfunits() 
             our_attr = (our_var.value, our_var.units)
-            ds_attr = (float(ds_var), ds_var.attrs.get('units', ''))
+            ds_attr = (float(ds_var), ds_var.attrs.get('units', ATTR_NOT_FOUND))
             try:
-                self._compare_attr(
+                self.compare_attr(
                     (our_var, attr_name, our_attr), (ds_var, attr_name, ds_attr),
                     comparison_func=comparison_func,
                     update_our_var=True, update_ds=False
                 )
                 _cleanup_our_var(our_var)
-            except TypeError as exc:
+            except (TypeError, ValueError) as exc:
                 _cleanup_our_var(our_var)
                 raise exc
 
         assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar)
         assert ds_var.size == 1
-        # normalize_units will set units on ds if it's been stored in a 
-        # nonstandard location
-        _ = self.normalize_units(ds_var.attrs)
-        if self.skip_units:
-            _compare_value_only(our_var, ds_var)
-            return
-        # Check equivalence of units: if units inequivalent, raise TypeError
-        _compare_value_and_units(
-            our_var, ds_var, 
-            comparison_func=units.units_equivalent
-        )
+        # Check equivalence of units: if units inequivalent, raises ValueError
+        try:
+            _compare_value_and_units(
+                our_var, ds_var, 
+                comparison_func=units.units_equivalent
+            )
+        except TypeError:
+            # get here if units attr not defined on ds_var
+            if self.skip_units:
+                _compare_value_only(our_var, ds_var)
+                return
+            else:
+                raise
         # If that passed, check equality of units. Log unequal units as a warning.
         # not an exception, since preprocessor can/will convert them.
         try:
@@ -623,11 +696,11 @@ class DatasetParser():
                 our_var, ds_var, 
                 comparison_func=(lambda x,y: units.units_equal(x,y, rtol=1.0e-5))
             )
-        except TypeError as exc:
+        except ValueError as exc:
             _log.warning(exc)
             our_var.units = units.to_cfunits(our_var.units)
 
-    def check_coord_bounds(self, our_coord, ds, ds_coord_name):
+    def reconcile_coord_bounds(self, our_coord, ds, ds_coord_name):
         """Reconcile standard_name and units attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
         expectations based on the model's convention (*our_var*), for the bounds
@@ -635,26 +708,26 @@ class DatasetParser():
         """
         try:
             bounds = ds.cf.get_bounds(ds_coord_name)
-            # Inherit standard_name from our_coord if not present
-            _ = self.normalize_standard_name(bounds.attrs)
-            if not self.skip_std_name:
-                self.check_attr(our_coord, bounds, 'standard_name',
-                    update_our_var=False, update_ds=True)
-            # Inherit units from our_coord if not present
-            _ = self.normalize_units(bounds.attrs)
-            if not self.skip_units:
-                self.check_attr(our_coord, bounds, 'units', 
-                    comparison_func=units.units_equal,
-                    update_our_var=False, update_ds=True
-                )
-            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                'bounds', our_coord.name, bounds.name)
-            our_coord.bounds = bounds.name
         except KeyError:
             # cf accessor could't find associated bounds variable
             our_coord.bounds = None
+            return
 
-    def check_dimension_coords(self, our_var, ds):
+        # Inherit standard_name from our_coord if not present (regardless of 
+        # skip_std_name)
+        self.reconcile_attr(our_coord, bounds, 'standard_name',
+            update_our_var=False, update_ds=True)
+        # Inherit units from our_coord if not present (regardless of skip_units)
+        self.reconcile_attr(our_coord, bounds, 'units', 
+            comparison_func=units.units_equal,
+            update_our_var=False, update_ds=True
+        )
+        if our_coord.name != bounds.name:
+            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                'bounds', our_coord.name, bounds.name)
+        our_coord.bounds = bounds.name
+
+    def reconcile_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
         expectations based on the model's convention (*our_var*), for all 
@@ -679,9 +752,9 @@ class DatasetParser():
         # check dimension coordinate names, std_names, units, bounds
         for coord in our_var.dim_axes.values():
             ds_coord_name = ds_axes[coord.axis]
-            self.check_names(coord, ds, ds_coord_name, update_name=True)
-            self.check_units(coord, ds[ds_coord_name])
-            self.check_coord_bounds(coord, ds, ds_coord_name)
+            self.reconcile_names(coord, ds, ds_coord_name, update_name=True)
+            self.reconcile_units(coord, ds[ds_coord_name])
+            self.reconcile_coord_bounds(coord, ds, ds_coord_name)
         for c_name in ds_var.dims:
             if ds[c_name].size == 1:
                 if c_name == ds_axes['Z']:
@@ -693,7 +766,7 @@ class DatasetParser():
                     # assume user knows what they're doing
                     _log.debug("Dataset has dimension coordinate '%s' of size 1.")
 
-    def check_scalar_coords(self, our_var, ds):
+    def reconcile_scalar_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our 
         expectations based on the model's convention (*our_var*), for all 
@@ -711,7 +784,7 @@ class DatasetParser():
         ds_scalars = ds.cf.scalar_coords(our_var.name)
         ds_names = [c.name for c in ds_scalars]
         ds_axes = [c.axis for c in ds_scalars]
-        if set(our_axes) != set(['Z']):
+        if our_axes and (set(our_axes) != set(['Z'])):
             # should never encounter this
             _log.error('Scalar coordinates on non-vertical axes not supported.')
         if len(our_axes) != 0 and len(ds_axes) == 0:
@@ -734,100 +807,44 @@ class DatasetParser():
                 if ds[ds_coord_name].size != 1:
                     _log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
                         ds_coord_name, ds[ds_coord_name].size)
-                self.check_names(coord, ds, ds_coord_name, update_name=True)
-                self.check_scalar_value_and_units(our_var, ds[ds_coord_name])
+                self.reconcile_names(coord, ds, ds_coord_name, update_name=True)
+                self.reconcile_scalar_value_and_units(our_var, ds[ds_coord_name])
             else:
                 # scalar coord has presumably been read from DataSet attribute.
-                # At any rate, we only have a placheholder object, which only
-                # gives us the name. Assume everything else OK.
-                self.check_name(coord, ds_coord_name, update_name=True)
+                # At any rate, we only have a PlaceholderScalarCoordinate object, 
+                # which only gives us the name. Assume everything else OK.
+                _log.warning(("Dataset only records scalar coordinate '%s' as a "
+                    "name attribute; assuming value and units are correct."),
+                    ds_coord_name)
+                self.reconcile_name(coord, ds_coord_name, update_name=True)
 
-    def check_variable(self, translated_var, ds):
+    def reconcile_variable(self, translated_var, ds):
         """Top-level method for the MDTF-specific dataset validation: attempts to
         reconcile name, standard_name and units attributes for the variable and
         coordinates in *translated_var* (our expectation, based on the DataSource's
         naming convention) with attributes actually present in the Dataset *ds*.
         """
         # check name, std_name, units on variable itself
-        self.check_names(translated_var, ds, translated_var.name, update_name=False)
-        self.check_units(translated_var, ds[translated_var.name])
+        self.reconcile_names(translated_var, ds, translated_var.name, update_name=False)
+        self.reconcile_units(translated_var, ds[translated_var.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
-        self.check_dimension_coords(translated_var, ds)
+        self.reconcile_dimension_coords(translated_var, ds)
         # check variable's scalar coords: names, std_names, units
-        self.check_scalar_coords(translated_var, ds)
+        self.reconcile_scalar_coords(translated_var, ds)
 
-    # Dataset-level munging -------------------------------------------------
-
-    def munge_ds_attrs(self, ds):
-        """Initial munging of xarray Dataset attribute dicts, before any 
-        parsing by xarray.decode_cf() or the cf_xarray accessor.
-        """
-        def strip_(v):
-            return (v.strip() if isinstance(v, str) else v)
-        def strip_attrs(obj):
-            d = getattr(obj, 'attrs', dict())
-            return {strip_(k): strip_(v) for k,v in d.items()}
-
-        setattr(ds, 'attrs', strip_attrs(ds))
-        self.attrs_backup = ds.attrs.copy()
-        for var in ds.variables:
-            d = strip_attrs(ds[var])
-            d = self.munge_unit(d)
-            d = self.munge_calendar(d)
-            setattr(ds[var], 'attrs', d)
-            self.var_attrs_backup[var] = ds[var].attrs.copy()
-
-    def munge_unit(self, attr_d):
-        """HACK to convert unit strings to values that are correctly parsed by
-        cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
-        as "millibarn", a unit of area (see UDUnits `mailing list 
-        <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
-        """
-        unit_str = self.normalize_units(attr_d)
-        if unit_str is not None:
-            # regex matches "mb", case-insensitive, provided the preceding and 
-            # following characters aren't also letters; expression replaces 
-            # "mb" with "millibar", which is interpreted correctly.
-            unit_str = re.sub(
-                r"(?<![^a-zA-Z])([mM][bB])(?![^a-zA-Z])", "millibar", unit_str
-            )
-            # TODO: insert other cases of misidentified units here as they're 
-            # discovered
-            attr_d['units'] = unit_str
-        return attr_d
-
-    def munge_calendar(self, attr_d):
-        """Calendar attribute string needs to be normalized before xarray.decode_cf
-        sees it.
-        """
-        cal_str = self.get_calendar(attr_d)
-        if cal_str is not None:
-            attr_d['calendar'] = self.guess_attr(
-                'calendar', cal_str, _cf_calendars, self._fallback_cal)
-        return attr_d
-
-    def restore_attrs(self, ds):
-        """xarray.decode_cf() and other functions appear to un-set some of the 
-        attributes defined in the netcdf file. Restore them from the backups 
-        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
-        """
-        def _restore_one(name, backup_d, attrs_d):
-            for k,v in backup_d.items():
-                if k not in attrs_d:
-                    attrs_d[k] = v
-                if v != attrs_d[k]:
-                    _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
-                        name, k, v, attrs_d[k])
-        
-        _restore_one('Dataset', self.attrs_backup, ds.attrs)
-        for var in ds.variables:
-            _restore_one(var, self.var_attrs_backup[var], ds[var].attrs)
+    # --- Methods for final checks of attrs before preprocessing ---------------
 
     def check_calendar(self, ds):
-        """Parse the calendar for time-dependent data (assumes CF conventions).
+        """Checks the 'calendar' attribute has been set correctly for 
+        time-dependent data (assumes CF conventions).
+
         Sets the "calendar" attr on the time coordinate, if it exists, in order
-        to be read by the calendar property. 
+        to be read by the calendar property defined in the cf_xarray accessor.
         """
+        def _get_calendar(d):
+            self.normalize_calendar(d)
+            return d.get('calendar', None)
+
         t_coords = ds.cf.axes().get('T', [])
         if not t_coords:
             return # assume static data
@@ -836,33 +853,81 @@ class DatasetParser():
                 t_coords[0].name)
         t_coord = t_coords[0]
 
-        # normal case: T axis has been parsed into cftime Datetime objects.
+        # normal case: T axis has been parsed into cftime Datetime objects, and
+        # the following works successfully.
         cftime_cal = getattr(t_coord.values[0], 'calendar', None)
+        # look in other places if that failed:
         if not cftime_cal:
             _log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
-            cftime_cal = self.get_calendar(t_coord.encoding)
+            cftime_cal = _get_calendar(t_coord.encoding)
         if not cftime_cal:
-            cftime_cal = self.get_calendar(t_coord.attrs)
+            cftime_cal = _get_calendar(t_coord.attrs)
         if not cftime_cal:
-            cftime_cal = self.get_calendar(ds.attrs)
+            cftime_cal = _get_calendar(ds.attrs)
         if not cftime_cal:
             _log.error("No calendar associated with '%s' found; using '%s'.", 
-                t_coord.name, self._fallback_cal)
-            cftime_cal = self._fallback_cal
+                t_coord.name, self.fallback_cal)
+            cftime_cal = self.fallback_cal
         t_coord.attrs['calendar'] = self.guess_attr(
-            'calendar', cftime_cal, _cf_calendars, self._fallback_cal)
+            'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
-    # --------------------------------------------------
+    def check_standard_name(self, ds_var):
+        """Wrapper for :meth:`~DatasetParser.normalize_attr`, specialized to the
+        case of getting a variable's standard_name.
+        """
+        if ds_var.attrs.get('standard_name', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
+            if self.skip_std_name:
+                _log.warning(f"'standard_name' attribute not found on {ds_var.name}.")
+            else:
+                # normal operation
+                raise TypeError(("Netcdf metadata attribute 'standard_name' not "
+                    f"found on variable {ds_var.name}. Please provide this attribute "
+                    "in input model data or run with --disable_CF_name_checks."))
+
+    def check_unit(self, ds_var):
+        """Wrapper for :meth:`~DatasetParser.normalize_attr`, specialized to the 
+        case of getting a variable's units.
+        """
+        if ds_var.attrs.get('units', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
+            if self.skip_units:
+                _log.warning(f"'units' attribute not found on {ds_var.name}.")
+            else:
+                # normal operation
+                raise TypeError(("Netcdf metadata attribute 'units' not found on "
+                    f"variable {ds_var.name}. Please provide this attribute in "
+                    "input model data or run with --disable_unit_checks."))
+
+    def check_ds_attrs(self, ds, var=None):
+        """Final checking of xarray Dataset attribute dicts before starting
+        functions in :mod:`src.preprocessor`.
+
+        Only check attributes on the dependent variable *var_name* and its 
+        coordinates: any other netCDF variables in the file are ignored.
+        """
+        self.check_calendar(ds)
+        if var is None:
+            # check everything in DataSet
+            names_to_check = ds.variables
+        else:
+            # Only check attributes on the dependent variable var_name and its 
+            # coordinates.
+            names_to_check = [var.name] + list(ds[var.name].dims)
+        for v_name in names_to_check:
+            self.check_standard_name(ds[v_name])
+            self.check_unit(ds[v_name])
+
+    # --- Top-level methods -----------------------------------------------
 
     def parse(self, ds, var=None):
         """Calls the above metadata parsing functions in the intended order; 
         intended to be called immediately after the Dataset is opened.
 
         .. note::
-           ``decode_cf=False`` should be passed to the xarray open_dataset command,
-           since that parsing is done here instead.
+           ``decode_cf=False`` should be passed to the xarray open_dataset 
+           method, since that parsing is done here instead.
 
-        - Strip whitespace from attributes as a precaution to avoid malformed metadata.
+        - Strip whitespace from attributes as a precaution to avoid malformed 
+          metadata.
         - Call xarray's `decode_cf 
           <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
           using `cftime <https://unidata.github.io/cftime/>`__ to decode 
@@ -872,7 +937,7 @@ class DatasetParser():
         - Verify that the name, standard_name and units for the variable and its
             coordinates are set correctly.
         """
-        self.munge_ds_attrs(ds)
+        self.normalize_ds_attrs(ds)
         ds = xr.decode_cf(ds,         
             decode_coords=True, # parse coords attr
             decode_times=True,
@@ -880,17 +945,19 @@ class DatasetParser():
         )
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs(ds)
-        self.check_calendar(ds)
         if var is not None:
-            self.check_variable(var.translation, ds)
+            self.reconcile_variable(var.translation, ds)
+            self.check_ds_attrs(ds, var.translation)
+        else:
+            self.check_ds_attrs(ds, None)
         return ds
     
     @staticmethod
     def get_unmapped_names(ds):
         """Get a dict whose keys are variable or attribute names referred to by 
-        variables in the dataset, but not present in the dataset itself. Values of 
-        the dict are sets of names of variables in the dataset that referred to the
-        missing name.
+        variables in the dataset, but not present in the dataset itself. Values 
+        of the dict are sets of names of variables in the dataset that referred 
+        to the missing name.
         """
         all_arr_names = set(ds.dims).union(ds.variables)
         all_attr_names = set(getattr(ds, 'attrs', []))

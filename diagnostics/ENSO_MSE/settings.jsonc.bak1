@@ -3,6 +3,10 @@
     "driver" : "ENSO_MSE.py",
     "long_name" : "ENSO moist static energy budget",
     "description" : "ENSO moist static energy budget",
+    "required_programs" : ["python", "ncl"],
+    "required_python_modules": ["numpy", "xarray", "netcdf4"],
+    "required_ncl_scripts" : ["contributed", "gsn_code", "gsn_csm", 
+        "shea_util", "calendar_decode2"],
     "pod_env_vars" : {
         // Pod-specific shell environment variables:
         // User-selectable rectangular domain for MSE variance plots (MSE_VAR):

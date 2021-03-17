@@ -53,9 +53,27 @@ Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/
 
 ### 1.1 Obtaining the code
 
-The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that end users download and test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3).
+The official repo for the MDTF code is hosted at the GFDL [GitHub account](https://github.com/NOAA-GFDL/MDTF-diagnostics). We recommend that all users test the [latest official release](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3).
 
-To install the MDTF package on a local machine, create a directory named `mdtf` and unzip the code downloaded from the [release page](https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3) there. This will create a directory titled `MDTF-diagnostics-3.0-beta.3` containing the files listed on the GitHub page. Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
+To install the MDTF package on a local machine, open a terminal and create a directory named `mdtf`. Instructions for end-users and new developers are as follows:
+- end users:
+  1. `cd mdtf`, then clone your fork of the MDTF repo on your machine: `git clone https://github.com/[your fork name]/MDTF-diagnostics`
+  2. Verify that you are on the main branch: `git branch` 
+  (this is the default, but it never hurts to get in the habit of running git branch before you start working)
+  3. Check out the latest official release: `git checkout tags/[version name]`
+  4. Proceed with the installation process described in [section 2](#2.)
+  5. Check out a new branch that will contain your edited config files: `git checkout -b [branch name]`
+  6. Update the config files, then commit the changes: `git commit -m "description of your changes"`
+  7. Push the changes on your branch to your remote fork: `git push -u origin [branch name]`
+- new developers:
+  1. `cd mdtf`, then clone your fork of the MDTF repo on your machine: `git clone https://github.com/[your fork name]/MDTF-diagnostics`
+  2. Check out the develop branch: `git checkout develop`
+  3. Proceed with the installation process described in [section 2](#2.)
+  4. Check out a new branch for you POD: `git checkout feature/[POD name]`
+  5. Edit existing files/create new files, then commit the changes: `git commit -m "description of your changes"`
+  6. Push the changes on your branch to your remote fork: `git push -u origin feature/[POD name]`]
+
+ Below we refer to this MDTF-diagnostics directory as `$CODE_ROOT`. It contains the following subdirectories:
 
 - `diagnostics/`: directory containing source code and documentation of individual PODs.
 - `doc/`: directory containing documentation (a local mirror of the documentation site).

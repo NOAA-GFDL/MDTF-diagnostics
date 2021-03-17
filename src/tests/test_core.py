@@ -5,7 +5,7 @@ import itertools
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.core as core
 # from src.data_manager import DataManager
-from src.diagnostic import Diagnostic
+import src.diagnostic as diagnostic
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
 
 
@@ -72,6 +72,35 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')
         self.assertEqual(temp.from_CF_name('A','pr_var'), 'PRECT')
         self.assertEqual(temp.from_CF_name('B','pr_var'), 'PRECT')
+
+    def test_variabletranslator_no_translation(self):
+        dummy_varlist = {  
+            "data": {
+                "frequency": "day"
+            },
+            "dimensions": {
+                "lat": {"standard_name": "latitude"},
+                "lon": {"standard_name": "longitude"},
+                "time": {"standard_name": "time"}
+            },
+            "varlist": {
+                "rlut": {
+                    "standard_name": "toa_outgoing_longwave_flux",
+                    "units": "W m-2",
+                    "dimensions": ["time", "lat", "lon"]
+                }
+            }
+        }
+        varlist = diagnostic.Varlist.from_struct(dummy_varlist)
+        ve = varlist.vars[0]
+        translate = core.VariableTranslator().get_convention('Null')
+        tve = translate.translate(ve)
+        self.assertEqual(ve.name, tve.name)
+        self.assertEqual(ve.standard_name, tve.standard_name)
+        self.assertEqual(ve.T.frequency, tve.T.frequency)
+        # make sure copy of attrs was successful
+        tve.standard_name = "foo"
+        self.assertNotEqual(tve.standard_name, ve.standard_name)
 
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):
@@ -167,7 +196,7 @@ class TestPathManagerPodCase(unittest.TestCase):
     def test_pathmgr_pod(self):
         paths = core.PathManager()
         case = DataManager(self.case_dict)
-        pod = Diagnostic('AA')
+        pod = diagnostic.Diagnostic('AA')
         d = paths.pod_paths(pod, case)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
         self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')

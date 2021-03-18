@@ -243,7 +243,6 @@ class Gfdludacmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
     _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
-    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -263,7 +262,6 @@ class Gfdlarchivecmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
     _fetch_method = "gcp" 
-    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -281,7 +279,6 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
-    _convention = "CMIP" # hard-code naming convention
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -386,23 +383,13 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource corresponding to 
     model data in the /pp/ directory hierarchy.
     """
-    convention: str = util.MANDATORY
-    CASE_ROOT_DIR: str = ""
-
-    def __post_init__(self):
-        """Validate user input.
-        """
-        super(PPDataSourceAttributes, self).__post_init__()
-        config = core.ConfigManager()
-
-        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
-            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
-            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
-        # verify case root dir exists
-        if not os.path.isdir(self.CASE_ROOT_DIR):
-            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
-            exit(1)
+    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+    # FIRSTYR: str
+    # LASTYR: str
+    # date_range: util.DateRange
+    # CASE_ROOT_DIR: str
+    # convention: str
+    pass
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _FileRegexClass = PPTimeseriesDataFile

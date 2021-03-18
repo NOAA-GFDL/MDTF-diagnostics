@@ -5,7 +5,9 @@ import os
 import abc
 import collections
 import dataclasses
+import glob
 import itertools
+import re
 import signal
 from src import util, core, diagnostic, preprocessor
 import pandas as pd
@@ -164,15 +166,46 @@ PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 
 @util.mdtf_dataclass
 class DataSourceAttributesBase():
-    """Attributes that any DataSource must specify.
+    """Class defining attributes that any DataSource needs to specify:
+
+    - *CASENAME*: User-supplied label to identify output of this run of the 
+      package.
+    - *FIRSTYR*, *LASTYR*, *date_range*: Analysis period, specified as a closed 
+      interval (i.e. running from 1 Jan of FIRSTYR through 31 Dec of LASTYR).
+    - *CASE_ROOT_DIR*: Root directory containing input model data. Different 
+      DataSources may interpret this differently. 
+    - *convention*: name of the variable naming convention used by the source of
+      model data. 
     """
     CASENAME: str = util.MANDATORY
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
     date_range: util.DateRange = dataclasses.field(init=False)
+    CASE_ROOT_DIR: str = ""
+    convention: str = util.MANDATORY
+
+    def _set_case_root_dir(self):
+        config = core.ConfigManager()
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        # verify case root dir exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
+            exit(1)
 
     def __post_init__(self):
+        self._set_case_root_dir()
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
+
+        # validate convention name
+        translate = core.VariableTranslator()
+        if not self.convention:
+            raise util.GenericDataSourceError((f"'convention' not configured "
+                f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)
+
 
 class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
     """Base class for handling the data needs of PODs. Executes query for 
@@ -198,16 +231,6 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self.failed_data = collections.defaultdict(list)
         self.exceptions = util.ExceptionQueue()
 
-        # set variable name convention
-        if hasattr(self, '_convention'):
-            self.convention = self._convention
-        elif hasattr(self.attrs, 'convention'):
-            self.convention = self.attrs.convention
-        else:
-            raise util.GenericDataSourceError((f"'convention' not configured "
-                f"for {self.__class__.__name__}."))
-        self.convention = translate.get_convention_name(self.convention)   
-
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
             config.global_env_vars.copy()
@@ -216,9 +239,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
         # add naming-convention-specific env vars 
-        self.env_vars.update(
-            getattr(translate.get_convention(self.convention), 'env_vars', dict())
-        )
+        convention_obj = translate.get_convention(self.attrs.convention)
+        self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
 
         # configure paths
         self.overwrite = config.overwrite
@@ -413,7 +435,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         Could arguably be moved into VarlistEntry's init, at the cost of 
         dependency inversion.
         """
-        translate = core.VariableTranslator().get_convention(self.convention)
+        translate = core.VariableTranslator().get_convention(self.attrs.convention)
         v.change_coord(
             'T',
             new_class = {
@@ -1176,25 +1198,28 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         return self.df[self.remote_data_col].loc[data_key]
 
 
-class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
-    """Mixin that creates an intake_esm.esm_datastore catalog by crawling a 
-    directory hierarchy and populating catalog entry attributes
-    by running a regex against the paths of files in the directory hierarchy.
+class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
+    """Mixin that creates an intake_esm.esm_datastore catalog by using a regex
+    (\_FileRegexClass) to query the existence of data files on a remote
+    filesystem. 
+    
+    For the purposes of this class, all data attributes are inferred only from 
+    filea nd directory naming conventions: the contents of the files are not 
+    examined (i.e., the data files are not read from) until they are fetched to
+    a local filesystem.
 
     .. note::
        At time of writing, the `filename parsing 
        <https://www.anaconda.com/blog/intake-parsing-data-from-filenames-and-paths>`__
-       functionality included in `intake <https://intake.readthedocs.io/en/latest/index.html>`__
-       is too limited to correctly parse our use cases, which is why we use the 
+       functionality included in `intake 
+       <https://intake.readthedocs.io/en/latest/index.html>`__ is too limited to
+       correctly parse our use cases, which is why we use the 
        :class:`~src.util.RegexPattern` class instead.
     """
     # root directory to begin crawling at:
     CATALOG_DIR = util.abstract_attribute()
     # regex to use to generate catalog entries from relative paths:
     _FileRegexClass = util.abstract_attribute()
-    # optional regex to speed up directory crawl to skip non-matching directories
-    # without examining all files; default below is to not skip any directories
-    _DirectoryRegex = util.RegexPattern(".*")
     _asset_file_format = "netcdf"
 
     @property
@@ -1208,33 +1233,6 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
         data file.
         """
         return self._FileRegexClass._pattern.input_field
-
-    def iter_files(self):
-        """Generator that yields instances of FileRegexClass generated from 
-        relative paths of files in CATALOG_DIR. Only paths that match the regex
-        in FileRegexClass are returned.
-        """
-        # in case CATALOG_DIR is subset of CASE_ROOT_DIR
-        path_offset = len(os.path.join(self.attrs.CASE_ROOT_DIR, ""))
-        for root, _, files in os.walk(self.CATALOG_DIR):
-            try:
-                self._DirectoryRegex.match(root[path_offset:])
-            except util.RegexParseError:
-                continue
-            if not self._DirectoryRegex.is_matched:
-                continue
-            for f in files:
-                if f.startswith('.'):
-                    continue
-                try:
-                    path = os.path.join(root, f)
-                    yield self._FileRegexClass.from_string(path, path_offset)
-                except util.RegexSuppressedError:
-                    # decided to silently ignore this file
-                    continue
-                except Exception:
-                    _log.info("Couldn't parse path %s", path[path_offset:])
-                    continue
                 
     def _dummy_esmcol_spec(self):
         """Dummy specification dict that enables us to use intake_esm's 
@@ -1259,25 +1257,78 @@ class OnTheFlyDirectoryHierarchyQueryMixin(metaclass=util.MDTFABCMeta):
             "last_updated": "2020-12-06"   
         }
 
+    @abc.abstractmethod
+    def generate_catalog(self):
+        """Method (to be implemented by child classes) which returns the data
+        catalog as a Pandas DataFrame. One of the columns of the DataFrame must
+        have the name returned by :meth:`remote_data_col` and contain paths to 
+        the files.
+        """
+        pass
+
     def setup_query(self):
         """Generate an intake_esm catalog of files found in CATALOG_DIR. 
-        Attributes of files listed in the catalog are inferred from the
-        directory heirarchy structure of thier paths, which is encoded by
-        FileRegexClass.
+        Attributes of files listed in the catalog (columns of the DataFrame) are
+        taken from the match groups (fields) of the class's \_FileRegexClass.
         """
-        _log.debug('Starting catalog directory crawl at %s', self.CATALOG_DIR)
+        _log.info('Starting data file search at %s', self.CATALOG_DIR)
+        self.catalog = intake_esm.core.esm_datastore.from_df(
+            self.generate_catalog(), 
+            esmcol_data = self._dummy_esmcol_spec(), 
+            progressbar=False, sep='|'
+        )
+
+class OnTheFlyDirectoryHierarchyQueryMixin(
+    OnTheFlyFilesystemQueryMixin, metaclass=util.MDTFABCMeta
+):
+    """Mixin that creates an intake_esm.esm_datastore catalog on-the-fly by 
+    crawling a directory hierarchy and populating catalog entry attributes
+    by running a regex (\_FileRegexClass) against the paths of files in the 
+    directory hierarchy.
+    """
+    # optional regex to speed up directory crawl to skip non-matching directories
+    # without examining all files; default below is to not skip any directories
+    _DirectoryRegex = util.RegexPattern(".*")
+
+    def iter_files(self):
+        """Generator that yields instances of \_FileRegexClass generated from 
+        relative paths of files in CATALOG_DIR. Only paths that match the regex
+        in \_FileRegexClass are returned.
+        """
+        # in case CATALOG_DIR is subset of CASE_ROOT_DIR
+        path_offset = len(os.path.join(self.attrs.CASE_ROOT_DIR, ""))
+        for root, _, files in os.walk(self.CATALOG_DIR):
+            try:
+                self._DirectoryRegex.match(root[path_offset:])
+            except util.RegexParseError:
+                continue
+            if not self._DirectoryRegex.is_matched:
+                continue
+            for f in files:
+                if f.startswith('.'):
+                    continue
+                try:
+                    path = os.path.join(root, f)
+                    yield self._FileRegexClass.from_string(path, path_offset)
+                except util.RegexSuppressedError:
+                    # decided to silently ignore this file
+                    continue
+                except Exception:
+                    _log.info("Couldn't parse path %s", path[path_offset:])
+                    continue
+
+    def generate_catalog(self):
+        """Crawl the directory hierarchy via :meth:`iter_files` and return the
+        set of found files as rows in a Pandas DataFrame.
+        """
+        # DataFrame constructor must be passed list, not just an iterable
         df = pd.DataFrame(list(self.iter_files()), dtype='object')
         if len(df) == 0:
             _log.critical('Directory crawl did not find any files.')
             raise AssertionError('Directory crawl did not find any files.')
         else:
-            _log.debug("Directory crawl found %d files.", len(df))
-        self.catalog = intake_esm.core.esm_datastore.from_df(
-            df, 
-            esmcol_data = self._dummy_esmcol_spec(), 
-            progressbar=False, sep='|'
-        )
-
+            _log.info("Directory crawl found %d files.", len(df))
+        return df
 
 class LocalFetchMixin(AbstractFetchMixin):
     """Mixin implementing data fetch for files on a locally mounted filesystem. 

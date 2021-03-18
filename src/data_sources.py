@@ -38,17 +38,19 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
     data.
     """
-    convention: str = util.MANDATORY
-    CASE_ROOT_DIR: str = ""
+    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+    # FIRSTYR: str
+    # LASTYR: str
+    # date_range: util.DateRange
+    # CASE_ROOT_DIR: str
+    # convention: str
     sample_dataset: str = ""
 
-    def __post_init__(self):
-        """Validate user input.
+    def _set_case_root_dir(self):
+        """Additional logic to set CASE_ROOT_DIR from MODEL_DATA_ROOT.
         """
-        super(SampleDataAttributes, self).__post_init__()
         config = core.ConfigManager()
         paths = core.PathManager()
-        # set CASE_ROOT_DIR
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
             _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
             self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
@@ -56,6 +58,16 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
             model_root = getattr(paths, 'MODEL_DATA_ROOT', None)
             _log.debug("Setting CASE_ROOT_DIR to MODEL_DATA_ROOT = '%s'.", model_root)
             self.CASE_ROOT_DIR = model_root
+        # verify CASE_ROOT_DIR exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
+            exit(1)
+
+    def __post_init__(self):
+        """Validate user input.
+        """
+        super(SampleDataAttributes, self).__post_init__()
         # set sample_dataset
         if not self.sample_dataset and self.CASENAME:
             _log.debug(
@@ -63,12 +75,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
                 self.CASENAME
             )
             self.sample_dataset = self.CASENAME
-
-        # verify CASE_ROOT_DIR exists
-        if not os.path.isdir(self.CASE_ROOT_DIR):
-            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
-            exit(1)
+        # verify chosen subdirectory exists
         if not os.path.isdir(
             os.path.join(self.CASE_ROOT_DIR, self.sample_dataset)
         ):
@@ -102,7 +109,12 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
-    CASE_ROOT_DIR: str = ""
+    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+    # FIRSTYR: str
+    # LASTYR: str
+    # date_range: util.DateRange
+    # CASE_ROOT_DIR: str
+    convention: str = "CMIP" # hard-code naming convention
     activity_id: str = ""
     institution_id: str = ""
     source_id: str = ""
@@ -116,7 +128,6 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
 
     def __post_init__(self, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__()
-        config = core.ConfigManager()
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):
@@ -133,15 +144,11 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     _log.debug("Couldn't set %s from %s='%s'.", 
                         dest, source, source_val)
                     setattr(self, dest, "")
-                    
-        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
-            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
-            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
-        # verify case root dir exists
-        if not os.path.isdir(self.CASE_ROOT_DIR):
-            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
-            exit(1)
+
+        if self.convention != "CMIP":
+            _log.debug("Received incompatible convention '%s'; setting to 'CMIP.", 
+                self.convention)
+            self.convention = "CMIP"
 
         # should really fix this at the level of CLI flag synonyms
         if model and not self.source_id:
@@ -321,5 +328,4 @@ class CMIP6LocalFileDataSource(
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
-    _convention = "CMIP" # hard-code naming convention
 

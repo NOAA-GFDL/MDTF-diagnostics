@@ -769,7 +769,8 @@ class VariableTranslator(util.Singleton):
         """Resolve the naming convention associated with a given 
         :class:`Fieldlist` object from among a set of possible aliases.
         """
-        if conv_name in self.conventions:
+        if conv_name in self.conventions \
+            or conv_name == _NO_TRANSLATION_CONVENTION:
             return conv_name
         if conv_name in self.aliases:
             _log.debug("Using convention '%s' based on alias '%s'.",

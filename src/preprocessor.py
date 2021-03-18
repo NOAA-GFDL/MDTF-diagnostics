@@ -229,7 +229,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         
         translate = core.VariableTranslator()
         try:
-            new_tv = translate.translate(data_mgr.convention, v_to_translate)
+            new_tv = translate.translate(data_mgr.attrs.convention, v_to_translate)
         except KeyError as exc:
             _log.debug(("%s edit_request on %s: caught %r when trying to translate "
                 "'%s'; varlist unaltered."), self.__class__.__name__, 
@@ -367,7 +367,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             new_tv_name = v.name
         else:
             new_tv_name = core.VariableTranslator().from_CF_name(
-                data_mgr.convention, v.standard_name, new_ax_set
+                data_mgr.attrs.convention, v.standard_name, new_ax_set
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
@@ -445,7 +445,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def __init__(self, data_mgr, pod):
         self.WK_DIR = data_mgr.MODEL_WK_DIR
-        self.convention = data_mgr.convention
+        self.convention = data_mgr.attrs.convention
         self.pod_convention = pod.convention
 
         # HACK only used for _FillValue workaround in clean_output_encoding

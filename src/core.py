@@ -425,22 +425,25 @@ class TempDirManager(util.Singleton):
 
 # --------------------------------------------------------------------
 
+_NO_TRANSLATION_CONVENTION = 'Null' # naming convention for disabling translation
+
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
-    """Class returned by VarlistTranslator.lookup_variable(). Marks some 
-    attributes inherited from DMVariable as participating in 
-    DataSource.query_dataset().
+    """Class returned by :meth:`VarlistTranslator.translate`. Marks some 
+    attributes inherited from :class:`~data_model.DMVariable` as being queryable 
+    in :meth:`data_manager.DataframeQueryDataSourceBase.query_dataset`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the
     # VarlistEntry, since metadata fields are specific to the VarlistEntry
-    # implementation
+    # implementation.
     convention: str = util.MANDATORY
     name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
+    # dims: list           # field inherited from data_model.DMVariable
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
 
@@ -582,7 +585,8 @@ class Fieldlist():
         return cls(**d)
 
     def to_CF(self, name):
-        """FieldlistEntry for the variable having the given name in this convention.
+        """Returns :class:`FieldlistEntry` for the variable having the given 
+        name in this convention.
         """
         return self.entries[name]
 
@@ -593,8 +597,8 @@ class Fieldlist():
         return self.to_CF(name).standard_name
 
     def from_CF(self, standard_name, axes_set=None):
-        """Look up FieldlistEntry corresponding to the given standard name,
-        optionally providing an axes_set to resolve ambiguity.
+        """Look up :class:`FieldlistEntry` corresponding to the given standard 
+        name, optionally providing an axes_set to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be 
         expanded with more ways to uniquely identify variable (eg cell methods).
@@ -627,8 +631,8 @@ class Fieldlist():
         return self.from_CF(standard_name, axes_set=axes_set).name
 
     def translate_coord(self, coord):
-        """Given a DMCoordinate, look up the corresponding translated DMCoordinate 
-        in this convention.
+        """Given a :class:`~data_model.DMCoordinate`, look up the corresponding 
+        translated :class:`~data_model.DMCoordinate` in this convention.
         """
         ax = coord.axis
         if ax not in self.axes_lut:
@@ -656,12 +660,12 @@ class Fieldlist():
         return new_coord
 
     def translate(self, var):
-        """Returns TranslatedVarlistEntry instance, with populated coordinate
-        axes. Units of scalar coord slices are translated to the units of the
-        conventions' coordinates. Includes logic to translate and rename scalar 
-        coords/slices, e.g. VarlistEntry for 'ua' (intrinsically 4D) @ 500mb 
-        could produce a TranslatedVarlistEntry for 'u500' (3D slice), depending 
-        on naming convention.
+        """Returns :class:`TranslatedVarlistEntry` instance, with populated 
+        coordinate axes. Units of scalar coord slices are translated to the units 
+        of the conventions' coordinates. Includes logic to translate and rename 
+        scalar coords/slices, e.g. :class:`~diagnostic.VarlistEntry` for 'ua' 
+        (intrinsically 4D) @ 500mb could produce a :class:`TranslatedVarlistEntry` 
+        for 'u500' (3D slice), depending on naming convention.
         """
         if var.use_exact_name:
             # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
@@ -687,10 +691,50 @@ class Fieldlist():
             name=new_name, coords=(new_dims + new_scalars), convention=self.name
         )
 
+class NullTranslationFieldlist():
+    """Class which partially implements the :class:`Fieldlist` interface but 
+    does no variable translation. :class:`~diagnostic.VarlistEntry` objects from 
+    the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
+    """
+    def to_CF(self, name):
+        # should never get here - not called externally
+        raise NotImplementedError
+
+    def to_CF_name(self, name):
+        # should never get here - not called externally
+        raise NotImplementedError
+
+    def from_CF(self, standard_name, axes_set=None):
+        # should never get here - not called externally
+        raise NotImplementedError
+
+    def from_CF_name(self, standard_name, axes_set=None):
+        # should never get here - not called externally
+        raise NotImplementedError
+
+    def translate_coord(self, coord):
+        # should never get here - not called externally
+        raise NotImplementedError
+
+    def translate(self, var):
+        """Returns :class:`TranslatedVarlistEntry` instance, populated with
+        contents of input :class:`~diagnostic.VarlistEntry` instance.
+
+        .. note::
+           We return a copy of the :class:`~diagnostic.VarlistEntry` because 
+           logic in :class:`~xr_parser.DatasetParser` alters the translation
+           based on the file's actual contents.
+        """
+        coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)
+        return util.coerce_to_dataclass(
+            var, TranslatedVarlistEntry, 
+            convention=_NO_TRANSLATION_CONVENTION,
+            coords=coords_copy
+        )
 
 class VariableTranslator(util.Singleton):
     """:class:`~util.Singleton` containing information for different variable 
-    naming conventions. These are defined in the data/fieldlist_*.jsonc 
+    naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
     files.
     """
     def __init__(self, code_root=None, unittest=False):
@@ -722,8 +766,8 @@ class VariableTranslator(util.Singleton):
         self.conventions[conv_name] = Fieldlist.from_struct(d)
 
     def get_convention_name(self, conv_name):
-        """Return the Fieldlist object itself, if we want to do lots of lookups
-        and want to keep code uncluttered.
+        """Resolve the naming convention associated with a given 
+        :class:`Fieldlist` object from among a set of possible aliases.
         """
         if conv_name in self.conventions:
             return conv_name
@@ -736,15 +780,22 @@ class VariableTranslator(util.Singleton):
         raise KeyError(conv_name)
 
     def get_convention(self, conv_name):
-        """Return the Fieldlist object itself, if we want to do lots of lookups
-        and want to keep code uncluttered.
+        """Return the :class:`Fieldlist` object containing the variable name
+        translation logic for a given convention name. 
         """
-        conv_name = self.get_convention_name(conv_name)
-        return self.conventions[conv_name]
+        if conv_name == _NO_TRANSLATION_CONVENTION:
+            # hard-coded special case: do no translation
+            _log.info('Variable name translation disabled.')
+            return NullTranslationFieldlist()
+        else:
+            # normal case: translate according to data source's naming convention
+            conv_name = self.get_convention_name(conv_name)
+            return self.conventions[conv_name]
 
     def _fieldlist_method(self, conv_name, method_name, *args, **kwargs):
         """Wrapper which determines the requested convention and calls the
-        requested method_name on the Fieldlist object for that convention.
+        requested *method_name* on the :class:`Fieldlist` object for that 
+        convention.
         """
         meth = getattr(self.get_convention(conv_name), method_name)
         return meth(*args, **kwargs)

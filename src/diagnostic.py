@@ -129,6 +129,11 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     to two different locations.
     """
     _id: int = util.NOTSET # assigned by DataSource (avoids unsafe_hash)
+    # name: str             # fields inherited from data_model.DMVariable
+    # standard_name: str
+    # units: Units
+    # dims: list
+    # scalar_coords: list
     pod_name: str = ""
     use_exact_name: bool = False
     dest_path: str = ""

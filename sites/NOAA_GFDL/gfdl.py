@@ -6,7 +6,7 @@ import io
 import dataclasses
 import shutil
 import tempfile
-from src import (util, core, diagnostic, data_manager, 
+from src import (util, core, diagnostic, data_manager, data_sources, 
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
 
@@ -228,13 +228,13 @@ class GFDL_GCP_FileDataSourceBase(
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
 @util.mdtf_dataclass
-class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdludacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_sources.CMIP6ExperimentSelectionMixin, 
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.
@@ -247,13 +247,13 @@ class Gfdludacmip6DataManager(
 
 
 @util.mdtf_dataclass
-class GFDL_archive_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_archive_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdlarchivecmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_sources.CMIP6ExperimentSelectionMixin, 
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
@@ -267,13 +267,13 @@ class Gfdlarchivecmip6DataManager(
 
 
 @util.mdtf_dataclass
-class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_data_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdldatacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_sources.CMIP6ExperimentSelectionMixin, 
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing pre-publication CMIP6 data on /data_cmip6.

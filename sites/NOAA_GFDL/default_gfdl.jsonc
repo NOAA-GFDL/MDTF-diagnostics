@@ -42,7 +42,7 @@
 
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
-  "OBS_DATA_REMOTE": "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+  "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/obs_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "$MDTF_TMPDIR/inputdata/obs_data",
@@ -51,7 +51,7 @@
   "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "$HOME/mdtf_out",
+  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
@@ -92,12 +92,12 @@
 
   // Path to the Anaconda installation. Only used if environment_manager='Conda'. 
   // Set equal to "" to use conda from your system's $PATH.
-  "conda_root": "/home/mdteam/anaconda",
+  "conda_root": "/home/oar.gfdl.mdtf/miniconda3",
 
   // Root directory for Anaconda environment installs. Only used if 
   // environment_manager = 'Conda'. Set equal to '' to install in your system's 
   // default location.
-  "conda_env_root": "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
+  "conda_env_root": "/home/oar.gfdl.mdtf/miniconda3/envs",
 
   // Root directory for python virtual environments. Only used if 
   // environment_manager = 'Virtualenv'. Set equal to '' to install in your 

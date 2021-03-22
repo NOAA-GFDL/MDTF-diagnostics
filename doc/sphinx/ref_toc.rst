@@ -6,5 +6,5 @@ Framework reference
    :numbered: 2
 
    ref_cli
-   ref_settings
-   ref_envvars
+   ref_data_sources
+   ref_runtime_mgrs

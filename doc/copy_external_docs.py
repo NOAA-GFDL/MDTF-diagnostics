@@ -30,11 +30,10 @@ Diagnostics reference
 
 # generate site toc source file on-the-fly
 _site_toc_header = """
-Site-specific information
--------------------------
+Site-specific documentation
+---------------------------
 .. toctree::
    :maxdepth: 1
-   :numbered: 2
 
 """
 

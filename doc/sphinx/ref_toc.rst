@@ -3,7 +3,6 @@ Framework reference
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 2
 
    ref_cli
    ref_data_sources

@@ -6,7 +6,7 @@ Invoking the package
 
 If you followed the :ref:`recommended installation method<ref-conda-install>` for installing the framework with the `conda <https://docs.conda.io/en/latest/>`__ package manager, the installation process will have created a driver script named ``mdtf`` in the top level of the code directory which should be used as the entry point for running the package. 
 
-This script is minimal and shouldn't conflict with customized shell environments: it only sets the conda environment for the framework and calls `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__, the phython script which should be used as the entry point if a different installation method was used. In all cases the command-line options are as described here.
+This script is minimal and shouldn't conflict with customized shell environments: it only sets the conda environment for the framework and calls `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__, the python script which should be used as the entry point if a different installation method was used. In all cases the command-line options are as described here.
 
 Usage
 -----

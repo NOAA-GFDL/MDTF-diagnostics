@@ -80,7 +80,7 @@ This data source implements the following logic to guarantee that all data it pr
 * Unless the ``--any-components`` flag is set, the model ``<component>`` must be the same for all variables requested by a POD, but can be different for different PODs. The same value will be chosen for all PODs if possible. Setting the ``--any-components`` flag drops this restriction.
 * If the same data is provided by multiple model ``<component>``\s, a single ``<component>`` is selected via the following heuristics:
 
-  - Preference is given to model components starting with "cmip" (case insensitive), in order to support analysis of data produced as part of CMIP6
+  - Preference is given to model components starting with "cmip" (case insensitive), in order to support analysis of data produced as part of CMIP6.
   - If multiple ``<component>``\s are still eligible, the one with the fewest words in the identifier (separated by underscores) is selected; in case of a tie, the ``<component>`` name with the shortest overall string length is used.
 
 Quasi-automated source selection

@@ -73,10 +73,10 @@ In practice, it is not necessary to explicitly specify each of these attributes 
 
 This data source implements the following logic to guarantee that all data it provides to the PODs are consistent, i.e. that the variables selected have been generated from the same run of the same model. An error will be raised if no set of variables can be found that satisfy the user's input above and the following requirements:
 
-* The <*activity_id*>, <*institution_id*>, <*source_id*>, <*experiment_id*>, <*variant_label*> and <*verison_date*> for all variables requested by all PODs must be identical.
+* The <*activity_id*>, <*institution_id*>, <*source_id*>, <*experiment_id*>, <*variant_label*> and <*version_date*> for all variables requested by all PODs must be identical.
   
   - If multiple realization, initialization, etc. indices in the <*variant_label*> satisfy this requirement, the lowest-numbered indices are chosen.
-  - If multiple <*verison_date*>s satisfy this requirement, the most recent one is chosen.
+  - If multiple <*version_date*>s satisfy this requirement, the most recent one is chosen.
   - If multiple values of the other attributes satisfy this requirement, an error is raised. In practice, this means that in the majority of cases, the user only needs to specify the <*source_id*> (model) and <*experiment_id*> (experiment) to uniquely identify the data. 
 
 * The <*grid_label*> must be the same for all variables requested by a POD, but can be different for different PODs. The same value will be chosen for all PODs if possible. 

@@ -46,7 +46,7 @@ In case you need any exotic third-party libraries, e.g., a storm tracker, consul
 Python
 ^^^^^^
 
-The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-install>`. You can then activate this environment by running in a terminal:
+The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-conda-install>`. You can then activate this environment by running in a terminal:
 
 ::
 
@@ -93,9 +93,9 @@ As  described in :ref:`ref-execute`, when you run the ``mdtf`` executable, among
 
 Note that for the 6 existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection, precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will switch to ``_MDTF_NCL_base`` when seeing both NCL and Python in ``settings.jsonc``.
 
-The framework verifies PODs' requirements via looking for the YAML files and their contents. Thus if you choose to selectively install conda environments using the ``--env`` flag (:ref:`ref-conda-env-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
+The framework verifies PODs' requirements via looking for the YAML files and their contents. Thus if you choose to selectively install conda environments using the ``--env`` flag (:ref:`ref-conda-install`), remember to install all the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's operation.
 
-- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs`` requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag`` (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag`` to the ``--env`` flag one at a time (:ref:`ref-conda-env-install`).
+- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs`` requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag`` (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag`` to the ``--env`` flag one at a time (:ref:`ref-conda-install`).
 
 
 Testing with a new Conda environment
@@ -107,7 +107,7 @@ Recall how the framework finds a proper Conda environment for a POD. First, it s
 
 - For an updated environment, first, uninstall it by deleting the corresponding directory under ``$CONDA_ENV_DIR``.
 
-- Re-install the environment using the ``conda_env_setup.sh`` script as described in the :ref:`installation instructions <ref-conda-env-install>`, or create the new environment for you POD:
+- Re-install the environment using the ``conda_env_setup.sh`` script as described in the :ref:`installation instructions <ref-conda-install>`, or create the new environment for you POD:
 
    ::
 

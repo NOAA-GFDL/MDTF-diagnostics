@@ -24,7 +24,7 @@ This option should always be used if the package was installed according to the 
 
 **Command-line options**
 
-The following command-line options should be set to the same values used when :ref:`installing the conda environments<ref-conda-env-install>`:
+The following command-line options should be set to the same values used when :ref:`installing the conda environments<ref-conda-install>`:
 
 * ``--conda-root`` <*DIR*>: Path to the Conda installation. Set equal to ``""`` to use the conda that's been configured to .
 * ``--conda-env-root`` <*DIR*>: Optional. Root directory where the conda environments used by the PODs have been installed. Omit or set equal to ``""`` if this flag was not used during the installation process (which installs the environments in the system's default location).

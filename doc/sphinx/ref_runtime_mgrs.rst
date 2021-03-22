@@ -1,11 +1,11 @@
 Runtime configuration reference
 ===============================
 
-This section details how to configure the way the package runs the PODs: how to direct the code of each POD to the libraries and other software it needs, and how to control how that code gets executed. The main command-line option for this functionality is the ``--environment-manager`` flag, which selects a ":ref:`data source<ref-runtime-mgrs-environments>`": a code plug-in that implements the functionality of managing the script interpreters, third-party libraries, and any other executables needed by each POD. The plug-in may define its own specific command-line options, which are documented here. 
+This section details how to configure the way the package runs the PODs: how to direct the code of each POD to the libraries and other software it needs, and how to control how that code gets executed. The main command-line option for this functionality is the ``--environment-manager`` flag, which selects an ":ref:`environment manager<ref-runtime-mgrs-environments>`": a code plug-in that implements the functionality of managing the script interpreters, third-party libraries, and any other executables needed by each POD. The plug-in may define its own specific command-line options, which are documented here. 
 
 In the future, we plan to offer analogous functionality that gives the user control over how PODs are executed through a similar ``--runtime-manager`` flag.
 
-If you're using site-specific functionality (``--site`` flag), additional options may be available beyond what is listed here. See the :doc:`site-specific documentation <site_toc>` for your site.
+If you're using site-specific functionality (via the ``--site`` flag), additional options may be available beyond what is listed here. See the :doc:`site-specific documentation <site_toc>` for your site.
 
 .. _ref-runtime-mgrs-environments:
 
@@ -20,13 +20,13 @@ Conda-based environment manager
 
 Selected via ``--environment-manager="Conda"``. This is the default value for <*environment-manager*>.
 
-This option should always be used if the package was installed according to the :ref:`standard instructions<ref-conda-install>`. This environment manager uses `Conda <https://docs.conda.io/en/latest/>`__, a multi-language, open-source package manager. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distributions, so having Miniconda/Anaconda is sufficient but not necessary. It is the recommended and best-supported means of installing the package's dependencies.
+This option should always be used if the package was installed according to the :ref:`standard instructions<ref-conda-install>`. This environment manager uses `conda <https://docs.conda.io/en/latest/>`__, a multi-language, open-source package manager. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distributions, so having Miniconda/Anaconda is sufficient but not necessary. It is the recommended and best-supported means of installing the package's dependencies.
 
 **Command-line options**
 
 The following command-line options should be set to the same values used when :ref:`installing the conda environments<ref-conda-install>`:
 
-* ``--conda-root`` <*DIR*>: Path to the Conda installation. Set equal to ``""`` to use the conda that's been configured to .
+* ``--conda-root`` <*DIR*>: Path to the conda installation. Set equal to ``""`` to use the conda that's been configured to .
 * ``--conda-env-root`` <*DIR*>: Optional. Root directory where the conda environments used by the PODs have been installed. Omit or set equal to ``""`` if this flag was not used during the installation process (which installs the environments in the system's default location).
 
 Virtualenv-based environment manager

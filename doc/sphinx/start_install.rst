@@ -38,7 +38,7 @@ Supporting observational data and sample model data are available via anonymous 
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
 - NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
 
-The default test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8`` sample dataset is only for testing the MJO Propagation and Amplitude POD. Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having a size of zero bytes in an FTP client.
+The default test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8`` sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__. Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having a size of zero bytes in an FTP client.
 
 Download these files and extract the contents in the following directory hierarchy under the ``mdtf`` directory:
 
@@ -47,25 +47,25 @@ Download these files and extract the contents in the following directory hierarc
    mdtf
    ├── MDTF-diagnostics ( = <CODE_ROOT>)
    ├── inputdata
-       ├── model ( = <MODEL_DATA_ROOT>)
-       │   ├── GFDL.CM4.c96L32.am4g10r8
-       │   │   └── day
-       │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
-       │   │       └── (... other .nc files )
-       │   └── QBOi.EXP1.AMIP.001
-       │       ├── 1hr
-       │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
-       │       │   └── (... other .nc files )
-       │       ├── 3hr
-       │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
-       │       ├── day
-       │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
-       │       │   └── (... other .nc files )
-       │       └── mon
-       │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
-       │           └── (... other .nc files )
-       └── obs_data ( = <OBS_DATA_ROOT>)
-           ├── (... supporting data for individual PODs )
+   │   ├── model ( = <MODEL_DATA_ROOT>)
+   │   │   ├── GFDL.CM4.c96L32.am4g10r8
+   │   │   │   └── day
+   │   │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
+   │   │   │       └── (... other .nc files )
+   │   │   └── QBOi.EXP1.AMIP.001
+   │   │       ├── 1hr
+   │   │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
+   │   │       │   └── (... other .nc files )
+   │   │       ├── 3hr
+   │   │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
+   │   │       ├── day
+   │   │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
+   │   │       │   └── (... other .nc files )
+   │   │       └── mon
+   │   │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
+   │   │           └── (... other .nc files )
+   │   └── obs_data ( = <OBS_DATA_ROOT>)
+   │       ├── (... supporting data for individual PODs )
 
 Note that ``mdtf`` now contains both the ``MDTF-diagnostics`` and ``inputdata`` directories. 
 
@@ -111,7 +111,7 @@ In this section we use conda to install the versions of the language interpreter
 
 - Install all the package's conda environments by running
 
-  ::
+  .. code-block:: console
 
       % cd <CODE_ROOT>
       % ./src/conda/conda_env_setup.sh --all --conda_root <CONDA_ROOT> --env_dir <CONDA_ENV_DIR>
@@ -134,16 +134,16 @@ Location of the installed executable
 
 The script used to install the conda environments in the previous section creates a script named ``mdtf`` in the MDTF-diagnostics directory. This script is the executable you'll use to run the package and its diagnostics. To test the installation, run
 
-::
+.. code-block:: console
 
    % cd <CODE_ROOT>
    % ./mdtf --version
 
 The output should be
 
-::
+.. code-block:: console
 
-   === Starting <...>/MDTF-diagnostics/mdtf_framework.py
+   === Starting <CODE_ROOT>/mdtf_framework.py
 
    mdtf 3.0 beta 3
 
@@ -152,40 +152,72 @@ The output should be
 Configuring framework paths
 ---------------------------
 
-The MDTF framework supports setting configuration options in a file as well as on the command line. An example of the configuration file format is provided at `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__. We recommend configuring the following settings by editing a copy of this file:
+In order to run the diagnostics in the package, it needs to be provided with paths to the data and code dependencies installed above. In general, there are two equivalent ways to configure any setting for the package:
 
-``src/default_tests.jsonc`` is a template/example for configuration options that will be passed to the executable as an input. Open it in an editor (we recommend working on a copy). The following adjustments are necessary before running the framework:
+- All settings are configured with command-line flags. The full documentation for the command line interface is at :doc:`ref_cli`. 
+- Long lists of command-line options are cumbersome, and many of the settings (such as the paths to data that we set here) don't change between different runs of the package. For this purpose, any command-line setting can also be provided in an input configuration file.
+- The two methods of setting options can be freely combined. Any values set explicitly on the command line will override those given in the configuration file. 
 
-- If you've saved the supporting data in the directory structure described in :numref:`ref-supporting-data`, the default values for ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` pointing to ``mdtf/inputdata/obs_data/`` and ``mdtf/inputdata/model/`` will be correct. If you put the data in a different location, these values should be changed accordingly.
+For the remainder of this section, we describe how to edit and use configuration files, since the paths to data, etc., we need to set won't change.
 
-- ``OUTPUT_DIR`` should be set to the location you want the output files to be written to (default: ``mdtf/wkdir/``; will be created by the framework). The output of each run of the framework will be saved in a different subdirectory in this location.
+An example of the configuration file format is provided at `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__. This is meant to be a template you can customize according to your purposes: save a copy of the file at <*config_file_path*> and open it in a text editor. The following paths need to be configured before running the framework:
 
-- ``conda_root`` should be set to the value of ``$CONDA_ROOT`` used above in :numref:`ref-conda-install`.
+- ``OBS_DATA_ROOT`` should be set to the location of the supporting data that you downloaded in :numref:`ref-supporting-data`. If you used the directory structure described in that section, the default value provided in the configuration file (``../inputdata/obs_data/``) will be correct. If you put the data in a different location, this value should be changed accordingly. Note that relative paths can be used in the configuration file, and are always resolved relative to the location of the MDTF-diagnostics directory (<*CODE_ROOT*>).
 
-- If you specified a custom environment location with ``$CONDA_ENV_DIR``, set ``conda_env_root`` to that value; otherwise, leave it blank.
+- Likewise, ``MODEL_DATA_ROOT`` should be updated to the location of the NCAR-CESM-CAM sample data (``model.QBOi.EXP1.AMIP.001.tar``)downloaded in :numref:`ref-supporting-data`. This data is required to run the test in the next section. If you used the directory structure described in :numref:`ref-supporting-data`, the default value provided in the configuration file (``../inputdata/model/``) will be correct.
 
-We recommend using absolute paths in ``default_tests.jsonc``, but relative paths are also allowed and should be relative to ``$CODE_ROOT``.
+- ``conda_root`` should be set to the location of your conda installation: the value of <*CONDA_ROOT*> that was used in :numref:`ref-conda-install`.
+
+- Likewise, if you installed the package's conda environments in a non-default location by using the ``--env_dir`` flag in :numref:`ref-conda-install`, the option ``conda_env_root`` should be set to this path (<*CONDA_ENV_DIR*>).
+
+- Finally, ``OUTPUT_DIR`` should be set to the location you want the output files to be written to (default: ``mdtf/wkdir/``; will be created by the framework). The output of each run of the framework will be saved in a different subdirectory in this location.
+
+In :doc:`start_config`, we describe more of the most important configuration options for the package, and in particular how you can configure the package to run on different data. A complete description of the configuration options is at :doc:`ref_cli`, or can be obtained by running ``% ./mdtf --help``.
 
 .. _ref-execute:
 
 Running the package on sample model data
------------------------------------------------
+----------------------------------------
 
-If you've installed the Conda environments using the ``--all`` flag (:numref:`ref-conda-install`), you can now run the framework on the CESM sample model data:
+You are now ready to run the package's diagnostics on the sample data from NCAR's CESM-CAM model. We assume you've edited a copy of `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__, which is saved at <*config_file_path*>, as described in the previous section. 
 
-::
+.. code-block:: console
 
    % cd <CODE_ROOT>
-   % ./mdtf -f src/default_tests.jsonc
+   % ./mdtf -f <config_file_path>
 
-Run time may be 10-20 minutes, depending on your system.
+The first few lines of output will be
 
-- If you edited/renamed ``default_tests.jsonc``, pass that file instead.
+.. code-block:: console
 
-- The output files for this test case will be written to ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981``. When the framework is finished, open ``$OUTPUT_DIR/QBOi.EXP1.AMIP.001_1977_1981/index.html`` in a web browser to view the output report.
+   === Starting <CODE_ROOT>/mdtf_framework.py
 
-- The above command will execute PODs included in ``pod_list`` of ``default_tests.jsonc``. Skipping/adding certain PODs by uncommenting/commenting out the POD names (i.e., deleting/adding ``//``). Note that entries in the list must be separated by ``,``. Check for missing or surplus ``,`` if you encounter an error (e.g., "ValueError: No closing quotation").
+   PACKAGE SETTINGS:
+   case_list(0):
+      CASENAME: QBOi.EXP1.AMIP.001
+      model: CESM
+      convention: CESM
+      FIRSTYR: 1977
+      LASTYR: 1981
+   [...]
 
-- Currently the framework only analyzes data from one model run at a time. To run the MJO_prop_amp POD on the GFDL.CM4.c96L32.am4g10r8 sample data, delete or comment out the section for QBOi.EXP1.AMIP.001 in "caselist" of ``default_tests.jsonc``, and uncomment the section for GFDL.CM4.c96L32.am4g10r8.
+Run time may be up to 10-20 minutes, depending on your system. The final lines of output should be:
+
+.. code-block:: console
+
+   Exiting normally from <CODE_ROOT>/src/core.py
+   Summary for QBOi.EXP1.AMIP.001:
+      All PODs exited cleanly.
+      Output written to <OUTPUT_DIR>/MDTF_QBOi.EXP1.AMIP.001_1977_1981
+
+This shows that the output of the package has been saved to a directory named ``MDTF_QBOi.EXP1.AMIP.001_1977_1981`` in <*OUTPUT_DIR*>. The results are presented as a series of web pages, with the top-level page named index.html. To view the results in a web browser, run (e.g.,)
+
+.. code-block:: console
+
+   % google-chrome <OUTPUT_DIR>/MDTF_QBOi.EXP1.AMIP.001_1977_1981/index.html &
+
+Currently the framework only analyzes data from one model run at a time. To run another test for the the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__ on the sample data from GFDL's CM4 model, open the configuration file at <*config_file_path*>, delete or comment out the section for ``QBOi.EXP1.AMIP.001`` in the ``caselist`` section of that file, and uncomment the section for ``GFDL.CM4.c96L32.am4g10r8``.
+
+In :doc:`start_config`, we describe further options to customize how the package is run.
 
 

@@ -1,3 +1,7 @@
+.. role:: console(code)
+   :language: console
+   :class: highlight
+
 Installation instructions
 =========================
 
@@ -5,7 +9,7 @@ This section provides basic directions for downloading, installing and running a
 
 You will need to download the source code, digested observational data, and sample model data (:numref:`ref-download`). Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__ package manager (:numref:`ref-conda-install`) and run the framework on sample model data (:numref:`ref-configure` and :numref:`ref-execute`).
 
-Throughout this document, ``%`` indicates the shell prompt and is followed by commands to be executed in a terminal in ``fixed-width font``. Variable values are denoted by angle brackets, e.g. <*HOME*> is the path to your home directory returned by running ``% echo $HOME``. 
+Throughout this document, :console:`%` indicates the shell prompt and is followed by commands to be executed in a terminal in ``fixed-width font``. Variable values are denoted by angle brackets, e.g. <*HOME*> is the path to your home directory returned by running :console:`% echo $HOME`. 
 
 .. _ref-download:
 
@@ -87,12 +91,12 @@ Installing the conda package manager
 
 In this section, we install the conda package manager if it's not already present on your system.
 
-- To determine if conda is installed, run ``% conda info`` as the user who will be using the package. The package has been tested against versions of conda >= 4.7.5. If a pre-existing conda installation is present, continue to the following section to install the package's environments. These environments will co-exist with any existing installation.
+- To determine if conda is installed, run :console:`% conda info` as the user who will be using the package. The package has been tested against versions of conda >= 4.7.5. If a pre-existing conda installation is present, continue to the following section to install the package's environments. These environments will co-exist with any existing installation.
 
   .. note::
      **Do not** reinstall Miniconda/Anaconda if it's already installed for the user who will be running the package: the installer will break the existing installation (if it's not managed with, e.g., environment modules.) 
 
-- If ``% conda info`` doesn't return anything, you will need to install conda. We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__) for the most recent version of python 3, although any version of Miniconda or Anaconda released after June 2019, using python 2 or 3, will work. 
+- If :console:`% conda info` doesn't return anything, you will need to install conda. We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__) for the most recent version of python 3, although any version of Miniconda or Anaconda released after June 2019, using python 2 or 3, will work. 
 
 - Follow the conda `installation instructions <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__ appropriate to your system.
 
@@ -105,7 +109,7 @@ Installing the package's conda environments
 
 In this section we use conda to install the versions of the language interpreters and third-party libraries required by the package's diagnostics. 
 
-- First, determine the location of your conda installation by running ``% conda info --base`` as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> below.
+- First, determine the location of your conda installation by running :console:`% conda info --base` as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> below.
 
 - If you don't have write access to <*CONDA_ROOT*> (for example, if conda has been installed for all users of a multi-user system), you will need to tell conda to install its files in a different, writable location. You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package together in the ``mdtf`` directory for organizational purposes. This location will be referred to as <*CONDA_ENV_DIR*> below.
 
@@ -172,7 +176,7 @@ An example of the configuration file format is provided at `src/default_tests.js
 
 - Finally, ``OUTPUT_DIR`` should be set to the location you want the output files to be written to (default: ``mdtf/wkdir/``; will be created by the framework). The output of each run of the framework will be saved in a different subdirectory in this location.
 
-In :doc:`start_config`, we describe more of the most important configuration options for the package, and in particular how you can configure the package to run on different data. A complete description of the configuration options is at :doc:`ref_cli`, or can be obtained by running ``% ./mdtf --help``.
+In :doc:`start_config`, we describe more of the most important configuration options for the package, and in particular how you can configure the package to run on different data. A complete description of the configuration options is at :doc:`ref_cli`, or can be obtained by running :console:`% ./mdtf --help`.
 
 .. _ref-execute:
 

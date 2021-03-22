@@ -1,3 +1,7 @@
+.. role:: console(code)
+   :language: console
+   :class: highlight
+
 .. _ref-dev-start:
 
 Developer quickstart guide
@@ -30,7 +34,7 @@ Regardless of development language, we strongly recommend that developers use co
 
 We recommend that new PODs be written in Python 3. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``-all-dev`` flag to the conda setup script:
 
-::
+.. code-block:: console
 
    % cd $CODE_ROOT
    % ./src/conda/conda_env_setup.sh --all-dev --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
@@ -48,11 +52,11 @@ Python
 
 The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-conda-install>`. You can then activate this environment by running in a terminal:
 
-::
+.. code-block:: console
 
    % source activate $CONDA_ENV_DIR/_MDTF_python3_base
 
-where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments. After you've finished working under this environment, run ``% conda deactivate`` or simply close the terminal.
+where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments. After you've finished working under this environment, run :console:`% conda deactivate` or simply close the terminal.
 
 Other languages
 ^^^^^^^^^^^^^^^
@@ -74,7 +78,7 @@ If your POD requires languages that aren't available in an existing environment 
 
 - We recommend listing conda-forge as the first channel to search, as it's entirely open source and has the largest range of packages. Note that combining packages from different channels (in particular, conda-forge and anaconda channels) may create incompatibilities.
 
-- We recommend constructing the list of packages manually, by simply searching your POD's code for ``import`` statements referencing third-party libraries. Please do *not* exporting your development environment with ``% conda env export``, which gives platform-specific version information and will not be fully portable in all cases; it also does so for every package in the environment, not just the "top-level" ones you directly requested.
+- We recommend constructing the list of packages manually, by simply searching your POD's code for ``import`` statements referencing third-party libraries. Please do *not* exporting your development environment with :console:`% conda env export`, which gives platform-specific version information and will not be fully portable in all cases; it also does so for every package in the environment, not just the "top-level" ones you directly requested.
 
 - We recommend specifying versions as little as possible, out of consideration for end-users: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (e.g., Python 2 vs. 3) or a bug affecting your POD was fixed (e.g., postscript font rendering on Mac OS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies.
 
@@ -109,7 +113,7 @@ Recall how the framework finds a proper Conda environment for a POD. First, it s
 
 - Re-install the environment using the ``conda_env_setup.sh`` script as described in the :ref:`installation instructions <ref-conda-install>`, or create the new environment for you POD:
 
-   ::
+   .. code-block:: console
 
       % cd $CODE_ROOT
       % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR

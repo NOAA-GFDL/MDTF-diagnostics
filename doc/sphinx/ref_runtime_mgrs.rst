@@ -48,7 +48,7 @@ Runtime managers
 
 The runtime manager is responsible for beginning the execution of each POD's code, and for returning control back to the framework when the PODs have finished running or raised an error. Because only one value for this option has currently been implemented, we don't provide a command-line option to change it.
 
-There are currently two data sources implemented in the package, described below. If you would like the package to support obtaining data from a source that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/176>`__.
+There is currently one runtime manager implemented in the package, described below. If you would like the package to support a method of running PODs that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/176>`__.
 
 Local subprocess runtime manager
 ++++++++++++++++++++++++++++++++

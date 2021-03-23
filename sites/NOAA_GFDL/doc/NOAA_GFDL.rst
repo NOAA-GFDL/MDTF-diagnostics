@@ -69,7 +69,7 @@ This data source searches for model data produced using GFDL's in-house postproc
 
 <*CASE_ROOT_DIR*> should be set to the root of the postprocessing directory hierarchy (i.e., should end in ``/pp``).
 
-- ``--any-components``: If this flag is set, the data source will return data from different model ``<component>``\s requested by the same POD. This is necessary for, e.g., PODs that compare data from different modeling realms. The default behavior is to require all variables requested by a POD to come from the same model ``<component>``.
+--any-components    If this flag is set, the data source will return data from different model ``<component>``\s requested by the same POD. This is necessary for, e.g., PODs that compare data from different modeling realms. The default behavior is to require all variables requested by a POD to come from the same model ``<component>``.
 
 **Data selection heuristics**
 
@@ -103,19 +103,19 @@ GFDL-specific flags
 
 The following new flags are added:
 
-* ``--GFDL-PPAN-TEMP`` <*DIR*>: If running on the GFDL PPAN cluster, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. This must be a location accessible via GCP, and the package does not currently verify this. Defaults to ``$TMPDIR``.
-* ``--GFDL-WS-TEMP`` <*DIR*>: If running on a GFDL workstation, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. The directory will be created if it doesn't exist. This must be accessible via GCP, and the package does not currently verify this. Defaults to /net2/``$USER``/tmp.
-* ``--frepp``: Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. Set flag to invoke the framework in the FRE-based execution mode (3A. or 3B. above), processing data as part of the FRE pipeline. 
-* ``--ignore-component``: Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. If set, this flag tells the framework to search the entire /pp/ directory for model data (mode 3A. above); default is to restrict to model component passed by FRE. Ignored if ``--frepp`` is not set.
+--GFDL-PPAN-TEMP <DIR>    If running on the GFDL PPAN cluster, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. This must be a location accessible via GCP, and the package does not currently verify this. Defaults to ``$TMPDIR``.
+--GFDL-WS-TEMP <DIR>    If running on a GFDL workstation, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. The directory will be created if it doesn't exist. This must be accessible via GCP, and the package does not currently verify this. Defaults to /net2/``$USER``/tmp.
+--frepp    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. Set flag to invoke the framework in the FRE-based execution mode (3A. or 3B. above), processing data as part of the FRE pipeline. 
+--ignore-component    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. If set, this flag tells the framework to search the entire /pp/ directory for model data (mode 3A. above); default is to restrict to model component passed by FRE. Ignored if ``--frepp`` is not set.
 
 GFDL-specific default values
 ++++++++++++++++++++++++++++
 
 The following paths are set to more useful default values:
 
-* ``--OBS-DATA-REMOTE`` <*DIR*>: Site-specific installation of observational data used by individual PODs at /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs\_data. If running on PPAN, this data will be GCP'ed to the current node. If running on a workstation, it will be symlinked.
-* ``--OBS-DATA-ROOT`` <*DIR*>: Local directory for observational data. Defaults to ``$MDTF_TMPDIR``/inputdata/obs_data, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
-* ``--MODEL-DATA-ROOT`` <*DIR*>: Local directory used as a destination for downloaded model data. Defaults to ``$MDTF_TMPDIR``/inputdata/model, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
-* ``--WORKING-DIR`` <*DIR*>: Working directory. Defaults to ``$MDTF_TMPDIR``/wkdir, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
-* ``-o``, ``--OUTPUT-DIR`` <*DIR*>: Destination for output files. Defaults to ``$MDTF_TMPDIR``/mdtf_out, which will be created if it doesn't exist.
+--OBS-DATA-REMOTE <DIR>    Site-specific installation of observational data used by individual PODs at /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs\_data. If running on PPAN, this data will be GCP'ed to the current node. If running on a workstation, it will be symlinked.
+--OBS-DATA-ROOT <OBS_DATA_ROOT>    Local directory for observational data. Defaults to ``$MDTF_TMPDIR``/inputdata/obs_data, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
+--MODEL-DATA-ROOT <MODEL_DATA_ROOT>    Local directory used as a destination for downloaded model data. Defaults to ``$MDTF_TMPDIR``/inputdata/model, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
+--WORKING-DIR <WORKING_DIR>    Working directory. Defaults to ``$MDTF_TMPDIR``/wkdir, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
+-o, --OUTPUT-DIR <OUTPUT_DIR>     Destination for output files. Defaults to ``$MDTF_TMPDIR``/mdtf_out, which will be created if it doesn't exist.
 

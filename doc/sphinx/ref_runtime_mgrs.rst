@@ -26,8 +26,8 @@ This option should always be used if the package was installed according to the 
 
 The following command-line options should be set to the same values used when :ref:`installing the conda environments<ref-conda-install>`:
 
-* ``--conda-root`` <*DIR*>: Path to the conda installation. Set equal to ``""`` to use the conda that's been configured to .
-* ``--conda-env-root`` <*DIR*>: Optional. Root directory where the conda environments used by the PODs have been installed. Omit or set equal to ``""`` if this flag was not used during the installation process (which installs the environments in the system's default location).
+--conda-root <CONDA_ROOT>    Path to the conda installation. Set equal to ``""`` to use the conda that's been configured to .
+--conda-env-root <CONDA_ENV_DIR>    Optional. Root directory where the conda environments used by the PODs have been installed. Omit or set equal to ``""`` if this flag was not used during the installation process (which installs the environments in the system's default location).
 
 Virtualenv-based environment manager
 ++++++++++++++++++++++++++++++++++++
@@ -38,8 +38,8 @@ This option should only be used if installation was done via the alternative ins
 
 **Command-line options**
 
-* ``--venv-root`` <*DIR*>: Root directory to use for installing python virtual environments. Set equal to ``""`` to install in your system's default location.
-* ``--r-lib-root`` <*DIR*>: Root directory to use for installing R packages requested by PODs. Set equal to ``""`` to install in your system's R package library.
+--venv-root <DIR>   Root directory to use for installing python virtual environments. Set equal to ``""`` to install in your system's default location.
+--r-lib-root <DIR>    Root directory to use for installing R packages requested by PODs. Set equal to ``""`` to install in your system's R package library.
 
 .. _ref-runtime-mgrs-runtimes:
 

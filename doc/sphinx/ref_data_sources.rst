@@ -41,11 +41,11 @@ At runtime, the user selects which dataset to use with the following flag:
 
 **Command-line options**
 
-* ``-e``, ``--experiment``, ``--sample-dataset`` <*dataset_name*>: Name of the sample dataset to use. This should correspond to the name of one of the subdirectories in the <*OBS_DATA_ROOT*>. The user is responsible for manually downloading the sample datasets of interest to them; for instructions, see :ref:`ref-supporting-data`.
+-e, --experiment, --sample-dataset <dataset_name>   | Name of the sample dataset to use. This should correspond to the name of one of the subdirectories in the <*OBS_DATA_ROOT*>. The user is responsible for manually downloading the sample datasets of interest to them; for instructions, see :ref:`ref-supporting-data`.
 
-  Optional; if not given, this attribute is set from <*CASENAME*> (for backwards compatibility reasons).
+   | Optional; if not given, this attribute is set from <*CASENAME*> (for backwards compatibility reasons).
 
-* ``-c``/``--convention`` should be set when using this data source. If not given, it defaults to ``CMIP`` (see below).
+``-c``/``--convention`` should be set when using this data source. If not given, it defaults to ``CMIP`` (see below).
 
 .. _ref-data-source-cmip6:
 
@@ -58,14 +58,15 @@ This data source searches for model data stored as netCDF files on a locally-mou
 
 **Command-line options**
 
-* ``--activity-id`` <*activity_id*>: Optional. If given, restricts the search to data published in connection with a specific Model Intercomparison Project (MIP). By default, all available MIPs (consistent with the other settings) are considered.
-* ``--institution-id`` <*institution_id*>: Optional. If given, restricts the search to data published by a specific institution.
-* ``-m``, ``--model``, ``--source-id`` <*source_id*>: Optional. If given, restricts the search to data produced by a specific "source," i.e. climate model.
-* ``-e``, ``--experiment``, ``--experiment-id`` <*experiment_id*>: Optional. If given, restricts the search to data produced for the given experiment.
-* ``--variant-label`` <*r\?i\?p\?f\?*>: Optional. If specified, restricts the search to data with the given combinations of realization index (``r``), initialization index (``i``), physics index (``i``) and forcing index (``f``). Note that the meaning of these indices may differ between institutions and MIPs. Filtering the search on each index individually is not currently implemented.
-* ``--grid-label`` <*grid_label*>: Optional. If specified, restricts the search to data marked with the given grid label (of the form `gn`, `gr1`, `gr2`, ...). Note that the meaning of these labels may differ between institutions and MIPs. 
-* ``--version-date`` <*YYYYMMDD*>: Optional. If specified, restricts the search to data published with a given revision date.
-* The user setting for ``-c``/``--convention`` is ignored by this data source; ``CMIP`` conventions are always used.
+--activity-id <activity_id>    Optional. If given, restricts the search to data published in connection with a specific Model Intercomparison Project (MIP). By default, all available MIPs (consistent with the other settings) are considered.
+--institution-id <institution_id>    Optional. If given, restricts the search to data published by a specific institution.
+-m, --model, --source-id <source_id>    Optional. If given, restricts the search to data produced by a specific source, i.e. climate model.
+-e, --experiment, --experiment-id <experiment_id>    Optional. If given, restricts the search to data produced for the given experiment.
+--variant-label <r?i?p?f?>    Optional. If specified, restricts the search to data with the given combinations of realization index (``r``), initialization index (``i``), physics index (``i``) and forcing index (``f``). Note that the meaning of these indices may differ between institutions and MIPs. Filtering the search on each index individually is not currently implemented.
+--grid-label <grid_label>    Optional. If specified, restricts the search to data marked with the given grid label (of the form `gn`, `gr1`, `gr2`, ...). Note that the meaning of these labels may differ between institutions and MIPs. 
+--version-date <YYYYMMDD>    Optional. If specified, restricts the search to data published with a given revision date.
+
+The user setting for ``-c``/``--convention`` is ignored by this data source; ``CMIP`` conventions are always used.
 
 In practice, it is not necessary to explicitly specify each of these attributes in order to select a desired set of data, as described below:
 
@@ -76,12 +77,12 @@ This data source implements the following logic to guarantee that all data it pr
 * The <*activity_id*>, <*institution_id*>, <*source_id*>, <*experiment_id*>, <*variant_label*> and <*version_date*> for all variables requested by all PODs must be identical.
   
   - If multiple realization, initialization, etc. indices in the <*variant_label*> satisfy this requirement, the lowest-numbered indices are chosen.
-  - If multiple <*version_date*>s satisfy this requirement, the most recent one is chosen.
+  - If multiple <*version_date*>\s satisfy this requirement, the most recent one is chosen.
   - If multiple values of the other attributes satisfy this requirement, an error is raised. In practice, this means that in the majority of cases, the user only needs to specify the <*source_id*> (model) and <*experiment_id*> (experiment) to uniquely identify the data. 
 
 * The <*grid_label*> must be the same for all variables requested by a POD, but can be different for different PODs. The same value will be chosen for all PODs if possible. 
 
-  - If multiple choices of <*grid_label*> satisfy this requirement, we prefer regridded to natively-gridded (``gn``) data, and select the lowest-numbered regridding.
+  - If multiple choices of <*grid_label*> satisfy this requirement, we prefer regridded to natively-gridded (*gn*) data, and select the lowest-numbered regridding.
 
 * Variables that don't have global coverage (e.g., are restricted to the Greenland or Antarctic regions) or are zonally or otherwise spatially averaged are excluded from the search, as no POD is currently designed to use these types of data.
 

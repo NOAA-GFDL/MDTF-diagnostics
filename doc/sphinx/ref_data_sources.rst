@@ -14,8 +14,8 @@ Model data sources
 
 By "data source," we mean a code plug-in for the package that provides all functionality needed to obtain model data needed by the PODs, based on user input:
 
-* An interface to query the remote store of data for the variables requested by the PODs, whether in the form of an organized data catalog/database or in file naming conventions;
-* (Optional) heuristics for refining the query results in order to guarantee that all data selected came from the same experiment;
+* An interface to query the remote store of data for the variables requested by the PODs, whether in the form of a file naming convention or an organized data catalog/database;
+* (Optional) heuristics for refining the query results in order to guarantee that all data selected came from the same model run;
 * The data transfer protocol to use for transferring the selected data to a local filesystem, for processing by the framework and by the PODs.
 
 There are currently two data sources implemented in the package, described below. If you would like the package to support obtaining data from a source that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/175>`__.
@@ -27,25 +27,25 @@ Sample model data source
 
 Selected via ``--data-manager="LocalFile"``. This is the default value for <*data-manager*>.
 
-This data source lets the package run on the sample model data provided with the package and installed by the user at <*OBS_DATA_ROOT*>. Any additional data added by the user to this location (either by copying files, or through symlinks) will also be recognized, provided that it takes the form of one netCDF file per variable and that it follows the following naming convention for subdirectories and file names:
+This data source lets the package run on the sample model data provided with the package and installed by the user at <*MODEL_DATA_ROOT*>. Any additional data added by the user to this location (either by copying files, or through symlinks) will also be recognized, provided that it takes the form of one netCDF file per variable and that it follows the following file and subdirectory naming convention :
 
-<*OBS_DATA_ROOT*>/<*dataset_name*>/<*frequency*>/<*dataset_name*>.<*variable_name*>.<*frequency*>.nc,
+<*MODEL_DATA_ROOT*>/<*dataset_name*>/<*frequency*>/<*dataset_name*>.<*variable_name*>.<*frequency*>.nc,
 
 where
 
 * <*dataset_name*> is any string uniquely identifying the dataset,
-* <*frequency*> is a string describing the frequency at which the data is sampled (``6hr``, ``day``, ``mon``, etc.), and
-* <*variable_name*> is the name of the variable according to one of the recognized :ref:`naming conventions<ref-data-conventions>`.
+* <*frequency*> is a string describing the frequency at which the data is sampled, e.g. ``6hr``, ``day``, ``mon``, etc. More specifically, it must take the form of an optional integer (if omitted, the value 1 is understood) followed by a unit string, one of ``hr``, ``day``, ``week``, ``mon`` or ``year``.
+* <*variable_name*> is the name of the variable in one of the recognized :ref:`naming conventions<ref-data-conventions>`.
 
 At runtime, the user selects which dataset to use with the following flag:
 
 **Command-line options**
 
--e, --experiment, --sample-dataset <dataset_name>   | Name of the sample dataset to use. This should correspond to the name of one of the subdirectories in the <*OBS_DATA_ROOT*>. The user is responsible for manually downloading the sample datasets of interest to them; for instructions, see :ref:`ref-supporting-data`.
+-e, --experiment, --sample-dataset <dataset_name>   | Name of the sample dataset to use. This should correspond to the name of one of the subdirectories in <*MODEL_DATA_ROOT*>. The user is responsible for manually copying or symlinking the files of interest to them; for instructions on downloading the sample model data we provide, see :ref:`ref-supporting-data`.
 
-   | Optional; if not given, this attribute is set from <*CASENAME*> (for backwards compatibility reasons).
+   | Optional; if not given, this attribute is set equal to <*CASENAME*> (for backwards compatibility reasons).
 
-``-c``/``--convention`` should be set when using this data source. If not given, it defaults to ``CMIP`` (see below).
+When using this data source, ``-c``/``--convention`` should be set to the convention used to assign <*variable_name*>s: the data source does not enforce consistency in this setting. If not given, ``--convention`` defaults to ``CMIP`` (see below).
 
 .. _ref-data-source-cmip6:
 
@@ -66,19 +66,23 @@ This data source searches for model data stored as netCDF files on a locally-mou
 --grid-label <grid_label>    Optional. If specified, restricts the search to data marked with the given grid label (of the form `gn`, `gr1`, `gr2`, ...). Note that the meaning of these labels may differ between institutions and MIPs. 
 --version-date <YYYYMMDD>    Optional. If specified, restricts the search to data published with a given revision date.
 
+<*CASE_ROOT_DIR*> is taken to be the root of the directory hierarchy in the data reference syntax. Arbitrary strings may be used in subdirectories of that hierarchy, and for the above flag values: this data source doesn't enforce the CMIP6 controlled vocabulary. This can be useful for, e.g., analyzing data that's not intended to be published as part of CMIP6 but was processed with CMIP tools out of convenience.
+
 The user setting for ``-c``/``--convention`` is ignored by this data source; ``CMIP`` conventions are always used.
 
-In practice, it is not necessary to explicitly specify each of these attributes in order to select a desired set of data, as described below:
+It is not necessary to explicitly specify each of the above flags in order to select a desired set of data, due to the use of heuristics described below:
 
 **Data selection heuristics**
 
-This data source implements the following logic to guarantee that all data it provides to the PODs are consistent, i.e. that the variables selected have been generated from the same run of the same model. An error will be raised if no set of variables can be found that satisfy the user's input above and the following requirements:
+This data source implements the following logic to guarantee that all data it provides to the PODs are consistent, i.e. that the variables selected have been generated from the same run of the same model. An error will be raised if no set of variables can be found that satisfy the user's settings (described above) and the following requirements:
 
 * The <*activity_id*>, <*institution_id*>, <*source_id*>, <*experiment_id*>, <*variant_label*> and <*version_date*> for all variables requested by all PODs must be identical.
   
   - If multiple realization, initialization, etc. indices in the <*variant_label*> satisfy this requirement, the lowest-numbered indices are chosen.
   - If multiple <*version_date*>\s satisfy this requirement, the most recent one is chosen.
-  - If multiple values of the other attributes satisfy this requirement, an error is raised. In practice, this means that in the majority of cases, the user only needs to specify the <*source_id*> (model) and <*experiment_id*> (experiment) to uniquely identify the data. 
+  - If multiple values of the other attributes satisfy this requirement, an error is raised. 
+  
+  In practice, this means that in the majority of cases, the user only needs to specify the <*source_id*> (model) and <*experiment_id*> (experiment) to uniquely identify the dataset they want to analyze. 
 
 * The <*grid_label*> must be the same for all variables requested by a POD, but can be different for different PODs. The same value will be chosen for all PODs if possible. 
 
@@ -94,9 +98,12 @@ Conventions for variable names and units
 
 The use of data source plug-ins, as described above, is how we let the package obtain data files by different methods, but doesn't address problems arising from differing content of these files. For example, the name for total precipitation used by NCAR models is ``PRECT`` and is given as a rate (meters per second), while the name for the same physical quantity in GFDL models is ``precip``, given in units of a flux (kg m\ :sup:`-2`\  s\ :sup:`-1`\ ).
 
-Frequently a data source (in the sense described above) will only identify a variable through this "native" name, which makes it necessary to tell the package which "language to speak" when searching for different variables. Setting the ``--convention`` flag translates the data request for each POD into the naming convention used by the model that's being analyzed. 
+Frequently a data source (in the sense described above) will only identify a variable through this "native" name, which makes it necessary to tell the package which "language to speak" when searching for different variables. Setting the ``--convention`` flag translates the data request for each POD into the variable naming convention used by the model that's being analyzed. 
 
-Before any PODs are run, the framework examines each file and converts the name and units of each variable to the values that the POD expects. This feature also provides a mechanism to deal with missing metadata, and to warn the user that the metadata for a specific file may be inaccurate. 
+This feature also provides a mechanism to deal with missing metadata, and to warn the user that the metadata for a specific file may be inaccurate: before any PODs are run, the framework examines each file and converts the name and units of each variable to the values that the POD has requested. 
+
+Recognized conventions
+++++++++++++++++++++++
 
 Naming conventions are specified with the ``--convention`` flag. The currently implemented naming conventions are:
 

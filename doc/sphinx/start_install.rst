@@ -16,9 +16,39 @@ Throughout this document, :console:`%` indicates the shell prompt and is followe
 Obtaining the code
 ------------------
 
-The official repo for the package's code is hosted at the NOAA-GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. We recommend that end users download the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3>`__.
+The official repo for the package's code is hosted at the NOAA-GFDL `GitHub account <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. To simplify updating the code, we recommend that all users obtain the code using git. For more in-depth instructions on how to use git, see :doc:`dev_git_intro`.
 
-To install the MDTF package, create a directory named ``mdtf`` and unzip the code downloaded from the `release page <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3>`__ there. This will create a directory titled ``MDTF-diagnostics-3.0-beta.3`` containing the files listed on the GitHub page. Below we refer to the path to this MDTF-diagnostics directory as <*CODE_ROOT*>. It contains the following subdirectories:
+To install the MDTF package on a local machine, open a terminal and create a directory named `mdtf`. Instructions for end-users and new developers are then as follows:
+
+- For end users:
+  
+  1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
+     | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
+  2. Verify that you are on the main branch: :console:`% git branch`. This is the default, but it never hurts to get in the habit of running git branch before you start working.
+  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3>`__:
+     | :console:`% git checkout tags/v3.0-beta.3`.
+  4. Proceed with the installation process described below.
+  5. | Check out a new branch that will contain your edited config files: 
+     | :console:`% git checkout -b <branch name>`.
+  6. | Update the config files, then commit the changes: 
+     | :console:`% git commit -m \"description of your changes\"`.
+  7. | Push the changes on your branch to your remote fork: 
+     | :console:`% git push -u origin <branch name>`.
+   
+- For new POD developers:
+  
+  1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
+     | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
+  2. Check out the ``develop`` branch: :console:`% git checkout develop`.
+  3. Proceed with the installation process described below.
+  4. | Check out a new branch for your POD: 
+     | :console:`% git checkout -b feature/<Your POD\'s name>`.
+  5. | Edit existing files/create new files, then commit the changes:
+     | :console:`% git commit -m \"description of your changes\"`.
+  6. | Push the changes on your branch to your remote fork:
+     | :console:`% git push -u origin feature/<Your POD\'s name>`.
+
+The path to the code directory (``.../mdtf/MDTF-diagnostics``) is referred to as <*CODE_ROOT*> in what follows. It contains the following subdirectories:
 
 - ``diagnostics/``: directory containing source code and documentation of individual PODs.
 - ``doc/``: source code for the documentation website.
@@ -28,8 +58,6 @@ To install the MDTF package, create a directory named ``mdtf`` and unzip the cod
 - ``tests/``: general tests for the framework.
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback, the ``main`` branch of the GitHub repo contains features that haven’t yet been incorporated into an official release, which are less stable or thoroughly tested.
-
-For POD developers, the ``develop`` branch of the GitHub repo is the “beta test” version of the framework. POD developers should begin by locally cloning the repo and checking out this branch, as described in :doc:`dev_git_intro`.
 
 .. _ref-supporting-data:
 

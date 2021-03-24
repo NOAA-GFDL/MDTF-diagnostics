@@ -29,15 +29,18 @@ Command-line options
 
 For long command line flags, words may be separated with hyphens (GNU standard) or with underscores (python variable name convention). For example, ``--file-transfer-timeout`` and ``--file_transfer_timeout`` are both recognized by the package as synonyms for the same setting.
 
-If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here. See the :doc:`site-specific documentation<site_toc>` for your site.
+If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <your site> --help`. 
 
 General options
 +++++++++++++++
 
 -h, --help     Show a help message, potentially more up-to-date than this page, along with your site's default values for these options.
 --version      Show the program's version number and exit.
--s, --site <site_name>   | Setting to use site-specific customizations and functionality. <*site_name*> is the name of one of the directories in `sites/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites>`__ containing the additional code and configuration files to use. This setting defaults to ``local``, which is left empty in order to enable any installation to be customized (e.g. configuring default settings for paths) without needing to alter the framework code in `src/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src>`__.
-   | See the :doc:`site-specific documentation<site_toc>` for information on what functionality is added for a given site.
+-s, --site <site_name>   | Setting to use site-specific customizations and functionality. <*site_name*> is the name of one of the directories in `sites/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites>`__, which contain additional code and configuration files to use. 
+   |
+   | The default value for this setting is ``local``. The sites/local/ directory is left empty in order to enable any installation to be customized (e.g. settings the paths to where supporting data was installed) without needing to alter the framework code. For more information on how to do this, see the documentation for the `'local' site <../sphinx_sites/local.html>`__.
+   |
+   | In general, see the :doc:`site-specific documentation<site_toc>` for information on what functionality is added for a given site.
 
 -f, --input-file <input_file>    Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__ (which is intended to be copied and used as a template), or a text file containing flags and command-line arguments as they would be entered in the shell. Additional options set explicitly on the command line will still override settings in this file.
 
@@ -58,10 +61,12 @@ Data
 Settings that describe the input model data and how it should be obtained.
 
 -c, --convention <naming_convention>   | The convention for variable names and units used in the input model data. Defaults to ``CMIP``, for data produced as part of CMIP6 data request, or compatible with it.
+   |
    | See the :doc:`ref_data_sources` for documentation on the recognized values for this option.
 
 --strict    Disables any model data selection heuristics provided by <*data_manager*>. The details of what this does depend on the <*data_manager*>, but in general this means that model data will only be searched for based on a literal interpretation of the user's input, with an error raised if that input doesn't specify a unique model run/experiment.
 --data-manager <data_manager>   | Method used to search for and fetch input model data. <*data_manager*> is case-insensitive, and spaces and underscores are ignored.
+   |
    | See the :doc:`ref_data_sources` for documentation on the available options, and the settings that are specific to each.
 
 Analysis
@@ -88,7 +93,7 @@ Runtime settings
 Settings that control how the package is deployed (how code dependencies are managed) and how the diagnostics are run.
 
 --environment-manager <environment_manager>   | Method the package should use to manage third-party code dependencies of diagnostics. <*environment_manager*> is case-insensitive, and spaces and underscores are ignored.
-
+   |
    | See the :doc:`ref_runtime_mgrs` for documentation on the available options, and the settings that are specific to each.
 
    .. note::

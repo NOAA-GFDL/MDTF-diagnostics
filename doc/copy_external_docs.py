@@ -62,10 +62,14 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
     ]
     # Case-insensitive alpha sort
     entries = sorted(entries, key=(lambda s: s.lower())) # handles unicode 
+    # put example POD documentation first
     if 'example' in entries:
-        # put example POD documentation first
         entries.remove('example')
         entries.insert(0, 'example')
+    # put local site documentation first
+    elif 'local' in entries:
+        entries.remove('local')
+        entries.insert(0, 'local')
 
     # find documentation files
     # = all non-PDF files (.rst and graphics) in /doc subdirectory 

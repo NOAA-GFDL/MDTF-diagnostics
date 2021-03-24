@@ -1,5 +1,5 @@
-Site-specific configuration README
-----------------------------------
+Customizing your installation with the 'local' site
+---------------------------------------------------
 
 To enable more consistent treatment of site-specific code, v3.0 beta 3 introduces
 a "--site/-s" command-line option to the top-level script at src/mtdf.py. When 

@@ -6,4 +6,5 @@ Framework reference
 
    ref_cli
    ref_data_sources
+   ref_data
    ref_runtime_mgrs

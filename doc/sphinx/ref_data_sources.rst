@@ -5,7 +5,7 @@ This section details how to select the input model data for the package to analy
 
 If you're using site-specific functionality (via the ``--site`` flag), additional options for the ``--data-manager`` flag may be available. See the :doc:`site-specific documentation<site_toc>` for your site.
 
-The choice of data source determines where and how the data needed by the diagnostics is obtained, but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a "variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag. 
+The choice of data source determines where and how the data needed by the diagnostics is obtained, but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a "variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag. Also consult the :doc:`requirements<ref_data>` that input model data must satisfy in terms of file formats.
 
 .. _ref-data-sources:
 
@@ -42,7 +42,7 @@ At runtime, the user selects which dataset to use with the following flag:
 **Command-line options**
 
 -e, --experiment, --sample-dataset <dataset_name>   | Name of the sample dataset to use. This should correspond to the name of one of the subdirectories in <*MODEL_DATA_ROOT*>. The user is responsible for manually copying or symlinking the files of interest to them; for instructions on downloading the sample model data we provide, see :ref:`ref-supporting-data`.
-
+   |
    | Optional; if not given, this attribute is set equal to <*CASENAME*> (for backwards compatibility reasons).
 
 When using this data source, ``-c``/``--convention`` should be set to the convention used to assign <*variable_name*>s: the data source does not enforce consistency in this setting. If not given, ``--convention`` defaults to ``CMIP`` (see below).

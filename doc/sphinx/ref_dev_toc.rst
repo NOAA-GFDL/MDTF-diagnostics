@@ -1,5 +1,5 @@
-Reference information for POD developers
-----------------------------------------
+Developer reference
+-------------------
 
 .. toctree::
    :maxdepth: 2

@@ -2,8 +2,8 @@
    :language: console
    :class: highlight
 
-Input model data format reference
-=================================
+Input model data format
+=======================
 
 This section describes how all input model data must be "formatted" for use by the framework. By "format" we mean not only the binary file format, but also the organization of data within and across files and metadata conventions.
 

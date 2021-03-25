@@ -1,5 +1,5 @@
-Data source configuration reference
-===================================
+Data sources
+============
 
 This section details how to select the input model data for the package to analyze. The main command-line option for this functionality is the ``--data-manager`` flag, which selects a ":ref:`data source<ref-data-sources>`": a code plug-in that implements the functionality of querying and fetching data from a remote host. The plug-in may define its own specific command-line options, which are documented here. 
 

@@ -2,8 +2,8 @@
    :language: console
    :class: highlight
 
-Runtime configuration reference
-===============================
+Runtime configuration
+=====================
 
 This section details how to configure the way the package runs the PODs: how to direct the code of each POD to the libraries and other software it needs, and how to control how that code gets executed. The main command-line option for this functionality is the ``--environment-manager`` flag, which selects an ":ref:`environment manager<ref-runtime-mgrs-environments>`": a code plug-in that implements the functionality of managing the script interpreters, third-party libraries, and any other executables needed by each POD. The plug-in may define its own specific command-line options, which are documented here. 
 

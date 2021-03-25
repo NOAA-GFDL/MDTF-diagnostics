@@ -2,8 +2,8 @@
    :language: console
    :class: highlight
 
-Command-line option reference
-=============================
+Command-line options
+====================
 
 Running the package
 -------------------

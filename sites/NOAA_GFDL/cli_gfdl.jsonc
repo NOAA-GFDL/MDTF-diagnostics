@@ -63,7 +63,7 @@
           "metavar" : "<convention>"
         },{
           "name": "strict",
-          "help": "If set, disables experiment selection hueristics and raises error if experiment not uniquely specified by user input.",
+          "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
           "default" : false
         },{
           "name": "disable_CF_name_checks",

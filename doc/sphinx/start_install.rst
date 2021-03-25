@@ -251,5 +251,3 @@ This shows that the output of the package has been saved to a directory named ``
 Currently the framework only analyzes data from one model run at a time. To run another test for the the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__ on the sample data from GFDL's CM4 model, open the configuration file at <*config_file_path*>, delete or comment out the section for ``QBOi.EXP1.AMIP.001`` in the ``caselist`` section of that file, and uncomment the section for ``GFDL.CM4.c96L32.am4g10r8``.
 
 In :doc:`start_config`, we describe further options to customize how the package is run.
-
-

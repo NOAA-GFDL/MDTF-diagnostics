@@ -2,8 +2,8 @@
    :language: console
    :class: highlight
 
-Input model data format
-=======================
+Model data format
+=================
 
 This section describes how all input model data must be "formatted" for use by the framework. By "format" we mean not only the binary file format, but also the organization of data within and across files and metadata conventions.
 
@@ -18,8 +18,8 @@ File organization
 +++++++++++++++++
 
 - Model data must be supplied in the form of a set of netCDF files. 
-- We support reading from all netCDF-3 and netCDF-4 binary formats, as defined in the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__, via `xarray <http://xarray.pydata.org/en/stable/>`__ (see below). Variables nested under netCDF-4 groups are not currently supported.
-- Each netCDF file should only contain one variable (i.e., an array with the values of a single dependent variable, along with all the values of the coordinates [independent variables] at which the dependent variable was sampled). Additional variables (coordinate bounds, auxiliary or transformed coordinates) may be present in the file, but they will be ignored by the framework.
+- We support reading from all netCDF-3 and netCDF-4 binary formats, as defined in the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__, via `xarray <http://xarray.pydata.org/en/stable/>`__ (see below), with the exception that variables nested under netCDF-4 groups are not currently supported.
+- Each netCDF file should only contain one variable (i.e., an array with the values of a single dependent variable, along with all the values of the coordinates at which the dependent variable was sampled). Additional variables (coordinate bounds, auxiliary or transformed coordinates) may be present in the file, but will be ignored by the framework.
 - The data for one variable may be spread across multiple netCDF files, but this must take the form of contiguous chunks by date (e.g., one file for 2000-2009, another for 2010-2019, etc.). The spatial coordinates in each file in a series of chunks must be identical. 
 
 Coordinates
@@ -27,7 +27,7 @@ Coordinates
 
 - The framework currently only supports model data provided on a latitude-longitude grid.
 - The framework currently only supports vertical coordinates given in terms of pressure. The pressure coordinate may be in any units (*mb*, *Pa*, *atm*, ...). We hope to offer support for `parametric vertical coordinates <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#parametric-vertical-coordinate>`__ in the near future.
-- The time coordinate of the data must follow the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#time-coordinate>`__; in particular, it must have a ``calendar`` attribute which matches one of the CF convention recognized calendars (case-insensitive).
+- The time coordinate of the data must follow the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#time-coordinate>`__; in particular, it must have a ``calendar`` attribute which matches one of the CF conventions' recognized calendars (case-insensitive).
 - The framework doesn't impose any limitations on the minimum or maximum resolution of model data, beyond the storage and memory available on the machine where the PODs are run.
 
 Metadata
@@ -50,7 +50,7 @@ xarray reference implementation
 
 The framework uses `xarray <http://xarray.pydata.org/en/stable/>`__ to preprocess and validate model data before the PODs are run; specifically using the `netcdf4 <https://unidata.github.io/netcdf4-python/>`__ engine and with `CF convention support <http://xarray.pydata.org/en/stable/weather-climate.html#non-standard-calendars-and-dates-outside-the-timestamp-valid-range>`__ provided via the  `cftime <https://unidata.github.io/cftime/>`__ library. We also use `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__ to access data attributes in a more convention-independent way.
 
-If you're deciding how to post-process your model's data for use by the package, or are debugging issues with your model's data format, it may be simpler to load and examine your data with these dependencies directly, rather than by invoking the entire package. The following python snippet approximates how the framework loads datasets for preprocessing. Use the `\_MDTF_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_base.yml>`__ conda environment for the appropriate versions of each package.
+If you're deciding how to post-process your model's data for use by the MDTF package, or are debugging issues with your model's data format, it may be simpler to load and examine your data with these packages interactively, rather than by invoking the entire MDTF package. The following python snippet approximates how the framework loads datasets for preprocessing. Use the `\_MDTF_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_base.yml>`__ conda environment to install the correct versions of each package.
 
 .. code-block:: python
 
@@ -68,11 +68,11 @@ If you're deciding how to post-process your model's data for use by the package,
        decode_coords=True, 
        decode_times=True, use_cftime=True
    )
-   # match coordinates to X/Y/Z/T axes roles using cf_xarray:
+   # match coordinates to X/Y/Z/T axes using cf_xarray:
    ds = ds.cf.guess_coord_axis()
    # print summary
    ds.info()
 
-The framework has additional logic for cleaning up noncompliant metadata (e.g., stripping leading or trailing whitespace from netCDF headers), but if you can load a dataset with the above commands, the framework should be able to deal with it as well. 
+The framework has additional logic for cleaning up noncompliant metadata (e.g., stripping whitespace from netCDF headers), but if you can load a dataset with the above commands, the framework should be able to deal with it as well. 
 
 If the framework runs into errors when run on a dataset that meets the criteria above, please file a bug report via the gitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`__. 

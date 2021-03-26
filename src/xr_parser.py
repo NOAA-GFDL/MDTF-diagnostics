@@ -731,7 +731,7 @@ class DatasetParser():
             bounds = ds.cf.get_bounds(ds_coord_name)
         except KeyError:
             # cf accessor could't find associated bounds variable
-            our_coord.bounds = None
+            our_coord.bounds_var = None
             return
 
         # Inherit standard_name from our_coord if not present (regardless of 
@@ -746,7 +746,7 @@ class DatasetParser():
         if our_coord.name != bounds.name:
             _log.debug("Updating %s for '%s' to value '%s' from dataset.",
                 'bounds', our_coord.name, bounds.name)
-        our_coord.bounds = bounds.name
+        our_coord.bounds_var = bounds
 
     def reconcile_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the

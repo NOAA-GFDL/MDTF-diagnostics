@@ -289,9 +289,9 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             dest_c = var.axes[c.axis]
             ds = units.convert_dataarray(
                 ds, c.name, src_unit=None, dest_unit=dest_c.units)
-            if c.bounds and c.bounds in ds:
+            if c.has_bounds and c.bounds_var in ds:
                 ds = units.convert_dataarray(
-                    ds, c.bounds, src_unit=None, dest_unit=dest_c.units)
+                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units)
             c.units = dest_c.units
 
         # convert scalar coordinates
@@ -530,7 +530,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
                 ds_T.encoding['units'] = ds_T.attrs['units']
             if t_coord.has_bounds:
-                ds[t_coord.bounds].encoding['units'] = ds_T.encoding['units']
+                ds[t_coord.bounds_var].encoding['units'] = ds_T.encoding['units']
 
         for k, v in ds.variables.items():
             # First condition: unset _FillValue attribute for all independent 

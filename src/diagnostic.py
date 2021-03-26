@@ -130,6 +130,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     """
     _id: int = util.NOTSET # assigned by DataSource (avoids unsafe_hash)
     # name: str             # fields inherited from data_model.DMVariable
+    # attrs: dict
     # standard_name: str
     # units: Units
     # dims: list
@@ -224,7 +225,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]
             d[dim.name + _coord_env_var_suffix] = trans_dim.name
-            if trans_dim.bounds:
+            if trans_dim.has_bounds:
                 d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
         return d
 

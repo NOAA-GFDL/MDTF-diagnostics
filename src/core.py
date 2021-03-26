@@ -449,6 +449,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     convention: str = util.MANDATORY
     name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
+    # attrs: dict           # field inherited from data_model.DMVariable
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY

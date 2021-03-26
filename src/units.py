@@ -115,15 +115,23 @@ def convert_scalar_coord(coord, dest_units):
         dest_value = coord.value
     return dest_value
 
-def convert_dataarray(ds, da_name, dest_unit):
+def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None):
     """Wrapper for cfunits.conform() that does unit conversion in-place on a
     member of an xarray Dataset, updating its units attribute.
     """
     da = ds.get(da_name, None)
     if da is None:
         raise ValueError(f"convert_dataarray: '{da_name}' not found in dataset.")
-    src_unit = da.attrs.get('units', "")
-    assert src_unit
+    if src_unit is None:
+        try:
+            src_unit = da.attrs['units']
+        except KeyError:
+            raise TypeError((f"convert_dataarray: 'units' attribute not defined "
+                f"on {da.name}."))
+    if dest_unit is None:
+        raise TypeError((f"convert_dataarray: dest_unit not given for unit "
+            "conversion on {da.name}."))
+
     if 'standard_name' in da.attrs:
         std_name = f" ({da.attrs['standard_name']})"
     else:

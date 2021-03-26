@@ -278,24 +278,28 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         tv = var.translation # abbreviate
         # convert dependent variable
-        ds = units.convert_dataarray(ds, tv.name, var.units)
+        ds = units.convert_dataarray(
+            ds, tv.name, src_unit=None, dest_unit=var.units)
         tv.units = var.units
 
         # convert coordinate dimensions and bounds
         for c in tv.dim_axes.values():
             if c.axis == 'T':
-                continue # handle calendar stuff etc. in another function
+                continue # TODO: separate function to handle calendar conversion
             dest_c = var.axes[c.axis]
-            ds = units.convert_dataarray(ds, c.name, dest_c.units)
+            ds = units.convert_dataarray(
+                ds, c.name, src_unit=None, dest_unit=dest_c.units)
             if c.bounds and c.bounds in ds:
-                ds = units.convert_dataarray(ds, c.bounds, dest_c.units)
+                ds = units.convert_dataarray(
+                    ds, c.bounds, src_unit=None, dest_unit=dest_c.units)
             c.units = dest_c.units
 
         # convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
-                ds = units.convert_dataarray(ds, c.name, dest_c.units)
+                ds = units.convert_dataarray(
+                    ds, c.name, src_unit=None, dest_unit=dest_c.units)
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
 
@@ -444,6 +448,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     _functions = util.abstract_attribute()
 
     def __init__(self, data_mgr, pod):
+        config = core.ConfigManager()
+        self.skip_std_name = config.get('disable_CF_name_checks', False)
+        self.skip_units = config.get('disable_unit_checks', False)
+
         self.WK_DIR = data_mgr.MODEL_WK_DIR
         self.convention = data_mgr.attrs.convention
         self.pod_convention = pod.convention
@@ -651,24 +659,47 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
 # -------------------------------------------------
 
+def applicable_functions():
+    """Determine which preprocessor functions are applicable to the current
+    package run, defaulting to all of them.
+
+    Returns:
+        tuple of classes (inheriting from :class:`PreprocessorFunctionBase`) 
+        listing the preprocessing functions to be called, in order.
+    """
+    # PrecipRateToFluxFunction relies on standard_name attribute; skip it if 
+    # the user told us to not use that attribute
+    config = core.ConfigManager()
+    if config.get('disable_CF_name_checks', False):
+        # omit PrecipRateToFluxFunction
+        return (
+            CropDateRangeFunction, ConvertUnitsFunction, 
+            ExtractLevelFunction, RenameVariablesFunction
+        )
+    else:
+        # normal operation: run all functions
+        return (
+            CropDateRangeFunction, 
+            PrecipRateToFluxFunction, ConvertUnitsFunction, 
+            ExtractLevelFunction, RenameVariablesFunction
+        )
+
 class SampleDataPreprocessor(SingleFilePreprocessor):
-    """A :class:`MDTFPreprocessorBase` intended for use on sample model data
-    only. Assumes all data is in one netCDF file and only truncates the date
-    range.
+    """Implementation class for :class:`MDTFPreprocessorBase` intended for use 
+    on sample model data distributed with the package. Assumes all data is in 
+    one netCDF file.
     """
     # ExtractLevelFunction needed for NCAR-CAM5.timeslice for Travis
-    _functions = (
-        CropDateRangeFunction, 
-        PrecipRateToFluxFunction, ConvertUnitsFunction, 
-        ExtractLevelFunction, RenameVariablesFunction
-    )
+    @property
+    def _functions(self):
+        return applicable_functions()
 
 class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
-    """A :class:`MDTFPreprocessorBase` for general, multi-file data.
+    """Implementation class for :class:`MDTFPreprocessorBase` for the general 
+    use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
-    _functions = (
-        CropDateRangeFunction, 
-        PrecipRateToFluxFunction, ConvertUnitsFunction, 
-        ExtractLevelFunction, RenameVariablesFunction
-    )
+
+    @property
+    def _functions(self):
+        return applicable_functions()

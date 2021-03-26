@@ -111,8 +111,18 @@ class MDTFCFAccessorMixin(object):
         return ds.coords[t_names[0]].attrs.get('calendar', None)
 
     def _old_axes_dict(self, var_name=None):
-        """cf_xarray accessor behavior: return dict mapping axes labels to lists
-        of variable names.
+        """Code for the "axes" accessor behavior as defined in `cf\_xarray 
+        <https://cf-xarray.readthedocs.io/en/latest/generated/xarray.DataArray.cf.axes.html#xarray.DataArray.cf.axes>`__,
+        which we override in various ways below. 
+
+        Args:
+            var_name (optional): If supplied, return a dict containing the subset
+                of coordinates used by the dependent variable *var\_name*, instead
+                of all coordinates in the dataset. 
+
+        Returns:
+            dict mapping axes labels to lists of names of variables in the 
+            DataSet that the accessor has mapped to that axis.
         """
         if var_name is None:
             axes_obj = self._obj
@@ -194,8 +204,19 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
         return None
 
     def axes(self, var_name=None, filter_set=None):
-        """Override cf_xarray accessor behavior by having values of the 'axes'
-        dict be the Dataset variables themselves, instead of their names.
+        """Override cf_xarray accessor behavior 
+        (from :meth:`~MDTFCFAccessorMixin._old_axes_dict).
+
+        Args:
+            var_name (optional): If supplied, return a dict containing the subset
+                of coordinates used by the dependent variable *var\_name*, instead
+                of all coordinates in the dataset. 
+            filter_set (optional): Optional iterable of coordinate names. If 
+                supplied, restrict the returned dict to coordinates in *filter\_set*.
+
+        Returns:
+            dict mapping axis labels to lists of the Dataset variables themselves, 
+            instead of their names.
         """
         ds = self._obj
         axes_d = ds.cf._old_axes_dict(var_name=var_name)

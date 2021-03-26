@@ -274,20 +274,23 @@ class MDTFFramework(object):
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
         case_list=None, log_config=None, unittest=False):
-        self.update(cli_obj.config)
-        if pod_info_tuple is None:
+        self._unittest = unittest
+        if self._unittest:
             self.pod_data = dict()
+            self.backup_config = dict()
         else:
+            # normal code path
             self.pod_data = pod_info_tuple.pod_data
+            self.update(cli_obj.config)
+            # copy serializable version of parsed settings, in order to write 
+            # backup config file
+            self.backup_config = copy.deepcopy(cli_obj.config) 
+            self.backup_config['case_list'] = copy.deepcopy(case_list)
         if global_env_vars is None:
             self.global_env_vars = dict()
         else:
             self.global_env_vars = global_env_vars
         self.log_config = log_config
-        # copy srializable version of parsed settings, in order to write 
-        # backup config file
-        self.backup_config = copy.deepcopy(cli_obj.config) 
-        self.backup_config['case_list'] = copy.deepcopy(case_list)
 
 
 class PathManager(util.Singleton, util.NameSpace):
@@ -295,42 +298,48 @@ class PathManager(util.Singleton, util.NameSpace):
     by the code.
     """
     def __init__(self, cli_obj=None, env_vars=None, unittest=False):
-        self.CODE_ROOT = cli_obj.code_root
         self._unittest = unittest
-        if not self._unittest:
+        if self._unittest:
+            for path in ['CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT', 
+                'WORKING_DIR', 'OUTPUT_DIR']:
+                setattr(self, path, 'TEST_'+path)
+            self.TEMP_DIR_ROOT = self.WORKING_DIR
+        else:
+            # normal code path
+            self.CODE_ROOT = cli_obj.code_root
             assert os.path.isdir(self.CODE_ROOT)
 
-        d = cli_obj.config
-        env = os.environ.copy()
-        if env_vars:
-            env.update(env_vars)
-        # set following explictly: redundant, but keeps linter from complaining
-        self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
-        self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
-        self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
-        self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
+            d = cli_obj.config
+            env = os.environ.copy()
+            if env_vars:
+                env.update(env_vars)
+            # set following explictly: redundant, but keeps linter from complaining
+            self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
+            self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', d, env=env)
+            self.WORKING_DIR = self._init_path('WORKING_DIR', d, env=env)
+            self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
 
-        if not self.OUTPUT_DIR:
-            self.OUTPUT_DIR = self.WORKING_DIR
+            if not self.OUTPUT_DIR:
+                self.OUTPUT_DIR = self.WORKING_DIR
 
-        # set as attribute any CLI setting that has "action": "PathAction" 
-        # in its definition in the .jsonc file
-        cli_paths = [act.dest for act in cli_obj.iter_actions() \
-            if isinstance(act, cli.PathAction)]
-        if not cli_paths:
-            _log.warning("Didn't get list of paths from CLI.")
-        for key in cli_paths:
-            self[key] = self._init_path(key, d, env=env)
-            if key in d:
-                d[key] = self[key]
+            # set as attribute any CLI setting that has "action": "PathAction" 
+            # in its definition in the .jsonc file
+            cli_paths = [act.dest for act in cli_obj.iter_actions() \
+                if isinstance(act, cli.PathAction)]
+            if not cli_paths:
+                _log.warning("Didn't get list of paths from CLI.")
+            for key in cli_paths:
+                self[key] = self._init_path(key, d, env=env)
+                if key in d:
+                    d[key] = self[key]
 
-        # set root directory for TempDirManager
-        if not getattr(self, 'TEMP_DIR_ROOT', ''):
-            if 'MDTF_TMPDIR' in env:
-                self.TEMP_DIR_ROOT = env['MDTF_TMPDIR']
-            else:
-                # default to writing temp files in working directory
-                self.TEMP_DIR_ROOT = self.WORKING_DIR
+            # set root directory for TempDirManager
+            if not getattr(self, 'TEMP_DIR_ROOT', ''):
+                if 'MDTF_TMPDIR' in env:
+                    self.TEMP_DIR_ROOT = env['MDTF_TMPDIR']
+                else:
+                    # default to writing temp files in working directory
+                    self.TEMP_DIR_ROOT = self.WORKING_DIR
 
     def _init_path(self, key, d, env=None):
         if self._unittest: # use in unit testing only

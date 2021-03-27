@@ -223,7 +223,9 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         self._id = 0
         self.id_number = itertools.count(start=1) # IDs for PODs, vars
         self.strict = config.get('strict', False)
-        self.attrs = util.coerce_to_dataclass(case_dict, self._AttributesClass, init=True)
+        self.attrs = util.coerce_to_dataclass(
+            case_dict, self._AttributesClass, init=True
+        )
         self.pods = case_dict.get('pod_list', [])
         # data_key -> local path of successfully fetched data
         self.local_data = dict()
@@ -1330,6 +1332,71 @@ class OnTheFlyDirectoryHierarchyQueryMixin(
             _log.info("Directory crawl found %d files.", len(df))
         return df
 
+FileGlobTuple = collections.namedtuple(
+    'FileGlobTuple', 'name glob attrs'
+)
+FileGlobTuple.__doc__ = """
+    Class representing one file glob pattern. 'attrs' is a dict containing the
+    data catalog values that will be associated with all files found using 'glob'.
+    'name' is used for logging only.
+"""
+
+class OnTheFlyGlobQueryMixin(
+    OnTheFlyFilesystemQueryMixin, metaclass=util.MDTFABCMeta
+):
+    """Mixin that creates an intake_esm.esm_datastore catalog on-the-fly by 
+    searching for files with (python's implementation of) the shell 
+    :py:mod:`glob` syntax.
+
+    We still invoke \_FileRegexClass to parse the paths, but the expected use 
+    case is that this will be the trivial regex (matching everything, with no
+    labeled match groups), since the file selection logic is being handled by 
+    the globs. If you know your data is stored according to some relevant 
+    structure, you should use :class:`OnTheFlyDirectoryHierarchyQueryMixin`
+    instead.
+    """
+    @abc.abstractmethod
+    def iter_globs(self):
+        """Iterator returning :class:`FileGlobTuple` instances. The generated 
+        catalog contains the union of the files found by each of the globs.
+        """
+        pass
+
+    def iter_files(self, rel_path_glob):
+        """Generator that yields instances of \_FileRegexClass generated from 
+        relative paths of files in CATALOG_DIR. Only paths that match the regex
+        in \_FileRegexClass are returned.
+        """
+        path_offset = len(os.path.join(self.attrs.CASE_ROOT_DIR, ""))
+        for path in glob.iglob(os.path.join(self.CATALOG_DIR, rel_path_glob),
+            recursive=True):
+            yield self._FileRegexClass.from_string(path, path_offset)
+
+    def generate_catalog(self):
+        """Build the catalog from the files returned from the set of globs 
+        provided by :meth:`rel_path_globs`.
+        """
+        catalog_df = pd.DataFrame(dtype='object')
+        for glob_tuple in self.iter_globs():
+            # DataFrame constructor must be passed list, not just an iterable
+            df = pd.DataFrame(
+                list(self.iter_files(glob_tuple.glob)), 
+                dtype='object'
+            )
+            if len(df) == 0:
+                _log.critical("No files found for '%s' with pattern '%s'.",
+                    glob_tuple.name, glob_tuple.glob)
+                raise AssertionError((f"No files found for '{glob_tuple.name}' "
+                    f"with pattern '{glob_tuple.glob}'."))
+            else:
+                _log.info("%d files found for '%s'.", len(df), glob_tuple.name)
+            
+            # add catalog attributes specific to this set of files
+            for k,v in glob_tuple.attrs.items():
+                df[k] = v
+            catalog_df = catalog_df.append(df)
+        return catalog_df
+
 class LocalFetchMixin(AbstractFetchMixin):
     """Mixin implementing data fetch for files on a locally mounted filesystem. 
     No data is transferred; we assume that xarray can open the paths directly.
@@ -1387,6 +1454,3 @@ class SingleLocalFileDataSource(LocalFileDataSource):
                 "Requested multiple files when one was expected:", data_key
             )
         return super(SingleLocalFileDataSource, self).remote_data(data_key)
-
-
-# IMPLEMENTATION CLASSES ======================================================

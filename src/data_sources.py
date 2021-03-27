@@ -3,6 +3,7 @@ implemented in src/data_manager.py, selected by the user via  ``--data_manager``
 """
 import os
 import dataclasses
+import itertools
 from src import util, core, diagnostic, preprocessor, cmip6
 from src import data_manager as dm
 import pandas as pd
@@ -104,6 +105,164 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
     def CATALOG_DIR(self):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
+
+# ----------------------------------------------------------------------------
+
+class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
+    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
+    look up and apply edits to metadata that are stored in 
+    :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
+    of :class:`ExplicitFileDataSource`.
+    """
+    def __init__(self, data_mgr, pod):
+        assert isinstance(data_mgr, ExplicitFileDataSource)
+        super(MetadataRewritePreprocessor, self).__init__(data_mgr, pod)
+
+        # make lookup table to map VarlistEntry ids to metadata we need to alter
+        self.id_lut = dict()
+        for var in pod.iter_vars(active=True):
+            new_metadata = util.ConsistentDict()
+            for data_key in var.remote_data.values():
+                glob_id = data_mgr.df['glob_id'].loc[data_key]
+                entry = data_mgr._config[glob_id]
+                new_metadata.update(entry.metadata)
+            self.id_lut[var.id] = new_metadata
+
+    def process(self, var):
+        """Before processing *var*, update attrs on the 
+        :class:`~diagnostic.VarlistEntry` with the new metadata values that were
+        specified in :class:`ExplicitFileDataSource`\'s config file.
+        """
+        for k, v in self.id_lut[var.id]:
+            if k in var.attrs:
+                if v != var.attrs[k]:
+                    _log.info(("Changing attr '%s' of %s from '%s' to user-"
+                        "requested value '%s'."), k, var.full_name, var.attrs[k], v)
+                else:
+                    _log.debug(("Attr '%s' of %s already has user-requested "
+                        "value '%s'; not changing."), k, var.full_name, v)
+            else:
+                _log.debug(("Setting undefined attr '%s' of %s to user-requested "
+                        "value '%s'."), k, var.full_name, v)
+            var.attrs[k] = v
+        super(MetadataRewritePreprocessor, self).process(var)
+
+dummy_regex = util.RegexPattern(
+    r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
+    """,
+    input_field="remote_path",
+    match_error_filter=ignore_non_nc_regex
+)
+@util.regex_dataclass(dummy_regex)
+@util.mdtf_dataclass
+class GlobbedDataFile():
+    """Applies a trivial regex to the paths returned by the glob."""
+    dummy_group: str = util.MANDATORY
+    remote_path: str = util.MANDATORY
+
+@util.mdtf_dataclass
+class ExplicitFileDataSourceConfigEntry():
+    glob_id: int = 0
+    pod_name: str = util.MANDATORY
+    name: str = util.MANDATORY
+    glob: str = util.MANDATORY
+    metadata: dict = dataclasses.field(default_factory=dict) 
+
+    @property
+    def full_name(self):
+        return '<' + self.pod_name+ '.' + self.name + '>'
+
+    @classmethod
+    def from_struct(cls, pod_name, var_name, v_data):
+        if isinstance(v_data, dict):
+            glob = v_data.get('files', "")
+            metadata = v_data.get('metadata', dict())
+        else:
+            glob = v_data
+            metadata = dict()
+        return cls(
+            pod_name = pod_name, name = var_name, 
+            glob = glob, metadata = metadata
+        )
+
+    def to_file_glob_tuple(self):
+        return dm.FileGlobTuple(
+            name=self.full_name, glob=self.glob,
+            attrs={
+                'glob_id': self.glob_id, 
+                'pod_name': self.pod_name, 'name': self.name
+            }
+        )
+
+@util.mdtf_dataclass
+class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
+    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+    # FIRSTYR: str
+    # LASTYR: str
+    # date_range: util.DateRange
+    # CASE_ROOT_DIR: str
+    convention: str = "Null" # hard-code naming convention
+    config_file: str = util.MANDATORY
+
+    def __post_init__(self):
+        """Validate user input.
+        """
+        super(ExplicitFileDataAttributes, self).__post_init__()
+
+        if self.convention != "Null":
+            _log.debug("Received incompatible convention '%s'; setting to 'Null.", 
+                self.convention)
+            self.convention = "Null"
+
+class ExplicitFileDataSource(
+    dm.OnTheFlyGlobQueryMixin, dm.LocalFetchMixin, dm.DataframeQueryDataSourceBase
+):
+    """DataSource for dealing data in a regular directory hierarchy on a 
+    locally mounted filesystem. Assumes data for each variable may be split into
+    several files according to date, with the dates present in their filenames.
+    """
+    _FileRegexClass = GlobbedDataFile
+    _AttributesClass = ExplicitFileDataAttributes
+    _DiagnosticClass = diagnostic.Diagnostic
+    _PreprocessorClass = MetadataRewritePreprocessor
+
+    def __init__(self, case_dict):
+        self.catalog = None
+        self._config = dict()
+        self._glob_id = itertools.count(start=1) # IDs for globs
+
+        super(ExplicitFileDataSource, self).__init__(case_dict)
+
+        # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
+        # objects and store in self._config
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'config_file'))
+        config = util.read_json(self.attrs.config_file)
+        self.parse_config(config)
+
+    @property
+    def CATALOG_DIR(self):
+        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
+        return self.attrs.CASE_ROOT_DIR
+
+    def parse_config(self, config_d):
+        """Parse contents of JSON config file into a list of 
+        :class`ExplicitFileDataSourceConfigEntry` objects.
+        """
+        for pod_name, v_dict in config_d.items():
+            for v_name, v_data in v_dict.items():
+                entry = ExplicitFileDataSourceConfigEntry.from_struct(
+                    pod_name, v_name, v_data)
+                entry.glob_id = next(self._glob_id)
+                self._config[entry.glob_id] = entry
+        # don't bother to validate here -- if we didn't specify files for all 
+        # vars it'll manifest as a failed query & be logged as error there.
+
+    def iter_globs(self):
+        """Iterator returning :class:`FileGlobTuple` instances. The generated 
+        catalog contains the union of the files found by each of the globs.
+        """
+        for entry in self._config.values():
+            yield entry.to_file_glob_tuple()
 
 # ----------------------------------------------------------------------------
 

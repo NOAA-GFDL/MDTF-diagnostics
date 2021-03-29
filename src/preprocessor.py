@@ -217,14 +217,14 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
                 standard_name = self._rate_d[std_name],
-                units = units.to_cfunits(v.units) / self._liquid_water_density
+                units = units.to_cfunits(v.units) * self._liquid_water_density
             )
         elif std_name in self._flux_d:
             # requested flux, so add alternate for rate
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
                 standard_name = self._flux_d[std_name],
-                units = units.to_cfunits(v.units) * self._liquid_water_density
+                units = units.to_cfunits(v.units) / self._liquid_water_density
             )
         
         translate = core.VariableTranslator()

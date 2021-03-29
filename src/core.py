@@ -594,25 +594,33 @@ class Fieldlist():
         d['lut'].update(temp_d)
         return cls(**d)
 
-    def to_CF(self, name):
+    def to_CF(self, var_or_name):
         """Returns :class:`FieldlistEntry` for the variable having the given 
         name in this convention.
         """
-        return self.entries[name]
+        if hasattr(var_or_name, 'name'):
+            return self.entries[var_or_name.name]
+        else:
+            return self.entries[var_or_name]
 
-    def to_CF_name(self, name):
+    def to_CF_name(self, var_or_name):
         """Like :meth:`to_CF`, but only return the CF standard name, given the 
         name in this convention.
         """
-        return self.to_CF(name).standard_name
+        return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, standard_name, axes_set=None):
+    def from_CF(self, var_or_name, axes_set=None):
         """Look up :class:`FieldlistEntry` corresponding to the given standard 
         name, optionally providing an axes_set to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be 
         expanded with more ways to uniquely identify variable (eg cell methods).
         """
+        if hasattr(var_or_name, 'standard_name'):
+            standard_name = var_or_name.standard_name
+        else:
+            standard_name = var_or_name
+    
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
                 f"convention '{self.name}'."))
@@ -634,11 +642,11 @@ class Fieldlist():
 
         return copy.deepcopy(fl_entry)
 
-    def from_CF_name(self, standard_name, axes_set=None):
+    def from_CF_name(self, var_or_name, axes_set=None):
         """Like :meth:`from_CF`, but only return the variable's name in this 
         convention.
         """
-        return self.from_CF(standard_name, axes_set=axes_set).name
+        return self.from_CF(var_or_name, axes_set=axes_set).name
 
     def translate_coord(self, coord):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding 
@@ -701,26 +709,34 @@ class Fieldlist():
             name=new_name, coords=(new_dims + new_scalars), convention=self.name
         )
 
-class NullTranslationFieldlist():
+class NullTranslationFieldlist(util.Singleton):
     """Class which partially implements the :class:`Fieldlist` interface but 
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from 
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
     """
-    def to_CF(self, name):
+    def __init__(self):
+        # only a Singleton to ensure that we only log this message once
+        _log.info('Variable name translation disabled.')
+
+    def to_CF(self, var_or_name):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def to_CF_name(self, name):
+    def to_CF_name(self, var_or_name):
+        if hasattr(var_or_name, 'name'):
+            return var_or_name.name
+        else:
+            return var_or_name
+
+    def from_CF(self, var_or_name, axes_set=None):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def from_CF(self, standard_name, axes_set=None):
-        # should never get here - not called externally
-        raise NotImplementedError
-
-    def from_CF_name(self, standard_name, axes_set=None):
-        # should never get here - not called externally
-        raise NotImplementedError
+    def from_CF_name(self, var_or_name, axes_set=None):        
+        if hasattr(var_or_name, 'name'):
+            return var_or_name.name
+        else:
+            return var_or_name
 
     def translate_coord(self, coord):
         # should never get here - not called externally
@@ -796,7 +812,6 @@ class VariableTranslator(util.Singleton):
         """
         if conv_name == _NO_TRANSLATION_CONVENTION:
             # hard-coded special case: do no translation
-            _log.info('Variable name translation disabled.')
             return NullTranslationFieldlist()
         else:
             # normal case: translate according to data source's naming convention

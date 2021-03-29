@@ -114,6 +114,12 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
     of :class:`ExplicitFileDataSource`.
     """
+    _file_preproc_functions = []
+
+    @property
+    def _functions(self):
+        return preprocessor.applicable_functions()
+    
     def __init__(self, data_mgr, pod):
         assert isinstance(data_mgr, ExplicitFileDataSource)
         super(MetadataRewritePreprocessor, self).__init__(data_mgr, pod)
@@ -126,14 +132,14 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
                 glob_id = data_mgr.df['glob_id'].loc[data_key]
                 entry = data_mgr._config[glob_id]
                 new_metadata.update(entry.metadata)
-            self.id_lut[var.id] = new_metadata
+            self.id_lut[var._id] = new_metadata
 
     def process(self, var):
         """Before processing *var*, update attrs on the 
         :class:`~diagnostic.VarlistEntry` with the new metadata values that were
         specified in :class:`ExplicitFileDataSource`\'s config file.
         """
-        for k, v in self.id_lut[var.id]:
+        for k, v in self.id_lut[var._id]:
             if k in var.attrs:
                 if v != var.attrs[k]:
                     _log.info(("Changing attr '%s' of %s from '%s' to user-"
@@ -146,6 +152,10 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
                         "value '%s'."), k, var.full_name, v)
             var.attrs[k] = v
         super(MetadataRewritePreprocessor, self).process(var)
+        # print('-'*70)
+        # print(var)
+        # print(var.attrs)
+        # print('-'*70)
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
@@ -210,7 +220,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         super(ExplicitFileDataAttributes, self).__post_init__()
 
         if self.convention != "Null":
-            _log.debug("Received incompatible convention '%s'; setting to 'Null.", 
+            _log.debug("Received incompatible convention '%s'; setting to 'Null'.", 
                 self.convention)
             self.convention = "Null"
 
@@ -225,6 +235,9 @@ class ExplicitFileDataSource(
     _AttributesClass = ExplicitFileDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = MetadataRewritePreprocessor
+    
+    expt_key_cols = tuple()
+    expt_cols = expt_key_cols
 
     def __init__(self, case_dict):
         self.catalog = None

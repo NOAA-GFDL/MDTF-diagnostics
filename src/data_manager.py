@@ -1395,7 +1395,8 @@ class OnTheFlyGlobQueryMixin(
             for k,v in glob_tuple.attrs.items():
                 df[k] = v
             catalog_df = catalog_df.append(df)
-        return catalog_df
+        # need to fix repeated indices from .append()ing
+        return catalog_df.reset_index(drop=True)
 
 class LocalFetchMixin(AbstractFetchMixin):
     """Mixin implementing data fetch for files on a locally mounted filesystem. 

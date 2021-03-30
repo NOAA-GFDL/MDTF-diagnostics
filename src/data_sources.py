@@ -123,10 +123,15 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     def __init__(self, data_mgr, pod):
         assert isinstance(data_mgr, ExplicitFileDataSource)
         super(MetadataRewritePreprocessor, self).__init__(data_mgr, pod)
-
-        # make lookup table to map VarlistEntry ids to metadata we need to alter
         self.id_lut = dict()
-        for var in pod.iter_vars(active=True):
+        
+    def setup(self, data_mgr, pod):
+        """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to 
+        the set of metadata that we need to alter.
+        """
+        super(MetadataRewritePreprocessor, self).setup(data_mgr, pod)
+        
+        for var in pod.iter_vars():
             new_metadata = util.ConsistentDict()
             for data_key in var.remote_data.values():
                 glob_id = data_mgr.df['glob_id'].loc[data_key]
@@ -135,27 +140,29 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
             self.id_lut[var._id] = new_metadata
 
     def process(self, var):
-        """Before processing *var*, update attrs on the 
-        :class:`~diagnostic.VarlistEntry` with the new metadata values that were
-        specified in :class:`ExplicitFileDataSource`\'s config file.
+        """Before processing *var*, update attrs on the translation of 
+        :class:`~diagnostic.VarlistEntry` *var* with the new metadata values 
+        that were specified in :class:`ExplicitFileDataSource`\'s config file.
         """
-        for k, v in self.id_lut[var._id]:
-            if k in var.attrs:
+        tv = var.translation # abbreviate
+        for k, v in self.id_lut[tv._id].items():
+            if k in tv.attrs:
+                # type coercion
+                attr_type = type(tv.attrs[k])
+                if type(v) != attr_type:
+                    v = attr_type(v)
+                
                 if v != var.attrs[k]:
                     _log.info(("Changing attr '%s' of %s from '%s' to user-"
-                        "requested value '%s'."), k, var.full_name, var.attrs[k], v)
+                        "requested value '%s'."), k, var.full_name, tv.attrs[k], v)
                 else:
                     _log.debug(("Attr '%s' of %s already has user-requested "
                         "value '%s'; not changing."), k, var.full_name, v)
             else:
                 _log.debug(("Setting undefined attr '%s' of %s to user-requested "
                         "value '%s'."), k, var.full_name, v)
-            var.attrs[k] = v
+            tv.attrs[k] = v
         super(MetadataRewritePreprocessor, self).process(var)
-        # print('-'*70)
-        # print(var)
-        # print(var.attrs)
-        # print('-'*70)
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
@@ -211,7 +218,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
-    convention: str = "Null" # hard-code naming convention
+    convention: str = core._NO_TRANSLATION_CONVENTION # hard-code naming convention
     config_file: str = util.MANDATORY
 
     def __post_init__(self):
@@ -219,10 +226,10 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         """
         super(ExplicitFileDataAttributes, self).__post_init__()
 
-        if self.convention != "Null":
-            _log.debug("Received incompatible convention '%s'; setting to 'Null'.", 
-                self.convention)
-            self.convention = "Null"
+        if self.convention != core._NO_TRANSLATION_CONVENTION:
+            _log.debug("Received incompatible convention '%s'; setting to '%s'.", 
+                self.convention, core._NO_TRANSLATION_CONVENTION)
+            self.convention = core._NO_TRANSLATION_CONVENTION
 
 class ExplicitFileDataSource(
     dm.OnTheFlyGlobQueryMixin, dm.LocalFetchMixin, dm.DataframeQueryDataSourceBase

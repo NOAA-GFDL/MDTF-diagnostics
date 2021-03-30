@@ -471,6 +471,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for func in self.functions:
             func.edit_request(data_mgr, pod)
 
+    def setup(self, data_mgr, pod):
+        """Method to do additional configuration immediately before :meth:`process`
+        is called on each variable for *pod*.
+        """
+        pass
+
     # arguments passed to xr.open_dataset and xr.open_mfdataset
     open_dataset_kwargs = {
         "engine": "netcdf4",

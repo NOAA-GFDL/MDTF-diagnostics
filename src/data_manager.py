@@ -695,6 +695,8 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
             if not vars_to_process:
                 break # exit: processed everything or nothing active
 
+            for pod in self.iter_pods(active=True):
+                pod.preprocessor.setup(self, pod)
             for pod, v in vars_to_process:
                 try:
                     _log.info("Processing %s", v)

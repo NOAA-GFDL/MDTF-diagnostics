@@ -4,12 +4,16 @@ import os
 import sys
 import argparse
 import datetime
+import io
 import subprocess
 import signal
+import traceback
+
+from . import exceptions
+
 import logging
 import logging.config
 import logging.handlers
-
 _log = logging.getLogger(__name__)
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
@@ -99,7 +103,27 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
             err_str = "Couldn't gather log file header information."
             _log.exception(err_str)
             return "ERROR: " + err_str + "\n"
-    
+
+def _hanging_indent(str_, initial_indent, subsequent_indent):
+    """Poor man's indenter. Easier than using textwrap for this case.
+
+    Args:
+        str_ (str): String to be indented.
+        initial_indent (str): string to insert as the indent for the first 
+            line.
+        subsequent_indent (str): string to insert as the indent for all 
+            subsequent lines.
+
+    Returns:
+        Indented string.
+    """
+    lines_ = str_.splitlines()
+    lines_out = []
+    if len(lines_) > 0:
+        lines_out = lines_out + [initial_indent + lines_[0]]
+    if len(lines_) > 1:
+        lines_out = lines_out + [(subsequent_indent+l) for l in lines_[1:]]
+    return '\n'.join(lines_out)
 
 class HangingIndentFormatter(logging.Formatter):
     """:py:class:`logging.Formatter` that applies a hanging indent, making it 
@@ -124,28 +148,6 @@ class HangingIndentFormatter(logging.Formatter):
         self.header = str(header)
         self.footer = str(footer)
 
-    @staticmethod
-    def _hanging_indent(str_, initial_indent, subsequent_indent):
-        """Poor man's indenter. Easier than using textwrap for this case.
-
-        Args:
-            str_ (str): String to be indented.
-            initial_indent (str): string to insert as the indent for the first 
-                line.
-            subsequent_indent (str): string to insert as the indent for all 
-                subsequent lines.
-
-        Returns:
-            Indented string.
-        """
-        lines_ = str_.splitlines()
-        lines_out = []
-        if len(lines_) > 0:
-            lines_out = lines_out + [initial_indent + lines_[0]]
-        if len(lines_) > 1:
-            lines_out = lines_out + [(subsequent_indent+l) for l in lines_[1:]]
-        return '\n'.join(lines_out)
-
     def format(self, record):
         """Format the specified :py:class:`logging.LogRecord` as text, adding
         indentation and header/footer.
@@ -166,7 +168,7 @@ class HangingIndentFormatter(logging.Formatter):
             record.asctime = self.formatTime(record, self.datefmt)
         s = self.formatMessage(record)
         # indent the text of the log message itself
-        s = self._hanging_indent(s, '', self.indent)
+        s = _hanging_indent(s, '', self.indent)
         if self.header:
             s = self.header + s
 
@@ -177,7 +179,7 @@ class HangingIndentFormatter(logging.Formatter):
             # stack trace without populating stack_info or calling formatStack.
             if not s.endswith('\n'):
                 s = s + '\n'
-            s = s + self._hanging_indent(
+            s = s + _hanging_indent(
                 record.exc_text, 
                 self.indent, self.stack_indent
             )
@@ -186,7 +188,7 @@ class HangingIndentFormatter(logging.Formatter):
             # init) requests a stack trace?
             if not s.endswith('\n'):
                 s = s + '\n'
-            s = s + self._hanging_indent(
+            s = s + _hanging_indent(
                 self.formatStack(record.stack_info),
                 self.stack_indent, self.stack_indent
             )
@@ -251,6 +253,134 @@ class EqLevelFilter(logging.Filter):
     def filter(self, record):
         return record.levelno == self.levelno
 
+# ------------------------------------------------------------------------------
+
+class MDTFObjectLogger():
+    """Class to implement per-object logging via composition (not inheritance).
+
+    This wraps related functionalities:
+    
+    - A :py:class:`~logging.Logger` to record events affecting the parent object
+        only. This logger does not propagate events up the log heirarchy: the 
+        module-level logger should be passed if that functionality is desired. 
+        Log messages are cached in a :py:class:`~io.StringIO` buffer.
+
+    - A list for holding :py:class:`Exception` objects received by the parent 
+        object, which are prepended to the log output.
+
+    - A method :meth:`~MDTFObjectLogger.format` for formatting the contents of
+        the above into a string, along with log messages of any child objects.
+        This is intended for preparing log files (at the per-POD or per-case 
+        level); logging intended for the console should use the module loggers.
+    """
+    _parent_attr_name = 'log'
+    _log_fmt = '%(asctime)s in %(funcName)s: %(message)s'
+    _log_datefmt = '%H:%M:%S'
+    _indent = ' ' * 4
+
+    def __init__(self, log_name, display_name=None, module_logger=None):
+        self.name = log_name
+        if display_name is None:
+            self.display_name = log_name
+        else:
+            self.display_name = display_name
+        self._module_log = module_logger
+
+        # init log
+        log = logging.getLogger(log_name)
+        log.propagate = False
+        log.setLevel(logging.DEBUG)
+        if log.hasHandlers():
+            for handler in log.handlers:
+                log.removeHandler(handler)
+
+        self._log_buffer = io.StringIO()
+        handler = logging.StreamHandler(self._log_buffer)
+        formatter = logging.Formatter(fmt=self._log_fmt, datefmt=self._log_datefmt)
+        handler.setFormatter(formatter)
+        log.addHandler(handler)
+        self._log = log
+
+        # init exception recording
+        self._exceptions = []
+
+    def debug(self, msg, *args, **kwargs):
+        self._log.debug(msg, *args, **kwargs)
+        if self._module_log is not None:
+            self._module_log.debug(msg, *args, **kwargs)
+        
+    def info(self, msg, *args, **kwargs):
+        self._log.info(msg, *args, **kwargs)
+        if self._module_log is not None:
+            self._module_log.info(msg, *args, **kwargs)
+        
+    def warning(self, msg, *args, **kwargs):
+        self._log.warning(msg, *args, **kwargs)
+        if self._module_log is not None:
+            self._module_log.warning(msg, *args, **kwargs)
+        
+    def error(self, msg, *args, **kwargs):
+        self._log.error(msg, *args, **kwargs)
+        if self._module_log is not None:
+            self._module_log.error(msg, *args, **kwargs)
+    
+    def critical(self, msg, *args, **kwargs):
+        # should be handled directly by framework instead
+        raise NotImplementedError
+
+    @property
+    def has_exceptions(self):
+        return (len(self._exceptions) == 0)
+
+    def exception(self, *args):
+        # NB not just wrapping the exception() method here.
+        msg = [x for x in args if isinstance(x, str)]
+        if len(msg) > 0:
+            msg = msg[0]
+        else: 
+            msg = ''
+        exc = [x for x in args if isinstance(x, Exception)]
+        if len(exc) > 0:
+            exc = exc[0]
+            if not msg:
+                msg = f"Caught {repr(exc)}."
+        else:
+            exc = exceptions.MDTFBaseException(msg)
+        
+        self._log.exception(msg)
+        wrapped_exc = traceback.TracebackException.from_exception(exc)
+        self._exceptions.append(wrapped_exc)
+    
+    def format_exceptions(self):
+        strs_ = [''.join(exc.format()) for exc in self._exceptions]
+        strs_ = [f"*** {self.display_name} caught exception #{i+1}:\n{exc}\n" \
+            for i, exc in enumerate(strs_)]
+        return "".join(strs_)
+
+    def format(self, child_objs=None):
+        """Return contents of log buffer, as well as that of any child objects
+        in *child_objs*, as a formatted string.
+        """
+        if child_objs is None:
+            child_objs = []
+            
+        str_ = self.display_name + ':\n'
+        # list exceptions before anything else:
+        if self.has_exceptions:
+            str_ += self.format_exceptions() + '\n'
+        # then log contents:
+        str_ += self._log_buffer.getvalue().rstrip()
+        # then contents of children:
+        for child in child_objs:
+            str_ += '\n'
+            child_log = getattr(child, self._parent_attr_name, '<No logger>')
+            if isinstance(child_log, MDTFObjectLogger):
+                str_ += child_log.format()
+            else:
+                str_ += f"<{child} log placeholder>\n"
+        return _hanging_indent(str_, '', self._indent)
+
+# ------------------------------------------------------------------------------
 
 def git_info():
     """Get the current git branch, hash, and list of uncommitted files, if 
@@ -292,8 +422,6 @@ def git_info():
     if not git_hash:
         git_hash = "<couldn't get git hash>"
     return (git_branch, git_hash, git_dirty)
-
-# ------------------------------------------------------------------------------
 
 def signal_logger(caller_name, signum=None, frame=None):
     """Lookup signal name from number and write to log.

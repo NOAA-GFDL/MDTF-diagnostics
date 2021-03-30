@@ -4,31 +4,10 @@ imports.
 import os
 import errno
 from subprocess import CalledProcessError
-import traceback
 
 import logging
 _log = logging.getLogger(__name__)
 
-class ExceptionQueue(object):
-    """Class to retain information about exceptions that were raised, for later
-    output.
-    """
-    def __init__(self):
-        self._queue = []
-
-    @property
-    def is_empty(self):
-        return (len(self._queue) == 0)
-
-    def log(self, exc, exc_to_chain=None):
-        wrapped_exc = traceback.TracebackException.from_exception(exc)
-        self._queue.append(wrapped_exc)
-
-    def format(self):
-        strs_ = [''.join(exc.format()) for exc in self._queue]
-        strs_ = [f"***** Caught exception #{i+1}:\n{exc}\n" \
-            for i, exc in enumerate(strs_)]
-        return "".join(strs_)
 
 def exit_on_exception(exc, msg=None):
     """Prints information about a fatal exception to the console beofre exiting.
@@ -43,8 +22,6 @@ def exit_on_exception(exc, msg=None):
     if msg:
         print(msg)
     exit(1)
-
-# -----------------------------------------------------------------
 
 class TimeoutAlarm(Exception):
     """Dummy exception raised if a subprocess times out."""

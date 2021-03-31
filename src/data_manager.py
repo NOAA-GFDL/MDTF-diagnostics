@@ -223,7 +223,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
         # name: str
         # _parent: object
-        # log = util.MDTFObjectLoggerWrapper 
+        # log = util.MDTFObjectLogger 
         super(DataSourceBase, self).__init__(
             name=case_dict.get('CASENAME', '<Untitled case>'),
             _parent=parent
@@ -906,7 +906,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         """Return tuple of row indices: this implementation's data_key."""
         return tuple(group_df.index.tolist())
 
-    def _check_group_daterange(self, group_df, log=self.log):
+    def _check_group_daterange(self, group_df, log=_log):
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
@@ -926,13 +926,15 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             return sorted_df
         except ValueError:
             self._query_error_logger(
-                "Noncontiguous or malformed date range in files:", data_key
+                "Noncontiguous or malformed date range in files:", data_key,
+                log=log
             )
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                 "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
-            self._query_error_logger(f"Caught exception {repr(exc)}:", data_key)
+            self._query_error_logger(f"Caught exception {repr(exc)}:", data_key,
+                log=log)
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
@@ -961,7 +963,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         for expt_key, group in expt_groups:
             group = self._check_group_daterange(group, log=var.log)
             if group.empty:
-                var.log.debug('Expt_key %s eliminated by _check_group_daterange', expt_key)
+                var.log.debug('Expt_key %s eliminated by _check_group_daterange', 
+                    expt_key)
                 continue
             group = self._query_group_hook(group)
             if group.empty:
@@ -972,7 +975,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 expt_key, data_key, var.full_name)
             var.remote_data[expt_key] = data_key
 
-    def _query_error_logger(self, msg, data_key, logger=self.log):
+    def _query_error_logger(self, msg, data_key, log=_log):
         """Log debugging message or raise an exception, depending on if we're
         in strict mode.
         """
@@ -984,7 +987,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         if self.strict:
             raise util.DataQueryError(err_str, data_key)
         else:
-            logger.warning(err_str)
+            log.warning(err_str)
 
     # --------------------------------------------------------------
 
@@ -1444,7 +1447,8 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         for data_key in var.remote_data.values():
             if len(data_key) != 1:
                 self._query_error_logger(
-                    "Query found multiple files when one was expected:", data_key
+                    "Query found multiple files when one was expected:", 
+                    data_key, log=var.log
                 )
 
     def remote_data(self, data_key):
@@ -1454,6 +1458,7 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         """
         if util.is_iterable(data_key) and len(data_key) != 1:
             self._query_error_logger(
-                "Requested multiple files when one was expected:", data_key
+                "Requested multiple files when one was expected:", data_key,
+                log=self.log
             )
         return super(SingleLocalFileDataSource, self).remote_data(data_key)

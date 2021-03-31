@@ -91,7 +91,7 @@ class TestVariableTranslator(unittest.TestCase):
                 }
             }
         }
-        varlist = diagnostic.Varlist.from_struct(dummy_varlist)
+        varlist = diagnostic.Varlist.from_struct(dummy_varlist, parent=None)
         ve = varlist.vars[0]
         translate = core.VariableTranslator().get_convention('Null')
         tve = translate.translate(ve)

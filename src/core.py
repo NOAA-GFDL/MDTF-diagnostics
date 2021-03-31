@@ -287,14 +287,16 @@ class MDTFObjectBase():
         # init object-level logger
         self.log = None # overwritten below; here so linter doesn't complain
         _log_name = f"{self.name}_{self._id}".replace('.', '_')
-        self._log_name = f"{self._parent._log_name}.{_log_name}"
+        _parent_log_name = getattr(self._parent, '_log_name', util.OBJ_LOG_ROOT)
+        self._log_name = f"{_parent_log_name}.{_log_name}"
 
         old_log_class = logging.getLoggerClass()
-        logging.setLoggerClass(util.MDTFObjectLoggerWrapper)
+        logging.setLoggerClass(util.MDTFObjectLogger)
         log = logging.getLogger(self._log_name)
         logging.setLoggerClass(old_log_class)
         setattr(self, util.OBJ_LOG_ATTR_NAME, log)
 
+# -----------------------------------------------------------------------------
 
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
@@ -735,7 +737,8 @@ class Fieldlist():
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry, 
-            name=new_name, coords=(new_dims + new_scalars), convention=self.name
+            name=new_name, coords=(new_dims + new_scalars), 
+            convention=self.name, log=var.log
         )
 
 class NullTranslationFieldlist(util.Singleton):
@@ -784,7 +787,8 @@ class NullTranslationFieldlist(util.Singleton):
         return util.coerce_to_dataclass(
             var, TranslatedVarlistEntry, 
             convention=_NO_TRANSLATION_CONVENTION,
-            coords=coords_copy
+            coords=coords_copy,
+            log=var.log
         )
 
 class VariableTranslator(util.Singleton):

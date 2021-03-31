@@ -273,7 +273,7 @@ class NameMatchFilter(logging.Filter):
 OBJ_LOG_ATTR_NAME = 'log'
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
 
-class MDTFObjectLoggerWrapper(logging.Logger):
+class MDTFObjectLogger(logging.Logger):
     """This class wraps functionality for use by :class:`MDTFObjectLoggerMixin`:
 
     - A :py:class:`~logging.Logger` to record events affecting the parent object
@@ -284,38 +284,38 @@ class MDTFObjectLoggerWrapper(logging.Logger):
         object.
     """
     def __init__(self, name):
-        super(MDTFObjectLoggerWrapper, self).__init__(name)
+        super(MDTFObjectLogger, self).__init__(name)
         self._module_log = None
         # init exception recording
         self._exceptions = []
 
     def log(self, level, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).log(level, msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).log(level, msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.log(level, msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).debug(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).debug(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.debug(msg, *args, **kwargs)
         
     def info(self, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).info(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).info(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.info(msg, *args, **kwargs)
         
     def warning(self, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).warning(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).warning(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.warning(msg, *args, **kwargs)
         
     def error(self, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).error(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).error(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.error(msg, *args, **kwargs)
     
     def critical(self, msg, *args, **kwargs):
-        super(MDTFObjectLoggerWrapper, self).critical(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).critical(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.critical(msg, *args, **kwargs)
 
@@ -330,7 +330,7 @@ class MDTFObjectLoggerWrapper(logging.Logger):
         if msg and exc is None:
             exc = exceptions.MDTFBaseException(msg)
         
-        super(MDTFObjectLoggerWrapper, self).exception(msg, *args, **kwargs)
+        super(MDTFObjectLogger, self).exception(msg, *args, **kwargs)
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 

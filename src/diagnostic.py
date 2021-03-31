@@ -118,7 +118,7 @@ VarlistEntryStatus = util.MDTFIntEnum(
 )
 
 @util.mdtf_dataclass
-class VarlistEntry(data_model.DMVariable, core.MDTFObjectBase, 
+class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable, 
     _VarlistGlobalSettings, util.MDTFObjectLoggerMixin):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
@@ -132,7 +132,7 @@ class VarlistEntry(data_model.DMVariable, core.MDTFObjectBase,
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
-    # log = util.MDTFObjectLoggerWrapper 
+    # log = util.MDTFObjectLogger 
     # name: str                    # fields inherited from data_model.DMVariable
     # attrs: dict
     # standard_name: str
@@ -156,7 +156,12 @@ class VarlistEntry(data_model.DMVariable, core.MDTFObjectBase,
     active: bool = dc.field(default=util.NOTSET, compare=False)
 
     def __post_init__(self, coords=None):
-        super(VarlistEntry, self).__post_init__(coords)
+        # inherited from two dataclasses, so need to call post_init on each directly
+        core.MDTFObjectBase.__post_init__(self)
+        # set up log (MDTFObjectLoggerMixin)
+        self.init_log(module_logger=_log)
+        data_model.DMVariable.__post_init__(self, coords)
+
         # (re)initialize mutable fields here so that if we copy VE (eg with .replace)
         # the fields on the copy won't point to the same object as the fields on
         # the original.
@@ -165,9 +170,6 @@ class VarlistEntry(data_model.DMVariable, core.MDTFObjectBase,
         self.local_data = []
         if self.active == util.NOTSET:
             self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
-
-        # set up log (MDTFObjectLoggerMixin)
-        self.init_log(module_logger=_log)
 
         # env_vars
         if not self.env_var:
@@ -444,7 +446,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
-    # log = util.MDTFObjectLoggerWrapper 
+    # log = util.MDTFObjectLogger 
     long_name: str = ""
     description: str = ""
     convention: str = "CF"

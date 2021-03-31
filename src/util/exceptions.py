@@ -33,6 +33,23 @@ class MDTFBaseException(Exception):
     during the framework's operation."""
     pass
 
+class MDTFPropagatedException(MDTFBaseException):
+    """Exception passed between members of the object hierarchy when a parent 
+    object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to 
+    deactivate its children.
+    """
+    def __init__(self, parent_exc, parent):
+        self.exc = parent_exc
+        self.parent = parent
+
+    def __str__(self):
+        if self.exc is None:
+            return (f"Deactivated {self.parent.class_name} due to failure of all "
+                f"child objects.")
+        else:
+            return (f"Received {repr(self.exc)} from deactivation of parent "
+                f"{self.parent.class_name}.")
+
 class MDTFFileNotFoundError(FileNotFoundError, MDTFBaseException):
     """Wrapper for :py:class:`FileNotFoundError` which handles error codes so we
     don't have to remember to import :py:mod:`errno` everywhere.

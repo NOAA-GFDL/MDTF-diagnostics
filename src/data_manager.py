@@ -91,7 +91,7 @@ class AbstractFetchMixin(abc.ABC):
 
 class AbstractDataSource(abc.ABC):
     @abc.abstractmethod
-    def __init__(self, case_dict): pass
+    def __init__(self, case_dict, parent): pass
 
     @abc.abstractmethod
     def query_dataset(self, var): 
@@ -162,8 +162,6 @@ class AbstractDataSource(abc.ABC):
 
 # --------------------------------------------------------------------------
 
-PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
-
 @util.mdtf_dataclass
 class DataSourceAttributesBase():
     """Class defining attributes that any DataSource needs to specify:
@@ -207,6 +205,8 @@ class DataSourceAttributesBase():
                 f"for {self.__class__.__name__}."))
         self.convention = translate.get_convention_name(self.convention)
 
+PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
+MAX_DATASOURCE_ITERS = 5
 
 class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin, 
     AbstractDataSource, metaclass=util.MDTFABCMeta):
@@ -224,8 +224,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # name: str
         # _parent: object
         # log = util.MDTFObjectLogger 
+        # status: ObjectStatus
         super(DataSourceBase, self).__init__(
-            name=case_dict.get('CASENAME', '<Untitled case>'),
+            name=case_dict['CASENAME'],
             _parent=parent
         )
         # configure paths
@@ -250,7 +251,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         self.attrs = util.coerce_to_dataclass(
             case_dict, self._AttributesClass, log=self.log
         )
-        self.pods = case_dict.get('pod_list', [])
+        self.pods = dict.fromkeys(case_dict.get('pod_list', []))
         # data_key -> local path of successfully fetched data
         self.local_data = dict()
         # VarlistEntry _id -> list of data_keys for which preprocessing failed
@@ -269,11 +270,15 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
 
     @property
-    def failed(self):
-        return not self.log.has_exceptions
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        return self.pods.values()
 
-    def iter_pods(self, active=None):
-        """Generator iterating over all PODs associated with this case.
+    def iter_vars(self, active=None, pod_active=None):
+        """Iterator over all :class:~diagnostic.VarlistEntry`\s (grandchildren)
+        associated with this case. Returns namedtuples of the 
+        :class:`~diagnostic.Diagnostic` and :class:~diagnostic.VarlistEntry` 
+        objects corresponding to the POD and its variable, respectively.
 
         Args:
             active: bool or None, default None. Selects subset of PODs which are
@@ -285,115 +290,41 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 - active = None: iterate over both active and inactive PODs.
 
         """
-        if active is None:
-            # default: all pods
-            yield from self.pods.values()
-        else:
-            # either all active or inactive pods
-            yield from filter(
-                (lambda p: p.active == active), self.pods.values()
-            )
+        def _get_kwargs(active_):
+            if active_ is None: 
+                return {'status': None}
+            if active_:
+                return {'status': core.ObjectStatus.ACTIVE}
+            else:
+                return {'status_neq': core.ObjectStatus.ACTIVE}
 
-    def iter_vars(self, active=None, active_pods=True):
-        """Generator iterating over all VarlistEntries in all PODs associated 
-        with this case.
-
-        Args:
-            active: bool or None, default None. Selects subset of VarlistEntries
-                which are returned, *after* selecting a subset of PODs based on
-                active_pods.
-
-                - active = True: only iterate over currently active VarlistEntries.
-                - active = False: only iterate over inactive VarlistEntries 
-                    (Either alternates which have not yet been considered, or
-                    variables which have experienced an error during query-fetch.)
-                - active = None: iterate over all VarlistEntries.
-
-            active_pods: bool or None, default True. Selects subset of PODs which 
-                are returned.
-
-                - active = True: only iterate over currently active PODs.
-                - active = False: only iterate over inactive PODs (PODs which
-                    have experienced an error during query-fetch.)
-                - active = None: iterate over both active and inactive PODs.
-
-        """
-        for p in self.iter_pods(active=active_pods):
-            yield from p.iter_vars(active=active)
-
-    def iter_pod_vars(self, active=None, active_pods=True):
-        """Generator similar to :meth:`DataSourceBase.iter_vars`, but returns a
-        namedtuple of the :class:`~diagnostic.Diagnostic` and 
-        :class:~diagnostic.VarlistEntry` objects corresponding to the POD and 
-        its variable, respectively.
-
-        Arguments are identical to :meth:`DataSourceBase.iter_vars`.
-        """
-        for p in self.iter_pods(active=active_pods):
-            for v in p.iter_vars(active=active):
+        pod_kwargs = _get_kwargs(pod_active)
+        var_kwargs = _get_kwargs(active)
+        for p in self.iter_children(**pod_kwargs):
+            for v in p.iter_children(**var_kwargs):
                 yield PodVarTuple(pod=p, var=v)
-
-    def update_active_pods(self):
-        # logic differs from VarlistEntry->POD propagation
-        # because POD is active if & only if it hasn't failed
-        self.log.debug("Updating active PODs for CASENAME '%s'", self.name)
-        if self.failed:
-            self.deactivate_if_failed()
-            return
-        for pod in self.iter_pods(active=True):
-            pod.update_active_vars()
-        self.deactivate_if_failed()
-
-    def deactivate_if_failed(self):
-        """Deactivate this DataSource if all requested PODs have failed, and
-        deactivate all PODs for this DataSource if the DataSource has failed 
-        through a non-POD-specific mechanism.
-        """
-        # logic differs from VarlistEntry->POD propagation
-        # because POD is active if & only if it hasn't failed
-        if not any(self.iter_pods(active=True)):
-            try:
-                raise util.GenericDataSourceError((f"No active PODs remaining "
-                    f"for CASENAME {self.name}."))
-            except Exception as exc:
-                self.log.exception("", exc=exc)
-
-        if self.failed:
-            # Originating exception will have been logged at a higher priority?
-            self.log.debug(("Execution for CASENAME '%s' couldn't be completed "
-                "successfully."), self.name)
-            for p in self.iter_pods(active=True):
-                try:
-                    raise util.GenericDataSourceError((f"Deactivating POD '{p.name}' "
-                        f"due to unrecoverable error processing CASENAME {self.name}."))
-                except Exception as exc:
-                    p.log.exception("", exc=exc)
-                p.deactivate_if_failed()
 
     # -------------------------------------
 
     def setup(self):
-        self.pods = {
-            pod_name: self._DiagnosticClass.from_config(pod_name, parent=self) \
-                for pod_name in self.pods
-        }
-        for pod in self.iter_pods():
+        for pod_name in self.pods:
+            self.pods[pod_name] = \
+                self._DiagnosticClass.from_config(pod_name, parent=self)
+        for pod in self.iter_children():
             try:
                 self.setup_pod(pod)
             except Exception as exc:
-                pod.log.exception("", exc=exc)
                 try:
                     raise util.PodConfigError((f"Caught {repr(exc)} in DataManager "
                         f"setup. Deactivating {pod.name}."), pod) from exc
                 except Exception as chained_exc:
-                    pod.log.exception("", exc=chained_exc)  
+                    pod.deactivate(chained_exc)  
                 continue
 
-        self.deactivate_if_failed()
         _log.debug('#' * 70)
-        _log.debug('Pre-query varlists for %s:', self.name)
-        for v in self.iter_vars(active=None, active_pods=None):
-            _log.debug("%s", v.debug_str())
+        _log.debug('Pre-query varlists for %s:', self.full_name)
+        for pv in self.iter_vars(active=None, pod_active=None):
+            _log.debug("%s", pv.var.debug_str())
         _log.debug('#' * 70)
 
     def setup_pod(self, pod):
@@ -413,18 +344,15 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # set up env vars
         pod.pod_env_vars.update(self.env_vars)
 
-        for v in pod.iter_vars():
+        for v in pod.iter_children():
             try:
                 self.setup_var(pod, v)
             except Exception as exc:
-                v.log.exception("", exc=exc)
                 try:
                     raise util.PodConfigError((f"Caught {repr(exc)} when configuring "
                         f"{v.full_name}; deactivating."), pod) from exc
                 except Exception as chained_exc:
-                    pod.log.exception("", exc=chained_exc)
-                v.deactivate(exc)  
-                # pod.update_active_vars() "catches" this and sets v.active=False
+                    v.deactivate(chained_exc)
                 continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
@@ -456,7 +384,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             v.log.warning("Deactivating %s due to translation failure (%s).", 
                 v.full_name, exc)
             v.deactivate(exc) 
-        v.status = diagnostic.VarlistEntryStatus.INITED
+        v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
         """Returns the absolute path of the POD's preprocessed, local copy of 
@@ -506,7 +434,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         VarlidstEntry are invalidated, deactivate it.
         """
         def _check_variable(v):
-            if v.status < diagnostic.VarlistEntryStatus.QUERIED:
+            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
                 return
             if not any(self.iter_valid_remote_data(v)):
                 # all data_keys obtained for this var during query have
@@ -523,9 +451,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         if var is None:
             # eliminate data_key for all vars (failed during fetch)
             self.failed_data[self._id].append(d_key)
-            for v in self.iter_vars(active=True):
-                v.log.debug("Eliminating data_key=%s for all vars.", d_key)
-                _check_variable(v)
+            for pv in self.iter_vars(active=True):
+                pv.var.log.debug("Eliminating data_key=%s for all vars.", d_key)
+                _check_variable(pv.var)
         else:
             # eliminate data_key for this var only (failed during preprocess)
             var.log.debug("Eliminating data_key=%s for %s.", d_key, var.full_name)
@@ -533,17 +461,11 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             _check_variable(var)
 
     def query_data(self):
-        update = True
         # really a while-loop, but limit # of iterations to be safe
-        for _ in range(5): 
-            # refresh list of active variables/PODs; find alternate vars for any
-            # vars that failed since last time.
-            if update:
-                self.update_active_pods()
-                update = False
+        for _ in range(MAX_DATASOURCE_ITERS): 
             vars_to_query = [
-                v for v in self.iter_vars(active=True) \
-                    if v.status < diagnostic.VarlistEntryStatus.QUERIED
+                pv.var for pv in self.iter_vars(active=True) \
+                    if pv.var.stage < diagnostic.VarlistEntryStage.QUERIED
             ]
             if not vars_to_query:
                 break # exit: queried everything or nothing active
@@ -557,14 +479,12 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
                         raise util.DataQueryError("No data found.", v)
-                    v.status = diagnostic.VarlistEntryStatus.QUERIED
+                    v.stage = diagnostic.VarlistEntryStage.QUERIED
                 except util.DataQueryError as exc:
-                    update = True
                     self.log.info("No data found for %s.", v.translation)
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
-                    update = True
                     self.log.exception("Caught exception querying %s: %r", 
                         v.translation, exc)
                     try:
@@ -577,18 +497,17 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataQueryError(
-                f"Too many iterations in {self.__class__.__name__}.query_data()."
+                f"Too many iterations in {self.class_name} query_data()."
             )
 
     def select_data(self):
         update = True
         # really a while-loop, but limit # of iterations to be safe
-        for _ in range(5): 
+        for _ in range(MAX_DATASOURCE_ITERS): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time.
             if update:
                 self.query_data()
-                self.update_active_pods()
                 update = False
             # this loop differs from the others in that logic isn't/can't be 
             # done on a per-variable basis, so we just try to execute
@@ -599,7 +518,6 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 # couldn't set consistent experiment attributes, so deactivate
                 # problematic pods/vars and try again
                 update = True
-                self.update_active_pods()
             except Exception as exc:
                 self.log.exception("Caught exception setting experiment: %r", exc)
                 raise exc
@@ -607,22 +525,21 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataQueryError(
-                f"Too many iterations in {self.__class__.__name__}.select_data()."
+                f"Too many iterations in {self.class_name} select_data()."
             )
 
     def fetch_data(self):
         update = True
         # really a while-loop, but limit # of iterations to be safe
-        for _ in range(5): 
+        for _ in range(MAX_DATASOURCE_ITERS): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and query them.
             if update:
                 self.select_data()
-                self.update_active_pods()
                 update = False
             vars_to_fetch = [
-                v for v in self.iter_vars(active=True) \
-                    if v.status < diagnostic.VarlistEntryStatus.FETCHED
+                pv.var for pv in self.iter_vars(active=True) \
+                    if pv.var.stage < diagnostic.VarlistEntryStage.FETCHED
             ]
             if not vars_to_fetch:
                 break # exit: fetched everything or nothing active
@@ -654,7 +571,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                         else:
                             paths = util.to_iter(self.local_data[data_key])
                             v.local_data.extend(paths)
-                    v.status = diagnostic.VarlistEntryStatus.FETCHED
+                    v.stage = diagnostic.VarlistEntryStage.FETCHED
                 except util.DataFetchError as exc:
                     update = True
                     v.log.info("Fetch failed for %s.", v)
@@ -662,7 +579,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     continue
                 except Exception as exc:
                     update = True
-                    v.log.exception("Caught exception fetching %s: %r", v, exc)
+                    self.log.exception("Caught exception fetching %s: %r", v, exc)
                     try:
                         raise util.DataFetchError(("Caught exception while "
                             f"fetching data for {v.full_name}."), v) from exc
@@ -673,7 +590,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataFetchError(
-                f"Too many iterations in {self.__class__.__name__}.fetch_data()."
+                f"Too many iterations in {self.class_name} fetch_data()."
             )
 
     def preprocess_data(self):
@@ -681,38 +598,40 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         """
         update = True
         # really a while-loop, but limit # of iterations to be safe
-        for _ in range(5): 
+        for _ in range(MAX_DATASOURCE_ITERS): 
             # refresh list of active variables/PODs; find alternate vars for any
             # vars that failed since last time and fetch them.
             if update:
                 self.fetch_data()
-                self.update_active_pods()
                 update = False
             vars_to_process = [
-                pv for pv in self.iter_pod_vars(active=True) \
-                    if pv.var.status < diagnostic.VarlistEntryStatus.PREPROCESSED
+                pv for pv in self.iter_vars(active=True) \
+                    if pv.var.stage < diagnostic.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
                 break # exit: processed everything or nothing active
 
-            for pod in self.iter_pods(active=True):
+            for pod in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 pod.preprocessor.setup(self, pod)
-            for pod, v in vars_to_process:
+            for pv in vars_to_process:
                 try:
-                    v.log.info("Processing %s", v)
-                    pod.preprocessor.process(v)
-                    v.status = diagnostic.VarlistEntryStatus.PREPROCESSED
+                    pv.var.log.info("Processing %s", pv.var)
+                    pv.pod.preprocessor.process(pv.var)
+                    pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True
-                    v.log.exception("Caught exception processing %s with data_key=%s: %r", 
-                        v, ', '.join(str(k) for k in self.iter_data_keys(v)), exc)
-                    for k in self.iter_data_keys(v):
-                        self.eliminate_data_key(k, v)
+                    self.log.exception(("Caught exception processing %s with "
+                        "data_key=%s: %r"), pv.var, 
+                        ', '.join(str(k) for k in self.iter_data_keys(pv.var)), 
+                        exc
+                    )
+                    for k in self.iter_data_keys(pv.var):
+                        self.eliminate_data_key(k, pv.var)
                     continue
         else:
             # only hit this if we don't break
             raise util.DataPreprocessError( 
-                f"Too many iterations in {self.__class__.__name__}.preprocess_data()."
+                f"Too many iterations in {self.class_name} preprocess_data()."
             )
 
     def request_data(self):
@@ -723,14 +642,11 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
         signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
         self.pre_query_and_fetch_hook()
-        self.deactivate_if_failed()
         try:
             self.preprocess_data()
         except Exception as exc:
-            self.log.exception(f"Caught DataSource-level exception: {repr(exc)}.",
-                exc=exc)
+            self.log.exception(f"Caught DataSource-level exception: %r.", exc)
         # clean up regardless of success/fail
-        self.deactivate_if_failed()
         self.post_query_and_fetch_hook()
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
@@ -755,8 +671,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
        TODO: integrate better with general Intake API.
     """
-    def __init__(self, case_dict):
-        super(DataframeQueryDataSourceBase, self).__init__(case_dict)
+    def __init__(self, case_dict, parent):
+        super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
         self.expt_keys = dict() # _id -> expt_key tuple
 
     @property
@@ -926,7 +842,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
-            self._query_error_logger(
+            self._query_error_handler(
                 "Noncontiguous or malformed date range in files:", data_key,
                 log=log
             )
@@ -934,7 +850,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                 "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
-            self._query_error_logger(f"Caught exception {repr(exc)}:", data_key,
+            self._query_error_handler(f"Caught exception {repr(exc)}:", data_key,
                 log=log)
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
@@ -976,7 +892,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 expt_key, data_key, var.full_name)
             var.remote_data[expt_key] = data_key
 
-    def _query_error_logger(self, msg, data_key, log=_log):
+    def _query_error_handler(self, msg, data_key, log=_log):
         """Log debugging message or raise an exception, depending on if we're
         in strict mode.
         """
@@ -1026,7 +942,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             var_iterator = [obj]
 
         for v in var_iterator:
-            if v.status < diagnostic.VarlistEntryStatus.QUERIED:
+            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
             for expt_key, data_key in self.iter_valid_remote_data(v):
@@ -1138,11 +1054,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         try:
             # attempt to choose same values for all PODs
             key = self._get_expt_key('pod', self, self._id)
-            for p in self.iter_pods(active=True):
+            for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 _set_expt_key(p, key)
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each POD
-            for p in self.iter_pods(active=True):
+            for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
                     key = self._get_expt_key('pod', p, self._id)
                     _set_expt_key(p, key)
@@ -1157,18 +1073,18 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # need to fetch
         try:
             # attempt to choose same values for each POD:
-            for p in self.iter_pods(active=True):
+            for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 key = self._get_expt_key('var', p, p._id)
-                for v in p.iter_vars(active=True):
+                for v in p.iter_children(status=core.ObjectStatus.ACTIVE):
                     _set_expt_key(v, key)
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each variable
-            for p, v in self.iter_pod_vars(active=True):
+            for pv in self.iter_vars(active=True):
                 try:
-                    key = self._get_expt_key('var', v, p._id)
-                    _set_expt_key(v, key)
+                    key = self._get_expt_key('var', pv.var, pv.pod._id)
+                    _set_expt_key(pv.var, key)
                 except Exception as exc:
-                    v.exception = exc
+                    pv.var.log.exception("", exc=exc)
                     continue
         
     def resolve_expt(self, expt_df, obj):
@@ -1431,9 +1347,9 @@ class LocalFileDataSource(
     locally mounted filesystem. Assumes data for each variable may be split into
     several files according to date, with the dates present in their filenames.
     """
-    def __init__(self, case_dict):
+    def __init__(self, case_dict, parent):
         self.catalog = None
-        super(LocalFileDataSource, self).__init__(case_dict)
+        super(LocalFileDataSource, self).__init__(case_dict, parent)
 
 
 class SingleLocalFileDataSource(LocalFileDataSource):
@@ -1447,7 +1363,7 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         super(SingleLocalFileDataSource, self).query_dataset(var)
         for data_key in var.remote_data.values():
             if len(data_key) != 1:
-                self._query_error_logger(
+                self._query_error_handler(
                     "Query found multiple files when one was expected:", 
                     data_key, log=var.log
                 )
@@ -1458,7 +1374,7 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         but check here just to be safe.)
         """
         if util.is_iterable(data_key) and len(data_key) != 1:
-            self._query_error_logger(
+            self._query_error_handler(
                 "Requested multiple files when one was expected:", data_key,
                 log=self.log
             )

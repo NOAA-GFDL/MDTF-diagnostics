@@ -110,12 +110,20 @@ VarlistEntryRequirement = util.MDTFEnum(
     'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', 
     module=__name__
 )
+VarlistEntryRequirement.__doc__ = """
+:class:`util.MDTFEnum` used to track whether the DataSource is required to
+provide data for the :class:`VarlistEntry`.
+"""
 
-VarlistEntryStatus = util.MDTFIntEnum(
-    'VarlistEntryStatus', 
+VarlistEntryStage = util.MDTFIntEnum(
+    'VarlistEntryStage', 
     'NOTSET INITED QUERIED FETCHED PREPROCESSED', 
     module=__name__
 )
+VarlistEntryStage.__doc__ = """
+:class:`util.MDTFIntEnum` used to track the stages of processing of a 
+:class:`VarlistEntry` carried out by the DataSource.
+"""
 
 @util.mdtf_dataclass
 class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable, 
@@ -133,8 +141,8 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     # name: str
     # _parent: object
     # log = util.MDTFObjectLogger 
-    # name: str                    # fields inherited from data_model.DMVariable
-    # attrs: dict
+    # status: ObjectStatus
+    # attrs: dict                  # fields inherited from data_model.DMVariable
     # standard_name: str
     # units: Units
     # dims: list
@@ -150,10 +158,9 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     translation: typing.Any = dc.field(default=None, compare=False)
     remote_data: util.WormDict = dc.field(default_factory=util.WormDict, compare=False)
     local_data: list = dc.field(default_factory=list, compare=False)
-    status: VarlistEntryStatus = dc.field(
-        default=VarlistEntryStatus.NOTSET, compare=False
+    stage: VarlistEntryStage = dc.field(
+        default=VarlistEntryStage.NOTSET, compare=False
     )
-    active: bool = dc.field(default=util.NOTSET, compare=False)
 
     def __post_init__(self, coords=None):
         # inherited from two dataclasses, so need to call post_init on each directly
@@ -168,8 +175,12 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         self.translation = None
         self.remote_data: util.WormDict()
         self.local_data = []
-        if self.active == util.NOTSET:
-            self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
+        # activate required vars
+        if self.status == core.ObjectStatus.NOTSET:
+            if self.requirement == VarlistEntryRequirement.REQUIRED:
+                self.status == core.ObjectStatus.ACTIVE
+            else:
+                self.status == core.ObjectStatus.INACTIVE
 
         # env_vars
         if not self.env_var:
@@ -184,8 +195,9 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             self.alternates = [vs for vs in self.alternates if vs]
 
     @property
-    def full_name(self):
-        return f"<#{self._id} {self._parent.name}.{self.name}>"
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        return [] # leaves of object hierarchy
 
     @property
     def name_in_model(self):
@@ -194,77 +206,6 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         else:
             return "(not translated)"
             # raise ValueError(f"Translation not defined for {self.name}.")
-
-    @property
-    def failed(self):
-        return self.log.has_exceptions
-
-    def deactivate(self, exc):
-        """Mark request for this variable as having failed.
-
-        .. note::
-           This doesn't manipulate the ``active`` attribute directly: that's set
-           by :meth:`~Diagnostic.update_active_vars` after activating possible
-           alternates for this variable.
-        """
-        if self.log.has_exceptions is not None:
-            raise util.MDTFBaseException(f"Var {str(self)} already deactivated.")
-        self.log.exception('', exc=exc)
-
-    @property
-    def env_vars(self):
-        """Get env var definitions for:
-
-            - The path to the preprocessed data file for this variable,
-            - The name for this variable in that data file,
-            - The names for all of this variable's coordinate axes in that file,
-            - The names of the bounds variables for all of those coordinate
-                dimensions, if provided by the data.
-        
-        """
-        if not self.active:
-            # Signal to POD's code that vars are not provided by setting 
-            # variable to the empty string
-            return {self.env_var: "", self.path_variable: ""}
-
-        assert self.dest_path
-        d = util.ConsistentDict()
-        d.update({
-            self.env_var: self.name_in_model,
-            self.path_variable: self.dest_path
-        })
-        for ax, dim in self.dim_axes.items():
-            trans_dim = self.translation.dim_axes[ax]
-            d[dim.name + _coord_env_var_suffix] = trans_dim.name
-            if trans_dim.has_bounds:
-                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
-        return d
-
-    def query_attrs(self, key_synonyms=None):
-        """Returns a dict of attributes relevant for DataSource.query_dataset()
-        (ie, which describe the variable itself and aren't specific to the 
-        MDTF implementation.)
-        """
-        if key_synonyms is None:
-            key_synonyms = dict()
-
-        def iter_query_attrs(obj):
-            """Recursive generator yielding name:value pairs for all dataclass
-            fields marked with query attribute in their metadata.
-            """
-            for f in dc.fields(obj):
-                val = getattr(obj, f.name, None)
-                if dc.is_dataclass(val):
-                    yield from iter_query_attrs(val)
-                if f.metadata.get('query', False):
-                    key = key_synonyms.get(f.name, f.name)
-                    yield (key, val)
-
-        d = util.ConsistentDict()
-        d.update(dict(iter_query_attrs(self)))
-        for dim in self.dims:
-            d.update(dict(iter_query_attrs(dim)))
-        return d
 
     @classmethod
     def from_struct(cls, global_settings_d, dims_d, name, parent, **kwargs):
@@ -345,10 +286,12 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         def _format(v):
             str_ = str(v)[1:-1]
             act_str = ('active' if v.active else 'inactive')
-            fail_str = (f"failed (exc={v.exception})" if v.failed else 'ok')
+            fail_str = (f"failed (exc={repr(v.exception)})" \
+                if v.failed else 'ok')
             trans_str = (str(v.translation) \
-                if getattr(v, 'translation', None) is not None else "(not translated)")
-            return (f"<{str_}; {act_str}:{v.status.name}, {fail_str}, "
+                if getattr(v, 'translation', None) is not None \
+                else "(not translated)")
+            return (f"<{str_}; {act_str}:{v.stage.name}, {fail_str}, "
                 f"{v.requirement}>\n    Translation: {trans_str}")
 
         s = _format(self)
@@ -356,6 +299,61 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             alt_str = ', '.join(str(vv) for vv in altvs)
             s += f"\n    Alternate set #{i+1}: [{alt_str}]"
         return s
+    
+    def query_attrs(self, key_synonyms=None):
+        """Returns a dict of attributes relevant for DataSource.query_dataset()
+        (ie, which describe the variable itself and aren't specific to the 
+        MDTF implementation.)
+        """
+        if key_synonyms is None:
+            key_synonyms = dict()
+
+        def iter_query_attrs(obj):
+            """Recursive generator yielding name:value pairs for all dataclass
+            fields marked with query attribute in their metadata.
+            """
+            for f in dc.fields(obj):
+                val = getattr(obj, f.name, None)
+                if dc.is_dataclass(val):
+                    yield from iter_query_attrs(val)
+                if f.metadata.get('query', False):
+                    key = key_synonyms.get(f.name, f.name)
+                    yield (key, val)
+
+        d = util.ConsistentDict()
+        d.update(dict(iter_query_attrs(self)))
+        for dim in self.dims:
+            d.update(dict(iter_query_attrs(dim)))
+        return d
+
+    @property
+    def env_vars(self):
+        """Get env var definitions for:
+
+            - The path to the preprocessed data file for this variable,
+            - The name for this variable in that data file,
+            - The names for all of this variable's coordinate axes in that file,
+            - The names of the bounds variables for all of those coordinate
+                dimensions, if provided by the data.
+        
+        """
+        if not self.active:
+            # Signal to POD's code that vars are not provided by setting 
+            # variable to the empty string
+            return {self.env_var: "", self.path_variable: ""}
+
+        assert self.dest_path
+        d = util.ConsistentDict()
+        d.update({
+            self.env_var: self.name_in_model,
+            self.path_variable: self.dest_path
+        })
+        for ax, dim in self.dim_axes.items():
+            trans_dim = self.translation.dim_axes[ax]
+            d[dim.name + _coord_env_var_suffix] = trans_dim.name
+            if trans_dim.has_bounds:
+                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+        return d
 
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a 
@@ -447,6 +445,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     # name: str
     # _parent: object
     # log = util.MDTFObjectLogger 
+    # status: ObjectStatus
     long_name: str = ""
     description: str = ""
     convention: str = "CF"
@@ -466,19 +465,12 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     POD_OUT_DIR = ""
     
     def __post_init__(self):
-        for k,v in self.runtime_requirements.items():
-            self.runtime_requirements[k] = util.to_iter(v)
-
+        core.MDTFObjectBase.__post_init__(self)
         # set up log (MDTFObjectLoggerMixin)
         self.init_log(module_logger=_log)
 
-    @property
-    def active(self):
-        return self.log.has_exceptions
-
-    @property
-    def failed(self):
-        return not self.log.has_exceptions
+        for k,v in self.runtime_requirements.items():
+            self.runtime_requirements[k] = util.to_iter(v)
 
     @classmethod
     def from_struct(cls, pod_name, d, parent, **kwargs):
@@ -493,8 +485,6 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
                 pod_name) from exc
         try:
             pod.varlist = Varlist.from_struct(d, parent=pod)
-            for v in pod.iter_vars():
-                v.pod_name = pod_name
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing varlist", 
                 pod_name) from exc
@@ -509,67 +499,37 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         config = core.ConfigManager()
         return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
 
-    def iter_vars(self, active=None):
-        """Generator iterating over all VarlistEntries associated with this POD.
+    @property
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        yield from self.varlist.iter_vars()
 
-        Args:
-            active: bool or None, default None. Selects subset of VarlistEntries
-               which are returned.
-
-                - active = True: only iterate over currently active VarlistEntries
-                    (variables that are currently being queried, fetched and
-                    preprocessed.)
-                - active = False: only iterate over inactive VarlistEntries 
-                    (Either alternates which have not yet been considered, or
-                    variables which have experienced an error during query-fetch.)
-                - active = None: iterate over all VarlistEntries.
-                
-        """
-        if active is None:
-            # default: all variables
-            yield from self.varlist.iter_vars()
-        else:
-            # either all active or inactive vars
-            yield from filter(
-                (lambda v: v.active == active), self.varlist.iter_vars()
-            )
-
-    def deactivate_if_failed(self):
-        """Deactivate all variables for this POD if the POD itself has failed.
-        """
-        # should be called from a hook whenever we log an exception
-        # only need to keep track of this up to pod execution
-        if self.failed:
-            # Originating exception will have been logged at a higher priority?
-            self.log.warning("Execution of POD '%s' couldn't be completed.", 
-                self.name)
-            for v in self.iter_vars():
-                v.active = False
-
-    def update_active_vars(self):
+    def child_deactivation_handler(self, level=logging.ERROR):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
-        process has failed for a VarlistEntry, try to find a set of alternate 
-        VarlistEntries. If successful, activate them; if not, raise a 
+        process has failed for a :class:`VarlistEntry`, try to find a set of 
+        alternate VarlistEntries. If successful, activate them; if not, raise a 
         :class:`PodDataError`.
         """
-        self.log.debug("Updating active vars for POD '%s'", self.name)
         if self.failed:
-            self.deactivate_if_failed()
-            return
-        old_active_vars = list(self.iter_vars(active=True))
+            # should never get here
+            raise ValueError('Active var on failed POD')
+        self.log.debug("Updating active vars for POD '%s'", self.name)
+        # loop mutates status of objects, so dump/freeze the set of objects we
+        # need to loop over 
+        old_active_vars = list(self.iter_children(status=core.ObjectStatus.ACTIVE))
         for v in old_active_vars:
             if v.failed:
                 self.log.info("Request for %s failed; finding alternate vars.", v)
-                v.active = False
                 alt_success_flag = False
-                for alts in v.iter_alternates():
-                    if any(v.failed for v in alts):
+                for alt_list in v.iter_alternates():
+                    if any(alt_v.failed for alt_v in alt_list):
+                        # skip sets of alternates where any variables have already failed
                         continue
                     # found a viable set of alternates
                     alt_success_flag = True
-                    for alt_v in alts:
-                        alt_v.active = True
+                    for alt_v in alt_list:
+                        alt_v.status = core.ObjectStatus.ACTIVE
                     break
                 if not alt_success_flag:
                     self.log.info("No alternates available for %s.", v.full_name)
@@ -577,9 +537,8 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
                         raise util.PodDataError(f"No alternates available for {v}.", 
                             self) from v.exception
                     except Exception as exc:
-                        self.log.exception("", exc=exc)
+                        self.deactivate(exc=exc, level=level)
                     continue
-        self.deactivate_if_failed()
 
     # -------------------------------------
 
@@ -634,14 +593,14 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
             "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
         })
-        for var in self.iter_vars(active=True):
+        for var in self.iter_children(status=core.ObjectStatus.ACTIVE):
             try:
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError as exc:
                 raise util.WormKeyError((f"{var.full_name} defines coordinate names "
                     f"that conflict with those previously set. (Tried to update "
                     f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
-        for var in self.iter_vars(active=False):
+        for var in self.iter_children(status_neq=core.ObjectStatus.ACTIVE):
             # define env vars for varlist entries without data. Name collisions
             # are OK in this case.
             try:

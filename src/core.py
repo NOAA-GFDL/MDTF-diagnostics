@@ -1,6 +1,7 @@
 """Common functions and classes used in multiple places in the MDTF code. 
 """
 import os
+import abc
 import collections
 import copy
 import dataclasses as dc
@@ -16,282 +17,54 @@ from src.units import Units
 import logging
 _log = logging.getLogger(__name__)
 
-class MDTFFramework(object):
-    def __init__(self, cli_obj):
-        self.code_root = cli_obj.code_root
-        self._id = 0
-        self.name = self.__class__.__name__
-        self._log_name = util.OBJ_LOG_ROOT
-        self.pod_list = []
-        self.case_list = []
-        self.cases = []
-        self.global_env_vars = dict()
-        try:
-            # load pod data
-            pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
-            # load log config
-            log_config = cli.read_config_file(
-                self.code_root, "logging.jsonc", site=cli_obj.site
-            )
-            self.configure(cli_obj, pod_info_tuple, log_config)
-        except Exception as exc:
-            wrapped_exc = traceback.TracebackException.from_exception(exc)
-            _log.critical("Framework caught exception %r", exc)
-            print(''.join(wrapped_exc.format()))
-            exit(1)
-        
-    def configure(self, cli_obj, pod_info_tuple, log_config):
-        """Wrapper for all configuration done based on CLI arguments.
-        """
-        self._cli_post_parse_hook(cli_obj)
-        self.dispatch_classes(cli_obj)
-        self.parse_mdtf_args(cli_obj, pod_info_tuple)
-        # init singletons
-        config = ConfigManager(cli_obj, pod_info_tuple, 
-            self.global_env_vars, self.case_list, log_config)
-        paths = PathManager(cli_obj)
-        self.verify_paths(config, paths)
-        _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        _ = VariableTranslator(self.code_root)
 
-        # config should be read-only from here on
-        self._post_parse_hook(cli_obj, config, paths)
-        self._print_config(cli_obj, config, paths)
+ObjectStatus = util.MDTFEnum(
+    'ObjectStatus', 
+    'NOTSET ACTIVE INACTIVE FAILED', 
+    module=__name__
+)
+ObjectStatus.__doc__ = """
+:class:`util.MDTFEnum` used to track the status of a :class:`MDTFObjectBase`:
 
-    def _cli_post_parse_hook(self, cli_obj):
-        # gives subclasses the ability to customize CLI handler after parsing
-        # although most of the work done by parse_mdtf_args
-        if cli_obj.config.get('dry_run', False):
-            cli_obj.config['test_mode'] = True
-
-    def dispatch_classes(self, cli_obj):
-        def _dispatch(setting):
-            return cli_obj.imports[setting]
-
-        self.DataSource = _dispatch('data_manager')
-        self.EnvironmentManager = _dispatch('environment_manager')
-        self.RuntimeManager = _dispatch('runtime_manager')
-        self.OutputManager = _dispatch('output_manager')
-
-    @staticmethod
-    def _populate_from_cli(cli_obj, group_nm, target_d=None):
-        if target_d is None:
-            target_d = dict()
-        for arg in cli_obj.iter_group_actions(subcommand=None, group=group_nm):
-            key = arg.dest
-            val = cli_obj.config.get(key, None)
-            if val: # assign nonempty items only
-                target_d[key] = val
-        return target_d
-
-    def parse_mdtf_args(self, cli_obj, pod_info_tuple):
-        """Parse script options returned by the CLI. For greater customizability,
-        most of the functionality is spun out into sub-methods.
-        """
-        self.parse_env_vars(cli_obj)
-        self.parse_pod_list(cli_obj, pod_info_tuple)
-        self.parse_case_list(cli_obj)
-
-    def parse_env_vars(self, cli_obj):
-        # don't think PODs use global env vars?
-        # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
-        self.global_env_vars['RGB'] = os.path.join(self.code_root,'shared','rgb')
-        # globally enforce non-interactive matplotlib backend
-        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
-        self.global_env_vars['MPLBACKEND'] = "Agg"
-
-    def parse_pod_list(self, cli_obj, pod_info_tuple):
-        pod_data = pod_info_tuple.pod_data
-        all_realms = pod_info_tuple.sorted_lists.get('realms', [])
-        pod_realms = pod_info_tuple.realm_data
-
-        args = util.to_iter(cli_obj.config.pop('pods', []), set)
-        if 'example' in args or 'examples' in args:
-            self.pod_list = [p for p in pod_data if p.startswith('example')]
-        elif 'all' in args:
-            self.pod_list = [p for p in pod_data if not p.startswith('example')]
-        else:
-            # specify pods by realm
-            realms = args.intersection(all_realms)
-            args = args.difference(all_realms) # remainder
-            for key in pod_realms:
-                if util.to_iter(key, set).issubset(realms):
-                    self.pod_list.extend(pod_realms[key])
-            # specify pods by name
-            pods = args.intersection(set(pod_data))
-            self.pod_list.extend(list(pods))
-            for arg in args.difference(set(pod_data)): # remainder:
-                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
-            # exclude examples
-            self.pod_list = [p for p in pod_data if not p.startswith('example')]
-        if not self.pod_list:
-            _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
-                " for a list of available PODs, and check your -p/--pods argument."
-                f"\nReceived --pods = {str(list(args))}"))
-            exit(1)
-
-    def parse_case_list(self, cli_obj):
-        d = cli_obj.config # abbreviate
-        if 'CASENAME' in d and d['CASENAME']:
-            # defined case from CLI
-            cli_d = self._populate_from_cli(cli_obj, 'MODEL')
-            if 'CASE_ROOT_DIR' not in cli_d and d.get('root_dir', None): 
-                # CASE_ROOT was set positionally
-                cli_d['CASE_ROOT_DIR'] = d['root_dir']
-            case_list_in = [cli_d]
-        else:
-            case_list_in = util.to_iter(cli_obj.file_case_list)
-        case_list = []
-        for i, case_d in enumerate(case_list_in):
-            case_list.append(self.parse_case(i, case_d, cli_obj))
-        self.case_list = [case for case in case_list if case]
-        if not self.case_list:
-            _log.critical(("ERROR: no valid entries in case_list. Please specify "
-                "model run information.\nReceived:"
-                f"\n{util.pretty_print_json(case_list_in)}"))
-            exit(1)
-
-    def parse_case(self, n, d, cli_obj):
-        # really need to move this into init of DataManager
-        if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
-            d['CASE_ROOT_DIR'] = d.pop('root_dir')
-        case_convention = d.get('convention', '')
-        if case_convention:
-            d['convention'] = case_convention
-
-        if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
-            _log.warning(("Need to specify either CASENAME or model/experiment "
-                "in caselist entry %s, skipping."), n+1)
-            return None
-        _ = d.setdefault('model', d.get('convention', ''))
-        _ = d.setdefault('experiment', '')
-        _ = d.setdefault('CASENAME', '{}_{}'.format(d['model'], d['experiment']))
-
-        for field in ['FIRSTYR', 'LASTYR', 'convention']:
-            if not d.get(field, None):
-                _log.warning(("No value set for %s in caselist entry %s, "
-                    "skipping."), field, n+1)
-                return None
-        # if pods set from CLI, overwrite pods in case list
-        d['pod_list'] = self.set_case_pod_list(d, cli_obj)
-        return d
-
-    def set_case_pod_list(self, case, cli_obj):
-        # if pods set from CLI, overwrite pods in case list
-        # already finalized self.pod-list by the time we get here
-        if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
-            return self.pod_list
-        else:
-            return case['pod_list']
-
-    def verify_paths(self, config, p):
-        # needs to be here, instead of PathManager, because we subclass it in 
-        # NOAA_GFDL
-        keep_temp = config.get('keep_temp', False)
-        # clean out WORKING_DIR if we're not keeping temp files:
-        if os.path.exists(p.WORKING_DIR) and not \
-            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
-            shutil.rmtree(p.WORKING_DIR)
-
-        util.check_dir(p, 'CODE_ROOT', create=False)
-        util.check_dir(p, 'OBS_DATA_ROOT', create=False)
-        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
-        util.check_dir(p, 'WORKING_DIR', create=True)
-
-    def _post_parse_hook(self, cli_obj, config, paths):
-        # init other services
-        pass
-
-    def _print_config(self, cli_obj, config, paths):
-        """Log end result of parsing package settings. This is only for the user's
-        benefit; a machine-readable version which is usable for 
-        provenance/reproducibilityis saved by the OutputManager as 
-        config_save.jsonc.
-        """
-        d = dict()
-        for n, case in enumerate(self.case_list):
-            key = 'case_list({})'.format(n)
-            d[key] = case
-        d['paths'] = paths.toDict()
-        d['paths'].pop('_unittest', None)
-        d['settings'] = dict()
-        all_groups = set(arg_gp.title for arg_gp in \
-            cli_obj.iter_arg_groups(subcommand=None))
-        settings_gps = all_groups.difference(
-            ('parser','PATHS','MODEL','DIAGNOSTICS'))
-        for group in settings_gps:
-            d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
-        d['settings'] = {k:v for k,v in d['settings'].items() \
-            if k not in d['paths']}
-        d['env_vars'] = config.global_env_vars
-        _log.info('PACKAGE SETTINGS:')
-        _log.info(util.pretty_print_json(d))
-
-    # --------------------------------------------------------------------
-
-    def _failed(self):
-        """Overall success/failure of this run of the framework. Return True if 
-        any case or any POD has failed, else return False.
-        """
-        if not self.cases:
-            return True
-        for case in self.cases:
-            if case.failed or not hasattr(case, 'pods') or not case.pods:
-                return True
-            if any(p.failed for p in case.pods.values()):
-                return True
-        return False
-
-    def main(self):
-        # only run first case in list until dependence on env vars cleaned up
-        for case_d in self.case_list[0:1]:
-            case_name = case_d.get('CASENAME', '<untitled>')
-            _log.info(f"### Framework: initialize {case_name}")
-            case = self.DataSource(case_d, parent=self)
-            case.setup()
-            self.cases.append(case)
-
-            if not case.failed:
-                _log.info(f'### Framework: request data for {case_name}')
-                case.request_data()
-            else:
-                _log.info((f"### Framework: initialization for {case_name} failed, skipping "
-                    f"data request."))
-
-            if not case.failed:
-                _log.info(f'### Framework: run {case_name}')
-                run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
-                run_mgr.setup()
-                run_mgr.run()
-                run_mgr.tear_down()
-            else:
-                _log.info((f"### Framework: Data request for {case_name} failed, "
-                    f"skipping execution."))
-
-            out_mgr = self.OutputManager(case)
-            out_mgr.make_output()
-            case.deactivate_if_failed() # in case we hit more errors generating output
-
-        tempdirs = TempDirManager()
-        tempdirs.cleanup()
-        print_summary(self)
-        return (1 if self._failed() else 0) # exit code
+- *NOTSET*: the object hasn't been fully initialized.
+- *ACTIVE*: the object is currently being processed by the framework.
+- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
+    alternate :class:`~diagnostic.VarlistEntry`\s).
+- *FAILED*: processing of the object has encountered an error, and no further
+    work will be done.
+"""
 
 @util.mdtf_dataclass
-class MDTFObjectBase():
-    _id: int = dc.field(init=False)
+class MDTFObjectBase(metaclass=util.MDTFABCMeta):
+    """Base class providing shared functionality for the "object hierarchy":
+    
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package
+        (:class:`MDTFFramework`);
+    - :class:`~diagnostic.Diagnostic`\s (PODs) belonging to a 
+        :class:`~data_manager.DataSourceBase`;
+    - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging 
+        to a :class:`~diagnostic.Diagnostic`.
+    """
+    _id: util.MDTF_ID = None
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
-    _log_name: str = dc.field(init=False)
+    _log_name: str = dc.field(init=False, compare=False)
+    status: ObjectStatus = dc.field(
+        default=ObjectStatus.NOTSET, compare=False
+    )
 
     def __post_init__(self):
-        self._id = util.MDTF_ID() # get unique ID #
+        if self._id is None:
+            # assign unique ID # so that we don't need to rely on names being unique
+            self._id = util.MDTF_ID() 
 
         # init object-level logger
         self.log = None # overwritten below; here so linter doesn't complain
-        _log_name = f"{self.name}_{self._id}".replace('.', '_')
-        _parent_log_name = getattr(self._parent, '_log_name', util.OBJ_LOG_ROOT)
-        self._log_name = f"{_parent_log_name}.{_log_name}"
+        if self._parent is None: 
+            self._log_name = util.OBJ_LOG_ROOT # framework: root of tree
+        else:
+            _log_name = f"{self.name}_{self._id}".replace('.', '_')
+            self._log_name = f"{self._parent._log_name}.{_log_name}"
 
         old_log_class = logging.getLoggerClass()
         logging.setLoggerClass(util.MDTFObjectLogger)
@@ -299,11 +72,88 @@ class MDTFObjectBase():
         logging.setLoggerClass(old_log_class)
         setattr(self, util.OBJ_LOG_ATTR_NAME, log)
 
+    @property
+    def class_name(self):
+        return f"<{self.__class__.__name__} '{self.name}' #{self._id}>"
+
+    @property
+    def full_name(self):
+        return f"<{self._parent.name}.{self.name} #{self._id}>"
+
+    @property
+    def failed(self):
+        return (self.status == ObjectStatus.FAILED) # abbreviate
+
+    @property
+    def active(self):
+        return (self.status == ObjectStatus.ACTIVE) # abbreviate
+
+    @property
+    @abc.abstractmethod
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        pass
+
+    def iter_children(self, status=None, status_neq=None):
+        """Generator iterating over child objects associated with this object.
+
+        Args:
+            status: None or :class:`ObjectStatus`, default None. If None, 
+                iterates over all child objects, regardless of status. If a
+                :class:`ObjectStatus` value is passed, only iterates over
+                child objects with that status.
+            status_neq: None or :class:`ObjectStatus`, default None. If set,
+                iterates over child objects which *don't* have the given status.
+                If *status* is set, this setting is ignored.
+        """
+        if status is None:
+            if status_neq is None:
+                yield from self._children # default: all children
+            else:
+                yield from filter(
+                    (lambda x: x.status != status_neq), self._children
+                )
+        else:
+            yield from filter(
+                (lambda x: x.status == status), self._children
+            )
+
+    def child_deactivation_handler(self, level=logging.ERROR):
+        pass
+
+    def child_status_update(self, level=logging.ERROR):
+        if next(self.iter_children(), None) is None:
+            # should never get here (no children of any status), because this 
+            # method should only be called by children
+            raise ValueError(f"Children misconfigured for {self.full_name}")
+
+        # if all children have failed, deactivate self and all children
+        if not self.failed and \
+            next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
+            exc = util.MDTFPropagatedException(None, self)
+            self.deactivate(exc, level=level)
+
+    def deactivate(self, exc, level=logging.ERROR):
+        # always log exceptions, even if we've already failed
+        self.log.store_exception(exc, log=True, level=level)
+        if not self.failed:
+            # only need to do updates on status change 
+            # update status on self
+            self.status = ObjectStatus.FAILED
+            if self._parent is not None:
+                # call handler on parent, which may change parent and/or siblings
+                self._parent.child_deactivation_handler(level=level)
+                self._parent.child_status_update(level=level)
+            # update children (deactivate all)
+            child_exc = util.MDTFPropagatedException(exc, self)
+            for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
+                obj.deactivate(child_exc, level=level)
+
 # -----------------------------------------------------------------------------
 
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
-        case_list=None, log_config=None, unittest=False):
+        case_d=None, log_config=None, unittest=False):
         self._unittest = unittest
         if self._unittest:
             self.pod_data = dict()
@@ -315,7 +165,7 @@ class ConfigManager(util.Singleton, util.NameSpace):
             # copy serializable version of parsed settings, in order to write 
             # backup config file
             self.backup_config = copy.deepcopy(cli_obj.config) 
-            self.backup_config['case_list'] = copy.deepcopy(case_list)
+            self.backup_config['case_list'] = copy.deepcopy(list(case_d.keys()))
         if global_env_vars is None:
             self.global_env_vars = dict()
         else:
@@ -882,6 +732,288 @@ class VariableTranslator(util.Singleton):
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)
+
+# ---------------------------------------------------------------------------
+
+class MDTFFramework(MDTFObjectBase):
+    def __init__(self, cli_obj):
+        super(MDTFFramework, self).__init__(
+            _id = 0,
+            name=self.__class__.__name__,
+            _parent=None
+        )
+        self.code_root = cli_obj.code_root
+        self.pod_list = []
+        self.cases = dict()
+        self.global_env_vars = dict()
+        try:
+            # load pod data
+            pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
+            # load log config
+            log_config = cli.read_config_file(
+                self.code_root, "logging.jsonc", site=cli_obj.site
+            )
+            self.configure(cli_obj, pod_info_tuple, log_config)
+        except Exception as exc:
+            wrapped_exc = traceback.TracebackException.from_exception(exc)
+            _log.critical("Framework caught exception %r", exc)
+            print(''.join(wrapped_exc.format()))
+            exit(1)
+
+    @property
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        return self.cases.values()
+
+    @property
+    def class_name(self):
+        return f"<{self.__class__.__name__}>"
+
+    @property
+    def full_name(self):
+        return f"<{self.name}>"
+        
+    def configure(self, cli_obj, pod_info_tuple, log_config):
+        """Wrapper for all configuration done based on CLI arguments.
+        """
+        self._cli_post_parse_hook(cli_obj)
+        self.dispatch_classes(cli_obj)
+        self.parse_mdtf_args(cli_obj, pod_info_tuple)
+        # init singletons
+        config = ConfigManager(cli_obj, pod_info_tuple, 
+            self.global_env_vars, self.cases, log_config)
+        paths = PathManager(cli_obj)
+        self.verify_paths(config, paths)
+        _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
+        _ = VariableTranslator(self.code_root)
+
+        # config should be read-only from here on
+        self._post_parse_hook(cli_obj, config, paths)
+        self._print_config(cli_obj, config, paths)
+
+    def _cli_post_parse_hook(self, cli_obj):
+        # gives subclasses the ability to customize CLI handler after parsing
+        # although most of the work done by parse_mdtf_args
+        if cli_obj.config.get('dry_run', False):
+            cli_obj.config['test_mode'] = True
+
+    def dispatch_classes(self, cli_obj):
+        def _dispatch(setting):
+            return cli_obj.imports[setting]
+
+        self.DataSource = _dispatch('data_manager')
+        self.EnvironmentManager = _dispatch('environment_manager')
+        self.RuntimeManager = _dispatch('runtime_manager')
+        self.OutputManager = _dispatch('output_manager')
+
+    @staticmethod
+    def _populate_from_cli(cli_obj, group_nm, target_d=None):
+        if target_d is None:
+            target_d = dict()
+        for arg in cli_obj.iter_group_actions(subcommand=None, group=group_nm):
+            key = arg.dest
+            val = cli_obj.config.get(key, None)
+            if val: # assign nonempty items only
+                target_d[key] = val
+        return target_d
+
+    def parse_mdtf_args(self, cli_obj, pod_info_tuple):
+        """Parse script options returned by the CLI. For greater customizability,
+        most of the functionality is spun out into sub-methods.
+        """
+        self.parse_env_vars(cli_obj)
+        self.parse_pod_list(cli_obj, pod_info_tuple)
+        self.parse_case_list(cli_obj)
+
+    def parse_env_vars(self, cli_obj):
+        # don't think PODs use global env vars?
+        # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
+        self.global_env_vars['RGB'] = os.path.join(self.code_root,'shared','rgb')
+        # globally enforce non-interactive matplotlib backend
+        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
+        self.global_env_vars['MPLBACKEND'] = "Agg"
+
+    def parse_pod_list(self, cli_obj, pod_info_tuple):
+        pod_data = pod_info_tuple.pod_data
+        all_realms = pod_info_tuple.sorted_lists.get('realms', [])
+        pod_realms = pod_info_tuple.realm_data
+
+        args = util.to_iter(cli_obj.config.pop('pods', []), set)
+        if 'example' in args or 'examples' in args:
+            self.pod_list = [p for p in pod_data if p.startswith('example')]
+        elif 'all' in args:
+            self.pod_list = [p for p in pod_data if not p.startswith('example')]
+        else:
+            # specify pods by realm
+            realms = args.intersection(all_realms)
+            args = args.difference(all_realms) # remainder
+            for key in pod_realms:
+                if util.to_iter(key, set).issubset(realms):
+                    self.pod_list.extend(pod_realms[key])
+            # specify pods by name
+            pods = args.intersection(set(pod_data))
+            self.pod_list.extend(list(pods))
+            for arg in args.difference(set(pod_data)): # remainder:
+                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
+            # exclude examples
+            self.pod_list = [p for p in pod_data if not p.startswith('example')]
+        if not self.pod_list:
+            _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
+                " for a list of available PODs, and check your -p/--pods argument."
+                f"\nReceived --pods = {str(list(args))}"))
+            exit(1)
+
+    def set_case_pod_list(self, case, cli_obj):
+        # if pods set from CLI, overwrite pods in case list
+        # already finalized self.pod-list by the time we get here
+        if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
+            return self.pod_list
+        else:
+            return case['pod_list']
+
+    def parse_case(self, n, d, cli_obj):
+        # really need to move this into init of DataManager
+        if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
+            d['CASE_ROOT_DIR'] = d.pop('root_dir')
+        case_convention = d.get('convention', '')
+        if case_convention:
+            d['convention'] = case_convention
+
+        if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
+            _log.warning(("Need to specify either CASENAME or model/experiment "
+                "in caselist entry %s, skipping."), n+1)
+            return None
+        _ = d.setdefault('model', d.get('convention', ''))
+        _ = d.setdefault('experiment', '')
+        _ = d.setdefault('CASENAME', '{}_{}'.format(d['model'], d['experiment']))
+
+        for field in ['FIRSTYR', 'LASTYR', 'convention']:
+            if not d.get(field, None):
+                _log.warning(("No value set for %s in caselist entry %s, "
+                    "skipping."), field, n+1)
+                return None
+        # if pods set from CLI, overwrite pods in case list
+        d['pod_list'] = self.set_case_pod_list(d, cli_obj)
+        return d
+
+    def parse_case_list(self, cli_obj):
+        d = cli_obj.config # abbreviate
+        if 'CASENAME' in d and d['CASENAME']:
+            # defined case from CLI
+            cli_d = self._populate_from_cli(cli_obj, 'MODEL')
+            if 'CASE_ROOT_DIR' not in cli_d and d.get('root_dir', None): 
+                # CASE_ROOT was set positionally
+                cli_d['CASE_ROOT_DIR'] = d['root_dir']
+            case_list_in = [cli_d]
+        else:
+            case_list_in = util.to_iter(cli_obj.file_case_list)
+        for i, case_d in enumerate(case_list_in):
+            case = self.parse_case(i, case_d, cli_obj)
+            if case:
+                self.cases[case['CASENAME']] = case
+        if not self.cases:
+            _log.critical(("ERROR: no valid entries in case_list. Please specify "
+                "model run information.\nReceived:"
+                f"\n{util.pretty_print_json(case_list_in)}"))
+            exit(1)
+
+    def verify_paths(self, config, p):
+        # needs to be here, instead of PathManager, because we subclass it in 
+        # NOAA_GFDL
+        keep_temp = config.get('keep_temp', False)
+        # clean out WORKING_DIR if we're not keeping temp files:
+        if os.path.exists(p.WORKING_DIR) and not \
+            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+            shutil.rmtree(p.WORKING_DIR)
+
+        util.check_dir(p, 'CODE_ROOT', create=False)
+        util.check_dir(p, 'OBS_DATA_ROOT', create=False)
+        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
+        util.check_dir(p, 'WORKING_DIR', create=True)
+
+    def _post_parse_hook(self, cli_obj, config, paths):
+        # init other services
+        pass
+
+    def _print_config(self, cli_obj, config, paths):
+        """Log end result of parsing package settings. This is only for the user's
+        benefit; a machine-readable version which is usable for 
+        provenance/reproducibility is saved by the OutputManager as 
+        ``config_save.jsonc``.
+        """
+        d = dict()
+        for n, case in enumerate(self.cases.values()):
+            key = 'case_list({})'.format(n)
+            d[key] = case
+        d['paths'] = paths.toDict()
+        d['paths'].pop('_unittest', None)
+        d['settings'] = dict()
+        all_groups = set(arg_gp.title for arg_gp in \
+            cli_obj.iter_arg_groups(subcommand=None))
+        settings_gps = all_groups.difference(
+            ('parser','PATHS','MODEL','DIAGNOSTICS'))
+        for group in settings_gps:
+            d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
+        d['settings'] = {k:v for k,v in d['settings'].items() \
+            if k not in d['paths']}
+        d['env_vars'] = config.global_env_vars
+        _log.info('PACKAGE SETTINGS:')
+        _log.info(util.pretty_print_json(d))
+
+    # --------------------------------------------------------------------
+
+    @property
+    def failed(self):
+        """Overall success/failure of this run of the framework. Return True if 
+        any case or any POD has failed, else return False.
+        """
+        if self.status == ObjectStatus.FAILED or not self.cases:
+            return True
+        for case in self.cases:
+            if case.failed or not hasattr(case, 'pods') or not case.pods:
+                return True
+            if any(p.failed for p in case.pods.values()):
+                return True
+        return False
+
+    def main(self):
+        # only run first case in list until dependence on env vars cleaned up
+        self.cases = dict(list(self.cases.items())[0:1])
+
+        new_d = dict()
+        for case_name, case_d in self.cases.items():
+            _log.info("### %s: initializing '%s'.", self.class_name, case_name)
+            case = self.DataSource(case_d, parent=self)
+            case.setup()
+            new_d[case_name] = case
+        self.cases = new_d
+
+        for case_name, case in self.cases.items():
+            if not case.failed:
+                _log.info("### %s: requesting data for '%s'.",
+                    self.class_name, case_name)
+                case.request_data()
+            else:
+                _log.info(("### %s: initialization for '%s' failed; skipping "
+                    f"data request."), self.class_name, case_name)
+
+            if not case.failed:
+                _log.info("### %s: running '%s'.", self.class_name, case_name)
+                run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
+                run_mgr.setup()
+                run_mgr.run()
+                run_mgr.tear_down()
+            else:
+                _log.info(("### %s: Data request for '%s' failed; skipping "
+                    "execution."), self.class_name, case_name)
+
+            out_mgr = self.OutputManager(case)
+            out_mgr.make_output()
+
+        tempdirs = TempDirManager()
+        tempdirs.cleanup()
+        print_summary(self)
+        return (1 if self.failed else 0) # exit code
 
 # --------------------------------------------------------------------
 

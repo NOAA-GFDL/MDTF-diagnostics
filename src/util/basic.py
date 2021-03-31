@@ -331,10 +331,10 @@ class _MDTFEnumMixin():
 
 class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
-    to the members of the enumeration. 2) Provide a ``from_struct`` method to 
-    simplify instantiating an instance from a string. To avoid potential 
-    confusion with reserved keywords, we use the Python convention that members
-    of the enumeration are all uppercase.
+    to the members of the enumeration. 2) Provide a 
+    :meth:`~_MDTFEnumMixin.from_struct` method to simplify instantiating an 
+    instance from a string. To avoid potential confusion with reserved keywords, 
+    we use the Python convention that members of the enumeration are all uppercase.
     """
     def __new__(cls, *args, **kwargs):
         """AutoNumber recipe from python stdlib docs."""

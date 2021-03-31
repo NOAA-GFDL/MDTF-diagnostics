@@ -313,24 +313,30 @@ class MDTFObjectLogger(logging.Logger):
         super(MDTFObjectLogger, self).error(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.error(msg, *args, **kwargs)
-    
+
     def critical(self, msg, *args, **kwargs):
         super(MDTFObjectLogger, self).critical(msg, *args, **kwargs)
         if self._module_log is not None:
             self._module_log.critical(msg, *args, **kwargs)
+    
+    def exception(self, msg, *args, **kwargs):
+        super(MDTFObjectLogger, self).exception(msg, *args, **kwargs)
+        if self._module_log is not None:
+            self._module_log.exception(msg, *args, **kwargs)
 
     @property
     def has_exceptions(self):
-        return (len(self._exceptions) == 0)
+        return (len(self._exceptions) > 0)
 
-    def exception(self, msg, *args, exc=None, **kwargs):
-        # NB not just wrapping the exception() method here.
-        if not msg and exc is not None:
-            msg = f"Caught {repr(exc)}."
-        if msg and exc is None:
-            exc = exceptions.MDTFBaseException(msg)
-        
-        super(MDTFObjectLogger, self).exception(msg, *args, **kwargs)
+    def store_exception(self, exc, log=False, level=logging.ERROR):
+        # add to internal list
+        if isinstance(exc, str):
+            if log:
+                self.log(level, exc)
+            exc = exceptions.MDTFBaseException(exc)
+        else:
+            if log:
+                self.log(level, "Caught %r.", exc)
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 
@@ -366,6 +372,13 @@ class MDTFObjectLoggerMixin():
         formatter = logging.Formatter(fmt=log_format, datefmt='%H:%M:%S')
         handler.setFormatter(formatter)
         self.log.addHandler(handler)
+
+    @property
+    def exception(self):
+        if self.log.has_exceptions:
+            return self.log._exceptions[-1]
+        else:
+            return None
 
     def format_log(self, child_objs=None):
         """Return contents of log buffer, as well as that of any child objects

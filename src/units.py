@@ -97,7 +97,7 @@ def conversion_factor(source_unit, dest_unit):
 
 # --------------------------------------------------------------------
 
-def convert_scalar_coord(coord, dest_units):
+def convert_scalar_coord(coord, dest_units, log=_log):
     """Given scalar coordinate *coord*, return the appropriate scalar value in
     new units *dest_units*. 
     """
@@ -105,17 +105,17 @@ def convert_scalar_coord(coord, dest_units):
     if not units_equal(coord.units, dest_units):
         # convert units of scalar value to convention's coordinate's units
         dest_value = coord.value * conversion_factor(coord.units, dest_units)
-        _log.debug("Converted %s %s %s slice of '%s' to %s %s.",
+        log.debug("Converted %s %s %s slice of '%s' to %s %s.",
             coord.value, coord.units, coord.axis, coord.name, 
             dest_value, dest_units)
     else:
         # identical units
-        _log.debug("Copied value of %s slice (=%s %s) of '%s' (identical units).",
+        log.debug("Copied value of %s slice (=%s %s) of '%s' (identical units).",
              coord.axis, coord.value, coord.units, coord.name)
         dest_value = coord.value
     return dest_value
 
-def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None):
+def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
     """Wrapper for cfunits.conform() that does unit conversion in-place on a
     member of an xarray Dataset, updating its units attribute.
     """
@@ -137,11 +137,11 @@ def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None):
     else:
         std_name = ""
     if units_equal(src_unit, dest_unit):
-        _log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
+        log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
             "done."), da.name, std_name, dest_unit)
         return ds
 
-    _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
+    log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
         da.name, std_name, src_unit, dest_unit)
     da_attrs = da.attrs.copy()
     fac = conversion_factor(src_unit, dest_unit)

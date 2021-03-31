@@ -35,7 +35,7 @@ class CMIP6_CVs(util.Singleton):
             paths = core.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'data', 
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
-        self._contents = util.read_json(file_)
+        self._contents = util.read_json(file_, log=_log)
         self._contents = self._contents['CV']
         for k in ['product','version_metadata','required_global_attributes',
             'further_info_url','Conventions','license']:

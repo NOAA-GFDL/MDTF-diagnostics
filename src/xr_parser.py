@@ -333,6 +333,7 @@ class DatasetParser():
         self.fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
         self.attrs_backup = dict()
         self.var_attrs_restore = dict()
+        self.log = None
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
@@ -365,7 +366,7 @@ class DatasetParser():
         options = util.to_iter(options)
         test_count = sum(comparison_func(opt, attr_name) for opt in options)
         if test_count > 1:
-            _log.debug("Found multiple values of '%s' set for '%s'.", 
+            self.log.debug("Found multiple values of '%s' set for '%s'.", 
                 attr_name, attr_desc)
         if test_count >= 1:
             return attr_name
@@ -375,7 +376,7 @@ class DatasetParser():
         ]
         if sum(tup[0] for tup in munged_opts) == 1:
             guessed_attr = [tup[1] for tup in munged_opts if tup[0]][0]
-            _log.debug("Correcting '%s' to '%s' as the intended value for '%s'.", 
+            self.log.debug("Correcting '%s' to '%s' as the intended value for '%s'.", 
                 attr_name, guessed_attr, attr_desc)
             return guessed_attr
         # Couldn't find a match
@@ -481,7 +482,7 @@ class DatasetParser():
                 if k not in attrs_d:
                     attrs_d[k] = v
                 if v != attrs_d[k] and v != ATTR_NOT_FOUND:
-                    _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                    self.log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
                         name, k, v, attrs_d[k])
         
         _restore_one('Dataset', self.attrs_backup, ds.attrs)
@@ -515,22 +516,43 @@ class DatasetParser():
 
     @staticmethod
     def compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None, 
-        update_our_var=True, update_ds=False):
-        """Convenience function to compare two values. Returns tuple of updated
-        values, or None if no update is needed.
+        update_our_var=True, update_ds=False, tiebreaker=None):
+        """Worker function to compare two attributes (on *our_var*, the 
+        framework's record, and on *ds*, the "ground truth" of the dataset) and 
+        update one in the event of disagreement.
+
+        This handles the special cases where the attribute isn't defined on 
+        *our_var* or *ds*.
+
+        Args:
+            our_attr_tuple: tuple specifying the attribute on *our_var*
+            ds_attr_tuple: tuple specifying the same attribute on *ds*
+            comparison_func: function of two arguments to use to compare the 
+                attributes; defaults to ``__eq__``.
+            update_our_var: Update *our_var* in the event of a disagreement.
+            update_ds: Update *ds* in the event of a disagreement.
+            tiebreaker: Action to take if both attrs are defined but have 
+                different values. 
+
+                - None (default): Update *our_var* if *update_our_var* is True,
+                    but in any case raise a TypeError.
+                - 'our_var': Change *ds* to match *our_var*.
+                - 'ds': Change *our_var* to match *ds*.
         """
         # unpack tuples
         our_var, our_attr_name, our_attr = our_attr_tuple
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
-        can_update_our_var = (update_our_var and ds_attr != ATTR_NOT_FOUND) # abbreviate
         if comparison_func is None:
             comparison_func = (lambda x,y: x == y)
+        can_update_our_var = (update_our_var and ds_attr != ATTR_NOT_FOUND) # abbreviate
+        if tiebreaker not in [None, 'our_var', 'ds']:
+            raise ValueError()
 
         if ds_attr == ATTR_NOT_FOUND or (not ds_attr):
             # ds_attr wasn't defined
             if update_ds:
                 # update ds with our value
-                _log.warning("No %s for '%s' found in dataset; setting to '%s'.",
+                self.log.warning("No %s for '%s' found in dataset; setting to '%s'.",
                     ds_attr_name, our_var.name, str(our_attr))
                 ds_var.attrs[ds_attr_name] = str(our_attr)
                 return
@@ -543,7 +565,7 @@ class DatasetParser():
             # our_attr wasn't defined
             if can_update_our_var:
                 if not (our_attr_name == 'name' and our_var.name == ds_attr):
-                    _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                    self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
                         our_attr_name, our_var.name, ds_attr)
                 setattr(our_var, our_attr_name, ds_attr)
                 return
@@ -645,7 +667,7 @@ class DatasetParser():
                 update_our_var=True, update_ds=(self.skip_units)
             )
         except ValueError as exc:
-            _log.warning(exc)
+            self.log.warning("Caught %s.", repr(exc))
             our_var.units = units.to_cfunits(our_var.units)
 
     def reconcile_scalar_value_and_units(self, our_var, ds_var):
@@ -660,7 +682,7 @@ class DatasetParser():
                 # cleanup placeholder attr if our var was altered
                 var_.value, new_units = getattr(var_, attr_name)
                 var_.units = units.to_cfunits(new_units)
-                _log.debug("Updated (value, units) of '%s' to (%s, %s).",
+                self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
                     var_.name, var_.value, var_.units)
                 delattr(var_, attr_name)
 
@@ -718,7 +740,7 @@ class DatasetParser():
                 comparison_func=(lambda x,y: units.units_equal(x,y, rtol=1.0e-5))
             )
         except ValueError as exc:
-            _log.warning(exc)
+            self.log.warning("Caught %s.", repr(exc))
             our_var.units = units.to_cfunits(our_var.units)
 
     def reconcile_coord_bounds(self, our_coord, ds, ds_coord_name):
@@ -744,7 +766,7 @@ class DatasetParser():
             update_our_var=False, update_ds=True
         )
         if our_coord.name != bounds.name:
-            _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+            self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
                 'bounds', our_coord.name, bounds.name)
         our_coord.bounds_var = bounds
 
@@ -780,12 +802,12 @@ class DatasetParser():
             if ds[c_name].size == 1:
                 if c_name == ds_axes['Z']:
                     # mis-identified scalar coordinate
-                    _log.warning(("Dataset has dimension coordinate '%s' of size "
+                    self.log.warning(("Dataset has dimension coordinate '%s' of size "
                         "1 not identified as scalar coord."), c_name)
                 else:
                     # encounter |X|,|Y| = 1 for single-column models; regardless,
                     # assume user knows what they're doing
-                    _log.debug("Dataset has dimension coordinate '%s' of size 1.")
+                    self.log.debug("Dataset has dimension coordinate '%s' of size 1.")
 
     def reconcile_scalar_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
@@ -807,13 +829,13 @@ class DatasetParser():
         ds_axes = [c.axis for c in ds_scalars]
         if our_axes and (set(our_axes) != set(['Z'])):
             # should never encounter this
-            _log.error('Scalar coordinates on non-vertical axes not supported.')
+            self.log.error('Scalar coordinates on non-vertical axes not supported.')
         if len(our_axes) != 0 and len(ds_axes) == 0:
             # warning but not necessarily an error if coordinate dims agree
-            _log.debug(("Dataset did not provide any scalar coordinate information, "
+            self.log.debug(("Dataset did not provide any scalar coordinate information, "
                 "expected %s."), list(zip(our_names, our_axes)))
         elif our_axes != ds_axes:
-            _log.warning(("Conflict in scalar coordinates for %s: expected %s; ",
+            self.log.warning(("Conflict in scalar coordinates for %s: expected %s; ",
                 "dataset has %s."), 
                 our_var.name, 
                 list(zip(our_names, our_axes)), list(zip(ds_names, ds_axes))
@@ -826,7 +848,7 @@ class DatasetParser():
                 # scalar coord is present in DataSet as a dimension coordinate of
                 # size 1.
                 if ds[ds_coord_name].size != 1:
-                    _log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
+                    self.log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
                         ds_coord_name, ds[ds_coord_name].size)
                 self.reconcile_names(coord, ds, ds_coord_name, update_name=True)
                 self.reconcile_scalar_value_and_units(our_var, ds[ds_coord_name])
@@ -834,7 +856,7 @@ class DatasetParser():
                 # scalar coord has presumably been read from DataSet attribute.
                 # At any rate, we only have a PlaceholderScalarCoordinate object, 
                 # which only gives us the name. Assume everything else OK.
-                _log.warning(("Dataset only records scalar coordinate '%s' as a "
+                self.log.warning(("Dataset only records scalar coordinate '%s' as a "
                     "name attribute; assuming value and units are correct."),
                     ds_coord_name)
                 self.reconcile_name(coord, ds_coord_name, update_name=True)
@@ -870,7 +892,7 @@ class DatasetParser():
         if not t_coords:
             return # assume static data
         elif len(t_coords) > 1:
-            _log.error("Found multiple time axes. Ignoring all but '%s'.", 
+            self.log.error("Found multiple time axes. Ignoring all but '%s'.", 
                 t_coords[0].name)
         t_coord = t_coords[0]
 
@@ -879,14 +901,14 @@ class DatasetParser():
         cftime_cal = getattr(t_coord.values[0], 'calendar', None)
         # look in other places if that failed:
         if not cftime_cal:
-            _log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
+            self.log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
             cftime_cal = _get_calendar(t_coord.encoding)
         if not cftime_cal:
             cftime_cal = _get_calendar(t_coord.attrs)
         if not cftime_cal:
             cftime_cal = _get_calendar(ds.attrs)
         if not cftime_cal:
-            _log.error("No calendar associated with '%s' found; using '%s'.", 
+            self.log.error("No calendar associated with '%s' found; using '%s'.", 
                 t_coord.name, self.fallback_cal)
             cftime_cal = self.fallback_cal
         t_coord.attrs['calendar'] = self.guess_attr(
@@ -898,7 +920,7 @@ class DatasetParser():
         """
         if ds_var.attrs.get('standard_name', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
             if self.skip_std_name:
-                _log.warning(f"'standard_name' attribute not found on {ds_var.name}.")
+                self.log.warning(f"'standard_name' attribute not found on {ds_var.name}.")
             else:
                 # normal operation
                 raise TypeError(("Netcdf metadata attribute 'standard_name' not "
@@ -911,7 +933,7 @@ class DatasetParser():
         """
         if ds_var.attrs.get('units', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
             if self.skip_units:
-                _log.warning(f"'units' attribute not found on {ds_var.name}.")
+                self.log.warning(f"'units' attribute not found on {ds_var.name}.")
             else:
                 # normal operation
                 raise TypeError(("Netcdf metadata attribute 'units' not found on "
@@ -958,6 +980,10 @@ class DatasetParser():
         - Verify that the name, standard_name and units for the variable and its
             coordinates are set correctly.
         """
+        if var is not None:
+            self.log = var.log
+        else:
+            self.log = _log
         self.normalize_ds_attrs(ds)
         ds = xr.decode_cf(ds,         
             decode_coords=True, # parse coords attr

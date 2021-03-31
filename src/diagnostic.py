@@ -118,7 +118,8 @@ VarlistEntryStatus = util.MDTFIntEnum(
 )
 
 @util.mdtf_dataclass
-class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
+class VarlistEntry(data_model.DMVariable, core.MDTFObjectBase, 
+    _VarlistGlobalSettings, util.MDTFObjectLoggerMixin):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
     settings.jsonc file.
@@ -128,14 +129,16 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
     """
-    _id: int = util.NOTSET # assigned by DataSource (avoids unsafe_hash)
-    # name: str             # fields inherited from data_model.DMVariable
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLoggerWrapper 
+    # name: str                    # fields inherited from data_model.DMVariable
     # attrs: dict
     # standard_name: str
     # units: Units
     # dims: list
     # scalar_coords: list
-    pod_name: str = ""
     use_exact_name: bool = False
     dest_path: str = ""
     env_var: str = dc.field(default="", compare=False)
@@ -151,7 +154,6 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         default=VarlistEntryStatus.NOTSET, compare=False
     )
     active: bool = dc.field(default=util.NOTSET, compare=False)
-    exception: Exception = dc.field(default=None, compare=False)
 
     def __post_init__(self, coords=None):
         super(VarlistEntry, self).__post_init__(coords)
@@ -163,6 +165,9 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         self.local_data = []
         if self.active == util.NOTSET:
             self.active = (self.requirement == VarlistEntryRequirement.REQUIRED)
+
+        # set up log (MDTFObjectLoggerMixin)
+        self.init_log(module_logger=_log)
 
         # env_vars
         if not self.env_var:
@@ -177,8 +182,20 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
             self.alternates = [vs for vs in self.alternates if vs]
 
     @property
+    def full_name(self):
+        return f"<#{self._id} {self._parent.name}.{self.name}>"
+
+    @property
+    def name_in_model(self):
+        if self.translation and self.translation.name:
+            return self.translation.name
+        else:
+            return "(not translated)"
+            # raise ValueError(f"Translation not defined for {self.name}.")
+
+    @property
     def failed(self):
-        return (self.exception is not None)
+        return self.log.has_exceptions
 
     def deactivate(self, exc):
         """Mark request for this variable as having failed.
@@ -188,17 +205,9 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
            by :meth:`~Diagnostic.update_active_vars` after activating possible
            alternates for this variable.
         """
-        if self.exception is not None:
+        if self.log.has_exceptions is not None:
             raise util.MDTFBaseException(f"Var {str(self)} already deactivated.")
-        self.exception = exc
-
-    @property
-    def name_in_model(self):
-        if self.translation and self.translation.name:
-            return self.translation.name
-        else:
-            return "(not translated)"
-            # raise ValueError(f"Translation not defined for {self.name}.")
+        self.log.exception('', exc=exc)
 
     @property
     def env_vars(self):
@@ -256,7 +265,7 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
         return d
 
     @classmethod
-    def from_struct(cls, global_settings_d, dims_d, name, **kwargs):
+    def from_struct(cls, global_settings_d, dims_d, name, parent, **kwargs):
         """Instantiate from a struct in the varlist section of a POD's
         settings.jsonc.
         """
@@ -290,34 +299,22 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
                         f"entry for {name}."))
                 new_kw['coords'].append(dims_d[d_name].make_scalar(scalar_val))
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
-        obj = cls(name=name, **new_kw, **filter_kw)
+        obj = cls(name=name, _parent=parent, **new_kw, **filter_kw)
         # specialize time coord
         time_kw = util.filter_dataclass(kwargs, _VarlistTimeSettings)
         if time_kw:
             obj.change_coord('T', None, **time_kw)
         return obj
 
-    @property
-    def full_name(self):
-        return f"<#{self._id}.{self.pod_name}:{self.name}>"
-
-    def iter_shallow_alternates(self):
-        """Iterator over all VarlistEntries referenced as parts of "sets" of 
-        alternates. ("Sets" is in quotes because they're implemented as lists 
-        here, since VarlistEntries aren't immutable.) 
-        """
-        for alt_vs in self.alternates:
-            yield from alt_vs
-
     def iter_alternates(self):
         """Breadth-first traversal of "sets" of alternate VarlistEntries, 
         alternates for those alternates, etc. ("Sets" is in quotes because 
         they're implemented as lists here, since VarlistEntries aren't immutable.)
-        Unlike :meth:`iter_shallow_alternates`, this is a "deep" iterator, 
-        yielding alternates of alternates, alternates of those, ... etc. until
-        variables with no alternates are encountered or all variables have been
-        yielded. In addition, it yields the "sets" of alternates instead of the 
-        VarlistEntries themselves.
+
+        This is a "deep" iterator,  yielding alternates of alternates, 
+        alternates of those, ... etc. until variables with no alternates are 
+        encountered or all variables have been yielded. In addition, it yields 
+        the "sets" of alternates and not the VarlistEntries themselves.
 
         (Recall that all local state (``stack`` and ``already_encountered``) is 
         maintained across successive calls.)
@@ -363,7 +360,7 @@ class Varlist(data_model.DMDataSet):
     single POD.
     """
     @classmethod
-    def from_struct(cls, d):
+    def from_struct(cls, d, parent):
         """Parse the "dimensions", "data" and "varlist" sections of the POD's 
         settings.jsonc file when instantiating a new Diagnostic() object.
 
@@ -389,23 +386,30 @@ class Varlist(data_model.DMDataSet):
                 )
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+        
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
 
         vlist_settings = util.coerce_to_dataclass(
             d.get('data', dict()), VarlistSettings)
         globals_d = vlist_settings.global_settings
 
         assert 'dimensions' in d
-        vlist_dims = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
             for k,v in d['dimensions'].items()}
 
         assert 'varlist' in d
         vlist_vars = {
-            k: VarlistEntry.from_struct(globals_d, vlist_dims, k, **v) \
+            k: VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v) \
             for k,v in d['varlist'].items()
         }
         for v in vlist_vars.values():
             # validate & replace names of alt vars with references to VE objects
-            for altv_name in v.iter_shallow_alternates():
+            for altv_name in _iter_shallow_alternates(v):
                 if altv_name not in vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
                         f"in alternates for varlist entry {v.name}."))
@@ -428,7 +432,7 @@ class Varlist(data_model.DMDataSet):
 # ------------------------------------------------------------
 
 @util.mdtf_dataclass
-class Diagnostic(object):
+class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes 
     are read from entries in the settings section of the POD's settings.jsonc 
     file upon initialization.
@@ -437,21 +441,22 @@ class Diagnostic(object):
     <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
     for documentation on attributes.
     """
-    _id: int = dc.field(init=False) # assigned by DataSource (avoids unsafe_hash)
-    name: str = util.MANDATORY
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLoggerWrapper 
     long_name: str = ""
     description: str = ""
     convention: str = "CF"
     realm: str = ""
 
-    varlist: Varlist = None
-    preprocessor: typing.Any = dc.field(default=None, compare=False)
-    exceptions: util.ExceptionQueue = dc.field(init=False)
-
     driver: str = ""
     program: str = ""
     runtime_requirements: dict = dc.field(default_factory=dict)
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
+
+    varlist: Varlist = None
+    preprocessor: typing.Any = dc.field(default=None, compare=False)
 
     POD_CODE_DIR = ""
     POD_OBS_DATA = ""
@@ -459,31 +464,33 @@ class Diagnostic(object):
     POD_OUT_DIR = ""
     
     def __post_init__(self):
-        self.exceptions = util.ExceptionQueue()
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.to_iter(v)
 
+        # set up log (MDTFObjectLoggerMixin)
+        self.init_log(module_logger=_log)
+
     @property
     def active(self):
-        return self.exceptions.is_empty
+        return self.log.has_exceptions
 
     @property
     def failed(self):
-        return not self.exceptions.is_empty
+        return not self.log.has_exceptions
 
     @classmethod
-    def from_struct(cls, pod_name, d, **kwargs):
+    def from_struct(cls, pod_name, d, parent, **kwargs):
         """Instantiate a Diagnostic object from the JSON format used in its
         settings.jsonc file.
         """
         try:
             kwargs.update(d.get('settings', dict()))
-            pod = cls(name=pod_name, **kwargs)
+            pod = cls(name=pod_name, _parent=parent, **kwargs)
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing settings",
                 pod_name) from exc
         try:
-            pod.varlist = Varlist.from_struct(d)
+            pod.varlist = Varlist.from_struct(d, parent=pod)
             for v in pod.iter_vars():
                 v.pod_name = pod_name
         except Exception as exc:
@@ -492,13 +499,13 @@ class Diagnostic(object):
         return pod
 
     @classmethod
-    def from_config(cls, pod_name):
+    def from_config(cls, pod_name, parent):
         """Usual method of instantiating Diagnostic objects, from the contents
         of its settings.jsonc file as stored in the 
         :class:`~core.ConfigManager`.
         """
         config = core.ConfigManager()
-        return cls.from_struct(pod_name, config.pod_data[pod_name])
+        return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
 
     def iter_vars(self, active=None):
         """Generator iterating over all VarlistEntries associated with this POD.
@@ -532,8 +539,8 @@ class Diagnostic(object):
         # only need to keep track of this up to pod execution
         if self.failed:
             # Originating exception will have been logged at a higher priority?
-            _log.warning("Execution of POD %s couldn't be completed:\n%s.", 
-                self.name, self.exceptions.format())
+            self.log.warning("Execution of POD '%s' couldn't be completed.", 
+                self.name)
             for v in self.iter_vars():
                 v.active = False
 
@@ -544,14 +551,14 @@ class Diagnostic(object):
         VarlistEntries. If successful, activate them; if not, raise a 
         :class:`PodDataError`.
         """
-        _log.debug('Updating active vars for POD %s', self.name)
+        self.log.debug("Updating active vars for POD '%s'", self.name)
         if self.failed:
             self.deactivate_if_failed()
             return
         old_active_vars = list(self.iter_vars(active=True))
         for v in old_active_vars:
             if v.failed:
-                _log.info("Request for %s failed; finding alternate vars.", v)
+                self.log.info("Request for %s failed; finding alternate vars.", v)
                 v.active = False
                 alt_success_flag = False
                 for alts in v.iter_alternates():
@@ -563,12 +570,12 @@ class Diagnostic(object):
                         alt_v.active = True
                     break
                 if not alt_success_flag:
-                    _log.info("No alternates available for %s.", v.full_name)
+                    self.log.info("No alternates available for %s.", v.full_name)
                     try:
                         raise util.PodDataError(f"No alternates available for {v}.", 
                             self) from v.exception
                     except Exception as exc:
-                        self.exceptions.log(exc)    
+                        self.log.exception("", exc=exc)
                     continue
         self.deactivate_if_failed()
 
@@ -647,23 +654,23 @@ class Diagnostic(object):
         programs = util.get_available_programs()
 
         if not self.driver:  
-            _log.warning("No valid driver entry found for %s", self.full_name)
-            #try to find one anyway
+            self.log.warning("No valid driver entry found for POD '%s'.", self.name)
+            # try to find one anyway
             try_filenames = [self.name+".", "driver."]      
             file_combos = [ file_root + ext for file_root \
                 in try_filenames for ext in programs]
-            _log.debug("Checking for possible driver names in {} {}".format(
+            self.log.debug("Checking for possible driver names in {} {}".format(
                 self.POD_CODE_DIR, file_combos))
             for try_file in file_combos:
                 try_path = os.path.join(self.POD_CODE_DIR, try_file)
-                _log.debug(" looking for driver file "+try_path)
+                self.log.debug(" looking for driver file "+try_path)
                 if os.path.exists(try_path):
                     self.driver = try_path
-                    _log.debug("Found driver script for {}: {}".format(
+                    self.log.debug("Found driver script for {}: {}".format(
                         self.name, self.driver))
-                    break    #go with the first one found
+                    break    # go with the first one found
                 else:
-                    _log.debug("\t "+try_path+" not found...")
+                    self.log.debug("\t "+try_path+" not found...")
         if self.driver == '':
             raise util.PodRuntimeError((f"No driver script found in "
                 f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
@@ -683,5 +690,5 @@ class Diagnostic(object):
                 raise util.PodRuntimeError((f"Don't know how to call a .{driver_ext} "
                         f"file.\nSupported programs: {programs}"), self)
             self.program = programs[driver_ext]
-            _log.debug("Found program "+programs[driver_ext])
+            self.log.debug("Found program '%s'.", programs[driver_ext])
 

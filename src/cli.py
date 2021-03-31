@@ -61,8 +61,8 @@ def read_config_files(code_root, file_name, site=""):
     """
     src_dir = os.path.join(code_root, 'src')
     site_dir = os.path.join(code_root, 'sites', site)
-    site_d = util.find_json(site_dir, file_name, exit_if_missing=False)
-    fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True)
+    site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
+    fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
     return (site_d, fmwk_d)
 
 def read_config_file(code_root, file_name, site=""):
@@ -469,7 +469,7 @@ class CLIParser(object):
         def _add_plugins_to_arg_list(arg_list, splice_d):
             # insert plugin args into arg_list
             return util.splice_into_list(
-                arg_list, splice_d, operator.attrgetter('dest')
+                arg_list, splice_d, operator.attrgetter('dest'), log=_log
             )
 
         config = CLIConfigManager()
@@ -523,7 +523,9 @@ class CLICommand(object):
         """
         if self.cli is None and self.cli_file is not None:
             try:
-                self.cli = util.read_json(os.path.join(code_root, self.cli_file))
+                self.cli = util.read_json(
+                    os.path.join(code_root, self.cli_file), log=_log
+                )
             except util.MDTFFileNotFoundError:
                 _log.critical("Couldn't find CLI file %s.", self.cli_file)
                 exit(2) # exit code for  CLI syntax error
@@ -635,7 +637,7 @@ class CLIConfigManager(util.Singleton):
             dest_d = self.user_defaults
 
         try:
-            d = util.read_json(path)
+            d = util.read_json(path, log=_log)
             self.defaults_files[def_type] = path
             # drop values equal to the empty string
             d = {k:v for k,v in d.items() if (v is not None and v != "")}

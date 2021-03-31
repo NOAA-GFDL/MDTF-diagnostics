@@ -45,33 +45,34 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+    # log: dataclasses.InitVar = _log
     sample_dataset: str = ""
 
-    def _set_case_root_dir(self):
+    def _set_case_root_dir(self, log=_log):
         """Additional logic to set CASE_ROOT_DIR from MODEL_DATA_ROOT.
         """
         config = core.ConfigManager()
         paths = core.PathManager()
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
-            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
             self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
         if not self.CASE_ROOT_DIR:
             model_root = getattr(paths, 'MODEL_DATA_ROOT', None)
-            _log.debug("Setting CASE_ROOT_DIR to MODEL_DATA_ROOT = '%s'.", model_root)
+            log.debug("Setting CASE_ROOT_DIR to MODEL_DATA_ROOT = '%s'.", model_root)
             self.CASE_ROOT_DIR = model_root
         # verify CASE_ROOT_DIR exists
         if not os.path.isdir(self.CASE_ROOT_DIR):
-            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+            log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
             exit(1)
 
-    def __post_init__(self):
+    def __post_init__(self, log=_log):
         """Validate user input.
         """
-        super(SampleDataAttributes, self).__post_init__()
+        super(SampleDataAttributes, self).__post_init__(log=log)
         # set sample_dataset
         if not self.sample_dataset and self.CASENAME:
-            _log.debug(
+            log.debug(
                 "'sample_dataset' not supplied, using CASENAME = '%s'.",
                 self.CASENAME
             )
@@ -80,7 +81,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
         if not os.path.isdir(
             os.path.join(self.CASE_ROOT_DIR, self.sample_dataset)
         ):
-            _log.critical(
+            log.critical(
                 "Sample dataset '%s' not found in CASE_ROOT_DIR = '%s'.",
                 self.sample_dataset, self.CASE_ROOT_DIR)
             exit(1)
@@ -218,16 +219,17 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
+    # log: dataclasses.InitVar = _log
     convention: str = core._NO_TRANSLATION_CONVENTION # hard-code naming convention
     config_file: str = util.MANDATORY
 
-    def __post_init__(self):
+    def __post_init__(self, log=_log):
         """Validate user input.
         """
-        super(ExplicitFileDataAttributes, self).__post_init__()
+        super(ExplicitFileDataAttributes, self).__post_init__(log=log)
 
         if self.convention != core._NO_TRANSLATION_CONVENTION:
-            _log.debug("Received incompatible convention '%s'; setting to '%s'.", 
+            log.debug("Received incompatible convention '%s'; setting to '%s'.", 
                 self.convention, core._NO_TRANSLATION_CONVENTION)
             self.convention = core._NO_TRANSLATION_CONVENTION
 
@@ -256,7 +258,7 @@ class ExplicitFileDataSource(
         # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
         # objects and store in self._config
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'config_file'))
-        config = util.read_json(self.attrs.config_file)
+        config = util.read_json(self.attrs.config_file, log=self.log)
         self.parse_config(config)
 
     @property
@@ -293,6 +295,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
+    # log: dataclasses.InitVar = _log
     convention: str = "CMIP" # hard-code naming convention
     activity_id: str = ""
     institution_id: str = ""
@@ -305,8 +308,8 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
     experiment: dataclasses.InitVar = "" # synonym for experiment_id
     CATALOG_DIR: str = dataclasses.field(init=False)
 
-    def __post_init__(self, model=None, experiment=None):
-        super(CMIP6DataSourceAttributes, self).__post_init__()
+    def __post_init__(self, model=None, experiment=None, log=_log):
+        super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):
@@ -316,16 +319,16 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     if not source_val:
                         raise KeyError()
                     dest_val = cv.lookup_single(source_val, source, dest)
-                    _log.debug("Set %s='%s' based on %s='%s'.", 
+                    log.debug("Set %s='%s' based on %s='%s'.", 
                         dest, dest_val, source, source_val)
                     setattr(self, dest, dest_val)
                 except KeyError:
-                    _log.debug("Couldn't set %s from %s='%s'.", 
+                    log.debug("Couldn't set %s from %s='%s'.", 
                         dest, source, source_val)
                     setattr(self, dest, "")
 
         if self.convention != "CMIP":
-            _log.debug("Received incompatible convention '%s'; setting to 'CMIP.", 
+            log.debug("Received incompatible convention '%s'; setting to 'CMIP.", 
                 self.convention)
             self.convention = "CMIP"
 
@@ -342,7 +345,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                 continue
             try:
                 if not cv.is_in_cv(field.name, val):
-                    _log.error(("Supplied value '%s' for '%s' is not recognized by "
+                    log.error(("Supplied value '%s' for '%s' is not recognized by "
                         "the CMIP6 CV. Continuing, but queries will probably fail."),
                         val, field.name)
             except KeyError: 
@@ -367,7 +370,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                 break
             new_root = os.path.join(new_root, drs_val)
         if not os.path.isdir(new_root):
-            _log.error("Data directory '%s' not found; starting crawl at '%s'.",
+            log.error("Data directory '%s' not found; starting crawl at '%s'.",
                 new_root, self.CASE_ROOT_DIR)
             self.CATALOG_DIR = self.CASE_ROOT_DIR
         else:
@@ -492,7 +495,7 @@ class CMIP6ExperimentSelectionMixin():
         # select first MIP table (out of available options) by alpha order
         # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
         df = df.sort_values(col_name).iloc[[0]]
-        _log.debug("Selected experiment attribute '%s'='%s' for %s.", 
+        obj.log.debug("Selected experiment attribute '%s'='%s' for %s.", 
             col_name, df[col_name].iloc[0], obj.name)
         return df
 

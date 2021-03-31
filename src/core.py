@@ -9,6 +9,7 @@ import shutil
 import signal
 import tempfile
 import traceback
+import typing
 from src import util, cli, mdtf_info, data_model, units
 from src.units import Units
 
@@ -18,6 +19,9 @@ _log = logging.getLogger(__name__)
 class MDTFFramework(object):
     def __init__(self, cli_obj):
         self.code_root = cli_obj.code_root
+        self._id = 0
+        self.name = self.__class__.__name__
+        self._log_name = util.OBJ_LOG_ROOT
         self.pod_list = []
         self.case_list = []
         self.cases = []
@@ -240,7 +244,7 @@ class MDTFFramework(object):
         for case_d in self.case_list[0:1]:
             case_name = case_d.get('CASENAME', '<untitled>')
             _log.info(f"### Framework: initialize {case_name}")
-            case = self.DataSource(case_d)
+            case = self.DataSource(case_d, parent=self)
             case.setup()
             self.cases.append(case)
 
@@ -269,6 +273,27 @@ class MDTFFramework(object):
         tempdirs.cleanup()
         print_summary(self)
         return (1 if self._failed() else 0) # exit code
+
+@util.mdtf_dataclass
+class MDTFObjectBase():
+    _id: int = dc.field(init=False)
+    name: str = util.MANDATORY
+    _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
+    _log_name: str = dc.field(init=False)
+
+    def __post_init__(self):
+        self._id = util.MDTF_ID() # get unique ID #
+
+        # init object-level logger
+        self.log = None # overwritten below; here so linter doesn't complain
+        _log_name = f"{self.name}_{self._id}".replace('.', '_')
+        self._log_name = f"{self._parent._log_name}.{_log_name}"
+
+        old_log_class = logging.getLoggerClass()
+        logging.setLoggerClass(util.MDTFObjectLoggerWrapper)
+        log = logging.getLogger(self._log_name)
+        logging.setLoggerClass(old_log_class)
+        setattr(self, util.OBJ_LOG_ATTR_NAME, log)
 
 
 class ConfigManager(util.Singleton, util.NameSpace):
@@ -348,7 +373,8 @@ class PathManager(util.Singleton, util.NameSpace):
             # need to check existence in case we're being called directly
             assert key in d, f"Error: {key} not initialized."
             return util.resolve_path(
-                util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env
+                util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env,
+                log=_log
             )
 
     def model_paths(self, case, overwrite=False):
@@ -429,7 +455,7 @@ class TempDirManager(util.Singleton):
 
     def tempdir_cleanup_handler(self, signum=None, frame=None):
         # delete temp files
-        util.signal_logger(self.__class__.__name__, signum, frame)
+        util.signal_logger(self.__class__.__name__, signum, frame, log=_log)
         self.cleanup()
 
 # --------------------------------------------------------------------
@@ -456,6 +482,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     # dims: list           # field inherited from data_model.DMVariable
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
+    log: typing.Any = util.MANDATORY # assigned from parent var
 
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
@@ -517,7 +544,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         assert filter_kw['coords']
         return cls(name=name, **filter_kw)
 
-    def scalar_name(self, old_coord, new_coord):
+    def scalar_name(self, old_coord, new_coord, log=_log):
         """Uses one of the scalar_coord_templates to construct the translated
         variable name for this variable on a scalar coordinate slice (eg.
         pressure level).
@@ -533,10 +560,10 @@ class FieldlistEntry(data_model.DMDependentVariable):
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
         if units.units_equal(c.units, new_coord.units):
-            _log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
+            log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                 c.value, c.units, c.axis, self.name, new_name)
         else:
-            _log.debug(("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s)."),
+            log.debug(("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s)."),
                 c.axis, self.name, new_name, c.value, c.units, 
                 new_coord.value, new_coord.units
             )
@@ -648,7 +675,7 @@ class Fieldlist():
         """
         return self.from_CF(var_or_name, axes_set=axes_set).name
 
-    def translate_coord(self, coord):
+    def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding 
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
@@ -671,7 +698,7 @@ class Fieldlist():
         
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = units.convert_scalar_coord(coord, new_coord.units)
+            new_coord.value = units.convert_scalar_coord(coord, new_coord.units, log=log)
         else:
             new_coord = dc.replace(coord, 
                 **(util.filter_dataclass(new_coord, coord)))
@@ -694,15 +721,17 @@ class Fieldlist():
             fl_entry = self.from_CF(var.standard_name, var.axes_set)
             new_name = fl_entry.name
         
-        new_dims = [self.translate_coord(dim) for dim in var.dims]
-        new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
+        new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
+        new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
             assert not var.use_exact_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
-            new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
+            new_name = fl_entry.scalar_name(
+                var.scalar_coords[0], new_scalars[0], log=var.log
+            )
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry, 
@@ -738,7 +767,7 @@ class NullTranslationFieldlist(util.Singleton):
         else:
             return var_or_name
 
-    def translate_coord(self, coord):
+    def translate_coord(self, coord, log=_log):
         # should never get here - not called externally
         raise NotImplementedError
 
@@ -778,10 +807,11 @@ class VariableTranslator(util.Singleton):
             config_files = glob.glob(glob_pattern)
         for f in config_files:
             try:
-                d = util.read_json(f)
+                d = util.read_json(f, log=_log)
                 self.add_convention(d)
             except Exception as exc:
-                _log.exception("Caught exception loading fieldlist file %s: %r", f, exc)
+                _log.exception("Caught exception loading fieldlist file %s: %r", 
+                    f, exc)
                 continue
 
     def add_convention(self, d):
@@ -840,8 +870,8 @@ class VariableTranslator(util.Singleton):
         return self._fieldlist_method(conv_name, 'from_CF_name', 
             standard_name, axes_set=axes_set)
 
-    def translate_coord(self, conv_name, coord):
-        return self._fieldlist_method(conv_name, 'translate_coord', coord)
+    def translate_coord(self, conv_name, coord, log=_log):
+        return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)

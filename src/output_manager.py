@@ -58,7 +58,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.save_nc = config['save_nc']
             self.save_non_nc = config['save_non_nc']
         except KeyError as exc:
-            _log.exception(f"Caught {repr(exc)}.")
+            pod.log.exception("", exc=exc)
             raise
         self.CODE_ROOT = output_mgr.CODE_ROOT
         self.WK_DIR = output_mgr.WK_DIR
@@ -132,10 +132,10 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                     f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
                 )
             except Exception as exc:
-                _log.error("%s produced malformed plot: %s", 
+                pod.log.error("%s produced malformed plot: %s", 
                     pod.name, f[len(abs_src_subdir):])
                 if isinstance(exc, util.MDTFCalledProcessError):
-                    _log.debug("gs error encountered when converting %s for %s:\n%s",
+                    pod.log.debug("gs error encountered when converting %s for %s:\n%s",
                         pod.name, f[len(abs_src_subdir):], getattr(exc, "output", ""))
                 continue
             # gs ran successfully; check how many files it created:
@@ -228,7 +228,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             self.overwrite = config['overwrite']
             self.file_overwrite = self.overwrite # overwrite both config and .tar
         except KeyError as exc:
-            _log.exception(f"Caught {repr(exc)}.")
+            case.log.exception("", exc=exc)
         self.CODE_ROOT = case.code_root
         self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
         self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
@@ -268,7 +268,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
-        _log.info('Checking linked output files for %s', pod.name)
+        pod.log.info('Checking linked output files for %s', pod.name)
         verifier = verify_links.LinkVerifier(
             self.POD_HTML(pod),  # root HTML file to start search at
             self.WK_DIR,         # root directory to resolve relative paths
@@ -276,7 +276,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            _log.error('POD %s has missing output files:\n%s', 
+            pod.log.error('POD %s has missing output files:\n%s', 
                 pod.name, '    \n'.join(missing_out))
             template_d = html_templating_dict(pod)
             template_d['missing_output'] = '<br>'.join(missing_out)
@@ -285,10 +285,10 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 self.CASE_TEMP_HTML, 
                 template_d
             )
-            pod.exceptions.log(util.MDTFFileNotFoundError(
+            pod.log.exception("", util.MDTFFileNotFoundError(
                 f'Missing {len(missing_out)} files.'))
         else:
-            _log.info('\tNo files are missing.')
+            pod.log.info('\tNo files are missing.')
 
     def html_warning_text(self):
         """Generate text for an optional warning banner in the output index page.
@@ -321,7 +321,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
-            _log.warning("%s: %s exists, deleting.", 
+            case.log.warning("%s: %s exists, deleting.", 
                 self._html_file_name, case.name)
             os.remove(dest)
 
@@ -352,8 +352,8 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
-            _log.info("%s: Overwriting %s.", case.name, out_file)
-        util.write_json(config.backup_config, out_file)
+            case.log.info("%s: Overwriting %s.", case.name, out_file)
+        util.write_json(config.backup_config, out_file, log=case.log)
 
     def make_tar_file(self, case):
         """Make tar file of web/bitmap output.
@@ -361,9 +361,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         out_path = self._tarball_file_path
         if not self.file_overwrite:
             out_path, _ = util.bump_version(out_path)
-            _log.info("%s: Creating %s.", case.name, out_path)
+            case.log.info("%s: Creating %s.", case.name, out_path)
         elif os.path.exists(out_path):
-            _log.info("%s: Overwriting %s.", case.name, out_path)
+            case.log.info("%s: Overwriting %s.", case.name, out_path)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
@@ -377,12 +377,11 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
-        _log.debug("%s: Copy %s to %s.", 
-            case.name, self.WK_DIR, self.OUT_DIR)
+        case.log.debug("%s: Copy %s to %s.", case.name, self.WK_DIR, self.OUT_DIR)
         try:
             if os.path.exists(self.OUT_DIR):
                 if not self.overwrite:
-                    _log.error("%s: %s exists, overwriting.", 
+                    case.log.error("%s: %s exists, overwriting.", 
                         case.name, self.OUT_DIR)
                 shutil.rmtree(self.OUT_DIR)
         except Exception:
@@ -402,8 +401,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                _log.exception(f"Caught {repr(exc)}.")
-                pod.exceptions.log(exc)
+                pod.log.exception("", exc=exc)
                 continue
         for pod in self._case.pods.values():
             try:
@@ -413,8 +411,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                _log.exception(f"Caught {repr(exc)}.")
-                pod.exceptions.log(exc)
+                pod.log.exception("", exc=exc)
                 continue
 
         self.make_html(self._case)

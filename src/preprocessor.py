@@ -67,7 +67,7 @@ def edit_request_wrapper(wrapped_edit_request_func):
                     else "(not translated)")
                 v_t_name = (str(v.translation) \
                     if getattr(v, 'translation', None) is not None else "(not translated)")
-                _log.debug("%s for %s: add translated %s as alternate for %s", 
+                pod.log.debug("%s for %s: add translated %s as alternate for %s.", 
                     self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
                 new_varlist.append(v)
                 new_varlist.append(new_v)
@@ -133,7 +133,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         tv_name = var.name_in_model
         t_coord = ds.cf.dim_axes(tv_name).get('T', None)
         if t_coord is None:
-            _log.debug("Exit %s for %s: time-independent.", 
+            var.log.debug("Exit %s for %s: time-independent.", 
                 self.__class__.__name__, var.full_name)
             return ds
         cal = t_coord.attrs['calendar']
@@ -152,31 +152,31 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         if t_start > dt_start_upper:
             err_str = (f"Error: dataset start ({t_start}) is after "
                 f"requested date range start ({dt_start_upper}).")
-            _log.error(err_str)
+            var.log.error(err_str)
             raise IndexError(err_str)
         if t_end < dt_end_lower:
             err_str = (f"Error: dataset end ({t_end}) is before "
                 f"requested date range end ({dt_end_lower}).")
-            _log.error(err_str)
+            var.log.error(err_str)
             raise IndexError(err_str)
 
         ds = ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
         new_t = ds.cf.dim_axes(tv_name).get('T')
         if t_size == new_t.size:
-            _log.info(("Requested dates for %s coincide with range of dataset "
+            var.log.info(("Requested dates for %s coincide with range of dataset "
                 "'%s -- %s'; left unmodified."),
                 var.full_name,
                 new_t.values[0].strftime('%Y-%m-%d'), 
                 new_t.values[-1].strftime('%Y-%m-%d'), 
             )
         else:
-            _log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
-                    var.full_name,
-                    t_start.strftime('%Y-%m-%d'), 
-                    t_end.strftime('%Y-%m-%d'), 
-                    new_t.values[0].strftime('%Y-%m-%d'), 
-                    new_t.values[-1].strftime('%Y-%m-%d'), 
-                )
+            var.log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
+                var.full_name,
+                t_start.strftime('%Y-%m-%d'), 
+                t_end.strftime('%Y-%m-%d'), 
+                new_t.values[0].strftime('%Y-%m-%d'), 
+                new_t.values[-1].strftime('%Y-%m-%d'), 
+            )
         return ds
 
 class PrecipRateToFluxFunction(PreprocessorFunctionBase):
@@ -231,8 +231,8 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         try:
             new_tv = translate.translate(data_mgr.attrs.convention, v_to_translate)
         except KeyError as exc:
-            _log.debug(("%s edit_request on %s: caught %r when trying to translate "
-                "'%s'; varlist unaltered."), self.__class__.__name__, 
+            pod.log.debug(("%s edit_request on %s: caught %r when trying to "
+                "translate '%s'; varlist unaltered."), self.__class__.__name__, 
                 v.full_name, exc, v_to_translate.standard_name)
             return None
         new_v = copy_as_alternate(v, data_mgr)
@@ -258,7 +258,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             # requested flux, received alternate for rate
             new_units = tv.units * self._liquid_water_density
 
-        _log.debug(("Assumed implicit factor of water density in units for %s: "
+        var.log.debug(("Assumed implicit factor of water density in units for %s: "
             "given %s, will convert as %s."), var.full_name, tv.units, new_units)  
         ds[tv.name].attrs['units'] = str(new_units)
         tv.units = new_units
@@ -279,7 +279,8 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         tv = var.translation # abbreviate
         # convert dependent variable
         ds = units.convert_dataarray(
-            ds, tv.name, src_unit=None, dest_unit=var.units)
+            ds, tv.name, src_unit=None, dest_unit=var.units, log=var.log
+        )
         tv.units = var.units
 
         # convert coordinate dimensions and bounds
@@ -288,10 +289,12 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                 continue # TODO: separate function to handle calendar conversion
             dest_c = var.axes[c.axis]
             ds = units.convert_dataarray(
-                ds, c.name, src_unit=None, dest_unit=dest_c.units)
+                ds, c.name, src_unit=None, dest_unit=dest_c.units, log=var.log
+            )
             if c.has_bounds and c.bounds_var in ds:
                 ds = units.convert_dataarray(
-                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units)
+                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units, log=var.log
+                )
             c.units = dest_c.units
 
         # convert scalar coordinates
@@ -299,11 +302,12 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.name in ds:
                 dest_c = var.axes[c.axis]
                 ds = units.convert_dataarray(
-                    ds, c.name, src_unit=None, dest_unit=dest_c.units)
+                    ds, c.name, src_unit=None, dest_unit=dest_c.units, log=var.log
+                )
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
 
-        _log.info("Converted units on %s.", var.full_name)
+        var.log.info("Converted units on %s.", var.full_name)
         return ds
 
 class RenameVariablesFunction(PreprocessorFunctionBase):
@@ -312,7 +316,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         rename_d = dict()
         # rename var
         if tv.name != var.name:
-            _log.debug("Rename '%s' variable in %s to '%s'.", 
+            var.log.debug("Rename '%s' variable in %s to '%s'.", 
                 tv.name, var.full_name, var.name)
             rename_d[tv.name] = var.name
             tv.name = var.name
@@ -321,7 +325,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         for c in tv.dim_axes.values():
             dest_c = var.axes[c.axis]
             if c.name != dest_c.name:
-                _log.debug("Rename %s axis of %s from '%s' to '%s'.", 
+                var.log.debug("Rename %s axis of %s from '%s' to '%s'.", 
                     c.axis, var.full_name, c.name, dest_c.name)
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
@@ -331,7 +335,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
-                _log.debug("Rename %s scalar coordinate of %s from '%s' to '%s'.", 
+                var.log.debug("Rename %s scalar coordinate of %s from '%s' to '%s'.", 
                     c.axis, var.full_name, c.name, dest_c.name)
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
@@ -390,21 +394,21 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         tv_name = var.name_in_model
         our_z = var.get_scalar('Z')
         if not our_z or not our_z.value:
-            _log.debug("Exit %s for %s: no level requested.", 
+            var.log.debug("Exit %s for %s: no level requested.", 
                 self.__class__.__name__, var.full_name)
             return ds
         if 'Z' not in ds[tv_name].cf.dim_axes_set:
             # maybe the ds we received has this level extracted already
             ds_z = ds.cf.get_scalar('Z', tv_name) 
             if ds_z is None or isinstance(ds_z, xr_parser.PlaceholderScalarCoordinate):
-                _log.debug(("Exit %s for %s: %s %s Z level requested but value not "
+                var.log.debug(("Exit %s for %s: %s %s Z level requested but value not "
                     "provided in scalar coordinate information; assuming correct."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)
                 return ds
             else:
                 # value (on var.translation) has already been checked by 
                 # xr_parser.DatasetParser
-                _log.debug(("Exit %s for %s: %s %s Z level requested and provided "
+                var.log.debug(("Exit %s for %s: %s %s Z level requested and provided "
                     "by dataset."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)
                 return ds
@@ -414,14 +418,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if ds_z is None:
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
         try:
-            ds_z_value = units.convert_scalar_coord(our_z, ds_z.units)
+            ds_z_value = units.convert_scalar_coord(our_z, ds_z.units, log=var.log)
             ds = ds.sel(
                 {ds_z.name: ds_z_value},
                 method='nearest', # Allow for floating point roundoff in axis values
                 tolerance=_atol,
                 drop=False
             )
-            _log.info("Extracted %s %s level from Z axis ('%s') of %s.", 
+            var.log.info("Extracted %s %s level from Z axis ('%s') of %s.", 
                 ds_z_value, ds_z.units, ds_z.name, var.full_name)
             # rename translated var to reflect renaming we're going to do
             # recall POD variable name env vars are set on this attribute
@@ -494,7 +498,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:
             raise ValueError(f"{var.full_name}: Expected one file, got {path_list}.")
-        _log.debug("xr.open_dataset on %s", path_list[0])
+        var.log.debug("xr.open_dataset on %s", path_list[0])
         return xr.open_dataset(
             path_list[0], 
             **self.open_dataset_kwargs
@@ -521,7 +525,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     else:
                         compare_ = (attrs[k] != v)
                     if compare_ and k.lower() != 'source':
-                        _log.warning("Conflict in '%s' attribute of %s: %s != %s.",
+                        var.log.warning("Conflict in '%s' attribute of %s: %s != %s.",
                             k, name, v, attrs[k])
                     del attrs[k]   
             
@@ -558,9 +562,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # TODO: remove any netcdf Variables that were present in file (and ds) 
         # but not needed for request
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
-        _log.info("Writing to %s", path_str)
+        var.log.info("Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
-        _log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
+        var.log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         ds = self.clean_output_encoding(var, ds)
         if var.is_static:
             unlimited_dims = []
@@ -588,7 +592,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # execute functions
         for f in self.functions:
             try:
-                _log.debug("Preprocess %s: call %s", var.full_name, f.__class__.__name__)
+                var.log.debug("Preprocess %s: call %s", var.full_name, 
+                    f.__class__.__name__)
                 ds = f.process(var, ds)
             except Exception as exc:
                 raise util.DataPreprocessError((f"Preprocessing on {var.full_name} "
@@ -600,7 +605,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             raise util.DataPreprocessError((f"Error in writing data for "
                 f"{var.full_name}."), var) from exc
         del ds # shouldn't be necessary
-        _log.debug("Successful preprocessor exit on %s.", var)
+        var.log.debug("Successful preprocessor exit on %s.", var)
 
 
 class SingleFilePreprocessor(MDTFPreprocessorBase):
@@ -646,7 +651,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             return _file_preproc(ds)
         else:
             assert not var.is_static # just to be safe
-            _log.debug("xr.open_mfdataset on %d files: %s", 
+            var.log.debug("xr.open_mfdataset on %d files:\n\t%s", 
                 len(var.local_data), var.local_data)
             return xr.open_mfdataset(
                 var.local_data,

@@ -5,7 +5,9 @@ import collections
 import collections.abc
 import enum
 import itertools
+import string
 import unittest.mock
+import uuid
 from . import exceptions
 
 import logging
@@ -353,6 +355,44 @@ def sentinel_object_factory(obj_name):
     """
     return getattr(unittest.mock.sentinel, obj_name)
 
+class MDTF_ID():
+    """Class wrapping :py:class:`~uuid.UUID`, to provide unique ID numbers for
+    cases, pods, variables, etc., so that we don't need to require that objects
+    in these classes have unique names.
+    """
+    def __init__(self, id_=None):
+        if id_ is None:
+            # set node=0 to eliminate hostname; only dependent on system clock
+            self._uuid = uuid.uuid1(node=0)
+        else:
+            self._uuid = id_
+        
+    def __str__(self):
+        """Print compact string representation (5 alphanumeric characters) instead
+        of the entire uuid, to get more readable logs.
+        """
+        chars = string.digits + string.ascii_letters
+        base = len(chars)
+        num = self._uuid.time_low # least significant bits
+        str_ = '00000'
+        while num:
+            str_ += chars[num % base]
+            num //= base        
+        return str_[-5:]
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._uuid})"
+    
+    def __eq__(self, other):
+        if hasattr(other, '_uuid'):
+            return (self._uuid == other._uuid)
+        else:
+            return False
+    
+    def __ne__(self, other):
+        return (not self.__eq__(other)) # more foolproof
+
+# ------------------------------------------------------------------
 
 def is_iterable(obj):
     return isinstance(obj, collections.abc.Iterable) \
@@ -397,7 +437,7 @@ def filter_kwargs(kwarg_dict, function):
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
-def splice_into_list(list_, splice_d,  key_fn=None):
+def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
     """Splice sub-lists in ``splice_d`` into list ``list_`` after their 
     corresponding entries (keys of ``slice_d``). Example: 
 
@@ -422,7 +462,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
     for k in splice_d:
         idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
         if len(idx) > 1:
-            _log.debug('%s not unique (%s) in %s.', k, idx, list_)
+            log.debug('%s not unique (%s) in %s.', k, idx, list_)
         chunks.extend(idx)
     chunk_0, chunk_1 = itertools.tee(sorted(chunks))
     next(chunk_1, None)

@@ -26,7 +26,7 @@ def abbreviate_path(path, old_base, new_base=None):
         str_ = os.path.join(new_base, str_)
     return str_
 
-def resolve_path(path, root_path="", env=None):
+def resolve_path(path, root_path="", env=None, log=_log):
     """Abbreviation to resolve relative paths.
 
     Args:
@@ -57,7 +57,7 @@ def resolve_path(path, root_path="", env=None):
     if isinstance(env, dict):
         path = _expandvars(path, env)
     if '$' in path:
-        _log.warning("Couldn't resolve all env vars in '%s'", path)
+        log.warning("Couldn't resolve all env vars in '%s'", path)
         return path
     if os.path.isabs(path):
         return path
@@ -295,8 +295,8 @@ def parse_json(str_):
         )
     return parsed_json
 
-def read_json(file_path):
-    _log.debug('Reading file %s', file_path)
+def read_json(file_path, log=_log):
+    log.debug('Reading file %s', file_path)
     if not os.path.isfile(file_path):
         raise exceptions.MDTFFileNotFoundError(file_path)
     try:    
@@ -308,7 +308,7 @@ def read_json(file_path):
         exit(1)
     return parse_json(str_)
 
-def find_json(dir_, file_name, exit_if_missing=True):
+def find_json(dir_, file_name, exit_if_missing=True, log=_log):
     """Wrap :func:`read_json` with more elaborate error handling. find_files() 
     will find a file named file_name at any level within dir\_.
     """
@@ -320,18 +320,18 @@ def find_json(dir_, file_name, exit_if_missing=True):
             _log.critical("Couldn't find file %s in %s.", file_name, dir_)
             exit(1)
         else:
-            _log.debug("Couldn't find file %s in %s; continuing.",
+            log.debug("Couldn't find file %s in %s; continuing.",
                 file_name, dir_)
             return dict()
 
-def write_json(struct, file_path, sort_keys=False):
+def write_json(struct, file_path, sort_keys=False, log=_log):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
         struct (:py:obj:`dict`)
         file_path (:py:obj:`str`): path of the JSON file to write.
     """
-    _log.debug('Writing file %s', file_path)
+    log.debug('Writing file %s', file_path)
     try:
         str_ = json.dumps(struct, 
             sort_keys=sort_keys, indent=2, separators=(',', ': '))

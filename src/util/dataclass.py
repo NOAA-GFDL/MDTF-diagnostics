@@ -9,6 +9,7 @@ import re
 import typing
 from . import basic
 from . import exceptions
+from . import logs
 
 import logging
 _log = logging.getLogger(__name__)
@@ -177,13 +178,13 @@ class RegexPatternWithTemplate(RegexPattern):
             Other arguments the same
     """
     def __init__(self, regex, defaults=None, input_field=None, 
-        match_error_filter=None, template=None):
+        match_error_filter=None, template=None, log=_log):
         super(RegexPatternWithTemplate, self).__init__(regex, defaults=defaults, 
             input_field=input_field, match_error_filter=match_error_filter)
         self.template = template
         for f in self.fields:
             if f not in self.template:
-                _log.warning("Field %s not included in output.", f)
+                log.warning("Field %s not included in output.", f)
 
     def format(self):
         if self.template is None:
@@ -225,7 +226,8 @@ class ChainedRegexPattern(RegexPatternBase):
     succeeds determining the returned answer. Public methods work the same as
     on RegexPattern.
     """
-    def __init__(self, *string_patterns, defaults=None, input_field=None, match_error_filter=None):
+    def __init__(self, *string_patterns, defaults=None, input_field=None, 
+        match_error_filter=None):
         # NB, changes attributes on patterns passed as arguments, so
         # once created they can't be used on their own
         new_pats = []
@@ -347,7 +349,7 @@ default fields in the dataclass-generated ``__init__`` method under
 we use the second solution described in `<https://stackoverflow.com/a/53085935>`__.
 """
 
-def _mdtf_dataclass_typecheck(self):
+def _mdtf_dataclass_typecheck(self, log=_log):
     """Do type checking/coercion on all dataclass fields after init/post_init.
 
     .. warning::
@@ -419,7 +421,7 @@ def _mdtf_dataclass_typecheck(self):
                 # https://stackoverflow.com/a/54119384 for implementation
                 object.__setattr__(self, f.name, new_value)
         except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
-            _log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
+            log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
                 f"({repr(value)}).")) from exc
@@ -464,9 +466,11 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     @functools.wraps(_old_init)
     def _new_init(self, *args, **kwargs):
         # Execute type check after dataclass' __init__ and __post_init__:
-        # print('XXX', self.__class__.__name__, args, kwargs)
         _old_init(self, *args, **kwargs)
-        _mdtf_dataclass_typecheck(self)        
+        if hasattr(self, logs.OBJ_LOG_ATTR_NAME):
+            _mdtf_dataclass_typecheck(self, self.log)
+        else:
+            _mdtf_dataclass_typecheck(self)  
 
     type.__setattr__(cls, '__init__', _new_init)
     return cls

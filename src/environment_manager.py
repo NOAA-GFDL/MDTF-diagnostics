@@ -14,11 +14,8 @@ _log = logging.getLogger(__name__)
 class AbstractEnvironmentManager(abc.ABC):
     """Interface for EnvironmentManagers.
     """
-    def __init__(self, log=None):
-        if log is None:
-            self.log = _log
-        else:
-            self.log = log # log to case's logger
+    def __init__(self, log=_log):
+        self.log = log # log to case's logger
 
     def setup(self): pass
 
@@ -67,8 +64,8 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     libraries into the current user's ``$PATH``. For other scripting languages, 
     no library management is performed.
     """
-    def __init__(self):
-        super(VirtualenvEnvironmentManager, self).__init__()
+    def __init__(self, log=_log):
+        super(VirtualenvEnvironmentManager, self).__init__(log=log)
 
         paths = core.PathManager()
         self.venv_root = paths.get('venv_root', '')
@@ -148,8 +145,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     """
     env_name_prefix = '_MDTF_' # our envs start with this string to avoid conflicts
 
-    def __init__(self):
-        super(CondaEnvironmentManager, self).__init__()
+    def __init__(self, log=_log):
+        super(CondaEnvironmentManager, self).__init__(log=log)
 
         paths = core.PathManager()
         self.code_root = paths.CODE_ROOT

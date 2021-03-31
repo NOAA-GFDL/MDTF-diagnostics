@@ -942,7 +942,7 @@ class MDTFFramework(MDTFObjectBase):
         ``config_save.jsonc``.
         """
         d = dict()
-        for n, case in enumerate(self.cases.values()):
+        for n, case in enumerate(self.iter_children()):
             key = 'case_list({})'.format(n)
             d[key] = case
         d['paths'] = paths.toDict()

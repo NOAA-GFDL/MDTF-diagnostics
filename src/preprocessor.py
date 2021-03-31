@@ -25,16 +25,13 @@ def copy_as_alternate(old_v, data_mgr, **kwargs):
     new_v = dataclasses.replace(
         old_v,
         # reset state from old_v
-        status = diagnostic.VarlistEntryStatus.INITED,
-        exception = None,
+        stage = diagnostic.VarlistEntryStage.INITED,
         # new VE meant as an alternate
-        active = False,
+        status = core.ObjectStatus.INACTIVE,
         requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
         # plus the specific replacements we want to make
         **kwargs
     )
-    # assign unique ID number; could also do this with UUIDs
-    new_v._id = next(data_mgr.id_number)
     return new_v
 
 def edit_request_wrapper(wrapped_edit_request_func):

@@ -285,7 +285,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 self.CASE_TEMP_HTML, 
                 template_d
             )
-            pod.log.exception("", util.MDTFFileNotFoundError(
+            pod.log.exception("", exc=util.MDTFFileNotFoundError(
                 f'Missing {len(missing_out)} files.'))
         else:
             pod.log.info('\tNo files are missing.')

@@ -7,7 +7,6 @@ import io
 import argparse
 import collections
 import dataclasses
-import enum
 import importlib
 import itertools
 import json
@@ -556,9 +555,9 @@ class CLICommand(object):
         instance = cls_(*args, **kwargs)
         return instance
 
-DefaultsFileTypes = enum.Enum('DefaultsFileTypes', 'USER SITE GLOBAL')
+DefaultsFileTypes = util.MDTFEnum('DefaultsFileTypes', 'USER SITE GLOBAL')
 DefaultsFileTypes.__doc__ = """
-    :py:class:`~enum.Enum` to distinguish the three different categories of 
+    :class:`~util.MDTFEnum` to distinguish the three different categories of 
     input settings files. In order of precedence:
 
     1. ``USER``: Input settings read from a file supplied by the user.

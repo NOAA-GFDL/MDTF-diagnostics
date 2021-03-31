@@ -55,7 +55,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
 
     def reset_case_pod_list(self, cli_obj, config, paths):
         if self.frepp_mode:
-            for case in self.case_list:
+            for case in self.iter_children():
                 # frepp mode:only attempt PODs other instances haven't already done
                 case_outdir = paths.modelPaths(case, overwrite=True)
                 case_outdir = case_outdir.MODEL_OUT_DIR
@@ -79,7 +79,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
         util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
         util.check_dir(p, 'OBS_DATA_ROOT', create=True)
         util.check_dir(p, 'WORKING_DIR', create=True)
-        
+
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
             gfdl_util.make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run, 
@@ -118,7 +118,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
                         f"directory at {self.POD_OUT_DIR}; deactivating {self.name}."),
                         self) from exc
                 except Exception as chained_exc:
-                    self.log.exception("", exc=chained_exc)    
+                    self.log.store_exception(chained_exc)
 
 # ------------------------------------------------------------------------
 
@@ -210,9 +210,9 @@ class GFDL_GCP_FileDataSourceBase(
     _AttributesClass = util.abstract_attribute()
     _fetch_method = 'auto' # symlink if not on /archive, else gcp
 
-    def __init__(self, case_dict):
+    def __init__(self, case_dict, parent):
         self.catalog = None
-        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict)
+        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict, parent)
 
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
@@ -407,8 +407,8 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
 
-    def __init__(self, case_dict):
-        super(GfdlppDataManager, self).__init__(case_dict)
+    def __init__(self, case_dict, parent):
+        super(GfdlppDataManager, self).__init__(case_dict, parent)
         config = core.ConfigManager()
         self.any_components = config.get('any_components', False)
 
@@ -542,9 +542,9 @@ class GfdlvirtualenvEnvironmentManager(
     # Use module files to switch execution environments, as defined on 
     # GFDL workstations and PP/AN cluster.
 
-    def __init__(self):
+    def __init__(self, log=_log):
         _ = gfdl_util.ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__()
+        super(GfdlvirtualenvEnvironmentManager, self).__init__(log=log)
 
     # TODO: manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
@@ -632,7 +632,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             self.dry_run = config.get('dry_run', False)
             self.timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
-            case.log.exception("", exc=exc)
+            case.log.store_exception(exc=exc)
 
         super(GFDLHTMLOutputManager, self).__init__(case)
 

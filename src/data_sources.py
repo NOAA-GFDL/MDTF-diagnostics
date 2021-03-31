@@ -132,7 +132,7 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
         """
         super(MetadataRewritePreprocessor, self).setup(data_mgr, pod)
         
-        for var in pod.iter_vars():
+        for var in pod.iter_children():
             new_metadata = util.ConsistentDict()
             for data_key in var.remote_data.values():
                 glob_id = data_mgr.df['glob_id'].loc[data_key]
@@ -248,12 +248,12 @@ class ExplicitFileDataSource(
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
 
-    def __init__(self, case_dict):
+    def __init__(self, case_dict, parent):
         self.catalog = None
         self._config = dict()
         self._glob_id = itertools.count(start=1) # IDs for globs
 
-        super(ExplicitFileDataSource, self).__init__(case_dict)
+        super(ExplicitFileDataSource, self).__init__(case_dict, parent)
 
         # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
         # objects and store in self._config

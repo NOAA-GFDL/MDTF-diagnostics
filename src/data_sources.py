@@ -86,6 +86,10 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
                 self.sample_dataset, self.CASE_ROOT_DIR)
             exit(1)
 
+sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = dm.DataFrameQueryColumnGroup(["sample_dataset"])
+)
 
 class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
@@ -94,10 +98,7 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
     _AttributesClass = SampleDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.SampleDataPreprocessor
-
-    # Catalog columns whose values must be the same for all variables.
-    expt_key_cols = ("sample_dataset", )
-    expt_cols = expt_key_cols
+    col_spec = sampleLocalFileDataSource_col_spec
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}
@@ -233,6 +234,11 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
                 self.convention, core._NO_TRANSLATION_CONVENTION)
             self.convention = core._NO_TRANSLATION_CONVENTION
 
+explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = dm.DataFrameQueryColumnGroup([])
+)
+
 class ExplicitFileDataSource(
     dm.OnTheFlyGlobQueryMixin, dm.LocalFetchMixin, dm.DataframeQueryDataSourceBase
 ):
@@ -244,6 +250,7 @@ class ExplicitFileDataSource(
     _AttributesClass = ExplicitFileDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = MetadataRewritePreprocessor
+    col_spec = explicitFileDataSource_col_spec
     
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
@@ -376,6 +383,27 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
         else:
             self.CATALOG_DIR = new_root
 
+explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = dm.DataFrameQueryColumnGroup(
+        ["activity_id", "institution_id", "source_id", "experiment_id",
+        "variant_label", "version_date"],
+        # columns whose values are derived from those above
+        ["region", "spatial_avg", 'realization_index', 'initialization_index', 
+        'physics_index', 'forcing_index']
+    ),
+    # Catalog columns whose values must be the same for each POD.
+    pod_expt_cols = dm.DataFrameQueryColumnGroup(
+        ['grid_label'],
+        # columns whose values are derived from those above
+        ['regrid', 'grid_number']
+    ),
+    # Catalog columns whose values must "be the same for each variable", ie are 
+    # irrelevant but must be constrained to a unique value.
+    var_expt_cols = dm.DataFrameQueryColumnGroup(["table_id"]),
+    daterange_col = "date_range"
+)
+
 class CMIP6ExperimentSelectionMixin():
     """Encapsulate attributes and logic used for CMIP6 experiment disambiguation
     so that it can be reused in DataSources with different parents (eg. different
@@ -385,28 +413,6 @@ class CMIP6ExperimentSelectionMixin():
     """
     # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
     _query_attrs_synonyms = {'name': 'variable_id'}
-
-    daterange_col = "date_range"
-    # Catalog columns whose values must be the same for all variables.
-    expt_key_cols = (
-        "activity_id", "institution_id", "source_id", "experiment_id",
-        "variant_label", "version_date"
-    )
-    expt_cols = expt_key_cols + (
-        # columns whose values are derived from those in expt_key_cols
-        "region", "spatial_avg", 'realization_index', 'initialization_index', 
-        'physics_index', 'forcing_index'
-    )
-    # Catalog columns whose values must be the same for each POD.
-    pod_expt_key_cols = ('grid_label',)
-    pod_expt_cols = pod_expt_key_cols + (
-        # columns whose values are derived from those in pod_expt_key_cols
-        'regrid', 'grid_number'
-    )
-    # Catalog columns whose values must "be the same for each variable", ie are 
-    # irrelevant but must be constrained to a unique value.
-    var_expt_key_cols = ("table_id", )
-    var_expt_cols = var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):
@@ -510,4 +516,5 @@ class CMIP6LocalFileDataSource(
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    col_spec = explicitFileDataSource_col_spec
 

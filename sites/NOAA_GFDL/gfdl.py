@@ -394,18 +394,20 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # convention: str
     pass
 
+gfdlppDataManager_col_spec = data_manager.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    daterange_col = "date_range"
+)
+
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
+    col_spec = gfdlppDataManager_col_spec
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}
-
-    daterange_col = "date_range"
-    # Catalog columns whose values must be the same for all variables.
-    expt_key_cols = tuple()
-    expt_cols = expt_key_cols
 
     def __init__(self, case_dict, parent):
         super(GfdlppDataManager, self).__init__(case_dict, parent)

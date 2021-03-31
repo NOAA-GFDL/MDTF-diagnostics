@@ -4,11 +4,12 @@ model data requested by the PODs.
 import os
 import abc
 import collections
-import dataclasses
+import dataclasses as dc
 import glob
 import itertools
 import re
 import signal
+import typing
 from src import util, core, diagnostic, preprocessor
 import pandas as pd
 import intake_esm
@@ -178,10 +179,10 @@ class DataSourceAttributesBase():
     CASENAME: str = util.MANDATORY
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
-    date_range: util.DateRange = dataclasses.field(init=False)
+    date_range: util.DateRange = dc.field(init=False)
     CASE_ROOT_DIR: str = ""
     convention: str = util.MANDATORY
-    log: dataclasses.InitVar = _log
+    log: dc.InitVar = _log
 
     def _set_case_root_dir(self, log=_log):
         config = core.ConfigManager()
@@ -225,9 +226,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # _parent: object
         # log = util.MDTFObjectLogger 
         # status: ObjectStatus
-        super(DataSourceBase, self).__init__(
-            name=case_dict['CASENAME'],
-            _parent=parent
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
         )
         # configure paths
         config = core.ConfigManager()
@@ -276,19 +276,23 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
 
     def iter_vars(self, active=None, pod_active=None):
         """Iterator over all :class:~diagnostic.VarlistEntry`\s (grandchildren)
-        associated with this case. Returns namedtuples of the 
-        :class:`~diagnostic.Diagnostic` and :class:~diagnostic.VarlistEntry` 
+        associated with this case. Returns :class:`PodVarTuple`\s (namedtuples) 
+        of the :class:`~diagnostic.Diagnostic` and :class:~diagnostic.VarlistEntry` 
         objects corresponding to the POD and its variable, respectively.
 
         Args:
-            active: bool or None, default None. Selects subset of PODs which are
-                returned.
+            active: bool or None, default None. Selects subset of VarlistEntries
+                which are returned in the namedtuples:
 
-                - active = True: only iterate over currently active PODs.
-                - active = False: only iterate over inactive PODs (PODs which
-                    have experienced an error during query-fetch.)
-                - active = None: iterate over both active and inactive PODs.
+                - active = True: only iterate over currently active VarlistEntries.
+                - active = False: only iterate over inactive VarlistEntries 
+                    (VarlistEntries which have either failed or are currently 
+                    unused alternate variables).
+                - active = None: iterate over both active and inactive 
+                    VarlistEntries.
 
+            pod_active: bool or None, default None. Same as *active*, but 
+                filtering the PODs that are selected.
         """
         def _get_kwargs(active_):
             if active_ is None: 
@@ -303,6 +307,13 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         for p in self.iter_children(**pod_kwargs):
             for v in p.iter_children(**var_kwargs):
                 yield PodVarTuple(pod=p, var=v)
+
+    def iter_vars_only(self, active=None):
+        """Convenience wrapper for :meth:`iter_vars` that returns only the
+        :class:~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
+        in this DataSource.
+        """
+        yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None))
 
     # -------------------------------------
 
@@ -323,8 +334,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
 
         _log.debug('#' * 70)
         _log.debug('Pre-query varlists for %s:', self.full_name)
-        for pv in self.iter_vars(active=None, pod_active=None):
-            _log.debug("%s", pv.var.debug_str())
+        for v in self.iter_vars_only(active=None):
+            _log.debug("%s", v.debug_str())
         _log.debug('#' * 70)
 
     def setup_pod(self, pod):
@@ -451,9 +462,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         if var is None:
             # eliminate data_key for all vars (failed during fetch)
             self.failed_data[self._id].append(d_key)
-            for pv in self.iter_vars(active=True):
-                pv.var.log.debug("Eliminating data_key=%s for all vars.", d_key)
-                _check_variable(pv.var)
+            for v in self.iter_vars_only(active=True):
+                v.log.debug("Eliminating data_key=%s for all vars.", d_key)
+                _check_variable(v)
         else:
             # eliminate data_key for this var only (failed during preprocess)
             var.log.debug("Eliminating data_key=%s for %s.", d_key, var.full_name)
@@ -464,8 +475,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS): 
             vars_to_query = [
-                pv.var for pv in self.iter_vars(active=True) \
-                    if pv.var.stage < diagnostic.VarlistEntryStage.QUERIED
+                v for v in self.iter_vars_only(active=True) \
+                    if v.stage < diagnostic.VarlistEntryStage.QUERIED
             ]
             if not vars_to_query:
                 break # exit: queried everything or nothing active
@@ -538,8 +549,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 self.select_data()
                 update = False
             vars_to_fetch = [
-                pv.var for pv in self.iter_vars(active=True) \
-                    if pv.var.stage < diagnostic.VarlistEntryStage.FETCHED
+                v for v in self.iter_vars_only(active=True) \
+                    if v.stage < diagnostic.VarlistEntryStage.FETCHED
             ]
             if not vars_to_fetch:
                 break # exit: fetched everything or nothing active
@@ -605,8 +616,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 self.fetch_data()
                 update = False
             vars_to_process = [
-                pv for pv in self.iter_vars(active=True) \
-                    if pv.var.stage < diagnostic.VarlistEntryStage.PREPROCESSED
+                v for v in self.iter_vars_only(active=True) \
+                    if v.stage < diagnostic.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
                 break # exit: processed everything or nothing active
@@ -659,6 +670,113 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
 
 # --------------------------------------------------------------------------
 
+class DataFrameQueryColumnGroup():
+    """Class wrapping a set of catalog (DataFrame) column names used by 
+    :class:`DataframeQueryDataSourceBase` in selecting experiment attributes of
+    a given scope (case-wide, pod-wide or var-wide).
+
+    One component of :class:`DataframeQueryColumnSpec`.
+    """
+    def __init__(self, key_cols=None, derived_cols=None):
+        if key_cols is None:
+            self.key_cols = tuple()
+        else:
+            self.key_cols = tuple(util.to_iter(key_cols, coll_type=set))
+        if derived_cols is None:
+            self.cols = self.key_cols
+        else:
+            self.cols = tuple(set(
+                self.key_cols + util.to_iter(derived_cols, coll_type=tuple)
+            ))
+
+    # hard-coded column name for DataSource-specific experiment identifier 
+    _expt_key_col = 'expt_key' 
+
+    def expt_key(self, df, idx=None):
+        """Returns string-valued key for use in grouping the rows of *df* by
+        experiment.
+
+        .. note::
+           We can't just do a .groupby on column names, because pandas attempts 
+           to coerce DateFrequency to a timedelta64, which overflows for static 
+           DateFrequency. There doesn't seem to be a way to disable this type 
+           coercion.
+        """
+        if idx is not None:   # index used in groupby
+            df = df.loc[idx]
+        return '|'.join(str(df[col]) for col in self.key_cols)
+
+    def expt_key_func(self, df):
+        """Function that constructs the appropriate experiment_key column 
+        when apply()'ed to the query results DataFrame.
+        """
+        return pd.Series(
+            {self._expt_key_col: self.expt_key(df, idx=None)},
+            dtype='object'
+        )
+
+@util.mdtf_dataclass
+class DataframeQueryColumnSpec(metaclass=util.MDTFABCMeta):
+    """
+    - *expt_cols*: Catalog columns whose values must be the same for all 
+        variables being fetched. This is the most common sense in which we 
+        "specify an experiment."
+    - *pod_expt_cols*: Catalog columns whose values must be the same for each 
+        POD, but may differ between PODs. An example could be spatial grid 
+        resolution. Defaults to the empty set.
+    - *var_expt_cols*: Catalog columns whose values must "be the same for each 
+        variable", i.e. are irrelevant differences for our purposes but must be 
+        constrained to a unique value in order to uniquely specify an experiment.
+        An example is the CMIP6 MIP table: the same variable can appear in 
+        multiple MIP tables, but the choice of table isn't relvant for PODs.
+        Defaults to the empty set.
+    
+    In addition, there are specially designated column names:
+
+    - *remote_data_col*: Name of the column in the catalog containing the 
+        location of the data for that row (e.g., path to a netCDF file).
+    - *daterange_col*: Name of the column in the catalog containing 
+        :class:`util.DateRange` objects specifying the date range covered by 
+        the data for that row. If set to None, we assume this information isn't
+        available from the catalog and date range selection logic is skipped.
+    """
+    expt_cols: DataFrameQueryColumnGroup = util.MANDATORY
+    pod_expt_cols: DataFrameQueryColumnGroup = \
+        dc.field(default_factory=DataFrameQueryColumnGroup)
+    var_expt_cols: DataFrameQueryColumnGroup = \
+        dc.field(default_factory=DataFrameQueryColumnGroup)
+    remote_data_col: str = None
+    # TODO: generate DateRange from start/end date columns
+    daterange_col: str = None
+
+    def __post__init__(self):
+        pass
+
+    @property
+    def has_date_info(self):
+        return (self.daterange_col is not None)
+
+    @property
+    def all_expt_cols(self):
+        """Columns of the DataFrame specifying the experiment. We assume that 
+        specifying a valid value for each of the columns in this set uniquely 
+        identifies an experiment. 
+        """
+        return tuple(set(
+            self.expt_cols.cols + self.pod_expt_cols.cols \
+            + self.var_expt_cols.cols
+        ))
+
+    def expt_key(self, df, idx=None):
+        """Returns tuple of string-valued keys for grouping files by experiment:
+        (<values of expt_key_cols>, <values of pod_expt_key_cols>, 
+        <values of var_expt_key_cols>).
+        """
+        return tuple(
+            x.expt_key(df, idx=idx) for x in \
+            (self.expt_cols, self.pod_expt_cols, self.var_expt_cols)
+        )
+
 class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     """DataSource which queries a data catalog made available as a pandas 
     DataFrame, and includes logic for selecting experiment based on column values.
@@ -671,6 +789,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
        TODO: integrate better with general Intake API.
     """
+    col_spec = util.abstract_attribute() # instance of DataframeQueryColumnSpec
+
     def __init__(self, case_dict, parent):
         super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
         self.expt_keys = dict() # _id -> expt_key tuple
@@ -681,47 +801,16 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         """Synonym for the DataFrame containing the catalog."""
         pass
 
-    # Name of the column in the catalog containing the location (eg, the path)
-    # of the data for that row.
-    remote_data_col = util.abstract_attribute()
-
-    # column of the DataFrame containing util.DateRange objects 
-    # If 'None', date range selection logic is skipped.
-    # TODO: generate DateRange from start/end date columns
-    daterange_col = None
-
-    @property
-    def has_date_info(self):
-        return (self.daterange_col is not None)
-
-    # Catalog columns whose values must be the same for all variables being
-    # fetched. This is the most common sense in which we "specify an experiment."
-    expt_key_cols = util.abstract_attribute()
-    expt_cols = util.abstract_attribute()
-
-    # Catalog columns whose values must be the same for each POD, but may differ
-    # between PODs. An example could be spatial grid resolution.
-    pod_expt_key_cols = tuple()
-    pod_expt_cols = tuple()
-
-    # Catalog columns whose values must "be the same for each variable", ie are 
-    # irrelevant differences for our purposes but must be constrained to a 
-    # unique value. An example is the CMIP6 MIP table: the same variable can 
-    # appear in multiple MIP tables, but the choice of table isn't relvant for PODs.
-    var_expt_key_cols = tuple()
-    var_expt_cols = tuple()
-
-    @property
-    def all_expt_cols(self):
-        """Columns of the DataFrame specifying the experiment. We assume that 
-        specifying a valid value for each of the columns in this set uniquely 
-        identifies an experiment. 
-        """
-        return tuple(set(self.expt_cols + self.pod_expt_cols + self.var_expt_cols))
-
     @property
     def all_columns(self):
         return tuple(self.df.columns)
+
+    @property
+    def remote_data_col(self):
+        col_name = self.col_spec.remote_data_col
+        if col_name is None:
+            raise ValueError
+        return col_name
 
     def _query_clause(self, col_name, query_attr_name, query_attr_val):
         """Translate a single field value into a logical clause in the dataframe
@@ -764,7 +853,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         """
         # contruct query string for non-DateRange attributes
         query_d = util.WormDict()
-        query_d.update(dataclasses.asdict(self.attrs))
+        query_d.update(dc.asdict(self.attrs))
         field_synonyms = getattr(self, '_query_attrs_synonyms', dict())
         query_d.update(var.query_attrs(field_synonyms))
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
@@ -788,36 +877,6 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             local_dict={'d': util.NameSpace.fromDict(query_d)}
         )
 
-    def _experiment_key(self, df=None, idx=None, cols=None):
-        """Returns tuple of string-valued keys for grouping files by experiment:
-        (<values of expt_key_cols>, <values of pod_expt_key_cols>, 
-        <values of var_expt_key_cols>), or individual entries in that tuple if
-        *cols* is specified.
-
-        .. note::
-           We can't just do a .groupby on column names, because pandas attempts 
-           to coerce DateFrequency to a timedelta64, which overflows for static 
-           DateFrequency. There doesn't seem to be a way to disable this type 
-           coercion.
-        """
-        if df is None:        # df used when .apply()'ed across rows
-            df = self.df
-        if idx is not None:   # index used in groupby
-            df = df.loc[idx]
-
-        def _key_str(cols_):
-            return '|'.join(str(df[c]) for c in cols_)
-
-        if cols is None:
-            # return full key
-            return tuple(
-                _key_str(x) for x in \
-                (self.expt_key_cols, self.pod_expt_key_cols, self.var_expt_key_cols)
-            )
-        else:
-            # computing one of the entries in the tuple
-            return _key_str(cols)
-
     @staticmethod
     def _data_key(group_df):
         """Return tuple of row indices: this implementation's data_key."""
@@ -828,15 +887,16 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
         """
-        if not self.has_date_info or self.daterange_col not in group_df:
+        date_col = self.col_spec.daterange_col # abbreviate
+        if not self.col_spec.has_date_info or date_col not in group_df:
             return group_df
 
         data_key = self._data_key(group_df)
         try:
-            sorted_df = group_df.sort_values(by=self.daterange_col)
+            sorted_df = group_df.sort_values(by=date_col)
             # method throws ValueError if ranges aren't contiguous
             files_date_range = util.DateRange.from_contiguous_span(
-                *(sorted_df[self.daterange_col].to_list())
+                *(sorted_df[date_col].to_list())
             )
             # throws AssertionError if we don't span the query range
             assert files_date_range.contains(self.attrs.date_range)
@@ -874,7 +934,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # assign set of sets of catalog row indices to var's remote_data attr
         # filter out empty entries = queries that failed.
         expt_groups = query_df.groupby(
-            by=(lambda idx: self._experiment_key(query_df, idx))
+            by=(lambda idx: self.col_spec.expt_key(query_df, idx))
         )
         var.remote_data = util.WormDict()
         for expt_key, group in expt_groups:
@@ -898,7 +958,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         """
         data_key = util.to_iter(data_key, list)
         err_str = '\n'.join(
-            '\t'+str(self.df[self.remote_data_col].loc[idx]) for idx in data_key
+            '\t' + str(self.df[self.remote_data_col].loc[idx]) \
+            for idx in data_key
         )
         err_str = msg + '\n' + err_str
         if self.strict:
@@ -908,25 +969,16 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     # --------------------------------------------------------------
 
-    _expt_key_col = 'expt_key' # column name for DataSource-specific experiment identifier
-
-    def _expt_df(self, obj, cols, key_cols, parent_id=None, obj_name=None):
+    def _expt_df(self, obj, var_iterator, col_group, parent_id=None, obj_name=None):
         """Return a DataFrame of partial experiment attributes (as determined by
-        cols) that are shared by the query results of all variables covered by
+        *cols*) that are shared by the query results of all variables covered by
         var_iterator.
         """
-        cols = list(cols) # DataFrame requires list
+        key_col = col_group._expt_key_col # name of the column for the expt_key
+        cols = list(col_group.cols) # DataFrame requires list
         if not cols:
             # short-circuit construction for trivial case (empty key)
-            return pd.DataFrame({self._expt_key_col: [""]}, dtype='object')
-
-        def _key_col_func(df):
-            """Function that constructs the appropriate experiment_key column 
-            when apply()'ed to the query results DataFrame.
-            """
-            return pd.Series({
-                self._expt_key_col: self._experiment_key(df, idx=None, cols=key_cols)
-            }, dtype='object')
+            return pd.DataFrame({key_col: [""]}, dtype='object')
 
         expt_df = None
         if parent_id is None:
@@ -935,11 +987,6 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             parent_key = self.expt_keys[parent_id]
         if obj_name is None:
             obj_name = obj.name
-        if hasattr(obj, 'iter_vars'):
-            var_iterator = obj.iter_vars(active=True)
-        else:
-            assert isinstance(obj, diagnostic.VarlistEntry)
-            var_iterator = [obj]
 
         for v in var_iterator:
             if v.stage < diagnostic.VarlistEntryStage.QUERIED:
@@ -951,7 +998,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 if expt_key[:len(parent_key)] == parent_key:
                     rows.update(data_key)
             v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates().copy()
-            v_expt_df[self._expt_key_col] = v_expt_df.apply(_key_col_func, axis=1)
+            v_expt_df[key_col] = v_expt_df.apply(col_group.expt_key_func, axis=1)
             if v_expt_df.empty:
                 # should never get here
                 raise util.DataExperimentError(("No choices of expt attrs "
@@ -965,7 +1012,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             else:
                 expt_df = pd.merge(
                     expt_df, v_expt_df, 
-                    how='inner', on=self._expt_key_col, sort=False, validate='1:1'
+                    how='inner', on=key_col, sort=False, validate='1:1'
                 )
             if expt_df.empty:
                 raise util.DataExperimentError(("Eliminated all choices of experiment "
@@ -974,41 +1021,45 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         obj.log.debug('%s expt attr choices for %s', len(expt_df), obj_name)
         return expt_df
 
-    def _get_expt_key(self, stage, obj, parent_id=None):
-        """Set experiment attributes at the case, pod or variable level. Given obj,
-        construct a DataFrame of epxeriment attributes that are found in the 
-        queried data for all variables in obj. If more than one choice of 
-        experiment is possible, call DataSource-specific heuristics in resolve_func
-        to choose between them. 
+    def get_expt_key(self, scope, obj, parent_id=None):
+        """Set experiment attributes with case, pod or variable *scope*. Given 
+        *obj*, construct a DataFrame of epxeriment attributes that are found in 
+        the queried data for all variables in *obj*. 
+        
+        If more than one choice of experiment is possible, call 
+        DataSource-specific heuristics in resolve_func to choose between them. 
         """
-        # set columns and tiebreaker function based on the level of the 
+        # set columns and tiebreaker function based on the scope of the 
         # selection process we're at (case-wide, pod-wide or var-wide):
-        if stage == 'case':
-            df_cols = self.expt_cols
-            df_key_cols = self.expt_key_cols
+        if scope == 'case':
+            col_group = self.col_spec.expt_cols
             resolve_func = self.resolve_expt
             obj_name = obj.name
-        elif stage == 'pod':
-            df_cols = self.pod_expt_cols
-            df_key_cols = self.pod_expt_key_cols
+            var_iterator = obj.iter_vars(active=True)
+        elif scope == 'pod':
+            col_group = self.col_spec.pod_expt_cols
             resolve_func = self.resolve_pod_expt
             if isinstance(obj, diagnostic.Diagnostic):
                 obj_name = obj.name
+                var_iterator = obj.iter_children(status=core.ObjectStatus.ACTIVE)
             else:
                 obj_name = 'all PODs'
-        elif stage == 'var':
-            df_cols = self.var_expt_cols
-            df_key_cols = self.var_expt_key_cols
+                var_iterator = obj.iter_vars(active=True)
+        elif scope == 'var':
+            col_group = self.col_spec.var_expt_cols
             resolve_func = self.resolve_var_expt
             if isinstance(obj, diagnostic.VarlistEntry):
                 obj_name = obj.name
+                var_iterator = [obj]
             else:
                 obj_name = "all POD's variables"
+                var_iterator = obj.iter_children(status=core.ObjectStatus.ACTIVE)
         else:
             raise TypeError()
+        key_col = col_group._expt_key_col # name of the column for the expt_key
 
         # get DataFrame of allowable (consistent) choices
-        expt_df = self._expt_df(obj, df_cols, df_key_cols, parent_id, obj_name)
+        expt_df = self._expt_df(obj, var_iterator, col_group, parent_id, obj_name)
         
         if len(expt_df) > 1:
             if self.strict:
@@ -1022,13 +1073,20 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         elif len(expt_df) > 1:  
             raise util.DataExperimentError((f"Experiment attributes for "
                 f"{obj_name} not uniquely specified by user input: "
-                f"{expt_df[self._expt_key_col].to_list()}"))
+                f"{expt_df[key_col].to_list()}"))
 
         # successful exit case: we've narrowed down the attrs to a single choice        
-        expt_key = (expt_df[self._expt_key_col].iloc[0], )
+        expt_key = (expt_df[key_col].iloc[0], )
         if parent_id is not None:
             expt_key = self.expt_keys[parent_id] + expt_key
         return expt_key
+
+    def set_expt_key(self, obj, key_):
+        key_str = str(key_[-1])
+        if key_str:
+            obj.log.debug("Setting experiment_key for '%s' to '%s'", 
+                obj.name, key_str)
+        self.expt_keys[obj._id] = key_
 
     def set_experiment(self):
         """Ensure that all data we're about to fetch comes from the same experiment.
@@ -1036,32 +1094,25 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         finished, either employ data source-specific heuristics to select one
         or return an error. 
         """
-        def _set_expt_key(obj_, key_):
-            key_str = str(key_[-1])
-            if key_str:
-                obj_.log.debug("Setting experiment_key for %s to '%s'", 
-                    obj_.name, key_str)
-            self.expt_keys[obj_._id] = key_
-
         # set attributes that must be the same for all variables
         if self.failed:
             raise util.DataExperimentError((f"Aborting experiment selection "
                 f"for CASENAME '{self.name}' due to failure."))
-        key = self._get_expt_key('case', self)
-        _set_expt_key(self, key)
+        key = self.get_expt_key('case', self)
+        self.set_expt_key(self, key)
 
         # set attributes that must be the same for all variables in each POD
         try:
             # attempt to choose same values for all PODs
-            key = self._get_expt_key('pod', self, self._id)
+            key = self.get_expt_key('pod', self, self._id)
             for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
-                _set_expt_key(p, key)
+                self.set_expt_key(p, key)
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each POD
             for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
-                    key = self._get_expt_key('pod', p, self._id)
-                    _set_expt_key(p, key)
+                    key = self.get_expt_key('pod', p, self._id)
+                    self.set_expt_key(p, key)
                 except Exception as exc:
                     p.log.exception(('set_experiment on pod-level experiment '
                         'attributes: %s caught %r; deactivating.'), p.name, exc, 
@@ -1073,16 +1124,15 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # need to fetch
         try:
             # attempt to choose same values for each POD:
-            for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
-                key = self._get_expt_key('var', p, p._id)
-                for v in p.iter_children(status=core.ObjectStatus.ACTIVE):
-                    _set_expt_key(v, key)
+            for pv in self.iter_vars(active=True):
+                key = self.get_expt_key('var', pv.pod, pv.pod._id)
+                self.set_expt_key(pv.var, key)
         except Exception: # util.DataExperimentError:
             # couldn't do that, so allow different choices for each variable
             for pv in self.iter_vars(active=True):
                 try:
-                    key = self._get_expt_key('var', pv.var, pv.pod._id)
-                    _set_expt_key(pv.var, key)
+                    key = self.get_expt_key('var', pv.var, pv.pod._id)
+                    self.set_expt_key(pv.var, key)
                 except Exception as exc:
                     pv.var.log.exception("", exc=exc)
                     continue

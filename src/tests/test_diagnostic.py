@@ -128,7 +128,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         self.assertEqual(pod.pod_env_vars['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
         self.assertEqual(pod.pod_env_vars['WK_DIR'], 'A')  
 
-    @mock.patch('src.util.check_dirs')
+    @mock.patch('src.util.check_dir')
     @mock.patch('os.path.exists', return_value = False)
     @mock.patch('os.makedirs')
     def test_setup_pod_directories_mkdir(self, mock_makedirs, mock_exists, \

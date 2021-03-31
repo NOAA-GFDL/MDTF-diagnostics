@@ -146,28 +146,39 @@ def find_files(src_dirs, filename_globs, n_files=None):
         raise exceptions.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 
-def check_dirs(*dirs, create=False):
+def check_dir(dir_, attr_name="", create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a 
     :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
 
     Args:
-        dirs: iterable of absolute paths to check.
+        dir\_: If a string, the absolute path to check; otherwise, assume the 
+            path to check is given by the *attr_name* attribute on this object.
+        attr_name: Name of the attribute being checked (used in log messages).
         create: (bool, default False): if True, nonexistent directories are 
             created. 
     """
-    for dir_ in dirs:
-        try:
-            if not os.path.isdir(dir_):
-                if create:
-                    os.makedirs(dir_, exist_ok=False)
-                else:
-                    raise exceptions.MDTFFileNotFoundError(f"Directory {dir_} not found.")
-        except Exception as exc:
-            if isinstance(exc, FileNotFoundError):
-                raise exceptions.MDTFFileNotFoundError(getattr(exc,'filename',''))
+    if not isinstance(dir_, str):
+        dir_ = getattr(dir_, attr_name, None)
+    if not isinstance(dir_, str):
+        raise ValueError(f"Received bad directory: {repr(dir_)}.")
+    try:
+        if not os.path.isdir(dir_):
+            if create:
+                os.makedirs(dir_, exist_ok=False)
             else:
-                raise OSError(f"Caught exception when checking {dir_}.") from exc
+                raise exceptions.MDTFFileNotFoundError(dir_)
+    except Exception as exc:
+        if isinstance(exc, FileNotFoundError):
+            path = getattr(exc, 'filename', '')
+            if attr_name:
+                raise exceptions.MDTFFileNotFoundError(
+                    f"{attr_name} not found at '{path}'.")
+            else:
+                raise exceptions.MDTFFileNotFoundError(path)
+        else:
+            raise OSError(f"Caught exception when checking {attr_name}={dir_}.") \
+                from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):
     """Return a filename that doesn't conflict with existing files.

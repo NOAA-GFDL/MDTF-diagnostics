@@ -237,7 +237,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
         self.MODEL_WK_DIR = d.MODEL_WK_DIR
         self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
-        util.check_dirs(self.MODEL_WK_DIR, self.MODEL_DATA_DIR, create=True)
+        util.check_dir(self, 'MODEL_WK_DIR', create=True)
+        util.check_dir(self, 'MODEL_DATA_DIR', create=True)
 
         # set up log (MDTFCaseLoggerMixin)
         self.init_log(config,

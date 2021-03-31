@@ -586,11 +586,13 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.
         """
-        util.check_dirs(self.POD_CODE_DIR, self.POD_OBS_DATA, create=False)
-        util.check_dirs(self.POD_WK_DIR, create=True)
+        util.check_dir(self, 'POD_CODE_DIR', create=False)
+        util.check_dir(self, 'POD_OBS_DATA', create=False)
+        util.check_dir(self, 'POD_WK_DIR', create=True)
+
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            util.check_dirs(os.path.join(self.POD_WK_DIR, d), create=True)
+            util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 

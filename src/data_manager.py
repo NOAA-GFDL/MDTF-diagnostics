@@ -202,7 +202,7 @@ class DataSourceAttributesBase():
         # validate convention name
         translate = core.VariableTranslator()
         if not self.convention:
-            raise util.GenericDataSourceError((f"'convention' not configured "
+            raise util.GenericDataSourceEvent((f"'convention' not configured "
                 f"for {self.__class__.__name__}."))
         self.convention = translate.get_convention_name(self.convention)
 
@@ -219,6 +219,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
     _AttributesClass = util.abstract_attribute()
     _DiagnosticClass = util.abstract_attribute()
     _PreprocessorClass = util.abstract_attribute()
+
+    _deactivation_log_level = logging.ERROR # default log level for failure
 
     def __init__(self, case_dict, parent):
         # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
@@ -400,9 +402,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             trans_v = translate.translate(v)
             v.translation = trans_v
         except KeyError as exc:
-            v.log.warning("Deactivating %s due to translation failure (%s).", 
-                v.full_name, exc)
-            v.deactivate(exc) 
+            new_exc = util.PodConfigError((f"Deactivating {v.full_name} due to "
+                f"translation failure ({str(exc)})."), pod)
+            v.deactivate(new_exc, level=logging.WARNING)
         v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
@@ -459,13 +461,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 # all data_keys obtained for this var during query have
                 # been eliminated, so need to deactivate var
                 dk_list = list(v.remote_data.values())
-                v.log.debug("Deactivating %s since all data_keys eliminated (%s).",
-                    v.full_name, dk_list)
-                try:
-                    raise util.GenericDataSourceError((f"Deactivating {v.full_name} "
-                        f"since all data_keys eliminated ({dk_list})."), v)
-                except Exception as exc:
-                    v.deactivate(exc)
+                exc = util.GenericDataSourceEvent((f"Deactivating {v.full_name} "
+                    f"since all data_keys eliminated ({dk_list})."), v)
+                v.deactivate(exc)
 
         if var is None:
             # eliminate data_key for all vars (failed during fetch)
@@ -497,17 +495,14 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     self.log.info("Querying %s", v.translation)
                     self.query_dataset(v) # sets v.remote_data
                     if not v.remote_data:
-                        raise util.DataQueryError("No data found.", v)
+                        raise util.DataQueryEvent("No data found.", v)
                     v.stage = diagnostic.VarlistEntryStage.QUERIED
-                except util.DataQueryError as exc:
-                    self.log.info("No data found for %s.", v.translation)
+                except util.DataQueryEvent as exc:
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
-                    self.log.exception("Caught exception querying %s: %r", 
-                        v.translation, exc)
                     try:
-                        raise util.DataQueryError(("Caught exception while querying "
+                        raise util.DataQueryEvent(("Caught exception while querying "
                             f"{v.translation} for {v.full_name}."), v) from exc
                     except Exception as chained_exc:
                         v.deactivate(chained_exc)
@@ -515,7 +510,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             self.post_query_hook(vars_to_query)
         else:
             # only hit this if we don't break
-            raise util.DataQueryError(
+            raise util.DataRequestError(
                 f"Too many iterations in {self.class_name} query_data()."
             )
 
@@ -533,7 +528,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             # set_experiment() successfully
             try:
                 self.set_experiment()
-            except util.DataExperimentError:
+            except util.DataExperimentEvent:
                 # couldn't set consistent experiment attributes, so deactivate
                 # problematic pods/vars and try again
                 update = True
@@ -543,7 +538,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             break # successful exit
         else:
             # only hit this if we don't break
-            raise util.DataQueryError(
+            raise util.DataQueryEvent(
                 f"Too many iterations in {self.class_name} select_data()."
             )
 
@@ -586,21 +581,19 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     # check if var received everything
                     for data_key in self.iter_data_keys(v):
                         if not self.local_data.get(data_key, None):
-                            raise util.DataFetchError("Fetch failed.", data_key)
+                            raise util.DataFetchEvent("Fetch failed.", data_key)
                         else:
                             paths = util.to_iter(self.local_data[data_key])
                             v.local_data.extend(paths)
                     v.stage = diagnostic.VarlistEntryStage.FETCHED
-                except util.DataFetchError as exc:
+                except util.DataFetchEvent as exc:
                     update = True
-                    v.log.info("Fetch failed for %s.", v)
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
                     update = True
-                    self.log.exception("Caught exception fetching %s: %r", v, exc)
                     try:
-                        raise util.DataFetchError(("Caught exception while "
+                        raise util.DataFetchEvent(("Caught exception while "
                             f"fetching data for {v.full_name}."), v) from exc
                     except Exception as chained_exc:
                         v.deactivate(chained_exc)
@@ -608,7 +601,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             self.post_fetch_hook(vars_to_fetch)
         else:
             # only hit this if we don't break
-            raise util.DataFetchError(
+            raise util.DataRequestError(
                 f"Too many iterations in {self.class_name} fetch_data()."
             )
 
@@ -649,7 +642,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     continue
         else:
             # only hit this if we don't break
-            raise util.DataPreprocessError( 
+            raise util.DataRequestError( 
                 f"Too many iterations in {self.class_name} preprocess_data()."
             )
 
@@ -971,7 +964,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         )
         err_str = msg + '\n' + err_str
         if self.strict:
-            raise util.DataQueryError(err_str, data_key)
+            raise util.DataQueryEvent(err_str, data_key)
         else:
             log.warning(err_str)
 
@@ -1009,7 +1002,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             v_expt_df[key_col] = v_expt_df.apply(col_group.expt_key_func, axis=1)
             if v_expt_df.empty:
                 # should never get here
-                raise util.DataExperimentError(("No choices of expt attrs "
+                raise util.DataExperimentEvent(("No choices of expt attrs "
                     f"for {v.full_name} in {obj_name}."), v)
             v.log.debug('%s expt attr choices for %s from %s', 
                 len(v_expt_df), obj_name, v.full_name)
@@ -1023,12 +1016,12 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     how='inner', on=key_col, sort=False, validate='1:1'
                 )
             if expt_df.empty:
-                raise util.DataExperimentError(("Eliminated all choices of experiment "
+                raise util.DataExperimentEvent(("Eliminated all choices of experiment "
                     f"attributes for {obj_name} when adding {v.full_name}."), v)
         
         if expt_df.empty:
             # shouldn't get here
-            raise util.DataExperimentError(f"No active variables for {obj_name}.", None)
+            raise util.DataExperimentEvent(f"No active variables for {obj_name}.", None)
         obj.log.debug('%s expt attr choices for %s', len(expt_df), obj_name)
         return expt_df
 
@@ -1074,15 +1067,15 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         
         if len(expt_df) > 1:
             if self.strict:
-                raise util.DataExperimentError((f"Experiment attributes for {obj_name} "
+                raise util.DataExperimentEvent((f"Experiment attributes for {obj_name} "
                     f"not uniquely specified by user input in strict mode."))
             else:
                 expt_df = resolve_func(expt_df, obj)
         if expt_df.empty:
-            raise util.DataExperimentError(("Eliminated all consistent "
+            raise util.DataExperimentEvent(("Eliminated all consistent "
                 f"choices of experiment attributes for {obj_name}."))
         elif len(expt_df) > 1:  
-            raise util.DataExperimentError((f"Experiment attributes for "
+            raise util.DataExperimentEvent((f"Experiment attributes for "
                 f"{obj_name} not uniquely specified by user input: "
                 f"{expt_df[key_col].to_list()}"))
 
@@ -1107,7 +1100,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         """
         # set attributes that must be the same for all variables
         if self.failed:
-            raise util.DataExperimentError((f"Aborting experiment selection "
+            raise util.DataExperimentEvent((f"Aborting experiment selection "
                 f"for CASENAME '{self.name}' due to failure."))
         key = self.get_expt_key('case', self)
         self.set_expt_key(self, key)
@@ -1118,7 +1111,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             key = self.get_expt_key('pod', self, self._id)
             for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 self.set_expt_key(p, key)
-        except Exception: # util.DataExperimentError:
+        except Exception: # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each POD
             for p in self.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
@@ -1138,7 +1131,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             for pv in self.iter_vars(active=True):
                 key = self.get_expt_key('var', pv.pod, pv.pod._id)
                 self.set_expt_key(pv.var, key)
-        except Exception: # util.DataExperimentError:
+        except Exception: # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each variable
             for pv in self.iter_vars(active=True):
                 try:
@@ -1393,7 +1386,7 @@ class LocalFetchMixin(AbstractFetchMixin):
             paths = (paths, )
         for path in paths:
             if not os.path.exists(path):
-                raise util.DataFetchError((f"Fetch {var.full_name}: File not "
+                raise util.DataFetchEvent((f"Fetch {var.full_name}: File not "
                     f"found at {path}."), var)
             else:
                 self.log.debug("Fetch %s: found %s.", var.full_name, path)

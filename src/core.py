@@ -118,10 +118,10 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
                 (lambda x: x.status == status), self._children
             )
 
-    def child_deactivation_handler(self, child, level=logging.ERROR):
+    def child_deactivation_handler(self, child):
         pass
 
-    def child_status_update(self, level=logging.ERROR):
+    def child_status_update(self):
         if next(self.iter_children(), None) is None:
             # should never get here (no children of any status), because this 
             # method should only be called by children
@@ -131,10 +131,23 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         if not self.failed and \
             next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
             exc = util.MDTFPropagatedException(None, self)
-            self.deactivate(exc, level=level)
+            self.deactivate(exc, level=None)
 
-    def deactivate(self, exc, level=logging.ERROR):
+    # level at which to log deactivation events
+    _deactivation_log_level = logging.ERROR
+
+    def deactivate(self, exc, level=None):
         # always log exceptions, even if we've already failed
+        if level is None:
+            level = self._deactivation_log_level # default level for child class
+        
+        if isinstance(exc, util.MDTFEvent):
+            # convert Event to exception
+            try:
+                raise util.FatalErrorEvent((f"{exc.__class__.__name__} led to "
+                    "deactivation.")) from exc
+            except Exception as chained_exc:
+                exc = chained_exc
         self.log.store_exception(exc, log=True, level=level)
         if not self.failed:
             # only need to do updates on status change 
@@ -142,12 +155,12 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
             self.status = ObjectStatus.FAILED
             if self._parent is not None:
                 # call handler on parent, which may change parent and/or siblings
-                self._parent.child_deactivation_handler(self, level=level)
-                self._parent.child_status_update(level=level)
+                self._parent.child_deactivation_handler(self)
+                self._parent.child_status_update()
             # update children (deactivate all)
             child_exc = util.MDTFPropagatedException(exc, self)
             for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
-                obj.deactivate(child_exc, level=level)
+                obj.deactivate(child_exc, level=None)
 
 # -----------------------------------------------------------------------------
 
@@ -993,7 +1006,6 @@ class MDTFFramework(MDTFObjectBase):
             if not case.failed:
                 _log.info("### %s: requesting data for case '%s'.",
                     self.class_name, case_name)
-                for v in case.iter_vars_only(active=True):
                 case.request_data()
             else:
                 _log.info(("### %s: initialization for case '%s' failed; skipping "

@@ -370,7 +370,6 @@ class SubprocessRuntimePODWrapper(object):
     def runtime_exception_handler(self, exc):
         log_str = (f"Caught exception while running {self.pod.name}: "
             f"{repr(exc)}.")
-        self.pod.error('\n' + log_str)
         if self.process is not None:
             self.process.kill()
             self.process = None

@@ -162,6 +162,8 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         default=VarlistEntryStage.NOTSET, compare=False
     )
 
+    _deactivation_log_level = logging.INFO # default log level for failure
+
     def __post_init__(self, coords=None):
         # inherited from two dataclasses, so need to call post_init on each directly
         core.MDTFObjectBase.__post_init__(self)
@@ -464,6 +466,8 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     POD_WK_DIR = ""
     POD_OUT_DIR = ""
     
+    _deactivation_log_level = logging.ERROR # default log level for failure
+
     def __post_init__(self):
         core.MDTFObjectBase.__post_init__(self)
         # set up log (MDTFObjectLoggerMixin)
@@ -504,7 +508,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         """Iterable of child objects associated with this object."""
         yield from self.varlist.iter_vars()
 
-    def child_deactivation_handler(self, failed_var, level=logging.ERROR):
+    def child_deactivation_handler(self, failed_var):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
         process has failed for a :class:`VarlistEntry`, try to find a set of 
@@ -528,12 +532,11 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
                 alt_v.status = core.ObjectStatus.ACTIVE
             break
         if not success:
-            self.log.info("No alternates available for %s.", failed_var.full_name)
             try:
-                raise util.PodDataError(f"No alternates available for {failed_var}.", 
-                    self) from failed_var.exception
+                raise util.PodDataError((f"No alternates available for "
+                    "{failed_var.full_name}."), self)
             except Exception as exc:
-                self.deactivate(exc=exc, level=level)
+                self.deactivate(exc=exc)
 
     # -------------------------------------
 

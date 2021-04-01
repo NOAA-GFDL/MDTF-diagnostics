@@ -583,7 +583,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             ds = self.read_dataset(var)
             ds = xr_parser.DatasetParser().parse(ds, var)
         except Exception as exc:
-            raise util.DataPreprocessError((f"Error in read/parse data for "
+            raise util.DataPreprocessEvent((f"Error in read/parse data for "
                 f"{var.full_name}."), var) from exc
         # execute functions
         for f in self.functions:
@@ -592,13 +592,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     f.__class__.__name__)
                 ds = f.process(var, ds)
             except Exception as exc:
-                raise util.DataPreprocessError((f"Preprocessing on {var.full_name} "
+                raise util.DataPreprocessEvent((f"Preprocessing on {var.full_name} "
                     f"failed at {f.__class__.__name__}."), var) from exc
         # write dataset
         try:
             self.write_dataset(var, ds)
         except Exception as exc:
-            raise util.DataPreprocessError((f"Error in writing data for "
+            raise util.DataPreprocessEvent((f"Error in writing data for "
                 f"{var.full_name}."), var) from exc
         del ds # shouldn't be necessary
         var.log.debug("Successful preprocessor exit on %s.", var)

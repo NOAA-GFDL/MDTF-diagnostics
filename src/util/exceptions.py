@@ -29,8 +29,8 @@ class TimeoutAlarm(Exception):
     pass
 
 class MDTFBaseException(Exception):
-    """Dummy base class to describe all MDTF-specific errors that can happen
-    during the framework's operation."""
+    """Base class to describe all MDTF-specific errors that can happen during 
+    the framework's operation."""
 
     def __repr__(self):
         # full repr of attrs of child classes may take lots of space to print;
@@ -142,18 +142,35 @@ class FXDateException(MDTFBaseException):
         return ("Attempted datelabel method '{}' on FXDate "
             "placeholder: {}.").format(self.func_name, self.msg)
 
-class DataExceptionBase(MDTFBaseException):
-    """Base class and common formatting code for exceptions raised in data 
-    query/fetch.
+class DataRequestError(MDTFBaseException):
+    """Dummy class used for fatal errors that take place during the 
+    data query/fetch/preprocess stage of the framework.
     """
-    _error_str = ""
+    pass
 
-    def __init__(self, msg=None, dataset=None):
+class MDTFEvent(MDTFBaseException):
+    """Dummy class to denote non-fatal errors, specifically "events" that are 
+    passed during the data query/fetch/preprocess stage of the framework.
+    """
+    pass
+
+class FatalErrorEvent(MDTFBaseException):
+    """Dummy class used to "convert" :class:`MDTFEvent`\s to fatal errors
+    (resulting in deactivation of a variable, pod or case.) via exception
+    chaining.
+    """
+    pass
+
+class DataProcessingEvent(MDTFEvent):
+    """Base class and common formatting code for events raised in data 
+    query/fetch. These should *not* be used for fatal errors (when a variable or
+    POD is deactivated.)
+    """
+    def __init__(self, msg="", dataset=None):
         self.msg = msg
         self.dataset = dataset
 
-    def __str__(self):
-        s = self._error_str
+    def __str__(self):        
         if self.dataset is not None:
             if hasattr(self.dataset, 'remote_path'):
                 data_id = self.dataset.remote_path
@@ -161,40 +178,35 @@ class DataExceptionBase(MDTFBaseException):
                 data_id = self.dataset.name
             else:
                 data_id = str(self.dataset)
-            s += f" for data in {data_id}"
-        if self.msg is not None:
-            s += f": {self.msg}"
-        if not s.endswith('.'):
-            s += "."
-        return s
+        return f"{self.msg} ({data_id})"
 
-class DataQueryError(DataExceptionBase):
+class DataQueryEvent(DataProcessingEvent):
     """Exception signaling a failure to find requested data in the remote location. 
     """
-    _error_str = "Data query error"
+    pass
 
-class DataExperimentError(DataExceptionBase):
+class DataExperimentEvent(DataProcessingEvent):
     """Exception signaling a failure to uniquely select an experiment for all
     variables based on query results.
     """
-    _error_str = "Experiment selection error"
+    pass
 
-class DataFetchError(DataExceptionBase):
+class DataFetchEvent(DataProcessingEvent):
     """Exception signaling a failure to obtain data from the remote location.
     """
-    _error_str = "Data fetch error"
+    pass
 
-class DataPreprocessError(DataExceptionBase):
+class DataPreprocessEvent(DataProcessingEvent):
     """Exception signaling an error in preprocessing data after it's been 
     fetched, but before any PODs run.
     """
-    _error_str = "Data preprocessing error"
+    pass
 
-class GenericDataSourceError(DataExceptionBase):
+class GenericDataSourceEvent(DataProcessingEvent):
     """Exception signaling a failure originating in the DataSource query/fetch
     pipeline whose cause doesn't fall into the above categories.
     """
-    _error_str = "General DataSource error"
+    pass
 
 class PodExceptionBase(MDTFBaseException):
     """Base class and common formatting code for exceptions affecting a single

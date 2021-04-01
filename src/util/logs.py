@@ -329,7 +329,7 @@ class MDTFObjectLogger(logging.Logger):
         return (len(self._exceptions) > 0)
 
     def store_exception(self, exc, log=False, level=logging.ERROR):
-        # add to internal list
+        # log it
         if isinstance(exc, str):
             if log:
                 self.log(level, exc)
@@ -337,6 +337,7 @@ class MDTFObjectLogger(logging.Logger):
         else:
             if log:
                 self.log(level, "Caught %r.", exc)
+        # add Exception object to internal list
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 

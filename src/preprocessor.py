@@ -24,12 +24,11 @@ def copy_as_alternate(old_v, data_mgr, **kwargs):
         kwargs['coords'] = (old_v.dims + old_v.scalar_coords)
     new_v = dataclasses.replace(
         old_v,
-        # reset state from old_v
-        stage = diagnostic.VarlistEntryStage.INITED,
-        # new VE meant as an alternate
-        status = core.ObjectStatus.INACTIVE,
+        _id = util.MDTF_ID(),                           # assign distinct ID
+        stage = diagnostic.VarlistEntryStage.INITED,    # reset state from old_v
+        status = core.ObjectStatus.INACTIVE,      # new VE meant as an alternate
         requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
-        # plus the specific replacements we want to make
+        # plus the specific replacements we want to make:
         **kwargs
     )
     return new_v

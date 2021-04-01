@@ -178,9 +178,9 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         # activate required vars
         if self.status == core.ObjectStatus.NOTSET:
             if self.requirement == VarlistEntryRequirement.REQUIRED:
-                self.status == core.ObjectStatus.ACTIVE
+                self.status = core.ObjectStatus.ACTIVE
             else:
-                self.status == core.ObjectStatus.INACTIVE
+                self.status = core.ObjectStatus.INACTIVE
 
         # env_vars
         if not self.env_var:
@@ -285,19 +285,19 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         """
         def _format(v):
             str_ = str(v)[1:-1]
-            act_str = ('active' if v.active else 'inactive')
-            fail_str = (f"failed (exc={repr(v.exception)})" \
+            status_str = f"{v.status.name.lower()}.{v.stage.name.lower()}"
+            fail_str = (f"(exc={repr(v.exception)})" \
                 if v.failed else 'ok')
             trans_str = (str(v.translation) \
                 if getattr(v, 'translation', None) is not None \
                 else "(not translated)")
-            return (f"<{str_}; {act_str}:{v.stage.name}, {fail_str}, "
-                f"{v.requirement}>\n    Translation: {trans_str}")
+            return (f"<{str_}; {status_str}, {fail_str}, {v.requirement}>\n"
+                f"\tTranslation: {trans_str}")
 
         s = _format(self)
         for i, altvs in enumerate(self.iter_alternates()):
             alt_str = ', '.join(str(vv) for vv in altvs)
-            s += f"\n    Alternate set #{i+1}: [{alt_str}]"
+            s += f"\n\tAlternate set #{i+1}: [{alt_str}]"
         return s
     
     def query_attrs(self, key_synonyms=None):
@@ -504,7 +504,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         """Iterable of child objects associated with this object."""
         yield from self.varlist.iter_vars()
 
-    def child_deactivation_handler(self, level=logging.ERROR):
+    def child_deactivation_handler(self, failed_var, level=logging.ERROR):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
         process has failed for a :class:`VarlistEntry`, try to find a set of 
@@ -514,31 +514,26 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         if self.failed:
             # should never get here
             raise ValueError('Active var on failed POD')
-        self.log.debug("Updating active vars for POD '%s'", self.name)
-        # loop mutates status of objects, so dump/freeze the set of objects we
-        # need to loop over 
-        old_active_vars = list(self.iter_children(status=core.ObjectStatus.ACTIVE))
-        for v in old_active_vars:
-            if v.failed:
-                self.log.info("Request for %s failed; finding alternate vars.", v)
-                alt_success_flag = False
-                for alt_list in v.iter_alternates():
-                    if any(alt_v.failed for alt_v in alt_list):
-                        # skip sets of alternates where any variables have already failed
-                        continue
-                    # found a viable set of alternates
-                    alt_success_flag = True
-                    for alt_v in alt_list:
-                        alt_v.status = core.ObjectStatus.ACTIVE
-                    break
-                if not alt_success_flag:
-                    self.log.info("No alternates available for %s.", v.full_name)
-                    try:
-                        raise util.PodDataError(f"No alternates available for {v}.", 
-                            self) from v.exception
-                    except Exception as exc:
-                        self.deactivate(exc=exc, level=level)
-                    continue
+        # self.log.debug("Updating active vars for POD '%s'", self.name)
+
+        self.log.info("Request for %s failed; finding alternate vars.", failed_var)
+        success = False
+        for alt_list in failed_var.iter_alternates():
+            if any(alt_v.failed for alt_v in alt_list):
+                # skip sets of alternates where any variables have already failed
+                continue
+            # found a viable set of alternates
+            success = True
+            for alt_v in alt_list:
+                alt_v.status = core.ObjectStatus.ACTIVE
+            break
+        if not success:
+            self.log.info("No alternates available for %s.", failed_var.full_name)
+            try:
+                raise util.PodDataError(f"No alternates available for {failed_var}.", 
+                    self) from failed_var.exception
+            except Exception as exc:
+                self.deactivate(exc=exc, level=level)
 
     # -------------------------------------
 

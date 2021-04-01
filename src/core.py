@@ -74,11 +74,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def class_name(self):
-        return f"<{self.__class__.__name__} '{self.name}' #{self._id}>"
+        return f"<#{self._id}:{self.__class__.__name__}('{self.name}')>"
 
     @property
     def full_name(self):
-        return f"<{self._parent.name}.{self.name} #{self._id}>"
+        return f"<#{self._id}:{self._parent.name}.{self.name}>"
 
     @property
     def failed(self):
@@ -118,7 +118,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
                 (lambda x: x.status == status), self._children
             )
 
-    def child_deactivation_handler(self, level=logging.ERROR):
+    def child_deactivation_handler(self, child, level=logging.ERROR):
         pass
 
     def child_status_update(self, level=logging.ERROR):
@@ -142,7 +142,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
             self.status = ObjectStatus.FAILED
             if self._parent is not None:
                 # call handler on parent, which may change parent and/or siblings
-                self._parent.child_deactivation_handler(level=level)
+                self._parent.child_deactivation_handler(self, level=level)
                 self._parent.child_status_update(level=level)
             # update children (deactivate all)
             child_exc = util.MDTFPropagatedException(exc, self)
@@ -738,9 +738,9 @@ class VariableTranslator(util.Singleton):
 class MDTFFramework(MDTFObjectBase):
     def __init__(self, cli_obj):
         super(MDTFFramework, self).__init__(
-            _id = 0,
             name=self.__class__.__name__,
-            _parent=None
+            _parent=None,
+            status=ObjectStatus.ACTIVE
         )
         self.code_root = cli_obj.code_root
         self.pod_list = []
@@ -967,12 +967,13 @@ class MDTFFramework(MDTFObjectBase):
         """Overall success/failure of this run of the framework. Return True if 
         any case or any POD has failed, else return False.
         """
+        # should be unnecessary if we've been propagating status correctly
         if self.status == ObjectStatus.FAILED or not self.cases:
             return True
-        for case in self.cases:
+        for case in self.iter_children():
             if case.failed or not hasattr(case, 'pods') or not case.pods:
                 return True
-            if any(p.failed for p in case.pods.values()):
+            if any(p.failed for p in case.iter_children()):
                 return True
         return False
 
@@ -982,7 +983,7 @@ class MDTFFramework(MDTFObjectBase):
 
         new_d = dict()
         for case_name, case_d in self.cases.items():
-            _log.info("### %s: initializing '%s'.", self.class_name, case_name)
+            _log.info("### %s: initializing case '%s'.", self.class_name, case_name)
             case = self.DataSource(case_d, parent=self)
             case.setup()
             new_d[case_name] = case
@@ -990,21 +991,22 @@ class MDTFFramework(MDTFObjectBase):
 
         for case_name, case in self.cases.items():
             if not case.failed:
-                _log.info("### %s: requesting data for '%s'.",
+                _log.info("### %s: requesting data for case '%s'.",
                     self.class_name, case_name)
+                for v in case.iter_vars_only(active=True):
                 case.request_data()
             else:
-                _log.info(("### %s: initialization for '%s' failed; skipping "
+                _log.info(("### %s: initialization for case '%s' failed; skipping "
                     f"data request."), self.class_name, case_name)
 
             if not case.failed:
-                _log.info("### %s: running '%s'.", self.class_name, case_name)
+                _log.info("### %s: running case '%s'.", self.class_name, case_name)
                 run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
                 run_mgr.setup()
                 run_mgr.run()
                 run_mgr.tear_down()
             else:
-                _log.info(("### %s: Data request for '%s' failed; skipping "
+                _log.info(("### %s: Data request for case '%s' failed; skipping "
                     "execution."), self.class_name, case_name)
 
             out_mgr = self.OutputManager(case)
@@ -1033,7 +1035,7 @@ def print_summary(fmwk):
                 getattr(case, 'MODEL_OUT_DIR', '<ERROR: dir not created.>')
             )
 
-    d = {c.name: summary_info_tuple(c) for c in fmwk.cases}
+    d = {c_name: summary_info_tuple(c) for c_name, c in fmwk.cases.items()}
     failed = any(len(tup[0]) > 0 for tup in d.values())
     _log.info('\n' + (80 * '-'))
     if failed:

@@ -325,7 +325,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.exceptions.log(exc)
+        self.pod.deactivate(exc)
         raise exc # include in production, or just for debugging?
 
     def run_commands(self):
@@ -378,7 +378,7 @@ class SubprocessRuntimePODWrapper(object):
             self.log_handle.write(log_str)
             self.log_handle.close()
             self.log_handle = None
-        self.pod.exceptions.log(exc)
+        self.pod.deactivate(exc)
         raise exc # include in production, or just for debugging?
 
     def tear_down(self):

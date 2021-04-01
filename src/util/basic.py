@@ -382,6 +382,9 @@ class MDTF_ID():
     
     def __repr__(self):
         return f"{self.__class__.__name__}({self._uuid})"
+
+    def __hash__(self):
+        return hash(self._uuid)
     
     def __eq__(self, other):
         if hasattr(other, '_uuid'):

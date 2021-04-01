@@ -31,7 +31,11 @@ class TimeoutAlarm(Exception):
 class MDTFBaseException(Exception):
     """Dummy base class to describe all MDTF-specific errors that can happen
     during the framework's operation."""
-    pass
+
+    def __repr__(self):
+        # full repr of attrs of child classes may take lots of space to print;
+        # instead just print message
+        return f'{self.__class__.__name__}("{str(self)}")'
 
 class MDTFPropagatedException(MDTFBaseException):
     """Exception passed between members of the object hierarchy when a parent 
@@ -164,16 +168,8 @@ class DataExceptionBase(MDTFBaseException):
             s += "."
         return s
 
-    def __repr__(self):
-        # full repr of dataset may take lots of space to print
-        return f"{self.__class__.__name__}({str(self)})"
-
 class DataQueryError(DataExceptionBase):
     """Exception signaling a failure to find requested data in the remote location. 
-    
-    Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
-    data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
-    or :meth:`~data_manager.DataManager.fetchData`.
     """
     _error_str = "Data query error"
 
@@ -223,10 +219,6 @@ class PodExceptionBase(MDTFBaseException):
         if not s.endswith('.'):
             s += "."
         return s
-
-    def __repr__(self):
-        # full repr of Diagnostic takes lots of space to print
-        return f"{self.__class__.__name__}({str(self)})"
 
 class PodConfigError(PodExceptionBase):
     """Exception raised if we can't parse info in a POD's settings.jsonc file.

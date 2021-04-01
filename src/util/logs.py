@@ -380,13 +380,10 @@ class MDTFObjectLoggerMixin():
         else:
             return None
 
-    def format_log(self, child_objs=None):
+    def format_log(self, children=True):
         """Return contents of log buffer, as well as that of any child objects
         in *child_objs*, as a formatted string.
         """
-        if child_objs is None:
-            child_objs = []
-            
         str_ = self.name + ':\n'
         # list exceptions before anything else:
         if self.log.has_exceptions:
@@ -397,13 +394,14 @@ class MDTFObjectLoggerMixin():
         # then log contents:
         str_ += self._log_buffer.getvalue().rstrip()
         # then contents of children:
-        for child in child_objs:
-            str_ += '\n'
-            if hasattr(child, 'format_log'):
-                str_ += child.format_log()
-            else:
-                str_ += f"<{child} log placeholder>\n"
-        return _hanging_indent(str_, '', 4 * ' ')
+        if children:
+            for child in self.iter_children():
+                str_ += '\n'
+                if hasattr(child, 'format_log'):
+                    str_ += child.format_log(children=children)
+                else:
+                    str_ += f"<{child} log placeholder>\n"
+            return _hanging_indent(str_, '', 4 * ' ')
 
 class MDTFCaseLoggerMixin():
     """Wrapper to handle configuring logging from a file and transferring 

@@ -253,7 +253,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if pod.failed:
             # report error
             src = self.html_src_file('pod_error_snippet.html')
-            template_d['error_text'] = pod.exceptions.format()
+            template_d['error_text'] = pod.format_log(children=True)
         else:
             # normal exit
             src = self.html_src_file('pod_result_snippet.html')

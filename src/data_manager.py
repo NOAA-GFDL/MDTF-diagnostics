@@ -332,6 +332,10 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     pod.deactivate(chained_exc)  
                 continue
 
+        if self.status == core.ObjectStatus.NOTSET and \
+            any(p.status == core.ObjectStatus.ACTIVE for p in self.iter_children()):
+            self.status = core.ObjectStatus.ACTIVE
+
         _log.debug('#' * 70)
         _log.debug('Pre-query varlists for %s:', self.full_name)
         for v in self.iter_vars_only(active=None):
@@ -368,6 +372,10 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
         pod.preprocessor.edit_request(self, pod)
+        
+        if pod.status == core.ObjectStatus.NOTSET and \
+            any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
+            pod.status = core.ObjectStatus.ACTIVE
 
     def setup_var(self, pod, v):
         """Update VarlistEntry fields with information that only becomes 
@@ -414,7 +422,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
 
     def is_fetch_necessary(self, d_key, var=None):
         if d_key in self.local_data:
-            self.log.debug("Already successfully downloaded data_key=%s.", d_key)
+            self.log.debug("Already successfully fetched data_key=%s.", d_key)
             return False
         if d_key in self.failed_data[self._id]:
             self.log.debug("Already failed to fetch data_key=%s; not retrying.", 
@@ -616,8 +624,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 self.fetch_data()
                 update = False
             vars_to_process = [
-                v for v in self.iter_vars_only(active=True) \
-                    if v.stage < diagnostic.VarlistEntryStage.PREPROCESSED
+                pv for pv in self.iter_vars(active=True) \
+                    if pv.var.stage < diagnostic.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
                 break # exit: processed everything or nothing active
@@ -1017,7 +1025,10 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if expt_df.empty:
                 raise util.DataExperimentError(("Eliminated all choices of experiment "
                     f"attributes for {obj_name} when adding {v.full_name}."), v)
-
+        
+        if expt_df.empty:
+            # shouldn't get here
+            raise util.DataExperimentError(f"No active variables for {obj_name}.", None)
         obj.log.debug('%s expt attr choices for %s', len(expt_df), obj_name)
         return expt_df
 
@@ -1035,7 +1046,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             col_group = self.col_spec.expt_cols
             resolve_func = self.resolve_expt
             obj_name = obj.name
-            var_iterator = obj.iter_vars(active=True)
+            var_iterator = obj.iter_vars_only(active=True)
         elif scope == 'pod':
             col_group = self.col_spec.pod_expt_cols
             resolve_func = self.resolve_pod_expt
@@ -1044,7 +1055,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 var_iterator = obj.iter_children(status=core.ObjectStatus.ACTIVE)
             else:
                 obj_name = 'all PODs'
-                var_iterator = obj.iter_vars(active=True)
+                var_iterator = obj.iter_vars_only(active=True)
         elif scope == 'var':
             col_group = self.col_spec.var_expt_cols
             resolve_func = self.resolve_var_expt

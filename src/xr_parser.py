@@ -332,7 +332,6 @@ class DatasetParser():
 
         self.fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
         self.attrs_backup = dict()
-        self.var_attrs_restore = dict()
         self.log = None
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
@@ -472,23 +471,6 @@ class DatasetParser():
                 default=self.fallback_cal
             )
 
-    def restore_attrs(self, ds):
-        """xarray.decode_cf() and other functions appear to un-set some of the 
-        attributes defined in the netcdf file. Restore them from the backups 
-        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
-        """
-        def _restore_one(name, backup_d, attrs_d):
-            for k,v in backup_d.items():
-                if k not in attrs_d:
-                    attrs_d[k] = v
-                if v != attrs_d[k] and v != ATTR_NOT_FOUND:
-                    self.log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
-                        name, k, v, attrs_d[k])
-        
-        _restore_one('Dataset', self.attrs_backup, ds.attrs)
-        for var in ds.variables:
-            _restore_one(var, self.var_attrs_restore[var], ds[var].attrs)
-
     def normalize_ds_attrs(self, ds):
         """Initial munging of xarray Dataset attribute dicts, before any 
         parsing by xarray.decode_cf() or the cf_xarray accessor.
@@ -501,21 +483,44 @@ class DatasetParser():
             return {strip_(k): strip_(v) for k,v in d.items()}
 
         setattr(ds, 'attrs', strip_attrs(ds))
-        self.attrs_backup = ds.attrs.copy()
         for var in ds.variables:
             new_d = dict()
             d = strip_attrs(ds[var])
+            setattr(ds[var], 'attrs', d) 
+            # need to do this hacky new_d/d stuff because if we updated attrs on d
+            # now, we'd hit an exception from xr.decode_cf() ("TypeError: argument 
+            # of type '_SentinelObject' is not iterable"). Instead we apply the
+            # edits to new_d, save that in attrs_backup, and reapply later in 
+            # restore_attrs_backup().
             self.normalize_standard_name(new_d, d)
             self.normalize_unit(new_d, d)
             self.normalize_calendar(d)
-            # setattr(ds[var], 'attrs', d) # do later & all at once, in restore_attrs
-            self.var_attrs_restore[var] = d.copy()
-            self.var_attrs_restore[var].update(new_d)
+            self.attrs_backup[var] = d.copy()
+            self.attrs_backup[var].update(new_d)
+        self.attrs_backup['Dataset'] = ds.attrs.copy()
+
+    def restore_attrs_backup(self, ds):
+        """xarray.decode_cf() and other functions appear to un-set some of the 
+        attributes defined in the netcdf file. Restore them from the backups 
+        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
+        """
+        def _restore_one(name, attrs_d):
+            backup_d = self.attrs_backup.get(name, dict())
+            for k,v in backup_d.items():
+                if k not in attrs_d:
+                    attrs_d[k] = v
+                if v != attrs_d[k] and v != ATTR_NOT_FOUND:
+                    self.log.error("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                        name, k, v, attrs_d[k])
+        
+        _restore_one('Dataset', ds.attrs)
+        for var in ds.variables:
+            _restore_one(var, ds[var].attrs)
+
 
     # --- Methods for comparing attrs against our record (TranslatedVarlistEntry) ---
 
-    @staticmethod
-    def compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None, 
+    def compare_attr(self, our_attr_tuple, ds_attr_tuple, comparison_func=None, 
         update_our_var=True, update_ds=False, tiebreaker=None):
         """Worker function to compare two attributes (on *our_var*, the 
         framework's record, and on *ds*, the "ground truth" of the dataset) and 
@@ -991,7 +996,7 @@ class DatasetParser():
             use_cftime=True     # use cftime instead of np.datetime64
         )
         ds = ds.cf.guess_coord_axis()
-        self.restore_attrs(ds)
+        self.restore_attrs_backup(ds)
         if var is not None:
             self.reconcile_variable(var.translation, ds)
             self.check_ds_attrs(ds, var.translation)

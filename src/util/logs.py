@@ -291,7 +291,6 @@ class TagMatchFilter(logging.Filter):
 # ------------------------------------------------------------------------------
 
 # standardize 
-OBJ_LOG_ATTR_NAME = 'log'
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
 
 class MDTFObjectLogger(logging.Logger):
@@ -376,25 +375,23 @@ class MDTFObjectLoggerMixin():
         if fmt is None:
             fmt = '%(asctime)s in %(funcName)s: %(message)s'
 
-        log = getattr(self, OBJ_LOG_ATTR_NAME)
-        log.propagate = True
-        log.setLevel(logging.DEBUG)
-        if log.hasHandlers():
+        assert hasattr(self, 'log')
+        self.log.propagate = True
+        self.log.setLevel(logging.DEBUG)
+        if self.log.hasHandlers():
             for handler in self.log.handlers:
-                log.removeHandler(handler)
+                self.log.removeHandler(handler)
         handler = StringIOHandler()
         # don't record events from children in StringIO buffer
         handler.addFilter(NameMatchFilter(self._log_name)) 
         formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
         handler.setFormatter(formatter)
-        log.addHandler(handler)
-        setattr(self, OBJ_LOG_ATTR_NAME, log)
+        self.log.addHandler(handler)
 
     @property
     def last_exception(self):
-        log = getattr(self, OBJ_LOG_ATTR_NAME)
-        if log.has_exceptions:
-            return log._exceptions[-1]
+        if self.log.has_exceptions:
+            return self.log._exceptions[-1]
         else:
             return None
 
@@ -402,16 +399,15 @@ class MDTFObjectLoggerMixin():
         """Return contents of log buffer, as well as that of any child objects
         in *child_objs*, as a formatted string.
         """
-        log = getattr(self, OBJ_LOG_ATTR_NAME)
         str_ = self.name + ':\n'
         # list exceptions before anything else:
-        if log.has_exceptions:
-            strs_ = [''.join(exc.format()) for exc in log._exceptions]
+        if self.log.has_exceptions:
+            strs_ = [''.join(exc.format()) for exc in self.log._exceptions]
             strs_ = [f"*** {self.name} caught exception #{i+1}:\n{exc}\n" \
                 for i, exc in enumerate(strs_)]
             str_ += "".join(strs_) + '\n'
         # then log contents:
-        for h in log.handlers:
+        for h in self.log.handlers:
             if isinstance(h, StringIOHandler):
                 str_ += h.buffer_contents().rstrip()
         # then contents of children:
@@ -431,12 +427,12 @@ class MDTFCaseLoggerMixin():
             fmt = ("%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line "
                 "%(lineno)d):\n%(message)s")
 
-        log = getattr(self, OBJ_LOG_ATTR_NAME)
-        log.propagate = True
-        log.setLevel(logging.DEBUG)
-        if log.hasHandlers():
+        assert hasattr(self, 'log')
+        self.log.propagate = True
+        self.log.setLevel(logging.DEBUG)
+        if self.log.hasHandlers():
             for handler in self.log.handlers:
-                log.removeHandler(handler)
+                self.log.removeHandler(handler)
         handler = MDTFHeaderFileHandler(
             filename=os.path.join(log_dir, f"{self.name}.log"),
             mode="w", encoding="utf-8"
@@ -445,10 +441,9 @@ class MDTFCaseLoggerMixin():
             fmt=fmt, datefmt='%H:%M:%S', header="", footer="\n"
         )
         handler.setFormatter(formatter)
-        log.addHandler(handler)
+        self.log.addHandler(handler)
         # transfer stuff from root logger cache
-        transfer_log_cache(log, close=False)
-        setattr(self, OBJ_LOG_ATTR_NAME, log)
+        transfer_log_cache(self.log, close=False)
 
 # ------------------------------------------------------------------------------
 

@@ -58,7 +58,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.save_nc = config['save_nc']
             self.save_non_nc = config['save_non_nc']
         except KeyError as exc:
-            pod.log.exception("", exc=exc)
+            pod.deactivate(exc)
             raise
         self.CODE_ROOT = output_mgr.CODE_ROOT
         self.WK_DIR = output_mgr.WK_DIR
@@ -228,11 +228,11 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             self.overwrite = config['overwrite']
             self.file_overwrite = self.overwrite # overwrite both config and .tar
         except KeyError as exc:
-            case.log.exception("", exc=exc)
+            case.log.exception("Caught %r", exc)
         self.CODE_ROOT = case.code_root
         self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
         self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
-        self._case = case
+        self.case = case
 
     @property
     def _tarball_file_path(self):
@@ -285,8 +285,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 self.CASE_TEMP_HTML, 
                 template_d
             )
-            pod.log.exception("", exc=util.MDTFFileNotFoundError(
-                f'Missing {len(missing_out)} files.'))
+            raise util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
         else:
             pod.log.info('\tNo files are missing.')
 
@@ -394,16 +393,16 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         # create empty text file for PODs to append to; equivalent of 'touch'
         open(self.CASE_TEMP_HTML, 'w').close()
-        for pod in self._case.pods.values():
+        for pod in self.case.iter_children():
             try:
                 pod_output = self._PodOutputManagerClass(pod, self)
                 pod_output.make_output()
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                pod.log.exception("", exc=exc)
+                pod.deactivate(exc)
                 continue
-        for pod in self._case.pods.values():
+        for pod in self.case.iter_children():
             try:
                 self.append_result_link(pod)
                 if pod.active:
@@ -411,11 +410,17 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
-                pod.log.exception("", exc=exc)
+                pod.deactivate(exc)
                 continue
+            if not pod.failed:
+                pod.status = core.ObjectStatus.SUCCEEDED
 
-        self.make_html(self._case)
-        self.backup_config_file(self._case)
+        self.make_html(self.case)
+        self.backup_config_file(self.case)
         if self.make_variab_tar:
-            _ = self.make_tar_file(self._case)
-        self.copy_to_output(self._case)
+            _ = self.make_tar_file(self.case)
+        self.copy_to_output(self.case)
+        if not self.case.failed \
+            and not any(p.failed for p in self.case.iter_children()):
+            self.case.status = core.ObjectStatus.SUCCEEDED
+

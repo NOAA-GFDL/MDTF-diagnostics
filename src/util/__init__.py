@@ -26,7 +26,7 @@ from .filesystem import (
     # is_subpath, 
 )
 from .logs import (
-    OBJ_LOG_ATTR_NAME, OBJ_LOG_ROOT, MDTFObjectLogger, 
+    OBJ_LOG_ROOT, MDTFObjectLogger, 
     MDTFObjectLoggerMixin, MDTFCaseLoggerMixin, 
     signal_logger, git_info, transfer_log_cache
 )

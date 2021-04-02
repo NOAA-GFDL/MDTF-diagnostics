@@ -115,10 +115,10 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
             except Exception as exc:
                 try:
                     raise util.PodRuntimeError((f"Caught exception making output "
-                        f"directory at {self.POD_OUT_DIR}; deactivating {self.name}."),
+                        f"directory at {self.POD_OUT_DIR}: {repr(exc)}"),
                         self) from exc
                 except Exception as chained_exc:
-                    self.log.store_exception(chained_exc)
+                    self.deactivate(chained_exc)
 
 # ------------------------------------------------------------------------
 
@@ -142,10 +142,10 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         if self.tape_filesystem:
             paths = set([])
             for var in vars_to_fetch:
-                for data_key in self.iter_data_keys(var):
-                    paths.update(self.remote_data(data_key))
+                for d_key in var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                    paths.update(d_key.remote_data())
 
-            self.log.info(f"Start dmget of {len(paths)} files.")
+            self.log.info(f"Start dmget of {len(paths)} files...")
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.timeout,
                 dry_run=self.dry_run, log=self.log

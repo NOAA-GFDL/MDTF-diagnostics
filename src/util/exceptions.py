@@ -37,7 +37,7 @@ class MDTFBaseException(Exception):
         # instead just print message
         return f'{self.__class__.__name__}("{str(self)}")'
 
-class MDTFPropagatedException(MDTFBaseException):
+class PropagatedEvent(MDTFBaseException):
     """Exception passed between members of the object hierarchy when a parent 
     object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to 
     deactivate its children.
@@ -48,7 +48,7 @@ class MDTFPropagatedException(MDTFBaseException):
 
     def __str__(self):
         if self.exc is None:
-            return (f"Deactivated {self.parent.full_name} due to failure of all "
+            return (f"Deactivating {self.parent.full_name} due to failure of all "
                 f"child objects.")
         else:
             return (f"Received {repr(self.exc)} from deactivation of parent "
@@ -175,6 +175,9 @@ def exc_to_event(exc, msg, event_class):
         return exc
     else:
         try:
+            if msg.endswith('.'):
+                msg = msg[:-1]
+            msg += f": {repr(exc)}."
             raise event_class(msg) from exc
         except Exception as chained_exc:
             return chained_exc

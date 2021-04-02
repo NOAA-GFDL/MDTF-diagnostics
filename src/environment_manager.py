@@ -173,8 +173,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 elif key == '_CONDA_ROOT':
                     self.conda_root = val
         except Exception as exc:
-            self.log.exception("Can't find conda.", exc=exc)
-            raise
+            raise PodRuntimeError("Can't find conda.") from exc
 
         # find where environments are installed
         if 'conda_env_root' in paths and paths.conda_env_root:
@@ -494,7 +493,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                         try:
                             raise util.PodExecutionError(p.pod, s)
                         except Exception as exc:
-                            p.pod.log.exception("", exc=exc)
+                            p.pod.deactivate(exc)
                         if p.log_handle is not None:
                             p.log_handle.write('ERROR: '+s)
                 p.process = None

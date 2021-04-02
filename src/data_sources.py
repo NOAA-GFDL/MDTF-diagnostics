@@ -135,8 +135,8 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
         
         for var in pod.iter_children():
             new_metadata = util.ConsistentDict()
-            for data_key in var.remote_data.values():
-                glob_id = data_mgr.df['glob_id'].loc[data_key]
+            for d_key in var.data.values():
+                glob_id = data_mgr.df['glob_id'].loc[d_key]
                 entry = data_mgr._config[glob_id]
                 new_metadata.update(entry.metadata)
             self.id_lut[var._id] = new_metadata

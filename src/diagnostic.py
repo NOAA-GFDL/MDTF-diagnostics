@@ -136,6 +136,16 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     compares fields without ``compare=False``) if they specify the same data 
     product, ie if the same output file from the preprocessor can be symlinked 
     to two different locations.
+
+    Attributes:
+        use_exact_name: see docs
+        env_var: Name of env var which is set to the variable's name in the 
+            provided dataset.
+        path_variable: Name of env var containing path to local data.
+        dest_path: Path to local data.
+        alternates: List of lists of VarlistEntries. 
+        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
     """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
@@ -148,16 +158,16 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     # dims: list
     # scalar_coords: list
     use_exact_name: bool = False
-    dest_path: str = ""
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
+    dest_path: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
-    remote_data: util.WormDict = dc.field(default_factory=util.WormDict, compare=False)
-    local_data: list = dc.field(default_factory=list, compare=False)
+    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, 
+        compare=False)
     stage: VarlistEntryStage = dc.field(
         default=VarlistEntryStage.NOTSET, compare=False
     )
@@ -175,8 +185,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         # the fields on the copy won't point to the same object as the fields on
         # the original.
         self.translation = None
-        self.remote_data: util.WormDict()
-        self.local_data = []
+        self.data: util.ConsistentDict()
         # activate required vars
         if self.status == core.ObjectStatus.NOTSET:
             if self.requirement == VarlistEntryRequirement.REQUIRED:
@@ -281,7 +290,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
 
     @staticmethod
     def alternates_str(alt_list):
-        return "[{}]".format(', '.join(v.id_name for v in alt_list))
+        return "[{}]".format(', '.join(v.full_name for v in alt_list))
 
     def debug_str(self):
         """String representation with more debugging information.
@@ -302,6 +311,58 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             s += f"\n\tAlternate set #{i+1}: {self.alternates_str(altvs)}"
         return s
     
+    def iter_data_keys(self, status=None, status_neq=None):
+        """Yield :class:`~data_manager.DataKeyBase`\s 
+        from v's *data* dict, filtering out those DataKeys that have been 
+        eliminated via previous failures in fetching or preprocessing.
+        """
+        iter_ = self.data.values()
+        if status is not None:
+            iter_ = filter((lambda x: x.status == status), iter_)
+        elif status_neq is not None:
+            iter_ = filter((lambda x: x.status != status_neq), iter_)
+        yield from list(iter_)
+
+    def deactivate_data_key(self, d_key, exc):
+        """When a DataKey (*d_key*) has been deactivated during query or fetch, 
+        log a message and delete our record of it if we were using it, and
+        deactivate ourselves if we don't have any viable DataKeys left.
+
+        We can't just use the *status* attribute on the DataKey, because the 
+        VarlistEntry-DataKey relationship is many-to-many.
+        """
+        expt_keys_to_remove = []
+        for dd_key in self.iter_data_keys(status=None):
+            if dd_key == d_key:
+                expt_keys_to_remove.append(dd_key.expt_key)
+        if expt_keys_to_remove:
+            self.log.debug("Eliminating %s for %s.", d_key, self.full_name)
+        for expt_key in expt_keys_to_remove:
+            del self.data[expt_key]
+
+        if self.stage >= VarlistEntryStage.QUERIED and not self.data:
+            # all DataKeys obtained for this var during query have
+            # been eliminated, so need to deactivate var
+            self.deactivate(util.PropagatedEvent(parent=self, parent_exc=exc))
+    
+    @property
+    def local_data(self):
+        """Return sorted list of local file paths corresponding to the selected
+        experiment.
+        """
+        if self.stage < VarlistEntryStage.FETCHED:
+            raise util.DataRequestError((f"Requested local_data property on "
+                f"{self.full_name} before fetch."))
+
+        local_paths = set([])
+        for d_key in self.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+            local_paths.update(d_key.local_data)
+        local_paths = sorted(local_paths)
+        if not local_paths:
+            raise util.DataRequestError((f"local_data property on {self.full_name} "
+                "empty after fetch."))
+        return local_paths
+
     def query_attrs(self, key_synonyms=None):
         """Returns a dict of attributes relevant for DataSource.query_dataset()
         (ie, which describe the variable itself and aren't specific to the 
@@ -476,6 +537,13 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.to_iter(v)
 
+    @property
+    def _log_name(self):
+        # POD loggers sit in a subtree of the DataSource logger distinct from 
+        # the DataKey loggers
+        _log_name = f"{self.name}_{self._id}".replace('.', '_')
+        return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
+
     @classmethod
     def from_struct(cls, pod_name, d, parent, **kwargs):
         """Instantiate a Diagnostic object from the JSON format used in its
@@ -508,7 +576,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         """Iterable of child objects associated with this object."""
         yield from self.varlist.iter_vars()
 
-    def child_deactivation_handler(self, failed_v):
+    def child_deactivation_handler(self, failed_v, failed_v_exc):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
         process has failed for a :class:`VarlistEntry`, try to find a set of 
@@ -542,7 +610,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
                 raise util.PodDataError((f"No alternate data available for "
                     f"{failed_v.full_name}."), self)
             except Exception as exc:
-                self.deactivate(exc=exc)
+                self.deactivate(exc)
 
     # -------------------------------------
 

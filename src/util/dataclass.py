@@ -467,7 +467,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     def _new_init(self, *args, **kwargs):
         # Execute type check after dataclass' __init__ and __post_init__:
         _old_init(self, *args, **kwargs)
-        if hasattr(self, logs.OBJ_LOG_ATTR_NAME):
+        if hasattr(self, 'log'):
             _mdtf_dataclass_typecheck(self, self.log)
         else:
             _mdtf_dataclass_typecheck(self)  

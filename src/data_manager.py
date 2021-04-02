@@ -9,6 +9,7 @@ import glob
 import itertools
 import re
 import signal
+import textwrap
 import typing
 from src import util, core, diagnostic, preprocessor
 import pandas as pd
@@ -20,20 +21,7 @@ _log = logging.getLogger(__name__)
 class AbstractQueryMixin(abc.ABC):
     @abc.abstractmethod
     def query_dataset(self, var): 
-        """Sets remote_data attribute on var or raises an exception."""
-        pass
-
-    @abc.abstractmethod
-    def iter_data_keys(self, var):
-        """Generator iterating over the data_keys (query results) for var 
-        corresponding to the selected experiment (assumed set in DataSource 
-        instance's state)."""
-        pass
-
-    @abc.abstractmethod
-    def remote_data(self, data_key):
-        """Translates between data_keys (output of query_data) and paths, urls, 
-        etc. (input to fetch_data.)"""
+        """Sets *data* attribute on var or raises an exception."""
         pass
 
     def setup_query(self):
@@ -48,8 +36,9 @@ class AbstractQueryMixin(abc.ABC):
 
     def set_experiment(self):
         """Called after querying the presence of a new batch of variables, to 
-        filter or otherwise ensure that the returned remote_data for *all* 
-        variables comes from the same experimental run of the model."""
+        filter or otherwise ensure that the returned DataKeys for *all* 
+        variables comes from the same experimental run of the model, by setting
+        the *status* attribute of those DataKeys to ACTIVE."""
         pass
 
     def post_query_hook(self, vars):
@@ -65,9 +54,11 @@ class AbstractQueryMixin(abc.ABC):
 
 class AbstractFetchMixin(abc.ABC):
     @abc.abstractmethod
-    def fetch_dataset(self, var, remote_data): 
-        """Returns list of identifiers for fetched data (paths to locally 
-        downloaded copies of data) or raises an exception."""
+    def fetch_dataset(self, var, data_key): 
+        """Fetches data corresponding to *data_key*. Populates its *local_data*
+        attribute with a list of identifiers for successfully fetched data 
+        (paths to locally downloaded copies of data).
+        """
         pass
 
     def setup_fetch(self):
@@ -90,32 +81,11 @@ class AbstractFetchMixin(abc.ABC):
         """
         pass
 
-class AbstractDataSource(abc.ABC):
+class AbstractDataSource(AbstractQueryMixin, AbstractFetchMixin, 
+    metaclass=util.MDTFABCMeta):
     @abc.abstractmethod
-    def __init__(self, case_dict, parent): pass
-
-    @abc.abstractmethod
-    def query_dataset(self, var): 
-        """Sets remote_data attribute on var or raises an exception."""
-        pass
-
-    @abc.abstractmethod
-    def fetch_dataset(self, var, remote_data): 
-        """Returns list of identifiers for fetched data (paths to locally 
-        downloaded copies of data) or raises an exception."""
-        pass
-
-    @abc.abstractmethod
-    def iter_data_keys(self, var):
-        """Generator iterating over the data_keys (query results) for var 
-        corresponding to the selected experiment (assumed set in DataSource 
-        instance's state)."""
-        pass
-
-    @abc.abstractmethod
-    def remote_data(self, data_key):
-        """Translates between data_keys (output of query_data) and paths, urls, 
-        etc. (input to fetch_data.)"""
+    def __init__(self, case_dict, parent):
+        # sets signature of __init__ method
         pass
 
     def pre_query_and_fetch_hook(self):
@@ -128,29 +98,6 @@ class AbstractDataSource(abc.ABC):
         if hasattr(self, 'setup_fetch'):
             self.setup_fetch()
 
-    def pre_query_hook(self, vars):
-        """Called before querying the presence of a new batch of variables."""
-        pass
-
-    def pre_fetch_hook(self, vars):
-        """Called before fetching each batch of query results."""
-        pass
-
-    def set_experiment(self):
-        """Called after querying the presence of a new batch of variables, to 
-        filter or otherwise ensure that the returned remote_data for *all* 
-        variables comes from the same experimental run of the model."""
-        pass
-
-    def post_query_hook(self, vars):
-        """Called after select_experiment(), after each query of a new batch of 
-        variables."""
-        pass
-
-    def post_fetch_hook(self, vars):
-        """Called after fetching each batch of query results."""
-        pass
-
     def post_query_and_fetch_hook(self):
         """Called once, after the iterative query_and_fetch() process ends.
         Use to, eg, close database or remote filesystem connections.
@@ -162,6 +109,52 @@ class AbstractDataSource(abc.ABC):
             self.tear_down_fetch()
 
 # --------------------------------------------------------------------------
+
+@util.mdtf_dataclass
+class DataKeyBase(core.MDTFObjectBase, metaclass=util.MDTFABCMeta):
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLogger 
+    # status: ObjectStatus
+    name: str = dc.field(init=False)
+    value: typing.Any = util.MANDATORY
+    expt_key: typing.Any = None
+    local_data: list = dc.field(default_factory=list, compare=False)
+
+    def __post_init__(self):
+        self.name = f"{self.__class__.__name__}_{self.value}"
+        super(DataKeyBase, self).__post_init__()
+        if self.status == core.ObjectStatus.NOTSET:
+            self.status == core.ObjectStatus.INACTIVE
+
+    @property
+    def _log_name(self):
+        # assign a unique log name through UUID; DataKey loggers sit in a 
+        # subtree of the DataSource logger distinct from the POD loggers
+        return f"{self._parent._log_name}.{self.__class__.__name__}.{self._id._uuid}"
+
+    @property
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        return []
+
+    # level at which to log deactivation events
+    _deactivation_log_level = logging.INFO
+
+    def __str__(self):
+        if util.is_iterable(self.value):
+            val_str = ', '.join(str(x) for x in self.value)
+        else:
+            val_str = str(self.value)
+        return f"DataKey({val_str})"
+        
+    @abc.abstractmethod
+    def remote_data(self):
+        """Returns paths, urls, etc. to be used as input to a *fetch_data* method
+        to specify how this dataset is fetched.
+        """
+        pass
 
 @util.mdtf_dataclass
 class DataSourceAttributesBase():
@@ -219,6 +212,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
     _AttributesClass = util.abstract_attribute()
     _DiagnosticClass = util.abstract_attribute()
     _PreprocessorClass = util.abstract_attribute()
+    _DataKeyClass = util.abstract_attribute()
 
     _deactivation_log_level = logging.ERROR # default log level for failure
 
@@ -251,10 +245,6 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             case_dict, self._AttributesClass, log=self.log
         )
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
-        # data_key -> local path of successfully fetched data
-        self.local_data = dict()
-        # VarlistEntry _id -> list of data_keys for which preprocessing failed
-        self.failed_data = collections.defaultdict(list)
 
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
@@ -274,7 +264,9 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
 
     @property
     def _children(self):
-        """Iterable of child objects associated with this object."""
+        """Iterable of child objects (:class:`~diagnostic.Diagnostic`\s) 
+        associated with this object.
+        """
         return self.pods.values()
 
     def iter_vars(self, active=None, pod_active=None):
@@ -423,60 +415,38 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         
     # DATA QUERY/FETCH/PREPROCESS -------------------------------------
 
+    def data_key(self, value, expt_key=None, status=None):
+        """Constructor for an instance of :class:`DataKeyBase` that's used by
+        this DataSource.
+        """
+        if status is None:
+            status = core.ObjectStatus.NOTSET
+        return self._DataKeyClass(
+            _parent=self, value=value, 
+            expt_key=expt_key, status=status
+        )
+
     def is_fetch_necessary(self, d_key, var=None):
-        if d_key in self.local_data:
-            self.log.debug("Already successfully fetched data_key=%s.", d_key)
+        if len(d_key.local_data) > 0:
+            self.log.debug("Already successfully fetched %s.", d_key)
             return False
-        if d_key in self.failed_data[self._id]:
-            self.log.debug("Already failed to fetch data_key=%s; not retrying.", 
-                d_key)
-            return False
-        if var is not None and (d_key in self.failed_data[var._id]):
-            # preprocessing failed on this d_key for this var (redundant condition)
-            var.log.debug("Preprocessing failed for data_key=%s; not retrying fetch.", 
-                d_key)
+        if d_key.failed:
+            self.log.debug("%s failed; not retrying.", d_key)
             return False
         return True
 
-    def iter_valid_remote_data(self, v):
-        """Yield expt_key:data_key tuples from v's remote_data dict, filtering 
-        out those data_keys that have been eliminated via previous failures in
-        fetching or preprocessing.
+    def child_deactivation_handler(self, child, child_exc):
+        """When a DataKey (*child*) has been deactivated during query or fetch, 
+        log a message on all VarlistEntries using it, and deactivate any 
+        VarlistEntries with no remaining viable DataKeys.
         """
-        failed_dkeys = set(self.failed_data[self._id])
-        failed_dkeys.update(self.failed_data[v._id])
-        yield from filter(
-            (lambda kv: kv[1] not in failed_dkeys), 
-            v.remote_data.items()
-        )
-
-    def eliminate_data_key(self, d_key, var=None):
-        """Mark a query result (represented by a data_key) as invalid due to 
-        failures in fetch or preprocessing. If all query results for a 
-        VarlidstEntry are invalidated, deactivate it.
-        """
-        def _check_variable(v):
-            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
-                return
-            if not any(self.iter_valid_remote_data(v)):
-                # all data_keys obtained for this var during query have
-                # been eliminated, so need to deactivate var
-                dk_list = list(v.remote_data.values())
-                exc = util.GenericDataSourceEvent((f"Deactivating {v.full_name} "
-                    f"since all data_keys eliminated ({dk_list})."), v)
-                v.deactivate(exc)
-
-        if var is None:
-            # eliminate data_key for all vars (failed during fetch)
-            self.failed_data[self._id].append(d_key)
-            for v in self.iter_vars_only(active=True):
-                v.log.debug("Eliminating data_key=%s for all vars.", d_key)
-                _check_variable(v)
-        else:
-            # eliminate data_key for this var only (failed during preprocess)
-            var.log.debug("Eliminating data_key=%s for %s.", d_key, var.full_name)
-            self.failed_data[var._id].append(d_key)
-            _check_variable(var)
+        if isinstance(child, diagnostic.Diagnostic):
+            # DataSource has 2 types of children: PODs and DataKeys
+            # only need to handle the latter here
+            return
+        
+        for v in self.iter_vars_only(active=None):
+            v.deactivate_data_key(child, child_exc)
 
     def query_data(self):
         # really a while-loop, but limit # of iterations to be safe
@@ -494,8 +464,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             for v in vars_to_query:
                 try:
                     self.log.info("Querying %s", v.translation)
-                    self.query_dataset(v) # sets v.remote_data
-                    if not v.remote_data:
+                    self.query_dataset(v) # sets v.data
+                    if not v.data:
                         raise util.DataQueryEvent("No data found.", v)
                     v.stage = diagnostic.VarlistEntryStage.QUERIED
                 except util.DataQueryEvent as exc:
@@ -510,16 +480,15 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataRequestError(
-                f"Too many iterations in {self.full_name} query_data()."
+                f"Too many iterations in query_data() for {self.full_name}."
             )
 
     def select_data(self):
         update = True
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS): 
-            # refresh list of active variables/PODs; find alternate vars for any
-            # vars that failed since last time.
             if update:
+                # query alternates for any vars that failed since last time
                 self.query_data()
                 update = False
             # this loop differs from the others in that logic isn't/can't be 
@@ -528,8 +497,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             try:
                 self.set_experiment()
             except util.DataExperimentEvent:
-                # couldn't set consistent experiment attributes, so deactivate
-                # problematic pods/vars and try again
+                # couldn't set consistent experiment attributes. Try again b/c 
+                # we've deactivated problematic pods/vars.
                 update = True
             except Exception as exc:
                 self.log.exception("Caught exception setting experiment: %r", exc)
@@ -538,15 +507,13 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataQueryEvent(
-                f"Too many iterations in {self.full_name} select_data()."
+                f"Too many iterations in select_data() for {self.full_name}."
             )
 
     def fetch_data(self):
         update = True
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS): 
-            # refresh list of active variables/PODs; find alternate vars for any
-            # vars that failed since last time and query them.
             if update:
                 self.select_data()
                 update = False
@@ -563,32 +530,23 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             for v in vars_to_fetch:
                 try:
                     v.log.info("Fetching %s", v)
-
-                    # fetch on a per-data_key basis
-                    for data_key in self.iter_data_keys(v):
+                    # fetch on a per-DataKey basis
+                    for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         try:
-                            if not self.is_fetch_necessary(data_key):
+                            if not self.is_fetch_necessary(d_key):
                                 continue
-                            v.log.debug("Fetching data_key=%s", data_key)
-                            self.local_data[data_key] = \
-                                self.fetch_dataset(v, self.remote_data(data_key))
+                            v.log.debug("Fetching %s", d_key)
+                            self.fetch_dataset(v, d_key)
                         except Exception as exc:
                             update = True
-                            self.eliminate_data_key(data_key)
+                            d_key.deactivate(exc)
                             break # no point continuing
 
                     # check if var received everything
-                    for data_key in self.iter_data_keys(v):
-                        if not self.local_data.get(data_key, None):
-                            raise util.DataFetchEvent("Fetch failed.", data_key)
-                        else:
-                            paths = util.to_iter(self.local_data[data_key])
-                            v.local_data.extend(paths)
+                    for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                        if not d_key.local_data:
+                            raise util.DataFetchEvent("Fetch failed.", d_key)
                     v.stage = diagnostic.VarlistEntryStage.FETCHED
-                except util.DataFetchEvent as exc:
-                    update = True
-                    v.deactivate(exc)
-                    continue
                 except Exception as exc:
                     update = True
                     exc = util.exc_to_event(exc, ("Caught exception while fetching "
@@ -599,7 +557,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataRequestError(
-                f"Too many iterations in {self.full_name} fetch_data()."
+                f"Too many iterations in fetch_data() for {self.full_name}."
             )
 
     def preprocess_data(self):
@@ -608,9 +566,8 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         update = True
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS): 
-            # refresh list of active variables/PODs; find alternate vars for any
-            # vars that failed since last time and fetch them.
             if update:
+                # fetch alternates for any vars that failed since last time
                 self.fetch_data()
                 update = False
             vars_to_process = [
@@ -630,19 +587,16 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                 except Exception as exc:
                     update = True
                     print('XXXX-1')
-                    self.log.exception(("Caught exception processing %s with "
-                        "data_key=%s: %r"), pv.var, 
-                        ', '.join(str(k) for k in self.iter_data_keys(pv.var)), 
-                        exc
-                    )
+                    self.log.exception("Caught exception processing %s: %r",
+                        pv.var.full_name, exc)
                     print('XXXX-2')
-                    for k in self.iter_data_keys(pv.var):
-                        self.eliminate_data_key(k, pv.var)
+                    for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                        pv.var.deactivate_data_key(d_key, exc)
                     continue
         else:
             # only hit this if we don't break
             raise util.DataRequestError( 
-                f"Too many iterations in {self.full_name} preprocess_data()."
+                f"Too many iterations in preprocess_data() for {self.full_name}."
             )
 
     def request_data(self):
@@ -659,6 +613,14 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
             self.log.exception(f"Caught DataSource-level exception: %r.", exc)
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
+        for v in self.iter_vars_only():
+            if v.status == core.ObjectStatus.ACTIVE:
+                v.log.info('Request for %s completed succesfully.', v.full_name)
+                v.status = core.ObjectStatus.SUCCEEDED
+            elif v.failed:
+                v.log.info('Request for %s failed.', v.full_name)
+            else:
+                v.log.info('Request for %s not used.', v.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
         """Called if framework is terminated abnormally. Not called during
@@ -669,6 +631,35 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         exit(1)
 
 # --------------------------------------------------------------------------
+
+class DataFrameDataKey(DataKeyBase):
+    """:class:`DataKeyBase` for use with :class:`DataframeQueryDataSourceBase`
+    and child classes. The *value*s stored in the DataKey are row indices on the
+    catalog DataFrame in the DataSource, and the *remote_data* method returns 
+    values from those rows from the column in the catalog containing the paths 
+    to remote data.
+
+    .. note::
+       Due to implementation, the catalog used by the DataSource must be static.
+       This code could readily be adapted to a dynamic catalog if its schema 
+       provided a unique ID number for each row, to take the place of the row
+       index used here.
+    """
+    def __post_init__(self):
+        """*value* as passed to :class:`DataframeQueryDataSourceBase` will be the
+        entire DataFrame corresponding to this group of catalog entries. Here
+        we convert that to a tuple of row indices and store that instead.
+        """
+        self.value = tuple(self.value.index.tolist())
+        super(DataFrameDataKey, self).__post_init__()
+
+    def remote_data(self):
+        """Returns paths, urls, etc. to be used as input to a *fetch_data* method
+        to specify how this dataset is fetched.
+        """
+        # pd.DataFrame loc requires list, not just iterable
+        idxs = list(self.value)
+        return self._parent.df[self._parent.remote_data_col].loc[idxs]
 
 class DataFrameQueryColumnGroup():
     """Class wrapping a set of catalog (DataFrame) column names used by 
@@ -772,10 +763,8 @@ class DataframeQueryColumnSpec(metaclass=util.MDTFABCMeta):
         (<values of expt_key_cols>, <values of pod_expt_key_cols>, 
         <values of var_expt_key_cols>).
         """
-        return tuple(
-            x.expt_key(df, idx=idx) for x in \
-            (self.expt_cols, self.pod_expt_cols, self.var_expt_cols)
-        )
+        return tuple(x.expt_key(df, idx=idx) for x in \
+            (self.expt_cols, self.pod_expt_cols, self.var_expt_cols))
 
 class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     """DataSource which queries a data catalog made available as a pandas 
@@ -784,16 +773,17 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     .. note::
        This implementation assumes the catalog is static and locally loaded into
        memory. (I think) the only source of this limitation is the fact that it 
-       uses values of the DataFrame's Index as its data_keys, instead of storing
+       uses values of the DataFrame's Index as its DataKeys, instead of storing
        the complete row contents, so this limitation could be lifted if needed.
 
        TODO: integrate better with general Intake API.
     """
+    _DataKeyClass = DataFrameDataKey
     col_spec = util.abstract_attribute() # instance of DataframeQueryColumnSpec
 
     def __init__(self, case_dict, parent):
         super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
-        self.expt_keys = dict() # _id -> expt_key tuple
+        self.expt_keys = dict() # Object _id -> expt_key tuple
 
     @property
     @abc.abstractmethod
@@ -877,12 +867,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             local_dict={'d': util.NameSpace.fromDict(query_d)}
         )
 
-    @staticmethod
-    def _data_key(group_df):
-        """Return tuple of row indices: this implementation's data_key."""
-        return tuple(group_df.index.tolist())
-
-    def _check_group_daterange(self, group_df, log=_log):
+    def check_group_daterange(self, group_df, expt_key=None, log=_log):
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
@@ -891,7 +876,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         if not self.col_spec.has_date_info or date_col not in group_df:
             return group_df
 
-        data_key = self._data_key(group_df)
+        d_key = self.data_key(group_df, expt_key=expt_key)
         try:
             sorted_df = group_df.sort_values(by=date_col)
             # method throws ValueError if ranges aren't contiguous
@@ -903,14 +888,13 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             return sorted_df
         except ValueError:
             self._query_error_handler(
-                "Noncontiguous or malformed date range in files:", data_key,
-                log=log
+                "Noncontiguous or malformed date range in files:", d_key, log=log
             )
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                 "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
-            self._query_error_handler(f"Caught exception {repr(exc)}:", data_key,
+            self._query_error_handler(f"Caught exception {repr(exc)}:", d_key,
                 log=log)
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
@@ -923,22 +907,22 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     def query_dataset(self, var):
         """Find all rows of the catalog matching relevant attributes of the 
-        DataSource and of the variable. Group these by experiments, and for each
-        experiment obtain the row indices in the the catalog DataFrame (the 
-        data_key for this query implementation) and store it in var's remote_data 
-        attribute. Specifically, the remote_data attribute is a dict mapping
-        experiments (labeled by experiment_keys) to data found for that variable
-        by this query (labeled by the data_keys).
+        DataSource and of the variable (:class:`~diagnostic.VarlistEntry`). 
+        Group these by experiments, and for each experiment make the corresponding
+        :class:`DataFrameDataKey` and store it in var's *data* attribute. 
+        Specifically, the *data* attribute is a dict mapping experiments 
+        (labeled by experiment_keys) to data found for that variable
+        by this query (labeled by the DataKeys).
         """
         query_df = self._query_catalog(var)
-        # assign set of sets of catalog row indices to var's remote_data attr
+        # assign set of sets of catalog row indices to var's data attr
         # filter out empty entries = queries that failed.
         expt_groups = query_df.groupby(
             by=(lambda idx: self.col_spec.expt_key(query_df, idx))
         )
-        var.remote_data = util.WormDict()
+        var.data = util.ConsistentDict()
         for expt_key, group in expt_groups:
-            group = self._check_group_daterange(group, log=var.log)
+            group = self.check_group_daterange(group, expt_key=expt_key, log=var.log)
             if group.empty:
                 var.log.debug('Expt_key %s eliminated by _check_group_daterange', 
                     expt_key)
@@ -947,23 +931,18 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if group.empty:
                 var.log.debug('Expt_key %s eliminated by _query_group_hook', expt_key)
                 continue
-            data_key = self._data_key(group)
-            var.log.debug('Query found <expt_key=%s, data_key=%s> for %s',
-                expt_key, data_key, var.full_name)
-            var.remote_data[expt_key] = data_key
+            d_key = self.data_key(group, expt_key=expt_key)
+            var.log.debug('Query found <expt_key=%s, %s> for %s',
+                expt_key, d_key, var.full_name)
+            var.data[expt_key] = d_key
 
-    def _query_error_handler(self, msg, data_key, log=_log):
+    def _query_error_handler(self, msg, d_key, log=_log):
         """Log debugging message or raise an exception, depending on if we're
         in strict mode.
         """
-        data_key = util.to_iter(data_key, list)
-        err_str = '\n'.join(
-            '\t' + str(self.df[self.remote_data_col].loc[idx]) \
-            for idx in data_key
-        )
-        err_str = msg + '\n' + err_str
+        err_str = msg + '\n' + textwrap.indent(str(d_key.remote_data()), 4*' ')
         if self.strict:
-            raise util.DataQueryEvent(err_str, data_key)
+            raise util.DataQueryEvent(err_str, d_key)
         else:
             log.warning(err_str)
 
@@ -977,7 +956,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         key_col = col_group._expt_key_col # name of the column for the expt_key
         cols = list(col_group.cols) # DataFrame requires list
         if not cols:
-            # short-circuit construction for trivial case (empty key)
+            # short-circuit construction for trivial case (no columns in expt_key)
             return pd.DataFrame({key_col: [""]}, dtype='object')
 
         expt_df = None
@@ -992,11 +971,10 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if v.stage < diagnostic.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
-            for expt_key, data_key in self.iter_valid_remote_data(v):
-                # filter variables on the basis of previously selected expt 
-                # attributes
-                if expt_key[:len(parent_key)] == parent_key:
-                    rows.update(data_key)
+            for d_key in v.iter_data_keys():
+                # filter vars on the basis of previously selected expt attributes
+                if d_key.expt_key[:len(parent_key)] == parent_key:
+                    rows.update(util.to_iter(d_key.value))
             v_expt_df = self.df[cols].loc[list(rows)].drop_duplicates().copy()
             v_expt_df[key_col] = v_expt_df.apply(col_group.expt_key_func, axis=1)
             if v_expt_df.empty:
@@ -1084,12 +1062,14 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             expt_key = self.expt_keys[parent_id] + expt_key
         return expt_key
 
-    def set_expt_key(self, obj, key_):
-        key_str = str(key_[-1])
+    def set_expt_key(self, obj, expt_key):
+        # Take last entry because each level of scope in get_expt_key adds 
+        # an entry to the overall expt_key tuple
+        key_str = str(expt_key[-1]) 
         if key_str:
             obj.log.debug("Setting experiment_key for '%s' to '%s'", 
                 obj.name, key_str)
-        self.expt_keys[obj._id] = key_
+        self.expt_keys[obj._id] = expt_key
 
     def set_experiment(self):
         """Ensure that all data we're about to fetch comes from the same experiment.
@@ -1100,7 +1080,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         # set attributes that must be the same for all variables
         if self.failed:
             raise util.DataExperimentEvent((f"Aborting experiment selection "
-                f"for CASENAME '{self.name}' due to failure."))
+                f"for '{self.name}' due to failure."))
         key = self.get_expt_key('case', self)
         self.set_expt_key(self, key)
 
@@ -1117,14 +1097,13 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self.get_expt_key('pod', p, self._id)
                     self.set_expt_key(p, key)
                 except Exception as exc:
-                    p.log.exception(('set_experiment on pod-level experiment '
-                        'attributes: %s caught %r; deactivating.'), p.name, exc, 
-                        exc=exc)
+                    exc = util.event_to_exc(exc, ("set_experiment on POD-level "
+                        f"experiment attributes for '{p.name}' failed."))
+                    p.deactivate(exc)
                     continue
 
-        # resolve irrelevant attributes -- still try to choose as many values to
-        # be the same as possible, to minimize the number of unique data files we
-        # need to fetch
+        # Resolve irrelevant attrs. Try to choose as many values to be the same 
+        # as possible, to minimize the number of files we need to fetch
         try:
             # attempt to choose same values for each POD:
             for pv in self.iter_vars(active=True):
@@ -1137,42 +1116,44 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self.get_expt_key('var', pv.var, pv.pod._id)
                     self.set_expt_key(pv.var, key)
                 except Exception as exc:
-                    pv.var.log.exception("", exc=exc)
+                    exc = util.event_to_exc(exc, ("set_experiment on variable-level "
+                        f"experiment attributes for '{pv.var.name}' failed."))
+                    pv.var.deactivate(exc)
                     continue
+        
+        # finally designate selected experiment by setting its DataKeys to ACTIVE
+        for v in self.iter_vars_only(active=True):
+            expt_key = self.expt_keys[v._id]
+            assert expt_key in v.data
+            d_key = v.data[expt_key]
+            assert d_key.expt_key == expt_key
+            d_key.log.debug("%s selected as part of experiment_key '%s'.",
+                d_key, expt_key)
+            d_key.status = core.ObjectStatus.ACTIVE
         
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
+        if self.col_spec.expt_cols.key_cols:
+            raise NotImplementedError
         return expt_df
 
     def resolve_pod_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
+        if self.col_spec.pod_expt_cols.key_cols:
+            raise NotImplementedError
         return expt_df
 
     def resolve_var_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be 
         specified by child classes.
         """
+        if self.col_spec.var_expt_cols.key_cols:
+            raise NotImplementedError
         return expt_df
-
-    def iter_data_keys(self, var):
-        """Generator iterating over data_keys belonging to the experiment 
-        attributes selected for the variable var.
-        """
-        expt_key = self.expt_keys[var._id]
-        yield var.remote_data[expt_key]
-  
-    def remote_data(self, data_key):
-        """Given one or more row indices in the catalog's dataframe (data_keys, 
-        as found by query_dataset()), return the corresponding remote_paths.
-        """
-        if util.is_iterable(data_key):
-            # loc requires list, not just iterable
-            data_key = util.to_iter(data_key, list) 
-        return self.df[self.remote_data_col].loc[data_key]
 
 
 class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
@@ -1248,7 +1229,7 @@ class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
         Attributes of files listed in the catalog (columns of the DataFrame) are
         taken from the match groups (fields) of the class's \_FileRegexClass.
         """
-        self.log.info('Starting data file search at %s', self.CATALOG_DIR)
+        self.log.info('Starting data file search at %s:', self.CATALOG_DIR)
         self.catalog = intake_esm.core.esm_datastore.from_df(
             self.generate_catalog(), 
             esmcol_data = self._dummy_esmcol_spec(), 
@@ -1291,7 +1272,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(
                     # decided to silently ignore this file
                     continue
                 except Exception:
-                    self.log.info("Couldn't parse path %s", path[path_offset:])
+                    self.log.info("    Couldn't parse path %s", path[path_offset:])
                     continue
 
     def generate_catalog(self):
@@ -1376,9 +1357,10 @@ class OnTheFlyGlobQueryMixin(
 class LocalFetchMixin(AbstractFetchMixin):
     """Mixin implementing data fetch for files on a locally mounted filesystem. 
     No data is transferred; we assume that xarray can open the paths directly.
-    Paths are returned unaltered, to be set as variable's local_data.
+    Paths are unaltered and set as variable's *local_data*.
     """
-    def fetch_dataset(self, var, paths):
+    def fetch_dataset(self, var, d_key):
+        paths = d_key.remote_data()
         if isinstance(paths, pd.Series):
             paths = paths.to_list()
         if not util.is_iterable(paths):
@@ -1389,7 +1371,7 @@ class LocalFetchMixin(AbstractFetchMixin):
                     f"found at {path}."), var)
             else:
                 self.log.debug("Fetch %s: found %s.", var.full_name, path)
-        return paths
+        d_key.local_data = paths
 
 
 class LocalFileDataSource(
@@ -1414,21 +1396,9 @@ class SingleLocalFileDataSource(LocalFileDataSource):
         """Verify that only a single file was found from each experiment.
         """
         super(SingleLocalFileDataSource, self).query_dataset(var)
-        for data_key in var.remote_data.values():
-            if len(data_key) != 1:
+        for d_key in var.data.values():
+            if len(d_key.value) != 1:
                 self._query_error_handler(
                     "Query found multiple files when one was expected:", 
-                    data_key, log=var.log
+                    d_key, log=var.log
                 )
-
-    def remote_data(self, data_key):
-        """Verify that only a single file is being requested.
-        (Should be unnecessary given constraint enforced in _group_query_results, 
-        but check here just to be safe.)
-        """
-        if util.is_iterable(data_key) and len(data_key) != 1:
-            self._query_error_handler(
-                "Requested multiple files when one was expected:", data_key,
-                log=self.log
-            )
-        return super(SingleLocalFileDataSource, self).remote_data(data_key)

@@ -581,10 +581,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # load dataset
         try:
             ds = self.read_dataset(var)
+        except Exception as exc:
+            raise util.exc_to_event(exc, (f"Error in loading dataset for "
+                f"{var.full_name}."), util.DataPreprocessEvent)
+        try:
             ds = xr_parser.DatasetParser().parse(ds, var)
         except Exception as exc:
-            raise util.DataPreprocessEvent((f"Error in read/parse data for "
-                f"{var.full_name}."), var) from exc
+            raise util.exc_to_event(exc, (f"Error in parsing file metadata for "
+                f"{var.full_name}."), util.DataPreprocessEvent)
         # execute functions
         for f in self.functions:
             try:
@@ -592,14 +596,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     f.__class__.__name__)
                 ds = f.process(var, ds)
             except Exception as exc:
-                raise util.DataPreprocessEvent((f"Preprocessing on {var.full_name} "
-                    f"failed at {f.__class__.__name__}."), var) from exc
+                raise util.exc_to_event(exc, (f"Preprocessing on {var.full_name} "
+                    f"failed at {f.__class__.__name__}."), util.DataPreprocessEvent)
         # write dataset
         try:
             self.write_dataset(var, ds)
         except Exception as exc:
-            raise util.DataPreprocessEvent((f"Error in writing data for "
-                f"{var.full_name}."), var) from exc
+            raise util.exc_to_event(exc, (f"Error in read/parse data for "
+                f"{var.full_name}."), util.DataPreprocessEvent)
+
         del ds # shouldn't be necessary
         var.log.debug("Successful preprocessor exit on %s.", var)
 

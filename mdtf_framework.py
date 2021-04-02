@@ -56,11 +56,7 @@ def main():
         validate_base_environment()
 
         # Cache log info in memory until log file is set up
-        logs.configure_console_loggers()
-        _log = logging.getLogger()
-        _log.setLevel(logging.NOTSET)
-        log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
-        _log.addHandler(log_cache)
+        logs.initial_log_config()
 
         # not printing help or info, setup CLI normally 
         cli_obj = cli.MDTFTopLevelArgParser(code_root)

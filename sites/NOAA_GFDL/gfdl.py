@@ -634,7 +634,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             self.dry_run = config.get('dry_run', False)
             self.timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
-            case.log.store_exception(exc=exc)
+            case.log.store_exception(exc)
 
         super(GFDLHTMLOutputManager, self).__init__(case)
 

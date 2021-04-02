@@ -48,11 +48,11 @@ class MDTFPropagatedException(MDTFBaseException):
 
     def __str__(self):
         if self.exc is None:
-            return (f"Deactivated {self.parent.class_name} due to failure of all "
+            return (f"Deactivated {self.parent.full_name} due to failure of all "
                 f"child objects.")
         else:
             return (f"Received {repr(self.exc)} from deactivation of parent "
-                f"{self.parent.class_name}.")
+                f"{self.parent.full_name}.")
 
 class MDTFFileNotFoundError(FileNotFoundError, MDTFBaseException):
     """Wrapper for :py:class:`FileNotFoundError` which handles error codes so we
@@ -161,6 +161,24 @@ class FatalErrorEvent(MDTFBaseException):
     """
     pass
 
+def event_to_exc(event, msg):
+    if isinstance(event, MDTFEvent):
+        try:
+            raise FatalErrorEvent(msg) from event
+        except Exception as chained_exc:
+            return chained_exc
+    else:
+        return event
+
+def exc_to_event(exc, msg, event_class):
+    if isinstance(exc, MDTFEvent):
+        return exc
+    else:
+        try:
+            raise event_class(msg) from exc
+        except Exception as chained_exc:
+            return chained_exc
+
 class DataProcessingEvent(MDTFEvent):
     """Base class and common formatting code for events raised in data 
     query/fetch. These should *not* be used for fatal errors (when a variable or
@@ -171,14 +189,14 @@ class DataProcessingEvent(MDTFEvent):
         self.dataset = dataset
 
     def __str__(self):        
-        if self.dataset is not None:
-            if hasattr(self.dataset, 'remote_path'):
-                data_id = self.dataset.remote_path
-            elif hasattr(self.dataset, 'name'):
-                data_id = self.dataset.name
-            else:
-                data_id = str(self.dataset)
-        return f"{self.msg} ({data_id})"
+        # if self.dataset is not None:
+        #     if hasattr(self.dataset, 'remote_path'):
+        #         data_id = self.dataset.remote_path
+        #     elif hasattr(self.dataset, 'name'):
+        #         data_id = self.dataset.name
+        #     else:
+        #         data_id = str(self.dataset)
+        return self.msg
 
 class DataQueryEvent(DataProcessingEvent):
     """Exception signaling a failure to find requested data in the remote location. 

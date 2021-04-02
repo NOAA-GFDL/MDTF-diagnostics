@@ -9,12 +9,33 @@ import subprocess
 import signal
 import traceback
 
-from . import exceptions
+from . import basic, exceptions
 
 import logging
 import logging.config
 import logging.handlers
 _log = logging.getLogger(__name__)
+
+class MDTFConsoleHandler(logging.StreamHandler):
+    """Dummy class to designate logging to stdout or stderr from the root logger.
+    """
+    pass
+
+class StringIOHandler(logging.StreamHandler):
+    """:py:class:`~logging.StreamHandler` instance that writes log entries to 
+    an internal :py:class:`~io.StringIO` buffer.
+    """
+    def __init__(self):
+        self._log_buffer = io.StringIO()
+        super(StringIOHandler, self).__init__(stream=self._log_buffer)
+
+    def close(self):
+        super(StringIOHandler, self).close()
+        self._log_buffer.close()
+
+    def buffer_contents(self):
+        """Return contents of buffer as a string."""
+        return self._log_buffer.getvalue()
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
     """Subclass :py:class:`logging.handlers.MemoryHandler` to enable flushing
@@ -43,12 +64,12 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
         finally:
             self.release()
 
-    def transfer_to_non_streams(self, logger):
+    def transfer_to_non_console(self, logger):
         """Transfer contents of buffer to all non-console-based handlers attached 
-        to logger (handlers that aren't :py:class:`~logging.StreamHandler`.)
+        to *logger* (handlers that aren't :py:class:`MDTFConsoleHandler`.)
 
         If no handlers are attached to the logger, a warning is printed and the
-        buffer is transferred to the :py:data:`logging.lastResort` handler, i.e.
+        buffer is transferred to the :py:class:`logging.lastResort` handler, i.e.
         printed to stderr.
         
         Args:
@@ -57,13 +78,11 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
         """
         no_transfer_flag = True
         for h in logger.handlers:
-            if not isinstance(h, MultiFlushMemoryHandler) \
-                and not (isinstance(h, logging.StreamHandler) \
-                    and not isinstance(h, logging.FileHandler)):
+            if not isinstance(h, (MultiFlushMemoryHandler, MDTFConsoleHandler)):
                 self.transfer(h)
                 no_transfer_flag = False
         if no_transfer_flag:
-            logger.warning("No non-console-based loggers configured.")
+            logger.warning("No non-console loggers configured.")
             self.transfer(logging.lastResort)
 
 class HeaderFileHandler(logging.FileHandler):
@@ -84,7 +103,7 @@ class HeaderFileHandler(logging.FileHandler):
 class MDTFHeaderFileHandler(HeaderFileHandler):
     def _log_header(self):
         """Returns string of system debug information to use as log file header.
-        Calls :func:`git_info`.
+        Calls :func:`git_info` to get repo status.
         """
         try:
             git_branch, git_hash, _ = git_info()
@@ -117,6 +136,10 @@ def _hanging_indent(str_, initial_indent, subsequent_indent):
     Returns:
         Indented string.
     """
+    if isinstance(initial_indent, int):
+        initial_indent = initial_indent * ' '
+    if isinstance(subsequent_indent, int):
+        subsequent_indent = subsequent_indent * ' '
     lines_ = str_.splitlines()
     lines_out = []
     if len(lines_) > 0:
@@ -143,7 +166,7 @@ class HangingIndentFormatter(logging.Formatter):
             footer (str): Optional constant string to append to each log entry.
         """
         super(HangingIndentFormatter, self).__init__(fmt=fmt, datefmt=datefmt, style=style)
-        self.indent = (tabsize * ' ')
+        self.indent = tabsize
         self.stack_indent = self.indent
         self.header = str(header)
         self.footer = str(footer)
@@ -168,7 +191,7 @@ class HangingIndentFormatter(logging.Formatter):
             record.asctime = self.formatTime(record, self.datefmt)
         s = self.formatMessage(record)
         # indent the text of the log message itself
-        s = _hanging_indent(s, '', self.indent)
+        s = _hanging_indent(s, 0, self.indent)
         if self.header:
             s = self.header + s
 
@@ -196,60 +219,39 @@ class HangingIndentFormatter(logging.Formatter):
             s = s + self.footer
         return s
 
+class _LevelFilterBase(logging.Filter):
+    """Base class to implement common features of level-based filters."""
+    def __init__(self, name="", level=None):
+        super(_LevelFilterBase, self).__init__(name=name)
+        if level is None:
+            level = logging.NOTSET
+        if not isinstance(level, int):
+            if hasattr(logging, str(level)):
+                level = getattr(logging, str(level))
+            else:
+                level = int(level)
+        self.levelno = level
 
-class GeqLevelFilter(logging.Filter):
+class GeqLevelFilter(_LevelFilterBase):
     """:py:class:`logging.Filter` to include only log messages with a severity of
-    level or worse. This is normally done by setting the level attribute on a
+    *level* or worse. This is normally done by setting the *level* attribute on a
     :py:class:`logging.Handler`, but we need to add a filter when transferring
     records from another logger, as shown in 
     `<https://stackoverflow.com/a/24324246>`__."""
-    def __init__(self, name="", level=None):
-        super(GeqLevelFilter, self).__init__(name=name)
-        if level is None:
-            level = logging.NOTSET
-        if not isinstance(level, int):
-            if hasattr(logging, str(level)):
-                level = getattr(logging, str(level))
-            else:
-                level = int(level)
-        self.levelno = level
-
     def filter(self, record):
         return record.levelno >= self.levelno
 
-class LtLevelFilter(logging.Filter):
+class LtLevelFilter(_LevelFilterBase):
     """:py:class:`logging.Filter` to include only log messages with a severity 
-    less than level.
+    less than *level*.
     """
-    def __init__(self, name="", level=None):
-        super(LtLevelFilter, self).__init__(name=name)
-        if level is None:
-            level = logging.NOTSET
-        if not isinstance(level, int):
-            if hasattr(logging, str(level)):
-                level = getattr(logging, str(level))
-            else:
-                level = int(level)
-        self.levelno = level
-
     def filter(self, record):
         return record.levelno < self.levelno
 
-class EqLevelFilter(logging.Filter):
+class EqLevelFilter(_LevelFilterBase):
     """:py:class:`logging.Filter` to include only log messages with a severity 
-    equal to level.
+    equal to *level*.
     """
-    def __init__(self, name="", level=None):
-        super(EqLevelFilter, self).__init__(name=name)
-        if level is None:
-            level = logging.NOTSET
-        if not isinstance(level, int):
-            if hasattr(logging, str(level)):
-                level = getattr(logging, str(level))
-            else:
-                level = int(level)
-        self.levelno = level
-
     def filter(self, record):
         return record.levelno == self.levelno
 
@@ -266,6 +268,25 @@ class NameMatchFilter(logging.Filter):
     
     def filter(self, record):
         return (record.name == self._name)
+
+OBJ_LOG_TAG_ATTR_NAME = 'tags'
+
+class TagMatchFilter(logging.Filter):
+    """:py:class:`logging.Filter` which only accepts records having the 
+    designated combination of 'tag' attributes. These are assigned by the 
+    methods in :class:`MDTFObjectLogger` or can be passed via the 'extra' kwarg
+    on any logger (see discussion in entry for 
+    <https://docs.python.org/3.7/library/logging.html#logging.Logger.debug>__.)
+    """
+    def __init__(self, name="", tags=None):
+        super(TagMatchFilter, self).__init__(name=name)
+        self._tags = basic.to_iter(tags, set)
+    
+    def filter(self, record):
+        if not hasattr(record, OBJ_LOG_TAG_ATTR_NAME):
+            return False
+        tags = basic.to_iter(record.tags, set)
+        return self._tags.issubset(tags)
 
 # ------------------------------------------------------------------------------
 
@@ -285,59 +306,53 @@ class MDTFObjectLogger(logging.Logger):
     """
     def __init__(self, name):
         super(MDTFObjectLogger, self).__init__(name)
-        self._module_log = None
-        # init exception recording
         self._exceptions = []
 
-    def log(self, level, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).log(level, msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.log(level, msg, *args, **kwargs)
+    def log(self, level, msg, *args, **kw):
+        # add "tags" attribute to all emitted LogRecords
+        if 'extra' not in kw:
+            kw['extra'] = dict()
+        elif OBJ_LOG_TAG_ATTR_NAME not in kw['extra']:
+            kw['extra'][OBJ_LOG_TAG_ATTR_NAME] = []
+        super(MDTFObjectLogger, self).log(level, msg, *args, **kw)
 
-    def debug(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).debug(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.debug(msg, *args, **kwargs)
-        
-    def info(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).info(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.info(msg, *args, **kwargs)
-        
-    def warning(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).warning(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.warning(msg, *args, **kwargs)
-        
-    def error(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).error(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.error(msg, *args, **kwargs)
+    # wrap convenience methods
+    # nb: typo in https://github.com/python/cpython/blob/3.7/Lib/logging/__init__.py line 1407
+    def debug(self, msg, *args, **kw):
+        self.log(logging.DEBUG, msg, *args, **kw)
 
-    def critical(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).critical(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.critical(msg, *args, **kwargs)
+    def info(self, msg, *args, **kw):
+        self.log(logging.INFO, msg, *args, **kw)
+        
+    def warning(self, msg, *args, **kw):
+        self.log(logging.WARNING, msg, *args, **kw)
+        
+    def error(self, msg, *args, **kw):
+        self.log(logging.ERROR, msg, *args, **kw)
+
+    def critical(self, msg, *args, **kw):
+        self.log(logging.CRITICAL, msg, *args, **kw)
     
-    def exception(self, msg, *args, **kwargs):
-        super(MDTFObjectLogger, self).exception(msg, *args, **kwargs)
-        if self._module_log is not None:
-            self._module_log.exception(msg, *args, **kwargs)
+    def exception(self, msg, *args, exc_info=True, **kw):
+        print('XXXX-4a')
+        if exc_info:
+            exc_type, _, _ = sys.exc_info()
+            if issubclass(exc_type, exceptions.MDTFEvent):
+                # "exception" isn't an exception, just an event, so log with 
+                # severity info
+                self.log(logging.INFO, msg, *args, exc_info=False, **kw)
+                return
+        self.log(logging.ERROR, msg, *args, exc_info=exc_info, **kw)
+        print('XXXX-4c')
 
+    # exception object storage
     @property
     def has_exceptions(self):
         return (len(self._exceptions) > 0)
 
-    def store_exception(self, exc, log=False, level=logging.ERROR):
-        # log it
-        if isinstance(exc, str):
-            if log:
-                self.log(level, exc)
-            exc = exceptions.MDTFBaseException(exc)
-        else:
-            if log:
-                self.log(level, "Caught %r.", exc)
+    def store_exception(self, exc):
         # add Exception object to internal list
+        # wrapped_exc = exc
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 
@@ -356,28 +371,30 @@ class MDTFObjectLoggerMixin():
         This is intended for preparing log files (at the per-POD or per-case 
         level); logging intended for the console should use the module loggers.
     """
-    def init_log(self, log_format=None, module_logger=None):
+    def init_log(self, fmt=None):
         # Mixin class, so no __init__ for simplicity
-        if log_format is None:
-            log_format = '%(asctime)s in %(funcName)s: %(message)s'
-        self._log_buffer = io.StringIO()
+        if fmt is None:
+            fmt = '%(asctime)s in %(funcName)s: %(message)s'
 
-        self.log.propagate = True # propagate up to case
-        self.log._module_log = module_logger
-        self.log.setLevel(logging.DEBUG)
-        if self.log.hasHandlers():
+        log = getattr(self, OBJ_LOG_ATTR_NAME)
+        log.propagate = True
+        log.setLevel(logging.DEBUG)
+        if log.hasHandlers():
             for handler in self.log.handlers:
-                self.log.removeHandler(handler)
-        handler = logging.StreamHandler(self._log_buffer)
-        handler.addFilter(NameMatchFilter(self._log_name)) # don't record events from children
-        formatter = logging.Formatter(fmt=log_format, datefmt='%H:%M:%S')
+                log.removeHandler(handler)
+        handler = StringIOHandler()
+        # don't record events from children in StringIO buffer
+        handler.addFilter(NameMatchFilter(self._log_name)) 
+        formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
         handler.setFormatter(formatter)
-        self.log.addHandler(handler)
+        log.addHandler(handler)
+        setattr(self, OBJ_LOG_ATTR_NAME, log)
 
     @property
-    def exception(self):
-        if self.log.has_exceptions:
-            return self.log._exceptions[-1]
+    def last_exception(self):
+        log = getattr(self, OBJ_LOG_ATTR_NAME)
+        if log.has_exceptions:
+            return log._exceptions[-1]
         else:
             return None
 
@@ -385,15 +402,18 @@ class MDTFObjectLoggerMixin():
         """Return contents of log buffer, as well as that of any child objects
         in *child_objs*, as a formatted string.
         """
+        log = getattr(self, OBJ_LOG_ATTR_NAME)
         str_ = self.name + ':\n'
         # list exceptions before anything else:
-        if self.log.has_exceptions:
-            strs_ = [''.join(exc.format()) for exc in self.log._exceptions]
+        if log.has_exceptions:
+            strs_ = [''.join(exc.format()) for exc in log._exceptions]
             strs_ = [f"*** {self.name} caught exception #{i+1}:\n{exc}\n" \
                 for i, exc in enumerate(strs_)]
             str_ += "".join(strs_) + '\n'
         # then log contents:
-        str_ += self._log_buffer.getvalue().rstrip()
+        for h in log.handlers:
+            if isinstance(h, StringIOHandler):
+                str_ += h.buffer_contents().rstrip()
         # then contents of children:
         if children:
             for child in self.iter_children():
@@ -402,69 +422,33 @@ class MDTFObjectLoggerMixin():
                     str_ += child.format_log(children=children)
                 else:
                     str_ += f"<{child} log placeholder>\n"
-            return _hanging_indent(str_, '', 4 * ' ')
+            return _hanging_indent(str_, 0, 4)
 
 class MDTFCaseLoggerMixin():
-    """Wrapper to handle configuring logging from a file and transferring 
-    the temporary log cache to the newly-configured loggers.
-
-    Args:
-        config_mgr ( :class:`~core.ConfigManager` ): Passed as an argument 
-            here in order to avoid complicating the import structure of the
-            'util' subpackage.
-        new_paths (dict): Dict of new log file names to assign. Keys are the 
-            names of :py:class:`logging.Handler` handlers in the config file, 
-            and values are the new paths.
-    """
-    def init_log(self, config_mgr, module_logger=None, **new_paths):
+    def init_log(self, log_dir, fmt=None):
         # Mixin class, so no __init__ for simplicity
-        def _set_log_file_paths(d, new_paths):
-            """Assign paths to log files. Paths are assumed to be well-formed 
-            and in writeable locations.
-            """
-            if not new_paths:
-                self.log.error("Log file paths not set.")
-                return
-            handlers = d.setdefault('handlers', dict())
-            for h in handlers:
-                if h in new_paths:
-                    d['handlers'][h]["filename"] = new_paths[h]
-                    del new_paths[h]
-            if new_paths:
-                self.log.warning(("Couldn't find handlers for the following log "
-                    "files: %s"), new_paths)
+        if fmt is None:
+            fmt = ("%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line "
+                "%(lineno)d):\n%(message)s")
 
-        self.log.propagate = False
-        self.log._module_log = module_logger
-    
-        if config_mgr.log_config is None:
-            return
-
-        root_logger = logging.getLogger()
-        cache_idx = [i for i,handler in enumerate(root_logger.handlers) \
-            if isinstance(handler, MultiFlushMemoryHandler)]
-        first_call = len(cache_idx) > 0
-        if first_call:
-            temp_log_cache = root_logger.handlers[cache_idx[0]]
-
-        # log uncaught exceptions
-        _set_excepthook(root_logger)
-        # configure loggers from the specification we loaded
-        try:
-            # set console verbosity level
-            log_d = config_mgr.log_config.copy()
-            log_d = _configure_logging_dict(log_d, config_mgr)
-            _set_log_file_paths(log_d, new_paths)
-            logging.config.dictConfig(log_d)
-        except Exception:
-            self.log.exception("Logging config failed.")
-
-        if first_call:
-            # transfer cache contents to newly-configured loggers and delete it
-            temp_log_cache.transfer_to_non_streams(root_logger)
-            temp_log_cache.close()
-            root_logger.removeHandler(temp_log_cache)
-            self.log.debug('Logger successfully configured.')
+        log = getattr(self, OBJ_LOG_ATTR_NAME)
+        log.propagate = True
+        log.setLevel(logging.DEBUG)
+        if log.hasHandlers():
+            for handler in self.log.handlers:
+                log.removeHandler(handler)
+        handler = MDTFHeaderFileHandler(
+            filename=os.path.join(log_dir, f"{self.name}.log"),
+            mode="w", encoding="utf-8"
+        )
+        formatter = HangingIndentFormatter(
+            fmt=fmt, datefmt='%H:%M:%S', header="", footer="\n"
+        )
+        handler.setFormatter(formatter)
+        log.addHandler(handler)
+        # transfer stuff from root logger cache
+        transfer_log_cache(log, close=False)
+        setattr(self, OBJ_LOG_ATTR_NAME, log)
 
 # ------------------------------------------------------------------------------
 
@@ -583,34 +567,48 @@ def _configure_logging_dict(log_d, log_args):
         log_d['root']['handlers'] = ["stderr"]
     return log_d
 
-def configure_console_loggers():
-    """Configure console loggers for top-level script. This is redundant with
-    what's in logging.jsonc, but for debugging purposes we want to get console 
-    output set up before we've parsed input paths, read config files, etc.
+def initial_log_config():
+    """Configure the root logger for logging to console and to a cache provided
+    by :class:`MultiFlushMemoryHandler`. For debugging purposes 
+    we want to get console output set up before we've read in the real log config
+    files (which requires doing a full parse of the user input).
     """
     logging.captureWarnings(True)
+    # log uncaught exceptions
+    root_logger = logging.getLogger()
+    _set_excepthook(root_logger)
+
     log_d = {
         "version": 1,
-        "disable_existing_loggers":  False,
-        "root": {"level": "NOTSET", "handlers": ["debug", "stdout", "stderr"]},
+        "disable_existing_loggers": True,
+        "root": {
+            "level": "NOTSET", 
+            "handlers": ["debug", "stdout", "stderr", "cache"]
+        },
         "handlers": {
             "debug": {
-                "class": "logging.StreamHandler",
+                "()": "src.util.logs.MDTFConsoleHandler",
                 "formatter": "level",
-                "level" : logging.DEBUG,
-                "stream" : "ext://sys.stdout"
+                "level": logging.DEBUG,
+                "stream": "ext://sys.stdout"
             },
             "stdout": {
-                "class": "logging.StreamHandler",
+                "()": "src.util.logs.MDTFConsoleHandler",
                 "formatter": "normal",
-                "level" : logging.INFO,
-                "stream" : "ext://sys.stdout"
+                "level": logging.INFO,
+                "stream": "ext://sys.stdout"
             },
             "stderr": {
-                "class": "logging.StreamHandler",
+                "()": "src.util.logs.MDTFConsoleHandler",
                 "formatter": "level",
-                "level" : logging.WARNING,
-                "stream" : "ext://sys.stderr"
+                "level": logging.WARNING,
+                "stream": "ext://sys.stderr"
+            },
+            "cache": {
+                "()": "src.util.logs.MultiFlushMemoryHandler",
+                "level": logging.NOTSET,
+                "capacity": 8*1024,
+                "flushOnClose": False
             }
         },
         "formatters": {
@@ -632,4 +630,23 @@ def configure_console_loggers():
 
     log_d = _configure_logging_dict(log_d, log_args)
     logging.config.dictConfig(log_d)
-    _log.debug('Console loggers configured.')
+    root_logger.debug('Console loggers configured.')
+
+def transfer_log_cache(target_log=None, close=False):
+    """Transfer the contents of the root log cache 
+    (:class:`MultiFlushMemoryHandler`) to logs on newly-configured objects.
+    """
+    root_logger = logging.getLogger()
+    cache_idx = [i for i,handler in enumerate(root_logger.handlers) \
+        if isinstance(handler, MultiFlushMemoryHandler)]
+    if len(cache_idx) > 0:
+        temp_log_cache = root_logger.handlers[cache_idx[0]]
+        if target_log is not None:
+            try:
+                temp_log_cache.transfer_to_non_console(target_log)
+            except Exception:
+                root_logger.debug("Couldn't transfer log to '%s'.", target_log.name)
+        if close:
+            # delete it
+            temp_log_cache.close()
+            root_logger.removeHandler(temp_log_cache)

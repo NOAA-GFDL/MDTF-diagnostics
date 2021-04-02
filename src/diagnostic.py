@@ -168,7 +168,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         # inherited from two dataclasses, so need to call post_init on each directly
         core.MDTFObjectBase.__post_init__(self)
         # set up log (MDTFObjectLoggerMixin)
-        self.init_log(module_logger=_log)
+        self.init_log()
         data_model.DMVariable.__post_init__(self, coords)
 
         # (re)initialize mutable fields here so that if we copy VE (eg with .replace)
@@ -287,8 +287,8 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         """
         def _format(v):
             str_ = str(v)[1:-1]
-            status_str = f"{v.status.name.lower()}.{v.stage.name.lower()}"
-            fail_str = (f"(exc={repr(v.exception)})" \
+            status_str = f"{v.status.name.lower()}, {v.stage.name.lower()}"
+            fail_str = (f"(exc={repr(v.last_exception)})" \
                 if v.failed else 'ok')
             trans_str = (str(v.translation) \
                 if getattr(v, 'translation', None) is not None \
@@ -471,7 +471,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
     def __post_init__(self):
         core.MDTFObjectBase.__post_init__(self)
         # set up log (MDTFObjectLoggerMixin)
-        self.init_log(module_logger=_log)
+        self.init_log()
 
         for k,v in self.runtime_requirements.items():
             self.runtime_requirements[k] = util.to_iter(v)
@@ -534,7 +534,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         if not success:
             try:
                 raise util.PodDataError((f"No alternates available for "
-                    "{failed_var.full_name}."), self)
+                    f"{failed_var.full_name}."), self)
             except Exception as exc:
                 self.deactivate(exc=exc)
 

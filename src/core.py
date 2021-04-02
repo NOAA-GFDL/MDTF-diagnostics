@@ -73,10 +73,6 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         setattr(self, util.OBJ_LOG_ATTR_NAME, log)
 
     @property
-    def class_name(self):
-        return f"<#{self._id}:{self.__class__.__name__}('{self.name}')>"
-
-    @property
     def full_name(self):
         return f"<#{self._id}:{self._parent.name}.{self.name}>"
 
@@ -140,15 +136,8 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # always log exceptions, even if we've already failed
         if level is None:
             level = self._deactivation_log_level # default level for child class
-        
-        if isinstance(exc, util.MDTFEvent):
-            # convert Event to exception
-            try:
-                raise util.FatalErrorEvent((f"{exc.__class__.__name__} led to "
-                    "deactivation.")) from exc
-            except Exception as chained_exc:
-                exc = chained_exc
-        self.log.store_exception(exc, log=True, level=level)
+        self.log.log(level, "Deactivating %s due to %r.", self.full_name, exc)
+        self.log.store_exception(exc)
         if not self.failed:
             # only need to do updates on status change 
             # update status on self
@@ -779,10 +768,6 @@ class MDTFFramework(MDTFObjectBase):
         return self.cases.values()
 
     @property
-    def class_name(self):
-        return f"<{self.__class__.__name__}>"
-
-    @property
     def full_name(self):
         return f"<{self.name}>"
         
@@ -996,30 +981,31 @@ class MDTFFramework(MDTFObjectBase):
 
         new_d = dict()
         for case_name, case_d in self.cases.items():
-            _log.info("### %s: initializing case '%s'.", self.class_name, case_name)
+            _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
             case = self.DataSource(case_d, parent=self)
             case.setup()
             new_d[case_name] = case
         self.cases = new_d
+        util.transfer_log_cache(close=True)
 
         for case_name, case in self.cases.items():
             if not case.failed:
                 _log.info("### %s: requesting data for case '%s'.",
-                    self.class_name, case_name)
+                    self.full_name, case_name)
                 case.request_data()
             else:
                 _log.info(("### %s: initialization for case '%s' failed; skipping "
-                    f"data request."), self.class_name, case_name)
+                    f"data request."), self.full_name, case_name)
 
             if not case.failed:
-                _log.info("### %s: running case '%s'.", self.class_name, case_name)
+                _log.info("### %s: running case '%s'.", self.full_name, case_name)
                 run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
                 run_mgr.setup()
                 run_mgr.run()
                 run_mgr.tear_down()
             else:
                 _log.info(("### %s: Data request for case '%s' failed; skipping "
-                    "execution."), self.class_name, case_name)
+                    "execution."), self.full_name, case_name)
 
             out_mgr = self.OutputManager(case)
             out_mgr.make_output()

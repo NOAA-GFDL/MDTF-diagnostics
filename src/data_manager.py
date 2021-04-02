@@ -244,10 +244,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         util.check_dir(self, 'MODEL_DATA_DIR', create=True)
 
         # set up log (MDTFCaseLoggerMixin)
-        self.init_log(config,
-            module_logger=_log,
-            mdtf_log_file= os.path.join(self.MODEL_WK_DIR, f"{self.name}.log")
-        )
+        self.init_log(log_dir = self.MODEL_WK_DIR)
 
         self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(
@@ -270,6 +267,10 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         translate = core.VariableTranslator()
         convention_obj = translate.get_convention(self.attrs.convention)
         self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
+
+    @property
+    def full_name(self):
+        return f"<#{self._id}:{self.name}>"
 
     @property
     def _children(self):
@@ -501,17 +502,15 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
-                    try:
-                        raise util.DataQueryEvent(("Caught exception while querying "
-                            f"{v.translation} for {v.full_name}."), v) from exc
-                    except Exception as chained_exc:
-                        v.deactivate(chained_exc)
+                    exc = util.exc_to_event(exc, ("Caught exception while querying "
+                        f"{v.translation} for {v.full_name}."), util.DataQueryEvent)
+                    v.deactivate(exc)
                     continue
             self.post_query_hook(vars_to_query)
         else:
             # only hit this if we don't break
             raise util.DataRequestError(
-                f"Too many iterations in {self.class_name} query_data()."
+                f"Too many iterations in {self.full_name} query_data()."
             )
 
     def select_data(self):
@@ -539,7 +538,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         else:
             # only hit this if we don't break
             raise util.DataQueryEvent(
-                f"Too many iterations in {self.class_name} select_data()."
+                f"Too many iterations in {self.full_name} select_data()."
             )
 
     def fetch_data(self):
@@ -592,17 +591,15 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     continue
                 except Exception as exc:
                     update = True
-                    try:
-                        raise util.DataFetchEvent(("Caught exception while "
-                            f"fetching data for {v.full_name}."), v) from exc
-                    except Exception as chained_exc:
-                        v.deactivate(chained_exc)
+                    exc = util.exc_to_event(exc, ("Caught exception while fetching "
+                        f"data for {v.full_name}."), util.DataFetchEvent)
+                    v.deactivate(exc)
                     continue
             self.post_fetch_hook(vars_to_fetch)
         else:
             # only hit this if we don't break
             raise util.DataRequestError(
-                f"Too many iterations in {self.class_name} fetch_data()."
+                f"Too many iterations in {self.full_name} fetch_data()."
             )
 
     def preprocess_data(self):
@@ -632,18 +629,20 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True
+                    print('XXXX-1')
                     self.log.exception(("Caught exception processing %s with "
                         "data_key=%s: %r"), pv.var, 
                         ', '.join(str(k) for k in self.iter_data_keys(pv.var)), 
                         exc
                     )
+                    print('XXXX-2')
                     for k in self.iter_data_keys(pv.var):
                         self.eliminate_data_key(k, pv.var)
                     continue
         else:
             # only hit this if we don't break
             raise util.DataRequestError( 
-                f"Too many iterations in {self.class_name} preprocess_data()."
+                f"Too many iterations in {self.full_name} preprocess_data()."
             )
 
     def request_data(self):

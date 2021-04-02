@@ -260,9 +260,6 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         alternates of those, ... etc. until variables with no alternates are 
         encountered or all variables have been yielded. In addition, it yields 
         the "sets" of alternates and not the VarlistEntries themselves.
-
-        (Recall that all local state (``stack`` and ``already_encountered``) is 
-        maintained across successive calls.)
         """
         def _iter_alternates():
             stack = [[self]]
@@ -282,6 +279,10 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         next(iterator_)
         yield from iterator_
 
+    @staticmethod
+    def alternates_str(alt_list):
+        return "[{}]".format(', '.join(v.id_name for v in alt_list))
+
     def debug_str(self):
         """String representation with more debugging information.
         """
@@ -298,8 +299,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
 
         s = _format(self)
         for i, altvs in enumerate(self.iter_alternates()):
-            alt_str = ', '.join(str(vv) for vv in altvs)
-            s += f"\n\tAlternate set #{i+1}: [{alt_str}]"
+            s += f"\n\tAlternate set #{i+1}: {self.alternates_str(altvs)}"
         return s
     
     def query_attrs(self, key_synonyms=None):
@@ -508,7 +508,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
         """Iterable of child objects associated with this object."""
         yield from self.varlist.iter_vars()
 
-    def child_deactivation_handler(self, failed_var):
+    def child_deactivation_handler(self, failed_v):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
         process has failed for a :class:`VarlistEntry`, try to find a set of 
@@ -520,21 +520,27 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
             raise ValueError('Active var on failed POD')
         # self.log.debug("Updating active vars for POD '%s'", self.name)
 
-        self.log.info("Request for %s failed; finding alternate vars.", failed_var)
+        self.log.info("Request for %s failed; looking for alternate data.", 
+            failed_v)
         success = False
-        for alt_list in failed_var.iter_alternates():
-            if any(alt_v.failed for alt_v in alt_list):
+        for i, alt_list in enumerate(failed_v.iter_alternates()):
+            failed_list = [alt_v for alt_v in alt_list if alt_v.failed]
+            if failed_list:
                 # skip sets of alternates where any variables have already failed
+                self.log.debug(("Eliminated alternate set #%d due to deactivated "
+                    "members: %s."), i, failed_v.alternates_str(failed_list))
                 continue
             # found a viable set of alternates
             success = True
+            self.log.info("Selected alternate set #%d: %s.", 
+                i+1, failed_v.alternates_str(alt_list))
             for alt_v in alt_list:
                 alt_v.status = core.ObjectStatus.ACTIVE
             break
         if not success:
             try:
-                raise util.PodDataError((f"No alternates available for "
-                    f"{failed_var.full_name}."), self)
+                raise util.PodDataError((f"No alternate data available for "
+                    f"{failed_v.full_name}."), self)
             except Exception as exc:
                 self.deactivate(exc=exc)
 

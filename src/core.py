@@ -73,6 +73,10 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         setattr(self, util.OBJ_LOG_ATTR_NAME, log)
 
     @property
+    def id_name(self):
+        return f"<#{self._id}:{self.name}>"
+
+    @property
     def full_name(self):
         return f"<#{self._id}:{self._parent.name}.{self.name}>"
 

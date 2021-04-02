@@ -394,9 +394,19 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # convention: str
     pass
 
-gfdlppDataManager_col_spec = data_manager.DataframeQueryColumnSpec(
+gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
     expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
+    daterange_col = "date_range"
+)
+
+gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols = data_manager.DataFrameQueryColumnGroup(['component']),
+    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
     daterange_col = "date_range"
 )
 
@@ -404,7 +414,13 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
-    col_spec = gfdlppDataManager_col_spec
+
+    @property
+    def col_spec(self):
+        if self.any_components:
+            return gfdlppDataManager_any_components_col_spec
+        else:
+            return gfdlppDataManager_same_components_col_spec
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}
@@ -413,25 +429,6 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         super(GfdlppDataManager, self).__init__(case_dict, parent)
         config = core.ConfigManager()
         self.any_components = config.get('any_components', False)
-
-    @property
-    def pod_expt_key_cols(self):
-        return (tuple() if self.any_components else ('component', ))
-
-    @property
-    def pod_expt_cols(self):
-        # Catalog columns whose values must be the same for each POD.
-        return self.pod_expt_key_cols
-
-    @property
-    def var_expt_key_cols(self):
-        return (('chunk_freq', 'component') if self.any_components else ('chunk_freq', ))
-
-    @property
-    def var_expt_cols(self):
-        # Catalog columns whose values must "be the same for each variable", ie  
-        # are irrelevant but must be constrained to a unique value.
-        return self.var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):
@@ -491,7 +488,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             else:
                 return _heuristic_tiebreaker_sub(str_list)
 
-        if 'component' in self.pod_expt_cols:
+        if 'component' in self.col_spec.pod_expt_cols.cols:
             df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
         # otherwise no-op
         return df
@@ -503,7 +500,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
-        if 'component' in self.var_expt_cols:
+        if 'component' in self.col_spec.var_expt_cols.cols:
             col_name = 'component'
             df = df.sort_values(col_name).iloc[[0]]
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.", 
@@ -527,7 +524,7 @@ class GfdlautoDataManager(object):
             # could use more careful logic here, but for now assume CMIP6 on 
             # /uda as a fallback
             
-        self.log.debug("%s: Dispatched DataManager to %s.", 
+        _log.debug("%s: Dispatched DataManager to %s.", 
             cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
         obj.__init__(case_dict)

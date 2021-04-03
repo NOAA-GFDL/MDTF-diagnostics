@@ -412,7 +412,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 # summary for the case
                 pod.deactivate(exc)
                 continue
-            if not pod.failed:
+            if pod.active:
                 pod.status = core.ObjectStatus.SUCCEEDED
 
         self.make_html(self.case)

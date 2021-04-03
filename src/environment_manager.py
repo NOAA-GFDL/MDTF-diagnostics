@@ -173,7 +173,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 elif key == '_CONDA_ROOT':
                     self.conda_root = val
         except Exception as exc:
-            raise PodRuntimeError("Can't find conda.") from exc
+            raise util.PodRuntimeError("Can't find conda.") from exc
 
         # find where environments are installed
         if 'conda_env_root' in paths and paths.conda_env_root:
@@ -296,7 +296,7 @@ class SubprocessRuntimePODWrapper(object):
         self.log_handle.write(log_str)
         self.pod.log.info(log_str)
         self.pod.pre_run_setup()
-        self.pod.info("\t%s will run in conda env '%s'", self.pod.name, self.env)
+        self.pod.log.info("\t%s will run in conda env '%s'", self.pod.name, self.env)
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
         self.setup_env_vars()
@@ -317,14 +317,10 @@ class SubprocessRuntimePODWrapper(object):
         self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list))+'\n\n')
 
     def setup_exception_handler(self, exc):
-        log_str = (f"Caught exception while preparing to run {self.pod.name}: "
-            f"{repr(exc)}.")
-        self.pod.error('\n\t' + log_str)
-        if self.log_handle is not None:
-            self.log_handle.write(log_str)
-            self.log_handle.close()
-            self.log_handle = None
-        self.pod.deactivate(exc)
+        chained_exc = util.exc_to_event(exc, (f"Caught exception while preparing "
+            f"to run {self.pod.name}."), util.PodRuntimeError)
+        self.pod.deactivate(chained_exc)
+        self.tear_down()
         raise exc # include in production, or just for debugging?
 
     def run_commands(self):
@@ -367,25 +363,38 @@ class SubprocessRuntimePODWrapper(object):
         return [''.join(command)]
 
     def runtime_exception_handler(self, exc):
-        log_str = (f"Caught exception while running {self.pod.name}: "
-            f"{repr(exc)}.")
-        if self.process is not None:
-            self.process.kill()
-            self.process = None
-        if self.log_handle is not None:
-            self.log_handle.write(log_str)
-            self.log_handle.close()
-            self.log_handle = None
-        self.pod.deactivate(exc)
+        chained_exc = util.exc_to_event(exc, (f"Caught exception while running "
+            f"{self.pod.name}."), util.PodExecutionError)
+        self.pod.deactivate(chained_exc)
+        self.tear_down()
         raise exc # include in production, or just for debugging?
 
-    def tear_down(self):
+    def tear_down(self, retcode=None):
+        # just to be safe
+        if self.process is not None:
+            try:
+                self.process.kill()
+            except ProcessLookupError:
+                pass
+            self.process = None
         if self.log_handle is not None:
-            # just to be safe
+            self.log_handle.flush() # redundant?
             self.log_handle.close()
             self.log_handle = None
 
-        self.pod.info("### Finished %s", self.pod.name)
+        if self.pod.status != core.ObjectStatus.INACTIVE:
+            if retcode == 0:
+                self.pod.log.info('%s exited successfully (code=%d).', 
+                    self.pod.name, retcode) 
+            elif retcode is None or self.pod.failed:
+                self.pod.log.info('%s was terminated or exited abnormally.', 
+                    self.pod.name) 
+            else:
+                exc = util.PodExecutionError((f"{self.pod.name} exited abnormally "
+                    f"(code={retcode})."))
+                self.pod.deactivate(exc)
+        if not self.pod.failed:
+            self.pod.status = core.ObjectStatus.INACTIVE
         # elapsed = timeit.default_timer() - start_time
         # print(pod+" Elapsed time ",elapsed)
 
@@ -411,9 +420,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         """Generator iterating over all wrapped pods which haven't been skipped 
         due to requirement errors.
         """
-        for p in self.pods:
-            if p.pod.active:
-                yield p
+        yield from filter((lambda p: p.pod.active), self.pods)
 
     def setup(self):
         self.env_mgr.setup()
@@ -484,23 +491,13 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.pods:
             if p.process is not None:
                 p.process.wait()
-                if p.process.returncode:
-                    if p.process.returncode == 0:
-                        p.pod.log.info('%s: %s exited successfully.', 
-                            self.__class__.__name__, p.pod.name)
-                    else:
-                        s = f"Process exited abnormally (code={p.process.returncode})"
-                        try:
-                            raise util.PodExecutionError(p.pod, s)
-                        except Exception as exc:
-                            p.pod.deactivate(exc)
-                        if p.log_handle is not None:
-                            p.log_handle.write('ERROR: '+s)
-                p.process = None
-            if p.log_handle is not None:
-                p.log_handle.close()
-                p.log_handle = None
+                if p.process.returncode and p.process.returncode != 0:
+
+                    if p.log_handle is not None:
+                        p.log_handle.write('ERROR: '+s)
+            p.tear_down(retcode=p.process.returncode)
         self.log.info('%s: completed all PODs.', self.__class__.__name__)
+        self.tear_down()
 
     def tear_down(self):
         # cleanup all envs that were defined, just to be safe
@@ -510,11 +507,10 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.env_mgr.tear_down()
 
     def runtime_cleanup(self, signum=None, frame=None):
+        # try to clean up everything
         util.signal_logger(self.__class__.__name__, signum, frame, log=self.log)
-        # kill any active subprocesses
         for p in self.pods:
-            if p.log_handle is not None:
-                p.log_handle.close()
-            if p.process is not None:
-                p.process.kill()
+            util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
+            p.tear_down()
+        self.tear_down()
         exit(1)

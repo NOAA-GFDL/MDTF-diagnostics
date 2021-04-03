@@ -514,6 +514,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             name = getattr(obj, 'name', 'dataset')
             encoding = getattr(obj, 'encoding', dict())
             attrs = getattr(obj, 'attrs', dict())
+            attrs_to_delete = set([])
             for k,v in encoding.items():
                 if k in attrs:
                     if isinstance(attrs[k], str) and isinstance(v, str):
@@ -523,7 +524,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     if compare_ and k.lower() != 'source':
                         var.log.warning("Conflict in '%s' attribute of %s: %s != %s.",
                             k, name, v, attrs[k])
-                    del attrs[k]   
+                    attrs_to_delete.add(k)
+            for k,v in attrs.items():
+                if v == xr_parser.ATTR_NOT_FOUND:
+                    var.log.warning("Caught unset attribute '%s' of %s.", k, name)
+                    attrs_to_delete.add(k)
+            for k in attrs_to_delete:
+                del attrs[k]
             
         for vv in ds.variables.values():
             _clean_dict(vv)
@@ -560,8 +567,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
         var.log.info("Writing to %s", path_str)
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
-        var.log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         ds = self.clean_output_encoding(var, ds)
+        var.log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         if var.is_static:
             unlimited_dims = []
         else:

@@ -1001,10 +1001,9 @@ class MDTFFramework(MDTFObjectBase):
 
             if not case.failed:
                 _log.info("### %s: running case '%s'.", self.full_name, case_name)
-                run_mgr = self.RuntimeManager(case.pods, self.EnvironmentManager)
+                run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
                 run_mgr.setup()
                 run_mgr.run()
-                run_mgr.tear_down()
             else:
                 _log.info(("### %s: Data request for case '%s' failed; skipping "
                     "execution."), self.full_name, case_name)

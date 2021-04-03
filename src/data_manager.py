@@ -615,12 +615,12 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         self.post_query_and_fetch_hook()
         for v in self.iter_vars_only():
             if v.status == core.ObjectStatus.ACTIVE:
-                v.log.info('Request for %s completed succesfully.', v.full_name)
+                v.log.debug('Request for %s completed succesfully.', v.full_name)
                 v.status = core.ObjectStatus.SUCCEEDED
             elif v.failed:
-                v.log.info('Request for %s failed.', v.full_name)
+                v.log.debug('Request for %s failed.', v.full_name)
             else:
-                v.log.info('Request for %s not used.', v.full_name)
+                v.log.debug('Request for %s not used.', v.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
         """Called if framework is terminated abnormally. Not called during

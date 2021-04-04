@@ -61,8 +61,8 @@ def edit_request_wrapper(wrapped_edit_request_func):
                 new_v_t_name = (str(new_v.translation) \
                     if getattr(new_v, 'translation', None) is not None \
                     else "(not translated)")
-                v_t_name = (str(v.translation) \
-                    if getattr(v, 'translation', None) is not None else "(not translated)")
+                v_t_name = (str(v.translation) if getattr(v, 'translation', None) \
+                    is not None else "(not translated)")
                 pod.log.debug("%s for %s: add translated %s as alternate for %s.", 
                     self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
                 new_varlist.append(v)
@@ -172,6 +172,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                 t_end.strftime('%Y-%m-%d'), 
                 new_t.values[0].strftime('%Y-%m-%d'), 
                 new_t.values[-1].strftime('%Y-%m-%d'), 
+                tags=util.ObjectLogTag.NC_HISTORY
             )
         return ds
 
@@ -255,7 +256,10 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             new_units = tv.units * self._liquid_water_density
 
         var.log.debug(("Assumed implicit factor of water density in units for %s: "
-            "given %s, will convert as %s."), var.full_name, tv.units, new_units)  
+            "given %s, will convert as %s."), 
+            var.full_name, tv.units, new_units,
+            tags=util.ObjectLogTag.NC_HISTORY
+        )  
         ds[tv.name].attrs['units'] = str(new_units)
         tv.units = new_units
         # actual conversion done by ConvertUnitsFunction; this assures 
@@ -289,7 +293,8 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             )
             if c.has_bounds and c.bounds_var in ds:
                 ds = units.convert_dataarray(
-                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units, log=var.log
+                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units, 
+                    log=var.log
                 )
             c.units = dest_c.units
 
@@ -298,7 +303,8 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.name in ds:
                 dest_c = var.axes[c.axis]
                 ds = units.convert_dataarray(
-                    ds, c.name, src_unit=None, dest_unit=dest_c.units, log=var.log
+                    ds, c.name, src_unit=None, dest_unit=dest_c.units, 
+                    log=var.log
                 )
                 c.units = dest_c.units
                 c.value = ds[c.name].item()
@@ -313,7 +319,9 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         # rename var
         if tv.name != var.name:
             var.log.debug("Rename '%s' variable in %s to '%s'.", 
-                tv.name, var.full_name, var.name)
+                tv.name, var.full_name, var.name, 
+                tags=util.ObjectLogTag.NC_HISTORY
+            )
             rename_d[tv.name] = var.name
             tv.name = var.name
 
@@ -322,7 +330,9 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
             dest_c = var.axes[c.axis]
             if c.name != dest_c.name:
                 var.log.debug("Rename %s axis of %s from '%s' to '%s'.", 
-                    c.axis, var.full_name, c.name, dest_c.name)
+                    c.axis, var.full_name, c.name, dest_c.name,
+                    tags=util.ObjectLogTag.NC_HISTORY
+                )
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
         # TODO: bounds??
@@ -332,7 +342,9 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
             if c.name in ds:
                 dest_c = var.axes[c.axis]
                 var.log.debug("Rename %s scalar coordinate of %s from '%s' to '%s'.", 
-                    c.axis, var.full_name, c.name, dest_c.name)
+                    c.axis, var.full_name, c.name, dest_c.name,
+                    tags=util.ObjectLogTag.NC_HISTORY
+                )
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
 
@@ -422,7 +434,9 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 drop=False
             )
             var.log.info("Extracted %s %s level from Z axis ('%s') of %s.", 
-                ds_z_value, ds_z.units, ds_z.name, var.full_name)
+                ds_z_value, ds_z.units, ds_z.name, var.full_name,
+                tags=util.ObjectLogTag.NC_HISTORY
+            )
             # rename translated var to reflect renaming we're going to do
             # recall POD variable name env vars are set on this attribute
             var.translation.name = var.name
@@ -504,38 +518,64 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_dataset(self, var):
         pass # return ds
 
-    def clean_output_encoding(self, var, ds):
-        """Xarray .to_netcdf raises an error if attributes set on a variable have
-        the same name as those used in its encoding, even if their values are the
-        same. Delete these attributes from the attrs dict prior to writing, after
-        checking equality of values.
-        """
-        def _clean_dict(obj):
-            name = getattr(obj, 'name', 'dataset')
-            encoding = getattr(obj, 'encoding', dict())
-            attrs = getattr(obj, 'attrs', dict())
-            attrs_to_delete = set([])
-            for k,v in encoding.items():
-                if k in attrs:
-                    if isinstance(attrs[k], str) and isinstance(v, str):
-                        compare_ = (attrs[k].lower() != v.lower())
-                    else:
-                        compare_ = (attrs[k] != v)
-                    if compare_ and k.lower() != 'source':
-                        var.log.warning("Conflict in '%s' attribute of %s: %s != %s.",
-                            k, name, v, attrs[k])
-                    attrs_to_delete.add(k)
-            for k,v in attrs.items():
-                if v == xr_parser.ATTR_NOT_FOUND:
-                    var.log.warning("Caught unset attribute '%s' of %s.", k, name)
-                    attrs_to_delete.add(k)
-            for k in attrs_to_delete:
-                del attrs[k]
-            
-        for vv in ds.variables.values():
-            _clean_dict(vv)
-        _clean_dict(ds)
+    def clean_nc_var_encoding(self, var, ds_obj):
+        """Clean up the ``attrs`` and ``encoding`` dicts of *obj* prior to 
+        writing to a netCDF file, as a workaround for the following known issues:
 
+        - Missing attributes may be set to the sentinel value ``ATTR_NOT_FOUND``
+          by :class:`xr_parser.DatasetParser`. Depending on context, this may not
+          be an error, but attributes with this value need to be deleted before
+          writing.
+        - Delete the ``_FillValue`` attribute for all independent variables 
+          (coordinates and their bounds), which is specified in the CF conventions
+          but isn't the xarray default; see 
+          `<https://github.com/pydata/xarray/issues/1598>`__.
+        - 'NaN' is not recognized as a valid ``_FillValue`` by NCL (see 
+          `<https://www.ncl.ucar.edu/Support/talk_archives/2012/1689.html>`__),
+          so unset the attribute for this case.
+        - xarray .to_netcdf() raises an error if attributes set on a variable have
+          the same name as those used in its encoding, even if their values are 
+          the same. We delete these attributes prior to writing, after checking 
+          equality of values.
+        """
+        name = getattr(ds_obj, 'name', 'dataset')
+        encoding = getattr(ds_obj, 'encoding', dict())
+        attrs = getattr(ds_obj, 'attrs', dict())
+        attrs_to_delete = set([])
+
+        # mark attrs with sentinel value for deletion
+        for k,v in attrs.items():
+            if v == xr_parser.ATTR_NOT_FOUND:
+                var.log.warning("Caught unset attribute '%s' of %s.", k, name,
+                    tags=util.ObjectLogTag.NC_HISTORY)
+                attrs_to_delete.add(k)
+        # clean up _FillValue
+        old_fillvalue = encoding.get('_FillValue', np.nan)
+        if name != var.translation.name \
+            or (self.output_to_ncl and np.isnan(old_fillvalue)):
+            encoding['_FillValue'] = None
+            attrs['_FillValue'] = None
+            attrs_to_delete.add('_FillValue')        
+        # mark attrs duplicating values in encoding for deletion
+        for k,v in encoding.items():
+            if k in attrs:
+                if isinstance(attrs[k], str) and isinstance(v, str):
+                    compare_ = (attrs[k].lower() != v.lower())
+                else:
+                    compare_ = (attrs[k] != v)
+                if compare_ and k.lower() != 'source':
+                    var.log.warning("Conflict in '%s' attribute of %s: %s != %s.",
+                        k, name, v, attrs[k], tags=util.ObjectLogTag.NC_HISTORY)
+                attrs_to_delete.add(k)
+
+        for k in attrs_to_delete:
+            if k in attrs:
+                del attrs[k]
+
+    def clean_output_attrs(self, var, ds):
+        """Call :meth:`clean_nc_var_encoding` on all sets of attributes in the
+        Dataset *ds*.
+        """
         if not getattr(var, 'is_static', True):
             t_coord = var.T
             ds_T = ds[t_coord.name]
@@ -545,35 +585,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if t_coord.has_bounds:
                 ds[t_coord.bounds_var].encoding['units'] = ds_T.encoding['units']
 
-        for k, v in ds.variables.items():
-            # First condition: unset _FillValue attribute for all independent 
-            # variables (coordinates and their bounds) as per CF convention but 
-            # contrary to xarray default; see 
-            # https://github.com/pydata/xarray/issues/1598.
-            # Second condition: 'NaN' not a valid _FillValue in NCL for any
-            # variable; see 
-            # https://www.ncl.ucar.edu/Support/talk_archives/2012/1689.html
-            old_fillvalue = v.encoding.get('_FillValue', np.nan)
-            if k != var.translation.name \
-                or (self.output_to_ncl and np.isnan(old_fillvalue)):
-                v.encoding['_FillValue'] = None
-                if '_FillValue' in v.attrs:
-                    del v.attrs['_FillValue']
+        for ds_v in ds.variables.values():
+            self.clean_nc_var_encoding(var, ds_v)
+        self.clean_nc_var_encoding(var, ds)
+        return ds
+
+    def log_history_attr(self, var, ds):
+        """Update ``history`` attribute on xarray Dataset *ds* with log records 
+        of any metadata modifications logged to *var*'s \_nc_history log handler.
+        Out of simplicity, events are written in chronological rather than 
+        reverse chronological order.
+        """
+        attrs = getattr(ds, 'attrs', dict())
+        hist = attrs.get('history', "")
+        var._nc_history.flush()
+        hist += var._nc_history.buffer_contents()
+        var._nc_history.close()
+        ds.attrs['history'] = hist
         return ds
 
     def write_dataset(self, var, ds):
-        # TODO: remove any netcdf Variables that were present in file (and ds) 
-        # but not needed for request
-        path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
-        var.log.info("Writing to %s", path_str)
+        # TODO: remove any netCDF Variables that were present in the input file 
+        # (and ds) but not needed for PODs' data request
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
-        ds = self.clean_output_encoding(var, ds)
         var.log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
         if var.is_static:
             unlimited_dims = []
         else:
             unlimited_dims = [var.T.name]
-
         ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -582,10 +621,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         ds.close()
 
-    def process(self, var):
-        """Top-level wrapper for doing all preprocessing of data files.
+    def load_ds(self, var):
+        """Top-level method to load dataset and parse metadata; spun out so that
+        child classes can modify it.
         """
-        # load dataset
         try:
             ds = self.read_dataset(var)
         except Exception as exc:
@@ -596,7 +635,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         except Exception as exc:
             raise util.exc_to_event(exc, (f"Error in parsing file metadata for "
                 f"{var.full_name}."), util.DataPreprocessEvent)
-        # execute functions
+        return ds
+
+    def process_ds(self, var, ds):
+        """Top-level method to apply selected functions to dataset; spun out so 
+        that child classes can modify it.
+        """
         for f in self.functions:
             try:
                 var.log.debug("Preprocess %s: call %s", var.full_name, 
@@ -604,15 +648,36 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 ds = f.process(var, ds)
             except Exception as exc:
                 raise util.exc_to_event(exc, (f"Preprocessing on {var.full_name} "
-                    f"failed at {f.__class__.__name__}."), util.DataPreprocessEvent)
-        # write dataset
+                    f"failed at {f.__class__.__name__}."), 
+                    util.DataPreprocessEvent
+                )
+        return ds
+
+    def write_ds(self, var, ds):
+        """Top-level method to write out processed dataset; spun out so 
+        that child classes can modify it.
+        """
+        path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
+        var.log.info("Writing to %s", path_str)
+        try:
+            ds = self.clean_output_attrs(var, ds)
+            ds = self.log_history_attr(var, ds)
+        except Exception as exc:
+            raise util.exc_to_event(exc, (f"Error in setting attributes for "
+                f"writing data for {var.full_name}."), util.DataPreprocessEvent)
         try:
             self.write_dataset(var, ds)
         except Exception as exc:
-            raise util.exc_to_event(exc, (f"Error in read/parse data for "
+            raise util.exc_to_event(exc, (f"Error in writing data for "
                 f"{var.full_name}."), util.DataPreprocessEvent)
-
         del ds # shouldn't be necessary
+
+    def process(self, var):
+        """Top-level wrapper for doing all preprocessing of data files.
+        """
+        ds = self.load_ds(var)
+        ds = self.process_ds(var, ds)
+        self.write_ds(var, ds)
         var.log.debug("Successful preprocessor exit on %s.", var)
 
 

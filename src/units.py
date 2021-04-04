@@ -107,11 +107,14 @@ def convert_scalar_coord(coord, dest_units, log=_log):
         dest_value = coord.value * conversion_factor(coord.units, dest_units)
         log.debug("Converted %s %s %s slice of '%s' to %s %s.",
             coord.value, coord.units, coord.axis, coord.name, 
-            dest_value, dest_units)
+            dest_value, dest_units, 
+            tags=util.ObjectLogTag.NC_HISTORY
+        )
     else:
         # identical units
         log.debug("Copied value of %s slice (=%s %s) of '%s' (identical units).",
-             coord.axis, coord.value, coord.units, coord.name)
+            coord.axis, coord.value, coord.units, coord.name
+        )
         dest_value = coord.value
     return dest_value
 
@@ -142,7 +145,9 @@ def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
         return ds
 
     log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
-        da.name, std_name, src_unit, dest_unit)
+        da.name, std_name, src_unit, dest_unit, 
+        tags=util.ObjectLogTag.NC_HISTORY
+    )
     da_attrs = da.attrs.copy()
     fac = conversion_factor(src_unit, dest_unit)
     ds = ds.assign({da_name: fac * ds[da_name]})

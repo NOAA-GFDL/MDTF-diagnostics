@@ -202,7 +202,7 @@ class DataSourceAttributesBase():
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
 
-class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin, 
+class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin, 
     AbstractDataSource, metaclass=util.MDTFABCMeta):
     """Base class for handling the data needs of PODs. Executes query for 
     requested model data against the remote data source, fetches the required 
@@ -237,7 +237,7 @@ class DataSourceBase(core.MDTFObjectBase, util.MDTFCaseLoggerMixin,
         util.check_dir(self, 'MODEL_WK_DIR', create=True)
         util.check_dir(self, 'MODEL_DATA_DIR', create=True)
 
-        # set up log (MDTFCaseLoggerMixin)
+        # set up log (CaseLoggerMixin)
         self.init_log(log_dir = self.MODEL_WK_DIR)
 
         self.strict = config.get('strict', False)

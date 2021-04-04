@@ -39,7 +39,7 @@ are expected, but not present in the data.
 class PlaceholderScalarCoordinate():
     """Dummy object used to describe scalar coordinates referred to by name only
     in the 'coordinates' attribute of a variable or dataset. We do this so that
-    the attributes match those of coordinates represented by real netcdf Variables.
+    the attributes match those of coordinates represented by real netCDF Variables.
     """
     name: str
     axis: str
@@ -336,8 +336,8 @@ class DatasetParser():
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
-    @staticmethod
-    def guess_attr(attr_desc, attr_name, options, default=None, comparison_func=None):
+    def guess_attr(self, attr_desc, attr_name, options, default=None, 
+        comparison_func=None):
         """Select and return element of *options* equal to *attr_name*. 
         If none are equal, try a case-insensititve string match.
 
@@ -376,7 +376,8 @@ class DatasetParser():
         if sum(tup[0] for tup in munged_opts) == 1:
             guessed_attr = [tup[1] for tup in munged_opts if tup[0]][0]
             self.log.debug("Correcting '%s' to '%s' as the intended value for '%s'.", 
-                attr_name, guessed_attr, attr_desc)
+                attr_name, guessed_attr, attr_desc,
+                tags=util.ObjectLogTag.NC_HISTORY)
             return guessed_attr
         # Couldn't find a match
         if default is not None:
@@ -501,7 +502,7 @@ class DatasetParser():
 
     def restore_attrs_backup(self, ds):
         """xarray.decode_cf() and other functions appear to un-set some of the 
-        attributes defined in the netcdf file. Restore them from the backups 
+        attributes defined in the netCDF file. Restore them from the backups 
         made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
         """
         def _restore_one(name, attrs_d):
@@ -837,11 +838,11 @@ class DatasetParser():
             self.log.error('Scalar coordinates on non-vertical axes not supported.')
         if len(our_axes) != 0 and len(ds_axes) == 0:
             # warning but not necessarily an error if coordinate dims agree
-            self.log.debug(("Dataset did not provide any scalar coordinate information, "
-                "expected %s."), list(zip(our_names, our_axes)))
+            self.log.debug(("Dataset did not provide any scalar coordinate "
+                "information, expected %s."), list(zip(our_names, our_axes)))
         elif our_axes != ds_axes:
-            self.log.warning(("Conflict in scalar coordinates for %s: expected %s; ",
-                "dataset has %s."), 
+            self.log.warning(("Conflict in scalar coordinates for %s: expected ",
+                "%s; dataset has %s."), 
                 our_var.name, 
                 list(zip(our_names, our_axes)), list(zip(ds_names, ds_axes))
             )
@@ -861,8 +862,8 @@ class DatasetParser():
                 # scalar coord has presumably been read from DataSet attribute.
                 # At any rate, we only have a PlaceholderScalarCoordinate object, 
                 # which only gives us the name. Assume everything else OK.
-                self.log.warning(("Dataset only records scalar coordinate '%s' as a "
-                    "name attribute; assuming value and units are correct."),
+                self.log.warning(("Dataset only records scalar coordinate '%s' as "
+                    "a name attribute; assuming value and units are correct."),
                     ds_coord_name)
                 self.reconcile_name(coord, ds_coord_name, update_name=True)
 
@@ -906,7 +907,8 @@ class DatasetParser():
         cftime_cal = getattr(t_coord.values[0], 'calendar', None)
         # look in other places if that failed:
         if not cftime_cal:
-            self.log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
+            self.log.warning("cftime calendar info parse failed on '%s'.", 
+                t_coord.name)
             cftime_cal = _get_calendar(t_coord.encoding)
         if not cftime_cal:
             cftime_cal = _get_calendar(t_coord.attrs)
@@ -928,7 +930,7 @@ class DatasetParser():
                 self.log.warning(f"'standard_name' attribute not found on {ds_var.name}.")
             else:
                 # normal operation
-                raise TypeError(("Netcdf metadata attribute 'standard_name' not "
+                raise TypeError(("NetCDF metadata attribute 'standard_name' not "
                     f"found on variable {ds_var.name}. Please provide this attribute "
                     "in input model data or run with --disable_CF_name_checks."))
 
@@ -941,7 +943,7 @@ class DatasetParser():
                 self.log.warning(f"'units' attribute not found on {ds_var.name}.")
             else:
                 # normal operation
-                raise TypeError(("Netcdf metadata attribute 'units' not found on "
+                raise TypeError(("NetCDF metadata attribute 'units' not found on "
                     f"variable {ds_var.name}. Please provide this attribute in "
                     "input model data or run with --disable_unit_checks."))
 

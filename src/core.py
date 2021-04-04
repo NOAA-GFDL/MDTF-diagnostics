@@ -54,13 +54,8 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         if self._id is None:
             # assign unique ID # so that we don't need to rely on names being unique
             self._id = util.MDTF_ID() 
-
         # init object-level logger
-        old_log_class = logging.getLoggerClass()
-        logging.setLoggerClass(util.MDTFObjectLogger)
-        log = logging.getLogger(self._log_name)
-        logging.setLoggerClass(old_log_class)
-        self.log = log
+        self.log = util.MDTFObjectLogger.get_logger(self._log_name)
 
     @property
     def _log_name(self):

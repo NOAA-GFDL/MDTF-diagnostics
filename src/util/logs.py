@@ -292,6 +292,12 @@ class TagMatchFilter(logging.Filter):
 
 # standardize 
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
+ObjectLogTag = basic.MDTFEnum("ObjectLogTag", "NC_HISTORY BANNER", 
+    module=__name__)
+ObjectLogTag.__doc__ = """Standardized values that the package-defined *tags* 
+attribute on :py:class:`~logging.LogRecord` objects can take, and that 
+:class:`TagMatchFilter` can listen for.
+"""
 
 class MDTFObjectLogger(logging.Logger):
     """This class wraps functionality for use by :class:`MDTFObjectLoggerMixin`:
@@ -311,8 +317,14 @@ class MDTFObjectLogger(logging.Logger):
         # add "tags" attribute to all emitted LogRecords
         if 'extra' not in kw:
             kw['extra'] = dict()
-        elif OBJ_LOG_TAG_ATTR_NAME not in kw['extra']:
-            kw['extra'][OBJ_LOG_TAG_ATTR_NAME] = []
+        kw['extra'][OBJ_LOG_TAG_ATTR_NAME] = basic.to_iter(
+            kw['extra'].get(OBJ_LOG_TAG_ATTR_NAME, None), set
+        )
+        if OBJ_LOG_TAG_ATTR_NAME in kw:
+            kw['extra'][OBJ_LOG_TAG_ATTR_NAME].update(
+                basic.to_iter(kw[OBJ_LOG_TAG_ATTR_NAME])
+            )
+            del kw[OBJ_LOG_TAG_ATTR_NAME]
         super(MDTFObjectLogger, self).log(level, msg, *args, **kw)
 
     # wrap convenience methods
@@ -355,7 +367,24 @@ class MDTFObjectLogger(logging.Logger):
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 
-class MDTFObjectLoggerMixin():
+    @classmethod
+    def get_logger(cls, log_name):
+        # logger objects have global scope (calling getLogger with the same name
+        # returns the same object, like a Singleton), so need to toggle global 
+        # state
+        old_log_class = logging.getLoggerClass()
+        logging.setLoggerClass(cls)
+        log = logging.getLogger(log_name)
+        logging.setLoggerClass(old_log_class)
+        # default settings
+        log.propagate = True
+        log.setLevel(logging.NOTSET)
+        return log
+
+class MDTFObjectLoggerMixinBase():
+    pass
+
+class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
     """Class to implement per-object logging via inheritance. Used for 
     :class:`~diagnostic.VarlistEntry` and :class:`~diagnostic.Diagnostic`. 
     Based on `<https://stackoverflow.com/q/57813096>`__.
@@ -376,11 +405,6 @@ class MDTFObjectLoggerMixin():
             fmt = '%(asctime)s in %(funcName)s: %(message)s'
 
         assert hasattr(self, 'log')
-        self.log.propagate = True
-        self.log.setLevel(logging.DEBUG)
-        if self.log.hasHandlers():
-            for handler in self.log.handlers:
-                self.log.removeHandler(handler)
         handler = StringIOHandler()
         # don't record events from children in StringIO buffer
         handler.addFilter(NameMatchFilter(self._log_name)) 
@@ -420,7 +444,33 @@ class MDTFObjectLoggerMixin():
                     str_ += f"<{child} log placeholder>\n"
             return _hanging_indent(str_, 0, 4)
 
-class MDTFCaseLoggerMixin():
+class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
+    def init_log(self, fmt=None):
+        super(VarlistEntryLoggerMixin, self).init_log(fmt=fmt)
+        # add extra handler for additions to netCDF history attribute
+        self._nc_history = StringIOHandler()
+        self._nc_history.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY)) 
+        formatter = logging.Formatter(
+            fmt='%(asctime)s: MDTF package: %(message)s', 
+            datefmt='%a %b %d %H:%M:%S %Y' # mimic date format used by NCO, CDO
+        )
+        self._nc_history.setFormatter(formatter)
+        self.log.addHandler(self._nc_history)
+
+class PODLoggerMixin(MDTFObjectLoggerMixin):
+    def init_log(self, fmt=None):
+        super(PODLoggerMixin, self).init_log(fmt=fmt)
+        # add extra handler for warning banner
+        self._banner = StringIOHandler()
+        self._banner.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
+        formatter = logging.Formatter(
+            fmt=fmt, 
+            datefmt='%H:%M:%S'
+        )
+        self._banner.setFormatter(formatter)
+        self.log.addHandler(self._banner)
+
+class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
     def init_log(self, log_dir, fmt=None):
         # Mixin class, so no __init__ for simplicity
         if fmt is None:
@@ -438,10 +488,22 @@ class MDTFCaseLoggerMixin():
             mode="w", encoding="utf-8"
         )
         formatter = HangingIndentFormatter(
-            fmt=fmt, datefmt='%H:%M:%S', header="", footer="\n"
+            fmt=fmt, datefmt='%H:%M:%S', 
+            header="", footer="\n"
         )
         handler.setFormatter(formatter)
         self.log.addHandler(handler)
+
+        # add extra handler for warning banner
+        self._banner = StringIOHandler()
+        self._banner.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
+        formatter = logging.Formatter(
+            fmt=fmt, 
+            datefmt='%H:%M:%S'
+        )
+        self._banner.setFormatter(formatter)
+        self.log.addHandler(self._banner)
+
         # transfer stuff from root logger cache
         transfer_log_cache(self.log, close=False)
 

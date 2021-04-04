@@ -127,7 +127,7 @@ VarlistEntryStage.__doc__ = """
 
 @util.mdtf_dataclass
 class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable, 
-    _VarlistGlobalSettings, util.MDTFObjectLoggerMixin):
+    _VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
     """Class to describe data for a single variable requested by a POD. 
     Corresponds to list entries in the "varlist" section of the POD's 
     settings.jsonc file.
@@ -177,7 +177,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     def __post_init__(self, coords=None):
         # inherited from two dataclasses, so need to call post_init on each directly
         core.MDTFObjectBase.__post_init__(self)
-        # set up log (MDTFObjectLoggerMixin)
+        # set up log (VarlistEntryLoggerMixin)
         self.init_log()
         data_model.DMVariable.__post_init__(self, coords)
 
@@ -495,7 +495,7 @@ class Varlist(data_model.DMDataSet):
 # ------------------------------------------------------------
 
 @util.mdtf_dataclass
-class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
+class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes 
     are read from entries in the settings section of the POD's settings.jsonc 
     file upon initialization.
@@ -531,7 +531,7 @@ class Diagnostic(core.MDTFObjectBase, util.MDTFObjectLoggerMixin):
 
     def __post_init__(self):
         core.MDTFObjectBase.__post_init__(self)
-        # set up log (MDTFObjectLoggerMixin)
+        # set up log (PODLoggerMixin)
         self.init_log()
 
         for k,v in self.runtime_requirements.items():

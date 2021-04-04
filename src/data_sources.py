@@ -141,30 +141,38 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
                 new_metadata.update(entry.metadata)
             self.id_lut[var._id] = new_metadata
 
-    def process(self, var):
-        """Before processing *var*, update attrs on the translation of 
-        :class:`~diagnostic.VarlistEntry` *var* with the new metadata values 
-        that were specified in :class:`ExplicitFileDataSource`\'s config file.
+    def process_ds(self, var, ds):
+        """After loading and parsing the metadata on dataset *ds* but before
+        applying the preprocessing functions, update attrs on *ds* with the new 
+        metadata values that were specified in :class:`ExplicitFileDataSource`\'s 
+        config file.
         """
-        tv = var.translation # abbreviate
-        for k, v in self.id_lut[tv._id].items():
-            if k in tv.attrs:
-                # type coercion
-                attr_type = type(tv.attrs[k])
-                if type(v) != attr_type:
-                    v = attr_type(v)
-                
-                if v != var.attrs[k]:
-                    _log.info(("Changing attr '%s' of %s from '%s' to user-"
-                        "requested value '%s'."), k, var.full_name, tv.attrs[k], v)
+        tv_name = var.translation.name # abbreviate
+        assert tv_name in ds # should have been validated by xr_parser
+        ds_attrs = ds[tv_name].attrs # abbreviate
+        for k, v in self.id_lut[var._id].items():
+            v = str(v) # xarray attrs are all strings
+            if k in ds_attrs:
+                if v != ds_attrs[k]:
+                    var.log.info(("Changing attr '%s' of %s from '%s' to user-"
+                        "requested value '%s'."), 
+                        k, var.full_name, ds_attrs[k], v,
+                        tags=[util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER]
+                    )
                 else:
-                    _log.debug(("Attr '%s' of %s already has user-requested "
-                        "value '%s'; not changing."), k, var.full_name, v)
+                    var.log.debug(("Attr '%s' of %s already has user-requested "
+                        "value '%s'; not changing."), 
+                        k, var.full_name, v,
+                        tags=util.ObjectLogTag.BANNER
+                    )
             else:
-                _log.debug(("Setting undefined attr '%s' of %s to user-requested "
-                        "value '%s'."), k, var.full_name, v)
-            tv.attrs[k] = v
-        super(MetadataRewritePreprocessor, self).process(var)
+                var.log.debug(("Setting undefined attr '%s' of %s to user-"
+                    "requested value '%s'."), 
+                    k, var.full_name, v,
+                    tags=[util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER]
+                )
+            ds_attrs[k] = v
+        return super(MetadataRewritePreprocessor, self).process_ds(var, ds)
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups

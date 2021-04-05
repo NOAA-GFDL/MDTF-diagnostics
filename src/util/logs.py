@@ -300,6 +300,7 @@ class MDTFObjectLogger(logging.Logger):
     def __init__(self, name):
         super(MDTFObjectLogger, self).__init__(name)
         self._exceptions = []
+        self._tracebacks = []
 
     def log(self, level, msg, *args, **kw):
         # add "tags" attribute to all emitted LogRecords
@@ -349,8 +350,9 @@ class MDTFObjectLogger(logging.Logger):
 
     def store_exception(self, exc):
         # add Exception object to internal list
-        wrapped_exc = traceback.TracebackException.from_exception(exc)
-        self._exceptions.append(wrapped_exc)
+        self._exceptions.append(exc)
+        tb_exc = traceback.TracebackException(*(sys.exc_info()))
+        self._tracebacks.append(tb_exc)
 
     @classmethod
     def get_logger(cls, log_name):
@@ -414,10 +416,10 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
             str_ = f"Log for {self.full_name}:\n"
         # list exceptions before anything else:
         if self.log.has_exceptions:
-            strs_ = [''.join(exc.format()) for exc in self.log._exceptions]
-            strs_ = [f"*** caught exception (#{i+1}):\n{exc}" \
-                for i, exc in enumerate(strs_)]
-            str_ += "".join(strs_) + '\n'
+            exc_strs = [''.join(exc.format()) for exc in self.log._tracebacks]
+            exc_strs = [f"*** caught exception (#{i+1}):\n{exc}" \
+                for i, exc in enumerate(exc_strs)]
+            str_ += "".join(exc_strs) + '\n'
         # then log contents:
         str_ += self._log_handler.buffer_contents().rstrip()
         # then contents of children:

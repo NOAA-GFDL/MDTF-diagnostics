@@ -545,7 +545,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # mark attrs with sentinel value for deletion
         for k,v in attrs.items():
             if v == xr_parser.ATTR_NOT_FOUND:
-                var.log.warning("Caught unset attribute '%s' of '%s'.", k, name)
+                var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
                 attrs_to_delete.add(k)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)

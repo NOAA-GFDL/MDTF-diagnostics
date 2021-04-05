@@ -298,15 +298,14 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         """
         def _format(v):
             str_ = str(v)[1:-1]
-            status_str = f"{v.status.name.lower()}, {v.stage.name.lower()}"
-            fail_str = (f"(exc={str(v.last_exception)})" \
-                if v.failed else 'ok')
+            status_str = f"{v.status.name.lower()}"
+            status_str += (f" ({type(v.last_exception).__name__})" if v.failed else '')
             if getattr(v, 'translation', None) is not None:
                 trans_str = str(v.translation)
                 trans_str = trans_str.replace("<", "'").replace(">", "'")
             else:
                 trans_str = "(not translated)"
-            return (f"<{str_}; {status_str}, {fail_str}, {v.requirement})\n"
+            return (f"<{str_}; {status_str}, {v.stage.name.lower()}, {v.requirement})\n"
                 f"\tName in data source: {trans_str}")
 
         s = _format(self)
@@ -591,9 +590,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         :class:`PodDataError`.
         """
         if self.failed:
-            # should never get here
-            raise ValueError('Active var on failed POD')
-        # self.log.debug("Updating active vars for POD '%s'", self.name)
+            return
 
         self.log.info("Request for %s failed; looking for alternate data.", 
             failed_v)
@@ -619,9 +616,9 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             except Exception as exc:
                 self.deactivate(exc)
 
-    def close_log_file(self, log_=True):
+    def close_log_file(self, log=True):
         if self.log_file is not None:
-            if log_:
+            if log:
                 self.log_file.write(self.format_log(children=False))
             self.log_file.flush() # redundant?
             self.log_file.close()

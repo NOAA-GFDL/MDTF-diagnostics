@@ -515,6 +515,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.pods:
             util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
             p.tear_down()
-            p.close_log_file(log_=True)
+            p.close_log_file(log=True)
         self.tear_down()
         exit(1)

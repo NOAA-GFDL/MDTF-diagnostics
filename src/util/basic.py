@@ -368,7 +368,7 @@ class MDTF_ID():
             self._uuid = id_
         
     def __str__(self):
-        """Print compact string representation (5 alphanumeric characters) instead
+        """Print compact string representation (4 alphanumeric characters) instead
         of the entire uuid, to get more readable logs.
         """
         chars = string.digits + string.ascii_letters
@@ -378,7 +378,7 @@ class MDTF_ID():
         while num:
             str_ += chars[num % base]
             num //= base        
-        return str_[:-5:-1] # last 4 chars, reversed so most-significant is 1st
+        return str_[-2:-6:-1] # reversed so most-significant is 1st
     
     def __repr__(self):
         return f"{self.__class__.__name__}({self._uuid})"

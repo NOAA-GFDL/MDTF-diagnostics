@@ -129,8 +129,8 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # always log exceptions, even if we've already failed
         self.log.store_exception(exc)
 
-        if not self.failed:
-            # only need to log and update updates on status change:
+        if not (self.failed or self.status == ObjectStatus.SUCCEEDED):
+            # only need to log and update on status change for still-active objs
             if level is None:
                 level = self._deactivation_log_level # default level for child class
             self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
@@ -160,8 +160,10 @@ class ConfigManager(util.Singleton, util.NameSpace):
             self.update(cli_obj.config)
             # copy serializable version of parsed settings, in order to write 
             # backup config file
-            self.backup_config = copy.deepcopy(cli_obj.config) 
-            self.backup_config['case_list'] = copy.deepcopy(list(case_d.keys()))
+            d = copy.deepcopy(cli_obj.config) 
+            d = {k:v for k,v in d.items() if not k.endswith('_is_default_')}
+            self.backup_config = d
+            self.backup_config['case_list'] = copy.deepcopy(case_d)
         if global_env_vars is None:
             self.global_env_vars = dict()
         else:
@@ -752,9 +754,9 @@ class MDTFFramework(MDTFObjectBase):
             )
             self.configure(cli_obj, pod_info_tuple, log_config)
         except Exception as exc:
-            wrapped_exc = traceback.TracebackException.from_exception(exc)
+            tb_exc = traceback.TracebackException(*(sys.exc_info()))
             _log.critical("Framework caught exception %r", exc)
-            print(''.join(wrapped_exc.format()))
+            print(''.join(tb_exc.format()))
             exit(1)
 
     @property

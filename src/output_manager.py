@@ -253,21 +253,22 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         or execution.
         """
         template_d = html_templating_dict(pod)
-        # add a warning banner if needed
-        banner_str = pod._banner_log.buffer_contents()
-        if banner_str:
-            src = self.html_src_file('warning_snippet.html')
-            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
-            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
         # put in the link to results
         if pod.failed:
             # report error
             src = self.html_src_file('pod_error_snippet.html')
-            template_d['error_text'] = pod.format_log(children=True)
+            # template_d['error_text'] = pod.format_log(children=True)
         else:
             # normal exit
             src = self.html_src_file('pod_result_snippet.html')
         util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
+        # add a warning banner if needed
+        banner_str = pod._banner_log.buffer_contents()
+        if banner_str:
+            banner_str = banner_str.replace('\n', '<br>\n')
+            src = self.html_src_file('warning_snippet.html')
+            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
+            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
 
     def verify_pod_links(self, pod):
         """Check for missing files linked to from POD's html page.
@@ -282,16 +283,14 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         verifier = verify_links.LinkVerifier(
             self.POD_HTML(pod),  # root HTML file to start search at
             self.WK_DIR,         # root directory to resolve relative paths
-            verbose=False
+            verbose=False,
+            log=pod.log
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            pod.log.error('%s has %d missing output files:\n%s', 
-                pod.full_name, len(missing_out),
-                '    \n'.join(missing_out),
-                tags=util.ObjectLogTag.BANNER
+            pod.deactivate(
+                util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
             )
-            raise util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
         else:
             pod.log.info('\tNo files are missing.')
 
@@ -404,20 +403,20 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             try:
                 pod_output = self._PodOutputManagerClass(pod, self)
                 pod_output.make_output()
+                if not pod.failed:
+                    self.verify_pod_links(pod)
             except Exception as exc:
                 pod.deactivate(exc)
                 continue
         for pod in self.case.iter_children():
             try:
                 self.append_result_link(pod)
-                if not pod.failed:
-                    self.verify_pod_links(pod)
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
                 pod.deactivate(exc)
                 continue  
-            pod.close_log_file(log_=True)
+            pod.close_log_file(log=True)
             if not pod.failed:
                 pod.status = core.ObjectStatus.SUCCEEDED
 

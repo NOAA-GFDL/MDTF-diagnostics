@@ -356,6 +356,11 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         pod.preprocessor = self._PreprocessorClass(self, pod)
         pod.preprocessor.edit_request(self, pod)
         
+        for v in pod.iter_children():
+            # deactivate failed variables, now that alternates are fully
+            # specified
+            if v.last_exception is not None and not v.failed:
+                v.deactivate(v.last_exception, level=logging.WARNING)
         if pod.status == core.ObjectStatus.NOTSET and \
             any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
             pod.status = core.ObjectStatus.ACTIVE
@@ -382,10 +387,19 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
+        except KeyError as exc:
+            # can happen in normal operation (eg. precip flux vs. rate)
+            chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
+                f"variable name translation: {str(exc)}."))
+            # store but don't deactivate, because preprocessor.edit_request()
+            # may supply alternate variables
+            v.log.store_exception(chained_exc)
         except Exception as exc:
             chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.", 
                 util.PodConfigError)
-            v.deactivate(chained_exc, level=logging.WARNING)
+            # store but don't deactivate, because preprocessor.edit_request()
+            # may supply alternate variables
+            v.log.store_exception(chained_exc)
         v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
@@ -525,7 +539,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                         try:
                             if not self.is_fetch_necessary(d_key):
                                 continue
-                            v.log.debug("Fetching %s:", d_key)
+                            v.log.debug("Fetching %s.", d_key)
                             self.fetch_dataset(v, d_key)
                         except Exception as exc:
                             update = True
@@ -572,7 +586,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 pod.preprocessor.setup(self, pod)
             for pv in vars_to_process:
                 try:
-                    pv.var.log.info("Preprocessing %s:", pv.var)
+                    pv.var.log.info("Preprocessing %s.", pv.var)
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
@@ -603,19 +617,21 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 util.exc_descriptor(exc), exc)
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
-        for v in self.iter_vars_only():
-            if v.status == core.ObjectStatus.ACTIVE:
-                v.log.debug('Data request for %s completed succesfully.', v.full_name)
-                v.status = core.ObjectStatus.SUCCEEDED
-            elif v.failed:
-                v.log.debug('Data request for %s failed.', v.full_name)
+        for p in self.iter_children():
+            for v in p.iter_children():
+                if v.status == core.ObjectStatus.ACTIVE:
+                    v.log.debug('Data request for %s completed succesfully.', 
+                        v.full_name)
+                    v.status = core.ObjectStatus.SUCCEEDED
+                elif v.failed:
+                    v.log.debug('Data request for %s failed.', v.full_name)
+                else:
+                    v.log.debug('Data request for %s not used.', v.full_name)
+            if p.failed:
+                p.log.debug('Data request for %s failed.', p.full_name)
             else:
-                v.log.debug('Data request for %s not used.', v.full_name)
-        if self.failed:
-            self.log.debug('Data request for %s completed succesfully.', 
-                self.full_name)
-        else:
-            self.log.debug('Data request for %s failed.', self.full_name)
+                p.log.debug('Data request for %s completed succesfully.', 
+                    p.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
         """Called if framework is terminated abnormally. Not called during

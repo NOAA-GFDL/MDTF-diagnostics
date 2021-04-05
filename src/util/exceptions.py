@@ -285,6 +285,11 @@ class PodConfigError(PodExceptionBase):
     """
     _error_str = "Couldn't parse the settings.jsonc file"
 
+class PodConfigEvent(MDTFEvent):
+    """Exception raised during non-fatal events in resolving POD configuration.
+    """
+    pass
+
 class PodDataError(PodExceptionBase):
     """Exception raised if POD doesn't have required data to run. 
     """

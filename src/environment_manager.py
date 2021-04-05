@@ -292,11 +292,12 @@ class SubprocessRuntimePODWrapper(object):
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'
         )
-        log_str = f"### Starting {self.pod.name}\n"
+        log_str = f"### Starting {self.pod.full_name}"
         self.log_handle.write(log_str)
         self.pod.log.info(log_str)
         self.pod.pre_run_setup()
-        self.pod.log.info("\t%s will run in conda env '%s'", self.pod.name, self.env)
+        self.pod.log.info("%s will run using '%s' from conda env '%s'.", 
+            self.pod.full_name, self.pod.program, self.env)
         #self.log_handle.write("\n".join(
         #    ["Found files: "] + pod.found_files + [" "]))
         self.setup_env_vars()
@@ -317,7 +318,7 @@ class SubprocessRuntimePODWrapper(object):
         self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list))+'\n\n')
 
     def setup_exception_handler(self, exc):
-        chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.name}.",
+        chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",
             util.PodRuntimeError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
@@ -332,9 +333,8 @@ class SubprocessRuntimePODWrapper(object):
     def run_msg(self):
         """Log message when execution starts.
         """
-        str_ = util.abbreviate_path(self.pod.driver, 
-            self.pod.POD_CODE_DIR, '$POD_CODE_DIR')
-        return f"Calling python {str_}"
+        return (f"Running {os.path.basename(self.pod.driver)} for "
+            f"{self.pod.full_name}.")
 
     def validate_commands(self):
         """Produces the shell command(s) to validate the POD's runtime environment 
@@ -363,7 +363,7 @@ class SubprocessRuntimePODWrapper(object):
         return [''.join(command)]
 
     def runtime_exception_handler(self, exc):
-        chained_exc = util.chain_exc(exc, f"running {self.pod.name}.", 
+        chained_exc = util.chain_exc(exc, f"running {self.pod.full_name}.", 
             util.PodExecutionError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
@@ -385,12 +385,12 @@ class SubprocessRuntimePODWrapper(object):
         if self.pod.status != core.ObjectStatus.INACTIVE:
             if retcode == 0:
                 self.pod.log.info('%s exited successfully (code=%d).', 
-                    self.pod.name, retcode) 
+                    self.pod.full_name, retcode) 
             elif retcode is None or self.pod.failed:
                 self.pod.log.info('%s was terminated or exited abnormally.', 
-                    self.pod.name) 
+                    self.pod.full_name) 
             else:
-                exc = util.PodExecutionError((f"{self.pod.name} exited abnormally "
+                exc = util.PodExecutionError((f"{self.pod.full_name} exited abnormally "
                     f"(code={retcode})."))
                 self.pod.deactivate(exc)
         if not self.pod.failed:
@@ -471,14 +471,14 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
-            p.pod.log.info('%s: run %s', self.__class__.__name__, p.pod.name)
+            p.pod.log.info('%s: run %s', self.__class__.__name__, p.pod.full_name)
             try:
                 p.pre_run_setup()
             except Exception as exc:
                 p.setup_exception_handler(exc)
                 continue
             try:
-                p.log_handle.write(f"### Running {p.pod.name}\n\n")
+                p.log_handle.write(f"### Running {p.pod.full_name}\n\n")
                 p.log_handle.flush()
                 p.process = self.spawn_subprocess(p, env_vars_base)
             except Exception as exc:

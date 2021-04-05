@@ -120,7 +120,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # if all children have failed, deactivate self
         if not self.failed and \
             next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
-            self.deactivate(util.ChildFailureEvent(exc=exc, obj=self), level=None)
+            self.deactivate(util.ChildFailureEvent(self), level=None)
 
     # level at which to log deactivation events
     _deactivation_log_level = logging.ERROR
@@ -549,7 +549,8 @@ class Fieldlist():
         
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = units.convert_scalar_coord(coord, new_coord.units, log=log)
+            new_coord.value = units.convert_scalar_coord(coord, new_coord.units, 
+                log=log)
         else:
             new_coord = dc.replace(coord, 
                 **(util.filter_dataclass(new_coord, coord)))
@@ -763,7 +764,7 @@ class MDTFFramework(MDTFObjectBase):
 
     @property
     def full_name(self):
-        return f"<{self.name}>"
+        return self.name
         
     def configure(self, cli_obj, pod_info_tuple, log_config):
         """Wrapper for all configuration done based on CLI arguments.
@@ -1034,22 +1035,22 @@ def print_summary(fmwk):
     failed = any(len(tup[0]) > 0 for tup in d.values())
     _log.info('\n' + (80 * '-'))
     if failed:
-        _log.info(f"Exiting with errors from {__file__}")
+        _log.info(f"Exiting with errors.")
         for case_name, tup in d.items():
             _log.info(f"Summary for {case_name}:")
             if tup[0][0] == 'dummy sentinel string':
                 _log.info('\tAn error occurred in setup. No PODs were run.')
             else:
                 if tup[1]:
-                    _log.info((f"\tThe following PODs exited cleanly: "
+                    _log.info((f"\tThe following PODs exited normally: "
                         f"{', '.join(tup[1])}"))
                 if tup[0]:
                     _log.info((f"\tThe following PODs raised errors: "
                         f"{', '.join(tup[0])}"))
             _log.info(f"\tOutput written to {tup[2]}")
     else:
-        _log.info(f"Exiting normally from {__file__}")
+        _log.info(f"Exiting normally.")
         for case_name, tup in d.items():
             _log.info(f"Summary for {case_name}:")
-            _log.info(f"\tAll PODs exited cleanly.")
+            _log.info(f"\tAll PODs exited normally.")
             _log.info(f"\tOutput written to {tup[2]}")

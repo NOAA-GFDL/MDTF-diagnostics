@@ -166,13 +166,13 @@ class HangingIndentFormatter(logging.Formatter):
             footer (str): Optional constant string to append to each log entry.
         """
         super(HangingIndentFormatter, self).__init__(fmt=fmt, datefmt=datefmt, style=style)
-        self.indent = tabsize
+        self.indent = 4
         self.stack_indent = self.indent
         self.header = str(header)
         self.footer = str(footer)
 
     def format(self, record):
-        """Format the specified :py:class:`logging.LogRecord` as text, adding
+        """Format the specified :py:class:`logging.LogReco rd` as text, adding
         indentation and header/footer.
 
         Args:
@@ -350,7 +350,6 @@ class MDTFObjectLogger(logging.Logger):
             if issubclass(exc_type, exceptions.MDTFEvent):
                 # "exception" isn't an exception, just an event, so log with 
                 # severity info
-                print('XXXX-4a', msg)
                 self.log(logging.INFO, msg, *args, exc_info=False, **kw)
                 return
         self.log(logging.ERROR, msg, *args, exc_info=exc_info, **kw)
@@ -671,7 +670,7 @@ def initial_log_config():
             "level": {"format": "%(levelname)s: %(message)s"},
             "debug": {
                 "()": HangingIndentFormatter,
-                "format": ("%(levelname)s: %(funcName)s (%(filename)s line "
+                "format": ("%(levelname)s in %(funcName)s() (%(filename)s line "
                     "%(lineno)d):\n%(message)s"),
                 "tabsize": 4,
                 "footer": "\n"

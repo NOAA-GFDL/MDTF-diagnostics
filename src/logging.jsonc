@@ -65,7 +65,7 @@
     "level": {"format": "%(levelname)s: %(message)s"},
     "debug": {
       "()": "src.util.logs.HangingIndentFormatter",
-      "format": "%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line %(lineno)d):\n%(message)s",
+      "format": "%(asctime)s %(levelname)s in %(funcName)s() (%(filename)s line %(lineno)d):\n%(message)s",
       "datefmt": "%H:%M:%S",
       "style": "%",
       "tabsize": 4,

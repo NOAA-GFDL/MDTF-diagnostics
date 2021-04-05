@@ -602,7 +602,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         attrs = getattr(ds, 'attrs', dict())
         hist = attrs.get('history', "")
         var._nc_history.flush()
-        hist += var._nc_history.buffer_contents()
+        hist += '\n' + var._nc_history.buffer_contents()
         var._nc_history.close()
         ds.attrs['history'] = hist
         return ds

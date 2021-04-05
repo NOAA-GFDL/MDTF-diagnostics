@@ -459,7 +459,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.pre_query_hook(vars_to_query)
             for v in vars_to_query:
                 try:
-                    self.log.info("Querying %s:", v.translation)
+                    self.log.info("Querying %s.", v.translation)
                     self.query_dataset(v) # sets v.data
                     if not v.data:
                         raise util.DataQueryEvent("No data found.", v)
@@ -527,7 +527,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.pre_fetch_hook(vars_to_fetch)
             for v in vars_to_fetch:
                 try:
-                    v.log.info("Fetching %s:", v)
+                    v.log.info("Fetching %s.", v)
                     # fetch on a per-DataKey basis
                     for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         try:
@@ -613,12 +613,17 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         self.post_query_and_fetch_hook()
         for v in self.iter_vars_only():
             if v.status == core.ObjectStatus.ACTIVE:
-                v.log.debug('Request for %s completed succesfully.', v.full_name)
+                v.log.debug('Data request for %s completed succesfully.', v.full_name)
                 v.status = core.ObjectStatus.SUCCEEDED
             elif v.failed:
-                v.log.debug('Request for %s failed.', v.full_name)
+                v.log.debug('Data request for %s failed.', v.full_name)
             else:
-                v.log.debug('Request for %s not used.', v.full_name)
+                v.log.debug('Data request for %s not used.', v.full_name)
+        if self.failed:
+            self.log.debug('Data request for %s completed succesfully.', 
+                self.full_name)
+        else:
+            self.log.debug('Data request for %s failed.', self.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
         """Called if framework is terminated abnormally. Not called during

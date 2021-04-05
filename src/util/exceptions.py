@@ -62,16 +62,12 @@ class ChildFailureEvent(MDTFBaseException):
     """Exception raised when a member of the object hierarchy is deactivated 
     because all its child objects have failed.
     """
-    def __init__(self, exc, obj):
-        self.exc = exc
+    def __init__(self, obj):
         self.obj = obj
 
     def __str__(self):
-        str_ = (f"Deactivating {self.obj.full_name} due to failure of all "
-            f"child objects")
-        if self.exc is None:
-            return str_ + '.'
-        return str_ + f" (last exc={repr(self.exc)})."
+        return (f"Deactivating {self.obj.full_name} due to failure of all "
+            f"child objects.")
 
 class PropagatedEvent(MDTFBaseException):
     """Exception passed between members of the object hierarchy when a parent 

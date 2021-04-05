@@ -345,7 +345,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         if self.stage >= VarlistEntryStage.QUERIED and not self.data:
             # all DataKeys obtained for this var during query have
             # been eliminated, so need to deactivate var
-            self.deactivate(util.ChildFailureEvent(exc=exc, obj=self))
+            self.deactivate(util.ChildFailureEvent(self))
     
     @property
     def local_data(self):
@@ -542,7 +542,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     @property
     def _log_name(self):
         # POD loggers sit in a subtree of the DataSource logger distinct from 
-        # the DataKey loggers
+        # the DataKey loggers; the two subtrees are distinguished by class name
         _log_name = f"{self.name}_{self._id}".replace('.', '_')
         return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
 

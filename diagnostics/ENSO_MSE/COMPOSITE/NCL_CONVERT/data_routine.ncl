@@ -21,35 +21,35 @@ begin
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars
-       zgv  = getenv("zg_var")
-       uav  = getenv("ua_var")
-       vav  = getenv("va_var")
-       tav  = getenv("ta_var")
-       husv = getenv("qa_var")
-       wapv = getenv("omega_var")
+       zgv  = "zg" ;;  getenv("zg_var")
+       uav  = "ua" ;;  getenv("ua_var")
+       vav  = "va" ;;  getenv("va_var")
+       tav  = "ta" ;;  getenv("ta_var")
+       husv = "hus" ;;  getenv("qa_var")
+       wapv = "wap" ;;  getenv("omega_var")
 
 ;;     2D  vars
-       prv = getenv("pr_var")
-       tsv = getenv("ts_var")
-       pr_conversionv = getenv("pr_conversion_factor")
-       hfssv = getenv("hfss_var")
-       hflsv = getenv("hfls_var")
+       prv = "pr" ;;  getenv("pr_var")
+       tsv = "ts" ;;  getenv("ts_var")
+       pr_conversionv = "pr_conversion_factor" ;;  getenv("pr_conversion_factor")
+       hfssv = "hfss" ;;  getenv("hfss_var")
+       hflsv = "hfls" ;;  getenv("hfls_var")
 
 ;;       coordinate vars
-       levx  = getenv("lev_coord")
-       lonx  = getenv("lon_var")
-       latx  = getenv("lat_var")
-       timex = getenv("time_var")
+       levx  = "lev" ;;  getenv("lev_coord")
+       lonx  = "lon" ;;  getenv("lon_var")
+       latx  = "lat" ;;  getenv("lat_var")
+       timex = "time" ;; getenv("time_var")
 
-       hyamx = getenv("hyam_var")
-       hybmx = getenv("hybm_var")
+       hyamx = "hyam" ;; getenv("hyam_var")
+       hybmx = "hybm" ;;  getenv("hybm_var")
        
-	levx = "lev"
-       lonx = "lon"
-       latx = "lat"
-       timex = "time"
-       hyamx = "hyam"
-       hybmx = "hybm"
+;	 levx = "lev"
+;       lonx = "lon"
+;       latx = "lat"
+;       timex = "time"
+;       hyamx = "hyam"
+;       hybmx = "hybm"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels
        plevels_name  =  codedata + "/shared/plevs.txt"

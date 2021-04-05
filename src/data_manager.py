@@ -343,15 +343,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         Could arguably be moved into Diagnostic's init, at the cost of 
         dependency inversion.
         """
-        # set up paths/working directories
-        paths = core.PathManager()
-        paths = paths.pod_paths(pod, self)
-        for k,v in paths.items():
-            setattr(pod, k, v)
-        pod.setup_pod_directories()
-        # set up env vars
-        pod.pod_env_vars.update(self.env_vars)
-
+        pod.setup(self)
         for v in pod.iter_children():
             try:
                 self.setup_var(pod, v)

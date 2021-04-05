@@ -266,11 +266,11 @@ class PodExceptionBase(MDTFBaseException):
     def __str__(self):
         s = self._error_str
         if self.pod is not None:
-            if hasattr(self.pod, 'name'):
-                pod_name = self.pod.name
+            if hasattr(self.pod, 'full_name'):
+                pod_name = self.pod.full_name
             else:
-                pod_name = self.pod
-            s += f" for POD '{pod_name}'"
+                pod_name = f"'{self.pod}'"
+            s += f" for POD {pod_name}"
         if self.msg is not None:
             s += f": {self.msg}"
         if not s.endswith('.'):

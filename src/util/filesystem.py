@@ -104,10 +104,6 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     for src, dest in zip(src_files, dest_files):
         copy_function(src, dest)
 
-def get_available_programs():
-    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
-    #return {'py': sys.executable, 'ncl': 'ncl'}  
-
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 

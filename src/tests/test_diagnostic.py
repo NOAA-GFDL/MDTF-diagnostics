@@ -157,7 +157,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
         # fill in driver from pod name
         programs = util.get_available_programs()
         pod = Diagnostic('DUMMY_POD')  
-        pod._check_pod_driver()
+        pod.set_entry_point()
         ext = os.path.splitext(pod.driver)[1][1:]
         self.assertTrue(ext in programs)
         self.assertEqual(pod.program, programs[ext])
@@ -166,7 +166,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
     def test_check_pod_driver_no_driver_2(self, mock_exists):
         # assertion fails if no driver found
         pod = Diagnostic('DUMMY_POD')  
-        self.assertRaises(PodRuntimeError, pod._check_pod_driver)
+        self.assertRaises(PodRuntimeError, pod.set_entry_point)
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticCheckVarlist(unittest.TestCase):
@@ -321,7 +321,7 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
             'settings':{'driver':'C.ncl'}, 'varlist':[]
         }
         pod = Diagnostic('DUMMY_POD')  
-        pod._check_pod_driver()
+        pod.set_entry_point()
         self.assertEqual(pod.driver, 'TEST_CODE_ROOT/diagnostics/A/C.ncl')
         self.assertEqual(pod.program, 'ncl')
 
@@ -333,7 +333,7 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
             'settings':{'driver':'C.foo'}, 'varlist':[]
         }
         pod = Diagnostic('DUMMY_POD') 
-        self.assertRaises(PodRuntimeError, pod._check_pod_driver)
+        self.assertRaises(PodRuntimeError, pod.set_entry_point)
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticTearDown(unittest.TestCase):

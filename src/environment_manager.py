@@ -327,8 +327,7 @@ class SubprocessRuntimePODWrapper(object):
     def run_commands(self):
         """Produces the shell command(s) to run the POD. 
         """
-        #return [self.program + ' ' + self.driver]
-        return ['/usr/bin/env python -u '+self.pod.driver]
+        return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
 
     def run_msg(self):
         """Log message when execution starts.
@@ -377,22 +376,25 @@ class SubprocessRuntimePODWrapper(object):
             except ProcessLookupError:
                 pass
             self.process = None
+
+        if self.pod.status != core.ObjectStatus.INACTIVE:
+            if retcode == 0:
+                log_str = f"{self.pod.full_name} exited successfully (code={retcode})."
+                self.pod.log.info(log_str)
+            elif retcode is None or self.pod.failed:
+                log_str = f"{self.pod.full_name} was terminated or exited abnormally."
+                self.pod.log.info(log_str)
+            else:
+                log_str = f"{self.pod.full_name} exited abnormally (code={retcode})."
+                exc = util.PodExecutionError(log_str)
+                self.pod.deactivate(exc)
+
         if self.log_handle is not None:
+            self.log_handle.write(log_str)
             self.log_handle.flush() # redundant?
             self.log_handle.close()
             self.log_handle = None
 
-        if self.pod.status != core.ObjectStatus.INACTIVE:
-            if retcode == 0:
-                self.pod.log.info('%s exited successfully (code=%d).', 
-                    self.pod.full_name, retcode) 
-            elif retcode is None or self.pod.failed:
-                self.pod.log.info('%s was terminated or exited abnormally.', 
-                    self.pod.full_name) 
-            else:
-                exc = util.PodExecutionError((f"{self.pod.full_name} exited abnormally "
-                    f"(code={retcode})."))
-                self.pod.deactivate(exc)
         if not self.pod.failed:
             self.pod.status = core.ObjectStatus.INACTIVE
         # elapsed = timeit.default_timer() - start_time
@@ -471,7 +473,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
         env_vars_base = os.environ.copy()
         for p in self.iter_active_pods():
-            p.pod.log.info('%s: run %s', self.__class__.__name__, p.pod.full_name)
+            p.pod.log.info('%s: run %s.', self.__class__.__name__, p.pod.full_name)
             try:
                 p.pre_run_setup()
             except Exception as exc:
@@ -491,10 +493,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.pods:
             if p.process is not None:
                 p.process.wait()
-                if p.process.returncode and p.process.returncode != 0:
-
-                    if p.log_handle is not None:
-                        p.log_handle.write('ERROR: '+s)
             p.tear_down(retcode=p.process.returncode)
         self.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()

@@ -402,9 +402,9 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
                 dimensions, if provided by the data.
         
         """
-        if not self.active:
+        if self.status != core.ObjectStatus.SUCCEEDED:
             # Signal to POD's code that vars are not provided by setting 
-            # variable to the empty string
+            # variable to the empty string.
             return {self.env_var: "", self.path_variable: ""}
 
         assert self.dest_path
@@ -530,6 +530,9 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     POD_OUT_DIR = ""
     
     _deactivation_log_level = logging.ERROR # default log level for failure
+    # recognized interpreters for supported script types; can ovverride with
+    # explict 'program' attribute in settings
+    _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
 
     def __post_init__(self):
         core.MDTFObjectBase.__post_init__(self)
@@ -616,6 +619,21 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
     # -------------------------------------
 
+    def setup(self, data_source):
+        """Configuration set by the DataSource on the POD (after the POD is
+        initialized, but before pre-run checks.)
+        """
+        # set up paths/working directories
+        paths = core.PathManager()
+        paths = paths.pod_paths(self, data_source)
+        for k,v in paths.items():
+            setattr(self, k, v)
+        self.setup_pod_directories()
+        self.set_entry_point()
+        self.set_interpreter()
+        # set up env vars
+        self.pod_env_vars.update(data_source.env_vars)
+
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.
         """
@@ -626,6 +644,58 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
             util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
+
+    def set_entry_point(self):
+        """Locate the top-level driver script for the POD.
+
+        Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
+        """
+        if not self.driver:  
+            self.log.warning("No valid driver script found for %s.", self.full_name)
+            # try to find one anyway
+            script_names = [self.name, "driver"]      
+            file_names = [f"{script}{ext}" for script in script_names \
+                for ext in self._interpreters.keys()]
+            for f in file_names:
+                path_ = os.path.join(self.POD_CODE_DIR, f)
+                if os.path.exists(path_):
+                    self.log.debug("Setting driver script for %s to '%s'.",
+                        self.full_name, f)
+                    self.driver = path_
+                    break    # go with the first one found
+        if not self.driver:
+            raise util.PodRuntimeError((f"No driver script found in "
+                f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
+                self)
+
+        if not os.path.isabs(self.driver): # expand relative path
+            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
+        if not os.path.exists(self.driver):
+            raise util.PodRuntimeError(
+                f"Unable to locate driver script '{self.driver}'.", 
+                self
+            )
+
+    def set_interpreter(self):
+        """Determine what executable should be used to run the driver script.
+
+        .. note::
+           Existence of the program on teh environment's ``$PATH`` isn't checked
+           until before the POD runs (see :mod:`src.environment_manager`.)
+        """
+
+        if not self.program:
+            # Find ending of filename to determine the program that should be used
+            _, driver_ext  = os.path.splitext(self.driver)
+            # Possible error: Driver file type unrecognized
+            if driver_ext not in self._interpreters:
+                raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
+                    f"file.\nSupported programs: {list(self._interpreters.values())}"), 
+                    self
+                )
+            self.program = self._interpreters[driver_ext]
+            self.log.debug("Set program for %s to '%s'.", 
+                self.full_name, self.program)
 
     def pre_run_setup(self):
         """Perform filesystem operations and checks prior to running the POD. 
@@ -645,13 +715,13 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
         Raises: :exc:`~diagnostic.PodRuntimeError` if requirements
             aren't met. This is re-raised from the 
-            :meth:`~diagnostic.Diagnostic._check_pod_driver` and
+            :meth:`~diagnostic.Diagnostic.set_entry_point` and
             :meth:`~diagnostic.Diagnostic._check_for_varlist_files` 
             subroutines.
         """
         try:
             self.set_pod_env_vars()
-            self.check_pod_driver()
+            self.set_entry_point()
         except Exception as exc:
             raise util.PodRuntimeError("Caught exception during pre_run_setup", 
                 self) from exc
@@ -681,51 +751,4 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError:
                 continue
-
-    def check_pod_driver(self):
-        """Private method called by :meth:`~diagnostic.Diagnostic.setup`.
-
-        Raises: :exc:`~diagnostic.PodRuntimeError` if driver script
-            can't be found.
-        """
-        programs = util.get_available_programs()
-
-        if not self.driver:  
-            self.log.warning("No valid driver entry found for POD '%s'.", self.name)
-            # try to find one anyway
-            try_filenames = [self.name+".", "driver."]      
-            file_combos = [ file_root + ext for file_root \
-                in try_filenames for ext in programs]
-            self.log.debug("Checking for possible driver names in {} {}".format(
-                self.POD_CODE_DIR, file_combos))
-            for try_file in file_combos:
-                try_path = os.path.join(self.POD_CODE_DIR, try_file)
-                self.log.debug(" looking for driver file "+try_path)
-                if os.path.exists(try_path):
-                    self.driver = try_path
-                    self.log.debug("Found driver script for {}: {}".format(
-                        self.name, self.driver))
-                    break    # go with the first one found
-                else:
-                    self.log.debug("\t "+try_path+" not found...")
-        if self.driver == '':
-            raise util.PodRuntimeError((f"No driver script found in "
-                f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
-                self)
-
-        if not os.path.isabs(self.driver): # expand relative path
-            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
-        if not os.path.exists(self.driver):
-            raise util.PodRuntimeError(f"Unable to locate driver script {self.driver}.", 
-                self)
-
-        if self.program == '':
-            # Find ending of filename to determine the program that should be used
-            driver_ext  = self.driver.split('.')[-1]
-            # Possible error: Driver file type unrecognized
-            if driver_ext not in programs:
-                raise util.PodRuntimeError((f"Don't know how to call a .{driver_ext} "
-                        f"file.\nSupported programs: {programs}"), self)
-            self.program = programs[driver_ext]
-            self.log.debug("Found program '%s'.", programs[driver_ext])
 

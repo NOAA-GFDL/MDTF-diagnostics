@@ -133,10 +133,13 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                 )
             except Exception as exc:
                 pod.log.error("%s produced malformed plot: %s", 
-                    pod.name, f[len(abs_src_subdir):])
+                    pod.full_name, f[len(abs_src_subdir):])
                 if isinstance(exc, util.MDTFCalledProcessError):
-                    pod.log.debug("gs error encountered when converting %s for %s:\n%s",
-                        pod.name, f[len(abs_src_subdir):], getattr(exc, "output", ""))
+                    pod.log.debug(
+                        "gs error encountered when converting %s for %s:\n%s",
+                        pod.full_name, f[len(abs_src_subdir):], 
+                        getattr(exc, "output", "")
+                    )
                 continue
             # gs ran successfully; check how many files it created:
             out_files = glob.glob(f_stem + '_MDTF_TEMP_?.png')
@@ -207,7 +210,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         to a bitmap format for webpage display; 3) Copies all requested files to
         the output directory and deletes temporary files.
         """
-        if self._pod.active:
+        if not self._pod.failed:
             self.make_pod_html(self._pod)
             self.convert_pod_figures(self._pod, os.path.join('model', 'PS'), 'model')
             self.convert_pod_figures(self._pod, os.path.join('obs', 'PS'), 'obs')
@@ -268,7 +271,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         missing, an error message listing them is written to the run's index.html 
         (located in src/html/pod_missing_snippet.html).
         """
-        pod.log.info('Checking linked output files for %s', pod.name)
+        pod.log.info('Checking linked output files for %s.', pod.full_name)
         verifier = verify_links.LinkVerifier(
             self.POD_HTML(pod),  # root HTML file to start search at
             self.WK_DIR,         # root directory to resolve relative paths
@@ -276,8 +279,8 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            pod.log.error('POD %s has missing output files:\n%s', 
-                pod.name, '    \n'.join(missing_out))
+            pod.log.error('%s has missing output files:\n%s', 
+                pod.full_name, '    \n'.join(missing_out))
             template_d = html_templating_dict(pod)
             template_d['missing_output'] = '<br>'.join(missing_out)
             util.append_html_template(
@@ -320,7 +323,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
-            case.log.warning("%s: %s exists, deleting.", 
+            case.log.warning("%s: '%s' exists, deleting.", 
                 self._html_file_name, case.name)
             os.remove(dest)
 
@@ -351,7 +354,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
-            case.log.info("%s: Overwriting %s.", case.name, out_file)
+            case.log.info("%s: Overwriting '%s'.", case.full_name, out_file)
         util.write_json(config.backup_config, out_file, log=case.log)
 
     def make_tar_file(self, case):
@@ -360,9 +363,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         out_path = self._tarball_file_path
         if not self.file_overwrite:
             out_path, _ = util.bump_version(out_path)
-            case.log.info("%s: Creating %s.", case.name, out_path)
+            case.log.info("%s: Creating '%s'.", case.full_name, out_path)
         elif os.path.exists(out_path):
-            case.log.info("%s: Overwriting %s.", case.name, out_path)
+            case.log.info("%s: Overwriting '%s'.", case.full_name, out_path)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
@@ -376,12 +379,13 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
-        case.log.debug("%s: Copy %s to %s.", case.name, self.WK_DIR, self.OUT_DIR)
+        case.log.debug("%s: Copy '%s' to '%s'.", case.full_name, 
+            self.WK_DIR, self.OUT_DIR)
         try:
             if os.path.exists(self.OUT_DIR):
                 if not self.overwrite:
-                    case.log.error("%s: %s exists, overwriting.", 
-                        case.name, self.OUT_DIR)
+                    case.log.error("%s: '%s' exists, overwriting.", 
+                        case.full_name, self.OUT_DIR)
                 shutil.rmtree(self.OUT_DIR)
         except Exception:
             raise
@@ -398,21 +402,19 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 pod_output = self._PodOutputManagerClass(pod, self)
                 pod_output.make_output()
             except Exception as exc:
-                # won't go into the HTML output, but will be present in the 
-                # summary for the case
                 pod.deactivate(exc)
                 continue
         for pod in self.case.iter_children():
             try:
                 self.append_result_link(pod)
-                if pod.active:
+                if not pod.failed:
                     self.verify_pod_links(pod)
             except Exception as exc:
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
                 pod.deactivate(exc)
                 continue
-            if pod.active:
+            if not pod.failed:
                 pod.status = core.ObjectStatus.SUCCEEDED
 
         self.make_html(self.case)

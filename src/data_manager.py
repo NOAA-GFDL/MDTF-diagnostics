@@ -320,11 +320,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             try:
                 self.setup_pod(pod)
             except Exception as exc:
-                try:
-                    raise util.PodConfigError((f"Caught {repr(exc)} in DataManager "
-                        f"setup. Deactivating {pod.name}."), pod) from exc
-                except Exception as chained_exc:
-                    pod.deactivate(chained_exc)  
+                chained_exc = util.chain_exc(exc, "setting up DataSource", 
+                    util.PodConfigError)
+                pod.deactivate(chained_exc)
                 continue
 
         if self.status == core.ObjectStatus.NOTSET and \
@@ -358,11 +356,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             try:
                 self.setup_var(pod, v)
             except Exception as exc:
-                try:
-                    raise util.PodConfigError((f"Caught {repr(exc)} when configuring "
-                        f"{v.full_name}; deactivating."), pod) from exc
-                except Exception as chained_exc:
-                    v.deactivate(chained_exc)
+                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
+                    util.PodConfigError)
+                v.deactivate(chained_exc)
                 continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
@@ -394,10 +390,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
-        except KeyError as exc:
-            new_exc = util.PodConfigError((f"Deactivating {v.full_name} due to "
-                f"translation failure ({str(exc)})."), pod)
-            v.deactivate(new_exc, level=logging.WARNING)
+        except Exception as exc:
+            chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.", 
+                util.PodConfigError)
+            v.deactivate(chained_exc, level=logging.WARNING)
         v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
@@ -458,12 +454,12 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             if not vars_to_query:
                 break # exit: queried everything or nothing active
             
-            self.log.debug('Query batch: [%s]', 
+            self.log.debug('Query batch: [%s].', 
                 ', '.join(v.full_name for v in vars_to_query))
             self.pre_query_hook(vars_to_query)
             for v in vars_to_query:
                 try:
-                    self.log.info("Querying %s", v.translation)
+                    self.log.info("Querying %s:", v.translation)
                     self.query_dataset(v) # sets v.data
                     if not v.data:
                         raise util.DataQueryEvent("No data found.", v)
@@ -472,9 +468,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     v.deactivate(exc)
                     continue
                 except Exception as exc:
-                    exc = util.exc_to_event(exc, ("Caught exception while querying "
-                        f"{v.translation} for {v.full_name}."), util.DataQueryEvent)
-                    v.deactivate(exc)
+                    chained_exc = util.chain_exc(exc, 
+                        f"querying {v.translation} for {v.full_name}.", 
+                        util.DataQueryEvent)
+                    v.deactivate(chained_exc)
                     continue
             self.post_query_hook(vars_to_query)
         else:
@@ -501,7 +498,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 # we've deactivated problematic pods/vars.
                 update = True
             except Exception as exc:
-                self.log.exception("Caught exception setting experiment: %r", exc)
+                self.log.exception("%s while setting experiment: %r", 
+                    util.exc_descriptor(exc), exc)
                 raise exc
             break # successful exit
         else:
@@ -524,18 +522,18 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             if not vars_to_fetch:
                 break # exit: fetched everything or nothing active
 
-            self.log.debug('Fetch batch: [%s]', 
+            self.log.debug('Fetch batch: [%s].', 
                 ', '.join(v.full_name for v in vars_to_fetch))
             self.pre_fetch_hook(vars_to_fetch)
             for v in vars_to_fetch:
                 try:
-                    v.log.info("Fetching %s", v)
+                    v.log.info("Fetching %s:", v)
                     # fetch on a per-DataKey basis
                     for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         try:
                             if not self.is_fetch_necessary(d_key):
                                 continue
-                            v.log.debug("Fetching %s", d_key)
+                            v.log.debug("Fetching %s:", d_key)
                             self.fetch_dataset(v, d_key)
                         except Exception as exc:
                             update = True
@@ -549,9 +547,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     v.stage = diagnostic.VarlistEntryStage.FETCHED
                 except Exception as exc:
                     update = True
-                    exc = util.exc_to_event(exc, ("Caught exception while fetching "
-                        f"data for {v.full_name}."), util.DataFetchEvent)
-                    v.deactivate(exc)
+                    chained_exc = util.chain_exc(exc, 
+                        f"fetching data for {v.full_name}.", 
+                        util.DataFetchEvent)
+                    v.deactivate(chained_exc)
                     continue
             self.post_fetch_hook(vars_to_fetch)
         else:
@@ -581,15 +580,13 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 pod.preprocessor.setup(self, pod)
             for pv in vars_to_process:
                 try:
-                    pv.var.log.info("Processing %s", pv.var)
+                    pv.var.log.info("Preprocessing %s:", pv.var)
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True
-                    print('XXXX-1')
-                    self.log.exception("Caught exception processing %s: %r",
-                        pv.var.full_name, exc)
-                    print('XXXX-2')
+                    self.log.exception("%s while preprocessing %s: %r",
+                        util.exc_descriptor(exc), pv.var.full_name, exc)
                     for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         pv.var.deactivate_data_key(d_key, exc)
                     continue
@@ -610,7 +607,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             self.preprocess_data()
         except Exception as exc:
-            self.log.exception(f"Caught DataSource-level exception: %r.", exc)
+            self.log.exception("%s at DataSource level: %r.", 
+                util.exc_descriptor(exc), exc)
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
         for v in self.iter_vars_only():
@@ -1097,8 +1095,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self.get_expt_key('pod', p, self._id)
                     self.set_expt_key(p, key)
                 except Exception as exc:
-                    exc = util.event_to_exc(exc, ("set_experiment on POD-level "
-                        f"experiment attributes for '{p.name}' failed."))
+                    exc = util.DataExperimentEvent("set_experiment() on POD-level "
+                        f"experiment attributes for '{p.name}' failed ({repr(exc)}).")
                     p.deactivate(exc)
                     continue
 
@@ -1116,8 +1114,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                     key = self.get_expt_key('var', pv.var, pv.pod._id)
                     self.set_expt_key(pv.var, key)
                 except Exception as exc:
-                    exc = util.event_to_exc(exc, ("set_experiment on variable-level "
-                        f"experiment attributes for '{pv.var.name}' failed."))
+                    exc = util.DataExperimentEvent("set_experiment() on variable-level "
+                        f"experiment attributes for '{pv.var.name}' failed ({repr(exc)})."),
                     pv.var.deactivate(exc)
                     continue
         
@@ -1272,7 +1270,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(
                     # decided to silently ignore this file
                     continue
                 except Exception:
-                    self.log.info("    Couldn't parse path %s", path[path_offset:])
+                    self.log.info("  Couldn't parse path '%s'.", path[path_offset:])
                     continue
 
     def generate_catalog(self):
@@ -1367,10 +1365,10 @@ class LocalFetchMixin(AbstractFetchMixin):
             paths = (paths, )
         for path in paths:
             if not os.path.exists(path):
-                raise util.DataFetchEvent((f"Fetch {var.full_name}: File not "
-                    f"found at {path}."), var)
+                raise util.DataFetchEvent((f"Fetch {d_key} ({var.full_name}): "
+                    f"File not found at {path}."), var)
             else:
-                self.log.debug("Fetch %s: found %s.", var.full_name, path)
+                self.log.debug("Fetch %s: found %s.", d_key, path)
         d_key.local_data = paths
 
 

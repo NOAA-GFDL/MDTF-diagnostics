@@ -317,8 +317,8 @@ class SubprocessRuntimePODWrapper(object):
         self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list))+'\n\n')
 
     def setup_exception_handler(self, exc):
-        chained_exc = util.exc_to_event(exc, (f"Caught exception while preparing "
-            f"to run {self.pod.name}."), util.PodRuntimeError)
+        chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.name}.",
+            util.PodRuntimeError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
         raise exc # include in production, or just for debugging?
@@ -363,8 +363,8 @@ class SubprocessRuntimePODWrapper(object):
         return [''.join(command)]
 
     def runtime_exception_handler(self, exc):
-        chained_exc = util.exc_to_event(exc, (f"Caught exception while running "
-            f"{self.pod.name}."), util.PodExecutionError)
+        chained_exc = util.chain_exc(exc, f"running {self.pod.name}.", 
+            util.PodExecutionError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
         raise exc # include in production, or just for debugging?

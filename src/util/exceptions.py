@@ -23,6 +23,27 @@ def exit_on_exception(exc, msg=None):
         print(msg)
     exit(1)
 
+def chain_exc(exc, new_msg, new_exc_class=None):
+    if new_exc_class is None:
+        new_exc_class = type(exc)
+    try:
+        if new_msg.istitle():
+            new_msg = new_msg[0].lower() + new_msg[1:]
+        if new_msg.endswith('.'):
+            new_msg = new_msg[:-1]
+        new_msg = f"{exc_descriptor(exc)} while {new_msg.lstrip()}: {repr(exc)}."
+        raise new_exc_class(new_msg) from exc
+    except Exception as chained_exc:
+        return chained_exc
+
+def exc_descriptor(exc):
+    # MDTFEvents are raised during normal program operation; use correct wording
+    # for log messages so user doesn't think it's an error
+    if isinstance(exc, MDTFEvent):
+        return "Received event"
+    else:
+        return "Caught exception"
+
 class TimeoutAlarm(Exception):
     """Dummy exception raised if a subprocess times out."""
     # NOTE py3 builds timeout into subprocess; fix this
@@ -37,22 +58,34 @@ class MDTFBaseException(Exception):
         # instead just print message
         return f'{self.__class__.__name__}("{str(self)}")'
 
+class ChildFailureEvent(MDTFBaseException):
+    """Exception raised when a member of the object hierarchy is deactivated 
+    because all its child objects have failed.
+    """
+    def __init__(self, exc, obj):
+        self.exc = exc
+        self.obj = obj
+
+    def __str__(self):
+        str_ = (f"Deactivating {self.obj.full_name} due to failure of all "
+            f"child objects")
+        if self.exc is None:
+            return str_ + '.'
+        return str_ + f" (last exc={repr(self.exc)})."
+
 class PropagatedEvent(MDTFBaseException):
     """Exception passed between members of the object hierarchy when a parent 
     object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to 
     deactivate its children.
     """
-    def __init__(self, parent_exc, parent):
-        self.exc = parent_exc
+    def __init__(self, exc, parent):
+        self.exc = exc
         self.parent = parent
 
     def __str__(self):
-        if self.exc is None:
-            return (f"Deactivating {self.parent.full_name} due to failure of all "
-                f"child objects.")
-        else:
-            return (f"Received {repr(self.exc)} from deactivation of parent "
-                f"{self.parent.full_name}.")
+        return (f"{exc_descriptor(self.exc)} {repr(self.exc)} from deactivation "
+            f"of parent {self.parent.full_name}.")
+
 
 class MDTFFileNotFoundError(FileNotFoundError, MDTFBaseException):
     """Wrapper for :py:class:`FileNotFoundError` which handles error codes so we
@@ -84,7 +117,8 @@ class WormKeyError(KeyError, MDTFBaseException):
 
 class DataclassParseError(ValueError, MDTFBaseException):
     """Raised when parsing input data fails on a 
-    :func:`~src.util.dataclass.mdtf_dataclass` or :func:`~src.util.dataclass.regex_dataclass`.
+    :func:`~src.util.dataclass.mdtf_dataclass` or 
+    :func:`~src.util.dataclass.regex_dataclass`.
     """
     pass
 
@@ -161,27 +195,6 @@ class FatalErrorEvent(MDTFBaseException):
     """
     pass
 
-def event_to_exc(event, msg):
-    if isinstance(event, MDTFEvent):
-        try:
-            raise FatalErrorEvent(msg) from event
-        except Exception as chained_exc:
-            return chained_exc
-    else:
-        return event
-
-def exc_to_event(exc, msg, event_class):
-    if isinstance(exc, MDTFEvent):
-        return exc
-    else:
-        try:
-            if msg.endswith('.'):
-                msg = msg[:-1]
-            msg += f": {repr(exc)}."
-            raise event_class(msg) from exc
-        except Exception as chained_exc:
-            return chained_exc
-
 class DataProcessingEvent(MDTFEvent):
     """Base class and common formatting code for events raised in data 
     query/fetch. These should *not* be used for fatal errors (when a variable or
@@ -220,6 +233,21 @@ class DataFetchEvent(DataProcessingEvent):
 class DataPreprocessEvent(DataProcessingEvent):
     """Exception signaling an error in preprocessing data after it's been 
     fetched, but before any PODs run.
+    """
+    pass
+
+class MetadataEvent(DataProcessingEvent):
+    """Exception signaling discrepancies in variable metadata.
+    """
+    pass
+
+class MetadataError(MDTFBaseException):
+    """Exception signaling unrecoverable errors in variable metadata.
+    """
+    pass
+
+class UnitsUndefinedError(MetadataError):
+    """Exception signaling unrecoverable errors in variable metadata.
     """
     pass
 

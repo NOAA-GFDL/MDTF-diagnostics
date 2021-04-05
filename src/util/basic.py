@@ -374,11 +374,11 @@ class MDTF_ID():
         chars = string.digits + string.ascii_letters
         base = len(chars)
         num = self._uuid.time_low # least significant bits
-        str_ = '00000'
+        str_ = '0000'
         while num:
             str_ += chars[num % base]
             num //= base        
-        return str_[-5:]
+        return str_[:-5:-1] # last 4 chars, reversed so most-significant is 1st
     
     def __repr__(self):
         return f"{self.__class__.__name__}({self._uuid})"

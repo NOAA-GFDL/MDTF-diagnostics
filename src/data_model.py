@@ -553,7 +553,8 @@ class DMDependentVariable(_DMDimensionsMixin):
     # attrs must be defined before standard_name, units due to the latters' 
     # implementation as properties
     attrs: dict = dc.field(default_factory=dict) 
-    # standard_name, units defined as field but implemented as properties below
+    # standard_name, units need to be defined as field here, in order to be 
+    # compatible with dataclass init, etc., but implemented as properties below
     standard_name: str = util.MANDATORY
     units: src.units.Units = "" # not MANDATORY since may be set later from var translation
     # dims: from _DMDimensionsMixin
@@ -591,11 +592,10 @@ class DMDependentVariable(_DMDimensionsMixin):
     def __str__(self):
         """Condensed string representation.
         """
-        str_ = self.full_name[1:-1]
         if hasattr(self, 'name_in_model') and self.name_in_model:
-            str_ += f" (={self.name_in_model})"
+            str_ = f"='{self.name_in_model}'"
         else:
-            str_ += f" (={self.standard_name})"
+            str_ = f"{self.standard_name}"
         attrs_ = []
         if not self.is_static and hasattr(self.T, 'frequency'):
             attrs_.append(str(self.T.frequency))
@@ -605,7 +605,7 @@ class DMDependentVariable(_DMDimensionsMixin):
         if attrs_:
             str_ += " @ "
             str_ += ", ".join(attrs_)
-        return '<' + str_ + '>'
+        return f"{self.full_name} ({str_})"
 
     @property
     def axes(self):

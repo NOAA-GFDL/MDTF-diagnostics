@@ -345,16 +345,15 @@ class MDTFObjectLogger(logging.Logger):
         self.log(logging.CRITICAL, msg, *args, **kw)
     
     def exception(self, msg, *args, exc_info=True, **kw):
-        print('XXXX-4a')
         if exc_info:
             exc_type, _, _ = sys.exc_info()
             if issubclass(exc_type, exceptions.MDTFEvent):
                 # "exception" isn't an exception, just an event, so log with 
                 # severity info
+                print('XXXX-4a', msg)
                 self.log(logging.INFO, msg, *args, exc_info=False, **kw)
                 return
         self.log(logging.ERROR, msg, *args, exc_info=exc_info, **kw)
-        print('XXXX-4c')
 
     # exception object storage
     @property
@@ -363,7 +362,6 @@ class MDTFObjectLogger(logging.Logger):
 
     def store_exception(self, exc):
         # add Exception object to internal list
-        # wrapped_exc = exc
         wrapped_exc = traceback.TracebackException.from_exception(exc)
         self._exceptions.append(wrapped_exc)
 

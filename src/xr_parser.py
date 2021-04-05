@@ -541,7 +541,7 @@ class DatasetParser():
                 different values. 
 
                 - None (default): Update *our_var* if *update_our_var* is True,
-                    but in any case raise a TypeError.
+                    but in any case raise a :class:`~util.MetadataEvent`.
                 - 'our_var': Change *ds* to match *our_var*.
                 - 'ds': Change *our_var* to match *ds*.
         """
@@ -564,7 +564,7 @@ class DatasetParser():
                 return
             else:
                 # don't change ds, raise exception
-                raise TypeError((f"No {ds_attr_name} for '{our_var.name}' "
+                raise util.MetadataError((f"No {ds_attr_name} for '{our_var.name}' "
                     f"(= {our_attr}) found in dataset."))
 
         if not our_attr:
@@ -577,15 +577,15 @@ class DatasetParser():
                 return
             else:
                 # don't change ds, raise exception
-                raise TypeError((f"'{our_var.name}' not set but {ds_attr_name} "
-                    f"(= {ds_attr}) present in dataset."))
+                raise util.MetadataError((f"'{our_var.name}' not set but "
+                    f"{ds_attr_name} (= {ds_attr}) present in dataset."))
 
         if not comparison_func(our_attr, ds_attr):
             # both attrs present, but have different values
             if can_update_our_var:
                 # update our attr with value from ds, but also raise error
                 setattr(our_var, our_attr_name, ds_attr)
-            raise ValueError((f"Found unexpected {our_attr_name} for variable "
+            raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
                 f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
         else:
             # comparison passed, no changes needed
@@ -636,8 +636,8 @@ class DatasetParser():
         """
         # check name
         if ds_var_name not in ds:
-            raise ValueError(f"Variable name '{ds_var_name}' not found in dataset: "
-                f"({list(ds.variables)}).")
+            raise util.MetadataError(f"Variable name '{ds_var_name}' not found "
+                f"in dataset: ({list(ds.variables)}).")
             # TODO: attempt to match on standard_name?
         self.reconcile_name(our_var, ds_var_name, update_name=update_name)
         self.reconcile_attr(our_var, ds[ds_var_name], 'standard_name',
@@ -648,18 +648,19 @@ class DatasetParser():
         dataset we downloaded (*ds_var*) and our expectations based on the 
         model's convention (*our_var*).
 
-        Normal operation is to raise a TypeError for missing 'units' attributes 
-        in the DataSet. This can be reduced to a warning by setting the
-        ``disable_unit_checks`` CLI flag, which sets skip_units=True here.
+        Normal operation is to raise a :class:`~util.UnitsUndefinedError` for missing 
+        'units' attributes in the DataSet. This can be reduced to a warning by 
+        setting the ``disable_unit_checks`` CLI flag, which sets skip_units=True 
+        here.
 
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds_var: xarray DataArray.
         """
-        # will raise TypeError or log warning if unit attribute missing
+        # will raise UnitsUndefinedError or log warning if unit attribute missing
         self.check_unit(ds_var)
-        # Check equivalence of units: if units inequivalent, raise ValueError
+        # Check equivalence of units: if units inequivalent, raise MetadataEvent
         self.reconcile_attr(our_var, ds_var, 'units', 
             comparison_func=units.units_equivalent,
             update_our_var=True, update_ds=(self.skip_units)
@@ -672,8 +673,8 @@ class DatasetParser():
                 comparison_func=units.units_equal, 
                 update_our_var=True, update_ds=(self.skip_units)
             )
-        except ValueError as exc:
-            self.log.warning("Caught %s.", repr(exc))
+        except util.MetadataEvent as exc:
+            self.log.warning("%s %r.", util.exc_descriptor(exc), exc)
             our_var.units = units.to_cfunits(our_var.units)
 
     def reconcile_scalar_value_and_units(self, our_var, ds_var):
@@ -682,15 +683,6 @@ class DatasetParser():
         discrepancy, log an error but change the entry in *our_var*.
         """
         attr_name = '_scalar_coordinate_value' # placeholder
-
-        def _cleanup_our_var(var_):
-            if hasattr(var_, attr_name):
-                # cleanup placeholder attr if our var was altered
-                var_.value, new_units = getattr(var_, attr_name)
-                var_.units = units.to_cfunits(new_units)
-                self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
-                    var_.name, var_.value, var_.units)
-                delattr(var_, attr_name)
 
         def _compare_value_only(our_var, ds_var):
             # may not have units info on ds_var, so only compare the numerical 
@@ -718,20 +710,24 @@ class DatasetParser():
                     comparison_func=comparison_func,
                     update_our_var=True, update_ds=False
                 )
-                _cleanup_our_var(our_var)
-            except (TypeError, ValueError) as exc:
-                _cleanup_our_var(our_var)
-                raise exc
+            finally:
+                # cleanup placeholder attr if our var was altered
+                if hasattr(var_, attr_name):
+                    var_.value, new_units = getattr(var_, attr_name)
+                    var_.units = units.to_cfunits(new_units)
+                    self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
+                        var_.name, var_.value, var_.units)
+                    delattr(var_, attr_name)
 
         assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar)
         assert ds_var.size == 1
-        # Check equivalence of units: if units inequivalent, raises ValueError
+        # Check equivalence of units: if units inequivalent, raises MetadataEvent
         try:
             _compare_value_and_units(
                 our_var, ds_var, 
                 comparison_func=units.units_equivalent
             )
-        except TypeError:
+        except util.MetadataError:
             # get here if units attr not defined on ds_var
             if self.skip_units:
                 _compare_value_only(our_var, ds_var)
@@ -745,8 +741,8 @@ class DatasetParser():
                 our_var, ds_var, 
                 comparison_func=(lambda x,y: units.units_equal(x,y, rtol=1.0e-5))
             )
-        except ValueError as exc:
-            self.log.warning("Caught %s.", repr(exc))
+        except util.MetadataEvent as exc:
+            self.log.warning("%s %r.", util.exc_descriptor(exc), exc)
             our_var.units = units.to_cfunits(our_var.units)
 
     def reconcile_coord_bounds(self, our_coord, ds, ds_coord_name):
@@ -927,10 +923,11 @@ class DatasetParser():
         """
         if ds_var.attrs.get('standard_name', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
             if self.skip_std_name:
-                self.log.warning(f"'standard_name' attribute not found on {ds_var.name}.")
+                self.log.warning((f"'standard_name' attribute not found on "
+                    f"{ds_var.name}."))
             else:
                 # normal operation
-                raise TypeError(("NetCDF metadata attribute 'standard_name' not "
+                raise util.MetadataError(("NetCDF metadata attribute 'standard_name' not "
                     f"found on variable {ds_var.name}. Please provide this attribute "
                     "in input model data or run with --disable_CF_name_checks."))
 
@@ -943,9 +940,10 @@ class DatasetParser():
                 self.log.warning(f"'units' attribute not found on {ds_var.name}.")
             else:
                 # normal operation
-                raise TypeError(("NetCDF metadata attribute 'units' not found on "
-                    f"variable {ds_var.name}. Please provide this attribute in "
-                    "input model data or run with --disable_unit_checks."))
+                raise util.UnitsUndefinedError(("NetCDF metadata attribute 'units' "
+                    f"not found on variable {ds_var.name}. Please provide this "
+                    "attribute in input model data or run with "
+                    "--disable_unit_checks."))
 
     def check_ds_attrs(self, ds, var=None):
         """Final checking of xarray Dataset attribute dicts before starting

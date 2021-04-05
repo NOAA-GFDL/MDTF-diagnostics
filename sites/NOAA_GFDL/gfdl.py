@@ -113,12 +113,9 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
                 gfdl_util.make_remote_dir(self.POD_OUT_DIR, log=self.log)
                 self._has_placeholder = True
             except Exception as exc:
-                try:
-                    raise util.PodRuntimeError((f"Caught exception making output "
-                        f"directory at {self.POD_OUT_DIR}: {repr(exc)}"),
-                        self) from exc
-                except Exception as chained_exc:
-                    self.deactivate(chained_exc)
+                chained_exc = util.chain_exc(exc, (f"Making output directory at "
+                    f"{self.POD_OUT_DIR}."), util.PodRuntimeError)
+                self.deactivate(chained_exc)
 
 # ------------------------------------------------------------------------
 

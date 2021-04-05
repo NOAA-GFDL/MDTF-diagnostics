@@ -518,7 +518,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_dataset(self, var):
         pass # return ds
 
-    def clean_nc_var_encoding(self, var, ds_obj):
+    def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *obj* prior to 
         writing to a netCDF file, as a workaround for the following known issues:
 
@@ -538,7 +538,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
           the same. We delete these attributes prior to writing, after checking 
           equality of values.
         """
-        name = getattr(ds_obj, 'name', 'dataset')
         encoding = getattr(ds_obj, 'encoding', dict())
         attrs = getattr(ds_obj, 'attrs', dict())
         attrs_to_delete = set([])
@@ -546,8 +545,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # mark attrs with sentinel value for deletion
         for k,v in attrs.items():
             if v == xr_parser.ATTR_NOT_FOUND:
-                var.log.warning("Caught unset attribute '%s' of %s.", k, name,
-                    tags=util.ObjectLogTag.NC_HISTORY)
+                var.log.warning("Caught unset attribute '%s' of '%s'.", 
+                    k, name,
+                    tags=util.ObjectLogTag.NC_HISTORY
+                )
                 attrs_to_delete.add(k)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)
@@ -564,8 +565,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     compare_ = (attrs[k] != v)
                 if compare_ and k.lower() != 'source':
-                    var.log.warning("Conflict in '%s' attribute of %s: %s != %s.",
-                        k, name, v, attrs[k], tags=util.ObjectLogTag.NC_HISTORY)
+                    var.log.warning(
+                        "Conflict in '%s' attribute of '%s': '%s' != '%s'.",
+                        k, name, v, attrs[k], tags=util.ObjectLogTag.NC_HISTORY
+                    )
                 attrs_to_delete.add(k)
 
         for k in attrs_to_delete:
@@ -585,9 +588,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if t_coord.has_bounds:
                 ds[t_coord.bounds_var].encoding['units'] = ds_T.encoding['units']
 
-        for ds_v in ds.variables.values():
-            self.clean_nc_var_encoding(var, ds_v)
-        self.clean_nc_var_encoding(var, ds)
+        for v_name, ds_v in ds.variables.items():
+            self.clean_nc_var_encoding(var, v_name, ds_v)
+        self.clean_nc_var_encoding(var, 'dataset', ds)
         return ds
 
     def log_history_attr(self, var, ds):
@@ -628,13 +631,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         try:
             ds = self.read_dataset(var)
         except Exception as exc:
-            raise util.exc_to_event(exc, (f"Error in loading dataset for "
-                f"{var.full_name}."), util.DataPreprocessEvent)
+            raise util.chain_exc(exc, (f"loading "
+                f"dataset for {var.full_name}."), util.DataPreprocessEvent)
         try:
             ds = xr_parser.DatasetParser().parse(ds, var)
         except Exception as exc:
-            raise util.exc_to_event(exc, (f"Error in parsing file metadata for "
-                f"{var.full_name}."), util.DataPreprocessEvent)
+            raise util.chain_exc(exc, (f"parsing file "
+                f"metadata for {var.full_name}."), util.DataPreprocessEvent)
         return ds
 
     def process_ds(self, var, ds):
@@ -643,11 +646,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         for f in self.functions:
             try:
-                var.log.debug("Preprocess %s: call %s", var.full_name, 
-                    f.__class__.__name__)
+                var.log.debug("Calling %s on %s.", f.__class__.__name__,
+                    var.full_name)
                 ds = f.process(var, ds)
             except Exception as exc:
-                raise util.exc_to_event(exc, (f"Preprocessing on {var.full_name} "
+                raise util.chain_exc(exc, (f"Preprocessing on {var.full_name} "
                     f"failed at {f.__class__.__name__}."), 
                     util.DataPreprocessEvent
                 )
@@ -663,13 +666,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             ds = self.clean_output_attrs(var, ds)
             ds = self.log_history_attr(var, ds)
         except Exception as exc:
-            raise util.exc_to_event(exc, (f"Error in setting attributes for "
-                f"writing data for {var.full_name}."), util.DataPreprocessEvent)
+            raise util.chain_exc(exc, (f"cleaning attributes to "
+                f"write data for {var.full_name}."), util.DataPreprocessEvent)
         try:
             self.write_dataset(var, ds)
         except Exception as exc:
-            raise util.exc_to_event(exc, (f"Error in writing data for "
-                f"{var.full_name}."), util.DataPreprocessEvent)
+            raise util.chain_exc(exc, f"writing data for {var.full_name}.",
+                util.DataPreprocessEvent)
         del ds # shouldn't be necessary
 
     def process(self, var):

@@ -300,11 +300,13 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             status_str = f"{v.status.name.lower()}, {v.stage.name.lower()}"
             fail_str = (f"(exc={repr(v.last_exception)})" \
                 if v.failed else 'ok')
-            trans_str = (str(v.translation) \
-                if getattr(v, 'translation', None) is not None \
-                else "(not translated)")
-            return (f"<{str_}; {status_str}, {fail_str}, {v.requirement}>\n"
-                f"\tTranslation: {trans_str}")
+            if getattr(v, 'translation', None) is not None:
+                trans_str = str(v.translation)
+                trans_str = trans_str.replace("<", "'").replace(">", "'")
+            else:
+                trans_str = "(not translated)"
+            return (f"<{str_}; {status_str}, {fail_str}, {v.requirement})\n"
+                f"\tName in data source: {trans_str}")
 
         s = _format(self)
         for i, altvs in enumerate(self.iter_alternates()):
@@ -343,7 +345,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         if self.stage >= VarlistEntryStage.QUERIED and not self.data:
             # all DataKeys obtained for this var during query have
             # been eliminated, so need to deactivate var
-            self.deactivate(util.PropagatedEvent(parent=self, parent_exc=exc))
+            self.deactivate(util.ChildFailureEvent(exc=exc, obj=self))
     
     @property
     def local_data(self):

@@ -111,17 +111,16 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # needs to test for child_type
         pass
 
-    def child_status_update(self):
+    def child_status_update(self, exc=None):
         if next(self.iter_children(), None) is None:
             # should never get here (no children of any status), because this 
             # method should only be called by children
-            raise ValueError(f"Children misconfigured for {self.full_name}")
+            raise ValueError(f"Children misconfigured for {self.full_name}.")
 
-        # if all children have failed, deactivate self and all children
+        # if all children have failed, deactivate self
         if not self.failed and \
             next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
-            exc = util.PropagatedEvent(None, self)
-            self.deactivate(exc, level=None)
+            self.deactivate(util.ChildFailureEvent(exc=exc, obj=self), level=None)
 
     # level at which to log deactivation events
     _deactivation_log_level = logging.ERROR
@@ -134,8 +133,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
             # only need to log and update updates on status change:
             if level is None:
                 level = self._deactivation_log_level # default level for child class
-            #self.log.log(level, "Deactivating %s due to %r.", self.full_name, exc)
-            self.log.exception("Deactivated %s due to %r.", self.full_name, exc)
+            self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
 
             # update status on self
             self.status = ObjectStatus.FAILED
@@ -144,9 +142,8 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
                 self._parent.child_deactivation_handler(self, exc)
                 self._parent.child_status_update()
             # update children (deactivate all)
-            child_exc = util.PropagatedEvent(exc, self)
             for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
-                obj.deactivate(child_exc, level=None)
+                obj.deactivate(util.PropagatedEvent(exc=exc, parent=self), level=None)
 
 # -----------------------------------------------------------------------------
 
@@ -962,13 +959,17 @@ class MDTFFramework(MDTFObjectBase):
         """Overall success/failure of this run of the framework. Return True if 
         any case or any POD has failed, else return False.
         """
+        def _failed(obj):
+            # need this workaround in case we failed early in init
+            return (not hasattr(obj, 'failed')) or obj.failed
+
         # should be unnecessary if we've been propagating status correctly
         if self.status == ObjectStatus.FAILED or not self.cases:
             return True
         for case in self.iter_children():
-            if case.failed or not hasattr(case, 'pods') or not case.pods:
+            if _failed(case) or not hasattr(case, 'pods') or not case.pods:
                 return True
-            if any(p.failed for p in case.iter_children()):
+            if any(_failed(p) for p in case.iter_children()):
                 return True
         return False
 

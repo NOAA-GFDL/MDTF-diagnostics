@@ -314,7 +314,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         return t0
 
 @util.mdtf_dataclass
-class DMTimeCoordinate(_DMCoordinateShared):
+class DMTimeCoordinate(DMGenericTimeCoordinate):
     name: str = util.MANDATORY
     # attrs: dict                    # fields inherited from _DMCoordinateShared
     # bounds_var: AbstractDMCoordinateBounds
@@ -326,9 +326,9 @@ class DMTimeCoordinate(_DMCoordinateShared):
     range: util.AbstractDateRange = None
     frequency: util.AbstractDateFrequency = None
 
-    @property
-    def is_static(self):
-        return (self.range == util.FXDateRange)
+    @classmethod
+    def from_instances(cls, *t_coords):
+        raise NotImplementedError
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields 

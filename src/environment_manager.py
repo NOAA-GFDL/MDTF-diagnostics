@@ -416,7 +416,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # transfer all pods, even failed ones, because we need to call their 
         self.pods = [self._PodWrapperClass(pod=p) for p in case.pods.values()]
         self.env_mgr = EnvMgrClass(log=case.log)
-        self.log = case.log
+        self.case = case
 
         # Need to run bash explicitly because 'conda activate' sources 
         # env vars (can't do that in posix sh). tcsh could also work.
@@ -471,7 +471,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
         test_list = [p for p in self.iter_active_pods()]
         if not test_list:
-            self.log.error('%s: no PODs met data requirements; returning',
+            self.case.log.error('%s: no PODs met data requirements; returning',
                 self.__class__.__name__)
             return
 
@@ -499,7 +499,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.process is not None:
                 p.process.wait()
             p.tear_down(retcode=p.process.returncode)
-        self.log.info('%s: completed all PODs.', self.__class__.__name__)
+        self.case.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
 
     def tear_down(self):
@@ -511,10 +511,11 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
     def runtime_terminate(self, signum=None, frame=None):
         # try to clean up everything
-        util.signal_logger(self.__class__.__name__, signum, frame, log=self.log)
+        util.signal_logger(self.__class__.__name__, signum, frame, log=self.case.log)
         for p in self.pods:
             util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
             p.tear_down()
-            p.close_log_file(log=True)
+            p.pod.close_log_file(log=True)
         self.tear_down()
+        self.case.close_log_file()
         exit(1)

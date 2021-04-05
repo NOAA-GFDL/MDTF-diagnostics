@@ -744,14 +744,14 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
             "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
         })
-        for var in self.iter_children(status=core.ObjectStatus.ACTIVE):
+        for var in self.iter_children(status=core.ObjectStatus.SUCCEEDED):
             try:
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError as exc:
                 raise util.WormKeyError((f"{var.full_name} defines coordinate names "
                     f"that conflict with those previously set. (Tried to update "
                     f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
-        for var in self.iter_children(status_neq=core.ObjectStatus.ACTIVE):
+        for var in self.iter_children(status_neq=core.ObjectStatus.SUCCEEDED):
             # define env vars for varlist entries without data. Name collisions
             # are OK in this case.
             try:

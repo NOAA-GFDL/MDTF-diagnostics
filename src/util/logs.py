@@ -472,7 +472,7 @@ class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
         if self.log.hasHandlers():
             for handler in self.log.handlers:
                 self.log.removeHandler(handler)
-        handler = MDTFHeaderFileHandler(
+        self._log_handler = MDTFHeaderFileHandler(
             filename=os.path.join(log_dir, f"{self.name}.log"),
             mode="w", encoding="utf-8"
         )
@@ -480,21 +480,25 @@ class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
             fmt=fmt, datefmt='%H:%M:%S', 
             header="", footer="\n"
         )
-        handler.setFormatter(formatter)
-        self.log.addHandler(handler)
+        self._log_handler.setFormatter(formatter)
+        self.log.addHandler(self._log_handler)
 
         # add extra handler for warning banner
         self._banner_log = StringIOHandler()
         self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
         formatter = logging.Formatter(
-            fmt=fmt, 
-            datefmt='%H:%M:%S'
+            fmt=fmt, datefmt='%H:%M:%S'
         )
         self._banner_log.setFormatter(formatter)
         self.log.addHandler(self._banner_log)
 
         # transfer stuff from root logger cache
         transfer_log_cache(self.log, close=False)
+
+    def close_log_file(self, log=True):
+        self._log_handler.flush() # redundant?
+        self._log_handler.close()
+        self._log_handler = None
 
 # ------------------------------------------------------------------------------
 

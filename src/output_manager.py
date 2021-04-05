@@ -253,6 +253,13 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         or execution.
         """
         template_d = html_templating_dict(pod)
+        # add a warning banner if needed
+        banner_str = pod._banner_log.buffer_contents()
+        if banner_str:
+            src = self.html_src_file('warning_snippet.html')
+            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
+            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
+        # put in the link to results
         if pod.failed:
             # report error
             src = self.html_src_file('pod_error_snippet.html')
@@ -279,14 +286,10 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            pod.log.error('%s has missing output files:\n%s', 
-                pod.full_name, '    \n'.join(missing_out))
-            template_d = html_templating_dict(pod)
-            template_d['missing_output'] = '<br>'.join(missing_out)
-            util.append_html_template(
-                self.html_src_file('pod_missing_snippet.html'),
-                self.CASE_TEMP_HTML, 
-                template_d
+            pod.log.error('%s has %d missing output files:\n%s', 
+                pod.full_name, len(missing_out),
+                '    \n'.join(missing_out),
+                tags=util.ObjectLogTag.BANNER
             )
             raise util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
         else:
@@ -413,7 +416,8 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 # won't go into the HTML output, but will be present in the 
                 # summary for the case
                 pod.deactivate(exc)
-                continue
+                continue  
+            pod.close_log_file(log_=True)
             if not pod.failed:
                 pod.status = core.ObjectStatus.SUCCEEDED
 

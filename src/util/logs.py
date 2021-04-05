@@ -29,6 +29,13 @@ class StringIOHandler(logging.StreamHandler):
         self._log_buffer = io.StringIO()
         super(StringIOHandler, self).__init__(stream=self._log_buffer)
 
+    def reset_buffer(self):
+        # easier to create a new buffer than reset the existing one
+        new_buffer = io.StringIO()
+        old_buffer = self.setStream(new_buffer)
+        old_buffer.close()
+        self._log_buffer = new_buffer
+
     def close(self):
         super(StringIOHandler, self).close()
         self._log_buffer.close()
@@ -102,26 +109,7 @@ class HeaderFileHandler(logging.FileHandler):
 
 class MDTFHeaderFileHandler(HeaderFileHandler):
     def _log_header(self):
-        """Returns string of system debug information to use as log file header.
-        Calls :func:`git_info` to get repo status.
-        """
-        try:
-            git_branch, git_hash, _ = git_info()
-            str_ = (
-                "MDTF PACKAGE LOG\n\n"
-                f"Started logging at {datetime.datetime.now()}\n"
-                f"git hash/branch: {git_hash} (on {git_branch})\n"
-                # f"uncommitted files: {git_dirty}\n"
-                f"sys.platform: '{sys.platform}'\n"
-                # f"sys.executable: '{sys.executable}'\n"
-                f"sys.version: '{sys.version}'\n"
-                # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
-            ) 
-            return str_ + (80 * '-') + '\n\n'
-        except Exception:
-            err_str = "Couldn't gather log file header information."
-            _log.exception(err_str)
-            return "ERROR: " + err_str + "\n"
+        return mdtf_log_header("MDTF PACKAGE LOG")
 
 def _hanging_indent(str_, initial_indent, subsequent_indent):
     """Poor man's indenter. Easier than using textwrap for this case.
@@ -399,15 +387,15 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
     def init_log(self, fmt=None):
         # Mixin class, so no __init__ for simplicity
         if fmt is None:
-            fmt = '%(asctime)s in %(funcName)s: %(message)s'
+            fmt = '%(levelname)s: %(message)s'
 
         assert hasattr(self, 'log')
-        handler = StringIOHandler()
+        self._log_handler = StringIOHandler()
         # don't record events from children in StringIO buffer
-        handler.addFilter(NameMatchFilter(self._log_name)) 
+        self._log_handler.addFilter(NameMatchFilter(self._log_name)) 
         formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
-        handler.setFormatter(formatter)
-        self.log.addHandler(handler)
+        self._log_handler.setFormatter(formatter)
+        self.log.addHandler(self._log_handler)
 
     @property
     def last_exception(self):
@@ -420,52 +408,54 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         """Return contents of log buffer, as well as that of any child objects
         in *child_objs*, as a formatted string.
         """
-        str_ = self.name + ':\n'
+        if hasattr(self, 'debug_str'):
+            str_ = f"Log for variable {self.debug_str()}\n" 
+        else:
+            str_ = f"Log for {self.full_name}:\n"
         # list exceptions before anything else:
         if self.log.has_exceptions:
             strs_ = [''.join(exc.format()) for exc in self.log._exceptions]
-            strs_ = [f"*** {self.name} caught exception #{i+1}:\n{exc}\n" \
+            strs_ = [f"*** caught exception (#{i+1}):\n{exc}" \
                 for i, exc in enumerate(strs_)]
             str_ += "".join(strs_) + '\n'
         # then log contents:
-        for h in self.log.handlers:
-            if isinstance(h, StringIOHandler):
-                str_ += h.buffer_contents().rstrip()
+        str_ += self._log_handler.buffer_contents().rstrip()
         # then contents of children:
         if children:
+            str_ += '\n'
             for child in self.iter_children():
                 str_ += '\n'
                 if hasattr(child, 'format_log'):
                     str_ += child.format_log(children=children)
                 else:
                     str_ += f"<{child} log placeholder>\n"
-            return _hanging_indent(str_, 0, 4)
+        return _hanging_indent(str_, 0, 4) + '\n'
 
 class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
     def init_log(self, fmt=None):
         super(VarlistEntryLoggerMixin, self).init_log(fmt=fmt)
         # add extra handler for additions to netCDF history attribute
-        self._nc_history = StringIOHandler()
-        self._nc_history.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY)) 
+        self._nc_history_log = StringIOHandler()
+        self._nc_history_log.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY)) 
         formatter = logging.Formatter(
             fmt='%(asctime)s: MDTF package: %(message)s', 
             datefmt='%a %b %d %H:%M:%S %Y' # mimic date format used by NCO, CDO
         )
-        self._nc_history.setFormatter(formatter)
-        self.log.addHandler(self._nc_history)
+        self._nc_history_log.setFormatter(formatter)
+        self.log.addHandler(self._nc_history_log)
 
 class PODLoggerMixin(MDTFObjectLoggerMixin):
     def init_log(self, fmt=None):
         super(PODLoggerMixin, self).init_log(fmt=fmt)
         # add extra handler for warning banner
-        self._banner = StringIOHandler()
-        self._banner.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
+        self._banner_log = StringIOHandler()
+        self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
         formatter = logging.Formatter(
             fmt=fmt, 
             datefmt='%H:%M:%S'
         )
-        self._banner.setFormatter(formatter)
-        self.log.addHandler(self._banner)
+        self._banner_log.setFormatter(formatter)
+        self.log.addHandler(self._banner_log)
 
 class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
     def init_log(self, log_dir, fmt=None):
@@ -492,14 +482,14 @@ class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
         self.log.addHandler(handler)
 
         # add extra handler for warning banner
-        self._banner = StringIOHandler()
-        self._banner.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
+        self._banner_log = StringIOHandler()
+        self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
         formatter = logging.Formatter(
             fmt=fmt, 
             datefmt='%H:%M:%S'
         )
-        self._banner.setFormatter(formatter)
-        self.log.addHandler(self._banner)
+        self._banner_log.setFormatter(formatter)
+        self.log.addHandler(self._banner_log)
 
         # transfer stuff from root logger cache
         transfer_log_cache(self.log, close=False)
@@ -546,6 +536,28 @@ def git_info():
     if not git_hash:
         git_hash = "<couldn't get git hash>"
     return (git_branch, git_hash, git_dirty)
+
+def mdtf_log_header(title):
+    """Returns string of system debug information to use as log file header.
+    Calls :func:`git_info` to get repo status.
+    """
+    try:
+        git_branch, git_hash, _ = git_info()
+        str_ = (
+            f"{title}\n\n"
+            f"Started logging at {datetime.datetime.now()}\n"
+            f"git hash/branch: {git_hash} (on {git_branch})\n"
+            # f"uncommitted files: {git_dirty}\n"
+            f"sys.platform: '{sys.platform}'\n"
+            # f"sys.executable: '{sys.executable}'\n"
+            f"sys.version: '{sys.version}'\n"
+            # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
+        ) 
+    except Exception:
+        err_str = "Couldn't gather log file header information."
+        _log.exception(err_str)
+        str_ = f"ERROR: {err_str}\n"
+    return str_ + (80 * '-') + '\n\n'
 
 def signal_logger(caller_name, signum=None, frame=None, log=_log):
     """Lookup signal name from number and write to log.

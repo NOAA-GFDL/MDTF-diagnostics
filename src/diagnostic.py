@@ -1,5 +1,6 @@
 import os
 import dataclasses as dc
+import io
 import itertools
 import typing
 from src import util, core, data_model
@@ -298,7 +299,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         def _format(v):
             str_ = str(v)[1:-1]
             status_str = f"{v.status.name.lower()}, {v.stage.name.lower()}"
-            fail_str = (f"(exc={repr(v.last_exception)})" \
+            fail_str = (f"(exc={str(v.last_exception)})" \
                 if v.failed else 'ok')
             if getattr(v, 'translation', None) is not None:
                 trans_str = str(v.translation)
@@ -520,6 +521,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     program: str = ""
     runtime_requirements: dict = dc.field(default_factory=dict)
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
+    log_file: io.IOBase = dc.field(default=None, init=False)
 
     varlist: Varlist = None
     preprocessor: typing.Any = dc.field(default=None, compare=False)
@@ -616,6 +618,14 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                     f"{failed_v.full_name}."), self)
             except Exception as exc:
                 self.deactivate(exc)
+
+    def close_log_file(self, log_=True):
+        if self.log_file is not None:
+            if log_:
+                self.log_file.write(self.format_log(children=False))
+            self.log_file.flush() # redundant?
+            self.log_file.close()
+            self.log_file = None
 
     # -------------------------------------
 

@@ -545,10 +545,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # mark attrs with sentinel value for deletion
         for k,v in attrs.items():
             if v == xr_parser.ATTR_NOT_FOUND:
-                var.log.warning("Caught unset attribute '%s' of '%s'.", 
-                    k, name,
-                    tags=util.ObjectLogTag.NC_HISTORY
-                )
+                var.log.warning("Caught unset attribute '%s' of '%s'.", k, name)
                 attrs_to_delete.add(k)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)
@@ -595,15 +592,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def log_history_attr(self, var, ds):
         """Update ``history`` attribute on xarray Dataset *ds* with log records 
-        of any metadata modifications logged to *var*'s \_nc_history log handler.
+        of any metadata modifications logged to *var*'s \_nc_history_log log handler.
         Out of simplicity, events are written in chronological rather than 
         reverse chronological order.
         """
         attrs = getattr(ds, 'attrs', dict())
         hist = attrs.get('history', "")
-        var._nc_history.flush()
-        hist += '\n' + var._nc_history.buffer_contents()
-        var._nc_history.close()
+        var._nc_history_log.flush()
+        hist += '\n' + var._nc_history_log.buffer_contents()
+        var._nc_history_log.close()
         ds.attrs['history'] = hist
         return ds
 

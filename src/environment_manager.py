@@ -284,22 +284,24 @@ class SubprocessRuntimePODWrapper(object):
     pod: typing.Any = util.MANDATORY
     env: typing.Any = None
     env_vars: dict = dataclasses.field(default_factory=dict)
-    log_handle: io.IOBase = dataclasses.field(default=None, init=False)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
     def pre_run_setup(self):
-        self.log_handle = io.open(
+        self.pod.log_file = io.open(
             os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
             'w', encoding='utf-8'
         )
-        log_str = f"### Starting {self.pod.full_name}"
-        self.log_handle.write(log_str)
-        self.pod.log.info(log_str)
+        self.pod.log_file.write(
+            util.mdtf_log_header(f"MDTF {self.pod.name} DIAGNOSTIC LOG")
+        )
+
+        self.pod.log.info('### Starting %s', self.pod.full_name)
         self.pod.pre_run_setup()
         self.pod.log.info("%s will run using '%s' from conda env '%s'.", 
             self.pod.full_name, self.pod.program, self.env)
-        #self.log_handle.write("\n".join(
-        #    ["Found files: "] + pod.found_files + [" "]))
+
+        self.pod.log_file.write(self.pod.format_log(children=True))
+        self.pod._log_handler.reset_buffer()
         self.setup_env_vars()
 
     def setup_env_vars(self):
@@ -315,7 +317,10 @@ class SubprocessRuntimePODWrapper(object):
         self.env_vars = {k: _envvar_format(v) \
             for k,v in self.pod.pod_env_vars.items()}
         env_list = [f"  {k}: {v}" for k,v in self.env_vars.items()]
-        self.log_handle.write("\n".join(["Env vars: "] + sorted(env_list))+'\n\n')
+        self.pod.log_file.write("\n")
+        self.pod.log_file.write("\n".join(["### Shell env vars: "] + sorted(env_list)))
+        self.pod.log_file.write("\n\n")
+
 
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",
@@ -389,11 +394,10 @@ class SubprocessRuntimePODWrapper(object):
                 exc = util.PodExecutionError(log_str)
                 self.pod.deactivate(exc)
 
-        if self.log_handle is not None:
-            self.log_handle.write(log_str)
-            self.log_handle.flush() # redundant?
-            self.log_handle.close()
-            self.log_handle = None
+        if self.pod.log_file is not None:
+            self.pod.log_file.write(80 * '-' + '\n')
+            self.pod.log_file.write(log_str + '\n')
+            self.pod.log_file.flush() # redundant?
 
         if not self.pod.failed:
             self.pod.status = core.ObjectStatus.INACTIVE
@@ -456,14 +460,14 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             commands,
             shell=True, executable=self.bash_exec,
             env=env_vars, cwd=p.pod.POD_WK_DIR,
-            stdout=p.log_handle, stderr=p.log_handle,
+            stdout=p.pod.log_file, stderr=p.pod.log_file,
             universal_newlines=True, bufsize=1
         )
 
     def run(self):
         # Call cleanup method if we're killed
-        signal.signal(signal.SIGTERM, self.runtime_cleanup)
-        signal.signal(signal.SIGINT, self.runtime_cleanup)
+        signal.signal(signal.SIGTERM, self.runtime_terminate)
+        signal.signal(signal.SIGINT, self.runtime_terminate)
 
         test_list = [p for p in self.iter_active_pods()]
         if not test_list:
@@ -480,8 +484,9 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 p.setup_exception_handler(exc)
                 continue
             try:
-                p.log_handle.write(f"### Running {p.pod.full_name}\n\n")
-                p.log_handle.flush()
+                p.pod.log_file.write(f"### Start execution of {p.pod.full_name}\n")
+                p.pod.log_file.write(80 * '-' + '\n')
+                p.pod.log_file.flush()
                 p.process = self.spawn_subprocess(p, env_vars_base)
             except Exception as exc:
                 p.runtime_exception_handler(exc)
@@ -504,11 +509,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.destroy_environment(env)
         self.env_mgr.tear_down()
 
-    def runtime_cleanup(self, signum=None, frame=None):
+    def runtime_terminate(self, signum=None, frame=None):
         # try to clean up everything
         util.signal_logger(self.__class__.__name__, signum, frame, log=self.log)
         for p in self.pods:
             util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
             p.tear_down()
+            p.close_log_file(log_=True)
         self.tear_down()
         exit(1)

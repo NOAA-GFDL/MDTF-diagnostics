@@ -136,9 +136,11 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
         for var in pod.iter_children():
             new_metadata = util.ConsistentDict()
             for d_key in var.data.values():
-                glob_id = data_mgr.df['glob_id'].loc[d_key]
-                entry = data_mgr._config[glob_id]
-                new_metadata.update(entry.metadata)
+                idxs = list(d_key.value)
+                glob_ids = data_mgr.df['glob_id'].loc[idxs].to_list()
+                for id_ in glob_ids:
+                    entry = data_mgr._config[id_]
+                    new_metadata.update(entry.metadata)
             self.id_lut[var._id] = new_metadata
 
     def process_ds(self, var, ds):
@@ -189,11 +191,15 @@ class GlobbedDataFile():
 
 @util.mdtf_dataclass
 class ExplicitFileDataSourceConfigEntry():
-    glob_id: int = 0
+    glob_id: util.MDTF_ID = None
     pod_name: str = util.MANDATORY
     name: str = util.MANDATORY
     glob: str = util.MANDATORY
     metadata: dict = dataclasses.field(default_factory=dict) 
+
+    def __post_init__(self):
+        if self.glob_id is None:
+            self.glob_id = util.MDTF_ID() # assign unique ID #
 
     @property
     def full_name(self):
@@ -230,12 +236,16 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
     # CASE_ROOT_DIR: str
     # log: dataclasses.InitVar = _log
     convention: str = core._NO_TRANSLATION_CONVENTION # hard-code naming convention
-    config_file: str = util.MANDATORY
+    config_file: str = None
 
     def __post_init__(self, log=_log):
         """Validate user input.
         """
         super(ExplicitFileDataAttributes, self).__post_init__(log=log)
+
+        if not self.config_file:
+            config = core.ConfigManager()
+            self.config_file = config.get('config_file', '')
 
         if self.convention != core._NO_TRANSLATION_CONVENTION:
             log.debug("Received incompatible convention '%s'; setting to '%s'.", 
@@ -266,7 +276,6 @@ class ExplicitFileDataSource(
     def __init__(self, case_dict, parent):
         self.catalog = None
         self._config = dict()
-        self._glob_id = itertools.count(start=1) # IDs for globs
 
         super(ExplicitFileDataSource, self).__init__(case_dict, parent)
 
@@ -289,7 +298,6 @@ class ExplicitFileDataSource(
             for v_name, v_data in v_dict.items():
                 entry = ExplicitFileDataSourceConfigEntry.from_struct(
                     pod_name, v_name, v_data)
-                entry.glob_id = next(self._glob_id)
                 self._config[entry.glob_id] = entry
         # don't bother to validate here -- if we didn't specify files for all 
         # vars it'll manifest as a failed query & be logged as error there.

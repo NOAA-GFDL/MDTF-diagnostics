@@ -28,7 +28,8 @@
             "name": "config_file",
             "metavar" : "<PATH>",
             "help": "Path to JSON configuration file mapping POD variables to filesystem relative paths.",
-            "default" : ""
+            "default" : "",
+            "action": "PathAction"
           }
         ]
       }

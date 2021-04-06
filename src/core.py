@@ -636,8 +636,12 @@ class NullTranslationFieldlist(util.Singleton):
            based on the file's actual contents.
         """
         coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)
-        return util.coerce_to_dataclass(
-            var, TranslatedVarlistEntry, 
+        # TODO: coerce_to_dataclass runs into recursion limit on var; fix that
+        return TranslatedVarlistEntry(
+            name=var.name,
+            attrs=var.attrs,
+            standard_name=var.standard_name,
+            units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
             log=var.log

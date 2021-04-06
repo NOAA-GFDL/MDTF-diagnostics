@@ -317,13 +317,14 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.pods[pod_name] = \
                 self._DiagnosticClass.from_config(pod_name, parent=self)
         for pod in self.iter_children():
-            try:
-                self.setup_pod(pod)
-            except Exception as exc:
-                chained_exc = util.chain_exc(exc, "setting up DataSource", 
-                    util.PodConfigError)
-                pod.deactivate(chained_exc)
-                continue
+            self.setup_pod(pod)
+            # try:
+                
+            # except Exception as exc:
+            #     chained_exc = util.chain_exc(exc, "setting up DataSource", 
+            #         util.PodConfigError)
+            #     pod.deactivate(chained_exc)
+            #     continue
 
         if self.status == core.ObjectStatus.NOTSET and \
             any(p.status == core.ObjectStatus.ACTIVE for p in self.iter_children()):

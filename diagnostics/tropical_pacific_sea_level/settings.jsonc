@@ -56,8 +56,7 @@
         "path_variable": "ZOS_FILE",
         "units": "m",
         "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "requirement": "required"
         },
         
       "tauuo": {
@@ -65,8 +64,7 @@
         "path_variable": "TAUUO_FILE",
         "units": "m s-1",
         "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "requirement": "required"
         },
         
       "tauvo": {
@@ -74,8 +72,7 @@
         "path_variable": "TAUVO_FILE",
         "units": "m s-1",
         "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "requirement": "required"
         },
         
       "areacello": {
@@ -83,7 +80,6 @@
         "path_variable": "AREACELLO_FILE",
         "units": "m2",
         "dimensions" : ["nlat", "nlon"],
-        "dimensions_ordered": true,
         "requirement": "required"
         }
   }

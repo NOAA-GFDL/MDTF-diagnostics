@@ -234,23 +234,17 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
+    # convention: str
     # log: dataclasses.InitVar = _log
-    convention: str = core._NO_TRANSLATION_CONVENTION # hard-code naming convention
     config_file: str = None
 
     def __post_init__(self, log=_log):
         """Validate user input.
         """
         super(ExplicitFileDataAttributes, self).__post_init__(log=log)
-
         if not self.config_file:
             config = core.ConfigManager()
             self.config_file = config.get('config_file', '')
-
-        if self.convention != core._NO_TRANSLATION_CONVENTION:
-            log.debug("Received incompatible convention '%s'; setting to '%s'.", 
-                self.convention, core._NO_TRANSLATION_CONVENTION)
-            self.convention = core._NO_TRANSLATION_CONVENTION
 
 explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.

@@ -66,12 +66,8 @@
           "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
           "default" : false
         },{
-          "name": "disable_CF_name_checks",
-          "help": "If set, disables functionality based on the CF standard_name attribute metadata in model data.",
-          "default" : false
-        },{
-          "name": "disable_unit_checks",
-          "help": "If set, disables functionality based on the units attribute metadata in model data. See POD documentation for required input data units.",
+          "name": "overwrite_file_metadata",
+          "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile).",
           "default" : false
         },{
           "name": "data_manager",

@@ -638,6 +638,10 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         self.setup_pod_directories()
         self.set_entry_point()
         self.set_interpreter()
+        config = core.ConfigManager()
+        if config.get('overwrite_file_metadata', False):
+            self.log.warning(('User has disabled preprocessing functionality that '
+                'uses input metadata.'), tags=util.ObjectLogTag.BANNER)
         # set up env vars
         self.pod_env_vars.update(data_source.env_vars)
 

@@ -317,10 +317,9 @@ class DatasetParser():
     """
     def __init__(self):
         config = dict() # core.ConfigManager()
-        self.skip_std_name = config.get('disable_CF_name_checks', False)
-        self.skip_units = config.get('disable_unit_checks', False)
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
 
-        self.fallback_cal = 'proleptic_gregorian' # calendar used if no attribute found
+        self.fallback_cal = 'proleptic_gregorian' # CF calendar used if no attribute found
         self.attrs_backup = dict()
         self.log = _log # temporary
 
@@ -508,8 +507,7 @@ class DatasetParser():
         for var in ds.variables:
             _restore_one(var, ds[var].attrs)
 
-
-    # --- Methods for comparing attrs against our record (TranslatedVarlistEntry) ---
+    # --- Methods for comparing Dataset attrs against our record  ---
 
     def compare_attr(self, our_attr_tuple, ds_attr_tuple, comparison_func=None, 
         fill_ours=True, fill_ds=False, overwrite_ours=None):
@@ -542,7 +540,16 @@ class DatasetParser():
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
         if comparison_func is None:
             comparison_func = (lambda x,y: x == y)
-        can_fill_ours = (fill_ours and ds_attr != ATTR_NOT_FOUND) # abbreviate
+        # told to update our metadata, but only do so if we weren't told to
+        # ignore ds's metadata and the metadata is actually present on ds
+        fill_ours = (fill_ours and ds_attr != ATTR_NOT_FOUND)
+        if overwrite_ours is not None:
+            overwrite_ours = (overwrite_ours and ds_attr != ATTR_NOT_FOUND)
+        if self.overwrite_ds:
+            # user set CLI option to force overwrite
+            fill_ds = True
+            fill_ours = False
+            overwrite_ours = False
 
         if ds_attr == ATTR_NOT_FOUND or (not ds_attr):
             # ds_attr wasn't defined
@@ -559,7 +566,7 @@ class DatasetParser():
 
         if not our_attr:
             # our_attr wasn't defined
-            if can_fill_ours:
+            if fill_ours:
                 if not (our_attr_name == 'name' and our_var.name == ds_attr):
                     self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
                         our_attr_name, our_var.name, ds_attr)
@@ -573,7 +580,7 @@ class DatasetParser():
         if not comparison_func(our_attr, ds_attr):
             # both attrs present, but have different values
             if overwrite_ours is None:
-                if can_fill_ours:
+                if fill_ours:
                     # update our attr with value from ds, but also raise error
                     setattr(our_var, our_attr_name, ds_attr)
                 raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
@@ -586,9 +593,14 @@ class DatasetParser():
                 return
             else:
                 # set ds attr to our value
+                if self.overwrite_ds:
+                    msg_addon = " (user set overwrite_file_metadata)"
+                else:
+                    msg_addon = ''
                 self.log.info(("Changing %s for '%s' in dataset from '%s' to our "
-                    "value '%s'."),
-                    ds_attr_name, our_var.name, ds_attr, our_attr)
+                    "value '%s'%s."),
+                    ds_attr_name, our_var.name, ds_attr, our_attr, msg_addon
+                )
                 ds_var.attrs[ds_attr_name] = str(our_attr)
                 return
         else:
@@ -649,22 +661,17 @@ class DatasetParser():
         dataset we downloaded (*ds_var*) and our expectations based on the 
         model's convention (*our_var*).
 
-        Normal operation is to raise a :class:`~util.UnitsUndefinedError` for missing 
-        'units' attributes in the DataSet. This can be reduced to a warning by 
-        setting the ``disable_unit_checks`` CLI flag, which sets skip_units=True 
-        here.
-
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds_var: xarray DataArray.
         """
         # will raise UnitsUndefinedError or log warning if unit attribute missing
-        self.check_unit(ds_var)
+        self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units inequivalent, raise MetadataEvent
         self.reconcile_attr(our_var, ds_var, 'units', 
             comparison_func=units.units_equivalent,
-            fill_ours=True, fill_ds=(self.skip_units)
+            fill_ours=True, fill_ds=True
         )
         # If that passed, check equality of units. Log unequal units as a warning.
         # not an exception, since preprocessor can/will convert them.
@@ -672,7 +679,7 @@ class DatasetParser():
             # test units only, not quantities+units
             self.reconcile_attr(our_var, ds_var, 'units', 
                 comparison_func=units.units_equal, 
-                fill_ours=True, fill_ds=(self.skip_units)
+                fill_ours=True, fill_ds=True
             )
         except util.MetadataEvent as exc:
             self.log.warning("%s %r.", util.exc_descriptor(exc), exc)
@@ -690,7 +697,7 @@ class DatasetParser():
             ds_var: xarray DataArray.
         """
         # will raise UnitsUndefinedError or log warning if unit attribute missing
-        self.check_unit(ds_var)
+        self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units inequivalent, raise MetadataEvent
         self.reconcile_attr(our_var, ds_var, 'units', 
             comparison_func=units.units_reftime_equivalent,
@@ -756,11 +763,8 @@ class DatasetParser():
             )
         except util.MetadataError:
             # get here if units attr not defined on ds_var
-            if self.skip_units:
-                _compare_value_only(our_var, ds_var)
-                return
-            else:
-                raise
+            _compare_value_only(our_var, ds_var)
+            return
         # If that passed, check equality of units. Log unequal units as a warning.
         # not an exception, since preprocessor can/will convert them.
         try:
@@ -788,7 +792,8 @@ class DatasetParser():
         # Inherit standard_name from our_coord if not present (regardless of 
         # skip_std_name)
         self.reconcile_attr(our_coord, bounds, 'standard_name',
-            fill_ours=False, fill_ds=True)
+            fill_ours=False, fill_ds=True
+        )
         # Inherit units from our_coord if not present (regardless of skip_units)
         self.reconcile_attr(our_coord, bounds, 'units', 
             comparison_func=units.units_equal,
@@ -949,33 +954,17 @@ class DatasetParser():
         t_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
-    def check_standard_name(self, ds_var):
+    def check_metadata(self, ds_var, *attr_names):
         """Wrapper for :meth:`~DatasetParser.normalize_attr`, specialized to the
         case of getting a variable's standard_name.
         """
-        if ds_var.attrs.get('standard_name', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
-            if self.skip_std_name:
-                self.log.warning((f"'standard_name' attribute not found on "
-                    f"{ds_var.name}."))
-            else:
-                # normal operation
-                raise util.MetadataError(("NetCDF metadata attribute 'standard_name' not "
-                    f"found on variable {ds_var.name}. Please provide this attribute "
-                    "in input model data or run with --disable_CF_name_checks."))
-
-    def check_unit(self, ds_var):
-        """Wrapper for :meth:`~DatasetParser.normalize_attr`, specialized to the 
-        case of getting a variable's units.
-        """
-        if ds_var.attrs.get('units', ATTR_NOT_FOUND) == ATTR_NOT_FOUND:
-            if self.skip_units:
-                self.log.warning(f"'units' attribute not found on {ds_var.name}.")
-            else:
-                # normal operation
-                raise util.UnitsUndefinedError(("NetCDF metadata attribute 'units' "
-                    f"not found on variable {ds_var.name}. Please provide this "
-                    "attribute in input model data or run with "
-                    "--disable_unit_checks."))
+        for attr in attr_names:
+            if attr not in ds_var.attrs:
+                ds_var.attrs[attr] = ATTR_NOT_FOUND
+            if ds_var.attrs[attr] == ATTR_NOT_FOUND:
+                raise util.MetadataEvent(
+                    f"'{attr}' metadata attribute not found on '{ds_var.name}'."
+                )
 
     def check_ds_attrs(self, ds, var=None):
         """Final checking of xarray Dataset attribute dicts before starting
@@ -993,8 +982,10 @@ class DatasetParser():
             # coordinates.
             names_to_check = [var.name] + list(ds[var.name].dims)
         for v_name in names_to_check:
-            self.check_standard_name(ds[v_name])
-            self.check_unit(ds[v_name])
+            try:
+                self.check_metadata(ds[v_name], 'standard_name', 'units')
+            except util.MetadataEvent as exc:
+                self.log.warning(f"{str(exc)}")
 
     # --- Top-level methods -----------------------------------------------
 

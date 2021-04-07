@@ -460,11 +460,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     provided by :class:`PreprocessorFunctionBase` functions.
     """
     _functions = util.abstract_attribute()
+    _XarrayParserClass = xr_parser.DatasetParser
 
     def __init__(self, data_mgr, pod):
         config = core.ConfigManager()
-        self.skip_std_name = config.get('disable_CF_name_checks', False)
-        self.skip_units = config.get('disable_unit_checks', False)
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
 
         self.WK_DIR = data_mgr.MODEL_WK_DIR
         self.convention = data_mgr.attrs.convention
@@ -631,7 +631,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             raise util.chain_exc(exc, (f"loading "
                 f"dataset for {var.full_name}."), util.DataPreprocessEvent)
         try:
-            ds = xr_parser.DatasetParser().parse(ds, var)
+            ds = self._XarrayParserClass().parse(ds, var)
         except Exception as exc:
             raise util.chain_exc(exc, (f"parsing file "
                 f"metadata for {var.full_name}."), util.DataPreprocessEvent)
@@ -754,8 +754,8 @@ def applicable_functions():
     # PrecipRateToFluxFunction relies on standard_name attribute; skip it if 
     # the user told us to not use that attribute
     config = core.ConfigManager()
-    if config.get('disable_CF_name_checks', False):
-        # omit PrecipRateToFluxFunction
+    if config.get('overwrite_file_metadata', False):
+        # omit functions requiring metadata
         return (
             CropDateRangeFunction, ConvertUnitsFunction, 
             ExtractLevelFunction, RenameVariablesFunction

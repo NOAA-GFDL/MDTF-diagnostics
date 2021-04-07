@@ -293,32 +293,6 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             )
         else:
             pod.log.info('\tNo files are missing.')
-
-    def html_warning_text(self):
-        """Generate text for an optional warning banner in the output index page.
-
-        Returns:
-            Either the string which should be displayed in the warning banner,
-            or None if no banner should be displayed.
-        """
-        # determine if checks were disabled for package run
-        config = core.ConfigManager()
-        skip_std_name = config.get('disable_CF_name_checks', False)
-        skip_units = config.get('disable_unit_checks', False)
-
-        if not skip_std_name:
-            if not skip_units:
-                return None # no warning
-            else:
-                warn_str = "units"
-        else:
-            if not skip_units:
-                warn_str = "CF standard name"
-            else:
-                warn_str = "units and CF standard name"
-                
-        return (f"This run of the package was performed without checks on "
-            f"{warn_str} attributes in input model metadata.")
         
     def make_html(self, case, cleanup=True):
         """Add header and footer to CASE_TEMP_HTML.
@@ -335,11 +309,6 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         util.append_html_template(
             self.html_src_file('mdtf_header.html'), dest, template_dict
         )
-        warning_text = self.html_warning_text()
-        if warning_text is not None:
-            # add a warning banner to output
-            util.append_html_template(self.html_src_file('warning_snippet.html'), 
-                dest, {'MDTF_WARNING_BANNER_TEXT': warning_text})
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict

@@ -1,8 +1,13 @@
 """'mdtf info' subcommand for online (command-line) help about installed PODs.
 """
 import os
+import sys
 import collections
+from json import JSONDecodeError
 from src import util
+
+import logging
+_log = logging.getLogger(__name__)
 
 PodDataTuple = collections.namedtuple(
     'PodDataTuple', 'sorted_lists pod_data realm_data'
@@ -19,9 +24,16 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
                 os.path.join(code_root, _pod_dir, pod, _pod_settings)
             )
             assert 'settings' in d
+        except JSONDecodeError as exc:
+            raise util.PodConfigError(
+                f"Syntax error in settings.jsonc: {str(exc)}.",
+                pod
+            )
         except Exception as exc:
             raise util.PodConfigError(
-                "Syntax error encountered when reading settings.jsonc.", pod) from exc
+                f"Error encountered in reading settings.jsonc: {repr(exc)}.",
+                pod
+            )
         return d
 
     # get list of pods
@@ -50,8 +62,8 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             d = _load_one_json(p)
             assert d
         except Exception as exc:
-            bad_pods.append(p)
-            continue
+            _log.critical(exc) # exc_info=sys.exc_info())
+            exit(1)
         pods[p] = d
         # PODs requiring data from multiple realms get stored in the dict
         # under a tuple of those realms; realms stored indivudally in realm_list

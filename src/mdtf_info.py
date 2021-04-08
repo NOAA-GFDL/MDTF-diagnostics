@@ -9,7 +9,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 PodDataTuple = collections.namedtuple(
-    'PodDataTuple', 'sorted_lists pod_data realm_data'
+    'PodDataTuple', 'sorted_pods sorted_realms pod_data realm_data'
 )
 def load_pod_settings(code_root, pod=None, pod_list=None):
     """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
@@ -89,10 +89,8 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
         exit(1)
     return PodDataTuple(
         pod_data=pods, realm_data=realms,
-        sorted_lists={
-            "pods": pod_list,
-            "realms": sorted(list(realm_list), key=str.lower)
-        }
+        sorted_pods=pod_list,
+        sorted_realms=sorted(list(realm_list), key=str.lower)
     )
 
 
@@ -107,9 +105,9 @@ class InfoCLIHandler(object):
 
         self.code_root = code_root
         pod_info_tuple = load_pod_settings(self.code_root)
-        self.pod_list = pod_info_tuple.sorted_lists.get('pods', [])
+        self.pod_list = pod_info_tuple.sorted_pods
+        self.realm_list = pod_info_tuple.sorted_realms
         self.pods = pod_info_tuple.pod_data
-        self.realm_list = pod_info_tuple.sorted_lists.get('realms', [])
         self.realms = pod_info_tuple.realm_data
 
         # build list of recognized topics, in order

@@ -98,9 +98,6 @@ class MDTFFramework(object):
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, pod_list, pod_info_tuple):
-        pod_data = pod_info_tuple.pod_data # pod name -> contents of settings.jsonc
-        pod_realms = pod_info_tuple.realm_data # realm name -> list of POD names
-
         args = util.to_iter(pod_list, set)
         bad_args = []
         pods = []
@@ -111,10 +108,11 @@ class MDTFFramework(object):
             elif arg == 'example' or arg == 'examples':
                 # add example PODs
                 pods.extend([p for p in pod_data if p.startswith('example')])
-            elif arg in pod_realms.keys():
+            elif arg in pod_info_tuple.realm_data.keys():
+                # realm_data: realm name -> list of POD names
                 # add all PODs for this realm
                 pods.extend(pod_realms[arg])
-            elif arg in pod_data.keys():
+            elif arg in pod_info_tuple.pod_data.keys():
                 # add POD by name
                 pods.append(arg)
             else:
@@ -124,8 +122,8 @@ class MDTFFramework(object):
 
         if bad_args: 
             valid_args = ['all', 'examples'] \
-                + pod_info_tuple.sorted_lists['realms'] \
-                + pod_info_tuple.sorted_lists['pods'] 
+                + pod_info_tuple.sorted_realms \
+                + pod_info_tuple.sorted_pods
             _log.critical(("The following POD identifiers were not recognized: "
                 "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
                 ', '.join(f"'{p}'" for p in bad_args),

@@ -7,8 +7,6 @@ import datetime
 import subprocess
 import signal
 
-from . import basic, exceptions
-
 import logging
 import logging.config
 import logging.handlers

@@ -15,7 +15,6 @@ if sys.version_info.major != 3 or sys.version_info.minor < 7:
         f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
-import logging
 from src import cli
 from src.util import logs
 

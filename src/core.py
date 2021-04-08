@@ -98,6 +98,7 @@ class MDTFFramework(object):
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, pod_list, pod_info_tuple):
+        pod_data = pod_info_tuple.pod_data # pod names -> contents of settings file
         args = util.to_iter(pod_list, set)
         bad_args = []
         pods = []
@@ -108,11 +109,11 @@ class MDTFFramework(object):
             elif arg == 'example' or arg == 'examples':
                 # add example PODs
                 pods.extend([p for p in pod_data if p.startswith('example')])
-            elif arg in pod_info_tuple.realm_data.keys():
+            elif arg in pod_info_tuple.realm_data:
                 # realm_data: realm name -> list of POD names
                 # add all PODs for this realm
-                pods.extend(pod_realms[arg])
-            elif arg in pod_info_tuple.pod_data.keys():
+                pods.extend(pod_info_tuple.realm_data[arg])
+            elif arg in pod_data:
                 # add POD by name
                 pods.append(arg)
             else:

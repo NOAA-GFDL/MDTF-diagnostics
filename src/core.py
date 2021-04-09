@@ -314,7 +314,7 @@ class TempDirManager(util.Singleton):
 
 # --------------------------------------------------------------------
 
-_NO_TRANSLATION_CONVENTION = 'Null' # naming convention for disabling translation
+_NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translation
 
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
@@ -594,7 +594,7 @@ class Fieldlist():
             convention=self.name, log=var.log
         )
 
-class NullTranslationFieldlist(util.Singleton):
+class NoTranslationFieldlist(util.Singleton):
     """Class which partially implements the :class:`Fieldlist` interface but 
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from 
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
@@ -703,7 +703,7 @@ class VariableTranslator(util.Singleton):
         """
         if conv_name == _NO_TRANSLATION_CONVENTION:
             # hard-coded special case: do no translation
-            return NullTranslationFieldlist()
+            return NoTranslationFieldlist()
         else:
             # normal case: translate according to data source's naming convention
             conv_name = self.get_convention_name(conv_name)

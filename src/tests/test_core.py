@@ -93,7 +93,7 @@ class TestVariableTranslator(unittest.TestCase):
         }
         varlist = diagnostic.Varlist.from_struct(dummy_varlist, parent=None)
         ve = varlist.vars[0]
-        translate = core.VariableTranslator().get_convention('Null')
+        translate = core.VariableTranslator().get_convention('None')
         tve = translate.translate(ve)
         self.assertEqual(ve.name, tve.name)
         self.assertEqual(ve.standard_name, tve.standard_name)

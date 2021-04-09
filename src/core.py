@@ -148,29 +148,48 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
 # -----------------------------------------------------------------------------
 
+ConfigTuple = collections.namedtuple(
+    'ConfigTuple', 'name backup_filename contents'
+)
+ConfigTuple.__doc__ = """
+    Class wrapping general structs used for configuration
+"""
+
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
         case_d=None, log_config=None, unittest=False):
         self._unittest = unittest
+        self._configs = dict()
         if self._unittest:
             self.pod_data = dict()
-            self.backup_config = dict()
         else:
             # normal code path
             self.pod_data = pod_info_tuple.pod_data
             self.update(cli_obj.config)
-            # copy serializable version of parsed settings, in order to write 
-            # backup config file
-            d = copy.deepcopy(cli_obj.config) 
-            d = {k:v for k,v in d.items() if not k.endswith('_is_default_')}
-            self.backup_config = d
-            self.backup_config['case_list'] = copy.deepcopy(case_d)
+            backup_config = self.backup_config(cli_obj, case_d)
+            self._configs[backup_config.name] = backup_config
+            self._configs['log_config'] = ConfigTuple(
+                name='log_config',
+                backup_filename=None,
+                contents=log_config
+            )
         if global_env_vars is None:
             self.global_env_vars = dict()
         else:
             self.global_env_vars = global_env_vars
-        self.log_config = log_config
 
+    def backup_config(self, cli_obj, case_d):
+        """Copy serializable version of parsed settings, in order to write 
+        backup config file.
+        """
+        d = copy.deepcopy(cli_obj.config) 
+        d = {k:v for k,v in d.items() if not k.endswith('_is_default_')}
+        d['case_list'] = copy.deepcopy(case_d)
+        return ConfigTuple(
+            name='backup_config',
+            backup_filename='config_save.json',
+            contents=d
+        )
 
 class PathManager(util.Singleton, util.NameSpace):
     """:class:`~util.Singleton` holding the root directories for all paths used 

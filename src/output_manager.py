@@ -251,7 +251,6 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     """
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
-    _backup_config_file_name = 'config_save.json'
 
     def __init__(self, case):
         config = core.ConfigManager()
@@ -348,16 +347,20 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             os.remove(self.CASE_TEMP_HTML)
         shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
 
-    def backup_config_file(self):
+    def backup_config_files(self):
         """Record settings in file config_save.json for rerunning.
         """
         config = core.ConfigManager()
-        out_file = os.path.join(self.WK_DIR, self._backup_config_file_name)
-        if not self.file_overwrite:
-            out_file, _ = util.bump_version(out_file)
-        elif os.path.exists(out_file):
-            self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_file)
-        util.write_json(config.backup_config, out_file, log=self.obj.log)
+        for config_tup in config._configs:
+            if config_tup.backup_filename is None:
+                continue
+            out_file = os.path.join(self.WK_DIR, config_tup.backup_filename)
+            if not self.file_overwrite:
+                out_file, _ = util.bump_version(out_file)
+            elif os.path.exists(out_file):
+                self.obj.log.info("%s: Overwriting '%s'.", 
+                    self.obj.full_name, out_file)
+            util.write_json(config_tup.contents, out_file, log=self.obj.log)
 
     def make_tar_file(self):
         """Make tar file of web/bitmap output.
@@ -421,7 +424,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 pod.status = core.ObjectStatus.SUCCEEDED
 
         self.make_html()
-        self.backup_config_file()
+        self.backup_config_files()
         self.write_data_log_file()
         if self.make_variab_tar:
             _ = self.make_tar_file()

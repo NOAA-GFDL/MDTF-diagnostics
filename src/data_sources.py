@@ -120,8 +120,8 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
         super(MetadataRewriteParser, self).__init__(data_mgr, pod)
 
         config = core.ConfigManager()
-        assert config.get('overwrite_file_metadata', False)
         self.disable = config.get('disable_preprocessor', False)
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
         self.id_lut = dict()
 
     def setup(self, data_mgr, pod):
@@ -213,11 +213,14 @@ class ExplicitFileDataSourceConfigEntry():
     pod_name: str = util.MANDATORY
     name: str = util.MANDATORY
     glob: str = util.MANDATORY
-    metadata: dict = dataclasses.field(default_factory=dict) 
+    metadata: dict = dataclasses.field(default_factory=dict)
+    _has_user_metadata: bool = None
 
     def __post_init__(self):
         if self.glob_id is None:
             self.glob_id = util.MDTF_ID() # assign unique ID #
+        if self._has_user_metadata is None:
+            self._has_user_metadata = bool(self.metadata)
 
     @property
     def full_name(self):
@@ -227,13 +230,16 @@ class ExplicitFileDataSourceConfigEntry():
     def from_struct(cls, pod_name, var_name, v_data):
         if isinstance(v_data, dict):
             glob = v_data.get('files', "")
-            metadata = v_data.get('metadata', dict())
+            metadata = v_data.get('metadata', dict()),
+            _has_user_metadata = ('metadata' in v_data)
         else:
             glob = v_data
             metadata = dict()
+            _has_user_metadata = False
         return cls(
             pod_name = pod_name, name = var_name, 
-            glob = glob, metadata = metadata
+            glob = glob, metadata = metadata,
+            _has_user_metadata=_has_user_metadata
         )
 
     def to_file_glob_tuple(self):
@@ -269,11 +275,6 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
                 "(--config-file)."))
             exit(1)
 
-        if not config.get('overwrite_file_metadata', False):
-            log.info(("Using --data_manager=ExplicitFileDataSource implies the "
-                "use of the --overwrite-file-metadata flag."))
-            config['overwrite_file_metadata'] = True
-
 explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
     expt_cols = dm.DataFrameQueryColumnGroup([])
@@ -298,6 +299,7 @@ class ExplicitFileDataSource(
     def __init__(self, case_dict, parent):
         self.catalog = None
         self._config = dict()
+        self._has_user_metadata = None
 
         super(ExplicitFileDataSource, self).__init__(case_dict, parent)
 
@@ -316,6 +318,16 @@ class ExplicitFileDataSource(
         """Parse contents of JSON config file into a list of 
         :class`ExplicitFileDataSourceConfigEntry` objects.
         """
+        # store contents in ConfigManager so they can be backed up in output
+        # (HTMLOutputManager.backup_config_files())
+        config = core.ConfigManager()
+        config._configs['data_source_config'] = core.ConfigTuple(
+            name='data_source_config',
+            backup_filename='ExplicitFileDataSource_config.json',
+            contents=config_d
+        )
+
+        # parse contents
         for pod_name, v_dict in config_d.items():
             for v_name, v_data in v_dict.items():
                 entry = ExplicitFileDataSourceConfigEntry.from_struct(
@@ -323,6 +335,19 @@ class ExplicitFileDataSource(
                 self._config[entry.glob_id] = entry
         # don't bother to validate here -- if we didn't specify files for all 
         # vars it'll manifest as a failed query & be logged as error there.
+
+        # set overwrite_metadata flag if needed
+        self._has_user_metadata = any(
+            x._has_user_metadata for x in self._config.values()
+        )
+        if self._has_user_metadata and \
+            not config.get('overwrite_file_metadata', False):
+            self.log.warning(("Requesting metadata edits in ExplicitFileDataSource "
+                "implies the use of the --overwrite-file-metadata flag. Input "
+                "file metadata will be overwritten."), 
+                tags=util.ObjectLogTag.BANNER
+            )
+            config['overwrite_file_metadata'] = True
 
     def iter_globs(self):
         """Iterator returning :class:`FileGlobTuple` instances. The generated 

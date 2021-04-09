@@ -1327,14 +1327,15 @@ class OnTheFlyGlobQueryMixin(
         """
         pass
 
-    def iter_files(self, rel_path_glob):
+    def iter_files(self, path_glob):
         """Generator that yields instances of \_FileRegexClass generated from 
         relative paths of files in CATALOG_DIR. Only paths that match the regex
         in \_FileRegexClass are returned.
         """
         path_offset = len(os.path.join(self.attrs.CASE_ROOT_DIR, ""))
-        for path in glob.iglob(os.path.join(self.CATALOG_DIR, rel_path_glob),
-            recursive=True):
+        if not os.path.isabs(path_glob):
+            path_glob = os.path.join(self.CATALOG_DIR, path_glob)
+        for path in glob.iglob(path_glob, recursive=True):
             yield self._FileRegexClass.from_string(path, path_offset)
 
     def generate_catalog(self):

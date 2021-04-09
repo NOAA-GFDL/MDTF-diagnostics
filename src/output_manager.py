@@ -2,6 +2,7 @@ import os
 import abc
 import datetime
 import glob
+import io
 import shutil
 from src import util, core, verify_links
 
@@ -61,10 +62,11 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             pod.deactivate(exc)
             raise
         self.CODE_ROOT = output_mgr.CODE_ROOT
-        self.WK_DIR = output_mgr.WK_DIR
-        self._pod = pod
+        self.CODE_DIR = pod.POD_CODE_DIR
+        self.WK_DIR = pod.POD_WK_DIR
+        self.obj = pod
 
-    def make_pod_html(self, pod):
+    def make_pod_html(self):
         """Perform templating on POD's html results page(s).
 
         A wrapper for :func:`~util.append_html_template`. Looks for all 
@@ -73,18 +75,18 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         :func:`~util.recursive_copy`).
         """
         test_path = os.path.join(
-            pod.POD_CODE_DIR, self.pod_html_template_file_name(pod)
+            self.obj.POD_CODE_DIR, self.pod_html_template_file_name(self.obj)
         )
         if not os.path.isfile(test_path):
             # POD's top-level HTML template needs to exist
             raise util.MDTFFileNotFoundError(test_path)
-        template_d = html_templating_dict(pod)
+        template_d = html_templating_dict(self.obj)
         # copy and template all .html files, since PODs can make sub-pages
-        source_files = util.find_files(pod.POD_CODE_DIR, '*.html')
+        source_files = util.find_files(self.CODE_DIR, '*.html')
         util.recursive_copy(
             source_files,
-            pod.POD_CODE_DIR,
-            pod.POD_WK_DIR,
+            self.CODE_DIR,
+            self.WK_DIR,
             copy_function=(
                 lambda src, dest: util.append_html_template(
                 src, dest, template_dict=template_d, append=False
@@ -92,7 +94,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             overwrite=True
         )
 
-    def convert_pod_figures(self, pod, src_subdir, dest_subdir):
+    def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
         ghostscript.
 
@@ -115,14 +117,14 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         eps_convert_flags = ("-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 "
         "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
 
-        abs_src_subdir = os.path.join(pod.POD_WK_DIR, src_subdir)
-        abs_dest_subdir = os.path.join(pod.POD_WK_DIR, dest_subdir)
+        abs_src_subdir = os.path.join(self.WK_DIR, src_subdir)
+        abs_dest_subdir = os.path.join(self.WK_DIR, dest_subdir)
         files = util.find_files(
             abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
         )
         for f in files:
-            f_stem, _  = os.path.splitext(f)
+            f_stem, _ = os.path.splitext(f)
             # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's 
             # template for multi-page output). If input .ps/.pdf file has multiple 
             # pages, this will generate 1 png per page, counting from 1.
@@ -132,12 +134,12 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                     f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
                 )
             except Exception as exc:
-                pod.log.error("%s produced malformed plot: %s", 
-                    pod.full_name, f[len(abs_src_subdir):])
+                self.obj.log.error("%s produced malformed plot: %s", 
+                    self.obj.full_name, f[len(abs_src_subdir):])
                 if isinstance(exc, util.MDTFCalledProcessError):
-                    pod.log.debug(
+                    self.obj.log.debug(
                         "gs error encountered when converting %s for %s:\n%s",
-                        pod.full_name, f[len(abs_src_subdir):], 
+                        self.obj.full_name, f[len(abs_src_subdir):], 
                         getattr(exc, "output", "")
                     )
                 continue
@@ -165,7 +167,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             copy_function=shutil.move, overwrite=False
         )
 
-    def cleanup_pod_files(self, pod):
+    def cleanup_pod_files(self):
         """Copy and remove remaining files to `POD_WK_DIR`.
 
         In order, this 1) copies any bitmap figures in any subdirectory of
@@ -178,25 +180,25 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         """
         # copy premade figures (if any) to output 
         files = util.find_files(
-            pod.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
+            self.obj.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )
         for f in files:
-            shutil.copy2(f, os.path.join(pod.POD_WK_DIR, 'obs'))
+            shutil.copy2(f, os.path.join(self.WK_DIR, 'obs'))
 
         # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not self.save_ps:
-            for d in util.find_files(pod.POD_WK_DIR, 'PS'+os.sep):
+            for d in util.find_files(self.WK_DIR, 'PS'+os.sep):
                 shutil.rmtree(d)
         # delete netCDF files, keep everything else
         if self.save_non_nc:
-            for f in util.find_files(pod.POD_WK_DIR, '*.nc'):
+            for f in util.find_files(self.WK_DIR, '*.nc'):
                 os.remove(f)
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:
-            for d in util.find_files(pod.POD_WK_DIR, 'netCDF'+os.sep):
+            for d in util.find_files(self.WK_DIR, 'netCDF'+os.sep):
                 shutil.rmtree(d)
-            for f in util.find_files(pod.POD_WK_DIR, '*.nc'):
+            for f in util.find_files(self.WK_DIR, '*.nc'):
                 os.remove(f)
 
     def make_output(self):
@@ -210,11 +212,11 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         to a bitmap format for webpage display; 3) Copies all requested files to
         the output directory and deletes temporary files.
         """
-        if not self._pod.failed:
-            self.make_pod_html(self._pod)
-            self.convert_pod_figures(self._pod, os.path.join('model', 'PS'), 'model')
-            self.convert_pod_figures(self._pod, os.path.join('obs', 'PS'), 'obs')
-            self.cleanup_pod_files(self._pod)
+        if not self.obj.failed:
+            self.make_pod_html()
+            self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
+            self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
+            self.cleanup_pod_files()
 
 class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     """OutputManager that collects all the PODs' output as HTML pages.
@@ -235,7 +237,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         self.CODE_ROOT = case.code_root
         self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
         self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
-        self.case = case
+        self.obj = case
 
     @property
     def _tarball_file_path(self):
@@ -263,6 +265,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             src = self.html_src_file('pod_result_snippet.html')
         util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
         # add a warning banner if needed
+        assert hasattr(pod, '_banner_log')
         banner_str = pod._banner_log.buffer_contents()
         if banner_str:
             banner_str = banner_str.replace('\n', '<br>\n')
@@ -294,16 +297,16 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         else:
             pod.log.info('\tNo files are missing.')
         
-    def make_html(self, case, cleanup=True):
+    def make_html(self, cleanup=True):
         """Add header and footer to CASE_TEMP_HTML.
         """
         dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
-            case.log.warning("%s: '%s' exists, deleting.", 
-                self._html_file_name, case.name)
+            self.obj.log.warning("%s: '%s' exists, deleting.", 
+                self._html_file_name, self.obj.name)
             os.remove(dest)
 
-        template_dict = case.env_vars.copy()
+        template_dict = self.obj.env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         util.append_html_template(
@@ -317,7 +320,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             os.remove(self.CASE_TEMP_HTML)
         shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
 
-    def backup_config_file(self, case):
+    def backup_config_file(self):
         """Record settings in file config_save.json for rerunning.
         """
         config = core.ConfigManager()
@@ -325,18 +328,18 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if not self.file_overwrite:
             out_file, _ = util.bump_version(out_file)
         elif os.path.exists(out_file):
-            case.log.info("%s: Overwriting '%s'.", case.full_name, out_file)
-        util.write_json(config.backup_config, out_file, log=case.log)
+            self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_file)
+        util.write_json(config.backup_config, out_file, log=self.obj.log)
 
-    def make_tar_file(self, case):
+    def make_tar_file(self):
         """Make tar file of web/bitmap output.
         """
         out_path = self._tarball_file_path
         if not self.file_overwrite:
             out_path, _ = util.bump_version(out_path)
-            case.log.info("%s: Creating '%s'.", case.full_name, out_path)
+            self.obj.log.info("%s: Creating '%s'.", self.obj.full_name, out_path)
         elif os.path.exists(out_path):
-            case.log.info("%s: Overwriting '%s'.", case.full_name, out_path)
+            self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_path)
         tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
@@ -345,18 +348,18 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         return out_path
 
-    def copy_to_output(self, case):
+    def copy_to_output(self):
         """Copy all files to the specified output directory.
         """
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
-        case.log.debug("%s: Copy '%s' to '%s'.", case.full_name, 
+        self.obj.log.debug("%s: Copy '%s' to '%s'.", self.obj.full_name, 
             self.WK_DIR, self.OUT_DIR)
         try:
             if os.path.exists(self.OUT_DIR):
                 if not self.overwrite:
-                    case.log.error("%s: '%s' exists, overwriting.", 
-                        case.full_name, self.OUT_DIR)
+                    self.obj.log.error("%s: '%s' exists, overwriting.", 
+                        self.obj.full_name, self.OUT_DIR)
                 shutil.rmtree(self.OUT_DIR)
         except Exception:
             raise
@@ -368,7 +371,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         # create empty text file for PODs to append to; equivalent of 'touch'
         open(self.CASE_TEMP_HTML, 'w').close()
-        for pod in self.case.iter_children():
+        for pod in self.obj.iter_children():
             try:
                 pod_output = self._PodOutputManagerClass(pod, self)
                 pod_output.make_output()
@@ -377,7 +380,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             except Exception as exc:
                 pod.deactivate(exc)
                 continue
-        for pod in self.case.iter_children():
+        for pod in self.obj.iter_children():
             try:
                 self.append_result_link(pod)
             except Exception as exc:
@@ -389,12 +392,12 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             if not pod.failed:
                 pod.status = core.ObjectStatus.SUCCEEDED
 
-        self.make_html(self.case)
-        self.backup_config_file(self.case)
+        self.make_html()
+        self.backup_config_file()
         if self.make_variab_tar:
-            _ = self.make_tar_file(self.case)
-        self.copy_to_output(self.case)
-        if not self.case.failed \
-            and not any(p.failed for p in self.case.iter_children()):
-            self.case.status = core.ObjectStatus.SUCCEEDED
+            _ = self.make_tar_file()
+        self.copy_to_output()
+        if not self.obj.failed \
+            and not any(p.failed for p in self.obj.iter_children()):
+            self.obj.status = core.ObjectStatus.SUCCEEDED
 

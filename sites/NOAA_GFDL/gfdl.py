@@ -610,13 +610,13 @@ class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
         """
         if not self.frepp_mode:
             super(GFDLHTMLPodOutputManager, self).make_output()
-        elif self._pod._has_placeholder:
-            self._pod.log.debug('POD %s has frepp placeholder, generating output.', 
-                self._pod.name)
+        elif getattr(self.obj, '_has_placeholder', False):
+            self.obj.log.debug('POD %s has frepp placeholder, generating output.', 
+                self.obj.name)
             super(GFDLHTMLPodOutputManager, self).make_output()
         else: 
-            self._pod.log.debug(('POD %s does not have frepp placeholder; not '
-                'generating output.'), self._pod.name)
+            self.obj.log.debug(('POD %s does not have frepp placeholder; not '
+                'generating output.'), self.obj.name)
 
 class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
     _PodOutputManagerClass = GFDLHTMLPodOutputManager
@@ -632,14 +632,14 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
 
         super(GFDLHTMLOutputManager, self).__init__(case)
 
-    def make_html(self, case, cleanup=False):
+    def make_html(self, cleanup=False):
         """Never cleanup html if we're in frepp_mode, since framework may run 
         later when another component finishes. Instead just append current
         progress to CASE_TEMP_HTML.
         """
         prev_html = os.path.join(self.OUT_DIR, self._html_file_name)
         if self.frepp_mode and os.path.exists(prev_html):
-            case.log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
+            self.obj.log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
             with io.open(prev_html, 'r', encoding='utf-8') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
@@ -649,12 +649,12 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             if os.path.exists(self.CASE_TEMP_HTML):
                 mode = 'a'
             else:
-                case.log.warning("No file at %s.", self.CASE_TEMP_HTML)
+                self.obj.log.warning("No file at %s.", self.CASE_TEMP_HTML)
                 mode = 'w'
             with io.open(self.CASE_TEMP_HTML, mode, encoding='utf-8') as f2:
                 f2.write(contents)
         super(GFDLHTMLOutputManager, self).make_html(
-            case, cleanup=(not self.frepp_mode)
+            cleanup=(not self.frepp_mode)
         )
 
     @property
@@ -664,18 +664,18 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         file_name = self.WK_DIR + '.tar'
         return os.path.join(paths.WORKING_DIR, file_name)
 
-    def make_tar_file(self, case):
+    def make_tar_file(self):
         """Make the tar file locally in WK_DIR and gcp to destination,
         since OUT_DIR might be mounted read-only.
         """
         paths = core.PathManager()
-        out_path = super(GFDLHTMLOutputManager, self).make_tar_file(case)
+        out_path = super(GFDLHTMLOutputManager, self).make_tar_file()
         _, file_name = os.path.split(out_path)
         tar_dest_path = os.path.join(paths.OUTPUT_DIR, file_name)
-        gfdl_util.gcp_wrapper(out_path, tar_dest_path, log=case.log)
+        gfdl_util.gcp_wrapper(out_path, tar_dest_path, log=self.obj.log)
         return tar_dest_path
 
-    def copy_to_output(self, case):
+    def copy_to_output(self):
         """Use gcp for transfer, since OUTPUT_DIR might be mounted read-only.
         Also has special logic to handle frepp_mode.
         """
@@ -683,33 +683,33 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             return # no copying needed
         if self.frepp_mode:
             # only copy PODs that ran, whether they succeeded or not
-            for pod in case.pods.values():
+            for pod in self.obj.iter_children():
                 if pod._has_placeholder:
                     gfdl_util.gcp_wrapper(
                         pod.POD_WK_DIR, pod.POD_OUT_DIR, log=pod.log
                     )
             # copy all case-level files
-            case.log.debug("Copying case-level files in %s", self.WK_DIR)
+            self.obj.log.debug("Copying case-level files in %s", self.WK_DIR)
             for f in os.listdir(self.WK_DIR):
                 if os.path.isfile(os.path.join(self.WK_DIR, f)):
-                    case.log.debug("Found case-level file %s", f)
+                    self.obj.log.debug("Found case-level file %s", f)
                     gfdl_util.gcp_wrapper(
-                        os.path.join(self.WK_DIR, f), self.OUT_DIR, log=case.log
+                        os.path.join(self.WK_DIR, f), self.OUT_DIR, log=self.obj.log
                     )
         else:
             # copy everything at once
             if os.path.exists(self.OUT_DIR):
                 if self.overwrite:
                     try:
-                        case.log.error('%s exists, attempting to remove.', self.OUT_DIR)
+                        self.obj.log.error('%s exists, attempting to remove.', self.OUT_DIR)
                         gfdl_util.rmtree_wrapper(self.OUT_DIR)
                     except OSError:
                         # gcp will not overwrite dirs, so forced to save under
                         # a different name despite overwrite=True
-                        case.log.error(("Couldn't remove %s (probably mounted read"
+                        self.obj.log.error(("Couldn't remove %s (probably mounted read"
                             "-only); will rename new directory."), self.OUT_DIR)
                 else:
-                    case.log.error("%s exists; will rename new directory.", self.OUT_DIR)
+                    self.obj.log.error("%s exists; will rename new directory.", self.OUT_DIR)
             try:
                 if os.path.exists(self.OUT_DIR):
                     # check again, since rmtree() might have succeeded
@@ -717,11 +717,11 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
                         util.bump_version(self.OUT_DIR)
                     new_wkdir, _ = \
                         util.bump_version(self.WK_DIR, new_v=version)
-                    case.log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
+                    self.obj.log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
                     shutil.move(self.WK_DIR, new_wkdir)
                     self.WK_DIR = new_wkdir
-                gfdl_util.gcp_wrapper(self.WK_DIR, self.OUT_DIR, log=case.log)
+                gfdl_util.gcp_wrapper(self.WK_DIR, self.OUT_DIR, log=self.obj.log)
             except Exception:
                 raise # only delete MODEL_WK_DIR if copied successfully
-            case.log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
+            self.obj.log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
             gfdl_util.rmtree_wrapper(self.WK_DIR)

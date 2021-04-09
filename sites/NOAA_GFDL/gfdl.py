@@ -200,7 +200,7 @@ class GFDL_GCP_FileDataSourceBase(
     using GCP, and which may be invoked via frepp.
     """
     _DiagnosticClass = GfdlDiagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    _PreprocessorClass = preprocessor.DefaultPreprocessor
 
     _FileRegexClass = util.abstract_attribute()
     _DirectoryRegex = util.abstract_attribute()

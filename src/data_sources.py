@@ -525,6 +525,6 @@ class CMIP6LocalFileDataSource(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    _PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = explicitFileDataSource_col_spec
 

@@ -316,7 +316,8 @@ class DatasetParser():
     """Class which acts as a container for MDTF-specific dataset parsing logic.
     """
     def __init__(self):
-        config = dict() # core.ConfigManager()
+        config = core.ConfigManager()
+        self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
 
         self.fallback_cal = 'proleptic_gregorian' # CF calendar used if no attribute found
@@ -1019,6 +1020,9 @@ class DatasetParser():
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs_backup(ds)
         self.check_calendar(ds)
+
+        if self.disable:
+            return ds # stop here; don't attempt to reconcile
         if var is not None:
             self.reconcile_variable(var.translation, ds)
             self.check_ds_attrs(ds, var.translation)

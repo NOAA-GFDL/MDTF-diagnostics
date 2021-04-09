@@ -793,8 +793,7 @@ class MDTFFramework(MDTFObjectBase):
     def _cli_post_parse_hook(self, cli_obj):
         # gives subclasses the ability to customize CLI handler after parsing
         # although most of the work done by parse_mdtf_args
-        if cli_obj.config.get('dry_run', False):
-            cli_obj.config['test_mode'] = True
+        pass
 
     def dispatch_classes(self, cli_obj):
         def _dispatch(setting):
@@ -820,9 +819,24 @@ class MDTFFramework(MDTFObjectBase):
         """Parse script options returned by the CLI. For greater customizability,
         most of the functionality is spun out into sub-methods.
         """
+        self.parse_flags(cli_obj)
         self.parse_env_vars(cli_obj)
         self.parse_pod_list(cli_obj, pod_info_tuple)
         self.parse_case_list(cli_obj)
+
+    def parse_flags(self, cli_obj):
+        if cli_obj.config.get('dry_run', False):
+            cli_obj.config['test_mode'] = True
+
+        if cli_obj.config.get('disable_preprocessor', False):
+            _log.warning(("User disabled metadata checks and unit conversion in "
+                "preprocessor."), tags=util.ObjectLogTag.BANNER)
+        if cli_obj.config.get('overwrite_file_metadata', False):
+            _log.warning(("User chose to overwrite input file metadata with "
+                "framework values (convention = '%s')."), 
+                cli_obj.config.get('convention', ''), 
+                tags=util.ObjectLogTag.BANNER
+            )
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?

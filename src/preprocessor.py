@@ -459,7 +459,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     here is parsing data axes and CF attributes; all other functionality is 
     provided by :class:`PreprocessorFunctionBase` functions.
     """
-    _functions = util.abstract_attribute()
     _XarrayParserClass = xr_parser.DatasetParser
 
     def __init__(self, data_mgr, pod):
@@ -475,6 +474,30 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
+
+    @property
+    def _functions(self):
+        """Determine which preprocessor functions are applicable to the current
+        package run, defaulting to all of them.
+
+        Returns:
+            tuple of classes (inheriting from :class:`PreprocessorFunctionBase`) 
+            listing the preprocessing functions to be called, in order.
+        """
+        config = core.ConfigManager()
+        if config.get('disable_preprocessor', False):
+            # omit unit conversion functions; following two functions necessary
+            # in all cases to obtain correct output
+            return (
+                CropDateRangeFunction, RenameVariablesFunction
+            )
+        else:
+            # normal operation: run all functions
+            return (
+                CropDateRangeFunction, 
+                PrecipRateToFluxFunction, ConvertUnitsFunction, 
+                ExtractLevelFunction, RenameVariablesFunction
+            )
 
     def edit_request(self, data_mgr, pod):
         """Edit POD's data request, based on the child class's functionality. If
@@ -743,47 +766,18 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
 # -------------------------------------------------
 
-def applicable_functions():
-    """Determine which preprocessor functions are applicable to the current
-    package run, defaulting to all of them.
-
-    Returns:
-        tuple of classes (inheriting from :class:`PreprocessorFunctionBase`) 
-        listing the preprocessing functions to be called, in order.
-    """
-    # PrecipRateToFluxFunction relies on standard_name attribute; skip it if 
-    # the user told us to not use that attribute
-    config = core.ConfigManager()
-    if config.get('overwrite_file_metadata', False):
-        # omit functions requiring metadata
-        return (
-            CropDateRangeFunction, ConvertUnitsFunction, 
-            ExtractLevelFunction, RenameVariablesFunction
-        )
-    else:
-        # normal operation: run all functions
-        return (
-            CropDateRangeFunction, 
-            PrecipRateToFluxFunction, ConvertUnitsFunction, 
-            ExtractLevelFunction, RenameVariablesFunction
-        )
-
 class SampleDataPreprocessor(SingleFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` intended for use 
     on sample model data distributed with the package. Assumes all data is in 
     one netCDF file.
     """
-    # ExtractLevelFunction needed for NCAR-CAM5.timeslice for Travis
-    @property
-    def _functions(self):
-        return applicable_functions()
+    # Need to include all functions; ExtractLevelFunction needed for 
+    # NCAR-CAM5.timeslice for Travis CI
+    pass
 
-class MDTFDataPreprocessor(DaskMultiFilePreprocessor):
+class DefaultPreprocessor(DaskMultiFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` for the general 
     use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
 
-    @property
-    def _functions(self):
-        return applicable_functions()

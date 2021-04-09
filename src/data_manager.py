@@ -211,7 +211,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     """
     _AttributesClass = util.abstract_attribute()
     _DiagnosticClass = util.abstract_attribute()
-    _PreprocessorClass = util.abstract_attribute()
+    _PreprocessorClass = preprocessor.DefaultPreprocessor
     _DataKeyClass = util.abstract_attribute()
 
     _deactivation_log_level = logging.ERROR # default log level for failure

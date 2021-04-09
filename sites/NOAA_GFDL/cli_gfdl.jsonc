@@ -66,6 +66,10 @@
           "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
           "default" : false
         },{
+          "name": "disable_preprocessor",
+          "help": "If set, disables metadata checks and unit conversion by the framework prior to POD execution.",
+          "default" : false
+        },{
           "name": "overwrite_file_metadata",
           "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile).",
           "default" : false

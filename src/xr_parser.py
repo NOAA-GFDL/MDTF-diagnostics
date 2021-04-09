@@ -312,17 +312,23 @@ with warnings.catch_warnings():
 
 # ========================================================================
 
-class DatasetParser():
+class DefaultDatasetParser():
     """Class which acts as a container for MDTF-specific dataset parsing logic.
     """
-    def __init__(self):
+    def __init__(self, data_mgr, pod):
         config = core.ConfigManager()
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
 
         self.fallback_cal = 'proleptic_gregorian' # CF calendar used if no attribute found
         self.attrs_backup = dict()
-        self.log = _log # temporary
+        self.log = pod.log # temporary
+
+    def setup(self, data_mgr, pod):
+        """Method to do additional configuration immediately before :meth:`parse`
+        is called on each variable for *pod*.
+        """
+        pass
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
@@ -507,6 +513,11 @@ class DatasetParser():
         _restore_one('Dataset', ds.attrs)
         for var in ds.variables:
             _restore_one(var, ds[var].attrs)
+
+    def _post_normalize_hook(self, var, ds):
+        # Allow child classes to perform additional operations, regardless of
+        # whether we go on to do reconciliation/checks
+        pass
 
     # --- Methods for comparing Dataset attrs against our record  ---
 
@@ -900,12 +911,13 @@ class DatasetParser():
                     ds_coord_name)
                 self.reconcile_name(coord, ds_coord_name, overwrite_ours=True)
 
-    def reconcile_variable(self, translated_var, ds):
+    def reconcile_variable(self, var, ds):
         """Top-level method for the MDTF-specific dataset validation: attempts to
         reconcile name, standard_name and units attributes for the variable and
         coordinates in *translated_var* (our expectation, based on the DataSource's
         naming convention) with attributes actually present in the Dataset *ds*.
         """
+        translated_var = var.translation
         # check name, std_name, units on variable itself
         self.reconcile_names(translated_var, ds, translated_var.name, 
             overwrite_ours=None)
@@ -956,7 +968,7 @@ class DatasetParser():
             'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
     def check_metadata(self, ds_var, *attr_names):
-        """Wrapper for :meth:`~DatasetParser.normalize_attr`, specialized to the
+        """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized to the
         case of getting a variable's standard_name.
         """
         for attr in attr_names:
@@ -967,7 +979,7 @@ class DatasetParser():
                     f"'{attr}' metadata attribute not found on '{ds_var.name}'."
                 )
 
-    def check_ds_attrs(self, ds, var=None):
+    def check_ds_attrs(self, var, ds):
         """Final checking of xarray Dataset attribute dicts before starting
         functions in :mod:`src.preprocessor`.
 
@@ -981,7 +993,8 @@ class DatasetParser():
         else:
             # Only check attributes on the dependent variable var_name and its 
             # coordinates.
-            names_to_check = [var.name] + list(ds[var.name].dims)
+            tv_name = var.translation.name
+            names_to_check = [tv_name] + list(ds[tv_name].dims)
         for v_name in names_to_check:
             try:
                 self.check_metadata(ds[v_name], 'standard_name', 'units')
@@ -990,7 +1003,7 @@ class DatasetParser():
 
     # --- Top-level methods -----------------------------------------------
 
-    def parse(self, ds, var=None):
+    def parse(self, var, ds):
         """Calls the above metadata parsing functions in the intended order; 
         intended to be called immediately after the Dataset is opened.
 
@@ -1020,14 +1033,15 @@ class DatasetParser():
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs_backup(ds)
         self.check_calendar(ds)
+        self._post_normalize_hook(var, ds)
 
         if self.disable:
             return ds # stop here; don't attempt to reconcile
         if var is not None:
-            self.reconcile_variable(var.translation, ds)
-            self.check_ds_attrs(ds, var.translation)
+            self.reconcile_variable(var, ds)
+            self.check_ds_attrs(var, ds)
         else:
-            self.check_ds_attrs(ds, None)
+            self.check_ds_attrs(None, ds)
         return ds
     
     @staticmethod

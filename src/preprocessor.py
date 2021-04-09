@@ -246,7 +246,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             return ds
 
         # var.translation.units set by edit_request will have been overwritten by
-        # DatasetParser to whatever they are in ds. Change them back.
+        # DefaultDatasetParser to whatever they are in ds. Change them back.
         tv = var.translation # abbreviate
         if std_name in self._rate_d:
             # requested rate, received alternate for flux
@@ -415,7 +415,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 return ds
             else:
                 # value (on var.translation) has already been checked by 
-                # xr_parser.DatasetParser
+                # xr_parser.DefaultDatasetParser
                 var.log.debug(("Exit %s for %s: %s %s Z level requested and provided "
                     "by dataset."), 
                     self.__class__.__name__, var.full_name, our_z.value, our_z.units)
@@ -459,7 +459,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     here is parsing data axes and CF attributes; all other functionality is 
     provided by :class:`PreprocessorFunctionBase` functions.
     """
-    _XarrayParserClass = xr_parser.DatasetParser
+    _XarrayParserClass = xr_parser.DefaultDatasetParser
 
     def __init__(self, data_mgr, pod):
         config = core.ConfigManager()
@@ -472,6 +472,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # HACK only used for _FillValue workaround in clean_output_encoding
         self.output_to_ncl = ('ncl' in pod.runtime_requirements)
 
+        # initialize xarray parser
+        self.parser = self._XarrayParserClass(data_mgr, pod)
         # initialize PreprocessorFunctionBase objects
         self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
 
@@ -512,12 +514,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Method to do additional configuration immediately before :meth:`process`
         is called on each variable for *pod*.
         """
-        pass
+        self.parser.setup(data_mgr, pod)
 
     # arguments passed to xr.open_dataset and xr.open_mfdataset
     open_dataset_kwargs = {
         "engine": "netcdf4",
-        "decode_cf": False,     # all decoding done by DatasetParser
+        "decode_cf": False,     # all decoding done by DefaultDatasetParser
         "decode_coords": False, # so disable it here
         "decode_times": False,
         "use_cftime": False
@@ -546,7 +548,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         writing to a netCDF file, as a workaround for the following known issues:
 
         - Missing attributes may be set to the sentinel value ``ATTR_NOT_FOUND``
-          by :class:`xr_parser.DatasetParser`. Depending on context, this may not
+          by :class:`xr_parser.DefaultDatasetParser`. Depending on context, this may not
           be an error, but attributes with this value need to be deleted before
           writing.
         - Delete the ``_FillValue`` attribute for all independent variables 
@@ -654,7 +656,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             raise util.chain_exc(exc, (f"loading "
                 f"dataset for {var.full_name}."), util.DataPreprocessEvent)
         try:
-            ds = self._XarrayParserClass().parse(ds, var)
+            ds = self.parser.parse(var, ds)
         except Exception as exc:
             raise util.chain_exc(exc, (f"parsing file "
                 f"metadata for {var.full_name}."), util.DataPreprocessEvent)

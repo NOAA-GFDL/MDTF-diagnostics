@@ -633,7 +633,7 @@ class NullTranslationFieldlist(util.Singleton):
 
         .. note::
            We return a copy of the :class:`~diagnostic.VarlistEntry` because 
-           logic in :class:`~xr_parser.DatasetParser` alters the translation
+           logic in :class:`~xr_parser.DefaultDatasetParser` alters the translation
            based on the file's actual contents.
         """
         coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)

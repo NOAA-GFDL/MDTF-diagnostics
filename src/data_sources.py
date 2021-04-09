@@ -3,7 +3,7 @@ implemented in src/data_manager.py, selected by the user via  ``--data_manager``
 """
 import os
 import dataclasses
-from src import util, core, diagnostic, preprocessor, cmip6
+from src import util, core, diagnostic, xr_parser, preprocessor, cmip6
 from src import data_manager as dm
 import pandas as pd
 
@@ -109,28 +109,26 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 
 # ----------------------------------------------------------------------------
 
-class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
-    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
-    look up and apply edits to metadata that are stored in 
-    :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
-    of :class:`ExplicitFileDataSource`.
+class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
+    """After loading and parsing the metadata on dataset *ds* but before
+    applying the preprocessing functions, update attrs on *ds* with the new 
+    metadata values that were specified in :class:`ExplicitFileDataSource`\'s 
+    config file.
     """
-    _file_preproc_functions = []
-
-    @property
-    def _functions(self):
-        return preprocessor.applicable_functions()
-    
     def __init__(self, data_mgr, pod):
         assert isinstance(data_mgr, ExplicitFileDataSource)
-        super(MetadataRewritePreprocessor, self).__init__(data_mgr, pod)
+        super(MetadataRewriteParser, self).__init__(data_mgr, pod)
+
+        config = core.ConfigManager()
+        assert config.get('overwrite_file_metadata', False)
+        self.disable = config.get('disable_preprocessor', False)
         self.id_lut = dict()
-        
+
     def setup(self, data_mgr, pod):
         """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to 
         the set of metadata that we need to alter.
         """
-        super(MetadataRewritePreprocessor, self).setup(data_mgr, pod)
+        super(MetadataRewriteParser, self).setup(data_mgr, pod)
         
         for var in pod.iter_children():
             new_metadata = util.ConsistentDict()
@@ -142,11 +140,17 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
                     new_metadata.update(entry.metadata)
             self.id_lut[var._id] = new_metadata
 
-    def process_ds(self, var, ds):
-        """After loading and parsing the metadata on dataset *ds* but before
-        applying the preprocessing functions, update attrs on *ds* with the new 
+    def _post_normalize_hook(self, var, ds):
+        """After loading the metadata on dataset *ds* but before
+        reconciling it with the record, update attrs with the new 
         metadata values that were specified in :class:`ExplicitFileDataSource`\'s 
         config file.
+
+        Normal operation is to set the changed attrs on the VarlistEntry 
+        translation, and then have these overwrite attrs in *ds* in the inherited 
+        :meth:`xr_parser.DefaultDatasetParser.reconcile_variable` method. If
+        the user set the ``--disable-preprocessor`` flag, this is skipped, so 
+        instead we set the attrs directly on *ds*.
         """
         tv_name = var.translation.name # abbreviate
         assert tv_name in ds # should have been validated by xr_parser
@@ -172,8 +176,23 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
                     k, var.full_name, v,
                     tags=[util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER]
                 )
+
+        if self.disable:
+            # skipping reconcile_variable(), so set attrs on ds directly
             ds_attrs[k] = v
-        return super(MetadataRewritePreprocessor, self).process_ds(var, ds)
+        else:
+            # messages above refer to changing attrs on ds, but for this (normal)
+            # case we change attrs on var.translation, so that we can use the 
+            # code path for the overwrite_file_metadata option.
+            var.translation.attrs[k] = v
+
+class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
+    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
+    look up and apply edits to metadata that are stored in 
+    :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
+    of :class:`ExplicitFileDataSource`.
+    """
+    _XarrayParserClass = MetadataRewriteParser
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
@@ -241,9 +260,19 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         """Validate user input.
         """
         super(ExplicitFileDataAttributes, self).__post_init__(log=log)
+
+        config = core.ConfigManager()
         if not self.config_file:
-            config = core.ConfigManager()
             self.config_file = config.get('config_file', '')
+        if not self.config_file:
+            log.critical(("No configuration file found for ExplicitFileDataSource "
+                "(--config-file)."))
+            exit(1)
+
+        if not config.get('overwrite_file_metadata', False):
+            log.info(("Using --data_manager=ExplicitFileDataSource implies the "
+                "use of the --overwrite-file-metadata flag."))
+            config['overwrite_file_metadata'] = True
 
 explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.

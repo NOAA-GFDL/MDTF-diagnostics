@@ -280,8 +280,11 @@ class TagMatchFilter(logging.Filter):
 
 # standardize 
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
-ObjectLogTag = basic.MDTFEnum("ObjectLogTag", "NC_HISTORY BANNER", 
-    module=__name__)
+ObjectLogTag = basic.MDTFEnum(
+    "ObjectLogTag", 
+    "NC_HISTORY BANNER IN_FILE OUT_FILE", 
+    module=__name__
+)
 ObjectLogTag.__doc__ = """Standardized values that the package-defined *tags* 
 attribute on :py:class:`~logging.LogRecord` objects can take, and that 
 :class:`TagMatchFilter` can listen for.
@@ -399,6 +402,12 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         self._log_handler.setFormatter(formatter)
         self.log.addHandler(self._log_handler)
 
+        self.init_extra_log_handlers()
+
+    def init_extra_log_handlers(self):
+        # add and name class-specific log handlers
+        pass
+
     @property
     def last_exception(self):
         if self.log.has_exceptions:
@@ -434,8 +443,9 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         return _hanging_indent(str_, 0, 4) + '\n'
 
 class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
-    def init_log(self, fmt=None):
-        super(VarlistEntryLoggerMixin, self).init_log(fmt=fmt)
+    """Mixin configuring log functionality for :class:`~diagnostic.VarlistEntry`.
+    """
+    def init_extra_log_handlers(self):
         # add extra handler for additions to netCDF history attribute
         self._nc_history_log = StringIOHandler()
         self._nc_history_log.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY)) 
@@ -446,22 +456,41 @@ class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
         self._nc_history_log.setFormatter(formatter)
         self.log.addHandler(self._nc_history_log)
 
-class PODLoggerMixin(MDTFObjectLoggerMixin):
-    def init_log(self, fmt=None):
-        super(PODLoggerMixin, self).init_log(fmt=fmt)
-        # add extra handler for warning banner
+class _CaseAndPODHandlerMixin():
+    """Common methods for :class:`PODLoggerMixin`, :class:`CaseLoggerMixin`.
+    """
+    def init_extra_log_handlers(self):
+        # add handler for warning banner
         self._banner_log = StringIOHandler()
         self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
         formatter = logging.Formatter(
-            fmt=fmt, 
-            datefmt='%H:%M:%S'
+            fmt='%(levelname)s: %(message)s', datefmt='%H:%M:%S'
         )
         self._banner_log.setFormatter(formatter)
         self.log.addHandler(self._banner_log)
 
-class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
+        # add handlers for log of data files used
+        formatter = logging.Formatter(fmt='%(message)s', datefmt='%H:%M:%S')
+        self._in_file_log = StringIOHandler()
+        self._in_file_log.addFilter(TagMatchFilter(tags=ObjectLogTag.IN_FILE))
+        self._in_file_log.setFormatter(formatter)
+        self.log.addHandler(self._in_file_log)
+        self._out_file_log = StringIOHandler()
+        self._out_file_log.addFilter(TagMatchFilter(tags=ObjectLogTag.OUT_FILE))
+        self._out_file_log.setFormatter(formatter)
+        self.log.addHandler(self._out_file_log)
+
+class PODLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
+    """Mixin configuring log functionality for :class:`~diagnostic.Diagnostic`.
+    """
+    pass
+
+class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):    
+    """Mixin configuring log functionality for :class:`~data_manager.DataSourceBase`.
+    """
     def init_log(self, log_dir, fmt=None):
         # Mixin class, so no __init__ for simplicity
+        # NB: no super(); redefining the method
         if fmt is None:
             fmt = ("%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line "
                 "%(lineno)d):\n%(message)s")
@@ -483,20 +512,12 @@ class CaseLoggerMixin(MDTFObjectLoggerMixinBase):
         self._log_handler.setFormatter(formatter)
         self.log.addHandler(self._log_handler)
 
-        # add extra handler for warning banner
-        self._banner_log = StringIOHandler()
-        self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
-        formatter = logging.Formatter(
-            fmt=fmt, datefmt='%H:%M:%S'
-        )
-        self._banner_log.setFormatter(formatter)
-        self.log.addHandler(self._banner_log)
+        self.init_extra_log_handlers()
 
         # transfer stuff from root logger cache
         transfer_log_cache(self.log, close=False)
 
     def close_log_file(self, log=True):
-        self._log_handler.flush() # redundant?
         self._log_handler.close()
         self._log_handler = None
 

@@ -49,6 +49,33 @@ class HTMLSourceFileMixin():
         """Path to POD's HTML output file in the working directory."""
         return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
 
+    def write_data_log_file(self):
+        """Writes *.data.log file to output containing info on data files used.
+        """
+        log_file = io.open(
+            os.path.join(self.WK_DIR, self.obj.name+".data.log"), 
+            'w', encoding='utf-8'
+        )
+        if isinstance(self, HTMLPodOutputManager):
+            str_1 = f"POD {self.obj.name}"
+            str_2 = 'this POD'
+        elif isinstance(self, HTMLOutputManager):
+            str_1 = f"case {self.obj.name}"
+            str_2 = 'PODs'
+        else:
+            raise AssertionError
+        
+        log_file.write(f"# Input model data files used in this run of {str_1}:\n")
+        assert hasattr(self.obj, '_in_file_log')
+        log_file.write(self.obj._in_file_log.buffer_contents())
+
+        log_file.write(f"# Preprocessed files used as input to {str_2}:")
+        log_file.write(("# (Depending on CLI flags, these will have been deleted "
+            "if the package exited successfully.)\n"))
+        assert hasattr(self.obj, '_out_file_log')
+        log_file.write(self.obj._out_file_log.buffer_contents())
+        log_file.close()
+
 class HTMLPodOutputManager(HTMLSourceFileMixin):
     def __init__(self, pod, output_mgr):
         """Performs cleanup tasks when the POD has finished running.
@@ -212,6 +239,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         to a bitmap format for webpage display; 3) Copies all requested files to
         the output directory and deletes temporary files.
         """
+        self.write_data_log_file()
         if not self.obj.failed:
             self.make_pod_html()
             self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
@@ -394,6 +422,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
 
         self.make_html()
         self.backup_config_file()
+        self.write_data_log_file()
         if self.make_variab_tar:
             _ = self.make_tar_file()
         self.copy_to_output()

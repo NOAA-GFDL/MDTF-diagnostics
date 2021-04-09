@@ -624,7 +624,6 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         if self.log_file is not None:
             if log:
                 self.log_file.write(self.format_log(children=False))
-            self.log_file.flush() # redundant?
             self.log_file.close()
             self.log_file = None
 

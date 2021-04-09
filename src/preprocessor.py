@@ -531,7 +531,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:
             raise ValueError(f"{var.full_name}: Expected one file, got {path_list}.")
-        var.log.debug("xr.open_dataset on %s", path_list[0])
+        var.log.debug("Loaded '%s'.", path_list[0], tags=util.ObjectLogTag.IN_FILE)
         return xr.open_dataset(
             path_list[0], 
             **self.open_dataset_kwargs
@@ -631,7 +631,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # TODO: remove any netCDF Variables that were present in the input file 
         # (and ds) but not needed for PODs' data request
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
-        var.log.debug("xr.Dataset.to_netcdf on %s", var.dest_path)
+        var.log.debug("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
         else:
@@ -747,8 +747,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             return _file_preproc(ds)
         else:
             assert not var.is_static # just to be safe
-            var.log.debug("xr.open_mfdataset on %d files:\n\t%s", 
-                len(var.local_data), var.local_data)
+            var.log.debug("Loaded multi-file dataset of %d files:\n%s", 
+                len(var.local_data), 
+                '\n'.join(4*' ' + f"'{f}'" for f in var.local_data),
+                tags=util.ObjectLogTag.IN_FILE
+            )
             return xr.open_mfdataset(
                 var.local_data,
                 combine="by_coords",

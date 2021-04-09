@@ -1,7 +1,6 @@
 """'mdtf info' subcommand for online (command-line) help about installed PODs.
 """
 import os
-import sys
 import collections
 from json import JSONDecodeError
 from src import util
@@ -62,7 +61,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
             d = _load_one_json(p)
             assert d
         except Exception as exc:
-            _log.critical(exc) # exc_info=sys.exc_info())
+            _log.critical(exc)
             exit(1)
         pods[p] = d
         # PODs requiring data from multiple realms get stored in the dict

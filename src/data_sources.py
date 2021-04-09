@@ -3,7 +3,6 @@ implemented in src/data_manager.py, selected by the user via  ``--data_manager``
 """
 import os
 import dataclasses
-import itertools
 from src import util, core, diagnostic, preprocessor, cmip6
 from src import data_manager as dm
 import pandas as pd

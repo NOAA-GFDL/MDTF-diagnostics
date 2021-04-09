@@ -6,8 +6,6 @@ import abc
 import collections
 import dataclasses as dc
 import glob
-import itertools
-import re
 import signal
 import textwrap
 import typing
@@ -499,6 +497,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # set_experiment() successfully
             try:
                 self.set_experiment()
+                break # successful exit
             except util.DataExperimentEvent:
                 # couldn't set consistent experiment attributes. Try again b/c 
                 # we've deactivated problematic pods/vars.
@@ -507,7 +506,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 self.log.exception("%s while setting experiment: %r", 
                     util.exc_descriptor(exc), exc)
                 raise exc
-            break # successful exit
         else:
             # only hit this if we don't break
             raise util.DataQueryEvent(

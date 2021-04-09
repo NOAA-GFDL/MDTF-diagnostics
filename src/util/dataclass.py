@@ -9,7 +9,6 @@ import re
 import typing
 from . import basic
 from . import exceptions
-from . import logs
 
 import logging
 _log = logging.getLogger(__name__)

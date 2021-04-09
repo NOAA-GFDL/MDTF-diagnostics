@@ -286,7 +286,11 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         # first value yielded by _iter_alternates is the var itself, so drop 
         # that and then start by returning var's alternates
         iterator_ = iter(_iter_alternates())
-        next(iterator_)
+        try:
+            next(iterator_)
+        except StopIteration:
+            # should never get here, for above reason
+            yield from []
         yield from iterator_
 
     @staticmethod

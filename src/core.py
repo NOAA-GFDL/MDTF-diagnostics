@@ -954,12 +954,13 @@ class MDTFFramework(MDTFObjectBase):
             case_list_in = [cli_d]
         else:
             case_list_in = util.to_iter(cli_obj.file_case_list)
+        self.cases = dict()
         for i, case_d in enumerate(case_list_in):
             case = self.parse_case(i, case_d, cli_obj, pod_info_tuple)
             if case:
                 self.cases[case['CASENAME']] = case
         if not self.cases:
-            _log.critical(("ERROR: no valid entries in case_list. Please specify "
+            _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
             exit(1)

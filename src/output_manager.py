@@ -351,7 +351,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """Record settings in file config_save.json for rerunning.
         """
         config = core.ConfigManager()
-        for config_tup in config._configs:
+        for config_tup in config._configs.values():
             if config_tup.backup_filename is None:
                 continue
             out_file = os.path.join(self.WK_DIR, config_tup.backup_filename)

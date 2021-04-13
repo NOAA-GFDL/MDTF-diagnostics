@@ -315,7 +315,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.pods[pod_name] = \
                 self._DiagnosticClass.from_config(pod_name, parent=self)
         for pod in self.iter_children():
-            try:    
+            try:
                 self.setup_pod(pod)
             except Exception as exc:
                 chained_exc = util.chain_exc(exc, "setting up DataSource", 

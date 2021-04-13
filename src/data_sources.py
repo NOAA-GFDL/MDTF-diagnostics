@@ -192,6 +192,7 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
     of :class:`ExplicitFileDataSource`.
     """
+    _file_preproc_functions = []
     _XarrayParserClass = MetadataRewriteParser
 
 dummy_regex = util.RegexPattern(
@@ -230,7 +231,7 @@ class ExplicitFileDataSourceConfigEntry():
     def from_struct(cls, pod_name, var_name, v_data):
         if isinstance(v_data, dict):
             glob = v_data.get('files', "")
-            metadata = v_data.get('metadata', dict()),
+            metadata = v_data.get('metadata', dict())
             _has_user_metadata = ('metadata' in v_data)
         else:
             glob = v_data
@@ -274,6 +275,11 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
             log.critical(("No configuration file found for ExplicitFileDataSource "
                 "(--config-file)."))
             exit(1)
+
+        if self.convention != core._NO_TRANSLATION_CONVENTION:
+            log.debug("Received incompatible convention '%s'; setting to '%s'.", 
+                self.convention, core._NO_TRANSLATION_CONVENTION)
+            self.convention = core._NO_TRANSLATION_CONVENTION
 
 explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
@@ -398,7 +404,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     setattr(self, dest, "")
 
         if self.convention != "CMIP":
-            log.debug("Received incompatible convention '%s'; setting to 'CMIP.", 
+            log.debug("Received incompatible convention '%s'; setting to 'CMIP'.", 
                 self.convention)
             self.convention = "CMIP"
 

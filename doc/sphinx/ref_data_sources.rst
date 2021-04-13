@@ -86,9 +86,9 @@ Paths to the data for each variable are specified with standard shell glob synta
 
 Metadata attributes are set as strings, and are not validated before being set on the variable. Setting metadata attributes on a variable's coordinates (such as the ``calendar`` attribute) is not currently supported. 
 
-This data source does not enforce consistency in variable naming convention, so ``-c``/``--convention`` should be set to the convention used to assign <*variable_name*>s (which may be ``None``; see below). If not given, ``--convention`` defaults to ``CMIP``.
+The user setting for ``-c``/``--convention`` is ignored by this data source: the ``None`` convention is always used, since the user has assigned files directly to the variable names used by each POD.
 
-If changes to metadata are requested in the config file, the ``--overwrite-file-metadata`` flag is assumed and file metadata will always be overwritten if it differs from the framework's record, either as a result of explicitly setting metadata attributes in the config file, or through the use of the ``-c``/``--convention`` flag. If both methods are used, the explicitly set attributes override the metadata attributes set through choice of ``--convention``.
+If changes to metadata are requested in the config file, the ``--overwrite-file-metadata`` flag is assumed and file metadata will always be overwritten if it differs from the framework's record.
 
 
 .. _ref-data-source-cmip6:

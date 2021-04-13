@@ -157,11 +157,12 @@ class MDTFFramework(object):
             case = self.parse_case(i, case_d, cli_obj, pod_info_tuple)
             if case:
                 case_list.append(case)
-        if not self.case_list:
-            _log.critical(("ERROR: no valid entries in case_list. Please specify "
+        if not case_list:
+            _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
             exit(1)
+        self.case_list = case_list
 
     def parse_case(self, n, d, cli_obj, pod_info_tuple):
         # really need to move this into init of DataManager

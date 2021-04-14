@@ -451,6 +451,37 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             raise ValueError((f"Caught exception extracting {our_z.value} {our_z.units} "
                 f"level from '{ds_z.name}' coord of {var.full_name}.")) from exc
 
+class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
+    """If the variable has ``scale_factor`` and ``add_offset`` attributes set,
+    apply the corresponding constant linear transformation to the variable's 
+    values and unset these attributes. By default this function is not applied.
+
+    See `<http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__.
+    """
+    def process(self, var, ds):
+        tv_name = var.translation.name
+        ds_var = ds[tv_name]
+        # CF standard says to scale first
+        if ds_var.attrs.get('scale_factor', ''):
+            scale_factor = float(ds_var.attrs['scale_factor'])
+            ds_var *= scale_factor
+            del ds_var.attrs['scale_factor']
+            var.log.info("Scaled values of '%s' variable in %s by a factor of %f.", 
+                tv_name, var.full_name, scale_factor,
+                tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
+            )
+
+        if ds_var.attrs.get('add_offset', ''):
+            add_offset = float(ds_var.attrs['add_offset'])
+            ds_var += add_offset
+            del ds_var.attrs['add_offset']
+            var.log.info("Added an offset of %f to values of '%s' variable in %s.", 
+                add_offset, tv_name, var.full_name,
+                tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
+            )
+
+        return ds
+
 # ==================================================
 
 class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):

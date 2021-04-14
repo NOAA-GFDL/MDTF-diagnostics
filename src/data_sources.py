@@ -194,6 +194,25 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     _file_preproc_functions = []
     _XarrayParserClass = MetadataRewriteParser
 
+    @property
+    def _functions(self):
+        config = core.ConfigManager()
+        if config.get('disable_preprocessor', False):
+            return (
+                preprocessor.CropDateRangeFunction, 
+                preprocessor.RenameVariablesFunction
+            )
+        else:
+            # Add ApplyScaleAndOffsetFunction to functions used by parent class
+            return (
+                preprocessor.CropDateRangeFunction, 
+                preprocessor.ApplyScaleAndOffsetFunction,
+                preprocessor.PrecipRateToFluxFunction, 
+                preprocessor.ConvertUnitsFunction, 
+                preprocessor.ExtractLevelFunction, 
+                preprocessor.RenameVariablesFunction
+            )
+
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
     """,
@@ -377,7 +396,7 @@ class ExplicitFileDataSource(
         the name.
         """
         super(ExplicitFileDataSource, self).setup_var(pod, v)
-        
+
         if pod.name in self._config and v.name in self._config[pod.name]:
             translated_name = self._config[pod.name][v.name].var_name
             v.translation.name = translated_name

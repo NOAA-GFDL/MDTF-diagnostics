@@ -87,7 +87,7 @@ Paths to the data for each variable are specified with standard shell glob synta
 
 If the name of the variable used by the data files is not specified via the ``var_name`` attribute, it is assumed to be the name for that variable used by the POD in its data request. In either case, if a variable by that name is not found in the data file, the data source will use heuristics to determine the correct name, assuming one dependent variable per data file. (The behavior for all other data sources in this situation is to raise an error.)
 
-Metadata attributes are set as strings, and are not validated before being set on the variable. Setting metadata attributes on a variable's coordinates (such as the ``calendar`` attribute) is not currently supported. 
+Metadata attributes are set as strings, and are not validated before being set on the variable. Setting metadata attributes on a variable's coordinates (such as the ``calendar`` attribute) is not currently supported. Incorrect unit metadata may be fixed either with one of the third-party tools mentioned above, or by setting the ``scale_factor`` and ``add_offset`` `CF attributes <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__.
 
 The user setting for ``-c``/``--convention`` is ignored by this data source: the ``None`` convention is always used, since the user has assigned files directly to the variable names used by each POD.
 

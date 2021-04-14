@@ -319,6 +319,7 @@ class DefaultDatasetParser():
         config = core.ConfigManager()
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
+        self.guess_names = False
 
         self.fallback_cal = 'proleptic_gregorian' # CF calendar used if no attribute found
         self.attrs_backup = dict()
@@ -519,6 +520,46 @@ class DefaultDatasetParser():
         # whether we go on to do reconciliation/checks
         pass
 
+    def guess_dependent_var(self, our_var, ds):
+        """Use heuristics to determine the name of the dependent variable from 
+        among all the variables in the Dataset *ds*, if the name doesn't match 
+        the value we expect in *our_var*.
+        """
+        # TODO: better heuristic would be to look for variable name strings in
+        # input file name
+        if our_var.name in ds:
+            return our_var.name
+        var_names = list(ds.variables.keys())
+        coord_names = set(ds.coords.keys())
+        for c_name, c in ds.coords.items():
+            # eliminate Dataset variables that are coords or coord bounds
+            var_names.remove(c_name)
+            c_bnds = getattr(c, 'bounds', None)
+            if c_bnds:
+                var_names.remove(c_bnds)
+        # restrict 
+        full_rank_vs = [v for v in var_names if set(ds[v].dims) == coord_names]
+        if len(full_rank_vs) == 1:
+            # only one variable in Dataset that uses all coordinates; select it
+            var_name = full_rank_vs[0]
+        elif not full_rank_vs:
+            # fallback: pick the first one with maximal rank
+            var_name = max(var_names, key=(lambda v: len(ds[v].dims)))
+        else:  
+            # multiple results from that test; give up
+            var_name = None
+
+        if var_name is not None:
+            # success, narrowed down to one guess
+            self.log.info(("Selecting '%s' as the intended dependent variable name "
+                "(expected '%s')."), var_name, our_var.name,
+                tags=util.ObjectLogTag.BANNER)
+            return var_name
+        else:
+            # give up; too ambiguous to guess
+            raise util.MetadataError(("Couldn't guess intended dependent variable "
+                f"name: expected {our_var.name}, received {list(ds.variables)}."))
+
     # --- Methods for comparing Dataset attrs against our record  ---
 
     def compare_attr(self, our_attr_tuple, ds_attr_tuple, comparison_func=None, 
@@ -656,14 +697,34 @@ class DefaultDatasetParser():
             ds: xarray DataSet.
             ds_var_name (str): Name of the variable in *ds* we expect to 
                 correspond to *our_var*.
-            overwrite_ours (bool, default False): If True, always update the name of
-                *our_var* to what's found in *ds*.
+            overwrite_ours (bool, default False): If True, always update the name 
+                of *our_var* to what's found in *ds*.
         """
-        # check name
+        # Determine if a variable with the expected name is present at all
         if ds_var_name not in ds:
-            raise util.MetadataError(f"Variable name '{ds_var_name}' not found "
-                f"in dataset: ({list(ds.variables)}).")
-            # TODO: attempt to match on standard_name?
+            if self.guess_names:
+                # attempt to match on standard_name attribute if present in data
+                ds_names = [v.name for v in ds.variables \
+                    if v.attrs.get('standard_name', "") == our_var.standard_name]
+                if len(ds_names) == 1:
+                    # success, narrowed down to one guess
+                    self.log.info(("Selecting '%s' as the intended name for '%s' "
+                        "(= %s; expected '%s')."), ds_names[0], our_var.name,
+                        our_var.standard_name, ds_var_name,
+                        tags=util.ObjectLogTag.BANNER)
+                    ds_var_name = ds_names[0]
+                    overwrite_ours = True # always overwrite for this case
+                else:
+                    # failure
+                    raise util.MetadataError(f"Variable name '{ds_var_name}' not "
+                        f"found in dataset: ({list(ds.variables)}).")
+            else:
+                # not guessing; error out
+                raise util.MetadataError(f"Variable name '{ds_var_name}' not found "
+                    f"in dataset: ({list(ds.variables)}).")
+
+        # in all non-error cases: now that variable has been identified in ds,
+        # straightforward to compare attrs 
         self.reconcile_name(our_var, ds_var_name, overwrite_ours=overwrite_ours)
         self.reconcile_attr(our_var, ds[ds_var_name], 'standard_name',
             fill_ours=True, fill_ds=True)
@@ -917,15 +978,20 @@ class DefaultDatasetParser():
         coordinates in *translated_var* (our expectation, based on the DataSource's
         naming convention) with attributes actually present in the Dataset *ds*.
         """
-        translated_var = var.translation
+        tv = var.translation # abbreviate
+        if tv.name not in ds and self.guess_names:
+            tv.name = self.guess_dependent_var(tv, ds)
+            overwrite_ours = True # overwrite since our record is wrong
+        else:
+            overwrite_ours = None # normal operation; don't overwrite
+
         # check name, std_name, units on variable itself
-        self.reconcile_names(translated_var, ds, translated_var.name, 
-            overwrite_ours=None)
-        self.reconcile_units(translated_var, ds[translated_var.name])
+        self.reconcile_names(tv, ds, tv.name, overwrite_ours=overwrite_ours)
+        self.reconcile_units(tv, ds[tv.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
-        self.reconcile_dimension_coords(translated_var, ds)
+        self.reconcile_dimension_coords(tv, ds)
         # check variable's scalar coords: names, std_names, units
-        self.reconcile_scalar_coords(translated_var, ds)
+        self.reconcile_scalar_coords(tv, ds)
 
     # --- Methods for final checks of attrs before preprocessing ---------------
 

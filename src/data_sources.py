@@ -2,6 +2,7 @@
 implemented in src/data_manager.py, selected by the user via  ``--data_manager``.
 """
 import os
+import collections
 import dataclasses
 from src import util, core, diagnostic, xr_parser, preprocessor, cmip6
 from src import data_manager as dm
@@ -119,9 +120,7 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
         assert isinstance(data_mgr, ExplicitFileDataSource)
         super(MetadataRewriteParser, self).__init__(data_mgr, pod)
 
-        config = core.ConfigManager()
-        self.disable = config.get('disable_preprocessor', False)
-        self.overwrite_ds = config.get('overwrite_file_metadata', False)
+        self.guess_names = True # needed since names will be un-translated
         self.id_lut = dict()
 
     def setup(self, data_mgr, pod):
@@ -136,7 +135,7 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
                 idxs = list(d_key.value)
                 glob_ids = data_mgr.df['glob_id'].loc[idxs].to_list()
                 for id_ in glob_ids:
-                    entry = data_mgr._config[id_]
+                    entry = data_mgr.config_by_id[id_]
                     new_metadata.update(entry.metadata)
             self.id_lut[var._id] = new_metadata
 
@@ -189,8 +188,8 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
 class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
     look up and apply edits to metadata that are stored in 
-    :class:`ExplicitFileDataSourceConfigEntry` objects in the \_config attribute
-    of :class:`ExplicitFileDataSource`.
+    :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id 
+    attribute of :class:`ExplicitFileDataSource`.
     """
     _file_preproc_functions = []
     _XarrayParserClass = MetadataRewriteParser
@@ -214,6 +213,7 @@ class ExplicitFileDataSourceConfigEntry():
     pod_name: str = util.MANDATORY
     name: str = util.MANDATORY
     glob: str = util.MANDATORY
+    var_name: str = ""
     metadata: dict = dataclasses.field(default_factory=dict)
     _has_user_metadata: bool = None
 
@@ -229,17 +229,21 @@ class ExplicitFileDataSourceConfigEntry():
 
     @classmethod
     def from_struct(cls, pod_name, var_name, v_data):
+        # "var_name" in arguments is the name given to the variable by the POD; 
+        # name_in_data is the user-specified name of the variable in the files
         if isinstance(v_data, dict):
             glob = v_data.get('files', "")
+            name_in_data = v_data.get('var_name', "")
             metadata = v_data.get('metadata', dict())
             _has_user_metadata = ('metadata' in v_data)
         else:
             glob = v_data
+            name_in_data = ""
             metadata = dict()
             _has_user_metadata = False
         return cls(
-            pod_name = pod_name, name = var_name, 
-            glob = glob, metadata = metadata,
+            pod_name=pod_name, name=var_name, glob=glob, 
+            var_name=name_in_data, metadata=metadata,
             _has_user_metadata=_has_user_metadata
         )
 
@@ -304,13 +308,14 @@ class ExplicitFileDataSource(
 
     def __init__(self, case_dict, parent):
         self.catalog = None
-        self._config = dict()
+        self._config = collections.defaultdict(dict)
+        self.config_by_id = dict()
         self._has_user_metadata = None
 
         super(ExplicitFileDataSource, self).__init__(case_dict, parent)
 
         # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
-        # objects and store in self._config
+        # objects and store in self.config_by_id
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'config_file'))
         config = util.read_json(self.attrs.config_file, log=self.log)
         self.parse_config(config)
@@ -338,13 +343,14 @@ class ExplicitFileDataSource(
             for v_name, v_data in v_dict.items():
                 entry = ExplicitFileDataSourceConfigEntry.from_struct(
                     pod_name, v_name, v_data)
-                self._config[entry.glob_id] = entry
+                self._config[pod_name][v_name] = entry
+                self.config_by_id[entry.glob_id] = entry
         # don't bother to validate here -- if we didn't specify files for all 
         # vars it'll manifest as a failed query & be logged as error there.
 
         # set overwrite_metadata flag if needed
         self._has_user_metadata = any(
-            x._has_user_metadata for x in self._config.values()
+            x._has_user_metadata for x in self.config_by_id.values()
         )
         if self._has_user_metadata and \
             not config.get('overwrite_file_metadata', False):
@@ -359,8 +365,24 @@ class ExplicitFileDataSource(
         """Iterator returning :class:`FileGlobTuple` instances. The generated 
         catalog contains the union of the files found by each of the globs.
         """
-        for entry in self._config.values():
+        for entry in self.config_by_id.values():
             yield entry.to_file_glob_tuple()
+
+    def setup_var(self, pod, v):
+        """Add steps to :meth:`data_manager.DataSourceBase.setup_var`: if user 
+        has provided the name of variable used by the data files (via the 
+        ``var_name`` attribute), set that as the translated variable name.
+        Otherwise, variables are untranslated, and we use the herusitics in
+        :meth:`xr_parser.DefaultDatasetParser.guess_dependent_var` to determine
+        the name.
+        """
+        super(ExplicitFileDataSource, self).setup_var(pod, v)
+        
+        if pod.name in self._config and v.name in self._config[pod.name]:
+            translated_name = self._config[pod.name][v.name].var_name
+            v.translation.name = translated_name
+            v.log.debug("Set translated name of %s to user-specified value '%s'.",
+                v.full_name, translated_name)
 
 # ----------------------------------------------------------------------------
 

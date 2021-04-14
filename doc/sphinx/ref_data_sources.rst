@@ -68,6 +68,7 @@ An example of the format for this file is:
       "zg_hybrid_sigma": "mon/QBOi.EXP1.AMIP.001.Z*.mon.nc",
       "ps": {
         "files": "mon/QBOi.EXP1.AMIP.001.PS.mon.nc",
+        "var_name": "PS",
         "metadata": {
           "standard_name": "surface_air_pressure",
           "units": "Pa",
@@ -80,9 +81,11 @@ An example of the format for this file is:
     }
   }
 
-The file should be organized as a nested struct, with keys corresponding to names of PODs and then names of variables used by those PODs in their data request. The entry corresponding to variable names can either be a string or another struct. Strings are taken to be a shell glob specifying the set of files that contain the data for that variable. The struct must have two keys, ``files`` (the shell glob) and ``metadata``, an arbitrary list of metadata attributes to assign to that variable.
+The file should be organized as a nested struct, with keys corresponding to names of PODs and then names of variables used by those PODs in their data request. The entry corresponding to variable names can either be a string or another struct. Strings are taken to be a shell glob specifying the set of files that contain the data for that variable. The struct may have up to three keys: ``files`` (the shell glob; required), ``var_name``, the name used for the variable in the data file, and ``metadata``, an arbitrary list of metadata attributes to assign to that variable.
 
 Paths to the data for each variable are specified with standard shell glob syntax as implemented by python's :py:mod:`glob` module: ``?`` matches one character (excluding directory separators), ``*`` matches zero or more characters (excluding directory separators), and ``**`` matches any number of subdirectories. Globs given as relative paths are resolve relative to <*CASE_ROOT_DIR*>. Paths are not validated ahead of time; mis-specified globs or omitted entries (such as ``EOF_500PhPa``'s request for ``zg`` in the example above) are reported as a data query with zero results.
+
+If the name of the variable used by the data files is not specified via the ``var_name`` attribute, it is assumed to be the name for that variable used by the POD in its data request. In either case, if a variable by that name is not found in the data file, the data source will use heuristics to determine the correct name, assuming one dependent variable per data file. (The behavior for all other data sources in this situation is to raise an error.)
 
 Metadata attributes are set as strings, and are not validated before being set on the variable. Setting metadata attributes on a variable's coordinates (such as the ``calendar`` attribute) is not currently supported. 
 

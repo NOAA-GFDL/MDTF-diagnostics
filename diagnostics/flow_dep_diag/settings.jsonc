@@ -1,63 +1,60 @@
-//the indenting in this file has gotten messed up so i will need to fix it
 {
-    "settings" : {
-        "long_name" : "Flow-Dependent, Cross-Timescale Model Diagnostics Documentation",
-        "driver" : "flow_dep_diag.py",
-        "realm" : ["weather"], //should there be additional tags?
-        "runtime_requirements" : {
-        "python" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib"]
-        },
-        "pod_env_vars" : { //names and values of shell env vars used by diagnostic
-        // Number of ensemble members in model data
-        "NENS" : "3"
-        }
+  "settings" : {
+    "long_name" : "Flow-Dependent, Cross-Timescale Model Diagnostics Documentation",
+    "driver" : "flow_dep_diag.py",
+    "realm" : ["weather"], //should there be additional tags?
+    "runtime_requirements" : {
+      "python" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "dask", "cftime"]
     },
-    "data" : {
-        "format" : "any_netcdf",
-        "frequency" : "day"
-    },
-    "dimensions" : { //should these be labeled X Y etc as in the data? or as lat lon etc
-        "Y" : {
-            "standard_name" : "latitude",
-            "units" : "degrees_N"
-        },
-        "X" : {
-            "standard_name" : "longitude",
-            "units" : "degrees_E"
-        },
-        "P" : {
-            "standard_name" : "air_pressure",
-            "units" : "hPa",
-            "positive" : "down"
-        },
-        "T" : {
-            "standard_name" : "time",
-            "units" : "days"
-        }
-    },
-//All data used in this dianostic is anomaly data
-    "varlist" : [
-    {
-      "var_name" : "hgt_var",
-      "standard_name" : "geopotential_height_anomaly",
-      "path_variable" : "HGT_ANOM_FILE",
-      "freq" : "day",
-      "requirement" : "required"
-    },{
-        "var_name" : "t2m_var", //this could be at other heights
-                                //so perhaps shouldnt put @2m
-        "standard_name" : "air_temperature_anomaly",
-        "path_variable" : "T2M_ANOM_FILE",
-        "freq" : "day",
-        "requirement" : "required",
-        "alternatives" : ["t_var"] //others?
-    },{
-        "var_name" : "pr_var",
-        "standard_name" : "lwe_precipitation_rate_anomaly", //Is this okay?
-        "path_variable" : "PR_ANOM_FILE",
-      //anomaly standard name not available for precip in CF standard
-        "freq" : "day",
-        "requirement" : "required"
+    "pod_env_vars" : {
+    //REANALYSIS WEATHER TYPING: perform the clustering. specify the number of clusters we want to create
+    //and the number of simulations we want to run
+      "NSIM" : "25", //typically 25-50 -- try 25 for quick preliminary computation only
+      "NCLUSTER" : "6" //Number of weather types
     }
-  ]
+  },
+  "data" : {"frequency" : "day"},
+  "dimensions" : { //should these be labeled X Y etc as in the data? or as lat lon etc
+    "lat" : {
+      "standard_name" : "latitude",
+      "units" : "degrees_N"
+    },
+    "lon" : {
+      "standard_name" : "longitude",
+      "units" : "degrees_E"
+    },
+    "plev" : {
+      "standard_name" : "air_pressure",
+      "units" : "hPa",
+      "positive" : "down"
+    },
+    "time" : {
+      "standard_name" : "time",
+      "units" : "days",
+      "calendar" : "noleap"
+    }
+  },
+  "varlist" : {
+    "hgt" : {
+      "standard_name" : "geopotential_height",
+      "path_variable" : "HGT_FILE", //this value is used as name of envt var. framework sets value of this envt var = absolute path to file containing data for var
+      "freq" : "day",
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]
+    },
+    "tas" : {
+      "standard_name" : "air_temperature",
+      "path_variable" : "TAS_FILE",
+      "freq" : "day",
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]
+    },
+    "prec" : {
+      "standard_name" : "lwe_precipitation_rate",
+      "path_variable" : "PREC_FILE",
+      "freq" : "day",
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]
+    }
+  }
 }

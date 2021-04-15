@@ -153,8 +153,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     # _parent: object
     # log = util.MDTFObjectLogger 
     # status: ObjectStatus
-    # attrs: dict                  # fields inherited from data_model.DMVariable
-    # standard_name: str
+    # standard_name: str           # fields inherited from data_model.DMVariable
     # units: Units
     # dims: list
     # scalar_coords: list

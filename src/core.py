@@ -347,7 +347,6 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     convention: str = util.MANDATORY
     name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
-    # attrs: dict           # field inherited from data_model.DMVariable
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
@@ -658,7 +657,6 @@ class NoTranslationFieldlist(util.Singleton):
         # TODO: coerce_to_dataclass runs into recursion limit on var; fix that
         return TranslatedVarlistEntry(
             name=var.name,
-            attrs=var.attrs,
             standard_name=var.standard_name,
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,

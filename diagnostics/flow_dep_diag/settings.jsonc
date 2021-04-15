@@ -42,7 +42,7 @@
       "requirement" : "required",
       "dimensions" : ["time", "lat", "lon"]
     },
-    "tas" : {
+    "t_ref" : {
       "standard_name" : "air_temperature",
       "path_variable" : "TAS_FILE",
       "freq" : "day",

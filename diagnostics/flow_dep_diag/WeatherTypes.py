@@ -1,21 +1,24 @@
+import os
 import xarray as xr
 import numpy as np
 import pandas as pd
-#import eccodes
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import cartopy.crs as ccrs
 from cartopy import feature
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-# key PyWR functions are imported here
+# key PyWR functions and climAnom are imported here from function files
 from PyWR import *
 from ClimAnom_func import *
 
 #running analysis to generate climatology anomalies for vars
-reanalysis = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.Z250.day.nc", var_name='Z250').stack(T=['time'], grid=['lat', 'lon'])
-rainfall = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.PRECT.day.nc", var_name='PRECT').stack(T=['time'], grid=['lat', 'lon'])
-t2m = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.T250.day.nc", var_name='T250').stack(T=['time'], grid=['lat', 'lon'])
+reanalysis = climAnom(var_path="{HGT_FILE}", var_name="{hgt_var}").stack(T=["{time_coord}"], grid=["{lat_coord}", "{lon_coord}"]).format(**os.environ)
+#reanalysis = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.Z250.day.nc", var_name='Z250').stack(T=['time'], grid=['lat', 'lon'])
+rainfall = climAnom(var_path="{PREC_FILE}", var_name="{prec_var}").stack(T=["{time_coord}"], grid=["{lat_coord}", "{lon_coord}"]).format(**os.environ)
+#rainfall = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.PRECT.day.nc", var_name='PRECT').stack(T=['time'], grid=['lat', 'lon'])
+t2m = climAnom(var_path="{TAS_FILE}", var_name="{t_ref_var}").stack(T=["{time_coord}"], grid=["{lat_coord}", "{lon_coord}"]).format(**os.environ)
+#t2m = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.T250.day.nc", var_name='T250').stack(T=['time'], grid=['lat', 'lon'])
 reanalysis = reanalysis.to_dataset()
 reanalysis = reanalysis.assign_coords(P=(250))
 rainfall = rainfall.to_dataset()
@@ -23,13 +26,13 @@ t2m = t2m.to_dataset()
 
 #dimension reduction; projection of data onto leading EOFs for principle component time series
 #PCA model saved for later use as reanalysis_pc
-n_eof = get_number_eof(X=reanalysis['Z250'].values, var_to_explain=0.9, plot=True)
-pca_model = PCA(n_components=n_eof).fit(reanalysis['Z250'].values)
-reanalysis_pc = pca_model.transform(reanalysis['Z250'].values)
+n_eof = get_number_eof(X=reanalysis["{hgt_var}"].values, var_to_explain=0.9, plot=True).format(**os.environ)
+pca_model = PCA(n_components=n_eof).fit(reanalysis["{hgt_var}"].values).format(**os.environ)
+reanalysis_pc = pca_model.transform(reanalysis["{hgt_var}"].values).format(**os.environ)
 
 #perform clustering using manually specified number of clusters
-ncluster = 6 # use 6 WTs
-n_sim = 50 # typically 25-50 -- try 25 for quick preliminary computation only
+ncluster = "{NCLUSTER}".format(**os.environ)
+n_sim = "{NSIM}".format(**os.environ) # typically 25-50 -- try 25 for quick preliminary computation only
 centroids, wtypes = loop_kmeans(X=reanalysis_pc, n_cluster=ncluster, n_sim=n_sim)
 class_idx, best_part = get_classifiability_index(centroids)
 print('The classifiability index is {}'.format(class_idx))
@@ -45,7 +48,7 @@ weather_types = xr.DataArray(
     dims='T'
 )
 reanalysis_composite['WT'] = weather_types
-reanalysis_composite = reanalysis_composite.groupby('WT').mean(dim='T').unstack('grid')['Z250']
+reanalysis_composite = reanalysis_composite.groupby('WT').mean(dim='T').unstack('grid')['{hgt_var}'].format(**os.environ)
 reanalysis_composite['M'] = 0
 wt_anomalies = [] # initialize empty list
 wt_anomalies.append(reanalysis_composite)
@@ -53,7 +56,7 @@ wt_anomalies = xr.concat(wt_anomalies, dim='M') # join together
 wt_anomalies['WT'] = wt_anomalies['WT'] + 1 # start from 1
 
 #prepare a figure with rainfall and temperature composites
-X, Y = np.meshgrid(reanalysis['Z250'].lon, reanalysis['Z250'].lat)
+X, Y = np.meshgrid(reanalysis['{hgt_var}'].lon, reanalysis['{hgt_var}'].lat).format(**os.environ)
 map_proj = ccrs.PlateCarree() #ccrs.Orthographic(-110, 10)
 data_proj = ccrs.PlateCarree()
 wt_unique = np.unique(wt_anomalies['WT'])
@@ -64,9 +67,10 @@ wt=wt+1
 wt_counts = wt.groupby('WT').size().div(wt['WT'].size)
 
 #plotting
-xmin,xmax = reanalysis['lon'].min(), reanalysis['lon'].max()
-ymin,ymax = reanalysis['lat'].min(), reanalysis['lat'].max()
-
+xmin,xmax = reanalysis['{lon_coord}'].min().format(**os.environ), reanalysis['{lon_coord}'].max().format(**os.environ)
+ymin,ymax = reanalysis['{lat_coord}'].min().format(**os.environ), reanalysis['{lat_coord}'].max().format(**os.environ)
+plot_path = "{WK_DIR}/model/PS/{CASENAME}_wt_composite.pdf".format(**os.environ)
+title_string = "{CASENAME}: Weather Types composite ({FIRSTYR}-{LASTYR})".format(**os.environ)
 # Set up the Figure
 plt.rcParams.update({'font.size': 12})
 fig, axes = plt.subplots(
@@ -76,15 +80,15 @@ fig, axes = plt.subplots(
 
 for i,w in enumerate(wt_unique):
     def selector(ds):
-        times = wt.loc[wt['WT'] == w].index.get_level_values('time')
-        ds = ds.sel(T = np.in1d(ds.unstack('T')['time'], times))
+        times = wt.loc[wt['WT'] == w].index.get_level_values('{time_coord}').format(**os.environ)
+        ds = ds.sel(T = np.in1d(ds.unstack('T')['{time_coord}'].format(**os.environ), times))
         ds = ds.mean(dim = 'T')
         return(ds)
 
     # Top row: geopotential height anomalies
     ax = axes[0, i]
     ax.set_title('WT {}: {:.1%} of days'.format(w, wt_counts.values[i]))
-    C0 = selector(reanalysis['Z250']).unstack('grid').plot.contourf(
+    C0 = selector(reanalysis['{hgt_var}']).unstack('grid').plot.contourf(
         transform = data_proj,
         ax=ax,
         cmap='PuOr',
@@ -92,13 +96,13 @@ for i,w in enumerate(wt_unique):
         levels=np.linspace(-2e2, 2e2, 21),
         add_colorbar=False,
         add_labels=False
-    )
+    ).format(**os.environ)
     ax.coastlines()
     ax.add_feature(feature.BORDERS)
 
     # Middle row: rainfall anomalies
     ax = axes[1, i]
-    C1 = selector(rainfall['PRECT']).unstack('grid').plot.contourf(
+    C1 = selector(rainfall['{prec_var}']).unstack('grid').plot.contourf(
         transform = data_proj,
         ax=ax,
         cmap = 'BrBG',
@@ -106,10 +110,10 @@ for i,w in enumerate(wt_unique):
         levels=np.linspace(-2, 2, 13),
         add_colorbar=False,
         add_labels=False
-    )
+    ).format(**os.environ)
     ax.coastlines()
     ax = axes[2, i]
-    C2 = selector(t2m['T250']).unstack('grid').plot.contourf(
+    C2 = selector(t2m['{t_ref_var}']).unstack('grid').plot.contourf(
         transform = data_proj,
         ax=ax,
         cmap = 'RdBu_r',
@@ -117,7 +121,7 @@ for i,w in enumerate(wt_unique):
         levels=np.linspace(-2, 2, 13),
         add_colorbar=False,
         add_labels=False
-    )
+    ).format(**os.environ)
     ax.coastlines()
     ax.add_feature(feature.BORDERS)
     #ax.set_extent([-95, -70, -9, 5])
@@ -132,11 +136,12 @@ cax2 = fig.add_axes([0.97, 0.01, 0.0075, 0.3])
 cbar0 = fig.colorbar(C0, cax = cax0)
 cbar0.formatter.set_powerlimits((4, 4))
 cbar0.update_ticks()
-cbar0.set_label(r'$zg_{500}$ anomaly [$m^2$/$s^2$]', rotation=270)
+cbar0.set_label(r'{hgt_var} anomaly [$m^2$/$s^2$]', rotation=270).format(**os.environ)
 cbar0.ax.get_yaxis().labelpad = 20
 cbar1 = fig.colorbar(C1, cax=cax1)
-cbar1.set_label('Precip. anomaly [mm/d]', rotation=270)
+cbar1.set_label('{prec_var} anomaly [mm/d]', rotation=270).format(**os.environ)
 cbar1.ax.get_yaxis().labelpad = 20
 cbar2 = fig.colorbar(C2, cax=cax2)
-cbar2.set_label('T2m anomaly [$^o$C]', rotation=270)
+cbar2.set_label('{t_ref_var} anomaly [$^o$C]', rotation=270).format(**os.environ)
 cbar2.ax.get_yaxis().labelpad = 20
+fig.savefig(plot_path, bbox_inches='tight')

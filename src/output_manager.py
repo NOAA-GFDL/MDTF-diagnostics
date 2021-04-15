@@ -69,7 +69,7 @@ class HTMLSourceFileMixin():
         assert hasattr(self.obj, '_in_file_log')
         log_file.write(self.obj._in_file_log.buffer_contents())
 
-        log_file.write(f"# Preprocessed files used as input to {str_2}:")
+        log_file.write(f"\n# Preprocessed files used as input to {str_2}:\n")
         log_file.write(("# (Depending on CLI flags, these will have been deleted "
             "if the package exited successfully.)\n"))
         assert hasattr(self.obj, '_out_file_log')
@@ -282,6 +282,15 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         or execution.
         """
         template_d = html_templating_dict(pod)
+        # add a warning banner if needed
+        assert hasattr(pod, '_banner_log')
+        banner_str = pod._banner_log.buffer_contents()
+        if banner_str:
+            banner_str = banner_str.replace('\n', '<br>\n')
+            src = self.html_src_file('warning_snippet.html')
+            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
+            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
+
         # put in the link to results
         if pod.failed:
             # report error
@@ -291,14 +300,6 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             # normal exit
             src = self.html_src_file('pod_result_snippet.html')
         util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
-        # add a warning banner if needed
-        assert hasattr(pod, '_banner_log')
-        banner_str = pod._banner_log.buffer_contents()
-        if banner_str:
-            banner_str = banner_str.replace('\n', '<br>\n')
-            src = self.html_src_file('warning_snippet.html')
-            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
-            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
 
     def verify_pod_links(self, pod):
         """Check for missing files linked to from POD's html page.

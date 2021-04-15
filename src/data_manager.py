@@ -9,7 +9,7 @@ import glob
 import signal
 import textwrap
 import typing
-from src import util, core, diagnostic, preprocessor
+from src import util, core, diagnostic, xr_parser, preprocessor
 import pandas as pd
 import intake_esm
 
@@ -379,7 +379,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 'range': util.DateRange,
                 'frequency': util.DateFrequency
             },
-            range=self.attrs.date_range
+            range=self.attrs.date_range,
+            calendar=util.NOTSET,
+            units=util.NOTSET
         )
         v.dest_path = self.variable_dest_path(pod, v)
         try:
@@ -588,12 +590,13 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
-                    update = True
-                    self.log.exception("%s while preprocessing %s: %r",
-                        util.exc_descriptor(exc), pv.var.full_name, exc)
-                    for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
-                        pv.var.deactivate_data_key(d_key, exc)
-                    continue
+                    raise
+                    # update = True
+                    # self.log.exception("%s while preprocessing %s: %r",
+                    #     util.exc_descriptor(exc), pv.var.full_name, exc)
+                    # for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                    #     pv.var.deactivate_data_key(d_key, exc)
+                    # continue
         else:
             # only hit this if we don't break
             raise util.DataRequestError( 
@@ -611,8 +614,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             self.preprocess_data()
         except Exception as exc:
-            self.log.exception("%s at DataSource level: %r.", 
-                util.exc_descriptor(exc), exc)
+            raise
+            # self.log.exception("%s at DataSource level: %r.", 
+            #     util.exc_descriptor(exc), exc)
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
         for p in self.iter_children():
@@ -823,7 +827,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
         if col_name not in self.all_columns:
             return ""
-        if query_attr_val == util.NOTSET \
+        if query_attr_val is util.NOTSET \
             or (isinstance(query_attr_val, str) and not query_attr_val):
             return ""
         elif query_attr_val is None:

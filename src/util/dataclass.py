@@ -122,8 +122,8 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
                 self.data[self.input_field] = m.string
             
             self._validate_match(m)
-            if any(self.data[f] == NOTSET for f in self.fields):
-                bad_names = [f for f in self.fields if self.data[f] == NOTSET]
+            if any(self.data[f] is NOTSET for f in self.fields):
+                bad_names = [f for f in self.fields if self.data[f] is NOTSET]
                 raise exceptions.RegexParseError((f"Couldn't match the "
                     f"following fields in {str_}: " + ', '.join(bad_names) ))
             self.is_matched = True

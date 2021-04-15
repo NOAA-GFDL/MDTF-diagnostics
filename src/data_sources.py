@@ -126,10 +126,30 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
     def setup(self, data_mgr, pod):
         """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to 
         the set of metadata that we need to alter.
+
+        If user has provided the name of variable used by the data files (via the 
+        ``var_name`` attribute), set that as the translated variable name.
+        Otherwise, variables are untranslated, and we use the herusitics in
+        :meth:`xr_parser.DefaultDatasetParser.guess_dependent_var` to determine
+        the name.
         """
         super(MetadataRewriteParser, self).setup(data_mgr, pod)
-        
+
         for var in pod.iter_children():
+            # set user-supplied translated name
+            # note: currently have to do this here, rather than in setup_var(),
+            # because query for this data source relies on the *un*translated 
+            # name (ie, the POD's name for the var) being set in the translated 
+            # name attribute.
+            if pod.name in data_mgr._config \
+                and var.name in data_mgr._config[pod.name]:
+                translated_name = data_mgr._config[pod.name][var.name].var_name
+                if translated_name:
+                    var.translation.name = translated_name
+                    var.log.debug(("Set translated name of %s to user-specified "
+                        "value '%s'."), var.full_name, translated_name)
+
+            # add var's info to lookup table of metadata changes
             new_metadata = util.ConsistentDict()
             for d_key in var.data.values():
                 idxs = list(d_key.value)
@@ -155,35 +175,32 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
         assert tv_name in ds # should have been validated by xr_parser
         ds_attrs = ds[tv_name].attrs # abbreviate
         for k, v in self.id_lut[var._id].items():
-            v = str(v) # xarray attrs are all strings
-            if k in ds_attrs:
+            if k in ds_attrs and v is not xr_parser.ATTR_NOT_FOUND:
                 if v != ds_attrs[k]:
-                    var.log.info(("Changing attr '%s' of %s from '%s' to user-"
-                        "requested value '%s'."), 
-                        k, var.full_name, ds_attrs[k], v,
-                        tags=[util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER]
+                    var.log.info(("Changing the value of the '%s' attribute of "
+                        "variable '%s' from '%s' to user-requested value '%s'."), 
+                        k, var.name, ds_attrs[k], v,
+                        tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
                     )
                 else:
-                    var.log.debug(("Attr '%s' of %s already has user-requested "
-                        "value '%s'; not changing."), 
-                        k, var.full_name, v,
+                    var.log.debug(("The '%s' attribute of variable '%s' already "
+                        "has the user-requested value '%s'; not changing."),
+                        k, var.name, v,
                         tags=util.ObjectLogTag.BANNER
                     )
             else:
-                var.log.debug(("Setting undefined attr '%s' of %s to user-"
-                    "requested value '%s'."), 
-                    k, var.full_name, v,
-                    tags=[util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER]
+                var.log.debug(("Attribute '%s' of variable '%s' is undefined; "
+                    "setting to user-requested value '%s'."), 
+                    k, var.name, v,
+                    tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
                 )
 
-        if self.disable:
-            # skipping reconcile_variable(), so set attrs on ds directly
+            v = str(v) # xarray attrs are all strings
             ds_attrs[k] = v
-        else:
-            # messages above refer to changing attrs on ds, but for this (normal)
-            # case we change attrs on var.translation, so that we can use the 
-            # code path for the overwrite_file_metadata option.
-            var.translation.attrs[k] = v
+            if k in ('standard_name', 'units'):
+                # already logged what we're doing, so update supported attrs on
+                # translated var itself in addition to setting directly on ds
+                setattr(var.translation, k, v)
 
 class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
@@ -386,22 +403,6 @@ class ExplicitFileDataSource(
         """
         for entry in self.config_by_id.values():
             yield entry.to_file_glob_tuple()
-
-    def setup_var(self, pod, v):
-        """Add steps to :meth:`data_manager.DataSourceBase.setup_var`: if user 
-        has provided the name of variable used by the data files (via the 
-        ``var_name`` attribute), set that as the translated variable name.
-        Otherwise, variables are untranslated, and we use the herusitics in
-        :meth:`xr_parser.DefaultDatasetParser.guess_dependent_var` to determine
-        the name.
-        """
-        super(ExplicitFileDataSource, self).setup_var(pod, v)
-
-        if pod.name in self._config and v.name in self._config[pod.name]:
-            translated_name = self._config[pod.name][v.name].var_name
-            v.translation.name = translated_name
-            v.log.debug("Set translated name of %s to user-specified value '%s'.",
-                v.full_name, translated_name)
 
 # ----------------------------------------------------------------------------
 

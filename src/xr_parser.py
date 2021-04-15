@@ -458,7 +458,7 @@ class DefaultDatasetParser():
         time axis.
         """
         self.normalize_attr(attr_d, attr_d, 'calendar', 'cal')
-        if attr_d['calendar'] == ATTR_NOT_FOUND:
+        if attr_d['calendar'] is ATTR_NOT_FOUND:
             # in normal operation, this is because we're looking at a non-time-
             # related variable. Calendar assignment is finalized by check_calendar().
             del attr_d['calendar']
@@ -507,7 +507,7 @@ class DefaultDatasetParser():
             for k,v in backup_d.items():
                 if k not in attrs_d:
                     attrs_d[k] = v
-                if v != attrs_d[k] and v != ATTR_NOT_FOUND:
+                if v != attrs_d[k] and v is not ATTR_NOT_FOUND:
                     self.log.error("%s: discrepancy for attr '%s': '%s' != '%s'.",
                         name, k, v, attrs_d[k])
         
@@ -515,20 +515,21 @@ class DefaultDatasetParser():
         for var in ds.variables:
             _restore_one(var, ds[var].attrs)
 
-    def _post_normalize_hook(self, var, ds):
-        # Allow child classes to perform additional operations, regardless of
-        # whether we go on to do reconciliation/checks
-        pass
-
-    def guess_dependent_var(self, our_var, ds):
+    def normalize_dependent_var(self, var, ds):
         """Use heuristics to determine the name of the dependent variable from 
         among all the variables in the Dataset *ds*, if the name doesn't match 
         the value we expect in *our_var*.
         """
         # TODO: better heuristic would be to look for variable name strings in
         # input file name
-        if our_var.name in ds:
-            return our_var.name
+        ds_var_name = var.translation.name
+        if ds_var_name in ds:
+            # normal operation: translation was correct
+            return
+        if not self.guess_names:
+            raise util.MetadataError(f"Variable name '{ds_var_name}' not found "
+                f"in dataset: ({list(ds.variables)}).")
+
         var_names = list(ds.variables.keys())
         coord_names = set(ds.coords.keys())
         for c_name, c in ds.coords.items():
@@ -552,13 +553,18 @@ class DefaultDatasetParser():
         if var_name is not None:
             # success, narrowed down to one guess
             self.log.info(("Selecting '%s' as the intended dependent variable name "
-                "(expected '%s')."), var_name, our_var.name,
+                "for '%s' (expected '%s')."), var_name, var.name, ds_var_name,
                 tags=util.ObjectLogTag.BANNER)
-            return var_name
+            var.translation.name = var_name
         else:
             # give up; too ambiguous to guess
             raise util.MetadataError(("Couldn't guess intended dependent variable "
-                f"name: expected {our_var.name}, received {list(ds.variables)}."))
+                f"name: expected {ds_var_name}, received {list(ds.variables)}."))
+
+    def _post_normalize_hook(self, var, ds):
+        # Allow child classes to perform additional operations, regardless of
+        # whether we go on to do reconciliation/checks
+        pass
 
     # --- Methods for comparing Dataset attrs against our record  ---
 
@@ -595,16 +601,16 @@ class DefaultDatasetParser():
             comparison_func = (lambda x,y: x == y)
         # told to update our metadata, but only do so if we weren't told to
         # ignore ds's metadata and the metadata is actually present on ds
-        fill_ours = (fill_ours and ds_attr != ATTR_NOT_FOUND)
+        fill_ours = (fill_ours and ds_attr is not ATTR_NOT_FOUND)
         if overwrite_ours is not None:
-            overwrite_ours = (overwrite_ours and ds_attr != ATTR_NOT_FOUND)
+            overwrite_ours = (overwrite_ours and ds_attr is not ATTR_NOT_FOUND)
         if self.overwrite_ds:
-            # user set CLI option to force overwrite
+            # user set CLI option to force overwrite of ds from our_var
             fill_ds = True
-            fill_ours = False
-            overwrite_ours = False
+            fill_ours = True       # only if missing on our_var & present on ds
+            overwrite_ours = False # overwrite conflicting data on ds from our_var
 
-        if ds_attr == ATTR_NOT_FOUND or (not ds_attr):
+        if ds_attr is ATTR_NOT_FOUND or (not ds_attr):
             # ds_attr wasn't defined
             if fill_ds:
                 # update ds with our value
@@ -614,10 +620,10 @@ class DefaultDatasetParser():
                 return
             else:
                 # don't change ds, raise exception
-                raise util.MetadataError((f"No {ds_attr_name} for '{ds_var.name}' "
-                    f"(= {our_attr}) found in dataset."))
+                raise util.MetadataError((f"No {ds_attr_name} set for '{ds_var.name}'; "
+                    f"expected value '{our_attr}'."))
 
-        if not our_attr:
+        if our_attr is util.NOTSET or (not our_attr):
             # our_attr wasn't defined
             if fill_ours:
                 if not (our_attr_name == 'name' and our_var.name == ds_attr):
@@ -627,8 +633,8 @@ class DefaultDatasetParser():
                 return
             else:
                 # don't change ds, raise exception
-                raise util.MetadataError((f"'{our_var.name}' not set but "
-                    f"{ds_attr_name} (= {ds_attr}) present in dataset."))
+                raise util.MetadataError((f"No {our_attr_name} set for '{our_var.name}'; "
+                    f"value '{ds_attr}' found in dataset."))
 
         if not comparison_func(our_attr, ds_attr):
             # both attrs present, but have different values
@@ -979,14 +985,8 @@ class DefaultDatasetParser():
         naming convention) with attributes actually present in the Dataset *ds*.
         """
         tv = var.translation # abbreviate
-        if tv.name not in ds and self.guess_names:
-            tv.name = self.guess_dependent_var(tv, ds)
-            overwrite_ours = True # overwrite since our record is wrong
-        else:
-            overwrite_ours = None # normal operation; don't overwrite
-
         # check name, std_name, units on variable itself
-        self.reconcile_names(tv, ds, tv.name, overwrite_ours=overwrite_ours)
+        self.reconcile_names(tv, ds, tv.name, overwrite_ours=None)
         self.reconcile_units(tv, ds[tv.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
         self.reconcile_dimension_coords(tv, ds)
@@ -1040,7 +1040,7 @@ class DefaultDatasetParser():
         for attr in attr_names:
             if attr not in ds_var.attrs:
                 ds_var.attrs[attr] = ATTR_NOT_FOUND
-            if ds_var.attrs[attr] == ATTR_NOT_FOUND:
+            if ds_var.attrs[attr] is ATTR_NOT_FOUND:
                 raise util.MetadataEvent(
                     f"'{attr}' metadata attribute not found on '{ds_var.name}'."
                 )
@@ -1098,6 +1098,7 @@ class DefaultDatasetParser():
         )
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs_backup(ds)
+        self.normalize_dependent_var(var, ds)
         self.check_calendar(ds)
         self._post_normalize_hook(var, ds)
 

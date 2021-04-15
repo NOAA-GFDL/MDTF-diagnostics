@@ -21,7 +21,7 @@ def climAnom(var_path, var_name):
     da = ds[va]
     da_ensmean = da.copy()
     #would need to make envt var or something so you could use either 'time' or 'S' as coordinate name without an issue
-    da_day_clim = da_ensmean.groupby('time.dayofyear').mean(time_var)
+    da_day_clim = da_ensmean.groupby('{time_coord}.dayofyear').mean(time_var).format(**os.environ)
     da_day_anom = da.groupby('{time_coord}.dayofyear').format(**os.environ) - da_day_clim
     da_day_anom = da_day_anom.drop('dayofyear')
 

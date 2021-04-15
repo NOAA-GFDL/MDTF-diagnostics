@@ -590,13 +590,12 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
-                    raise
-                    # update = True
-                    # self.log.exception("%s while preprocessing %s: %r",
-                    #     util.exc_descriptor(exc), pv.var.full_name, exc)
-                    # for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
-                    #     pv.var.deactivate_data_key(d_key, exc)
-                    # continue
+                    update = True
+                    self.log.exception("%s while preprocessing %s: %r",
+                        util.exc_descriptor(exc), pv.var.full_name, exc)
+                    for d_key in pv.var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                        pv.var.deactivate_data_key(d_key, exc)
+                    continue
         else:
             # only hit this if we don't break
             raise util.DataRequestError( 
@@ -614,9 +613,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             self.preprocess_data()
         except Exception as exc:
-            raise
-            # self.log.exception("%s at DataSource level: %r.", 
-            #     util.exc_descriptor(exc), exc)
+            self.log.exception("%s at DataSource level: %r.", 
+                util.exc_descriptor(exc), exc)
         # clean up regardless of success/fail
         self.post_query_and_fetch_hook()
         for p in self.iter_children():

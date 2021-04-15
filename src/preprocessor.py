@@ -291,9 +291,9 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             ds = units.convert_dataarray(
                 ds, c.name, src_unit=None, dest_unit=dest_c.units, log=var.log
             )
-            if c.has_bounds and c.bounds_var in ds:
+            if c.has_bounds and c.bounds_var.name in ds:
                 ds = units.convert_dataarray(
-                    ds, c.bounds_var, src_unit=None, dest_unit=dest_c.units, 
+                    ds, c.bounds_var.name, src_unit=None, dest_unit=dest_c.units, 
                     log=var.log
                 )
             c.units = dest_c.units
@@ -639,7 +639,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
                 ds_T.encoding['units'] = ds_T.attrs['units']
             if t_coord.has_bounds:
-                ds[t_coord.bounds_var].encoding['units'] = ds_T.encoding['units']
+                ds[t_coord.bounds_var.name].encoding['units'] = ds_T.encoding['units']
 
         for v_name, ds_v in ds.variables.items():
             self.clean_nc_var_encoding(var, v_name, ds_v)

@@ -428,6 +428,69 @@ class DefaultDatasetParser():
             # key was found with expected name; copy to new_attr_d
             new_attr_d[key_name] = d[key_name]
 
+    def normalize_calendar(self, attr_d):
+        """Finds the calendar attribute, if present, and normalizes it to one of
+        the values in the CF standard before xarray.decode_cf decodes the 
+        time axis.
+        """
+        self.normalize_attr(attr_d, attr_d, 'calendar', 'cal')
+        if attr_d['calendar'] is ATTR_NOT_FOUND:
+            # in normal operation, this is because we're looking at a non-time-
+            # related variable. Calendar assignment is finalized by check_calendar().
+            del attr_d['calendar']
+        else:
+            # Make sure it's set to a recognized value
+            attr_d['calendar'] = self.guess_attr(
+                'calendar', attr_d['calendar'], _cf_calendars, 
+                default=self.fallback_cal
+            )
+
+    def normalize_pre_decode(self, ds):
+        """Initial munging of xarray Dataset attribute dicts, before any 
+        parsing by xarray.decode_cf() or the cf_xarray accessor.
+        """
+        def strip_(v):
+            # strip leading, trailing whitespace from all string-valued attributes
+            return (v.strip() if isinstance(v, str) else v)
+        def strip_attrs(obj):
+            d = getattr(obj, 'attrs', dict())
+            return {strip_(k): strip_(v) for k,v in d.items()}
+
+        setattr(ds, 'attrs', strip_attrs(ds))
+        for var in ds.variables:
+            new_d = dict()
+            d = strip_attrs(ds[var])
+            setattr(ds[var], 'attrs', d) 
+            # need to do this hacky new_d/d stuff because if we updated attrs on d
+            # now, we'd hit an exception from xr.decode_cf() ("TypeError: argument 
+            # of type '_SentinelObject' is not iterable"). Instead we apply the
+            # edits to new_d, save that in attrs_backup, and reapply later in 
+            # restore_attrs_backup().
+            self.normalize_calendar(d)
+            self.attrs_backup[var] = d.copy()
+            self.attrs_backup[var].update(new_d)
+        self.attrs_backup['Dataset'] = ds.attrs.copy()
+
+    def restore_attrs_backup(self, ds):
+        """xarray.decode_cf() and other functions appear to un-set some of the 
+        attributes defined in the netCDF file. Restore them from the backups 
+        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
+        """
+        def _restore_one(name, attrs_d):
+            backup_d = self.attrs_backup.get(name, dict())
+            for k,v in backup_d.items():
+                if v is ATTR_NOT_FOUND:
+                    continue
+                if k in attrs_d and v != attrs_d[k]:
+                    # log warning but still update attrs
+                    self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                        name, k, v, attrs_d[k])
+                attrs_d[k] = v
+        
+        _restore_one('Dataset', ds.attrs)
+        for var in ds.variables:
+            _restore_one(var, ds[var].attrs)
+
     def normalize_standard_name(self, new_attr_d, attr_d):
         """Method for munging standard_name attribute prior to parsing.
         """
@@ -451,69 +514,6 @@ class DefaultDatasetParser():
             # TODO: insert other cases of misidentified units here as they're 
             # discovered
             new_attr_d['units'] = unit_str
-
-    def normalize_calendar(self, attr_d):
-        """Finds the calendar attribute, if present, and normalizes it to one of
-        the values in the CF standard before xarray.decode_cf decodes the 
-        time axis.
-        """
-        self.normalize_attr(attr_d, attr_d, 'calendar', 'cal')
-        if attr_d['calendar'] is ATTR_NOT_FOUND:
-            # in normal operation, this is because we're looking at a non-time-
-            # related variable. Calendar assignment is finalized by check_calendar().
-            del attr_d['calendar']
-        else:
-            # Make sure it's set to a recognized value
-            attr_d['calendar'] = self.guess_attr(
-                'calendar', attr_d['calendar'], _cf_calendars, 
-                default=self.fallback_cal
-            )
-
-    def normalize_ds_attrs(self, ds):
-        """Initial munging of xarray Dataset attribute dicts, before any 
-        parsing by xarray.decode_cf() or the cf_xarray accessor.
-        """
-        def strip_(v):
-            # strip leading, trailing whitespace from all string-valued attributes
-            return (v.strip() if isinstance(v, str) else v)
-        def strip_attrs(obj):
-            d = getattr(obj, 'attrs', dict())
-            return {strip_(k): strip_(v) for k,v in d.items()}
-
-        setattr(ds, 'attrs', strip_attrs(ds))
-        for var in ds.variables:
-            new_d = dict()
-            d = strip_attrs(ds[var])
-            setattr(ds[var], 'attrs', d) 
-            # need to do this hacky new_d/d stuff because if we updated attrs on d
-            # now, we'd hit an exception from xr.decode_cf() ("TypeError: argument 
-            # of type '_SentinelObject' is not iterable"). Instead we apply the
-            # edits to new_d, save that in attrs_backup, and reapply later in 
-            # restore_attrs_backup().
-            self.normalize_standard_name(new_d, d)
-            self.normalize_unit(new_d, d)
-            self.normalize_calendar(d)
-            self.attrs_backup[var] = d.copy()
-            self.attrs_backup[var].update(new_d)
-        self.attrs_backup['Dataset'] = ds.attrs.copy()
-
-    def restore_attrs_backup(self, ds):
-        """xarray.decode_cf() and other functions appear to un-set some of the 
-        attributes defined in the netCDF file. Restore them from the backups 
-        made in :meth:`munge_ds_attrs`, but only if the attribute was deleted.
-        """
-        def _restore_one(name, attrs_d):
-            backup_d = self.attrs_backup.get(name, dict())
-            for k,v in backup_d.items():
-                if k not in attrs_d:
-                    attrs_d[k] = v
-                if v != attrs_d[k] and v is not ATTR_NOT_FOUND:
-                    self.log.error("%s: discrepancy for attr '%s': '%s' != '%s'.",
-                        name, k, v, attrs_d[k])
-        
-        _restore_one('Dataset', ds.attrs)
-        for var in ds.variables:
-            _restore_one(var, ds[var].attrs)
 
     def normalize_dependent_var(self, var, ds):
         """Use heuristics to determine the name of the dependent variable from 
@@ -560,6 +560,21 @@ class DefaultDatasetParser():
             # give up; too ambiguous to guess
             raise util.MetadataError(("Couldn't guess intended dependent variable "
                 f"name: expected {ds_var_name}, received {list(ds.variables)}."))
+
+    def normalize_metadata(self, var, ds):
+        """Normalize name, standard_name and units attributes after decode_cf
+        and cf_xarray setup steps and metadata dict has been restored, since 
+        those methods don't touch these metadata attributes.
+        """
+        for v in ds.variables:
+            # do this hacky new_d/d stuff because we don't want to rewrite existing methods
+            d = ds[v].attrs
+            new_d = dict()
+            self.normalize_standard_name(new_d, d)
+            self.normalize_unit(new_d, d)
+            d.update(new_d)
+            setattr(ds[v], 'attrs', d)
+        self.normalize_dependent_var(var, ds)
 
     def _post_normalize_hook(self, var, ds):
         # Allow child classes to perform additional operations, regardless of
@@ -614,7 +629,7 @@ class DefaultDatasetParser():
             # ds_attr wasn't defined
             if fill_ds:
                 # update ds with our value
-                self.log.warning("No %s for '%s' found in dataset; setting to '%s'.",
+                self.log.info("No %s for '%s' found in dataset; setting to '%s'.",
                     ds_attr_name, ds_var.name, str(our_attr))
                 ds_var.attrs[ds_attr_name] = str(our_attr)
                 return
@@ -656,9 +671,10 @@ class DefaultDatasetParser():
                     msg_addon = " (user set overwrite_file_metadata)"
                 else:
                     msg_addon = ''
-                self.log.info(("Changing %s for '%s' in dataset from '%s' to our "
-                    "value '%s'%s."),
-                    ds_attr_name, our_var.name, ds_attr, our_attr, msg_addon
+                self.log.info(("Changing attribute '%s' for dataset variable '%s' "
+                    "from '%s' to our value '%s'%s."),
+                    ds_attr_name, ds_var.name, ds_attr, our_attr, msg_addon,
+                    tags=util.ObjectLogTag.NC_HISTORY
                 )
                 ds_var.attrs[ds_attr_name] = str(our_attr)
                 return
@@ -869,14 +885,15 @@ class DefaultDatasetParser():
             return
 
         # Inherit standard_name from our_coord if not present (regardless of 
-        # skip_std_name)
+        # skip_std_name), overwriting metadata on bounds if different
         self.reconcile_attr(our_coord, bounds, 'standard_name',
-            fill_ours=False, fill_ds=True
+            fill_ours=False, fill_ds=True, overwrite_ours=False
         )
-        # Inherit units from our_coord if not present (regardless of skip_units)
+        # Inherit units from our_coord if not present (regardless of skip_units),
+        # overwriting metadata on bounds if different
         self.reconcile_attr(our_coord, bounds, 'units', 
             comparison_func=units.units_equal,
-            fill_ours=False, fill_ds=True
+            fill_ours=False, fill_ds=True, overwrite_ours=False
         )
         if our_coord.name != bounds.name:
             self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
@@ -1090,7 +1107,7 @@ class DefaultDatasetParser():
         """
         if var is not None:
             self.log = var.log
-        self.normalize_ds_attrs(ds)
+        self.normalize_pre_decode(ds)
         ds = xr.decode_cf(ds,         
             decode_coords=True, # parse coords attr
             decode_times=True,
@@ -1098,7 +1115,7 @@ class DefaultDatasetParser():
         )
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs_backup(ds)
-        self.normalize_dependent_var(var, ds)
+        self.normalize_metadata(var, ds)
         self.check_calendar(ds)
         self._post_normalize_hook(var, ds)
 

@@ -28,7 +28,7 @@ rainfall = climAnom(var_path=os.environ["PREC_FILE"], var_name=os.environ["prec_
 t2m = climAnom(var_path=os.environ["TAS_FILE"], var_name=os.environ["t_ref_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
 #t2m = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.T250.day.nc", var_name='T250').stack(T=['time'], grid=['lat', 'lon'])
 reanalysis = reanalysis.to_dataset()
-reanalysis = reanalysis.assign_coords(P=(250))
+#reanalysis = reanalysis.assign_coords(P=(250))
 rainfall = rainfall.to_dataset()
 t2m = t2m.to_dataset()
 

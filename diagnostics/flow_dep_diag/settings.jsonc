@@ -35,26 +35,26 @@
     }
   },
   "varlist" : {
-    "Z250" : {
+    "Z500" : {
       "standard_name" : "geopotential_height",
       "path_variable" : "HGT_FILE", //this value is used as name of envt var. framework sets value of this envt var = absolute path to file containing data for var
       "freq" : "day",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"]
+      // "dimensions" : ["time", "lat", "lon"]
     },
     "T250" : {
       "standard_name" : "air_temperature",
       "path_variable" : "TAS_FILE",
       "freq" : "day",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"]
+      // "dimensions" : ["time", "lat", "lon"]
     },
     "PRECT" : {
       "standard_name" : "precipitation_rate",
       "path_variable" : "PREC_FILE",
       "freq" : "day",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"]
+      // "dimensions" : ["time", "lat", "lon"]
     }
   }
 }

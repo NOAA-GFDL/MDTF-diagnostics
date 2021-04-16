@@ -3,20 +3,20 @@ import os
 import glob
 
 #specifying file structure for each var
-os.environ["PREC_FILE"] = "*."+os.environ["prec_var"]+".day.nc"
-os.environ["HGT_FILE"] = "*."+os.environ["hgt_var"]+".day.nc"
-os.environ["TAS_FILE"] = "*."+os.environ["t_ref_var"]+".day.nc"
+os.environ["PRECT_FILE"] = "*."+os.environ["PRECT_var"]+".day.nc"
+os.environ["Z250_FILE"] = "*."+os.environ["Z250_var"]+".day.nc"
+os.environ["T250_FILE"] = "*."+os.environ["T250_var"]+".day.nc"
 
 os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
 
 missing_file=0
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["PREC_FILE"]))==0:
+if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["PRECT_FILE"]))==0:
     print("Required Precipitation data missing!")
     missing_file=1
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["HGT_FILE"]))==0:
+if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["Z250_FILE"]))==0:
     print("Required Geopotential heightdata missing!")
     missing_file=1
-if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["TAS_FILE"]))==0:
+if len(glob.glob(os.environ["MODEL_OUTPUT_DIR"]+"/"+os.environ["T250_FILE"]))==0:
     print("Required temperature data missing!")
     missing_file=1
 

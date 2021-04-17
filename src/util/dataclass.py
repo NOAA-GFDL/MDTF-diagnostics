@@ -453,6 +453,9 @@ def _mdtf_dataclass_type_check(self):
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
                 f"({repr(value)})."))
 
+DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True, 
+    'order': False, 'unsafe_hash': False, 'frozen': False}
+
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
 def mdtf_dataclass(cls=None, **deco_kwargs):
@@ -481,8 +484,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
        *default* or *default_factory* defined. Fields which are mandatory must 
        have their default value set to the sentinel object ``MANDATORY``.
     """
-    dc_kwargs = {'init': True, 'repr': True, 'eq': True, 'order': False, 
-        'unsafe_hash': False, 'frozen': False}
+    dc_kwargs = DEFAULT_MDTF_DATACLASS_KWARGS.copy()
     dc_kwargs.update(deco_kwargs)
     if cls is None:
         # called without arguments
@@ -550,7 +552,7 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
             post_init[f.name] = new_kw.pop(f.name)
     return (new_kw, post_init)
 
-def regex_dataclass(pattern):
+def regex_dataclass(pattern, **deco_kwargs):
     """Decorator for a dataclass that adds a from_string classmethod which 
     creates instances of that dataclass by parsing an input string with a 
     :class:`RegexPattern` or :class:`ChainedRegexPattern`. The values of all
@@ -562,9 +564,29 @@ def regex_dataclass(pattern):
     regex_dataclass will be invoked on that field's value (ie, a string obtained
     by regex matching in *this* regex_dataclass), and the parsed values of those
     fields will be supplied to this regex_dataclass constructor. This is our 
-    implementation of inheritance for regex_dataclasses.
+    implementation of composition for regex_dataclasses.
+
+    .. note::
+       Unlike :func:`mdtf_dataclass`, type coercion is done *after* 
+       ``__post_init__`` for these dataclasses. This is necessary due to 
+       composition: if a regex_dataclass is being instantiated as a field of 
+       another regex_dataclass, all values being passed to it will be strings
+       (the regex fields), and type coercion is the job of ``__post_init__``.
     """
+    dc_kwargs = DEFAULT_MDTF_DATACLASS_KWARGS.copy()
+    dc_kwargs.update(deco_kwargs)
+
     def _dataclass_decorator(cls):
+        if '__post_init__' not in cls.__dict__:
+            # Prevent class from inheriting __post_init__ from parents if it 
+            # doesn't overload it (which is why we use __dict__ and not
+            # hasattr().) __post_init__ of all parents will have been called when
+            # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
+            def _dummy_post_init(self, *args, **kwargs): pass
+            type.__setattr__(cls, '__post_init__', _dummy_post_init)
+
+        # apply dataclasses' decorator
+        cls = dataclasses.dataclass(cls, **dc_kwargs)
         # check that all DCs specified as fields are also in class hierarchy
         # so that we inherit their fields; probably no way this could happen though
         for f in dataclasses.fields(cls):
@@ -590,22 +612,17 @@ def regex_dataclass(pattern):
             else:
                 _old_init(self, first_arg, *args, **new_kw)
 
-        if '__post_init__' not in cls.__dict__:
-            # Prevent class from inheriting __post_init__ from parents if it 
-            # doesn't overload it (which is why we use __dict__ and not
-            # hasattr().) __post_init__ of all parents will have been called when
-            # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
-            def _dummy_post_init(self, *args, **kwargs): pass
-            type.__setattr__(cls, '__post_init__', _dummy_post_init)
+            _mdtf_dataclass_type_coercion(self)      
+            _mdtf_dataclass_type_check(self)     
+        type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
+        type.__setattr__(cls, 'from_string', classmethod(_from_string))
 
-        type.__setattr__(cls, '__init__', _new_init)
         type.__setattr__(cls, '_is_regex_dataclass', True)
         type.__setattr__(cls, '_pattern', pattern)
-        type.__setattr__(cls, 'from_string', classmethod(_from_string))
         return cls
     return _dataclass_decorator
 

@@ -149,6 +149,41 @@ class TestMDTFDataclass(unittest.TestCase):
         self.assertEqual(dummy.b, 5)
         self.assertEqual(dummy.c, [1,2,3])
 
+    def test_builtin_coerce_pre_postinit(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            b: int = None
+        
+            def __post_init__(self):
+                self.b += 5
+
+        dummy = Dummy(b="3")
+        self.assertEqual(dummy.b, 8)
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = Dummy(b=Exception)
+
+    def test_builtin_check_post_postinit_1(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: str = None
+        
+            def __post_init__(self):
+                self.a = 5
+
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = Dummy(a="a string")
+
+    def test_builtin_check_post_postinit_2(self):
+        @util.mdtf_dataclass
+        class Dummy(object):
+            a: str = None
+        
+            def __post_init__(self):
+                self.a = util.MANDATORY
+
+        with self.assertRaises(exceptions.DataclassParseError):
+            _ = Dummy(a="a string")
+
     def test_decorator_args(self):
         @util.mdtf_dataclass(frozen=True)
         class Dummy(object):

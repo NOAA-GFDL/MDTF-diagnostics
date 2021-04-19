@@ -33,23 +33,28 @@
     }
   },
   "varlist" : {
-    "Z500" : {
+    "Z250" : {
       "standard_name" : "geopotential_height",
       "path_variable" : "HGT_FILE",
       "freq" : "day",
-      "requirement" : "required"
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 250}
     },
     "T250" : {
       "standard_name" : "air_temperature",
       "path_variable" : "TAS_FILE",
       "freq" : "day",
-      "requirement" : "required"
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 250}
     },
     "PRECT" : {
       "standard_name" : "precipitation_rate",
       "path_variable" : "PREC_FILE",
       "freq" : "day",
-      "requirement" : "required"
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]    
     }
   }
 }

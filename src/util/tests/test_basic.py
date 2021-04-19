@@ -243,18 +243,31 @@ class TestNameSpace(unittest.TestCase):
 
 class TestMDTFEnum(unittest.TestCase):
     def test_to_string(self):
-        class Dummy(util.MDTFEnum):
-            VALUE = ()
-            ANOTHER_VALUE = ()
+        Dummy = util.MDTFEnum('Dummy', 'VALUE ANOTHER_VALUE')
         self.assertEqual('value', str(Dummy.VALUE))
         self.assertEqual('another_value', str(Dummy.ANOTHER_VALUE))
 
     def test_from_string(self):
-        class Dummy(util.MDTFEnum):
-            VALUE = ()
-            ANOTHER_VALUE = ()
+        Dummy = util.MDTFEnum('Dummy', 'VALUE ANOTHER_VALUE')
         self.assertEqual(Dummy.from_struct('value'), Dummy.VALUE)
         self.assertEqual(Dummy.from_struct('another_value'), Dummy.ANOTHER_VALUE)
+        with self.assertRaises(ValueError):
+            Dummy.from_struct('invalid_value')
+
+    def test_eq_coercion(self):
+        Dummy = util.MDTFEnum('Dummy', 'VALUE ANOTHER_VALUE')
+        self.assertEqual(Dummy.VALUE, Dummy.VALUE)
+        self.assertNotEqual(Dummy.ANOTHER_VALUE, Dummy.VALUE)
+        #self.assertEqual(Dummy.VALUE, 'value')
+        #self.assertEqual('value', Dummy.VALUE)
+        #self.assertNotEqual('another_value', Dummy.VALUE)
+        #self.assertNotEqual(Dummy.VALUE, 'another_value')
+
+    def test_int_enum(self):
+        Dummy = util.MDTFIntEnum('Dummy', 'ONE TWO THREE')
+        self.assertTrue(Dummy.ONE < Dummy.TWO)
+        self.assertTrue(Dummy.THREE >= Dummy.TWO)
+        self.assertNotEqual(Dummy.ONE, Dummy.TWO)
 
 class TestSpliceIntoList(unittest.TestCase):
     def test_splice_into_list_start(self):

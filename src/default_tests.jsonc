@@ -34,9 +34,9 @@
     // {
     //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
     //   "model" : "AM4",
-    //   "convention" : "AM4",
-    //   "FIRSTYR" : 1977,
-    //   "LASTYR" : 1981,
+    //   "convention" : "GFDL",
+    //   "FIRSTYR" : 1,
+    //   "LASTYR" : 10,
     //   "pod_list" : ["MJO_prop_amp"]
     // }
     // {
@@ -69,11 +69,11 @@
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory. Defaults to working directory if blank.
+  // Working directory.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
-  // put in a subdirectory of this directory.
+  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing

@@ -1,0 +1,37 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>MDTF tropical Pacific sea level diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Example diagnostic: time scale diagnostic of wind stress and sea level</h3>
+<p>
+The diagnostic plots show tropical Pacific dynamic sea level (DSL)
+and wind stress curl(WSC) scatter plots at different time scales
+due to their strong dependency from Ekman pumping/suction
+and barotropic response over the ocean.
+</p>
+<p>
+</p>
+<TABLE>
+<TR>
+<TH align=left><font color=navy>Time period, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>OBS
+<TR>
+<TH align=left>Scatter plot between WSC and DSL 
+<!-- 
+    Relative links to bitmaps of plots made by the diagnostic, see above. 
+-->
+<TH align=center><A href=model/example_model_plot.png>plot</A>
+<TH align=center><A href=obs/example_obs_plot.png>plot</A>
+</TABLE>

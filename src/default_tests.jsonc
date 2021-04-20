@@ -15,22 +15,31 @@
     // models in a single invocation. Comment out or delete the first entry and
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
+    
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
+      "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
+      "model" : "CESM2",
       "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list": [
-          // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
-      ]
+      "FIRSTYR" : 1993,
+      "LASTYR" : 2009,
+      "pod_list": ["tropical_pacific_sea_level"]
     }
+    //{
+    //  "CASENAME" : "QBOi.EXP1.AMIP.001",
+    //  "model" : "CESM",
+    //  "convention" : "CESM",
+    //  "FIRSTYR" : 1977,
+    //  "LASTYR" : 1981,
+    //  "pod_list": [
+    //      // Optional: PODs to run for this model only (defaults to all)
+    //      "Wheeler_Kiladis",
+    //      "EOF_500hPa",
+    //      "MJO_suite",
+    //      "MJO_teleconnection"
+    //      // "convective_transition_diag"
+    //      // "precip_diurnal_cycle"
+    //  ]
+    //}
     // {
     //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
     //   "model" : "AM4",
@@ -79,13 +88,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "/storage1/home1/chiaweih/anaconda2",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "/storage1/home1/chiaweih/anaconda2/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -100,7 +109,7 @@
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": false,
+  "save_ps": true,
 
   // Set to true to have PODs save netCDF files of processed data.
   "save_nc": false,

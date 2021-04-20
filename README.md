@@ -1,4 +1,4 @@
-# MDTF-diagnostics: A Portable Framework for Weather and Climate Data Analysis
+# MDTF-diagnostics: A Portable Framework for Weather and Climate Model Data Analysis
 
 [![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=latest)](https://mdtf-diagnostics.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.com/NOAA-GFDL/MDTF-diagnostics.svg?branch=main)](https://travis-ci.com/NOAA-GFDL/MDTF-diagnostics) [![Total alerts](https://img.shields.io/lgtm/alerts/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/alerts/) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/context:python)
 

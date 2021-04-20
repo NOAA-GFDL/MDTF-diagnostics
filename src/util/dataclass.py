@@ -348,8 +348,57 @@ default fields in the dataclass-generated ``__init__`` method under
 we use the second solution described in `<https://stackoverflow.com/a/53085935>`__.
 """
 
-def _mdtf_dataclass_typecheck(self, log=_log):
-    """Do type checking/coercion on all dataclass fields after init/post_init.
+def _mdtf_dataclass_get_field_types(obj, f):
+    """Common functionality for :func:`_mdtf_dataclass_type_coercion` and
+    :func:`_mdtf_dataclass_type_check`. Given a :py:class:`datacalsses.Field` 
+    object *f*, return either a tuple of the type its value should be coerced to
+    and a tuple of the valid types its value can have, or (None, None) to signal
+    a case we don't handle. 
+    """
+    if not f.init:
+        # ignore fields that aren't handled at init
+        return (None, None)
+    value = getattr(obj, f.name)
+    # ignore unset field values, regardless of type
+    if value is None or value is NOTSET:
+        return (None, None)
+    # guess what types are valid
+    new_type = None
+    if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
+        return (None, None)
+    if dataclasses.is_dataclass(f.type):
+        # ignore if type is a dataclass: use this type annotation to
+        # implement dataclass inheritance
+        if not isinstance(obj, f.type):
+            raise exceptions.DataclassParseError((f"Field {f.name} specified "
+                f"as dataclass {f.type.__name__}, which isn't a parent class "
+                f"of {obj.__class__.__name__}."))
+        return (None, None)
+    elif isinstance(f.type, typing._GenericAlias) \
+        or isinstance(f.type, typing._SpecialForm):
+        # type is a generic from typing module, eg "typing.List"
+        if f.type.__origin__ is typing.Union:
+            new_type = None # can't do coercion, but can test type
+            valid_types = list(f.type.__args__)
+        elif issubclass(f.type.__origin__, typing.Generic):
+            return (None, None) # can't do anything in this case
+        else:
+            new_type = f.type.__origin__
+            valid_types = [new_type]
+    else:
+        new_type = f.type
+        valid_types = [new_type]
+    # Get types of field's default value, if present. Dataclass doesn't 
+    # require defaults to be same type as what's given for field.
+    if not isinstance(f.default, dataclasses._MISSING_TYPE):
+        valid_types.append(type(f.default))
+    if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
+        valid_types.append(type(f.default_factory()))
+    return (new_type, valid_types)
+
+def _mdtf_dataclass_type_coercion(self, log):
+    """Do type checking on all dataclass fields after the auto-generated 
+    ``__init__`` method, but before any ``__post_init__`` method.
 
     .. warning::
        Type checking logic used is specific to the ``typing`` module in python 
@@ -357,58 +406,13 @@ def _mdtf_dataclass_typecheck(self, log=_log):
        work with 3.5 or 3.6. See `<https://stackoverflow.com/a/52664522>`__.
     """
     for f in dataclasses.fields(self):
-        if not f.init:
-            # ignore fields that aren't handled at init
-            continue
-        value = getattr(self, f.name)
-        # ignore unset field values, regardless of type
-        if value is None or value is NOTSET:
-            continue
-        if value is MANDATORY:
-            raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
-                f"No value supplied for mandatory field {f.name}."))
-        # guess what types are valid
-        new_type = None
-        if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
-            continue
-        if dataclasses.is_dataclass(f.type):
-            # ignore if type is a dataclass: use this type annotation to
-            # implement dataclass inheritance
-            if not isinstance(self, f.type):
-                raise exceptions.DataclassParseError((f"Field {f.name} specified "
-                    f"as dataclass {f.type.__name__} which isn't a parent class "
-                    f"of {self.__class__.__name__}."))
-            continue
-        elif isinstance(f.type, typing._GenericAlias) \
-            or isinstance(f.type, typing._SpecialForm):
-            # type is a generic from typing module, eg "typing.List"
-            if f.type.__origin__ is typing.Union:
-                new_type = None # can't do coercion, but can test type
-                valid_types = list(f.type.__args__)
-            elif issubclass(f.type.__origin__, typing.Generic):
-                continue # can't do anything in this case
-            else:
-                new_type = f.type.__origin__
-                valid_types = [new_type]
-        else:
-            new_type = f.type
-            valid_types = [new_type]
-        # Get types of field's default value, if present. Dataclass doesn't 
-        # require defaults to be same type as what's given for field.
-        if not isinstance(f.default, dataclasses._MISSING_TYPE):
-            valid_types.append(type(f.default))
-        if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
-            valid_types.append(type(f.default_factory()))
-        
+        value = getattr(self, f.name, NOTSET)
+        new_type, valid_types = _mdtf_dataclass_get_field_types(self, f)
         try:
-            if isinstance(value, tuple(valid_types)):
-                continue
+            if valid_types is None or isinstance(value, tuple(valid_types)):
+                continue # don't coerce if we're already a valid type
             if new_type is None or hasattr(new_type, '__abstract_methods__'):
-                continue
-                # # can't do type coercion, so print a warning
-                # print((f"\tWarning: {self.__class__.__name__}: type of "
-                #     f" {f.name} is ({f.type}), recieved {repr(value)} of "
-                #     "conflicting type."))
+                continue # can't do type coercion
             else:
                 if hasattr(new_type, 'from_struct'):
                     new_value = new_type.from_struct(value)
@@ -420,10 +424,40 @@ def _mdtf_dataclass_typecheck(self, log=_log):
                 # https://stackoverflow.com/a/54119384 for implementation
                 object.__setattr__(self, f.name, new_value)
         except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
+            raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
+                f"Couldn't coerce value {repr(value)} for field {f.name} from "
+                f"type {type(value)} to type {new_type}.")) from exc
+        except Exception as exc:
             log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
+            raise exc
+
+def _mdtf_dataclass_type_check(self, log):
+    """Do type checking on all dataclass fields after ``__init__`` and 
+    ``__post_init__`` methods.
+
+    .. warning::
+       Type checking logic used is specific to the ``typing`` module in python 
+       3.7. It may or may not work on newer pythons, and definitely will not 
+       work with 3.5 or 3.6. See `<https://stackoverflow.com/a/52664522>`__.
+    """
+    for f in dataclasses.fields(self):
+        value = getattr(self, f.name, NOTSET)
+        if value is None or value is NOTSET:
+            continue
+        if value is MANDATORY:
+            raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
+                f"No value supplied for mandatory field {f.name}."))
+
+        _, valid_types = _mdtf_dataclass_get_field_types(self, f)
+        if valid_types is not None and not isinstance(value, tuple(valid_types)):
+            log.exception("%s: Failed type check for field '%s': %s != %s.",
+                self.__class__.__name__, f.name, type(value), valid_types)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
-                f"({repr(value)}).")) from exc
+                f"({repr(value)})."))
+
+DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True, 
+    'order': False, 'unsafe_hash': False, 'frozen': False}
 
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
@@ -453,25 +487,35 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
        *default* or *default_factory* defined. Fields which are mandatory must 
        have their default value set to the sentinel object ``MANDATORY``.
     """
-    dc_kwargs = {'init': True, 'repr': True, 'eq': True, 'order': False, 
-        'unsafe_hash': False, 'frozen': False}
+    dc_kwargs = DEFAULT_MDTF_DATACLASS_KWARGS.copy()
     dc_kwargs.update(deco_kwargs)
     if cls is None:
         # called without arguments
         return functools.partial(mdtf_dataclass, **dc_kwargs)
+
+    if not hasattr(cls, '__post_init__'):
+        # create dummy __post_init__ if none deefined, so we can wrap it
+        # contrast with what we do below in regex_dataclass()
+        def _dummy_post_init(self, *args, **kwargs): pass
+        type.__setattr__(cls, '__post_init__', _dummy_post_init)
+
+    # apply dataclasses' decorator
     cls = dataclasses.dataclass(cls, **dc_kwargs)
 
-    _old_init = cls.__init__
-    @functools.wraps(_old_init)
-    def _new_init(self, *args, **kwargs):
-        # Execute type check after dataclass' __init__ and __post_init__:
-        _old_init(self, *args, **kwargs)
+    # Do type coercion after dataclass' __init__, but before user __post_init__
+    # Do type check after __init__ and __post_init__
+    _old_post_init = cls.__post_init__
+    @functools.wraps(_old_post_init)
+    def _new_post_init(self, *args, **kwargs):
         if hasattr(self, 'log'):
-            _mdtf_dataclass_typecheck(self, self.log)
+            _post_init_log = self.log # for object hierarchy
         else:
-            _mdtf_dataclass_typecheck(self)  
+            _post_init_log = _log # fallback: use module-level logger
+        _mdtf_dataclass_type_coercion(self, _post_init_log)      
+        _old_post_init(self, *args, **kwargs)
+        _mdtf_dataclass_type_check(self, _post_init_log)
+    type.__setattr__(cls, '__post_init__', _new_post_init)
 
-    type.__setattr__(cls, '__init__', _new_init)
     return cls
 
 def is_regex_dataclass(obj):
@@ -515,7 +559,7 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
             post_init[f.name] = new_kw.pop(f.name)
     return (new_kw, post_init)
 
-def regex_dataclass(pattern):
+def regex_dataclass(pattern, **deco_kwargs):
     """Decorator for a dataclass that adds a from_string classmethod which 
     creates instances of that dataclass by parsing an input string with a 
     :class:`RegexPattern` or :class:`ChainedRegexPattern`. The values of all
@@ -527,9 +571,29 @@ def regex_dataclass(pattern):
     regex_dataclass will be invoked on that field's value (ie, a string obtained
     by regex matching in *this* regex_dataclass), and the parsed values of those
     fields will be supplied to this regex_dataclass constructor. This is our 
-    implementation of inheritance for regex_dataclasses.
+    implementation of composition for regex_dataclasses.
+
+    .. note::
+       Unlike :func:`mdtf_dataclass`, type coercion is done *after* 
+       ``__post_init__`` for these dataclasses. This is necessary due to 
+       composition: if a regex_dataclass is being instantiated as a field of 
+       another regex_dataclass, all values being passed to it will be strings
+       (the regex fields), and type coercion is the job of ``__post_init__``.
     """
+    dc_kwargs = DEFAULT_MDTF_DATACLASS_KWARGS.copy()
+    dc_kwargs.update(deco_kwargs)
+
     def _dataclass_decorator(cls):
+        if '__post_init__' not in cls.__dict__:
+            # Prevent class from inheriting __post_init__ from parents if it 
+            # doesn't overload it (which is why we use __dict__ and not
+            # hasattr().) __post_init__ of all parents will have been called when
+            # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
+            def _dummy_post_init(self, *args, **kwargs): pass
+            type.__setattr__(cls, '__post_init__', _dummy_post_init)
+
+        # apply dataclasses' decorator
+        cls = dataclasses.dataclass(cls, **dc_kwargs)
         # check that all DCs specified as fields are also in class hierarchy
         # so that we inherit their fields; probably no way this could happen though
         for f in dataclasses.fields(cls):
@@ -555,22 +619,17 @@ def regex_dataclass(pattern):
             else:
                 _old_init(self, first_arg, *args, **new_kw)
 
-        if '__post_init__' not in cls.__dict__:
-            # Prevent class from inheriting __post_init__ from parents if it 
-            # doesn't overload it (which is why we use __dict__ and not
-            # hasattr().) __post_init__ of all parents will have been called when
-            # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
-            def _dummy_post_init(self, *args, **kwargs): pass
-            type.__setattr__(cls, '__post_init__', _dummy_post_init)
+            _mdtf_dataclass_type_coercion(self, _log)
+            _mdtf_dataclass_type_check(self, _log)
+        type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
+        type.__setattr__(cls, 'from_string', classmethod(_from_string))
 
-        type.__setattr__(cls, '__init__', _new_init)
         type.__setattr__(cls, '_is_regex_dataclass', True)
         type.__setattr__(cls, '_pattern', pattern)
-        type.__setattr__(cls, 'from_string', classmethod(_from_string))
         return cls
     return _dataclass_decorator
 

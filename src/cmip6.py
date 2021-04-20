@@ -267,7 +267,6 @@ variant_label_regex = util.RegexPattern(r"""
     input_field="variant_label"
 )
 @util.regex_dataclass(variant_label_regex)
-@util.mdtf_dataclass
 class CMIP6_VariantLabel():
     """Dataclass which represents and parses the CMIP6 DRS variant label identifier 
     string.
@@ -294,7 +293,6 @@ mip_table_regex = util.RegexPattern(r"""
     input_field="table_id"
 )
 @util.regex_dataclass(mip_table_regex)
-@util.mdtf_dataclass
 class CMIP6_MIPTable():
     """Dataclass which represents and parses MIP table identifier string.
 
@@ -344,7 +342,6 @@ grid_label_regex = util.RegexPattern(r"""
     input_field="grid_label"
 )
 @util.regex_dataclass(grid_label_regex)
-@util.mdtf_dataclass
 class CMIP6_GridLabel():
     """Dataclass which represents and parses the CMIP6 DRS grid label identifier string.
 
@@ -393,7 +390,6 @@ drs_directory_regex = util.RegexPattern(r"""
     input_field="directory"
 )
 @util.regex_dataclass(drs_directory_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS directory, using regex 
     defined above.
@@ -441,7 +437,6 @@ drs_filename_regex = util.ChainedRegexPattern(
     input_field="filename"
 )
 @util.regex_dataclass(drs_filename_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS filename, using regex 
     defined above.
@@ -481,7 +476,6 @@ drs_path_regex = util.RegexPattern(r"""
     input_field="path"
 )
 @util.regex_dataclass(drs_path_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
     """Dataclass which represents and parses a full CMIP6 DRS path.
     """

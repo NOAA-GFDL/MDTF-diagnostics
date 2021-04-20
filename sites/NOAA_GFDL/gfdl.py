@@ -348,7 +348,6 @@ pp_path_regex = util.ChainedRegexPattern(
     match_error_filter=pp_ignore_regex
 )
 @util.regex_dataclass(pp_path_regex)
-@util.mdtf_dataclass
 class PPTimeseriesDataFile():
     """Dataclass describing catalog entries for /pp/ directory timeseries data.
     """

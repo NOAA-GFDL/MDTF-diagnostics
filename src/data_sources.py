@@ -428,6 +428,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
 
     def __post_init__(self, model=None, experiment=None, log=_log):
         super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
+        config = core.ConfigManager()
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):
@@ -445,10 +446,14 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                         dest, source, source_val)
                     setattr(self, dest, "")
 
-        if self.convention != "CMIP":
-            log.debug("Received incompatible convention '%s'; setting to 'CMIP'.", 
-                self.convention)
-            self.convention = "CMIP"
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        # verify case root dir exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                self.CASE_ROOT_DIR)
+            exit(1)
 
         # should really fix this at the level of CLI flag synonyms
         if model and not self.source_id:
@@ -494,7 +499,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
         else:
             self.CATALOG_DIR = new_root
 
-explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
     expt_cols = dm.DataFrameQueryColumnGroup(
         ["activity_id", "institution_id", "source_id", "experiment_id",
@@ -616,9 +621,7 @@ class CMIP6ExperimentSelectionMixin():
             col_name, df[col_name].iloc[0], obj.name)
         return df
 
-class CMIP6LocalFileDataSource(
-    CMIP6ExperimentSelectionMixin, dm.LocalFileDataSource
-):
+class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and 
     stored on a local filesystem.
     """
@@ -627,5 +630,6 @@ class CMIP6LocalFileDataSource(
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.DefaultPreprocessor
-    col_spec = explicitFileDataSource_col_spec
+    col_spec = cmip6LocalFileDataSource_col_spec
+    _convention = "CMIP" # hard-code naming convention
 

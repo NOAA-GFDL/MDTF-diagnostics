@@ -327,7 +327,9 @@ class _MDTFEnumMixin():
     @classmethod
     def from_struct(cls, str_):
         """Instantiate from string."""
-        return cls.__members__.get(str_.upper())
+        if str_.upper() not in cls.__members__:
+            raise ValueError(f"Unrecognized value '{str_}' for '{cls.__name__}'.")
+        return cls[str_.upper()]
 
 class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically

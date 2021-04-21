@@ -20,6 +20,7 @@ Functionality
 -------------
 
 The currently package consists of:
+
 - a Python script (SM_ET_coupling.py), which sets up the directories and calls\.\.\.
 - \.\.\. an R script (SM_ET_coupling.R) which reads the data, performs the calculations and generates the plots.
 

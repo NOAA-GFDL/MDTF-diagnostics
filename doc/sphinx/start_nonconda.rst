@@ -1,7 +1,9 @@
+:orphan:
+
 Non-conda installation instructions
 ===================================
 
-If you're unable to use the conda-based :ref:`installation instructions <ref-install>`, the framework can use pre-existing languages and programs on your systems without the use of conda environments for dependency management. If you choose this option, we assume you know what you're doing: because this mode of operation is dependent on the details of each user’s system, we can only support it at a secondary priority. 
+If you're unable to use the conda-based :ref:`installation instructions <ref-conda-install>`, the framework can use pre-existing languages and programs on your systems without the use of conda environments for dependency management. If you choose this option, we assume you know what you're doing: because this mode of operation is dependent on the details of each user’s system, we can only support it at a secondary priority. 
 
 Requirements
 ------------

@@ -95,3 +95,4 @@ pip-delete-this-directory.txt
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.DS_Store

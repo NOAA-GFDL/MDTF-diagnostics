@@ -28,7 +28,7 @@
     "time": {"standard_name": "time"}
   },
   "varlist": {
-    "omega": {
+    "wap": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
       "dimensions": ["time", "lev", "lat", "lon"]

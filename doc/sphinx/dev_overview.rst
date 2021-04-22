@@ -5,7 +5,7 @@ This walkthrough contains information for developers wanting to contribute a pro
 
 :numref:`ref-dev-start` provides instructions for setting up POD development, in particular managing language and library dependencies through conda. For developers already familiar with version 2.0 of the framework, :numref:`ref-dev-migration` summarizes changes from v2.0 to facilitate migration to v3.0. New developers can skip this section, as the rest of this walkthrough is self-contained.
 
-:numref:`ref-dev-checklist` Provides a list of instructions for submitting a POD for inclusion in the framework. We require developers to submit PODs through `GitHub <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. See :numref:`ref-dev-git-intro` for how to manage code through the GitHub website.
+:numref:`ref-dev-checklist` Provides a list of instructions for submitting a POD for inclusion in the framework. We require developers to submit PODs through `GitHub <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__. See :doc:`dev_git_intro` for how to manage code through the GitHub website.
 
 :numref:`ref-dev-guidelines` provides overall guidelines for POD development. :numref:`ref-dev-settings-quick` is a reference for the POD's settings file format. In :numref:`ref-dev-walkthrough`, we walk the developers through the workflow of the framework, focusing on aspects that are relevant for the operation of individual PODs, and using the `Example Diagnostic POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ as a concrete example to illustrate how a POD works under the framework :numref:`ref-dev-coding-tips` provides coding best practices to address common issues encountered in submitted PODs.. 
 

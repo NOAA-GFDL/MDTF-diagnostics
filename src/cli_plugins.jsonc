@@ -125,7 +125,7 @@
             "default" : false
           },{
             "name": "save_non_nc",
-            "help": "Set flag to save all processed data except netcdf files.",
+            "help": "Set flag to save all processed data except netCDF files.",
             "default" : false
           },{
             "name": "make_variab_tar",

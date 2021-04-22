@@ -197,11 +197,13 @@ class VarlistEntry(data_model.DMVariable, _VarlistGlobalSettings):
     @property
     def env_vars(self):
         """Get env var definitions for:
+
             - The path to the preprocessed data file for this variable,
             - The name for this variable in that data file,
             - The names for all of this variable's coordinate axes in that file,
             - The names of the bounds variables for all of those coordinate
                 dimensions, if provided by the data.
+        
         """
         if not self.active:
             # Signal to POD's code that vars are not provided by setting 
@@ -497,7 +499,8 @@ class Diagnostic(object):
 
         Args:
             active: bool or None, default None. Selects subset of VarlistEntries
-                which are returned.
+               which are returned.
+
                 - active = True: only iterate over currently active VarlistEntries
                     (variables that are currently being queried, fetched and
                     preprocessed.)
@@ -505,6 +508,7 @@ class Diagnostic(object):
                     (Either alternates which have not yet been considered, or
                     variables which have experienced an error during query-fetch.)
                 - active = None: iterate over all VarlistEntries.
+                
         """
         if active is None:
             # default: all variables

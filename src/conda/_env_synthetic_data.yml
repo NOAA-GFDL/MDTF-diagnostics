@@ -1,0 +1,17 @@
+# Conda environment for synthetic data generation
+name: _MDTF_synthetic_data
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.8
+- numpy=1.19.4
+- netCDF4=1.5.4
+- cftime=1.3.0
+- xarray=0.16.2
+- setuptools >= 49.1
+- esmpy
+- xesmf
+- python-dateutil >= 2.8.0
+- pandas >= 1.2.0
+- pytz=2020.4

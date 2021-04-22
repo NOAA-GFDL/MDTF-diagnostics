@@ -39,7 +39,8 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # MDTF-specific setup: install all conda envs
+  # MDTF-specific setup: 
+  # install all conda envs used by package and PODs
   - $TRAVIS_BUILD_DIR/src/conda/conda_env_setup.sh --all --conda_root "$HOME/miniconda"
 
   - df -h # Log space remaining for data

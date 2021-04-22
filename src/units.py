@@ -49,7 +49,7 @@ def to_equivalent_units(*args):
     return args
 
 def relative_tol(x, y):
-    """HACK to return max(|x-y|/x, |x-y|/y) for unit-ful quantities x,y. 
+    """HACK to return ``max(|x-y|/x, |x-y|/y)`` for unit-ful quantities x, y. 
     Vulnerable to underflow in principle.
     """
     x, y = to_equivalent_units(x,y)

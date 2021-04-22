@@ -157,6 +157,18 @@
       "units": "W m-2",
       "ndim": 3
     },
+    // Variables for flow_dep_diag module:
+    "Z250": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "ndim": 3
+    },
+    "T250": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "ndim": 3
+
+    },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
     //   "standard_name": "sea_water_x_velocity",

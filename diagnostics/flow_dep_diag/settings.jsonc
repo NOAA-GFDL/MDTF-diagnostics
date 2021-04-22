@@ -4,7 +4,7 @@
     "driver" : "flow_dep_diag.py",
     "realm" : "weather",
     "runtime_requirements" : {
-      "python" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "cftime"]
+      "python3" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "cftime"]
     },
     "pod_env_vars" : {
       "NSIM" : "25",
@@ -32,8 +32,9 @@
       "calendar" : "noleap"
     }
   },
-  "varlist" : {
-    "Z250" : {
+  "varlist" : [
+    {
+      "var_name" : "Z250_var",
       "standard_name" : "geopotential_height",
       "path_variable" : "HGT_FILE",
       "freq" : "day",
@@ -41,7 +42,8 @@
       "dimensions" : ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 250}
     },
-    "T250" : {
+    {
+      "var_name" : "T250_var",
       "standard_name" : "air_temperature",
       "path_variable" : "TAS_FILE",
       "freq" : "day",
@@ -49,12 +51,13 @@
       "dimensions" : ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 250}
     },
-    "PRECT" : {
+    {
+      "var_name" : "PRECT_var",
       "standard_name" : "precipitation_rate",
       "path_variable" : "PREC_FILE",
       "freq" : "day",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"]    
+      "dimensions" : ["time", "lat", "lon"]
     }
-  }
+  ]
 }

@@ -23,10 +23,11 @@
       "LASTYR" : 1981,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
+          "flow_dep_diag"
+          // "Wheeler_Kiladis",
+          // "EOF_500hPa",
+          // "MJO_suite",
+          // "MJO_teleconnection"
           // "convective_transition_diag"
           // "precip_diurnal_cycle"
       ]

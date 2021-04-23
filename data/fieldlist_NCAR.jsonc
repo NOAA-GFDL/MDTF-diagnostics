@@ -89,12 +89,12 @@
       "units": "m s-1",
       "ndim": 3
     },
-    "TREFHT" : {
+    // "TREFHT" : {
       // correct name? CMIP6 equivalent should be tas, temp at 2m ref height
-      "standard_name": "air_temperature",
-      "units": "K",
-      "ndim": 3
-    },
+      // "standard_name": "air_temperature",
+      // "units": "K",
+      // "ndim": 3
+    // },
     "TAUX": {
       "standard_name": "surface_downward_eastward_stress",
       "units": "Pa",
@@ -167,7 +167,6 @@
       "standard_name": "air_temperature",
       "units": "K",
       "ndim": 3
-
     },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
@@ -197,11 +196,11 @@
     },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
-    "T": {
-      "standard_name": "air_temperature",
-      "units": "K",
-      "ndim": 4
-    },
+    // "T": {
+      // "standard_name": "air_temperature",
+      // "units": "K",
+      // "ndim": 4
+    // },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw": {
       // check name: is this column integrated?

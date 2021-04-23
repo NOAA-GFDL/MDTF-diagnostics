@@ -32,32 +32,33 @@
       "calendar" : "noleap"
     }
   },
-  "varlist" : [
-    {
-      "var_name" : "Z250_var",
+  "varlist" : {
+    "Z250": {
+      // "var_name" : "Z250_var",
       "standard_name" : "geopotential_height",
       "path_variable" : "HGT_FILE",
       "freq" : "day",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"],
-      "scalar_coordinates": {"plev": 250}
+      "units" : "m",
+      "dimensions" : ["time", "lat", "lon"]
     },
-    {
-      "var_name" : "T250_var",
+    "T250": {
+      // "var_name" : "T250_var",
       "standard_name" : "air_temperature",
       "path_variable" : "TAS_FILE",
       "freq" : "day",
+      "units" : "K",
       "requirement" : "required",
-      "dimensions" : ["time", "lat", "lon"],
-      "scalar_coordinates": {"plev": 250}
+      "dimensions" : ["time", "lat", "lon"]
     },
-    {
-      "var_name" : "PRECT_var",
+    "PRECT": {
+      // "var_name" : "PRECT_var",
       "standard_name" : "precipitation_rate",
       "path_variable" : "PREC_FILE",
       "freq" : "day",
+      "units": "m s-1",
       "requirement" : "required",
       "dimensions" : ["time", "lat", "lon"]
     }
-  ]
+  }
 }

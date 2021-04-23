@@ -20,18 +20,19 @@ tas_var = os.environ["T250_var"]
 lat_coord = os.environ["lat_coord"]
 lon_coord = os.environ["lon_coord"]
 
+print("IT IS GOIN")
 #running analysis to generate climatology anomalies for vars
-reanalysis = climAnom(var_path=os.environ["HGT_FILE"], var_name=os.environ["Z250_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
+reanalysis = climAnom(var_path=os.environ["Z250_FILE"], var_name=os.environ["Z250_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
 #reanalysis = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.Z250.day.nc", var_name='Z250').stack(T=['time'], grid=['lat', 'lon'])
-rainfall = climAnom(var_path=os.environ["PREC_FILE"], var_name=os.environ["PRECT_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
+rainfall = climAnom(var_path=os.environ["PRECT_FILE"], var_name=os.environ["PRECT_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
 #rainfall = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.PRECT.day.nc", var_name='PRECT').stack(T=['time'], grid=['lat', 'lon'])
-t2m = climAnom(var_path=os.environ["TAS_FILE"], var_name=os.environ["T250_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
+t2m = climAnom(var_path=os.environ["T250_FILE"], var_name=os.environ["T250_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
 #t2m = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.T250.day.nc", var_name='T250').stack(T=['time'], grid=['lat', 'lon'])
 reanalysis = reanalysis.to_dataset()
 #reanalysis = reanalysis.assign_coords(P=(250))
 rainfall = rainfall.to_dataset()
 t2m = t2m.to_dataset()
-
+print("THE DATA LOADED BIIITCH")
 #dimension reduction; projection of data onto leading EOFs for principle component time series
 #PCA model saved for later use as reanalysis_pc
 n_eof = get_number_eof(X=reanalysis[Z250_var].values, var_to_explain=0.9, plot=True)
@@ -39,13 +40,14 @@ pca_model = PCA(n_components=n_eof).fit(reanalysis[Z250_var].values)
 reanalysis_pc = pca_model.transform(reanalysis[Z250_var].values)
 
 #perform clustering using manually specified number of clusters
-ncluster = os.environ["NCLUSTER"]
-n_sim = os.environ["NSIM"] # typically 25-50 -- try 25 for quick preliminary computation only
-centroids, wtypes = loop_kmeans(X=reanalysis_pc, n_cluster=ncluster, n_sim=n_sim)
+n_cluster = int(os.environ["NCLUSTER"])
+n_sim = int(os.environ["NSIM"])
+print(type(n_sim)) # typically 25-50 -- try 25 for quick preliminary computation only
+centroids, wtypes = loop_kmeans(X=reanalysis_pc, n_cluster=n_cluster, n_sim=n_sim)
 class_idx, best_part = get_classifiability_index(centroids)
 print('The classifiability index is {}'.format(class_idx))
 #define KMeans object
-best_fit = KMeans(n_clusters=ncluster, init=centroids[best_part, :, :], n_init=1, max_iter=1).fit(reanalysis_pc)
+best_fit = KMeans(n_clusters=n_cluster, init=centroids[best_part, :, :], n_init=1, max_iter=1).fit(reanalysis_pc)
 
 #start reanalysis
 reanalysis_composite = reanalysis.copy()
@@ -62,7 +64,7 @@ wt_anomalies = [] # initialize empty list
 wt_anomalies.append(reanalysis_composite)
 wt_anomalies = xr.concat(wt_anomalies, dim='M') # join together
 wt_anomalies['WT'] = wt_anomalies['WT'] + 1 # start from 1
-
+print("plot time bois")
 #prepare a figure with rainfall and temperature composites
 X, Y = np.meshgrid(reanalysis[Z250_var].lon, reanalysis[Z250_var].lat)
 map_proj = ccrs.PlateCarree() #ccrs.Orthographic(-110, 10)
@@ -77,7 +79,7 @@ wt_counts = wt.groupby('WT').size().div(wt['WT'].size)
 #plotting
 xmin,xmax = reanalysis[lon_coord].min(), reanalysis[lon_coord].max()
 ymin,ymax = reanalysis[lat_coord].min(), reanalysis[lat_coord].max()
-plot_path = "{WK_DIR}/model/PS/{CASENAME}_wt_composite.pdf".format(**os.environ)
+plot_path = "{WK_DIR}/model/PS/example_model_plot.png".format(**os.environ)
 title_string = "{CASENAME}: Weather Types composite ({FIRSTYR}-{LASTYR})".format(**os.environ)
 # Set up the Figure
 plt.rcParams.update({'font.size': 12})
@@ -144,12 +146,12 @@ cax2 = fig.add_axes([0.97, 0.01, 0.0075, 0.3])
 cbar0 = fig.colorbar(C0, cax = cax0)
 cbar0.formatter.set_powerlimits((4, 4))
 cbar0.update_ticks()
-cbar0.set_label(r'{Z250_var} anomaly [$m^2$/$s^2$]', rotation=270).format(**os.environ)
+cbar0.set_label('{Z250_var} anomaly [$m^2$/$s^2$]'.format(**os.environ), rotation=270)
 cbar0.ax.get_yaxis().labelpad = 20
 cbar1 = fig.colorbar(C1, cax=cax1)
-cbar1.set_label('{PRECT_var} anomaly [mm/d]', rotation=270).format(**os.environ)
+cbar1.set_label('{PRECT_var} anomaly [mm/d]'.format(**os.environ), rotation=270)
 cbar1.ax.get_yaxis().labelpad = 20
 cbar2 = fig.colorbar(C2, cax=cax2)
-cbar2.set_label('{T250_var} anomaly [$^o$C]', rotation=270).format(**os.environ)
+cbar2.set_label('{T250_var} anomaly [$^o$C]'.format(**os.environ), rotation=270)
 cbar2.ax.get_yaxis().labelpad = 20
 fig.savefig(plot_path, bbox_inches='tight')

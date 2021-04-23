@@ -271,6 +271,12 @@ class CLIArgument(object):
                 # recognize both --option and -O, if short_name defined
                 self.arg_flags.insert(1, '-' + self.short_name)
 
+        # Add default value set from site-specific file (so that it will show up
+        # when the user runs --help)
+        config = CLIConfigManager()
+        if self.dest in config.site_defaults:
+            self.default = config.site_defaults[self.dest]
+
         # Type conversion of default value:
         if self.type is not None:
             if isinstance(self.type, str):
@@ -319,8 +325,8 @@ class CLIArgument(object):
 @dataclasses.dataclass
 class CLIArgumentGroup(object):
     """Class holding configuration options for an 
-    :py:class:`argparse.ArgumentParser`
-    `argument group <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__.
+    :py:class:`argparse.ArgumentParser` `argument group 
+    <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__.
     """
     title: str
     description: str = None
@@ -431,10 +437,21 @@ class CLIParser(object):
             for arg_gp in self.argument_groups:
                 # add groups and arguments therein
                 _ = arg_gp.add(target_p)
-        for attr_ in ['prog', 'usage', 'description', 'epilog']:
+        for attr_ in ['prog', 'usage', 'epilog']:
             str_ = getattr(self, attr_, None)
             if str_:
                 setattr(target_p, attr_, str_)
+
+        # append source of default values to description, to reduce user confusion
+        description_text = getattr(self, 'description', None)
+        defaults_text = config.site_default_text()
+        if defaults_text:
+            if description_text is None:
+                description_text = defaults_text
+            else:
+                description_text += '\n\n' + defaults_text
+        if description_text:
+            setattr(target_p, 'description', description_text)
 
     def add_plugin_args(self, preparsed_d):
         """Revise arguments after we know what plugins are being used. This 
@@ -573,11 +590,9 @@ class CLIConfigManager(util.Singleton):
         self.plugins = dict()
         self.plugin_files = []
 
-        self.defaults = dict()
         self.defaults_files = dict()
-        for def_type in DefaultsFileTypes:
-            self.defaults[def_type] = dict()
-        self.defaults[DefaultsFileTypes.GLOBAL] = {'site': self.default_site}
+        self.site_defaults = {'site': self.default_site}
+        self.user_defaults = dict()
     
     default_site = 'local'
     defaults_filename = "defaults.jsonc"
@@ -597,22 +612,6 @@ class CLIConfigManager(util.Singleton):
         assert self.site is not None
         return os.path.join(self.sites_dir, self.site)
 
-    @property
-    def partial_defaults(self):
-        """In order of precedence:
-
-        1. ``USER``: Input settings read from a file supplied by the user.
-        2. ``SITE``: Settings specific to the given site (``--site`` flag.)
-        3. ``GLOBAL``: Settings applicable to all sites. The main intended use case
-            of this file is to enable the user to configure a default site at 
-            install time.
-        """
-        return collections.ChainMap(
-            self.defaults[DefaultsFileTypes.USER],
-            self.defaults[DefaultsFileTypes.SITE],
-            self.defaults[DefaultsFileTypes.GLOBAL]
-        )
-
     def read_defaults(self, def_type, path=None):
         """Populate one of the entries in ``self.defaults`` by reading from the
         appropriate defaults file.
@@ -627,19 +626,32 @@ class CLIConfigManager(util.Singleton):
         if def_type == DefaultsFileTypes.GLOBAL:
             # NB file lives in "sites_dir", not a "site_dir" for a given site
             path = os.path.join(self.sites_dir, self.defaults_filename)
+            dest_d = self.site_defaults
         elif def_type == DefaultsFileTypes.SITE:
             path = os.path.join(self.site_dir, self.defaults_filename)
+            dest_d = self.site_defaults
         elif def_type == DefaultsFileTypes.USER:
             assert path # is not none
-        self.defaults_files[def_type] = path
+            dest_d = self.user_defaults
 
         try:
             d = util.read_json(path)
+            self.defaults_files[def_type] = path
             # drop values equal to the empty string
             d = {k:v for k,v in d.items() if (v is not None and v != "")}
-            self.defaults[def_type].update(d)
+            dest_d.update(d)
         except util.MDTFFileNotFoundError:
             _log.debug('Config file %s not found; not updating defaults.', path)
+
+    def site_default_text(self):
+        files_str = [self.defaults_files.get(x, None) for x in [
+            DefaultsFileTypes.SITE, DefaultsFileTypes.GLOBAL]]
+        files_str = '\n'.join([x for x in files_str if x is not None])
+        if files_str:
+            return "Default values have been set from the following files:" \
+                + '\n' + files_str
+        else:
+            return None
 
     def read_subcommands(self):
         """Populates ``subcommands`` and ``subparser_kwargs`` attributes with 
@@ -731,9 +743,10 @@ class MDTFArgParser(argparse.ArgumentParser):
     - Configuring the parser from an external file (:meth:`~MDTFArgParser.configure`).
     - Customized help text formatting provided by :class:`.CustomHelpFormatter`.
     - Recording whether the user specified each argument value, or whether the
-        default was used, via :class:`.RecordDefaultsAction`.
-    - Better bookkeeping of `argument groups <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__ 
-        (eg which arguments belong to which group).
+      default was used, via :class:`.RecordDefaultsAction`.
+    - Better bookkeeping of `argument groups 
+      <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__, 
+      e.g. which arguments belong to which group.
     """
     def __init__(self, *args, **kwargs):
         # Dict to store whether default value was used, for arguments using the
@@ -825,10 +838,17 @@ class MDTFArgParser(argparse.ArgumentParser):
         itself. The precedence order is:
 
         1. Argument values explictly given by the user on the command line, as 
-            recorded in the ``is_default`` attribute of :class:`.MDTFArgParser`.
-        2. Argument values given in the :meth:`~.CLIConfigManager.partial_defaults`` 
-            property of :class:`~.CLIConfigManager`.
-        3. Argument values specified as the default values in the argument parser.
+           recorded in the ``is_default`` attribute of :class:`.MDTFArgParser`.
+        2. Argument values from a file the user gave via the ``-f`` flag.
+           (CLIConfigManager.defaults[DefaultsFileTypes.USER]).
+        3. Argument values specified as the default values in the argument 
+           parser, which in turn are set with the following precedence order:
+
+           a. Default values from a site-specfic file (defaults.jsonc), stored in
+              CLIConfigManager.defaults[DefaultsFileTypes.SITE].
+           b. Default values from a defaults.jsonc file in the sites/ directory,
+              stored in CLIConfigManager.defaults[DefaultsFileTypes.GLOBAL].
+           c. Default values hard-coded in the CLI definition file itself.
 
         Args:
             args (optional): String or list of strings to parse. If a single 
@@ -877,7 +897,7 @@ class MDTFArgParser(argparse.ArgumentParser):
             raise
         # CLI opts override options set from file, which override defaults
         parsed_args = _to_dict(collections.ChainMap(
-            user_cli_opts, config.partial_defaults, vars(parser_defaults)
+            user_cli_opts, config.user_defaults, vars(parser_defaults)
         ))
         if namespace is None:
             namespace = argparse.Namespace(**parsed_args)
@@ -1023,7 +1043,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                 d = util.parse_json(str_)
                 self.file_case_list = d.pop('case_list', [])
                 d = {canonical_arg_name(k): v for k,v in d.items()}
-                config.defaults[DefaultsFileTypes.USER].update(d)
+                config.user_defaults.update(d)
             except json.JSONDecodeError as exc:
                 sys.exit(f"ERROR: JSON syntax error in {path}:\n\t{exc}")
             except Exception:
@@ -1067,7 +1087,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         """
         config = CLIConfigManager()
         config.read_defaults(DefaultsFileTypes.GLOBAL)
-        default_site = config.partial_defaults.get('site', config.default_site)
+        default_site = config.site_defaults.get('site', config.default_site)
 
         self.sites = [d for d in os.listdir(config.sites_dir) \
             if os.path.isdir(os.path.join(config.sites_dir, d)) \
@@ -1135,9 +1155,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             usage="%(prog)s [options] [CASE_ROOT_DIR]",
             description=word_wrap("""
                 Driver script for the NOAA Model Diagnostics Task Force (MDTF)
-                package, which runs process-oriented diagnostics (PODs) on
-                climate model data. See documentation at
-                https://mdtf-diagnostics.rtfd.io.
+                package, which runs process-oriented diagnostics (PODs) on climate 
+                model data. See documentation at https://mdtf-diagnostics.rtfd.io.
             """),
             add_help=True,
         )
@@ -1176,7 +1195,14 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         """Parse args, and call the subcommand that was selected.
         """
         config = CLIConfigManager()
+
+        # finally parse the user's CLI arguments
         self.config = vars(self.parse_args(args))
+        # log use of site-wide default files here (not earlier, in case user 
+        # just wanted --help or --version)
+        defaults_text = config.site_default_text()
+        if defaults_text:
+            _log.info(defaults_text)
         # import plugin classes
         for act in self.iter_actions():
             if isinstance(act, ClassImportAction):

@@ -85,8 +85,9 @@ class MDTFFramework(object):
         most of the functionality is spun out into sub-methods.
         """
         self.parse_env_vars(cli_obj)
-        self.parse_pod_list(cli_obj, pod_info_tuple)
-        self.parse_case_list(cli_obj)
+        pod_list = cli_obj.config.pop('pods', [])
+        self.pod_list = self.parse_pod_list(pod_list, pod_info_tuple)
+        self.parse_case_list(cli_obj, pod_info_tuple)
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
@@ -96,37 +97,51 @@ class MDTFFramework(object):
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
-    def parse_pod_list(self, cli_obj, pod_info_tuple):
-        pod_data = pod_info_tuple.pod_data
-        all_realms = pod_info_tuple.sorted_lists.get('realms', [])
-        pod_realms = pod_info_tuple.realm_data
+    def parse_pod_list(self, pod_list, pod_info_tuple):
+        pod_data = pod_info_tuple.pod_data # pod names -> contents of settings file
+        args = util.to_iter(pod_list, set)
+        bad_args = []
+        pods = []
+        for arg in args:
+            if arg == 'all':
+                # add all PODs except example PODs
+                pods.extend([p for p in pod_data if not p.startswith('example')])
+            elif arg == 'example' or arg == 'examples':
+                # add example PODs
+                pods.extend([p for p in pod_data if p.startswith('example')])
+            elif arg in pod_info_tuple.realm_data:
+                # realm_data: realm name -> list of POD names
+                # add all PODs for this realm
+                pods.extend(pod_info_tuple.realm_data[arg])
+            elif arg in pod_data:
+                # add POD by name
+                pods.append(arg)
+            else:
+                # unrecognized argument
+                _log.error("POD identifier '%s' not recognized.", arg)
+                bad_args.append(arg)
 
-        args = util.to_iter(cli_obj.config.pop('pods', []), set)
-        if 'example' in args or 'examples' in args:
-            self.pod_list = [p for p in pod_data if p.startswith('example')]
-        elif 'all' in args:
-            self.pod_list = [p for p in pod_data if not p.startswith('example')]
-        else:
-            # specify pods by realm
-            realms = args.intersection(all_realms)
-            args = args.difference(all_realms) # remainder
-            for key in pod_realms:
-                if util.to_iter(key, set).issubset(realms):
-                    self.pod_list.extend(pod_realms[key])
-            # specify pods by name
-            pods = args.intersection(set(pod_data))
-            self.pod_list.extend(list(pods))
-            for arg in args.difference(set(pod_data)): # remainder:
-                print("WARNING: Didn't recognize POD {}, ignoring".format(arg))
-            # exclude examples
-            self.pod_list = [p for p in pod_data if not p.startswith('example')]
-        if not self.pod_list:
+        if bad_args: 
+            valid_args = ['all', 'examples'] \
+                + pod_info_tuple.sorted_realms \
+                + pod_info_tuple.sorted_pods
+            _log.critical(("The following POD identifiers were not recognized: "
+                "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
+                ', '.join(f"'{p}'" for p in bad_args),
+                ', '.join(f"'{p}'" for p in valid_args),
+                str(list(args))
+            )
+            exit(1)
+
+        pods = list(set(pods)) # delete duplicates
+        if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
                 f"\nReceived --pods = {str(list(args))}"))
             exit(1)
+        return pods
 
-    def parse_case_list(self, cli_obj):
+    def parse_case_list(self, cli_obj, pod_info_tuple):
         d = cli_obj.config # abbreviate
         if 'CASENAME' in d and d['CASENAME']:
             # defined case from CLI
@@ -139,15 +154,17 @@ class MDTFFramework(object):
             case_list_in = util.to_iter(cli_obj.file_case_list)
         case_list = []
         for i, case_d in enumerate(case_list_in):
-            case_list.append(self.parse_case(i, case_d, cli_obj))
-        self.case_list = [case for case in case_list if case]
-        if not self.case_list:
-            _log.critical(("ERROR: no valid entries in case_list. Please specify "
+            case = self.parse_case(i, case_d, cli_obj, pod_info_tuple)
+            if case:
+                case_list.append(case)
+        if not case_list:
+            _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
             exit(1)
+        self.case_list = case_list
 
-    def parse_case(self, n, d, cli_obj):
+    def parse_case(self, n, d, cli_obj, pod_info_tuple):
         # really need to move this into init of DataManager
         if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
             d['CASE_ROOT_DIR'] = d.pop('root_dir')
@@ -157,7 +174,7 @@ class MDTFFramework(object):
 
         if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
             _log.warning(("Need to specify either CASENAME or model/experiment "
-                "in caselist entry %s, skipping."), n+1)
+                "in caselist entry #%d, skipping."), n+1)
             return None
         _ = d.setdefault('model', d.get('convention', ''))
         _ = d.setdefault('experiment', '')
@@ -165,20 +182,20 @@ class MDTFFramework(object):
 
         for field in ['FIRSTYR', 'LASTYR', 'convention']:
             if not d.get(field, None):
-                _log.warning(("No value set for %s in caselist entry %s, "
+                _log.warning(("No value set for %s in caselist entry #%d, "
                     "skipping."), field, n+1)
                 return None
         # if pods set from CLI, overwrite pods in case list
-        d['pod_list'] = self.set_case_pod_list(d, cli_obj)
+        d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
         return d
 
-    def set_case_pod_list(self, case, cli_obj):
+    def set_case_pod_list(self, case, cli_obj, pod_info_tuple):
         # if pods set from CLI, overwrite pods in case list
         # already finalized self.pod-list by the time we get here
         if not cli_obj.is_default['pods'] or not case.get('pod_list', None):
             return self.pod_list
         else:
-            return case['pod_list']
+            return self.parse_pod_list(case['pod_list'], pod_info_tuple)
 
     def verify_paths(self, config, p):
         # needs to be here, instead of PathManager, because we subclass it in 

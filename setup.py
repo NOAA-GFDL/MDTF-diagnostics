@@ -3,8 +3,6 @@
 from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-import glob
-import subprocess
 
 # Leave option to run commands post-install
 # see https://stackoverflow.com/a/36902139

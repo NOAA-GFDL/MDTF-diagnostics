@@ -455,7 +455,7 @@ class DateRange(AtomicInterval, _DateMixin):
     """
     _range_sep = '-'
 
-    def __init__(self, start, end=None, precision=None):
+    def __init__(self, start, end=None, precision=None, log=_log):
         "Init method for DateRange."
         if not end:
             if isinstance(start, str):
@@ -468,7 +468,7 @@ class DateRange(AtomicInterval, _DateMixin):
         dt0, prec0 = self._coerce_to_datetime(start, is_lower=True)
         dt1, prec1 = self._coerce_to_datetime(end, is_lower=False)
         if not (dt0 < dt1):
-            _log.warning('Args to DateRange out of order (%s >= %s)',
+            log.warning('Args to DateRange out of order (%s >= %s)',
                 start, end)
             dt0, prec0 = self._coerce_to_datetime(end, is_lower=True)
             dt1, prec1 = self._coerce_to_datetime(start, is_lower=False)

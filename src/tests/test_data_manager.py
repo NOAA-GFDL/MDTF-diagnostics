@@ -55,7 +55,7 @@ class TestDataManagerSetup(unittest.TestCase):
         self.assertEqual(os.environ['pr_var'], 'PRECT')
         self.assertEqual(os.environ['prc_var'], 'PRECC')
 
-    @mock.patch('src.util.check_dirs')
+    @mock.patch('src.util.check_dir')
     def test_set_model_env_vars_no_model(self, mock_check_dirs):
         # exit if can't find model
         case = DataManager(self.default_case)

@@ -2,12 +2,16 @@
   "settings" : {
     "long_name" : "Flow-Dependent, Cross-Timescale Model Diagnostics Documentation",
     "driver" : "flow_dep_diag.py",
-    "realm" : "weather",
+    "realm" : "atmos",
+    "description" : "Comparing daily atmospheric circulation pattern characteristics in reanalysis and models",
     "runtime_requirements" : {
-      "python3" : ["xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "numba", "typing"]
+      "python3" : ["netCDF4", "xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "numba", "datetime", "typing"]
     },
     "pod_env_vars" : {
+    // Number of simulations run in reanalysis weather typing.
+    // Typically 25-50; try 25 for a quick preliminary computation only
       "NSIM" : "25",
+    // number of weather types in clustering
       "NCLUSTER" : "6"
     }
   },

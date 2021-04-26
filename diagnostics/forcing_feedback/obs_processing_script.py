@@ -38,7 +38,6 @@ def feedback_regress(fluxanom,tspert,tsclimo,lat,lon,fbname):
     tsanom_re_timemean = np.nanmean(tsanom_re,axis=0)
     tsanom_re_std = np.nanstd(tsanom_re,axis=0)
     fluxanom_timemean = np.nanmean(fluxanom,axis=0)
-    fluxanom_std = np.nanstd(fluxanom,axis=0)
 
     n=np.sum(~np.isnan(tsanom_re),axis=0)
     cov = np.nansum((tsanom_re-tsanom_re_timemean)*\
@@ -65,9 +64,8 @@ ts = None
 
 #Planck radiative anomalies
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_planck_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_pl_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out1.nc')
+nc_pl_era = xr.open_dataset(inputfile)
 nc_pl_era = nc_pl_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_pl_era.time.values),freq='M'))
-#nc_pl_era = nc_pl_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_pl_era.fluxanom_pl_sfc_tot.values+nc_pl_era.fluxanom_pl_trop_tot.values+nc_pl_era.fluxanom_pl_strat_tot.values
@@ -76,9 +74,8 @@ varhold = None
 
 #Lapse Rate radiative anomalies
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_lapserate_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_lr_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out2.nc')
+nc_lr_era = xr.open_dataset(inputfile)
 nc_lr_era = nc_lr_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_lr_era.time.values),freq='M'))
-#nc_lr_era = nc_lr_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_lr_era.fluxanom_lr_trop_tot.values+nc_lr_era.fluxanom_lr_strat_tot.values
@@ -87,9 +84,8 @@ varhold = None
 
 #Water vapor radiative anomalies
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_watervapor_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_wv_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out_wv.nc')
+nc_wv_era = xr.open_dataset(inputfile)
 nc_wv_era = nc_wv_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_wv_era.time.values),freq='M'))
-#nc_wv_era = nc_wv_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_wv_era.fluxanom_lw_q_trop_tot.values+nc_wv_era.fluxanom_lw_q_strat_tot.values
@@ -101,9 +97,8 @@ varhold = None
 
 #Cloud radiative anomalies
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_clouds_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_c_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out3.nc')
+nc_c_era = xr.open_dataset(inputfile)
 nc_c_era = nc_c_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_c_era.time.values),freq='M'))
-#nc_c_era = nc_c_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_c_era.fluxanom_lw_c.values
@@ -115,9 +110,8 @@ varhold = None
 
 #Surface Albedo radiative anomalies
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_albedo_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_a_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out4.nc')
+nc_a_era = xr.open_dataset(inputfile)
 nc_a_era = nc_a_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_a_era.time.values),freq='M'))
-#nc_a_era = nc_a_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_a_era.fluxanom_a_sfc_tot.values
@@ -126,9 +120,8 @@ varhold = None
 
 #Total TOA radiative imbalance
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_netrad_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_netrad_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out5.nc')
+nc_netrad_era = xr.open_dataset(inputfile)
 nc_netrad_era = nc_netrad_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_netrad_era.time.values),freq='M'))
-#nc_netrad_era = nc_netrad_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_netrad_era.netrad_lw_tot.values
@@ -140,9 +133,8 @@ varhold = None
 
 #Instaneous Radiative Forcing
 inputfile = '/gpfsm/dnb32/rjkramer/ERAfb/results/'+regime+'_Fluxanom_IRF_Results_K'+kname+'_ERAfb_allERA_retry.nc'
-nc_IRF_era = xr.open_dataset(inputfile)#'/gpfsm/dnb32/rjkramer/ERAfb/results/file_out5.nc')
+nc_IRF_era = xr.open_dataset(inputfile)
 nc_IRF_era = nc_IRF_era.assign_coords(time=pd.date_range('2003-01',periods=len(nc_IRF_era.time.values),freq='M'))
-#nc_IRF_era = nc_IRF_era.sel(latitude=slice(-60,60))
 inputfile = None
 
 varhold = nc_IRF_era.IRF_lw_tot.values

@@ -477,7 +477,6 @@ def initial_log_config():
                 "level": logging.NOTSET,
                 "capacity": 8*1024,
                 "flushOnClose": False
->>>>>>> develop
             }
         },
         "formatters": {

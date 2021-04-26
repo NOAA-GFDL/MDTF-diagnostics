@@ -39,7 +39,7 @@ Required model output variables
 -------------------------------
 
 The following three 3-D (lat-lon-time), monthly model fields are required:
-- surface temperature ("ts" in CMIP conventions)
+- surface skin temperature ("ts" in CMIP conventions)
 - TOA incident shortwave radiation ("rsdt")
 - TOA outgoing all-sky shortwave radiation ("rsut")
 - TOA outgoing clear-sky shortwave radiation ("rsutcs")
@@ -54,7 +54,7 @@ The following 4-D (lat-lon-level-time), monthly model fields are requied:
 - Air temperature ("ta" in CMIP conventions)
 - Specific humidity ("hus")
 
-The observational estimates (see below) are for 2003-2018. While ideally the model data should cover the same period, it is reasonable to compare the model's radiative feedbacks and radiative forcing over any historical timeperiod.  Note that idealized model experiments, such as a single forcing scenario, may produce radiative forcing trends that differ considerably from the observations.  In that case, this package will still have value as a qualitative "gut check" on the radiative feedbacks, which exhibit similar characteristics regardless of forcing scenario.
+The observational estimates (see below) are for 2003-2018. While ideally the model data should cover the same period, it is reasonable to compare the model's radiative feedbacks and radiative forcing over any historical time period.  Note that idealized model experiments, such as a single forcing scenario, may produce radiative forcing trends that differ considerably from the observations.  In that case, this package will still have value as a qualitative "gut check" on the radiative feedbacks, which exhibit similar characteristics regardless of the forcing scenario.
 
 
 More about the diagnostic

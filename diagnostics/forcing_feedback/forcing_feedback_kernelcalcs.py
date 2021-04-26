@@ -13,20 +13,15 @@
 #
 
 import os
-import sys
 import numpy as np
 import xarray as xr
-import pandas as pd
-import netCDF4
 from scipy.interpolate import interp1d
-from scipy.interpolate import griddata
 
 #Import functions specific to this toolkit
 from forcing_feedback_util import fluxanom_calc_4D
 from forcing_feedback_util import fluxanom_calc_3D
 from forcing_feedback_util import esat_coef
 from forcing_feedback_util import latlonr3_3D4D
-from forcing_feedback_util import fluxanom_nc_create
 from forcing_feedback_util import feedback_regress
 # ======================================================================
 
@@ -53,20 +48,6 @@ kernnc.close()
 
 
 #Read in model output
-os.environ["ts_file"] = os.environ["CASENAME"]+"."+os.environ["ts_var"]+".mon.nc"
-os.environ["ta_file"] = os.environ["CASENAME"]+"."+os.environ["ta_var"]+".mon.nc"
-os.environ["hus_file"] = os.environ["CASENAME"]+"."+os.environ["hus_var"]+".mon.nc"
-os.environ["rsus_file"] = os.environ["CASENAME"]+"."+os.environ["rsus_var"]+".mon.nc"
-os.environ["rsds_file"] = os.environ["CASENAME"]+"."+os.environ["rsds_var"]+".mon.nc"
-os.environ["rsuscs_file"] = os.environ["CASENAME"]+"."+os.environ["rsuscs_var"]+".mon.nc"
-os.environ["rsdscs_file"] = os.environ["CASENAME"]+"."+os.environ["rsdscs_var"]+".mon.nc"
-os.environ["rsdt_file"] = os.environ["CASENAME"]+"."+os.environ["rsdt_var"]+".mon.nc"
-os.environ["rsut_file"] = os.environ["CASENAME"]+"."+os.environ["rsut_var"]+".mon.nc"
-os.environ["rsutcs_file"] = os.environ["CASENAME"]+"."+os.environ["rsutcs_var"]+".mon.nc"
-os.environ["rlut_file"] = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".mon.nc"
-os.environ["rlutcs_file"] = os.environ["CASENAME"]+"."+os.environ["rlutcs_var"]+".mon.nc"
-
-
 
 varnames = ["ta","ts","hus","rsus","rsds","rsuscs","rsdscs","rsdt","rsut","rsutcs","rlut","rlutcs"]
 model_mainvar_pert = {}
@@ -121,28 +102,22 @@ lon_kern = lon_model
 
 for varname in varnames:
     if len(model_mainvar_pert[os.environ[varname+"_var"]].shape)==4:
-       #If vertical coordinates for kernel and model data differ, check if just a difference in units,
-       #check if one is flipped and finally, flip or interpolate as needed.
-       if not np.array_equal(lev_model,lev_kern) and not np.array_equal(lev_model/100,lev_kern) \
-            and not np.array_equal(lev_model*100,lev_kern):
-                    if np.array_equal(lev_model,lev_kern[::-1]) or np.array_equal(lev_model/100,lev_kern[::-1]) \
-                       or np.array_equal(lev_model*100,lev_kern[::-1]):
-                       model_mainvar_pert[os.environ[varname+"_var"]] = \
-                          model_mainvar_pert[os.environ[varname+"_var"]][:,::-1,...]
-                       model_mainvar_climo[os.environ[varname+"_var"]] = \
-                          model_mainvar_climo[os.environ[varname+"_var"]][:,::-1,...]
-                    else:
-                          if (np.max(lev_model)/np.max(lev_kern)>10):
-                             lev_model = lev_model/100 #scale units down
-                          if (np.max(lev_model)/np.max(lev_kern)<0.1):
-                             lev_model = lev_model*100 #scale units up
-                          f = interp1d(np.log(lev_model), model_mainvar_pert[os.environ[varname+"_var"]], \
-                              axis=1,bounds_error=False,fill_value='extrapolate')
-                          model_mainvar_pert[os.environ[varname+"_var"]] = f(np.log(lev_kern))
-                          f = None
-                          f = interp1d(np.log(lev_model), model_mainvar_climo[os.environ[varname+"_var"]], \
-                              axis=1,bounds_error=False,fill_value='extrapolate')
-                          model_mainvar_climo[os.environ[varname+"_var"]] = f(np.log(lev_kern))
+       #If vertical coordinates for kernel and model data differ,check if one is 
+       #flipped and finally, flip or interpolate as needed.
+       if not np.array_equal(lev_model,lev_kern):
+              if np.array_equal(lev_model,lev_kern[::-1]):
+                 model_mainvar_pert[os.environ[varname+"_var"]] = \
+                    model_mainvar_pert[os.environ[varname+"_var"]][:,::-1,...]
+                 model_mainvar_climo[os.environ[varname+"_var"]] = \
+                     model_mainvar_climo[os.environ[varname+"_var"]][:,::-1,...]
+              else:
+                 f = interp1d(np.log(lev_model), model_mainvar_pert[os.environ[varname+"_var"]], \
+                       axis=1,bounds_error=False,fill_value='extrapolate')
+                 model_mainvar_pert[os.environ[varname+"_var"]] = f(np.log(lev_kern))
+                 f = None
+                 f = interp1d(np.log(lev_model), model_mainvar_climo[os.environ[varname+"_var"]], \
+                       axis=1,bounds_error=False,fill_value='extrapolate')
+                 model_mainvar_climo[os.environ[varname+"_var"]] = f(np.log(lev_kern))
 
 
 #Pressure of upper boundary of each vertical layer
@@ -281,9 +256,9 @@ fluxanom_Rcre_SW_TOA = fluxanom_Rtot_SW_TOA - fluxanom_Rclr_SW_TOA
 #to user's specific model experiment.
 IRF_lw_clr_TOA = fluxanom_Rclr_LW_TOA - fluxanom_pl_clr_TOA - fluxanom_lr_clr_TOA  - \
                      fluxanom_lw_q_clr_TOA - fluxanom_pl_sfc_clr_TOA
-IRF_lw_tot_TOA = IRF_lw_clr_TOA / 1.24
+IRF_lw_tot_TOA = IRF_lw_clr_TOA / os.environ["LW_CLOUDMASK"]
 IRF_sw_clr_TOA = fluxanom_Rclr_SW_TOA - fluxanom_sw_q_clr_TOA - fluxanom_a_sfc_clr_TOA
-IRF_sw_tot_TOA = IRF_sw_clr_TOA / 2.43
+IRF_sw_tot_TOA = IRF_sw_clr_TOA / os.environ["SW_CLOUDMASK"]
 
 #Compute Cloud Radiative Flux Anomalies as dCRE minus correction for cloud masking using
 #kernel-derived IRF and individual flux anomalies (See e.g. Soden et al. 2008)

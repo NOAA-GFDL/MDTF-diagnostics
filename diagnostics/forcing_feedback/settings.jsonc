@@ -1,69 +1,139 @@
-// Forcing and Feedbacks Module
-//
-// All text to the right of an unquoted "//" is a comment and ignored, as well
-// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
-// in strings, so you'll want to turn word wrap on in your editor.
-//
 {
   "settings" : {
     "driver" : "forcing_feedback.py",
-    "long_name" : "Forcing and Feedbacks",
+    "long_name" : "Radiative Forcing and Feedback Diagnostics",
     "realm" : "atmos",
-    "description" : "Radiative forcing and feedback diagnostics",
     "runtime_requirements": {
-      "python3": ["os", "sys", "numpy", "xarray", "pandas", "netCDF4", "scipy", "matplotlib"]
+      "python3": ["os", "numpy", "xarray", "pandas", "netCDF4", "scipy", "matplotlib", "cartopy"]
+    },
+    "pod_env_vars" : {
+      "LW_CLOUDMASK": 1.24,
+      "SW_CLOUDMASK": 2.43
     }
   },
-  //
-  "varlist" : [
-    {
-      "var_name" : "ta_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "ts_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "hus_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsus_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsuscs_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsds_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsdscs_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsdt_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsut_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rsutcs_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rlut_var",
-      "freq" : "mon",
-      "requirement" : "required"
-    },{
-      "var_name" : "rlutcs_var",
-      "freq" : "mon",
-      "requirement" : "required"
+  "data": {
+    "format": "any_netcdf_classic",
+    "rename_dimensions": false,
+    "rename_variables": false,
+    "multi_file_ok": false,
+    "frequency": "mon",
+    "min_frequency": "mon",
+    "max_frequency": "mon",
+    "min_duration": "5yr",
+    "max_duration": "any"
+  },
+  "dimensions": {
+    "lat": {
+        "standard_name": "latitude",
+        "units": "degrees_N",
+        "range": [-90, 90],
+        "need_bounds": false
+    },
+    "lon": {
+        "standard_name": "longitude",
+        "units": "degrees_E",
+        "range": [-180, 180],
+        "need_bounds": false
+    },
+    "plev": {
+        "standard_name": "air_pressure",
+        "units": "Pa",
+        "positive": "down",
+        "need_bounds": false
+    },
+    "time": {
+        "standard_name": "time",
+        "units": "days",
+        "calendar": "noleap",
+        "need_bounds": false
     }
-  ]
-}
+  },
+  "varlist" : {
+    "ts": {
+      "standard_name": "surface_temperature",
+      "path_variable": "TS_FILE",
+      "units": "K",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "ta": {
+      "standard_name": "air_temperature",
+      "path_variable": "TA_FILE",
+      "units": "K",
+      "dimensions" : ["time", "plev", "lat", "lon"],
+      "requirement": "required"
+    },
+    "hus": {
+      "standard_name": "specific_humidity",
+      "path_variable": "HUS_FILE",
+      "units": "1",
+      "dimensions" : ["time", "plev", "lat", "lon"],
+      "requirement": "required" 
+    },
+    "rsus": {
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "path_variable": "RSUS_FILE",
+      "units": "W m-2",
+     "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsuscs": {
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "path_variable": "RSUSCS_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsds": {
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "path_variable": "RSDS_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsdscs": {
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "path_variable": "RSDSCS_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsdt": {
+      "standard_name": "toa_incoming_shortwave_flux",
+      "path_variable": "RSDT_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsut": {
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "path_variable": "RSUT_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rsutcs": {
+      "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+      "path_variable": "RSUTCS_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rlut": {
+      "standard_name": "toa_outgoing_longwave_flux",
+      "path_variable": "RLUT_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "rlutcs": {
+      "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+      "path_variable": "RLUTCS_FILE",
+      "units": "W m-2",
+      "dimensions" : ["time", "lat", "lon"],
+      "requirement": "required"
+    }
+  }
+}  
+
+

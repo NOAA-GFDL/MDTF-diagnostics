@@ -153,6 +153,7 @@ class MDTFFramework(object):
         else:
             case_list_in = util.to_iter(cli_obj.file_case_list)
         case_list = []
+        for i, case_d in enumerate(case_list_in):
             case = self.parse_case(i, case_d, cli_obj, pod_info_tuple)
             if case:
                 case_list.append(case)

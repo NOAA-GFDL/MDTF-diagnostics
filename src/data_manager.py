@@ -1354,7 +1354,6 @@ sample_data_regex = util.RegexPattern(
     match_error_filter=ignore_non_nc_regex
 )
 @util.regex_dataclass(sample_data_regex)
-@util.mdtf_dataclass
 class SampleDataFile():
     """Dataclass describing catalog entries for sample model data files.
     """

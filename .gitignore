@@ -46,6 +46,11 @@ doc/sphinx_pods
 doc/sphinx/site_toc.rst
 doc/sphinx_sites
 
+# exclude site directory for user's personal configuration
+sites/local/*
+# however, include the documentation within that directory
+!sites/local/doc/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

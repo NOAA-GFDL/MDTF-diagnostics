@@ -40,10 +40,8 @@ install:
   - conda info -a
 
   # MDTF-specific setup: 
-  # install mamba (https://github.com/mamba-org/mamba) for faster dependency resolution
-  - conda install mamba -n base -c conda-forge   
-  # install all conda envs, using mamba
-  - $TRAVIS_BUILD_DIR/src/conda/conda_env_setup.sh --all --mamba --conda_root "$HOME/miniconda"
+  # install all conda envs used by package and PODs
+  - $TRAVIS_BUILD_DIR/src/conda/conda_env_setup.sh --all --conda_root "$HOME/miniconda"
 
   - df -h # Log space remaining for data
 

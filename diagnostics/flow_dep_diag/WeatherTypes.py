@@ -40,7 +40,6 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
 #perform clustering using manually specified number of clusters
     n_cluster = int(os.environ["NCLUSTER"])
     n_sim = int(os.environ["NSIM"])
-    print(type(n_sim)) # typically 25-50 -- try 25 for quick preliminary computation only
     centroids, wtypes = loop_kmeans(X=reanalysis_pc, n_cluster=n_cluster, n_sim=n_sim)
     class_idx, best_part = get_classifiability_index(centroids)
     print('The classifiability index is {}'.format(class_idx))

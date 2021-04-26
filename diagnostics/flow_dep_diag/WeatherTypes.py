@@ -79,7 +79,7 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     #plotting
     xmin,xmax = reanalysis[lon_coord].min(), reanalysis[lon_coord].max()
     ymin,ymax = reanalysis[lat_coord].min(), reanalysis[lat_coord].max()
-    plot_path = "{WK_DIR}/model/PS/example_model_plot.png".format(**os.environ)
+    plot_path = "{WK_DIR}/model/PS/model_plot.png".format(**os.environ)
     title_string = "{CASENAME}: Weather Types composite ({FIRSTYR}-{LASTYR})".format(**os.environ)
     # Set up the Figure
     plt.rcParams.update({'font.size': 12})

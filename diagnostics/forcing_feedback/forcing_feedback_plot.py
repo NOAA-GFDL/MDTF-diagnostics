@@ -16,7 +16,6 @@
 
 import os
 import numpy as np
-import numpy.ma as ma
 import xarray as xr
 
 from forcing_feedback_util import globemean_2D
@@ -128,7 +127,7 @@ obsvariable_2 = nc_obs.LapseRate.values
 units = 'W/$m^2$/K'
 filename = 'Temperature'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,obsvariable_2,units,filename)        
+                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)        
 
 #Water Vapor Feedback
 levels_1 = np.arange(-6,6.0001,1)
@@ -142,7 +141,7 @@ obsvariable_2 = nc_obs.SW_WaterVapor.values
 units = 'W/$m^2$/K'
 filename = 'WaterVapor'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 #Surface Albedo Feedback
 levels_1 = np.arange(-6,6.0001,1)
@@ -167,7 +166,7 @@ obsvariable_2 = nc_obs.SW_Cloud.values
 units = 'W/$m^2$/K'
 filename = 'Cloud'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 
 #Rad Feedback
@@ -182,7 +181,7 @@ obsvariable_2 = nc_obs.SW_Rad.values
 units = 'W/$m^2$/K'
 filename = 'Rad'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 #IRF Trend
 levels_1 = np.arange(-0.15,0.150001,0.015)
@@ -196,6 +195,6 @@ obsvariable_2 = 12*nc_obs.SW_IRF.values
 units = 'W/$m^2$/yr'
 filename = 'IRF'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 

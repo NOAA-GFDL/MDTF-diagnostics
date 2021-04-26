@@ -377,7 +377,7 @@ def feedback_regress(fluxanom,tspert,tsclimo,lat,lon,fbname):
 # bargraph_plotting
 #
 
-def bargraph_plotting(model_bar,obs_bar,var_units,var_legnames,var_filename)
+def bargraph_plotting(model_bar,obs_bar,var_units,var_legnames,var_filename):
 
     '''
 
@@ -410,7 +410,7 @@ def bargraph_plotting(model_bar,obs_bar,var_units,var_legnames,var_filename)
 
 def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
                        model_origlon,lon_m,lat_m,var1_obs,var2_name, \
-                       var2_model,var2_obs,var_units,var_filename)
+                       var2_model,var2_obs,var_units,var_filename):
 
     '''
 
@@ -499,7 +499,7 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
 
 def map_plotting_2subs(cbar_levs,var_name,var_model, \
                        model_origlon,lon_m,lat_m,var_obs, \
-                       var_units,var_filename)
+                       var_units,var_filename):
 
     '''
 

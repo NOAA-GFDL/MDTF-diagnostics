@@ -20,7 +20,6 @@ tas_var = os.environ["T250_var"]
 lat_coord = os.environ["lat_coord"]
 lon_coord = os.environ["lon_coord"]
 
-print("IT IS GOIN")
 #running analysis to generate climatology anomalies for vars
 reanalysis = climAnom(var_path=os.environ["Z250_FILE"], var_name=os.environ["Z250_var"]).stack(T=[time_coord], grid=[lat_coord, lon_coord])
 #reanalysis = climAnom(var_path="/Users/drewr/mdtf/inputdata/model/QBOi.EXP1.AMIP.001/day/QBOi.EXP1.AMIP.001.Z250.day.nc", var_name='Z250').stack(T=['time'], grid=['lat', 'lon'])
@@ -32,7 +31,6 @@ reanalysis = reanalysis.to_dataset()
 #reanalysis = reanalysis.assign_coords(P=(250))
 rainfall = rainfall.to_dataset()
 t2m = t2m.to_dataset()
-print("THE DATA LOADED BIIITCH")
 #dimension reduction; projection of data onto leading EOFs for principle component time series
 #PCA model saved for later use as reanalysis_pc
 n_eof = get_number_eof(X=reanalysis[Z250_var].values, var_to_explain=0.9, plot=True)
@@ -64,7 +62,6 @@ wt_anomalies = [] # initialize empty list
 wt_anomalies.append(reanalysis_composite)
 wt_anomalies = xr.concat(wt_anomalies, dim='M') # join together
 wt_anomalies['WT'] = wt_anomalies['WT'] + 1 # start from 1
-print("plot time bois")
 #prepare a figure with rainfall and temperature composites
 X, Y = np.meshgrid(reanalysis[Z250_var].lon, reanalysis[Z250_var].lat)
 map_proj = ccrs.PlateCarree() #ccrs.Orthographic(-110, 10)

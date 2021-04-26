@@ -429,7 +429,6 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        start1a = var1_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var1_model[...,np.int(len(model_origlon)/2):]
        var1_model = np.concatenate((start1b,start1a),axis=1)
-       start1a,start1b = None,None
     axs[0, 0].set_extent([-180,180,-80,80])
     cs = axs[0, 0].contourf(lon_m,lat_m,var1_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs1[0], \
@@ -461,7 +460,6 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        start1a = var2_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var2_model[...,np.int(len(model_origlon)/2):]
        var2_model = np.concatenate((start1b,start1a),axis=1)
-       start1a,start1b = None,None
     axs[1, 0].set_extent([-180,180,-80,80])
     cs = axs[1, 0].contourf(lon_m,lat_m,var2_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs2[0], \
@@ -516,9 +514,8 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
        start1a = var_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var_model[...,np.int(len(model_origlon)/2):]
        var_model = np.concatenate((start1b,start1a),axis=1)
-       start1a,start1b = None,None
     axs[0].set_extent([-180,180,-80,80])
-    cs = axs[0].contourf(lon_m,lat_m,var_model,cmap=plt.cm.RdBu_r, \
+    axs[0].contourf(lon_m,lat_m,var_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs[0], \
                        vmax=cbar_levs[-1],levels=cbar_levs,extend='both')
     axs[0].coastlines()

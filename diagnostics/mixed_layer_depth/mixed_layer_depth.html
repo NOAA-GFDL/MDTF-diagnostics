@@ -1,0 +1,32 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>MDTF mixed layer depth</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Mixed Layer Depth</h3>
+<p>This POD computes mixed layer depth from CMIP6 monthly temperature and salinity. Mixed layer depth computed from the EN4 reanalysis temperature and salinity is included to compare with models.</p>
+
+<p>These figures show the mixed layer depth climatology for each month. Note that the colorbar varies between subplots. Users may wish to modify this.</p>
+
+<p>The results from this POD are to be appear in a paper being prepared for the MAPP team special issue.</p>
+<TABLE>
+<TR>
+<TH align=left><font color=navy>Mean mixed layer depth
+<!-- 
+    Relative links to bitmaps of plots made by the diagnostic, see above. 
+-->
+<TH align=center><A href=../mixed_layer_depth/model/modelmldmean.png>MODEL</A>
+<TH align=center><A href=../mixed_layer_depth/obs/obsmldmean.png>OBS</A>
+
+
+</TABLE>

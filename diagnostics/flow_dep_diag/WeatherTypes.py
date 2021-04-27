@@ -30,7 +30,7 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
 #reanalysis = reanalysis.assign_coords(P=(250))
     rainfall = rainfall.to_dataset()
     t2m = t2m.to_dataset()
-    print("climatology anomaly calculations completed.")
+    print("Climatology anomaly calculations completed.")
 #dimension reduction; projection of data onto leading EOFs for principle component time series
 #PCA model saved for later use as reanalysis_pc
     n_eof = get_number_eof(X=reanalysis[Z250_var].values, var_to_explain=0.9, plot=True)
@@ -58,7 +58,7 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     reanalysis_composite = reanalysis_composite.groupby('WT').mean(dim='T').unstack('grid')[Z250_var]
     reanalysis_composite['M'] = 0
 
-    print("reanalysis completed.")
+    print("Reanalysis completed.")
     wt_anomalies = [] # initialize empty list
     wt_anomalies.append(reanalysis_composite)
     wt_anomalies = xr.concat(wt_anomalies, dim='M') # join together
@@ -74,7 +74,7 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     wt=wt+1
     wt_counts = wt.groupby('WT').size().div(wt['WT'].size)
 
-    print("beginning plotting..")
+    print("Beginning plotting..")
     #plotting
     xmin,xmax = reanalysis[lon_coord].min(), reanalysis[lon_coord].max()
     ymin,ymax = reanalysis[lat_coord].min(), reanalysis[lat_coord].max()

@@ -69,10 +69,6 @@ if missing_file==1:
     print("Flow-Dependent, Cross-Timescale Model Diagnostics Package will NOT be executed!")
 else:
 
-    ##### Functionalities in Diagnostic Package #####
-    # ======================================================================
-
-    #  See WeatherTypes.py for detailed info
     try:
         os.system("python3 "+os.environ["POD_HOME"]+"/"+"WeatherTypes.py")
     except OSError as e:

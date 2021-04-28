@@ -53,7 +53,6 @@ See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/)
 - `cd $CODE_ROOT`, then run
 `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
-
   - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
 ## 2. Download the sample data
@@ -117,7 +116,7 @@ We recommend using absolute paths in `default_tests.jsonc`, but relative paths a
 
 The MDTF framework is run via the wrapper script `$CODE_ROOT/mdtf` that is generated conda_env_install.sh. To test the installation, `% $CODE_ROOT/mdtf --help` will print help text on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
 
-This should print the current version of the framework.
+For interested users, the `mdtf` executable is also a script, which calls `src/conda/conda_init.sh` and `src/mdtf.py`.
 
 To run the code on the test data using the version of default_tests.jsonc you modified:
 ```

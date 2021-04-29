@@ -22,8 +22,8 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
 #    
 #     get in the climatology first :
     tmax = 12
-    namein1 = prefixclim + variable1 + "_clim.nc"
-    namein2 = prefixclim + variable2 + "_clim.nc"    
+    namein1 = os.path.join(prefixclim,variable1 + "_clim.nc")
+    namein2 = os.path.join(prefixclim,variable2 + "_clim.nc")    
     clima1 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')
     clima2 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')    
     
@@ -54,8 +54,8 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                 month = str(mm)
                 yy = "%04d" % iyy
                 year = str(yy)
-                namein1 = prefix + year + "/"+variable1+"_"+year+".nc"
-                namein2 = prefix + year + "/"+variable2+"_"+year+".nc"
+                namein1 = os.path.join(prefix,year,variable1+"_"+year+".nc")
+                namein2 = os.path.join(prefix,year,variable2+"_"+year+".nc")
                 if (os.path.exists( namein1) and os.path.exists( namein1)):
                     vvar1 = read_netcdf_2D(imax, jmax, tmax,  variable1,  namein1, vvar1, undef)
                     vvar2 = read_netcdf_2D(imax, jmax, tmax,  variable2,  namein2, vvar2, undef)

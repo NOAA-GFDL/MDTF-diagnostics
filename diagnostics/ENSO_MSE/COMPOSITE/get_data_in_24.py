@@ -22,7 +22,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
     # not necessary to preallocate memory for arrays that are read in from files
 
 ##  read in the clima values
-    nameclima = prefix2 +  variable + "_clim.nc"
+    nameclima = os.path.join(prefix2, variable + "_clim.nc")
     if (os.path.exists( nameclima)):
         # np.fromfile handles file open/close, memory allocation
         clima = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  nameclima, clima, undef)
@@ -47,7 +47,7 @@ def get_data_in_24(imax, jmax, zmax,  ttmax, years,  iy2, variable,  tmax24,  da
                 year = str(yy)
 
                 # data files now per-year, not per-month, so only load when year changes
-                namein = prefix+"/"+year+"/"+variable+"_"+year+".nc"
+                namein = os.path.join(prefix,year,variable+"_"+year+".nc")
                 if (os.path.exists( namein)):
                         # np.fromfile handles file open/close, memory allocation
                         vvar = read_netcdf_3D(imax, jmax,  zmax, tmax12,  variable,  namein, vvar, undef)

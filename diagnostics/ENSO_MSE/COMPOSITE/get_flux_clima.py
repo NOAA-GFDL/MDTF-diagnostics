@@ -13,7 +13,7 @@ def get_flux_clima(imax, jmax, im1, im2, variable,  dataout, prefixclim, undef):
     vvar  = np.ma.zeros((imax,jmax, itmax),dtype='float32', order='F')
     dataout = np.ma.zeros((imax,jmax),dtype='float32', order='F')
 ##  read x, y, t dimensioned data 
-    namein = prefixclim + variable + "_clim.nc"
+    namein = os.path.join(prefixclim,variable + "_clim.nc")
 
     if (os.path.exists( namein)):
         vvar = read_netcdf_2D(imax, jmax, itmax,  variable,  namein, vvar, undef)

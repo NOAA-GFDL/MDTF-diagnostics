@@ -123,32 +123,32 @@ undef = float(1.1e+20)
 iundef = -9999
 
 ##   the pointer to code directory 
-prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
+prefix = os.path.join(os.environ["POD_HOME"],"COMPOSITE")
 
 ## base path of all the files written/read here
-wkdir_model = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/model"
+wkdir_model = os.path.join(os.environ["ENSO_MSE_WKDIR_COMPOSITE"],"model")
 
 ##  prefix1 =   input data (to other parts of package, really output dir too)
-prefix1 =   wkdir_model + "/netCDF/DATA/"
+prefix1 =   os.path.join(wkdir_model,"netCDF","DATA")
 ##   prefix2 =   input CLIMA
-prefix2 =   wkdir_model + "/netCDF/CLIMA/"
+prefix2 =   os.path.join(wkdir_model,"netCDF","CLIMA")
 
 ###  output  
-prefixout = wkdir_model + "/netCDF/"
+prefixout = os.path.join(wkdir_model,"netCDF")
 
 #   El Nino
-prefixout1 =wkdir_model + "/netCDF/ELNINO/"
+prefixout1 = os.path.join(wkdir_model, "netCDF","ELNINO")
 #  La Nina out
-prefixout2 =wkdir_model + "/netCDF/LANINA/"
+prefixout2 = os.path.join(wkdir_model, "netCDF","LANINA")
 ##  24 month evoution prefixes EL NINO
-prefixout11 =wkdir_model + "/netCDF/24MONTH_ELNINO/"
-prefixout111 =wkdir_model + "/netCDF/24MONTH_ELNINO/BIN/"
+prefixout11 = os.path.join(wkdir_model, "netCDF","24MONTH_ELNINO")
+prefixout111 = os.path.join(wkdir_model, "netCDF","24MONTH_ELNINO", "BIN")
 #  La Nina out
-prefixout22 =wkdir_model + "/netCDF/24MONTH_LANINA/"
-prefixout222 =wkdir_model + "/netCDF/24MONTH_LANINA/BIN/"
+prefixout22 = os.path.join(wkdir_model, "netCDF", "24MONTH_LANINA")
+prefixout222 = os.path.join(wkdir_model, "netCDF", "24MONTH_LANINA", "BIN")
 
 ## climatology output
-prefixclim = wkdir_model + "/netCDF/"
+prefixclim = prefixout
 
 ###  the directory check ran already in get_directories.py
 ## dirs_to_create = [prefix1,prefix2,prefixout1,prefixout2, prefixout11, prefixout22, prefixout111, prefixout222]
@@ -690,7 +690,6 @@ if( regression == 1):
 
     print(os.system("ls "+wkdir_model))
 
-print("what is going on here")
 file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR"]+"/COMPOSITE.html" 
 if os.path.isfile( file_dest ):

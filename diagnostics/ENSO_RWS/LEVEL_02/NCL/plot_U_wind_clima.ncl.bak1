@@ -18,15 +18,8 @@ begin
    varunit = (/ "[m s~S~-1~N~]" /)
 ;;   contour levels  one for each p-level
      cmin = -10.
-     cmax =  75.
+     cmax =  65.
      cint =   5
-
-   levels = (/ -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75 /)
-
-   cmin2 = 0.
-   cmax2 = 1000
-   cint2 = 1000
-
 
    title_mode =  "Climatology" 
 
@@ -34,6 +27,13 @@ begin
     dirname1 = getenv("ENSO_RWS_WKDIR")
     obsname  = getenv("OBS_DATA") + "/DATA/"
 
+    dirname1 = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2020-08-28/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_RWS/"
+
+
+     obsname = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2020-08-28/diagnostics/inputdata/obs_data/ENSO_RWS/DATA/"
+
+      varcode = "/home/gyoji7/hafner/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2020-08-28/diagnostics/ENSO_RWS/"
+  
 
       parameter_name = varcode + "/shared/parameters.txt"
 ;;;   global map 
@@ -107,10 +107,7 @@ begin
    wks = gsn_open_wks( wks_type, nameout2)
    gsn_define_colormap(wks,  colormap)
       
-  res = True
-
-  res@gsnFrame             = False               ; don't advance frame
-  res@gsnDraw              = False
+ res = True
 
   res@mpMinLonF              =  xlon1
   res@mpMaxLonF              =  xlon2
@@ -169,7 +166,7 @@ begin
 
       cmap = read_colormap_file(colormap)
 
-    cmap( 17, 0) = 90./255.
+      cmap( 17, 0) = 90./255.
     cmap (17,1) = 0.
     cmap (17,2) = 0.
     cmap (17,3) = 1
@@ -200,44 +197,12 @@ begin
 
      res@cnFillPalette =  cmap( (/0, 1, 2,  3, 4, 5, 6, 7, 8,  10, 11, 12,13, 14, 15, 16, 17 /), :)
 
-     res@cnMinLevelValF       = cmin                ; set min contour level
-     res@cnMaxLevelValF       = cmax                ; set max contour level
-     res@cnLevelSpacingF      = cint 
+      res@cnMinLevelValF       = cmin                ; set min contour level
+      res@cnMaxLevelValF       = cmax                ; set max contour level
+      res@cnLevelSpacingF      = cint 
       
-     plot1 = gsn_csm_contour_map(wks, uuc(0, kk, :, :),res)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    res2 = True
-    res2@gsnMaximize          = True                ; maximize pot in frame
-    res2@gsnFrame             = False               ; don't advance frame
-    res2@gsnDraw              = False
-
-     delete(uuc@long_name)
-
-    res2@cnLineThicknessF =   1;;    4 ;;   linethick
-    res2@cnLineLabelInterval        = 1             ; default = 2
-    res2@cnLineLabelPlacementMode   = "constant"
-    res2@cnLineLabelFontHeightF = 0.008 ;;  0.015
-    res2@cnLineLabelFontThicknessF  = 1.
-    res2@gsnContourZeroLineThicknessF  = 5
-    res2@cnInfoLabelOn = False
-    res2@cnLineLabelsOn   =  False
-
-    res2@cnLevelSelectionMode = "ManualLevels"   ;
-
-   res2@cnFillOn = False
-   res2@cnLinesOn   = True
-   res2@cnMinLevelValF  = cmin2                  ; set the minimum contour level
-   res2@cnMaxLevelValF  = cmax2                  ; set the maximum contour level
-   res2@cnLevelSpacingF = cint2
-
-   plot2 = gsn_csm_contour(wks,  uuc(0, kk, :,:), res2)
-
-   overlay( plot1, plot2)
+     plot = gsn_csm_contour_map(wks, uuc(0, kk, :, :),res)
  
-   draw( plot1)
-   frame(wks)
-
     end if  
     end do  ;;; over pressure levels 
  

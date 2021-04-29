@@ -1,40 +1,36 @@
 ;;   plot the ElNino/LaNina composite anomalies 
+;;   stream function composite anomalies at 500 and 200 mb 
 
 
 begin
 
    mode = "CLIMA"
 
-   variable =  "ua"
+   variable1 =  "ua"
+   variable2 =  "va"
  
-   variname = "Zonal Wind" 
+   variname = "Divergence" 
 
-   outname = "U_wind"
+   outname = "divergence"
 
    plevel2 = (/ 200  /)
    nlevels2 = dimsizes( plevel2)
    
 ;;  
-   varunit = (/ "[m s~S~-1~N~]" /)
+    levels4 =  (/ -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5, \
+                   0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0 /) 
+    
+   ff4 = 1E+06 
+   varunit = (/ "[x10~S~-06~N~s~S~-1~N~]" /)
+
 ;;   contour levels  one for each p-level
-     cmin = -10.
-     cmax =  75.
-     cint =   5
 
-   levels = (/ -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75 /)
+   title_mode =  "Climatology"
 
-   cmin2 = 0.
-   cmax2 = 1000
-   cint2 = 1000
-
-
-   title_mode =  "Climatology" 
-
-    varcode  = getenv("POD_HOME")
-    dirname1 = getenv("ENSO_RWS_WKDIR")
-    obsname  = getenv("OBS_DATA") + "/DATA/"
-
-
+    varcode  =  getenv("POD_HOME")
+    dirname1 =   getenv("ENSO_RWS_WKDIR")
+    obsname  =  getenv("OBS_DATA") + "/DATA/"
+ 
       parameter_name = varcode + "/shared/parameters.txt"
 ;;;   global map 
       xlon1 = 0
@@ -52,25 +48,28 @@ begin
      xs4 = 0.08
      ys4 = 0.14
 
-     colormap = "precip2_17lev" ;;    "WhiteBlueGreenYellowRed"
+     colormap ="hotcold_18lev"
 
    do icase = 1, 2
 
    if( icase .eq. 1) ;;  model
    dirname  =  dirname1 + "/model"
    outdir   =  dirname1 + "/model"
-     model = getenv( "CASENAME") ;;;  "CESM2" ;;  getenv( "CASENAME")
+     model = getenv( "CASENAME") ;;  "CESM2" ;;  getenv( "CASENAME")
     end if
 
   if( icase .eq. 2) ;;; OBS
    dirname = obsname
    outdir  = dirname1  + "/obs"
-      model = " " ;;  OBS = blank
+      model = " " ;;   OBS = blank 
     end if
 
-    namein1 =  dirname +  "/netCDF/"  + variable + ".nc"
+    namein1 =  dirname +  "/netCDF/"  + variable1 + ".nc"
+    namein2 =  dirname +  "/netCDF/"  + variable2 + ".nc"
     f1 = addfile( namein1, "r")
-    uuc = f1->$variable$
+    uuc = f1->$variable1$
+    f2 = addfile( namein2, "r")
+    vvc = f2->$variable2$
 
     plev1 = f1->lev
     lon = f1->lon
@@ -79,13 +78,34 @@ begin
     zdim = dimsizes( plev1) 
 
     delete( f1)
+    delete( f2)
+
+  nscan = 500             ; usually *much* fewer
+  eps   = 0.001            ; variable depended
+  gtype =  True           ; "gendat" does not generate cyclic fields
+  guess =  1               ; use zonal means
+  relc  = 0.6              ; standard relaxation coef
+  opt   = 0
+  poisson_grid_fill( uuc, gtype, guess, nscan, eps, relc, opt)
+  poisson_grid_fill( vvc, gtype, guess, nscan, eps, relc, opt)
 
 
-     namein  = dirname  + "/netCDF/"  + mode
-     nameout = outdir  + "/PS/"
+     mm2 = 1
+     wrf_smooth_2d(uuc,mm2)
+     wrf_smooth_2d(vvc,mm2)
 
-    uuc@units = " "
-    uuc@long_name = " "
+      nameout = outdir  + "/PS/"
+
+;;  divergence 
+    cdiv = uuc
+    cdiv =  uv2dvF_Wrap(uuc,vvc) ;;   uv2dv_cfd (uuc,vvc, lat, lon, 3)  
+    cdiv = ff4 * cdiv
+
+    cdiv(:, :, :, :) =  where( .not.ismissing(uuc(:, :, :, :)),  cdiv(:, :, :, :), uuc@_FillValue)
+
+
+    cdiv@units = " "
+    cdiv@long_name = " "
 
 ;;;  loop over levels  select the index kk corresponding to plev(nlev) 
 
@@ -107,10 +127,7 @@ begin
    wks = gsn_open_wks( wks_type, nameout2)
    gsn_define_colormap(wks,  colormap)
       
-  res = True
-
-  res@gsnFrame             = False               ; don't advance frame
-  res@gsnDraw              = False
+ res = True
 
   res@mpMinLonF              =  xlon1
   res@mpMaxLonF              =  xlon2
@@ -120,7 +137,7 @@ begin
  res@cnFillOn              = True
  res@cnFillMode            = "AreaFill"
  res@cnLinesOn             = False
- res@cnLevelSelectionMode  = "ManualLevels " ;;  "ExplicitLevels" 
+ res@cnLevelSelectionMode  = "ExplicitLevels" 
 
   res@cnFillOn             = True                  ; turn on color fill
   res@cnLinesOn            = False
@@ -166,81 +183,16 @@ begin
      end if
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
   
+    res@cnLevels    =   levels4
 
-      cmap = read_colormap_file(colormap)
-
-    cmap( 17, 0) = 90./255.
-    cmap (17,1) = 0.
-    cmap (17,2) = 0.
-    cmap (17,3) = 1
-
-    i = 0
-    cmap( i, 0) = 150./255.
-    cmap (i,1) = 150./255.
-    cmap (i,2) = 150./255.
-    cmap (i,3) = 1
-    i = 1
-    cmap( i, 0) = 180./255.
-    cmap (i,1) = 180./255.
-    cmap (i,2) = 180./255.
-    cmap (i,3) = 1
-     i = 2
-    cmap( i, 0) = 200./255.
-    cmap (i,1) = 200./255.
-    cmap (i,2) = 200./255.
-    cmap (i,3) = 1
-
-    i = 8
-    cmap(i,0) = 164./255. ;; 184./255.
-    cmap(i,1) = 215./255. ;;; 235./255.
-    cmap(i,2) = 200./255. ;;;  220./255.
-    cmap(i,3) = 1
+    cmap = read_colormap_file(colormap)
+    res@cnFillPalette = cmap ( (/0, 1, 2, 3, 4, 5, 6, 7,   9,  11, 12, 13, 14, 15, 16, 17, 18  /), :)
+     plot = gsn_csm_contour_map(wks, cdiv(0, kk,:,:),res)
  
-     cmap(:, 3) = 0.75
-
-     res@cnFillPalette =  cmap( (/0, 1, 2,  3, 4, 5, 6, 7, 8,  10, 11, 12,13, 14, 15, 16, 17 /), :)
-
-     res@cnMinLevelValF       = cmin                ; set min contour level
-     res@cnMaxLevelValF       = cmax                ; set max contour level
-     res@cnLevelSpacingF      = cint 
-      
-     plot1 = gsn_csm_contour_map(wks, uuc(0, kk, :, :),res)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    res2 = True
-    res2@gsnMaximize          = True                ; maximize pot in frame
-    res2@gsnFrame             = False               ; don't advance frame
-    res2@gsnDraw              = False
-
-     delete(uuc@long_name)
-
-    res2@cnLineThicknessF =   1;;    4 ;;   linethick
-    res2@cnLineLabelInterval        = 1             ; default = 2
-    res2@cnLineLabelPlacementMode   = "constant"
-    res2@cnLineLabelFontHeightF = 0.008 ;;  0.015
-    res2@cnLineLabelFontThicknessF  = 1.
-    res2@gsnContourZeroLineThicknessF  = 5
-    res2@cnInfoLabelOn = False
-    res2@cnLineLabelsOn   =  False
-
-    res2@cnLevelSelectionMode = "ManualLevels"   ;
-
-   res2@cnFillOn = False
-   res2@cnLinesOn   = True
-   res2@cnMinLevelValF  = cmin2                  ; set the minimum contour level
-   res2@cnMaxLevelValF  = cmax2                  ; set the maximum contour level
-   res2@cnLevelSpacingF = cint2
-
-   plot2 = gsn_csm_contour(wks,  uuc(0, kk, :,:), res2)
-
-   overlay( plot1, plot2)
- 
-   draw( plot1)
-   frame(wks)
-
     end if  
     end do  ;;; over pressure levels 
  
-  delete( [/  lon, lat, plev1, time,  zdim, uuc /])
- end do 
+  delete( [/lon, lat, plev1, time,  zdim, uuc, vvc, cdiv /])
+end do  ; over model/OBS
+
 end

@@ -31,7 +31,7 @@ begin
 ;;     2D  vars
        pr =  "pr" ;;  getenv("pr_var")
        ts = "ts" ;;   getenv("ts_var")
-       pr_conversion = "pr_conversion_factor" ;;    getenv("pr_conversion_factor")
+       pr_conversion = 1. ;;;  "pr_conversion_factor" ;;    getenv("pr_conversion_factor")
        hfss = "hfss" ;; getenv("hfss_var")
        hfls = "hfls" ;;  getenv("hfls_var")
 

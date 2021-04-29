@@ -1,0 +1,140 @@
+{
+	"settings": {
+		"driver": "ENSO_MSE.py",
+		"long_name": "ENSO moist static energy budget",
+		"description": "ENSO moist static energy budget",
+              "runtime_requirements": {
+              "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"]
+    }
+   },
+    "data": {
+    "frequency": "mon"
+  },
+   "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+
+	"pod_env_vars": {
+		"slon1" : "160",
+		"slon2" : "200",
+		"slat1" : "-10",
+		"slat2" : "5",
+		"ENSO_OBS" : "0",
+		"ENSO_COMPOSITE" : "1",
+		"ENSO_MSE" : "0",
+		"ENSO_MSE_VAR" : "0",
+		"ENSO_SCATTER" : "0"
+	},
+	"varlist": {
+		"zg": {
+                    "standard_name": "geopotential_height",
+                    "units": "m",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ua": {
+                     "standard_name": "eastward_wind",
+                     "units": "m s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"va": {
+                     "standard_name": "northward_wind",
+                     "units": "m s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ta": {
+                      "standard_name": "air_temperature",
+                     "units": "K",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"hus": {
+                     "standard_name": "specific_humidity",
+                     "units": "1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"wap": {
+                     "standard_name": "lagrangian_tendency_of_air_pressure",
+                     "units": "Pa s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"pr": {
+                     "standard_name": "precipitation_flux",
+                     "units": "kg m-2 s-1",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ts": {
+                     "standard_name": "surface_temperature",
+                     "units": "K",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"hfss": {
+                     "standard_name": "surface_upward_sensible_heat_flux",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"hfls": {
+                     "standard_name": "surface_upward_latent_heat_flux",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rsus": {
+                     "standard_name": "surface_upwelling_shortwave_flux_in_air",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rsds": {
+                     "standard_name": "surface_downwelling_shortwave_flux_in_air",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rsdt": {
+                     "standard_name": "toa_incoming_shortwave_flux",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rsut": {
+                     "standard_name": "toa_outgoing_shortwave_flux",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rlus": {
+                     "standard_name": "surface_upwelling_longwave_flux_in_air",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rlds": {
+                     "standard_name": "surface_downwelling_longwave_flux_in_air",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"rlut": {
+                     "standard_name": "toa_outgoing_longwave_flux",
+                     "units": "W m-2",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		}
+	}
+}

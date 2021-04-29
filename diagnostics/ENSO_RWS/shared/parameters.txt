@@ -1,0 +1,8 @@
+lon1 = 190    ;   Nino3.4 domain - selectable
+lon2 = 240
+lat1 = -5
+lat2 =  5
+sigma = 1.   ;   the +/- sigma  threshold for SST index construction
+imindx1 =  12
+imindx2 =  2      ;  note  DJF season for the ENSO index selection
+seasonindx = DJF  ;  nomination of the season 

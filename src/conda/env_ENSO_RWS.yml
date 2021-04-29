@@ -1,4 +1,4 @@
-name: _MDTF_ENSO_MSE
+name: _MDTF_ENSO_RWS
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults

@@ -1,0 +1,24 @@
+{
+  "settings" : {
+    "driver" : "eulerian_storm_track.py",
+    "long_name" : "Eulerian Storm Track",
+    "realm" : "atmos",
+    "description" : "Eulerian Storm Track",
+    "runtime_requirements": {
+      "python3": ["numpy", "matplotlib", "xarray", "netCDF4", "cartopy"]
+      }
+  },
+
+  "pod_env_vars": {
+    "lat_var": "lat", 
+    "lon_var": "lon"
+  }, 
+  
+  "varlist" : [
+    {
+      "var_name" : "v850_var",
+      "freq" : "day",
+      "requirement" : "required"
+    }
+  ]
+}

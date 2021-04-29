@@ -7,9 +7,9 @@ def get_dimensions(imax, jmax,  zmax, prefix):
 
 
 ###    dimensions first needed for the rest 
-
-    if (os.path.exists(prefix+"xyz_dimensions.txt")):
-        file = open(prefix+'xyz_dimensions.txt', 'r')
+    dir_path = os.path.join(prefix,"xyz_dimensions.txt")
+    if (os.path.exists(dir_path)):
+        file = open(dir_path, 'r')
         line = file.readline()
         line = line.strip()
         column = line.split()
@@ -24,7 +24,7 @@ def get_dimensions(imax, jmax,  zmax, prefix):
         zmax = int( column[0])
         file.close()
     else:
-        print (" missing file "+  prefix +" xyz_dimensions.txt")
+        print (" missing file ", dir_path)
         print (" needed for the code "  )
         print (" exiting get_dimensions.py ")
         sys.exit()

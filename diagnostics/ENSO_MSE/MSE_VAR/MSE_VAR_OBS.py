@@ -1,9 +1,9 @@
 #
-#      The code at this level uses pre-calculated data from levels 1 and 2 
+#      The code at this level uses pre-calculated data from levels 1 and 2
 #     COMPOSITE and MSE.  It calculates the Moist Static Energy (MSE)
-#    variances and select variable co-variances.  Area averaged seasonal 
-#     MSE variances and co-variances are displayed in bar charts in 
-#     ~/wkdir/MDTF_$CASE  directories.   
+#    variances and select variable co-variances.  Area averaged seasonal
+#     MSE variances and co-variances are displayed in bar charts in
+#     ~/wkdir/MDTF_$CASE  directories.
 #
 #       Contact Information:
 #       PI :  Dr. H. Annamalai,
@@ -57,7 +57,7 @@ from generate_ncl_call import generate_ncl_call
       This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
       The top driver for the MSE component variances calculations
-       all need to be anomalies !!! 
+       all need to be anomalies !!!
       input data are as follows:
        2 dimensional atmospheric variables: all vertical integrals
    dimensions:  IMAX, JMAX
@@ -71,8 +71,8 @@ from generate_ncl_call import generate_ncl_call
                MADV :  moisture advection [W/m2]
                OMSE  : MSE vertical advection [W/m2]
    1 dimensional INPUT:
-         LON(IMAX) - longitude dimensions 
-         LAT(JMAX) - latitude dimensions 
+         LON(IMAX) - longitude dimensions
+         LAT(JMAX) - latitude dimensions
          PLEV(ZMAX) - vertical dimensions and  pressure levels [mb]
          REARTH  - radius of earth in  [m]
 
@@ -94,10 +94,10 @@ from generate_ncl_call import generate_ncl_call
 '''
 ####  check the preprocessing
 flag0  = 1
-##############  get the parameters 
+##############  get the parameters
 prefix = os.environ["POD_HOME"] + "/MSE_VAR/"
 
-##############  check for preprocessed data in OBS directory  
+##############  check for preprocessed data in OBS directory
 composite_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs/"
 mse_dir       = os.environ["ENSO_MSE_WKDIR_MSE"] + "/obs/"
 mse_var_dir   = os.environ["ENSO_MSE_WKDIR_MSE_VAR"] + "/obs/"
@@ -110,7 +110,7 @@ convert_file = composite_dir +"/netCDF/DATA/preprocess.txt"
 print ("  The Observational MSE Variance  Composites to be processed ")
 
 
-#################  set the default domain lat/lon boxes 
+#################  set the default domain lat/lon boxes
 ###   Central Pacific
 clon1 = 160.
 clon2 = 200.
@@ -118,7 +118,7 @@ clat1 = -10.
 clat2 = 5.
 ##  and  Eastern Pacific
 elon1 = 220.
-elon2 = 280. 
+elon2 = 280.
 elat1 = -5.
 elat2 = 5.
 
@@ -132,18 +132,18 @@ composite_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs/"
 mse_dir       = os.environ["ENSO_MSE_WKDIR_MSE"] + "/obs/"
 mse_var_dir   = os.environ["ENSO_MSE_WKDIR_MSE_VAR"] + "/obs/"
 
-###   input data  pre-calculated in obs 
+###   input data  pre-calculated in obs
 prefix1 = os.environ["OBS_DATA"] + "/DATA/netCDF/ELNINO/"
 prefix2 = os.environ["OBS_DATA"] + "/DATA/netCDF/LANINA/"
 prefix3 = os.environ["OBS_DATA"] + "/DATA/netCDF/"
- 
-###########3 
+
+###########3
 
 prefixout  =  mse_var_dir+"/netCDF/"
 prefixout1 =  mse_var_dir+"/netCDF/ELNINO/"
 prefixout2 =  mse_var_dir+"/netCDF/LANINA/"
 
-## 
+##
 
 
 rearth = 6378000.0
@@ -167,14 +167,14 @@ composite = 0
 composite24 = 0
 regression = 0
 correlation = 0
-## 
+##
 
 im1 = 12
 im2 = 14
 
 ##iy1 = os.environ["FIRSTYR"]
 ##iy2 = os.environ["LASTYR"]
-###  reading  in selected  parameters  from parameter.txt file 
+###  reading  in selected  parameters  from parameter.txt file
 ##   read in parameters    and the actual array dimensions imax, jmax, zmax,
 ##    longitudes, latitudes,  plevels
 llon1, llon2, llat1, llat2, sigma, imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation,  undef  =  get_parameters_in(llon1, llon2, llat1, llat2, sigma, imindx1, imindx2, composite, im1, im2, season, composite24, regression, correlation,  undef,  prefix)
@@ -190,10 +190,10 @@ lon    = np.zeros(imax,dtype='float32')
 lat    = np.zeros(jmax,dtype='float32')
 plevs  = np.zeros(zmax,dtype='float32')
 
-###  prefix1 = OBS directory ELNINO 
+###  prefix1 = OBS directory ELNINO
 imax, jmax, lon, lat = get_lonlat_in_OBS( imax, jmax, lon, lat, prefix1, undef)
 
-###  array declarations 
+###  array declarations
 # 2D variables
 ts   = np.zeros((imax,jmax),dtype='float32', order='F')
 pr   = np.zeros((imax,jmax),dtype='float32', order='F')
@@ -229,21 +229,23 @@ omse_var= undef
 tadv_var = undef
 
 ##   reading in climatology of MSE components
-##   prefix3 - climatology 
+##   prefix3 - climatology
 mse_clim, omse_clim, madv_clim, tadv_clim =  get_clima_in_OBS(imax, jmax, mse_clim, omse_clim, madv_clim, tadv_clim, prefix3, undef)
 
-##   reading in  climatological  fluxes 
+##   reading in  climatological  fluxes
 ##print( prefix3)
 pr_clim, ts_clim, lhf_clim, shf_clim, sw_clim, lw_clim = get_clima_flux_in_OBS(imax, jmax,  pr_clim, ts_clim, lhf_clim, shf_clim, sw_clim, lw_clim, prefix3, undef)
 
 ######################
 ###      El Nino/La Nina composites   for default domain NINO3.4 + general domain
-###      general domain set by slon1, slon2, slat1, slat2  enviromental variables 
+###      general domain set by slon1, slon2, slat1, slat2  enviromental variables
 ###      under  MSE_VAR  section in ~/ENSO_MSE/ENSO_MSE.py
+
 slon1 =  os.environ["slon1"]
 slon2 =  os.environ["slon2"]
 slat1 =  os.environ["slat1"]
 slat2 =  os.environ["slat2"]
+
 slon1 =  float(slon1)
 slon2 =  float(slon2)
 slat1 =  float(slat1)
@@ -269,14 +271,14 @@ omse = get_anomaly(imax, jmax, zmax,  omse, omse_clim, undef)
 tadv = get_anomaly(imax, jmax, zmax,  tadv, tadv_clim, undef)
 
 ## variance and co-variance calculations for default domains Central and Eastern Pacific:
-###        Central Pacif: 
+###        Central Pacif:
 shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
-####    output written out 
+####    output written out
 nameout  = 'MSE_variance_C.out'
 write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1,  nameout,  undef)
 
-####  repeat for the Eastern 
+####  repeat for the Eastern
 shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, elon1, elon2, elat1, elat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
 ####    output written out
@@ -287,17 +289,17 @@ write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var
 ##  the same calculations for user selected  domain
 shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, slon1, slon2, slat1, slat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
-###  selected domain data output 
+###  selected domain data output
 write_out_general(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout1, undef)
 
-########   La Nina case   similar as for El Nino case 
+########   La Nina case   similar as for El Nino case
 ######
 ##          reading data in   from prefix2 La Nina
 #############################################
 mse, omse, madv,  tadv  =  get_data_in_OBS(imax, jmax, mse, omse, madv,  tadv, prefix2, undef)
 pr, ts, lhf, shf, sw, lw = get_flux_in_OBS(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix2, undef)
 
-###    anomaly calculations 
+###    anomaly calculations
 pr    = get_anomaly(imax, jmax, zmax,  pr, pr_clim, undef)
 ts    = get_anomaly(imax, jmax, zmax,  ts, ts_clim, undef)
 shf   = get_anomaly(imax, jmax, zmax,  shf, shf_clim, undef)
@@ -313,7 +315,7 @@ tadv  = get_anomaly(imax, jmax, zmax,  tadv, tadv_clim, undef)
 ###        Central Pacif:
 shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  moisture_variance(imax, jmax, zmax, clon1, clon2, clat1, clat2, lon, lat, plevs, ts, pr, shf, lhf, sw, lw, mse, madv, omse, tadv, shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  undef)
 
-####    output written out   in prefix2 directory 
+####    output written out   in prefix2 directory
 nameout  = 'MSE_variance_C.out'
 write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2,  nameout,  undef)
 
@@ -329,7 +331,7 @@ shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var  =  mois
 
 write_out_general(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv_var, omse_var, tadv_var,  prefixout2, undef)
 
-###########  plot the default domain NINO3.4 bar plots  
+###########  plot the default domain NINO3.4 bar plots
 generate_ncl_call(os.environ["POD_HOME"]+ "/MSE_VAR/NCL/plot_bars_composite_OBS.ncl")
 
 ##      plotting for the  user selected domain :
@@ -340,8 +342,8 @@ generate_ncl_call(os.environ["POD_HOME"]+ "/MSE_VAR/NCL_general/plot_bars_compos
 now = datetime.datetime.now()
 print ("   Seasonal OBS ENSO MSE Variance composites finished  " + now.strftime("%Y-%m-%d %H:%M") )
 
-print ("   resulting plots are located in : " +mse_var_dir ) 
+print ("   resulting plots are located in : " +mse_var_dir )
 
-print (" ") 
+print (" ")
 ##########################
 

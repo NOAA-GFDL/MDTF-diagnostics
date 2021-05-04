@@ -42,7 +42,7 @@
 
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
-  "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/obs_data",
+  "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "$MDTF_TMPDIR/inputdata/obs_data",

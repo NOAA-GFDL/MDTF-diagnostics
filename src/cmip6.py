@@ -172,7 +172,7 @@ class CMIP6DateFrequency(util.DateFrequency):
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 16.
+    Reference: `<http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
@@ -267,11 +267,13 @@ variant_label_regex = util.RegexPattern(r"""
     input_field="variant_label"
 )
 @util.regex_dataclass(variant_label_regex)
-@util.mdtf_dataclass
 class CMIP6_VariantLabel():
-    """Dataclass which represents and parses the CMIP6 DRS variant label identifier string.
-
-    Reference: `<http://goo.gl/v1drZl>`__, note 8 on page 9.
+    """Dataclass which represents and parses the CMIP6 DRS variant label identifier 
+    string.
+    
+    References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
+    although this doesn't document all cases used in CMIP6. See also note 8 on 
+    page 9 of `<http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
     realization_index: int = None
@@ -291,11 +293,10 @@ mip_table_regex = util.RegexPattern(r"""
     input_field="table_id"
 )
 @util.regex_dataclass(mip_table_regex)
-@util.mdtf_dataclass
 class CMIP6_MIPTable():
     """Dataclass which represents and parses MIP table identifier string.
 
-    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    Reference: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6.
     """
     table_id: str = util.MANDATORY
@@ -341,7 +342,6 @@ grid_label_regex = util.RegexPattern(r"""
     input_field="grid_label"
 )
 @util.regex_dataclass(grid_label_regex)
-@util.mdtf_dataclass
 class CMIP6_GridLabel():
     """Dataclass which represents and parses the CMIP6 DRS grid label identifier string.
 
@@ -390,7 +390,6 @@ drs_directory_regex = util.RegexPattern(r"""
     input_field="directory"
 )
 @util.regex_dataclass(drs_directory_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS directory, using regex 
     defined above.
@@ -438,7 +437,6 @@ drs_filename_regex = util.ChainedRegexPattern(
     input_field="filename"
 )
 @util.regex_dataclass(drs_filename_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """Dataclass which represents and parses the DRS filename, using regex 
     defined above.
@@ -478,7 +476,6 @@ drs_path_regex = util.RegexPattern(r"""
     input_field="path"
 )
 @util.regex_dataclass(drs_path_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
     """Dataclass which represents and parses a full CMIP6 DRS path.
     """

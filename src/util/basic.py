@@ -20,7 +20,7 @@ class _AbstractAttributePlaceholder():
 def abstract_attribute(obj=None):
     """Decorator for abstract attributes in abstract base classes by analogy 
     with :py:func:`abc.abstract_method`. Based on 
-    `https://stackoverflow.com/a/50381071`__.
+    `<https://stackoverflow.com/a/50381071>`__.
     """
     if obj is None:
         obj = _AbstractAttributePlaceholder()
@@ -31,7 +31,7 @@ class MDTFABCMeta(abc.ABCMeta):
     """Wrap the metaclass for abstract base classes to enable definition of 
     abstract attributes; raises NotImplementedError if they aren't defined in
     child classes. Based on 
-    `https://stackoverflow.com/a/50381071`__.
+    `<https://stackoverflow.com/a/50381071>`__.
     """
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
@@ -325,7 +325,9 @@ class _MDTFEnumMixin():
     @classmethod
     def from_struct(cls, str_):
         """Instantiate from string."""
-        return cls.__members__.get(str_.upper())
+        if str_.upper() not in cls.__members__:
+            raise ValueError(f"Unrecognized value '{str_}' for '{cls.__name__}'.")
+        return cls[str_.upper()]
 
 class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
@@ -402,6 +404,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
     corresponding entries (keys of ``slice_d``). Example: 
 
     .. code-block:: python
+
        >>> splice_into_list(['a','b','c'], {'b': ['b1', 'b2']})
        ['a', 'b', 'b1', 'b2', 'c']
 
@@ -437,7 +440,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
 def deserialize_class(name):
     """Given the name of a currently defined class, return the class itself.
     This avoids security issues with calling :py:func:`eval`. Based on 
-    `https://stackoverflow.com/a/11781721`__.
+    `<https://stackoverflow.com/a/11781721>`__.
 
     Args:
         name (str): name of the class to look up.

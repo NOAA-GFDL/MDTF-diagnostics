@@ -15,7 +15,6 @@ if sys.version_info.major != 3 or sys.version_info.minor < 7:
         f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
-import logging
 from src import cli
 from src.util import logs
 
@@ -35,7 +34,9 @@ def validate_base_environment():
 
 def main():
     # get dir of currently executing script: 
-    code_root = os.path.dirname(os.path.realpath(__file__))
+    code_root = os.path.dirname(os.path.realpath(__file__))    
+    # Cache log info in memory until log file is set up
+    logs.initial_log_config()
 
     # poor man's subparser: argparse's subparser doesn't handle this
     # use case easily, so just dispatch on first argument
@@ -54,13 +55,6 @@ def main():
         # run the actual framework
         print(f"=== Starting {os.path.realpath(__file__)}\n")
         validate_base_environment()
-
-        # Cache log info in memory until log file is set up
-        logs.configure_console_loggers()
-        _log = logging.getLogger()
-        _log.setLevel(logging.NOTSET)
-        log_cache = logs.MultiFlushMemoryHandler(1024*16, flushOnClose=False)
-        _log.addHandler(log_cache)
 
         # not printing help or info, setup CLI normally 
         cli_obj = cli.MDTFTopLevelArgParser(code_root)

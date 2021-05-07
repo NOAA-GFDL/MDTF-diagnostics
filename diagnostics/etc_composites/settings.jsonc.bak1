@@ -1,0 +1,92 @@
+{
+  "settings" : {
+    "driver" : "etc_composites.py",
+    "long_name" : "ETC composites",
+    "realm" : "atmos",
+    "description" : "Extra Tropical Cyclone Composites",
+    "pod_env_vars" : {
+      "lat_var": "lat", 
+      "lon_var": "lon", 
+      "RUN_MCMS": "True", 
+      "RUN_COMPOSITES": "False"
+    },
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"},
+    "pressure": {
+      "standard_name": "air_pressure", 
+      "units": "hPa", 
+      "positive": "down", 
+      "axis": "Z"
+    }, 
+    "altitude": {
+      "standard_name": "altitude", 
+      "units": "m", 
+      "positive": "up",
+      "axis": "Z"
+    }
+  },
+
+  "varlist" : {
+    //"wap500": {
+      //"standard_name" : "lagrangian_tendency_of_air_pressure",
+      //"units": "Pa s-1",
+      //"frequency" : "6hr",
+      //"dimensions": ["time", "lat", "lon"], 
+      //"scalar_coordinates": {"pressure": 500}
+    //},
+    "wap500": {
+      "standard_name" : "custom_wap500",
+      "units": "Pa s-1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "oro": {
+      "standard_name" : "custom_orog",
+      "units": "m",
+      "frequency": "fx",
+      "dimensions": ["lat", "lon"], 
+      "use_exact_name": true
+    },
+    "sftlf": {
+      "standard_name" : "custom_sftlf",
+      "units": "1",
+      "dimensions": ["lat", "lon"], 
+      "use_exact_name": true
+    }, 
+    "psl": {
+      "standard_name" : "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "prw": {
+      "standard_name" : "atmosphere_mass_content_of_water_vapor",
+      "frequency" : "6hr",
+      "units": "kg m-2", 
+      "dimensions": ["time", "lat", "lon"],
+      "use_exact_name": true
+    },
+    "pr": {
+      "standard_name" : "precipitation_flux",
+      "units": "kg m-2 s-2",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "clt": {
+      "standard_name" : "cloud_area_fraction",
+      "units": "1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    } 
+  }
+}

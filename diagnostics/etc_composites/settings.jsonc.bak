@@ -1,0 +1,91 @@
+{
+  "settings" : {
+    "driver" : "etc_composites.py",
+    "long_name" : "ETC composites",
+    "realm" : "atmos",
+    "description" : "Extra Tropical Cyclone Composites",
+    "pod_env_vars" : {
+      "lat_var": "lat", 
+      "lon_var": "lon", 
+      "RUN_MCMS": "False", 
+      "RUN_COMPOSITES": "False"
+    },
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"},
+    "pressure": {
+      "standard_name": "pressure", 
+      "units": "hPa", 
+      "positive": "down", 
+      "axis": "Z"
+    }, 
+    "altitude": {
+      "standard_name": "altitude", 
+      "units": "m"
+    }
+  },
+
+  "varlist" : {
+    "psl": {
+      "standard_name" : "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "prw": {
+      "standard_name" : "atmosphere_mass_content_of_water_vapor",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "pr": {
+      "standard_name" : "precipitation_flux",
+      "units": "kg m s-2",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "clt": {
+      "standard_name" : "cloud_area_fraction",
+      "units": "1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    }, 
+    "zg": {
+      "standard_name" : "geopotential_height",
+      "units": "m",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "sftlf": {
+      "standard_name" : "land_area_fraction",
+      "units": "1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"]
+    }, 
+    "u10": {
+      "standard_name" : "eastward_wind",
+      "units": "m s-1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "scalar_coordinates": {"altitude": 10}
+    },
+    "v10": {
+      "standard_name" : "northward_wind",
+      "units": "m s-1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "scalar_coordinates": {"altitude": 10}
+    },
+    "wap500": {
+      "standard_name" : "lagrangian_tendency_of_air_pressure",
+      "units": "Pa s-1",
+      "frequency" : "6hr",
+      "dimensions": ["time", "lat", "lon"], 
+      "scalar_coordinates": {"pressure": 500}
+    } 
+  }
+}

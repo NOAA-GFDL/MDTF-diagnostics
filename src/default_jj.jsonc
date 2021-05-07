@@ -27,8 +27,8 @@
       // "CASENAME" : "ERA5.ALL.DEG15.001",
       "model" : "CESM",
       "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
+      "FIRSTYR" : 2008,
+      "LASTYR" : 2012,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",

@@ -11,14 +11,54 @@ import sys
 import time as timelib
 sys.path.append(os.environ['POD_HOME']+'/util')
 
+# getting the starting time
+start_time = timelib.time()
+
+########################################################
+###### Creating the TOPO file used by the code #########
+########################################################
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
-os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+# os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
+os.environ['topo_file'] = f"{os.environ['WK_DIR']}/tmp/data_converts/topo.nc"
+
+os.environ['hgt_var'] = 'zg'
+os.environ['hgt_var_scale'] = '1.'  
+os.environ['hgt_file'] = '*.'+os.environ['hgt_var']+'.6hr.nc'
+
+os.environ['lsm_var'] = 'sftlf'
+os.environ['lsm_var_scale'] = '1.'  
+os.environ['lsm_file'] = '*.'+os.environ['lsm_var']+'.6hr.nc'
+
+in_ds = xr.open_dataset()
+hgt_file =  os.environ['DATADIR'] + '/6hr/' + os.environ['CASENAME'] + '.' + os.environ['hgt_var'] + '.6hr.nc'
+hgt = in_ds[os.environ['hgt_var']].values*float(os.environ['hgt_var_scale'])
+in_ds.close()
+
+in_ds = xr.open_dataset()
+lsm_file =  os.environ['DATADIR'] + '/6hr/' + os.environ['CASENAME'] + '.' + os.environ['lsm_var'] + '.6hr.nc'
+lsm = in_ds[os.environ['lsm_var']].values*float(os.environ['lsm_var_scale'])
+in_ds.close()
+
+# creating the topo file 
+out_topo_ds = xr.Dataset(
+    {'hgt': (('lat', 'lon'), hgt), 'lsm': (('lat', 'lon'), lsm)}, 
+    coords={
+        'time': time, 
+        'lat': lat, 
+        'lon': lon
+    })
+# adding the necessary attributes to the SLP file
+out_topo_ds.hgt.attrs['units'] = 'm'
+out_topo_ds.lsm.attrs['units'] = '1'
+
+# writing to the netcdf file
+out_topo_ds.to_netcdf(os.environ['topo_file'])
+
+# The following imports need the topo and obs_lat_distrib_file
 os.environ['obs_lat_distrib_file'] = os.environ['OBS_DATA'] + '/erai_lat_distrib.pkl'
 import run_tracker_setup 
 import defines
 
-# getting the starting time
-start_time = timelib.time()
 
 ##################################
 ###### Running Cython
@@ -159,22 +199,28 @@ sYear = int(os.environ['FIRSTYR'])
 eYear = int(os.environ['LASTYR'])
 
 # Setitng up the necessary variable names 
-os.environ['slp_var'] = 'SLP'
+os.environ['slp_var'] = 'psl'
+os.environ['slp_var_scale'] = '0.01'
 os.environ['slp_file'] = '*.'+os.environ['slp_var']+'.6hr.nc'
 
-os.environ['tp_var'] = 'PRECT'
+os.environ['tp_var'] = 'pr'
+os.environ['tp_var_scale'] = '3600.'  
 os.environ['tp_file'] = '*.'+os.environ['tp_var']+'.6hr.nc'
 
-os.environ['prw_var'] = 'PRW'
+os.environ['prw_var'] = 'prw'
+os.environ['prw_var_scale'] = '1'
 os.environ['prw_file'] = '*.'+os.environ['prw_var']+'.6hr.nc'
 
-os.environ['uv10_var'] = 'UV10'
+os.environ['uv10_var'] = 'uv10'
+os.environ['uv10_var_scale'] = '1'
 os.environ['uv10_file'] = '*.'+os.environ['uv10_var']+'.6hr.nc'
 
-os.environ['w500_var'] = 'W500'
+os.environ['w500_var'] = 'w500'
+os.environ['w500_var_scale'] = '1'
 os.environ['w500_file'] = '*.'+os.environ['w500_var']+'.6hr.nc'
 
-os.environ['clt_var'] = 'CLT'
+os.environ['clt_var'] = 'clt'
+os.environ['clt_var_scale'] = '100.'
 os.environ['clt_file'] = '*.'+os.environ['clt_var']+'.6hr.nc'
 
 # Setting up the slp_file to be used
@@ -254,13 +300,13 @@ for year in range(sYear, eYear+1):
         continue
        
     # selecting only the time index for the year
-    slp_sel = slp[ind, :, :]
+    slp_sel = slp[ind, :, :]*float(os.environ['slp_var_scale'])
     if (os.environ['RUN_COMPOSITES'] == 'True'):
-      tp_sel = tp[ind, :, :]
-      prw_sel = prw[ind, :, :]
-      uv10_sel = uv10[ind, :, :]
-      w500_sel = w500[ind, :, :]
-      clt_sel = clt[ind, :, :]
+      tp_sel = tp[ind, :, :]*float(os.environ['tp_var_scale'])
+      prw_sel = prw[ind, :, :]*float(os.environ['prw_var_scale'])
+      uv10_sel = uv10[ind, :, :]*float(os.environ['uv10_var_scale'])
+      w500_sel = w500[ind, :, :]*float(os.environ['w500_var_scale'])
+      clt_sel = clt[ind, :, :]*float(os.environ['clt_var_scale'])
 
     
     # creating the filename of the output in the correct folder

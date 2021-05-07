@@ -1,21 +1,30 @@
 {
   "settings" : {
     "driver" : "etc_composites.py",
-    "long_name" : "Extra Tropical Cyclone Composites",
+    "long_name" : "ETC composites",
     "realm" : "atmos",
     "description" : "Extra Tropical Cyclone Composites",
-    "runtime_requirements": {
-      "python3": ["numpy", "matplotlib", "xarray", "netCDF4", "cartopy"]
-      },
-    "pod_env_vars": {
+    "pod_env_vars" : {
       "lat_var": "lat", 
-      "lon_var": "lon",
-      "RUN_MCMS": "False",
+      "lon_var": "lon", 
+      "RUN_MCMS": "True", 
       "RUN_COMPOSITES": "False"
-    } 
+    },
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"}
   },
 
-  
-  /* "varlist" : [ */
-  /* ] */
+  "varlist" : {
+    "sftlf": {
+      "standard_name" : "land_area_fraction",
+      "units": "1",
+      "dimensions": ["lat", "lon"], 
+      "use_exact_name": true
+    } 
+  }
 }

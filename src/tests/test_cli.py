@@ -207,14 +207,16 @@ class TestCLIConfigManager(unittest.TestCase):
         except:
             pass
 
-    def test_no_partial_def(self):
-        c = cli.CLIConfigManager()
-        p = _parser_from_dict({
+    def _setup_parser(self):
+        return _parser_from_dict({
             "arguments": [
                 {"name": "foo"},
                 {"name": "foo2", "default": "bar"}
             ],
         })
+    def test_no_partial_def(self):
+        c = cli.CLIConfigManager()
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar', 'site': 'local'})
         config = vars(p.parse_args('--foo2 baz'))
@@ -222,69 +224,69 @@ class TestCLIConfigManager(unittest.TestCase):
 
     def test_partial_def_1(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
+
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
+        c.user_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
+        c.user_defaults = {'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
     def test_partial_def_2(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX', 'foo2': 'YY'}
+
+        c.site_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar','site':'local'})
+
+        c.site_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX'}
+        c.site_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo2': 'YY'}
+        c.site_defaults = {'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':None, 'foo2': 'baz','site':'local'})
 
     def test_partial_def_3(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo': 'XX'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YYQ','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XXQ', 'foo2': 'baz','site':'local'})
 

@@ -1,6 +1,4 @@
-import numpy as np
 import sys
-import math
 
 import datetime
  
@@ -11,7 +9,7 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
-from util import check_required_dirs
+
 from generate_ncl_call import generate_ncl_call
 
 '''

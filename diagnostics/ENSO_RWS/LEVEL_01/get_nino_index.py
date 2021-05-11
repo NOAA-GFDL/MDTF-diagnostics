@@ -3,8 +3,6 @@ import os.path
 import math
 import sys
 
-from scipy.io import netcdf
-
 
 import os
 shared_dir = os.path.join(
@@ -13,7 +11,6 @@ shared_dir = os.path.join(
 )
 sys.path.insert(0, shared_dir)
 
-from read_netcdf_3D import read_netcdf_3D
 from read_netcdf_2D import read_netcdf_2D
 
 def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon2, llat1, llat2, ii1, ii2, jj1, jj2,  sigma, tmax1, tmax2, years1,  years2, prefix, undef):
@@ -109,7 +106,6 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
                 imm = im - 12
             if( iyy <= iy2 ):
                 mm = "%02d" % imm
-                month = str(mm)
                 yy = "%04d" % iyy
                 year = str(yy)
                 namein = os.path.join(prefix+"/"+year+"/ts_"+year+".nc")
@@ -137,8 +133,6 @@ def get_nino_index(imax, jmax, lon, lat,  itmax, iy1, iy2, im1, im2, llon1, llon
             if( anom <=  threshold2):
                 years2[it2] = iy
                 it2 = it2 + 1
-            else:
-                anom = undef    
 
     tmax1 = it1 
     tmax2 = it2 

@@ -1,11 +1,9 @@
 
 import os
-import math
 import sys
 import os.path
 
 
-import numpy as np
 import xarray as xr
 
 shared_dir = os.path.join(
@@ -13,7 +11,6 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
-from util import check_required_dirs
 
 
 ###   

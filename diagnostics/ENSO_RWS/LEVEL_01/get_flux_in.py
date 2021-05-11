@@ -1,6 +1,5 @@
 import numpy as np
 import os.path
-import math
 import sys
 
 from read_netcdf_2D import read_netcdf_2D
@@ -14,7 +13,6 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
     dataout = np.ma.zeros((imax,jmax),dtype='float32',  order='F')
 
     for it in range(0, ttmax):
-        file_count = 0
         for im in range (im1, im2+1):
             iyy = years[it]
             imm = im
@@ -23,7 +21,6 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                 imm = im - 12
             if( iyy <= iy2 ):
                 mm = "%02d" % imm
-                month = str(mm)
                 yy = "%04d" % iyy
                 year = str(yy)
 

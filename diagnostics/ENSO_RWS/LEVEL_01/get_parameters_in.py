@@ -1,10 +1,8 @@
-import numpy as np
 import os.path
 import sys
 
 def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  im1, im2, season, prefix):
 ##  read in all  parameter data 
-    undef = float( 1.1E+20)
     file_path = os.path.join(prefix,"../shared","parameters.txt")
 
 
@@ -44,8 +42,6 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  im1, im2, season, prefix):
         line = line.strip()
         column = line.split()
         imindx2 = int( column[2])
-        if( imindx2 < imindx1):
-            imindx2 = imindx2 + 12
 
         line = file.readline()
         line = line.strip()

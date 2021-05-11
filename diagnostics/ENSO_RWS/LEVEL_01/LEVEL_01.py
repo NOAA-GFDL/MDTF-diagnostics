@@ -24,20 +24,17 @@
 
 import numpy as np
 import sys
-import math
 import os
 
 import time
 import datetime
 
-import os
 shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     'shared'
 )
 sys.path.insert(0, shared_dir)
 
-from netCDF4 import Dataset
 
 from get_parameters_in import get_parameters_in
 from get_dims import get_dims

@@ -10,8 +10,6 @@
 #   updated 2021-01-20
 # ======================================================================
 import os
-import sys
-import subprocess
 import os.path
 
 # ======================================================================
@@ -71,7 +69,7 @@ os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/check_input_files.py")
 print("        Finished check_input_files.py")
 
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/process_data.py")
-print("        Finished check_input_files.py")
+print("        Finished process_data.py")
 
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/LEVEL_01.py")
 print("        Finished LEVEL_01.py")

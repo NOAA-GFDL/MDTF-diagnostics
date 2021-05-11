@@ -17,18 +17,10 @@
 
 import numpy as np
 import sys
-import subprocess
 
 import datetime
 
 import os
-
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
-
 
 from get_data_in_OBS import get_data_in_OBS
 from get_flux_in_OBS import get_flux_in_OBS
@@ -95,14 +87,8 @@ from generate_ncl_call import generate_ncl_call
 ####  check the preprocessing
 flag0  = 1
 ##############  get the parameters
-prefix = os.environ["POD_HOME"] + "/MSE_VAR/"
-
 ##############  check for preprocessed data in OBS directory
 composite_dir = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/obs/"
-mse_dir       = os.environ["ENSO_MSE_WKDIR_MSE"] + "/obs/"
-mse_var_dir   = os.environ["ENSO_MSE_WKDIR_MSE_VAR"] + "/obs/"
-
-prefix1 =  composite_dir +"/netCDF/DATA/"
 convert_file = composite_dir +"/netCDF/DATA/preprocess.txt"
 
 #######################################33
@@ -160,8 +146,7 @@ llat1 = undef
 llat2 = undef
 imindx1 = undef
 imindx2 = undef
-im1 = undef
-im2 = undef
+
 sigma = undef
 composite = 0
 composite24 = 0

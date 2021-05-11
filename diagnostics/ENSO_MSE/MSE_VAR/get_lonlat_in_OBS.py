@@ -4,10 +4,8 @@ import math
 import sys
 import os.path
 
-
 import numpy as np
 
-from numpy import dtype
 from netCDF4 import Dataset
 
 def get_lonlat_in_OBS(imax, jmax, lon, lat, prefix, undef):

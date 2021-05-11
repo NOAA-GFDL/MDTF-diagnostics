@@ -27,7 +27,6 @@ from get_parameters_in import get_parameters_in
 from get_anomaly import get_anomaly
 
 import sys
-import subprocess
 
 import datetime
 
@@ -151,15 +150,14 @@ dy = -9999.
 
 undef = float(1.1e+20)
 season = "NIL"
-model = "NIL"
+
 llon1 = undef
 llon2 = undef
 llat1 = undef
 llat2 = undef
 imindx1 = undef
 imindx2 = undef
-im1 = undef
-im2 = undef
+
 sigma = undef
 composite = 0
 composite24 = 0

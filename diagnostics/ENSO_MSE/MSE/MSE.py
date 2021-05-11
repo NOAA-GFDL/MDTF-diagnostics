@@ -200,38 +200,11 @@ plevs  = np.zeros(zmax,dtype='float32')
 
 lon, lat, plevs = get_lon_lat_plevels_in( imax, jmax, zmax, lon, lat, plevs, prefix01)
 
-# 3d variables
-uu = np.zeros((imax,jmax,zmax),dtype='float32')
-vv = np.zeros((imax,jmax,zmax),dtype='float32')
-temp = np.zeros((imax,jmax,zmax),dtype='float32')
-hgt = np.zeros((imax,jmax,zmax),dtype='float32')
-shum = np.zeros((imax,jmax,zmax),dtype='float32')
-vvel = np.zeros((imax,jmax,zmax),dtype='float32')
-
-omse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-omse2 = np.zeros((imax,jmax),dtype='float32')
-
-mse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mse2 = np.zeros((imax,jmax),dtype='float32')
-
 mse3_adv = np.zeros((imax,jmax,zmax),dtype='float32')
 mse2_adv = np.zeros((imax,jmax),dtype='float32')
 
 mse3_div = np.zeros((imax,jmax,zmax),dtype='float32')
 mse2_div = np.zeros((imax,jmax),dtype='float32')
-
-madv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-madv2 = np.zeros((imax,jmax),dtype='float32')
-
-mdiv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mdiv2 = np.zeros((imax,jmax),dtype='float32')
-
-tadv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-tadv2 = np.zeros((imax,jmax),dtype='float32')
-
-mse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mse2 = np.zeros((imax,jmax),dtype='float32')
-
 
 ##  climatology  array declaration 
 uu = np.zeros((imax,jmax,zmax),dtype='float32')

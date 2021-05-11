@@ -1,5 +1,4 @@
 import numpy as np
-import sys
 
 '''
     routine to calculate the horizontal moisture advection and its
@@ -77,19 +76,16 @@ def mse_adv(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mse_
                     
                 # to simplify the coding the various
                 # input variables for differentiation are selected here
-                qq   = hus[i,j,k]
                 qq11 = hus[i1,j,k]
                 qq21 = hus[i2,j,k]
                 qq12 = hus[i,j1,k]
                 qq22 = hus[i,j2,k]
                 
-                zz   = hgt[i,j,k]
                 zz11 = hgt[i1,j,k]
                 zz21 = hgt[i2,j,k]
                 zz12 = hgt[i,j1,k]
                 zz22 = hgt[i,j2,k]
                 
-                tt   = ta[i, j,k]
                 tt11 = ta[i1,j,k]
                 tt21 = ta[i2,j,k]
                 tt12 = ta[i,j1,k]
@@ -97,10 +93,6 @@ def mse_adv(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mse_
                 
                 uu =   ua[i,j,k]
                 vv  =  va[i,j,k]
-                u11  = ua[i1,j,k]
-                u21  = ua[i2,j,k]
-                v12  = va[i,j1,k]
-                v22  = va[i,j2,k]
                           
                 # perform the calculation only if all input variables
                 # are defined (not missing).

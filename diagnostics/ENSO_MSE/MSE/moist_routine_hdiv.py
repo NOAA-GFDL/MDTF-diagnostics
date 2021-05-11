@@ -78,25 +78,11 @@ def mse_div(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mse_
                 # to simplify the coding the various
                 # input variables for differentiation are selected here
                 hh   = hgt[i, j, k]
-                hh10 = hgt[ i1, j, k]
-                hh20 = hgt[ i2, j, k]
-                hh01 = hgt[ i, j1, k]
-                hh02 = hgt[ i, j2, k] 
                                
                 qq   = hus[i,j,k]
-                qq10 = hus[i1,j,k]
-                qq20 = hus[i2,j,k]
-                qq01 = hus[i,j1,k]
-                qq02 = hus[i,j2,k]
                 
                 tt   = ta[i, j,k]
-                tt10 = ta[i1,j,k]
-                tt20 = ta[i2,j,k]
-                tt01 = ta[i,j1,k]
-                tt02 = ta[i,j2,k]
                 
-                uu =   ua[i,j,k]
-                vv  =  va[i,j,k]
                 u10  = ua[i1,j,k]
                 u20  = ua[i2,j,k]
                 v01  = va[i,j1,k]

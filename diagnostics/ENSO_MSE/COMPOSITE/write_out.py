@@ -1,4 +1,3 @@
-import numpy as np
 import os.path
 
 def write_out( variable, dataout,  prefix):

@@ -1,6 +1,5 @@
 import numpy as np
 import os.path
-import math
 import sys
 
 from read_netcdf_3D import read_netcdf_3D
@@ -25,7 +24,6 @@ def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datou
                 year = str(yy)
 
                 # data files now per-year, not per-month, so only load when year changes
-                #if (file_count == 0) or (im > 12  and file_count == 1):
                 namein = os.path.join(prefix,year,variable + "_" + year + ".nc")
                 if (os.path.exists( namein)):
                     vvar = read_netcdf_3D(imax, jmax, zmax, im12, variable, namein, vvar, undef)
@@ -37,17 +35,13 @@ def get_data_in(imax, jmax, zmax,  ttmax, years, iy2, im1, im2,  variable, datou
                     # to the running sum in dataout (modifies in-place)
                     dataout[:,:,:] += vvar[:,:,:, imm-1]
                     ss[:,:,:] += vvar_valid[:,:,:, imm-1]
-                    #file_count += 1
                 else:
                     print (" missing file " + namein )
                     print (" exiting get_data_in.py ")
                     sys.exit()
 
-#                dataout[:,:,:] += vvar[:,:,:, imm-1]
-#                ss[:,:,:] += vvar_valid[:,:,:, imm-1]
 
 ########### average
     dataout = dataout/ss
 
     return dataout.filled(fill_value = undef)
-

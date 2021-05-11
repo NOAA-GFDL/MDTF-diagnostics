@@ -4,7 +4,6 @@ import math
 import sys
 
 from read_netcdf_2D import read_netcdf_2D
-from read_netcdf_3D import read_netcdf_3D
 
 
 ###   read in data and make composite  correlations need anomalies to calculate
@@ -25,8 +24,8 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
     namein1 = os.path.join(prefixclim,variable1 + "_clim.nc")
     namein2 = os.path.join(prefixclim,variable2 + "_clim.nc")    
     clima1 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')
-    clima2 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')    
-    
+    clima2 = np.zeros( (imax,jmax, tmax),dtype='float32', order='F')
+
     if (os.path.exists( namein1) and  os.path.exists( namein2)):
         clima1 = read_netcdf_2D(imax, jmax,  tmax,  variable1,  namein1, clima1, undef)       
         clima2 = read_netcdf_2D(imax, jmax,  tmax,  variable2,  namein2, clima2, undef)
@@ -51,7 +50,6 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                 imm = im - 12
             if( iyy <= iy2 ):
                 mm = "%02d" % imm
-                month = str(mm)
                 yy = "%04d" % iyy
                 year = str(yy)
                 namein1 = os.path.join(prefix,year,variable1+"_"+year+".nc")
@@ -63,7 +61,6 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                     vvar1_invalid = (vvar1 >= undef)
                     vvar1[vvar1_invalid] = 0.
 
-                    vvar2_valid = (vvar2 < undef)
                     vvar2_invalid = (vvar2 >= undef)
                     vvar2[vvar2_invalid] = 0.
 

@@ -1,6 +1,4 @@
-import numpy as np
 import os
-import math
 import sys
 
 shared_dir = os.path.join(
@@ -8,7 +6,6 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
-from util import check_required_dirs
 
 ###   
 ###  check  the input data in inputdata/obs_data  directories  DATADIR 

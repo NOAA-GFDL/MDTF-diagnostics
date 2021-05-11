@@ -1,6 +1,4 @@
-import numpy as np
 import sys
-import math
 
 import datetime
 
@@ -11,7 +9,7 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
-from util import check_required_dirs
+
 from generate_ncl_call import generate_ncl_call
 
 '''
@@ -69,15 +67,6 @@ else:
     print ("  The NetCDF data are being converted (preprocess.py) ")
     print ("   ")
     print (" " )
-###   prepare the directories
-
-#os.system("mkdir " +  os.environ["DATADIR"]  + "/DATA/" + " 2> /dev/null")
-#os.system("mkdir " +  os.environ["DATADIR"]  + "/CLIMA/" + " 2> /dev/null")
-
-#DRB should be done elsewhere
-#    os.system("mkdir " +  os.environ["WK_DIR"]+"/COMPOSITE/model/netCDF/DATA/" + " 2> /dev/null")
-#    os.system("mkdir " +  os.environ["WK_DIR"]+"/COMPOSITE/model/netCDF/CLIMA/" + " 2> /dev/null")
-
 ##   need to check for missing input data
 
     for iy in range( iy1, iy2+1):
@@ -106,13 +95,11 @@ else:
     now = datetime.datetime.now()
     print ("  clima routine finished " + now.strftime("%Y-%m-%d %H:%M") )
 
-###     print " preprocessing completed "
 ##  print the flag to  external file so once preprocess it could be skipped
     f = open(convert_file , 'w')
     f.write("1")
     f.close()
     assert (os.path.isfile(convert_file)), "File " + convert_file + " not created."
-
 
     now = datetime.datetime.now()
     print (" Preprocessing completed  " + now.strftime("%Y-%m-%d %H:%M") )

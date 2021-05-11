@@ -1,4 +1,3 @@
-import numpy as np
 import os.path
 import sys
 
@@ -77,6 +76,7 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  imindx1, imindx2,  composi
         season =  column[2]
 
         line = file.readline()
+        line = line.strip()
 ####      composite evolution 24 month switches
         line = file.readline()
         line = line.strip()

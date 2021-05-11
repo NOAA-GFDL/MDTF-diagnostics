@@ -1,6 +1,5 @@
 import numpy as np
 import os.path
-import math
 import sys
 
 from read_netcdf_2D import read_netcdf_2D

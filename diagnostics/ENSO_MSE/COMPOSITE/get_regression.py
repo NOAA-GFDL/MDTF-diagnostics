@@ -1,6 +1,5 @@
 import numpy as np
 import os.path
-import math
 import sys
 
 from scipy import stats

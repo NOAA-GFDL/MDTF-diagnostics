@@ -1,7 +1,7 @@
 import numpy as np
 import os.path
 
-import netCDF4 as nc
+import netCDF4 
 from netCDF4 import Dataset 
 
 def write_out( lons, lats, plevs, variable, unit, dataout,  prefixout, undef):
@@ -16,7 +16,7 @@ def write_out( lons, lats, plevs, variable, unit, dataout,  prefixout, undef):
 
     ndims =  dataout.ndim
 
-    time = fid.createDimension('time',  1)
+    time_dim = fid.createDimension('time',  1)
 
     time = fid.createVariable('time', np.float32, ('time'))
     time.units = 'hours since 1900-01-01 00:00:00'
@@ -32,9 +32,9 @@ def write_out( lons, lats, plevs, variable, unit, dataout,  prefixout, undef):
         jmax = xyz[1]
         zmax = xyz[2]
 
-        lat = fid.createDimension('lat',  jmax)  # latitude axis
-        lon = fid.createDimension('lon',  imax)  # longitude axis
-        lev = fid.createDimension('lev',  zmax)  #
+        lat_dim = fid.createDimension('lat',  jmax)  # latitude axis
+        lon_dim = fid.createDimension('lon',  imax)  # longitude axis
+        lev_dim = fid.createDimension('lev',  zmax)  #
 
 
         lat = fid.createVariable('lat', np.float32, ('lat'))
@@ -74,8 +74,8 @@ def write_out( lons, lats, plevs, variable, unit, dataout,  prefixout, undef):
         imax = xyz[0]
         jmax = xyz[1]
 
-        lat = fid.createDimension('lat',  jmax)     # latitude axis
-        lon = fid.createDimension('lon',  imax)    # longitude axis
+        lat_dim = fid.createDimension('lat',  jmax)     # latitude axis
+        lon_dim = fid.createDimension('lon',  imax)    # longitude axis
 
         lat = fid.createVariable('lat', np.float32, ('lat'))
         lat.units = 'degrees_north'

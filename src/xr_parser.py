@@ -41,7 +41,7 @@ class PlaceholderScalarCoordinate():
     units: str = util.NOTSET
 
 # ========================================================================
-# Customize behavior of cf_xarray accessor 
+# Customize behavior of cf_xarray accessor
 # (https://github.com/xarray-contrib/cf-xarray, https://cf-xarray.readthedocs.io/en/latest/)
 
 def patch_cf_xarray_accessor(mod):
@@ -57,18 +57,18 @@ def patch_cf_xarray_accessor(mod):
     func_name = "_get_axis_coord"
     old_get_axis_coord = getattr(mod, func_name, None)
     assert old_get_axis_coord is not None
-    
+
     @functools.wraps(old_get_axis_coord)
     def new_get_axis_coord(var, key):
-        """Modify cf_xarray behavior: If a variable has been recognized as one of 
+        """Modify cf_xarray behavior: If a variable has been recognized as one of
         the coordinates in the dict above **and** no variable has been set as the
         corresponding axis, recognize the variable as that axis as well.
         See discussion at `https://github.com/xarray-contrib/cf-xarray/issues/23`__.
-        
+
         Args:
             var: Dataset or DataArray to be queried
             key: axis or coordinate name.
-            
+
         Returns list of variable names in var matching key.
         """
         var_names = old_get_axis_coord(var, key)
@@ -79,13 +79,13 @@ def patch_cf_xarray_accessor(mod):
         for new_key in _ax_to_coord[key]:
             var_names.extend(old_get_axis_coord(var, new_key))
         return var_names
-    
+
     setattr(mod, func_name, new_get_axis_coord)
-    
+
 patch_cf_xarray_accessor(cf_xarray.accessor)
 
 class MDTFCFAccessorMixin(object):
-    """Methods we add for both xarray Dataset and DataArray objects, although 
+    """Methods we add for both xarray Dataset and DataArray objects, although
     intended use case will be to call them once per Dataset.
     """
     @property
@@ -121,14 +121,14 @@ class MDTFCFAccessorMixin(object):
         }
         if var_name is None:
             return {k: sorted(v) for k, v in vardict.items() if v}
-        # case where var_name given:    
+        # case where var_name given:
         # do validation on cf_xarray.accessor's work, since it turns out it
         # can get confused on real-world data
         empty_keys = []
         delete_keys = []
         dims_list = list(axes_obj.dims)
         for k,v in vardict.items():
-            if len(v) > 1 and var_name is not None: 
+            if len(v) > 1 and var_name is not None:
                 _log.error('Too many %s axes found for %s: %s', k, var_name, v)
                 raise TypeError(f"Too many {k} axes for {var_name}.")
             elif len(v) == 1:
@@ -171,15 +171,15 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                         scalars.append(ds[c])
                 else:
                     if c not in ds.dims:
-                        # scalar coord set from Dataset attribute, so we only 
+                        # scalar coord set from Dataset attribute, so we only
                         # have name and axis
                         dummy_coord = PlaceholderScalarCoordinate(name=c, axis=ax)
                         scalars.append(dummy_coord)
         return scalars
 
     def get_scalar(self, ax_name, var_name=None):
-        """If the axis label *ax_name* is a scalar coordinate, return the 
-        corresponding xarray DataArray (or PlaceholderScalarCoordinate), otherwise 
+        """If the axis label *ax_name* is a scalar coordinate, return the
+        corresponding xarray DataArray (or PlaceholderScalarCoordinate), otherwise
         return None.
         """
         for c in self.scalar_coords(var_name=var_name):
@@ -202,7 +202,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                 if c in ds:
                     new_coords.append(ds[c])
                 else:
-                    # scalar coord set from Dataset attribute, so we only 
+                    # scalar coord set from Dataset attribute, so we only
                     # have name and axis
                     if var_name is not None:
                         assert c not in ds[var_name].dims
@@ -273,7 +273,7 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
             key, value = mapping.split(":")
             terms[key] = value
         return terms
-    
+
 with warnings.catch_warnings():
     # cf_xarray registered its accessors under "cf". Re-registering our versions
     # will work correctly, but raises the following warning, which we suppress.
@@ -286,7 +286,7 @@ with warnings.catch_warnings():
         MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor
     ):
         pass
-    
+
     @xr.register_dataarray_accessor("cf")
     class MDTFCFDataArrayAccessor(
         MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor
@@ -304,7 +304,7 @@ class DatasetParser():
 
     @staticmethod
     def guess_attr(name, expected_val, options, default=None, comparison_func=None):
-        """Return element of *options* equal to *expected_val*. If none are equal, 
+        """Return element of *options* equal to *expected_val*. If none are equal,
         try a looser, case-insensititve match. (All arguments expected to be strings.)
         """
         def str_munge(s):
@@ -316,7 +316,7 @@ class DatasetParser():
         options = util.to_iter(options)
         test_count = sum(comparison_func(opt, expected_val) for opt in options)
         if test_count > 1:
-            _log.debug("Found multiple values of '%s' set for '%s'.", 
+            _log.debug("Found multiple values of '%s' set for '%s'.",
                 expected_val, name)
         if test_count >= 1:
             return expected_val
@@ -326,7 +326,7 @@ class DatasetParser():
         ]
         if sum(tup[0] for tup in munged_opts) == 1:
             guessed_val = [tup[1] for tup in munged_opts if tup[0]][0]
-            _log.debug(("Correcting '%s' to '%s' as the intended value for '%s'."), 
+            _log.debug(("Correcting '%s' to '%s' as the intended value for '%s'."),
                 expected_val, guessed_val, name)
             return guessed_val
         if default is None:
@@ -335,21 +335,21 @@ class DatasetParser():
             return default
 
     def normalize_attr(self, key_name, key_startswith, d, default=None, update=True):
-        """Attempts to obtain the value from dict *d* corresponding to the key 
+        """Attempts to obtain the value from dict *d* corresponding to the key
         *key_name*. If *key_name* is not in *d*, we check possible nonstandard
         representations of the key (case-insensitive match via :meth:`guess_attr`
         and whether the key starts with the string *key_startswith*.) If lookup
         fails, return None.
 
-        If *update* is True and the attribute name wasn't *key_name*, set 
+        If *update* is True and the attribute name wasn't *key_name*, set
         d[key_name] to the obtained value. Do not delete d[k].
         """
         try:
-            k = self.guess_attr(key_name, key_name, d.keys(), 
+            k = self.guess_attr(key_name, key_name, d.keys(),
                 default=None, comparison_func=None)
         except KeyError:
             try:
-                k = self.guess_attr(key_name, key_startswith, d.keys(), 
+                k = self.guess_attr(key_name, key_startswith, d.keys(),
                     default=default, comparison_func=(lambda x,y: x.startswith(y)))
             except KeyError:
                 return None
@@ -359,7 +359,7 @@ class DatasetParser():
         return value
 
     def munge_ds_attrs(self, ds):
-        """Initial munging of xarray Dataset attribute dicts, before any 
+        """Initial munging of xarray Dataset attribute dicts, before any
         decoding or parsing.
         """
         def strip_(v):
@@ -380,7 +380,7 @@ class DatasetParser():
     def munge_unit(self, attr_d):
         """HACK to convert unit strings to values that are correctly parsed by
         cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
-        as "millibarn", a unit of area (see UDUnits `mailing list 
+        as "millibarn", a unit of area (see UDUnits `mailing list
         <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
         """
         unit_str = self.normalize_attr('units', 'unit', attr_d)
@@ -405,7 +405,7 @@ class DatasetParser():
 
     def restore_attrs(self, ds):
         """decode_cf and other functions appear to un-set some of the attributes
-        coming from the netcdf file. Restore them from the backups made in 
+        coming from the netcdf file. Restore them from the backups made in
         munge_ds_attrs, but only if the attribute was deleted.
         """
         def _restore_one(name, backup_d, attrs_d):
@@ -415,7 +415,7 @@ class DatasetParser():
                 if v != attrs_d[k]:
                     _log.debug("%s: discrepancy for attr '%s': '%s' != '%s'.",
                         name, k, v, attrs_d[k])
-        
+
         _restore_one('Dataset', self.attrs_backup, ds.attrs)
         for var in ds.variables:
             _restore_one(var, self.var_attrs_backup[var], ds[var].attrs)
@@ -423,7 +423,7 @@ class DatasetParser():
     def check_calendar(self, ds):
         """Parse the calendar for time-dependent data (assumes CF conventions).
         Sets the "calendar" attr on the time coordinate, if it exists, in order
-        to be read by the calendar property. 
+        to be read by the calendar property.
         """
         _default_cal = 'none'
         t_coords = ds.cf.axes().get('T', [])
@@ -437,23 +437,23 @@ class DatasetParser():
         cftime_cal = getattr(t_coord.values[0], 'calendar', None)
         if not cftime_cal:
             _log.warning("cftime calendar info parse failed on '%s'.", t_coord.name)
-            cftime_cal = self.normalize_attr('calendar', 'cal', 
+            cftime_cal = self.normalize_attr('calendar', 'cal',
                 t_coord.encoding, update=False)
         if not cftime_cal:
-            cftime_cal = self.normalize_attr('calendar', 'cal', 
+            cftime_cal = self.normalize_attr('calendar', 'cal',
                 t_coord.attrs, update=False)
         if not cftime_cal:
-            cftime_cal = self.normalize_attr('calendar', 'cal', 
+            cftime_cal = self.normalize_attr('calendar', 'cal',
                 ds.attrs, update=False)
         if not cftime_cal:
-            _log.error("No calendar associated with '%s' found; using '%s'.", 
+            _log.error("No calendar associated with '%s' found; using '%s'.",
                 t_coord.name, _default_cal)
             cftime_cal = _default_cal
         t_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, _default_cal)
 
     @staticmethod
-    def _compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None, 
+    def _compare_attr(our_attr_tuple, ds_attr_tuple, comparison_func=None,
         update_our_var=True, update_ds=False):
         """Convenience function to compare two values. Returns tuple of updated
         values, or None if no update is needed.
@@ -503,7 +503,7 @@ class DatasetParser():
             return
 
     def check_name(self, our_var, ds_var_name, update_name=False):
-        """Reconcile the name of the variable between the 'ground truth' of the 
+        """Reconcile the name of the variable between the 'ground truth' of the
         dataset we downloaded (*ds_var*) and our expectations based on the model's
         convention (*our_var*).
         """
@@ -516,9 +516,9 @@ class DatasetParser():
             update_our_var=True, update_ds=False
         )
 
-    def check_attr(self, our_var, ds_var, our_attr_name, ds_attr_name=None, 
+    def check_attr(self, our_var, ds_var, our_attr_name, ds_attr_name=None,
         comparison_func=None, update_our_var=True, update_ds=False):
-        """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*) 
+        """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*)
         with what's set in the xarray.Dataset (*ds_var*).
         """
         if ds_attr_name is None:
@@ -527,13 +527,13 @@ class DatasetParser():
         ds_attr = ds_var.attrs.get(ds_attr_name, "")
         self._compare_attr(
             (our_var, our_attr_name, our_attr), (ds_var, ds_attr_name, ds_attr),
-            comparison_func=comparison_func, 
+            comparison_func=comparison_func,
             update_our_var=update_our_var, update_ds=update_ds
         )
 
     def check_scalar_coord_value(self, our_var, ds_var, equivalent=False):
-        """Compare scalar coordinate value of a :class:`~src.data_model.DMVariable` 
-        (*our_var*) with what's set in the xarray.Dataset (*ds_var*). If there's a 
+        """Compare scalar coordinate value of a :class:`~src.data_model.DMVariable`
+        (*our_var*) with what's set in the xarray.Dataset (*ds_var*). If there's a
         discrepancy, log an error but change the entry in *our_var*.
         """
         attr_name = '_scalar_coordinate_value' # placeholder
@@ -552,7 +552,7 @@ class DatasetParser():
             comparison_func = units.units_equivalent
         else:
             comparison_func = (lambda x,y: units.units_equal(x,y, rtol=1.0e-5))
-        
+
         our_attr = (our_var.value, our_var.units)
         ds_attr = (float(ds_var), ds_var.attrs.get('units', ''))
         try:
@@ -595,7 +595,7 @@ class DatasetParser():
         if is_scalar:
             self.check_scalar_coord_value(our_var, ds_var, equivalent=True)
         else:
-            self.check_attr(our_var, ds_var, 'units', 
+            self.check_attr(our_var, ds_var, 'units',
                 comparison_func=units.units_equivalent,
                 update_our_var=True, update_ds=True
         )
@@ -606,8 +606,8 @@ class DatasetParser():
                 self.check_scalar_coord_value(our_var, ds_var, equivalent=False)
             else:
                 # test units only, not quantities+units
-                self.check_attr(our_var, ds_var, 'units', 
-                    comparison_func=units.units_equal, 
+                self.check_attr(our_var, ds_var, 'units',
+                    comparison_func=units.units_equal,
                     update_our_var=True, update_ds=True
                 )
         except TypeError as exc:
@@ -633,7 +633,7 @@ class DatasetParser():
         ds_axes = ds[tv_name].cf.dim_axes_set
         if our_axes != ds_axes:
             raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
-                f" expected axes {set(our_axes)}, got {set(ds_axes)}.") 
+                f" expected axes {set(our_axes)}, got {set(ds_axes)}.")
         # check dimension coordinate names, std_names, units, bounds
         for coord in translated_var.dim_axes.values():
             ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
@@ -664,8 +664,8 @@ class DatasetParser():
                 "expected %s."), list(zip(our_names, our_axes)))
         elif our_axes != ds_axes:
             _log.warning(("Conflict in scalar coordinates for %s: expected %s; ",
-                "dataset has %s."), 
-                translated_var, 
+                "dataset has %s."),
+                translated_var,
                 list(zip(our_names, our_axes)), list(zip(ds_names, ds_axes))
             )
         for coord in our_scalars:
@@ -682,14 +682,14 @@ class DatasetParser():
                 self.check_name(coord, ds_coord_name, update_name=True)
 
     def parse(self, ds, var=None):
-        """Calls the above metadata parsing functions in the intended order; 
+        """Calls the above metadata parsing functions in the intended order;
         intended to be called immediately after the Dataset is opened.
 
         - Strip whitespace from attributes as a precaution to avoid malformed metadata.
-        - Call xarray's 
+        - Call xarray's
             `decode_cf <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
             using `cftime <https://unidata.github.io/cftime/>`__ to decode CF-compliant
-            time axes. 
+            time axes.
         - Assign axis labels to dimension coordinates using cf_xarray.
         - Verify that calendar is set correctly.
         - Verify that the name, standard_name and units for the variable and its
@@ -700,7 +700,7 @@ class DatasetParser():
            since that parsing is done here instead.
         """
         self.munge_ds_attrs(ds)
-        ds = xr.decode_cf(ds,         
+        ds = xr.decode_cf(ds,
             decode_coords=True, # parse coords attr
             decode_times=True,
             use_cftime=True     # use cftime instead of np.datetime64
@@ -711,11 +711,11 @@ class DatasetParser():
         if var is not None:
             self.check_variable(ds, var.translation)
         return ds
-    
+
     @staticmethod
     def get_unmapped_names(ds):
-        """Get a dict whose keys are variable or attribute names referred to by 
-        variables in the dataset, but not present in the dataset itself. Values of 
+        """Get a dict whose keys are variable or attribute names referred to by
+        variables in the dataset, but not present in the dataset itself. Values of
         the dict are sets of names of variables in the dataset that referred to the
         missing name.
         """

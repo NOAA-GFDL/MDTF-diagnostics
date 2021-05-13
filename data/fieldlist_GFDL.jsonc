@@ -8,7 +8,7 @@
   "models": ["AM4", "CM4", "ESM4", "SPEAR"], // others?
   "coords" : {
     // only used for taking slices, unit conversion
-    // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based 
+    // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based
     // on their values in model data
     "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
@@ -181,7 +181,7 @@
       "units": "kg m-2",
       "ndim": 3
     }
-    // Variables for SM_ET_coupling module 
+    // Variables for SM_ET_coupling module
     // "mrsos": {
     //   "standard_name": "mass_content_of_water_in_soil_layer",
     //   "units": "kg m-2",

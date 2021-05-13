@@ -1,4 +1,4 @@
-"""All framework-specific exceptions are placed in a single module to simplify 
+"""All framework-specific exceptions are placed in a single module to simplify
 imports.
 """
 import os
@@ -32,7 +32,7 @@ class ExceptionQueue(object):
 
 def exit_on_exception(exc, msg=None):
     """Prints information about a fatal exception to the console beofre exiting.
-    Use case is in user-facing subcommands (``mdtf install`` etc.), since we 
+    Use case is in user-facing subcommands (``mdtf install`` etc.), since we
     have more sophisticated logging in the framework itself.
     Args:
         exc: :py:class:`Exception` object
@@ -85,26 +85,26 @@ class WormKeyError(KeyError, MDTFBaseException):
     pass
 
 class DataclassParseError(ValueError, MDTFBaseException):
-    """Raised when parsing input data fails on a 
+    """Raised when parsing input data fails on a
     :func:`~src.util.dataclass.mdtf_dataclass` or :func:`~src.util.dataclass.regex_dataclass`.
     """
     pass
 
 class RegexParseError(ValueError, MDTFBaseException):
-    """Raised when parsing input data fails on a 
+    """Raised when parsing input data fails on a
     :func:`~src.util.dataclass.RegexPattern`.
     """
     pass
 
 class RegexSuppressedError(ValueError, MDTFBaseException):
     """Raised when parsing input data fails on a
-    :func:`~src.util.dataclass.RegexPattern`, but we've decided to supress 
+    :func:`~src.util.dataclass.RegexPattern`, but we've decided to supress
     error based on the associated RegexPattern's match_error_filter attribute.
     """
     pass
 
 class UnitsError(ValueError, MDTFBaseException):
-    """Raised when trying to convert between quantities with physically 
+    """Raised when trying to convert between quantities with physically
     inequivalent units.
     """
     pass
@@ -118,7 +118,7 @@ class ConventionError(MDTFBaseException):
         return f"Error in the definition of convention '{self.conv_name}'."
 
 class MixedDatePrecisionException(MDTFBaseException):
-    """Exception raised when we attempt to operate on :class:`Date` or 
+    """Exception raised when we attempt to operate on :class:`Date` or
     :class:`DateRange` objects with differing levels of precision, which shouldn't
     happen with data sampled at a single frequency.
     """
@@ -131,9 +131,9 @@ class MixedDatePrecisionException(MDTFBaseException):
             "placeholder: {}.").format(self.func_name, self.msg)
 
 class FXDateException(MDTFBaseException):
-    """Exception raised when :class:`FXDate` or :class:`FXDateRange` classes, 
-    which are placeholder/sentinel classes used to indicate static data with no 
-    time dependence, are accessed like real :class:`Date` or :class:`DateRange` 
+    """Exception raised when :class:`FXDate` or :class:`FXDateRange` classes,
+    which are placeholder/sentinel classes used to indicate static data with no
+    time dependence, are accessed like real :class:`Date` or :class:`DateRange`
     objects.
     """
     def __init__(self, func_name='', msg=''):
@@ -145,7 +145,7 @@ class FXDateException(MDTFBaseException):
             "placeholder: {}.").format(self.func_name, self.msg)
 
 class DataExceptionBase(MDTFBaseException):
-    """Base class and common formatting code for exceptions raised in data 
+    """Base class and common formatting code for exceptions raised in data
     query/fetch.
     """
     _error_str = ""
@@ -175,8 +175,8 @@ class DataExceptionBase(MDTFBaseException):
         return f"{self.__class__.__name__}({str(self)})"
 
 class DataQueryError(DataExceptionBase):
-    """Exception signaling a failure to find requested data in the remote location. 
-    
+    """Exception signaling a failure to find requested data in the remote location.
+
     Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
     data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
     or :meth:`~data_manager.DataManager.fetchData`.
@@ -195,7 +195,7 @@ class DataFetchError(DataExceptionBase):
     _error_str = "Data fetch error"
 
 class DataPreprocessError(DataExceptionBase):
-    """Exception signaling an error in preprocessing data after it's been 
+    """Exception signaling an error in preprocessing data after it's been
     fetched, but before any PODs run.
     """
     _error_str = "Data preprocessing error"
@@ -243,12 +243,12 @@ class PodConfigError(PodExceptionBase):
     _error_str = "Couldn't parse the settings.jsonc file"
 
 class PodDataError(PodExceptionBase):
-    """Exception raised if POD doesn't have required data to run. 
+    """Exception raised if POD doesn't have required data to run.
     """
     _error_str = "Requested data not available"
 
 class PodRuntimeError(PodExceptionBase):
-    """Exception raised if POD doesn't have required resources to run. 
+    """Exception raised if POD doesn't have required resources to run.
     """
     _error_str = "Error in setting the runtime environment"
 

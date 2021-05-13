@@ -19,16 +19,16 @@ class MDTFConsoleHandler(logging.StreamHandler):
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
     """Subclass :py:class:`logging.handlers.MemoryHandler` to enable flushing
-    the contents of its log buffer to multiple targets. We do this to solve the 
-    chicken-and-egg problem of logging any events that happen before the log 
-    outputs are configured: those events are captured by an instance of this 
+    the contents of its log buffer to multiple targets. We do this to solve the
+    chicken-and-egg problem of logging any events that happen before the log
+    outputs are configured: those events are captured by an instance of this
     handler and then transfer()'ed to other handlers once they're set up.
     See `<https://stackoverflow.com/a/12896092>`__.
     """
 
     def transfer(self, target_handler):
         """Transfer contents of buffer to target_handler.
-        
+
         Args:
             target_handler (:py:class:`logging.Handler`): log handler to transfer
                 contents of buffer to.
@@ -45,13 +45,13 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
             self.release()
 
     def transfer_to_non_console(self, logger):
-        """Transfer contents of buffer to all non-console-based handlers attached 
+        """Transfer contents of buffer to all non-console-based handlers attached
         to *logger* (handlers that aren't :py:class:`MDTFConsoleHandler`.)
 
         If no handlers are attached to the logger, a warning is printed and the
         buffer is transferred to the :py:class:`logging.lastResort` handler, i.e.
         printed to stderr.
-        
+
         Args:
             logger (:py:class:`logging.Logger`): logger to transfer
                 contents of buffer to.
@@ -96,16 +96,16 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
                 # f"sys.executable: '{sys.executable}'\n"
                 f"sys.version: '{sys.version}'\n"
                 # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
-            ) 
+            )
             return str_ + (80 * '-') + '\n\n'
         except Exception:
             err_str = "Couldn't gather log file header information."
             _log.exception(err_str)
             return "ERROR: " + err_str + "\n"
-    
+
 
 class HangingIndentFormatter(logging.Formatter):
-    """:py:class:`logging.Formatter` that applies a hanging indent, making it 
+    """:py:class:`logging.Formatter` that applies a hanging indent, making it
     easier to tell where one entry stops and the next starts.
     """
     # https://blog.belgoat.com/python-textwrap-wrap-your-text-to-terminal-size/
@@ -133,9 +133,9 @@ class HangingIndentFormatter(logging.Formatter):
 
         Args:
             str_ (str): String to be indented.
-            initial_indent (str): string to insert as the indent for the first 
+            initial_indent (str): string to insert as the indent for the first
                 line.
-            subsequent_indent (str): string to insert as the indent for all 
+            subsequent_indent (str): string to insert as the indent for all
                 subsequent lines.
 
         Returns:
@@ -159,7 +159,7 @@ class HangingIndentFormatter(logging.Formatter):
         Returns:
             String representation of the log entry.
 
-        This essentially repeats the method's `implementation 
+        This essentially repeats the method's `implementation
         <https://github.com/python/cpython/blob/4e02981de0952f54bf87967f8e10d169d6946b40/Lib/logging/__init__.py#L595-L625>`__
         in the python standard library. See comments there and the logging module
         `documentation <https://docs.python.org/3.7/library/logging.html>`__.
@@ -176,12 +176,12 @@ class HangingIndentFormatter(logging.Formatter):
         if record.exc_info and not record.exc_text:
             record.exc_text = self.formatException(record.exc_info)
         if record.exc_text:
-            # text from formatting the exception. NOTE that this includes the 
+            # text from formatting the exception. NOTE that this includes the
             # stack trace without populating stack_info or calling formatStack.
             if not s.endswith('\n'):
                 s = s + '\n'
             s = s + self._hanging_indent(
-                record.exc_text, 
+                record.exc_text,
                 self.indent, self.stack_indent
             )
         if record.stack_info:
@@ -202,7 +202,7 @@ class GeqLevelFilter(logging.Filter):
     """:py:class:`logging.Filter` to include only log messages with a severity of
     level or worse. This is normally done by setting the level attribute on a
     :py:class:`logging.Handler`, but we need to add a filter when transferring
-    records from another logger, as shown in 
+    records from another logger, as shown in
     `<https://stackoverflow.com/a/24324246>`__."""
     def __init__(self, name="", level=None):
         super(GeqLevelFilter, self).__init__(name=name)
@@ -219,7 +219,7 @@ class GeqLevelFilter(logging.Filter):
         return record.levelno >= self.levelno
 
 class LtLevelFilter(logging.Filter):
-    """:py:class:`logging.Filter` to include only log messages with a severity 
+    """:py:class:`logging.Filter` to include only log messages with a severity
     less than level.
     """
     def __init__(self, name="", level=None):
@@ -237,7 +237,7 @@ class LtLevelFilter(logging.Filter):
         return record.levelno < self.levelno
 
 class EqLevelFilter(logging.Filter):
-    """:py:class:`logging.Filter` to include only log messages with a severity 
+    """:py:class:`logging.Filter` to include only log messages with a severity
     equal to level.
     """
     def __init__(self, name="", level=None):
@@ -256,10 +256,10 @@ class EqLevelFilter(logging.Filter):
 
 
 def git_info():
-    """Get the current git branch, hash, and list of uncommitted files, if 
+    """Get the current git branch, hash, and list of uncommitted files, if
     available.
 
-    Called by :meth:`DebugHeaderFileHandler._debug_header`. Based on NumPy's 
+    Called by :meth:`DebugHeaderFileHandler._debug_header`. Based on NumPy's
     implementation: `<https://stackoverflow.com/a/40170206>`__.
     """
     def _minimal_ext_cmd(cmd):
@@ -283,7 +283,7 @@ def git_info():
         git_dirty = _minimal_ext_cmd(['git', 'diff', '--no-ext-diff', '--name-only'])
     except OSError:
         pass
-        
+
     if git_dirty:
         git_dirty = git_dirty.splitlines()
     elif git_hash:
@@ -300,7 +300,7 @@ def git_info():
 
 def signal_logger(caller_name, signum=None, frame=None, log=_log):
     """Lookup signal name from number and write to log.
-    
+
     Taken from `<https://stackoverflow.com/a/2549950>`__.
 
     Args:
@@ -320,7 +320,7 @@ def signal_logger(caller_name, signum=None, frame=None, log=_log):
         log.info("%s caught unknown signal.", caller_name)
 
 def _set_excepthook(root_logger):
-    """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are 
+    """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are
     logged to the root logger.
 
     See `<https://docs.python.org/3/library/sys.html#sys.excepthook>`__.
@@ -331,17 +331,17 @@ def _set_excepthook(root_logger):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         root_logger.critical(
-            (70*'*') + "\nUncaught exception:\n", # banner so it stands out 
+            (70*'*') + "\nUncaught exception:\n", # banner so it stands out
             exc_info=(exc_type, exc_value, exc_traceback)
         )
-    
+
     sys.excepthook = uncaught_exception_handler
 
 def _configure_logging_dict(log_d, log_args):
-    """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure 
+    """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure
     log level and filters on console handlers in a logging config dictionary.
     """
-    # smaller number = more verbose  
+    # smaller number = more verbose
     level = getattr(log_args, 'quiet', 0) - getattr(log_args, 'verbose', 0)
     if level <= 1:
         stderr_level = logging.WARNING
@@ -373,13 +373,13 @@ def _configure_logging_dict(log_d, log_args):
     return log_d
 
 def _set_log_file_paths(d, new_paths):
-    """Assign paths to log files. Paths are assumed to be well-formed and in 
+    """Assign paths to log files. Paths are assumed to be well-formed and in
     writeable locations.
 
     Args:
         d (dict): Nested dict read from the log configuration file.
-        new_paths (dict): Dict of new log file names to assign. Keys are the 
-            names of :py:class:`logging.Handler` handlers in the config file, and 
+        new_paths (dict): Dict of new log file names to assign. Keys are the
+            names of :py:class:`logging.Handler` handlers in the config file, and
             values are the new paths.
     """
     if not new_paths:
@@ -395,7 +395,7 @@ def _set_log_file_paths(d, new_paths):
             new_paths)
 
 def case_log_config(config_mgr, **new_paths):
-    """Wrapper to handle logger configuration from a file and transferring the 
+    """Wrapper to handle logger configuration from a file and transferring the
     temporary log cache to the newly-configured loggers.
 
     Args:
@@ -403,8 +403,8 @@ def case_log_config(config_mgr, **new_paths):
             which the temporary log cache was attached.
         cli_obj ( :class:`~src.cli.MDTFTopLevelArgParser` ): CLI parser object
             containing parsed command-line values.
-        new_paths (dict): Dict of new log file names to assign. Keys are the 
-            names of :py:class:`logging.Handler` handlers in the config file, and 
+        new_paths (dict): Dict of new log file names to assign. Keys are the
+            names of :py:class:`logging.Handler` handlers in the config file, and
             values are the new paths.
     """
     if config_mgr.log_config is None:
@@ -438,7 +438,7 @@ def case_log_config(config_mgr, **new_paths):
 
 def initial_log_config():
     """Configure the root logger for logging to console and to a cache provided
-    by :class:`MultiFlushMemoryHandler`. For debugging purposes 
+    by :class:`MultiFlushMemoryHandler`. For debugging purposes
     we want to get console output set up before we've read in the real log config
     files (which requires doing a full parse of the user input).
     """
@@ -448,9 +448,9 @@ def initial_log_config():
     _set_excepthook(root_logger)
     log_d = {
         "version": 1,
-        "disable_existing_loggers":  True,        
+        "disable_existing_loggers":  True,
         "root": {
-            "level": "NOTSET", 
+            "level": "NOTSET",
             "handlers": ["debug", "stdout", "stderr", "cache"]
         },
         "handlers": {

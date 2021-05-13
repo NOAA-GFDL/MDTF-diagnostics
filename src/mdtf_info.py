@@ -150,9 +150,9 @@ class InfoCLIHandler(object):
             print('  Variables:')
             for var in dv:
                 var_str = '    {} ({}) @ {} frequency'.format(
-                    var['var_name'].replace('_var',''), 
-                    var.get('requirement',''), 
-                    var['freq'] 
+                    var['var_name'].replace('_var',''),
+                    var.get('requirement',''),
+                    var['freq']
                 )
                 if 'alternates' in var:
                     var_str = var_str + '; alternates: {}'.format(

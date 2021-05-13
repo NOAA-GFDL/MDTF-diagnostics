@@ -22,27 +22,27 @@ begin
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars
-       zg  =  getenv("zg_var")
-       ua  =  getenv("ua_var")
-       va  =  getenv("va_var")
-       ta  =  getenv("ta_var")
-       hus =  getenv("qa_var")
-       wap =  getenv("omega_var")
+       zg  = "zg" ;;  getenv("zg_var")
+       ua  = "ua" ;;  getenv("ua_var")
+       va  = "va" ;;  getenv("va_var")
+       ta  = "ta" ;;   getenv("ta_var")
+       hus = "hus" ;;   getenv("qa_var")
+       wap = "wap" ;;  getenv("omega_var")
 ;;     2D  vars
-       pr =  getenv("pr_var")
-       ts =  getenv("ts_var")
-       pr_conversion =   getenv("pr_conversion_factor")
-       hfss =  getenv("hfss_var")
-       hfls =  getenv("hfls_var")
+       pr =  "pr" ;;  getenv("pr_var")
+       ts = "ts" ;;   getenv("ts_var")
+       pr_conversion = 1. ;;;  "pr_conversion_factor" ;;    getenv("pr_conversion_factor")
+       hfss = "hfss" ;; getenv("hfss_var")
+       hfls = "hfls" ;;  getenv("hfls_var")
 
 ;;       coordinate vars
-       lev  =  getenv("lev_coord")
-       lon  =  getenv("lon_coord")
-       lat  =  getenv("lat_coord")
-       time =  getenv("time_coord")
+       lev  = "lev" ;; getenv("lev_coord")
+       lon  = "lon" ;; getenv("lon_coord")
+       lat  = "lat" ;;  getenv("lat_coord")
+       time = "time" ;; getenv("time_coord")
 
-       hyam =  getenv("hyam_var")
-       hybm =  getenv("hybm_var")
+       hyam = "hyam" ;;  getenv("hyam_var")
+       hybm = "hybm" ;;  getenv("hybm_var")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels 

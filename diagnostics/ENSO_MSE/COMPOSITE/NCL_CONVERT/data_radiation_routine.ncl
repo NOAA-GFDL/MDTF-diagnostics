@@ -18,14 +18,14 @@ begin
       iy1 =  toint (( getenv("FIRSTYR")) )
       iy2 = toint (( getenv("LASTYR")) )
 
-       Varname1 = getenv("rsus_var") ;;  "rsus"
-       Varname2 = getenv("rsds_var") ;;  "rsds"
-       Varname3 = getenv("rsdt_var") ;;  "rsdt"
-       Varname4 = getenv("rsut_var") ;;  "rsut"
+       Varname1 = "rsus" ;;  getenv("rsus_var") ;;  "rsus"
+       Varname2 = "rsds" ;;  getenv("rsds_var") ;;  "rsds"
+       Varname3 = "rsdt" ;;  getenv("rsdt_var") ;;  "rsdt"
+       Varname4 = "rsut" ;;  getenv("rsut_var") ;;  "rsut"
 
-       Varname5 = getenv("rlus_var") ;;  "rlus"
-       Varname6 = getenv("rlds_var") ;;  "rlds"
-       Varname7 = getenv("rlut_var") ;;  "rlut"
+       Varname5 = "rlus" ;;  getenv("rlus_var") ;;  "rlus"
+       Varname6 = "rlds" ;;  getenv("rlds_var") ;;  "rlds"
+       Varname7 = "rlut" ;;  getenv("rlut_var") ;;  "rlut"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         undef2 = 1.1E+20

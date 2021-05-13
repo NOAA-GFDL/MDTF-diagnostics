@@ -15,7 +15,7 @@ class TestSubprocessInteraction(unittest.TestCase):
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'foo')
         self.assertEqual(out[1], 'bar')
-        
+
     def test_run_shell_commands_exitcode(self):
         input = 'echo "foo"; false'
         with self.assertRaises(Exception):
@@ -39,7 +39,7 @@ class TestSubprocessInteraction(unittest.TestCase):
     def test_poll_command_shell_false(self):
         rc = util.poll_command(['echo', 'foo'], shell=False)
         self.assertEqual(rc, 0)
-    
+
     @unittest.skip("Skipping poll_command tests")
     def test_poll_command_error(self):
         rc = util.poll_command(['false'], shell=False)

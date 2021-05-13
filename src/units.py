@@ -14,9 +14,9 @@ class Units(cfunits.Units):
     pass
 
 def to_cfunits(*args):
-    """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units 
-    objects. Also coerces reference time units (eg 'days since 1970-01-01') to 
-    time units ('days'). The reference date aspect isn't used in the code here 
+    """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units
+    objects. Also coerces reference time units (eg 'days since 1970-01-01') to
+    time units ('days'). The reference date aspect isn't used in the code here
     and is handled by xarray parsing in the preprocessor.
     """
     def _coerce(u):
@@ -49,7 +49,7 @@ def to_equivalent_units(*args):
     return args
 
 def relative_tol(x, y):
-    """HACK to return max(|x-y|/x, |x-y|/y) for unit-ful quantities x,y. 
+    """HACK to return ``max(|x-y|/x, |x-y|/y)`` for unit-ful quantities x, y.
     Vulnerable to underflow in principle.
     """
     x, y = to_equivalent_units(x,y)
@@ -59,7 +59,7 @@ def relative_tol(x, y):
 
 def units_equivalent(*args):
     """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplicative conversion 
+    (represent the same physical quantity, up to a multiplicative conversion
     factor.)
     """
     args = to_cfunits(*args)
@@ -89,8 +89,8 @@ def units_equal(*args, rtol=None):
         return True
 
 def conversion_factor(source_unit, dest_unit):
-    """Defined so that (conversion factor) * (quantity in source_units) = 
-    (quantity in dest_units). 
+    """Defined so that (conversion factor) * (quantity in source_units) =
+    (quantity in dest_units).
     """
     source_unit, dest_unit = to_equivalent_units(source_unit, dest_unit)
     return Units.conform(1.0, source_unit, dest_unit)
@@ -99,14 +99,14 @@ def conversion_factor(source_unit, dest_unit):
 
 def convert_scalar_coord(coord, dest_units):
     """Given scalar coordinate *coord*, return the appropriate scalar value in
-    new units *dest_units*. 
+    new units *dest_units*.
     """
     assert hasattr(coord, 'is_scalar') and coord.is_scalar
     if not units_equal(coord.units, dest_units):
         # convert units of scalar value to convention's coordinate's units
         dest_value = coord.value * conversion_factor(coord.units, dest_units)
         _log.debug("Converted %s %s %s slice of '%s' to %s %s.",
-            coord.value, coord.units, coord.axis, coord.name, 
+            coord.value, coord.units, coord.axis, coord.name,
             dest_value, dest_units)
     else:
         # identical units
@@ -133,7 +133,7 @@ def convert_dataarray(ds, da_name, dest_unit):
             "done."), da.name, std_name, dest_unit)
         return ds
 
-    _log.debug("Convert units of '%s'%s from '%s' to '%s'.", 
+    _log.debug("Convert units of '%s'%s from '%s' to '%s'.",
         da.name, std_name, src_unit, dest_unit)
     da_attrs = da.attrs.copy()
     fac = conversion_factor(src_unit, dest_unit)

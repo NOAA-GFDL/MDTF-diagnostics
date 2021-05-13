@@ -25,7 +25,7 @@ class TestCMIP6_CVs(unittest.TestCase):
             x.lookup('NorCPM1', 'source_id', 'institution_id')
         )
         self.assertCountEqual(
-            ['NorCPM1', 'NorESM2-LMEC', 'NorESM2-HH', 'NorESM1-F', 
+            ['NorCPM1', 'NorESM2-LMEC', 'NorESM2-HH', 'NorESM1-F',
                 'NorESM2-MH', 'NorESM2-LM', 'NorESM2-MM', 'NorESM2-LME'],
             x.lookup('NCC', 'institution_id', 'source_id')
         )
@@ -43,20 +43,20 @@ class TestCMIP6_CVs(unittest.TestCase):
         )
         self.assertEqual(
             x.lookup(dt_freq('mon'), 'frequency', 'table_id'),
-            set(['EmonZ', 'AERmon', 'SImon', 'Amon', 'CFmon', 'Omon', 
-                'ImonGre', 'Emon', 'ImonAnt', 'Lmon', 'LImon', 'Oclim', 
+            set(['EmonZ', 'AERmon', 'SImon', 'Amon', 'CFmon', 'Omon',
+                'ImonGre', 'Emon', 'ImonAnt', 'Lmon', 'LImon', 'Oclim',
                 'AERmonZ'])
         )
         self.assertEqual(
             x.lookup('mon', 'table_freq', 'table_id'),
-            set(['EmonZ', 'AERmon', 'SImon', 'Amon', 'CFmon', 'Omon', 
-                'ImonGre', 'Emon', 'ImonAnt', 'Lmon', 'LImon', 'Oclim', 
+            set(['EmonZ', 'AERmon', 'SImon', 'Amon', 'CFmon', 'Omon',
+                'ImonGre', 'Emon', 'ImonAnt', 'Lmon', 'LImon', 'Oclim',
                 'AERmonZ'])
         )
 
 class TestCMIP6DateFrequency(unittest.TestCase):
     all_freqs = ['fx', 'dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
-        '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt', 
+        '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt',
         'subhrPt']
 
     def test_string_output(self):
@@ -98,6 +98,7 @@ class TestDRSFilename(unittest.TestCase):
         self.assertEqual(d.experiment_id, 'historical')
         self.assertEqual(d.variant_label, 'r1i1p1f1')
         self.assertEqual(d.grid_label, 'gr1')
+        self.assertEqual(d.grid_number, 1)
         self.assertEqual(d.start_date, dl.Date(1950,1))
         self.assertEqual(d.end_date, dl.Date(2014,12))
         self.assertEqual(d.date_range, dl.DateRange('195001-201412'))
@@ -111,6 +112,7 @@ class TestDRSFilename(unittest.TestCase):
         self.assertEqual(d.experiment_id, 'historical')
         self.assertEqual(d.variant_label, 'r1i1p1f1')
         self.assertEqual(d.grid_label, 'gn')
+        self.assertEqual(d.grid_number, 0)
         self.assertEqual(d.start_date, dl.FXDateMin)
         self.assertEqual(d.end_date, dl.FXDateMax)
         self.assertEqual(d.date_range, dl.FXDateRange)

@@ -1,4 +1,4 @@
-.. :orphan:
+:orphan:
 
 MDTF Developer's walkthrough
 ============================

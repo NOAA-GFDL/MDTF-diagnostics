@@ -15,10 +15,7 @@
 #    This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
 
-import numpy as np
 import sys
-import math
-import subprocess
 import time
 
 import datetime

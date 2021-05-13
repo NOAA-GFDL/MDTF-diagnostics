@@ -1,8 +1,6 @@
 import os
 import sys
-import subprocess
 import numpy as np
-import math
 
 shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),

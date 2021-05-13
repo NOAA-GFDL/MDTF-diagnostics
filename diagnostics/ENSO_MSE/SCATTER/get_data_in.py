@@ -1,6 +1,5 @@
 import os
 import sys
-import subprocess
 import numpy as np
 
 shared_dir = os.path.join(
@@ -12,7 +11,6 @@ sys.path.insert(0, shared_dir)
 
 def   get_data_in(imax, jmax, variable, dataout, prefix1, suffix,  undef):
 
-    dataout = np.zeros( (imax,jmax),dtype='float32',  order='F')
 ###  readin  the data and output anomaly
     if (os.path.exists(prefix1+"/ELNINO/" + variable + "." + suffix)):
         f = open(prefix1+'/ELNINO/' + variable + '.' + suffix, 'rb')

@@ -1,6 +1,5 @@
 import numpy as np
 import os.path
-import math
 import sys
 
 from read_netcdf_2D import read_netcdf_2D
@@ -16,7 +15,7 @@ def get_flux_in_24(imax, jmax,  ttmax, years,  iy2,  variable,  tmax24, datout, 
     vvar    = np.ma.zeros((imax,jmax,tmax12),dtype='float32',  order='F')
     dataout = np.ma.zeros((imax,jmax,tmax24), dtype='float32', order='F')
 
-    nameclima = prefix2 +  variable + "_clim.nc"
+    nameclima = os.path.join(prefix2,variable + "_clim.nc")
 
     if (os.path.exists( nameclima)):
         clima = read_netcdf_2D(imax, jmax, tmax12,  variable,  nameclima, clima, undef)

@@ -1,6 +1,4 @@
-import numpy as np
 import os
-import math
 import sys
 
 shared_dir = os.path.join(

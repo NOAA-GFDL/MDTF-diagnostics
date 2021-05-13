@@ -26,8 +26,13 @@
 
 import numpy as np
 import sys
-import math
 import os
+
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
 
 from get_parameters_in import get_parameters_in
 from get_nino_index import get_nino_index
@@ -45,16 +50,6 @@ from get_regression import get_regression
 import time
 import datetime
 
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
-
-
-from util import check_required_dirs
-from util import check_required_dirs
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from get_dimensions import get_dimensions
 from generate_ncl_call import generate_ncl_call
@@ -104,16 +99,6 @@ print("=========== COMPOSITE.py =======================================")
 print("   Start of Composite Module calculations  " + now.strftime("%Y-%m-%d %H:%M"))
 print("===============================================================")
 
-### DRB: For debugging purposes, I added test_mode to flip switches within this
-### script to turn off things that have already run. Some pieces can take
-### several hours. To use, set test_mode = True, then search below to turn
-### on/off exactly what you want
-test_mode = False
-
-if ( test_mode ):
-        print(" WARNING: COMPOSITE.py in test_mode. Some portions of the code may be ommited")
-
-### 
 ###     The code construct the 24 month ENSO evolution cycle Year(0)+Year(1) and 
 ###     the resulting plots are set for default  DJF season (Year(0) of the 24 month ENSO cycle
 ####    
@@ -123,32 +108,32 @@ undef = float(1.1e+20)
 iundef = -9999
 
 ##   the pointer to code directory 
-prefix = os.environ["POD_HOME"] + "/COMPOSITE/"
+prefix = os.path.join(os.environ["POD_HOME"],"COMPOSITE")
 
 ## base path of all the files written/read here
-wkdir_model = os.environ["ENSO_MSE_WKDIR_COMPOSITE"] + "/model"
+wkdir_model = os.path.join(os.environ["ENSO_MSE_WKDIR_COMPOSITE"],"model")
 
 ##  prefix1 =   input data (to other parts of package, really output dir too)
-prefix1 =   wkdir_model + "/netCDF/DATA/"
+prefix1 =   os.path.join(wkdir_model,"netCDF","DATA")
 ##   prefix2 =   input CLIMA
-prefix2 =   wkdir_model + "/netCDF/CLIMA/"
+prefix2 =   os.path.join(wkdir_model,"netCDF","CLIMA")
 
 ###  output  
-prefixout = wkdir_model + "/netCDF/"
+prefixout = os.path.join(wkdir_model,"netCDF")
 
 #   El Nino
-prefixout1 =wkdir_model + "/netCDF/ELNINO/"
+prefixout1 = os.path.join(wkdir_model, "netCDF","ELNINO")
 #  La Nina out
-prefixout2 =wkdir_model + "/netCDF/LANINA/"
+prefixout2 = os.path.join(wkdir_model, "netCDF","LANINA")
 ##  24 month evoution prefixes EL NINO
-prefixout11 =wkdir_model + "/netCDF/24MONTH_ELNINO/"
-prefixout111 =wkdir_model + "/netCDF/24MONTH_ELNINO/BIN/"
+prefixout11 = os.path.join(wkdir_model, "netCDF","24MONTH_ELNINO")
+prefixout111 = os.path.join(wkdir_model, "netCDF","24MONTH_ELNINO", "BIN")
 #  La Nina out
-prefixout22 =wkdir_model + "/netCDF/24MONTH_LANINA/"
-prefixout222 =wkdir_model + "/netCDF/24MONTH_LANINA/BIN/"
+prefixout22 = os.path.join(wkdir_model, "netCDF", "24MONTH_LANINA")
+prefixout222 = os.path.join(wkdir_model, "netCDF", "24MONTH_LANINA", "BIN")
 
 ## climatology output
-prefixclim = wkdir_model + "/netCDF/"
+prefixclim = prefixout
 
 ###  the directory check ran already in get_directories.py
 ## dirs_to_create = [prefix1,prefix2,prefixout1,prefixout2, prefixout11, prefixout22, prefixout111, prefixout222]
@@ -161,15 +146,15 @@ dummy2 = undef
 dummy3 = undef
 dummy4 = undef
 season = "NIL"
-model = "NIL"
+
 llon1 = undef
 llon2 = undef
 llat1 = undef
 llat2 = undef
+
 imindx1 = undef
 imindx2 = undef
-im1 = undef
-im2 = undef
+
 sigma = undef
 composite = 0
 composite24 = 0
@@ -342,51 +327,46 @@ if( ttmax2 >= 2 ):
 ######   CLIMATOLOGY:   reading pre-calculated total CLIMATOLOGY - output seasonal one
 now = datetime.datetime.now()
 
-if ( test_mode ):
-        print("WARNING: test_mode not reading climatologies")
-else:
-        print (" Reading Climatologies  "  + now.strftime("%Y-%m-%d %H:%M"))
+#if ( test_mode ):
+#        print("WARNING: test_mode not reading climatologies")
+#else:
+print (" Reading Climatologies  "  + now.strftime("%Y-%m-%d %H:%M"))
 
-        hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "zg",  hgtclim, prefix2, undef)
-        uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "ua",   uuclim , prefix2, undef)
-        vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "va",   vvclim,  prefix2, undef)
-        tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "ta",   tempclim, prefix2, undef)
-        shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "hus",   shumclim, prefix2,  undef)
-        vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "wap", vvelclim, prefix2, undef)
-        ## and the clima fluxes  average over im1, im2
-        prclim  = get_flux_clima(imax, jmax, im1, im2, "pr",   prclim,  prefix2,  undef)
-        tsclim  = get_flux_clima(imax, jmax, im1, im2, "ts",   tsclim,  prefix2,  undef)
-        shfclim = get_flux_clima(imax, jmax, im1, im2, "hfss",  shfclim, prefix2,  undef)
-        lhfclim = get_flux_clima(imax, jmax, im1, im2, "hfls",  lhfclim, prefix2,  undef)
-        swclim  = get_flux_clima(imax, jmax, im1, im2, "sw",   swclim,  prefix2,  undef)
-        lwclim  = get_flux_clima(imax, jmax, im1, im2, "lw",   lwclim,  prefix2,  undef)
+hgtclim  = get_clima_in(imax, jmax, zmax,  im1, im2, "zg",  hgtclim, prefix2, undef)
+uuclim   = get_clima_in(imax, jmax, zmax, im1, im2, "ua",   uuclim , prefix2, undef)
+vvclim   = get_clima_in(imax, jmax, zmax, im1, im2, "va",   vvclim,  prefix2, undef)
+tempclim = get_clima_in(imax, jmax, zmax, im1, im2, "ta",   tempclim, prefix2, undef)
+shumclim = get_clima_in(imax, jmax, zmax, im1, im2, "hus",   shumclim, prefix2,  undef)
+vvelclim = get_clima_in(imax, jmax, zmax, im1, im2, "wap", vvelclim, prefix2, undef)
+## and the clima fluxes  average over im1, im2
+prclim  = get_flux_clima(imax, jmax, im1, im2, "pr",   prclim,  prefix2,  undef)
+tsclim  = get_flux_clima(imax, jmax, im1, im2, "ts",   tsclim,  prefix2,  undef)
+shfclim = get_flux_clima(imax, jmax, im1, im2, "hfss",  shfclim, prefix2,  undef)
+lhfclim = get_flux_clima(imax, jmax, im1, im2, "hfls",  lhfclim, prefix2,  undef)
+swclim  = get_flux_clima(imax, jmax, im1, im2, "sw",   swclim,  prefix2,  undef)
+lwclim  = get_flux_clima(imax, jmax, im1, im2, "lw",   lwclim,  prefix2,  undef)
         
-        ###  write seasonal climatology for further processing 
-        write_out( "Z_clim",    hgtclim,  prefixclim)
-        write_out( "U_clim",     uuclim,  prefixclim)
-        write_out( "V_clim",     vvclim,  prefixclim)
-        write_out( "T_clim",   tempclim,  prefixclim)
-        write_out( "Q_clim",   shumclim,  prefixclim)
-        write_out(  "OMG_clim", vvelclim,  prefixclim)
-        ## similarly the fluxes
-        write_out(  "PR_clim",   prclim,  prefixclim)
-        write_out(  "TS_clim",   tsclim,  prefixclim)
-        write_out(  "SHF_clim", shfclim,  prefixclim)
-        write_out(  "LHF_clim", lhfclim,  prefixclim)
-        write_out(  "LW_clim",   lwclim,  prefixclim)
-        write_out(  "SW_clim",   swclim,  prefixclim)
-        ##   add Frad
-        #lwclim = np.ma.masked_greater_equal(lwclim, undef, copy=False)
-        #swclim = np.ma.masked_greater_equal(swclim, undef, copy=False)
-        fradclim = lwclim  +  swclim
-        write_out(  "FRAD_clim", fradclim,   prefixclim)
+###  write seasonal climatology for further processing 
+write_out( "Z_clim",    hgtclim,  prefixclim)
+write_out( "U_clim",     uuclim,  prefixclim)
+write_out( "V_clim",     vvclim,  prefixclim)
+write_out( "T_clim",   tempclim,  prefixclim)
+write_out( "Q_clim",   shumclim,  prefixclim)
+write_out(  "OMG_clim", vvelclim,  prefixclim)
+## similarly the fluxes
+write_out(  "PR_clim",   prclim,  prefixclim)
+write_out(  "TS_clim",   tsclim,  prefixclim)
+write_out(  "SHF_clim", shfclim,  prefixclim)
+write_out(  "LHF_clim", lhfclim,  prefixclim)
+write_out(  "LW_clim",   lwclim,  prefixclim)
+write_out(  "SW_clim",   swclim,  prefixclim)
+##   add Frad
+#lwclim = np.ma.masked_greater_equal(lwclim, undef, copy=False)
+#swclim = np.ma.masked_greater_equal(swclim, undef, copy=False)
+fradclim = lwclim  +  swclim
+write_out(  "FRAD_clim", fradclim,   prefixclim)
 
 ## 
-
-if ( test_mode ):
-        print ("WARNING: test_mode setting composite = 0 to prevent calculations")
-        composite = 0
-
 ###  composite module -  selected in  parameter.txt file 
 if(  composite == 1):
 
@@ -487,10 +467,6 @@ print (" ")
 ########### all  data in ELNINO/LANINA composite + CLIMATOLOGY  
 ###   24 month  ENSO evolution if selected in parameters.txt file 
 ###    years 0 ( building phase of ENSO) and year 1 (decaying phase) are calculated
-
-if (test_mode) :
-        print ("WARNING: test_mode setting composite24 = 0 to prevent calculations")
-        composite24 = 0
 
 if( composite24 == 1):
     now = datetime.datetime.now()
@@ -612,10 +588,6 @@ print (" " )
 
 ##########   seasonal correlation, calculations with seasonal NINO3.4 SST anomalies 
 
-if (test_mode) :
-        correlation = 0
-        print ("WARNING: test_mode setting correlation = ",correlation," to prevent computations")
-
 if( correlation == 1):
     now = datetime.datetime.now()
     print ("   Seasonal  SST  correlations started  " + now.strftime("%Y-%m-%d %H:%M") )
@@ -690,7 +662,6 @@ if( regression == 1):
 
     print(os.system("ls "+wkdir_model))
 
-print("what is going on here")
 file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR"]+"/COMPOSITE.html" 
 if os.path.isfile( file_dest ):

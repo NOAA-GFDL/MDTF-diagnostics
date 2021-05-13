@@ -6,30 +6,32 @@ begin
 
 ;; levels to plot 
    plevel2 = (/  200.  /)
+
    nlevels2 = dimsizes( plevel2) 
+
+   cmin      =   0. 
+   cmax      =  10.
+   cint      =   1. 
+   levels0   =   0. 
 
    mode = "CLIMA"
 
    variable1 =  "ua"
    variable2 =  "va"
 
-   variname = "Beta star"
+   variname = "Wave Number"
 
-   outname = "betastar"
+   outname = "wave_number"
 
    title_mode = " "
 
-    ff = 1.E+11   ;;   for beta star
-    varunit = (/ "[x10~S~-11~N~m~S~-1~N~s~S~-1~N~]" /)
+   varunit =  " " 
 
-  levels1 = (/ -1.,  0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13, 14, 15, 16 /)
-  levels0 = (/ 0. /)
+   colormap = "matlab_jet"
 
-    colormap = "precip2_17lev" ;;   "WhiteBlueGreenYellowRed"
-
-     varcode = getenv("POD_HOME")
-     dirname1  =   getenv("ENSO_RWS_WKDIR")
-     obsname  = getenv("OBS_DATA") + "/DATA/"
+    varcode  = getenv("POD_HOME")
+    dirname1 = getenv("ENSO_RWS_WKDIR")
+    obsname  = getenv("OBS_DATA") + "/DATA/"
 
       parameter_name = varcode + "/shared/parameters.txt"
 ;;;   global map
@@ -53,18 +55,18 @@ begin
     pi = 3.142
     rearth = 6378000.
 
-   do icase = 1, 2 
-    
+    do icase = 1, 2
+
    if( icase .eq. 1) ;;  model
    dirname  =  dirname1 + "/model"
    outdir   =  dirname1 + "/model"
-     model = getenv( "CASENAME")  ;;  "CESM2" ;;  getenv( "CASENAME")
+     model = getenv( "CASENAME") ;; 
     end if
 
   if( icase .eq. 2) ;;; OBS
    dirname = obsname
    outdir  = dirname1  + "/obs"
-      model = " " ;;   OBS leave it blank
+      model = " " ;;   OBS = blank 
     end if
 
     namein1 =  dirname +  "/netCDF/"  + variable1 + ".nc"
@@ -75,45 +77,71 @@ begin
     vvc = f2->$variable2$
 
     plev1 = f1->lev
-    lon   = f1->lon
-    lat   = f1->lat
-    time  = f1->time
-    ydim  = dimsizes( lat)
-    zdim  = dimsizes( plev1)
+    lon = f1->lon
+    lat = f1->lat
+    time = f1->time
+    ydim = dimsizes( lat)
+    zdim = dimsizes( plev1)
 
     delete( f1)
     delete( f2)
 
-   mm2 = 1
-   wrf_smooth_2d(uuc,mm2)
-   wrf_smooth_2d(vvc,mm2)
+;;  fill undefined
+  nscan = 500             ; usually *much* fewer
+  eps   = 0.001            ; variable depended
+  gtype =  True           ; "gendat" does not generate cyclic fields
+  guess =  1               ; use zonal means
+  relc  = 0.6              ; standard relaxation coef
+  opt   = 0
+  poisson_grid_fill( uuc, gtype, guess, nscan, eps, relc, opt)
+  poisson_grid_fill( vvc, gtype, guess, nscan, eps, relc, opt)
+
+  mm2 = 1
+  wrf_smooth_2d(uuc,mm2)
+  wrf_smooth_2d(vvc,mm2)
 
 
     nameout = outdir  + "/PS/"
-;;  calculate beta star before plotting :
-       betastar = uuc
-       Uc2 = uuc
+;;  calculate  wave number 
 
-       sinlat = sin( tofloat(lat) * pi/180.)
-       fcoriol = 2.* omega * sinlat
+     wavenumber = uuc 
+     Ucc = uuc 
+     cvort2 = uuc
+    
+    cvort2 =  uv2vrF_Wrap (uuc, vvc);;   uv2vr_cfd(uuc, vvc, lat,lon, 3)  ;;  uv2vrF_Wrap (uuc, vvc) 
+    cvort2( :, :, :, :) = where( .not.ismissing(uuc(:, :, :, :)), cvort2( :, :, :, :), uuc@_FillValue)
 
-       coslat =  cos( tofloat(lat) * pi/180.)
-       beta = 2.* omega * coslat/rearth
+    cvort  =  cvort2     
 
-   do j = 1, ydim-2                      ; loop over each latitude
-    dlat = 0.5 * tofloat((lat(j+1)-lat(j-1)) )
-    dY = rearth * dlat * pi/180. 
-    Uc2(:, :, j, :) = (uuc(:, :, j+1, :) - 2.*uuc(:, :, j, :) + uuc(:, :, j-1, :))/(dY*dY)
-    betastar(:, :, j, :) =  (  beta(j)  -  Uc2(:, :, j, :) )
+     sinlat = sin( lat * pi/180.)
+     fcoriol = 2.* omega * sinlat
+
+    do j = 0, ydim - 1
+    cvort(:, :, j, :) =  ( tofloat(fcoriol(j) )  + cvort2(:, :, j, :)) 
+    end do
+
+   cvortx = cvort
+   cvorty = cvort
+   gradsg (cvort,  cvortx, cvorty)
+
+;;   cvort_grad =   grad_latlon_cfd(cvort, lat, lon, True, False)
+;;   cvortx = cvort_grad[1]
+;;   cvorty = cvort_grad[0]
+
+   Ucc  = where( uuc .gt. 0., uuc , uuc@_FillValue)
+   bb = where(  cvorty .gt. 0, cvorty, uuc@_FillValue)
+   do j = 0, ydim - 1
+   wavenumber(:, :, j, :) = (rearth * rearth * cos( tofloat(lat(j)) *pi/180.) * bb(:, :, j, :)/Ucc(:, :, j, :) )
    end do
-;;   optionally smooth the beta-star
-;; mm2 = 6
-;;wrf_smooth_2d(betastar,mm2)
-;;    betastar(:, :, :, :) =  where( .not.ismissing(uuc(:, :, :, :)),  betastar(:, :, :, :), uuc@_FillValue)
+   wavenumber = where( wavenumber .gt. 0.,  sqrt(wavenumber),  uuc@_FillValue)
+   
 
-    betastar = ff * betastar
-    betastar@units = " "
-    betastar@long_name = " "
+;;;  optional smoothnig    
+  ;;mm2 = 6
+  ;;wrf_smooth_2d( wavenumber,mm2)
+
+     wavenumber@long_name = " "
+     wavenumber@units = " "
 
   do nlev = 0, nlevels2 - 1
 
@@ -149,7 +177,7 @@ begin
 
   res@cnFillOn             = True                  ; turn on color fill
   res@cnLinesOn            = True ;;  False
-  res@cnLineThicknessF     = 0.1
+  res@cnLineThicknessF    =  0.2
 ;;  the color bar
   res@lbAutoManage          = False             ; we control label bar
   res@pmLabelBarDisplayMode = "Always"          ; turns on label bar
@@ -190,82 +218,41 @@ begin
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
-     label4 = "  Months/Season= " + season + " Model: " + model + "  units:" +  varunit
+     label4 = "  Months/Season= " + season + " Model: " + model  ;;;  + "  units:" +  varunit
      if( icase .eq. 2)
      label4 = "  Months/Season= " + season + "                       units:" +  varunit
      end if
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
 
-     res@cnLevels    =   levels1
-     cmap = read_colormap_file( colormap)
-   
-    i = 0
-    gx = 150.
-    cmap( i, 0) = gx/255.
-    cmap (i,1) = gx/255.
-    cmap (i,2) = gx/255.
-    cmap (i,3) = 1
+    res@cnLevelSelectionMode =  "ManualLevels"
+    cmap = read_colormap_file(colormap) ;;  read_colormap_file("BlueDarkRed18")
+    res@cnFillPalette = cmap
+    ;;  res@cnFillPalette =  cmap ( (/12, 16, 19, 27, 32, 38, 40, 46, 52, 57, 63 /),:) 
+    res@cnMinLevelValF       = cmin               ; set min contour level
+    res@cnMaxLevelValF       = cmax               ; set max contour level
+    res@cnLevelSpacingF      = cint    
 
-    i = 1
-    gx = 200.
-    cmap( i, 0) = gx/255.
-    cmap (i,1) = gx/255.
-    cmap (i,2) = gx/255.
-    cmap (i,3) = 1
-
-;     i = 2
-;    gx = 200.
-;    cmap( i, 0) = gx/255.
-;    cmap (i,1) = gx/255.
-;    cmap (i,2) = gx/255.
-;    cmap(i,3) = 1
-
-;     i = 253
-;    gx = 40.
-;    cmap( i, 0) = 80./255.
-;    cmap (i,1) = gx/255.
-;    cmap (i,2) = gx/255.
-;    cmap(i,3) = 1
-;;     res@cnFillPalette = cmap ( (/  0, 1,  2, 10, 25, 35, 50, 65, 75, 85, 130, 145, 160, 175, 190, 205, 230, 245, 253/),:)
-
-    res@cnFillPalette = cmap ( (/  0, 1,  2,  3, 4, 5, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17 /), :)
-
-
-    plot1 = gsn_csm_contour_map(wks,  betastar(0, kk, :, :), res)
-
-  sres                      = True              ; set up a second resource list
-  sres@gsnDraw              = False             ; do not draw the plot
-  sres@gsnFrame             = False             ; do not advance the frame
-  sres@cnLevelSelectionMode = "ExplicitLevels" ;; "ManualLevels" ;;;  "ExplicitLevels"  ; use explicit levels
+    plot1 = gsn_csm_contour_map(wks,  wavenumber(0, kk, :, :), res) 
+;;;;;;;;;;;;;
+  sres                      = True             ; set up a second resource list
+  sres@gsnDraw              = False            ; do not draw the plot
+  sres@gsnFrame             = False            ; do not advance the frame
+  sres@cnLevelSelectionMode = "ExplicitLevels" ;; 
   sres@cnLevels             =  levels0    ; set the contour levels
-
-  sres@cnInfoLabelOn   = False                ; turn off info label box
-  sres@cnLineLabelsOn  = False                ; no lables on line
-  sres@cnFillOn        =  False
-  sres@cnLineThicknessF =   10 
-  sres@cnLineLabelInterval       =  2 ;; 1             ; default = 2
-  sres@cnLineLabelPlacementMode   = "constant"
-
-  sres@gsnContourNegLineDashPattern = 1
-  sres@gsnContourZeroLineThicknessF = 2
+  sres@gsnContourZeroLineThicknessF =  2
   sres@cnInfoLabelOn = False
-  sres@cnLineLabelsOn = False
-  sres@cnLineLabelFormat  =  "f" ;; "0@;*.3f"
+  sres@cnLineLabelFormat  =  "f"  ;;
 
-  betastar@long_name = " "
+;;  plot2 = gsn_csm_contour(wks,  wavenumber(0, kk, :, :), sres)
 
-  plot2 = gsn_csm_contour(wks,  betastar(0, kk, :,:), sres)
-
-  overlay(plot1,plot2)          ; overlay the U-wind plot on the temperature plot
+;;  overlay(plot1,plot2)          ; overlay the U-wind plot on the temperature plot
   draw(plot1)                   ; draw the temperature plot (with the U-wind plot overlaid)
   frame(wks)
 
-   end if   ;;  if on pressure levels
-  
-   end do ;;  over pressure levels 
-
- delete ([/lon, lat, plev1, time,  zdim, uuc, vvc,  betastar, Uc2, dY, dlat, beta, coslat,  fcoriol, sinlat/])
-  end do 
+  end if 
  
+  end do  ;; over pressure levels 
 
+  delete ([/lon, lat, plev1, time,  zdim, uuc, vvc, Ucc, cvort2, cvort, sinlat, fcoriol, cvortx, cvorty,  bb,  wavenumber /])
+ end do 
 end

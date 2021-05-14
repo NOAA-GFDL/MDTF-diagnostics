@@ -36,7 +36,7 @@ begin
       parameter_name = varcode + "/shared/parameters.txt"
       datamode = "Anomaly"
       data  = asciiread(parameter_name,-1,"string")
-      season = str_get_field(data(12), 3," ")
+      season = str_get_field(data(10), 3," ")
 
 ;;  read  in the data from MSE_VAR
 	

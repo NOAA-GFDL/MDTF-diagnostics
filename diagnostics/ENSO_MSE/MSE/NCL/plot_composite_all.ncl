@@ -71,7 +71,7 @@ begin
       undef2 = 1.1E+20
 	
        data  = asciiread(parameter_name,-1,"string")
-       season = str_get_field(data(12), 3," ")
+       season = str_get_field(data(10), 3," ")
 
 ;;;   read the lat/lon and dimensions from external files - in DATA
        dataxyz  = asciiread(name_dimensions,-1,"string")

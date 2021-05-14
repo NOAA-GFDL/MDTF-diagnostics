@@ -43,7 +43,7 @@ begin
       undef2 = 1.1E+20
 
        data  = asciiread(parameter_name,-1,"string")
-       season = str_get_field(data(12), 3," ")
+       season = str_get_field(data(10), 3," ")
 
       domain = (/ "Central Pacific", "Eastern Pacific" /)
       tlabels = (/ "MSE~B~vert. advect.~N", "M~B~adv~N",  "T~B~adv~N" , "SW~B~net~N", \ 

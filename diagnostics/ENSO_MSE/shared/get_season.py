@@ -10,11 +10,7 @@ def get_season( season, prefix):
             line = file.readline()
             line = line.strip()
             column = line.split()
-	     season =  column[2]
-#        line = file.readline()
-#        line = line.strip()
-#        column = line.split()
-#        season =  column[2]
+            season =  column[2]
 
         file.close()
 

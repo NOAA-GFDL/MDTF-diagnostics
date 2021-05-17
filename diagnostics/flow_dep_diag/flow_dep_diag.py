@@ -30,6 +30,11 @@
 #   (4) Procrustes analysis(* to be added soon)
 #   As a module of the MDTF code package, all scripts of this package can be
 #   found under mdtf/MDTF_$ver/var_code/flow_dep_diag
+
+#   This diagnostic assumes:
+#   (1)the longitude if in range -180,180 for plotting purposes
+#   (2) The data has been cropped for a specific region
+#   Refer to cropping.py for code to crop your data / shift the grid
 #
 # Required programming language and libraries
 #

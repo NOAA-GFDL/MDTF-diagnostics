@@ -36,6 +36,9 @@ The currently package consists of following functionalities:
 
 (4) Procrustes analysis (to be added soon)
 
+(**) cropping.py can be referenced if code is needed to either shift the grid of your data
+or to crop your data to a specified region
+
 As a module of the MDTF code package, all scripts of this package can be found under
 ``mdtf/MDTF_$ver/diagnostics/flow_dep_diag``
 

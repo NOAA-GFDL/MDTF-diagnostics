@@ -21,12 +21,15 @@
 #
 #   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 #
-# FUNCTIONALITY!!
+# Functionality
 #
-#   In this section you should summarize the stages of the calculations your
-#   diagnostic performs, and how they translate to the individual source code files
-#   provided in your submission. This will, e.g., let maintainers fixing a bug or
-#   people with questions about how your code works know where to look.
+#   The currently package consists of following functionalities:
+#   (1) Calculation of climatologies and anomalies for the input fields (ClimAnom_func.py)
+#   (2) Calculation of weather types spatial patterns (WeatherTypes.py.py)
+#   (3) Calculation of weather types temporal characteristics (* to be added soon)
+#   (4) Procrustes analysis(* to be added soon)
+#   As a module of the MDTF code package, all scripts of this package can be
+#   found under mdtf/MDTF_$ver/var_code/flow_dep_diag
 #
 # Required programming language and libraries
 #
@@ -35,12 +38,14 @@
 #   Python Libraries used: "netCDF4", "xarray", "numpy", "pandas", "sklearn",
 #                          "cartopy", "matplotlib", "numba", "datetime", "typing"
 #
-# Required model output variables!!!!!!!!!!
+# Required model output variables
+#
+#   Geopotential height anomalies (units: HPa, daily resolution)
+#   Rainfall (units: mm/day, daily resolution)
+#   Temperature (units: Celsius, daily resolution)
 #
 #   This diagnostic assumes the data is structured on a time grid with no leap years.
 #   It also assumes each variable is for a single ensemble member.
-#
-#   DESCRIBE EACH VARIBALE IN INPUT DATA
 #
 # References
 #

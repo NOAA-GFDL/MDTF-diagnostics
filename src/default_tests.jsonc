@@ -16,7 +16,7 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
+      "CASENAME" : "QBOi_CROPPED.EXP1.AMIP.001",
       "model" : "CESM",
       "convention" : "CESM",
       "FIRSTYR" : 1977,

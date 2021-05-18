@@ -163,12 +163,12 @@
       "ndim": 3
     },
     "tauuo": {
-      "standard_name": "downward_x_stress_at_sea_water_surface",
+      "standard_name": "surface_downward_x_stress",
       "units": "N m-2",
       "ndim": 3
     },
     "tauvo": {
-      "standard_name": "downward_y_stress_at_sea_water_surface",
+      "standard_name": "surface_downward_y_stress",
       "units": "N m-2",
       "ndim": 3
     },

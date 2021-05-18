@@ -36,35 +36,27 @@
   "varlist" : {
       "zos": {
         "standard_name": "sea_surface_height_above_geoid",
-        "path_variable": "ZOS_FILE",
         "units": "m",
-        "dimensions" : ["time", "lat", "lon"],
-        "requirement": "required"
+        "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauuo": {
-        "standard_name": "downward_x_stress_at_sea_water_surface",
-        "path_variable": "TAUUO_FILE",
+        "standard_name": "surface_downward_x_stress",
         "units": "N m-2",
-        "dimensions" : ["time", "lat", "lon"],
-        "requirement": "required"
+        "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauvo": {
-        "standard_name": "downward_y_stress_at_sea_water_surface",
-        "path_variable": "TAUVO_FILE",
+        "standard_name": "surface_downward_y_stress",
         "units": "N m-2",
-        "dimensions" : ["time", "lat", "lon"],
-        "requirement": "required"
-        }
+        "dimensions" : ["time", "lat", "lon"]
+        },
         
-      // "areacello": {
-      //   "standard_name": "cell_area",
-      //   "path_variable": "AREACELLO_FILE",
-      //   "units": "m2",
-      //   "dimensions" : ["lat", "lon"],
-      //   "requirement": "required"
-      //   }
+      "areacello": {
+        "standard_name": "cell_area",
+        "units": "m2",
+        "dimensions" : ["lat", "lon"]
+        }
   }
   
 }

@@ -937,28 +937,30 @@ class DefaultDatasetParser():
             assert isinstance(coord, xr.core.dataarray.DataArray)
 
         # check set of dimension coordinates (array dimensionality) agrees
-        our_axes_set = our_var.dim_axes_set
-        ds_var = ds[our_var.name]
-        ds_axes = ds_var.cf.dim_axes()
-        ds_axes_set = ds_var.cf.dim_axes_set
-
-        # check set of dimension coordinates (array dimensionality) agrees
-        if our_axes_set == ds_axes_set:
-            # check dimension coordinate names, std_names, units, bounds
-            for coord in our_var.dim_axes.values():
-                ds_coord_name = ds_axes[coord.axis]
-                self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-                if coord.axis == 'T':
-                    # special case for time coordinate
-                    self.reconcile_time_units(coord, ds[ds_coord_name])
-                else:
-                    self.reconcile_units(coord, ds[ds_coord_name])
-                self.reconcile_coord_bounds(coord, ds, ds_coord_name)
+        our_axes = translated_var.dim_axes_set
+        ds_axes = ds[tv_name].cf.dim_axes_set
+        if our_axes != ds_axes:
+            _log.warning(f"Variable {tv_name} has unexpected dimensionality:  "+\
+                         f"expected axes {set(our_axes)}, got {set(ds_axes)}.")
+            valid_axes = False
         else:
-            _log.warning(f"Variable {our_var.name} has unexpected dimensionality: "
-                f" expected axes {list(our_axes_set)}, got {list(ds_axes_set)}.")
+            valid_axes = True
 
-        for c_name in ds_var.dims:
+        # check dimension coordinate names, std_names, units, bounds
+        if valid_axes:
+            for coord in translated_var.dim_axes.values():
+                ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
+                self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
+                try:
+                    bounds_name = ds.cf.get_bounds(ds_coord_name).name
+                    _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                        'bounds', coord.name, bounds_name)
+                    coord.bounds = bounds_name
+                except KeyError:
+                    coord.bounds = None
+                    continue
+
+        for c_name in ds[tv_name].dims:
             if ds[c_name].size == 1:
                 if c_name == ds_axes['Z']:
                     # mis-identified scalar coordinate

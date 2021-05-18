@@ -414,15 +414,16 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         dependency inversion.
         """
         translate = core.VariableTranslator().get_convention(self.convention)
-        v.change_coord(
-            'T',
-            new_class = {
-                'self': diagnostic.VarlistTimeCoordinate,
-                'range': util.DateRange,
-                'frequency': util.DateFrequency
-            },
-            range=self.attrs.date_range
-        )
+        if v.T is not None:
+            v.change_coord(
+                'T',
+                new_class = {
+                    'self': diagnostic.VarlistTimeCoordinate,
+                    'range': util.DateRange,
+                    'frequency': util.DateFrequency
+                },
+                range=self.attrs.date_range
+            )
         v._id = next(self.id_number)
         v.dest_path = self.variable_dest_path(pod, v)
         try:

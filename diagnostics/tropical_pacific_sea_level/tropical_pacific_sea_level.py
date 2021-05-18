@@ -117,21 +117,17 @@ lat_range_list = [np.float(os.getenv('lat_min')),
 Model_name = [os.getenv('CASENAME')]        # model name in the dictionary
 Model_legend_name = [os.getenv('CASENAME')] # model name appeared on the plot legend
 
-
-
 # initialization
 modelin = {}
 path = {}
 #####################
-ori_syear = 1948
-ori_fyear = 2009
 
 modelfile = [[os.getenv('TAUUO_FILE')],
              [os.getenv('TAUVO_FILE')],
              [os.getenv('ZOS_FILE')]]
 areafile = os.getenv('AREACELLO_FILE')
 
-path[Model_name[0]]=[modeldir,modelfile]
+#path[Model_name[0]]=[modeldir,modelfile]
 
 Model_varname = [os.getenv('tauuo_var'),os.getenv('tauvo_var'),os.getenv('zos_var')]
 Model_dimname = [os.getenv('time_coord'),os.getenv('nlat_coord'),os.getenv('nlon_coord')]
@@ -139,27 +135,6 @@ Model_coordname = [os.getenv('lat_coord_name'),os.getenv('lon_coord_name')]
 
 xname = Model_dimname[2]
 yname = Model_dimname[1]
-
-
-
-
-for nmodel,model in enumerate(Model_name):
-    modeldir = path[model][0]
-    modelfile = path[model][1]
-    multivar = []
-    for file in modelfile :
-        if len(file) == 1 :
-            multivar.append([os.path.join(modeldir,file[0])])
-        elif len(file) > 1 :
-            multifile = []
-            for ff in file :
-                multifile.append(os.path.join(modeldir,ff))
-            multivar.append(multifile)
-    modelin[model] = multivar
-
-#### create time axis (datatime.datetime)
-timeax = xr.cftime_range(start=cftime.datetime(ori_syear,1,1),end=cftime.datetime(ori_fyear,12,1),freq='MS')
-timeax = timeax.to_datetimeindex()    # cftime => datetime64
 
 print('--------------------------')
 print('Start processing model outputs')
@@ -172,29 +147,31 @@ ds_model_mlist = {}
 mean_mlist = {}
 season_mlist = {}
 linear_mlist = {}
+
 #### models
 for nmodel,model in enumerate(Model_name):
     ds_model_list = {}
     mean_list = {}
     season_list = {}
     linear_list = {}
+
+    # read input data
+    ds_model = xr.open_mfdataset([os.getenv("TAUUO_FILE"),
+                                  os.getenv("TAUVO_FILE"),
+                                  os.getenv("ZOS_FILE"),
+                                  os.getenv("AREACELLO_FILE")],
+                                 compat="override",
+                                 use_cftime=True)
+
     for nvar,var in enumerate(Model_varname):
         print('read %s %s'%(model,var))
 
-        print(modelin[model][nvar][0])
-        # read input data
-        ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
-
-
-        # crop data (time)
-        ds_model['time'] = timeax
-        da_model = ds_model[var].where((ds_model['time.year'] >= syear)&
-                                       (ds_model['time.year'] <= fyear)
-                                       ,drop=True)
+        da_model = ds_model[var]
 
         # remove land value
-        da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
-        da_model[Model_coordname[0]] = da_model[Model_coordname[0]].where(da_model[Model_coordname[0]]<1000.,other=np.nan)
+        # fails = lon and lat not found
+        #da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
+        #da_model[Model_coordname[0]] = da_model[Model_coordname[0]].where(da_model[Model_coordname[0]]<1000.,other=np.nan)
 
         # store all model data
         ds_model_list[var] = da_model
@@ -208,9 +185,10 @@ for nmodel,model in enumerate(Model_name):
         ds_model_list[var] = ds_model_list[var].groupby('time.month')-season_list[var]
 
         # remove linear trend
-        linear_list[var] = da_linregress(ds_model_list[var],stTconfint=0.99)
+        # fails with two dimension error
+        #linear_list[var] = da_linregress(ds_model_list[var],stTconfint=0.99)
 
-    linear_mlist[model] = linear_list
+    #linear_mlist[model] = linear_list
     mean_mlist[model] = mean_list
     season_mlist[model] = season_list
     ds_model_mlist[model] = ds_model_list

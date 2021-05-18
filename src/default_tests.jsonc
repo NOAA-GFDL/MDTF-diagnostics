@@ -20,8 +20,8 @@
       "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
       "model" : "CESM",
       "convention" : "CESM",
-      "FIRSTYR" : 1993,
-      "LASTYR" : 2009,
+      "FIRSTYR" : 293,
+      "LASTYR" : 310,
       "pod_list": ["tropical_pacific_sea_level"]
     }
     //{

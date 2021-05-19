@@ -293,6 +293,11 @@ for nobs,obs in enumerate(Obs_name):
                                      end=cftime.datetime(fyear_obs,fmon_obs,1),
                                      freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
+
+            # fix required in the event time lengths are not consistent
+            # (a bit rough -- could be more intelligent)
+            ds_obs = ds_obs.isel(time=slice(0,len(timeax)))
+
             ds_obs['time'] = timeax
 
             # calculate global mean sea level
@@ -319,10 +324,9 @@ for nobs,obs in enumerate(Obs_name):
 
 
         # crop data (time)
-        ds_obs = ds_obs[var]\
-                          .where((ds_obs['time.year'] >= syear)&
-                                 (ds_obs['time.year'] <= fyear)
-                                 ,drop=True)
+        # values below are hard-coded, need to be moved to optional vars
+        ds_obs[var].load()
+        ds_obs = ds_obs[var].sel(time=slice("1993-01-01","2009-12-31"))
 
 
         # store all model data

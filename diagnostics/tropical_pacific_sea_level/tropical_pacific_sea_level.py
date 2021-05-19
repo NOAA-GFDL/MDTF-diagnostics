@@ -155,23 +155,38 @@ for nmodel,model in enumerate(Model_name):
     season_list = {}
     linear_list = {}
 
-    # read input data
-    ds_model = xr.open_mfdataset([os.getenv("TAUUO_FILE"),
-                                  os.getenv("TAUVO_FILE"),
-                                  os.getenv("ZOS_FILE"),
-                                  os.getenv("AREACELLO_FILE")],
-                                 compat="override",
-                                 use_cftime=True)
+    # read input data into three xr.Datasets
+
+    ds_tau = xr.open_mfdataset([os.getenv("TAUUO_FILE"),
+                                os.getenv("TAUVO_FILE")],
+                                use_cftime=True)
+
+    ds_zos = xr.open_mfdataset([os.getenv("ZOS_FILE")],use_cftime=True)
+
+    ds_areacello = xr.open_mfdataset([os.getenv("AREACELLO_FILE")],use_cftime=True)
+
+    # make a list of all datasets
+    all_datasets = [ds_tau, ds_zos, ds_areacello]
+
 
     for nvar,var in enumerate(Model_varname):
         print('read %s %s'%(model,var))
 
+        # search for the requested variable among the input datasets
+        da_model = None
+        for ds_model in all_datasets:
+            if var in ds_model.variables:
+                da_model = ds_model[var]
+                break
+
+        if da_model is None:
+            raise ValueError(f"Unable to find {var} in input files")
+
         da_model = ds_model[var]
 
         # remove land value
-        # fails = lon and lat not found
-        #da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
-        #da_model[Model_coordname[0]] = da_model[Model_coordname[0]].where(da_model[Model_coordname[0]]<1000.,other=np.nan)
+        da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
+        da_model[Model_coordname[0]] = da_model[Model_coordname[0]].where(da_model[Model_coordname[0]]<1000.,other=np.nan)
 
         # store all model data
         ds_model_list[var] = da_model
@@ -185,10 +200,9 @@ for nmodel,model in enumerate(Model_name):
         ds_model_list[var] = ds_model_list[var].groupby('time.month')-season_list[var]
 
         # remove linear trend
-        # fails with two dimension error
-        #linear_list[var] = da_linregress(ds_model_list[var],stTconfint=0.99)
+        linear_list[var] = da_linregress(ds_model_list[var],stTconfint=0.99)
 
-    #linear_mlist[model] = linear_list
+    linear_mlist[model] = linear_list
     mean_mlist[model] = mean_list
     season_mlist[model] = season_list
     ds_model_mlist[model] = ds_model_list
@@ -404,7 +418,7 @@ for nmodel,model in enumerate(Model_name):
     for nvar,var in enumerate(['curl_tau','zos']):
 
         # read areacello
-        da_area = xr.open_dataset(path[Model_name[0]][0]+areafile)['areacello']
+        da_area = ds_areacello[os.getenv("areacello_var")]
 
         # crop region
         ds_mask = mean_mlist[model][var].where(

@@ -433,6 +433,9 @@ for nmodel,model in enumerate(Model_name):
                       ,drop=True).compute()
         ds_mask = ds_mask/ds_mask
 
+        # hard-coded for now; needs to be addressed
+        xname = "nlon"
+        yname = "nlat"
 
         # calculate regional mean
         regionalavg_list['%s_%i_%i_%i_%i_season'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\

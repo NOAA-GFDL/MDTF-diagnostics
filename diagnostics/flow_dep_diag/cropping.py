@@ -1,9 +1,9 @@
 import xarray as xr
 
-file_path =
-output_path =
+file_path = None
+output_path = None
 
-#United States BB; replace with region of interest
+#United States BB provided; replace with region of interest
 #lon in range -180,180
 nla=71.36
 sla=18.91

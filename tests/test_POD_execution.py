@@ -1,15 +1,9 @@
 import os
 import sys
 import unittest
-if os.name == 'posix' and sys.version_info[0] < 3:
-    try:
-        import subprocess32 as subprocess
-    except (ImportError, ModuleNotFoundError):
-        import subprocess
-    else:
-        import subprocess
-from src.util import write_yaml
-import shared_test_utils as shared
+import subprocess
+from src.util import write_json
+from src.tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
@@ -34,7 +28,7 @@ if DOING_SETUP:
 
     pod_configs = shared.configure_pods(case_list, config_to_insert=temp_config)
     for pod in case_list['pods']:
-        write_yaml(pod_configs[pod], os.path.join(out_path, pod+'_temp.yml'))
+        write_json(pod_configs[pod], os.path.join(out_path, pod+'_temp.json'))
 
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
@@ -45,7 +39,7 @@ class TestSequenceMeta(type):
     def __new__(mcs, name, bases, test_dict):
         def generate_test(pod_name):
             def test(self):
-                temp_config_file = os.path.join(out_path, pod_name+'_temp.yml')
+                temp_config_file = os.path.join(out_path, pod_name+'_temp.json')
                 self.assertEqual(0, subprocess.check_call(
                     ['python', 'src/mdtf.py', temp_config_file]
                 ))

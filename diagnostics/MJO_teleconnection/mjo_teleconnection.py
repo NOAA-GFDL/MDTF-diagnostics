@@ -1,4 +1,4 @@
-# This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 # ==============================================================================================
 # mjo_teleconnection.py
@@ -49,7 +49,7 @@
 #     
 #     Please change the variable names and conversion factor according to your data before running
 #     MJO teleconnection diagnostic at :
-#     src/config_<model name>.yml
+#     src/config_<model name>.json
 #     Please provide each input variable into a single file
 #
 #   -------------------------------------------------------------------------------------------------------
@@ -61,92 +61,89 @@
 
 import os
 import subprocess
-import commands
+import time
 
 #============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
 #============================================================
 def generate_ncl_plots(nclPlotFile):
-   """generate_plots_call - call a nclPlotFile via subprocess call
+    """generate_plots_call - call a nclPlotFile via subprocess call
    
-   Arguments:
-   nclPlotFile (string) - full path to ncl plotting file name
-   """
-   # check if the nclPlotFile exists - 
-   # don't exit if it does not exists just print a warning.
-   try:
-      print("Calling ",nclPlotFile)
-      pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-      output = pipe.communicate()[0]
-      print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
-      while pipe.poll() is None:
-         time.sleep(0.5)
-   except OSError as e:
-      print('WARNING',e.errno,e.strerror)
+    Arguments:
+    nclPlotFile (string) - full path to ncl plotting file name
+    """
+    # check if the nclPlotFile exists - 
+    # don't exit if it does not exists just print a warning.
+    try:
+        print("Calling ",nclPlotFile)
+        pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0].decode()
+        print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
 
-   return 0
+    return 0
 
 
 print("=======================================================================")
 print("    Execution of MJO Teleconnection Diagnotics is started from here")
 print("-----------------------------------------------------------------------")
-os.environ["prec_file"] = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
-os.environ["olr_file"]  = os.environ["CASENAME"]+"."+os.environ["rlut_var"]+".day.nc"
-os.environ["u850_file"] = os.environ["CASENAME"]+"."+os.environ["u850_var"]+".day.nc"
-os.environ["u250_file"] = os.environ["CASENAME"]+"."+os.environ["u250_var"]+".day.nc"
-os.environ["z250_file"] = os.environ["CASENAME"]+"."+os.environ["z250_var"]+".day.nc"
+# create synonyms for env var names to avoid changes to rest of this POD's code
+os.environ["prec_file"] = os.environ["PR_FILE"]
+os.environ["olr_file"]  = os.environ["RLUT_FILE"]
+os.environ["u850_file"] = os.environ["U850_FILE"]
+os.environ["u250_file"] = os.environ["U250_FILE"]
+os.environ["z250_file"] = os.environ["Z250_FILE"]
 
 
-if os.path.isfile( os.environ["DATADIR"]+"/day/"+os.environ["prec_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ ["olr_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["u850_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["u250_file"]) & os.path.isfile(os.environ["DATADIR"]+"/day/"+os.environ["z250_file"]):
+if os.path.isfile(os.environ["prec_file"]) & os.path.isfile(os.environ["olr_file"]) \
+    & os.path.isfile(os.environ["u850_file"]) & os.path.isfile(os.environ["u250_file"]) \
+    & os.path.isfile(os.environ["z250_file"]):
 
-   print("Following input data file are found ")
-   print(os.environ["prec_file"])
-   print(os.environ["olr_file"])
-   print(os.environ["u850_file"])
-   print(os.environ["u250_file"])
-   print(os.environ["z250_file"])
-   print("-----------------------------------------------------------------------")      
+    print("Following input data file are found ")
+    print(os.environ["prec_file"])
+    print(os.environ["olr_file"])
+    print(os.environ["u850_file"])
+    print(os.environ["u250_file"])
+    print(os.environ["z250_file"])
+    print("-----------------------------------------------------------------------")      
 #===================================================================================
 #                               Set up directories
 #===================================================================================
 
-   if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
-      os.makedirs(os.environ["WK_DIR"]+"/htmls")
+    if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
+        os.makedirs(os.environ["WK_DIR"]+"/htmls")
 
 #======================================================================================
 #      Calling a NCL script to calculate RMM index of a given model data
 #======================================================================================
-   os.environ["strtdy"] = os.environ["FIRSTYR"]+"0101"
-   os.environ["lastdy"] = os.environ["LASTYR"] +"1231"
+    os.environ["strtdy"] = os.environ["FIRSTYR"]+"0101"
+    os.environ["lastdy"] = os.environ["LASTYR"] +"1231"
 
-   os.chdir(os.environ["DATADIR"])
+    os.chdir(os.environ["DATADIR"])
 
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_RMM_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_geop_hgt_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_prec_comp_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_U250_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_daig_Corr_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
-   generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
-#============================================================
-# copy additional html files
-#============================================================
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_RMM_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_geop_hgt_comp_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_prec_comp_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_U250_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_daig_Corr_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_EWR_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
 
-   if os.path.isfile( os.environ["WK_DIR"]+"/htmls/*.html" ):
-      os.system("rm -f "+os.environ["WK_DIR"]+"/htmls/*.html")
-   os.system("cp "+os.environ["POD_HOME"]+"/htmls/*.html "+os.environ["WK_DIR"]+ "/htmls")
       
 
 #============================================================
-   print("-----------------------------------------------------------------------------")
-   print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
-   print("=============================================================================")
-   print("Check: " + os.environ["WK_DIR"])
-   print( "now you can open index.html in browser to see the results " )
-   print("-----------------------------------------------------------------------------")
+    print("-----------------------------------------------------------------------------")
+    print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
+    print("=============================================================================")
+    print("Check: " + os.environ["WK_DIR"])
+    print( "now you can open index.html in browser to see the results " )
+    print("-----------------------------------------------------------------------------")
 
 else:
-   print("Requested Input data file are not found, Please check input data directory ")
-   print("check data directory and /util/config_XXX.yml to set variable names" )  
+    print("Requested Input data file are not found, Please check input data directory ")
+    print("check data directory and /util/config_XXX.json to set variable names" )  
    

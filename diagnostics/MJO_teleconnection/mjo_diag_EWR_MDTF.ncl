@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
@@ -13,8 +13,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 
-  Model = getenv("CASENAME") 
-  pr_conv=stringtointeger(getenv("pr_conversion_mm/day"))
+  Model = getenv("CASENAME")
   latS   = -10.
   latN   =  10.
 print("----------------------------------------------------------------------------------")
@@ -37,12 +36,10 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------
   print("Reading daily precipitation data") 
   pName     = getenv("pr_var")           ; mm/day
-  diri      = getenv("DATADIR")+"/day/"                               ;Input data directory
   dirobs    = getenv("OBS_DATA")+"/"
   diro      = getenv("WK_DIR")+"/model/netCDF/"
   filp      = getenv("prec_file")    
   filewcmip ="EWratio_wf_CMIP5"
-     print("Input data path   :" + diri)
      print("Input data file observation geop composite :" + filp)
    
      print("Input data path (Observations EWR) :" + dirobs)
@@ -57,7 +54,7 @@ print("-------------------------------------------------------------------------
 ;     Read user specified period
 ;************************************************************
 
-  f  = addfile(diri+filp, "r")  
+  f  = addfile(filp, "r")  
   temp_time = f->time
   
    calend = temp_time@calendar
@@ -76,11 +73,11 @@ print("-------------------------------------------------------------------------
   end if
   
 ; if(m .gt. 0)
- print("convert to mm/day")
-     P = P *pr_conv
+    print("convert kg m-2 s-1 flux to mm/day rate")
+    P = P * 86400.0
 ; end if
 
-      P@_FillValue = -999  
+   P@_FillValue = -999.0  
 
   delete(date_p)
   time_p = P&time                     ; clarity
@@ -93,15 +90,29 @@ print("removing  seasonal cycle")
    P!0 = "time_p"
    P!1 = "lat"
    P!2 = "lon"
-   P@_FillValue=-999
+   P@_FillValue=-999.0
 
    yyyyddd  = yyyymmdd_to_yyyyddd(date_p)
+   ;yyyymmdd_to_yyyyddd is deprecated but unsure why this workaround doesn't work
+   ;yyyyddd_double = cd_calendar(time_p, 4)
+   ;yyyy = floor(yyyyddd_double)
+   ;ddd = floor(365.0*(yyyyddd_double - yyyy)) + 1.0 ; runs from 1 to 365
+   ;yyyyddd = toint(1000.0*yyyy + ddd)
+   if (isatt(time_p,"calendar")) then           ; default is gregorian
+      yyyyddd@calendar = time_p@calendar  
+   end if
+   print("CALENDAR DEBUG")
+   printMinMax(yyyyddd, 0)
 
 ;calculate raw climatology then smooth it
 print("calculating raw and  smooth climatology ....")
-
+   print("DEBUG: "+num(ismissing(P))+" missing vals in pr")
    rawclim = clmDayTLL(P,yyyyddd)
+   print("DEBUG: "+num(ismissing(rawclim))+" missing vals in rawclim")
+   printVarSummary(P)
+   printVarSummary(rawclim)
    smoothclim = smthClmDayTLL(rawclim,2)
+   print("DEBUG: "+num(ismissing(smoothclim))+" missing vals in smoothclim")
 
    P_anom = calcDayAnomTLL(P,yyyyddd,smoothclim)
    P_anom@_FillValue=-999

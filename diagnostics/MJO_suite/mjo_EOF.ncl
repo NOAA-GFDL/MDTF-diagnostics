@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ;***********************************************************
 ; Generate conventional EOFs using 20-100 day filtered data
@@ -11,6 +11,7 @@ begin
 ; ===========================================================
 ; input data
 ;============================================================
+routine_name = "mjo_EOF.ncl"
 vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
@@ -75,7 +76,7 @@ gw0 = f[0]->gw
 
 ;   f       = addfile (diri+fili , "r")                         
 ;   TIME    = f->time                          ; days since ...
-;   YMD     = ut_calendar(TIME, -2)            ; entire (time,6)
+;   YMD     = cd_calendar(TIME, -2)            ; entire (time,6)
 
 ;   iStrt   = ind(YMD.eq.ymdStrt)              ; index start
 ;   iLast   = ind(YMD.eq.ymdLast)              ; index last 
@@ -86,18 +87,18 @@ gw0 = f[0]->gw
 do ivars = 0,dimsizes(vars)-1
   
   vName = vars(ivars)
-
+  print("Starting "+vName)
 ;***********************************************************
 ; Read anomalies
 ;***********************************************************
 ;   X       = f->$vName$(iStrt:iLast,{latS:latN},:) ; U_anom_sm
    X = f[ivars]->$vars(ivars)$(:,{latS:latN},:)
-   printVarSummary(X)
-   printMinMax(X, True)
+;   printVarSummary(X)
+;   printMinMax(X, True)
 
 ;   time    = f->time(iStrt:iLast)             ; days since ...
    time    = f[ivars]->time
-   t_utc = ut_calendar(time,0)
+   t_utc = cd_calendar(time,0)
 
    yrStrt = min(t_utc(:,0))
    yrLast = max(t_utc(:,0))
@@ -139,11 +140,16 @@ do ivars = 0,dimsizes(vars)-1
   time0 = new((/count(0)/),"double")
   time1 = new((/count(1)/),"double")
 
+if ( dimsizes(time) .gt. 1000 ) then
+  time_warning = dimsizes(time)+" time samples, may take a while. Check "+pltDir
+else
+  time_warning = " no time warning, nt "+dimsizes(time)
+end if
   
 do season = 0,1
 
 pltName = casename+".MJO.EOF."+vars(ivars)+"."+seasons_name(season)
-
+print("Computing "+vars(ivars)+", "+seasons_name(season)+". "+time_warning) 
 x_season = new((/count(season),nlat,mlon/),"float")
 x_season!0 = "time"
 x_season!1 = "lat"
@@ -197,8 +203,8 @@ end if
   delete(x_season)
   delete(x_season_w)
 
-  printVarSummary( eof )
-  printVarSummary( eof_ts )
+;  printVarSummary( eof )
+;  printVarSummary( eof_ts )
 
 ;------------------------------------------------------------
 ; PLOTS
@@ -209,10 +215,10 @@ end if
       pltTypeLocal = pltType
   end if
 
-  print(pltDir)
-  print(pltName)
+;  print(pltDir)
+;  print(pltName)
   pltPath = pltDir+pltName
-  print(pltPath)
+
 
   wks = gsn_open_wks(pltTypeLocal,pltPath)
   gsn_define_colormap(wks,"BlwhRe") 
@@ -294,12 +300,16 @@ end if
 ; create individual plots
 
   if(season.eq.0) then
-  yyyymmdd= ut_calendar(time0, -2)
+  ;yyyymmdd= cd_calendar(time0, -2)
+  yrfrac = cd_calendar(time0, 4)
   else
-  yyyymmdd= ut_calendar(time1, -2)
+  ;yyyymmdd= cd_calendar(time1, -2)
+  yrfrac = cd_calendar(time1, 4)
   end if
-  yrfrac  = yyyymmdd_to_yyyyfrac(yyyymmdd, 0.0)
-  delete(yrfrac@long_name)
+  ;yrfrac  = yyyymmdd_to_yyyyfrac(yyyymmdd, 0.0) ; yyyymmdd_to_yyyyfrac assumes gregorian year
+  if (isatt(yrfrac, "long_name")) then
+    delete(yrfrac@long_name)
+  end if
 
   nGrd    = nlat*mlon 
   eof_ts  = eof_ts/nGrd
@@ -320,16 +330,17 @@ end if
        end if
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
        system("convert "+pltConvert+" "+pltPath+".eps "+pltPath+".png")
-       system("/bin/rm -f "+pltPath+".eps")
+       system("rm -f "+pltPath+".eps")
    end if
 
 delete(pltName)
 delete(eof)
 delete(eof_ts)
 delete(work)
-delete(yyyymmdd)
+; delete(yyyymmdd)
 delete(yrfrac)
 
+print(routine_name+" wrote "+pltPath)
 end do ; season loop
 end do ; variable loop
 

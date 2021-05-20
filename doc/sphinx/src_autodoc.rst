@@ -1,13 +1,12 @@
-Code reference
-==============
+Internal framework code
+=======================
 
 .. autosummary::
 
    src.mdtf
    src.data_manager
    src.environment_manager
-   src.shared_diagnostic
-   src.util
+   src.diagnostic
 
 .. toctree::
    :maxdepth: 4
@@ -15,5 +14,4 @@ Code reference
    src.mdtf
    src.data_manager
    src.environment_manager
-   src.shared_diagnostic
-   src.util
+   src.diagnostic

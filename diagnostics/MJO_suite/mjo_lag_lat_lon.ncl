@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
@@ -8,6 +8,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
   
 ;******************** MAIN **********************************
 begin
+routine_name = "mjo_lat_lat_lon.ncl"
 vars = (/"pr","u850"/)
 casename = getenv("CASENAME")
 
@@ -72,7 +73,7 @@ nameSeason = (/"winter","summer","annual"/)
 
 ;  f      = addfile(dirp+filp, "r")  
   f      = addfile(filename_pr,"r")
-;  date_p = ut_calendar(f->time, -2)   ; entire file
+;  date_p = cd_calendar(f->time, -2)   ; entire file
 ;  iStrt  = ind(date_p.eq.twStrt)      ; desired dates
 ;  iLast  = ind(date_p.eq.twLast)
 ;  delete(date_p)
@@ -85,16 +86,16 @@ nameSeason = (/"winter","summer","annual"/)
 
   pr = f->$vars(0)$(:,{latS_globe:latN_globe},:) 
 
-  printVarSummary( pr )
-  printMinMax(pr, True)
+;  printVarSummary( pr )
+;  printMinMax(pr, True)
 
   time_pr = pr&time                     ; clarity
-  date_pr = ut_calendar(time_pr, -2 )   ; yyyymmdd
+  date_pr = cd_calendar(time_pr, -2 )   ; yyyymmdd
   
   wypr   = f->lat({latS_IO:latN_IO})  
   wypr   = cos(0.017459*wypr)         ; spatial wgt
 
-  t_utc = ut_calendar(time_pr,2)
+  t_utc = cd_calendar(time_pr,2)
   twStrt = min(t_utc(:))
   twLast = max(t_utc(:))
   
@@ -106,7 +107,7 @@ nameSeason = (/"winter","summer","annual"/)
 
 ;  f      = addfile(diru+filu, "r")  
   f      = addfile(filename_u850,"r")
-;  date_u2 = ut_calendar(f->time, -2)     ; entire file
+;  date_u2 = cd_calendar(f->time, -2)     ; entire file
 ;  iStrt  = ind(date_u.eq.twStrt)        ; desired dates
 ;  iLast  = ind(date_u.eq.twLast)
 ;  delete(date_u)
@@ -119,11 +120,11 @@ nameSeason = (/"winter","summer","annual"/)
 
   u850 = f->$vars(1)$(:,{latS_globe:latN_globe},:) 
 
-  printVarSummary( u850 )
-  printMinMax(u850, True)
+;  printVarSummary( u850 )
+;  printMinMax(u850, True)
 
   time_u850 = u850&time                     ; clarity
-  date_u850 = ut_calendar(time_u850 , -2 )  ; yyyymmdd
+  date_u850 = cd_calendar(time_u850 , -2 )  ; yyyymmdd
 
   wyu850    = f->lat({latS_IO:latN_IO})
   wyu850   = cos(0.017459*wyu850)          ; MJO Clivar says cos(lat) wgting
@@ -199,5 +200,8 @@ nameSeason = (/"winter","summer","annual"/)
      pltNameSeason = pltName+"."+nameSeason(ns)
      mjo_xcor_lag_ovly_panel(rpr_timelon, ru850_timelon, rpr_timelat, ru850_timelat \
                             ,pltType, pltDir, pltNameSeason, optPlot)
+
+     print(routine_name+" wrote "+pltDir+"/"+pltNameSeason+"."+pltType) ;lag.lat.lon.summer.ps
+                            
   end do
 end

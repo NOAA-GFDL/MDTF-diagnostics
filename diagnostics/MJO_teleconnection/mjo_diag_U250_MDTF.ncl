@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 ;------------------------------------------------------------------------------------
 ;CMIP 250mb zonal wind
@@ -30,7 +30,7 @@ dim_mo = tointeger(dim_yrs * 3.)
    print("Last year"+yrLast)
 g   = 9.81              ;- Gravity acceleration [m/s^2]
 ;-----Model------
-Model= getenv("CASENAME") 
+Model= getenv("CASENAME")
 
 ;-----------------------------------------------------------------------------------------
 ;-- read in reanalysis values of monthly zonal wind --
@@ -42,13 +42,11 @@ print("Reading DJF mean ERA-I(1979-2016) zonal wind data .....")
 ;---------------------------------------------------------------------------------
 ;--directory for output files--
 ;---------------------------------------------------------------------------------
-diri    = getenv("DATADIR")+"/day/"                               ;Input data directory
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
 diro    = getenv("WK_DIR")+"/model/netCDF/" 
 filobsU = "ERAi.1979_2016.DJF.mean.nc"
 filu250   = getenv("u250_file")                   ; input file
 
-print("Input data path :" + diri)
 print("Output data path :" + diro)
 print("Input data file for Observed U250 :" + filobsU)
 print("Input data file for"+Model+ "U250 :" + filu250)
@@ -81,7 +79,7 @@ print("-------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------------------
 print("Reading Model 250hPa zonal wind data")
 
- b =addfile(diri+filu250,"r")   ;(time,lat,lon), 
+ b =addfile(filu250,"r")   ;(time,lat,lon), 
 
 ;--- read in time ---
    temp_time = b->time
@@ -92,8 +90,7 @@ print("Reading Model 250hPa zonal wind data")
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
 
-
- Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
+    Ut  = tofloat(b->$u250var$(iStrt:iLast,:,:))	 	;type: double orig.
  Ut@_FillValue=-999
 
 

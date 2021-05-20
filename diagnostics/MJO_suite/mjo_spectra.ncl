@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
@@ -8,7 +8,8 @@ load "$POD_HOME/my_cam_diags.ncl"
    
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
-vars = (/"pr","rlut","u200","u850","v200","v200"/)
+routine_name = "mjo_spectra.ncl"
+vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
 
@@ -18,7 +19,7 @@ filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"
 filename_u850 = file_dir+casename+".u850.day.anom.nc"
 filename_v200 = file_dir+casename+".v200.day.anom.nc"
-filename_v850 = file_dir+casename+".v200.day.anom.nc"
+filename_v850 = file_dir+casename+".v850.day.anom.nc"
 
   nameSeason = (/"winter" , "summer"/)
 
@@ -72,7 +73,7 @@ do ivars = 0,dimsizes(vars)-1
 ; time indices corresponding to the desired time window
 ;************************************************************
 
-  date  = ut_calendar(f[ivars]->time, -2)   ; entire file
+  date  = cd_calendar(f[ivars]->time, -2)   ; entire file
   twStrt = min(date)
   twLast = max(date)
 ;  iStrt = ind(date.eq.twStrt)        ; desired dates
@@ -89,11 +90,11 @@ do ivars = 0,dimsizes(vars)-1
 ;      X = f->$vName$(iStrt:iLast,{latS:latN},:) 
 ;  end if
   X = f[ivars]->$vars(ivars)$(:,{latS:latN},:)
-  printVarSummary( X )
-  printMinMax(X, True)
+;  printVarSummary( X )
+;  printMinMax(X, True)
 
   time  = X&time                     ; clarity
-  date  = ut_calendar( time , -2 )   ; yyyymmdd
+  date  = cd_calendar( time , -2 )   ; yyyymmdd
 
 ;************************************************************
 ; MJO Clivar says to average the data over latitude and
@@ -151,7 +152,7 @@ do ivars = 0,dimsizes(vars)-1
   res@tmXBValues = 1./(/-5,-10,-20,-30,-90,90,30,20,10,5/)     ; choose first 13 timesteps
   res@tmXBLabels = (/"5d","10d","20d","30d","90d","90d","30d","20d","10d","5d"/)
  
-  print (" *** Plotting ***")
+;  print (" *** Plotting ***")
   res@gsnLeftString = ""
   res@gsnRightString = ""
   res@gsnCenterString = ""
@@ -170,6 +171,7 @@ do ivars = 0,dimsizes(vars)-1
      pan@txString = vars(ivars)+":"+twStrt+" to "+twLast
      gsn_panel(wks,plot,(/1,1/),pan)
      
+     print(routine_name+ " wrote "+ pltDir+"/"+pltName+"."+nameSeason(ns)+"."+pltType)
   end do
 
   delete(res@cnLevels)

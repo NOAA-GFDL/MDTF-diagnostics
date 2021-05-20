@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ; FILE: mjo.ncl
 
@@ -11,11 +11,13 @@ begin
 ; each daily file has 30 days of data
 ; U200(time,lat,lon)
 
+routine_name = "mjo.ncl"
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
 file_dir = getenv("WK_DIR")+"/model/netCDF/"
 yr1 = getenv("FIRSTYR")
 yr2 = getenv("LASTYR")
+time_coord = getenv("time_coord")
 
 firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
@@ -29,7 +31,10 @@ if (ndays .gt. maxdays) then
   ndays = maxdays
 end if
 u200 = f->u200(0:ndays-1,{-10:10},:) 
-yrfrac = yyyymmdd2yyyyFrac(date(0:ndays-1),0) ; second arg is an offset
+; yrfrac = yyyymmdd2yyyyFrac(date(0:ndays-1),0) ; second arg is an offset
+; yrfrac = yyyymmdd_to_yyyyfrac(date(0:ndays-1), 0.0) ; second arg is an offset
+yrfrac_time = f->$time_coord$
+yrfrac = cd_calendar(yrfrac_time(0:ndays-1), 4)
 yrfrac!0 = "date as fraction of year"
 
 ; compute weighted area ave of U200 over tropics
@@ -82,6 +87,17 @@ res@vpHeightF = 0.30
 res@trXMinF = firstyr
 res@trXMaxF = lastyr+1
 
+if ( False ) then
+  print("DEBUG yrfrac")
+  print(getvardims(yrfrac)+": "+dimsizes(yrfrac))
+  print("DEBUG data")
+  print(getvardims(data)+": "+dimsizes(data))
+  print("DEBUG filtered")
+  print(getvardims(filtered)+": "+dimsizes(filtered))
+  print("DEBUG var_fil")
+  print(getvardims(var_fil)+": "+dimsizes(var_fil))
+end if
+
 ; First Plot
 res@gsnCenterString = casename+" Mean of Daily 200 mb Zonal Wind (10S-10N)" 
 res@trYMaxF = 15.0
@@ -109,4 +125,5 @@ pan@gsnPaperOrientation = "portrait"
 pan@gsnPanelYWhiteSpacePercent = 2.0
 gsn_panel(wks,plot,(/3,1/),pan)
 
+print(routine_name+" wrote "+psplot+".ps")
 end

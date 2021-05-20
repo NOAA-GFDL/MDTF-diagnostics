@@ -101,4 +101,3 @@ dependencies:
   - zipp=3.4.1=pyhd3eb1b0_0
   - zlib=1.2.11=h1de35cc_3
   - zstd=1.4.9=h322a384_0
-prefix: /Users/drewr/opt/anaconda3/envs/MDTF_flow_dep_diag

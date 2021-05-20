@@ -17,7 +17,7 @@ def climAnom(var_path, var_name):
     ds = ds.squeeze()
     da = ds[var_name]
     da_ensmean = da.copy()
-    da_day_clim = da_ensmean.groupby('{time_coord}.dayofyear'.format(**os.environ)).mean(time_var) #.format(**os.environ)
+    da_day_clim = da_ensmean.groupby('{time_coord}.dayofyear'.format(**os.environ)).mean(time_var)
     da_day_anom = da.groupby('{time_coord}.dayofyear'.format(**os.environ)) - da_day_clim
     da_day_anom = da_day_anom.drop('dayofyear')
     da_day_anom.to_netcdf("{WK_DIR}/model/netCDF/".format(**os.environ) + var_name + "_climAnom.nc")

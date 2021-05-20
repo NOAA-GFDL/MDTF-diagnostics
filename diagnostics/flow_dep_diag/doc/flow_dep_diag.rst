@@ -95,27 +95,6 @@ modeled circulation patterns, as well as biases associated with their temporal c
 of occurrence, duration, persistence and transitions. Relationships between these biases and climate
 teleconnections (e.g., ENSO and MJO) are explored using different models.
 
-FIGURE1
-
-Here's the syntax for including a figure in the document:
-
-The tag lets you refer to figures in the text, e.g.
-``:ref:`Figure 1 <my-figure-tag>``` → :ref:`Figure 1 <my-figure-tag>`.
-
-.. code-block:: restructuredtext
-
-   .. _my-figure-tag: [only needed for linking to figures]
-
-   .. figure:: [path to image file, relative to the source.rst file]
-      :align: left
-      :width: 75 % [these both need to be indented by three spaces]
-
-      Paragraphs or other text following the figure that are indented by three
-      spaces are treated as a caption/legend, eg:
-
-      Figure 1. Weather types (WT, or “flows”) in the MERRA reanalysis and in a suite of GFDL model experiments
-      (for details, see Muñoz et al 2017). Some biases in magnitude and spatial rotation in WT3 and WT5 are indicated.
-
 .. _figure1:
 
 .. figure:: figure1.png
@@ -136,8 +115,6 @@ Beyond the analysis of spatial biases in the modeled atmospheric circulation pat
 in temporal characteristics. A variety of metrics have been suggested by Muñoz et al (2017), and are summarized
 in :ref:`Figure 3 <figure3>`.
 
-FIGURE2
-
 .. _figure2:
 
 .. figure:: figure2.png
@@ -145,8 +122,6 @@ FIGURE2
    :width: 75 %
 
    Figure 2. Atmospheric circulation, rainfall and sea-surface temperature (SST) patterns associated to weather type 5 (WT5).
-
-FIGURE3
 
 .. _figure3:
 

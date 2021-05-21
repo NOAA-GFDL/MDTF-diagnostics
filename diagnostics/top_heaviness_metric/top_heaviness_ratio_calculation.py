@@ -115,9 +115,28 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2/O1 ERA5 ',loc='center',fontsize=18)
     fig = fig.savefig("{WK_DIR}/model/Top-Heaviness Ratio ERA5.pdf", format='pdf',bbox_inches='tight')    
+    #====================== O2/O1 top-heaviness ratio =======================
+    fig, axes = plt.subplots(figsize=(8,4))
+    mmid=(Q2_explained_era5+Q1_explained_era5)/total_variance_era5
+    lons, lats = np.meshgrid(lon_GEFS, lat_GEFS)
+    m = basemap(projection="cyl",llcrnrlat=lat_era5[ilat][0],urcrnrlat=lat_era5[ilat][-1],\
+            llcrnrlon=lon_era5[ilon][0],urcrnrlon=lon_era5[ilon][0],ax=axes,resolution='c')
+    m.drawcoastlines(linewidth=0.5, color="black")
+    m.drawparallels(np.arange(lat_era5[ilat][0],lat_era5[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
+    m.drawmeridians(np.arange(lon_era5[ilon][0],lon_era5[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
+    X,Y = m(x,y)
+    cmap = plt.get_cmap('RdBu_r')
+    clevs=np.arange(0,1,.05)
+    im = m.contourf(X,Y,mmid,20,cmap=cmap,extend='both')
+    axes.set_title('Explained Var. by Q1 & Q2 July',loc='center',fontsize=16,y=1.02)
+    plt.colorbar(im,orientation='horizontal', pad=0.15,shrink=.9,aspect=45)
+    fig = fig.savefig("{WK_DIR}/model/Explained Var ERA5.pdf", format='pdf',bbox_inches='tight')    
+
     print("Plotting Completed")
+    
 
 top_heaviness_ratio_calculation(os.environ["OMEGA_FILE"],os.environ["OMEGA_var"])
+
 
 
 

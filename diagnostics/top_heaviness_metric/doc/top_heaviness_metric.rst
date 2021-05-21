@@ -86,13 +86,12 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
 
 .. Explained_Variance_by_Q1&Q2_ERA5:
 
-.. figure:: Top-Heaviness_Ratio_July_ERA5.png
+.. figure:: Q1&Q2.png, vertical motion from varied ratio.png
    :align: center
    :width: 75 %
    
 
-   Figure 1. Weather types (WT, or “flows”) in the MERRA reanalysis and in a suite of GFDL model experiments
-   (for details, see Muñoz et al 2017). Some biases in magnitude and spatial rotation in WT3 and WT5 are indicated.
+   Figure 1. Variance explained by Q1 and Q2
 
 For example, :ref:`Figure 1 <figure1>` exhibits atmospheric circulation patterns for North Eastern North America,
 as analyzed by :ref:`Muñoz (2017) <ref-Muñoz1>`, in a reanalysis and in different model experiments produced using GFDL models

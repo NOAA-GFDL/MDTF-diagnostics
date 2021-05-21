@@ -91,7 +91,7 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
    :width: 75 %
    
 
-   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red)
+   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 For example, :ref:`Figure 1 <figure1>` exhibits atmospheric circulation patterns for North Eastern North America,
 as analyzed by :ref:`Muñoz (2017) <ref-Muñoz1>`, in a reanalysis and in different model experiments produced using GFDL models
@@ -110,7 +110,7 @@ in :ref:`Figure 3 <figure3>`.
    :align: left
    :width: 75 %
 
-   Figure 2. Atmospheric circulation, rainfall and sea-surface temperature (SST) patterns associated to weather type 5 (WT5).
+   Figure 2. Percentage of variance explained by Q1 and Q2.
 
 .. _figure3:
 
@@ -118,4 +118,4 @@ in :ref:`Figure 3 <figure3>`.
    :align: left
    :width: 75 %
 
-   Figure 3. A brief list of suggested metrics to evaluate flow-dependent temporal characteristics in models.
+   Figure 3. Top-Heaviness Ratio.  

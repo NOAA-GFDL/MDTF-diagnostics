@@ -84,7 +84,7 @@ of occurrence, duration, persistence and transitions. Relationships between thes
 teleconnections (e.g., ENSO and MJO) are explored using different models.
 
 
-.. _figure1:
+.. Explained_Variance_by_Q1&Q2_ERA5:
 
 .. figure:: Explained_Variance_by_Q1&Q2_ERA5.pdf
    :align: left

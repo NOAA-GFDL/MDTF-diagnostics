@@ -67,22 +67,9 @@ Jiacheng and Zhuo's paper is under developing...
 More about this diagnostic
 --------------------------
 
-Common approaches to diagnose systematic errors involve the computation of metrics aimed at providing
-an overall summary of the performance of the model in reproducing the particular variables of interest
-in the study, normally tied to specific spatial and temporal scales.
+Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Through such approximation, figure 2 reveals that using these two base functions can help tp explain most of the tropical and subtropical ocean. Top-heaviness ratio in figure 3 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation. 
 
-However, the evaluation of model performance is not always tied to the understanding of the physical
-processes that are correctly represented, distorted or even absent in the model world. As the physical
-mechanisms are more often than not related to interactions taking place at multiple time and spatial scales,
-cross-scale model diagnostic tools are not only desirable but required. Here, a recently proposed
-circulation-based diagnostic framework is extended to consider systematic errors in both spatial and temporal
-patterns at multiple timescales.
-
-The framework, which uses a weather-typing dynamical approach, quantifies biases in shape, location and tilt of
-modeled circulation patterns, as well as biases associated with their temporal characteristics, such as frequency
-of occurrence, duration, persistence and transitions. Relationships between these biases and climate
-teleconnections (e.g., ENSO and MJO) are explored using different models.
-
+The top-heaviness is a useful tool to diagnose the coupling between diabatic process and large-scale circulation. If the model is not able to reproduce correct pattern of top-heaviness ratio, this would imply potential deficiencies in deep convection and stratiform scheme. In the future POD develop, we are considering adding shallow convection as a third base function. By doing so will enable us to further investigate the bias source of tropical and subtropical predicability. 
 
 .. Explained_Variance_by_Q1&Q2_ERA5:
 

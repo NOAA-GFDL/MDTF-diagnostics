@@ -86,7 +86,7 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
 
 .. _figure1:
 
-.. figure:: figure1.png
+.. figure:: Explained_Variance_by_Q1&Q2_ERA5.pdf
    :align: left
    :width: 75 %
 

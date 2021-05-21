@@ -86,7 +86,7 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
 
 .. Explained_Variance_by_Q1&Q2_ERA5:
 
-.. figure:: Q1&Q2.png, vertical motion from varied ratio.png
+.. figure:: Q1&Q2.png; vertical motion from varied ratio.png
    :align: center
    :width: 75 %
    

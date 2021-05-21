@@ -43,7 +43,7 @@ import os
 import glob
 
 missing_file=0
-if len(glob.glob(os.environ["WAP_FILE"]))==0:
+if len(glob.glob(os.environ["OMEGA_FILE"]))==0:
     print("Required OMEGA data missing!")
     missing_file=1
 
@@ -51,15 +51,15 @@ if missing_file==1:
     print("Top-heaviness metric diagnostics Package will NOT be executed!")
 else:
     try:
-        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_metric.py")
+        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_calculation.py")
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("**************************************************")
-        print("Top-Heaviness Metric Diagnostics (top_heaviness_metric.py) is NOT Executed as Expected!")
+        print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
         print("**************************************************")
 
     print("**************************************************")
-    print("Top-Heaviness Metric Diagnostics (top_heaviness_metric.py) Executed!")
+    print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) Executed!")
     print("**************************************************")
 
 

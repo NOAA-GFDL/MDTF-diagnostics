@@ -106,7 +106,7 @@ in :ref:`Figure 3 <figure3>`.
 
 .. _figure2:
 
-.. figure:: figure2.png
+.. figure:: Explained_Variance_by_Q1&Q2_ERA5.png
    :align: left
    :width: 75 %
 
@@ -114,7 +114,7 @@ in :ref:`Figure 3 <figure3>`.
 
 .. _figure3:
 
-.. figure:: figure3.png
+.. figure:: Top-Heaviness_Ratio_July_ERA5.png
    :align: left
    :width: 75 %
 

@@ -16,15 +16,54 @@
   },
   "dimensions": {
     "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"}
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    }
   },
-
+  "data": {
+    "frequency": "6hr"
+  },
   "varlist" : {
-    "sftlf": {
-      "standard_name" : "land_area_fraction",
-      "units": "1",
+    "orog": {
+      "standard_name" : "surface_altitude",
+      "units": "m",
       "dimensions": ["lat", "lon"], 
       "use_exact_name": true
-    } 
+    }, 
+    "clt": {
+      "standard_name" : "cloud_area_fraction",
+      "units": "1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    }, 
+    "pr": {
+      "standard_name" : "precipitation_flux",
+      "units": "kg m-2 s-2",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+   "psl": {
+      "standard_name" : "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "wap500": {
+      "standard_name" : "custom_wap500",
+      "units": "Pa s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "prw": {
+      "standard_name" : "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2", 
+      "dimensions": ["time", "lat", "lon"],
+      "use_exact_name": true
+    }
   }
 }

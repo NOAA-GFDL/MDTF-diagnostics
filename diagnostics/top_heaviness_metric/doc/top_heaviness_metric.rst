@@ -86,13 +86,13 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
 
 .. Explained_Variance_by_Q1&Q2_ERA5:
 
-.. figure:: Q1&Q2.png; vertical motion from varied ratio.png
+.. figure:: Q1&Q2_R.png
    :align: center
    :width: 75 %
    
 
-   Figure 1. Variance explained by Q1 and Q2
-
+   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red)
+   
 For example, :ref:`Figure 1 <figure1>` exhibits atmospheric circulation patterns for North Eastern North America,
 as analyzed by :ref:`Muñoz (2017) <ref-Muñoz1>`, in a reanalysis and in different model experiments produced using GFDL models
 LOAR and FLOR. The POD permits for the calculation of the atmospheric circulation patterns :ref:`Figure 1 <figure1>` as well as

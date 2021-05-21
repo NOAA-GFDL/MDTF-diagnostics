@@ -28,6 +28,11 @@
       "units": "Pa s-1",
       "dimensions": ["time", "lev", "lat", "lon"]
     }
+    "lsm": {
+      "standard_name": "land_area_fraction",
+      "units": "1",
+      "dimensions": [ "lat", "lon"]
+    }   
   }
 }
 

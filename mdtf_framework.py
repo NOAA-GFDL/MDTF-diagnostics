@@ -4,7 +4,7 @@
 # See http://gfdl.noaa.gov/mdtf-diagnostics.
 
 # NOTE: Under the standard installation procedure, users should never call this
-# script directly, but should instead call the "mdtf" wrapper shell script 
+# script directly, but should instead call the "mdtf" wrapper shell script
 # created during installation.
 
 import sys
@@ -19,9 +19,9 @@ from src import cli
 from src.util import logs
 
 def validate_base_environment():
-    """Check that the package's required third-party dependencies (listed in 
+    """Check that the package's required third-party dependencies (listed in
     src/conda/env_base.yml) are accessible.
-    """        
+    """
     # checking existence of one third-party module is imperfect, but will
     # catch the most common case where user hasn't installed environments
     try:
@@ -33,8 +33,8 @@ def validate_base_environment():
             "at mdtf-diagnostics.rtfd.io/en/latest/sphinx/start_install.html.")
 
 def main():
-    # get dir of currently executing script: 
-    code_root = os.path.dirname(os.path.realpath(__file__))    
+    # get dir of currently executing script:
+    code_root = os.path.dirname(os.path.realpath(__file__))
     # Cache log info in memory until log file is set up
     logs.initial_log_config()
 
@@ -46,7 +46,7 @@ def main():
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         cli_obj.print_help()
         return 0 # will actually exit from print_help
-    elif sys.argv[1].lower() == 'info': 
+    elif sys.argv[1].lower() == 'info':
         from src import mdtf_info
         # "subparser" for command-line info
         mdtf_info.InfoCLIHandler(code_root, sys.argv[2:])
@@ -56,7 +56,7 @@ def main():
         print(f"=== Starting {os.path.realpath(__file__)}\n")
         validate_base_environment()
 
-        # not printing help or info, setup CLI normally 
+        # not printing help or info, setup CLI normally
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         framework = cli_obj.dispatch()
         exit_code = framework.main()

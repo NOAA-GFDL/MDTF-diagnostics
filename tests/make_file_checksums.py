@@ -11,7 +11,7 @@ def checksum_in_subtree_1(rootdir, reference_subdirs, exclude_exts=[]):
     checksum_dict = {}
     for d1 in reference_subdirs:
         p1 = os.path.join(rootdir, d1)
-        assert os.path.isdir(p1)   
+        assert os.path.isdir(p1)
         checksum_dict[d1] = shared.checksum_files_in_subtree(p1, exclude_exts)
     return checksum_dict
 
@@ -21,18 +21,18 @@ def make_output_data_dict(rootdir, case_list, exclude_exts=[]):
     for c in case_list:
         d1 = c['dir']
         p1 = os.path.join(rootdir, d1)
-        assert os.path.isdir(p1)   
+        assert os.path.isdir(p1)
         checksum_dict[d1] = {}
         for d2 in c['pod_list']:
             p2 = os.path.join(rootdir, d1, d2)
-            assert os.path.isdir(p2) 
+            assert os.path.isdir(p2)
             checksum_dict[d1][d2] = shared.checksum_files_in_subtree(p2, exclude_exts)
     return checksum_dict
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config_file', nargs='?', type=str, 
+    parser.add_argument('config_file', nargs='?', type=str,
                         default='', help="Configuration file.")
     args = parser.parse_args()
 

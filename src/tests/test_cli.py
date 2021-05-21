@@ -29,9 +29,9 @@ class TestWordWrap(unittest.TestCase):
 
     def test_word_wrap(self):
         str1 = """
-            Here's a multiline test string; we'll test to see 
+            Here's a multiline test string; we'll test to see
             if the indentation is removed
-            and if it 
+            and if it
             gets word wrapped to 80 columns, etc.
         """
         str2 = ("Here's a multiline test string; we'll test to see if the "
@@ -40,10 +40,10 @@ class TestWordWrap(unittest.TestCase):
 
     def test_word_wrap_multipara(self):
         str1 = """
-            Here's a multiline test string; we'll test to see  
-            if the indentation is removed  
+            Here's a multiline test string; we'll test to see
+            if the indentation is removed
             and if it
-            
+
             gets word wrapped to 80 columns, etc.
             \n\nExplicit para break
         """
@@ -103,11 +103,11 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
         p = _parser_from_dict({
             "usage": 'foo',
             "description": """long multiline description text, although strictly
-                speaking we covered this in TestWordWrap, but why not test it 
+                speaking we covered this in TestWordWrap, but why not test it
                 again
             """,
             "arguments": [{
-                "name": "foo", 
+                "name": "foo",
                 "help": "foo help",
                 "metavar": "<foo metavar>",
                 "default": "bar"}],
@@ -299,11 +299,11 @@ class TestParseDummyInput(unittest.TestCase):
             pass
 
     def test_parse_dummy_input(self):
-        # get dir of currently executing script: 
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        # get dir of currently executing script:
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         cli_obj = cli.MDTFTopLevelArgParser(
-            code_root, 
+            code_root,
             skip_defaults=True,
             argv= f"-f {os.path.join(cwd, 'dummy_config.json')}"
         )

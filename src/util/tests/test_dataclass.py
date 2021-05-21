@@ -49,7 +49,7 @@ class TestRegexDataclassInheritance(unittest.TestCase):
                     self.spatial_avg = 'global_mean'
                 else:
                     self.spatial_avg = None
-                    
+
         drs_directory_regex = util.RegexPattern(r"""
                 /?(CMIP6/)?(?P<activity_id>\w+)/(?P<grid_label>\w+)/
             """, input_field="directory"
@@ -89,7 +89,7 @@ class TestRegexDataclassInheritance(unittest.TestCase):
                     self.spatial_avg = 'global_mean'
                 else:
                     self.spatial_avg = None
-                    
+
         parent2_regex = util.RegexPattern(r"""
                 x(?P<grid_number>\d?)x(?P<spatial_avg>\w+)x
             """, input_field="parent2"
@@ -103,7 +103,7 @@ class TestRegexDataclassInheritance(unittest.TestCase):
             def __post_init__(self):
                 if self.spatial_avg:
                     self.spatial_avg += '_mean'
-                    
+
         child_regex = util.RegexPattern(r"""
                 (?P<activity_id>\w+)/(?P<grid_label>\w+)/(?P<redundant_label>\w+)/
             """, input_field="directory"
@@ -119,9 +119,9 @@ class TestRegexDataclassInheritance(unittest.TestCase):
         foo = Child('bazinga/gm6/x6xglobalx/')
         self.assertDictEqual(
             dataclasses.asdict(foo),
-            {'parent2': 'x6xglobalx', 'grid_number': 6, 'spatial_avg': 'global_mean', 
-            'parent1': 'gm6', 'directory': 'bazinga/gm6/x6xglobalx/', 
-            'activity_id': 'bazinga', 'grid_label': 'gm6', 
+            {'parent2': 'x6xglobalx', 'grid_number': 6, 'spatial_avg': 'global_mean',
+            'parent1': 'gm6', 'directory': 'bazinga/gm6/x6xglobalx/',
+            'activity_id': 'bazinga', 'grid_label': 'gm6',
             'redundant_label': 'x6xglobalx'}
         )
         # conflict in assignment to fields of same name in parent dataclasses
@@ -147,7 +147,7 @@ class TestMDTFDataclass(unittest.TestCase):
         @util.mdtf_dataclass
         class Dummy(object):
             b: int = None
-        
+
             def __post_init__(self):
                 self.b += 5
 
@@ -160,7 +160,7 @@ class TestMDTFDataclass(unittest.TestCase):
         @util.mdtf_dataclass
         class Dummy(object):
             a: str = None
-        
+
             def __post_init__(self):
                 self.a = 5
 
@@ -171,7 +171,7 @@ class TestMDTFDataclass(unittest.TestCase):
         @util.mdtf_dataclass
         class Dummy(object):
             a: str = None
-        
+
             def __post_init__(self):
                 self.a = util.MANDATORY
 
@@ -211,7 +211,7 @@ class TestMDTFDataclass(unittest.TestCase):
             a: str = util.MANDATORY
 
         @util.mdtf_dataclass
-        class Dummy2(object):    
+        class Dummy2(object):
             b: int = util.NOTSET
 
         @util.mdtf_dataclass

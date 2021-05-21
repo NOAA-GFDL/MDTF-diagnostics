@@ -87,8 +87,9 @@ teleconnections (e.g., ENSO and MJO) are explored using different models.
 .. Explained_Variance_by_Q1&Q2_ERA5:
 
 .. figure:: Explained_Variance_by_Q1&Q2_ERA5.pdf
-   :align: left
+   :align: center
    :width: 75 %
+   
 
    Figure 1. Weather types (WT, or “flows”) in the MERRA reanalysis and in a suite of GFDL model experiments
    (for details, see Muñoz et al 2017). Some biases in magnitude and spatial rotation in WT3 and WT5 are indicated.

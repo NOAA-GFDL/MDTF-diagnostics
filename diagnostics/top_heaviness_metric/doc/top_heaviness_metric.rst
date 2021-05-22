@@ -94,7 +94,7 @@ in :ref:`Figure 3 <figure3>`.
 .. _figure2:
 
 .. figure:: Explained_Variance_by_Q1&Q2_ERA5.png
-   :align: left
+   :align: center
    :width: 75 %
 
    Figure 2. Percentage of variance explained by Q1 and Q2.
@@ -102,7 +102,7 @@ in :ref:`Figure 3 <figure3>`.
 .. _figure3:
 
 .. figure:: Top-Heaviness_Ratio_July_ERA5.png
-   :align: left
+   :align: center
    :width: 75 %
 
    Figure 3. Top-Heaviness Ratio.  

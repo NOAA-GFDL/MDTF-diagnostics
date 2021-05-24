@@ -12,8 +12,7 @@ Version & Contact info
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#bullet-lists
 
 - Version/revision information: version 1.0 (5/21/2021)
-- PI (Jiacheng Ye, Department of Atmospheric Sciences UIUC, jye18@illinois.edu)
-- Developer/point of contact (Jiacheng Ye, jye18@illinois.edu and Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
+- Developer/point of contact (Jiacheng Ye, jye18@illinois.edu, DAS UIUC; Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
 
 .. Underline with '^'s to make a third-level heading.
 

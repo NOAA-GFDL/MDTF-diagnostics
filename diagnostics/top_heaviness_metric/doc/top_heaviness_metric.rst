@@ -80,16 +80,6 @@ The top-heaviness is a useful tool to diagnose the coupling between diabatic pro
 
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
    
-For example, :ref:`Figure 1 <figure1>` exhibits atmospheric circulation patterns for North Eastern North America,
-as analyzed by :ref:`Muñoz (2017) <ref-Muñoz1>`, in a reanalysis and in different model experiments produced using GFDL models
-LOAR and FLOR. The POD permits for the calculation of the atmospheric circulation patterns :ref:`Figure 1 <figure1>` as well as
-for the rainfall and temperature anomaly fields related to each “flow”, computed via a composite analysis.
-It’s also possible to identify the typical sea-surface temperature patterns related to the occurrence of each
-pattern :ref:`Figure 2 <figure2>`.
-
-Beyond the analysis of spatial biases in the modeled atmospheric circulation patterns, the POD can help assess biases
-in temporal characteristics. A variety of metrics have been suggested by Muñoz et al (2017), and are summarized
-in :ref:`Figure 3 <figure3>`.
 
 .. _figure2:
 

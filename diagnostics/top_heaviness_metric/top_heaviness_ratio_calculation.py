@@ -23,7 +23,6 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     lev_era5=ds[lev].values
     lat_era5=ds[lat].values
     lon_era5=ds[lon].values
-    lsm_erai=ds[lsm].values
     isort=np.argsort(lev_era5)[::-1] # descending
     mid_omega_era5=ds[reanalysis_var].values # mon x lev x lat x lon; for the sample data (JAS over 2000-2019) 
     mid_omega_era5=mid_omega_era5[:,isort]

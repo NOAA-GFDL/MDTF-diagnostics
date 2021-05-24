@@ -42,17 +42,12 @@ As a module of the MDTF code package, all scripts of this package can be found u
 Required programming language and libraries
 -------------------------------------------
 
-Python3 packages: "netCDF4", "xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib",
-"numba", "datetime", "typing"
+Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "basemap"
 
 Required model output variables
 -------------------------------
 
-(1) Geopotential height anomalies at 500 hPa (units: HPa, daily resolution)
-
-(2) Rainfall (units: mm/day, daily resolution)
-
-(3) Temperature (units: Celsius, daily resolution)
+Monthly three spatial dimension Omega (units: Pa/s)
 
 
 References

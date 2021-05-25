@@ -15,35 +15,6 @@ from sklearn.decomposition import PCA
 import xarray as xr
 from typing import Tuple
 
-def download_data(url, authkey, outfile, force_download=False):
-    """A smart function to download data from IRI Data Library
-    If the data can be read in and force_download is False, will read from file
-    Otherwise will download from IRIDL and then read from file
-
-    PARAMETERS
-    ----------
-        url: the url pointing to the data.nc file
-        authkey: the authentication key for IRI DL (see above)
-        outfile: the data filename
-        force_download: False if it's OK to read from file, True if data *must* be re-downloaded
-    """
-
-    if not force_download:
-        try:
-            data = xr.open_dataset(outfile, decode_times=False)
-        except:
-            force_download = True
-
-    if force_download:
-        # calls curl to download data
-        command = "curl -L -k -b '__dlauth_id={}' '{}' > {}".format(authkey, url, outfile)
-        #command = "curl -L '{}' > {}".format(url, outfile)
-        get_ipython().system(command)
-        # open the data
-        data = xr.open_dataset(outfile, decode_times=False)
-
-    return data
-
 def get_number_eof(X: np.ndarray, var_to_explain: float, plot=False) -> int:
     """Get the number of EOFs of X that explain a given variance proportion
     """

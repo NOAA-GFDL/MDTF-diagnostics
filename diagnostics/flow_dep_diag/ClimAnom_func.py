@@ -1,7 +1,6 @@
 import os
 import xarray as xr
 import numpy as np
-import pandas as pd
 from datetime import datetime
 np.seterr(divide='ignore', invalid='ignore')
 

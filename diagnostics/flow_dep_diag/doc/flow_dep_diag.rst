@@ -48,7 +48,7 @@ As a module of the MDTF code package, all scripts of this package can be found u
 Required programming language and libraries
 -------------------------------------------
 
-Python3 packages: "netCDF4", "xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib",
+Python3 packages: "netCDF4", "xarray", "numpy", "sklearn", "cartopy", "matplotlib",
 "numba", "datetime", "typing"
 
 Required model output variables

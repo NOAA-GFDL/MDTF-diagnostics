@@ -40,7 +40,7 @@
 #
 #   This diagnostic runs on the most recent version of python3.
 #   The required packages are as follows, and all should be the most updated version.
-#   Python Libraries used: "netCDF4", "xarray", "numpy", "pandas", "sklearn",
+#   Python Libraries used: "netCDF4", "xarray", "numpy", "sklearn",
 #                          "cartopy", "matplotlib", "numba", "datetime", "typing"
 #
 # Required model output variables

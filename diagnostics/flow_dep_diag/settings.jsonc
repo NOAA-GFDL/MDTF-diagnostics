@@ -5,7 +5,7 @@
     "realm" : "atmos",
     "description" : "Comparing daily atmospheric circulation pattern characteristics in reanalysis and models",
     "runtime_requirements" : {
-      "python3" : ["netCDF4", "xarray", "numpy", "pandas", "sklearn", "cartopy", "matplotlib", "numba", "datetime", "typing"]
+      "python3" : ["netCDF4", "xarray", "numpy", "sklearn", "cartopy", "matplotlib", "numba", "datetime", "typing"]
     },
     "pod_env_vars" : {
     // Number of simulations run in reanalysis weather typing.

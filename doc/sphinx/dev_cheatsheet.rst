@@ -6,13 +6,13 @@ Where are the files?
 
 My POD scripts and supporting documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-POD files should be placed in a directory that you create in MDTF-diagnostics/diagnostics: MDTF-diagnostics/diagnostics/[POD name]
+POD files should be placed in a directory that you create in MDTF-diagnostics/diagnostics: MDTF-diagnostics/diagnostics/[POD name].
 The files include:
-   - settings.jsonc: settings file for your POD. You can use the example/settings.jsonc file as template
-   - POD scripts
-   - documentation : place in a directory called MDTF-diagnostics/diagnostics/[POD name]/doc
-      - POD description and links to supporting documentation (.rst file(s))
-      - supporting figures
+- settings.jsonc: settings file for your POD. You can use the example/settings.jsonc file as template
+- POD scripts
+- documentation : place in a directory called MDTF-diagnostics/diagnostics/[POD name]/doc. Documentation includes:
+    - POD description and links to supporting documentation (.rst file(s))
+    - supporting figures
 
 Input Model Data for my POD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -20,7 +20,7 @@ The default input data locations are:
    - model input data: MDTF-diagnostics/../inputdata/model/[dataset name]/[output frequency]
    - observational input data: MDTF-diagnostics/../inputdata/obs_data/[POD name]
 Sample datasets should be submitted using the default directory structure.
-You may re-define input data locations in the `MODEL_DATA_ROOT` and `OBS_DATA_ROOT`definitions in the
+You may re-define input data locations in the MODEL_DATA_ROOT and OBS_DATA_ROOT definitions in the
 default_tests.jsonc file (or whatever the name of your runtime settings jsonc file is).
 
 Output Data from my POD
@@ -41,9 +41,9 @@ The ${WK_DIR}/[POD NAME]/POD.html file should be modified to include the paths t
 How do I define variables for my POD?
 -------------------------------------
 
-Add variables to the `varlist` block in the MDTF-diagnostics/diagnostics/[POD name]/settings.jsonc and define the following:
+Add variables to the "varlist" block in the MDTF-diagnostics/diagnostics/[POD name]/settings.jsonc and define the following:
 - the variable name: the short name that will generate the corresponding ${ENV_VAR}
-(e.g., `zg500` generates the ${ENV_VAR} `zg500_var`)
+(e.g., "zg500" generates the ${ENV_VAR} "zg500_var")
 - the standard name with a corresponding entry in the appropriate fieldlist file(s). If your variable is not in the necessary fieldlist file(s),
 add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the develop branch into your POD branch.
 - variable units

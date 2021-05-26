@@ -4,8 +4,9 @@ import os
 import xarray as xr
 import numpy as np
 from scipy import integrate
+import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import basemap
+from mpl_toolkits.basemap import Basemap
 
 
 #Setting variables equal to environment variables set by the diagnostic
@@ -133,8 +134,7 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     print("Plotting Completed")
     
 
-top_heaviness_ratio_calculation(os.environ["OMEGA_FILE"],os.environ["OMEGA_var"])
-
+top_heaviness_ratio_calculation(os.environ["OMEGA_FILE"],os.environ["omega_var"])
 
 
 

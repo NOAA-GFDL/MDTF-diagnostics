@@ -14,7 +14,7 @@
   "dimensions" : {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
-    "plev": {
+    "lev": {
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
@@ -23,10 +23,10 @@
     "time": {"standard_name": "time"}
   },  
   "varlist": {
-    "OMEGA": {
+    "omega": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
-      "dimensions": ["time", "plev", "lat", "lon"]
+      "dimensions": ["time", "lev", "lat", "lon"]
     }   
   }
 }

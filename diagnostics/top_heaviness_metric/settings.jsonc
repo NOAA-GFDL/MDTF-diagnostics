@@ -1,33 +1,32 @@
 {
-  "settings" : {
+  "settings" : { 
     "driver" : "top_heaviness_metric.py",
     "long_name" : "Top Heaviness Metric Diagnostic",
     "realm" : "atmos",
     "description": "The vertical profiles of diabatic heating have important implications for large-scale dynamics, especially for the coupling between the large-scale atmospheric circulation and precipitation processes. We adopt an objective approach to examine the top-heaviness of vertical motion, which is closely related to the heating profiles and a commonly available model output variable. The diagnostic/metric can also be used to evaluate the top-heaviness of diabatic heating.", 
     "runtime_requirements": {
       "python3": ["netCDF4", "xarray", "numpy", "scipy", "matplotlib", "basemap"]
-    }
-  },
+    }   
+  },  
   "data": {
     "frequency": "mon"
-  },
-  "dimensions": {
+  },  
+  "dimensions" : {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
-      "axis": "Z"
-    },
+      "axis": "Z" 
+    },  
     "time": {"standard_name": "time"}
-  },
+  },  
   "varlist": {
-    "omega": {
+    "OMEGA": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
       "dimensions": ["time", "plev", "lat", "lon"]
-    }
+    }   
   }
 }
-

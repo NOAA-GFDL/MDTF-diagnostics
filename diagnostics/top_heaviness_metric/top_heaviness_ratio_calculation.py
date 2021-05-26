@@ -4,9 +4,8 @@ import os
 import xarray as xr
 import numpy as np
 from scipy import integrate
-import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+from mpl_toolkits.basemap import basemap
 
 
 #Setting variables equal to environment variables set by the diagnostic

@@ -1,7 +1,7 @@
 Top-Heaviness Metric Diagnostic Documentation
 ================================
 
-Last update: 5/21/2021
+Last update: 5/27/2021
 
 The vertical profiles of diabatic heating have important implications for large-scale dynamics, especially for the coupling between the large-scale atmospheric circulation and precipitation processes. We adopt an objective approach to examine the top-heaviness of vertical motion (Back et al. 2017), which is closely related to the heating profiles and a commonly available model output variable. The diagnostic metric can also be used to evaluate the diabatic heating profile.
 
@@ -61,7 +61,7 @@ Jiacheng and Zhuo's paper is under developing...
 More about this diagnostic
 --------------------------
 
-Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Through such approximation, figure 2 reveals that using these two base functions can help tp explain most of the tropical and subtropical ocean. Top-heaviness ratio in figure 3 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation. 
+Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Top-heaviness ratio in figure 2 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation.  Through approximating monthly mean vertical motion profile by Q1 and Q2, figure 3 and figure 4 reveal that using these two base functions can help tp explain most of the tropical and subtropical ocean. 
 
 The top-heaviness is a useful tool to diagnose the coupling between diabatic process and large-scale circulation. If the model is not able to reproduce correct pattern of top-heaviness ratio, this would imply potential deficiencies in deep convection and stratiform scheme. In the future POD develop, we are considering adding shallow convection as a third base function. By doing so will enable us to further investigate the bias source of tropical and subtropical predicability. 
 
@@ -75,18 +75,27 @@ The top-heaviness is a useful tool to diagnose the coupling between diabatic pro
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
+
 .. _figure2:
+
+.. figure:: Top-Heaviness Ratio.png
+   :align: center
+   :width: 75 %
+
+   Figure 2. Top-Heaviness Ratio in July (2000-2019).  
+   
+.. _figure3:
 
 .. figure:: Explained_Variance_by_Q1&Q2_ERA5.png
    :align: center
    :width: 75 %
 
-   Figure 2. Percentage of variance explained by Q1 and Q2.
+   Figure 3. Proportion of Interannual Variance Explained by Q1 and Q2.png.
 
-.. _figure3:
+.. _figure4:
 
-.. figure:: Top-Heaviness_Ratio_July_ERA5.png
+.. figure:: R2 Between Recon. Omega & Original.png
    :align: center
    :width: 75 %
 
-   Figure 3. Top-Heaviness Ratio.  
+   Figure 4. R U+33A1 Between Reconstructed LTM Omega & Original profile.

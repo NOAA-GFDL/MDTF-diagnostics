@@ -25,9 +25,9 @@ default_tests.jsonc file (or whatever the name of your runtime settings jsonc fi
 
 Output Data from my POD
 ^^^^^^^^^^^^^^^^^^^^^^^
-${WK_DIR} is a framework environment variable defining the working directory, and is set to MDTF-diagnostics/../wkdir by default.
-${WK_DIR} contains POD output figures, temporary files, and logs.
-You can modify ${WK_DIR} by changing "WORKING_DIR" to the desired location in default_tests.jsonc.
+``${WK_DIR}`` is a framework environment variable defining the working directory, and is set to MDTF-diagnostics/../wkdir by default.
+``${WK_DIR}`` contains POD output figures, temporary files, and logs.
+You can modify ``${WK_DIR}`` by changing "WORKING_DIR" to the desired location in default_tests.jsonc.
 
 You can also modify the "OUTPUT_DIR" option in default_tests.jsonc to write output files to a different location if you wish.
 "OUTPUT_DIR" defaults to "WORKING_DIR" if it is not defined.
@@ -42,10 +42,11 @@ How do I define variables for my POD?
 -------------------------------------
 
 Add variables to the "varlist" block in the MDTF-diagnostics/diagnostics/[POD name]/settings.jsonc and define the following:
-- the variable name: the short name that will generate the corresponding ${ENV_VAR}
-(e.g., "zg500" generates the ${ENV_VAR} "zg500_var")
+- the variable name: the short name that will generate the corresponding ``${ENV_VAR}``
+(e.g., "zg500" generates the ``${ENV_VAR}`` "zg500_var")
 - the standard name with a corresponding entry in the appropriate fieldlist file(s). If your variable is not in the necessary fieldlist file(s),
-add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the develop branch into your POD branch.
+add them to the file(s), or open an issue on GitHub requesting that the framework team add them.
+Once the files are updated, merge the changes from the develop branch into your POD branch. Note that the variable name and the standard name must be unique fieldlist entries.
 - variable units
 - variable dimensions (e.g., [time, lat, lon])
 - scalar coordinates for variables defined on a specific atmospheric pressure level (e.g. {"lev": 250} for a field on the 250-hPa p level).
@@ -54,7 +55,8 @@ How do I define and reference environment variables?
 ----------------------------------------------------
 
 - To define an environment variable specific to your POD, add a "pod_env_vars" block to the "settings" block inyour POD's settings.jsonc file and define the desired variables.
-Reference the a variable in your POD (python) code using os.environ["VARIABLE NAME"].
+Reference the a variable in your POD (python) code by calling ``os.environ["VARIABLE NAME"]``.
+NCL code can reference environment variables by calling ``getenv("VARIABLE NAME")``.
 
 - You can reference the environment variables defined by the framework using os.environ["ENV_VARIABLE_NAME"].
 Framework-specific environment variables include:

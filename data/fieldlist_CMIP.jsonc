@@ -18,9 +18,9 @@
       "axis": "Z"
     },
     "standard_hybrid_sigma": {
-      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate", 
-      "units": "1", 
-      "axis": "Z", 
+      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "units": "1",
+      "axis": "Z",
       "positive": "down"
     }
   },
@@ -196,7 +196,7 @@
       "units": "kg m-2",
       "ndim": 3
     },
-    // Variables for SM_ET_coupling module 
+    // Variables for SM_ET_coupling module
     "mrsos": {
       "standard_name": "mass_content_of_water_in_soil_layer",
       "units": "kg m-2",

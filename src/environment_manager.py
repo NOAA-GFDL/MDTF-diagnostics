@@ -20,32 +20,32 @@ class AbstractEnvironmentManager(abc.ABC):
     def setup(self): pass
 
     @abc.abstractmethod
-    def create_environment(self, env_name): pass 
+    def create_environment(self, env_name): pass
 
     @abc.abstractmethod
-    def get_pod_env(self, pod): pass 
+    def get_pod_env(self, pod): pass
 
     @abc.abstractmethod
-    def activate_env_commands(self, env_name): pass 
+    def activate_env_commands(self, env_name): pass
 
     @abc.abstractmethod
-    def deactivate_env_commands(self, env_name): pass 
+    def deactivate_env_commands(self, env_name): pass
 
     @abc.abstractmethod
-    def destroy_environment(self, env_name): pass 
+    def destroy_environment(self, env_name): pass
 
     def tear_down(self): pass
 
 class NullEnvironmentManager(AbstractEnvironmentManager):
-    """:class:`AbstractEnvironmentManager` which performs no environment 
-    switching. Useful only as a dummy setting for building framework test 
+    """:class:`AbstractEnvironmentManager` which performs no environment
+    switching. Useful only as a dummy setting for building framework test
     harnesses.
     """
     def create_environment(self, env_name):
-        pass 
-    
+        pass
+
     def destroy_environment(self, env_name):
-        pass 
+        pass
 
     def get_pod_env(self, pod):
         pass
@@ -57,11 +57,11 @@ class NullEnvironmentManager(AbstractEnvironmentManager):
         return []
 
 class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
-    """:class:`AbstractEnvironmentManager` that manages dependencies assuming 
-    that current versions of the scripting language executables are already 
+    """:class:`AbstractEnvironmentManager` that manages dependencies assuming
+    that current versions of the scripting language executables are already
     available on ``$PATH``. For python-based PODs, it uses pip and virtualenvs
     to install needed libraries. For R-based PODs, it attempts to install needed
-    libraries into the current user's ``$PATH``. For other scripting languages, 
+    libraries into the current user's ``$PATH``. For other scripting languages,
     no library management is performed.
     """
     def __init__(self):
@@ -91,7 +91,7 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
             'deactivate'
         ]:
             util.run_shell_command(cmd)
-    
+
     def _create_r_venv(self, env_name, r_pkgs):
         r_pkg_str = ', '.join(['"'+x+'"' for x in r_pkgs])
         if self.r_lib_root != '':
@@ -109,7 +109,7 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
             util.run_shell_command(cmd)
 
     def destroy_environment(self, env_key):
-        pass 
+        pass
 
     def get_pod_env(self, pod):
         env_key = [pod.name]
@@ -225,7 +225,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             raise
 
     def destroy_environment(self, env_name):
-        pass 
+        pass
 
     def get_pod_env(self, pod):
         if pod.name in self.env_list:
@@ -243,11 +243,11 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             elif 'python3' in langs:
                 return self.env_name_prefix + 'python3_base'
             else:
-                _log.error("Can't find environment providing %s", 
+                _log.error("Can't find environment providing %s",
                     pod.runtime_requirements)
 
     def activate_env_commands(self, env_name):
-        """Source conda_init.sh to set things that aren't set b/c we aren't 
+        """Source conda_init.sh to set things that aren't set b/c we aren't
         in an interactive shell.
         """
         # conda_init for bash defines conda as a shell function; will get error
@@ -259,18 +259,18 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         ]
 
     def deactivate_env_commands(self, env_name):
-        return [] 
-    
+        return []
+
 # ============================================================================
 
 class AbstractRuntimeManager(abc.ABC):
     """Interface for RuntimeManagers.
     """
     @abc.abstractmethod
-    def setup(self): pass 
+    def setup(self): pass
 
     @abc.abstractmethod
-    def run(self): pass 
+    def run(self): pass
 
     @abc.abstractmethod
     def tear_down(self): pass
@@ -289,7 +289,7 @@ class SubprocessRuntimePODWrapper(object):
 
     def pre_run_setup(self):
         self.log_handle = io.open(
-            os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"), 
+            os.path.join(self.pod.POD_WK_DIR, self.pod.name+".log"),
             'w', encoding='utf-8'
         )
         log_str = f"### Starting {self.pod.name}\n"
@@ -328,7 +328,7 @@ class SubprocessRuntimePODWrapper(object):
         raise exc # include in production, or just for debugging?
 
     def run_commands(self):
-        """Produces the shell command(s) to run the POD. 
+        """Produces the shell command(s) to run the POD.
         """
         #return [self.program + ' ' + self.driver]
         return ['/usr/bin/env python -u '+self.pod.driver]
@@ -336,19 +336,19 @@ class SubprocessRuntimePODWrapper(object):
     def run_msg(self):
         """Log message when execution starts.
         """
-        str_ = util.abbreviate_path(self.pod.driver, 
+        str_ = util.abbreviate_path(self.pod.driver,
             self.pod.POD_CODE_DIR, '$POD_CODE_DIR')
         return f"Calling python {str_}"
 
     def validate_commands(self):
-        """Produces the shell command(s) to validate the POD's runtime environment 
-        (ie, check for all requested third-party module dependencies.) 
-        Dependencies are passed as arguments to the shell script 
+        """Produces the shell command(s) to validate the POD's runtime environment
+        (ie, check for all requested third-party module dependencies.)
+        Dependencies are passed as arguments to the shell script
         ``src/validate_environment.sh``, which is invoked in the POD's subprocess
         before the POD is run.
 
         Returns:
-            (:py:obj:`str`): Command-line invocation to validate the POD's 
+            (:py:obj:`str`): Command-line invocation to validate the POD's
                 runtime environment.
         """
         paths = core.PathManager()
@@ -399,16 +399,16 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     def __init__(self, pod_dict, EnvMgrClass):
         config = core.ConfigManager()
         self.test_mode = config.test_mode
-        # transfer all pods, even failed ones, because we need to call their 
+        # transfer all pods, even failed ones, because we need to call their
         self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]
         self.env_mgr = EnvMgrClass()
 
-        # Need to run bash explicitly because 'conda activate' sources 
+        # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         self.bash_exec = find_executable('bash')
-        
+
     def iter_active_pods(self):
-        """Generator iterating over all wrapped pods which haven't been skipped 
+        """Generator iterating over all wrapped pods which haven't been skipped
         due to requirement errors.
         """
         for p in self.pods:
@@ -441,7 +441,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         assert os.path.isdir(p.pod.POD_WK_DIR)
         env_vars = env_vars_base.copy()
         env_vars.update(p.env_vars)
-        # Need to run bash explicitly because 'conda activate' sources 
+        # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         return subprocess.Popen(
             commands,
@@ -478,7 +478,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
                 continue
         # should use asyncio, instead wait for each process
         # to terminate and close all log files
-        # TODO: stderr gets eaten with current setup; possible to do a proper 
+        # TODO: stderr gets eaten with current setup; possible to do a proper
         # tee if procs are run with asyncio? https://stackoverflow.com/a/59041913
         for p in self.pods:
             if p.process is not None:

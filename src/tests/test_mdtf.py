@@ -15,8 +15,8 @@ class TestMDTFArgParsing(unittest.TestCase):
         }
 
     def tearDown(self):
-        # call _reset method deleting clearing PathManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing PathManager for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         temp = configs.PathManager(unittest = True)
         temp._reset()
@@ -44,7 +44,7 @@ class TestMDTFArgParsing(unittest.TestCase):
         mdtf = MDTFFramework.__new__(MDTFFramework)
         mdtf.config = self.config_test.copy()
         mdtf.set_mdtf_env_vars()
-        self.assertEqual(mdtf.config['envvars']['E'], 'F')      
+        self.assertEqual(mdtf.config['envvars']['E'], 'F')
 
     @mock.patch('src.util.check_dirs')
     def test_sset_mdtf_env_vars_config_rgb(self, mock_check_dirs):

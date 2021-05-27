@@ -1,3 +1,4 @@
+# 26 May top_heaviness_metric.py
 # Top-Heaviness Metric 
 #
 # ================================================================================
@@ -35,7 +36,7 @@
 #   1) Back, L. E., Hansen, Z., & Handlos, Z. (2017). Estimating vertical motion profile top-heaviness: 
 #   Reanalysis compared to satellite-based observations and stratiform rain fraction. 
 #   Journal of the Atmospheric Sciences, 74(3), 855-864.
-#   2) Our paper which focuses on GEFS v12 diagnostics is under progress
+#   2) Our paper which focuses on GEFS v12 diagnostics is under progress...
 # 
 
 # driver file
@@ -57,9 +58,18 @@ else:
         print("**************************************************")
         print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
         print("**************************************************")
+    # if the user only focuses on calculating top-heaviess ratio instead of applying some tests on 
+    #   ratio robustness, the user can choose not to run the following python file.  
+    try:
+        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_robustness_calc.py")
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
+        print("**************************************************")
+        print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_robustness_calc.py) is NOT Executed as Expected!")
+        print("**************************************************")
 
     print("**************************************************")
-    print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) Executed!")
+    print("Top-Heaviness Metric Diagnostics Executed!")
     print("**************************************************")
 
 

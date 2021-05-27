@@ -74,20 +74,20 @@ The top-heaviness is a useful tool to diagnose the coupling between diabatic pro
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
-.. figure:: Top-Heaviness Ratio.png
+.. figure:: Top_Heaviness_Ratio.png
    :align: center
    :width: 75 %
 
    Figure 2. Top-Heaviness Ratio in July (2000-2019).  
    
 
-.. figure:: Explained_Variance_by_Q1&Q2_ERA5.png
+.. figure:: Proportion_of_explained_Interannual_Variance.png
    :align: center
    :width: 75 %
 
    Figure 3. Proportion of Interannual Variance Explained by Q1 and Q2.png.
 
-.. figure:: R2 Between Recon. Omega & Original.png
+.. figure:: R2_Between_Recon_Omega&Original.png
    :align: center
    :width: 75 %
 

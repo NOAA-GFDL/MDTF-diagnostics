@@ -60,7 +60,7 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O1 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout() 
-    fig = fig.savefig("{WK_DIR}/model/Long term mean of O1.png", format='png',bbox_inches='tight')
+    fig = fig.savefig("{WK_DIR}/model/Long_term_mean_of_O1.png", format='png',bbox_inches='tight')
     #====================== O2 =======================
     fig, axes = plt.subplots(figsize=(8,4))
     x,y = np.meshgrid(lon_obs,lat_obs) 
@@ -75,7 +75,7 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout()
-    fig = fig.savefig("{WK_DIR}/model/Long term mean of O2.png", format='png',bbox_inches='tight')    
+    fig = fig.savefig("{WK_DIR}/model/Long_term_mean_of_O2.png", format='png',bbox_inches='tight')    
     #====================== O2/O1 top-heaviness ratio =======================
     fig, axes = plt.subplots(figsize=(8,4))
     mmid1=O2_obs/O1_obs
@@ -92,7 +92,7 @@ def top_heaviness_ratio_calculation(reanalysis_path, reanalysis_var):
     im0 = m.contourf(X,Y,mmid1,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('Top-heaviness Ratio (O2/O1)',loc='center',fontsize=18)
-    fig = fig.savefig("{WK_DIR}/model/Top-Heaviness Ratio.png", format='png',bbox_inches='tight') 
+    fig = fig.savefig("{WK_DIR}/model/Top_Heaviness_Ratio.png", format='png',bbox_inches='tight') 
     
     print("Plotting Completed")
         

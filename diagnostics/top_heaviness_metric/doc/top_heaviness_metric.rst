@@ -65,7 +65,6 @@ Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by i
 
 The top-heaviness is a useful tool to diagnose the coupling between diabatic process and large-scale circulation. If the model is not able to reproduce correct pattern of top-heaviness ratio, this would imply potential deficiencies in deep convection and stratiform scheme. In the future POD develop, we are considering adding shallow convection as a third base function. By doing so will enable us to further investigate the bias source of tropical and subtropical predicability. 
 
-.. Explained_Variance_by_Q1&Q2_ERA5:
 
 .. figure:: Q1&Q2_R.png
    :align: center
@@ -74,7 +73,6 @@ The top-heaviness is a useful tool to diagnose the coupling between diabatic pro
 
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
    
-.. Explained_Variance_by_Q1&Q2_ERA5:
 
 .. figure:: Top-Heaviness Ratio.png
    :align: center
@@ -82,15 +80,12 @@ The top-heaviness is a useful tool to diagnose the coupling between diabatic pro
 
    Figure 2. Top-Heaviness Ratio in July (2000-2019).  
    
-.. _figure3:
 
 .. figure:: Explained_Variance_by_Q1&Q2_ERA5.png
    :align: center
    :width: 75 %
 
    Figure 3. Proportion of Interannual Variance Explained by Q1 and Q2.png.
-
-.. _figure4:
 
 .. figure:: R2 Between Recon. Omega & Original.png
    :align: center

@@ -199,7 +199,7 @@
       "standard_name": "air_temperature",
       "units": "K",
       "ndim": 4
-    // },
+    },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw": {
       // check name: is this column integrated?

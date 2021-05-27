@@ -7,7 +7,6 @@ from sklearn.decomposition import PCA
 import cartopy.crs as ccrs
 from cartopy import feature
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 # The following are function scripts which the diagnostic calls to run specific calculations
 # refer to PyWR.py and ClimAnom_func.py for details on imported functions
 from PyWR import *
@@ -73,7 +72,6 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     xmin,xmax = reanalysis[lon_coord].min(), reanalysis[lon_coord].max()
     ymin,ymax = reanalysis[lat_coord].min(), reanalysis[lat_coord].max()
     plot_path = "{WK_DIR}/model/PS/model_plot.png".format(**os.environ)
-    title_string = "{CASENAME}: Weather Types composite ({FIRSTYR}-{LASTYR})".format(**os.environ)
     # Set up the Figure
     plt.rcParams.update({'font.size': 12})
     fig, axes = plt.subplots(

@@ -46,7 +46,7 @@ Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "basemap"
 Required model output variables
 -------------------------------
 
-Monthly three spatial dimension Omega (units: Pa/s)
+Monthly 3-D spatial dimension Omega (units: Pa/s)
 
 
 References
@@ -61,7 +61,7 @@ Jiacheng and Zhuo's paper is under developing...
 More about this diagnostic
 --------------------------
 
-Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Top-heaviness ratio in figure 2 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation.  Through approximating monthly mean vertical motion profile by Q1 and Q2, figure 3 and figure 4 reveal that using these two base functions can help tp explain most of the tropical and subtropical ocean. 
+Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Top-heaviness ratio in figure 2 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation.  Through approximating monthly mean vertical motion profile by Q1 and Q2, figure 3 and figure 4 reveal that using these two base functions can help to explain most of the tropical and subtropical ocean. 
 
 The top-heaviness is a useful tool to diagnose the coupling between diabatic process and large-scale circulation. If the model is not able to reproduce correct pattern of top-heaviness ratio, this would imply potential deficiencies in deep convection and stratiform scheme. In the future POD develop, we are considering adding shallow convection as a third base function. By doing so will enable us to further investigate the bias source of tropical and subtropical predicability. 
 

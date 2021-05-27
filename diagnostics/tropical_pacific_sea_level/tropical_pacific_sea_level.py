@@ -117,21 +117,17 @@ lat_range_list = [np.float(os.getenv('lat_min')),
 Model_name = [os.getenv('CASENAME')]        # model name in the dictionary
 Model_legend_name = [os.getenv('CASENAME')] # model name appeared on the plot legend
 
-
-
 # initialization
 modelin = {}
 path = {}
+
 #####################
-ori_syear = 1948
-ori_fyear = 2009
 
 modelfile = [[os.getenv('TAUUO_FILE')],
              [os.getenv('TAUVO_FILE')],
              [os.getenv('ZOS_FILE')]]
 areafile = os.getenv('AREACELLO_FILE')
 
-path[Model_name[0]]=[modeldir,modelfile]
 
 Model_varname = [os.getenv('tauuo_var'),os.getenv('tauvo_var'),os.getenv('zos_var')]
 Model_dimname = [os.getenv('time_coord'),os.getenv('nlat_coord'),os.getenv('nlon_coord')]
@@ -140,26 +136,6 @@ Model_coordname = [os.getenv('lat_coord_name'),os.getenv('lon_coord_name')]
 xname = Model_dimname[2]
 yname = Model_dimname[1]
 
-
-
-
-for nmodel,model in enumerate(Model_name):
-    modeldir = path[model][0]
-    modelfile = path[model][1]
-    multivar = []
-    for file in modelfile :
-        if len(file) == 1 :
-            multivar.append([os.path.join(modeldir,file[0])])
-        elif len(file) > 1 :
-            multifile = []
-            for ff in file :
-                multifile.append(os.path.join(modeldir,ff))
-            multivar.append(multifile)
-    modelin[model] = multivar
-
-#### create time axis (datatime.datetime)
-timeax = xr.cftime_range(start=cftime.datetime(ori_syear,1,1),end=cftime.datetime(ori_fyear,12,1),freq='MS')
-timeax = timeax.to_datetimeindex()    # cftime => datetime64
 
 print('--------------------------')
 print('Start processing model outputs')
@@ -172,25 +148,42 @@ ds_model_mlist = {}
 mean_mlist = {}
 season_mlist = {}
 linear_mlist = {}
+
 #### models
 for nmodel,model in enumerate(Model_name):
     ds_model_list = {}
     mean_list = {}
     season_list = {}
     linear_list = {}
+
+    # read input data into three xr.Datasets
+
+    ds_tau = xr.open_mfdataset([os.getenv("TAUUO_FILE"),
+                                os.getenv("TAUVO_FILE")],
+                                use_cftime=True)
+
+    ds_zos = xr.open_mfdataset([os.getenv("ZOS_FILE")],use_cftime=True)
+
+    ds_areacello = xr.open_mfdataset([os.getenv("AREACELLO_FILE")],use_cftime=True)
+
+    # make a list of all datasets
+    all_datasets = [ds_tau, ds_zos, ds_areacello]
+
+
     for nvar,var in enumerate(Model_varname):
         print('read %s %s'%(model,var))
 
-        print(modelin[model][nvar][0])
-        # read input data
-        ds_model = xr.open_dataset(modelin[model][nvar][0],use_cftime=True)
+        # search for the requested variable among the input datasets
+        da_model = None
+        for ds_model in all_datasets:
+            if var in ds_model.variables:
+                da_model = ds_model[var]
+                break
 
+        if da_model is None:
+            raise ValueError(f"Unable to find {var} in input files")
 
-        # crop data (time)
-        ds_model['time'] = timeax
-        da_model = ds_model[var].where((ds_model['time.year'] >= syear)&
-                                       (ds_model['time.year'] <= fyear)
-                                       ,drop=True)
+        da_model = ds_model[var]
 
         # remove land value
         da_model[Model_coordname[1]] = da_model[Model_coordname[1]].where(da_model[Model_coordname[1]]<1000.,other=np.nan)
@@ -301,6 +294,11 @@ for nobs,obs in enumerate(Obs_name):
                                      end=cftime.datetime(fyear_obs,fmon_obs,1),
                                      freq='MS')
             timeax = timeax.to_datetimeindex()    # cftime => datetime64
+
+            # fix required in the event time lengths are not consistent
+            # (a bit rough -- could be more intelligent)
+            ds_obs = ds_obs.isel(time=slice(0,len(timeax)))
+
             ds_obs['time'] = timeax
 
             # calculate global mean sea level
@@ -327,10 +325,9 @@ for nobs,obs in enumerate(Obs_name):
 
 
         # crop data (time)
-        ds_obs = ds_obs[var]\
-                          .where((ds_obs['time.year'] >= syear)&
-                                 (ds_obs['time.year'] <= fyear)
-                                 ,drop=True)
+        # values below are hard-coded, need to be moved to optional vars
+        ds_obs[var].load()
+        ds_obs = ds_obs[var].sel(time=slice("1993-01-01","2009-12-31"))
 
 
         # store all model data
@@ -426,7 +423,7 @@ for nmodel,model in enumerate(Model_name):
     for nvar,var in enumerate(['curl_tau','zos']):
 
         # read areacello
-        da_area = xr.open_dataset(path[Model_name[0]][0]+areafile)['areacello']
+        da_area = ds_areacello[os.getenv("areacello_var")]
 
         # crop region
         ds_mask = mean_mlist[model][var].where(
@@ -437,6 +434,9 @@ for nmodel,model in enumerate(Model_name):
                       ,drop=True).compute()
         ds_mask = ds_mask/ds_mask
 
+        # hard-coded for now; needs to be addressed
+        xname = "nlon"
+        yname = "nlat"
 
         # calculate regional mean
         regionalavg_list['%s_%i_%i_%i_%i_season'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\

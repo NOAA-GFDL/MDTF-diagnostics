@@ -91,7 +91,7 @@ def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     du_yu = da_tauuo.diff(yname,1,label='upper')
     
     du_dy.values[0,:] = du_yl.values[0,:]            # forward differences
-    du_dy.values[1:-1,:] = (du_yl+du_yu).values      # central differences
+    du_dy.values[1:-1,:] = (du_yl+du_yu).values[1:-1]      # central differences
     du_dy.values[-1,:] = du_yu.values[-1,:]          # backward differences
     
     # calculate dy 
@@ -100,7 +100,7 @@ def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dyu = du_dy.lat.diff(yname,1,label='upper')
     
     dy.values[0,:] = dyl.values[0,:]            # forward differences
-    dy.values[1:-1,:] = (dyl+dyu).values      # central differences
+    dy.values[1:-1,:] = (dyl+dyu).values[1:-1]      # central differences
     dy.values[-1,:] = dyu.values[-1,:]          # backward differences  
     da_dy = dy/180.*np.pi*r_earth/100.      # m
     
@@ -113,7 +113,7 @@ def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dv_xr = da_tauvo.diff(xname,1,label='upper')
 
     dv_dx.values[:,0] = dv_xl.values[:,0]            # forward differences
-    dv_dx.values[:,1:-1] = (dv_xl+dv_xr).values      # central differences
+    dv_dx.values[:,1:-1] = (dv_xl+dv_xr).values[:,1:-1]      # central differences
     dv_dx.values[:,-1] = dv_xr[:,-1].values          # backward differences
 
     # calculate dx 
@@ -122,7 +122,7 @@ def curl_tau(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dxu = dv_dx.lon.diff(xname,1,label='upper')
     
     dx.values[:,0] = dxl.values[:,0]            # forward differences
-    dx.values[:,1:-1] = (dxl+dxu).values      # central differences
+    dx.values[:,1:-1] = (dxl+dxu).values[:,1:-1]      # central differences
     dx.values[:,-1] = dxu.values[:,-1]          # backward differences  
     da_dx = dx/180.*np.pi*r_earth*np.cos(da_tauuo.lat/180.*np.pi)/100.     # m
     
@@ -222,7 +222,7 @@ def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     du_yu = da_tauuo.diff(yname,1,label='upper')
  
     du_dy.values[:,0,:] = du_yl.values[:,0,:]            # forward differences
-    du_dy.values[:,1:-1,:] = (du_yl+du_yu).values      # central differences
+    du_dy.values[:,1:-1,:] = (du_yl+du_yu).values[:,1:-1,:]      # central differences
     du_dy.values[:,-1,:] = du_yu.values[:,-1,:]          # backward differences
     
     # calculate dy 
@@ -231,7 +231,7 @@ def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dyu = du_dy.lat.diff(yname,1,label='upper')
     
     dy.values[0,:] = dyl.values[0,:]            # forward differences
-    dy.values[1:-1,:] = (dyl+dyu).values      # central differences
+    dy.values[1:-1,:] = (dyl+dyu).values[1:-1,:]      # central differences
     dy.values[-1,:] = dyu.values[-1,:]          # backward differences  
     da_dy = dy/180.*np.pi*r_earth/100.      # m
     
@@ -244,7 +244,7 @@ def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dv_xr = da_tauvo.diff(xname,1,label='upper')
 
     dv_dx.values[:,:,0] = dv_xl.values[:,:,0]            # forward differences
-    dv_dx.values[:,:,1:-1] = (dv_xl+dv_xr).values      # central differences
+    dv_dx.values[:,:,1:-1] = (dv_xl+dv_xr).values[:,:,1:-1]      # central differences
     dv_dx.values[:,:,-1] = dv_xr[:,:,-1].values          # backward differences
 
     # calculate dx 
@@ -253,7 +253,7 @@ def curl_tau_3d(da_tauuo,da_tauvo,xname='x',yname='y',r_earth = 6.371*1E8):
     dxu = dv_dx.lon.diff(xname,1,label='upper')
     
     dx.values[:,0] = dxl.values[:,0]            # forward differences
-    dx.values[:,1:-1] = (dxl+dxu).values      # central differences
+    dx.values[:,1:-1] = (dxl+dxu).values[:,1:-1]      # central differences
     dx.values[:,-1] = dxu.values[:,-1]          # backward differences  
     da_dx = dx/180.*np.pi*r_earth*np.cos(da_tauuo.lat/180.*np.pi)/100.     # m
     

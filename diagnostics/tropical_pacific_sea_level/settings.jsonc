@@ -2,7 +2,7 @@
   "settings" : {
     "driver" : "tropical_pacific_sea_level.py",
     "long_name" : "tropical pacific sea level",
-    "realm" : "ocns",
+    "realm" : "ocean",
     "description" : "Tropical pacific sea level diagnostic",
     "runtime_requirements": {
         "python3" : ["matplotlib", "xarray", "cartopy","cftime","numpy"]
@@ -18,73 +18,44 @@
   },   
   
   "data": {
-      "format": "netcdf4_classic",
-      "rename_dimensions": false,
-      "rename_variables": false,
-      "multi_file_ok": true,
-      "frequency": "mon",
-      "min_frequency": "mon",
-      "max_frequency": "mon",
-      "min_duration": "5yr",
-      "max_duration": "any"
+      "frequency": "mon"
     },
     
   "dimensions": {
-      "nlat": {
-          "standard_name": "latitude",
-          "units": "degrees_N",
-          "range": [-90, 90],
-          "need_bounds": false
+      "lat": {
+          "standard_name": "latitude"
       },
-      "nlon": {
-          "standard_name": "longitude",
-          "units": "degrees_E",
-          "range": [0, 360],
-          "need_bounds": false
+      "lon": {
+          "standard_name": "longitude"
       },
       "time": {
-          "standard_name": "time",
-          "units": "months",
-          "calendar": "any",
-          "need_bounds": false
+          "standard_name": "time"
       }
     },
   
   "varlist" : {
       "zos": {
         "standard_name": "sea_surface_height_above_geoid",
-        "path_variable": "ZOS_FILE",
         "units": "m",
-        "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauuo": {
-        "standard_name": "downward_x_stress_at_sea_water_surface",
-        "path_variable": "TAUUO_FILE",
-        "units": "m s-1",
-        "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "standard_name": "surface_downward_x_stress",
+        "units": "N m-2",
+        "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauvo": {
-        "standard_name": "downward_y_stress_at_sea_water_surface",
-        "path_variable": "TAUVO_FILE",
-        "units": "m s-1",
-        "dimensions" : ["time", "nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required",
+        "standard_name": "surface_downward_y_stress",
+        "units": "N m-2",
+        "dimensions" : ["time", "lat", "lon"]
         },
         
       "areacello": {
         "standard_name": "cell_area",
-        "path_variable": "AREACELLO_FILE",
         "units": "m2",
-        "dimensions" : ["nlat", "nlon"],
-        "dimensions_ordered": true,
-        "requirement": "required"
+        "dimensions" : ["lat", "lon"]
         }
   }
   

@@ -43,7 +43,7 @@ def annual_to_monthly(basedir, year):
     # obtain a list of files for each year
     files = list(scantree(path))
     files = [x.path for x in list(scantree(path)) if x.path.endswith(".nc")]
-    
+
     # open a multi-file dataset and extract the variable
     da = xr.open_mfdataset(files, combine="by_coords", use_cftime=True)[var]
 
@@ -62,14 +62,14 @@ def main(basedir, dataname_begin, var, start_year, end_year):
     arr = [
         annual_to_monthly(basedir, year) for year in np.arange(start_year, end_year + 1)
     ]
-    
+
     # separate attribute dictionary from the data arrays
     attrs = arr[0][1]
     arr = [x[0] for x in arr]
 
     # concatenate along existing time dimension
     arr = xr.concat([x.mean(dim="time") for x in arr], dim="time")
-    print(arr)
+
     arr = arr.assign_attrs(attrs)
 
     # create an empty dataset to hold the new array
@@ -99,6 +99,6 @@ if __name__ == "__main__":
     #  this can be changed based on used download period
 
     start_year = 1993
-    end_year = 1994
+    end_year = 2018
 
     result = main(basedir, dataname_begin, var, start_year, end_year)

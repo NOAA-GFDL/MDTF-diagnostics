@@ -46,8 +46,6 @@ def da_linregress(da_data,xname='x',yname='y',stTconfint=0.99,skipna=False):
 
                     # perform linear regression
                     slope, intercept, r_value, p_value, std_err=stats.linregress(da_time,da_ts.values)
-
-#                     print(xx,yy,slope)
                     da_slope[yy,xx] = slope
                     da_intercept[yy,xx] = intercept 
                     da_r_value[yy,xx] = r_value

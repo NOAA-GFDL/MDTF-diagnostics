@@ -15,44 +15,28 @@
     // models in a single invocation. Comment out or delete the first entry and
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
-    
     {
-      "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
-<<<<<<< HEAD
-      "model" : "CESM2",
-      "convention" : "CESM",
-      "FIRSTYR" : 1993,
-      "LASTYR" : 2009,
-=======
+      "CASENAME" : "NCAR.Synthetic",
       "model" : "CESM",
       "convention" : "CESM",
-      "FIRSTYR" : 293,
-      "LASTYR" : 310,
->>>>>>> fork/trop_sl_rebased
-      "pod_list": ["tropical_pacific_sea_level"]
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "pod_list": [
+          // Optional: PODs to run for this model only (defaults to all)
+          //"Wheeler_Kiladis",
+          "EOF_500hPa"
+          //"MJO_suite",
+          //"MJO_teleconnection"
+          // "convective_transition_diag"
+          // "precip_diurnal_cycle"
+      ]
     }
-    //{
-    //  "CASENAME" : "QBOi.EXP1.AMIP.001",
-    //  "model" : "CESM",
-    //  "convention" : "CESM",
-    //  "FIRSTYR" : 1977,
-    //  "LASTYR" : 1981,
-    //  "pod_list": [
-    //      // Optional: PODs to run for this model only (defaults to all)
-    //      "Wheeler_Kiladis",
-    //      "EOF_500hPa",
-    //      "MJO_suite",
-    //      "MJO_teleconnection"
-    //      // "convective_transition_diag"
-    //      // "precip_diurnal_cycle"
-    //  ]
-    //}
     // {
     //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
     //   "model" : "AM4",
-    //   "convention" : "GFDL",
-    //   "FIRSTYR" : 1,
-    //   "LASTYR" : 10,
+    //   "convention" : "AM4",
+    //   "FIRSTYR" : 1977,
+    //   "LASTYR" : 1981,
     //   "pod_list" : ["MJO_prop_amp"]
     // }
     // {
@@ -85,31 +69,23 @@
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory.
+  // Working directory. Defaults to OUTPUT_DIR if blank.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
-  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  // put in a subdirectory of this directory.
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-<<<<<<< HEAD
-  "conda_root": "/storage1/home1/chiaweih/anaconda2",
-=======
-  // "conda_root": "/storage1/home1/chiaweih/anaconda2",
->>>>>>> fork/trop_sl_rebased
+  "conda_root": "",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-<<<<<<< HEAD
-  "conda_env_root": "/storage1/home1/chiaweih/anaconda2/envs",
-=======
-  // "conda_env_root": "/storage1/home1/chiaweih/anaconda2/envs",
->>>>>>> fork/trop_sl_rebased
+  "conda_env_root": "",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -124,7 +100,7 @@
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": true,
+  "save_ps": false,
 
   // Set to true to have PODs save netCDF files of processed data.
   "save_nc": false,

@@ -53,7 +53,7 @@
     "units" : "K",
     "requirement" : "required",
     "dimensions" : ["time", "lat", "lon"],
-    "alternates": ["T250"]    
+    "alternates": ["T250"]
     },
     "T250": {
       // "var_name" : "T250_var",

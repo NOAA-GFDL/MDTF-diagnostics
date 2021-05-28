@@ -18,7 +18,7 @@ WK_DIR    = os.environ["WK_DIR"]
 OBS_DATA  = os.environ["OBS_DATA"] 
 CASENAME  = os.environ["CASENAME"] 
 
-# run model data
+#====================== deriving model output =======================
 def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     # read omega and land-sea fraction data
     ds= xr.open_dataset(reanalysis_path)
@@ -102,11 +102,12 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
 top_heaviness_ratio_calculation_model(os.environ["OMEGA_FILE"],os.environ["omega_var"])
 
 
+
+#====================== deriving obs output =======================
 # run obs data (ERA5 2000-2019 July only)
-OBS_DATA = os.environ["OBS_DATA"]
 
 def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
-    # read omega and land-sea fraction data
+    # read omega 
     ds= xr.open_dataset(obs_data_full_dir)
     lev_obs=ds['lev'].values
     lat_obs=ds['lat'].values
@@ -185,3 +186,4 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     print("Plotting Completed")
 
 top_heaviness_ratio_calculation_obs(OBS_DATA+'/ERA5_omega_mon_2000_2019_July.nc')
+

@@ -163,7 +163,12 @@
       "ndim": 3
     },
     "T250": {
-      "standard_name": "air_temperature",
+      "standard_name": "temperature_at_250_mbar_pressure_surface",
+      "units": "K",
+      "ndim": 3
+    },
+    "T500": {
+      "standard_name": "temperature_at_500_mbar_pressure_surface",
       "units": "K",
       "ndim": 3
     },

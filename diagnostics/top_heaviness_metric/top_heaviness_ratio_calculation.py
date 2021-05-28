@@ -1,4 +1,4 @@
-# 26 May top_heaviness_ratio_calculation.py
+# 28 May top_heaviness_ratio_calculation.py
 #Python packages/ modules imported for the diagnostic
 # the sample monthly data is from ERA5 in July from 2000 to 2019 
 import os
@@ -63,7 +63,7 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O1 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout() 
-    fig = fig.savefig(WK_DIR+"/model/"+CASENAME+"_O1.png", format='png',bbox_inches='tight')
+    fig.savefig(WK_DIR+"/model/"+CASENAME+"_O1.png", format='png',bbox_inches='tight')
     #====================== O2 =======================
     fig, axes = plt.subplots(figsize=(8,4))
     x,y = np.meshgrid(lon_model,lat_model) 
@@ -78,7 +78,7 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout()
-    fig = fig.savefig(WK_DIR+"/model/"+CASENAME+"_O2.png", format='png',bbox_inches='tight')    
+    fig.savefig(WK_DIR+"/model/"+CASENAME+"_O2.png", format='png',bbox_inches='tight')    
     #====================== O2/O1 top-heaviness ratio =======================
     fig, axes = plt.subplots(figsize=(8,4))
     mmid1=O2_model/O1_model
@@ -95,7 +95,7 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     im0 = m.contourf(X,Y,mmid1,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('Top-heaviness Ratio (O2/O1)',loc='center',fontsize=18)
-    fig = fig.savefig(WK_DIR+"/model/"+CASENAME+"_Top_Heaviness_Ratio.png", format='png',bbox_inches='tight') 
+    fig.savefig(WK_DIR+"/model/"+CASENAME+"_Top_Heaviness_Ratio.png", format='png',bbox_inches='tight') 
     print("Plotting Completed")
         
 
@@ -150,7 +150,7 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O1 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout() 
-    fig = fig.savefig(WK_DIR+"/obs/ERA5_O1_2000_2019_July.png", format='png',bbox_inches='tight')
+    fig.savefig(WK_DIR+"/obs/ERA5_O1_2000_2019_July.png", format='png',bbox_inches='tight')
     #====================== O2 =======================
     fig, axes = plt.subplots(figsize=(8,4))
     x,y = np.meshgrid(lon_obs,lat_obs) 
@@ -165,7 +165,7 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout()
-    fig = fig.savefig(WK_DIR+"/obs/ERA5_O2_2000_2019_July.png", format='png',bbox_inches='tight')    
+    fig.savefig(WK_DIR+"/obs/ERA5_O2_2000_2019_July.png", format='png',bbox_inches='tight')    
     #====================== O2/O1 top-heaviness ratio =======================
     fig, axes = plt.subplots(figsize=(8,4))
     mmid1=O2_obs/O1_obs
@@ -182,7 +182,7 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     im0 = m.contourf(X,Y,mmid1,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
     cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('Top-heaviness Ratio (O2/O1)',loc='center',fontsize=18)
-    fig = fig.savefig(WK_DIR+"/obs/ERA5_Top_Heaviness_Ratio_2000_2019_July.png", format='png',bbox_inches='tight') 
+    fig.savefig(WK_DIR+"/obs/ERA5_Top_Heaviness_Ratio_2000_2019_July.png", format='png',bbox_inches='tight') 
     print("Plotting Completed")
 
 top_heaviness_ratio_calculation_obs(OBS_DATA+'/ERA5_omega_mon_2000_2019_July.nc')

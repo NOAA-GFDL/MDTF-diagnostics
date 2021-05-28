@@ -4,7 +4,6 @@ import xarray as xr
 import numpy as np
 import scipy 
 from scipy import interpolate
-import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 

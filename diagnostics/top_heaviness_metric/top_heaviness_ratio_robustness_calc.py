@@ -160,7 +160,7 @@ def top_heaviness_ratio_robustness_calc_obs(obs_data_full_dir):
     total_variance_obs=np.nansum(np.nanvar(mid_omega_obs,axis=0),axis=0)
     Q1_explained_obs=np.nanvar(OQ1_obs,axis=0)
     Q2_explained_obs=np.nanvar(OQ2_obs,axis=0)
-    total_explained_obs=Q1_explained_obs+Q2_explained_obs
+    #total_explained_obs=Q1_explained_obs+Q2_explained_obs
     # calc ltm O1 and O2, because calculating correlation is not a linear operation
     mid_omega_obs_ltm=np.nanmean(mid_omega_obs,axis=0)
     OQ1_obs_ltm=np.nansum(mid_Q1_obs[:,None,None]*mid_omega_obs_ltm,axis=0)

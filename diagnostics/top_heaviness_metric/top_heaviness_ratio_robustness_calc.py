@@ -1,4 +1,4 @@
-# 26 May top_heaviness_ratio_robustness_calc.py
+# 28 May top_heaviness_ratio_robustness_calc.py
 import os
 import xarray as xr
 import numpy as np
@@ -95,9 +95,9 @@ def top_heaviness_ratio_robustness_calc_model(reanalysis_path, reanalysis_var):
     X,Y = m(x,y)
     clevs=np.arange(0,1.,0.1)
     im0 = m.contourf(X,Y,mmid,clevs,cmap = plt.get_cmap('RdBu_r'),extend='max') 
-    cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
+    fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('$R^{2}$ Between Recon. Omega & Original',loc='center',fontsize=18)
-    fig = fig.savefig(WK_DIR+"/model/"+CASENAME+"_R2.png", format='png',bbox_inches='tight')    
+    fig.savefig(WK_DIR+"/model/"+CASENAME+"_R2.png", format='png',bbox_inches='tight')    
     #====================== explained interannual variance =======================
     fig, axes = plt.subplots(figsize=(8,4))
     mmid=(Q2_explained_obs+Q1_explained_obs)/total_variance_obs
@@ -112,8 +112,9 @@ def top_heaviness_ratio_robustness_calc_model(reanalysis_path, reanalysis_var):
     clevs=np.arange(0,1.0,.1)
     im = m.contourf(X,Y,mmid,clevs,cmap=cmap,extend='max')
     axes.set_title('Prop. of Interannual Var. Explained by Q1 & Q2',loc='center',fontsize=16,y=1.02)
-    plt.colorbar(im,orientation='horizontal', pad=0.15,shrink=.9,aspect=45)
-    fig = fig.savefig(WK_DIR+"/model/"+CASENAME+"_Proportion_of_explained_Interannual_Variance.png", format='png',bbox_inches='tight')    
+    fig.colorbar(im,orientation='horizontal', pad=0.15,shrink=.9,aspect=45)
+    fig.tight_layout()
+    fig.savefig(WK_DIR+"/model/"+CASENAME+"_Proportion_of_explained_Interannual_Variance.png", format='png',bbox_inches='tight')    
 
     print("Plotting Completed")
     
@@ -186,9 +187,10 @@ def top_heaviness_ratio_robustness_calc_obs(obs_data_full_dir):
     X,Y = m(x,y)
     clevs=np.arange(0,1.,0.1)
     im0 = m.contourf(X,Y,mmid,clevs,cmap = plt.get_cmap('RdBu_r'),extend='max') 
-    cbar = fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
+    fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('$R^{2}$ Between Recon. Omega & Original',loc='center',fontsize=18)
-    fig = fig.savefig(WK_DIR+"/obs/ERA5_R2_Between_Recon_Omega&Original_2000_2019_July.png", format='png',bbox_inches='tight')    
+    fig.tight_layout()
+    fig.savefig(WK_DIR+"/obs/ERA5_R2_Between_Recon_Omega&Original_2000_2019_July.png", format='png',bbox_inches='tight')    
     #====================== explained interannual variance =======================
     fig, axes = plt.subplots(figsize=(8,4))
     mmid=(Q2_explained_obs+Q1_explained_obs)/total_variance_obs
@@ -203,8 +205,9 @@ def top_heaviness_ratio_robustness_calc_obs(obs_data_full_dir):
     clevs=np.arange(0,1.0,.1)
     im = m.contourf(X,Y,mmid,clevs,cmap=cmap,extend='max')
     axes.set_title('Prop. of Interannual Var. Explained by Q1 & Q2',loc='center',fontsize=16,y=1.02)
-    plt.colorbar(im,orientation='horizontal', pad=0.15,shrink=.9,aspect=45)
-    fig = fig.savefig(WK_DIR+"/obs/ERA5_Proportion_of_explained_Interannual_Variance_2000_2019_July.png", format='png',bbox_inches='tight')    
+    fig.colorbar(im,orientation='horizontal', pad=0.15,shrink=.9,aspect=45)
+    fig.tight_layout()
+    fig.savefig(WK_DIR+"/obs/ERA5_Proportion_of_explained_Interannual_Variance_2000_2019_July.png", format='png',bbox_inches='tight')    
 
     print("Plotting Completed")
     

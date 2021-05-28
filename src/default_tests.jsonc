@@ -16,14 +16,13 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "QBOi_CROPPED.EXP1.AMIP.001",
+      "CASENAME" : "QBOi.EXP1.AMIP.001",
       "model" : "CESM",
       "convention" : "CESM",
       "FIRSTYR" : 1977,
       "LASTYR" : 1981,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "flow_dep_diag"
           // "Wheeler_Kiladis",
           // "EOF_500hPa",
           // "MJO_suite",

@@ -46,9 +46,18 @@
       "units" : "m",
       "dimensions" : ["time", "lat", "lon"]
     },
+    "T500": {
+    "standard_name" : "temperature_at_500_mbar_pressure_surface",
+    "path_variable" : "T500_FILE",
+    "freq" : "day",
+    "units" : "K",
+    "requirement" : "required",
+    "dimensions" : ["time", "lat", "lon"],
+    "alternates": ["T250"]    
+    },
     "T250": {
       // "var_name" : "T250_var",
-      "standard_name" : "air_temperature",
+      "standard_name" : "temperature_at_250_mbar_pressure_surface",
       "path_variable" : "T250_FILE",
       "freq" : "day",
       "units" : "K",

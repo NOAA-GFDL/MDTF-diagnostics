@@ -59,6 +59,9 @@ def da_linregress(da_data,xname='x',yname='y',stTconfint=0.99,skipna=False):
 
         da_time = year+month/12. 
 
+        # Dask parallelization not working below. Load DataArray here
+        da_data.load()
+        
         # perform linear regression
         da_slope, da_intercept, da_r_value, da_p_value, da_std_err\
         =xr.apply_ufunc(
@@ -66,7 +69,11 @@ def da_linregress(da_data,xname='x',yname='y',stTconfint=0.99,skipna=False):
             da_time,da_data,\
             input_core_dims=[['time'],['time']],\
             output_core_dims=[[],[],[],[],[]],
-            vectorize=True,dask='allowed')
+            vectorize=True)
+
+        # commented out Dask options
+        #vectorize=True,dask='parallelized',
+        #dask_gufunc_kwargs={"allow_rechunk":True})
     
     ### calculate confidence interval 
     # calculate the error bar base on the number of standard error

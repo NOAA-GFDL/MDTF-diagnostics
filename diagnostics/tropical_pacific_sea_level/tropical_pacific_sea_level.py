@@ -51,6 +51,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 import spherical_area as sa
 from xr_ufunc import da_linregress
 from dynamical_balance2 import curl_tau, curl_tau_3d
@@ -102,14 +103,16 @@ warnings.simplefilter("ignore")
 print('--------------------------')
 print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
-# constant setting
-syear = np.int(os.getenv('FIRSTYR'))                 # crop model and obs data from year
-fyear = np.int(os.getenv('LASTYR'))                 # crop model and obs data to year
 
+# constant setting
+syear = np.int(os.getenv('FIRSTYR'))                 # crop model data from year
+fyear = np.int(os.getenv('LASTYR'))                  # crop model data to year
+obs_start_year = np.int(os.getenv('obs_start_year')) # crop obs data from year
+obs_end_year = np.int(os.getenv('obs_end_year'))     # crop obs data to year
 
 # regional average box
 lon_range_list = [np.float(os.getenv('lon_min')),
-                  np.float(os.getenv('lon_max'))]   # 0-360
+                  np.float(os.getenv('lon_max'))]   
 lat_range_list = [np.float(os.getenv('lat_min')),
                   np.float(os.getenv('lat_max'))]
 
@@ -130,11 +133,13 @@ areafile = os.getenv('AREACELLO_FILE')
 
 
 Model_varname = [os.getenv('tauuo_var'),os.getenv('tauvo_var'),os.getenv('zos_var')]
-Model_dimname = [os.getenv('time_coord'),os.getenv('nlat_coord'),os.getenv('nlon_coord')]
 Model_coordname = [os.getenv('lat_coord_name'),os.getenv('lon_coord_name')]
 
-xname = Model_dimname[2]
-yname = Model_dimname[1]
+xname = os.getenv('x_axis_name')
+yname = os.getenv('y_axis_name')
+
+print("Ocean model axis name:", xname,yname)
+print("Ocean model coord name:", Model_coordname[1],Model_coordname[0])
 
 
 print('--------------------------')
@@ -325,9 +330,9 @@ for nobs,obs in enumerate(Obs_name):
 
 
         # crop data (time)
-        # values below are hard-coded, need to be moved to optional vars
+        #  include the option to crop obs data in the pod_env_vars setting
         ds_obs[var].load()
-        ds_obs = ds_obs[var].sel(time=slice("1993-01-01","2009-12-31"))
+        ds_obs = ds_obs[var].sel(time=slice("%i-01-01"%obs_start_year,"%i-12-31"%obs_end_year))
 
 
         # store all model data
@@ -433,10 +438,6 @@ for nmodel,model in enumerate(Model_name):
                       (mean_mlist[model][var][Model_coordname[0]]<=np.max(lat_range))
                       ,drop=True).compute()
         ds_mask = ds_mask/ds_mask
-
-        # hard-coded for now; needs to be addressed
-        xname = "nlon"
-        yname = "nlat"
 
         # calculate regional mean
         regionalavg_list['%s_%i_%i_%i_%i_season'%(var,lon_range[0],lon_range[1],lat_range[0],lat_range[1])]\
@@ -561,9 +562,9 @@ all_ssh = np.array(all_ssh)
 
 #### setting the plotting format
 ax1.set_ylabel('SSH (m)',{'size':'20'},color='k')
-ax1.set_ylim([all_ssh.min()-all_ssh.min()/5.,all_ssh.max()+all_ssh.max()/5.])
+ax1.set_ylim([all_ssh.min()-np.abs(all_ssh.min()/5.),all_ssh.max()+np.abs(all_ssh.max()/5.)])
 ax1.set_xlabel('WSC (N/m$^3$)',{'size':'20'},color='k')
-ax1.set_xlim([all_wsc.min()-all_wsc.min()/5.,all_wsc.max()+all_wsc.max()/5.])
+ax1.set_xlim([all_wsc.min()-np.abs(all_wsc.min()/5.),all_wsc.max()+np.abs(all_wsc.max()/5.)])
 ax1.tick_params(axis='y',labelsize=20,labelcolor='k',rotation=0)
 ax1.tick_params(axis='x',labelsize=20,labelcolor='k',rotation=0)
 ax1.set_title("Linear trend",{'size':'24'},pad=24)

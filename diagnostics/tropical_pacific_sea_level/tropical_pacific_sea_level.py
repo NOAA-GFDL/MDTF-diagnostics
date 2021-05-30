@@ -375,6 +375,7 @@ for nmodel, model in enumerate(Model_name):
         season_mlist[model]["tauvo"],
         xname=xname,
         yname=yname,
+        tname="month",
     )
 
     season_mlist[model]["curl_tau"] = (
@@ -410,6 +411,7 @@ if predef_obs != "True":
         obs_season_mlist[obs]["ty"],
         xname="lon",
         yname="lat",
+        tname="month",
     )
 
     obs_season_mlist[obs]["curl_tau"] = (

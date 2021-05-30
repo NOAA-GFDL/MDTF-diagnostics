@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 
 
-def da_linregress(da_data, xname="x", yname="y", stTconfint=0.99, skipna=False):
+def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipna=False):
     """
     The function calculate the trend of each trend in the gridded data. 
     Trend is calculated based on stats.linregress
@@ -21,8 +21,12 @@ def da_linregress(da_data, xname="x", yname="y", stTconfint=0.99, skipna=False):
     da_conf (xr.DataArray) - a 2 dimension gridded data representing the confidence interval of the linear trend
     
     """
+    
     if skipna == True:
 
+        # make sure the order of the dataarray is correct
+        da_data = da_data.transpose(tname,yname,xname)
+        
         nx = len(da_data[xname])
         ny = len(da_data[yname])
 

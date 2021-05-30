@@ -239,7 +239,8 @@ obs_mean_mlist[obs]["curl_tau"] = (
 )
 
 obs_season_mlist[obs]["curl_tx"], obs_season_mlist[obs]["curl_ty"] = curl_var_3d(
-    obs_season_mlist[obs]["tx"], obs_season_mlist[obs]["ty"], xname="lon", yname="lat"
+    obs_season_mlist[obs]["tx"], obs_season_mlist[obs]["ty"], xname="lon", yname="lat",
+    tname="month"
 )
 obs_season_mlist[obs]["curl_tau"] = (
     obs_season_mlist[obs]["curl_tx"] + obs_season_mlist[obs]["curl_ty"]

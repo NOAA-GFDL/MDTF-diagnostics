@@ -21,6 +21,9 @@ def curl_var(da_uo, da_vo, x_name="lon", y_name="lat", r_earth=6.371 * 1e8):
     2. two Arrays have the same dimensions and grid points
     
     """
+    # make sure the dim order is correct
+    da_uo = da_uo.transpose(y_name,x_name)
+    da_vo = da_vo.transpose(y_name,x_name)
 
     # calulate du
     du_dy = da_uo.copy() + np.nan
@@ -86,6 +89,10 @@ def curl_tau(da_tauuo, da_tauvo, xname="x", yname="y", r_earth=6.371 * 1e8):
     
     """
     #     r_earth = 6.371*1E8         # cm
+    
+    # make sure the dim order is correct
+    da_tauuo = da_tauuo.transpose(yname,xname)
+    da_tauvo = da_tauvo.transpose(yname,xname)
 
     # calulate dtauu
     du_dy = da_tauuo.copy() + np.nan
@@ -139,7 +146,7 @@ def curl_tau(da_tauuo, da_tauvo, xname="x", yname="y", r_earth=6.371 * 1e8):
     return curltau_u, curltau_v
 
 
-def curl_var_3d(da_varx, da_vary, xname="lon", yname="lat", r_earth=6.371 * 1e8):
+def curl_var_3d(da_varx, da_vary, xname="lon", yname="lat", tname="time", r_earth=6.371 * 1e8):
     """
     Calculate wind stress curl 
     
@@ -152,6 +159,10 @@ def curl_var_3d(da_varx, da_vary, xname="lon", yname="lat", r_earth=6.371 * 1e8)
     
     """
     #     r_earth = 6.371*1E8         # cm
+    
+    # make sure the dim order is correct
+    da_varx = da_varx.transpose(tname,yname,xname)
+    da_vary = da_vary.transpose(tname,yname,xname)    
 
     # calulate dtauu
     du_dy = da_varx.copy() + np.nan
@@ -205,7 +216,7 @@ def curl_var_3d(da_varx, da_vary, xname="lon", yname="lat", r_earth=6.371 * 1e8)
     return curlvar_u, curlvar_v
 
 
-def curl_tau_3d(da_tauuo, da_tauvo, xname="x", yname="y", r_earth=6.371 * 1e8):
+def curl_tau_3d(da_tauuo, da_tauvo, xname="x", yname="y", tname="time", r_earth=6.371 * 1e8):
     """
     Calculate wind stress curl 
     
@@ -217,8 +228,13 @@ def curl_tau_3d(da_tauuo, da_tauvo, xname="x", yname="y", r_earth=6.371 * 1e8):
     3. Both are 3d array with (time,y,x) 
     
     """
+    
     #     r_earth = 6.371*1E8         # cm
 
+    # make sure the dim order is correct
+    da_tauuo = da_tauuo.transpose(tname,yname,xname)
+    da_tauvo = da_tauvo.transpose(tname,yname,xname)    
+    
     # calulate dtauu
     du_dy = da_tauuo.copy() + np.nan
     du_yl = da_tauuo.diff(yname, 1, label="lower")

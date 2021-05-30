@@ -8,6 +8,7 @@
         "python3" : ["matplotlib","xarray","cartopy","cftime","numpy","dask"]
     },
     "pod_env_vars" : {
+      "predef_obs" : "True",
       "obs_start_year" : "1993",
       "obs_end_year" : "2009",
       "x_axis_name" : "nlon",

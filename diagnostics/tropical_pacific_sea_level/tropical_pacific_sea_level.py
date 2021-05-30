@@ -61,45 +61,6 @@ from dynamical_balance2 import curl_var, curl_var_3d
 import warnings
 warnings.simplefilter("ignore")
 
-######
-# testing parameter before combining with MDTF framework
-#####
-
-
-# #### possible input info from external text file
-# # constant setting
-# syear = 1993                 # crop model and obs data from year
-# fyear = 2009                 # crop model and obs data to year
-# tp_lat_region = [-30,30]     # extract model till latitude
-
-# # regional average box
-# lon_range_list = [120,150]   # 0-360
-# lat_range_list = [10,20]
-
-# # Model label
-# Model_name = ['CESM2_CORE']        # model name in the dictionary
-# Model_legend_name = ['CESM2-CORE'] # model name appeared on the plot legend
-
-# # initialization
-# modelin = {}
-# path = {}
-# #####################
-# ori_syear = 1948
-# ori_fyear = 2009
-# modeldir = os.getenv('MODEL_DATA_ROOT')+'/CESM2_omip1_r1i1p1f1_gn/mon/'
-# modelfile = [['CESM2_omip1_r1i1p1f1_gn.tauuo.mon.nc'],
-#              ['CESM2_omip1_r1i1p1f1_gn.tauvo.mon.nc'],
-#              ['CESM2_omip1_r1i1p1f1_gn.zos.mon.nc']]
-# areafile = 'CESM2_omip1_r1i1p1f1_gn.areacello.mon.nc'
-# path[Model_name[0]]=[modeldir,modelfile]
-
-# Model_varname = ['tauuo','tauvo','zos']
-# Model_dimname = ['time','nlat','nlon']
-# Model_coordname = ['lat','lon']
-
-# xname = Model_dimname[2]
-# yname = Model_dimname[1]
-
 print('--------------------------')
 print('Start reading set parameter (pod_env_vars)')
 print('--------------------------')
@@ -107,6 +68,7 @@ print('--------------------------')
 # constant setting
 syear = np.int(os.getenv('FIRSTYR'))                 # crop model data from year
 fyear = np.int(os.getenv('LASTYR'))                  # crop model data to year
+predef_obs = os.getenv('predef_obs')
 obs_start_year = np.int(os.getenv('obs_start_year')) # crop obs data from year
 obs_end_year = np.int(os.getenv('obs_end_year'))     # crop obs data to year
 
@@ -213,146 +175,149 @@ for nmodel,model in enumerate(Model_name):
     season_mlist[model] = season_list
     ds_model_mlist[model] = ds_model_list
 
-
 # # Observation
-# constant setting
-obs_year_range = [[1950,2011],[1993,2018,9]]
-Obs_varname = [['tx','ty'],['adt']]
-Obs_name = ['WASwind','CMEMS']
+if predef_obs != 'True':
+    
+    # constant setting
+    obs_year_range = [[1950,2011],[1993,2018,9]]
+    Obs_varname = [['tx','ty'],['adt']]
+    Obs_name = ['WASwind','CMEMS']
 
-# inputs
-obsin = {}
-obspath = {}
+    # inputs
+    obsin = {}
+    obspath = {}
 
-obs = Obs_name[0]
-obsdir = str(os.getenv('OBS_DATA'))
-obsfile = [['waswind_v1_0_1.monthly.nc'],['waswind_v1_0_1.monthly.nc']]
-obspath[obs]=[obsdir,obsfile]
+    obs = Obs_name[0]
+    obsdir = str(os.getenv('OBS_DATA'))
+    obsfile = [['waswind_v1_0_1.monthly.nc'],['waswind_v1_0_1.monthly.nc']]
+    obspath[obs]=[obsdir,obsfile]
 
-obs = Obs_name[1]
-obsdir = str(os.getenv('OBS_DATA'))
-obsfile = [['dt_global_allsat_phy_l4_monthly_adt.nc']]
-obspath[obs]=[obsdir,obsfile]
-
-
-for nobs,obs in enumerate(Obs_name):
-    obsdir = obspath[obs][0]
-    obsfile = obspath[obs][1]
-    multivar = []
-    for file in obsfile :
-        if len(file) == 1 :
-            multivar.append([os.path.join(obsdir,file[0])])
-        elif len(file) > 1 :
-            multifile = []
-            for ff in file :
-                multifile.append(os.path.join(obsdir,ff))
-            multivar.append(multifile)
-    obsin[obs] = multivar
+    obs = Obs_name[1]
+    obsdir = str(os.getenv('OBS_DATA'))
+    obsfile = [['dt_global_allsat_phy_l4_monthly_adt.nc']]
+    obspath[obs]=[obsdir,obsfile]
 
 
-# initialization of dict and list
-ds_obs_mlist = {}
-obs_mean_mlist = {}
-obs_season_mlist = {}
-obs_linear_mlist = {}
+    for nobs,obs in enumerate(Obs_name):
+        obsdir = obspath[obs][0]
+        obsfile = obspath[obs][1]
+        multivar = []
+        for file in obsfile :
+            if len(file) == 1 :
+                multivar.append([os.path.join(obsdir,file[0])])
+            elif len(file) > 1 :
+                multifile = []
+                for ff in file :
+                    multifile.append(os.path.join(obsdir,ff))
+                multivar.append(multifile)
+        obsin[obs] = multivar
 
-for nobs,obs in enumerate(Obs_name):
-    ds_obs_list = {}
-    obs_mean_list = {}
-    obs_season_list = {}
-    obs_linear_list = {}
-    for nvar,var in enumerate(Obs_varname[nobs]):
-        print('read %s %s'%(obs,var))
 
-        # read input data
-        
-        
-        #-- single file
-        if len(obsin[obs][nvar]) == 1 :
+    # initialization of dict and list
+    ds_obs_mlist = {}
+    obs_mean_mlist = {}
+    obs_season_mlist = {}
+    obs_linear_mlist = {}
 
-            # find out dimension name
-            da = xr.open_dataset(obsin[obs][nvar][0])
-            obsdims = list(da[var].dims)
+    for nobs,obs in enumerate(Obs_name):
+        ds_obs_list = {}
+        obs_mean_list = {}
+        obs_season_list = {}
+        obs_linear_list = {}
+        for nvar,var in enumerate(Obs_varname[nobs]):
+            print('read %s %s'%(obs,var))
 
-            ds_obs = xr.open_dataset(obsin[obs][nvar][0])
+            # read input data
 
-        #-- multi-file merge (same variable)
-        elif len(obsin[obs][nvar]) > 1 :
-            for nf,file in enumerate(obsin[obs][nvar]):
+
+            #-- single file
+            if len(obsin[obs][nvar]) == 1 :
+
                 # find out dimension name
-                da = xr.open_dataset(file,chunks={})
+                da = xr.open_dataset(obsin[obs][nvar][0])
                 obsdims = list(da[var].dims)
 
-                ds_obs_sub = xr.open_dataset(file,use_cftime=True)
-                if nf == 0 :
-                    ds_obs = ds_obs_sub
-                else:
-                    ds_obs = xr.concat([ds_obs,ds_obs_sub],dim='time',data_vars='minimal')
+                ds_obs = xr.open_dataset(obsin[obs][nvar][0])
 
-        ############## CMEMS ##############
-        if obs in ['CMEMS']:
-            syear_obs = obs_year_range[nobs][0]
-            fyear_obs = obs_year_range[nobs][1]
-            fmon_obs = obs_year_range[nobs][2]
-            #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
-                                     end=cftime.datetime(fyear_obs,fmon_obs,1),
-                                     freq='MS')
-            timeax = timeax.to_datetimeindex()    # cftime => datetime64
+            #-- multi-file merge (same variable)
+            elif len(obsin[obs][nvar]) > 1 :
+                for nf,file in enumerate(obsin[obs][nvar]):
+                    # find out dimension name
+                    da = xr.open_dataset(file,chunks={})
+                    obsdims = list(da[var].dims)
 
-            # fix required in the event time lengths are not consistent
-            # (a bit rough -- could be more intelligent)
-            ds_obs = ds_obs.isel(time=slice(0,len(timeax)))
+                    ds_obs_sub = xr.open_dataset(file,use_cftime=True)
+                    if nf == 0 :
+                        ds_obs = ds_obs_sub
+                    else:
+                        ds_obs = xr.concat([ds_obs,ds_obs_sub],dim='time',data_vars='minimal')
 
-            ds_obs['time'] = timeax
+            ############## CMEMS ##############
+            if obs in ['CMEMS']:
+                syear_obs = obs_year_range[nobs][0]
+                fyear_obs = obs_year_range[nobs][1]
+                fmon_obs = obs_year_range[nobs][2]
+                #### create time axis for overlapping period
+                timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                         end=cftime.datetime(fyear_obs,fmon_obs,1),
+                                         freq='MS')
+                timeax = timeax.to_datetimeindex()    # cftime => datetime64
 
-            # calculate global mean sea level
-            da_area = sa.da_area(ds_obs, lonname='longitude', latname='latitude',
-                                 xname='longitude', yname='latitude', model=None)
-            da_glo_mean = (ds_obs*da_area)\
-                                .sum(dim=['longitude','latitude'])/\
-                           da_area\
-                                .sum(dim=['longitude','latitude'])
-            ds_obs = ds_obs-da_glo_mean
+                # fix required in the event time lengths are not consistent
+                # (a bit rough -- could be more intelligent)
+                ds_obs = ds_obs.isel(time=slice(0,len(timeax)))
 
-            # rename
-            ds_obs = ds_obs.rename({'longitude':'lon','latitude':'lat'})
+                ds_obs['time'] = timeax
 
-        else:
-            syear_obs = obs_year_range[nobs][0]
-            fyear_obs = obs_year_range[nobs][1]
-            #### create time axis for overlapping period
-            timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
-                                     end=cftime.datetime(fyear_obs,12,31),
-                                     freq='MS')
-            timeax = timeax.to_datetimeindex()    # cftime => datetime64
-            ds_obs['time'] = timeax
+                # calculate global mean sea level
+                da_area = sa.da_area(ds_obs, lonname='longitude', latname='latitude',
+                                     xname='longitude', yname='latitude', model=None)
+                da_glo_mean = (ds_obs*da_area)\
+                                    .sum(dim=['longitude','latitude'])/\
+                               da_area\
+                                    .sum(dim=['longitude','latitude'])
+                ds_obs = ds_obs-da_glo_mean
+
+                # rename
+                ds_obs = ds_obs.rename({'longitude':'lon','latitude':'lat'})
+                skipna = False
+
+            else:
+                syear_obs = obs_year_range[nobs][0]
+                fyear_obs = obs_year_range[nobs][1]
+                #### create time axis for overlapping period
+                timeax = xr.cftime_range(start=cftime.datetime(syear_obs,1,1),
+                                         end=cftime.datetime(fyear_obs,12,31),
+                                         freq='MS')
+                timeax = timeax.to_datetimeindex()    # cftime => datetime64
+                ds_obs['time'] = timeax
+                skipna = True
 
 
-        # crop data (time)
-        #  include the option to crop obs data in the pod_env_vars setting
-        ds_obs[var].load()
-        ds_obs = ds_obs[var].sel(time=slice("%i-01-01"%obs_start_year,"%i-12-31"%obs_end_year))
+            # crop data (time)
+            #  include the option to crop obs data in the pod_env_vars setting
+            ds_obs[var].load()
+            ds_obs = ds_obs[var].sel(time=slice("%i-01-01"%obs_start_year,"%i-12-31"%obs_end_year))
 
 
-        # store all model data
-        ds_obs_list[var] = ds_obs
+            # store all model data
+            ds_obs_list[var] = ds_obs
 
-        # calculate mean
-        obs_mean_list[var] = ds_obs_list[var].mean(dim='time').compute()
-        ds_obs_list[var] = ds_obs_list[var]-obs_mean_list[var]
+            # calculate mean
+            obs_mean_list[var] = ds_obs_list[var].mean(dim='time').compute()
+            ds_obs_list[var] = ds_obs_list[var]-obs_mean_list[var]
 
-        # calculate seasonality
-        obs_season_list[var] = ds_obs_list[var].groupby('time.month').mean(dim='time').compute()
-        ds_obs_list[var] = ds_obs_list[var].groupby('time.month')-obs_season_list[var]
+            # calculate seasonality
+            obs_season_list[var] = ds_obs_list[var].groupby('time.month').mean(dim='time').compute()
+            ds_obs_list[var] = ds_obs_list[var].groupby('time.month')-obs_season_list[var]
 
-        # remove linear trend
-        obs_linear_list[var] = da_linregress(ds_obs_list[var],stTconfint=0.99)
+            # remove linear trend
+            obs_linear_list[var] = da_linregress(ds_obs_list[var],xname='lon',yname='lat',stTconfint=0.99,skipna=skipna)
 
-    obs_linear_mlist[obs] = obs_linear_list
-    obs_mean_mlist[obs] = obs_mean_list
-    obs_season_mlist[obs] = obs_season_list
-    ds_obs_mlist[obs] = ds_obs_list
+        obs_linear_mlist[obs] = obs_linear_list
+        obs_mean_mlist[obs] = obs_mean_list
+        obs_season_mlist[obs] = obs_season_list
+        ds_obs_mlist[obs] = ds_obs_list
 
 
 # # Derive wind stress curl
@@ -384,28 +349,56 @@ for nmodel,model in enumerate(Model_name):
 #########
 # Obs
 #########
-obs = 'WASwind'
-obs_linear_mlist[obs]['curl_tx'],obs_linear_mlist[obs]['curl_ty'] = curl_var(
-                                           obs_linear_mlist[obs]['tx'].slope,
-                                           obs_linear_mlist[obs]['ty'].slope,
-                                           x_name='lon',y_name='lat')
+if predef_obs != 'True':
+    obs = 'WASwind'
+    obs_linear_mlist[obs]['curl_tx'],obs_linear_mlist[obs]['curl_ty'] = curl_var(
+                                               obs_linear_mlist[obs]['tx'].slope,
+                                               obs_linear_mlist[obs]['ty'].slope,
+                                               x_name='lon',y_name='lat')
 
-obs_linear_mlist[obs]['curl_tau'] = obs_linear_mlist[obs]['curl_tx']+obs_linear_mlist[obs]['curl_ty']
+    obs_linear_mlist[obs]['curl_tau'] = obs_linear_mlist[obs]['curl_tx']+obs_linear_mlist[obs]['curl_ty']
 
-obs_mean_mlist[obs]['curl_tx'],obs_mean_mlist[obs]['curl_ty'] = curl_var(
-                                           obs_mean_mlist[obs]['tx'],
-                                           obs_mean_mlist[obs]['ty'],
-                                           x_name='lon',y_name='lat')
+    obs_mean_mlist[obs]['curl_tx'],obs_mean_mlist[obs]['curl_ty'] = curl_var(
+                                               obs_mean_mlist[obs]['tx'],
+                                               obs_mean_mlist[obs]['ty'],
+                                               x_name='lon',y_name='lat')
 
-obs_mean_mlist[obs]['curl_tau'] = obs_mean_mlist[obs]['curl_tx']+obs_mean_mlist[obs]['curl_ty']
+    obs_mean_mlist[obs]['curl_tau'] = obs_mean_mlist[obs]['curl_tx']+obs_mean_mlist[obs]['curl_ty']
 
-obs_season_mlist[obs]['curl_tx'],obs_season_mlist[obs]['curl_ty'] = curl_var_3d(
-                                           obs_season_mlist[obs]['tx'],
-                                           obs_season_mlist[obs]['ty'],
-                                           xname='lon',yname='lat')
+    obs_season_mlist[obs]['curl_tx'],obs_season_mlist[obs]['curl_ty'] = curl_var_3d(
+                                               obs_season_mlist[obs]['tx'],
+                                               obs_season_mlist[obs]['ty'],
+                                               xname='lon',yname='lat')
 
-obs_season_mlist[obs]['curl_tau'] = obs_season_mlist[obs]['curl_tx']+obs_season_mlist[obs]['curl_ty']
+    obs_season_mlist[obs]['curl_tau'] = obs_season_mlist[obs]['curl_tx']+obs_season_mlist[obs]['curl_ty']
+    
+else:
+    # for pre-defined period 1993-2011
+    Obs_name = ['WASwind','CMEMS']
+    
+    # initialization of dict and list
+    obs_mean_mlist = {}
+    obs_season_mlist = {}
+    obs_linear_mlist = {}
+    
+    obs_linear_mlist['CMEMS'] = {}
+    obs_mean_mlist['CMEMS'] = {}
+    obs_season_mlist['CMEMS'] = {}
+    
+    obs_linear_mlist['WASwind'] = {}
+    obs_mean_mlist['WASwind'] = {}
+    obs_season_mlist['WASwind'] = {}
+    
+    predeffile_dir = str(os.getenv('OBS_DATA'))
+    
+    obs_linear_mlist['CMEMS']['adt'] = xr.open_dataset(os.path.join(predeffile_dir,'cmems_ssh_linear.nc'))
+    obs_mean_mlist['CMEMS']['adt'] = xr.open_dataset(os.path.join(predeffile_dir,'cmems_ssh_mean.nc')).adt
+    obs_season_mlist['CMEMS']['adt'] = xr.open_dataset(os.path.join(predeffile_dir,'cmems_ssh_season.nc')).adt
 
+    obs_linear_mlist['WASwind']['curl_tau'] = xr.open_dataset(os.path.join(predeffile_dir,'waswind_curltau_linear.nc')).curl_tau
+    obs_mean_mlist['WASwind']['curl_tau'] = xr.open_dataset(os.path.join(predeffile_dir,'waswind_curltau_mean.nc')).curl_tau
+    obs_season_mlist['WASwind']['curl_tau'] = xr.open_dataset(os.path.join(predeffile_dir,'waswind_curltau_season.nc')).curl_tau
+    
 
 # # Regional averaging
 #### setting regional range

@@ -1,7 +1,7 @@
 Top-Heaviness Metric Diagnostic Documentation
 ================================
 
-Last update: 5/27/2021
+Last update: 5/30/2021
 
 The vertical profiles of diabatic heating have important implications for large-scale dynamics, especially for the coupling between the large-scale atmospheric circulation and precipitation processes. We adopt an objective approach to examine the top-heaviness of vertical motion (Back et al. 2017), which is closely related to the heating profiles and a commonly available model output variable. The diagnostic metric can also be used to evaluate the diabatic heating profile.
 
@@ -26,9 +26,9 @@ Functionality
 
 The currently package consists of following functionalities:
 
-(1) Calculation of percentage of variance explained by two base functions (idealized deep convection profile, idealized deep stratiform profile)
+(1) Calculation of the fractional variance of vertical velocity at each grid point explained by two base functions (i.e., idealized deep convection profile, idealized deep stratiform profile)
 
-(2) Calculation of top-heaviness ratio (O2/O1)
+(2) Calculation of the top-heaviness ratio (O2/O1)
 
 (3) Other analysis (to be added soon)
 
@@ -46,7 +46,7 @@ Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "basemap"
 Required model output variables
 -------------------------------
 
-Monthly 3-D spatial dimension Omega (units: Pa/s)
+3-D spatial dimension Omega (units: Pa/s), which can be either the monthly mean in a certain year or the long-term monthly mean (or seasonal) mean.
 
 
 References
@@ -61,34 +61,30 @@ Jiacheng and Zhuo's paper is under developing...
 More about this diagnostic
 --------------------------
 
-Q1 and Q2 (Figure 1) are two prescribed base functions. Q1 is characterized by idealized deep convection profile and Q2 is characterized by idealized deep stratiform profile. The concept of percentage of explained variance is similar to that of EOF analysis where we can regard Q1 and Q2 as two leading EOFs. Top-heaviness ratio in figure 2 shows that the WP is characterized by more top-heavy circulation while EP and ATL are described by more bottom-heavy circulation.  Through approximating monthly mean vertical motion profile by Q1 and Q2, figure 3 and figure 4 reveal that using these two base functions can help to explain most of the tropical and subtropical ocean. 
+Q1 and Q2 (Figure 1a) are two prescribed base functions. Following Back et al. (2017), Q1 as a half sine function, and Q2 as a full sine function, which represent the idealized deep convection profile and the idealized deep stratiform profile, respectively. The vertical velocity can be approximated by Q1 and Q2:
+ω'(x,y,p) = O1(x,y,t) * Q1(p) + O2(x,y,t)*Q2(p)
 
-The top-heaviness is a useful tool to diagnose the coupling between diabatic process and large-scale circulation. If the model is not able to reproduce correct pattern of top-heaviness ratio, this would imply potential deficiencies in deep convection and stratiform scheme. In the future POD develop, we are considering adding shallow convection as a third base function. By doing so will enable us to further investigate the bias source of tropical and subtropical predicability. 
 
+Holding O1 as positively defined, when the ratio of r=O2/O1 increases from -1 to 1, ω' transitions from a bottom-heavy profile to a top-heavy profile (Figure 1b). 
+To assess how well ω' approximates ω, the fractional variance (R2 between the reconstructed Omega and original Omega profiles) is calculated over each grid point. As shown in Figure 2,  ω' explains more than 80% of the vertical variances over most tropical/subtropical oceanic grid points.
 
 .. figure:: Q1&Q2_R.png
    :align: center
    :width: 75 %
    
 
-   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heviness ratio (r; r=-1: dark blue, r=1: dark red).
+   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
+   
+
+.. figure:: R2_Between_Recon_Omega&Original.png
+   :align: center
+   :width: 75 %
+
+   Figure 2. R2 between the reconstructed Omega and original Omega profiles.
    
 
 .. figure:: Top_Heaviness_Ratio.png
    :align: center
    :width: 75 %
 
-   Figure 2. Top-Heaviness Ratio in July (2000-2019).  
-   
-
-.. figure:: Proportion_of_explained_Interannual_Variance.png
-   :align: center
-   :width: 75 %
-
-   Figure 3. Proportion of Interannual Variance Explained by Q1 and Q2.png.
-
-.. figure:: R2_Between_Recon_Omega&Original.png
-   :align: center
-   :width: 75 %
-
-   Figure 4. R U+33A1 Between Reconstructed LTM Omega & Original profile.
+   Figure 3.. Top-Heaviness Ratio in of the long-term mean omega in July (2000-2019). The ratio is only calculated over grid points where O1 is no less than 0.01 which is very close to zero.

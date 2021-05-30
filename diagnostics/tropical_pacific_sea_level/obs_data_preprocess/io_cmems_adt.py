@@ -20,7 +20,6 @@ The daily data is preprocessed to monthly data in this script
 import xarray as xr
 import numpy as np
 import os
-import cftime
 
 
 def scantree(path):
@@ -41,7 +40,7 @@ def annual_to_monthly(basedir, year):
     print(path)
 
     # obtain a list of files for each year
-    files = list(scantree(path))
+    #files = list(scantree(path))
     files = [x.path for x in list(scantree(path)) if x.path.endswith(".nc")]
 
     # open a multi-file dataset and extract the variable

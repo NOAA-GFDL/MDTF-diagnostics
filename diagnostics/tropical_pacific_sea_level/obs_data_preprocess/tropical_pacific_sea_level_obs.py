@@ -42,7 +42,6 @@ Observational data : adt, tx, ty
 import os
 import cftime
 import xarray as xr
-import numpy as np
 import spherical_area as sa
 from xr_ufunc import da_linregress
 from dynamical_balance2_obs import curl_var, curl_var_3d

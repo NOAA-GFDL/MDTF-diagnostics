@@ -89,12 +89,13 @@ When you are ready to push your updates to the remote feature branch on your for
 
 Submitting Pull Requests
 ------------------------
-A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo.
+The pull request (PR) for your branch is your proposal to the maintainers to incorporate your feature into NOAA's repo.
 Your changes will not affect the official NOAA's repo until the PR is accepted by the lead-team programmer.
 Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
-To submit a PR
 
-1. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request" button
+To submit a PR :
+
+1. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request* button
 
 2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
 that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch

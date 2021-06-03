@@ -54,9 +54,9 @@ def top_heaviness_ratio_robustness_calc_model(reanalysis_path, reanalysis_var):
         Q1_model[i]=-np.sin(np.pi*(levs_interp[i]-levs_interp[0])/dp)
         Q2_model[i]=np.sin(2*np.pi*(levs_interp[i]-levs_interp[0])/dp)
     #Normalize 
-    factor=scipy.integrate.trapz(Q1_model*Q1_model,lev_model)/dp
+    factor=integrate.trapz(Q1_model*Q1_model,lev_model)/dp
     Q1_model=Q1_model/np.sqrt(factor)
-    factor=scipy.integrate.trapz(Q2_model*Q2_model,lev_model)/dp
+    factor=integrate.trapz(Q2_model*Q2_model,lev_model)/dp
     Q2_model=Q2_model/np.sqrt(factor)
     #======================calculate explained variance over the globe=======================
     # Often times, the pres level is not equally distributed. People tend to increase density in the 

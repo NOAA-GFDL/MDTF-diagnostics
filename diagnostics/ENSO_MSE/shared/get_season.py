@@ -6,7 +6,7 @@ def get_season( season, prefix):
 
     if (os.path.exists(prefix+"../shared/parameters.txt")):
         file = open(prefix+'../shared/parameters.txt', 'r')
-        for i in range(1, 13):
+        for i in range(1, 11):
             line = file.readline()
             line = line.strip()
             column = line.split()

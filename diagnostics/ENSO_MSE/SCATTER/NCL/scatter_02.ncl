@@ -1,10 +1,5 @@
 ;---------------------------------------------------------------------
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-;
 ; This file still has to be loaded manually
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
@@ -25,17 +20,10 @@ begin
     xlabel = "Precipitation [W/m~S~2~N~]"
     ylabel = "F~B~rad~N~ [W/m~S~2~N~]"
 ;;;----------------------------------------------------------------------
-; Data is hard-coded here. It was originally calculated by running
-; a compute-intensive script.
-;----------------------------------------------------------------------
-;;  read in the data based on the region .. 
-  
 ;;  columns -   rows = xdim, columns - ydim 
 ;;   xdim is the number of lines = models 
-;;     ydim is the number of columns = variables 
+;;   ydim is the number of columns = variables 
 
-    season = "DJF"
-;;;   season and mode all predefined
    season = "DJF"
    mode = "El Nino"
 
@@ -49,7 +37,6 @@ begin
    ydim = 6
 
 ;; read in the models:
-;;     namemodel = varcode +  "/SCATTER/list-models-historical-obs"
      namemodel = prefix + "list-models-historical-obs"
      models = readAsciiTable ( namemodel, 1, "string", 0)
      models2 = new ( (/ xdim+1 /), "string" )
@@ -78,15 +65,9 @@ begin
     dataY(0:xdim-1) = datain1(0:xdim-1, 2)
     dataY(xdim) = datain2(0, 2)
 
-   ;;printMinMax (dataX, False)
-   ;;printMinMax (dataY, False)
-
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
 ;----------------------------------------------------------------------
-;;  colors  = (/"white","black","dodgerblue2","firebrick","forestgreen",\
-;              "dodgerblue2","darkorange2","forestgreen","deeppink2",\
-;              "darkorange2","purple"/)
 ;;  colors for the markers 
 
   colors1  = (/ 2,  3,   2,   3,   2,   3,  4,   2,  3,  4,  \ ;;   10
@@ -109,23 +90,17 @@ begin
                      0.03,  0.03, 0.03, 0.03,  0.03/)        ;;; ERA + NEW_MODEL
 
 
-     markerthick =  (/   3., 3., 3., 3., 3., 10., 10.,  3., 10., 3., \  ;;  10
-                         3., 3., 3., 3., 3.,  3.,  3., 10.,  3., 3., \ ;;; 20
-                         3., 3., 3., 3., 3.,  3.,  3.,  3., 10., 3.,  \ ;; 30
+     markerthick =  (/   3., 3., 3., 3., 3., 10., 10.,  3., 10., 3., \  ;;  
+                         3., 3., 3., 3., 3.,  3.,  3., 10.,  3., 3., \ ;;; 
+                         3., 3., 3., 3., 3.,  3.,  3.,  3., 10., 3.,  \ ;; 
                          3., 3., 3., 3., 3., 3.,  \  ! 36
                         10., 10., 6.,  6., 6./)      ;; ERA + NEW_MODEL
 
 
-;;  wks = gsn_open_wks ("ps","scatter")
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000 
    wks_type = "eps"
-;;   nameout2 = wkdir + "/SCATTER/PS/" + nameout(ibox)
    nameout2 = wkdir +  "/model/PS/" + nameout(ibox)
    wks = gsn_open_wks( wks_type, nameout2)
 
-;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
 
 ;----------------------------------------------------------------------
@@ -143,11 +118,7 @@ begin
     aminy = miny - dy
 ;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
-;----------------------------------------------------------------------
-;;  infoTimeStamp(wks,0.005,"")
 ;;;;;; ***********  regression line  
-   
    rc =   regline ( dataX, dataY)
    
 ;************************************************
@@ -168,7 +139,6 @@ begin
 
 ;************************************************
 ; plotting parameters
-; This illustrates one approach. Overlays could also be used.
 ;************************************************
 
    res1 = True
@@ -176,8 +146,8 @@ begin
    res1@txFont   = "helvetica"
    res1@txFuncCode    = "~"
 
-   res1@tmXBMode         =  "Explicit" ;; "Manual"
-   res1@tmYLMode         =  "Explicit" ;;  "Manual"
+   res1@tmXBMode         =  "Explicit" ;; 
+   res1@tmYLMode         =  "Explicit" ;; 
    res1@tmXBTickSpacingF =  dxx(ibox)
    res1@tmYLTickSpacingF =  dyy(ibox) 
    res1@trXMinF           = xmin(ibox)
@@ -185,19 +155,17 @@ begin
    res1@trYMinF           = ymin(ibox)
    res1@trYMaxF           = ymax(ibox)
 
-  res1@gsnDraw            = False       ; Don't draw plot
-  res1@gsnFrame           = False       ; Don't advance frame
+  res1@gsnDraw            = False       ; 
+  res1@gsnFrame           = False       ; 
 ;;;
-  res1@vpXF              = 0.18 ;; 0.14
-  res1@vpYF              = 0.8  ;; 0.82
-  res1@vpWidthF          = 0.53 ;; 0.55
-  res1@vpHeightF         = 0.53 ;; 0.55
+  res1@vpXF              = 0.18 ;; 
+  res1@vpYF              = 0.8  ;; 
+  res1@vpWidthF          = 0.53 ;;
+  res1@vpHeightF         = 0.53 ;; 
 
 ;---Title resources
   res1@txFont   = "helvetica"
   res1@tiMainString       = maintitle
-;;  res1@tiXAxisString      =  xlabel
- ;; res1@tiYAxisString      =  ylabel
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
@@ -216,14 +184,9 @@ begin
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    res1@tiMainFontHeightF  = 0.02
-;---Resources for X/Y axes.
-;  res1@trYMinF            =  aminy               ; min value on y-axis
-;  res1@trYMaxF            =  amaxy               ; max value on y-axis
-;  res1@trXMinF            =  minx                  ; min value on x-axis
-;  res1@trXMaxF            =  maxx                  ; max value on x-axis
  
   res1@tmLabelAutoStride = True
-;--XY marker resources
+
   res1@xyMarkLineMode     = "Markers"
   res1@xyMonoMarkerColor  = False          ; Allow different colors for markers
   res1@xyMarkerSizes            = markersizes(:)
@@ -244,7 +207,6 @@ begin
     
    res1@xyMarkLineMode      = "Lines"
    res1@xyLineColors        = "red"  ; choose which have markers
-;;   res1@xyMarkerSizeF       = 0.005  ; Marker size (default 0.01)
    res1@xyDashPatterns      = 0                ; solid line 
    res1@xyLineThicknesses   = 4                 ; 
 
@@ -272,11 +234,12 @@ begin
       txres@txFontColor =  colors1(i)
       txres@txFont   = "helvetica"
       txres@txFontHeightF = 0.01
-     ;;mkres@gsMarkerColor  = True
+
      mkres@gsMarkerColor =  colors1(i)
      mkres@gsMarkerThicknessF = 3.5
      mkres@gsMarkerSizeF      = 0.012
      mkres@gsMarkerIndex      = markers1(i)
+
      fheight  = 0.016
      fthick = 6.
      mthick = 6.

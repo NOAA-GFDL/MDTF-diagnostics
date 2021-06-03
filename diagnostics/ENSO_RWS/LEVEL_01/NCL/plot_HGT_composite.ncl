@@ -18,9 +18,6 @@ begin
    varunit = (/ "[m]" /)
 
 ;;   contour levels  one for each p-level
-   
-;;    levels2 = (/ (/ -60, -50, -40, -30, -20, -10, 10, 20, 30, 40, 50, 60 /), \
-;;                 (/ -30, -25, -20, -15, -10, -5, 5, 10, 15, 20, 25, 30 /) /)
 
    levels2 = (/ (/ -100, -80, -60, -40, -20,  0, 20, 40, 60, 80, 100 /), \
                 (/  -50, -40, -30, -20, -10,  0, 10, 20, 30, 40, 50 /) /)
@@ -135,7 +132,7 @@ begin
  res@cnLevelSelectionMode  =  "ManualLevels" ;; "ExplicitLevels" 
 
   res@cnFillOn             = True                  ; turn on color fill
-  res@cnLinesOn            = True ;;  False
+  res@cnLinesOn            = True ;;  
 ;;  the color bar 
   res@lbAutoManage          = False             ; we control label bar
   res@pmLabelBarDisplayMode = "Always"          ; turns on label bar
@@ -168,22 +165,18 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;;  
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
      label4 = "  Months/Season= " + season + " Model: " + model + "  units:" +  varunit
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
   
-;;    res@cnLevels    =   levels2(nlev2,:)
      cmap = read_colormap_file(colormap)
      res@cnFillPalette = cmap
      res@cnMinLevelValF       = cmin(nlev2)                ; set min contour level
      res@cnMaxLevelValF       = cmax(nlev2)              ; set max contour level
      res@cnLevelSpacingF      = cint(nlev2)
-
-;;    cmap = read_colormap_file(colormap)
-;;    res@cnFillPalette = cmap ;;   cmap( (/ 1, 2, 3, 4, 5, 6,  9 , 11, 12, 13, 14, 15, 16 /),:)
 
      plot = gsn_csm_contour_map(wks, hgta(0, kk,:,:),res)
   
@@ -194,5 +187,5 @@ begin
 
    delete ([/ hgtc,  hgt, hgta, lon, lat, plev1, time,  zdim/])
 
-  end do  ;;  model/OBS
-end
+  end do  ;;  
+end  

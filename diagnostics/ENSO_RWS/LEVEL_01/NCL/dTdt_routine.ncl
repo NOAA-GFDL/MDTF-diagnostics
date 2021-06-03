@@ -1,9 +1,4 @@
 ;;***************************************************
-;
-;*******************************************************
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
@@ -21,13 +16,13 @@ begin
 
 ;;;    selected variables    import from system defined vars. 
 ;;     3D  vars only TA
-    tav =  "ta" ;;;   getenv("ta_var")
+    tav =  "ta" ;;;  
 
 ;;       coordinate vars
-      levx  = "lev" ;;  getenv("lev_coord")
-      lonx  = "lon" ;;  getenv("lon_coord")
-      latx  = "lat" ;;;   getenv("lat_coord")
-      timex = "time" ;;;   getenv("time_coord")
+      levx  = "lev" ;;  
+      lonx  = "lon" ;;  
+      latx  = "lat" ;;;
+      timex = "time" ;;;  
 
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -117,7 +112,7 @@ begin
        if(  year22 .eq. year)  then
 
        it2 = month - 1
-       Vin2(it2, :, :, :)  = tofloat( dta(it, :, :, :))  ;;;;   fin->$Varname$(it:it, :, :)
+       Vin2(it2, :, :, :)  = tofloat( dta(it, :, :, :))  ;;;; 
 
        timeout(it2)  = time0(it)
 
@@ -174,7 +169,7 @@ begin
        fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here    
        filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -204,24 +199,13 @@ begin
        fout = addfile( fileout ,"c")
        setfileoption(fout,"DefineMode",True)
     
-;       lon2!0 = "lon"
-;       lon2@units = "degrees_east"
-;       lon2@_FillValue = undef2
-;       lon2@long_name = "longitude"
-
-;       lat2!0 = "lat"
-;       lat2@units = "degrees_north"
-;       lat2@long_name = "latitude"
-;       lat2@_FillValue = undef2
-
-
        fAtt               = True            ; assign file attributes
        fAtt@title         = "NCL created netcdf"
        fAtt@source_file   =  "original-file.nc"
        fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" ) 
+;;;;;;;;;;;;;;;;; define all attributes here   
 ;;;;  average clima and output too
       ss2 =  where( ss2 .gt. 0.,  ss2 ,  ss2@_FillValue )
        clima = clima/ss2
@@ -237,8 +221,8 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
-         filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
+;;;;;;;;;;;;;;;;; define all attributes here   
+       filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
        filevardef(fout, "lev"  , typeof(plevels),   (/"lev"/) )

@@ -118,14 +118,8 @@ begin
   poisson_grid_fill( ua, gtype, guess, nscan, eps, relc, opt)
   poisson_grid_fill( va, gtype, guess, nscan, eps, relc, opt)
 
-   mm2 = 1
-;;   wrf_smooth_2d(ua,mm2)
-;;   wrf_smooth_2d(va,mm2)
-;;   wrf_smooth_2d(uuc,mm2)
-;;   wrf_smooth_2d(vvc,mm2)
 
-
-    asfvp  = uv2sfvpG (ua,va)
+    asfvp  = uv2sfvpF (ua,va)
 ;;  mask undefined
     asfvp(0, :, :, :, :) = where( .not.ismissing(uu1(:, :, :, :)), asfvp(0, :, :, :, :), uu1@_FillValue)
     asfvp(1, :, :, :, :) = where( .not.ismissing(uu1(:, :, :, :)), asfvp(1, :, :, :, :), uu1@_FillValue)
@@ -216,7 +210,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;;  
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -226,15 +220,6 @@ begin
      end if
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
   
-;;    res@cnLevels    =   levels2(nlev,:)
-;;    cmap = read_colormap_file(colormap)
-;;    i = 7
-;;    cmap( i, 0) = 0. ;200./255.
-;;    cmap( i, 0) = 0. ;200./255.
-;;   cmap( i, 0) = 210./255.
-;;    cmap (i,3) = 1
-;;   res@cnFillPalette =  cmap( (/ 0,  1, 2, 3, 4, 5, 6, 7,  9 , 11, 12, 13, 14, 15, 16, 17, 18 /),:)
-
    cmap = read_colormap_file(colormap)
    res@cnFillPalette = cmap
    res@cnMinLevelValF       = cmin(nlev)                ; set min contour level

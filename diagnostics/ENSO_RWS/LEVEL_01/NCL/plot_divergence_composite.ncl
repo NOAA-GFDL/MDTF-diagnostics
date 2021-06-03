@@ -57,14 +57,14 @@ begin
    do  icase = 1, 2
 
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
+      dirname  =  dirname1 + "/model"
+      outdir   =  dirname1 + "/model"
       model =  getenv( "CASENAME")
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname   
-   outdir  = dirname1  + "/obs"
+      dirname = obsname   
+      outdir  = dirname1  + "/obs"
       model = " " ;;  
     end if
 
@@ -125,11 +125,8 @@ begin
 
 ;;  divergence 
     adiv = uu1
-    adiv = uv2dvF_Wrap( ua, va) ;;  uv2dv_cfd (ua,va, lat, lon, 3)  
+    adiv = uv2dvF_Wrap( ua, va) ;;  
     adiv = ff4 * adiv
-;;  smoothing 9x9 window 
-;;    mm2 = 2
-;;    wrf_smooth_2d(adiv,mm2)
 
 ;;  mask the undefined
    adiv(:, :, :, :) =  where( .not.ismissing(uu1(:, :, :, :)),  adiv(:, :, :, :), uu1@_FillValue)
@@ -177,7 +174,7 @@ begin
   res@lbOrientation         = "Horizontal"      ; ncl default is vertical
   res@pmLabelBarSide        = "Bottom"          ; default is right
   res@lbLabelStride         = 1                ; skip every other label
-  res@pmLabelBarWidthF      = 0.85 ;; 0.8               ; default is shorter
+  res@pmLabelBarWidthF      = 0.85 ;;           ; default is shorter
   res@pmLabelBarHeightF     = 0.15               ; default is taller
   res@lbLabelFontHeightF    = 0.012              ; default is HUGE
   res@lbPerimOn             = False       
@@ -203,7 +200,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 

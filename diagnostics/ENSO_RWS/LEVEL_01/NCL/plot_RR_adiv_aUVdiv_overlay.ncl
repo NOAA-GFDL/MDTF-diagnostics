@@ -56,50 +56,48 @@ begin
      ys10 = 0.84
      dx2 = 0.65
 
-     xs110 = 0.05 ;;  0.82
-     ys110 = 0.15 ;;  0.78
-     dxs1 = 0. ;;   0.3
+     xs110 = 0.05 ;;  
+     ys110 = 0.15 ;;  
+     dxs1 = 0. ;;  
      dys1 = -0.03
 
 ;;  need to set for each pressure level   here now only top is relevant 
 
-;;  levels1  = RR anom
    levels1 = (/  -8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8 /)
 
 ;;;  anomaly divergence 
    levels4 =   (/1, 2, 3, 4, 5 /) 
-   cmin4 = -4 ;; -6.
-   cmax4 =  4 ;;  6.
+   cmin4 = -4 ;; 
+   cmax4 =  4 ;; 
    cint4 =  1.
 
 ;;  hatching :
     levels44 = (/ -3., -2., -1. /)
     patterns = (/ 16, 16, 6, -1  /) 
-    scales   =  (/ 0.6, 0.7, 0.8, 1 /)  ;;;  (/ 1, 2, 3, 4 /)  ;;; (/ 0.3, 0.3, 0.8, 1 /) 
+    scales   =  (/ 0.6, 0.7, 0.8, 1 /)  ;;; 
 
 ;;; vector parameters 
     divmag = 2.
-    veclength =  0.025 ;;;   0.05  ;; 0.1 ;; 0.05
+    veclength =  0.025 ;;;   
     vmin = 0.4  ;;  min vector to plot
-    thinvector = 0.02 ;;   0.02 ;; 0.12
-    vthick = 4 ;; 4
-    vcolor =  "black" ;;  "grey40" ;; "grey60" ;;  "blue"
+    thinvector = 0.02 ;;  
+    vthick = 4 ;; 
+    vcolor =  "black" ;; 
     ahead =  0.005
 
 ;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase ) 
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
+     dirname  =  dirname1 + "/model"
+     outdir   =  dirname1 + "/model"
      model =  model2   ;;
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
-    model = " "
+     dirname = obsname
+     outdir  = dirname1  + "/obs"
+     model = " "
     end if
 
      wks_type = "eps" ;; 
@@ -127,7 +125,6 @@ begin
     delete( [/ f1, f2, f3 /])
 ;;;   anomaly seconds  either El Nino/La Nina
     do n = 0, 1
-;;       print( "mode " +  modes(n) )
      mode  =  modes(n)
      namein  = dirname  + "/netCDF/"  + mode
      nameout = outdir  + "/PS/"
@@ -172,9 +169,9 @@ begin
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  divergent wind from divergence    uv2dvG_Wrap
+;;  divergent wind from divergence    
      adiv = ua
-     adiv = uv2dvF_Wrap( ua, va) ;;   uv2dv_cfd (ua,va, lat, lon, 3)
+     adiv = uv2dvF_Wrap( ua, va) ;;  
    
     aUVdiv = dv2uvF_Wrap (adiv)
     aUVdiv(0, :, :, :, :) = where( .not.ismissing(ua(:, :, :, :)), aUVdiv(0, :, :, :, :), ua@_FillValue)
@@ -193,8 +190,6 @@ begin
 
 ;;;;;;;;;;;;;;;;;;
 ;;;;;;   PLOTTING 
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000
 
     kk = 0
     nn = 0
@@ -205,7 +200,7 @@ begin
    end do
 
    pressure =  tostring_with_format( plev1(kk), "%3.0f" )
-;;   print( plevel1(n) + " " + plev1(kk) )
+
    nameout2 = nameout + outname + "_" + mode + "_" + pressure ;;  
 
    wks = gsn_open_wks( wks_type, nameout2)
@@ -219,7 +214,6 @@ begin
     res@mpMinLonF   =  xlon1 
     res@mpMaxLonF   =  xlon2
     res@mpCenterLonF =  xcenter
-    ;;  res@mpGeophysicalLineThicknessF = 1.9 ;;;   3
 
      res@lbAutoManage          = False             ; we control label bar
      res@pmLabelBarDisplayMode = "Always"          ; turns on label bar
@@ -234,8 +228,7 @@ begin
 
     res@gsnMaximize  = True 
     res@cnFillOn             = True               ; turn on color fill
-;;;     res@tiMainString       =  model + " " + title + " " + filter + "  " + pressure + " mb"
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;; 
 
     txres1 = True
     txres1@txFontColor =  "black"
@@ -256,7 +249,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 ;;     add units 
@@ -287,7 +280,6 @@ begin
      plot1 = gsn_csm_contour_map(wks,  rra( :, :), res)
  
    delete(cmap)
-;;    delete( res@cnFillPalette )
    delete( res@cnLevels)
    delete( res@mpMinLatF)
    delete( res@mpMaxLatF)
@@ -300,7 +292,7 @@ begin
    res@cnFillOn            = False 
    res@cnLevels    =   levels4    ;;;
 ;;;   contour lines 
-    res@cnLineThicknessF =  1 ;; 4 
+    res@cnLineThicknessF =  1 ;;  
     res@cnLineLabelInterval       =   1       
     res@cnLineLabelPlacementMode   = "Computed" 
     res@cnLineLabelFontHeightF = 0.008 ;; 
@@ -312,7 +304,7 @@ begin
     res@gsnContourZeroLineThicknessF  = 0
 
      res@cnMonoLineColor = True
-     res@cnLineColor = "gray40" ;;  "black"
+     res@cnLineColor = "gray40" ;; 
 
     adiv = ff4 * adiv 
     plot2 = gsn_csm_contour(wks,  adiv(tt0, kk, :, :), res)
@@ -327,27 +319,27 @@ begin
    res2@gsnMaximize  = True
 
      res2@lbAutoManage          =  False
-     res2@pmLabelBarDisplayMode = "ForceAlways" ;; "NoCreate" ;;;  "Never"
-     res2@lbOrientation         = "Vertical";;   "Horizontal"      ; ncl default is vertical
-     res2@pmLabelBarSide        = "Right";;  "Top" ;;  "Bottom"          ; default is right
-     res2@lbLabelStride         = 1                 ; skip every other label
+     res2@pmLabelBarDisplayMode = "ForceAlways" ;;
+     res2@lbOrientation         = "Vertical";;  
+     res2@pmLabelBarSide        = "Right";;  
+     res2@lbLabelStride         = 1                ; skip every other label
      res2@pmLabelBarWidthF      = 0.               ; default is shorter
      res2@pmLabelBarHeightF     = 0.               ; default is taller
-     res2@lbLabelFontHeightF    = 0.0000001              ; default is HUGE
+     res2@lbLabelFontHeightF    = 0.0000001        ; default is HUGE
      res2@lbPerimOn             = False
-     res2@pmLabelBarOrthogonalPosF = 1 ;;  -1.
+     res2@pmLabelBarOrthogonalPosF = 1 ;; 
 
     res2@cnLevelSelectionMode = "ExplicitLevels"
     res2@cnLevels   =   levels44
 ;;;   contour lines
-    res2@cnLineThicknessF =   2 ;;  1;;    4 ;;   linethick
-    res2@cnLineLabelInterval       =   1           ; default = 2
-    res2@cnLineLabelPlacementMode   = "Computed" ;;;  "constant"
-    res2@cnLineLabelFontHeightF = 0.008 ;;  0.015
+    res2@cnLineThicknessF =   2 ;; 
+    res2@cnLineLabelInterval       =   1   ;;        
+    res2@cnLineLabelPlacementMode   = "Computed" ;;; 
+    res2@cnLineLabelFontHeightF = 0.008 ;;  
     res2@cnLineLabelFontThicknessF  = 1.
     res2@cnInfoLabelOn = False
-    res2@cnLineLabelsOn   =  True ;;;   False
-    res2@gsnContourNegLineDashPattern  =  7 ;  7; 1
+    res2@cnLineLabelsOn   =  True ;;;   
+    res2@gsnContourNegLineDashPattern  =  7 ;
     res2@cnLineLabelFormat    =  "0@;*.2f"
     res2@gsnContourZeroLineThicknessF  = 0
 
@@ -379,10 +371,10 @@ begin
   res3@vcMinAnnoSide = "Bottom"
 
   res3@vcMonoLineArrowColor  = True
-  res3@vcRefMagnitudeF =  divmag    ;; 3.               ; make vectors larger
-  res3@vcRefLengthF    =  veclength ;; 0.050               ; reference vector length
-  res3@vcGlyphStyle    = "LineArrow" ;; "CurlyVector"      ; turn on curly vectors
-  res3@vcMinDistanceF  =  thinvector ;;  0.012             ; thin the vectors
+  res3@vcRefMagnitudeF =  divmag    ;; make vectors larger
+  res3@vcRefLengthF    =  veclength ;;  reference vector length
+  res3@vcGlyphStyle    = "LineArrow" ;;; turn on curly vectors
+  res3@vcMinDistanceF  =  thinvector ;;  thin the vectors
   res3@vcLineArrowThicknessF  = vthick 
   
   res3@vcMinMagnitudeF  = vmin 

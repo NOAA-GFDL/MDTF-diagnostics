@@ -61,33 +61,31 @@ begin
      colormap = "precip2_17lev"
 ;;  need to set for each pressure level   here now only top is relevant 
 
-;;  levels1  =  RWS terms 
-;   levels1 = (/ -30,  -27,  -24, -21, -18, -15, -12, -9, -6,  6, 9, 12, 15, 18, 21, 24, 27, 30 /)
+;;  levels1  RWS terms 
     levels1 = (/  -6, 6 /)
-    patterns =  (/ 2, -1, 16 /)  ; -1
-    scales =  (/ 1, 1, 1 /) ;;;  (/ 0.6, 1,  0.3 /)  ; 0.6, 1,  0.6  1
+    patterns =  (/ 2, -1, 16 /)  ;
+    scales =  (/ 1, 1, 1 /) ;;; 
 
 ;;    U clima 
-   cmin4 = -10 ;; -6.
-   cmax4 =  75 ;;  6.
+   cmin4 = -10 ;; 
+   cmax4 =  75 ;; 
    cint4 =   5.
 
-    wks_type = "eps" ;; "ps" ;;; "png"
+    wks_type = "eps" ;
 
 ;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase )
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
-    model =  model2   ;;;
+     dirname  =  dirname1 + "/model"
+     outdir   =  dirname1 + "/model"
+     model =  model2   ;;;
     end if
 
    if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
-    model = " "
+     dirname = obsname
+     outdir  = dirname1  + "/obs"
+     model = " "
     end if
 
 ;;;  clima  winds  first
@@ -210,17 +208,15 @@ begin
    cvorty(:, :, :, :) =  where( .not.ismissing(uuc(:, :, :, :)), cvorty(:, :, :, :),ua@_FillValue)
 
 ;;; RWS terms : 1
-;;;   term1 = cvort (clima abs vorticity) *  div ( UVdivanom)
       term1 = uu1
       term1 = -1.*( cvort * adiv)
-;;;   term2 = aUVdiv * cvortxy( gradient )
+
       term2 = term1
       term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 
-;;;   term3 =  avort( * div( UVdivclim)
       term3 =  term1
       term3 = -1.*( avort * cdiv)
-;;;   term4 =  UVdivclim  *  grad( avortxy)
+
       term4 =  term1
       term4(:, :, :, :) = -1.*( cUVdiv(0, :, :, :, :) * avortx(:, :, :, :) +  cUVdiv(1, :, :, :, :) * avorty(:, :, :, :))
 
@@ -262,12 +258,12 @@ begin
 
     res@gsnMaximize  = True 
     res@cnFillOn             = True               ; turn on color fill
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;; 
 
      txres1 = True
      txres1@txFontColor =  "black"
      txres1@txFont   = "helvetica"
-     txres1@txFontHeightF =  0.022 ;;  0.025
+     txres1@txFontHeightF =  0.022 ;;  
      txres1@txJust        = "CenterLeft"
      txres1@txFuncCode    = "~"
 
@@ -283,7 +279,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.018 ;;  0.016
+      txres2@txFontHeightF = 0.018 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -304,7 +300,7 @@ begin
       end if
 
 ;;;  Uclima first 
-    res@cnLevelSelectionMode = "ManualLevels" ;;; "ExplicitLevels" ;;
+    res@cnLevelSelectionMode = "ManualLevels" ;;;
     res@cnLinesOn           =  False
     res@cnFillOn            = True
 
@@ -351,9 +347,9 @@ begin
 
 ;;                                                        8
     res@cnFillPalette =  cmap( (/0, 1, 2,  3, 4, 5, 6, 7, 8,  10, 11, 12,13, 14, 15, 16, 17 /), :)
-    res@cnMinLevelValF       = cmin4               ; set min contour level
-    res@cnMaxLevelValF       = cmax4                ; set max contour level
-    res@cnLevelSpacingF      = cint4                ; set contour spacing
+    res@cnMinLevelValF       = cmin4    ; set min contour level
+    res@cnMaxLevelValF       = cmax4    ; set max contour level
+    res@cnLevelSpacingF      = cint4    ; set contour spacing
 
    plot1 = gsn_csm_contour_map(wks,   uuc(tt0, kk,:,:),res)
 
@@ -369,7 +365,7 @@ begin
    res2@cnInfoLabelOn   = False                ; turn off info label box
    res2@cnLineLabelsOn  = False                ; no lables on line
    res2@cnFillOn        = True                 ; fill contour intervals
-   res2@cnLinesOn        =  True ;;   False
+   res2@cnLinesOn        =  True ;; 
 
    res2@cnMonoFillColor = True                 ; default color is fground [black]
    res2@cnMonoFillPattern = False              ; want multiple patterns
@@ -379,7 +375,7 @@ begin
     res2@cnFillScales  = scales  ;;;    
 
     res2@lbAutoManage          =  False
-    res2@pmLabelBarDisplayMode = "Never" ;;  "Always"          ; turns on label bar
+    res2@pmLabelBarDisplayMode = "Never" ;;        ; turns on label bar
     res2@lbOrientation         = "Horizontal"      ; ncl default is vertical
     res2@pmLabelBarSide        = "Bottom"          ; default is right
     res2@lbLabelStride         = 1                 ; skip every other label

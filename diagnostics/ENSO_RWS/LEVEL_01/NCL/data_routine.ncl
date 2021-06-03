@@ -1,9 +1,5 @@
 ;;***************************************************
-;
 ;*******************************************************
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
@@ -20,22 +16,22 @@ begin
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars
-       zgv  = "zg" ;;  getenv("zg_var")
-       uav  = "ua" ;;  getenv("ua_var")
-       vav  = "va" ;; getenv("va_var")
-       tav  = "ta" ;; getenv("ta_var")
-       wapv = "wap" ;;  getenv("omega_var")
+       zgv  = "zg" ;; 
+       uav  = "ua" ;;  
+       vav  = "va" ;; 
+       tav  = "ta" ;; 
+       wapv = "wap" ;; 
 
 ;;     2D  vars
-       prv =  "pr" ;;; getenv("pr_var")
-       tsv =  "ts" ;;;   getenv("ts_var")
-       pr_conversionv =  1. ;;;    getenv("pr_conversion_factor")
+       prv =  "pr" ;;; 
+       tsv =  "ts" ;;;   
+       pr_conversionv =  1. ;;;  
 
 ;;       coordinate vars
-       levx  = "lev" ;;;  getenv("lev_coord")
-       lonx  = "lon" ;;;  getenv("lon_coord")
-       latx  = "lat" ;;;  getenv("lat_coord")
-       timex = "time" ;;;  getenv("time_coord")
+       levx  = "lev" ;;; 
+       lonx  = "lon" ;;; 
+       latx  = "lat" ;;;  
+       timex = "time" ;;;  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;           need this file just  in a case it is on hybrid levels
@@ -62,7 +58,6 @@ begin
 	ivar = 0
        Varname =   Varnamesin3(ivar)
         namein = namein1 + case +"." + Varname + ".mon.nc"
-       ;;  print( namein + " " ) 
 
         fin = addfile( namein, "r")
         setfileoption("nc", "Format",  "Classic")  ;   "NetCDF4Classic"
@@ -89,7 +84,6 @@ begin
         ff = 1.
         if(  dlev@units .eq. "Pa")
         ff = 0.01
-        print( dlev@units +  " " )
         end if
 	 plevels = ff * tofloat ( dlev)
 
@@ -130,7 +124,6 @@ begin
     print( " Started preprocessing variable : " + Varname + "  " +  ivv1 + "/" + ivar32 )
 
         namein = namein1 + case +"." + Varname + ".mon.nc"
-        ; print("namein: "+ namein)           
         fin = addfile( namein, "r")
         setfileoption("nc", "Format",  "Classic")  ;   "NetCDF4Classic"
 
@@ -151,7 +144,6 @@ begin
         ff = 1.
         if(  dlev@units .eq. "Pa")
         ff = 0.01
-        ;;   print( dlev@units +  " " )
         end if
         lev2 = ff * tofloat ( dlev)
 
@@ -248,7 +240,7 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here   
       filedimdef(fout, dimNames, dimSizes, dimUnlim)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -270,7 +262,6 @@ begin
        fout->lon    = (/lon2/)
        fout->$Varout$  = (/Vout/)
 
-;;   print( yearchar )
       delete( indices)
       delete( Vin)
       delete( Vout)
@@ -294,7 +285,7 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here    
        filedimdef(fout, dimNames, dimSizes, dimUnlim)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -336,8 +327,6 @@ begin
 
       do ivar = 0, ivar2 - 1
 ;;      
-;;        print( ivar)
-;;        dimsize4 = (/ ymax, xmax /)
        Varname = Varnamesin2(ivar)
        Varout = Varnamesout2(ivar)
        ivv1 = ivar3 + ivar + 1
@@ -446,7 +435,7 @@ begin
        fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here    
             filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -489,7 +478,7 @@ begin
        fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" ) 
+;;;;;;;;;;;;;;;;; define all attributes here    
 ;;;;  average clima and output too
       ss2 =  where( ss2 .gt. 0.,  ss2 ,  ss2@_FillValue )
        clima = clima/ss2
@@ -505,7 +494,7 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here   
          filedimdef(fout, dimNames2, dimSizes2, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )

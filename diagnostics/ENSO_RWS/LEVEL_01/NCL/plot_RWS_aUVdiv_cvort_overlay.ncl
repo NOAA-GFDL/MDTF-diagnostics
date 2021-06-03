@@ -67,8 +67,8 @@ begin
     
 ;;;   absolute corticity
   
-   cmin4 = -16 ;; -6.
-   cmax4 =  16 ;;  6.
+   cmin4 = -16 ;; 
+   cmax4 =  16 ;; 
    cint4 =   2.
 
 ;;; vector parameters     vcLineArrowThicknessF 
@@ -76,7 +76,7 @@ begin
     veclength =  0.025 ;;; 
     thinvector = 0.02 ;;  
     vmin = 0.4
-    vthick = 4 ;;  4 ;;  6 ;;  
+    vthick = 4 ;;   
     vcolor = "black"  ;; 
     ahead = 0.005
 
@@ -85,17 +85,16 @@ begin
 ;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase )
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
-    model =  model2   ;;;   
+     dirname  =  dirname1 + "/model"
+     outdir   =  dirname1 + "/model"
+     model =  model2   ;;;   
     end if
 
    if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
-    model = " "
+      dirname = obsname
+      outdir  = dirname1  + "/obs"
+      model = " "
     end if
 
 ;;;  clima  winds  first
@@ -120,7 +119,6 @@ begin
    
 ;;;   anomaly second  either El Nino/La Nina
     do n = 0, 1
-;;       print( "mode " +  modes(n) )
      mode  =  modes(n)
      namein  = dirname  + "/netCDF/"  + mode
      nameout = outdir  + "/PS/"
@@ -220,17 +218,15 @@ begin
    cUVdiv@long_name = ""
    cUVdiv@units = " "
 ;;; RWS terms : 
-;;;   term1 = cvort (clima abs vorticity) *  div ( UVdivanom)
       term1 = uu1
       term1 = -1.*( cvort * adiv)
-;;;   term2 = aUVdiv * cvortxy( gradient )
+
       term2 = term1
       term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 
-;;;   term3 =  avort( * div( UVdivclim)
       term3 =  term1
       term3 = -1.*( avort * cdiv)
-;;;   term4 =  UVdivclim  *  grad( avortxy)
+
       term4 =  term1
       term4(:, :, :, :) = -1.*( cUVdiv(0, :, :, :, :) * avortx(:, :, :, :) +  cUVdiv(1, :, :, :, :) * avorty(:, :, :, :))
 
@@ -254,7 +250,6 @@ begin
 
    pressure =  tostring_with_format( plev1(kk), "%3.0f" )
 
-;;   print( plevel1(n) + " " + plev1(kk) )
    nameout2 =  nameout + outname + "_" + mode + "_" + pressure ;;
 
    wks = gsn_open_wks( wks_type, nameout2)
@@ -284,12 +279,12 @@ begin
 
     res@gsnMaximize  = True 
     res@cnFillOn             = True               ; turn on color fill
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;; 
 
      txres1 = True
      txres1@txFontColor =  "black"
      txres1@txFont   = "helvetica"
-     txres1@txFontHeightF =  0.022 ;;  0.025
+     txres1@txFontHeightF =  0.022 ;;  
      txres1@txJust        = "CenterLeft"
      txres1@txFuncCode    = "~"
 
@@ -305,7 +300,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -339,7 +334,6 @@ begin
      plot1 = gsn_csm_contour_map(wks,  termx(tt0, kk, :, :), res)
   
    delete(cmap)
-;;    delete( res@cnFillPalette )
    delete( res@cnLevels)
    delete( res@mpMinLatF)
    delete( res@mpMaxLatF)
@@ -353,7 +347,7 @@ begin
    delete( res@mpGeophysicalLineThicknessF)
 ;;;;  absolute vorticity  in contours 
    i = 2
-   res@cnLevelSelectionMode = "ManualLevels" ;;; "ExplicitLevels" ;;
+   res@cnLevelSelectionMode = "ManualLevels" ;;; 
    res@cnLinesOn           =  True
    res@cnFillOn            =  False 
    res@cnMinLevelValF      =  cmin4
@@ -361,13 +355,13 @@ begin
    res@cnLevelSpacingF     =   cint4
    res@pmLabelBarDisplayMode = "NoCreate"
 
-    res@cnLineThicknessF =  1 ;;  4 ;;  
+    res@cnLineThicknessF =  1 ;;  
     res@cnLineLabelInterval       =  2 ;;
     res@cnLineLabelPlacementMode   = "constant"
-    res@cnLineLabelFontHeightF = 0.009 ;;  0.015
+    res@cnLineLabelFontHeightF = 0.009 ;; 
     res@cnLineLabelFontThicknessF  = 1.
     res@cnInfoLabelOn = False
-    res@cnLineLabelsOn   =  True ;;;   False
+    res@cnLineLabelsOn   =  True ;;;   
     res@gsnContourNegLineDashPattern  = 7
     res@gsnContourZeroLineThicknessF  = 5 ;; 
 
@@ -386,9 +380,9 @@ begin
 
   res3@vcMonoLineArrowColor  = True
   res3@vcRefMagnitudeF =  divmag    ;;  make vectors larger
-  res3@vcRefLengthF    =  veclength ;;              ; reference vector length
-  res3@vcGlyphStyle    =  "LineArrow" ;;        ; turn on curly vectors
-  res3@vcMinDistanceF  =  thinvector ;;           ; thin the vectors
+  res3@vcRefLengthF    =  veclength ;;  reference vector length
+  res3@vcGlyphStyle    =  "LineArrow" ;; turn on curly vectors
+  res3@vcMinDistanceF  =  thinvector ;;; thin the vectors
   res3@vcLineArrowThicknessF  = vthick   
   res3@vcLineArrowColor  = vcolor
   res3@vcRefAnnoArrowLineColor  = "black"

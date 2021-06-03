@@ -38,7 +38,6 @@ begin
    plevel1 = (/  200.  /)
    nlevels1 = dimsizes( plevel1) 
 
-;;   print( nlevels1 + " ")
 
     tt0 = 0
     kk = 0
@@ -56,9 +55,9 @@ begin
      ys10 = 0.84
      dx2 = 0.65
 
-     xs110 = 0.05 ;;  0.82
-     ys110 = 0.15 ;;  0.78
-     dxs1 = 0. ;;   0.3
+     xs110 = 0.05 ;;  
+     ys110 = 0.15 ;;  
+     dxs1 = 0. ;;  
      dys1 = -0.03
 
 ;;  need to set for each pressure level   here now only top is relevant 
@@ -70,10 +69,10 @@ begin
 
    colormap =  "hotcold_18lev"
 
-  ;; loop over El Nino/La Nina  and MODEL/OBS
+;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase )
+
    if( icase .eq. 1) ;;  model
    dirname  =  dirname1 + "/model"
    outdir   =  dirname1 + "/model"
@@ -110,7 +109,7 @@ begin
 
 ;;  read  anomaly U wind  and V 
     do n = 0, 1
-;;       print( "mode " +  modes(n) )
+
      mode  =  modes(n)
      namein  = dirname  + "/netCDF/"  + mode
      nameout = outdir  + "/PS/"
@@ -151,7 +150,7 @@ begin
    end do
 
    pressure =  tostring_with_format( plev1(kk), "%3.0f" )
-;;   print( plevel1(n) + " " + plev1(kk) )
+
    nameout2 = nameout + outname + "_" + mode + "_" + pressure ;;
 
    wks = gsn_open_wks( wks_type, nameout2)
@@ -167,31 +166,16 @@ begin
     res@mpMaxLonF   =  xlon2
     res@mpCenterLonF =  xcenter
 
-   ; res@mpGeophysicalLineThicknessF = 1.5 
-
-    ; res@lbAutoManage          = False             ; we control label bar
-    ; res@pmLabelBarDisplayMode = "Always"          ; turns on label bar
-   ;  res@lbOrientation         = "Horizontal"      ; ncl default is vertical
-   ;  res@pmLabelBarSide        = "Bottom"          ; default is right
-   ;  res@lbLabelStride         = 1                 ; skip every other label
-   ;  res@pmLabelBarWidthF      =  0.80               ; default is shorter
-   ;  res@pmLabelBarHeightF     = 0.1               ; default is taller
-   ;  res@lbLabelFontHeightF    = .014              ; default is HUGE
-   ;  res@lbPerimOn             = False
-   ;  res@pmLabelBarOrthogonalPosF = 0.2
-
-
     res@gsnMaximize  = True 
 
     res@cnFillOn             = True               ; turn on color fill
-;;    res@tiMainString       =  model + " " + title + " " + filter + "  " + pressure + " mb"
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;; 
 
       txres1 = True
       txres1@txFuncCode    = ":"
       txres1@txFontColor =  "black"
       txres1@txFont   =  "helvetica"
-      txres1@txFontHeightF = 0.025 ;;   0.02  ;;;0.016
+      txres1@txFontHeightF = 0.025 ;;  
       txres1@txJust        = "CenterLeft"
       txres1@txFuncCode    = "~"
 
@@ -207,7 +191,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;;  
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -228,18 +212,15 @@ begin
       end if 
 ;;  Hgt anomaly    i = 1    
     res@cnLevelSelectionMode = "ManualLevels" ;; "ExplicitLevels"
-    ;;  res@cnLevels    =   levels1 
      cmap = read_colormap_file( colormap)
      res@cnFillPalette = cmap
-     res@cnMinLevelValF       = cmin                ; set min contour level
+     res@cnMinLevelValF       = cmin              ; set min contour level
      res@cnMaxLevelValF       = cmax              ; set max contour level
      res@cnLevelSpacingF      = cint
 
      plot1 = gsn_csm_contour_map(wks,  hgta(tt0, kk, :, :), res)
     
      delete(cmap)
-;;    delete( res@cnFillPalette )
-;;   delete( res@cnLevels)
    delete( res@mpMinLatF)
    delete( res@mpMaxLatF)
    delete( res@mpMinLonF)   
@@ -252,14 +233,13 @@ begin
    res@cnLinesOn           =  True
    res@cnFillOn            = False 
    res@cnLevels            =   levels4
-;;   res@cnLevels    =   levels4    ;;;;   different for each plot
 ;;;   contour lines 
     res@pmLabelBarDisplayMode = "NoCreate"
 
-    res@cnLineThicknessF =   3 ;;  1;;    4 ;;   linethick
-    res@cnLineLabelInterval       =  2 ;; 1             ; default = 2
+    res@cnLineThicknessF =   3 ;;  
+    res@cnLineLabelInterval       =  2 ;; 
     res@cnLineLabelPlacementMode   = "constant"
-    res@cnLineLabelFontHeightF = 0.009 ;;  0.015
+    res@cnLineLabelFontHeightF = 0.009 ;;
     res@cnLineLabelFontThicknessF  = 1.
     res@cnInfoLabelOn = False
     res@cnLineLabelsOn   =  True ;;;   False
@@ -278,6 +258,5 @@ begin
   delete ([/lon, lat, plev1, time,  zdim1, hgt1, hgtc, hgta, vv1, vvc, va, res /])
  
  end do ;;  over  MODEL/OBS
-
 
 end

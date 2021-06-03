@@ -54,19 +54,18 @@ begin
      ys10 = 0.84
      dx2 = 0.65
 
-     xs110 = 0.05 ;;  0.82
-     ys110 = 0.19 ;;  0.17 ;;  0.78
-     dxs1 = 0. ;;   0.3
+     xs110 = 0.05 ;;  
+     ys110 = 0.19 ;;
+     dxs1 = 0. ;; 
      dys1 = -0.03
 
      colormap = "precip2_17lev"
 ;;  need to set for each pressure level   here now only top is relevant 
 
 ;;  levels1  =  RWS terms 
-;   levels1 = (/ -30,  -27,  -24, -21, -18, -15, -12, -9, -6,  6, 9, 12, 15, 18, 21, 24, 27, 30 /)
     levels1 = (/  -6, 6 /)
-    patterns =  (/ 2, -1, 16 /)  ; -1
-    scales = (/ 1, 1, 1 /) ;;;   (/ 0.6, 1,  0.3 /)  ; 1
+    patterns =  (/ 2, -1, 16 /)  ; 
+    scales = (/ 1, 1, 1 /) ;;;  
 
 ;;;     betastar
    levels4 = (/ -1.,  0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13, 14, 15, 16 /)
@@ -74,20 +73,20 @@ begin
     wks_type = "eps" ;; 
 ;;;  time dimensions for seasonal averaging 
 
-   ;; loop over El Nino/La Nina  and MODEL/OBS
+;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase )
+
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
+    dirname  =  dirname1 + "/model"
+    outdir   =  dirname1 + "/model"
     model =  model2   ;;;
     end if
 
    if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
-    model = " "
+    dirname = obsname
+    outdir  = dirname1  + "/obs"
+     model = " "
     end if
 
 ;;;  clima  winds  first
@@ -221,17 +220,15 @@ begin
    betastar@units =" " ;; 
 
 ;;; RWS terms : 1
-;;;   term1 = cvort (clima abs vorticity) *  div ( UVdivanom)
       term1 = uu1
       term1 = -1.*( cvort * adiv)
-;;;   term2 = aUVdiv * cvortxy( gradient )
+
       term2 = term1
       term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 
-;;;   term3 =  avort( * div( UVdivclim)
       term3 =  term1
       term3 = -1.*( avort * cdiv)
-;;;   term4 =  UVdivclim  *  grad( avortxy)
+
       term4 =  term1
       term4(:, :, :, :) = -1.*( cUVdiv(0, :, :, :, :) * avortx(:, :, :, :) +  cUVdiv(1, :, :, :, :) * avorty(:, :, :, :))
 
@@ -256,7 +253,7 @@ begin
    end do
 
    pressure =  tostring_with_format( plev1(kk), "%3.0f" )
-;;   print( plevel1(n) + " " + plev1(kk) )
+
    nameout2 =  nameout + outname + "_" + mode + "_" + pressure ;;
    wks = gsn_open_wks( wks_type, nameout2)
 
@@ -274,13 +271,12 @@ begin
 
     res@gsnMaximize  = True 
     res@cnFillOn             = True               ; turn on color fill
-;;     res@tiMainString       =  model + " " + title + " " + filter + "  " + pressure + " mb"
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;;
 
      txres1 = True
      txres1@txFontColor =  "black"
      txres1@txFont   = "helvetica"
-     txres1@txFontHeightF =  0.022 ;;  0.025
+     txres1@txFontHeightF =  0.022 ;;  
      txres1@txJust        = "CenterLeft"
      txres1@txFuncCode    = "~"
 
@@ -296,7 +292,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.018 ;;  0.016
+      txres2@txFontHeightF = 0.018 ;;
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -316,7 +312,7 @@ begin
       gsn_text_ndc (wks, "Model: " + model2, xs11, ys11, txres2)
       end if
 ;;   betastar 
-    res@cnLevelSelectionMode = "ExplicitLevels" ;; "ManualLevels" ;;
+    res@cnLevelSelectionMode = "ExplicitLevels" ;;;
     res@cnLevels    =   levels4
     cmap = read_colormap_file( colormap) 
 
@@ -365,7 +361,7 @@ begin
    res2@cnInfoLabelOn   = False                ; turn off info label box
    res2@cnLineLabelsOn  = False                ; no lables on line
    res2@cnFillOn        = True                 ; fill contour intervals
-   res2@cnLinesOn        =  True ;;   False
+   res2@cnLinesOn        =  True ;; 
 
    res2@cnMonoFillColor = True                 ; default color is fground [black]
    res2@cnMonoFillPattern = False              ; want multiple patterns 
@@ -375,7 +371,7 @@ begin
    res2@cnFillScales  = scales  ;;; 
 
     res2@lbAutoManage          =  False 
-    res2@pmLabelBarDisplayMode =  "Never" ;;  "Always"          ; turns on label bar
+    res2@pmLabelBarDisplayMode =  "Never" ;;      ; turns on label bar
     res2@lbOrientation         = "Horizontal"      ; ncl default is vertical
     res2@pmLabelBarSide        = "Bottom"          ; default is right
     res2@lbLabelStride         = 1                 ; skip every other label

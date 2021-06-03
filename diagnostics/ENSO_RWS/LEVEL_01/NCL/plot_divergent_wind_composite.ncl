@@ -1,7 +1,6 @@
 ;;   plot the ElNino/LaNina composite anomalies 
 ;; 
 
-
 begin
    
       varcode = getenv("POD_HOME")
@@ -22,10 +21,10 @@ begin
    
 ;;  vector parameters 
     divmag =  (/ 2., 1. /)
-     veclength =  0.05  ;; 0.1 ;; 0.05
-     thinvector = 0.02 ;; 0.12
+     veclength =  0.05  ;;
+     thinvector = 0.02 ;;
 
-     thick_vector =  3. ;; 2.
+     thick_vector =  3. ;;
 
      height_ref = 3
      thick_ref = 5

@@ -10,17 +10,17 @@ begin
 
 
 ;     3 D vars
-       zgv  = "zg" ;;  getenv("zg_var")
-       uav  = "ua" ;;;  getenv("ua_var")
-       vav  = "va" ;;;  getenv("va_var")
-       tav  = "ta" ;;   getenv("ta_var")
+       zgv  = "zg" ;; 
+       uav  = "ua" ;;;  
+       vav  = "va" ;;;  
+       tav  = "ta" ;;   
        dTv  =  "dT"
-       wapv = "wap" ;;;   getenv("omega_var")
+       wapv = "wap" ;;;   
 
-       levx  = "lev" ;;  getenv("lev_coord")
-       lonx  = "lon" ;;  getenv("lon_coord")
-       latx  = "lat" ;; getenv("lat_coord")
-       timex = "time" ;;  getenv("time_coord")
+       levx  = "lev" ;;  
+       lonx  = "lon" ;; 
+       latx  = "lat" ;;
+       timex = "time" ;; 
 
      
     mode = (/ "ELNINO" , "LANINA" /)  
@@ -83,13 +83,13 @@ begin
       ta@units = "K"
       theta  = ta
       dtheta = ta
-      theta =  pot_temp( plev*100., ta, 1, False)  ; dim=0
+      theta =  pot_temp( plev*100., ta, 1, False)  ; 
       dtheta = pot_temp( plev*100., dtemp, 1, False)   
 
 ;;   calculate the horizontal advection of theta
       gridType = 1
       long_name = "horizontal advection of potential temperature"
-      units     = "K" ;;  "K/s" 
+      units     = "K" ;; 
       opt_adv  = 0 
       theta_adv = advect_variable(ua, va, theta, gridType, long_name, units, opt_adv)
 

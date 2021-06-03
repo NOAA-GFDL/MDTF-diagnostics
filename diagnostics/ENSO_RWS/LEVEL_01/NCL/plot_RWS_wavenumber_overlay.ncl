@@ -53,15 +53,15 @@ begin
      ys10 = 0.84
      dx2 = 0.65
 
-     xs110 = 0.05 ;;  0.82
-     ys110 = 0.10 ;;  0.19 ;;  0.17 ;;  0.78
-     dxs1 = 0. ;;   0.3
+     xs110 = 0.05 ;;  
+     ys110 = 0.10 ;;
+     dxs1 = 0. ;; 
      dys1 = -0.03
 
 ;;  need to set for each pressure level   here now only top is relevant 
     levels1 = (/  -6, 6 /)
-    patterns =  (/ 2, -1, 16 /)  ; -1 
-    scales = (/ 1, 1, 1 /) ;;;  (/ 0.6, 1,  0.3 /)  ; 1
+    patterns =  (/ 2, -1, 16 /)  ; 
+    scales = (/ 1, 1, 1 /) ;;;  
 ;;;   wave number  
    cmin =  1  ;; -6.
    cmax =  10 ;;  6.
@@ -73,7 +73,6 @@ begin
    ;; loop over El Nino/La Nina  and MODEL/OBS
 
    do icase = 1, 2
-;;     print( "case " + icase )
    if( icase .eq. 1) ;;  model
    dirname  =  dirname1 + "/model"
    outdir   =  dirname1 + "/model"
@@ -238,7 +237,7 @@ begin
    end do
    wavenumber = where( wavenumber .gt. 0.,  sqrt(wavenumber),  uuc@_FillValue)
 
-   wavenumber@long_name = " " ;;  "Wave Number"
+   wavenumber@long_name = " " ;;  
    wavenumber@units = " "
 
 ;;;;;;;;;;;;;;;;;;
@@ -273,12 +272,12 @@ begin
 
     res@gsnMaximize  = True 
     res@cnFillOn             = True               ; turn on color fill
-    res@cnLinesOn           =   False ;; True
+    res@cnLinesOn           =   False ;; 
 
     txres1 = True
      txres1@txFontColor =  "black"
      txres1@txFont   = "helvetica"
-     txres1@txFontHeightF =  0.022 ;;  0.025
+     txres1@txFontHeightF =  0.022 ;;  
      txres1@txJust        = "CenterLeft"
      txres1@txFuncCode    = "~"
 
@@ -294,7 +293,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.018 ;;  0.016
+      txres2@txFontHeightF = 0.018 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 ;;     add units
@@ -314,7 +313,7 @@ begin
       end if
 ;; wave number first 
    res@cnLevelSelectionMode =  "ManualLevels"
-    res@cnLinesOn            =  False ;; True
+    res@cnLinesOn            =  False ;; 
     cmap = read_colormap_file( colormap )
     res@cnFillPalette =  cmap ( (/12, 16, 19, 27, 32, 38, 40, 46, 52, 57, 63 /),:)
     res@cnMinLevelValF       = cmin                ; set min contour level
@@ -353,7 +352,7 @@ begin
    res2@cnInfoLabelOn   = False                ; turn off info label box
    res2@cnLineLabelsOn  = False                ; no lables on line
    res2@cnFillOn        = True                 ; fill contour intervals
-   res2@cnLinesOn        =  True ;;   False
+   res2@cnLinesOn        =  True ;;  
 
    res2@cnMonoFillColor = True                 ; default color is fground [black]
    res2@cnMonoFillPattern = False              ; want multiple patterns 

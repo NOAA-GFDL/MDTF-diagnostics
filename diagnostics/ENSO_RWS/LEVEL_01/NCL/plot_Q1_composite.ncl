@@ -4,10 +4,6 @@
 
 begin
 
-;;   cmin = (/ -40, -30 /)
-;;   cmax = (/  40 , 30 /)
-;;   cint = (/ 5,  5 /)
-
     cmin = (/ -60., -50. /)
     cmax = (/  60.,  50. /)
     cint = (/  10.,  10. /)
@@ -46,15 +42,15 @@ begin
      colormap = "BlueWhiteOrangeRed" 
 
   do icase = 1, 2 
-       if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
-     model =  getenv( "CASENAME")
+   if( icase .eq. 1) ;;  model
+      dirname  =  dirname1 + "/model"
+      outdir   =  dirname1 + "/model"
+      model =  getenv( "CASENAME")
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
+     dirname = obsname
+     outdir  = dirname1  + "/obs"
      model = " " ;;  
     end if
 
@@ -120,7 +116,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 

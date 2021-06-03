@@ -5,10 +5,10 @@
 ENSO Rossby wave sources (ENSO_RWS) diagnostic package consists of four
 levels. With a focus on identifying leading processes that determine
 ENSO-induced global teleconnection, particularly the Pacific North
-American (PNA) pattern, main module of the POD estimates basic state
+American (PNA) pattern, the main module of the POD estimates basic state
 flow properties at an appropriate tropospheric upper-level and solves
-barotropic vorticity equation to estimate various terms that contribute
-to the total anomalous RWS. In that pursuit, POD is applied to monthly
+the barotropic vorticity equation to estimate various terms that contribute
+to the total anomalous RWS. In that pursuit, the ENSO-RWS POD is applied to monthly
 data (climate model or reanalysis products), and RWS terms are estimated
 for “composite” El Niño or La Nina events. To attain robust “composite”
 results a reasonable sample of ENSO winters is needed. However, the POD
@@ -16,14 +16,14 @@ can be applied even for a single El Niño winter (e.g., when applied to
 seasonal prediction models). Similarly, the POD is applicable to any
 number of pressure levels (e.g., to identify the level at which maximum
 upper-level divergence and associated RWS are located). Here, reanalysis
-products (e.g., ERA-interim) is “considered” as “observations” and
+products (e.g., ERA-Interim) are considered as observations and
 diagnostics obtained from ERA-Interim and other reanalysis products are
 used for model validation. In this general document, brief descriptions
-of the four levels of the POD are provided but detailed information is
+of the four levels of the POD are provided, and detailed information is
 provided at each level. For the four levels of diagnostics, selected
 results are illustrated here.
 
-*POD works efficiently if model data contain sufficient number of El
+*The POD works efficiently if the model data contain a sufficient number of El
 Niño or La Nina events.* Predigested results are available for both El
 Niño and La Nina composites.
 
@@ -109,18 +109,18 @@ vertical processes (in preparation).
 (ENSO_RWS)**
 
 The NOAA-MDTF Rossby Wave Source (RWS) Process Oriented Diagnostic (POD)
-package would fill a critical gap in the diagnostics tools available to
-climate model developers. Both in basic-state and anomalous conditions,
+package fills a critical gap in the diagnostics tools available to
+climate model developers. In both basic-state and anomalous conditions,
 changes in the response of moist processes in model either
-parameterization modifications or tuning and calibration, can often
+parameterization modifications or tuning and calibration can often
 change the nature of the seasonal distributions of tropical
 precipitation and associated heating, and by association moistening and
 divergence profiles. While validation of precipitation is
 straightforward, an understanding of the circulation consequences in the
-tropics, and particularly the extra-tropics is not. 
+tropics and the extra-tropics is not. 
 
 The RWS POD developed here will help to address this critical validation
-gap, by quantifying the roles of changing ambient flow properties (basic
+gap by quantifying the roles of changing ambient flow properties (basic
 state climatological features), and anomalous upper tropospheric
 divergent patterns in the generation and radiation of planetary
 stationary Rossby waves. This will be particularly important in coupled
@@ -161,7 +161,7 @@ Reference index (e.g., Nino3.4 SST)
 -  Seasonal averages
 
 Based on a reference ENSO index (e.g., area-averaged SST anomalies over
-Nino3.4 region), seasonal composites of variables relevant to
+the Nino3.4 region), seasonal composites of variables relevant to
 ENSO-induced global teleconnection at an appropriate tropospheric
 upper-level are constructed. Fig. 1 shows composite anomalous
 precipitation (shaded), 200hPa divergence/convergence (contour/hatching)
@@ -187,7 +187,7 @@ README_LEVEL_01.pdf document located in ~/diagnostics/ENSO_RWS/doc.
 **Level 2 – Climatological flow and wave properties (basic-state/ambient
 flow) diagnostics**
 
-As regards to basic or climatological flow properties, restoring effect
+Regarding to basic or climatological flow properties, restoring effect
 for Rossby waves (*β*\ :sub:`\*`) that is dependent on meridional
 gradient in absolute vorticity (*β*) and meridional curvature of the
 zonal flow or gradients in relative vorticity :math:`\frac{\partial^{2}{{U}}}{\partial{y}^{2}}` and resultant stationary wave number (:math:`K_{s}`) are diagnosed. These ambient flow properties determine generation and propagation of stationary Rossby waves.

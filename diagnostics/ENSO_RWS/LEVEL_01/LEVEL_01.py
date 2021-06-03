@@ -87,8 +87,6 @@ datain =  os.environ["DATADIR"]
 model =  os.environ["CASENAME"]
 case = model
 
-### print( " ENSO_RWS_WKDIR = " + os.environ["ENSO_RWS_WKDIR"] )
-
 wkdir_model =  os.environ["ENSO_RWS_WKDIR"] + "/model"
 
 ##   output directories 
@@ -108,14 +106,14 @@ iy2 = int(iy2)
 
 ##  read in all variables
 ## 3D vars
-zgv  = "zg"  # os.environ["zg_var"]
-uav  = "ua"  # os.environ["ua_var"]
-vav  = "va"  # os.environ["va_var"]
-tav  = "ta"  # os.environ["ta_var"]
-wapv = "wap" # os.environ["omega_var"]
+zgv  = "zg"  # 
+uav  = "ua"  # 
+vav  = "va"  #
+tav  = "ta"  # 
+wapv = "wap" #
 ##     2D  vars
-prv = "pr" #  os.environ["pr_var"]
-tsv = "ts" # os.environ["ts_var"]
+prv = "pr" #  
+tsv = "ts" # 
 
 ##  get 
 undef = 1.1E+20

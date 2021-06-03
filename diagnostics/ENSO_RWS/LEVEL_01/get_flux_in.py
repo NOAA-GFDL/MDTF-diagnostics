@@ -39,9 +39,6 @@ def get_flux_in(imax, jmax,  ttmax, years, iy2, im1, im2,  variable, datout, pre
                         print (" exiting get_flux_in.py ")
                         sys.exit()
 
-#                dataout[:,:] += vvar[:,:, imm-1]
-#                ss[:,:] += vvar_valid[:,:, imm-1]
-    
 #### 
     dataout = dataout/ss
     return dataout.filled(fill_value = undef)

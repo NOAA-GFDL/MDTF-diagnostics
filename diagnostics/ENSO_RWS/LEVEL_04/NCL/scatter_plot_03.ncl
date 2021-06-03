@@ -17,11 +17,9 @@ begin
     prefix1 = prefix + "/" + case
 
      wks_type = "eps"
-;;     wks_type@wkWidth = 1000
-;;     wks_type@wkHeight = 1000
 
      mindex =  12
-     msize  =  0.025 ;; 12.0
+     msize  =  0.025 ;; 
      mcolor =  (/ "red" /)
      mthick = 10
      mlabel = "NEW MODEL"
@@ -167,7 +165,7 @@ begin
 ;;   collect CMIP5 CMIP6 and OBS data :
    maintitle = " AMIP5/6 "
    season = "DJF"
-    mode = "El Nino"
+   mode = "El Nino"
 
     namein1 = prefix1 +  "/" + "scatter_data_AMIP5.txt"
     namein2 = prefix1 +  "/" + "scatter_data_AMIP6.txt"
@@ -261,7 +259,7 @@ begin
 ;;;;  
 
    markers3 = (/  4,  5, 6, 7, 8 /)
-    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  colors3  = (/  14,  5,  6, 7, 8 /)
+    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;; 
    markersizes3 = (/ 0.025, 0.025, 0.025, 0.025, 0.025  /)
    markerthick3 = (/ 10, 10, 10, 10, 10  /)
 
@@ -301,8 +299,6 @@ begin
 ;    aminy = miny - dy
 ;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
-;----------------------------------------------------------------------
 ;;;;;; ***********  regression line  
    
    rc =   regline ( dataX, dataY)
@@ -320,11 +316,8 @@ begin
    xx1(0) =  minx
    xx1(1) =  maxx
    pltarry(:) = rc*(xx1-rc@xave) + rc@yave          ; use solid line
-;;   print(rc)  
 
    rc = regline_stats( dataX, dataY)
-;;    print(rc) 
- 
 ;************************************************
 ; plotting parameters
 ; This illustrates one approach. Overlays could also be used.
@@ -345,15 +338,14 @@ begin
    res1@trYMinF           = ymin
    res1@trYMaxF           = ymax
 
-;;    res1@tmYLPrecision = 3
-   res1@tmYLFormat = "0@;*.2f" ;;  "f" ;; "0@*+^sg"
+   res1@tmYLFormat = "0@;*.2f" ;;
 
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.14 ;;  0.1 ;; 0.14
+  res1@vpXF              = 0.14 ;; 
   res1@vpYF              = 0.82
-  res1@vpWidthF          = 0.55 ;;  0.51 ;; 0.55
+  res1@vpWidthF          = 0.55 ;; 
   res1@vpHeightF         = 0.55
 
 ;---Title resources
@@ -368,17 +360,15 @@ begin
 ;--XY marker resources
 
   res1@xyMarkLineMode     = "Markers"
-  res1@xyMonoMarkerColor  = False ;;;; True         ; Allow different colors for markers
+  res1@xyMonoMarkerColor  = False ;;;;    ; Allow different colors for markers
   res1@xyMarkerSizes       = markersizes1(:)
   res1@xyMarkerColors      = colors1(:)
   res1@xyMarkerThicknesses = markerthick1(:)
   res1@xyMarkers     = NhlNewMarker(wks, mstring5, fontnum, xoffset, yoffset, ratio, size, angle)
-;;;  res1@xyMarkers           =  markers1(:)
 
   plot1 = gsn_csm_xy (wks,transpose((/dataX1,dataX1/)), \
                          transpose((/dataY1,dataY1/)),res1)
-;;   plot1  = gsn_csm_xy (wks, dataX1, dataY1,res1)  
-  delete( res1@xyMarkerColors )
+
   delete( res1@xyMarkers )
   delete( res1@xyMarkerSizes)
   delete( res1@xyMarkerThicknesses)
@@ -390,8 +380,6 @@ begin
   plot2 = gsn_csm_xy (wks,transpose((/dataX2,dataX2/)), \
                          transpose((/dataY2,dataY2/)),res1)
 
-;;  plot2  = gsn_csm_xy (wks, dataX2, dataY2,res1)
- 
   delete( res1@xyMarkerSizes )
   delete( res1@xyMarkerColors )
   delete( res1@xyMarkerThicknesses )
@@ -409,14 +397,14 @@ begin
       txres2 = True
       txres2@txFuncCode       = ":"
       txres2@txFontColor =  "black"
-      txres2@txFont   = "times-roman" ;;; "helvetica"
+      txres2@txFont   = "times-roman" ;;;
       txres2@txFontThicknessF = 2.
       txres2@txAngleF  = 90
-      txres2@txFontHeightF = 0.016 ;;   0.013  ;;;0.016
+      txres2@txFontHeightF = 0.016 ;;  
       txres2@txJust        = "CenterLeft"
 
-     xs1 = 0.1  ;; 0.595 ;;; 0.75
-     ys1 = 0.14  ;; 0.31 ;;;  0.18
+     xs1 = 0.1  ;; 
+     ys1 = 0.14  ;;
      dy2 = -0.022
      gsn_text_ndc (wks, eqn1, xe1, ye1, txres2)
      delete( txres2 )
@@ -458,7 +446,7 @@ begin
       txres@txFont   =  "times-roman" ;;;;
       mkres@gsMarkerColor =  colors1(i)
       mkres@gsMarkerThicknessF = 3.5
-      mkres@gsMarkerSizeF      = 0.015 ;; 0.012
+      mkres@gsMarkerSizeF      = 0.015 ;; 
       mkres@gsMarkerIndex      = markers1(i)
       
      gsn_text_ndc      (wks, labels1(i,0), xpos2, ypos2, txres)
@@ -490,13 +478,11 @@ begin
       txres@txFontThicknessF = 1.
       txres@txFontColor =  colors1(i)
       txres@txFont   =  "times-roman" ;;;;"helvetica"
-;;      txres@txFontHeightF = 0.01
       mkres@gsMarkerColor =  colors1(i)
       mkres@gsMarkerThicknessF = 3.5
       mkres@gsMarkerSizeF      = 0.012
       mkres@gsMarkerIndex      = markers1(i)
 
-      ;; gsn_polymarker_ndc(wks,  xpos1, ypos2, mkres)
      gsn_text_ndc      (wks,labels2(i,0),xpos2, ypos2, txres)
   end do
 
@@ -524,11 +510,10 @@ begin
       ypos2 = ypos2 - dyy3
       txres@txFontThicknessF = 1.
       txres@txFontColor =  colors3(i)
-      txres@txFont   =  "times-roman" ;;;;"helvetica"
-;;      txres@txFontHeightF = 0.01 ;;  0.013
+      txres@txFont   =  "times-roman" ;;;;
       mkres@gsMarkerColor =  colors3(i)
-      mkres@gsMarkerThicknessF = 10. ;;   5. ;;  3.5
-      mkres@gsMarkerSizeF      =  0.015 ;; 0.017 ;; 0.02
+      mkres@gsMarkerThicknessF = 10. ;;  
+      mkres@gsMarkerSizeF      =  0.015 ;; 
       mkres@gsMarkerIndex      = markers3(i)
 
       gsn_polymarker_ndc(wks,  xpos1, ypos2, mkres)
@@ -565,22 +550,20 @@ begin
 ;;  print the correlation and regression values
       txres2 = True
       txres2@txFontColor =  "red"
-      txres2@txFont   = "times-roman" ;;; "helvetica"
-      txres2@txFontHeightF =  0.013  ;;;0.016
+      txres2@txFont   = "times-roman" ;;; 
+      txres2@txFontHeightF =  0.013  ;;;
       txres@txJust        = "CenterLeft"
 
      label1 = (/"Regression=", " ", regression/)
      new_label1 = str_concat(label1)
-     xs1 = 0.45 ;;  0.595 ;;; 0.75
-     ys1 = 0.31 ;;;  0.18
+     xs1 = 0.45 ;;  
+     ys1 = 0.31 ;;;
      dy2 = -0.022
-;     gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 
      label2 = (/"Correlation="," ", correlation/)
      new_label2 = str_concat(label2)
      xs2 = xs1
      ys2 = ys1 + dy2
-;     gsn_text_ndc (wks, new_label2, xs2, ys2, txres2)
 
 
   frame(wks)    ; Now advance the frame.
@@ -589,8 +572,5 @@ begin
    max_p = max( dataX)
    min_y = min( dataY)
    max_y = max( dataY)
-
-;;   print( min_p + " " +  max_p)
-;;   print( min_y + " " +  max_y)
 
 end

@@ -20,7 +20,7 @@ begin
      wks_type = "eps"
 
      mindex =  12
-     msize  =  0.025 ;; 12.0
+     msize  =  0.025 ;; 
      mcolor =  (/ "red" /)
      mthick = 10
      mlabel = "NEW MODEL"
@@ -30,7 +30,7 @@ begin
     xmax  =  1.5
     dxx   =  0.2
 
-;;    	  	-4.20153 7.9155
+;;    	 
     ymin  =   -6.
     ymax  =   10.  
     dyy   =    2.
@@ -162,17 +162,17 @@ begin
    cUVdiv(0, :, :, :, :) = where( .not.ismissing(uc(:, :, :, :)), cUVdiv(0, :, :, :, :), uc@_FillValue)
     cUVdiv(1, :, :, :, :) = where( .not.ismissing(vc(:, :, :, :)), cUVdiv(1, :, :, :, :), vc@_FillValue)
 
-;;;   term1 = cvort (clima abs vorticity) *  div ( UVdivanom)
+;;;  
       term1 = ua
       term1 = -1.*( cvort * adiv)
-;;;   term2 = aUVdiv * cvortxy( gradient )
+;;;  
       term2 = term1
       term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 
-;;;   term3 =  avort( * div( UVdivclim)
+;;;   
       term3 =  term1
       term3 = -1.*( avort * cdiv)
-;;;   term4 =  UVdivclim  *  grad( avortxy)
+;;;   
       term4 =  term1
       term4(:, :, :, :) = -1.*( cUVdiv(0, :, :, :, :) * avortx(:, :, :, :) +  cUVdiv(1, :, :, :, :) * avorty(:, :, :, :))
 
@@ -291,7 +291,7 @@ begin
 ;;;;  
 
    markers3 = (/  4,  5, 6, 7, 8 /)
-    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  colors3  = (/  14,  5,  6, 7, 8 /)
+   colors3 = (/ "black",  "black", "black",  "black", "black" /) ;; 
    markersizes3 = (/ 0.025, 0.025, 0.025, 0.025, 0.025  /)
    markerthick3 = (/ 10, 10, 10, 10, 10  /)
 
@@ -329,11 +329,7 @@ begin
   minx = min(dataX) - dx 
   maxx = max(dataX) + dx
 
-;    amaxy = maxy + dy
-;    aminy = miny - dy
 ;----------------------------------------------------------------------
-;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
 ;----------------------------------------------------------------------
 ;;;;;; ***********  regression line  
    
@@ -375,15 +371,14 @@ begin
    res1@trYMinF           = ymin
    res1@trYMaxF           = ymax
 
-;;    res1@tmYLPrecision = 3
-   res1@tmYLFormat = "0@;*.2f" ;;  "f" ;; "0@*+^sg"
+   res1@tmYLFormat = "0@;*.2f" ;; 
 
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.14 ;;  0.1 ;; 0.14
+  res1@vpXF              = 0.14 ;; 
   res1@vpYF              = 0.82
-  res1@vpWidthF          = 0.55 ;;  0.51 ;; 0.55
+  res1@vpWidthF          = 0.55 ;; 
   res1@vpHeightF         = 0.55
 
 ;---Title resources
@@ -398,7 +393,7 @@ begin
 ;--XY marker resources
 
   res1@xyMarkLineMode     = "Markers"
-  res1@xyMonoMarkerColor  = False ;;;; True         ; Allow different colors for markers
+  res1@xyMonoMarkerColor  = False ;;;;         ; Allow different colors for markers
   res1@xyMarkerSizes       = markersizes1(:)
   res1@xyMarkerColors      = colors1(:)
   res1@xyMarkerThicknesses = markerthick1(:)
@@ -406,7 +401,6 @@ begin
 
   plot1 = gsn_csm_xy (wks,transpose((/dataX1,dataX1/)), \
                          transpose((/dataY1,dataY1/)),res1)
-;;   plot1  = gsn_csm_xy (wks, dataX1, dataY1,res1)  
   delete( res1@xyMarkerColors )
   delete( res1@xyMarkers )
   delete( res1@xyMarkerSizes)
@@ -440,8 +434,8 @@ begin
       txres2@txFontHeightF =  0.013  ;;;
       txres2@txJust        = "CenterLeft"
 
-     xs1 = 0.1  ;; 0.595 ;;; 0.75
-     ys1 = 0.14  ;; 0.31 ;;;  0.18
+     xs1 = 0.1  ;; 
+     ys1 = 0.14  ;; 
      dy2 = -0.022
 
     
@@ -514,7 +508,6 @@ begin
       txres@txFontThicknessF = 1.
       txres@txFontColor =  colors1(i)
       txres@txFont   =  "times-roman" ;;;
-;;      txres@txFontHeightF = 0.01
       mkres@gsMarkerColor =  colors1(i)
       mkres@gsMarkerThicknessF = 3.5
       mkres@gsMarkerSizeF      = 0.012
@@ -547,8 +540,7 @@ begin
       ypos2 = ypos2 - dyy3
       txres@txFontThicknessF = 1.
       txres@txFontColor =  colors3(i)
-      txres@txFont   =  "times-roman" ;;;;"helvetica"
-;;      txres@txFontHeightF = 0.01 ;;  0.013
+      txres@txFont   =  "times-roman" ;;;;
       mkres@gsMarkerColor =  colors3(i)
       mkres@gsMarkerThicknessF = 10. ;;   5. ;;  3.5
       mkres@gsMarkerSizeF      =  0.015 ;; 0.017 ;; 0.02
@@ -594,16 +586,14 @@ begin
 
      label1 = (/"Regression=", " ", regression/)
      new_label1 = str_concat(label1)
-     xs1 = 0.45 ;;  0.595 ;;; 0.75
-     ys1 = 0.31 ;;;  0.18
+     xs1 = 0.45 ;;  
+     ys1 = 0.31 ;;; 
      dy2 = -0.022
-;     gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 
      label2 = (/"Correlation="," ", correlation/)
      new_label2 = str_concat(label2)
      xs2 = xs1
      ys2 = ys1 + dy2
-;     gsn_text_ndc (wks, new_label2, xs2, ys2, txres2)
 
 
   frame(wks)    ; Now advance the frame.

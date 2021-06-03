@@ -20,7 +20,7 @@ begin
      wks_type = "eps"
 
      mindex =  12
-     msize  =  0.025 ;; 12.0
+     msize  =  0.025 ;; 
      mcolor =  (/ "red" /)
      mthick = 10
      mlabel = "NEW MODEL"
@@ -84,10 +84,6 @@ begin
     uc!1 = "lev"
     uc!2 = "lat"
     uc!3 = "lon"
-    ; uc@time = time
-    ; uc@lev = plev1 
-    ; uc@lat = lat 
-    ; uc@lon = lon
 ;; make anomalies
      ua = ua - uc
      va = va - vc
@@ -172,7 +168,6 @@ begin
       iindex( kk2) = ii
       jindex( kk2) = jj
        bmask(jj , ii) = 1.
-;;      print( kk2 + " " + iindex( kk2)  + " " + jindex( kk2)  )
 
      if( min_beta2 .le. zero_limit)  ;; then calculate the 
 
@@ -219,7 +214,6 @@ begin
        kk2 = k1 
      end do 
      xx = xx_lon - 180.
-;;      print( " min. below 0 " + min_beta2 + " " + xx_lon + " " + xx)
     end if  ;;  if minimum below zero_limit
 
 ;;;   YY PNA index 
@@ -284,7 +278,7 @@ begin
    xdim1 = 12
    datain11 = asciiread(namein11,(/xdim1/),"float")
 
-   xdim2 =  12;;  17
+   xdim2 =  12;;  
    datain22 = asciiread(namein22,(/xdim2/),"float")
 
    xdim3 = 5
@@ -358,7 +352,7 @@ begin
 ;;;;  
 
       markers3 = (/  4,  5, 6, 7, 8 /)
-    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  colors3  = (/  14,  5,  6, 7, 8 /)
+    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  
    markersizes3 = (/ 0.025, 0.025, 0.025, 0.025, 0.025  /)
    markerthick3 = (/ 10, 10, 10, 10, 10  /)
 
@@ -393,11 +387,7 @@ begin
   minx = min(dataX) - dx 
   maxx = max(dataX) + dx
 
-;    amaxy = maxy + dy
-;    aminy = miny - dy
 ;----------------------------------------------------------------------
-;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
 ;----------------------------------------------------------------------
 ;;;;;; ***********  regression line  
    
@@ -416,10 +406,8 @@ begin
    xx1(0) =  minx
    xx1(1) =  maxx
    pltarry(:) = rc*(xx1-rc@xave) + rc@yave          ; use solid line
-;;   print(rc)  
 
    rc = regline_stats( dataX, dataY)
-;;    print(rc) 
  
 ;************************************************
 ; plotting parameters
@@ -444,17 +432,17 @@ begin
    res1@xyMonoDashPattern = True                 ; make all curves solid
    res1@xyLineThicknessF  = 1.0
    res1@gsnXRefLineDashPatterns  = 1
-   res1@gsnXRefLineColors = "black"  ;;   (/"black" , "black"/)
+   res1@gsnXRefLineColors = "black"  ;;  
    res1@gsnXRefLine       = (/ 0., 10./)
 
-   res1@tmYLFormat = "0@;*.2f" ;;  "f" ;; "0@*+^sg"
+   res1@tmYLFormat = "0@;*.2f" ;;  
 
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.14 ;;  0.1 ;; 0.14
+  res1@vpXF              = 0.14 ;; 
   res1@vpYF              = 0.82
-  res1@vpWidthF          = 0.55 ;;  0.51 ;; 0.55
+  res1@vpWidthF          = 0.55 ;; 
   res1@vpHeightF         = 0.55
 
 ;---Title resources
@@ -511,8 +499,8 @@ begin
       txres2@txFontHeightF =  0.013  ;;;
       txres2@txJust        = "CenterLeft"
 
-     xs1 = 0.1  ;; 0.595 ;;; 0.75
-     ys1 = 0.14  ;; 0.31 ;;;  0.18
+     xs1 = 0.1  ;; 
+     ys1 = 0.14  ;;
      dy2 = -0.022
     
    draw( plot1)
@@ -618,8 +606,8 @@ begin
       txres@txFontColor =  colors3(i)
       txres@txFont   =  "times-roman" ;;;;
       mkres@gsMarkerColor =  colors3(i)
-      mkres@gsMarkerThicknessF = 10. ;;   5. ;;  3.5
-      mkres@gsMarkerSizeF      =  0.015 ;; 0.017 ;; 0.02
+      mkres@gsMarkerThicknessF = 10. ;
+      mkres@gsMarkerSizeF      =  0.015 ;;
       mkres@gsMarkerIndex      = markers3(i)
 
       gsn_polymarker_ndc(wks,  xpos1, ypos2, mkres)
@@ -655,8 +643,8 @@ begin
 ;;  print the correlation and regression values
       txres2 = True
       txres2@txFontColor =  "red"
-      txres2@txFont   = "times-roman" ;;; "helvetica"
-      txres2@txFontHeightF =  0.013  ;;;0.016
+      txres2@txFont   = "times-roman" ;;; "
+      txres2@txFontHeightF =  0.013  ;;;
       txres@txJust        = "CenterLeft"
 
      label1 = (/"Regression=", " ", regression/)
@@ -664,14 +652,11 @@ begin
      xs1 = 0.45 ;;  0.595 ;;; 0.75
      ys1 = 0.31 ;;;  0.18
      dy2 = -0.022
-;     gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 
      label2 = (/"Correlation="," ", correlation/)
      new_label2 = str_concat(label2)
      xs2 = xs1
      ys2 = ys1 + dy2
-;     gsn_text_ndc (wks, new_label2, xs2, ys2, txres2)
-
 
   frame(wks)    ; Now advance the frame.
 ;;;   print max min levels 

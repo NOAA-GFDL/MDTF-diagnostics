@@ -30,10 +30,10 @@ begin
   iy1 =  toint( ( getenv("FIRSTYR")) )
   iy2 =  toint( (  getenv("LASTYR")) )
   zgv  =  "zg" ;;  getenv("zg_var")
-    levx  = "lev" ;;   getenv("lev_coord")
-    lonx  = "lon" ;;  getenv("lon_coord")
-    latx  = "lat" ;;  getenv("lat_coord")
-    timex = "time" ;;   getenv("time_coord")
+    levx  = "lev" ;;  
+    lonx  = "lon" ;;  
+    latx  = "lat" ;;  
+    timex = "time" ;;  
 
     namein   = vardata +  "/mon/"  + model +"." + zgv + ".mon.nc"
     fin = addfile( namein, "r")
@@ -60,8 +60,8 @@ begin
        ff = 1.
         if(  dlev@units .eq. "Pa")
         ff = 0.01
-;;         print( dlev@units +  " " )
         end if
+
 	 plevels = tofloat ( dlev)
         plevels = ff * tofloat ( dlev)
         zdim1 = dimsizes( plevels)      

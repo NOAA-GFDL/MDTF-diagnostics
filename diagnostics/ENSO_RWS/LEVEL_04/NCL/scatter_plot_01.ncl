@@ -19,11 +19,9 @@ begin
  
      nameout = "scatter_01"
      wks_type = "eps"
-;;     wks_type@wkWidth = 1000
-;;     wks_type@wkHeight = 1000
 
     mindex =  12
-    msize  =  0.025 ;; 12.0
+    msize  =  0.025 ;; 
     mcolor =  (/ "red" /)
     mthick = 10
     mlabel = "NEW MODEL"
@@ -47,13 +45,13 @@ begin
     nameinV2 =  datadir2 + "/" + "va.nc"
 
 ;;---Tickmark resources
-    xmin  =  2. ;; -2.5 
-    xmax  =  8. ;; 0.5
-    dxx   =  0.2 ;;   0.5 
+    xmin  =  2. ;; 
+    xmax  =  8. ;;
+    dxx   =  0.2 ;;  
 
-    ymin  = -2.5 ;;  2.4
-    ymax  = 0.5 ;;   6.4
-    dyy   = 0.5 ;;   0.2
+    ymin  = -2.5 ;;  
+    ymax  = 0.5 ;;  
+    dyy   = 0.5 ;;  
 
     ylabel = " Divergence anomalies [150:F34:0:F:E-160:F34:0:F:W; 25:F34:0:F:-40:F34:0:F:N] [10:S:-06:N:s:S:-1:N:]" 
      iy = 1
@@ -122,7 +120,6 @@ begin
     end do
 ;; area average 
     yy = ff2 * wgt_areaave_Wrap ( adiv(0, kk, {lat11:lat22}, {lon11:lon22}),1.0,1.0,0)
-;;    print( xx + " " + yy)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   collect CMIP5 CMIP6 and OBS data :
@@ -141,13 +138,13 @@ begin
 ;;  read in the data based on the region .. 
 ;;  columns -   rows = xdim, columns - ydim 
 ;;   xdim is the number of lines = models 
-;;     ydim is the number of columns = variables   - reads in 3 files:
+;;   ydim is the number of columns = variables   - reads in 3 files:
    xdim1 = 12
    ydim1 = 2
    datain1 = asciiread(namein1,(/xdim1, ydim1/),"float") 
    model1 =   readAsciiTable ( list1, 1, "string", 0)
  
-   xdim2 =  12;;  17
+   xdim2 =  12;; 
    ydim2 =  2
    datain2 = asciiread(namein2,(/xdim2, ydim2/),"float")
    model2 = readAsciiTable ( list2, 1, "string", 0)
@@ -176,11 +173,6 @@ begin
     ix2 = ix1 + xdim3 -1
     datain(ix1:ix2,  :) = datain3(0:xdim3-1,  :)
     datain@_FillValue = undef2
-;    printVarSummary( datain1)
-;    printVarSummary( datain2)
-;    printVarSummary( datain3)
-;    printVarSummary( datain)
-
 
    iyy = iy
    ixx = ix
@@ -196,14 +188,10 @@ begin
    dataX = ff1 * datain(:, ixx)
    dataY = ff2 * datain(:, iyy)
    
-;;   printVarSummary(dataX1)
-;;   printVarSummary(dataY1)
-   
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
 ;----------------------------------------------------------------------
 ;;;  markers first -    1 is for AMIP/CMIP5     2 AMIP/CMIP6  3 is BS only 3 
-;;;     added GFDL  at the position number 7 
 
     colors1 = (/ "black", "saddlebrown", "blue", "green", "plum2", "red", \
              "orange", "hotpink",  "cadetblue2", "purple",  "darkseagreen3", "grey50" /)
@@ -222,8 +210,8 @@ begin
 
 ;;;;  
 
-       markers3 = (/  4,  5, 6, 7, 8 /)
-    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  colors3  = (/  14,  5,  6, 7, 8 /)
+    markers3 = (/  4,  5, 6, 7, 8 /)
+    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;; 
    markersizes3 = (/ 0.025, 0.025, 0.025, 0.025, 0.025  /)
    markerthick3 = (/ 10, 10, 10, 10, 10  /)
 
@@ -263,8 +251,6 @@ begin
 ;    aminy = miny - dy
 ;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
-;----------------------------------------------------------------------
 ;;;;;; ***********  regression line  
    
    rc =   regline ( dataX, dataY)
@@ -282,10 +268,8 @@ begin
    xx1(0) =  minx
    xx1(1) =  maxx
    pltarry(:) = rc*(xx1-rc@xave) + rc@yave          ; use solid line
-;;   print(rc)  
 
    rc = regline_stats( dataX, dataY)
-;;    print(rc) 
  
 ;************************************************
 ; plotting parameters
@@ -307,15 +291,14 @@ begin
    res1@trYMinF           = ymin
    res1@trYMaxF           = ymax
 
-;;    res1@tmYLPrecision = 3
    res1@tmYLFormat = "0@;*.2f" ;;  "f" ;; "0@*+^sg"
 
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.14 ;;  0.1 ;; 0.14
+  res1@vpXF              = 0.14 ;;  
   res1@vpYF              = 0.82
-  res1@vpWidthF          = 0.55 ;;  0.48 ;;  0.51 ;; 0.55
+  res1@vpWidthF          = 0.55 ;;
   res1@vpHeightF         = 0.55
 
 ;---Title resources
@@ -330,7 +313,7 @@ begin
 ;--XY marker resources
 
   res1@xyMarkLineMode     = "Markers"
-  res1@xyMonoMarkerColor  = False ;;;; True         ; Allow different colors for markers
+  res1@xyMonoMarkerColor  = False ;;;;; Allow different colors for markers
   res1@xyMarkerSizes       = markersizes1(:)
   res1@xyMarkerColors      = colors1(:)
   res1@xyMarkerThicknesses = markerthick1(:)
@@ -449,7 +432,6 @@ begin
       mkres@gsMarkerSizeF      = 0.012
       mkres@gsMarkerIndex      = markers1(i)
 
-      ;; gsn_polymarker_ndc(wks,  xpos1, ypos2, mkres)
      gsn_text_ndc      (wks,labels2(i,0),xpos2, ypos2, txres)
   end do
 
@@ -522,16 +504,14 @@ begin
 
      label1 = (/"Regression=", " ", regression/)
      new_label1 = str_concat(label1)
-     xs1 = 0.45 ;;  0.595 ;;; 0.75
-     ys1 = 0.31 ;;;  0.18
+     xs1 = 0.45 ;;
+     ys1 = 0.31 ;;; 
      dy2 = -0.022
-;     gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 
      label2 = (/"Correlation="," ", correlation/)
      new_label2 = str_concat(label2)
      xs2 = xs1
      ys2 = ys1 + dy2
-;     gsn_text_ndc (wks, new_label2, xs2, ys2, txres2)
 
 
   frame(wks)    ; Now advance the frame.
@@ -540,8 +520,5 @@ begin
    max_p = max( dataX)
    min_y = min( dataY)
    max_y = max( dataY)
-
-;;   print( min_p + " " +  max_p)
-;;   print( min_y + " " +  max_y)
 
 end

@@ -18,24 +18,22 @@ begin
     prefix1 = prefix + "/" + case
 
      wks_type = "eps"
-;;     wks_type@wkWidth = 1000
-;;     wks_type@wkHeight = 1000
 
      mindex =  12
-     msize  =  0.025 ;; 12.0
+     msize  =  0.025 ;; 
      mcolor =  (/ "red" /)
      mthick = 10
      mlabel = "NEW MODEL"
 
 
 ;;---Tickmark resources
-    xmin  =  -2 ;; 0
-    xmax  =  14 ;; 3.6
-    dxx   =   2 ;; 0.4
+    xmin  =  -2 ;; 
+    xmax  =  14 ;; 
+    dxx   =   2 ;; 
 
-    ymin  = 0. ;;  -2
-    ymax  = 4. ;;  14 
-    dyy   = 0.4 ;;  2
+    ymin  = 0. ;; 
+    ymax  = 4. ;;  
+    dyy   = 0.4 ;; 
 
     ylabel = "PNA standardized index "
      iy = 1
@@ -137,17 +135,17 @@ begin
    cUVdiv(0, :, :, :, :) = where( .not.ismissing(uc(:, :, :, :)), cUVdiv(0, :, :, :, :), uc@_FillValue)
     cUVdiv(1, :, :, :, :) = where( .not.ismissing(vc(:, :, :, :)), cUVdiv(1, :, :, :, :), vc@_FillValue)
 
-;;;   term1 = cvort (clima abs vorticity) *  div ( UVdivanom)
+;;;   term1 
        term1 = ua
       term1 = -1.*( cvort * adiv)
-;;;   term2 = aUVdiv * cvortxy( gradient )
+;;;   term2
       term2 = term1
       term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 
-;;;   term3 =  avort( * div( UVdivclim)
+;;;   term3 
       term3 =  term1
       term3 = -1.*( avort * cdiv)
-;;;   term4 =  UVdivclim  *  grad( avortxy)
+;;;   term4 
       term4 =  term1
       term4(:, :, :, :) = -1.*( cUVdiv(0, :, :, :, :) * avortx(:, :, :, :) +  cUVdiv(1, :, :, :, :) * avorty(:, :, :, :))
 
@@ -196,7 +194,7 @@ begin
    datain1 = asciiread(namein1,(/xdim1, ydim1/),"float") 
    model1 =   readAsciiTable ( list1, 1, "string", 0)
  
-   xdim2 =  12;;  17
+   xdim2 =  12;;  
    ydim2 =  2
    datain2 = asciiread(namein2,(/xdim2, ydim2/),"float")
    model2 = readAsciiTable ( list2, 1, "string", 0)
@@ -225,10 +223,6 @@ begin
     ix2 = ix1 + xdim3 -1
     datain(ix1:ix2,  :) = datain3(0:xdim3-1,  :)
     datain@_FillValue = undef2
-;    printVarSummary( datain1)
-;    printVarSummary( datain2)
-;    printVarSummary( datain3)
-;    printVarSummary( datain)
 
 
    iyy = iy
@@ -244,9 +238,6 @@ begin
   
    dataX = ff1 * datain(:, ixx)
    dataY = ff2 * datain(:, iyy)
-   
-;;   printVarSummary(dataX1)
-;;   printVarSummary(dataY1)
    
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
@@ -275,8 +266,8 @@ begin
                       5, 5, 5 /)
 ;;;;  
 
-      markers3 = (/  4,  5, 6, 7, 8 /)
-    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;  colors3  = (/  14,  5,  6, 7, 8 /)
+    markers3 = (/  4,  5, 6, 7, 8 /)
+    colors3 = (/ "black",  "black", "black",  "black", "black" /) ;;
    markersizes3 = (/ 0.025, 0.025, 0.025, 0.025, 0.025  /)
    markerthick3 = (/ 10, 10, 10, 10, 10  /)
 
@@ -311,11 +302,7 @@ begin
   minx = min(dataX) - dx 
   maxx = max(dataX) + dx
 
-;    amaxy = maxy + dy
-;    aminy = miny - dy
 ;----------------------------------------------------------------------
-;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
 ;----------------------------------------------------------------------
 ;;;;;; ***********  regression line  
    
@@ -334,10 +321,8 @@ begin
    xx1(0) =  minx
    xx1(1) =  maxx
    pltarry(:) = rc*(xx1-rc@xave) + rc@yave          ; use solid line
-;;   print(rc)  
 
    rc = regline_stats( dataX, dataY)
-;;    print(rc) 
  
 ;************************************************
 ; plotting parameters
@@ -359,15 +344,14 @@ begin
    res1@trYMinF           = ymin
    res1@trYMaxF           = ymax
 
-;;    res1@tmYLPrecision = 3
-   res1@tmYLFormat = "0@;*.2f" ;;  "f" ;; "0@*+^sg"
+   res1@tmYLFormat = "0@;*.2f" ;;  
 
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.14 ;;  0.1 ;; 0.14
+  res1@vpXF              = 0.14 ;;  
   res1@vpYF              = 0.82
-  res1@vpWidthF          = 0.55 ;;  0.51 ;; 0.55
+  res1@vpWidthF          = 0.55 ;; 
   res1@vpHeightF         = 0.55
 
 ;---Title resources
@@ -420,12 +404,12 @@ begin
       txres2 = True
       txres2@txFuncCode       = ":"
       txres2@txFontColor =  "black"
-      txres2@txFont   = "times-roman" ;;; "helvetica"
-      txres2@txFontHeightF =  0.013  ;;;0.016
+      txres2@txFont   = "times-roman" ;;; 
+      txres2@txFontHeightF =  0.013  ;;;
       txres2@txJust        = "CenterLeft"
 
-     xs1 = 0.1  ;; 0.595 ;;; 0.75
-     ys1 = 0.14  ;; 0.31 ;;;  0.18
+     xs1 = 0.1  ;; 
+     ys1 = 0.14  ;; 
      dy2 = -0.022
 
     
@@ -532,8 +516,8 @@ begin
       txres@txFontColor =  colors3(i)
       txres@txFont   =  "times-roman" ;;;;
       mkres@gsMarkerColor =  colors3(i)
-      mkres@gsMarkerThicknessF = 10. ;;   5. ;;  3.5
-      mkres@gsMarkerSizeF      =  0.015 ;; 0.017 ;; 0.02
+      mkres@gsMarkerThicknessF = 10. ;;  
+      mkres@gsMarkerSizeF      =  0.015 ;; 
       mkres@gsMarkerIndex      = markers3(i)
 
       gsn_polymarker_ndc(wks,  xpos1, ypos2, mkres)
@@ -569,8 +553,8 @@ begin
 ;;  print the correlation and regression values
       txres2 = True
       txres2@txFontColor =  "red"
-      txres2@txFont   = "times-roman" ;;; "helvetica"
-      txres2@txFontHeightF =  0.013  ;;;0.016
+      txres2@txFont   = "times-roman" ;;; 
+      txres2@txFontHeightF =  0.013  ;;;
       txres@txJust        = "CenterLeft"
 
      label1 = (/"Regression=", " ", regression/)
@@ -578,13 +562,11 @@ begin
      xs1 = 0.45 ;;  0.595 ;;; 0.75
      ys1 = 0.31 ;;;  0.18
      dy2 = -0.022
-;     gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 
      label2 = (/"Correlation="," ", correlation/)
      new_label2 = str_concat(label2)
      xs2 = xs1
      ys2 = ys1 + dy2
-;     gsn_text_ndc (wks, new_label2, xs2, ys2, txres2)
 
 
   frame(wks)    ; Now advance the frame.

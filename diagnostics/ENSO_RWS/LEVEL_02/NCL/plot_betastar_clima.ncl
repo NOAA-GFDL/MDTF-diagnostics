@@ -56,14 +56,14 @@ begin
    do icase = 1, 2 
     
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
+     dirname  =  dirname1 + "/model"
+     outdir   =  dirname1 + "/model"
      model = getenv( "CASENAME")  ;;  "CESM2" ;;  getenv( "CASENAME")
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
+      dirname = obsname
+      outdir  = dirname1  + "/obs"
       model = " " ;;   OBS leave it blank
     end if
 
@@ -106,10 +106,6 @@ begin
     Uc2(:, :, j, :) = (uuc(:, :, j+1, :) - 2.*uuc(:, :, j, :) + uuc(:, :, j-1, :))/(dY*dY)
     betastar(:, :, j, :) =  (  beta(j)  -  Uc2(:, :, j, :) )
    end do
-;;   optionally smooth the beta-star
-;; mm2 = 6
-;;wrf_smooth_2d(betastar,mm2)
-;;    betastar(:, :, :, :) =  where( .not.ismissing(uuc(:, :, :, :)),  betastar(:, :, :, :), uuc@_FillValue)
 
     betastar = ff * betastar
     betastar@units = " "
@@ -148,7 +144,7 @@ begin
  res@cnLevelSelectionMode  = "ExplicitLevels"
 
   res@cnFillOn             = True                  ; turn on color fill
-  res@cnLinesOn            = True ;;  False
+  res@cnLinesOn            = True ;;  
   res@cnLineThicknessF     = 0.1
 ;;  the color bar
   res@lbAutoManage          = False             ; we control label bar
@@ -186,7 +182,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;;  
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -213,23 +209,7 @@ begin
     cmap (i,2) = gx/255.
     cmap (i,3) = 1
 
-;     i = 2
-;    gx = 200.
-;    cmap( i, 0) = gx/255.
-;    cmap (i,1) = gx/255.
-;    cmap (i,2) = gx/255.
-;    cmap(i,3) = 1
-
-;     i = 253
-;    gx = 40.
-;    cmap( i, 0) = 80./255.
-;    cmap (i,1) = gx/255.
-;    cmap (i,2) = gx/255.
-;    cmap(i,3) = 1
-;;     res@cnFillPalette = cmap ( (/  0, 1,  2, 10, 25, 35, 50, 65, 75, 85, 130, 145, 160, 175, 190, 205, 230, 245, 253/),:)
-
     res@cnFillPalette = cmap ( (/  0, 1,  2,  3, 4, 5, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17 /), :)
-
 
     plot1 = gsn_csm_contour_map(wks,  betastar(0, kk, :, :), res)
 
@@ -243,7 +223,7 @@ begin
   sres@cnLineLabelsOn  = False                ; no lables on line
   sres@cnFillOn        =  False
   sres@cnLineThicknessF =   10 
-  sres@cnLineLabelInterval       =  2 ;; 1             ; default = 2
+  sres@cnLineLabelInterval       =  2 ;; 
   sres@cnLineLabelPlacementMode   = "constant"
 
   sres@gsnContourNegLineDashPattern = 1

@@ -58,14 +58,14 @@ begin
     do icase = 1, 2
 
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
-     model = getenv( "CASENAME") ;; 
+      dirname  =  dirname1 + "/model"
+      outdir   =  dirname1 + "/model"
+      model = getenv( "CASENAME") ;; 
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
+      dirname = obsname
+      outdir  = dirname1  + "/obs"
       model = " " ;;   OBS = blank 
     end if
 
@@ -108,7 +108,7 @@ begin
      Ucc = uuc 
      cvort2 = uuc
     
-    cvort2 =  uv2vrF_Wrap (uuc, vvc);;   uv2vr_cfd(uuc, vvc, lat,lon, 3)  ;;  uv2vrF_Wrap (uuc, vvc) 
+    cvort2 =  uv2vrF_Wrap (uuc, vvc);;   
     cvort2( :, :, :, :) = where( .not.ismissing(uuc(:, :, :, :)), cvort2( :, :, :, :), uuc@_FillValue)
 
     cvort  =  cvort2     
@@ -124,10 +124,6 @@ begin
    cvorty = cvort
    gradsg (cvort,  cvortx, cvorty)
 
-;;   cvort_grad =   grad_latlon_cfd(cvort, lat, lon, True, False)
-;;   cvortx = cvort_grad[1]
-;;   cvorty = cvort_grad[0]
-
    Ucc  = where( uuc .gt. 0., uuc , uuc@_FillValue)
    bb = where(  cvorty .gt. 0, cvorty, uuc@_FillValue)
    do j = 0, ydim - 1
@@ -135,10 +131,6 @@ begin
    end do
    wavenumber = where( wavenumber .gt. 0.,  sqrt(wavenumber),  uuc@_FillValue)
    
-
-;;;  optional smoothnig    
-  ;;mm2 = 6
-  ;;wrf_smooth_2d( wavenumber,mm2)
 
      wavenumber@long_name = " "
      wavenumber@units = " "
@@ -176,7 +168,7 @@ begin
  res@cnLevelSelectionMode  = "ExplicitLevels"
 
   res@cnFillOn             = True                  ; turn on color fill
-  res@cnLinesOn            = True ;;  False
+  res@cnLinesOn            = True ;;  
   res@cnLineThicknessF    =  0.2
 ;;  the color bar
   res@lbAutoManage          = False             ; we control label bar
@@ -214,7 +206,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;;  
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -227,7 +219,7 @@ begin
     res@cnLevelSelectionMode =  "ManualLevels"
     cmap = read_colormap_file(colormap) ;;  read_colormap_file("BlueDarkRed18")
     res@cnFillPalette = cmap
-    ;;  res@cnFillPalette =  cmap ( (/12, 16, 19, 27, 32, 38, 40, 46, 52, 57, 63 /),:) 
+
     res@cnMinLevelValF       = cmin               ; set min contour level
     res@cnMaxLevelValF       = cmax               ; set max contour level
     res@cnLevelSpacingF      = cint    
@@ -243,10 +235,7 @@ begin
   sres@cnInfoLabelOn = False
   sres@cnLineLabelFormat  =  "f"  ;;
 
-;;  plot2 = gsn_csm_contour(wks,  wavenumber(0, kk, :, :), sres)
-
-;;  overlay(plot1,plot2)          ; overlay the U-wind plot on the temperature plot
-  draw(plot1)                   ; draw the temperature plot (with the U-wind plot overlaid)
+  draw(plot1)                   ;
   frame(wks)
 
   end if 

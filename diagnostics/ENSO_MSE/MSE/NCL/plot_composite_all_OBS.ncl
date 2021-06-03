@@ -1,17 +1,5 @@
 ;;;*******************************************************
 ;
-;
-; Concepts illustrated:
-;   - Drawing multiple bar charts on a page
-;   - Drawing three custom legends outside a bar chart
-;   - Using bar charts to draw standard deviations for four timeseries
-;*******************************************************
-;
-;; These files are loaded by default in NCL V6.2.0 and newer
-;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-;; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -44,7 +32,6 @@ begin
    modes = (/ "ELNINO", "LANINA" /)
 
    variables = (/ "madv",  "mdiv", "omse", "tadv",  "mse" /)
-;;   varinames = (/ "moisture advection", "moist divergence", "MSE vert. advect.", "temp. advection", "MSE" /)
    varinames = (/ "M~B~adv~N", "M~B~div~N", "MSE~B~vert. advect.~N", "T~B~adv~N" , "MSE" /)
 
    units = (/ "[W/m2]", "[W/m2]", "[W/m2]", "[W/m2]",  "[J/m2]" /)
@@ -88,21 +75,14 @@ begin
         cints = cints2(iv)
       end if
 
-;;;     print( cmins + " " +  cmaxs + " " + cints )	 
-
-     colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
+     colormap = "BlueWhiteOrangeRed" ;;   
 ;;  the title 
-;;    maintitle2 = maintitle + " " + season  +  " " + varinames(iv)
-    namein1 = namein + "/MSE_" + variable + ".nc"  ;;  str_concat( string)
-    namein2 = nameclima + "/MSE_" + variable + "_clim.nc"  ;;; str_concat( string)
+    namein1 = namein + "/MSE_" + variable + ".nc"  ;;  
+    namein2 = nameclima + "/MSE_" + variable + "_clim.nc"  ;;; 
 
     nameout12 = nameout + "_" + variable
 
-;;;   print( nameout12  + " " )
- 
-;;   print( namein2 ) 
 ;;   read in the data
-
 ;;;;  read in data and dimensions lon/lat  etc
      
      fin1 = addfile( namein1, "r")
@@ -141,17 +121,11 @@ begin
 	  end do 
 	end do
        
-;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
-
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
  res = True
-;;   res@gsnMaximize  = True                        ; maximize plot in frame
 
   res@mpMinLonF              =  xlon1 
   res@mpMaxLonF              =  xlon2
@@ -173,21 +147,12 @@ begin
   res@cnLevelSpacingF       = cints
 
  res@gsnMaximize         = True
-; res@gsnSpreadColors     = True
-; res@gsnSpreadColorStart = gsn_range@ColorStart
-; res@gsnSpreadColorEnd   = gsn_range@ColorEnd
-; res@lbLabelStride       = 2
 
 ;;  title 
   res@tiMainFontHeightF = 0.025
   res@tiMainFont = "helvetica"
-;;  res@tiMainString =  maintitle2
-
-;;   gsn_define_colormap(wks,  colormap)
-;;   plot = gsn_csm_contour_map(wks, datain, res)
 
 ;;  legend - variable mode and season
-;;  legend title
       txres1 = True
       txres1@txFontColor =  "black"
       txres1@txFont   = "helvetica"
@@ -219,14 +184,12 @@ begin
      ys1 = 0.18
      dy2 = 0.0
      dx2 = 0.3
-;;     new_label2 = str_concat(label2)
      label4 =  "Months/Season= " +  season +  "  " + model + " units:" + units2
      gsn_text_ndc (wks, label4, xs1, ys1, txres2)
 ;;;;;    
 
 	plot = gsn_csm_contour_map(wks, datain, res)
 
-;;  frame(wks)      
   end do 
   end do 
 end

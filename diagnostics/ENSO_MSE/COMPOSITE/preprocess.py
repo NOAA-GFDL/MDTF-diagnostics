@@ -45,8 +45,6 @@ iy2 = int(iy2)
 
 convert_file = os.path.join(prefix1,"preprocess.txt")
 
-## print( convert_file)
-
 flag0 = -1
 
 if( os.path.isfile( convert_file) ):

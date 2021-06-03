@@ -68,7 +68,7 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
                     ss22 = ss22 + 1.
 
 ####################################
-###                       collect summations for the variances and covariances
+###        collect summations for the variances and covariances
                     variance1 = variance1 + ( (vvar1[:,:, imm-1]   - clima1[:,:, imm-1])* (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) ) 
                     correl = correl + ( (vvar1[:,:, imm-1] - clima1[:,:, imm-1]) * sst_anom )
                     ss[:,:] += vvar1_valid[:,:, imm-1]
@@ -82,7 +82,6 @@ def get_correlation(imax, jmax, zmax,  iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, v
  
     variance2 = variance2/ss22
     variance2 = math.sqrt(variance2)
-    #print( variance2)
     correl = correl/ss22
     variance1 = variance1/ss22
     variance1 = np.sqrt(variance1) 

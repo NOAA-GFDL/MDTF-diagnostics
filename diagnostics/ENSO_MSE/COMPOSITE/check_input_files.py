@@ -34,7 +34,7 @@ for iv in range(0, size-1):
     data = xr.open_dataset( filevar, decode_cf=False)
     datax = data[ vvar[iv] ]
     chunit =  datax.attrs["units"] 
-##    print( "variable unit check ", vvar[iv] , chunit, " ", unit[iv] )
+
     data.close()
     if( not (chunit ==  unit[iv]) ):
         print( "Warning: unit", chunit, "for variable ",  vvar[iv] )

@@ -38,12 +38,6 @@ def get_regression(imax, jmax, zmax, iy1, iy2, im1, im2, ii1, ii2, jj1, jj2, var
         clima2 = read_netcdf_2D(imax, jmax, tmax12,  variable2,  namein2, clima2, undef)
         clima1 = np.ma.masked_greater_equal( clima1, undef, copy=False)
         clima2 = np.ma.masked_greater_equal( clima2, undef, copy=False)
-        #clima1_valid = (clima1 < undef)
-        #clima1_invalid = (clima1 >= undef)
-        #clima1[clima1_invalid] = 0.
-        #clima2_valid = (clima2 < undef)
-        #clima2_invalid = (clima2 >= undef)
-        #clima2[clima2_invalid] = 0.
 
     else:
         print (" missing file 1 " + namein1 )

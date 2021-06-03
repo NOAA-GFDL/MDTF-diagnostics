@@ -130,7 +130,7 @@ if os.environ["ENSO_COMPOSITE"] == "1":
             os.system("rm -f "+file_dest)
             os.system("cp "+file_src+" "+file_dest)
 
-        file_src  = os.environ["POD_HOME"]+"/ENSO_MSE.pdf"
+        file_src  = os.environ["POD_HOME"]+"/doc/ENSO_MSE.pdf"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/ENSO_MSE.pdf"
         if os.path.isfile( file_dest ):
             os.system("rm -f "+file_dest)

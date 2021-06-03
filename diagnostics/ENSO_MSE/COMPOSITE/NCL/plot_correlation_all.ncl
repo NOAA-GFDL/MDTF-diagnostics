@@ -1,13 +1,6 @@
 ;;*******************************************************
-;
-;
 ;*******************************************************
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -161,7 +154,6 @@ begin
 
 	plot = gsn_csm_contour_map(wks, datain1, res)
 
-;;  frame(wks)      
 
   end do  ;  over variables
 end

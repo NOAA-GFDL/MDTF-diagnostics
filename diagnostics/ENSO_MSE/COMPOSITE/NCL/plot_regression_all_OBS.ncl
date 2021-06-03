@@ -2,18 +2,12 @@
 ;
 ;
 ;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
 ;; select the  cmin, cmax, cint
-   cmin = (/  -2.8,  -2.4, -22.5, -18,  -12 /) ; min(datain)
-   cmax = (/   2.8,   2.4,  22.5,  18,   12 /) ; max(datain)
+   cmin = (/  -2.8,  -2.4, -22.5, -18,  -12 /) ;
+   cmax = (/   2.8,   2.4,  22.5,  18,   12 /) ; 
    cint = (/   0.4,   0.4,  2.5,    2,    2 /)
    ccenter = 0
 
@@ -30,7 +24,7 @@ begin
       outdir2   = getenv("ENSO_MSE_WKDIR")+"/obs/"  
       outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/"  ; set in ENSO_MSE.py
       varcode  = getenv("POD_HOME")
-      model =  " "   ;;;;   leave blank for observations  getenv( "CASENAME")
+      model =  " "   ;;;;   leave blank for observations  
 
       parameter_name = varcode + "/shared/parameters.txt"
 
@@ -103,7 +97,6 @@ begin
   res@cnFillOn             = True                  ; turn on color fill
   res@cnLinesOn            = False
 
-;  symMinMaxPlt ( datain1, clevs, False,res)  
  res@cnMinLevelValF        = cmin(iv)
  res@cnMaxLevelValF        = cmax(iv)
  res@cnLevelSpacingF       = cint(iv)

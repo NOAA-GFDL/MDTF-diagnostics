@@ -1,13 +1,7 @@
-;;;****************************************************
+;****************************************************
 ;
 ;
 ;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -76,24 +70,22 @@ begin
 	namein  = obsdir + "/netCDF/"  + mode
 	nameout = outdir2 + "/PS/composite_"  + mode
 
-;;      maintitle = "Composite " + title_mode(n)  + " " + varinames(iv)
 ;;;   read in various variables then  plot 
 ;;    
      variable = variables(iv) ;;;;  
      units = varunits(iv) ;;;  
 
-     colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
+     colormap = "BlueWhiteOrangeRed" ;;  
      if( iv .eq. 5 ) then
 	 colormap =  "precip4_diff_19lev"
      end if
 ;;  the title 
 
-   namein1 = namein + "/" + variable + ".nc"  ;;  str_concat( string)
-   namein2 = nameclima +  variable + "_clim.nc"  ;;; str_concat( string)
+   namein1 = namein + "/" + variable + ".nc"  ;;
+   namein2 = nameclima +  variable + "_clim.nc"  ;;; 
 
    nameout12 = nameout + "_" + variname2(iv)
-;    print( namein1) 
-;   print( namein2 ) 
+
 ;;   read in the data and dimensions lon/lat
 
      fin1 = addfile( namein1, "r")

@@ -11,9 +11,6 @@
 
 begin 
 
-;; select the  cmin, cmax, cint
-;; select the  cmin, cmax, cint
-;;;    need the two rows El Nino/La Nina
    cmin = (/  (/  -3.2,   -8,   -60,   -40,  -32,  -8,  -60 /) ,  \
               (/  -3.2,  -3.6, -50,   -32,  -28,  -7,  -50 /) /)
 
@@ -95,24 +92,22 @@ begin
 	namein  = outdir  + "/netCDF/"  + mode
 	nameout = outdir2 + "/PS/composite_"  + mode
 
-;;      maintitle = "Composite " + title_mode(n)  + " " + varinames(iv)
 ;;;   read in various variables then  plot 
 ;;    
      variable = variables(iv) ;;;;  
      units = varunits(iv) ;;;  
 
-     colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
+     colormap = "BlueWhiteOrangeRed" ;; 
      if( iv .eq. 5 ) then
 	 colormap =  "precip4_diff_19lev"
      end if
 ;;  the title 
 
-   namein1 = namein + "/" + variable + ".grd"  ;;  str_concat( string)
-   namein2 = nameclima +  variable + "_clim.grd"  ;;; str_concat( string)
+   namein1 = namein + "/" + variable + ".grd"  ;;  
+   namein2 = nameclima +  variable + "_clim.grd"  ;;
 
    nameout12 = nameout + "_" + variable
-;;  print( namein1) 
-;;   print( namein2 ) 
+
 ;;   read in the data
      dims = (/  ymax, xmax /)
      datain1 =  new(  dims, "float")
@@ -124,24 +119,19 @@ begin
 
 ;;  make the anomaly for plotting
     
-    datain =  new(  dims, "float")
+     datain =  new(  dims, "float")
      datain!0="lat"
      datain!1="lon"
      datain&lat = lat
      datain&lon = lon
 
     datain = ff *( datain1  - datain2) 
-;;  gsn_range = gsnColorRange(cmin, cmax, cint, ccenter, 97, 49)
 
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
    gsn_define_colormap(wks,  colormap)
 
  res = True
-;;   res@gsnMaximize  = True                        ; maximize plot in frame
 
   res@mpMinLonF              =  xlon1 
   res@mpMaxLonF              =  xlon2
@@ -154,19 +144,13 @@ begin
  res@cnLevelSelectionMode  = "ManualLevels"
 
   res@cnFillOn             = True                  ; turn on color fill
-;;  res@cnFillPalette        = colormap        ; set color map
   res@cnLinesOn            = False
 
-;;  symMinMaxPlt ( datain, clevs, False,res)  
  res@cnMinLevelValF        = cmin(n, iv)
  res@cnMaxLevelValF        = cmax(n, iv)
  res@cnLevelSpacingF       = cint(n, iv) 
 
  res@gsnMaximize         = True
-; res@gsnSpreadColors     = True
-; res@gsnSpreadColorStart = gsn_range@ColorStart
-; res@gsnSpreadColorEnd   = gsn_range@ColorEnd
-; res@lbLabelStride       = 2
 
 ;;  title 
   res@tiMainFontHeightF = 0.025
@@ -189,10 +173,6 @@ begin
       label2 = title_mode(n) + "  (" + season + ")"
       xs1 = xs1 + dx2
       gsn_text_ndc (wks, label2, xs1, ys1, txres1)
- 
-
-;;   gsn_define_colormap(wks,  colormap)
-;;   plot = gsn_csm_contour_map(wks, datain, res)
 
 ;;  legend - variable mode and season
 
@@ -209,10 +189,8 @@ begin
      dx2 = 0.3
        label4 = "  Months/Season= " + season + " Model: " + model + "  units:" +  units
      gsn_text_ndc (wks, label4, xs1, ys1, txres2)
-;;;;;    
-	plot = gsn_csm_contour_map(wks, datain, res)
 
-;;  frame(wks)      
+	plot = gsn_csm_contour_map(wks, datain, res)
    
   end do  ;  over variables
 

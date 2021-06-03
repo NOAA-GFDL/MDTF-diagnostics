@@ -23,8 +23,7 @@ missing data are flaged by UNDEF which is a very large number
 '''
 
 def mse_adv(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth, mse_adv1, mse_adv3, undef):
-    #work on process
-    #print("mse_adv processing...")
+
     # various constants
     pi = 4.0 * np.arctan(1.0)
     lh = 2.5e+6

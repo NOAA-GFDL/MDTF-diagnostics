@@ -24,8 +24,7 @@ OUTPUT: TADV3  3 dimensional horizontal temperature advection  [W/kg]
 '''
 
 def temperature_adv(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth):
-    #work on process
-    #print("temperature_adv processing...")
+
     # various constants
     pi = 4.0 * np.arctan(1.0)
     cp = 1004.0

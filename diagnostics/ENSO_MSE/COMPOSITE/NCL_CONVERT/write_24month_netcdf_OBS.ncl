@@ -1,15 +1,14 @@
 ;;;;;;  to convert binary to easy netcdf for 24 month ENSO evolution 
 ;;;; 
-;;;
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
 begin
 
-      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py, 
+  outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/obs" ; envvar set in ENSO_MSE.py, 
                                 ;processed output from other scripts in this package
-      varcode = getenv ("POD_HOME")
+  varcode = getenv ("POD_HOME")
 
 ;;;  read in the dimensions first 
         modes = (/ "ELNINO", "LANINA" /)
@@ -131,7 +130,6 @@ begin
 
        fAtt               = True            ; assign file attributes
 	fAtt@title         = "24 month evolution of " + mode(n) + "  year 0 developing and year 1 decaying phase" 
-;;; 	fAtt@Conventions   = "None"   
 	fAtt@creation_date = systemfunc ("date")        
 	fileattdef( fout, fAtt ) 
 ;;;;;;;;;;;;;;;;; define all attributes here 
@@ -164,7 +162,7 @@ begin
  
 
     do iv = 0, ivar2 - 1
-       namein = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables2(iv) + ".grd"
+     namein = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/BIN/" + variables2(iv) + ".grd"
        nameout = outdir + "/netCDF/24MONTH_" +  mode(n) +  "/" + varnames2(iv) + ".nc"
 ;;;  read in the data
 
@@ -185,7 +183,6 @@ begin
 
        fAtt               = True            ; assign file attributes
        fAtt@title         = "24 month evolution of " + mode(n) + "  year 0 developing and year 1 decaying phase"
-;;;    fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )
 ;;;;;;;;;;;;;;;;; define all attributes here

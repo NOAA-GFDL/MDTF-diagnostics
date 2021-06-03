@@ -99,9 +99,6 @@ os.system("cp "+file_src+" "+file_dest)
 print("=================================================================")
 print("                         LEVEL_01 FINISHED                     ")
 print("=================================================================")
-#except OSError as e:
-#    print('WARNING',e.errno,e.strerror)
-#    print("LEVEL_01 is NOT Executed as Expected!")
 
 # ==================================================================================================
 # 2. LEVEL_02

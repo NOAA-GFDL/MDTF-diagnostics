@@ -69,14 +69,14 @@ begin
    do icase = 1, 2
 
    if( icase .eq. 1) ;;  model
-   dirname  =  dirname1 + "/model"
-   outdir   =  dirname1 + "/model"
+     dirname  =  dirname1 + "/model"
+     outdir   =  dirname1 + "/model"
      model = model2  ;;;  getenv( "CASENAME") ;;; 
     end if
 
   if( icase .eq. 2) ;;; OBS
-   dirname = obsname
-   outdir  = dirname1  + "/obs"
+      dirname = obsname
+      outdir  = dirname1  + "/obs"
       model = " " ;;   observations - leave it blank 
     end if
 
@@ -162,21 +162,14 @@ begin
      cvorty = uu1
 
 ;;;;   anomaly vorticity and climatolog vorticity gradients 
-;;    avort_grad =  grad_latlon_cfd( avort, lat, lon, True, False) ;;    
-;;    cvort_grad =  grad_latlon_cfd( cvort, lat, lon, True, False) ;; 
      
        gradsf (avort,  avortx, avorty)
        gradsf (cvort,  cvortx, cvorty)
 
-;;      avortx = avort_grad[1]
-;;      avorty = avort_grad[0]
-;;      cvortx = cvort_grad[1]
-;;      cvorty = cvort_grad[0]
-
      adiv = uu1
      cdiv = uuc
-     adiv = uv2dvF_Wrap( ua, va) ;;  uv2dv_cfd (uu1, vv1, lat, lon, 3)  
-     cdiv = uv2dvF_Wrap( uuc, vvc) ;;  uv2dv_cfd (uuc, vvc, lat, lon, 3) 
+     adiv = uv2dvF_Wrap( ua, va) ;;  
+     cdiv = uv2dvF_Wrap( uuc, vvc) ;;  
    
      aUVdiv = dv2uvF_Wrap (adiv)  
      cUVdiv = dv2uvF_Wrap (cdiv) 
@@ -240,7 +233,6 @@ begin
    invar = tostring_with_format( ivar+1, "%2.2d")
 
    nameout2 =  nameout + outname(ivar) +  "_" + mode + "_" + pressure
-;;;   nameout + outname + "_" + invar +  "_" + mode + "_" + pressure
 
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout2)
@@ -296,7 +288,7 @@ begin
       txres2 = True
       txres2@txFontColor =  "black"
       txres2@txFont   = "helvetica"
-      txres2@txFontHeightF = 0.02 ;;  0.016
+      txres2@txFontHeightF = 0.02 ;; 
       txres2@txJust        = "CenterLeft"
       txres2@txFuncCode    = "~"
 
@@ -359,7 +351,6 @@ begin
  delete( [/ cUVdiv, aUVdiv,  adiv, cdiv, avortx, avorty, cvortx,  cvorty, sinlat, fcoriol, coslat, beta, cvort2, cvort, avort /])
  delete( [/ term1, term2, term3, term4, term5, term6, term7, termx /])
 
-;;;  print( "finished case " + icase )   ;;  over model/OBS
 end do 
 
 end

@@ -95,7 +95,6 @@ convert_file = prefix1 + "/DATA/preprocess.txt"
 if( os.path.isfile( convert_file) ):
     f = open(convert_file , 'r')
     flag0  = f.read()
-       ## print( " preprocessing flag =",  flag0)
     f.close()
 #############################################3
 if( flag0 == '1'):
@@ -185,8 +184,6 @@ imax = 0
 jmax = 0
 zmax = 0
 imax, jmax, zmax = get_dimensions( imax,jmax, zmax, prefix1)
-
-### print( imax,  " " , jmax , " " , zmax )
 
 lon    = np.zeros(imax,dtype='float32')
 lat    = np.zeros(jmax,dtype='float32')

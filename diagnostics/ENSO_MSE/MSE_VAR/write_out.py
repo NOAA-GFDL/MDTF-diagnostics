@@ -16,7 +16,7 @@ def write_out(imax, jmax, zmax,  shf_var, lhf_var, sw_var, lw_var, mse_var, madv
     output[4] = sw_var  
     output[5] = lw_var   
     output[6] = shf_var    
-    output[7] = lhf_var      
-###    output.tofile(fh)
+    output[7] = lhf_var  
+    
     output.tofile(fh)    
     fh.close()

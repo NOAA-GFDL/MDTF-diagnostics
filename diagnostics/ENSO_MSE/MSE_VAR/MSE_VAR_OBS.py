@@ -156,8 +156,6 @@ correlation = 0
 im1 = 12
 im2 = 14
 
-##iy1 = os.environ["FIRSTYR"]
-##iy2 = os.environ["LASTYR"]
 ###  reading  in selected  parameters  from parameter.txt file
 ##   read in parameters    and the actual array dimensions imax, jmax, zmax,
 ##    longitudes, latitudes,  plevels
@@ -168,7 +166,6 @@ imax = 0
 jmax = 0
 zmax = 0
 
-### print( imax,  " " , jmax , " " , zmax )
 
 lon    = np.zeros(imax,dtype='float32')
 lat    = np.zeros(jmax,dtype='float32')

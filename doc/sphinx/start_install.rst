@@ -111,7 +111,7 @@ Installing dependencies
 Installing XQuartz on MacOS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you're installing on a MacOS system, you will need to install `XQuartz <https://www.xquartz.org/>`__ if it's not already present. 
+If you're installing on a MacOS system, you will need to install `XQuartz <https://www.xquartz.org/>`__. If the XQuartz executable isn't present in ``/Applications/Utilities``, you will need to download and run the installer from the previous link.
 
 The reason for this requirement is that the X11 libraries are `required dependencies <https://www.ncl.ucar.edu/Download/macosx.shtml#InstallXQuartz>`__ for the NCL scripting language, even when it's run non-interactively. Because the required libraries cannot be installed through conda (next section), this installation needs to be done as a manual step.
 

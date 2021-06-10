@@ -54,7 +54,7 @@ Notes:
    - Note that the variable name and the standard name must be unique fieldlist entries
 - Environment variables
    - To define an environment variable specific to your POD, add a ``"pod_env_vars"`` block to the ``"settings"`` block in your POD's ``settings.jsonc`` file and define the desired variables 
-   - Reference the a variable in Python by calling ``os.environ["VARIABLE NAME"]``  
+   - Reference an environment variable in Python by calling ``os.environ["VARIABLE NAME"]``  
    - NCL code can reference environment variables by calling ``getenv("VARIABLE NAME")``  
    - Framework-specific environment variables include:
       - OBS_DATA : path to the top-level directory containing any observational or reference data for your POD

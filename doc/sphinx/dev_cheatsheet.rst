@@ -35,7 +35,6 @@ Creating and submitting a POD
             - If a POD uses matplotlib, it is recommended to write as figures as EPS instead of PS because of potential bugs
    
    - Modify html files to point to the figure names
-   - If running an NCAR NCL-based POD, modify input.jsonc to call your POD
 
 3. Place your documentation in ``MDTF-diagnostics/diagnostics/[YOUR POD NAME]/docs``
 4. Test your code with the framework 

@@ -67,8 +67,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     def make_pod_html(self, pod):
         """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~util.append_html_template`. Looks for all 
-        html files in POD_CODE_DIR, templates them, and copies them to 
+        A wrapper for :func:`~util.append_html_template`. Looks for all
+        html files in POD_CODE_DIR, templates them, and copies them to
         POD_WK_DIR, respecting subdirectory structure (see doc for
         :func:`~util.recursive_copy`).
         """
@@ -96,8 +96,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
         ghostscript.
 
-        All vector graphics files (identified by extension) in any subdirectory 
-        of `POD_WK_DIR/src_subdir` are converted to .png files by running 
+        All vector graphics files (identified by extension) in any subdirectory
+        of `POD_WK_DIR/src_subdir` are converted to .png files by running
         `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
         Ghostscript is included in the _MDTF_base conda environment. Afterwards,
         any bitmap files (identified by extension) in any subdirectory of
@@ -107,7 +107,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         Args:
             src_subdir: Subdirectory tree of `POD_WK_DIR` to search for vector
                 graphics files.
-            dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted 
+            dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted
                 bitmap files to.
         """
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
@@ -123,8 +123,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
         for f in files:
             f_stem, _  = os.path.splitext(f)
-            # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's 
-            # template for multi-page output). If input .ps/.pdf file has multiple 
+            # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's
+            # template for multi-page output). If input .ps/.pdf file has multiple
             # pages, this will generate 1 png per page, counting from 1.
             f_out = f_stem + '_MDTF_TEMP_%d.png'
             try:
@@ -132,7 +132,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                     f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
                 )
             except Exception as exc:
-                _log.error("%s produced malformed plot: %s", 
+                _log.error("%s produced malformed plot: %s",
                     pod.name, f[len(abs_src_subdir):])
                 if isinstance(exc, util.MDTFCalledProcessError):
                     _log.debug("gs error encountered when converting %s for %s:\n%s",
@@ -158,7 +158,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             abs_src_subdir, ['*.png', '*.gif', '*.jpg', '*.jpeg']
         )
         util.recursive_copy(
-            files, abs_src_subdir, abs_dest_subdir, 
+            files, abs_src_subdir, abs_dest_subdir,
             copy_function=shutil.move, overwrite=False
         )
 
@@ -166,14 +166,14 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         """Copy and remove remaining files to `POD_WK_DIR`.
 
         In order, this 1) copies any bitmap figures in any subdirectory of
-        `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without 
+        `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without
         digested observational data), 2) removes vector graphics if requested,
         3) removes netCDF scratch files in `POD_WK_DIR` if requested.
 
-        Settings are set at runtime, when :class:`~core.ConfigManager` is 
+        Settings are set at runtime, when :class:`~core.ConfigManager` is
         initialized.
         """
-        # copy premade figures (if any) to output 
+        # copy premade figures (if any) to output
         files = util.find_files(
             pod.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )
@@ -197,13 +197,13 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                 os.remove(f)
 
     def make_output(self):
-        """Top-level method to make POD-specific output, post-init. Split off 
+        """Top-level method to make POD-specific output, post-init. Split off
         into its own method to make subclassing easier.
-        
+
         In order, this 1) creates the POD's HTML output page from its included
         template, replacing ``CASENAME`` and other template variables with their
         current values, and adds a link to the POD's page from the top-level HTML
-        report; 2) converts the POD's output plots (in PS or EPS vector format) 
+        report; 2) converts the POD's output plots (in PS or EPS vector format)
         to a bitmap format for webpage display; 3) Copies all requested files to
         the output directory and deletes temporary files.
         """
@@ -244,7 +244,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     def append_result_link(self, pod):
         """Update the top level index.html page with a link to this POD's results.
 
-        This simply appends one of two html fragments to index.html: 
+        This simply appends one of two html fragments to index.html:
         pod_result_snippet.html if the POD completed successfully, or
         pod_error_snippet.html if an exception was raised during the POD's setup
         or execution.
@@ -263,9 +263,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """Check for missing files linked to from POD's html page.
 
         See documentation for :class:`~verify_links.LinkVerifier`. This method
-        calls LinkVerifier to check existence of all files linked to from the 
+        calls LinkVerifier to check existence of all files linked to from the
         POD's own top-level html page (after templating). If any files are
-        missing, an error message listing them is written to the run's index.html 
+        missing, an error message listing them is written to the run's index.html
         (located in src/html/pod_missing_snippet.html).
         """
         _log.info('Checking linked output files for %s', pod.name)
@@ -276,13 +276,13 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            _log.error('POD %s has missing output files:\n%s', 
+            _log.error('POD %s has missing output files:\n%s',
                 pod.name, '    \n'.join(missing_out))
             template_d = html_templating_dict(pod)
             template_d['missing_output'] = '<br>'.join(missing_out)
             util.append_html_template(
                 self.html_src_file('pod_missing_snippet.html'),
-                self.CASE_TEMP_HTML, 
+                self.CASE_TEMP_HTML,
                 template_d
             )
             pod.exceptions.log(util.MDTFFileNotFoundError(
@@ -295,7 +295,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
-            _log.warning("%s: %s exists, deleting.", 
+            _log.warning("%s: %s exists, deleting.",
                 self._html_file_name, case.name)
             os.remove(dest)
 
@@ -346,12 +346,12 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
-        _log.debug("%s: Copy %s to %s.", 
+        _log.debug("%s: Copy %s to %s.",
             case.name, self.WK_DIR, self.OUT_DIR)
         try:
             if os.path.exists(self.OUT_DIR):
                 if not self.overwrite:
-                    _log.error("%s: %s exists, overwriting.", 
+                    _log.error("%s: %s exists, overwriting.",
                         case.name, self.OUT_DIR)
                 shutil.rmtree(self.OUT_DIR)
         except Exception:
@@ -369,7 +369,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 pod_output = self._PodOutputManagerClass(pod, self)
                 pod_output.make_output()
             except Exception as exc:
-                # won't go into the HTML output, but will be present in the 
+                # won't go into the HTML output, but will be present in the
                 # summary for the case
                 _log.exception(f"Caught {repr(exc)}.")
                 pod.exceptions.log(exc)
@@ -380,7 +380,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 if pod.active:
                     self.verify_pod_links(pod)
             except Exception as exc:
-                # won't go into the HTML output, but will be present in the 
+                # won't go into the HTML output, but will be present in the
                 # summary for the case
                 _log.exception(f"Caught {repr(exc)}.")
                 pod.exceptions.log(exc)

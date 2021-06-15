@@ -43,12 +43,3 @@ Required input data to the module:
 
 1) Monthly averaged surface pressure (ps)
 2) Monthly averaged geopotential height (zg)
-
-References
-----------
-
-None
-
-More About the Diagnostic
--------------------------
-

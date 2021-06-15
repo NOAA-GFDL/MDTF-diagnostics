@@ -15,7 +15,7 @@ class TestDataManagerSetup(unittest.TestCase):
         'pod_list': ['C']
     }
     default_pod_CF = {
-        'settings':{}, 
+        'settings':{},
         'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
         }
     dummy_paths = {
@@ -30,8 +30,8 @@ class TestDataManagerSetup(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            config=self.default_case, 
-            paths=self.dummy_paths, 
+            config=self.default_case,
+            paths=self.dummy_paths,
             pods={'C': self.default_pod_CF}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -90,7 +90,7 @@ class TestDataManagerSetupNonCFPod(unittest.TestCase):
         'pod_list': ['C']
     }
     default_pod_not_CF = {
-        'settings': {'variable_convention':'not_CF'}, 
+        'settings': {'variable_convention':'not_CF'},
         'varlist': [{'var_name': 'PRECT', 'freq':'mon'}]
         }
     dummy_paths = {
@@ -105,8 +105,8 @@ class TestDataManagerSetupNonCFPod(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            config=self.default_case, 
-            paths=self.dummy_paths, 
+            config=self.default_case,
+            paths=self.dummy_paths,
             pods={'C': self.default_pod_not_CF}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -134,14 +134,14 @@ class TestDataManagerSetupNonCFPod(unittest.TestCase):
     @mock.patch('src.diagnostic.util.read_json', return_value = {
         'settings':{'conda_env':'B'},'varlist':[]})
     def test_parse_pod_settings_conda_env(self, mock_read_json):
-        # fill in conda environment 
+        # fill in conda environment
         pod = Diagnostic('A')
         self.assertEqual(pod.conda_env, '_MDTF-diagnostics-B')
 
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
-class TestDataManagerFetchData(unittest.TestCase):    
-    @mock.patch('src.util.read_json', 
+class TestDataManagerFetchData(unittest.TestCase):
+    @mock.patch('src.util.read_json',
         return_value = {
             'convention_name':'not_CF',
             'var_names':{'pr_var': 'PRECT', 'prc_var':'PRECC'}
@@ -152,8 +152,8 @@ class TestDataManagerFetchData(unittest.TestCase):
         _ = util.PathManager(unittest = True)
 
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing Translator for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         temp = util.VariableTranslator(unittest = True)
         temp._reset()

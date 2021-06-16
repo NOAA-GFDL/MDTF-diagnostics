@@ -4,16 +4,18 @@
 <TITLE>Precipitation Buoyancy Statistics</TITLE>
 <H3>Precipitation Buoyancy Statistics</h3>
 <P>
-The precipitation-buoyancy diagnostics module relates precipitation to a
-measure of lower-tropospheric averaged buoyancy and its two components:
+
+The precipitation-buoyancy diagnostics POD evaluates the thermodynamic sensitivity of model 
+precipitation. This POD relates precipitation to a measure of lower-tropospheric averaged buoyancy (B<sub>L</sub>) and its two components:
 a measure of lower-tropospheric Convective Available Potential Energy (CAPE<sub>L</sub>) and
-lower-tropospheric sub saturation (SUBSAT<sub>L</sub>). The module evaluates the
-model precipitation sensitivity to thermodynamic variations by
-conditionally-averaging tropical oceanic precipitation by CAPE<sub>L</sub> and
-SUBSAT<sub>L</sub>, and visualizing the result in 3D as a precipitation surface. A
-metric called &gamma;<sub>Tq</sub> assesses the CAPE<sub>L</sub> vs. SUBSAT<sub>L</sub> precipitation sensitivity. This metric is
-used to assess model performance compared to observations and a suite of
-CMIP6 models.
+lower-tropospheric sub saturation (SUBSAT<sub>L</sub>). 
+The observational baseline for the comparison is constructed using ERA5 
+thermodynamic profiles and TRMM 3B42 precipitation. The evaluation identifies if the model 
+first displays a precipitation-buoyancy relationship, and then assesses how sensitive the model 
+precipitation is to relative measures of conditional instability (CAPE<sub>L</sub>) and lower-tropospheric 
+sub-saturation (SUBSAT<sub>L</sub>). This evaluation also places the candidate model being evaluated among a 
+collection of CMIP6 models with respect to measures of thermodynamic sensitivity.
+
 <p>
 <a href="MDTF_Documentation_precipitation_buoyancy.pdf">Full Documentation and Contact Information</a>
 <P>
@@ -25,5 +27,9 @@ CMIP6 models.
 <TR>
 <TD>Precipitation-buoyancy surface
 <TD>&nbsp; <A HREF=model/{{CASENAME}}.PrecipBuoySurf.png>plot</A>
+<TR>
+<TR>
+<TD>CMIP6 comparison
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.CMIP6comparison.png>plot</A>
 <TR>
 </TABLE>

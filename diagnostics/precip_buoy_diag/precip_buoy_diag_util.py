@@ -22,6 +22,8 @@ from vert_cython import find_closest_index_2D, compute_layer_thetae
 import xarray as xr
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
 
 # ======================================================================
 # precipbuoy_binThetae
@@ -50,8 +52,7 @@ NUMBER_BL_BIN, CAPE, SUBSAT, BL, RAIN, p0, p1, p2, pe, q0, q1, q2, qe):
                     
                     if (rain[time_idx]>PRECIP_THRESHOLD):
                         pe[subsat_idx[time_idx],cape_idx[time_idx]]+=1
-
-                    
+        
                 if (bl_idx[time_idx]<NUMBER_BL_BIN and bl_idx[time_idx]>=0
                 and np.isfinite(rain[time_idx])):
                     q0[bl_idx[time_idx]]+=1
@@ -60,7 +61,6 @@ NUMBER_BL_BIN, CAPE, SUBSAT, BL, RAIN, p0, p1, p2, pe, q0, q1, q2, qe):
                     if (rain[time_idx]>PRECIP_THRESHOLD):
                         qe[bl_idx[time_idx]]+=1
                         
-
 class precipbuoy:
 
     def __init__(self):
@@ -120,6 +120,8 @@ class precipbuoy:
             
         ### Load arrays into memory ###
     
+        lat=ta_ds_subset['lat']
+        lon=ta_ds_subset['lon']
         ta=ta_ds_subset[os.environ['ta_var']]
         hus=hus_ds_subset[os.environ['qa_var']]
         lev=ta_ds_subset['lev']
@@ -261,7 +263,7 @@ class precipbuoy:
             else:
                 datetimeindex = ds.indexes['time'].to_datetimeindex()
                 ds['time'] = datetimeindex
-        except Exception:
+        except:
             pass
     
     def _slice_data(self,ds,dimsize=4):
@@ -585,7 +587,7 @@ class precipbuoy:
     
         try:
             os.remove(os.environ["binned_output"])
-        except Exception:
+        except:
             pass
     
         data_set.to_netcdf(os.environ["binned_output"],
@@ -642,14 +644,15 @@ class precipbuoy:
 
 
         ### Compute Tq ratio ###
-        ### Measure precip. sensitivity to CAPE vs. SUBSAT     
+        ### Measure precip. sensitivity to CAPE vs. SUBSAT 
+                    
         gamma_Tq={}
-        gamma_Tq['OBS']=self._calcqT_ratio(P_obs,PE_obs,cape_bin_center_obs,subsat_bin_center_obs)
-        gamma_Tq[os.environ['CASENAME']]=self._calcqT_ratio(P_model,PE_model,cape_bin_center_model,subsat_bin_center_model)
-
+        ret_obs=self._calcqT_ratio(P_obs,PE_obs,P0_obs,cape_bin_center_obs,subsat_bin_center_obs)
+        gamma_Tq['OBS']=ret_obs[0]
+        ret_model=self._calcqT_ratio(P_model,PE_model,P0,cape_bin_center_model,subsat_bin_center_model)
+        gamma_Tq[os.environ['CASENAME']]=ret_model[0]
 
         print("...Plotting Surfaces..."),
-
 
         ### Create 2D surface plotting parameters
         ### Flexible option to read parameters from user could be implemented
@@ -662,13 +665,13 @@ class precipbuoy:
         labelsize=13
         
 
-        figsize1 = 9.0 # figure size set by figsize=(figsize1,figsize2)
-        figsize2 = 7 
+        figsize1 = 11.0 # figure size set by figsize=(figsize1,figsize2)
+        figsize2 = 8 
         
         fig_params['f0']=[axes_fontsize,axes_elev,axes_azim,labelsize]
 
-        xlim=[0,40] 
-        ylim=[-40,0]
+        xlim=[-1,15] 
+        ylim=[-5,10]
         zlim=[0,7]
         
         ### Plotting labels ##
@@ -681,24 +684,51 @@ class precipbuoy:
 
         fig = plt.figure(figsize=(figsize1,figsize2))
 
+        ### Plot polar plot ###
+        
+        ds_polar=xr.open_dataset(os.environ["cmip6_output"])
+        
+        
+        ax = fig.add_subplot(122, projection='polar')
+
+        self._polar_plot(ax,ds_polar,ret_model)
+        ds_polar.close()
+        plt.savefig("{WK_DIR}/model/{CASENAME}.CMIP6comparison.png".format(**os.environ), bbox_inches="tight")
+        print("...Completed!")
+        print("...Polar plots saved as {WK_DIR}/model/{CASENAME}.CMIP6comparison.png!".format(**os.environ))
+
+
+
+
         ### Plot ERA5/TRMM 3B42 (Obs.) ###
         ax = fig.add_subplot(121, projection='3d')
+        Zoffset=5  ### Vertical offset distance in the 3D plot 
         self._plot_precip_surface(fig, ax, subsat_bin_center_obs, cape_bin_center_obs, P_obs, 
-                                  fig_params)
-
-        ax.text2D(0.7,.6,'$\gamma_{Tq}$=%.2f'%(gamma_Tq['OBS']),transform=ax.transAxes,
-        fontsize=14)
+                                  Zoffset, ret_obs, fig_params)
 
         ### Plot Model ###
         fig_params['f1'][6]=os.environ['CASENAME']
         ax = fig.add_subplot(122, projection='3d')
         
         self._plot_precip_surface(fig, ax, subsat_bin_center_model, cape_bin_center_model, P_model, 
-                            fig_params, subsat_bin_center_obs, cape_bin_center_obs, P_obs, 
-                            plot_ref=True, plot_cbar=True, cbar_coords=[1.07,0.35,.75,0.03])
+                            Zoffset, ret_model, fig_params, subsat_bin_center_obs, cape_bin_center_obs, P_obs,
+                             plot_ref=True, gamma_params_ref=ret_obs, plot_cbar=True, 
+                             cbar_coords=[0.98,0.325,.75,0.03])
+                             
+        ### add Figure caption ###
+        
+        caption='These plots display precipitation conditionally averaged by $\mathrm{CAPE}_\mathrm{L}$ and $\mathrm{SUBSAT}_\mathrm{L}$. The '\
+        'candidate model (right)\nis compared to the observational baseline (left). The precipitation pickup is viewed in 3D perspective. The\n'\
+        'conditionally-averaged precipitation is also displayed as colored contours in the $\mathrm{CAPE}_\mathrm{L}-\mathrm{SUBSAT}_\mathrm{L}$ plane.\n'\
+        'The direction and magnitude of the strongest precipitation increase is depicted by the vector $\gamma_{CS}$ (orange arrow).\nThe relative'\
+        ' sensitivity of precipitation to $\mathrm{CAPE}_\mathrm{L}$ vs. $\mathrm{SUBSAT}_\mathrm{L}$ is measured by the angle ($\\theta_{CS}$) this'\
+        ' arrrow makes\nwith the $\mathrm{SUBSAT}_\mathrm{L}$ axis.'\
+        'The maroon contours depict the probability density function (pdf) of precipitating points.\n'\
+        'These contours can be used to compare the precipitating mean state between model and ERA5. The black\ndashed arrow in the'\
+        ' right plot is the observational $\gamma_{CS}$ vector reproduced for comparison.'
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        txt=fig.text(0.1, -0.1, caption, ha='left',fontsize=14,bbox=props)
 
-        ax.text2D(0.7,.6,'$\gamma_{Tq}$=%.2f'%(gamma_Tq[os.environ['CASENAME']]),
-        transform=ax.transAxes,fontsize=14)
 
         plt.tight_layout()
         plt.savefig("{WK_DIR}/model/{CASENAME}.PrecipBuoySurf.png".format(**os.environ), bbox_inches="tight")
@@ -728,7 +758,10 @@ class precipbuoy:
         plt.savefig("{WK_DIR}/model/{CASENAME}.PrecipBuoyCurve.png".format(**os.environ), bbox_inches="tight")
         print("...Precipitation buoyancy curve plots saved as {WK_DIR}/model/{CASENAME}.PrecipBuoyCurve.png!".format(**os.environ))
 
-    def _calcqT_ratio(self, Z, counts,cape_bin_center,subsat_bin_center):
+
+
+
+    def _calcqT_ratio(self, Z, pcp_counts, total_counts, cape_bin_center,subsat_bin_center):
         '''
         Function that takes the precipitation surface and produces an estimate of the 
         temperature-to-moisture sensitivity. This metric measures the rate of precipitation
@@ -736,9 +769,21 @@ class precipbuoy:
         SUBSAT direction.
         '''
 
+        ### Compute precipitating pdf ###
+        compute_hist=lambda P0, P0_norm, xbin, ybin: P0/(np.nansum(P0_norm)*np.diff(xbin)[0]*np.diff(ybin)[0])
+        hist=compute_hist(pcp_counts,total_counts,subsat_bin_center,cape_bin_center)
+
         ### Find the location of max counts. This is generally near the precipitation
         ### onset.
-        subsat_max_pop_ind,cape_max_pop_ind=np.where(counts==np.nanmax(counts))
+        subsat_max_pop_ind,cape_max_pop_ind=np.where(pcp_counts==np.nanmax(pcp_counts))
+
+        while (np.isnan(Z[:subsat_max_pop_ind[0],:]).all()):
+            ### if the slice along subsat axis is too short,
+            ### shift the subsat max to a drier spot by one bin
+            subsat_max_pop_ind[0]=subsat_max_pop_ind[0]+1
+            if subsat_max_pop_ind[0]>subsat_bin_center.size-1:
+                print('...could not locate point for gamma Tq computation')
+                break
 
         ### Create three copies of the 2D precipitation surface array.
         ### Divide the precipitation surface into three portions: the CAPE, SUBSAT and
@@ -767,9 +812,14 @@ class precipbuoy:
 
         subsat_y0=subsat_bin_center[fin0[0]]
         cape_x0=cape_bin_center[fin0[1]]
+    
+#         subsat_y1=subsat_bin_center[fin1[0]]
         cape_x1=cape_bin_center[fin1[1]]
-        subsat_y2=subsat_bin_center[fin2[0]]
 
+        subsat_y2=subsat_bin_center[fin2[0]]
+#         cape_x2=cape_bin_center[fin2[1]]
+
+    
         ### Get a distance measure between the overlapping region to the cape and subsat regions
 
         dcape=abs(cape_x0.mean()-cape_x1.mean())
@@ -784,30 +834,124 @@ class precipbuoy:
         darea_cape=abs(area_overlap-area_cape)
         darea_subsat=abs(area_overlap-area_subsat)
         ratio=darea_cape*dsubsat/(dcape*darea_subsat)
-    
-        return ratio
+        num=darea_cape/dcape
+        denom=darea_subsat/dsubsat
 
-    def _plot_precip_surface(self, fig, ax, xbin, ybin, Z, fig_params,
-                            xbin_ref=None, ybin_ref=None, Z_ref=None, plot_ref=False,
-                            plot_cbar=False,cbar_coords=[1.03,0.35,1.0,0.05]):
+        return ratio,subsat_max_pop_ind,cape_max_pop_ind,subsat_y0.mean(),cape_x0.mean(),num,denom,hist 
 
-        normed=matplotlib.colors.Normalize(vmin=fig_params['f1'][2][0],
-                                           vmax=fig_params['f1'][2][1])
+
+    def _plot_arrow(self,ax,gamma_params,
+                    arrow_linestyle='-',
+                    arrow_color='orange'):
+        
+        gamma,x0,y0,xcentroid,ycentroid,num,denom,hist=gamma_params
     
-        X, Y = np.meshgrid(xbin,ybin)
+        GAMMA_C0=40.0 ## internal scaling factor to plot arrow 3D
+        gamma_mag=np.sqrt(num**(2)+denom**(2))*GAMMA_C0
+
+        dx=np.cos(np.arctan(gamma))*gamma_mag
+        dy=gamma*dx
+        assert dx>0, 'x distance is negative'
+
+        arrow = Arrow3D([xcentroid+dx, xcentroid], 
+            [ycentroid-dy, ycentroid], 
+            [0, 0], mutation_scale=20, 
+            lw=2, arrowstyle="-|>", color=arrow_color,
+            zorder=100,linestyle=arrow_linestyle)
+
+        ax.add_artist(arrow)
+
+    def _plot_precip_surface(self, fig, ax, xbin, ybin, Z, Zoffset, gamma_params, 
+                            fig_params, xbin_ref=None, ybin_ref=None, Z_ref=None,
+                            plot_ref=False, gamma_params_ref=None, plot_cbar=False,
+                            cbar_coords=[1.01,0.35,1.0,0.05]):
+
+
+
+
     
+        X, Y = np.meshgrid(xbin,ybin)        
+        Zcopy=np.copy(Z)
+        Zcopy[Zcopy<0.25]=np.nan  ### remove points below 0.25 mm/hr
+
+        Zcopy1=np.copy(Z)
+
+        ### Plot precip surface ###
+        ### choose boundaries to chop in 3D plot ###
+        indx1=np.where(xbin>fig_params['f1'][0][1])[0]
+        indy1=np.where(np.isfinite(ybin))[0]
+
+        indx=np.where(np.isfinite(xbin))[0]
+        indy=np.where(ybin<fig_params['f1'][1][0])[0]
+
+        Zcopy[np.ix_(indx,indy)]=np.nan
+        Zcopy[np.ix_(indx1,indy1)]=np.nan
+        
+        Zcopy1[np.ix_(indx,indy)]=np.nan
+        Zcopy1[np.ix_(indx1,indy1)]=np.nan
+
         interval = np.linspace(0, 0.95)
         colors_trunc = matplotlib.cm.nipy_spectral(interval)
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list('name', colors_trunc)
+
+        cmap = matplotlib.colors.ListedColormap(colors_trunc)
+        bounds=list(range(fig_params['f1'][2][0],fig_params['f1'][2][1]+1))
+        normed = matplotlib.colors.BoundaryNorm(bounds, cmap.N, clip=True)
+
+        colors=cmap(normed(Zcopy.T))
+        ind_nans=np.isnan(Zcopy.T)
+        colors[ind_nans,:]=0
+
+        surf=ax.plot_surface(X,Y,Zcopy.T+Zoffset,facecolors=colors,alpha=0.5)
     
-        colors=cmap(normed(Z.T))
-        ax.plot_surface(X,Y,Z.T,facecolors=colors,alpha=0.75)
-    
-        if plot_ref:
-            X_ref, Y_ref = np.meshgrid(xbin_ref,ybin_ref)
-            ax.plot_surface(X_ref,Y_ref,Z_ref.T,color='black',alpha=0.25)
+        ##### Plot 2D contour plot ######
+
+        levels=np.arange(1,fig_params['f1'][2][1])
+
+        ax.contourf(X,Y,Zcopy1.T,cmap=cmap,zdir='z',offset=0.0,
+                norm=normed, extend='min',alpha=0.5,zorder=-5)
+
+        ax.contour(X,Y,Zcopy1.T,cmap=cmap,zdir='z',offset=0.0,
+                levels=levels,alpha=0.5,extend='min',zorder=-5)
+
+
+        #### Plot precipitating pdf ###
+        
+        ### read histogram
+        hist=gamma_params[-1]
+
+        hist[np.ix_(indx,indy)]=np.nan
+        hist[np.ix_(indx1,indy1)]=np.nan
+        hist_max=np.nanmax(hist)
+        hist_levels=np.arange(hist_max*0.1,hist_max,hist_max*0.2)
+
+        ax.contour(X,Y,hist.T,zdir='z',offset=0.0,levels=hist_levels,
+                   colors='maroon',alpha=0.5,extend='both',linestyles='solid',zorder=-5)
 
         
+        ### plot reference precipitating pdf mode and gamma ###
+
+        if plot_ref:
+        
+            hist_ref=gamma_params_ref[-1]        
+            ### mark ref. precipitating pdf mode
+            xmode_indx,ymode_indx=np.where(hist_ref==np.nanmax(hist_ref))
+            xmode_indx,ymode_indx=xmode_indx[0],ymode_indx[0]
+            ax.scatter3D(xbin[xmode_indx],ybin[ymode_indx],0,
+                         c='magenta',marker='*',s=100,zorder=100)
+                         
+            ### plot ref arrow ###
+            ### change the plotting base for the reference arrow
+            gamma_params_ref=list(gamma_params_ref)
+            gamma_params_ref[3]=gamma_params[3]
+            gamma_params_ref[4]=gamma_params[4]
+            self._plot_arrow(ax,gamma_params_ref,
+                            arrow_linestyle='--',
+                            arrow_color='black')
+
+        ### Plot arrow ####
+        self._plot_arrow(ax,gamma_params)
+
+
         ### Fix to avoid plotting error ###
         for spine in ax.spines.values():
             spine.set_visible(False)
@@ -818,20 +962,22 @@ class precipbuoy:
         ax.set_xlim(fig_params['f1'][0])
         ax.set_ylim(fig_params['f1'][1])
 
-
+        ax.set_zticks(np.arange(Zoffset,fig_params['f1'][2][1]+Zoffset+2,2))    
+        ax.set_zticklabels(np.arange(Zoffset,fig_params['f1'][2][1]+Zoffset+2,2)-Zoffset)
 
         ax.set_xlabel(fig_params['f1'][3],fontsize=fig_params['f0'][0])
         ax.set_ylabel(fig_params['f1'][4],fontsize=fig_params['f0'][0])
-        ax.set_zlabel(fig_params['f1'][5],fontsize=fig_params['f0'][0])
         ax.view_init(elev=fig_params['f0'][1], azim=fig_params['f0'][2])
-        ax.set_title(fig_params['f1'][6],fontsize=fig_params['f0'][0]+2,y=1.02)
-        ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(10))
-        ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(10))
+        ax.set_title(fig_params['f1'][6]+'\n$ \\theta_{cs}=%.1f^{\circ}$'%(np.degrees(np.arctan(gamma_params[0]))),
+        fontsize=fig_params['f0'][0]+2,y=1.02)
+        ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(5))
+        ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(5))
     
         ax.tick_params(which='both',labelsize=fig_params['f0'][3])
+
     
         if plot_cbar:
-        
+            
             axpos = ax.get_position()
             height=axpos.height*cbar_coords[2]
             width=axpos.width*cbar_coords[3]
@@ -839,12 +985,163 @@ class precipbuoy:
             cax=fig.add_axes([cbar_coords[0],cbar_coords[1],width,height])
             m = matplotlib.cm.ScalarMappable(cmap=cmap, norm=normed)
             m.set_array([])
-            cb=plt.colorbar(m,cax=cax,label='')
-
+            cb=plt.colorbar(m,cax=cax,extend='both',
+                            ticks=bounds, boundaries=bounds, spacing='proportional')
             cb.ax.tick_params(which='both',labelsize=fig_params['f0'][3]-1)
-            ax = cb.ax
-            text = ax.yaxis.label
-            font = matplotlib.font_manager.FontProperties(size=fig_params['f0'][3]-1)
-            text.set_font_properties(font)
+            cax = cb.ax
+            cb.set_label("Precip. (mm/hr)",labelpad=10)
+
+            cbar_text = cax.yaxis.label
+            font = matplotlib.font_manager.FontProperties(size=fig_params['f0'][3])
+            cbar_text.set_font_properties(font)
+   
+
+   
+    
+    def _polar_plot(self,ax,ds_polar,gamma_params):
+    
+        ### define markers and colors for CMIP6 models
+    
+        model_marker={'ACCESS-ESM1-5': 'D','AWI-ESM-1-1-LR': '>','BCC-CSM2-MR': '+', 'CESM2': 'o',
+                      'CMCC-CM2-ESM2': '*', 'CNRM-CM6-1': '<','CNRM-CM6-1-HR': 'D','CanESM5': '>',
+                      'FGOALS-g3': '+','GFDL-CM4': 'o','GISS-E2-1-G': '*','IPSL-CM5A2-INCA': '<',
+                      'IPSL-CM6A-LR': 'D', 'KACE-1-0-G': '>', 'MIROC-ES2L': '+','MIROC6': 'o',
+                      'MPI-ESM1-2-HR': '*', 'MPI-ESM1-2-LR': '<', 'MRI-ESM2-0': 'D','NESM3': '>',
+                      'NorESM2-LM': '+','NorESM2-MM': 'o','SAM0-UNICON': '*','TaiESM1': '<',
+                      'obs': 'D','obs_2deg': '>'}
+                      
+        model_colors_dict={'ACCESS-CM2': (0.2, 0.0, 0.2, 1.0),
+        'ACCESS-ESM1-5': (0.3333571428571428, 0.0, 0.3809285714285714, 1.0),
+        'AWI-ESM-1-1-LR': (0.49524285714285715, 0.0, 0.5618857142857143, 1.0),
+        'BCC-CSM2-MR': (0.4571142857142858, 0.0, 0.6095285714285714, 1.0),
+        'CESM2': (0.07618571428571436, 0.0, 0.6571714285714285, 1.0),
+        'CMCC-CM2-ESM2': (0.0, 0.0, 0.7809857142857141, 1.0),
+        'CMCC-CM2-SR5': (0.0, 0.133342857142857, 0.8667, 1.0),
+        'CNRM-CM6-1': (0.0, 0.4667, 0.8667, 1.0),
+        'CNRM-CM6-1-HR': (0.0, 0.5619142857142857, 0.8667, 1.0),
+        'CNRM-ESM2-1': (0.0, 0.6285857142857143, 0.7809857142857143, 1.0),
+        'CanESM5': (0.0, 0.6667, 0.6476428571428572, 1.0),
+        'FGOALS-g3': (0.0, 0.6667, 0.5523571428571429, 1.0),
+        'GFDL-CM4': (0.0, 0.6285857142857143, 0.22855714285714296, 1.0),
+        'GISS-E2-1-G': (0.0, 0.6380857142857141, 0.0, 1.0),
+        'IPSL-CM6A-LR': (0.0, 0.6380857142857141, 0.0, 1.0),
+        'IPSL-CM5A2-INCA': (0.0, 0.8285857142857141, 0.0, 1.0),
+        'KACE-1-0-G': (0.0, 0.9238285714285713, 0.0, 1.0),
+        'MIROC-ES2L': (0.10475714285714258, 1.0, 0.0, 1.0),
+        'MIROC6': (0.6285428571428574, 1.0, 0.0, 1.0),
+        'MPI-ESM-1-2-HAM': (0.8475857142857139, 0.9618857142857143, 0.0, 1.0),
+        'MPI-ESM1-2-HR': (0.9523571428571428, 0.895214285714286, 0.0, 1.0),
+        'MPI-ESM1-2-LR': (1.0, 0.8, 0.0, 1.0),
+        'MRI-ESM2-0': (1.0, 0.4571428571428574, 0.0, 1.0),
+        'NESM3': (0.9809571428571429, 0.0, 0.0, 1.0),
+        'NorESM2-LM': (0.8857428571428572, 0.0, 0.0, 1.0),
+        'NorESM2-MM': (0.8285857142857144, 0.0, 0.0, 1.0),
+        'SAM0-UNICON': (0.8, 0.22857142857142743, 0.22857142857142743, 1.0),
+        'TaiESM1': (0.8, 0.2, 0.4, 1.0)}
+        
+        for key in ds_polar.model:
+
+            if str(key.values).split('_')[0] not in ['obs']:
+            
+                ### Plot model markers ###
+        
+                if key in ['NESM3','NorESM2-MM']:
+                    facecolor_option='None'
+                    alpha_option=0.75
+                else:
+                    facecolor_option=model_colors_dict[str(key.values)]
+                    alpha_option=0.5
+            
+                ds_sel=ds_polar.sel(model=key)
+                ax.scatter(np.deg2rad(ds_sel.gamma_deg),ds_sel.gamma_mag,label=key.values,
+                          color=model_colors_dict[str(key.values)],marker=model_marker[str(key.values)],
+                           s=75,alpha=alpha_option, facecolor=facecolor_option)
+        
+            elif key in ['obs']:
+            
+                ### Plot obs. ###
+            
+                ds_sel=ds_polar.sel(model=key)
+                ln_obs=ax.scatter(np.deg2rad(ds_sel.gamma_deg),ds_sel.gamma_mag,color='grey',
+                           s=60,alpha=1.0,marker='s',facecolor='grey',edgecolor='black',zorder=9)
+        
+                ds_sel=ds_polar.sel(model='obs_2deg')
+                ln_obs_2deg=ax.scatter(np.deg2rad(ds_sel.gamma_deg),ds_sel.gamma_mag,color='grey',
+                           s=60,alpha=1.0,marker='o',facecolor='grey',edgecolor='black',zorder=9)
+
+        ax.tick_params(which='both',labelsize=13)
 
 
+        ### Place error bars on obs. markers and mark uncertainty range###
+        rad=np.arange(0,25.5,.5)
+        ax.plot([np.deg2rad(ds_polar.sel(model='obs_2deg_95').gamma_deg)]*rad.size,rad,
+                c='grey',linestyle='--')
+        ax.plot([np.deg2rad(ds_polar.sel(model='obs_5').gamma_deg)]*rad.size,rad,
+                c='grey',linestyle='--')
+
+        ### strange: when the bottom >0; we require a factor of 1.05 in front of the theta argument below.
+        bootstrap_deg_range=ds_polar.sel(model='obs_95').gamma_deg-ds_polar.sel(model='obs_5').gamma_deg
+        bootstrap_mag_range=ds_polar.sel(model='obs_95').gamma_mag-ds_polar.sel(model='obs_5').gamma_mag
+
+        ax.bar(np.deg2rad(ds_polar.sel(model='obs_5').gamma_deg)*1.05, bootstrap_mag_range, 
+               width=np.deg2rad(bootstrap_deg_range), 
+               bottom=ds_polar.sel(model='obs_5').gamma_mag,
+               color='grey', edgecolor = 'black',alpha=0.5)
+
+        bootstrap_deg_range=ds_polar.sel(model='obs_2deg_95').gamma_deg-ds_polar.sel(model='obs_2deg_5').gamma_deg
+        bootstrap_mag_range=ds_polar.sel(model='obs_2deg_95').gamma_mag-ds_polar.sel(model='obs_2deg_5').gamma_mag
+
+        ax.bar(np.deg2rad(ds_polar.sel(model='obs_2deg_5').gamma_deg)*1.05, 
+               bootstrap_mag_range, width=np.deg2rad(bootstrap_deg_range), 
+               bottom=ds_polar.sel(model='obs_2deg_5').gamma_mag,
+               color='grey', edgecolor = 'black',alpha=0.5)
+
+        ### Plot candidate model ###
+        
+        gamma,num,denom=gamma_params[0], gamma_params[-3], gamma_params[-2]
+        gamma_mag=np.sqrt(num**(2)+denom**(2))
+        ln_cand=ax.scatter(np.arctan(gamma),gamma_mag,
+                    color='black',s=200,alpha=1.0,marker='*',facecolor='black',zorder=9)
+
+
+        ax.set_thetamin(0)
+        ax.set_thetamax(90)
+        ax.set_ylim([0,0.6])
+        ax.text(0.25,-0.15,"$|\gamma_{cs}|$ (mm $\mathrm{hr}^{-1}\mathrm{ K}^{-1}$)",fontsize=13,
+                transform=ax.transAxes)
+
+        leg=ax.legend(fontsize=11,ncol=2,loc=(1.15,0.0))
+        leg1=ax.legend((ln_obs,ln_obs_2deg,ln_cand),('ERA5/TRMM3B42 (0.25 deg.)',
+        'ERA5/TRMM3B42 (2 deg.)','{CASENAME}'.format(**os.environ)),fontsize=11,
+        ncol=2,loc=(1.15,0.75))
+
+        ax.add_artist(leg)
+
+        leg.get_frame().set_edgecolor('black')
+        leg1.get_frame().set_edgecolor('black')
+        
+        ### Figure caption
+        caption='This polar plot summarizes information about the thermodynamic sensitivity of convection'\
+        ' in \nmultiple models. The angle measures the relative $\mathrm{CAPE}_\mathrm{L}$-$\mathrm{SUBSAT}_\mathrm{L}$'\
+        'sensitivity of model convection;\nthe radius meaures the strength of the precipitation pickup.\n\n'\
+        'The observational baseline is set by the grey square and circle.'\
+        ' The grey shaded regions denote\nthe uncertainty range in observations.'\
+        ' The black star denotes the model being evaluated. The other\ncolor markers denote different CMIP6 models. See POD documentation for more information.'
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+
+        txt=ax.text(0.0, -.65, caption, transform=ax.transAxes,
+        ha='left',fontsize=14,bbox=props)
+
+
+    
+### Class for 3D arrows        
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)

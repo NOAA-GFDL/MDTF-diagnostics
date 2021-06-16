@@ -1,16 +1,17 @@
 Precipitation Buoyancy Diagnostic Package
 ========================================
 
-The precipitation-buoyancy diagnostics module relates precipitation to a
-measure of lower-tropospheric averaged buoyancy and its two components:
-a measure of lower-tropospheric Convective Available Potential Energy (CAPE<sub>L</sub>) and
-lower-tropospheric sub saturation (SUBSAT<sub>L</sub>). The module evaluates the
-model precipitation sensitivity to thermodynamic variations by
-conditionally-averaging tropical oceanic precipitation by CAPE<sub>L</sub> and
-SUBSAT<sub>L</sub>, and visualizing the result in 3D as a precipitation surface. A
-metric called &gamma;<sub>Tq</sub> assesses the CAPE<sub>L</sub> vs. SUBSAT<sub>L</sub> precipitation sensitivity. This metric is
-used to assess model performance compared to observations and a suite of
-CMIP6 models.
+The precipitation-buoyancy diagnostics POD is used to assess the thermodynamic sensitivity of model precipitation fields. 
+
+Scientific basis
+----------------------
+Observations show that over tropical oceans, a lower tropospheric buoyancy metric :math:`B_L` has a strong relationship to precipitation ( :ref:`Ahmed and Neelin 2018 <ref-AN18>`, :ref:`Ahmed et al. 2020 <ref-AAN>`). This buoyancy metric can further be decomposed into two components:
+
+1. A measure of undilute buoyancy termed CAPE :subscript:`L`, which measures the difference between boundary layer moist enthalpy and the free-tropospheric temperature. If convection were non-entraining, this would be the dominant thermodynamic measure affecting precipitation. 
+2. A measure of lower-free tropospheric sub-saturation SUBSAT :subscript:`L`, which is computed as a departure from saturation in the lower free-troposphere. The influence of entrainment on convection is expressed through this measure.
+
+In observations (ERA re-analysis and TRMM precipitation), precipitation appears to about equally sensitive to CAPE :subscript:`L` and SUBSAT :subscript:`L`. However, climate models can show diverging behavior. To measure this relative sensitivity of precipitation to CAPE :subscript:`L` and SUBSAT :subscript:`L`, a vector :math:`\gamma_{CS}` is introduced. This has a direction that is expressed in degrees and takes values ranging from 0 to 90. 
+
 
 Version & Contact info
 ----------------------
@@ -57,7 +58,13 @@ The following high-frequency model fields are required\:
 References
 ----------
 
+ .. _ref-AN18: 
+
+   1. Ahmed, F., & Neelin, J. D. (2018). Reverse engineering the tropical precipitation–buoyancy relationship. Journal of the Atmospheric Sciences, 75(5), 1587-1608.`__.
+
+ .. _ref-AAN: 
+
+  2. Ahmed, F., Adames, Á. F., & Neelin, J. D. (2020). Deep convective adjustment of temperature and moisture. Journal of the Atmospheric Sciences, 77(6), 2163-2186.`__.
 
 More about this diagnostic
 --------------------------
-

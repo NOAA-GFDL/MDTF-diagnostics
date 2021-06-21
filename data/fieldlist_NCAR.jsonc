@@ -158,17 +158,17 @@
     },
     // Variables for flow_dep_diag module:
     "Z250": {
-      "standard_name": "geopotential_height",
+      "standard_name": "geopotential_height_250_mbar",
       "units": "m",
       "ndim": 3
     },
     "T250": {
-      "standard_name": "temperature_at_250_mbar_pressure_surface",
+      "standard_name": "temperature_250_mbar",
       "units": "K",
       "ndim": 3
     },
     "T500": {
-      "standard_name": "temperature_at_500_mbar_pressure_surface",
+      "standard_name": "temperature_500_mbar",
       "units": "K",
       "ndim": 3
     },

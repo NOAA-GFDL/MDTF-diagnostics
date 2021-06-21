@@ -39,7 +39,7 @@
   "varlist" : {
     "Z250": {
       // "var_name" : "Z250_var",
-      "standard_name" : "geopotential_height",
+      "standard_name" : "geopotential_height_250_mbar",
       "path_variable" : "Z250_FILE",
       "freq" : "day",
       "requirement" : "required",
@@ -47,7 +47,7 @@
       "dimensions" : ["time", "lat", "lon"]
     },
     "T500": {
-    "standard_name" : "temperature_at_500_mbar_pressure_surface",
+    "standard_name" : "temperature_500_mbar",
     "path_variable" : "T500_FILE",
     "freq" : "day",
     "units" : "K",
@@ -57,7 +57,7 @@
     },
     "T250": {
       // "var_name" : "T250_var",
-      "standard_name" : "temperature_at_250_mbar_pressure_surface",
+      "standard_name" : "temperature_250_mbar",
       "path_variable" : "T250_FILE",
       "freq" : "day",
       "units" : "K",

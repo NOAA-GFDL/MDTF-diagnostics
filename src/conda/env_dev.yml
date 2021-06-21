@@ -1,4 +1,4 @@
-# Conda environment for development work. 
+# Conda environment for development work.
 name: _MDTF_dev
 channels:
 - conda-forge

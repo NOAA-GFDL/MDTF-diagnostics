@@ -68,7 +68,7 @@ class TestDate(unittest.TestCase):
         self.assertTrue(dt(2019,9) >= datetime.date(2018,12,25))
 
     def test_minmax(self):
-        test = [dt(2019,2), dt(2019,9), dt(2018), 
+        test = [dt(2019,2), dt(2019,9), dt(2018),
             dt(2019), dt(2019,1,1,12)]
         self.assertEqual(max(test), dt(2019,9))
         self.assertEqual(min(test), dt(2018))
@@ -102,22 +102,22 @@ class TestDate(unittest.TestCase):
 
 class TestDateRange(unittest.TestCase):
     def test_string_parsing(self):
-        self.assertEqual(dt_range('2010-2019'), 
+        self.assertEqual(dt_range('2010-2019'),
             dt_range(dt(2010), dt(2019)))
-        self.assertEqual(dt_range('20100201-20190918'), 
+        self.assertEqual(dt_range('20100201-20190918'),
             dt_range(dt(2010,2,1), dt(2019,9,18)))
 
     def test_input_string_parsing(self):
-        self.assertEqual(dt_range(2010, 2019), 
+        self.assertEqual(dt_range(2010, 2019),
             dt_range(dt(2010), dt(2019)))
-        self.assertEqual(dt_range('20100201', '20190918'), 
+        self.assertEqual(dt_range('20100201', '20190918'),
             dt_range(dt(2010,2,1), dt(2019,9,18)))
 
     def test_input_list_parsing(self):
         self.assertEqual(
-            dt_range.from_date_span(dt(2015), dt(2010), dt(2019), dt(2017)), 
+            dt_range.from_date_span(dt(2015), dt(2010), dt(2019), dt(2017)),
             dt_range(2010, 2019))
-        self.assertEqual(dt_range(['20100201', '20190918']), 
+        self.assertEqual(dt_range(['20100201', '20190918']),
             dt_range('20100201', '20190918'))
 
     def test_input_range_parsing(self):
@@ -234,7 +234,7 @@ class TestDateRange(unittest.TestCase):
             self.assertTrue(d[0].overlaps(rng1) == d[2])
             self.assertTrue(d[0].contains(rng1) == d[3])
             self.assertTrue(rng1.contains(d[0]) == d[4])
-    
+
     def test_more_intersection(self):
         # mixed precision
         rng1 = dt_range('1980-1990')
@@ -356,14 +356,14 @@ class TestDateFrequency(unittest.TestCase):
         self.assertEqual(dt_freq.from_struct('daily'), dt_freq(1, 'dy'))
         self.assertEqual(dt_freq.from_struct('120hr'), dt_freq(120, 'hr'))
         self.assertEqual(dt_freq.from_struct('2 weeks'), dt_freq(2, 'wk'))
-    
+
     def test_comparisons_same_unit(self):
         self.assertTrue(dt_freq(1,'hr') < dt_freq(2,'hr'))
         self.assertTrue(dt_freq(5,'yr') > dt_freq(2,'yr'))
         self.assertTrue(dt_freq(1,'se') <= dt_freq(1,'se'))
         self.assertTrue(dt_freq(2,'mo') >= dt_freq(2,'mo'))
         self.assertTrue(dt_freq(1,'hr') <= dt_freq(2,'hr'))
-    
+
     def test_comparisons_different_unit(self):
         self.assertTrue(dt_freq(3,'hr') < dt_freq(2,'dy'))
         self.assertTrue(dt_freq(2,'yr') > dt_freq(6,'mo'))

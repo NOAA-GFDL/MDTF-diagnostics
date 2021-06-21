@@ -1,4 +1,4 @@
-"""Code specific to the computing environment at NOAA's Geophysical Fluid 
+"""Code specific to the computing environment at NOAA's Geophysical Fluid
 Dynamics Laboratory (Princeton, NJ, USA).
 """
 import os
@@ -6,7 +6,7 @@ import io
 import dataclasses
 import shutil
 import tempfile
-from src import (util, core, diagnostic, data_manager, 
+from src import (util, core, diagnostic, data_manager,
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
 
@@ -74,7 +74,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             gfdl_util.rmtree_wrapper(p.WORKING_DIR)
         util.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
-        util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR, 
+        util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR,
             create=True)
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
@@ -85,18 +85,18 @@ class GFDLMDTFFramework(core.MDTFFramework):
 
 @util.mdtf_dataclass
 class GfdlDiagnostic(diagnostic.Diagnostic):
-    """Wrapper for Diagnostic that adds writing a placeholder directory 
-    (POD_OUT_DIR) to the output as a lockfile if we're running in frepp 
+    """Wrapper for Diagnostic that adds writing a placeholder directory
+    (POD_OUT_DIR) to the output as a lockfile if we're running in frepp
     cooperative mode.
     """
     # extra dataclass fields
     _has_placeholder: bool = False
 
     def pre_run_setup(self):
-        """Extra code only applicable in frepp cooperative mode. If this code is 
+        """Extra code only applicable in frepp cooperative mode. If this code is
         called, all the POD's model data has been generated. Write a placeholder
-        directory to POD_OUT_DIR, so if frepp invokes the MDTF package again 
-        while we're running, only our results will be written to the overall 
+        directory to POD_OUT_DIR, so if frepp invokes the MDTF package again
+        while we're running, only our results will be written to the overall
         output.
         """
         super(GfdlDiagnostic, self).pre_run_setup()
@@ -114,7 +114,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
                         self) from exc
                 except Exception as chained_exc:
                     _log.error(chained_exc)
-                    self.exceptions.log(chained_exc)    
+                    self.exceptions.log(chained_exc)
 
 # ------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.timeout,
                 dry_run=self.dry_run
-            ) 
+            )
             _log.info("Successful exit of dmget.")
 
     def _get_fetch_method(self, method=None):
@@ -180,11 +180,11 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             local_path = os.path.join(tmpdir, os.path.basename(path))
             _log.info(f"\tFetching {path[len(self.attrs.CASE_ROOT_DIR):]}")
             util.run_command(cp_command + [
-                smartsite + path, 
+                smartsite + path,
                 # gcp requires trailing slash, ln ignores it
                 smartsite + tmpdir + os.sep
-            ], 
-                timeout=self.timeout, 
+            ],
+                timeout=self.timeout,
                 dry_run=self.dry_run
             )
             local_paths.append(local_path)
@@ -192,8 +192,8 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
 
 class GFDL_GCP_FileDataSourceBase(
-    data_manager.OnTheFlyDirectoryHierarchyQueryMixin, 
-    GCPFetchMixin, 
+    data_manager.OnTheFlyDirectoryHierarchyQueryMixin,
+    GCPFetchMixin,
     data_manager.DataframeQueryDataSourceBase
 ):
     """Base class for DataSources that access data on GFDL's internal filesystems
@@ -221,7 +221,7 @@ class GFDL_GCP_FileDataSourceBase(
             self.overwrite = True
             # flag to not overwrite config and .tar: want overwrite for frepp
             self.file_overwrite = True
-            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a 
+            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a
             # unique name in parent's init. Set it back so it will be overwritten.
             d = paths.model_paths(self, overwrite=True)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
@@ -234,7 +234,7 @@ class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes)
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdludacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_manager.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.
@@ -253,7 +253,7 @@ class GFDL_archive_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttribu
         super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdlarchivecmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_manager.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
@@ -262,7 +262,7 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
-    _fetch_method = "gcp" 
+    _fetch_method = "gcp"
     _convention = "CMIP" # hard-code naming convention
 
 
@@ -273,7 +273,7 @@ class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdldatacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin, 
+    data_manager.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing pre-publication CMIP6 data on /data_cmip6.
@@ -286,9 +286,9 @@ class Gfdldatacmip6DataManager(
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
 # match files ending in .nc only if they aren't of the form .tile#.nc
-# (negative lookback) 
+# (negative lookback)
 _ignore_tiles_regex = util.RegexPattern(r".*\.tile\d\.nc$")
-# match any paths corresponding to time average data (/av/), since currently 
+# match any paths corresponding to time average data (/av/), since currently
 # we only deal with timeseries data (/ts/)
 _ignore_time_avg_regex = util.RegexPattern(r"/?([a-zA-Z0-9_-]+)/av/\S*")
 # RegexPattern matching any of the above -- description of files that are OK
@@ -298,7 +298,7 @@ pp_ignore_regex = util.ChainedRegexPattern(
 )
 
 # can't combine these with the path regexes (below) since static dir regex should
-# only be used with static files 
+# only be used with static files
 _pp_dir_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)/     # component name
@@ -309,7 +309,7 @@ _pp_dir_regex = util.RegexPattern(r"""
 )
 _pp_static_dir_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
-        (?P<component>[a-zA-Z0-9_-]+)     # component name             
+        (?P<component>[a-zA-Z0-9_-]+)     # component name
     """,
     defaults={
         'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
@@ -325,7 +325,7 @@ _pp_ts_regex = util.RegexPattern(r"""
         (?P<component>[a-zA-Z0-9_-]+)/     # component name
         ts/                     # timeseries;
         (?P<frequency>\w+)/     # ts freq
-        (?P<chunk_freq>\w+)/    # data chunk length   
+        (?P<chunk_freq>\w+)/    # data chunk length
         (?P=component)\.        # component name (again)
         (?P<start_date>\d+)-(?P<end_date>\d+)\.   # file's date range
         (?P<variable>[a-zA-Z0-9_-]+)\.       # field name
@@ -334,9 +334,9 @@ _pp_ts_regex = util.RegexPattern(r"""
 )
 _pp_static_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
-        (?P<component>[a-zA-Z0-9_-]+)/     # component name 
+        (?P<component>[a-zA-Z0-9_-]+)/     # component name
         (?P=component)     # component name (again)
-        \.static\.nc             # static frequency, netCDF file extension                
+        \.static\.nc             # static frequency, netCDF file extension
     """,
     defaults={
         'variable': 'static',
@@ -368,7 +368,7 @@ class PPTimeseriesDataFile():
             self.frequency = util.DateFrequency(self.frequency)
         if self.start_date == util.FXDateMin \
             and self.end_date == util.FXDateMax:
-            # Assume we're dealing with static/fx-frequency data, so use special 
+            # Assume we're dealing with static/fx-frequency data, so use special
             # placeholder values
             self.date_range = util.FXDateRange
             if not self.frequency.is_static:
@@ -382,7 +382,7 @@ class PPTimeseriesDataFile():
 
 @util.mdtf_dataclass
 class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
-    """Data-source-specific attributes for the DataSource corresponding to 
+    """Data-source-specific attributes for the DataSource corresponding to
     model data in the /pp/ directory hierarchy.
     """
     convention: str = util.MANDATORY
@@ -436,7 +436,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
 
     @property
     def var_expt_cols(self):
-        # Catalog columns whose values must "be the same for each variable", ie  
+        # Catalog columns whose values must "be the same for each variable", ie
         # are irrelevant but must be constrained to a unique value.
         return self.var_expt_key_cols
 
@@ -452,7 +452,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             # unique value, no need to filter
             return df
         filter_val = func(values)
-        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).", 
+        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
 
@@ -467,20 +467,20 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         return df
 
     def resolve_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all 
+        """Disambiguate experiment attributes that must be the same for all
         variables.
         """
         # no-op since no attributes in this category
         return df
 
     def resolve_pod_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all 
+        """Disambiguate experiment attributes that must be the same for all
         variables for each POD:
 
         - Select the model component name according to the following heuristics:
             i) select component names containing 'cmip' (case-insensitive). ii)
-            if that selects multiple components, break the tie by selecting the 
-            component with the fewest words (separated by '_'), or, failing that, 
+            if that selects multiple components, break the tie by selecting the
+            component with the fewest words (separated by '_'), or, failing that,
             the shortest overall name.
         """
         def _heuristic_tiebreaker(str_list):
@@ -505,7 +505,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
 
     def resolve_var_expt(self, df, obj):
         """Disambiguate arbitrary experiment attributes on a per-variable basis:
- 
+
         - Take the shortest chunk_frequency, to minimize transferring data that's
             outside of the query date range.
         """
@@ -513,7 +513,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         if 'component' in self.var_expt_cols:
             col_name = 'component'
             df = df.sort_values(col_name).iloc[[0]]
-            _log.debug("Selected experiment attribute '%s'='%s' for %s.", 
+            _log.debug("Selected experiment attribute '%s'='%s' for %s.",
                 col_name, df[col_name].iloc[0], obj.name)
         return df
 
@@ -523,7 +523,7 @@ class GfdlautoDataManager(object):
     /uda via :class:`Gfdludacmip6DataManager`.
     """
     def __new__(cls, case_dict, *args, **kwargs):
-        """Dispatch DataManager instance creation based on the contents of 
+        """Dispatch DataManager instance creation based on the contents of
         case_dict."""
         config = core.ConfigManager()
         dir_ = case_dict.get('CASE_ROOT_DIR', config.CASE_ROOT_DIR)
@@ -531,10 +531,10 @@ class GfdlautoDataManager(object):
             dispatched_cls = GfdlppDataManager
         else:
             dispatched_cls = Gfdludacmip6DataManager
-            # could use more careful logic here, but for now assume CMIP6 on 
+            # could use more careful logic here, but for now assume CMIP6 on
             # /uda as a fallback
-            
-        _log.debug("%s: Dispatched DataManager to %s.", 
+
+        _log.debug("%s: Dispatched DataManager to %s.",
             cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
         obj.__init__(case_dict)
@@ -548,7 +548,7 @@ class GfdlautoDataManager(object):
 class GfdlvirtualenvEnvironmentManager(
     environment_manager.VirtualenvEnvironmentManager
     ):
-    # Use module files to switch execution environments, as defined on 
+    # Use module files to switch execution environments, as defined on
     # GFDL workstations and PP/AN cluster.
 
     def __init__(self):
@@ -618,17 +618,17 @@ class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
         self.frepp_mode = config.get('frepp', False)
 
     def make_output(self):
-        """Only run output steps (including logging error on index.html) 
+        """Only run output steps (including logging error on index.html)
         if POD ran on this invocation.
         """
         if not self.frepp_mode:
             super(GFDLHTMLPodOutputManager, self).make_output()
         elif self._pod._has_placeholder:
-            _log.debug('POD %s has frepp placeholder, generating output.', 
+            _log.debug('POD %s has frepp placeholder, generating output.',
                 self._pod.name)
             super(GFDLHTMLPodOutputManager, self).make_output()
-        else: 
-            _log.debug('POD %s does not have frepp placeholder; not generating output.', 
+        else:
+            _log.debug('POD %s does not have frepp placeholder; not generating output.',
                 self._pod.name)
 
 class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
@@ -646,7 +646,7 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         super(GFDLHTMLOutputManager, self).__init__(case)
 
     def make_html(self, case, cleanup=False):
-        """Never cleanup html if we're in frepp_mode, since framework may run 
+        """Never cleanup html if we're in frepp_mode, since framework may run
         later when another component finishes. Instead just append current
         progress to CASE_TEMP_HTML.
         """

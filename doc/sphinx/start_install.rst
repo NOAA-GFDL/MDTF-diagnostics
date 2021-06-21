@@ -105,8 +105,18 @@ You can put the observational data and model output in different locations, e.g.
 
 .. _ref-conda-install:
 
-Installing dependencies via the conda package manager
------------------------------------------------------
+Installing dependencies
+-----------------------
+
+Installing XQuartz on MacOS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you're installing on a MacOS system, you will need to install `XQuartz <https://www.xquartz.org/>`__. If the XQuartz executable isn't present in ``/Applications/Utilities``, you will need to download and run the installer from the previous link.
+
+The reason for this requirement is that the X11 libraries are `required dependencies <https://www.ncl.ucar.edu/Download/macosx.shtml#InstallXQuartz>`__ for the NCL scripting language, even when it's run non-interactively. Because the required libraries cannot be installed through conda (next section), this installation needs to be done as a manual step.
+
+Managing dependencies with the conda package manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MDTF framework code is written in Python 3.7, but supports running PODs written in a variety of scripting languages and combinations of libraries. To ensure that the correct versions of these dependencies are installed and available, we use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager. Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and `Anaconda <https://www.anaconda.com/>`__ python distributions, so having Miniconda/Anaconda is sufficient but not necessary.
 

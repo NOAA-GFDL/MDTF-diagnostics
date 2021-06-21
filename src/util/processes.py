@@ -13,7 +13,7 @@ _log = logging.getLogger(__name__)
 
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
-    thread when the child is join()ed. 
+    thread when the child is join()ed.
     Adapted from `<https://stackoverflow.com/a/31614591>`__.
     """
     def run(self):
@@ -33,17 +33,17 @@ class ExceptionPropagatingThread(threading.Thread):
 
 def poll_command(command, shell=False, env=None):
     """Runs a shell command and prints stdout in real-time.
-    
+
     Optional ability to pass a different environment to the subprocess. See
-    documentation for the Python2 `subprocess 
+    documentation for the Python2 `subprocess
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
-        command: list of command + arguments, or the same as a single string. 
+        command: list of command + arguments, or the same as a single string.
             See `subprocess` syntax. Note this interacts with the `shell` setting.
-        shell (:py:obj:`bool`, optional): shell flag, passed to Popen, 
+        shell (:py:obj:`bool`, optional): shell flag, passed to Popen,
             default `False`.
-        env (:py:obj:`dict`, optional): environment variables to set, passed to 
+        env (:py:obj:`dict`, optional): environment variables to set, passed to
             Popen, default `None`.
     """
     process = subprocess.Popen(
@@ -64,24 +64,24 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
 
     Note:
         We hope to save some process overhead by not running the command in a
-        shell, but this means the command can't use piping, quoting, environment 
+        shell, but this means the command can't use piping, quoting, environment
         variables, or filename globbing etc.
 
-    See documentation for the Python2 `subprocess 
+    See documentation for the Python2 `subprocess
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
         command (list of :py:obj:`str`): List of commands to execute
-        env (:py:obj:`dict`, optional): environment variables to set, passed to 
+        env (:py:obj:`dict`, optional): environment variables to set, passed to
             `Popen`, default `None`.
         cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
         timeout (:py:obj:`int`, optional): Optionally, kill the command's subprocess
-            and raise a MDTFCalledProcessError if the command doesn't finish in 
+            and raise a MDTFCalledProcessError if the command doesn't finish in
             `timeout` seconds.
 
     Returns:
-        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
@@ -136,19 +136,19 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
 def run_shell_command(command, env=None, cwd=None, dry_run=False):
     """Subprocess wrapper to facilitate running shell commands.
 
-    See documentation for the Python2 `subprocess 
+    See documentation for the Python2 `subprocess
     <https://docs.python.org/2/library/subprocess.html>`_ module.
 
     Args:
         commands (list of :py:obj:`str`): List of commands to execute
-        env (:py:obj:`dict`, optional): environment variables to set, passed to 
+        env (:py:obj:`dict`, optional): environment variables to set, passed to
             `Popen`, default `None`.
         cwd (:py:obj:`str`, optional): child processes' working directory, passed
             to `Popen`. Default is `None`, which uses parent processes' directory.
 
     Returns:
-        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout  
-        by each command. Note: this is split on newlines after the fact, so if 
+        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout
+        by each command. Note: this is split on newlines after the fact, so if
         commands give != 1 lines of output this will not map to the list of commands
         given.
 

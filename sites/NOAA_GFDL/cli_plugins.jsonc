@@ -1,6 +1,6 @@
 // Configuration of CLI plugins for code provided in /src. These options are
 // spliced into the CLI configuration in src/cli_template.jsonc. The contents of
-// both of these files may be overridden by configuration in /sites if a 
+// both of these files may be overridden by configuration in /sites if a
 // site-specific installation is selected.
 //
 {

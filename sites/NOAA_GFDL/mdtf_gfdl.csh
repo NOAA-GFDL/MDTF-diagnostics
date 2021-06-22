@@ -39,6 +39,7 @@ set WK_DIR="${TMPDIR}/wkdir"
 # End of user-configurable paramters
 # ----------------------------------------------------
 
+echo "mdtf_gfdl.csh: script start"
 ## parse paths and check access
 # if ( ! -w "$WK_DIR" ) then
 # 	echo "${USER} doesn't have write access to ${WK_DIR}"
@@ -69,7 +70,7 @@ set flags=()
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
 set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
 if ($? != 0) then
-    echo "Command line parse error 1" >/dev/stderr
+    echo "mdtf_gfdl.csh: arg parse error 1" >/dev/stderr
     exit 1
 endif
 
@@ -94,7 +95,7 @@ while (1)
         shift
         break
     default:
-        echo "Command line parse error 2" ; exit 1
+        echo "mdtf_gfdl.csh: arg parse error 2" ; exit 1
     endsw
 end
 # trim leading zeros
@@ -104,17 +105,17 @@ set yr2 = `echo ${yr2} | sed 's/^0*//g'`
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then
-    echo "\$MODULESHOME is undefined"
+    echo "mdtf_gfdl.csh: \$MODULESHOME is undefined"
     exit 1
 else
     if ( "$MODULESHOME" == "" )  then
-        echo "\$MODULESHOME is empty"
+        echo "mdtf_gfdl.csh: \$MODULESHOME is empty"
         exit 1
     else
         source $MODULESHOME/init/tcsh
         # should probably 'module purge'
         if ( `where module` == "" ) then
-            echo "Still can't load modules"
+            echo "mdtf_gfdl.csh: Still can't load modules"
             exit 1
         endif
     endif
@@ -135,9 +136,12 @@ end
 wipetmp
 
 ## run the command
-echo 'script start'
+echo "mdtf_gfdl.csh: conda activate"
 source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/mdteam/anaconda"
 conda activate "${REPO_DIR}/envs/_MDTF_base"
+
+echo "mdtf_gfdl.csh: MDTF start"
+
 "${REPO_DIR}/mdtf_framework.py" \
 --site="NOAA_GFDL" \
 --frepp \
@@ -153,39 +157,38 @@ conda activate "${REPO_DIR}/envs/_MDTF_base"
 --LASTYR $yr2 \
 $cmpt_args:q \
 $flags:q
-echo 'script exit'
+
+pkg_status=$?
+echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"
 
 # ----------------------------------------------------
 # copy/link output files to website directory, if requested
 
 if ( ! $?WEBSITE_OUTPUT_DIR ) then
-    echo "Complete -- Exiting"
-    exit 0
-endif
-if ( "$WEBSITE_OUTPUT_DIR" == "" ) then
-    echo "Complete -- Exiting"
-    exit 0
+    exit $pkg_status
+else if ( "$WEBSITE_OUTPUT_DIR" == "" )
+    exit $pkg_status
 endif
 
 # test for write access -- don't trust -w test
 # OK, but what about gcp read-only?
 ( touch ${WEBSITE_OUTPUT_DIR}/test && rm -f ${WEBSITE_OUTPUT_DIR}/test ) >& /dev/null
 if ($? == 0) then
-    echo "Configuring data for experiments website"
+    echo "mdtf_gfdl.csh: configuring data for experiments website"
 
     set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
     set mdteamDir="${WEBSITE_OUTPUT_DIR}/${shaOut}"
     if ( ! -d ${mdteamDir} ) then
         mkdir -p "${mdteamDir}"
-        echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
+        echo "mdtf_gfdl.csh: Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
         ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
     else
-        echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
+        echo "mdtf_gfdl.csh: Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
         gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
     endif
-    echo "Complete -- Exiting"
-    exit 0
+    echo "mdtf_gfdl.csh: copied data for experiments website"
+    exit $pkg_status
 else
-   echo "${USER} doesn't have write access to ${WEBSITE_OUTPUT_DIR}"
-   exit 0
+   echo "mdtf_gfdl.csh: ${USER} doesn't have write access to ${WEBSITE_OUTPUT_DIR}"
+   exit 1
 endif

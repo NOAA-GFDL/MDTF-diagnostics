@@ -27,12 +27,12 @@ set staticfile
 set fremodule
 set script_path
 
-## set paths
+## set paths to site installation
 set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
 set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
-# output always written to $out_dir; unset below to skip copy/linking to
-# MDteam experiment directory.
-set OUTPUT_HTML_DIR="/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output"
+# output is always written to $out_dir; set a path below to GCP a copy of output
+# for purposes of serving from a website
+set WEBSITE_OUTPUT_DIR=""
 set INPUT_DIR="${TMPDIR}/inputdata"
 set WK_DIR="${TMPDIR}/wkdir"
 
@@ -61,7 +61,7 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args=( '--ignore_component' )
+set cmpt_args=( '--any_components' ) # default arg for Gfdl_PP
 set flags=()
 
 ## parse command line arguments
@@ -122,7 +122,7 @@ endif
 
 # modules may load other modules of different versions as dependencies,
 # so if any version of a version-unspecified module is already loaded skip it
-foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
+foreach mod ( 'gcp' 'perlbrew' )
     # () needed for csh quoting, also remember `module` only writes to stderr
     ( module list -t ) |& grep -qiF "$mod"
     if ( $status != 0 ) then
@@ -134,16 +134,19 @@ end
 ## clean up tmpdir
 wipetmp
 
-## run the command (unbuffered output)
+## run the command
 echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" \
+source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/mdteam/anaconda"
+conda activate "${REPO_DIR}/envs/_MDTF_base"
+"${REPO_DIR}/mdtf_framework.py" \
+--site="NOAA_GFDL" \
 --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
 --OUTPUT_DIR "$out_dir" \
---data_manager "GfdlPP" \
---environment_manager "GfdlConda" \
+--data_manager "GFDL_PP" \
+--environment_manager "GFDL_conda" \
 --CASENAME "$descriptor" \
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
@@ -152,24 +155,26 @@ $cmpt_args:q \
 $flags:q
 echo 'script exit'
 
-## copy/link output files, if requested
-if ( ! $?OUTPUT_HTML_DIR ) then
+# ----------------------------------------------------
+# copy/link output files to website directory, if requested
+
+if ( ! $?WEBSITE_OUTPUT_DIR ) then
     echo "Complete -- Exiting"
     exit 0
 endif
-if ( "$OUTPUT_HTML_DIR" == "" ) then
+if ( "$WEBSITE_OUTPUT_DIR" == "" ) then
     echo "Complete -- Exiting"
     exit 0
 endif
 
 # test for write access -- don't trust -w test
 # OK, but what about gcp read-only?
-( touch ${OUTPUT_HTML_DIR}/test && rm -f ${OUTPUT_HTML_DIR}/test ) >& /dev/null
+( touch ${WEBSITE_OUTPUT_DIR}/test && rm -f ${WEBSITE_OUTPUT_DIR}/test ) >& /dev/null
 if ($? == 0) then
     echo "Configuring data for experiments website"
 
     set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"
+    set mdteamDir="${WEBSITE_OUTPUT_DIR}/${shaOut}"
     if ( ! -d ${mdteamDir} ) then
         mkdir -p "${mdteamDir}"
         echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
@@ -181,6 +186,6 @@ if ($? == 0) then
     echo "Complete -- Exiting"
     exit 0
 else
-   echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
+   echo "${USER} doesn't have write access to ${WEBSITE_OUTPUT_DIR}"
    exit 0
 endif

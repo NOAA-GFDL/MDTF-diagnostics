@@ -1,7 +1,7 @@
-// Surface Temperature Extremes and Distribution Shape 
+// Surface Temperature Extremes and Distribution Shape
 //    This requires daily two-meter temperature, sea level pressure, 500hPa Geopotential Height
-//    For further documentation & user options, see comments in temp_extremes_distshape.py 
-//    This also requires the following Python modules: 
+//    For further documentation & user options, see comments in temp_extremes_distshape.py
+//    This also requires the following Python modules:
 //         os,json,numpy,scipy,matplotlib,mpl_toolkits,h5py,netcdf4,netcdftime,math,cftime,cartopy
 //    The code is in Python 3
 
@@ -10,9 +10,9 @@
     // Name of the driver script.
     "driver" : "temp_extremes_distshape.py",
 
-    // Human-readable name of the diagnostic. 
+    // Human-readable name of the diagnostic.
     "long_name" : "Surface Temperature Extremes and Distribution Shape",
-    
+
     // Modeling realm.
     "realm" : "atmos",
 
@@ -49,42 +49,36 @@
      "multi_file_ok": false,
      "frequency": "day"
    },
-   "dimensions": {
-     "lat": {
-       "standard_name": "latitude"
-     },
-     "lon": {
-       "standard_name": "longitude"
-     },
-     "time": {
-       "standard_name": "time",
-       "units": "day"
-     }
-   },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
   // Model data diagnostic uses.
-   "varlist" : [
-     {
-      // Variable identifier. An environment variable with this name will be set
-      // to what the corresponding field is called in the model being analyzed.
-      "var_name" : "tas_var",
+  "varlist" : {
+    // Variable identifier. An environment variable with this name will be set
+    // to what the corresponding field is called in the model being analyzed.
+    "tas_var": {
+      "standard_name" : "air_temperature",
       "units": "K",
-      "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required",
-      "freq" : "day"
-     },
-     {
-      "var_name" : "zg_var",
+      "dimensions" : ["time", "lat", "lon"]
+    },
+    "zg_var": {
+      "standard_name": "geopotential_height",
       "units": "m",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required",
-      "freq" : "day"
-     },
-     {
-      "var_name" : "psl_var",
+      "scalar_coordinates": {"plev": 500}
+    },
+    "psl_var": {
+      "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
-      "dimensions" : ["time", "lat", "lon"],
-      "requirement" : "required",
-      "freq" : "day"
-     }
-   ]
+      "dimensions" : ["time", "lat", "lon"]
+    }
+  }
 }

@@ -62,26 +62,19 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
+
+# default values for args
 set cmpt_args=( '--any_components' ) # default arg for Gfdl_PP
-set flags=()
+set convention='GFDL'
+set passed_args=()
 
-## parse command line arguments
-# NB analysis doesn't have getopts
-# reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
-if ($? != 0) then
-    echo "mdtf_gfdl.csh: arg parse error 1" >/dev/stderr
-    exit 1
-endif
-
-eval set argv=\($temp:q\) # argv needed for shift etc. to work
-while (1)
+# parse command line arguments manually because getopt doesn't let us pass
+# through unrecognized arguments.
+while ($#argv > 0)
     switch($1:q)
+    # arguments we need to recognize and handle in this script
     case --component_only:
         set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift
-        breaksw;
-    case --save_nc:
-        set flags=( '--save_nc' ) ; shift
         breaksw;
     case -Y:
     case --yr1:
@@ -91,14 +84,28 @@ while (1)
     case --yr2:
         set yr2="$2:q" ; shift ; shift
         breaksw
+    case --convention:
+        set convention="$2:q" ; shift ; shift
+        breaksw
     case --:
         shift
         break
+    # pass through everything else
     default:
-        echo "mdtf_gfdl.csh: arg parse error 2" ; exit 1
+	    if ("$1:q" =~ -*) then
+			set passed_args=( $passed_args:q $1:q )     # flag
+	    else
+			set passed_args=( $passed_args:q \"$1:q\" ) # quote arg
+		endif
+		if ($#argv > 0) then
+			shift
+		else
+			break
+		endif
+		breaksw
     endsw
 end
-# trim leading zeros
+# trim leading zeros: NB breaks if either year is 0
 set yr1 = `echo ${yr1} | sed 's/^0*//g'`
 set yr2 = `echo ${yr2} | sed 's/^0*//g'`
 
@@ -144,6 +151,7 @@ echo "mdtf_gfdl.csh: MDTF start"
 
 "${REPO_DIR}/mdtf_framework.py" \
 --site="NOAA_GFDL" \
+--convention "$convention" \
 --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
@@ -156,7 +164,7 @@ echo "mdtf_gfdl.csh: MDTF start"
 --FIRSTYR $yr1 \
 --LASTYR $yr2 \
 $cmpt_args:q \
-$flags:q
+$passed_args:q
 
 pkg_status=$?
 echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"

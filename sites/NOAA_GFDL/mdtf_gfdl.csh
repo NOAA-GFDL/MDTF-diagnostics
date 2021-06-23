@@ -65,7 +65,6 @@ set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
 
 # default values for args
 set cmpt_args=( '--any_components' ) # default arg for Gfdl_PP
-set convention='GFDL'
 set passed_args=()
 
 # parse command line arguments manually because getopt doesn't let us pass
@@ -83,9 +82,6 @@ while ($#argv > 0)
     case -Z:
     case --yr2:
         set yr2="$2:q" ; shift ; shift
-        breaksw
-    case --convention:
-        set convention="$2:q" ; shift ; shift
         breaksw
     case --:
         shift
@@ -151,7 +147,6 @@ echo "mdtf_gfdl.csh: MDTF start"
 
 "${REPO_DIR}/mdtf_framework.py" \
 --site="NOAA_GFDL" \
---convention "$convention" \
 --frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \

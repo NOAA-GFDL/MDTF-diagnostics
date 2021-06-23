@@ -27,7 +27,9 @@ The site installation provides alternative ways to run the diagnostics within GF
 
       <analysis switch="on" cumulative="no" script="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
 
-The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. The wrapper script calls the site installation of the package with the ``--frepp`` and ``--data-manager="GFDL_PP"`` (see below) options, as well as passing through all relevant paths set by FRE and any additional options set in the tag's ``script`` attribute. This can be used to, e.g., only run PODs relevant for one model ``<component>`` with the ``--pods`` option.
+The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. 
+
+The wrapper script calls the site installation of the package with the ``--frepp`` and ``--data-manager="GFDL_PP"`` (see below) options. ``GFDL_PP`` defaults to assuming GFDL variable naming :ref:`conventions<ref-data-conventions>`; data which follows other conventions (e.g. fremetarized runs intended for publication as part of CMIP6) requires the ``--convention`` flag to be set explicitly. In general, the wrapper script passes through any additional options set in the tag's ``script`` attribute, as well as setting the paths provided by FRE. This can be used to, e.g., only run PODs relevant for one model ``<component>`` with the ``--pods`` option.
 
 Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/components. We provide two ways to address this issue:
 
@@ -78,6 +80,8 @@ This data source searches for model data produced using GFDL's in-house postproc
 <*CASE_ROOT_DIR*> should be set to the root of the postprocessing directory hierarchy (i.e., should end in ``/pp``).
 
 --any-components    If this flag is set, the data source will return data from different model ``<component>``\s requested by the same POD. This is necessary for, e.g., PODs that compare data from different modeling realms. The default behavior is to require all variables requested by a POD to come from the same model ``<component>``.
+
+When using this data source, ``-c``/``--convention`` should be set to the convention used to assign variable names. If not given, ``--convention`` defaults to ``GFDL``.
 
 **Data selection heuristics**
 

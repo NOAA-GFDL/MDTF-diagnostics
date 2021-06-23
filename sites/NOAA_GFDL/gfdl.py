@@ -385,7 +385,7 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource corresponding to
     model data in the /pp/ directory hierarchy.
     """
-    convention: str = util.MANDATORY
+    convention: str = "GFDL"
     CASE_ROOT_DIR: str = ""
 
     def __post_init__(self):
@@ -409,7 +409,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _AttributesClass = PPDataSourceAttributes
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
-    _query_attrs_synonyms = {'name': 'variable'}
+    _query_attrs_synonyms = {'name': 'variable', 'data_freq': 'frequency'}
 
     daterange_col = "date_range"
     # Catalog columns whose values must be the same for all variables.

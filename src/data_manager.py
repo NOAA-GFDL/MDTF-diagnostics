@@ -170,6 +170,7 @@ class DataSourceAttributesBase():
     FIRSTYR: str = util.MANDATORY
     LASTYR: str = util.MANDATORY
     date_range: util.DateRange = dataclasses.field(init=False)
+    convention: str = ""
 
     def __post_init__(self):
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
@@ -201,7 +202,7 @@ class DataSourceBase(AbstractDataSource, metaclass=util.MDTFABCMeta):
         # set variable name convention
         if hasattr(self, '_convention'):
             self.convention = self._convention
-        elif hasattr(self.attrs, 'convention'):
+        elif hasattr(self.attrs, 'convention') and self.attrs.convention:
             self.convention = self.attrs.convention
         else:
             raise util.GenericDataSourceError((f"'convention' not configured "
@@ -1368,7 +1369,7 @@ class SampleDataAttributes(DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
     data.
     """
-    convention: str = util.MANDATORY
+    convention: str = "CMIP"
     CASE_ROOT_DIR: str = ""
     sample_dataset: str = ""
 

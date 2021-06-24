@@ -58,7 +58,6 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     wt_anomalies = xr.concat(wt_anomalies, dim='M') # join together
     wt_anomalies['WT'] = wt_anomalies['WT'] + 1 # start from 1
 #prepare a figure with rainfall and temperature composites
-    X, Y = np.meshgrid(reanalysis[Z250_var].lon, reanalysis[Z250_var].lat)
     map_proj = ccrs.PlateCarree() #ccrs.Orthographic(-110, 10)
     data_proj = ccrs.PlateCarree()
     wt_unique = np.unique(wt_anomalies['WT'])
@@ -69,8 +68,6 @@ def weatherTypes(reanalysis_path, reanalysis_var, rainfall_path, rainfall_var, t
     wt_counts = wt.groupby('WT').size().div(wt['WT'].size)
     print("Beginning plotting..")
     #plotting
-    xmin,xmax = reanalysis[lon_coord].min(), reanalysis[lon_coord].max()
-    ymin,ymax = reanalysis[lat_coord].min(), reanalysis[lat_coord].max()
     plot_path = "{WK_DIR}/model/PS/model_plot.png".format(**os.environ)
     # Set up the Figure
     plt.rcParams.update({'font.size': 12})

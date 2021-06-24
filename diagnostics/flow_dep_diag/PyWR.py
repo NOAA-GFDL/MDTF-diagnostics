@@ -12,7 +12,6 @@ from numba import jit
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-import xarray as xr
 from typing import Tuple
 
 def get_number_eof(X: np.ndarray, var_to_explain: float, plot=False) -> int:

@@ -30,7 +30,7 @@ set script_path
 ## set paths
 set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
 set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
-# output always written to $out_dir; unset below to skip copy/linking to 
+# output always written to $out_dir; unset below to skip copy/linking to
 # MDteam experiment directory.
 set OUTPUT_HTML_DIR="/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output"
 set INPUT_DIR="${TMPDIR}/inputdata"
@@ -68,7 +68,7 @@ set flags=()
 # NB analysis doesn't have getopts
 # reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
 set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
-if ($? != 0) then 
+if ($? != 0) then
     echo "Command line parse error 1" >/dev/stderr
     exit 1
 endif
@@ -77,10 +77,10 @@ eval set argv=\($temp:q\) # argv needed for shift etc. to work
 while (1)
     switch($1:q)
     case --component_only:
-        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift 
+        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift
         breaksw;
     case --save_nc:
-        set flags=( '--save_nc' ) ; shift 
+        set flags=( '--save_nc' ) ; shift
         breaksw;
     case -Y:
     case --yr1:
@@ -103,14 +103,14 @@ set yr2 = `echo ${yr2} | sed 's/^0*//g'`
 
 
 ## configure env modules
-if ( ! $?MODULESHOME ) then       
+if ( ! $?MODULESHOME ) then
     echo "\$MODULESHOME is undefined"
     exit 1
 else
     if ( "$MODULESHOME" == "" )  then
         echo "\$MODULESHOME is empty"
         exit 1
-    else 
+    else
         source $MODULESHOME/init/tcsh
         # should probably 'module purge'
         if ( `where module` == "" ) then
@@ -128,7 +128,7 @@ foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
     if ( $status != 0 ) then
         module load $mod
     endif
-end	
+end
 ( module list -t ) |& cat # log modules being used
 
 ## clean up tmpdir
@@ -153,7 +153,7 @@ $flags:q
 echo 'script exit'
 
 ## copy/link output files, if requested
-if ( ! $?OUTPUT_HTML_DIR ) then       
+if ( ! $?OUTPUT_HTML_DIR ) then
     echo "Complete -- Exiting"
     exit 0
 endif
@@ -169,7 +169,7 @@ if ($? == 0) then
     echo "Configuring data for experiments website"
 
     set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"	
+    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"
     if ( ! -d ${mdteamDir} ) then
         mkdir -p "${mdteamDir}"
         echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"

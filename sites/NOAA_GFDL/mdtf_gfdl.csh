@@ -101,9 +101,9 @@ while ($#argv > 0)
 		breaksw
     endsw
 end
-# trim leading zeros: NB breaks if either year is 0
-set yr1 = `echo ${yr1} | sed 's/^0*//g'`
-set yr2 = `echo ${yr2} | sed 's/^0*//g'`
+# trim leading zeros
+set yr1 = `echo ${yr1} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
+set yr2 = `echo ${yr2} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
 
 
 ## configure env modules

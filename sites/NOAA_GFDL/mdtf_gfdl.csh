@@ -63,18 +63,21 @@ set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
 
-# default values for args
-set cmpt_args=( '--any_components' ) # default arg for Gfdl_PP
-set passed_args=()
-
 # parse command line arguments manually because getopt doesn't let us pass
 # through unrecognized arguments.
+set passed_args=()
 while ($#argv > 0)
     switch($1:q)
     # arguments we need to recognize and handle in this script
+    case --multi_component:
+        # don't rename the "frepp" flag, for backwards compatibility
+        set passed_args=( $passed_args:q '--frepp' )
+        shift
+        breaksw
     case --component_only:
-        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift
-        breaksw;
+        set passed_args=( $passed_args:q '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
+        shift
+        breaksw
     case -Y:
     case --yr1:
         set yr1="$2:q" ; shift ; shift
@@ -104,7 +107,6 @@ end
 # trim leading zeros
 set yr1 = `echo ${yr1} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
 set yr2 = `echo ${yr2} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
-
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then
@@ -147,7 +149,6 @@ echo "mdtf_gfdl.csh: MDTF start"
 
 "${REPO_DIR}/mdtf_framework.py" \
 --site="NOAA_GFDL" \
---frepp \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
@@ -158,7 +159,6 @@ echo "mdtf_gfdl.csh: MDTF start"
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
 --LASTYR $yr2 \
-$cmpt_args:q \
 $passed_args:q
 
 pkg_status=$?

@@ -33,9 +33,11 @@ The wrapper script calls the site installation of the package with the ``--frepp
 
 Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/components. We provide two ways to address this issue:
 
-   A. If it's known ahead of time that a given model ``<component>`` will dominate the run time and finish last, one can call ``mdtf_gfdl.csh`` from an ``<analysis>`` tag in that component only. In this case, the framework will search all data present in the /pp/ output directory when it runs (the ``--any-components`` setting, described below, which is the default behavior for the wrapper script). The ``<component>`` being used doesn't need to generate any data analyzed by the diagnostics; in this case it's only used to schedule the diagnostics' execution.
+   A. If it's known ahead of time that a given model ``<component>`` will dominate the run time and finish last, one can call ``mdtf_gfdl.csh`` from an ``<analysis>`` tag in that component only. In this case, the framework will search all data present in the /pp/ output directory when it runs. The ``<component>`` being used doesn't need to generate any data analyzed by the diagnostics; in this case it's only used to schedule the diagnostics' execution.
 
-   B. If one doesn't know which ``<component>`` will finish last, a more robust solution is to call ``mdtf_gfdl.csh --component_only`` from *each* ``<component>`` that generates data to be analyzed. When the ``--component_only`` flag is set, every time the framework is called it will *only* run the diagnostics for which all the input data is available *and* which haven't run already (which haven't written their output to ``$OUTPUT_DIR``).
+   B. If one doesn't know which ``<component>`` will finish last, an alternate solution is to call ``mdtf_gfdl.csh --multi_component`` from *each* ``<component>`` that generates data to be analyzed. When the ``--multi_component`` flag is passed to the wrapper script, every time the framework is called it will *only* run the diagnostics for which all the input data is available *and* which haven't run already (which haven't written their output to ``$OUTPUT_DIR``).
+
+In case 3A or 3B, you can optionally pass the ``--component_only`` flag to the wrapper script if you wish to restrict the package to only use data from the ``<component>`` it's associated with in the XML. Otherwise, the default behavior is for the package to search all the data that's present in the /pp/ directory hierarchy when it runs.
 
 
 Additional data sources
@@ -79,7 +81,8 @@ This data source searches for model data produced using GFDL's in-house postproc
 
 <*CASE_ROOT_DIR*> should be set to the root of the postprocessing directory hierarchy (i.e., should end in ``/pp``).
 
---any-components    If this flag is set, the data source will return data from different model ``<component>``\s requested by the same POD. This is necessary for, e.g., PODs that compare data from different modeling realms. The default behavior is to require all variables requested by a POD to come from the same model ``<component>``.
+--component    If set, only run the package on data from the specified model component name. If this flag is *not* set, the data source will return data from different model ``<component>``\s requested by the same POD; see the description of the heuristics used for ``<component>`` selection below. This is necessary for, e.g., PODs that compare data from different modeling realms. 
+--chunk_freq    If set, only run the package on data with the specified timeseries chunk length. If not set, default behavior is to use the smallest chunks available.
 
 When using this data source, ``-c``/``--convention`` should be set to the convention used to assign variable names. If not given, ``--convention`` defaults to ``GFDL``.
 
@@ -117,8 +120,7 @@ The following new flags are added:
 
 --GFDL-PPAN-TEMP <DIR>    If running on the GFDL PPAN cluster, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. This must be a location accessible via GCP, and the package does not currently verify this. Defaults to ``$TMPDIR``.
 --GFDL-WS-TEMP <DIR>    If running on a GFDL workstation, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. The directory will be created if it doesn't exist. This must be accessible via GCP, and the package does not currently verify this. Defaults to /net2/``$USER``/tmp.
---frepp    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. Set flag to invoke the framework in the FRE-based execution mode (3A. or 3B. above), processing data as part of the FRE pipeline. 
---ignore-component    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script, and not directly by the user. If set, this flag tells the framework to search the entire /pp/ directory for model data (mode 3A. above); default is to restrict to model component passed by FRE. Ignored if ``--frepp`` is not set.
+--frepp    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script (by setting the ``--multi_component`` flag), and not directly by the user. This should only be set if you're using the package in scenario 3B. above, where the package will be called **multiple** times when each model component is finished running. When the package is invoked with this flag, it only runs PODs for which i) the data has finished post-processing (is present in the /pp/ directory) and ii) haven't been run by a previous invocation of the package. The bookkeeping for this is done by having each invocation write placeholder directories for each POD it's executing to ``$OUTPUT_DIR``. Setting this flag disables the package's warnings for PODs with missing data, since that may be a normal occurrence in this scenario.
 
 GFDL-specific default values
 ++++++++++++++++++++++++++++

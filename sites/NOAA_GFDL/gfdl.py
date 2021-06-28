@@ -387,6 +387,8 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """
     convention: str = "GFDL"
     CASE_ROOT_DIR: str = ""
+    component: str = ""
+    chunk_freq: util.DateFrequency = None
 
     def __post_init__(self):
         """Validate user input.
@@ -408,8 +410,9 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
 
-    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
-    _query_attrs_synonyms = {'name': 'variable', 'data_freq': 'frequency'}
+    # map "name" field in VarlistEntry's query_attrs() to "variable" field of
+    # PPTimeseriesDataFile
+    _query_attrs_synonyms = {'name': 'variable'}
 
     daterange_col = "date_range"
     # Catalog columns whose values must be the same for all variables.
@@ -419,7 +422,8 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     def __init__(self, case_dict):
         super(GfdlppDataManager, self).__init__(case_dict)
         config = core.ConfigManager()
-        self.any_components = config.get('any_components', False)
+        # if no model component set, consider data from any components
+        self.any_components = not(self.attrs.component)
 
     @property
     def pod_expt_key_cols(self):

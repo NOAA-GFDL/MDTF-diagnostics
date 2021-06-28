@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - develop
+      - update_test_yaml_file
   pull_request:
     branches:
       - main
@@ -87,8 +88,8 @@ jobs:
         cd mdtf_test_data
         # Defining dependencies in Conda env is faster than pip
         conda activate _MDTF_synthetic_data
-        # generate the data
-        ./mdtf_test_data/mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10
+        # generate the data and run unit tests
+        ./mdtf_test_data/mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
         ./mdtf_test_data/mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
         cd ../
         mkdir wkdir
@@ -101,6 +102,7 @@ jobs:
         # attempt FTP data fetch
         # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
         # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/convective_transition_diag_obs_data.tar --output convective_transition_diag_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/EOF_500hPa_obs_data.tar --output EOF_500hPa_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/Wheeler_Kiladis_obs_data.tar --output Wheeler_Kiladis_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
@@ -109,6 +111,7 @@ jobs:
         ## make input data directories
         mkdir -p inputdata/obs_data
         echo "Untarring test files"
+        tar -xvf convective_transition_diag_obs_data.tar
         tar -xvf EOF_500hPa_obs_data.tar
         tar -xvf precip_diurnal_cycle_obs_data.tar
         tar -xvf MJO_teleconnection_obs_data.tar

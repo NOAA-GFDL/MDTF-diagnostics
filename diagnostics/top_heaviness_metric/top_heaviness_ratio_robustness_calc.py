@@ -6,7 +6,8 @@ import scipy
 from scipy import interpolate
 from scipy import integrate
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
+import cartopy.mpl.ticker as cticker
 
 
 #Setting variables equal to environment variables set by the diagnostic

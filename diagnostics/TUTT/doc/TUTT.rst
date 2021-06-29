@@ -88,9 +88,6 @@ for example:
 TUTT_contour_lat_1979-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Open source copyright agreement
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 The corrdinates of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
 
 

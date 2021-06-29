@@ -1,4 +1,4 @@
-# 28 May top_heaviness_ratio_calculation.py
+# 28 June top_heaviness_ratio_calculation.py
 #Python packages/ modules imported for the diagnostic
 # the sample monthly data is from ERA5 in July from 2000 to 2019 
 import os

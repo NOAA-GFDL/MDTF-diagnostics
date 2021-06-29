@@ -1,0 +1,36 @@
+{
+  "settings" : {
+    "long_name" : "Tropical Upper Tropospheric Trough Diagnostic Package",
+    "driver" : "TUTT.py",
+    "realm" : "atmos",
+    "description" : "Comparing daily atmospheric circulation pattern characteristics in reanalysis and models",
+    "runtime_requirements" : {
+      "python3" : ["netCDF4", "xarray", "numpy", "sklearn", "cartopy", "matplotlib", "numba", "datetime", "typing"]
+    },
+  },
+  "data" : {"frequency" : "month"},
+  "dimensions" : {
+    "lat" : {
+      "standard_name" : "latitude",
+      "units" : "degrees_north"
+    },
+    "lon" : {
+      "standard_name" : "longitude",
+      "units" : "degrees_east"
+    },
+    "time" : {
+      "standard_name" : "time",
+      "units" : "mon",
+    }
+  },
+  "varlist" : {
+    "Z200": {
+      // "var_name" : "Z200_var",
+      "standard_name" : "geopotential_height_200_mbar",
+      "freq" : "mon",
+      "requirement" : "required",
+      "units" : "m",
+      "dimensions" : ["time", "lat", "lon"]
+    }
+  }
+}

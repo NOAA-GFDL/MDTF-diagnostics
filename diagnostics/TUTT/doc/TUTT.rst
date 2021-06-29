@@ -59,6 +59,8 @@ Back, L. E., Hansen, Z., & Handlos, Z. (2017). Estimating vertical motion profil
 
 Jiacheng and Zhuo's paper is under developing...
 
+
+
 More about this diagnostic
 --------------------------
 
@@ -75,5 +77,12 @@ To assess how well ω' approximates ω, the fractional variance (R2 between the 
    
 
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
+   
+your txt name
+^^^^^^^^^^^^^
+
+Explain the data inside of your txt file and its writing format 
+
+
    
 

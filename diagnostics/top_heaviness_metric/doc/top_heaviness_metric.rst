@@ -57,11 +57,13 @@ More about this diagnostic
 --------------------------
 
 Q1 and Q2 (Figure 1a) are two prescribed base functions. Following Back et al. (2017), Q1 as a half sine function, and Q2 as a full sine function, which represent the idealized deep convection profile and the idealized deep stratiform profile, respectively. The vertical velocity can be approximated by Q1 and Q2:
-ω'(x,y,p) = O1(x,y,t) * Q1(p) + O2(x,y,t)*Q2(p)
+ω'(x,y,p) = O1(x,y) * Q1(p) + O2(x,y)*Q2(p) 
 
 
 Holding O1 as positively defined, when the ratio of r=O2/O1 increases from -1 to 1, ω' transitions from a bottom-heavy profile to a top-heavy profile (Figure 1b). 
-To assess how well ω' approximates ω, the fractional variance (R2 between the reconstructed Omega and original Omega profiles) is calculated over each grid point. As shown in Figure 2,  ω' explains more than 80% of the vertical variances over most tropical/subtropical oceanic grid points.
+To assess how well ω' approximates ω, the fractional variance (R2 between the reconstructed Omega and original Omega profiles) is calculated over each grid point. The fractional variance is defined as the square of the pearson correlation between ω' and ω. As shown in Figure 2,  ω' explains more than 80% of the vertical variability over most tropical/subtropical oceanic grid points.
+
+The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in the deep convective regions, grid points with O1 less than zero are not shown. The Western Pacific is dominated by more top-heavy vertical profiles while the Eastern Pacific and Atlantic are characterized by more bottom-heavy profiles, exhibiting a great contrast.   
 
 .. figure:: Q1&Q2_R.png
    :align: center

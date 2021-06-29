@@ -26,6 +26,7 @@
   "varlist" : {
     "Z200": {
       // "var_name" : "Z200_var",
+      "path_variable": "Z200_FILE",
       "standard_name" : "geopotential_height_200_mbar",
       "freq" : "mon",
       "requirement" : "required",

@@ -1,4 +1,4 @@
-# Last update: 30 May top_heaviness_ratio_robustness_calc.py
+# Last update: 28 June top_heaviness_ratio_robustness_calc.py
 import os
 import xarray as xr
 import numpy as np
@@ -80,15 +80,24 @@ def top_heaviness_ratio_robustness_calc_model(reanalysis_path, reanalysis_var):
     # R2 measures the proportion of ltm omega profile explained by Q1 and Q2  
     fig, axes = plt.subplots(figsize=(8,4))
     mmid=R2_model
-    x,y = np.meshgrid(lon_model,lat_model) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_model[ilat][0],urcrnrlat=lat_model[ilat][-1],\
-            llcrnrlon=lon_model[ilon][0],urcrnrlon=lon_model[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_model[ilat][0],lat_model[ilat][-1]+0.1,10),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_model[ilon][0],lon_model[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(0,1.,0.1)
-    im0 = m.contourf(X,Y,mmid,clevs,cmap = plt.get_cmap('RdBu_r'),extend='max') 
+    im0 = axes.contourf(lon_model, lat_model, mmid, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_model[ilon][0],lon_model[ilon][-1],60)
+    lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('$R^{2}$ Between Recon. Omega & Original',loc='center',fontsize=18)
     fig.savefig(WK_DIR+"/model/"+CASENAME+"_R2.png", format='png',bbox_inches='tight')    
@@ -149,15 +158,24 @@ def top_heaviness_ratio_robustness_calc_obs(obs_data_full_dir):
     # R2 measures the proportion of ltm omega profile explained by Q1 and Q2  
     fig, axes = plt.subplots(figsize=(8,4))
     mmid=R2_obs
-    x,y = np.meshgrid(lon_obs,lat_obs) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_obs[ilat][0],urcrnrlat=lat_obs[ilat][-1],\
-            llcrnrlon=lon_obs[ilon][0],urcrnrlon=lon_obs[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_obs[ilat][0],lat_obs[ilat][-1]+0.1,10),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(0,1.,0.1)
-    im0 = m.contourf(X,Y,mmid,clevs,cmap = plt.get_cmap('RdBu_r'),extend='max') 
+    im0 = axes.contourf(lon_obs, lat_obs, mmid, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60)
+    lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('$R^{2}$ Between Recon. Omega & Original',loc='center',fontsize=18)
     fig.tight_layout()

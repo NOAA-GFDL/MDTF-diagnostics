@@ -65,6 +65,8 @@ To assess how well ω' approximates ω, the fractional variance (R2 between the 
 
 The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in the deep convective regions, grid points with O1 less than zero are not shown. The Western Pacific is dominated by more top-heavy vertical profiles while the Eastern Pacific and Atlantic are characterized by more bottom-heavy profiles, exhibiting a great contrast.   
 
+
+
 .. figure:: Q1&Q2_R.png
    :align: center
    :width: 75 %

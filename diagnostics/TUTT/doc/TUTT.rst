@@ -1,4 +1,4 @@
-Top-Heaviness Metric Diagnostic Documentation
+Tropical Upper Tropospheric Trough Diagnostic Documentation
 ================================
 
 Last update: 6/28/2021
@@ -12,7 +12,8 @@ Version & Contact info
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#bullet-lists
 
 - Version/revision information: version 1.0 (5/21/2021)
-- Developer/point of contact (Jiacheng Ye, jye18@illinois.edu, DAS UIUC; Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
+- PI: Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
+- Developer/point of contact ( , DAS UIUC; Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
 
 .. Underline with '^'s to make a third-level heading.
 
@@ -68,7 +69,7 @@ Q1 and Q2 (Figure 1a) are two prescribed base functions. Following Back et al. (
 Holding O1 as positively defined, when the ratio of r=O2/O1 increases from -1 to 1, ω' transitions from a bottom-heavy profile to a top-heavy profile (Figure 1b). 
 To assess how well ω' approximates ω, the fractional variance (R2 between the reconstructed Omega and original Omega profiles) is calculated over each grid point. As shown in Figure 2,  ω' explains more than 80% of the vertical variances over most tropical/subtropical oceanic grid points.
 
-.. figure:: Q1&Q2_R.png
+.. figure:: TUTT_example.png
    :align: center
    :width: 75 %
    
@@ -76,15 +77,3 @@ To assess how well ω' approximates ω, the fractional variance (R2 between the 
    Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
-.. figure:: R2_Between_Recon_Omega&Original.png
-   :align: center
-   :width: 75 %
-
-   Figure 2. R2 between the reconstructed Omega and original Omega profiles.
-   
-
-.. figure:: Top_Heaviness_Ratio.png
-   :align: center
-   :width: 75 %
-
-   Figure 3.. Top-Heaviness Ratio in of the long-term mean omega in July (2000-2019). The ratio is only calculated over grid points where O1 is no less than 0.01 which is very close to zero.

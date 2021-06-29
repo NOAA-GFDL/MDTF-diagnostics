@@ -19,8 +19,9 @@
       "axis": "Z" 
     },  
   "varlist": {
-    "OMEGA": {
+    "omega": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
+      "path_variable": "PR_FILE",
       "units": "Pa s-1",
       "dimensions": ["lev", "lat", "lon"]
     }   

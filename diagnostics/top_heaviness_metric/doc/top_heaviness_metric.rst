@@ -11,7 +11,7 @@ Version & Contact info
 .. '-' starts items in a bulleted list:
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#bullet-lists
 
-- Version/revision information: version 1.0 (5/21/2021)
+- Version/revision information: version 1.0 (6/28/2021)
 - Developer/point of contact (Jiacheng Ye, jye18@illinois.edu, DAS UIUC; Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
 
 .. Underline with '^'s to make a third-level heading.
@@ -24,13 +24,11 @@ The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 Functionality
 -------------
 
-The currently package consists of following functionalities:
+The current package consists of following functionalities:
 
-(1) Calculation of the fractional variance of vertical velocity at each grid point explained by two base functions (i.e., idealized deep convection profile, idealized deep stratiform profile)
+(1) Calculation of the fractional variance of vertical velocity at each grid point explained by two base functions - Q1 (~= idealized deep convection profile) and Q2 (~= idealized deep stratiform profile)
 
 (2) Calculation of the top-heaviness ratio (O2/O1)
-
-(3) Other analysis (to be added soon)
 
 (**) cropping.py can be referenced if code is needed to either shift the grid of your data
 or to crop your data to a specified region

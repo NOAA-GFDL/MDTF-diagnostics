@@ -18,18 +18,18 @@
 #
 # ================================================================================
 # Functionality
-#
-# 1) calculate top-heaviness ratio
-# Under developing 
+# 1) calculate the coefficient of Q1 and Q2 (Q1 ~= idealized deep convection profile; Q2 ~= idealized deep stratiform profile);
+# 2) calculate top-heaviness ratio (defined as O2/O1)
 #
 # ================================================================================
 #
 #    All scripts of this package can be found under: /diagnostics/top_heaviness_metric 
 #    & observational data under: /obs_data/top_heaviness_metric
 #
-#    Monthly 4-D (time-plev-lat-lon) vertical motion (wap) fields are required;
+#    Monthly 3-D (time-lat-lon) vertical motion (wap) fields are required;
 #
-# Required programming language and libraries: Tested by Python3; Numpy, Scipy
+# Required programming language and libraries: Tested in the Python 3.7 environment;
+# Required Python libraries:  Numpy, Scipy
 #
 # ================================================================================
 # Reference: 

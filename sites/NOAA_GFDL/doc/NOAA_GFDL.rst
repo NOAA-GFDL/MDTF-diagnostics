@@ -33,11 +33,13 @@ The wrapper script calls the site installation of the package with the ``--frepp
 
 Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/components. We provide two ways to address this issue:
 
-   A. If it's known ahead of time that a given model ``<component>`` will dominate the run time and finish last, one can call ``mdtf_gfdl.csh`` from an ``<analysis>`` tag in that component only. In this case, the framework will search all data present in the /pp/ output directory when it runs. The ``<component>`` being used doesn't need to generate any data analyzed by the diagnostics; in this case it's only used to schedule the diagnostics' execution.
+   A. If it's known ahead of time that a given model ``<component>`` will dominate the run time and finish last, one can call ``mdtf_gfdl.csh --run_once`` from an ``<analysis>`` tag in that component only. In this case, the framework will search all data present in the /pp/ output directory when it runs. The ``<component>`` being used doesn't need to generate any data analyzed by the diagnostics; in this case it's only used to schedule the diagnostics' execution.
 
-   B. If one doesn't know which ``<component>`` will finish last, an alternate solution is to call ``mdtf_gfdl.csh --multi_component`` from *each* ``<component>`` that generates data to be analyzed. When the ``--multi_component`` flag is passed to the wrapper script, every time the framework is called it will *only* run the diagnostics for which all the input data is available *and* which haven't run already (which haven't written their output to ``$OUTPUT_DIR``).
+   B. If one doesn't know which ``<component>`` will finish last, an alternate solution is to call ``mdtf_gfdl.csh`` from *each* ``<component>`` that generates data to be analyzed. This is assumed to be the default use case for the wrapper script (when ``--run_once`` is not set), where the package is called multiple times on a single model run to incrementally update the analysis as data from different components finishes postprocessing. Every time the package is called it will *only* run the diagnostics for which all the input data is available *and* which haven't run already (which haven't written their output to ``$OUTPUT_DIR``).
 
 In case 3A or 3B, you can optionally pass the ``--component_only`` flag to the wrapper script if you wish to restrict the package to only use data from the ``<component>`` it's associated with in the XML. Otherwise, the default behavior is for the package to search all the data that's present in the /pp/ directory hierarchy when it runs.
+
+The ``--run_once`` flag should be used whenever you don't need the incremental update capability of case 3B (or if the package is only being called from one ``<component>`` in an XML), since the default behavior in 3B necessarily disables logging warnings if individual PODs aren't able to run.
 
 
 Additional data sources
@@ -81,8 +83,8 @@ This data source searches for model data produced using GFDL's in-house postproc
 
 <*CASE_ROOT_DIR*> should be set to the root of the postprocessing directory hierarchy (i.e., should end in ``/pp``).
 
---component    If set, only run the package on data from the specified model component name. If this flag is *not* set, the data source will return data from different model ``<component>``\s requested by the same POD; see the description of the heuristics used for ``<component>`` selection below. This is necessary for, e.g., PODs that compare data from different modeling realms. 
---chunk_freq    If set, only run the package on data with the specified timeseries chunk length. If not set, default behavior is to use the smallest chunks available.
+--component    If set, only run the package on data from the specified model component name. If this flag is *not* set, the data source will return data from different model ``<component>``\s requested by the same POD; see the description of the heuristics used for ``<component>`` selection below. This is necessary for, e.g., PODs that compare data from different modeling realms. The main use case for this flag is passing options from FRE to the package via the wrapper script.
+--chunk_freq    If set, only run the package on data with the specified timeseries chunk length. If not set, default behavior is to use the smallest chunks available. The main use case for this flag is passing options from FRE to the package via the wrapper script.
 
 When using this data source, ``-c``/``--convention`` should be set to the convention used to assign variable names. If not given, ``--convention`` defaults to ``GFDL``.
 
@@ -92,11 +94,15 @@ This data source implements the following logic to guarantee that all data it pr
 
 * This data source only searches data saved as time series (``/ts/``), rather than time averages, since no POD is currently designed to use time-averaged data.
 * If the same data has been saved in files of varying chronological length (``<chunk_freq>``), the shortest ``<chunk_freq>`` is used, in order to minimize the amount of data that is transferred but not used (because it falls outside of the user's analysis period).
-* Unless the ``--any-components`` flag is set, the model ``<component>`` must be the same for all variables requested by a POD, but can be different for different PODs. The same value will be chosen for all PODs if possible. Setting the ``--any-components`` flag drops this restriction.
+* By default, any variable can come from model ``<component>``, with the same component used for all variables requested by a POD if possible. This setting is required to enable the execution of PODs that use data from different ``<component>``s or realms. 
+  - Specifying a model component with the ``--component`` flag does one of two things, depending on whether the package is being run once or incrementally. 
+  - If the package is being run once, all data used must come from that component (e.g., multi-realm PODs will not run). In this case we assume the user wants to focus their attention on this component exclusively.
+  - If the package is being run incrementally (called from FRE without the ``--run_once`` flag, see above, or called in general with the ``--frepp`` flag), all data for each POD must come from the same component, but different PODs may use data from different components. This is because we're operating according to scenario 3B (above) and are analyzing multiple components, but still want to focus on component-specific diagnostics.
 * If the same data is provided by multiple model ``<component>``\s, a single ``<component>`` is selected via the following heuristics:
 
   - Preference is given to model components starting with "cmip" (case insensitive), in order to support analysis of data produced as part of CMIP6.
   - If multiple ``<component>``\s are still eligible, the one with the fewest words in the identifier (separated by underscores) is selected; in case of a tie, the ``<component>`` name with the shortest overall string length is used.
+  - This is haphazard, but it's the best we can do given that ``<component>`` names may be arbitrary strings, with only partial standardization.
 
 Quasi-automated source selection
 ++++++++++++++++++++++++++++++++
@@ -120,7 +126,7 @@ The following new flags are added:
 
 --GFDL-PPAN-TEMP <DIR>    If running on the GFDL PPAN cluster, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. This must be a location accessible via GCP, and the package does not currently verify this. Defaults to ``$TMPDIR``.
 --GFDL-WS-TEMP <DIR>    If running on a GFDL workstation, set the ``$MDTF_TMPDIR`` environment variable to this location and create temp files here. The directory will be created if it doesn't exist. This must be accessible via GCP, and the package does not currently verify this. Defaults to /net2/``$USER``/tmp.
---frepp    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script (by setting the ``--multi_component`` flag), and not directly by the user. This should only be set if you're using the package in scenario 3B. above, where the package will be called **multiple** times when each model component is finished running. When the package is invoked with this flag, it only runs PODs for which i) the data has finished post-processing (is present in the /pp/ directory) and ii) haven't been run by a previous invocation of the package. The bookkeeping for this is done by having each invocation write placeholder directories for each POD it's executing to ``$OUTPUT_DIR``. Setting this flag disables the package's warnings for PODs with missing data, since that may be a normal occurrence in this scenario.
+--frepp    Normally this is set by the `mdtf_gfdl.csh <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/mdtf_gfdl.csh>`__ wrapper script (by default, unless the ``--run_once`` flag is set), and not directly by the user. This should only be set if you're using the package in scenario 3B. above, where the package will be called **multiple** times when each model component is finished running. When the package is invoked with this flag, it only runs PODs for which i) the data has finished post-processing (is present in the /pp/ directory) and ii) haven't been run by a previous invocation of the package. The bookkeeping for this is done by having each invocation write placeholder directories for each POD it's executing to ``$OUTPUT_DIR``. Setting this flag disables the package's warnings for PODs with missing data, since that may be a normal occurrence in this scenario.
 
 GFDL-specific default values
 ++++++++++++++++++++++++++++

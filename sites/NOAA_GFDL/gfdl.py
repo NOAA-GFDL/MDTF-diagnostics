@@ -413,36 +413,64 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     # map "name" field in VarlistEntry's query_attrs() to "variable" field of
     # PPTimeseriesDataFile
     _query_attrs_synonyms = {'name': 'variable'}
-
     daterange_col = "date_range"
-    # Catalog columns whose values must be the same for all variables.
-    expt_key_cols = tuple()
-    expt_cols = expt_key_cols
 
     def __init__(self, case_dict):
         super(GfdlppDataManager, self).__init__(case_dict)
+
+        # default behavior when run interactively:
+        # frepp_mode = False, any_components = True
+        # default behavior when invoked by FRE wrapper:
+        # frepp_mode = True (set to False by calling wrapper with --run_once)
+        # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
+        self.frepp_mode = config.get('frepp', False)
         # if no model component set, consider data from any components
         self.any_components = not(self.attrs.component)
 
     @property
-    def pod_expt_key_cols(self):
-        return (tuple() if self.any_components else ('component', ))
+    def expt_key_cols(self):
+        """Catalog columns whose values must be the same for all data used in
+        this run of the package.
+        """
+        if not self.frepp_mode and not self.any_components:
+            return ('component', )
+        else:
+            return tuple()
 
     @property
-    def pod_expt_cols(self):
-        # Catalog columns whose values must be the same for each POD.
-        return self.pod_expt_key_cols
+    def pod_expt_key_cols(self):
+        """Catalog columns whose values must be the same for each POD, but can
+        differ for different PODs.
+        """
+        if self.frepp_mode and not self.any_components:
+            return ('component', )
+        else:
+            return tuple()
 
     @property
     def var_expt_key_cols(self):
-        return (('chunk_freq', 'component') if self.any_components else ('chunk_freq', ))
+        """Catalog columns whose values must "be the same for each variable", ie
+        are irrelevant but must be constrained to a unique value.
+        """
+        # if we aren't restricted to one component, use all components regardless
+        # of frepp_mode. This is the default behavior when called from the FRE
+        # wrapper.
+        if self.any_components:
+            return ('chunk_freq', 'component')
+        else:
+            return ('chunk_freq', )
+
+    # these have to be supersets of their *_key_cols counterparts; for this use
+    # case they're all just the same set of attributes.
+    @property
+    def expt_cols(self): return self.expt_key_cols
 
     @property
-    def var_expt_cols(self):
-        # Catalog columns whose values must "be the same for each variable", ie
-        # are irrelevant but must be constrained to a unique value.
-        return self.var_expt_key_cols
+    def pod_expt_cols(self): return self.pod_expt_key_cols
+
+    @property
+    def var_expt_cols(self): return self.var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):

@@ -65,14 +65,15 @@ set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
 
 # parse command line arguments manually because getopt doesn't let us pass
 # through unrecognized arguments.
+set frepp_flag=( '--frepp' ) # multi-run/incremental mode, enabled by default
 set passed_args=()
 while ($#argv > 0)
     switch($1:q)
     # arguments we need to recognize and handle in this script
-    case --multi_component:
-        # don't rename the "frepp" flag, for backwards compatibility
-        set passed_args=( $passed_args:q '--frepp' )
-        shift
+    case --run_once:
+        # disable multi-run/incremental mode -- should set this flag if this
+        # script only called once in an XML
+        set frepp_flag=()
         breaksw
     case --component_only:
         set passed_args=( $passed_args:q '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
@@ -149,6 +150,7 @@ echo "mdtf_gfdl.csh: MDTF start"
 
 "${REPO_DIR}/mdtf_framework.py" \
 --site="NOAA_GFDL" \
+$frepp_flag:q \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \

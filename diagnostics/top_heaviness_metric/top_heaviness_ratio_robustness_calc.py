@@ -37,7 +37,7 @@ def top_heaviness_ratio_robustness_calc_model(reanalysis_path, reanalysis_var):
     lev_model=ds[lev_coord].values
     lat_model=ds[lat_coord].values
     lon_model=ds[lon_coord].values
-    isort=np.argsort(lev_coord)[::-1] # descending
+    isort=np.argsort(lev_model)[::-1] # descending
     mid_omega_model=ds[reanalysis_var].values # mon x lev x lat x lon; for the sample data (JAS over 2000-2019) 
     mid_omega_model=mid_omega_model[:,isort]
     mid_omega_model_ltm=np.nanmean(mid_omega_model,axis=0) # lev x lat x lon

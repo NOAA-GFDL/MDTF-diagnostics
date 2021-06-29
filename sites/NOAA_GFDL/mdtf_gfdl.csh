@@ -2,8 +2,8 @@
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
-#SBATCH --chdir=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
-#SBATCH -o /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/%x.o%j
+#SBATCH --chdir=/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics
+#SBATCH -o /home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
 
@@ -28,8 +28,8 @@ set fremodule
 set script_path
 
 ## set paths to site installation
-set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
-set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
+set REPO_DIR="/home/oar.gfdl.mdtf/mdtfmdtf/MDTF-diagnostics"
+set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
 # output is always written to $out_dir; set a path below to GCP a copy of output
 # for purposes of serving from a website
 set WEBSITE_OUTPUT_DIR=""
@@ -143,7 +143,7 @@ wipetmp
 
 ## run the command
 echo "mdtf_gfdl.csh: conda activate"
-source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/mdteam/anaconda"
+source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
 conda activate "${REPO_DIR}/envs/_MDTF_base"
 
 echo "mdtf_gfdl.csh: MDTF start"
@@ -182,14 +182,14 @@ if ($? == 0) then
     echo "mdtf_gfdl.csh: configuring data for experiments website"
 
     set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-    set mdteamDir="${WEBSITE_OUTPUT_DIR}/${shaOut}"
-    if ( ! -d ${mdteamDir} ) then
-        mkdir -p "${mdteamDir}"
-        echo "mdtf_gfdl.csh: Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-        ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    set WEB_COPY_DIR="${WEBSITE_OUTPUT_DIR}/${shaOut}"
+    if ( ! -d ${WEB_COPY_DIR} ) then
+        mkdir -p "${WEB_COPY_DIR}"
+        echo "mdtf_gfdl.csh: Symlinking ${out_dir}/${mdtf_dir} to ${WEB_COPY_DIR}/mdtf"
+        ln -s "${out_dir}/${mdtf_dir}" "${WEB_COPY_DIR}/mdtf"
     else
-        echo "mdtf_gfdl.csh: Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+        echo "mdtf_gfdl.csh: Gcp'ing ${out_dir}/${mdtf_dir}/ to ${WEB_COPY_DIR}/mdtf/"
+        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${WEB_COPY_DIR}/mdtf/"
     endif
     echo "mdtf_gfdl.csh: copied data for experiments website"
     exit $pkg_status

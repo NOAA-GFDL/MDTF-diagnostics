@@ -6,7 +6,7 @@ This page contains information specific to the site installation at the `Geophys
 Site installation
 -----------------
 
-The DET team maintains a site-wide installation of the framework and all supporting data at /home/mdteam/DET/analysis/mdtf/MDTF-diagnostics. This is kept up-to-date and is accessible from both workstations and PPAN; in particular it is **not** necessary for an end user to set up conda environments or download any supporting data, as described in the installation instructions.
+The DET team maintains a site-wide installation of the framework and all supporting data at /home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics. This is kept up-to-date and is accessible from both workstations and PPAN; in particular it is **not** necessary for an end user to set up conda environments or download any supporting data, as described in the installation instructions.
 
 Invoking the package from the site installation's wrapper script automatically prepends ``--site="NOAA_GFDL"`` to the user's command-line flags.
 
@@ -25,7 +25,7 @@ The site installation provides alternative ways to run the diagnostics within GF
 
    .. code-block:: xml
 
-      <analysis switch="on" cumulative="no" script="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
+      <analysis switch="on" cumulative="no" script="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
 
 The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. 
 
@@ -133,7 +133,7 @@ GFDL-specific default values
 
 The following paths are set to more useful default values:
 
---OBS-DATA-REMOTE <DIR>    Site-specific installation of observational data used by individual PODs at /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs\_data. If running on PPAN, this data will be GCP'ed to the current node. If running on a workstation, it will be symlinked.
+--OBS-DATA-REMOTE <DIR>    Site-specific installation of observational data used by individual PODs at /home/oar.gfdl.mdtf/mdtf/inputdata/obs\_data. If running on PPAN, this data will be GCP'ed to the current node. If running on a workstation, it will be symlinked.
 --OBS-DATA-ROOT <OBS_DATA_ROOT>    Local directory for observational data. Defaults to ``$MDTF_TMPDIR``/inputdata/obs_data, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
 --MODEL-DATA-ROOT <MODEL_DATA_ROOT>    Local directory used as a destination for downloaded model data. Defaults to ``$MDTF_TMPDIR``/inputdata/model, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
 --WORKING-DIR <WORKING_DIR>    Working directory. Defaults to ``$MDTF_TMPDIR``/wkdir, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.

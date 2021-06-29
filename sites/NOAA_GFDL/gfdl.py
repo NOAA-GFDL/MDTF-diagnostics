@@ -635,10 +635,10 @@ class GfdlvirtualenvEnvironmentManager(
         modMgr.revert_state()
 
 class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
-    # Use mdteam's anaconda2
+    # Use miniconda3 in the mdtf role account
     def _call_conda_create(self, env_name):
         raise Exception(("Trying to create conda env {} "
-            "in read-only mdteam account.").format(env_name)
+            "in read-only mdtf role account.").format(env_name)
         )
 
 # ------------------------------------------------------------------------

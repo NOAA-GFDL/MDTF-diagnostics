@@ -85,4 +85,4 @@ The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in
    :align: center
    :width: 75 %
    
-   Figure 3. Top-Heaviness Ratio in of the long-term mean omega in July (2000-2019). The ratio is only calculated over grid points where O1 is no less than 0.01 which is very close to zero.
+   Figure 3. Long-term mean Top-Heaviness Ratio in July (2000-2019). The ratio is presented only for the grid points with values no less than 0.01.

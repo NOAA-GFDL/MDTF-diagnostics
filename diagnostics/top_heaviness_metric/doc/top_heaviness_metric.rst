@@ -36,18 +36,17 @@ As a module of the MDTF code package, all scripts of this package can be found u
 Required programming language and libraries
 -------------------------------------------
 
-Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "basemap"
+Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "cartopy"
 
 Required model output variables
 -------------------------------
 
-3-D spatial dimension Omega (units: Pa/s), which can be either the monthly mean in a certain year or the long-term monthly mean (or seasonal) mean.
-
+1) wap (plev x lat x lon) : Vertical Velocity [Pa/s], which can be either the monthly mean in a certain year or the long-term monthly mean (or seasonal) mean.
 
 References
 ----------
 
-.. _ref-Muñoz1:
+.. :
 
 Back, L. E., Hansen, Z., & Handlos, Z. (2017). Estimating vertical motion profile top-heaviness: Reanalysis compared to satellite-based observations and stratiform rain fraction. Journal of the Atmospheric Sciences, 74(3), 855-864. https://doi.org/10.1175/JAS-D-16-0062.1
 

@@ -80,4 +80,4 @@ To assess how well ω' approximates ω, the fractional variance (R2 between the 
 .. figure:: Top_Heaviness_Ratio.png
    :align: center
    :width: 75 %
-   Figure 3.. Top-Heaviness Ratio in of the long-term mean omega in July (2000-2019). The ratio is only calculated over grid points where O1 is no less than 0.01 which is very close to zero.
+   Figure 3. Top-Heaviness Ratio in of the long-term mean omega in July (2000-2019). The ratio is only calculated over grid points where O1 is no less than 0.01 which is very close to zero.

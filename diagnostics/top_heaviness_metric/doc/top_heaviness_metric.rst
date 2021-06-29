@@ -67,8 +67,7 @@ To assess how well ω' approximates ω, the fractional variance (R2 between the 
    :align: center
    :width: 75 %
    
-
-   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
+   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from the varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
 .. figure:: R2_Between_Recon_Omega&Original.png

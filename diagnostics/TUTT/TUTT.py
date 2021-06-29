@@ -1,10 +1,10 @@
-# 26 May top_heaviness_metric.py
-# Top-Heaviness Metric 
+# 28 June TUTT.py
+# Tropical Upper Tropospheric Trough Diagnostic Package
 #
 # ================================================================================
 # 
-# Last update: 20 May, 2021
-# Contributors: Jiacheng Ye (UIUC), Zhuo Wang (UIUC)
+# Last update: 28 June, 2021
+# Contributors: Zhuo Wang (zhuowang@illinois.edu)
 # 
 #  Evaluate model skill for representing vertical motion (omega) profile;
 #  The diabatic heating profile is closely related to vertical motion profile. Thus, diagnosing omega 
@@ -13,23 +13,25 @@
 # Version and contact info
 #
 #  - Version: 1.0
-#  - Contact info: Jiacheng Ye (jye18@illinois.edu) and
+#  - Contact info: 
 #                  Zhuo Wang (zhuowang@illinois.edu)
 #
 # ================================================================================
 # Functionality
 #
-# 1) calculate top-heaviness ratio
-# Under developing 
+# 1) 
+# 2) 
+# 3)
 #
 # ================================================================================
 #
 #    All scripts of this package can be found under: /diagnostics/top_heaviness_metric 
 #    & observational data under: /obs_data/top_heaviness_metric
 #
-#    Monthly 4-D (time-plev-lat-lon) vertical motion (wap) fields are required;
+#    Monthly 3-D (time-lat-lon) geopotential height fields are required;
 #
-# Required programming language and libraries: Tested by Python3; Numpy, Scipy
+# Required programming language: Tested in the Python 3.7 envrionment;
+# Required libraries: Numpy, Scipy, ...
 #
 # ================================================================================
 # Reference: 
@@ -43,31 +45,41 @@
 import os
 import glob
 
+obs_running=1 # =1 if the user wishes to run the example; =0 if the user wishes to disable it. 
+model_running=1 # =1 if the user wishes to run the model data; =0 if the user wishes to disable it. 
+
 missing_file=0
 if len(glob.glob(os.environ["OMEGA_FILE"]))==0:
     print("Required OMEGA data missing!")
     missing_file=1
 
-if missing_file==1:
-    print("Top-heaviness metric diagnostics Package will NOT be executed!")
+if missing_file == 1:
+    print("TUTT Diag Package will NOT be executed!")
+    
 else:
-    try:
-        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_calculation.py")
-    except OSError as e:
-        print('WARNING',e.errno,e.strerror)
-        print("**************************************************")
-        print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
-        print("**************************************************")
-    # if the user only focuses on calculating top-heaviess ratio instead of applying some tests on 
-    #   ratio robustness, the user can choose not to run the following python file.  
-    try:
-        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_robustness_calc.py")
-    except OSError as e:
-        print('WARNING',e.errno,e.strerror)
-        print("**************************************************")
-        print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_robustness_calc.py) is NOT Executed as Expected!")
-        print("**************************************************")
-
+    if obs_running == 0:
+        print("The example data will Not be executed")
+    elif obs_running == 1:
+        try:
+            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc.py")
+            print("The TUTT diag based on example data has been successfully conducted!")
+        except OSError as e:
+            print('WARNING',e.errno,e.strerror)
+            print("**************************************************")
+            print("TUTT_diag_obs.py based on example data is NOT Executed as Expected!")
+            print("**************************************************")
+    if model_running == 0:
+        print("The example data will Not be executed")
+    elif model_running == 1:
+        try:
+            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc.py")
+            print("The TUTT diag based on model data has been successfully conducted!")
+        except OSError as e:
+            print('WARNING',e.errno,e.strerror)
+            print("**************************************************")
+            print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
+            print("**************************************************")
+            
     print("**************************************************")
     print("Top-Heaviness Metric Diagnostics Executed!")
     print("**************************************************")

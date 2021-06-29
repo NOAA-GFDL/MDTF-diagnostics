@@ -41,7 +41,7 @@ Python3 packages: "netCDF4", "xarray", "numpy", "scipy", "matplotlib", "cartopy"
 Required model output variables
 -------------------------------
 
-1) wap (plev x lat x lon) : Vertical Velocity [Pa/s], which can be either the monthly mean in a certain year or the long-term monthly mean (or seasonal) mean.
+1) wap (plev x lat x lon) : Vertical Velocity [Pa/s], which can be either the monthly mean for a certain year or the long-term monthly/season mean.
 
 References
 ----------

@@ -84,8 +84,9 @@ your txt name
 Explain the data inside of your txt file and its writing format 
 
 for example:
+
 TUTT_contour_lat_1979-Ug_2.0.txt
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

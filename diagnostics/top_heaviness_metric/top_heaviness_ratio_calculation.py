@@ -6,7 +6,8 @@ import xarray as xr
 import numpy as np
 from scipy import integrate
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
+import cartopy.mpl.ticker as cticker
 
 
 #Setting variables equal to environment variables set by the diagnostic
@@ -51,30 +52,48 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     fig, axes = plt.subplots(figsize=(8,4))
     ilat=np.argsort(lat_model)
     ilon=np.argsort(lon_model)
-    x,y = np.meshgrid(lon_model,lat_model) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_model[ilat][0],urcrnrlat=lat_model[ilat][-1],\
-            llcrnrlon=lon_model[ilon][0],urcrnrlon=lon_model[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_model[ilat][0],lat_model[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_model[ilon][0],lon_model[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.06,0.07,0.01)
-    im0 = m.contourf(X,Y,O1_model,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both')
+    im0 = axes.contourf(lon_model, lat_model, O1_model, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_model[ilon][0],lon_model[ilon][-1],60)
+    lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O1 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout() 
     fig.savefig(WK_DIR+"/model/"+CASENAME+"_O1.png", format='png',bbox_inches='tight')
     #====================== O2 =======================
     fig, axes = plt.subplots(figsize=(8,4))
-    x,y = np.meshgrid(lon_model,lat_model) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_model[ilat][0],urcrnrlat=lat_model[ilat][-1],\
-            llcrnrlon=lon_model[ilon][0],urcrnrlon=lon_model[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_model[ilat][0],lat_model[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_model[ilon][0],lon_model[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.06,0.07,0.01)
-    im0 = m.contourf(X,Y,O2_model,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
+    im0 = axes.contourf(lon_model, lat_model, O2_model, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_model[ilon][0],lon_model[ilon][-1],60)
+    lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout()
@@ -84,15 +103,24 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     mmid1=O2_model/O1_model
     midi=O1_model<0.01   # We only investigate areas with O1 larger than zero
     mmid1[midi]=np.nan
-    x,y = np.meshgrid(lon_model,lat_model)
-    m = Basemap(projection="cyl",llcrnrlat=lat_model[ilat][0],urcrnrlat=lat_model[ilat][-1],\
-            llcrnrlon=lon_model[ilon][0],urcrnrlon=lon_model[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_model[ilat][0],lat_model[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_model[ilon][0],lon_model[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.6,0.7,0.1)
-    im0 = m.contourf(X,Y,mmid1,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
+    im0 = axes.contourf(lon_model, lat_model, mmid1, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_model[ilon][0],lon_model[ilon][-1],60)
+    lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('Top-heaviness Ratio (O2/O1)',loc='center',fontsize=18)
     fig.tight_layout()
@@ -139,30 +167,48 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     fig, axes = plt.subplots(figsize=(8,4))
     ilat=np.argsort(lat_obs)
     ilon=np.argsort(lon_obs)
-    x,y = np.meshgrid(lon_obs,lat_obs) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_obs[ilat][0],urcrnrlat=lat_obs[ilat][-1],\
-            llcrnrlon=lon_obs[ilon][0],urcrnrlon=lon_obs[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.06,0.07,0.01)
-    im0 = m.contourf(X,Y,O1_obs,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both')
+    im0 = axes.contourf(lon_obs, lat_obs, O1_obs, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60)
+    lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O1 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout() 
     fig.savefig(WK_DIR+"/obs/ERA5_O1_2000_2019_July.png", format='png',bbox_inches='tight')
     #====================== O2 =======================
     fig, axes = plt.subplots(figsize=(8,4))
-    x,y = np.meshgrid(lon_obs,lat_obs) 
-    m = Basemap(projection="cyl",llcrnrlat=lat_obs[ilat][0],urcrnrlat=lat_obs[ilat][-1],\
-            llcrnrlon=lon_obs[ilon][0],urcrnrlon=lon_obs[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.06,0.07,0.01)
-    im0 = m.contourf(X,Y,O2_obs,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
+    im0 = axes.contourf(lon_obs, lat_obs, O2_obs, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60)
+    lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('O2 [Pa/s]',loc='center',fontsize=16)
     fig.tight_layout()
@@ -172,15 +218,24 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     mmid1=O2_obs/O1_obs
     midi=O1_obs<0.01   # We only investigate areas with O1 larger than zero
     mmid1[midi]=np.nan
-    x,y = np.meshgrid(lon_obs,lat_obs)
-    m = Basemap(projection="cyl",llcrnrlat=lat_obs[ilat][0],urcrnrlat=lat_obs[ilat][-1],\
-            llcrnrlon=lon_obs[ilon][0],urcrnrlon=lon_obs[ilon][-1],ax=axes,resolution='c')
-    m.drawcoastlines(linewidth=1, color="k")
-    m.drawparallels(np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30),labels=[1,0,0,0],linewidth=0.,fontsize=16)
-    m.drawmeridians(np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60),labels=[0,0,0,1],linewidth=0.,fontsize=16)
-    X,Y = m(x,y)
+    axes = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     clevs=np.arange(-0.6,0.7,0.1)
-    im0 = m.contourf(X,Y,mmid1,clevs,cmap = plt.get_cmap('RdBu_r'),extend='both') 
+    im0 = axes.contourf(lon_obs, lat_obs, mmid1, clevs,cmap = plt.get_cmap('RdBu_r'),extend='both',
+             transform=ccrs.PlateCarree())
+    axes.coastlines()
+    lon_grid = np.arange(lon_obs[ilon][0],lon_obs[ilon][-1],60)
+    lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
+    # set x labels
+    axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    lon_formatter = cticker.LongitudeFormatter()
+    axes.xaxis.set_major_formatter(lon_formatter)
+    # set y labels
+    axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    lat_formatter = cticker.LatitudeFormatter()
+    axes.yaxis.set_major_formatter(lat_formatter)
+    # colorbar
     fig.colorbar(im0, ax=axes, orientation="horizontal", pad=0.15,shrink=.9,aspect=45)
     axes.set_title('Top-heaviness Ratio (O2/O1)',loc='center',fontsize=18)
     fig.tight_layout()

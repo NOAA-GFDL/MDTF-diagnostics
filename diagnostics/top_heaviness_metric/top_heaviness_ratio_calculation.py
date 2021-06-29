@@ -61,12 +61,12 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar
@@ -85,12 +85,12 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar
@@ -112,12 +112,12 @@ def top_heaviness_ratio_calculation_model(reanalysis_path, reanalysis_var):
     lat_grid = np.arange(lat_model[ilat][0],lat_model[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar
@@ -176,12 +176,12 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar
@@ -200,12 +200,12 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar
@@ -227,12 +227,12 @@ def top_heaviness_ratio_calculation_obs(obs_data_full_dir):
     lat_grid = np.arange(lat_obs[ilat][0],lat_obs[ilat][-1],30)
     # set x labels
     axes.set_xticks(lon_grid, crs=ccrs.PlateCarree())
-    axes.set_xticklabels(lon_grid, rotation=0, fontsize=12)
+    axes.set_xticklabels(lon_grid, rotation=0, fontsize=14)
     lon_formatter = cticker.LongitudeFormatter()
     axes.xaxis.set_major_formatter(lon_formatter)
     # set y labels
     axes.set_yticks(lat_grid, crs=ccrs.PlateCarree())
-    axes.set_yticklabels(lat_grid, rotation=0, fontsize=12)
+    axes.set_yticklabels(lat_grid, rotation=0, fontsize=14)
     lat_formatter = cticker.LatitudeFormatter()
     axes.yaxis.set_major_formatter(lat_formatter)
     # colorbar

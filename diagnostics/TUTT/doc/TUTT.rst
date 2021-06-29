@@ -83,6 +83,12 @@ your txt name
 
 Explain the data inside of your txt file and its writing format 
 
+for example:
+TUTT_contour_lat_1979-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The corrdinates of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
+
 
    
 

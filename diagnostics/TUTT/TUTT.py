@@ -58,10 +58,10 @@ if missing_file == 1:
     
 else:
     if obs_running == 0:
-        print("The example data will Not be executed")
+        print("The TUTT diag based on example data will Not be executed")
     elif obs_running == 1:
         try:
-            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc.py")
+            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc_obs.py")
             print("The TUTT diag based on example data has been successfully conducted!")
         except OSError as e:
             print('WARNING',e.errno,e.strerror)
@@ -69,10 +69,10 @@ else:
             print("TUTT_diag_obs.py based on example data is NOT Executed as Expected!")
             print("**************************************************")
     if model_running == 0:
-        print("The example data will Not be executed")
+        print("The TUTT diag based on model data will Not be executed")
     elif model_running == 1:
         try:
-            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc.py")
+            os.system("python3 "+os.environ["POD_HOME"]+"/"+"TUTT_calc_model.py")
             print("The TUTT diag based on model data has been successfully conducted!")
         except OSError as e:
             print('WARNING',e.errno,e.strerror)

@@ -4,10 +4,10 @@
 # ================================================================================
 # 
 # Last update: 20 May, 2021
-# Contributors: Jiacheng Ye (UIUC), Zhuo Wang (UIUC)
+# Contributors: Jiacheng Ye (jye18@illinois.edu; UIUC), Zhuo Wang (zhuowang@illinois.edu; UIUC)
 # 
-#  Evaluate model skill for representing vertical motion (omega) profile;
-#  The diabatic heating profile is closely related to vertical motion profile. Thus, diagnosing omega 
+#  Evaluate model performance for the representation of vertical motion (omega) profile;
+#  The diabatic heating profile is closely related to vertical motion profile. Thus, diagnosing omega vertical structure
 #  would help us to better understand the coupling between large-scale circulation and precipitation process
 #
 # Version and contact info

@@ -140,6 +140,22 @@
       "units": "W m-2",
       "ndim": 3
     },
+    // Variables for Flow Dependent Cross Timescale Model Diagnostic
+    "zg250": {
+      "standard_name": "geopotential_height_250_mbar",
+      "units": "m",
+      "ndim": 3
+    },
+    "ta250": {
+      "standard_name": "air_temperature_250_mbar",
+      "units": "K",
+      "ndim": 3
+    },
+    "ta500": {
+      "standard_name": "air_temperature_500_mbar",
+      "units": "K",
+      "ndim": 3
+    },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
     // NB: need to perform rotation to get from u,v?

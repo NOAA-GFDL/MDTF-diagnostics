@@ -29,9 +29,9 @@ The site installation provides alternative ways to run the diagnostics within GF
 
    The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. 
 
-   The wrapper script calls the site installation of the package with the ``--frepp`` and ``--data-manager="GFDL_PP"`` (see below) options. ``GFDL_PP`` defaults to assuming GFDL variable naming :ref:`conventions<ref-data-conventions>`; data which follows other conventions (e.g. fremetarized runs intended for publication as part of CMIP6) requires the ``--convention`` flag to be set explicitly. In general, the wrapper script passes through any additional options set in the tag's ``script`` attribute, as well as setting the paths provided by FRE. This can be used to, e.g., only run PODs relevant for one model ``<component>`` with the ``--pods`` option.
+   The wrapper script calls the site installation of the package with the ``--data-manager="GFDL_PP"`` (see below) option. ``GFDL_PP`` defaults to assuming GFDL variable naming :ref:`conventions<ref-data-conventions>`; data which follows other conventions (e.g. fremetarized runs intended for publication as part of CMIP6) requires the ``--convention`` flag to be set explicitly. In general, the wrapper script passes through any additional options set in the tag's ``script`` attribute, in addition to setting the data attributes provided by FRE. Passing through package flags in the ``<analysis>`` tag can be used to, e.g., only run specific PODs for each ``<component>`` with the ``--pods`` option.
 
-   Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/components. We provide two ways to address this issue:
+   Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/``<component>``\s. We provide two ways to address this issue:
 
       A. If it's known ahead of time that a given model ``<component>`` will dominate the run time and finish last, one can call ``mdtf_gfdl.csh --run_once`` from an ``<analysis>`` tag in that component only. In this case, the framework will search all data present in the /pp/ output directory when it runs. The ``<component>`` being used doesn't need to generate any data analyzed by the diagnostics; in this case it's only used to schedule the diagnostics' execution.
 
@@ -94,7 +94,7 @@ This data source implements the following logic to guarantee that all data it pr
 
 * This data source only searches data saved as time series (``/ts/``), rather than time averages, since no POD is currently designed to use time-averaged data.
 * If the same data has been saved in files of varying chronological length (``<chunk_freq>``), the shortest ``<chunk_freq>`` is used, in order to minimize the amount of data that is transferred but not used (because it falls outside of the user's analysis period).
-* By default, any variable can come from model ``<component>``, with the same component used for all variables requested by a POD if possible. This setting is required to enable the execution of PODs that use data from different ``<component>``s or realms. 
+* By default, any variable can come from model ``<component>``, with the same component used for all variables requested by a POD if possible. This setting is required to enable the execution of PODs that use data from different ``<component>``\s or realms. 
 
   - Specifying a model component with the ``--component`` flag does one of two things, depending on whether the package is being run once or incrementally. 
   - If the package is being run once, all data used must come from that component (e.g., multi-realm PODs will not run). In this case we assume the user wants to focus their attention on this component exclusively.

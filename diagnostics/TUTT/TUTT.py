@@ -33,18 +33,19 @@
 #    All scripts of this package can be found under: /diagnostics/TUTT/ 
 #    & observational data under: /obs_data/TUTT/
 #
-#    Long-term mean 2-D (lat-lon) geopotential height fields are required;
+#    3-D (time-lat-lon) 200 hPa geopotential height fields are required;
 #
 # Required programming language: Tested in the Python 3.7 envrionment;
-# Required libraries: Numpy, Scipy, ...
+# Required libraries: "netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "cartopy"
 #
 # ================================================================================
 # Reference: 
-#   1) Back, L. E., Hansen, Z., & Handlos, Z. (2017). Estimating vertical motion profile top-heaviness: 
-#   Reanalysis compared to satellite-based observations and stratiform rain fraction. 
-#   Journal of the Atmospheric Sciences, 74(3), 855-864.
-#   2) Our paper which focuses on GEFS v12 diagnostics is under progress...
-# 
+# Wang, Z., Zhang, G., Dunkerton, T. J., & Jin, F. F. (2020). 
+#   Summertime stationary waves integrate tropical and extratropical impacts on tropical cyclone activity. 
+#   Proceedings of the National Academy of Sciences of the United States of America, 117(37), 22720-22726. https://doi.org/10.1073/pnas.2010547117
+#
+# Chuan-Chieh Chang and Zhuo's paper is under developing...
+
 
 # driver file
 import os
@@ -55,7 +56,7 @@ model_running=1 # =1 if the user wishes to run the model data; =0 if the user wi
 
 missing_file=0
 if len(glob.glob(os.environ["OMEGA_FILE"]))==0:
-    print("Required OMEGA data missing!")
+    print("Required HGT200 data missing!")
     missing_file=1
 
 if missing_file == 1:
@@ -82,11 +83,11 @@ else:
         except OSError as e:
             print('WARNING',e.errno,e.strerror)
             print("**************************************************")
-            print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
+            print("TUTT_diag_model.py based on model data is NOT Executed as Expected!")
             print("**************************************************")
             
     print("**************************************************")
-    print("Top-Heaviness Metric Diagnostics Executed!")
+    print("Tropical Upper-Tropospheric Trough Diagnostics Executed!")
     print("**************************************************")
 
 

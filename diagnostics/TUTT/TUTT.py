@@ -4,31 +4,36 @@
 # ================================================================================
 # 
 # Last update: 28 June, 2021
-# Contributors: Zhuo Wang (zhuowang@illinois.edu)
+# PI: Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
+# Developer/point of contact (Zhuo Wang, Gan Zhang, Chuan-Chieh Chang, and Jiacheng Ye, DAS UIUC)
 # 
-#  Evaluate model skill for representing vertical motion (omega) profile;
-#  The diabatic heating profile is closely related to vertical motion profile. Thus, diagnosing omega 
-#  would help us to better understand the coupling between large-scale circulation and precipitation process
+#  Tropical upper-tropospheric troughs (TUTTs) are part of summertime stationary waves and provide a 
+#  unified framework that can be used to better understand tropical cyclone (TC) variability over different basins.
+#  Thus, a better understanding of how TUTTs will change as climate warms also increases our confidence in future TC projection. 
+#  This diagnostic package is used to evaluate 200-hPa TUTT area in both climate models and reanalysis datasets.
 #
 # Version and contact info
 #
 #  - Version: 1.0
 #  - Contact info: 
-#                  Zhuo Wang (zhuowang@illinois.edu)
+#  Zhuo Wang (zhuowang@illinois.edu)
 #
 # ================================================================================
 # Functionality
 #
-# 1) 
-# 2) 
-# 3)
+# 1) Calculates geostrophic zonal winds (Ug) using 200-hPa geopotential height with a fixed Coriolis parameter at 15N.
+# 2) Identifies positions of the circumglobal contour of the long-term seasonal-mean Ug. The value of Ug can be specified by the user, 
+#    usually ranges from 1 to 2 m/s. The zonal-mean latitude of the circumglobal contour is chosen as the reference latitude.
+# 3) The TUTT index is estimated from the area where the circumglobal contour of seasonal-mean Ug extends southward of the reference latitude.
+# 4) Calculates TUTT strength and central location.
+#
 #
 # ================================================================================
 #
-#    All scripts of this package can be found under: /diagnostics/top_heaviness_metric 
-#    & observational data under: /obs_data/top_heaviness_metric
+#    All scripts of this package can be found under: /diagnostics/TUTT/ 
+#    & observational data under: /obs_data/TUTT/
 #
-#    Monthly 3-D (time-lat-lon) geopotential height fields are required;
+#    Long-term mean 2-D (lat-lon) geopotential height fields are required;
 #
 # Required programming language: Tested in the Python 3.7 envrionment;
 # Required libraries: Numpy, Scipy, ...

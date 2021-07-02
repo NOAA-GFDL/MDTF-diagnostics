@@ -72,28 +72,53 @@ a. Weak westerly wind sometimes extends southward of the equator and connects to
 
 b. Pacific TUTT and Atlantic TUTT sometimes are connected to each other. This has been observed during the years when the 200-hPa anticyclone over the Central America is weak. The longitude used to divide two TUTTs can be decided by the following options:
 
-    The script calculates the averaged 200-hPa geopotential height between 20 to 30 N, and then searches the longitude where the averaged 200-hPa geopotential height is the largest between 120 W to 80 W.   This option uses the approximate location of subtropical ridge over the North America as the dividing longitude.
-    The dividing longitude is specified by the user.
+    1. The script calculates the averaged 200-hPa geopotential height between 20 to 30 N, and then searches the longitude where the averaged 200-hPa geopotential height is the largest between 120 W to 80 W.   This option uses the approximate location of subtropical ridge over the North America as the dividing longitude.
+    2. The dividing longitude is specified by the user.
 
 .. figure:: TUTT_example.png
    :align: center
    :width: 75 %
    
 
-   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
+   Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals to 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
    
-your txt name
-^^^^^^^^^^^^^
 
-Explain the data inside of your txt file and its writing format 
+Descriptions of outputted .txt files:
 
-for example:
-
-TUTT_contour_lat_1979-Ug_2.0.txt
+TUTT_contour_lat_1958-Ug_2.0.txt
+TUTT_contour_lon_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The corrdinates (latitude and longitude) of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
 
-The corrdinates of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
+TUTT_ref_lat_1958-Ug_2.0.txt
+TUTT_contour_lon_1958-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The corrdinates (latitude and longitude) of reference latitude.
 
 
-   
+TUTT_contour_length_1958-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Length (i.e., number of points) of TUTT contour.
 
+tutt_Area_lat-1958-1958JASO-Ug_2.0.txt
+tutt_Area_lon-1958-1958JASO-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The central locations (latitude and longitude) of Pacific and Atlantic TUTTs. When calculating averaged latitude/longitude, each grid point has the same weighting.
+
+tutt_UG.wt_lat-1958-1958JASO-Ug_2.0.txt
+tutt_UG.wt_lon-1958-1958JASO-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The central locations (latitude and longitude) of Pacific and Atlantic TUTTs. When calculating averaged latitude/longitude, each grid point is weighted by the value of Ug.
+
+
+tutt_area-1958-1958JASO-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The area of Pacific and Atlantic TUTTs.
+
+tutt_intensity-1958-1958JASO-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The intensity/strength of Pacific and Atlantic TUTTs.
+
+tutt_ref.latitude-1958-1958JASO-Ug_2.0.txt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The value of reference latitude.

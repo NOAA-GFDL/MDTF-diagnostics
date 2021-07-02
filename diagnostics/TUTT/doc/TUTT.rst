@@ -85,13 +85,11 @@ b. Pacific TUTT and Atlantic TUTT sometimes are connected to each other. This ha
 
 Descriptions of outputted .txt files:
 
-TUTT_contour_lat_1958-Ug_2.0.txt
-TUTT_contour_lon_1958-Ug_2.0.txt
+TUTT_contour_lat_1958-Ug_2.0.txt/TUTT_contour_lon_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The corrdinates (latitude and longitude) of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
 
-TUTT_ref_lat_1958-Ug_2.0.txt
-TUTT_contour_lon_1958-Ug_2.0.txt
+TUTT_ref_lat_1958-Ug_2.0.txt/TUTT_contour_lon_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The corrdinates (latitude and longitude) of reference latitude.
 
@@ -100,13 +98,11 @@ TUTT_contour_length_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Length (i.e., number of points) of TUTT contour.
 
-tutt_Area_lat-1958-1958JASO-Ug_2.0.txt
-tutt_Area_lon-1958-1958JASO-Ug_2.0.txt
+tutt_Area_lat-1958-1958JASO-Ug_2.0.txt/tutt_Area_lon-1958-1958JASO-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The central locations (latitude and longitude) of Pacific and Atlantic TUTTs. When calculating averaged latitude/longitude, each grid point has the same weighting.
 
-tutt_UG.wt_lat-1958-1958JASO-Ug_2.0.txt
-tutt_UG.wt_lon-1958-1958JASO-Ug_2.0.txt
+tutt_UG.wt_lat-1958-1958JASO-Ug_2.0.txt/tutt_UG.wt_lon-1958-1958JASO-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The central locations (latitude and longitude) of Pacific and Atlantic TUTTs. When calculating averaged latitude/longitude, each grid point is weighted by the value of Ug.
 

@@ -7,10 +7,13 @@
 # PI: Zhuo Wang, zhuowang@illinois.edu, DAS UIUC)
 # Developer/point of contact (Zhuo Wang, Gan Zhang, Chuan-Chieh Chang, and Jiacheng Ye, DAS UIUC)
 # 
-#  Tropical upper-tropospheric troughs (TUTTs) are part of summertime stationary waves and provide a 
-#  unified framework that can be used to better understand tropical cyclone (TC) variability over different basins.
-#  Thus, a better understanding of how TUTTs will change as climate warms also increases our confidence in future TC projection. 
-#  This diagnostic package is used to evaluate 200-hPa TUTT area in both climate models and reanalysis datasets.
+# Tropical upper-tropospheric troughs (TUTTs) are part of summertime stationary waves and 
+# provide a unified framework that can be used to better understand variability of tropical
+# cyclones (TCs) over different basins.Identifying deficiencies in representing TUTTs has 
+# important implications for the improved regional TC simulation in climate models. A better 
+# understanding of how TUTTs will change as climate warms also increases our confidence in 
+# future TC projection. This diagnostic package is used to evaluate 200-hPa TUTT area in 
+# both climate models and reanalysis datasets.
 #
 # Version and contact info
 #

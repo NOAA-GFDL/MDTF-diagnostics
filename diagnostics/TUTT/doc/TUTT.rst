@@ -48,7 +48,7 @@ Required programming language and libraries
 
 Python3 packages: "netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "cartopy"
 
-Required model output variables
+Required model input variables
 -------------------------------
 
 Time-varying 2-D geopotential height fields at 200 hPa (unit: gpm). 200-hPa geopotneitla height should be the monthly-mean field. Horizontal resolution of the geopotential height data can be deceided by the user. Note that the longitude index of the data must goes from west to east (0-360E).

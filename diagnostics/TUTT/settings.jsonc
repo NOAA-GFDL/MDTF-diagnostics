@@ -3,7 +3,7 @@
     "long_name" : "Tropical Upper-Tropospheric Trough Diagnostic Package",
     "driver" : "TUTT.py",
     "realm" : "atmos",
-    "description" : "TUTTs are part of summertime stationary waves and can be used to better understand tropical and extratropical variability over different basins.",
+    "description" : "TUTTs are part of summertime stationary waves and can be ur different basins.",
     "runtime_requirements" : {
       "python3" : ["netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "cartopy"]
     },

@@ -1,9 +1,9 @@
 {
   "settings" : {
-    "long_name" : "Tropical Upper-Tropospheric Trough Diagnostic Package",
+    "long_name" : "Tropical Upper-Tropospheric Trough (TUTT) Diagnostic Package",
     "driver" : "TUTT.py",
     "realm" : "atmos",
-    "description" : "TUTTs are part of summertime stationary waves and can be ur different basins.",
+    "description" : "This diagnostic package is used to evaluate 200-hPa TUTT area in both climate models and reanalysis datasets.",
     "runtime_requirements" : {
       "python3" : ["netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "cartopy"]
     },

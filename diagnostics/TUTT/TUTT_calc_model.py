@@ -6,7 +6,6 @@ from normalize import normalize
 from netCDF4 import Dataset, num2date
 # http://scikit-image.org/
 from skimage import measure
-# conda install -c scitools shapely
 from shapely.geometry import Polygon, LineString
 from scipy.signal import argrelextrema
 from scipy.stats.stats import pearsonr

@@ -25,8 +25,7 @@
 # Functionality
 #
 # 1) Calculates geostrophic zonal winds (Ug) using 200-hPa geopotential height with a fixed Coriolis parameter at 15N.
-# 2) Identifies positions of the circumglobal contour of the long-term seasonal-mean Ug. The value of Ug can be specified by the user, 
-#    usually ranges from 1 to 2 m/s. The zonal-mean latitude of the circumglobal contour is chosen as the reference latitude.
+# 2) Identifies positions of the circumglobal contour of the long-term seasonal-mean Ug. The value of Ug can be specified by the user, and usually ranges from 1 to 2 m/s. The zonal-mean latitude of the circumglobal contour is chosen as the reference latitude.
 # 3) The TUTT index is estimated from the area where the circumglobal contour of seasonal-mean Ug extends southward of the reference latitude.
 # 4) Calculates TUTT strength and central location.
 #

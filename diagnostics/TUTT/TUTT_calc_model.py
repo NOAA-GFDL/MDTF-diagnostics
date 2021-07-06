@@ -1,7 +1,5 @@
 #Jun 29 2021
 import matplotlib.pyplot as pyplot
-#from mpl_toolkits.basemap import Basemap
-#from mpl_toolkits.basemap import addcyclic
 import numpy as np
 from normalize import normalize
 # http://netcdf4-python.googlecode.com/svn/trunk/docs/netCDF4-module.html

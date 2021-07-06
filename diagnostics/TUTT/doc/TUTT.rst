@@ -51,7 +51,7 @@ Python3 packages: "netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "c
 Required model input variables
 -------------------------------
 
-Time-varying 2-D geopotential height fields at 200 hPa (unit: gpm). 200-hPa geopotneitla height should be the monthly-mean field. Horizontal resolution of the geopotential height data can be deceided by the user. Note that the longitude index of the data must goes from west to east (0-360E).
+Time-varying 2-D geopotential height fields at 200 hPa (unit: gpm). 200-hPa geopotential height should be the monthly-mean field. Horizontal resolution of the geopotential height data can be deceided by the user. Note that the longitude index of the data goes from west to east (0-360E).
 
 
 References
@@ -61,7 +61,8 @@ References
 
 Wang, Z., Zhang, G., Dunkerton, T. J., & Jin, F. F. (2020). Summertime stationary waves integrate tropical and extratropical impacts on tropical cyclone activity. Proceedings of the National Academy of Sciences of the United States of America, 117(37), 22720-22726. https://doi.org/10.1073/pnas.2010547117
 
-Chuan-Chieh Chang and Zhuo's paper is under developing...
+Chuan-Chieh Chang and Zhuo's paper is in preparation...
+Title: Chang, C.-C. and Z. Wang, 2021: Summertime Subtropical Stationary Waves: Variability and Impacts on the Tropical Cyclone Activity 
 
 
 
@@ -87,11 +88,11 @@ Descriptions of outputted .txt files:
 
 TUTT_contour_lat_1958-Ug_2.0.txt/TUTT_contour_lon_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The corrdinates (latitude and longitude) of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
+The coordinates (latitude and longitude) of TUTT contour given by 200 hPa zonal geostrophic wind (Ug) at value 2 m/s.
 
 TUTT_ref_lat_1958-Ug_2.0.txt/TUTT_contour_lon_1958-Ug_2.0.txt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The corrdinates (latitude and longitude) of reference latitude.
+The coordinates (latitude and longitude) of reference latitude.
 
 
 TUTT_contour_length_1958-Ug_2.0.txt

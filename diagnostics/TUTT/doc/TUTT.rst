@@ -80,7 +80,7 @@ b. Pacific TUTT and Atlantic TUTT sometimes are connected to each other. This ha
    :width: 75 %
    
 
-   Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals to 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+   Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
    
 
 Descriptions of outputted .txt files:

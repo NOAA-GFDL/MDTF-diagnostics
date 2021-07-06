@@ -46,7 +46,8 @@
 #   Summertime stationary waves integrate tropical and extratropical impacts on tropical cyclone activity. 
 #   Proceedings of the National Academy of Sciences of the United States of America, 117(37), 22720-22726. https://doi.org/10.1073/pnas.2010547117
 #
-# Chuan-Chieh Chang and Zhuo's paper is under developing...
+# Chuan-Chieh Chang and Zhuo's paper is in preparation...
+#Title: Chang, C.-C. and Z. Wang, 2021: Summertime Subtropical Stationary Waves: Variability and Impacts on the Tropical Cyclone Activity 
 
 
 # driver file

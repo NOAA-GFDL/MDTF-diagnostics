@@ -127,19 +127,40 @@ class MDTFCFAccessorMixin(object):
         empty_keys = []
         delete_keys = []
         dims_list = list(axes_obj.dims)
+        coords_list = list(axes_obj.coords)
+
+        # if the number of coordinates is greater than the number of dimensions,
+        # assume that we have a curvilinear grid that is defined by 2-dimensional lat & lon coords
+        if len(coords_list) > len(dims_list):
+
+            # subtract the coordinate list from the dimensions list
+            subset_dims = list(set(dims_list)-set(coords_list))
+
+            # determine if we have a time dimension to deal with
+            timedim = vardict["T"][0] if len(vardict["T"]) > 0 else None
+
+            # add back in the time dimension if necessary
+            if timedim is not None:
+                dims_list = vardict["T"] + subset_dims
+            else:
+                dims_list = subset_dims
+
         for k,v in vardict.items():
             if len(v) > 1 and var_name is not None:
                 _log.error('Too many %s axes found for %s: %s', k, var_name, v)
                 raise TypeError(f"Too many {k} axes for {var_name}.")
             elif len(v) == 1:
-                if v[0] not in dims_list:
+                if v[0] not in coords_list:
                     _log.warning(("cf_xarray fix: %s axis %s not in dimensions "
                         "for %s; dropping."), k, v[0], var_name)
                     delete_keys.append(k)
                 else:
-                    dims_list.remove(v[0])
+                    coords_list.remove(v[0])
+                    if v[0] in dims_list:
+                        dims_list.remove(v[0])
             else:
                 empty_keys.append(k)
+
         if len(dims_list) > 0:
             # didn't assign all dims for this var
             if len(dims_list) == 1 and len(empty_keys) == 1:
@@ -628,24 +649,31 @@ class DatasetParser():
         for coord in ds.cf.axes(tv_name).values():
             # .axes() will have thrown TypeError if XYZT axes not all uniquely defined
             assert isinstance(coord, xr.core.dataarray.DataArray)
+
         # check set of dimension coordinates (array dimensionality) agrees
         our_axes = translated_var.dim_axes_set
         ds_axes = ds[tv_name].cf.dim_axes_set
         if our_axes != ds_axes:
-            raise TypeError(f"Variable {tv_name} has unexpected dimensionality: "
-                f" expected axes {set(our_axes)}, got {set(ds_axes)}.")
+            _log.warning(f"Variable {tv_name} has unexpected dimensionality:  "+\
+                         f"expected axes {set(our_axes)}, got {set(ds_axes)}.")
+            valid_axes = False
+        else:
+            valid_axes = True
+
         # check dimension coordinate names, std_names, units, bounds
-        for coord in translated_var.dim_axes.values():
-            ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
-            self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
-            try:
-                bounds_name = ds.cf.get_bounds(ds_coord_name).name
-                _log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                    'bounds', coord.name, bounds_name)
-                coord.bounds = bounds_name
-            except KeyError:
-                coord.bounds = None
-                continue
+        if valid_axes:
+            for coord in translated_var.dim_axes.values():
+                ds_coord_name = ds[tv_name].cf.dim_axes[coord.axis]
+                self.check_names_and_units(coord, ds, ds_coord_name, update_name=True)
+                try:
+                    bounds_name = ds.cf.get_bounds(ds_coord_name).name
+                    _log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                        'bounds', coord.name, bounds_name)
+                    coord.bounds = bounds_name
+                except KeyError:
+                    coord.bounds = None
+                    continue
+
         for c_name in ds[tv_name].dims:
             if ds[c_name].size == 1:
                 _log.warning(("Dataset has dimension coordinate '%s' of size 1 "

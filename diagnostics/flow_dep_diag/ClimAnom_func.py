@@ -10,7 +10,7 @@ time_var = os.environ["time_coord"] #set environment variable for time equal to 
 #function to calculate climatology anomalies for eah variable
 def climAnom(var_path, var_name):
 
-    ds = xr.open_dataset(var_path, decode_times = True)
+    ds = xr.open_dataset(var_path, use_cftime = True)
     ds[time_var] = ds.indexes[time_var].to_datetimeindex() #convert time to datetime so we can use groupby functionality
     # Drop 1 dimensional coordinates
     ds = ds.squeeze()

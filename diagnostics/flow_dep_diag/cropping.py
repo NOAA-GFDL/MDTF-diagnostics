@@ -12,15 +12,13 @@ elo=-66.96
 ds = xr.open_dataset(file_path, decode_times=False)
 
 #the diagnostic assumes your grid has a longitudinal range -180,180
-#Shift your grid from 0,360 using the following lines
+#Shift your grid from 0,360 using the following lines; this will retain the correct
+#coordinates if values are between -180,180
 ds.coords['lon'] = (ds.coords['lon'] + 180) % 360 - 180 #shift the values
 ds = ds.sortby(ds.lon) #sort them
-
-#in the case your data is not cropped to a
-#specific region, this code can be used to select a subset of data within a lat/lon
-
+#cropping the dataset by the bounding box coordinates specified above
 mask_lon = (ds.lon >= wlo) & (ds.lon <= elo)
 mask_lat = (ds.lat >= sla) & (ds.lat <= nla)
-cropped_ds = ds.where(mask_lon & mask_lat, drop=True)
+cropped_ds = ds.where(mask_lon & mask_lat, drop=True)    
 
 cropped_ds.to_netcdf(output_path)

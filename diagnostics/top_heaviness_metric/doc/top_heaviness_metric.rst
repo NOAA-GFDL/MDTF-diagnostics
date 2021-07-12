@@ -56,6 +56,7 @@ More about this diagnostic
 --------------------------
 
 Q1 and Q2 (Figure 1a) are two prescribed base functions. Following Back et al. (2017), Q1 as a half sine function, and Q2 as a full sine function, which represent the idealized deep convection profile and the idealized deep stratiform profile, respectively. The vertical velocity can be approximated by Q1 and Q2:
+
 ω'(x,y,p) = O1(x,y) * Q1(p) + O2(x,y)*Q2(p) 
 
 

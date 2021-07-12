@@ -30,9 +30,13 @@ Functionality
 
 The package consists of the following functionalities:
 1.	Calculates constant-f geostrophic zonal winds (Ug) using 200-hPa geopotential height for a fixed Coriolis parameter at 15N.
+
 2.	Identifies the circumglobal contour of the long-term seasonal mean Ug = 1.0 m/s. The zonal-mean latitude of this circumglobal contour is chosen as the reference latitude. The value of Ug can be adjusted by the user, usually ranging from 0.5 to 2.0 m/s. A small positive number is used because the associated Ug contour is more robust than the zero contour.
+
 3.	The TUTT index is defined as the area where the circumglobal contour of seasonal mean Ug extends southward of the reference latitude. Two TUTT areas are calculated, one for the North Pacific and one for the North Atlantic.
+
 4.	In addition to TUTT area, the centroid locations of TUTTs (i.e., latitude and longitude) are also calculated.
+
 5.	The reference latitude, area, and centroid location of two TUTTs are output as .txt files, and figure is plotted showing the year-to-year variability TUTTs (Fig. 2).
 
 

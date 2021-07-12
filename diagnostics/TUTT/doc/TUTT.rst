@@ -77,20 +77,20 @@ More about this diagnostic
    
 .. figure:: fig1_update.png
    :align: center
-   :width: 40%
+   :width: 30%
    
-   Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+   Figure 1. The 200-hPa wind vectors and streamlines during June-August in 1967 (Krishnamurti 1970). The colored lines highlight the monsoon anticyclones and TUTTs. 
    
 
 .. figure:: fig2.png
    :align: center
-   :width: 60 %
+   :width: 40 %
    
-Figure 2. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+Figure 2. (a) Long-term mean 200-hPa geopotential height (shading; units: m), the reference latitude for TUTTs (white dashed line), and the contours of 𝑢g=1.0 𝑚 𝑠* for individual years from 1979-2018; (b) the time series of the normalized TUTT_Pac and TUTT_Atl indices. The correlation between TUTT_Atl and TUTT_Pac is shown at the upper right corner of panel (b). 
    
 .. figure:: table1.png
    :align: center
-   :width: 40 %
+   :width: 30 %
    
    Table 1. Correlation coefficients between different TUTT indices and the TC activity indices over three basins during JASO 1979–2018. The correlations between the Nino3.4 index and TC indices are also shown for comparison. 
    

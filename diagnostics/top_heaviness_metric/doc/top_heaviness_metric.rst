@@ -26,7 +26,7 @@ Functionality
 
 The current package consists of following functionalities:
 
-(1) Calculation of the fractional variance of vertical velocity at each grid point explained by two base functions - Q1 (~= idealized deep convection profile) and Q2 (~= idealized deep stratiform profile)
+(1) Calculation of the fractional variance of vertical velocity at each grid point explained by two base functions, Q1 (~idealized deep convection profile) and Q2 (~idealized deep stratiform profile)
 
 (2) Calculation of the top-heaviness ratio (O2/O1)
 

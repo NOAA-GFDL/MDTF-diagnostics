@@ -72,20 +72,20 @@ The top-heaviness ratio (r) is presented in Figure 3. The Western Pacific is dom
 
 .. figure:: Q1&Q2_R.png
    :align: center
-   :width: 75 %
+   :width: 100 %
    
    Figure 1. (a) Q1 and Q2; (b) Vertical velocity profiles constructed from the varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
 .. figure:: R2_Between_Recon_Omega&Original.png
    :align: center
-   :width: 75 %
+   :width: 100 %
 
    Figure 2. The fractional variance of ω explained by ω'.
    
 
 .. figure:: Top_Heaviness_Ratio.png
    :align: center
-   :width: 75 %
+   :width: 100 %
    
    Figure 3. Long-term mean Top-Heaviness Ratio in July (2000-2019). The ratio is presented only for the grid points with O1 no less than 0.01.

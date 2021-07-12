@@ -75,7 +75,7 @@ More about this diagnostic
 1.	Weak westerly wind sometimes extends southward of the equator and connects to the westerlies over the Southern Hemisphere in reanalysis datasets. We therefore choose to use the zonal geostrophic wind with a fixed Coriolis parameter instead of the total zonal wind.
 2.	Pacific TUTT and Atlantic TUTT sometimes are connected to each other in some CMIP models. This happens during the years when the 200-hPa anticyclone over the Central America is weak, especially in the CMIP models that underestimate the North American monsoon strength. The longitude of 95W is used to divide the two TUTTs in this situation. 
    
-.. figure:: fig1.png
+.. figure:: fig1_update.png
    :align: center
    :width: 40 %
    

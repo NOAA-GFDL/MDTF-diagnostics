@@ -171,9 +171,31 @@ else:
   folder_6hr =  os.environ['DATADIR'] + '/6hr/'
   files = os.listdir(folder_6hr)
 
-  # getting the composites var list from the created variable list
+  # getting the composites var list from the created variable in the "DATADIR"/6hr folder
   composite_var_list = [file.replace(os.environ['CASENAME']+'.', '').replace('.6hr.nc', '') for file in files if not '.psl.6hr.nc' in file]
+  if ('u10' in composite_var_list) & ('v10' in composite_var_list):
+    # if both exists then add uv10 to the list
+    composite_var_list.append('uv10')
+  # always remove the u10 and v10 from the list
+  if ('u10' in composite_var_list):
+    composite_var_list.remove('u10')
+  if ('v10' in composite_var_list):
+    composite_var_list.remove('v10')
+
+  #renaming the wap500 to w500 used by the code
+  if ('wap500' in composite_var_list):
+    composite_var_list.remove('wap500')
+    composite_var_list.append('w500')
+
+  #renaming the pr to tp used by the code
+  if ('pr' in composite_var_list):
+    composite_var_list.remove('pr')
+    composite_var_list.append('tp')
+
+  print(f'Variables to run composites: {composite_var_list}')
+
   composite_available_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
+
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

@@ -7,7 +7,7 @@
     "pod_env_vars" : {
       "lat_var": "lat", 
       "lon_var": "lon", 
-      "USE_EXTERNAL_TRACKS": "True", 
+      "USE_EXTERNAL_TRACKS": "False", 
       "EXTERNAL_TRACKS_FILE": "/localdrive/drive10/jj/mdtf/inputdata/model/GFDL.EXP1.2PM.001/6hr/trimmed_track_output.txt",
       "RUN_COMPOSITES": "True"
     },
@@ -58,35 +58,35 @@
       "dimensions": ["time", "lat", "lon"], 
       "use_exact_name": true
     },
-    // "pr": {
-    //   "standard_name" : "precipitation_flux",
-    //   "units": "kg m-2 s-1",
-    //   "dimensions": ["time", "lat", "lon"], 
-    //   "use_exact_name": true
-    // },
-    // "wap500": {
-    //   "standard_name" : "custom_wap500",
-    //   "units": "Pa s-1",
-    //   "dimensions": ["time", "lat", "lon"], 
-    //   "use_exact_name": true
-    // },
+    "pr": {
+      "standard_name" : "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "wap500": {
+      "standard_name" : "custom_wap500",
+      "units": "Pa s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
     "prw": {
       "standard_name" : "atmosphere_mass_content_of_water_vapor",
       "units": "kg m-2", 
       "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
+    },
+    "u10": {
+      "standard_name" : "eastward_wind",
+      "units": "m s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
+    },
+    "v10": {
+      "standard_name" : "westward_wind",
+      "units": "m s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true
     }
-    // "u10": {
-    //   "standard_name" : "eastward_wind",
-    //   "units": "m s-1",
-    //   "dimensions": ["time", "lat", "lon"], 
-    //   "use_exact_name": true
-    // },
-    // "v10": {
-    //   "standard_name" : "westward_wind",
-    //   "units": "m s-1",
-    //   "dimensions": ["time", "lat", "lon"], 
-    //   "use_exact_name": true
-    // }
   }
 }

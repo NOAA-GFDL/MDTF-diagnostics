@@ -29,6 +29,7 @@ Functionality
 -------------
 
 The package consists of the following functionalities:
+
 1.	Calculates constant-f geostrophic zonal winds (Ug) using 200-hPa geopotential height for a fixed Coriolis parameter at 15N.
 
 2.	Identifies the circumglobal contour of the long-term seasonal mean Ug = 1.0 m/s. The zonal-mean latitude of this circumglobal contour is chosen as the reference latitude. The value of Ug can be adjusted by the user, usually ranging from 0.5 to 2.0 m/s. A small positive number is used because the associated Ug contour is more robust than the zero contour.

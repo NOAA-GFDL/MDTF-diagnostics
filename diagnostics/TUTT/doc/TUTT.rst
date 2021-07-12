@@ -92,7 +92,7 @@ Figure 2. (a) Long-term mean 200-hPa geopotential height (shading; units: m), th
    :align: center
    :width: 20 %
    
-   Table 1. Correlation coefficients between different TUTT indices and the TC activity indices over three basins during JASO 1979–2018. The correlations between the Nino3.4 index and TC indices are also shown for comparison (From Wang et al. 2020). 
+   Table 1. Correlation coefficients between different TUTT indices and the TC activity indices over three basins during JASO 1979–2018. The correlations between the Nino3.4 index and TC indices are also shown for comparison. TCF: tropical cyclone frequency; HURR: hurricane frequency; ACE: accumulated cyclone energy. Asterisk denotes correlations below the 95% confidence level. (From Wang et al. 2020). 
    
 
 Descriptions of outputted .txt files:

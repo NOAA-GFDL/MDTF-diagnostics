@@ -80,7 +80,7 @@ More about this diagnostic
    :align: center
    :width: 75 %
    
-.. figure:: fig1.pdf
+.. figure:: fig1.png
    :align: center
    :width: 75 %
    

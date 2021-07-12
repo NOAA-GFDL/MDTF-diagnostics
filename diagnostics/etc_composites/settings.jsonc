@@ -7,8 +7,9 @@
     "pod_env_vars" : {
       "lat_var": "lat", 
       "lon_var": "lon", 
-      "RUN_MCMS": "True", 
-      "RUN_COMPOSITES": "False"
+      "USE_EXTERNAL_TRACKS": "True", 
+      "EXTERNAL_TRACKS_FILE": "/localdrive/drive10/jj/mdtf/inputdata/model/GFDL.EXP1.2PM.001/6hr/trimmed_track_output.txt",
+      "RUN_COMPOSITES": "True"
     },
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]
@@ -23,6 +24,10 @@
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
+    }, 
+    "altitude": {
+      "standard_name": "altitude", 
+      "units": "m"
     }
   },
   "data": {
@@ -35,35 +40,53 @@
       "dimensions": ["lat", "lon"], 
       "use_exact_name": true
     }, 
-    "clt": {
-      "standard_name" : "cloud_area_fraction",
+    "sftlf": {
+      "standard_name" : "land_area_fraction",
       "units": "1",
-      "dimensions": ["time", "lat", "lon"], 
+      "dimensions": ["lat", "lon"], 
       "use_exact_name": true
     }, 
-    "pr": {
-      "standard_name" : "precipitation_flux",
-      "units": "kg m-2 s-2",
-      "dimensions": ["time", "lat", "lon"], 
-      "use_exact_name": true
-    },
    "psl": {
       "standard_name" : "air_pressure_at_mean_sea_level",
       "units": "Pa",
       "dimensions": ["time", "lat", "lon"], 
       "use_exact_name": true
     },
-    "wap500": {
-      "standard_name" : "custom_wap500",
-      "units": "Pa s-1",
+    "clt": {
+      "standard_name" : "cloud_area_fraction",
+      "units": "1",
       "dimensions": ["time", "lat", "lon"], 
       "use_exact_name": true
     },
+    // "pr": {
+    //   "standard_name" : "precipitation_flux",
+    //   "units": "kg m-2 s-1",
+    //   "dimensions": ["time", "lat", "lon"], 
+    //   "use_exact_name": true
+    // },
+    // "wap500": {
+    //   "standard_name" : "custom_wap500",
+    //   "units": "Pa s-1",
+    //   "dimensions": ["time", "lat", "lon"], 
+    //   "use_exact_name": true
+    // },
     "prw": {
       "standard_name" : "atmosphere_mass_content_of_water_vapor",
       "units": "kg m-2", 
       "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     }
+    // "u10": {
+    //   "standard_name" : "eastward_wind",
+    //   "units": "m s-1",
+    //   "dimensions": ["time", "lat", "lon"], 
+    //   "use_exact_name": true
+    // },
+    // "v10": {
+    //   "standard_name" : "westward_wind",
+    //   "units": "m s-1",
+    //   "dimensions": ["time", "lat", "lon"], 
+    //   "use_exact_name": true
+    // }
   }
 }

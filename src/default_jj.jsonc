@@ -28,7 +28,7 @@
       "model" : "CESM",
       "convention" : "CESM",
       "FIRSTYR" : 2008,
-      "LASTYR" : 2012,
+      "LASTYR" : 2008,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",

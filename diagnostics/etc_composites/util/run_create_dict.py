@@ -14,6 +14,7 @@ import pandas as pd
 # os.environ['FIRSTYR'] = '1950'
 # os.environ['LASTYR'] = '2019'
 # os.environ['RUN_MCMS'] = 'True'
+# os.environ['USE_EXTERNAL_TRACKS'] = 'True'
 
 import defines
 import xarray as xr
@@ -42,7 +43,8 @@ def read_in_txt_file(start_year, end_year):
 
   # the input track file has to be provided as track_data.txt in the "inputdata/{model}/6hr" directory, under the model name
   # the tracks are normally tracked on 6 hourly data 
-  track_file = f"{os.environ['DATADIR']}/6hr/track_output.txt"
+  # track_file = f"{os.environ['DATADIR']}/6hr/track_output.txt"
+  track_file = defines.track_file
 
   main_df = pd.read_csv(track_file, sep='\s+') 
 
@@ -92,10 +94,10 @@ if (not os.path.exists(base_dir)):
 # reading in txt file with the tracks for all the years
 # This depends on which tracker I am using 
 # If the MCMS tracker is run then read in the MCMS output
-if (os.environ['RUN_MCMS'] == 'True'): 
-  df = read_in_MCMS_txt_file(base_dir, in_model, start_year, end_year)
-elif (os.environ['RUN_MCMS'] == 'False'): 
+if (os.environ['USE_EXTERNAL_TRACKS'] == 'True'): 
   df = read_in_txt_file(start_year, end_year)
+elif (os.environ['USE_EXTERNAL_TRACKS'] == 'False'): 
+  df = read_in_MCMS_txt_file(base_dir, in_model, start_year, end_year)
 
 # Reading in the topographic information
 # also reading in the lat/lon values for the topo file

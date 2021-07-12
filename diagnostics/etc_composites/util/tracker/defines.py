@@ -164,7 +164,12 @@ else:
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
   # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
-  composite_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
+  # composite_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
+  folder_6hr =  os.environ['DATADIR'] + '/6hr/'
+  files = os.listdir(folder_6hr)
+
+  # getting the composites var list from the created variable list
+  composite_var_list = [file.replace(os.environ['CASENAME']+'.', '').replace('.6hr.nc', '') for file in files if not '.psl.6hr.nc' in file]
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

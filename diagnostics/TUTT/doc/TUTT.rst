@@ -80,7 +80,10 @@ More about this diagnostic
    :align: center
    :width: 75 %
    
-
+.. figure:: fig1.pdf
+   :align: center
+   :width: 75 %
+   
    Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
    
 

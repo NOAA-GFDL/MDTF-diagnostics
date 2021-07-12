@@ -81,15 +81,12 @@ jobs:
     - name: Generate Model Data
       run: |
         cd ../
-        # clone the mdtf_test_data repo
-        git clone https://github.com/jkrasting/mdtf_test_data.git
-        # install the test data software
-        cd mdtf_test_data
-        # Defining dependencies in Conda env is faster than pip
-        conda activate _MDTF_synthetic_data
+        pip install pytest
+        pip install mdtf-test-data
+        mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests
-        ./mdtf_test_data/mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
-        ./mdtf_test_data/mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
+        mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
+        mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
         cd ../
         mkdir wkdir
     - name: Get Observational Data for Set 1

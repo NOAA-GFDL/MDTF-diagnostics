@@ -66,7 +66,7 @@ For O1>0, ω' transitions from a bottom-heavy profile to a top-heavy profile whe
 
 To assess how well ω' approximates ω, the fractional variance is calculated over each grid point. The fractional variance is defined as the square of the pearson correlation between ω' and ω. As shown in Figure 2,  ω' explains more than 80% of the vertical variance over most tropical/subtropical oceanic grid points. 
 
-The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in the deep convective regions, grid points with O1 less than zero are not shown. The Western Pacific is dominated by more top-heavy vertical profiles while the Eastern Pacific and Atlantic are characterized by more bottom-heavy profiles, exhibiting a great contrast.   
+The top-heaviness ratio (r) is presented in Figure 3. The Western Pacific is dominated by more top-heavy vertical profiles while the Eastern Pacific and Atlantic are characterized by more bottom-heavy profiles, exhibiting a great contrast.   
 
 
 
@@ -74,18 +74,18 @@ The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in
    :align: center
    :width: 75 %
    
-   Figure 1. Left: Q1 and Q2; Right: Vertical motion profiles constructed from the varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
+   Figure 1. (a) Q1 and Q2; (b) Vertical velocity profiles constructed from the varying top-heaviness ratio (r; r=-1: dark blue, r=1: dark red).
    
 
 .. figure:: R2_Between_Recon_Omega&Original.png
    :align: center
    :width: 75 %
 
-   Figure 2. R2 between the reconstructed Omega and original Omega profiles.
+   Figure 2. The fractional variance of ω explained by ω'.
    
 
 .. figure:: Top_Heaviness_Ratio.png
    :align: center
    :width: 75 %
    
-   Figure 3. Long-term mean Top-Heaviness Ratio in July (2000-2019). The ratio is presented only for the grid points with values no less than 0.01.
+   Figure 3. Long-term mean Top-Heaviness Ratio in July (2000-2019). The ratio is presented only for the grid points with O1 no less than 0.01.

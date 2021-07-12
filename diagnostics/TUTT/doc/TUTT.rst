@@ -90,9 +90,9 @@ Figure 2. Solid gray curve denotes the postions where the climatological seasona
    
 .. figure:: table1.png
    :align: center
-   :width: 20 %
+   :width: 40 %
    
-   Table 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+   Table 1. Correlation coefficients between different TUTT indices and the TC activity indices over three basins during JASO 1979–2018. The correlations between the Nino3.4 index and TC indices are also shown for comparison. 
    
 
 Descriptions of outputted .txt files:

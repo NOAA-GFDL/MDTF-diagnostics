@@ -60,9 +60,11 @@ Q1 and Q2 (Figure 1a) are two prescribed base functions. Following Back et al. (
       ω'(x,y,p) = O1(x,y) * Q1(p) + O2(x,y)*Q2(p) 
 
 
-where O1 and O2 are the coefficients of Q1 and Q2, respectively. For O1>0, when the ratio of r=O2/O1 increases from -1 to 1, ω' transitions from a bottom-heavy profile to a top-heavy profile (Figure 1b). The ratio r is thus defined as the top-heaviness ratio.
+where O1 and O2 are the coefficients of Q1 and Q2, respectively. Back et al. (2017) showed that Q1 and Q2 resemble the first two EOF modes of vertical velocity profile variability. Then  O1 and O2 can be approximately regarded as the corresponding principal component time series. 
 
-To assess how well ω' approximates ω, the fractional variance (R2 between the reconstructed Omega and original Omega profiles) is calculated over each grid point. The fractional variance is defined as the square of the pearson correlation between ω' and ω. As shown in Figure 2,  ω' explains more than 80% of the vertical variability over most tropical/subtropical oceanic grid points. Another way to look at the Q1 and Q2 is that we can regard them (Q1 and Q2) as two leading EOF modes when applying EOF analysis to the vertical velocity field. Then the O1 and O2 are just two corresponding "PC time series". The ratio of O2 to O1 can tell us the relative importance of Q1 and Q2.  
+For O1>0, ω' transitions from a bottom-heavy profile to a top-heavy profile when the ratio of r=O2/O1 increases from -1 to 1 (Figure 1b). The ratio r is thus defined as the top-heaviness ratio.
+
+To assess how well ω' approximates ω, the fractional variance is calculated over each grid point. The fractional variance is defined as the square of the pearson correlation between ω' and ω. As shown in Figure 2,  ω' explains more than 80% of the vertical variance over most tropical/subtropical oceanic grid points. 
 
 The top-heaviness ratio (r) is presented in Figure 3. Since we are interested in the deep convective regions, grid points with O1 less than zero are not shown. The Western Pacific is dominated by more top-heavy vertical profiles while the Eastern Pacific and Atlantic are characterized by more bottom-heavy profiles, exhibiting a great contrast.   
 

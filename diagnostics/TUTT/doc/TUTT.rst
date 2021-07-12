@@ -74,17 +74,24 @@ More about this diagnostic
 
 1.	Weak westerly wind sometimes extends southward of the equator and connects to the westerlies over the Southern Hemisphere in reanalysis datasets. We therefore choose to use the zonal geostrophic wind with a fixed Coriolis parameter instead of the total zonal wind.
 2.	Pacific TUTT and Atlantic TUTT sometimes are connected to each other in some CMIP models. This happens during the years when the 200-hPa anticyclone over the Central America is weak, especially in the CMIP models that underestimate the North American monsoon strength. The longitude of 95W is used to divide the two TUTTs in this situation. 
-
-
-.. figure:: TUTT_example.png
-   :align: center
-   :width: 75 %
    
 .. figure:: fig1.png
    :align: center
-   :width: 75 %
+   :width: 60 %
    
    Figure 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+   
+.. figure:: fig2.png
+   :align: center
+   :width: 60 %
+   
+   Figure 2. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
+   
+.. figure:: table1.png
+   :align: center
+   :width: 60 %
+   
+   Table 1. Solid gray curve denotes the postions where the climatological seasonal-mean Ug equals 2 m/s in JRA-55 reanalysis from 1958 to 2014. Dashed white line indicates the reference latitude. Estimated Pacific TUTT and Atlantic TUTT indices are shown above the figure. Background shaded field is climatolgoical 200-hPa geopotential height (gpm). 
    
 
 Descriptions of outputted .txt files:

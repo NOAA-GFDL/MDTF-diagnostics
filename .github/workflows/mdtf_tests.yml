@@ -82,7 +82,6 @@ jobs:
       run: |
         cd ../
         conda activate _MDTF_synthetic_data
-        pip install pytest
         pip install mdtf-test-data
         mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests

@@ -1,4 +1,4 @@
-"""All framework-specific exceptions are placed in a single module to simplify 
+"""All framework-specific exceptions are placed in a single module to simplify
 imports.
 """
 import os
@@ -11,7 +11,7 @@ _log = logging.getLogger(__name__)
 
 def exit_on_exception(exc, msg=None):
     """Prints information about a fatal exception to the console beofre exiting.
-    Use case is in user-facing subcommands (``mdtf install`` etc.), since we 
+    Use case is in user-facing subcommands (``mdtf install`` etc.), since we
     have more sophisticated logging in the framework itself.
     Args:
         exc: :py:class:`Exception` object
@@ -50,7 +50,7 @@ class TimeoutAlarm(Exception):
     pass
 
 class MDTFBaseException(Exception):
-    """Base class to describe all MDTF-specific errors that can happen during 
+    """Base class to describe all MDTF-specific errors that can happen during
     the framework's operation."""
 
     def __repr__(self):
@@ -59,7 +59,7 @@ class MDTFBaseException(Exception):
         return f'{self.__class__.__name__}("{str(self)}")'
 
 class ChildFailureEvent(MDTFBaseException):
-    """Exception raised when a member of the object hierarchy is deactivated 
+    """Exception raised when a member of the object hierarchy is deactivated
     because all its child objects have failed.
     """
     def __init__(self, obj):
@@ -70,8 +70,8 @@ class ChildFailureEvent(MDTFBaseException):
             f"child objects.")
 
 class PropagatedEvent(MDTFBaseException):
-    """Exception passed between members of the object hierarchy when a parent 
-    object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to 
+    """Exception passed between members of the object hierarchy when a parent
+    object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to
     deactivate its children.
     """
     def __init__(self, exc, parent):
@@ -112,27 +112,27 @@ class WormKeyError(KeyError, MDTFBaseException):
     pass
 
 class DataclassParseError(ValueError, MDTFBaseException):
-    """Raised when parsing input data fails on a 
-    :func:`~src.util.dataclass.mdtf_dataclass` or 
+    """Raised when parsing input data fails on a
+    :func:`~src.util.dataclass.mdtf_dataclass` or
     :func:`~src.util.dataclass.regex_dataclass`.
     """
     pass
 
 class RegexParseError(ValueError, MDTFBaseException):
-    """Raised when parsing input data fails on a 
+    """Raised when parsing input data fails on a
     :func:`~src.util.dataclass.RegexPattern`.
     """
     pass
 
 class RegexSuppressedError(ValueError, MDTFBaseException):
     """Raised when parsing input data fails on a
-    :func:`~src.util.dataclass.RegexPattern`, but we've decided to supress 
+    :func:`~src.util.dataclass.RegexPattern`, but we've decided to supress
     error based on the associated RegexPattern's match_error_filter attribute.
     """
     pass
 
 class UnitsError(ValueError, MDTFBaseException):
-    """Raised when trying to convert between quantities with physically 
+    """Raised when trying to convert between quantities with physically
     inequivalent units.
     """
     pass
@@ -146,7 +146,7 @@ class ConventionError(MDTFBaseException):
         return f"Error in the definition of convention '{self.conv_name}'."
 
 class MixedDatePrecisionException(MDTFBaseException):
-    """Exception raised when we attempt to operate on :class:`Date` or 
+    """Exception raised when we attempt to operate on :class:`Date` or
     :class:`DateRange` objects with differing levels of precision, which shouldn't
     happen with data sampled at a single frequency.
     """
@@ -159,9 +159,9 @@ class MixedDatePrecisionException(MDTFBaseException):
             "placeholder: {}.").format(self.func_name, self.msg)
 
 class FXDateException(MDTFBaseException):
-    """Exception raised when :class:`FXDate` or :class:`FXDateRange` classes, 
-    which are placeholder/sentinel classes used to indicate static data with no 
-    time dependence, are accessed like real :class:`Date` or :class:`DateRange` 
+    """Exception raised when :class:`FXDate` or :class:`FXDateRange` classes,
+    which are placeholder/sentinel classes used to indicate static data with no
+    time dependence, are accessed like real :class:`Date` or :class:`DateRange`
     objects.
     """
     def __init__(self, func_name='', msg=''):
@@ -173,13 +173,13 @@ class FXDateException(MDTFBaseException):
             "placeholder: {}.").format(self.func_name, self.msg)
 
 class DataRequestError(MDTFBaseException):
-    """Dummy class used for fatal errors that take place during the 
+    """Dummy class used for fatal errors that take place during the
     data query/fetch/preprocess stage of the framework.
     """
     pass
 
 class MDTFEvent(MDTFBaseException):
-    """Dummy class to denote non-fatal errors, specifically "events" that are 
+    """Dummy class to denote non-fatal errors, specifically "events" that are
     passed during the data query/fetch/preprocess stage of the framework.
     """
     pass
@@ -192,7 +192,7 @@ class FatalErrorEvent(MDTFBaseException):
     pass
 
 class DataProcessingEvent(MDTFEvent):
-    """Base class and common formatting code for events raised in data 
+    """Base class and common formatting code for events raised in data
     query/fetch. These should *not* be used for fatal errors (when a variable or
     POD is deactivated.)
     """
@@ -200,7 +200,7 @@ class DataProcessingEvent(MDTFEvent):
         self.msg = msg
         self.dataset = dataset
 
-    def __str__(self):        
+    def __str__(self):
         # if self.dataset is not None:
         #     if hasattr(self.dataset, 'remote_path'):
         #         data_id = self.dataset.remote_path
@@ -211,7 +211,7 @@ class DataProcessingEvent(MDTFEvent):
         return self.msg
 
 class DataQueryEvent(DataProcessingEvent):
-    """Exception signaling a failure to find requested data in the remote location. 
+    """Exception signaling a failure to find requested data in the remote location.
     """
     pass
 
@@ -227,7 +227,7 @@ class DataFetchEvent(DataProcessingEvent):
     pass
 
 class DataPreprocessEvent(DataProcessingEvent):
-    """Exception signaling an error in preprocessing data after it's been 
+    """Exception signaling an error in preprocessing data after it's been
     fetched, but before any PODs run.
     """
     pass
@@ -291,12 +291,12 @@ class PodConfigEvent(MDTFEvent):
     pass
 
 class PodDataError(PodExceptionBase):
-    """Exception raised if POD doesn't have required data to run. 
+    """Exception raised if POD doesn't have required data to run.
     """
     _error_str = "Requested data not available"
 
 class PodRuntimeError(PodExceptionBase):
-    """Exception raised if POD doesn't have required resources to run. 
+    """Exception raised if POD doesn't have required resources to run.
     """
     _error_str = "Error in setting the runtime environment"
 

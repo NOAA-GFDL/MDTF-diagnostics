@@ -37,9 +37,9 @@ Attributes:
 """
 
 class LinkParser(HTMLParser):
-    """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs 
+    """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs
     an iterable over each <a> tag.
-    
+
     Adapted from `<https://stackoverflow.com/a/41663924>`__.
     """
     def reset(self):
@@ -56,16 +56,16 @@ class LinkParser(HTMLParser):
 class LinkVerifier(object):
     def __init__(self, root, rel_path_root=None, verbose=False, log=None):
         """Initialize search for broken links.
-        
+
         Args:
-            root (str): Either a URL or path on the local filesystem. Location 
+            root (str): Either a URL or path on the local filesystem. Location
                 of the top-level html file to begin the search from.
-            rel_path_root (str, optional): Either a URL or path on the local 
-                filesystem. If given, used as the path that relative paths to 
-                missing files are given relative to. Defaults to root (if root 
-                is a directory) or the directory containing root (if root is a 
+            rel_path_root (str, optional): Either a URL or path on the local
+                filesystem. If given, used as the path that relative paths to
+                missing files are given relative to. Defaults to root (if root
+                is a directory) or the directory containing root (if root is a
                 file.)
-            verbose (bool, default False): Set to True to print each file 
+            verbose (bool, default False): Set to True to print each file
                 examined.
         """
         def munge_input_url(url):
@@ -88,7 +88,7 @@ class LinkVerifier(object):
         self.verbose = verbose
         self.pod_name = None
         # NB: WK_DIR isn't a "working directory"; it's just the base path
-        # relative to which paths are reported 
+        # relative to which paths are reported
         (self.root_url, self.WK_DIR, self.root_file) = munge_input_url(root)
         if rel_path_root:
             self.rel_path_root, _, _ = munge_input_url(rel_path_root)
@@ -101,20 +101,20 @@ class LinkVerifier(object):
 
     @staticmethod
     def gen_links(f, parser):
-        """Generator which parses the contents of an HTML file f and yields 
+        """Generator which parses the contents of an HTML file f and yields
         targets of all the links it contains.
 
         Adapted from `<https://stackoverflow.com/a/41663924>`__.
 
         Args:
-            f: :py:mod:`urllib.respose` object of the form returned by 
-                :py:func:`~urllib.request.urlopen`: either 
-                :py:class:`~http.client.HTTPResponse` for http or https, or 
+            f: :py:mod:`urllib.respose` object of the form returned by
+                :py:func:`~urllib.request.urlopen`: either
+                :py:class:`~http.client.HTTPResponse` for http or https, or
                 :py:class:`urllib.response.addinfourl` for files.
             parser: instance of :class:`LinkParser`.
 
         Yields:
-            Contents of the `href` attribute of each `a` tag of f, as extracted 
+            Contents of the `href` attribute of each `a` tag of f, as extracted
                 by :class:`LinkParser`.
         """
         encoding = f.headers.get_content_charset() or 'UTF-8'
@@ -129,12 +129,12 @@ class LinkVerifier(object):
             link (:obj:`Link`): Instance of :class:`Link`. Only the URL in
                 link.target is examined.
 
-        Returns: 
-            Either 
+        Returns:
+            Either
 
-                #. None if link.target can't be opened, 
-                #. the empty list if link.target is not an html document, or 
-                #. a list of links contained in link.target, expressed as 
+                #. None if link.target can't be opened,
+                #. the empty list if link.target is not an html document, or
+                #. a list of links contained in link.target, expressed as
                     :class:`Link` objects.
         """
         if hasattr(link, 'target'):
@@ -149,7 +149,7 @@ class LinkVerifier(object):
         except urllib.error.URLError as e:
             # print('\nFailed to find file or connect to server.')
             # print('Reason: ', e.reason)
-            tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'", 
+            tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'",
                 str(e.reason))
             if len(tup) == 3:
                 str_ = util.abbreviate_path(tup[1], self.WK_DIR, '$WK_DIR')
@@ -169,18 +169,18 @@ class LinkVerifier(object):
             return links
 
     def breadth_first(self, root_url):
-        """Breadth-first search of all files linked from an initial root_url. 
+        """Breadth-first search of all files linked from an initial root_url.
 
-        The search correctly handles cycles (ie, A.html links to B.html and 
-        B.html links to A.html) and only examines files in subdirectories of 
-        root_url's directory, so that links to external sites are ignored, 
+        The search correctly handles cycles (ie, A.html links to B.html and
+        B.html links to A.html) and only examines files in subdirectories of
+        root_url's directory, so that links to external sites are ignored,
         rather than trying to trace the link structure of the whole internet.
 
         Args:
             root_url (str): URL of an html file to start the search at.
 
         Returns:
-            list of (link_source, link_target) tuples where the file in 
+            list of (link_source, link_target) tuples where the file in
                 link_target couldn't be found.
         """
         missing = []
@@ -218,17 +218,17 @@ class LinkVerifier(object):
         return missing
 
     def group_relative_links(self, missing):
-        """Format paths to missing linked files as relative paths, grouped by 
+        """Format paths to missing linked files as relative paths, grouped by
         POD.
 
         Args:
-            missing (list): List of :class:`Link` objects found by 
+            missing (list): List of :class:`Link` objects found by
                 :meth:`breadth_first`, whose targets correspond to missing files.
 
         Returns:
             dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing. 
-                Missing files are listed by their path relative to the POD's 
+                and values given by a list of the files that POD is missing.
+                Missing files are listed by their path relative to the POD's
                 output directory.
         """
         missing_dict = collections.defaultdict(list)
@@ -241,7 +241,7 @@ class LinkVerifier(object):
         return missing_dict
 
     def verify_pod_links(self, pod_name):
-        """Perform search for missing linked files that were supposed to have 
+        """Perform search for missing linked files that were supposed to have
         been output by pod_name.
 
         Args:
@@ -268,8 +268,8 @@ class LinkVerifier(object):
 
         Returns:
             dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing. 
-                Missing files are listed by their path relative to the POD's 
+                and values given by a list of the files that POD is missing.
+                Missing files are listed by their path relative to the POD's
                 output directory.
         """
         if not self.root_file:
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true",
         help="increase output verbosity")
-    parser.add_argument("path_or_url", 
+    parser.add_argument("path_or_url",
         help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     formatter = logging.Formatter(fmt='%(message)s', datefmt='%H:%M:%S')
     handler.setFormatter(formatter)
     log.addHandler(handler)
-    
+
     link_verifier = LinkVerifier(args.path_or_url, verbose=args.verbose)
     missing_dict = link_verifier.verify_all_links()
 

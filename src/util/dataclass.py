@@ -14,22 +14,22 @@ import logging
 _log = logging.getLogger(__name__)
 
 class RegexPatternBase():
-    """Dummy parent class for :class:`RegexPattern` and 
+    """Dummy parent class for :class:`RegexPattern` and
     :class:`ChainedRegexPattern`.
     """
     pass
 
 class RegexPattern(collections.UserDict, RegexPatternBase):
-    """Wraps :py:class:`re.Pattern` with more convenience methods. Extracts 
-    values of named fields from a string by parsing it with a regex with 
-    named capture groups, and stores those values in a dict. 
+    """Wraps :py:class:`re.Pattern` with more convenience methods. Extracts
+    values of named fields from a string by parsing it with a regex with
+    named capture groups, and stores those values in a dict.
     """
-    def __init__(self, regex, defaults=None, input_field=None, 
+    def __init__(self, regex, defaults=None, input_field=None,
         match_error_filter=None):
         """Constructor.
 
         Args:
-            regex: str or :py:class:`re.Pattern`: regex to use for string 
+            regex: str or :py:class:`re.Pattern`: regex to use for string
                 parsing. Should contain named match groups corresponding to the
                 fields to parse.
             defaults: dict, optional. If supplied, any fields not matched by the
@@ -37,17 +37,17 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             input_field: str, optional. If supplied, add a field to the match with
                 the supplied name which will be set equal to the contents of the
                 input string on a successful match.
-            match_error_filter: optional, bool or :class:`RegexPattern` or 
+            match_error_filter: optional, bool or :class:`RegexPattern` or
                 :class:`ChainedRegexPattern`.
                 If supplied, suppresses raising ValueErrors when match() fails.
                 If boolean or none, either always or never raise ValueError.
-                If a RegexPattern, try matching the input string that caused 
+                If a RegexPattern, try matching the input string that caused
                 the failed match against it. If it matches, do not raise an error.
 
         Attributes:
             data: dict, either empty when unmatched, or containing the contents
                 of the match. From :py:class:`collections.UserDict`.
-            fields: frozenset of fields matched by the pattern. Consists of the 
+            fields: frozenset of fields matched by the pattern. Consists of the
                 *union* of named match groups in regex, and *all* keys in defaults.
             input_string: Contains string that was input to last call of match(),
                 whether successful or not.
@@ -73,28 +73,28 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         self.input_field = input_field
         self._match_error_filter = match_error_filter
         self._update_fields()
-    
+
     def clear(self):
         """Erase an existing match.
         """
         self.data = dict()
         self.input_string = ""
         self.is_matched = False
-        
+
     def _update_fields(self):
         self.regex_fields = frozenset(self.regex.groupindex.keys())
         self.fields = self.regex_fields.union(self._defaults.keys())
         if self.input_field:
             self.fields = self.fields.union((self.input_field, ))
         self.clear()
-        
+
     def update_defaults(self, d):
         """Update the default values used for the match with the values in d.
         """
         if d:
             self._defaults.update(d)
             self._update_fields()
-                
+
     def match(self, str_, *args):
         self.clear() # to be safe
         self.input_string = str_
@@ -113,34 +113,34 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             else:
                 raise exceptions.RegexParseError(
                     f"Couldn't match {str_} against {self.regex}.")
-        else:    
+        else:
             self.data = m.groupdict(default=NOTSET)
             for k,v in self._defaults.items():
                 if self.data.get(k, NOTSET) is NOTSET:
                     self.data[k] = v
             if self.input_field:
                 self.data[self.input_field] = m.string
-            
+
             self._validate_match(m)
             if any(self.data[f] is NOTSET for f in self.fields):
                 bad_names = [f for f in self.fields if self.data[f] is NOTSET]
                 raise exceptions.RegexParseError((f"Couldn't match the "
                     f"following fields in {str_}: " + ', '.join(bad_names) ))
             self.is_matched = True
-        
+
     def _validate_match(self, match_obj):
         """Hook for post-processing of match, running after all fields are
-        assigned but before final check that all fields are set. 
+        assigned but before final check that all fields are set.
         """
         pass
-    
+
     def __str__(self):
         if not self.is_matched:
             str_ = ', '.join(self.fields)
         else:
             str_ = ', '.join([f'{k}={v}' for k,v in self.data.items()])
         return f"<{self.__class__.__name__}({str_})>"
-    
+
     def __copy__(self):
         if hasattr(self._match_error_filter, 'copy'):
             match_error_filter_copy = self._match_error_filter.copy()
@@ -170,15 +170,15 @@ class RegexPatternWithTemplate(RegexPattern):
     """Adds formatted output to RegexPattern.
 
         Args:
-            template: str, optional. Template string to use for formatting 
+            template: str, optional. Template string to use for formatting
                 contents of match in format() method. Contents of the matched
                 fields will be subsituted using the {}-syntax of python string
                 formatting.
             Other arguments the same
     """
-    def __init__(self, regex, defaults=None, input_field=None, 
+    def __init__(self, regex, defaults=None, input_field=None,
         match_error_filter=None, template=None, log=_log):
-        super(RegexPatternWithTemplate, self).__init__(regex, defaults=defaults, 
+        super(RegexPatternWithTemplate, self).__init__(regex, defaults=defaults,
             input_field=input_field, match_error_filter=match_error_filter)
         self.template = template
         for f in self.fields:
@@ -218,14 +218,14 @@ class RegexPatternWithTemplate(RegexPattern):
         )
         obj.data = copy.deepcopy(self.data, memo)
         return obj
-    
+
 class ChainedRegexPattern(RegexPatternBase):
-    """Class which takes an 'or' of multiple RegexPatterns. Matches are 
+    """Class which takes an 'or' of multiple RegexPatterns. Matches are
     attempted on the supplied RegexPatterns in order, with the first one that
     succeeds determining the returned answer. Public methods work the same as
     on RegexPattern.
     """
-    def __init__(self, *string_patterns, defaults=None, input_field=None, 
+    def __init__(self, *string_patterns, defaults=None, input_field=None,
         match_error_filter=None):
         # NB, changes attributes on patterns passed as arguments, so
         # once created they can't be used on their own
@@ -246,40 +246,40 @@ class ChainedRegexPattern(RegexPatternBase):
                 pat.update_defaults(defaults)
             if input_field:
                 pat.input_field = input_field
-            pat._match_error_filter = None   
+            pat._match_error_filter = None
             pat._update_fields()
         self._update_fields()
 
     @property
     def is_matched(self):
         return (self._match >= 0)
-    
+
     @property
     def data(self):
         if self.is_matched:
             return self._patterns[self._match].data
         else:
             return dict()
-        
+
     def clear(self):
         for pat in self._patterns:
             pat.clear()
         self._match = -1
         self.input_string = ""
-    
+
     def _update_fields(self):
         self.fields = self._patterns[0].fields
         for pat in self._patterns:
             if pat.fields != self.fields:
                 raise ValueError("Incompatible fields.")
         self.clear()
-    
+
     def update_defaults(self, d):
         if d:
             for pat in self._patterns:
                 pat.update_defaults(d)
         self._update_fields()
-                
+
     def match(self, str_, *args):
         self.clear()
         self.input_string = str_
@@ -304,30 +304,30 @@ class ChainedRegexPattern(RegexPatternBase):
             else:
                 raise exceptions.RegexParseError((f"Couldn't match {str_} "
                     f"against any pattern in {self.__class__.__name__}."))
-    
+
     def __str__(self):
         if not self.is_matched:
             str_ = ', '.join(self.fields)
         else:
             str_ = ', '.join([f'{k}={v}' for k,v in self.data.items()])
         return f"<{self.__class__.__name__}({str_})>"
-    
+
     def format(self):
         if not self.is_matched:
             raise ValueError('No match')
         return self._patterns[self._match].format()
-    
+
     def __copy__(self):
         new_pats = (pat.copy() for pat in self._patterns)
         return self.__class__(
-            *new_pats, 
+            *new_pats,
             match_error_filter=self._match_error_filter.copy()
         )
 
     def __deepcopy__(self, memo):
         new_pats = (copy.deepcopy(pat, memo) for pat in self._patterns)
         return self.__class__(
-            *new_pats, 
+            *new_pats,
             match_error_filter=copy.deepcopy(self._match_error_filter, memo)
         )
 
@@ -335,25 +335,25 @@ class ChainedRegexPattern(RegexPatternBase):
 
 NOTSET = basic.sentinel_object_factory('NotSet')
 NOTSET.__doc__ = """
-Sentinel object to detect uninitialized values, in cases where ``None`` is a 
-valid value. 
+Sentinel object to detect uninitialized values, in cases where ``None`` is a
+valid value.
 """
 
 MANDATORY = basic.sentinel_object_factory('Mandatory')
 MANDATORY.__doc__ = """
-Sentinel object to mark :func:`mdtf_dataclass` fields that do not take a default 
+Sentinel object to mark :func:`mdtf_dataclass` fields that do not take a default
 value. This is a workaround to avoid errors with non-default fields coming after
-default fields in the dataclass-generated ``__init__`` method under 
+default fields in the dataclass-generated ``__init__`` method under
 `inheritance <https://docs.python.org/3/library/dataclasses.html#inheritance>`__:
 we use the second solution described in `<https://stackoverflow.com/a/53085935>`__.
 """
 
 def _mdtf_dataclass_get_field_types(obj, f):
     """Common functionality for :func:`_mdtf_dataclass_type_coercion` and
-    :func:`_mdtf_dataclass_type_check`. Given a :py:class:`datacalsses.Field` 
+    :func:`_mdtf_dataclass_type_check`. Given a :py:class:`datacalsses.Field`
     object *f*, return either a tuple of the type its value should be coerced to
     and a tuple of the valid types its value can have, or (None, None) to signal
-    a case we don't handle. 
+    a case we don't handle.
     """
     if not f.init:
         # ignore fields that aren't handled at init
@@ -388,7 +388,7 @@ def _mdtf_dataclass_get_field_types(obj, f):
     else:
         new_type = f.type
         valid_types = [new_type]
-    # Get types of field's default value, if present. Dataclass doesn't 
+    # Get types of field's default value, if present. Dataclass doesn't
     # require defaults to be same type as what's given for field.
     if not isinstance(f.default, dataclasses._MISSING_TYPE):
         valid_types.append(type(f.default))
@@ -397,12 +397,12 @@ def _mdtf_dataclass_get_field_types(obj, f):
     return (new_type, valid_types)
 
 def _mdtf_dataclass_type_coercion(self, log):
-    """Do type checking on all dataclass fields after the auto-generated 
+    """Do type checking on all dataclass fields after the auto-generated
     ``__init__`` method, but before any ``__post_init__`` method.
 
     .. warning::
-       Type checking logic used is specific to the ``typing`` module in python 
-       3.7. It may or may not work on newer pythons, and definitely will not 
+       Type checking logic used is specific to the ``typing`` module in python
+       3.7. It may or may not work on newer pythons, and definitely will not
        work with 3.5 or 3.6. See `<https://stackoverflow.com/a/52664522>`__.
     """
     for f in dataclasses.fields(self):
@@ -423,7 +423,7 @@ def _mdtf_dataclass_type_coercion(self, log):
                     new_value = new_type(value)
                 # https://stackoverflow.com/a/54119384 for implementation
                 object.__setattr__(self, f.name, new_value)
-        except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc: 
+        except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc:
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                 f"Couldn't coerce value {repr(value)} for field {f.name} from "
                 f"type {type(value)} to type {new_type}.")) from exc
@@ -432,12 +432,12 @@ def _mdtf_dataclass_type_coercion(self, log):
             raise exc
 
 def _mdtf_dataclass_type_check(self, log):
-    """Do type checking on all dataclass fields after ``__init__`` and 
+    """Do type checking on all dataclass fields after ``__init__`` and
     ``__post_init__`` methods.
 
     .. warning::
-       Type checking logic used is specific to the ``typing`` module in python 
-       3.7. It may or may not work on newer pythons, and definitely will not 
+       Type checking logic used is specific to the ``typing`` module in python
+       3.7. It may or may not work on newer pythons, and definitely will not
        work with 3.5 or 3.6. See `<https://stackoverflow.com/a/52664522>`__.
     """
     for f in dataclasses.fields(self):
@@ -456,7 +456,7 @@ def _mdtf_dataclass_type_check(self, log):
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
                 f"({repr(value)})."))
 
-DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True, 
+DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True,
     'order': False, 'unsafe_hash': False, 'frozen': False}
 
 # declaration to allow calling with and without args: python cookbook 9.6
@@ -471,20 +471,20 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     following tasks are performed:
 
     1. Verify that mandatory fields have values specified. We have to work around
-       the usual :py:func:`~dataclasses.dataclass` way of doing this, because it 
-       leads to errors in the signature of the dataclass-generated ``__init__`` 
-       method under inheritance (mandatory fields can't come after optional 
+       the usual :py:func:`~dataclasses.dataclass` way of doing this, because it
+       leads to errors in the signature of the dataclass-generated ``__init__``
+       method under inheritance (mandatory fields can't come after optional
        fields.) Mandatory fields must be designated by setting their default to
-       ``MANDATORY``, and a DataclassParseError is raised here if mandatory fields 
+       ``MANDATORY``, and a DataclassParseError is raised here if mandatory fields
        are uninitialized.
 
-    2. Check each field's value to see if it's consistent with known type info. 
+    2. Check each field's value to see if it's consistent with known type info.
        If not, attempt to coerce it to that type, using a ``from_struct`` method if
        it exists. Raise DataclassParseError if this fails.
 
     .. warning::
-       Unlike :py:func:`~dataclasses.dataclass`, all fields **must** have a 
-       *default* or *default_factory* defined. Fields which are mandatory must 
+       Unlike :py:func:`~dataclasses.dataclass`, all fields **must** have a
+       *default* or *default_factory* defined. Fields which are mandatory must
        have their default value set to the sentinel object ``MANDATORY``.
     """
     dc_kwargs = DEFAULT_MDTF_DATACLASS_KWARGS.copy()
@@ -511,7 +511,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
             _post_init_log = self.log # for object hierarchy
         else:
             _post_init_log = _log # fallback: use module-level logger
-        _mdtf_dataclass_type_coercion(self, _post_init_log)      
+        _mdtf_dataclass_type_coercion(self, _post_init_log)
         _old_post_init(self, *args, **kwargs)
         _mdtf_dataclass_type_check(self, _post_init_log)
     type.__setattr__(cls, '__post_init__', _new_post_init)
@@ -560,23 +560,23 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
     return (new_kw, post_init)
 
 def regex_dataclass(pattern, **deco_kwargs):
-    """Decorator for a dataclass that adds a from_string classmethod which 
-    creates instances of that dataclass by parsing an input string with a 
+    """Decorator for a dataclass that adds a from_string classmethod which
+    creates instances of that dataclass by parsing an input string with a
     :class:`RegexPattern` or :class:`ChainedRegexPattern`. The values of all
-    fields returned by the match() method of the pattern are passed to the 
+    fields returned by the match() method of the pattern are passed to the
     __init__ method of the dataclass as kwargs.
 
-    Additionally, if the type of one or more fields is set to a class that's 
-    also been decorated with regex_dataclass, the parsing logic for that field's 
+    Additionally, if the type of one or more fields is set to a class that's
+    also been decorated with regex_dataclass, the parsing logic for that field's
     regex_dataclass will be invoked on that field's value (ie, a string obtained
     by regex matching in *this* regex_dataclass), and the parsed values of those
-    fields will be supplied to this regex_dataclass constructor. This is our 
+    fields will be supplied to this regex_dataclass constructor. This is our
     implementation of composition for regex_dataclasses.
 
     .. note::
-       Unlike :func:`mdtf_dataclass`, type coercion is done *after* 
-       ``__post_init__`` for these dataclasses. This is necessary due to 
-       composition: if a regex_dataclass is being instantiated as a field of 
+       Unlike :func:`mdtf_dataclass`, type coercion is done *after*
+       ``__post_init__`` for these dataclasses. This is necessary due to
+       composition: if a regex_dataclass is being instantiated as a field of
        another regex_dataclass, all values being passed to it will be strings
        (the regex fields), and type coercion is the job of ``__post_init__``.
     """
@@ -585,7 +585,7 @@ def regex_dataclass(pattern, **deco_kwargs):
 
     def _dataclass_decorator(cls):
         if '__post_init__' not in cls.__dict__:
-            # Prevent class from inheriting __post_init__ from parents if it 
+            # Prevent class from inheriting __post_init__ from parents if it
             # doesn't overload it (which is why we use __dict__ and not
             # hasattr().) __post_init__ of all parents will have been called when
             # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
@@ -634,7 +634,7 @@ def regex_dataclass(pattern, **deco_kwargs):
     return _dataclass_decorator
 
 def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
-    """Function that returns a dataclass (ie, a decorated class) whose fields 
+    """Function that returns a dataclass (ie, a decorated class) whose fields
     are the union of the fields specified in its parent classes.
 
     Args:
@@ -644,7 +644,7 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
             the collection determines the MRO.
         kwargs: optional; arguments to pass to dataclass_decorator when it's
             applied to produce the returned class.
-    """ 
+    """
     def _to_dataclass(self, cls_, **kwargs_):
         f"""Method to create an instance of one of the parent classes of
         {class_name} by copying over the relevant subset of fields.
@@ -676,18 +676,18 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
 # ----------------------------------------------------
 
 def filter_dataclass(d, dc, init=False):
-    """Return a dict of the subset of fields or entries in d that correspond to 
+    """Return a dict of the subset of fields or entries in d that correspond to
     the fields in dataclass dc.
 
     Args:
         d: (dict, dataclass or dataclass instance):
-        dc: (dataclass or dataclass instance): 
+        dc: (dataclass or dataclass instance):
         init: bool or 'all', default False:
 
-            - If False: Include only the fields of dc (as returned by 
+            - If False: Include only the fields of dc (as returned by
                 :py:func:`dataclasses.fields`.)
             - If True: Include only the arguments to dc's constructor (ie, include
-                any `init-only fields 
+                any `init-only fields
                 <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
                 and exclude any of dc's fields with init=False.
             - If 'all': Include the union of the above two options.
@@ -708,15 +708,15 @@ def filter_dataclass(d, dc, init=False):
             if (f.name in d and f.init)}
     if init or (init == 'all'):
         init_fields = filter(
-            (lambda f: f.type == dataclasses.InitVar), 
+            (lambda f: f.type == dataclasses.InitVar),
             dc.__dataclass_fields__.values()
         )
         ans.update({f.name: d[f.name] for f in init_fields if f.name in d})
     return ans
-    
+
 def coerce_to_dataclass(d, dc, **kwargs):
     """Given a dataclass dc (may be the class or an instance of it), and a dict,
-    dataclass or dataclass instance d, return an instance of dc's class with 
+    dataclass or dataclass instance d, return an instance of dc's class with
     field values initialized from those in d, along with any extra values
     passed in kwargs.
     """

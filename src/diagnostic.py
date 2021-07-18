@@ -14,7 +14,7 @@ _var_name_env_var_suffix = '_var'
 _file_env_var_suffix = '_FILE'
 
 PodDataFileFormat = util.MDTFEnum(
-    'PodDataFileFormat', 
+    'PodDataFileFormat',
     ("ANY_NETCDF ANY_NETCDF_CLASSIC "
     "ANY_NETCDF3 NETCDF3_CLASSIC NETCDF_64BIT_OFFSET NETCDF_64BIT_DATA "
     "ANY_NETCDF4 NETCDF4_CLASSIC NETCDF4"),
@@ -56,7 +56,7 @@ class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
 @util.mdtf_dataclass
 class VarlistCoordinateMixin(object):
     """Base class to describe a single dimension (in the netcdf data model sense)
-    used by one or more variables. Corresponds to list entries in the 
+    used by one or more variables. Corresponds to list entries in the
     "dimensions" section of the POD's settings.jsonc file.
     """
     need_bounds: bool = False
@@ -102,13 +102,13 @@ class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
     axis = 'T'
 
 @util.mdtf_dataclass
-class VarlistTimeCoordinate(_VarlistTimeSettings, data_model.DMTimeCoordinate, 
+class VarlistTimeCoordinate(_VarlistTimeSettings, data_model.DMTimeCoordinate,
     VarlistCoordinateMixin):
     pass
 
 VarlistEntryRequirement = util.MDTFEnum(
-    'VarlistEntryRequirement', 
-    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE', 
+    'VarlistEntryRequirement',
+    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE',
     module=__name__
 )
 VarlistEntryRequirement.__doc__ = """
@@ -117,41 +117,41 @@ provide data for the :class:`VarlistEntry`.
 """
 
 VarlistEntryStage = util.MDTFIntEnum(
-    'VarlistEntryStage', 
-    'NOTSET INITED QUERIED FETCHED PREPROCESSED', 
+    'VarlistEntryStage',
+    'NOTSET INITED QUERIED FETCHED PREPROCESSED',
     module=__name__
 )
 VarlistEntryStage.__doc__ = """
-:class:`util.MDTFIntEnum` used to track the stages of processing of a 
+:class:`util.MDTFIntEnum` used to track the stages of processing of a
 :class:`VarlistEntry` carried out by the DataSource.
 """
 
 @util.mdtf_dataclass
-class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable, 
+class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     _VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
-    """Class to describe data for a single variable requested by a POD. 
-    Corresponds to list entries in the "varlist" section of the POD's 
+    """Class to describe data for a single variable requested by a POD.
+    Corresponds to list entries in the "varlist" section of the POD's
     settings.jsonc file.
 
     Two VarlistEntries are equal (as determined by the ``__eq__`` method, which
-    compares fields without ``compare=False``) if they specify the same data 
-    product, ie if the same output file from the preprocessor can be symlinked 
+    compares fields without ``compare=False``) if they specify the same data
+    product, ie if the same output file from the preprocessor can be symlinked
     to two different locations.
 
     Attributes:
         use_exact_name: see docs
-        env_var: Name of env var which is set to the variable's name in the 
+        env_var: Name of env var which is set to the variable's name in the
             provided dataset.
         path_variable: Name of env var containing path to local data.
         dest_path: Path to local data.
-        alternates: List of lists of VarlistEntries. 
+        alternates: List of lists of VarlistEntries.
         translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
     """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
-    # log = util.MDTFObjectLogger 
+    # log = util.MDTFObjectLogger
     # status: ObjectStatus
     # standard_name: str           # fields inherited from data_model.DMVariable
     # units: Units
@@ -166,7 +166,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     )
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
-    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, 
+    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
         compare=False)
     stage: VarlistEntryStage = dc.field(
         default=VarlistEntryStage.NOTSET, compare=False
@@ -261,13 +261,13 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         return obj
 
     def iter_alternates(self):
-        """Breadth-first traversal of "sets" of alternate VarlistEntries, 
-        alternates for those alternates, etc. ("Sets" is in quotes because 
+        """Breadth-first traversal of "sets" of alternate VarlistEntries,
+        alternates for those alternates, etc. ("Sets" is in quotes because
         they're implemented as lists here, since VarlistEntries aren't immutable.)
 
-        This is a "deep" iterator,  yielding alternates of alternates, 
-        alternates of those, ... etc. until variables with no alternates are 
-        encountered or all variables have been yielded. In addition, it yields 
+        This is a "deep" iterator,  yielding alternates of alternates,
+        alternates of those, ... etc. until variables with no alternates are
+        encountered or all variables have been yielded. In addition, it yields
         the "sets" of alternates and not the VarlistEntries themselves.
         """
         def _iter_alternates():
@@ -282,7 +282,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
                     for alt_v_set_of_ve in ve.alternates:
                         if alt_v_set_of_ve not in already_encountered:
                             stack.append(alt_v_set_of_ve)
-        # first value yielded by _iter_alternates is the var itself, so drop 
+        # first value yielded by _iter_alternates is the var itself, so drop
         # that and then start by returning var's alternates
         iterator_ = iter(_iter_alternates())
         try:
@@ -315,10 +315,10 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         for i, altvs in enumerate(self.iter_alternates()):
             s += f"\n\tAlternate set #{i+1}: {self.alternates_str(altvs)}"
         return s
-    
+
     def iter_data_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s 
-        from v's *data* dict, filtering out those DataKeys that have been 
+        """Yield :class:`~data_manager.DataKeyBase`\s
+        from v's *data* dict, filtering out those DataKeys that have been
         eliminated via previous failures in fetching or preprocessing.
         """
         iter_ = self.data.values()
@@ -329,11 +329,11 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         yield from list(iter_)
 
     def deactivate_data_key(self, d_key, exc):
-        """When a DataKey (*d_key*) has been deactivated during query or fetch, 
+        """When a DataKey (*d_key*) has been deactivated during query or fetch,
         log a message and delete our record of it if we were using it, and
         deactivate ourselves if we don't have any viable DataKeys left.
 
-        We can't just use the *status* attribute on the DataKey, because the 
+        We can't just use the *status* attribute on the DataKey, because the
         VarlistEntry-DataKey relationship is many-to-many.
         """
         expt_keys_to_remove = []
@@ -349,7 +349,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             # all DataKeys obtained for this var during query have
             # been eliminated, so need to deactivate var
             self.deactivate(util.ChildFailureEvent(self))
-    
+
     @property
     def local_data(self):
         """Return sorted list of local file paths corresponding to the selected
@@ -370,7 +370,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
 
     def query_attrs(self, key_synonyms=None):
         """Returns a dict of attributes relevant for DataSource.query_dataset()
-        (ie, which describe the variable itself and aren't specific to the 
+        (ie, which describe the variable itself and aren't specific to the
         MDTF implementation.)
         """
         if key_synonyms is None:
@@ -403,10 +403,10 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             - The names for all of this variable's coordinate axes in that file,
             - The names of the bounds variables for all of those coordinate
                 dimensions, if provided by the data.
-        
+
         """
         if self.status != core.ObjectStatus.SUCCEEDED:
-            # Signal to POD's code that vars are not provided by setting 
+            # Signal to POD's code that vars are not provided by setting
             # variable to the empty string.
             return {self.env_var: "", self.path_variable: ""}
 
@@ -424,18 +424,18 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         return d
 
 class Varlist(data_model.DMDataSet):
-    """Class to perform bookkeeping for the model variables requested by a 
+    """Class to perform bookkeeping for the model variables requested by a
     single POD.
     """
     @classmethod
     def from_struct(cls, d, parent):
-        """Parse the "dimensions", "data" and "varlist" sections of the POD's 
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
         settings.jsonc file when instantiating a new Diagnostic() object.
 
         Args:
             d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
 
-        Returns: 
+        Returns:
             :py:obj:`dict`, keys are names of the dimensions in POD's convention,
             values are :class:`PodDataDimension` objects.
         """
@@ -454,7 +454,7 @@ class Varlist(data_model.DMDataSet):
                 )
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
-        
+
         def _iter_shallow_alternates(var):
             """Iterator over all VarlistEntries referenced as alternates. Doesn't
             traverse alternates of alternates, etc.
@@ -488,7 +488,7 @@ class Varlist(data_model.DMDataSet):
         return cls(contents = list(vlist_vars.values()))
 
     def find_var(self, v):
-        """If a variable matching v is already present in the Varlist, return 
+        """If a variable matching v is already present in the Varlist, return
         (a reference to) it (so that we don't try to add duplicates), otherwise
         return None.
         """
@@ -501,18 +501,18 @@ class Varlist(data_model.DMDataSet):
 
 @util.mdtf_dataclass
 class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
-    """Class holding configuration for a diagnostic script. Object attributes 
-    are read from entries in the settings section of the POD's settings.jsonc 
+    """Class holding configuration for a diagnostic script. Object attributes
+    are read from entries in the settings section of the POD's settings.jsonc
     file upon initialization.
 
-    See `settings file documentation 
+    See `settings file documentation
     <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
     for documentation on attributes.
     """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
-    # log = util.MDTFObjectLogger 
+    # log = util.MDTFObjectLogger
     # status: ObjectStatus
     long_name: str = ""
     description: str = ""
@@ -532,7 +532,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     POD_OBS_DATA = ""
     POD_WK_DIR = ""
     POD_OUT_DIR = ""
-    
+
     _deactivation_log_level = logging.ERROR # default log level for failure
     # recognized interpreters for supported script types; can ovverride with
     # explict 'program' attribute in settings
@@ -548,7 +548,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
     @property
     def _log_name(self):
-        # POD loggers sit in a subtree of the DataSource logger distinct from 
+        # POD loggers sit in a subtree of the DataSource logger distinct from
         # the DataKey loggers; the two subtrees are distinguished by class name
         _log_name = f"{self.name}_{self._id}".replace('.', '_')
         return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
@@ -567,14 +567,14 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         try:
             pod.varlist = Varlist.from_struct(d, parent=pod)
         except Exception as exc:
-            raise util.PodConfigError("Caught exception while parsing varlist", 
+            raise util.PodConfigError("Caught exception while parsing varlist",
                 pod_name) from exc
         return pod
 
     @classmethod
     def from_config(cls, pod_name, parent):
         """Usual method of instantiating Diagnostic objects, from the contents
-        of its settings.jsonc file as stored in the 
+        of its settings.jsonc file as stored in the
         :class:`~core.ConfigManager`.
         """
         config = core.ConfigManager()
@@ -588,14 +588,14 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     def child_deactivation_handler(self, failed_v, failed_v_exc):
         """Update the status of which VarlistEntries are "active" (not failed
         somewhere in the query/fetch process) based on new information. If the
-        process has failed for a :class:`VarlistEntry`, try to find a set of 
-        alternate VarlistEntries. If successful, activate them; if not, raise a 
+        process has failed for a :class:`VarlistEntry`, try to find a set of
+        alternate VarlistEntries. If successful, activate them; if not, raise a
         :class:`PodDataError`.
         """
         if self.failed:
             return
 
-        self.log.info("Request for %s failed; looking for alternate data.", 
+        self.log.info("Request for %s failed; looking for alternate data.",
             failed_v)
         success = False
         for i, alt_list in enumerate(failed_v.iter_alternates()):
@@ -607,7 +607,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                 continue
             # found a viable set of alternates
             success = True
-            self.log.info("Selected alternate set #%d: %s.", 
+            self.log.info("Selected alternate set #%d: %s.",
                 i+1, failed_v.alternates_str(alt_list))
             for alt_v in alt_list:
                 alt_v.status = core.ObjectStatus.ACTIVE
@@ -663,10 +663,10 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
         Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
         """
-        if not self.driver:  
+        if not self.driver:
             self.log.warning("No valid driver script found for %s.", self.full_name)
             # try to find one anyway
-            script_names = [self.name, "driver"]      
+            script_names = [self.name, "driver"]
             file_names = [f"{script}{ext}" for script in script_names \
                 for ext in self._interpreters.keys()]
             for f in file_names:
@@ -685,7 +685,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
         if not os.path.exists(self.driver):
             raise util.PodRuntimeError(
-                f"Unable to locate driver script '{self.driver}'.", 
+                f"Unable to locate driver script '{self.driver}'.",
                 self
             )
 
@@ -703,40 +703,40 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             # Possible error: Driver file type unrecognized
             if driver_ext not in self._interpreters:
                 raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
-                    f"file.\nSupported programs: {list(self._interpreters.values())}"), 
+                    f"file.\nSupported programs: {list(self._interpreters.values())}"),
                     self
                 )
             self.program = self._interpreters[driver_ext]
-            self.log.debug("Set program for %s to '%s'.", 
+            self.log.debug("Set program for %s to '%s'.",
                 self.full_name, self.program)
 
     def pre_run_setup(self):
-        """Perform filesystem operations and checks prior to running the POD. 
+        """Perform filesystem operations and checks prior to running the POD.
 
         In order, this 1) sets environment variables specific to the POD, 2)
         creates POD-specific working directories, and 3) checks for the existence
         of the POD's driver script.
 
         Note:
-            The existence of data files is checked with 
+            The existence of data files is checked with
             :meth:`data_manager.DataManager.fetchData`
             and the runtime environment is validated separately as a function of
-            :meth:`environment_manager.EnvironmentManager.run`. This is because 
+            :meth:`environment_manager.EnvironmentManager.run`. This is because
             each POD is run in a subprocess (due to the necessity of supporting
-            multiple languages) so the validation must take place in that 
+            multiple languages) so the validation must take place in that
             subprocess.
 
         Raises: :exc:`~diagnostic.PodRuntimeError` if requirements
-            aren't met. This is re-raised from the 
+            aren't met. This is re-raised from the
             :meth:`~diagnostic.Diagnostic.set_entry_point` and
-            :meth:`~diagnostic.Diagnostic._check_for_varlist_files` 
+            :meth:`~diagnostic.Diagnostic._check_for_varlist_files`
             subroutines.
         """
         try:
             self.set_pod_env_vars()
             self.set_entry_point()
         except Exception as exc:
-            raise util.PodRuntimeError("Caught exception during pre_run_setup", 
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
                 self) from exc
 
     def set_pod_env_vars(self):

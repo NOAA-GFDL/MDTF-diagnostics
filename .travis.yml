@@ -1,8 +1,8 @@
 # This Travis-CI file only runs unit tests on the MDTF code.
-# It does not make use of external test data and does not test the scientific 
+# It does not make use of external test data and does not test the scientific
 # content of individual diagnostics.
 
-# Config validator: https://config.travis-ci.com/explore 
+# Config validator: https://config.travis-ci.com/explore
 
 jobs:
   include:
@@ -17,7 +17,7 @@ jobs:
       env:
         - MINICONDA_INSTALLER="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
 
-before_install: 
+before_install:
   # TRAVIS_BUILD_DIR = abs path to checked-out repo
   - BUILD_PARENT="$( cd "$( dirname "$TRAVIS_BUILD_DIR" )" >/dev/null 2>&1 && pwd )"
   - POD_OUTPUT="${BUILD_PARENT}/wkdir/MDTF_NCAR-CAM5.timeslice_2000_2003"
@@ -27,7 +27,7 @@ before_install:
   - cd "$BUILD_PARENT"
 
 install:
-# miniconda setup taken from official guide at 
+# miniconda setup taken from official guide at
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
   # - sudo apt update
   - wget $MINICONDA_INSTALLER -O miniconda.sh;
@@ -39,7 +39,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # MDTF-specific setup: 
+  # MDTF-specific setup:
   # install all conda envs used by package and PODs
   - $TRAVIS_BUILD_DIR/src/conda/conda_env_setup.sh --all --conda_root "$HOME/miniconda"
 
@@ -71,11 +71,11 @@ script:
 
   # try running EOF_500hPa and example PODs
   - ./mdtf -v -f "${TRAVIS_BUILD_DIR}/tests/travis_test.jsonc"
-  # EOF_500hPa 
+  # EOF_500hPa
   - ls "${POD_OUTPUT}/EOF_500hPa/obs"
   - ls "${POD_OUTPUT}/EOF_500hPa/model"
   - cat "${POD_OUTPUT}/EOF_500hPa/EOF_500hPa.log"
-  # example 
+  # example
   - ls "${POD_OUTPUT}/example/obs"
   - ls "${POD_OUTPUT}/example/model"
   - cat "${POD_OUTPUT}/example/example.log"

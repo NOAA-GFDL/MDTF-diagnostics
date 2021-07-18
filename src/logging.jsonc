@@ -1,5 +1,5 @@
 // Default logging configuration for the MDTF package.
-// Schema follows 
+// Schema follows
 // https://docs.python.org/3.7/library/logging.config.html#logging-config-dictschema.
 // Customize as needed to change the logging output and format for your site.
 {
@@ -24,7 +24,7 @@
   "handlers": {
     "debug": {
         // writes DEBUG statements to stdout
-        // verbosity level set from CLI (--verbose/--quiet) by 
+        // verbosity level set from CLI (--verbose/--quiet) by
         // src.util.logs._set_console_log_level
         "class": "logging.StreamHandler",
         "formatter": "level",
@@ -33,7 +33,7 @@
     },
     "stdout": {
         // writes INFO statements to stdout
-        // verbosity level set from CLI (--verbose/--quiet) by 
+        // verbosity level set from CLI (--verbose/--quiet) by
         // src.util.logs._set_console_log_level
         "class": "logging.StreamHandler",
         "formatter": "normal",
@@ -42,7 +42,7 @@
     },
     "stderr": {
         // writes WARNING and ERROR statements to stderr
-        // verbosity level set from CLI (--verbose/--quiet) by 
+        // verbosity level set from CLI (--verbose/--quiet) by
         // src.util.logs._set_console_log_level
         "class": "logging.StreamHandler",
         "formatter": "level",

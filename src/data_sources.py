@@ -1,4 +1,4 @@
-"""Implementation classes for the model data query/fetch functionality 
+"""Implementation classes for the model data query/fetch functionality
 implemented in src/data_manager.py, selected by the user via  ``--data_manager``.
 """
 import os
@@ -112,8 +112,8 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
     """After loading and parsing the metadata on dataset *ds* but before
-    applying the preprocessing functions, update attrs on *ds* with the new 
-    metadata values that were specified in :class:`ExplicitFileDataSource`\'s 
+    applying the preprocessing functions, update attrs on *ds* with the new
+    metadata values that were specified in :class:`ExplicitFileDataSource`\'s
     config file.
     """
     def __init__(self, data_mgr, pod):
@@ -124,10 +124,10 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
         self.id_lut = dict()
 
     def setup(self, data_mgr, pod):
-        """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to 
+        """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to
         the set of metadata that we need to alter.
 
-        If user has provided the name of variable used by the data files (via the 
+        If user has provided the name of variable used by the data files (via the
         ``var_name`` attribute), set that as the translated variable name.
         Otherwise, variables are untranslated, and we use the herusitics in
         :meth:`xr_parser.DefaultDatasetParser.guess_dependent_var` to determine
@@ -138,8 +138,8 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
         for var in pod.iter_children():
             # set user-supplied translated name
             # note: currently have to do this here, rather than in setup_var(),
-            # because query for this data source relies on the *un*translated 
-            # name (ie, the POD's name for the var) being set in the translated 
+            # because query for this data source relies on the *un*translated
+            # name (ie, the POD's name for the var) being set in the translated
             # name attribute.
             if pod.name in data_mgr._config \
                 and var.name in data_mgr._config[pod.name]:
@@ -161,14 +161,14 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
 
     def _post_normalize_hook(self, var, ds):
         """After loading the metadata on dataset *ds* but before
-        reconciling it with the record, update attrs with the new 
-        metadata values that were specified in :class:`ExplicitFileDataSource`\'s 
+        reconciling it with the record, update attrs with the new
+        metadata values that were specified in :class:`ExplicitFileDataSource`\'s
         config file.
 
-        Normal operation is to set the changed attrs on the VarlistEntry 
-        translation, and then have these overwrite attrs in *ds* in the inherited 
+        Normal operation is to set the changed attrs on the VarlistEntry
+        translation, and then have these overwrite attrs in *ds* in the inherited
         :meth:`xr_parser.DefaultDatasetParser.reconcile_variable` method. If
-        the user set the ``--disable-preprocessor`` flag, this is skipped, so 
+        the user set the ``--disable-preprocessor`` flag, this is skipped, so
         instead we set the attrs directly on *ds*.
         """
         tv_name = var.translation.name # abbreviate
@@ -178,7 +178,7 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
             if k in ds_attrs and v is not xr_parser.ATTR_NOT_FOUND:
                 if v != ds_attrs[k]:
                     var.log.info(("Changing the value of the '%s' attribute of "
-                        "variable '%s' from '%s' to user-requested value '%s'."), 
+                        "variable '%s' from '%s' to user-requested value '%s'."),
                         k, var.name, ds_attrs[k], v,
                         tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
                     )
@@ -190,7 +190,7 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
                     )
             else:
                 var.log.debug(("Attribute '%s' of variable '%s' is undefined; "
-                    "setting to user-requested value '%s'."), 
+                    "setting to user-requested value '%s'."),
                     k, var.name, v,
                     tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
                 )
@@ -204,8 +204,8 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
 
 class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
-    look up and apply edits to metadata that are stored in 
-    :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id 
+    look up and apply edits to metadata that are stored in
+    :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id
     attribute of :class:`ExplicitFileDataSource`.
     """
     _file_preproc_functions = []
@@ -216,17 +216,17 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
         config = core.ConfigManager()
         if config.get('disable_preprocessor', False):
             return (
-                preprocessor.CropDateRangeFunction, 
+                preprocessor.CropDateRangeFunction,
                 preprocessor.RenameVariablesFunction
             )
         else:
             # Add ApplyScaleAndOffsetFunction to functions used by parent class
             return (
-                preprocessor.CropDateRangeFunction, 
+                preprocessor.CropDateRangeFunction,
                 preprocessor.ApplyScaleAndOffsetFunction,
-                preprocessor.PrecipRateToFluxFunction, 
-                preprocessor.ConvertUnitsFunction, 
-                preprocessor.ExtractLevelFunction, 
+                preprocessor.PrecipRateToFluxFunction,
+                preprocessor.ConvertUnitsFunction,
+                preprocessor.ExtractLevelFunction,
                 preprocessor.RenameVariablesFunction
             )
 
@@ -265,7 +265,7 @@ class ExplicitFileDataSourceConfigEntry():
 
     @classmethod
     def from_struct(cls, pod_name, var_name, v_data):
-        # "var_name" in arguments is the name given to the variable by the POD; 
+        # "var_name" in arguments is the name given to the variable by the POD;
         # name_in_data is the user-specified name of the variable in the files
         if isinstance(v_data, dict):
             glob = v_data.get('files', "")
@@ -278,7 +278,7 @@ class ExplicitFileDataSourceConfigEntry():
             metadata = dict()
             _has_user_metadata = False
         return cls(
-            pod_name=pod_name, name=var_name, glob=glob, 
+            pod_name=pod_name, name=var_name, glob=glob,
             var_name=name_in_data, metadata=metadata,
             _has_user_metadata=_has_user_metadata
         )
@@ -287,7 +287,7 @@ class ExplicitFileDataSourceConfigEntry():
         return dm.FileGlobTuple(
             name=self.full_name, glob=self.glob,
             attrs={
-                'glob_id': self.glob_id, 
+                'glob_id': self.glob_id,
                 'pod_name': self.pod_name, 'name': self.name
             }
         )
@@ -317,7 +317,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
             exit(1)
 
         if self.convention != core._NO_TRANSLATION_CONVENTION:
-            log.debug("Received incompatible convention '%s'; setting to '%s'.", 
+            log.debug("Received incompatible convention '%s'; setting to '%s'.",
                 self.convention, core._NO_TRANSLATION_CONVENTION)
             self.convention = core._NO_TRANSLATION_CONVENTION
 
@@ -329,7 +329,7 @@ explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
 class ExplicitFileDataSource(
     dm.OnTheFlyGlobQueryMixin, dm.LocalFetchMixin, dm.DataframeQueryDataSourceBase
 ):
-    """DataSource for dealing data in a regular directory hierarchy on a 
+    """DataSource for dealing data in a regular directory hierarchy on a
     locally mounted filesystem. Assumes data for each variable may be split into
     several files according to date, with the dates present in their filenames.
     """
@@ -338,7 +338,7 @@ class ExplicitFileDataSource(
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = MetadataRewritePreprocessor
     col_spec = explicitFileDataSource_col_spec
-    
+
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
 
@@ -362,7 +362,7 @@ class ExplicitFileDataSource(
         return self.attrs.CASE_ROOT_DIR
 
     def parse_config(self, config_d):
-        """Parse contents of JSON config file into a list of 
+        """Parse contents of JSON config file into a list of
         :class`ExplicitFileDataSourceConfigEntry` objects.
         """
         # store contents in ConfigManager so they can be backed up in output
@@ -381,7 +381,7 @@ class ExplicitFileDataSource(
                     pod_name, v_name, v_data)
                 self._config[pod_name][v_name] = entry
                 self.config_by_id[entry.glob_id] = entry
-        # don't bother to validate here -- if we didn't specify files for all 
+        # don't bother to validate here -- if we didn't specify files for all
         # vars it'll manifest as a failed query & be logged as error there.
 
         # set overwrite_metadata flag if needed
@@ -392,13 +392,13 @@ class ExplicitFileDataSource(
             not config.get('overwrite_file_metadata', False):
             self.log.warning(("Requesting metadata edits in ExplicitFileDataSource "
                 "implies the use of the --overwrite-file-metadata flag. Input "
-                "file metadata will be overwritten."), 
+                "file metadata will be overwritten."),
                 tags=util.ObjectLogTag.BANNER
             )
             config['overwrite_file_metadata'] = True
 
     def iter_globs(self):
-        """Iterator returning :class:`FileGlobTuple` instances. The generated 
+        """Iterator returning :class:`FileGlobTuple` instances. The generated
         catalog contains the union of the files found by each of the globs.
         """
         for entry in self.config_by_id.values():
@@ -438,11 +438,11 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     if not source_val:
                         raise KeyError()
                     dest_val = cv.lookup_single(source_val, source, dest)
-                    log.debug("Set %s='%s' based on %s='%s'.", 
+                    log.debug("Set %s='%s' based on %s='%s'.",
                         dest, dest_val, source, source_val)
                     setattr(self, dest, dest_val)
                 except KeyError:
-                    log.debug("Couldn't set %s from %s='%s'.", 
+                    log.debug("Couldn't set %s from %s='%s'.",
                         dest, source, source_val)
                     setattr(self, dest, "")
 
@@ -471,7 +471,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     log.error(("Supplied value '%s' for '%s' is not recognized by "
                         "the CMIP6 CV. Continuing, but queries will probably fail."),
                         val, field.name)
-            except KeyError: 
+            except KeyError:
                 # raised if not a valid CMIP6 CV category
                 continue
         # currently no inter-field consistency checks: happens implicitly, since
@@ -505,7 +505,7 @@ cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
         ["activity_id", "institution_id", "source_id", "experiment_id",
         "variant_label", "version_date"],
         # columns whose values are derived from those above
-        ["region", "spatial_avg", 'realization_index', 'initialization_index', 
+        ["region", "spatial_avg", 'realization_index', 'initialization_index',
         'physics_index', 'forcing_index']
     ),
     # Catalog columns whose values must be the same for each POD.
@@ -514,7 +514,7 @@ cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
         # columns whose values are derived from those above
         ['regrid', 'grid_number']
     ),
-    # Catalog columns whose values must "be the same for each variable", ie are 
+    # Catalog columns whose values must "be the same for each variable", ie are
     # irrelevant but must be constrained to a unique value.
     var_expt_cols = dm.DataFrameQueryColumnGroup(["table_id"]),
     daterange_col = "date_range"
@@ -548,10 +548,10 @@ class CMIP6ExperimentSelectionMixin():
         else:
             # return empty DataFrame to signify failure
             if has_region:
-                _log.debug("Eliminating expt_key for regional data (%s).", 
+                _log.debug("Eliminating expt_key for regional data (%s).",
                     group_df['region'].drop_duplicates().to_list())
             elif has_spatial_avg:
-                _log.debug("Eliminating expt_key for spatially averaged data (%s).", 
+                _log.debug("Eliminating expt_key for spatially averaged data (%s).",
                     group_df['spatial_avg'].drop_duplicates().to_list())
             return pd.DataFrame(columns=group_df.columns)
 
@@ -562,7 +562,7 @@ class CMIP6ExperimentSelectionMixin():
             # unique value, no need to filter
             return df
         filter_val = func(values)
-        _log.debug("Selected experiment attribute '%s'='%s' for %s (out of %s).", 
+        _log.debug("Selected experiment attribute '%s'='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
 
@@ -577,10 +577,10 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
     def resolve_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all 
-        variables in this case: 
- 
-        - If variant_id (realization, forcing, etc.) not specified by user, 
+        """Disambiguate experiment attributes that must be the same for all
+        variables in this case:
+
+        - If variant_id (realization, forcing, etc.) not specified by user,
             choose the lowest-numbered variant
         - If version_date not set by user, choose the most recent revision
         """
@@ -593,9 +593,9 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
     def resolve_pod_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all 
+        """Disambiguate experiment attributes that must be the same for all
         variables for each POD:
- 
+
         - Prefer regridded to native-grid data (questionable)
         - If multiple regriddings available, pick the lowest-numbered one
         """
@@ -608,7 +608,7 @@ class CMIP6ExperimentSelectionMixin():
 
     def resolve_var_expt(self, df, obj):
         """Disambiguate arbitrary experiment attributes on a per-variable basis:
- 
+
         - If the same variable appears in multiple MIP tables, select the first
             MIP table in alphabetical order.
         """
@@ -617,12 +617,12 @@ class CMIP6ExperimentSelectionMixin():
         # select first MIP table (out of available options) by alpha order
         # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
         df = df.sort_values(col_name).iloc[[0]]
-        obj.log.debug("Selected experiment attribute '%s'='%s' for %s.", 
+        obj.log.debug("Selected experiment attribute '%s'='%s' for %s.",
             col_name, df[col_name].iloc[0], obj.name)
         return df
 
 class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSource):
-    """DataSource for handling model data named following the CMIP6 DRS and 
+    """DataSource for handling model data named following the CMIP6 DRS and
     stored on a local filesystem.
     """
     _FileRegexClass = cmip6.CMIP6_DRSPath

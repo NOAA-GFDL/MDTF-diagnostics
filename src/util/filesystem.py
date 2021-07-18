@@ -17,7 +17,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 def abbreviate_path(path, old_base, new_base=None):
-    """Express path as a path relative to old_base, optionally prepending 
+    """Express path as a path relative to old_base, optionally prepending
     new_base.
     """
     ps = tuple(os.path.abspath(p) for p in (path, old_base))
@@ -34,7 +34,7 @@ def resolve_path(path, root_path="", env=None, log=_log):
         root_path (:obj:`str`, optional): root path to resolve `path` with. If
             not given, resolves relative to `cwd`.
 
-    Returns: Absolute version of `path`, relative to `root_path` if given, 
+    Returns: Absolute version of `path`, relative to `root_path` if given,
         otherwise relative to `os.getcwd`.
     """
     def _expandvars(path, env_dict):
@@ -45,8 +45,8 @@ def resolve_path(path, root_path="", env=None, log=_log):
         escaped characters and not changing unrecognized variables.
         """
         return re.sub(
-            r'\$(\w+|\{([^}]*)\})', 
-            lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)), 
+            r'\$(\w+|\{([^}]*)\})',
+            lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)),
             path
         )
 
@@ -66,14 +66,14 @@ def resolve_path(path, root_path="", env=None, log=_log):
     assert os.path.isabs(root_path)
     return os.path.normpath(os.path.join(root_path, path))
 
-def recursive_copy(src_files, src_root, dest_root, copy_function=None, 
+def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     overwrite=False):
     """Copy src_files to dest_root, preserving relative subdirectory structure.
 
     Copies a subset of files in a directory subtree rooted at src_root to an
     identical subtree structure rooted at dest_root, creating any subdirectories
-    as needed. For example, `recursive_copy('/A/B/C.txt', '/A', '/D')` will 
-    first create the destination subdirectory `/D/B` and copy '/A/B/C.txt` to 
+    as needed. For example, `recursive_copy('/A/B/C.txt', '/A', '/D')` will
+    first create the destination subdirectory `/D/B` and copy '/A/B/C.txt` to
     `/D/B/C.txt`.
 
     Args:
@@ -81,8 +81,8 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
         src_root: Root subtree of all files in src_files. Raises a ValueError
             if all files in src_files are not contained in the src_root directory.
         dest_root: Destination directory in which to create the copied subtree.
-        copy_function: Function to use to copy individual files. Must take two 
-            arguments, the source and destination paths, respectively. Defaults 
+        copy_function: Function to use to copy individual files. Must take two
+            arguments, the source and destination paths, respectively. Defaults
             to :py:meth:`shutil.copy2`.
         overwrite: Boolean, deafult False. If False, raise an OSError if
             any destination files already exist, otherwise silently overwrite.
@@ -119,12 +119,12 @@ def find_files(src_dirs, filename_globs, n_files=None):
     of ``filename_globs``. Wraps :py:class:`glob.glob`.
 
     Args:
-        src_dirs: Directory, or a list of directories, to search for files in. The 
+        src_dirs: Directory, or a list of directories, to search for files in. The
             function will also search all subdirectories.
-        filename_globs: Glob, or a list of globs, for filenames to match. This 
+        filename_globs: Glob, or a list of globs, for filenames to match. This
             is a shell globbing pattern, not a full regex.
-        n_files (int, optional): If supplied, raise 
-            :class:`~framework.util.exceptions.MDTFFileNotFoundError` if the 
+        n_files (int, optional): If supplied, raise
+            :class:`~framework.util.exceptions.MDTFFileNotFoundError` if the
             number of files found is not equal to this number.
 
     Returns: :py:obj:`list` of paths to files matching any of the criteria.
@@ -144,15 +144,15 @@ def find_files(src_dirs, filename_globs, n_files=None):
 
 def check_dir(dir_, attr_name="", create=False):
     """Check existence of directories. No action is taken for directories that
-    already exist; nonexistent directories either raise a 
+    already exist; nonexistent directories either raise a
     :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
 
     Args:
-        dir\_: If a string, the absolute path to check; otherwise, assume the 
+        dir\_: If a string, the absolute path to check; otherwise, assume the
             path to check is given by the *attr_name* attribute on this object.
         attr_name: Name of the attribute being checked (used in log messages).
-        create: (bool, default False): if True, nonexistent directories are 
-            created. 
+        create: (bool, default False): if True, nonexistent directories are
+            created.
     """
     if not isinstance(dir_, str):
         dir_ = getattr(dir_, attr_name, None)
@@ -246,7 +246,7 @@ def strip_comments(str_, delimiter=None):
     # would be better to use shlex, but that doesn't support multi-character
     # comment delimiters like '//'
     ESCAPED_QUOTE_PLACEHOLDER = '\v' # no one uses vertical tab
-    
+
     if not delimiter:
         return str_
     lines = str_.splitlines()
@@ -257,7 +257,7 @@ def strip_comments(str_, delimiter=None):
             continue
         # handle delimiters midway through a line:
         # If delimiter appears quoted in a string, don't want to treat it as
-        # a comment. So for each occurrence of delimiter, count number of 
+        # a comment. So for each occurrence of delimiter, count number of
         # "s to its left and only truncate when that's an even number.
         # First we get rid of \-escaped single "s.
         replaced_line = lines[i].replace('\\\"', ESCAPED_QUOTE_PLACEHOLDER)
@@ -279,25 +279,25 @@ def strip_comments(str_, delimiter=None):
 
 def parse_json(str_):
     def _pos_from_lc(lineno, colno, str_):
-        # fix line number, since we stripped commented-out lines. JSONDecodeError 
+        # fix line number, since we stripped commented-out lines. JSONDecodeError
         # computes line/col no. in error message from character position in string.
         lines = str_.splitlines()
         return (colno - 1) + sum( (len(line) + 1) for line in lines[:lineno])
 
     (strip_str, line_nos) = strip_comments(str_, delimiter= '//')
     try:
-        parsed_json = json.loads(strip_str, 
+        parsed_json = json.loads(strip_str,
             object_pairs_hook=collections.OrderedDict)
     except json.JSONDecodeError as exc:
-        # fix reported line number, since we stripped commented-out lines. 
+        # fix reported line number, since we stripped commented-out lines.
         assert exc.lineno <= len(line_nos)
         raise json.JSONDecodeError(
-            msg=exc.msg, doc=str_, 
+            msg=exc.msg, doc=str_,
             pos=_pos_from_lc(line_nos[exc.lineno-1], exc.colno, str_)
         )
     except UnicodeDecodeError as exc:
         raise json.JSONDecodeError(
-            msg=f"parse_json received UnicodeDecodeError:\n{exc}", 
+            msg=f"parse_json received UnicodeDecodeError:\n{exc}",
             doc=strip_str, pos=0
         )
     return parsed_json
@@ -306,7 +306,7 @@ def read_json(file_path, log=_log):
     log.debug('Reading file %s', file_path)
     if not os.path.isfile(file_path):
         raise exceptions.MDTFFileNotFoundError(file_path)
-    try:    
+    try:
         with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
     except Exception as exc:
@@ -316,7 +316,7 @@ def read_json(file_path, log=_log):
     return parse_json(str_)
 
 def find_json(dir_, file_name, exit_if_missing=True, log=_log):
-    """Wrap :func:`read_json` with more elaborate error handling. find_files() 
+    """Wrap :func:`read_json` with more elaborate error handling. find_files()
     will find a file named file_name at any level within dir\_.
     """
     try:
@@ -340,7 +340,7 @@ def write_json(struct, file_path, sort_keys=False, log=_log):
     """
     log.debug('Writing file %s', file_path)
     try:
-        str_ = json.dumps(struct, 
+        str_ = json.dumps(struct,
             sort_keys=sort_keys, indent=2, separators=(',', ': '))
         with io.open(file_path, 'w', encoding='utf-8') as file_:
             file_.write(str_)
@@ -349,7 +349,7 @@ def write_json(struct, file_path, sort_keys=False, log=_log):
         exit(1)
 
 def pretty_print_json(struct, sort_keys=False):
-    """Convert struct to a pseudo-YAML string for human-readable debugging 
+    """Convert struct to a pseudo-YAML string for human-readable debugging
     purposes only. Output is not valid JSON (or YAML).
     """
     str_ = json.dumps(struct, sort_keys=sort_keys, indent=2)
@@ -358,18 +358,18 @@ def pretty_print_json(struct, sort_keys=False):
     # remove isolated double quotes, but keep ""
     str_ = re.sub(r'(?<!\")\"(?!\")', "", str_)
     # remove lines containing only whitespace
-    return os.linesep.join([s for s in str_.splitlines() if s.strip()]) 
+    return os.linesep.join([s for s in str_.splitlines() if s.strip()])
 
 # ---------------------------------------------------------
 # HTML TEMPLATING
 # ---------------------------------------------------------
 
 class _DoubleBraceTemplate(string.Template):
-    """Private class used by :func:`~util.append_html_template` to do 
+    """Private class used by :func:`~util.append_html_template` to do
     string templating with double curly brackets as delimiters, since single
     brackets are also used in css.
 
-    See `<https://docs.python.org/3.7/library/string.html#string.Template>`_ and 
+    See `<https://docs.python.org/3.7/library/string.html#string.Template>`_ and
     `<https://stackoverflow.com/a/34362892>`__.
     """
     flags = re.VERBOSE # matching is case-sensitive, unlike default
@@ -381,7 +381,7 @@ class _DoubleBraceTemplate(string.Template):
         (?P<escaped>\{\{)|
         # case 2) text is the name of an env var, possibly followed by whitespace,
         # followed by closing double bracket. Match POSIX env var names,
-        # case-sensitive (see https://stackoverflow.com/a/2821183), with the 
+        # case-sensitive (see https://stackoverflow.com/a/2821183), with the
         # addition that hyphens are allowed.
         # Can't tell from docs what the distinction between <named> and <braced> is.
         \s*(?P<named>[a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}|
@@ -391,11 +391,11 @@ class _DoubleBraceTemplate(string.Template):
         )
     """
 
-def append_html_template(template_file, target_file, template_dict={}, 
+def append_html_template(template_file, target_file, template_dict={},
     create=True, append=True):
     """Perform substitutions on template_file and write result to target_file.
 
-    Variable substitutions are done with custom 
+    Variable substitutions are done with custom
     `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
     replacing *double* curly bracket-delimited keys with their values in template_dict.
     For example, if template_dict is {'A': 'foo'}, all occurrences of the string
@@ -405,17 +405,17 @@ def append_html_template(template_file, target_file, template_dict={},
     Double-curly-bracketed strings that don't correspond to keys in template_dict are
     ignored (instead of raising a KeyError.)
 
-    Double curly brackets are chosen as the delimiter to match the default 
+    Double curly brackets are chosen as the delimiter to match the default
     syntax of, eg, django and jinja2. Using single curly braces leads to conflicts
     with CSS syntax.
 
     Args:
         template_file: Path to template file.
-        target_file: Destination path for result. 
+        target_file: Destination path for result.
         template_dict: :py:obj:`dict` of variable name-value pairs. Both names
             and values must be strings.
         create: Boolean, default True. If true, create target_file if it doesn't
-            exist, otherwise raise an OSError. 
+            exist, otherwise raise an OSError.
         append: Boolean, default True. If target_file exists and this is true,
             append the substituted contents of template_file to it. If false,
             overwrite target_file with the substituted contents of template_file.

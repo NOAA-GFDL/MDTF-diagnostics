@@ -22,7 +22,7 @@ class MDTFConsoleHandler(logging.StreamHandler):
     pass
 
 class StringIOHandler(logging.StreamHandler):
-    """:py:class:`~logging.StreamHandler` instance that writes log entries to 
+    """:py:class:`~logging.StreamHandler` instance that writes log entries to
     an internal :py:class:`~io.StringIO` buffer.
     """
     def __init__(self):
@@ -46,16 +46,16 @@ class StringIOHandler(logging.StreamHandler):
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
     """Subclass :py:class:`logging.handlers.MemoryHandler` to enable flushing
-    the contents of its log buffer to multiple targets. We do this to solve the 
-    chicken-and-egg problem of logging any events that happen before the log 
-    outputs are configured: those events are captured by an instance of this 
+    the contents of its log buffer to multiple targets. We do this to solve the
+    chicken-and-egg problem of logging any events that happen before the log
+    outputs are configured: those events are captured by an instance of this
     handler and then transfer()'ed to other handlers once they're set up.
     See `<https://stackoverflow.com/a/12896092>`__.
     """
 
     def transfer(self, target_handler):
         """Transfer contents of buffer to target_handler.
-        
+
         Args:
             target_handler (:py:class:`logging.Handler`): log handler to transfer
                 contents of buffer to.
@@ -72,13 +72,13 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
             self.release()
 
     def transfer_to_non_console(self, logger):
-        """Transfer contents of buffer to all non-console-based handlers attached 
+        """Transfer contents of buffer to all non-console-based handlers attached
         to *logger* (handlers that aren't :py:class:`MDTFConsoleHandler`.)
 
         If no handlers are attached to the logger, a warning is printed and the
         buffer is transferred to the :py:class:`logging.lastResort` handler, i.e.
         printed to stderr.
-        
+
         Args:
             logger (:py:class:`logging.Logger`): logger to transfer
                 contents of buffer to.
@@ -116,9 +116,9 @@ def _hanging_indent(str_, initial_indent, subsequent_indent):
 
     Args:
         str_ (str): String to be indented.
-        initial_indent (str): string to insert as the indent for the first 
+        initial_indent (str): string to insert as the indent for the first
             line.
-        subsequent_indent (str): string to insert as the indent for all 
+        subsequent_indent (str): string to insert as the indent for all
             subsequent lines.
 
     Returns:
@@ -137,7 +137,7 @@ def _hanging_indent(str_, initial_indent, subsequent_indent):
     return '\n'.join(lines_out)
 
 class HangingIndentFormatter(logging.Formatter):
-    """:py:class:`logging.Formatter` that applies a hanging indent, making it 
+    """:py:class:`logging.Formatter` that applies a hanging indent, making it
     easier to tell where one entry stops and the next starts.
     """
     # https://blog.belgoat.com/python-textwrap-wrap-your-text-to-terminal-size/
@@ -169,7 +169,7 @@ class HangingIndentFormatter(logging.Formatter):
         Returns:
             String representation of the log entry.
 
-        This essentially repeats the method's `implementation 
+        This essentially repeats the method's `implementation
         <https://github.com/python/cpython/blob/4e02981de0952f54bf87967f8e10d169d6946b40/Lib/logging/__init__.py#L595-L625>`__
         in the python standard library. See comments there and the logging module
         `documentation <https://docs.python.org/3.7/library/logging.html>`__.
@@ -186,12 +186,12 @@ class HangingIndentFormatter(logging.Formatter):
         if record.exc_info and not record.exc_text:
             record.exc_text = self.formatException(record.exc_info)
         if record.exc_text:
-            # text from formatting the exception. NOTE that this includes the 
+            # text from formatting the exception. NOTE that this includes the
             # stack trace without populating stack_info or calling formatStack.
             if not s.endswith('\n'):
                 s = s + '\n'
             s = s + _hanging_indent(
-                record.exc_text, 
+                record.exc_text,
                 self.indent, self.stack_indent
             )
         if record.stack_info:
@@ -224,20 +224,20 @@ class GeqLevelFilter(_LevelFilterBase):
     """:py:class:`logging.Filter` to include only log messages with a severity of
     *level* or worse. This is normally done by setting the *level* attribute on a
     :py:class:`logging.Handler`, but we need to add a filter when transferring
-    records from another logger, as shown in 
+    records from another logger, as shown in
     `<https://stackoverflow.com/a/24324246>`__."""
     def filter(self, record):
         return record.levelno >= self.levelno
 
 class LtLevelFilter(_LevelFilterBase):
-    """:py:class:`logging.Filter` to include only log messages with a severity 
+    """:py:class:`logging.Filter` to include only log messages with a severity
     less than *level*.
     """
     def filter(self, record):
         return record.levelno < self.levelno
 
 class EqLevelFilter(_LevelFilterBase):
-    """:py:class:`logging.Filter` to include only log messages with a severity 
+    """:py:class:`logging.Filter` to include only log messages with a severity
     equal to *level*.
     """
     def filter(self, record):
@@ -247,29 +247,29 @@ class NameMatchFilter(logging.Filter):
     """:py:class:`logging.Filter` that rejects all log events coming from child
     loggers.
 
-    Intended to be attached to a handler -- the effect of attaching this to a 
+    Intended to be attached to a handler -- the effect of attaching this to a
     logger is the same as setting *propagate* = False on it.
     """
     def __init__(self, name=""):
         super(NameMatchFilter, self).__init__()
         self._name = name
-    
+
     def filter(self, record):
         return (record.name == self._name)
 
 OBJ_LOG_TAG_ATTR_NAME = 'tags'
 
 class TagMatchFilter(logging.Filter):
-    """:py:class:`logging.Filter` which only accepts records having the 
-    designated combination of 'tag' attributes. These are assigned by the 
+    """:py:class:`logging.Filter` which only accepts records having the
+    designated combination of 'tag' attributes. These are assigned by the
     methods in :class:`MDTFObjectLogger` or can be passed via the 'extra' kwarg
-    on any logger (see discussion in entry for 
+    on any logger (see discussion in entry for
     <https://docs.python.org/3.7/library/logging.html#logging.Logger.debug>__.)
     """
     def __init__(self, name="", tags=None):
         super(TagMatchFilter, self).__init__(name=name)
         self._tags = basic.to_iter(tags, set)
-    
+
     def filter(self, record):
         if not hasattr(record, OBJ_LOG_TAG_ATTR_NAME):
             return False
@@ -278,15 +278,15 @@ class TagMatchFilter(logging.Filter):
 
 # ------------------------------------------------------------------------------
 
-# standardize 
+# standardize
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
 ObjectLogTag = basic.MDTFEnum(
-    "ObjectLogTag", 
-    "NC_HISTORY BANNER IN_FILE OUT_FILE", 
+    "ObjectLogTag",
+    "NC_HISTORY BANNER IN_FILE OUT_FILE",
     module=__name__
 )
-ObjectLogTag.__doc__ = """Standardized values that the package-defined *tags* 
-attribute on :py:class:`~logging.LogRecord` objects can take, and that 
+ObjectLogTag.__doc__ = """Standardized values that the package-defined *tags*
+attribute on :py:class:`~logging.LogRecord` objects can take, and that
 :class:`TagMatchFilter` can listen for.
 """
 
@@ -294,10 +294,10 @@ class MDTFObjectLogger(logging.Logger):
     """This class wraps functionality for use by :class:`MDTFObjectLoggerMixin`:
 
     - A :py:class:`~logging.Logger` to record events affecting the parent object
-        only. This logger does not propagate events up the log hierarchy: the 
-        module-level logger should be passed if that functionality is desired. 
+        only. This logger does not propagate events up the log hierarchy: the
+        module-level logger should be passed if that functionality is desired.
 
-    - A list for holding :py:class:`Exception` objects received by the parent 
+    - A list for holding :py:class:`Exception` objects received by the parent
         object.
     """
     def __init__(self, name):
@@ -326,21 +326,21 @@ class MDTFObjectLogger(logging.Logger):
 
     def info(self, msg, *args, **kw):
         self.log(logging.INFO, msg, *args, **kw)
-        
+
     def warning(self, msg, *args, **kw):
         self.log(logging.WARNING, msg, *args, **kw)
-        
+
     def error(self, msg, *args, **kw):
         self.log(logging.ERROR, msg, *args, **kw)
 
     def critical(self, msg, *args, **kw):
         self.log(logging.CRITICAL, msg, *args, **kw)
-    
+
     def exception(self, msg, *args, exc_info=True, **kw):
         if exc_info:
             exc_type, _, _ = sys.exc_info()
             if issubclass(exc_type, exceptions.MDTFEvent):
-                # "exception" isn't an exception, just an event, so log with 
+                # "exception" isn't an exception, just an event, so log with
                 # severity info
                 self.log(logging.INFO, msg, *args, exc_info=False, **kw)
                 return
@@ -360,7 +360,7 @@ class MDTFObjectLogger(logging.Logger):
     @classmethod
     def get_logger(cls, log_name):
         # logger objects have global scope (calling getLogger with the same name
-        # returns the same object, like a Singleton), so need to toggle global 
+        # returns the same object, like a Singleton), so need to toggle global
         # state
         old_log_class = logging.getLoggerClass()
         logging.setLoggerClass(cls)
@@ -375,18 +375,18 @@ class MDTFObjectLoggerMixinBase():
     pass
 
 class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
-    """Class to implement per-object logging via inheritance. Used for 
-    :class:`~diagnostic.VarlistEntry` and :class:`~diagnostic.Diagnostic`. 
+    """Class to implement per-object logging via inheritance. Used for
+    :class:`~diagnostic.VarlistEntry` and :class:`~diagnostic.Diagnostic`.
     Based on `<https://stackoverflow.com/q/57813096>`__.
 
     This wraps related functionalities:
-    
+
     - A :py:class:`~logging.Logger` to record events affecting the object
         only. Log messages are cached in a :py:class:`~io.StringIO` buffer.
 
     - A method :meth:`~MDTFObjectLogger.format` for formatting the contents of
         the above into a string, along with log messages of any child objects.
-        This is intended for preparing log files (at the per-POD or per-case 
+        This is intended for preparing log files (at the per-POD or per-case
         level); logging intended for the console should use the module loggers.
     """
     def init_log(self, fmt=None):
@@ -397,7 +397,7 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         assert hasattr(self, 'log')
         self._log_handler = StringIOHandler()
         # don't record events from children in StringIO buffer
-        self._log_handler.addFilter(NameMatchFilter(self._log_name)) 
+        self._log_handler.addFilter(NameMatchFilter(self._log_name))
         formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
         self._log_handler.setFormatter(formatter)
         self.log.addHandler(self._log_handler)
@@ -420,7 +420,7 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         in *child_objs*, as a formatted string.
         """
         if hasattr(self, 'debug_str'):
-            str_ = f"Log for variable {self.debug_str()}\n" 
+            str_ = f"Log for variable {self.debug_str()}\n"
         else:
             str_ = f"Log for {self.full_name}:\n"
         # list exceptions before anything else:
@@ -448,9 +448,9 @@ class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
     def init_extra_log_handlers(self):
         # add extra handler for additions to netCDF history attribute
         self._nc_history_log = StringIOHandler()
-        self._nc_history_log.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY)) 
+        self._nc_history_log.addFilter(TagMatchFilter(tags=ObjectLogTag.NC_HISTORY))
         formatter = logging.Formatter(
-            fmt='%(asctime)s: MDTF package: %(message)s', 
+            fmt='%(asctime)s: MDTF package: %(message)s',
             datefmt='%a %b %d %H:%M:%S %Y' # mimic date format used by NCO, CDO
         )
         self._nc_history_log.setFormatter(formatter)
@@ -462,7 +462,7 @@ class _CaseAndPODHandlerMixin():
     def init_extra_log_handlers(self):
         # add handler for warning banner
         self._banner_log = StringIOHandler()
-        self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER)) 
+        self._banner_log.addFilter(TagMatchFilter(tags=ObjectLogTag.BANNER))
         formatter = logging.Formatter(
             fmt='%(levelname)s: %(message)s', datefmt='%H:%M:%S'
         )
@@ -485,7 +485,7 @@ class PODLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
     """
     pass
 
-class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):    
+class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
     """Mixin configuring log functionality for :class:`~data_manager.DataSourceBase`.
     """
     def init_log(self, log_dir, fmt=None):
@@ -506,7 +506,7 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
             mode="w", encoding="utf-8"
         )
         formatter = HangingIndentFormatter(
-            fmt=fmt, datefmt='%H:%M:%S', 
+            fmt=fmt, datefmt='%H:%M:%S',
             header="", footer="\n"
         )
         self._log_handler.setFormatter(formatter)
@@ -524,10 +524,10 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
 # ------------------------------------------------------------------------------
 
 def git_info():
-    """Get the current git branch, hash, and list of uncommitted files, if 
+    """Get the current git branch, hash, and list of uncommitted files, if
     available.
 
-    Called by :meth:`DebugHeaderFileHandler._debug_header`. Based on NumPy's 
+    Called by :meth:`DebugHeaderFileHandler._debug_header`. Based on NumPy's
     implementation: `<https://stackoverflow.com/a/40170206>`__.
     """
     def _minimal_ext_cmd(cmd):
@@ -551,7 +551,7 @@ def git_info():
         git_dirty = _minimal_ext_cmd(['git', 'diff', '--no-ext-diff', '--name-only'])
     except OSError:
         pass
-        
+
     if git_dirty:
         git_dirty = git_dirty.splitlines()
     elif git_hash:
@@ -579,7 +579,7 @@ def mdtf_log_header(title):
             # f"sys.executable: '{sys.executable}'\n"
             f"sys.version: '{sys.version}'\n"
             # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
-        ) 
+        )
     except Exception:
         err_str = "Couldn't gather log file header information."
         _log.exception(err_str)
@@ -588,7 +588,7 @@ def mdtf_log_header(title):
 
 def signal_logger(caller_name, signum=None, frame=None, log=_log):
     """Lookup signal name from number and write to log.
-    
+
     Taken from `<https://stackoverflow.com/a/2549950>`__.
 
     Args:
@@ -608,7 +608,7 @@ def signal_logger(caller_name, signum=None, frame=None, log=_log):
         log.info("%s caught unknown signal.", caller_name)
 
 def _set_excepthook(root_logger):
-    """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are 
+    """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are
     logged to the root logger.
 
     See `<https://docs.python.org/3/library/sys.html#sys.excepthook>`__.
@@ -619,17 +619,17 @@ def _set_excepthook(root_logger):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         root_logger.critical(
-            (70*'*') + "\nUncaught exception:\n", # banner so it stands out 
+            (70*'*') + "\nUncaught exception:\n", # banner so it stands out
             exc_info=(exc_type, exc_value, exc_traceback)
         )
-    
+
     sys.excepthook = uncaught_exception_handler
 
 def _configure_logging_dict(log_d, log_args):
-    """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure 
+    """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure
     log level and filters on console handlers in a logging config dictionary.
     """
-    # smaller number = more verbose  
+    # smaller number = more verbose
     level = getattr(log_args, 'quiet', 0) - getattr(log_args, 'verbose', 0)
     if level <= 1:
         stderr_level = logging.WARNING
@@ -662,7 +662,7 @@ def _configure_logging_dict(log_d, log_args):
 
 def initial_log_config():
     """Configure the root logger for logging to console and to a cache provided
-    by :class:`MultiFlushMemoryHandler`. For debugging purposes 
+    by :class:`MultiFlushMemoryHandler`. For debugging purposes
     we want to get console output set up before we've read in the real log config
     files (which requires doing a full parse of the user input).
     """
@@ -675,7 +675,7 @@ def initial_log_config():
         "version": 1,
         "disable_existing_loggers": True,
         "root": {
-            "level": "NOTSET", 
+            "level": "NOTSET",
             "handlers": ["debug", "stdout", "stderr", "cache"]
         },
         "handlers": {
@@ -726,7 +726,7 @@ def initial_log_config():
     root_logger.debug('Console loggers configured.')
 
 def transfer_log_cache(target_log=None, close=False):
-    """Transfer the contents of the root log cache 
+    """Transfer the contents of the root log cache
     (:class:`MultiFlushMemoryHandler`) to logs on newly-configured objects.
     """
     root_logger = logging.getLogger()

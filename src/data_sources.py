@@ -25,7 +25,6 @@ sample_data_regex = util.RegexPattern(
     match_error_filter=ignore_non_nc_regex
 )
 @util.regex_dataclass(sample_data_regex)
-@util.mdtf_dataclass
 class SampleDataFile():
     """Dataclass describing catalog entries for sample model data files.
     """
@@ -237,7 +236,6 @@ dummy_regex = util.RegexPattern(
     match_error_filter=ignore_non_nc_regex
 )
 @util.regex_dataclass(dummy_regex)
-@util.mdtf_dataclass
 class GlobbedDataFile():
     """Applies a trivial regex to the paths returned by the glob."""
     dummy_group: str = util.MANDATORY

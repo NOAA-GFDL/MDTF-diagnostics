@@ -146,17 +146,14 @@ class MDTFCFAccessorMixin(object):
         coords_list = list(axes_obj.coords)
 
         # if the number of coordinates is greater than the number of dimensions,
-        # assume that we have a curvilinear grid that is defined by 2-dimensional lat & lon coords
+        # assume that we have a curvilinear grid that is defined by 2-dimensional
+        # lat & lon coords
         if len(coords_list) > len(dims_list):
-
             # subtract the coordinate list from the dimensions list
             subset_dims = list(set(dims_list)-set(coords_list))
-
-            # determine if we have a time dimension to deal with
-            timedim = vardict["T"][0] if len(vardict["T"]) > 0 else None
-
+            # determine if we have a time dimension to deal with;
             # add back in the time dimension if necessary
-            if timedim is not None:
+            if vardict["T"]:
                 dims_list = vardict["T"] + subset_dims
             else:
                 dims_list = subset_dims
@@ -941,19 +938,23 @@ class DefaultDatasetParser():
         ds_var = ds[our_var.name]
         ds_axes = ds_var.cf.dim_axes()
         ds_axes_set = ds_var.cf.dim_axes_set
-        if our_axes_set != ds_axes_set:
-            raise TypeError(f"Variable {our_var.name} has unexpected dimensionality: "
+
+        # check set of dimension coordinates (array dimensionality) agrees
+        if our_axes_set == ds_axes_set:
+            # check dimension coordinate names, std_names, units, bounds
+            for coord in our_var.dim_axes.values():
+                ds_coord_name = ds_axes[coord.axis]
+                self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
+                if coord.axis == 'T':
+                    # special case for time coordinate
+                    self.reconcile_time_units(coord, ds[ds_coord_name])
+                else:
+                    self.reconcile_units(coord, ds[ds_coord_name])
+                self.reconcile_coord_bounds(coord, ds, ds_coord_name)
+        else:
+            _log.warning(f"Variable {our_var.name} has unexpected dimensionality: "
                 f" expected axes {list(our_axes_set)}, got {list(ds_axes_set)}.")
-        # check dimension coordinate names, std_names, units, bounds
-        for coord in our_var.dim_axes.values():
-            ds_coord_name = ds_axes[coord.axis]
-            self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-            if coord.axis == 'T':
-                # special case for time coordinate
-                self.reconcile_time_units(coord, ds[ds_coord_name])
-            else:
-                self.reconcile_units(coord, ds[ds_coord_name])
-            self.reconcile_coord_bounds(coord, ds, ds_coord_name)
+
         for c_name in ds_var.dims:
             if ds[c_name].size == 1:
                 if c_name == ds_axes['Z']:

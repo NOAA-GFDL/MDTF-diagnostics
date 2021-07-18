@@ -470,7 +470,8 @@ class _DMDimensionsMixin(object):
         # TODO: lookup by non-axis name
         old_coord = getattr(self, ax_name, None)
         if not old_coord:
-            raise KeyError(f"{self.name} has no {ax_name} axis")
+            if ax_name == 'T' and not self.is_static:
+                raise KeyError(f"{self.name} has no {ax_name} axis")
 
         if isinstance(new_class, dict):
             new_coord_class = new_class.pop('self', None)

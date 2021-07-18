@@ -15,8 +15,8 @@ class TestVariableTranslator(unittest.TestCase):
         setUp_config_singletons()
 
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing Translator for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         tearDown_config_singletons()
 
@@ -104,14 +104,14 @@ class TestVariableTranslator(unittest.TestCase):
 
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing Translator for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         tearDown_config_singletons()
 
     def test_variabletranslator_load_files(self):
         # run in non-unit-test mode to test loading of config files
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         raised = False
         try:
@@ -121,10 +121,10 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         self.assertFalse(raised)
         self.assertIn('CMIP', translate.conventions)
         self.assertIn('ua', translate.conventions['CMIP'].entries)
-        
+
     def test_variabletranslator_real_data(self):
         # run in non-unit-test mode to test loading of config files
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         translate = core.VariableTranslator(code_root, unittest=False)
         self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_rate")
@@ -158,7 +158,7 @@ class TestPathManager(unittest.TestCase):
         paths = core.PathManager()
         self.assertRaises(AssertionError, paths.parse, d, list(d.keys()))
         # initialize successfully so that tear_down doesn't break
-        #_ = core.PathManager(unittest = True) 
+        #_ = core.PathManager(unittest = True)
 
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
@@ -167,13 +167,13 @@ class TestPathManagerPodCase(unittest.TestCase):
     def setUp(self):
         # set up translation dictionary without calls to filesystem
         setUp_config_singletons(
-            config=self.case_dict, 
+            config=self.case_dict,
             paths={
                 'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
                 'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
             },
             pods={ 'AA':{
-                'settings':{}, 
+                'settings':{},
                 'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
                 }
             })

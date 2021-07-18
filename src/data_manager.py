@@ -372,17 +372,18 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         dependency inversion.
         """
         translate = core.VariableTranslator().get_convention(self.attrs.convention)
-        v.change_coord(
-            'T',
-            new_class = {
-                'self': diagnostic.VarlistTimeCoordinate,
-                'range': util.DateRange,
-                'frequency': util.DateFrequency
-            },
-            range=self.attrs.date_range,
-            calendar=util.NOTSET,
-            units=util.NOTSET
-        )
+        if v.T is not None:
+            v.change_coord(
+                'T',
+                new_class = {
+                    'self': diagnostic.VarlistTimeCoordinate,
+                    'range': util.DateRange,
+                    'frequency': util.DateFrequency
+                },
+                range=self.attrs.date_range,
+                calendar=util.NOTSET,
+                units=util.NOTSET
+            )
         v.dest_path = self.variable_dest_path(pod, v)
         try:
             trans_v = translate.translate(v)

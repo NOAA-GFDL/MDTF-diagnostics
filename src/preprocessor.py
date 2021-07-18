@@ -632,6 +632,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Call :meth:`clean_nc_var_encoding` on all sets of attributes in the
         Dataset *ds*.
         """
+        def _clean_dict(obj):
+            name = getattr(obj, 'name', 'dataset')
+            encoding = getattr(obj, 'encoding', dict())
+            attrs = getattr(obj, 'attrs', dict())
+            for k,v in encoding.items():
+                if k in attrs:
+                    if isinstance(attrs[k], str) and isinstance(v, str):
+                        compare_ = (attrs[k].lower() != v.lower())
+                    else:
+                        compare_ = (attrs[k] != v)
+                    if compare_ and k.lower() != 'source':
+                        _log.warning("Conflict in '%s' attribute of %s: %s != %s.",
+                            k, name, v, attrs[k])
+                    del attrs[k]
+
+        for vv in ds.variables.values():
+            _clean_dict(vv)
+        _clean_dict(ds)
+
         if not getattr(var, 'is_static', True):
             t_coord = var.T
             ds_T = ds[t_coord.name]
@@ -816,4 +835,3 @@ class DefaultPreprocessor(DaskMultiFilePreprocessor):
     use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
-

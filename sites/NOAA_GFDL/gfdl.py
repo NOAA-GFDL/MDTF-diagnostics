@@ -243,6 +243,7 @@ class Gfdludacmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
     _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
+    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -262,6 +263,7 @@ class Gfdlarchivecmip6DataManager(
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
     _fetch_method = "gcp"
+    _convention = "CMIP" # hard-code naming convention
 
 
 @util.mdtf_dataclass
@@ -425,6 +427,25 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         super(GfdlppDataManager, self).__init__(case_dict, parent)
         config = core.ConfigManager()
         self.any_components = config.get('any_components', False)
+
+    @property
+    def pod_expt_key_cols(self):
+        return (tuple() if self.any_components else ('component', ))
+
+    @property
+    def pod_expt_cols(self):
+        # Catalog columns whose values must be the same for each POD.
+        return self.pod_expt_key_cols
+
+    @property
+    def var_expt_key_cols(self):
+        return (('chunk_freq', 'component') if self.any_components else ('chunk_freq', ))
+
+    @property
+    def var_expt_cols(self):
+        # Catalog columns whose values must "be the same for each variable", ie
+        # are irrelevant but must be constrained to a unique value.
+        return self.var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):

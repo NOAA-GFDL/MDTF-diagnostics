@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
-# Script that determines whether POD's requested (non-data) dependencies are 
-# present in the current environment. This is called in a subprocess by the 
-# run() method of EnvironmentManager. Exit normally if everything is found, 
-# otherwise exit with code 1 which aborts the subprocess. 
-# It's hacky to do this in a shell script, but didn't want to assume the 
+# Script that determines whether POD's requested (non-data) dependencies are
+# present in the current environment. This is called in a subprocess by the
+# run() method of EnvironmentManager. Exit normally if everything is found,
+# otherwise exit with code 1 which aborts the subprocess.
+# It's hacky to do this in a shell script, but didn't want to assume the
 # current environment has python, etc.
 set -Eeuo pipefail
 

@@ -1,6 +1,6 @@
 // Configuration of CLI plugins for code provided in /src. These options are
 // spliced into the CLI configuration in src/cli_template.jsonc. The contents of
-// both of these files may be overridden by configuration in /sites if a 
+// both of these files may be overridden by configuration in /sites if a
 // site-specific installation is selected.
 //
 {
@@ -21,7 +21,7 @@
     },
     "CMIP6": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
-      "entry_point": "src.data_source:CMIP6DataSource",
+      "entry_point": "src.data_manager:CMIP6LocalFileDataSource",
       "cli": {
         "arguments": [
           {

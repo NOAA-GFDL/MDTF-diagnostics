@@ -26,10 +26,10 @@ from recommonmark.transform import AutoStructify
 
 # mock out imports of non-standard library modules
 autodoc_mock_imports = [
-    'numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray', 
+    'numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray',
     'pandas', 'intake', 'intake_esm'
 ]
-# need to manually mock out explicit patching of cf_xarray.accessor done 
+# need to manually mock out explicit patching of cf_xarray.accessor done
 # on import in xr_parser
 import unittest.mock as mock
 mock_accessor = mock.Mock()
@@ -121,8 +121,8 @@ html_theme = 'alabaster'
 # See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
     'page_width': '1024px',
-    'sidebar_collapse': True,
-    'fixed_sidebar': True,
+    'sidebar_collapse': False,
+    'fixed_sidebar': False,
     'extra_nav_links' : {
         "Getting Started [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
         "Developer's Walkthough [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
@@ -215,22 +215,22 @@ latex_documents = [
     (
         # "Main" PDF containing all source files. This is built automatically by
         # ReadTheDocs (filename is fixed by the RTD account name).
-        'tex_all', 'mdtf-diagnostics.tex', 
+        'tex_all', 'mdtf-diagnostics.tex',
         u'MDTF Diagnostics Documentation', author, 'manual'
     ),(
-        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can 
-        # tell, ReadTheDocs won't (linked open issues in prior commits to this 
-        # file?). Instead these are currently built manually and checked into 
-        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's 
+        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can
+        # tell, ReadTheDocs won't (linked open issues in prior commits to this
+        # file?). Instead these are currently built manually and checked into
+        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's
         # build process if it finds multiple .tex files, and doesn't affect sphinx.
-        'tex_getting_started', 'MDTF_getting_started.tex_', 
-        u"MDTF Getting Started Guide", 
-        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)", 
+        'tex_getting_started', 'MDTF_getting_started.tex_',
+        u"MDTF Getting Started Guide",
+        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)",
         'manual'
     ),(
         # another secondary PDF.
-        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
-        u"MDTF Developer's Walkthrough", 
+        'tex_walkthrough', 'MDTF_walkthrough.tex_',
+        u"MDTF Developer's Walkthrough",
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
         r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
@@ -339,7 +339,7 @@ def run_apidoc(_):
 
 # -- Extensions to the Napoleon GoogleDocstring class ---------------------
 # copied from: https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
-# purpose: provide correct formatting of class attributes when documented 
+# purpose: provide correct formatting of class attributes when documented
 # with Google-style docstrings.
 
 from sphinx.ext.napoleon.docstring import GoogleDocstring

@@ -7,13 +7,13 @@ class TestMDTFABCMeta(unittest.TestCase):
     def test_abstract_attribute(self):
         class Foo(metaclass=util.MDTFABCMeta):
             class_attr = util.abstract_attribute()
-    
+
             def foo(self, x):
                 return self.class_attr + x
-    
+
         class GoodChildClass(Foo):
             class_attr = 5
-            
+
         raised_exc = False
         try:
             b = GoodChildClass()
@@ -61,7 +61,7 @@ class TestMultiMap(unittest.TestCase):
     def test_multimap_setitem(self):
         # test key addition and handling of duplicate values
         temp = util.MultiMap({'a':1, 'b':2})
-        temp['c'] = 1           
+        temp['c'] = 1
         temp_inv = temp.inverse()
         self.assertIn(1, temp_inv)
         self.assertCountEqual(temp_inv[1], set(['a','c']))
@@ -279,7 +279,7 @@ class TestSpliceIntoList(unittest.TestCase):
         list_ = ['a','b','c']
         ans = util.splice_into_list(list_, {'b':['b1']})
         self.assertEqual(ans, ['a', 'b', 'b1', 'c'])
-    
+
     def test_splice_into_list_end(self):
         list_ = ['a','b','c']
         ans = util.splice_into_list(list_, {'c':['c1']})
@@ -295,7 +295,7 @@ class TestSpliceIntoList(unittest.TestCase):
         key_fn = (lambda s: s[0])
         splice_d = {'a':['a1'], 'b':['b1'], 'd':['d1'],'g':['g1']}
         ans = util.splice_into_list(list_, splice_d, key_fn)
-        self.assertEqual(ans, 
+        self.assertEqual(ans,
             ['aaa', 'a1', 'bXX', 'b1', 'bYY', 'b1', 'c', 'dXX', 'd1', 'bZZ', 'b1']
         )
 
@@ -303,7 +303,7 @@ class TestSpliceIntoList(unittest.TestCase):
         list_ = ['a','b','b','c','d','b']
         splice_d = {'a':['a1','a2'], 'b':['b1'], 'd':['d1'],'g':['g1']}
         ans = util.splice_into_list(list_, splice_d)
-        self.assertEqual(ans, 
+        self.assertEqual(ans,
             ['a', 'a1', 'a2', 'b', 'b1', 'b', 'b1', 'c', 'd', 'd1', 'b', 'b1']
         )
 

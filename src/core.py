@@ -1,4 +1,4 @@
-"""Common functions and classes used in multiple places in the MDTF code. 
+"""Common functions and classes used in multiple places in the MDTF code.
 """
 import os
 import collections
@@ -35,7 +35,7 @@ class MDTFFramework(object):
             _log.critical("Framework caught exception %r", exc)
             print(''.join(wrapped_exc.format()))
             exit(1)
-        
+
     def configure(self, cli_obj, pod_info_tuple, log_config):
         """Wrapper for all configuration done based on CLI arguments.
         """
@@ -43,7 +43,7 @@ class MDTFFramework(object):
         self.dispatch_classes(cli_obj)
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
-        config = ConfigManager(cli_obj, pod_info_tuple, 
+        config = ConfigManager(cli_obj, pod_info_tuple,
             self.global_env_vars, self.case_list, log_config)
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
@@ -121,7 +121,7 @@ class MDTFFramework(object):
                 _log.error("POD identifier '%s' not recognized.", arg)
                 bad_args.append(arg)
 
-        if bad_args: 
+        if bad_args:
             valid_args = ['all', 'examples'] \
                 + pod_info_tuple.sorted_realms \
                 + pod_info_tuple.sorted_pods
@@ -146,7 +146,7 @@ class MDTFFramework(object):
         if 'CASENAME' in d and d['CASENAME']:
             # defined case from CLI
             cli_d = self._populate_from_cli(cli_obj, 'MODEL')
-            if 'CASE_ROOT_DIR' not in cli_d and d.get('root_dir', None): 
+            if 'CASE_ROOT_DIR' not in cli_d and d.get('root_dir', None):
                 # CASE_ROOT was set positionally
                 cli_d['CASE_ROOT_DIR'] = d['root_dir']
             case_list_in = [cli_d]
@@ -198,7 +198,7 @@ class MDTFFramework(object):
             return self.parse_pod_list(case['pod_list'], pod_info_tuple)
 
     def verify_paths(self, config, p):
-        # needs to be here, instead of PathManager, because we subclass it in 
+        # needs to be here, instead of PathManager, because we subclass it in
         # NOAA_GFDL
         keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
@@ -214,8 +214,8 @@ class MDTFFramework(object):
 
     def _print_config(self, cli_obj, config, paths):
         """Log end result of parsing package settings. This is only for the user's
-        benefit; a machine-readable version which is usable for 
-        provenance/reproducibilityis saved by the OutputManager as 
+        benefit; a machine-readable version which is usable for
+        provenance/reproducibilityis saved by the OutputManager as
         config_save.jsonc.
         """
         d = dict()
@@ -240,7 +240,7 @@ class MDTFFramework(object):
     # --------------------------------------------------------------------
 
     def _failed(self):
-        """Overall success/failure of this run of the framework. Return True if 
+        """Overall success/failure of this run of the framework. Return True if
         any case or any POD has failed, else return False.
         """
         if not self.cases:
@@ -289,7 +289,7 @@ class MDTFFramework(object):
 
 
 class ConfigManager(util.Singleton, util.NameSpace):
-    def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None, 
+    def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None,
         case_list=None, log_config=None, unittest=False):
         self.update(cli_obj.config)
         if pod_info_tuple is None:
@@ -301,14 +301,14 @@ class ConfigManager(util.Singleton, util.NameSpace):
         else:
             self.global_env_vars = global_env_vars
         self.log_config = log_config
-        # copy srializable version of parsed settings, in order to write 
+        # copy srializable version of parsed settings, in order to write
         # backup config file
-        self.backup_config = copy.deepcopy(cli_obj.config) 
+        self.backup_config = copy.deepcopy(cli_obj.config)
         self.backup_config['case_list'] = copy.deepcopy(case_list)
 
 
 class PathManager(util.Singleton, util.NameSpace):
-    """:class:`~util.Singleton` holding the root directories for all paths used 
+    """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """
     def __init__(self, cli_obj=None, env_vars=None, unittest=False):
@@ -330,7 +330,7 @@ class PathManager(util.Singleton, util.NameSpace):
         if not self.OUTPUT_DIR:
             self.OUTPUT_DIR = self.WORKING_DIR
 
-        # set as attribute any CLI setting that has "action": "PathAction" 
+        # set as attribute any CLI setting that has "action": "PathAction"
         # in its definition in the .jsonc file
         cli_paths = [act.dest for act in cli_obj.iter_actions() \
             if isinstance(act, cli.PathAction)]
@@ -374,8 +374,8 @@ class PathManager(util.Singleton, util.NameSpace):
         d.MODEL_WK_DIR = os.path.join(self.WORKING_DIR, case_wk_dir)
         d.MODEL_OUT_DIR = os.path.join(self.OUTPUT_DIR, case_wk_dir)
         if not overwrite:
-            # bump both WK_DIR and OUT_DIR to same version because name of 
-            # former may be preserved when we copy to latter, depending on 
+            # bump both WK_DIR and OUT_DIR to same version because name of
+            # former may be preserved when we copy to latter, depending on
             # copy method
             d.MODEL_WK_DIR, ver = util.bump_version(
                 d.MODEL_WK_DIR, extra_dirs=[self.OUTPUT_DIR])
@@ -444,8 +444,8 @@ class TempDirManager(util.Singleton):
 
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
-    """Class returned by VarlistTranslator.lookup_variable(). Marks some 
-    attributes inherited from DMVariable as participating in 
+    """Class returned by VarlistTranslator.lookup_variable(). Marks some
+    attributes inherited from DMVariable as participating in
     DataSource.query_dataset().
     """
     # to be more correct, we should probably have VarlistTranslator return a
@@ -482,7 +482,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         1: ('PLACEHOLDER_T_COORD'),
         2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
-        4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD', 
+        4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
             'PLACEHOLDER_X_COORD')
     }
     _placeholder_class_dict = {
@@ -497,7 +497,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         # if we only have ndim, map to axes names
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
             kwargs['dimensions'] = cls._ndim_to_axes_set[kwargs.pop('ndim')]
-    
+
         # map dimension names to coordinate objects
         kwargs['coords'] = []
         if 'dimensions' not in kwargs or not kwargs['dimensions']:
@@ -541,11 +541,11 @@ class FieldlistEntry(data_model.DMDependentVariable):
                 c.value, c.units, c.axis, self.name, new_name)
         else:
             _log.debug(("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s)."),
-                c.axis, self.name, new_name, c.value, c.units, 
+                c.axis, self.name, new_name, c.value, c.units,
                 new_coord.value, new_coord.units
             )
         return new_name
-        
+
 @util.mdtf_dataclass
 class Fieldlist():
     """Class corresponding to a single variable naming convention (single file
@@ -575,7 +575,7 @@ class Fieldlist():
             return (d, temp_d)
 
         def _process_var(section_name, d, temp_d):
-            # build two-stage lookup table (by standard name, then data 
+            # build two-stage lookup table (by standard name, then data
             # dimensionality) -- should just make FieldlistEntry hashable
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
@@ -604,7 +604,7 @@ class Fieldlist():
         return self.entries[name]
 
     def to_CF_name(self, name):
-        """Like :meth:`to_CF`, but only return the CF standard name, given the 
+        """Like :meth:`to_CF`, but only return the CF standard name, given the
         name in this convention.
         """
         return self.to_CF(name).standard_name
@@ -613,7 +613,7 @@ class Fieldlist():
         """Look up FieldlistEntry corresponding to the given standard name,
         optionally providing an axes_set to resolve ambiguity.
 
-        TODO: this is a hacky implementation; FieldlistEntry needs to be 
+        TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
         """
         if standard_name not in self.lut:
@@ -638,13 +638,13 @@ class Fieldlist():
         return copy.deepcopy(fl_entry)
 
     def from_CF_name(self, standard_name, axes_set=None):
-        """Like :meth:`from_CF`, but only return the variable's name in this 
+        """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
         return self.from_CF(standard_name, axes_set=axes_set).name
 
     def translate_coord(self, coord):
-        """Given a DMCoordinate, look up the corresponding translated DMCoordinate 
+        """Given a DMCoordinate, look up the corresponding translated DMCoordinate
         in this convention.
         """
         ax = coord.axis
@@ -663,21 +663,21 @@ class Fieldlist():
                 raise KeyError((f"Coordinate {coord.name} with standard name "
                     f"'{coord.standard_name}' not defined in convention '{self.name}'."))
             new_coord = lut1[coord.standard_name]
-        
+
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
             new_coord.value = units.convert_scalar_coord(coord, new_coord.units)
         else:
-            new_coord = dc.replace(coord, 
+            new_coord = dc.replace(coord,
                 **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
     def translate(self, var):
         """Returns TranslatedVarlistEntry instance, with populated coordinate
         axes. Units of scalar coord slices are translated to the units of the
-        conventions' coordinates. Includes logic to translate and rename scalar 
-        coords/slices, e.g. VarlistEntry for 'ua' (intrinsically 4D) @ 500mb 
-        could produce a TranslatedVarlistEntry for 'u500' (3D slice), depending 
+        conventions' coordinates. Includes logic to translate and rename scalar
+        coords/slices, e.g. VarlistEntry for 'ua' (intrinsically 4D) @ 500mb
+        could produce a TranslatedVarlistEntry for 'u500' (3D slice), depending
         on naming convention.
         """
         if var.use_exact_name:
@@ -688,7 +688,7 @@ class Fieldlist():
         else:
             fl_entry = self.from_CF(var.standard_name, var.axes_set)
             new_name = fl_entry.name
-        
+
         new_dims = [self.translate_coord(dim) for dim in var.dims]
         new_scalars = [self.translate_coord(dim) for dim in var.scalar_coords]
         if len(new_scalars) > 1:
@@ -700,14 +700,14 @@ class Fieldlist():
             new_name = fl_entry.scalar_name(var.scalar_coords[0], new_scalars[0])
 
         return util.coerce_to_dataclass(
-            fl_entry, TranslatedVarlistEntry, 
+            fl_entry, TranslatedVarlistEntry,
             name=new_name, coords=(new_dims + new_scalars), convention=self.name
         )
 
 
 class VariableTranslator(util.Singleton):
-    """:class:`~util.Singleton` containing information for different variable 
-    naming conventions. These are defined in the data/fieldlist_*.jsonc 
+    """:class:`~util.Singleton` containing information for different variable
+    naming conventions. These are defined in the data/fieldlist_*.jsonc
     files.
     """
     def __init__(self, code_root=None, unittest=False):
@@ -748,7 +748,7 @@ class VariableTranslator(util.Singleton):
             _log.debug("Using convention '%s' based on alias '%s'.",
                 self.aliases[conv_name], conv_name)
             return self.aliases[conv_name]
-        _log.error("Unrecognized variable name convention '%s'.", 
+        _log.error("Unrecognized variable name convention '%s'.",
             conv_name)
         raise KeyError(conv_name)
 
@@ -773,11 +773,11 @@ class VariableTranslator(util.Singleton):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
     def from_CF(self, conv_name, standard_name, axes_set=None):
-        return self._fieldlist_method(conv_name, 'from_CF', 
+        return self._fieldlist_method(conv_name, 'from_CF',
             standard_name, axes_set=axes_set)
 
     def from_CF_name(self, conv_name, standard_name, axes_set=None):
-        return self._fieldlist_method(conv_name, 'from_CF_name', 
+        return self._fieldlist_method(conv_name, 'from_CF_name',
             standard_name, axes_set=axes_set)
 
     def translate_coord(self, conv_name, coord):

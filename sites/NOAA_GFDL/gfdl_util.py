@@ -40,7 +40,7 @@ class ModuleManager(util.Singleton):
         (output, error) = proc.communicate()
         if proc.returncode != 0:
             raise util.MDTFCalledProcessError(
-                returncode=proc.returncode, 
+                returncode=proc.returncode,
                 cmd=' '.join([cmd, 'python'] + args), output=error)
         exec(output)
 
@@ -78,7 +78,7 @@ class ModuleManager(util.Singleton):
         """Wrapper for module list.
         """
         return os.environ['LOADEDMODULES'].split(':')
-    
+
     def revert_state(self):
         mods_to_unload = self.modules_i_loaded.difference(self.user_modules)
         for mod in mods_to_unload:
@@ -91,7 +91,7 @@ class ModuleManager(util.Singleton):
 # ========================================================================
 
 def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None):
-    """Wrapper for file and recursive directory copying using the GFDL 
+    """Wrapper for file and recursive directory copying using the GFDL
     site-specific General Copy Program (`https://gitlab.gfdl.noaa.gov/gcp/gcp`__.)
     Assumes GCP environment module has been loaded beforehand, and calls GCP in
     a subprocess.
@@ -117,7 +117,7 @@ def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None):
     _log.info('\tGCP {} -> {}'.format(source[-1], dest[-1]))
     util.run_command(
         ['gcp', '--sync', '-v', '-cd'] + source + dest,
-        timeout=timeout, 
+        timeout=timeout,
         dry_run=dry_run
     )
 
@@ -128,7 +128,7 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         os.makedirs(dest_dir)
     except OSError as exc:
         # use GCP for this because output dir might be on a read-only filesystem.
-        # apparently trying to test this with os.access is less robust than 
+        # apparently trying to test this with os.access is less robust than
         # just catching the error
         _log.debug("os.makedirs at %s failed (%r); trying GCP.", dest_dir, exc)
         tmpdirs = core.TempDirManager()
@@ -185,7 +185,7 @@ def is_on_tape_filesystem(path):
         for s in ['/arch', '/ptmp', '/work', '/uda'])
 
 def rmtree_wrapper(path):
-    """Attempt to workaround errors with :py:func:`shutil.rmtree` on NFS 
+    """Attempt to workaround errors with :py:func:`shutil.rmtree` on NFS
     filesystems.
     """
     # Standard shutil.rmtree raises ``OSError: [Errno 39] Directory not empty``,

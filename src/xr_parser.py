@@ -813,7 +813,7 @@ class DefaultDatasetParser():
         self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units inequivalent, raise MetadataEvent
         self.reconcile_attr(our_var, ds_var, 'units',
-            comparison_func=units.units_reftime_equivalent,
+            comparison_func=units.units_reftime_base_eq,
             fill_ours=True, fill_ds=False, overwrite_ours=None
         )
         self.reconcile_attr(our_var, ds_var, 'units',

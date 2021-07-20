@@ -12,16 +12,18 @@ class Units(cfunits.Units):
     class of cfunits to isolate dependence of the framework on cfunits to this
     module.
     """
-    def reftime_equivalent(self, other):
+    def reftime_base_eq(self, other):
         """Comparison function that recognizes reference time units (eg
-        'days since 1970-01-01') as being equivalent to unqualified time units
+        'days since 1970-01-01') as being equal to unqualified time units
         of the same base unit ('days'). cfunits .equivalent() method returns
         false on these cases.
         """
         cls = type(self)
+        if self.isreftime and other.isreftime:
+            return self.equals(other)
         self_2 = (cls(self._units_since_reftime) if self.isreftime else self)
         other_2 = (cls(other._units_since_reftime) if other.isreftime else other)
-        return self_2.equivalent(other_2)
+        return self_2.equals(other_2)
 
 def to_cfunits(*args):
     """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units
@@ -72,14 +74,14 @@ def units_equivalent(*args):
     ref_unit = args.pop()
     return all(ref_unit.equivalent(unit) for unit in args)
 
-def units_reftime_equivalent(*args):
+def units_reftime_base_eq(*args):
     """Returns True if and only if all units in arguments are equivalent
     (represent the same physical quantity, up to a multiplicative conversion
     factor.)
     """
     args = to_cfunits(*args)
     ref_unit = args.pop()
-    return all(ref_unit.reftime_equivalent(unit) for unit in args)
+    return all(ref_unit.reftime_base_eq(unit) for unit in args)
 
 def units_equal(*args, rtol=None):
     """Returns True if and only if all quantities in arguments are strictly equal

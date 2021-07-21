@@ -66,6 +66,14 @@
           "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
           "default" : false
         },{
+          "name": "disable_preprocessor",
+          "help": "If set, disables metadata checks and unit conversion by the framework prior to POD execution. This is only provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
+        },{
+          "name": "overwrite_file_metadata",
+          "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile). This is provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
+        },{
           "name": "data_manager",
           "help": "Source used to query and fetch model data.",
           "default": "Local_file",

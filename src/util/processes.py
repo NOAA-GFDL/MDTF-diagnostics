@@ -58,7 +58,7 @@ def poll_command(command, shell=False, env=None):
     return rc
 
 
-def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
+def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log):
     """Subprocess wrapper to facilitate running single command without starting
     a shell.
 
@@ -95,7 +95,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
     if dry_run:
-        _log.info('DRY_RUN: call %s', cmd_str)
+        log.info('DRY_RUN: call %s', cmd_str)
         return
     proc = None
     pid = None
@@ -124,7 +124,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
             proc.kill()
         stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
-        _log.error('run_command on %s (pid %s) exit status=%s:%s\n',
+        log.error('run_command on %s (pid %s) exit status=%s:%s\n',
             cmd_str, pid, retcode, stderr)
         raise exceptions.MDTFCalledProcessError(
             returncode=retcode, cmd=cmd_str, output=stderr)
@@ -133,7 +133,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False):
     else:
         return stdout.splitlines()
 
-def run_shell_command(command, env=None, cwd=None, dry_run=False):
+def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
     """Subprocess wrapper to facilitate running shell commands.
 
     See documentation for the Python2 `subprocess
@@ -165,7 +165,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
     if not isinstance(command, str):
         command = ' '.join(command)
     if dry_run:
-        _log.info('DRY_RUN: call %s', command)
+        log.info('DRY_RUN: call %s', command)
         return
     proc = None
     pid = None
@@ -187,7 +187,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False):
             proc.kill()
         stderr += f"\nCaught exception {repr(exc)}."
     if retcode != 0:
-        _log.error('run_shell_command on %s (pid %s) exit status=%s:\n%s\n',
+        log.error('run_shell_command on %s (pid %s) exit status=%s:\n%s\n',
             command, pid, retcode, stderr)
         raise exceptions.MDTFCalledProcessError(
             returncode=retcode, cmd=command, output=stderr)

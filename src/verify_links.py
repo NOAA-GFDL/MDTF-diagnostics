@@ -54,7 +54,7 @@ class LinkParser(HTMLParser):
 
 
 class LinkVerifier(object):
-    def __init__(self, root, rel_path_root=None, verbose=False):
+    def __init__(self, root, rel_path_root=None, verbose=False, log=None):
         """Initialize search for broken links.
 
         Args:
@@ -94,6 +94,10 @@ class LinkVerifier(object):
             self.rel_path_root, _, _ = munge_input_url(rel_path_root)
         else:
             self.rel_path_root = self.root_url
+        if log is None:
+            self.log = _log
+        else:
+            self.log = log
 
     @staticmethod
     def gen_links(f, parser):
@@ -140,7 +144,7 @@ class LinkVerifier(object):
         try:
             f = urllib.request.urlopen(url)
         except urllib.error.HTTPError as e:
-            print('Error code: ', e.code)
+            self.log.error(f'Error code: {e.code}', tags=util.ObjectLogTag.BANNER)
             return None
         except urllib.error.URLError as e:
             # print('\nFailed to find file or connect to server.')
@@ -151,7 +155,7 @@ class LinkVerifier(object):
                 str_ = util.abbreviate_path(tup[1], self.WK_DIR, '$WK_DIR')
             else:
                 str_ = str(e.reason)
-            print(f"  Missing: {str_}")
+            self.log.error("Missing '%s'.", str_, tags=util.ObjectLogTag.BANNER)
             return None
         if f.info().get_content_subtype() != 'html':
             return []
@@ -188,21 +192,21 @@ class LinkVerifier(object):
 
         queue = [Link(origin=None, target=root_url)]
         if self.verbose:
-            print("Checking {}:".format(root_url))
+            self.log.info("Checking '%s'.", root_url)
         while queue:
             current_link = queue.pop(0)
             if self.verbose:
-                print("\tChecking {}".format(
+                self.log.info("\tChecking {}".format(
                     current_link.target[len(root_parent) + 1:]
                 ), end="")
             new_links = self.check_one_url(current_link)
             if new_links is None:
                 if self.verbose:
-                    print('...MISSING!')
+                    self.log.info('...MISSING!')
                 missing.append(current_link)
             else:
                 if self.verbose:
-                    print('...OK')
+                    self.log.info('...OK')
                 # restrict links to those that start with root_parent
                 new_links = [
                     lnk for lnk in new_links if lnk.target not in known_urls \
@@ -284,6 +288,13 @@ if __name__ == '__main__':
     parser.add_argument("path_or_url",
         help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
+
+    # instead of print(), use root logger
+    log = logging.getLogger()
+    handler = logging.StreamHandler(stream=sys.stdout)
+    formatter = logging.Formatter(fmt='%(message)s', datefmt='%H:%M:%S')
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
     link_verifier = LinkVerifier(args.path_or_url, verbose=args.verbose)
     missing_dict = link_verifier.verify_all_links()

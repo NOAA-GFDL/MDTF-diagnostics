@@ -26,7 +26,7 @@ def abbreviate_path(path, old_base, new_base=None):
         str_ = os.path.join(new_base, str_)
     return str_
 
-def resolve_path(path, root_path="", env=None):
+def resolve_path(path, root_path="", env=None, log=_log):
     """Abbreviation to resolve relative paths.
 
     Args:
@@ -57,7 +57,7 @@ def resolve_path(path, root_path="", env=None):
     if isinstance(env, dict):
         path = _expandvars(path, env)
     if '$' in path:
-        _log.warning("Couldn't resolve all env vars in '%s'", path)
+        log.warning("Couldn't resolve all env vars in '%s'", path)
         return path
     if os.path.isabs(path):
         return path
@@ -104,10 +104,6 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     for src, dest in zip(src_files, dest_files):
         copy_function(src, dest)
 
-def get_available_programs():
-    return {'py': 'python', 'ncl': 'ncl', 'R': 'Rscript'}
-    #return {'py': sys.executable, 'ncl': 'ncl'}
-
 def check_executable(exec_name):
     """Tests if <exec_name> is found on the current $PATH.
 
@@ -146,28 +142,39 @@ def find_files(src_dirs, filename_globs, n_files=None):
         raise exceptions.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 
-def check_dirs(*dirs, create=False):
+def check_dir(dir_, attr_name="", create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a
     :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
 
     Args:
-        dirs: iterable of absolute paths to check.
+        dir\_: If a string, the absolute path to check; otherwise, assume the
+            path to check is given by the *attr_name* attribute on this object.
+        attr_name: Name of the attribute being checked (used in log messages).
         create: (bool, default False): if True, nonexistent directories are
             created.
     """
-    for dir_ in dirs:
-        try:
-            if not os.path.isdir(dir_):
-                if create:
-                    os.makedirs(dir_, exist_ok=False)
-                else:
-                    raise exceptions.MDTFFileNotFoundError(f"Directory {dir_} not found.")
-        except Exception as exc:
-            if isinstance(exc, FileNotFoundError):
-                raise exceptions.MDTFFileNotFoundError(getattr(exc,'filename',''))
+    if not isinstance(dir_, str):
+        dir_ = getattr(dir_, attr_name, None)
+    if not isinstance(dir_, str):
+        raise ValueError(f"Received bad directory: {repr(dir_)}.")
+    try:
+        if not os.path.isdir(dir_):
+            if create:
+                os.makedirs(dir_, exist_ok=False)
             else:
-                raise OSError(f"Caught exception when checking {dir_}.") from exc
+                raise exceptions.MDTFFileNotFoundError(dir_)
+    except Exception as exc:
+        if isinstance(exc, FileNotFoundError):
+            path = getattr(exc, 'filename', '')
+            if attr_name:
+                raise exceptions.MDTFFileNotFoundError(
+                    f"{attr_name} not found at '{path}'.")
+            else:
+                raise exceptions.MDTFFileNotFoundError(path)
+        else:
+            raise OSError(f"Caught exception when checking {attr_name}={dir_}.") \
+                from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):
     """Return a filename that doesn't conflict with existing files.
@@ -295,8 +302,8 @@ def parse_json(str_):
         )
     return parsed_json
 
-def read_json(file_path):
-    _log.debug('Reading file %s', file_path)
+def read_json(file_path, log=_log):
+    log.debug('Reading file %s', file_path)
     if not os.path.isfile(file_path):
         raise exceptions.MDTFFileNotFoundError(file_path)
     try:
@@ -308,7 +315,7 @@ def read_json(file_path):
         exit(1)
     return parse_json(str_)
 
-def find_json(dir_, file_name, exit_if_missing=True):
+def find_json(dir_, file_name, exit_if_missing=True, log=_log):
     """Wrap :func:`read_json` with more elaborate error handling. find_files()
     will find a file named file_name at any level within dir\_.
     """
@@ -320,18 +327,18 @@ def find_json(dir_, file_name, exit_if_missing=True):
             _log.critical("Couldn't find file %s in %s.", file_name, dir_)
             exit(1)
         else:
-            _log.debug("Couldn't find file %s in %s; continuing.",
+            log.debug("Couldn't find file %s in %s; continuing.",
                 file_name, dir_)
             return dict()
 
-def write_json(struct, file_path, sort_keys=False):
+def write_json(struct, file_path, sort_keys=False, log=_log):
     """Wrapping file I/O simplifies unit testing.
 
     Args:
         struct (:py:obj:`dict`)
         file_path (:py:obj:`str`): path of the JSON file to write.
     """
-    _log.debug('Writing file %s', file_path)
+    log.debug('Writing file %s', file_path)
     try:
         str_ = json.dumps(struct,
             sort_keys=sort_keys, indent=2, separators=(',', ': '))

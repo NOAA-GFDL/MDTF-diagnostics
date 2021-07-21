@@ -861,17 +861,22 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
         clauses = [self._query_clause(k, k, v) for k,v in query_d.items()]
         query_str = '&'.join(c for c in clauses if c)
 
-        # need to do filtering on DateRange separately due to limitations on
-        # pd.query()/pd.eval() -- arbitrary methods not supported, at least not
-        # efficiently. TODO: better implementation with <=/>= separate start/end
-        # date columns.
+        # filtering on DateRange is done here, separately, due to limitations on
+        # pd.query()/pd.eval() -- arbitrary method calls not supported, at least
+        # not efficiently. TODO: better implementation with <=/>= separate
+        # start/end date columns.
         catalog_df = self.df
         for col_name, v in query_d.items():
             if isinstance(v, util.DateRange):
                 if col_name not in catalog_df:
                     # e.g., for sample model data where date_range not in catalog
                     continue
-                row_sel = catalog_df.apply((lambda r: v in r[col_name]), axis=1)
+                # select files whose date range overlaps analysis date range
+                # (in case we're dealing with chunked/multi-file data)
+                row_sel = catalog_df.apply(
+                    (lambda r: r[col_name].overlaps(v)),
+                    axis=1
+                )
                 catalog_df = catalog_df[row_sel]
 
         return catalog_df.query(

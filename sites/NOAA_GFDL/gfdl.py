@@ -6,6 +6,7 @@ import io
 import dataclasses
 import shutil
 import tempfile
+import pandas as pd
 from src import (util, core, diagnostic, data_manager, data_sources,
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
@@ -165,13 +166,17 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         self.log.debug("Selected fetch method '%s'.", method)
         return (_methods[method]['command'], _methods[method]['site'])
 
-    def fetch_dataset(self, var, paths):
+    def fetch_dataset(self, var, d_key):
         """Copy files to temporary directory.
         (GCP can't copy to home dir, so always copy to a temp dir)
         """
         tmpdir = core.TempDirManager().make_tempdir()
         self.log.debug("Created GCP fetch temp dir at %s.", tmpdir)
         (cp_command, smartsite) = self._get_fetch_method(self._fetch_method)
+
+        paths = d_key.remote_data()
+        if isinstance(paths, pd.Series):
+            paths = paths.to_list()
         if not util.is_iterable(paths):
             paths = (paths, )
 
@@ -188,7 +193,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
                 timeout=self.timeout, dry_run=self.dry_run, log=self.log
             )
             local_paths.append(local_path)
-        return local_paths
+        d_key.local_data = local_paths
 
 
 class GFDL_GCP_FileDataSourceBase(

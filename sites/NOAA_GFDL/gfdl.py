@@ -6,6 +6,7 @@ import io
 import dataclasses
 import shutil
 import tempfile
+import pandas as pd
 from src import (util, core, diagnostic, data_manager,
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
@@ -171,6 +172,9 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         tmpdir = core.TempDirManager().make_tempdir()
         _log.debug("Created GCP fetch temp dir at %s.", tmpdir)
         (cp_command, smartsite) = self._get_fetch_method(self._fetch_method)
+
+        if isinstance(paths, pd.Series):
+            paths = paths.to_list()
         if not util.is_iterable(paths):
             paths = (paths, )
 

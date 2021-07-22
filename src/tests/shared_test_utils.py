@@ -36,6 +36,7 @@ def setUp_config_singletons(config=None, paths=None, pods=None, unittest=True):
 
     _ = core.ConfigManager(cli_obj, dummy_pod_data, unittest=unittest)
     pm = core.PathManager(cli_obj, unittest=unittest)
+    pm.CODE_ROOT = code_root
     if paths:
         pm.update(paths)
     _ = core.VariableTranslator(code_root, unittest=unittest)

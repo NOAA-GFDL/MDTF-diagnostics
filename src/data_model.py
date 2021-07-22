@@ -6,7 +6,7 @@ import dataclasses as dc
 import itertools
 import typing
 from src import util
-from src.units import Units
+import src.units # fully qualify name to reduce confusion with "units" attributes
 
 import logging
 _log = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class DMBoundsDimension(object):
     name: str = util.MANDATORY
 
     standard_name = 'bounds'
-    units = Units('1')
+    units = src.units.Units('1')
     axis = 'BOUNDS'
     bounds = None
     value = None
@@ -142,12 +142,27 @@ class _DMCoordinateShared(object):
     ``value`` is our mechanism for implementing CF convention `scalar coordinates
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__.
     """
-    bounds: AbstractDMCoordinateBounds = None
+    standard_name: str = util.MANDATORY
+    units: src.units.Units = util.MANDATORY
+    axis: str = 'OTHER'
+    bounds_var: AbstractDMCoordinateBounds = None
     value: typing.Union[int, float] = None
 
     @property
+    def bounds(self):
+        """Store bounds_var as a pointer to the actual object representing the
+        bounds variable for this coordinate, but in order to parallel xarray's
+        syntax define 'bounds' to return the name of this variable, not the
+        variable itself.
+        """
+        if not hasattr(self.bounds_var, 'name'):
+            return None
+        else:
+            return self.bounds_var.name
+
+    @property
     def has_bounds(self):
-        return (self.bounds is not None)
+        return (self.bounds_var is not None)
 
     @property
     def is_scalar(self):
@@ -162,22 +177,28 @@ class DMCoordinate(_DMCoordinateShared):
     `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
     """
     name: str = util.MANDATORY
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = util.MANDATORY
-    units: Units = util.MANDATORY
+    units: src.units.Units = util.MANDATORY
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
     name: str = 'lon'
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = 'longitude'
-    units: Units = 'degrees_east'
+    units: src.units.Units = 'degrees_east'
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMLatitudeCoordinate(_DMCoordinateShared):
     name: str = 'lat'
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = 'latitude'
-    units: Units = 'degrees_north'
+    units: src.units.Units = 'degrees_north'
     axis: str = 'Y'
 
 @util.mdtf_dataclass
@@ -186,8 +207,10 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
     name: str = util.MANDATORY
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = util.MANDATORY
-    units: Units = "1" # dimensionless vertical coords OK
+    units: src.units.Units = "1" # dimensionless vertical coords OK
     axis: str = 'Z'
     positive: str = util.MANDATORY
 
@@ -212,8 +235,10 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
     (or other attributes).
     """
     name: str = 'time'
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = 'time'
-    units: Units = ""
+    units: src.units.Units = ""
     axis: str = 'T'
     calendar: str = ""
     range: typing.Any = None
@@ -240,18 +265,20 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         return t0
 
 @util.mdtf_dataclass
-class DMTimeCoordinate(_DMCoordinateShared):
+class DMTimeCoordinate(DMGenericTimeCoordinate):
     name: str = util.MANDATORY
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int or float
     standard_name: str = 'time'
-    units: Units = util.MANDATORY
+    units: src.units.Units = util.MANDATORY
     axis: str = 'T'
     calendar: str = ""
     range: util.AbstractDateRange = None
     frequency: util.AbstractDateFrequency = None
 
-    @property
-    def is_static(self):
-        return (self.range == util.FXDateRange)
+    @classmethod
+    def from_instances(cls, *t_coords):
+        raise NotImplementedError
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields
@@ -306,28 +333,28 @@ class _DMPlaceholderCoordinateBase(object):
 class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_COORD'
     standard_name: str = NotImplemented
-    units: Units = NotImplemented
+    units: src.units.Units = NotImplemented
     axis: str = 'OTHER'
 
 @util.mdtf_dataclass
 class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_X_COORD'
     standard_name: str = NotImplemented
-    units: Units = NotImplemented
+    units: src.units.Units = NotImplemented
     axis: str = 'X'
 
 @util.mdtf_dataclass
 class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_Y_COORD'
     standard_name: str = NotImplemented
-    units: Units = NotImplemented
+    units: src.units.Units = NotImplemented
     axis: str = 'Y'
 
 @util.mdtf_dataclass
 class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_Z_COORD'
     standard_name: str = NotImplemented
-    units: Units = NotImplemented
+    units: src.units.Units = NotImplemented
     axis: str = 'Z'
     positive: str = NotImplemented
 
@@ -335,7 +362,7 @@ class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
 class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     name: str = 'PLACEHOLDER_T_COORD'
     standard_name: str = NotImplemented
-    units: Units = NotImplemented
+    units: src.units.Units = NotImplemented
     axis: str = 'T'
     calendar: str = NotImplemented
     range: typing.Any = None
@@ -475,7 +502,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: Units = "" # not MANDATORY since may be set later from var translation
+    units: src.units.Units = "" # not MANDATORY since may be set later from var translation
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -491,11 +518,10 @@ class DMDependentVariable(_DMDimensionsMixin):
     def __str__(self):
         """Condensed string representation.
         """
-        str_ = self.full_name[1:-1]
         if hasattr(self, 'name_in_model') and self.name_in_model:
-            str_ += f" (={self.name_in_model})"
+            str_ = f"='{self.name_in_model}'"
         else:
-            str_ += f" (={self.standard_name})"
+            str_ = f"{self.standard_name}"
         attrs_ = []
         if not self.is_static and hasattr(self.T, 'frequency'):
             attrs_.append(str(self.T.frequency))
@@ -505,7 +531,7 @@ class DMDependentVariable(_DMDimensionsMixin):
         if attrs_:
             str_ += " @ "
             str_ += ", ".join(attrs_)
-        return '<' + str_ + '>'
+        return f"{self.full_name} ({str_})"
 
     @property
     def axes(self):
@@ -601,7 +627,7 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
             bounds_dim = DMBoundsDimension(name=bounds_dim)
         kwargs['coords'] = [coord, bounds_dim]
         coord_bounds = cls(**kwargs)
-        coord.bounds = coord_bounds
+        coord.bounds_var = coord_bounds
         return coord_bounds
 
 @util.mdtf_dataclass
@@ -610,7 +636,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # units: Units
+    # units: src.units.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     pass

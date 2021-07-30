@@ -500,6 +500,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         self.convention = data_mgr.attrs.convention
         self.pod_convention = pod.convention
 
+        if getattr(pod, 'nc_largefile', False):
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
         # HACK only used for _FillValue workaround in clean_output_encoding
         self.output_to_ncl = ('ncl' in pod.runtime_requirements)
 
@@ -555,11 +559,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         "decode_times": False,
         "use_cftime": False
     }
+
     # arguments passed to xr.to_netcdf
-    save_dataset_kwargs = {
-        "engine": "netcdf4",
-        "format": "NETCDF4_CLASSIC" # NETCDF3* not supported by this engine (?)
-    }
+    @property
+    def save_dataset_kwargs(self):
+        return {
+            "engine": "netcdf4",
+            "format": self.nc_format
+        }
 
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:

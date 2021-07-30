@@ -524,6 +524,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     runtime_requirements: dict = dc.field(default_factory=dict)
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
+    nc_largefile: bool = False
 
     varlist: Varlist = None
     preprocessor: typing.Any = dc.field(default=None, compare=False)
@@ -646,6 +647,12 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                 'uses input metadata.'), tags=util.ObjectLogTag.BANNER)
         # set up env vars
         self.pod_env_vars.update(data_source.env_vars)
+
+        self.nc_largefile = config.get('large_file', False)
+        if self.nc_largefile:
+            self.pod_env_vars['MDTF_NCL_NC_FORMAT'] = "NetCDF4"
+        else:
+            self.pod_env_vars['MDTF_NCL_NC_FORMAT'] = "NetCDF4Classic"
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

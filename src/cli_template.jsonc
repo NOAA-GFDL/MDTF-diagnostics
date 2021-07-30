@@ -78,6 +78,10 @@
           "help": "Source used to query and fetch model data.",
           "default": "Local_file",
           "action": "PluginArgAction"
+        },{
+          "name": "large_file",
+          "help": "Set this flag to handle large volumes of input model data. If set, use netCDF4 format in intermediate data files to handle variables >4gb (HDF5 API). Default is to use netCDF4 classic format.",
+          "default" : false
         }
       ]
     },{

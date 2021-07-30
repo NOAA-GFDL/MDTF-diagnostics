@@ -650,9 +650,19 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
         self.nc_largefile = config.get('large_file', False)
         if self.nc_largefile:
-            self.pod_env_vars['MDTF_NCL_NC_FORMAT'] = "NetCDF4"
+            if self.program == 'ncl':
+                # argument to ncl setfileoption()
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4"
+            else:
+                # argument to netCDF4-python/xarray/etc.
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4"
         else:
-            self.pod_env_vars['MDTF_NCL_NC_FORMAT'] = "NetCDF4Classic"
+            if self.program == 'ncl':
+                # argument to ncl setfileoption()
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4Classic"
+            else:
+                # argument to netCDF4-python/xarray/etc.
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4_CLASSIC"
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

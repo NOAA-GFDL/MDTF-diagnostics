@@ -73,6 +73,10 @@ Settings that describe the input model data and how it should be obtained.
 --data-manager <data_manager>   | Method used to search for and fetch input model data. <*data_manager*> is case-insensitive, and spaces and underscores are ignored.
    |
    | See the :doc:`ref_data_sources` for documentation on the available options, and the settings that are specific to each.
+--large_file   | Set this flag when running the package on a large volume of input model data: specifically, if the full time series for any requested variable is over 4gb. This may impact performance for variables less than 4gb but otherwise has no effect.
+   |
+   | When set, this causes the framework and PODs to use the netCDF-4 format (CDF-5 standard, using the HDF5 API; see the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__) for all intermediate data files generated during the package run. If the flag is not set (default), the netCDF4 Classic format is used instead. Regardless of this setting, the package can read input model data in any netCDF4 format.
+
 
 Analysis
 ++++++++

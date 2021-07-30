@@ -6,6 +6,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/utils.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 undef("debug_print")
 procedure debug_print(string_to_print,routine_name,debug_flag)
 begin

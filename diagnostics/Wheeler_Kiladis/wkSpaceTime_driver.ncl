@@ -5,6 +5,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/diagnostics_cam.ncl"
 load "$POD_HOME/getVarSlice.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;==================================================================
 ; Function to fix contour levels according to variable name
 ; The variable name's used here are the CESM variables as used in diagnostics_cam.ncl

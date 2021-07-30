@@ -16,6 +16,8 @@
 ; Given two sets of nrow x ncol dimensions, return an orientation to 
 ; use for paneling plots given these dimensions.
 ;----------------------------------------------------------------------
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 undef("get_orientation")
 function get_orientation(dims1[2]:numeric,dims2[2]:numeric)
 local ncols1, ncols2, nrows1, nrows2

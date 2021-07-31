@@ -712,6 +712,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         except Exception as exc:
             raise util.chain_exc(exc, (f"loading "
                 f"dataset for {var.full_name}."), util.DataPreprocessEvent)
+        var.log.debug("Read %d mb for %s.", ds.nbytes / (1024*1024), var.full_name)
         try:
             ds = self.parser.parse(var, ds)
         except Exception as exc:
@@ -740,7 +741,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         that child classes can modify it.
         """
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
-        var.log.info("Writing to %s", path_str)
+        var.log.info("Writing %d mb to %s", ds.nbytes / (1024*1024), path_str)
         try:
             ds = self.clean_output_attrs(var, ds)
             ds = self.log_history_attr(var, ds)

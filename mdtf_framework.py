@@ -47,7 +47,10 @@ def main():
         cli_obj.print_help()
         return 0 # will actually exit from print_help
     elif sys.argv[1].lower() == 'info':
+<<<<<<< HEAD
+=======
         # case where we print command-line info on PODs
+>>>>>>> gfdl2/develop
         from src import mdtf_info
         mdtf_info.InfoCLIHandler(code_root, sys.argv[2:])
         return 0 # will actually exit from print_help

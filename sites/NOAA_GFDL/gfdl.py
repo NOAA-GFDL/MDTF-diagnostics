@@ -6,7 +6,8 @@ import io
 import dataclasses
 import shutil
 import tempfile
-from src import (util, core, diagnostic, data_manager,
+import pandas as pd
+from src import (util, core, diagnostic, data_manager, data_sources,
     preprocessor, environment_manager, output_manager, cmip6)
 from sites.NOAA_GFDL import gfdl_util
 
@@ -33,10 +34,11 @@ class GFDLMDTFFramework(core.MDTFFramework):
         else:
             gfdl_tmp_dir = cli_obj.config.get('GFDL_WS_TEMP', '$TMPDIR')
         gfdl_tmp_dir = util.resolve_path(
-            gfdl_tmp_dir, root_path=self.code_root, env=self.global_env_vars
+            gfdl_tmp_dir, root_path=self.code_root, env=self.global_env_vars,
+            log=_log
         )
         if not os.path.isdir(gfdl_tmp_dir):
-            gfdl_util.make_remote_dir(gfdl_tmp_dir)
+            gfdl_util.make_remote_dir(gfdl_tmp_dir, log=_log)
         tempfile.tempdir = gfdl_tmp_dir
         os.environ['MDTF_TMPDIR'] = gfdl_tmp_dir
         self.global_env_vars['MDTF_TMPDIR'] = gfdl_tmp_dir
@@ -49,19 +51,19 @@ class GFDLMDTFFramework(core.MDTFFramework):
         # copy obs data from site install
         gfdl_util.fetch_obs_data(
             paths.OBS_DATA_REMOTE, paths.OBS_DATA_ROOT,
-            timeout=self.timeout, dry_run=self.dry_run
+            timeout=self.timeout, dry_run=self.dry_run, log=_log
         )
 
     def reset_case_pod_list(self, cli_obj, config, paths):
         if self.frepp_mode:
-            for case in self.case_list:
+            for case in self.iter_children():
                 # frepp mode:only attempt PODs other instances haven't already done
                 case_outdir = paths.modelPaths(case, overwrite=True)
                 case_outdir = case_outdir.MODEL_OUT_DIR
                 pod_list = case['pod_list']
                 for p in pod_list:
                     if os.path.isdir(os.path.join(case_outdir, p)):
-                        _log.info(("\tPreexisting {} in {}; "
+                        case.log.info(("\tPreexisting {} in {}; "
                             "skipping b/c frepp mode").format(p, case_outdir))
                 case['pod_list'] = [p for p in pod_list if not \
                     os.path.isdir(os.path.join(case_outdir, p))
@@ -73,12 +75,16 @@ class GFDLMDTFFramework(core.MDTFFramework):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             gfdl_util.rmtree_wrapper(p.WORKING_DIR)
-        util.check_dirs(p.CODE_ROOT, p.OBS_DATA_REMOTE, create=False)
-        util.check_dirs(p.MODEL_DATA_ROOT, p.OBS_DATA_ROOT, p.WORKING_DIR,
-            create=True)
+        util.check_dir(p, 'CODE_ROOT', create=False)
+        util.check_dir(p, 'OBS_DATA_REMOTE', create=False)
+        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
+        util.check_dir(p, 'OBS_DATA_ROOT', create=True)
+        util.check_dir(p, 'WORKING_DIR', create=True)
+
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
-            gfdl_util.make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run)
+            gfdl_util.make_remote_dir(p.OUTPUT_DIR, self.timeout, self.dry_run,
+                log=_log)
 
 
 # ====================================================================
@@ -105,16 +111,12 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
         frepp_mode = config.get('frepp', False)
         if frepp_mode and not os.path.exists(self.POD_OUT_DIR):
             try:
-                gfdl_util.make_remote_dir(self.POD_OUT_DIR)
+                gfdl_util.make_remote_dir(self.POD_OUT_DIR, log=self.log)
                 self._has_placeholder = True
             except Exception as exc:
-                try:
-                    raise util.PodRuntimeError((f"Caught exception making output "
-                        f"directory at {self.POD_OUT_DIR}; deactivating {self.name}."),
-                        self) from exc
-                except Exception as chained_exc:
-                    _log.error(chained_exc)
-                    self.exceptions.log(chained_exc)
+                chained_exc = util.chain_exc(exc, (f"Making output directory at "
+                    f"{self.POD_OUT_DIR}."), util.PodRuntimeError)
+                self.deactivate(chained_exc)
 
 # ------------------------------------------------------------------------
 
@@ -138,15 +140,15 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         if self.tape_filesystem:
             paths = set([])
             for var in vars_to_fetch:
-                for data_key in self.iter_data_keys(var):
-                    paths.update(self.remote_data(data_key))
+                for d_key in var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                    paths.update(d_key.remote_data())
 
-            _log.info(f"Start dmget of {len(paths)} files.")
+            self.log.info(f"Start dmget of {len(paths)} files...")
             util.run_command(['dmget','-t','-v'] + list(paths),
                 timeout= len(paths) * self.timeout,
-                dry_run=self.dry_run
+                dry_run=self.dry_run, log=self.log
             )
-            _log.info("Successful exit of dmget.")
+            self.log.info("Successful exit of dmget.")
 
     def _get_fetch_method(self, method=None):
         _methods = {
@@ -161,16 +163,20 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
                 method = 'gcp' # use GCP for DMF filesystems
             else:
                 method = 'ln' # symlink for local files
-        _log.debug("Selected fetch method '%s'.", method)
+        self.log.debug("Selected fetch method '%s'.", method)
         return (_methods[method]['command'], _methods[method]['site'])
 
-    def fetch_dataset(self, var, paths):
+    def fetch_dataset(self, var, d_key):
         """Copy files to temporary directory.
         (GCP can't copy to home dir, so always copy to a temp dir)
         """
         tmpdir = core.TempDirManager().make_tempdir()
-        _log.debug("Created GCP fetch temp dir at %s.", tmpdir)
+        self.log.debug("Created GCP fetch temp dir at %s.", tmpdir)
         (cp_command, smartsite) = self._get_fetch_method(self._fetch_method)
+
+        paths = d_key.remote_data()
+        if isinstance(paths, pd.Series):
+            paths = paths.to_list()
         if not util.is_iterable(paths):
             paths = (paths, )
 
@@ -178,17 +184,16 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
         for path in paths:
             # exceptions caught in parent loop in data_manager.DataSourceBase
             local_path = os.path.join(tmpdir, os.path.basename(path))
-            _log.info(f"\tFetching {path[len(self.attrs.CASE_ROOT_DIR):]}")
+            self.log.info(f"\tFetching {path[len(self.attrs.CASE_ROOT_DIR):]}")
             util.run_command(cp_command + [
-                smartsite + path,
-                # gcp requires trailing slash, ln ignores it
-                smartsite + tmpdir + os.sep
-            ],
-                timeout=self.timeout,
-                dry_run=self.dry_run
+                    smartsite + path,
+                    # gcp requires trailing slash, ln ignores it
+                    smartsite + tmpdir + os.sep
+                ],
+                timeout=self.timeout, dry_run=self.dry_run, log=self.log
             )
             local_paths.append(local_path)
-        return local_paths
+        d_key.local_data = local_paths
 
 
 class GFDL_GCP_FileDataSourceBase(
@@ -200,16 +205,16 @@ class GFDL_GCP_FileDataSourceBase(
     using GCP, and which may be invoked via frepp.
     """
     _DiagnosticClass = GfdlDiagnostic
-    _PreprocessorClass = preprocessor.MDTFDataPreprocessor
+    _PreprocessorClass = preprocessor.DefaultPreprocessor
 
     _FileRegexClass = util.abstract_attribute()
     _DirectoryRegex = util.abstract_attribute()
     _AttributesClass = util.abstract_attribute()
     _fetch_method = 'auto' # symlink if not on /archive, else gcp
 
-    def __init__(self, case_dict):
+    def __init__(self, case_dict, parent):
         self.catalog = None
-        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict)
+        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict, parent)
 
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
@@ -228,13 +233,13 @@ class GFDL_GCP_FileDataSourceBase(
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
 @util.mdtf_dataclass
-class GFDL_UDA_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
         super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdludacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin,
+    data_sources.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.
@@ -247,13 +252,13 @@ class Gfdludacmip6DataManager(
 
 
 @util.mdtf_dataclass
-class GFDL_archive_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_archive_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
         super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdlarchivecmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin,
+    data_sources.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
@@ -267,13 +272,13 @@ class Gfdlarchivecmip6DataManager(
 
 
 @util.mdtf_dataclass
-class GFDL_data_CMIP6DataSourceAttributes(data_manager.CMIP6DataSourceAttributes):
+class GFDL_data_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
         super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
 
 class Gfdldatacmip6DataManager(
-    data_manager.CMIP6ExperimentSelectionMixin,
+    data_sources.CMIP6ExperimentSelectionMixin,
     GFDL_GCP_FileDataSourceBase
 ):
     """DataSource for accessing pre-publication CMIP6 data on /data_cmip6.
@@ -281,7 +286,6 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
-    _convention = "CMIP" # hard-code naming convention
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -385,39 +389,47 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource corresponding to
     model data in the /pp/ directory hierarchy.
     """
-    convention: str = util.MANDATORY
-    CASE_ROOT_DIR: str = ""
+    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+    # FIRSTYR: str
+    # LASTYR: str
+    # date_range: util.DateRange
+    # CASE_ROOT_DIR: str
+    # convention: str
+    pass
 
-    def __post_init__(self):
-        """Validate user input.
-        """
-        super(PPDataSourceAttributes, self).__post_init__()
-        config = core.ConfigManager()
+gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
+    daterange_col = "date_range"
+)
 
-        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
-            _log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
-            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
-        # verify case root dir exists
-        if not os.path.isdir(self.CASE_ROOT_DIR):
-            _log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
-            exit(1)
+gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSpec(
+    # Catalog columns whose values must be the same for all variables.
+    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols = data_manager.DataFrameQueryColumnGroup(['component']),
+    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
+    daterange_col = "date_range"
+)
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
 
+    @property
+    def col_spec(self):
+        if self.any_components:
+            return gfdlppDataManager_any_components_col_spec
+        else:
+            return gfdlppDataManager_same_components_col_spec
+
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
     _query_attrs_synonyms = {'name': 'variable'}
 
-    daterange_col = "date_range"
-    # Catalog columns whose values must be the same for all variables.
-    expt_key_cols = tuple()
-    expt_cols = expt_key_cols
-
-    def __init__(self, case_dict):
-        super(GfdlppDataManager, self).__init__(case_dict)
+    def __init__(self, case_dict, parent):
+        super(GfdlppDataManager, self).__init__(case_dict, parent)
         config = core.ConfigManager()
         self.any_components = config.get('any_components', False)
 
@@ -452,7 +464,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             # unique value, no need to filter
             return df
         filter_val = func(values)
-        _log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
+        self.log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
 
@@ -498,7 +510,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             else:
                 return _heuristic_tiebreaker_sub(str_list)
 
-        if 'component' in self.pod_expt_cols:
+        if 'component' in self.col_spec.pod_expt_cols.cols:
             df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
         # otherwise no-op
         return df
@@ -510,10 +522,10 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
-        if 'component' in self.var_expt_cols:
+        if 'component' in self.col_spec.var_expt_cols.cols:
             col_name = 'component'
             df = df.sort_values(col_name).iloc[[0]]
-            _log.debug("Selected experiment attribute '%s'='%s' for %s.",
+            self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
                 col_name, df[col_name].iloc[0], obj.name)
         return df
 
@@ -551,9 +563,9 @@ class GfdlvirtualenvEnvironmentManager(
     # Use module files to switch execution environments, as defined on
     # GFDL workstations and PP/AN cluster.
 
-    def __init__(self):
+    def __init__(self, log=_log):
         _ = gfdl_util.ModuleManager()
-        super(GfdlvirtualenvEnvironmentManager, self).__init__()
+        super(GfdlvirtualenvEnvironmentManager, self).__init__(log=log)
 
     # TODO: manual-coded logic like this is not scalable
     def set_pod_env(self, pod):
@@ -623,13 +635,13 @@ class GFDLHTMLPodOutputManager(output_manager.HTMLPodOutputManager):
         """
         if not self.frepp_mode:
             super(GFDLHTMLPodOutputManager, self).make_output()
-        elif self._pod._has_placeholder:
-            _log.debug('POD %s has frepp placeholder, generating output.',
-                self._pod.name)
+        elif getattr(self.obj, '_has_placeholder', False):
+            self.obj.log.debug('POD %s has frepp placeholder, generating output.',
+                self.obj.name)
             super(GFDLHTMLPodOutputManager, self).make_output()
         else:
-            _log.debug('POD %s does not have frepp placeholder; not generating output.',
-                self._pod.name)
+            self.obj.log.debug(('POD %s does not have frepp placeholder; not '
+                'generating output.'), self.obj.name)
 
 class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
     _PodOutputManagerClass = GFDLHTMLPodOutputManager
@@ -641,18 +653,18 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             self.dry_run = config.get('dry_run', False)
             self.timeout = config.get('file_transfer_timeout', 0)
         except (AttributeError, KeyError) as exc:
-            _log.exception(f"Caught {repr(exc)}.")
+            case.log.store_exception(exc)
 
         super(GFDLHTMLOutputManager, self).__init__(case)
 
-    def make_html(self, case, cleanup=False):
+    def make_html(self, cleanup=False):
         """Never cleanup html if we're in frepp_mode, since framework may run
         later when another component finishes. Instead just append current
         progress to CASE_TEMP_HTML.
         """
         prev_html = os.path.join(self.OUT_DIR, self._html_file_name)
         if self.frepp_mode and os.path.exists(prev_html):
-            _log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
+            self.obj.log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
             with io.open(prev_html, 'r', encoding='utf-8') as f1:
                 contents = f1.read()
             contents = contents.split('<!--CUT-->')
@@ -662,12 +674,12 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             if os.path.exists(self.CASE_TEMP_HTML):
                 mode = 'a'
             else:
-                _log.warning("No file at %s.", self.CASE_TEMP_HTML)
+                self.obj.log.warning("No file at %s.", self.CASE_TEMP_HTML)
                 mode = 'w'
             with io.open(self.CASE_TEMP_HTML, mode, encoding='utf-8') as f2:
                 f2.write(contents)
         super(GFDLHTMLOutputManager, self).make_html(
-            case, cleanup=(not self.frepp_mode)
+            cleanup=(not self.frepp_mode)
         )
 
     @property
@@ -677,18 +689,18 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
         file_name = self.WK_DIR + '.tar'
         return os.path.join(paths.WORKING_DIR, file_name)
 
-    def make_tar_file(self, case):
+    def make_tar_file(self):
         """Make the tar file locally in WK_DIR and gcp to destination,
         since OUT_DIR might be mounted read-only.
         """
         paths = core.PathManager()
-        out_path = super(GFDLHTMLOutputManager, self).make_tar_file(case)
+        out_path = super(GFDLHTMLOutputManager, self).make_tar_file()
         _, file_name = os.path.split(out_path)
         tar_dest_path = os.path.join(paths.OUTPUT_DIR, file_name)
-        gfdl_util.gcp_wrapper(out_path, tar_dest_path)
+        gfdl_util.gcp_wrapper(out_path, tar_dest_path, log=self.obj.log)
         return tar_dest_path
 
-    def copy_to_output(self, case):
+    def copy_to_output(self):
         """Use gcp for transfer, since OUTPUT_DIR might be mounted read-only.
         Also has special logic to handle frepp_mode.
         """
@@ -696,31 +708,33 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
             return # no copying needed
         if self.frepp_mode:
             # only copy PODs that ran, whether they succeeded or not
-            for pod in case.pods.values():
+            for pod in self.obj.iter_children():
                 if pod._has_placeholder:
-                    gfdl_util.gcp_wrapper(pod.POD_WK_DIR, pod.POD_OUT_DIR)
+                    gfdl_util.gcp_wrapper(
+                        pod.POD_WK_DIR, pod.POD_OUT_DIR, log=pod.log
+                    )
             # copy all case-level files
-            _log.debug("Copying case-level files in %s", self.WK_DIR)
+            self.obj.log.debug("Copying case-level files in %s", self.WK_DIR)
             for f in os.listdir(self.WK_DIR):
                 if os.path.isfile(os.path.join(self.WK_DIR, f)):
-                    _log.debug("Found case-level file %s", f)
+                    self.obj.log.debug("Found case-level file %s", f)
                     gfdl_util.gcp_wrapper(
-                        os.path.join(self.WK_DIR, f), self.OUT_DIR,
+                        os.path.join(self.WK_DIR, f), self.OUT_DIR, log=self.obj.log
                     )
         else:
             # copy everything at once
             if os.path.exists(self.OUT_DIR):
                 if self.overwrite:
                     try:
-                        _log.error('%s exists, attempting to remove.', self.OUT_DIR)
+                        self.obj.log.error('%s exists, attempting to remove.', self.OUT_DIR)
                         gfdl_util.rmtree_wrapper(self.OUT_DIR)
                     except OSError:
                         # gcp will not overwrite dirs, so forced to save under
                         # a different name despite overwrite=True
-                        _log.error(("Couldn't remove %s (probably mounted read"
+                        self.obj.log.error(("Couldn't remove %s (probably mounted read"
                             "-only); will rename new directory."), self.OUT_DIR)
                 else:
-                    _log.error("%s exists; will rename new directory.", self.OUT_DIR)
+                    self.obj.log.error("%s exists; will rename new directory.", self.OUT_DIR)
             try:
                 if os.path.exists(self.OUT_DIR):
                     # check again, since rmtree() might have succeeded
@@ -728,11 +742,11 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
                         util.bump_version(self.OUT_DIR)
                     new_wkdir, _ = \
                         util.bump_version(self.WK_DIR, new_v=version)
-                    _log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
+                    self.obj.log.debug("Move %s to %s", self.WK_DIR, new_wkdir)
                     shutil.move(self.WK_DIR, new_wkdir)
                     self.WK_DIR = new_wkdir
-                gfdl_util.gcp_wrapper(self.WK_DIR, self.OUT_DIR)
+                gfdl_util.gcp_wrapper(self.WK_DIR, self.OUT_DIR, log=self.obj.log)
             except Exception:
                 raise # only delete MODEL_WK_DIR if copied successfully
-            _log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
+            self.obj.log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
             gfdl_util.rmtree_wrapper(self.WK_DIR)

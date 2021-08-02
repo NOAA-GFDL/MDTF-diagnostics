@@ -122,8 +122,8 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
                 self.data[self.input_field] = m.string
 
             self._validate_match(m)
-            if any(self.data[f] == NOTSET for f in self.fields):
-                bad_names = [f for f in self.fields if self.data[f] == NOTSET]
+            if any(self.data[f] is NOTSET for f in self.fields):
+                bad_names = [f for f in self.fields if self.data[f] is NOTSET]
                 raise exceptions.RegexParseError((f"Couldn't match the "
                     f"following fields in {str_}: " + ', '.join(bad_names) ))
             self.is_matched = True
@@ -177,13 +177,13 @@ class RegexPatternWithTemplate(RegexPattern):
             Other arguments the same
     """
     def __init__(self, regex, defaults=None, input_field=None,
-        match_error_filter=None, template=None):
+        match_error_filter=None, template=None, log=_log):
         super(RegexPatternWithTemplate, self).__init__(regex, defaults=defaults,
             input_field=input_field, match_error_filter=match_error_filter)
         self.template = template
         for f in self.fields:
             if f not in self.template:
-                _log.warning("Field %s not included in output.", f)
+                log.warning("Field %s not included in output.", f)
 
     def format(self):
         if self.template is None:
@@ -225,7 +225,8 @@ class ChainedRegexPattern(RegexPatternBase):
     succeeds determining the returned answer. Public methods work the same as
     on RegexPattern.
     """
-    def __init__(self, *string_patterns, defaults=None, input_field=None, match_error_filter=None):
+    def __init__(self, *string_patterns, defaults=None, input_field=None,
+        match_error_filter=None):
         # NB, changes attributes on patterns passed as arguments, so
         # once created they can't be used on their own
         new_pats = []
@@ -371,7 +372,7 @@ def _mdtf_dataclass_get_field_types(obj, f):
         if not isinstance(obj, f.type):
             raise exceptions.DataclassParseError((f"Field {f.name} specified "
                 f"as dataclass {f.type.__name__}, which isn't a parent class "
-                f"of {self.__class__.__name__}."))
+                f"of {obj.__class__.__name__}."))
         return (None, None)
     elif isinstance(f.type, typing._GenericAlias) \
         or isinstance(f.type, typing._SpecialForm):
@@ -395,7 +396,7 @@ def _mdtf_dataclass_get_field_types(obj, f):
         valid_types.append(type(f.default_factory()))
     return (new_type, valid_types)
 
-def _mdtf_dataclass_type_coercion(self):
+def _mdtf_dataclass_type_coercion(self, log):
     """Do type checking on all dataclass fields after the auto-generated
     ``__init__`` method, but before any ``__post_init__`` method.
 
@@ -427,10 +428,10 @@ def _mdtf_dataclass_type_coercion(self):
                 f"Couldn't coerce value {repr(value)} for field {f.name} from "
                 f"type {type(value)} to type {new_type}.")) from exc
         except Exception as exc:
-            _log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
+            log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
             raise exc
 
-def _mdtf_dataclass_type_check(self):
+def _mdtf_dataclass_type_check(self, log):
     """Do type checking on all dataclass fields after ``__init__`` and
     ``__post_init__`` methods.
 
@@ -449,6 +450,8 @@ def _mdtf_dataclass_type_check(self):
 
         _, valid_types = _mdtf_dataclass_get_field_types(self, f)
         if valid_types is not None and not isinstance(value, tuple(valid_types)):
+            log.exception("%s: Failed type check for field '%s': %s != %s.",
+                self.__class__.__name__, f.name, type(value), valid_types)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                 f"Expected {f.name} to be {f.type}, got {type(value)} "
                 f"({repr(value)})."))
@@ -504,9 +507,13 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     _old_post_init = cls.__post_init__
     @functools.wraps(_old_post_init)
     def _new_post_init(self, *args, **kwargs):
-        _mdtf_dataclass_type_coercion(self)
+        if hasattr(self, 'log'):
+            _post_init_log = self.log # for object hierarchy
+        else:
+            _post_init_log = _log # fallback: use module-level logger
+        _mdtf_dataclass_type_coercion(self, _post_init_log)
         _old_post_init(self, *args, **kwargs)
-        _mdtf_dataclass_type_check(self)
+        _mdtf_dataclass_type_check(self, _post_init_log)
     type.__setattr__(cls, '__post_init__', _new_post_init)
 
     return cls
@@ -612,8 +619,8 @@ def regex_dataclass(pattern, **deco_kwargs):
             else:
                 _old_init(self, first_arg, *args, **new_kw)
 
-            _mdtf_dataclass_type_coercion(self)
-            _mdtf_dataclass_type_check(self)
+            _mdtf_dataclass_type_coercion(self, _log)
+            _mdtf_dataclass_type_check(self, _log)
         type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):

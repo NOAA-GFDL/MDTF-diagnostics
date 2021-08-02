@@ -5,7 +5,9 @@ import collections
 import collections.abc
 import enum
 import itertools
+import string
 import unittest.mock
+import uuid
 from . import exceptions
 
 import logging
@@ -18,9 +20,9 @@ class _AbstractAttributePlaceholder():
     pass
 
 def abstract_attribute(obj=None):
-    """Decorator for abstract attributes in abstract base classes by analogy 
-    with :py:func:`abc.abstract_method`. Based on 
-    `https://stackoverflow.com/a/50381071`__.
+    """Decorator for abstract attributes in abstract base classes by analogy
+    with :py:func:`abc.abstract_method`. Based on
+    `<https://stackoverflow.com/a/50381071>`__.
     """
     if obj is None:
         obj = _AbstractAttributePlaceholder()
@@ -28,10 +30,10 @@ def abstract_attribute(obj=None):
     return obj
 
 class MDTFABCMeta(abc.ABCMeta):
-    """Wrap the metaclass for abstract base classes to enable definition of 
+    """Wrap the metaclass for abstract base classes to enable definition of
     abstract attributes; raises NotImplementedError if they aren't defined in
-    child classes. Based on 
-    `https://stackoverflow.com/a/50381071`__.
+    child classes. Based on
+    `<https://stackoverflow.com/a/50381071>`__.
     """
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
@@ -61,17 +63,17 @@ class _Singleton(type):
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Singleton(_Singleton('SingletonMeta', (object,), {})): 
-    """Parent class defining the 
+class Singleton(_Singleton('SingletonMeta', (object,), {})):
+    """Parent class defining the
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
     """
     @classmethod
     def _reset(cls):
         """Private method of all :class:`~util.Singleton`-derived classes added
-        for use in unit testing only. Calling this method on test teardown 
-        deletes the instance, so that tests coming afterward will initialize the 
-        :class:`~util.Singleton` correctly, instead of getting the state set 
+        for use in unit testing only. Calling this method on test teardown
+        deletes the instance, so that tests coming afterward will initialize the
+        :class:`~util.Singleton` correctly, instead of getting the state set
         during previous tests.
         """
         # pylint: disable=maybe-no-member
@@ -80,12 +82,12 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
 
 class MultiMap(collections.defaultdict):
-    """Extension of the :obj:`dict` class that allows doing dictionary lookups 
-    from either keys or values. 
-    
+    """Extension of the :obj:`dict` class that allows doing dictionary lookups
+    from either keys or values.
+
     Syntax for lookup from keys is unchanged, ``bd['key'] = 'val'``, while lookup
     from values is done on the `inverse` attribute and returns a set of matching
-    keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.    
+    keys if more than one match is present: ``bd.inverse['val'] = ['key1', 'key2']``.
     See `<https://stackoverflow.com/a/21894086>`__.
     """
     def __init__(self, *args, **kwargs):
@@ -102,7 +104,7 @@ class MultiMap(collections.defaultdict):
         if key not in list(self.keys()):
             raise KeyError(key)
         return from_iter(self[key])
-    
+
     def to_dict(self):
         d = {}
         for key in iter(self.keys()):
@@ -122,7 +124,7 @@ class MultiMap(collections.defaultdict):
         return from_iter(inv_lookup[val])
 
 class WormDict(collections.UserDict, dict):
-    """Dict which raises eexceptions when trying to overwrite or delete an 
+    """Dict which raises eexceptions when trying to overwrite or delete an
     existing entry. "WORM" is an acronym for "write once, read many."
     """
     def __setitem__(self, key, value):
@@ -173,7 +175,7 @@ class WormDefaultDict(WormDict):
 class NameSpace(dict):
     """ A dictionary that provides attribute-style access.
 
-    For example, `d['key'] = value` becomes `d.key = value`. All methods of 
+    For example, `d['key'] = value` becomes `d.key = value`. All methods of
     :py:obj:`dict` are supported.
 
     Note: recursive access (`d.key.subkey`, as in C-style languages) is not
@@ -291,7 +293,7 @@ class NameSpace(dict):
     def _freeze(self):
         """Return immutable representation of (current) attributes.
 
-        We do this to enable comparison of two Namespaces, which otherwise would 
+        We do this to enable comparison of two Namespaces, which otherwise would
         be done by the default method of testing if the two objects refer to the
         same location in memory.
         See `<https://stackoverflow.com/a/45170549>`__.
@@ -325,14 +327,16 @@ class _MDTFEnumMixin():
     @classmethod
     def from_struct(cls, str_):
         """Instantiate from string."""
-        return cls.__members__.get(str_.upper())
+        if str_.upper() not in cls.__members__:
+            raise ValueError(f"Unrecognized value '{str_}' for '{cls.__name__}'.")
+        return cls[str_.upper()]
 
 class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize :py:class:`~enum.Enum`. 1) Assign (integer) values automatically
-    to the members of the enumeration. 2) Provide a ``from_struct`` method to 
-    simplify instantiating an instance from a string. To avoid potential 
-    confusion with reserved keywords, we use the Python convention that members
-    of the enumeration are all uppercase.
+    to the members of the enumeration. 2) Provide a
+    :meth:`~_MDTFEnumMixin.from_struct` method to simplify instantiating an
+    instance from a string. To avoid potential confusion with reserved keywords,
+    we use the Python convention that members of the enumeration are all uppercase.
     """
     def __new__(cls, *args, **kwargs):
         """AutoNumber recipe from python stdlib docs."""
@@ -344,15 +348,56 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
 class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
     """Customize :py:class:`~enum.IntEnum` analogous to :class:`MDTFEnum`.
     """
-    pass 
+    pass
 
 def sentinel_object_factory(obj_name):
     """Return a unique singleton object/class (same difference for singletons).
-    For implentation, see `python docs 
+    For implentation, see `python docs
     <https://docs.python.org/3/library/unittest.mock.html#unittest.mock.sentinel>`__.
     """
     return getattr(unittest.mock.sentinel, obj_name)
 
+class MDTF_ID():
+    """Class wrapping :py:class:`~uuid.UUID`, to provide unique ID numbers for
+    cases, pods, variables, etc., so that we don't need to require that objects
+    in these classes have unique names.
+    """
+    def __init__(self, id_=None):
+        if id_ is None:
+            # set node=0 to eliminate hostname; only dependent on system clock
+            self._uuid = uuid.uuid1(node=0)
+        else:
+            self._uuid = id_
+
+    def __str__(self):
+        """Print compact string representation (4 alphanumeric characters) instead
+        of the entire uuid, to get more readable logs.
+        """
+        chars = string.digits + string.ascii_letters
+        base = len(chars)
+        num = self._uuid.time_low # least significant bits
+        str_ = '0000'
+        while num:
+            str_ += chars[num % base]
+            num //= base
+        return str_[-2:-6:-1] # reversed so most-significant is 1st
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._uuid})"
+
+    def __hash__(self):
+        return hash(self._uuid)
+
+    def __eq__(self, other):
+        if hasattr(other, '_uuid'):
+            return (self._uuid == other._uuid)
+        else:
+            return False
+
+    def __ne__(self, other):
+        return (not self.__eq__(other)) # more foolproof
+
+# ------------------------------------------------------------------
 
 def is_iterable(obj):
     return isinstance(obj, collections.abc.Iterable) \
@@ -397,11 +442,12 @@ def filter_kwargs(kwarg_dict, function):
     return dict((k, kwarg_dict[k]) for k in named_args \
         if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
-def splice_into_list(list_, splice_d,  key_fn=None):
-    """Splice sub-lists in ``splice_d`` into list ``list_`` after their 
-    corresponding entries (keys of ``slice_d``). Example: 
+def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
+    """Splice sub-lists in ``splice_d`` into list ``list_`` after their
+    corresponding entries (keys of ``slice_d``). Example:
 
     .. code-block:: python
+
        >>> splice_into_list(['a','b','c'], {'b': ['b1', 'b2']})
        ['a', 'b', 'b1', 'b2', 'c']
 
@@ -410,7 +456,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
         splice_d: dict of sub-lists to splice in. Keys are entries in ``list_``
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
-        key_fn (optional): If supplied, function applied to elements of ``list_`` 
+        key_fn (optional): If supplied, function applied to elements of ``list_``
             to compare to keys of ``splice_d``.
 
     Returns: spliced ``list_`` as described above.
@@ -421,7 +467,7 @@ def splice_into_list(list_, splice_d,  key_fn=None):
     for k in splice_d:
         idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
         if len(idx) > 1:
-            _log.debug('%s not unique (%s) in %s.', k, idx, list_)
+            log.debug('%s not unique (%s) in %s.', k, idx, list_)
         chunks.extend(idx)
     chunk_0, chunk_1 = itertools.tee(sorted(chunks))
     next(chunk_1, None)
@@ -436,8 +482,8 @@ def splice_into_list(list_, splice_d,  key_fn=None):
 
 def deserialize_class(name):
     """Given the name of a currently defined class, return the class itself.
-    This avoids security issues with calling :py:func:`eval`. Based on 
-    `https://stackoverflow.com/a/11781721`__.
+    This avoids security issues with calling :py:func:`eval`. Based on
+    `<https://stackoverflow.com/a/11781721>`__.
 
     Args:
         name (str): name of the class to look up.
@@ -445,7 +491,7 @@ def deserialize_class(name):
     Returns: class with the given name, or raise ValueError.
     """
     try:
-        # for performance, search python builtin types first before going 
+        # for performance, search python builtin types first before going
         # through everything
         return getattr(__builtins__, name)
     except AttributeError:

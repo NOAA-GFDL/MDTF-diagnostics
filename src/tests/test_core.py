@@ -5,7 +5,7 @@ import itertools
 import unittest.mock as mock # define mock os.environ so we don't mess up real env vars
 import src.core as core
 # from src.data_manager import DataManager
-from src.diagnostic import Diagnostic
+import src.diagnostic as diagnostic
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
 
 
@@ -15,8 +15,8 @@ class TestVariableTranslator(unittest.TestCase):
         setUp_config_singletons()
 
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing Translator for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         tearDown_config_singletons()
 
@@ -73,16 +73,45 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertEqual(temp.from_CF_name('A','pr_var'), 'PRECT')
         self.assertEqual(temp.from_CF_name('B','pr_var'), 'PRECT')
 
+    def test_variabletranslator_no_translation(self):
+        dummy_varlist = {  
+            "data": {
+                "frequency": "day"
+            },
+            "dimensions": {
+                "lat": {"standard_name": "latitude"},
+                "lon": {"standard_name": "longitude"},
+                "time": {"standard_name": "time"}
+            },
+            "varlist": {
+                "rlut": {
+                    "standard_name": "toa_outgoing_longwave_flux",
+                    "units": "W m-2",
+                    "dimensions": ["time", "lat", "lon"]
+                }
+            }
+        }
+        varlist = diagnostic.Varlist.from_struct(dummy_varlist, parent=None)
+        ve = varlist.vars[0]
+        translate = core.VariableTranslator().get_convention('None')
+        tve = translate.translate(ve)
+        self.assertEqual(ve.name, tve.name)
+        self.assertEqual(ve.standard_name, tve.standard_name)
+        self.assertEqual(ve.T.frequency, tve.T.frequency)
+        # make sure copy of attrs was successful
+        tve.standard_name = "foo"
+        self.assertNotEqual(tve.standard_name, ve.standard_name)
+
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):
-        # call _reset method deleting clearing Translator for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method deleting clearing Translator for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         tearDown_config_singletons()
 
     def test_variabletranslator_load_files(self):
         # run in non-unit-test mode to test loading of config files
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         raised = False
         try:
@@ -92,10 +121,10 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         self.assertFalse(raised)
         self.assertIn('CMIP', translate.conventions)
         self.assertIn('ua', translate.conventions['CMIP'].entries)
-        
+
     def test_variabletranslator_real_data(self):
         # run in non-unit-test mode to test loading of config files
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         translate = core.VariableTranslator(code_root, unittest=False)
         self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_rate")
@@ -129,7 +158,7 @@ class TestPathManager(unittest.TestCase):
         paths = core.PathManager()
         self.assertRaises(AssertionError, paths.parse, d, list(d.keys()))
         # initialize successfully so that tear_down doesn't break
-        #_ = core.PathManager(unittest = True) 
+        #_ = core.PathManager(unittest = True)
 
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
@@ -138,13 +167,13 @@ class TestPathManagerPodCase(unittest.TestCase):
     def setUp(self):
         # set up translation dictionary without calls to filesystem
         setUp_config_singletons(
-            config=self.case_dict, 
+            config=self.case_dict,
             paths={
                 'CODE_ROOT':'A', 'OBS_DATA_ROOT':'B', 'MODEL_DATA_ROOT':'C',
                 'WORKING_DIR':'D', 'OUTPUT_DIR':'E'
             },
             pods={ 'AA':{
-                'settings':{}, 
+                'settings':{},
                 'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
                 }
             })
@@ -167,7 +196,7 @@ class TestPathManagerPodCase(unittest.TestCase):
     def test_pathmgr_pod(self):
         paths = core.PathManager()
         case = DataManager(self.case_dict)
-        pod = Diagnostic('AA')
+        pod = diagnostic.Diagnostic('AA')
         d = paths.pod_paths(pod, case)
         self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
         self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')

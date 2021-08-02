@@ -29,10 +29,7 @@ def moisture_div(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, ua, va, rearth)
     # various constants
     pi = 4.0 * np.arctan(1.0)
     lh = 2.5e+6
-    cp = 1004.0
     rd = 287.0
-    gg = 9.82
-
 
     plev = plev.reshape((1,1,zmax), order='F')
     rho = plev * 100./(rd * ta)

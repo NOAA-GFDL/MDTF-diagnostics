@@ -23,10 +23,8 @@ OUTPUT: MADV3  3 dimensional vertical MSE advection  [W/kg]
 '''
 
 def moisture_o_energy(imax, jmax, zmax, lon, lat, plev, hgt, ta, hus, omega, rearth):
-    #work on process
-    #print("moisture_o_energy processing...")
+
     # various constants
-    pi = 4.0 * np.arctan(1.0)
     lh = 2.5e+6
     cp = 1004.0
     

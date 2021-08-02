@@ -1,22 +1,11 @@
 ;;;*******************************************************
 ;
-;
-; Concepts illustrated:
-;   - Drawing multiple bar charts on a page
-;   - Drawing three custom legends outside a bar chart
-;   - Using bar charts to draw standard deviations for four timeseries
-;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin 
 
     ff = 2.6E+06
     factor  = 1./ff
-;; print( " in NCL ")
 ;;;   get in the general  custom selectable domain lat/lons
 
       lon1 = getenv("slon1")
@@ -36,7 +25,7 @@ begin
       parameter_name = varcode + "/shared/parameters.txt"
       datamode = "Anomaly"
       data  = asciiread(parameter_name,-1,"string")
-      season = str_get_field(data(12), 3," ")
+      season = str_get_field(data(10), 3," ")
 
 ;;  read  in the data from MSE_VAR
 	
@@ -50,9 +39,7 @@ begin
 	mode =  modes(n) ;;
 	
        namein =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/obs/netCDF/" +  mode +  "/MSE_general_variance.out"
-;;       nameout = getenv("ENSO_MSE_WKDIR_MSE_VAR")+ "/obs/PS/MSE_VAR_comp_general_" + model 
       nameout = getenv("ENSO_MSE_WKDIR")+ "/obs/PS/MSE_VAR_comp_general_" + mode
-;;;  construct the main title based on model, season and region
 
 
        ydim = 8
@@ -69,14 +56,10 @@ begin
         data2(5)    = (datain(6)+datain(7))/datain(0) ;; THF
 
 ;======================================================================================	
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout)
    wks_type@wkOrientation = "portrait" ;;  "landscape"
 
-;;   wks = gsn_open_wks ("X11", "scatter")
    gsn_define_colormap(wks, "grads_default")
 
 ;;; controling paramters
@@ -88,28 +71,20 @@ begin
      ndim2 = ydim -2 -1 ; dimensions to display 
 
      sres = True
-     sres@tmYLMode   =  "Automatic" ;;   "Manual"
-     sres@vpWidthF = 0.8 ;; 0.9 ;;  0.7
+     sres@tmYLMode   =  "Automatic" ;;  
+     sres@vpWidthF = 0.8 ;; 
      sres@vpHeightF = 0.5
-     sres@vpXF = 0.10 ;;  0.15
+     sres@vpXF = 0.10 ;; 
      sres@vpYF = 0.8
 
      sres@trXMinF = 0
      sres@trXMaxF = ydim - 1
-;;     sres@trYMinF = ymin
-;;     sres@trYMaxF = ymax
-;;    sres@tmYLTickSpacingF  = dyy
      sres@gsnDraw = True
      sres@gsnFrame = False
-;;;    manual labels 
-;;      sres@tmYLMode          = "Manual"
-;;      sres@tmYLTickEndF      = sres@trYMaxF
-;;      sres@tmYLTickStartF    = sres@trYMinF
 
      sres@gsnXYBarChart = True
      sres@gsnYRefLine           = 0. ; reference line  
      sres@gsnPaperOrientation = "portrait"
-;;     sres@gsnMaximize      = True      
 
       sres@tmXBValues = ispan( 1, ydim-2, 1 )
 
@@ -119,15 +94,11 @@ begin
      sres@txFuncCode    = "~"
      sres@tmXBLabels = tlabels ;
      sres@tmXBLabelFuncCode  = "~"
-     sres@tmXBLabelFontHeightF = 0.018 ;;  0.0105
-     sres@tmXTLabelFontHeightF = 0.018 ;; 0.015   ;; 0.0205
-     sres@tmYLLabelFontHeightF = 0.015   ;;  0.0225
+     sres@tmXBLabelFontHeightF = 0.018 ;; 
+     sres@tmXTLabelFontHeightF = 0.018 ;
+     sres@tmYLLabelFontHeightF = 0.015 ;; 
      sres@tiMainFontHeightF = 0.025
      sres@tiMainFont = "helvetica"
-;;     sres@tiMainString =  maintitle2
-;;     sres@gsnRightString = ""
-      ;; sres@tiYAxisString = "(mm/day)"
-      ;; sres@tiXAxisString = "pentad"
 
 ;;;    
      sres@gsnXYBarChartColors = (/"blue"/)
@@ -142,7 +113,7 @@ begin
      lbres                    = True          ; labelbar only resources
      lbres@vpWidthF           = 0.25           ; labelbar width
      lbres@vpHeightF          = 0.12           ; labelbar height
-     lbres@lbBoxMajorExtentF  = 0.35 ;;  0.4          ; puts space between color boxes
+     lbres@lbBoxMajorExtentF  = 0.35 ;;        ; puts space between color boxes
      lbres@lbMonoFillPattern  = True          ; Solid fill pattern
      lbres@lbLabelFontHeightF = 0.015         ; font height. default is small
      lbres@lbLabelJust        = "CenterLeft"  ; left justify labels
@@ -158,7 +129,7 @@ begin
       txres1@txJust        = "CenterLeft"
       txres1@txFuncCode    = "~"
       xs1 = 0.08
-      ys1 = 0.85 ;; 0.90
+      ys1 = 0.85 ;; 
       dy2 = 0.0
       dx2 = 0.65
       label2 = "MSE variance    User Selected Domain"
@@ -167,8 +138,6 @@ begin
       label2 = title_modes(n) + "  (" + season + ")"
       xs1 = xs1 + dx2
       gsn_text_ndc (wks, label2, xs1, ys1, txres1)
-
-;;;   to write the summary - model season  etc. 
 
       txres2 = True
       txres2@txFuncCode    = "~"
@@ -189,8 +158,6 @@ begin
       txres2@txFontHeightF = 0.016
        dy2 = -0.03
 
-;;      region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + slat1 + "~F34~0~F~N " + slat2 + "~F34~0~F~N"
-
     if ( (slat1 .lt. 0.) .and. (slat2 .gt. 0.) )  then
     sslat1 = -slat1
    region2 = slon1 + "~F34~0~F~E " + slon2 + "~F34~0~F~E  " + sslat1 + "~F34~0~F~S " + slat2 + "~F34~0~F~N"
@@ -209,13 +176,6 @@ begin
        xs4 = xs1 
        ys4 = ys1 + dy2
        gsn_text_ndc (wks, label4, xs4, ys4, txres2)
-  
-;;; add the text of scaling
-     label2 = "relative units"
-     xs1 = 0.8
-     ys1 = 0.15 ;;  0.05
-;;     gsn_text_ndc (wks, label2, xs1, ys1, txres2)
- 
   
      frame(wks)      
 

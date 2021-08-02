@@ -1,19 +1,10 @@
 ;;;*******************************************************
-;
-;
-;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-; load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
 
-   cmin = (/  -2.8,  -2.4, -22.5, -18,  -12 /) ; min(datain)
-   cmax = (/   2.8,   2.4,  22.5,  18,   12 /) ; max(datain)
+   cmin = (/  -2.8,  -2.4, -22.5, -18,  -12 /) ; 
+   cmax = (/   2.8,   2.4,  22.5,  18,   12 /) ;
    cint = (/   0.4,   0.4,  2.5,    2,    2 /)
    ccenter = 0
   
@@ -50,7 +41,7 @@ begin
       undef2 = 1.1E+20
 
 	 data  = asciiread(parameter_name,-1,"string")
-        season = str_get_field(data(12), 3," ")
+        season = str_get_field(data(10), 3," ")
 ;;;   read the lat/lon and dimensions from external files - in DATA
        dataxyz  = asciiread(name_dimensions,-1,"string")
        xdum  = str_get_field(dataxyz(0), 1," ")
@@ -106,7 +97,7 @@ begin
   res@txFuncCode    = "~"
 
  res@cnFillOn              = True
- res@cnFillMode            = "CellFill"
+ res@cnFillMode            = "AreaFill"
  res@cnLinesOn             = False
  res@cnLevelSelectionMode  = "ManualLevels"
 

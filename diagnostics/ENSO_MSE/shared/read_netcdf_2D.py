@@ -2,9 +2,6 @@ import numpy as np
 import os.path
 import sys
 
-from numpy import dtype
-from sys import byteorder
-
 from scipy.io import netcdf
 
 def read_netcdf_2D(imax, jmax, tmax,  variable,  namein, dataout, undef):
@@ -16,7 +13,6 @@ def read_netcdf_2D(imax, jmax, tmax,  variable,  namein, dataout, undef):
      dataout1 = vvar2.copy()
      dataout = np.transpose( dataout1)
      dataout = np.ma.masked_greater_equal( dataout, undef, copy=False)
-     vvar2 = []
      nc.close()
 
  else:
@@ -24,10 +20,6 @@ def read_netcdf_2D(imax, jmax, tmax,  variable,  namein, dataout, undef):
      print (" needed for the calculations ")
      print (" exiting read_netcdf.py ")
      sys.exit()
-
-# if( byteorder == 'little' ):
-      ## print( "swapping ")
-      ##dataout.byteswap(True)
 
  return dataout.filled(fill_value = undef)
    

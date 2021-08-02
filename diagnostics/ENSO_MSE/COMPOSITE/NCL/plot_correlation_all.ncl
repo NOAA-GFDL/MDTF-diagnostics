@@ -1,13 +1,6 @@
 ;;*******************************************************
-;
-;
 ;*******************************************************
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -43,7 +36,7 @@ begin
       undef2 = 1.1E+20
 
        data  = asciiread(parameter_name,-1,"string")
-       season = str_get_field(data(12), 3," ")
+       season = str_get_field(data(10), 3," ")
 
 
 ;;;   read the lat/lon and dimensions from external files - in DATA
@@ -104,7 +97,7 @@ begin
 
 
  res@cnFillOn              = True
- res@cnFillMode            = "CellFill"
+ res@cnFillMode            = "AreaFill"
  res@cnLinesOn             = False
  res@cnLevelSelectionMode  = "ManualLevels"
 
@@ -161,7 +154,6 @@ begin
 
 	plot = gsn_csm_contour_map(wks, datain1, res)
 
-;;  frame(wks)      
 
   end do  ;  over variables
 end

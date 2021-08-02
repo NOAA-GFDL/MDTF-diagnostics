@@ -1,9 +1,8 @@
-import numpy as np
 import os.path
 
 def write_out( variable, dataout,  prefix):
 ##   construct the output name 
-    nameout =  prefix+variable+".grd"
+    nameout =  os.path.join(prefix, variable + ".grd")
     os.system("rm " + nameout + " 2> /dev/null")
     fh = open(nameout, "wb")
  

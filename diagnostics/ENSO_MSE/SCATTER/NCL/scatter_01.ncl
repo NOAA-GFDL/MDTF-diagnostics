@@ -1,11 +1,5 @@
 ;---------------------------------------------------------------------
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-;
-; This file still has to be loaded manually
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
@@ -46,7 +40,6 @@ begin
    ydim = 6
 
 ;; read in the models:
-;;     namemodel = varcode +  "/SCATTER/list-models-historical-obs"
      namemodel = prefix + "list-models-historical-obs"
      models = readAsciiTable ( namemodel, 1, "string", 0)
      models2 = new ( (/ xdim+1 /), "string" )
@@ -74,15 +67,9 @@ begin
     dataY(0:xdim-1) = datain1(0:xdim-1, 1)
     dataY(xdim) = datain2(0, 1)
 
-;;   printMinMax (dataX, False)
-;;   printMinMax (dataY, False)
-   
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
 ;----------------------------------------------------------------------
-;;  colors  = (/"white","black","dodgerblue2","firebrick","forestgreen",\
-;              "dodgerblue2","darkorange2","forestgreen","deeppink2",\
-;              "darkorange2","purple"/)
 ;;  colors for the markers 
    colors1  = (/ 2,  3,   2,   3,   2,   3,  4,   2,  3,  4,  \ ;;   10
                  8,  2,   2,   3,   2,   2,  3,   4,  2,  3, \ ;;   20
@@ -113,16 +100,10 @@ begin
 
 
 
-;;  wks = gsn_open_wks ("ps","scatter")
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000 
    wks_type = "eps"
-;;     nameout2 = wkdir + "/SCATTER/PS/" + nameout(ibox)
    nameout2 = wkdir +  "/model/PS/" + nameout(ibox)
    wks = gsn_open_wks( wks_type, nameout2)
 
-;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
 
 ;----------------------------------------------------------------------
@@ -173,8 +154,8 @@ begin
    res1@txFont   = "helvetica"
    res1@txFuncCode    = "~"
 
-   res1@tmXBMode         =  "Explicit" ;; "Manual"
-   res1@tmYLMode         =  "Explicit" ;;  "Manual"
+   res1@tmXBMode         =  "Explicit" ;; 
+   res1@tmYLMode         =  "Explicit" ;;  
    res1@tmXBTickSpacingF =  dxx(ibox)
    res1@tmYLTickSpacingF =  dyy(ibox) 
    res1@trXMinF           = xmin(ibox)
@@ -185,16 +166,14 @@ begin
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.18 ;; 0.14
-  res1@vpYF              = 0.8  ;; 0.82
-  res1@vpWidthF          = 0.53 ;; 0.55
-  res1@vpHeightF         = 0.53 ;; 0.55
+  res1@vpXF              = 0.18 ;; 
+  res1@vpYF              = 0.8  ;; 
+  res1@vpWidthF          = 0.53 ;; 
+  res1@vpHeightF         = 0.53 ;; 
 
 ;---Title resources
   res1@txFont   = "helvetica"
   res1@tiMainString       = maintitle
-;;  res1@tiXAxisString      =  xlabel
- ;; res1@tiYAxisString      =  ylabel
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
@@ -265,17 +244,10 @@ begin
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    res1@tiMainFontHeightF  = 0.02
-;---Resources for X/Y axes.
-;  res1@trYMinF            =  aminy               ; min value on y-axis
-;  res1@trYMaxF            =  amaxy               ; max value on y-axis
-;  res1@trXMinF            =  minx                  ; min value on x-axis
-;  res1@trXMaxF            =  maxx                  ; max value on x-axis
  
   res1@tmLabelAutoStride = True
 ;--XY marker resources
   res1@xyMarkLineMode     = "Markers"
-;;  res1@xyMarkerSizeF      = 0.02
-;;  res1@xyMarkerThicknessF = 3.
   res1@xyMonoMarkerColor  = False          ; Allow different colors for markers
   res1@xyMarkerSizes            = markersizes(:)
   res1@xyMarkerThicknesses      = markerthick(:)
@@ -295,7 +267,6 @@ begin
     
    res1@xyMarkLineMode      = "Lines"
    res1@xyLineColors        = "red"  ; choose which have markers
-;;   res1@xyMarkerSizeF       = 0.005  ; Marker size (default 0.01)
    res1@xyDashPatterns      = 0                ; solid line 
    res1@xyLineThicknesses   = 4                 ; 
 
@@ -356,8 +327,8 @@ begin
 
      label1 = (/"Regression=", " ", regression/)
      new_label1 = str_concat(label1)
-     xs1 = 0.595 ;;; 0.75
-     ys1 = 0.31 ;;;  0.18
+     xs1 = 0.595 ;;; 
+     ys1 = 0.31 ;;;  
      dy2 = -0.022
      gsn_text_ndc (wks, new_label1, xs1, ys1, txres2)
 

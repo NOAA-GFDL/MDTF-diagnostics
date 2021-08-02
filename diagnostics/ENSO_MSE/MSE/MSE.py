@@ -18,6 +18,15 @@
 import numpy as np
 import sys
 
+import datetime
+
+import os
+shared_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'shared'
+)
+sys.path.insert(0, shared_dir)
+
 
 from get_data_in import get_data_in
 from get_clima_in import get_clima_in
@@ -32,14 +41,6 @@ from moist_routine_tadv import temperature_adv
 from moist_routine_omse import moisture_o_energy
 from get_parameters_in import get_parameters_in
 
-import datetime
- 
-import os
-shared_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'shared'
-)
-sys.path.insert(0, shared_dir)
 from get_dimensions import get_dimensions
 from get_lon_lat_plevels_in import  get_lon_lat_plevels_in
 from generate_ncl_call import generate_ncl_call
@@ -200,38 +201,11 @@ plevs  = np.zeros(zmax,dtype='float32')
 
 lon, lat, plevs = get_lon_lat_plevels_in( imax, jmax, zmax, lon, lat, plevs, prefix01)
 
-# 3d variables
-uu = np.zeros((imax,jmax,zmax),dtype='float32')
-vv = np.zeros((imax,jmax,zmax),dtype='float32')
-temp = np.zeros((imax,jmax,zmax),dtype='float32')
-hgt = np.zeros((imax,jmax,zmax),dtype='float32')
-shum = np.zeros((imax,jmax,zmax),dtype='float32')
-vvel = np.zeros((imax,jmax,zmax),dtype='float32')
-
-omse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-omse2 = np.zeros((imax,jmax),dtype='float32')
-
-mse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mse2 = np.zeros((imax,jmax),dtype='float32')
-
 mse3_adv = np.zeros((imax,jmax,zmax),dtype='float32')
 mse2_adv = np.zeros((imax,jmax),dtype='float32')
 
 mse3_div = np.zeros((imax,jmax,zmax),dtype='float32')
 mse2_div = np.zeros((imax,jmax),dtype='float32')
-
-madv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-madv2 = np.zeros((imax,jmax),dtype='float32')
-
-mdiv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mdiv2 = np.zeros((imax,jmax),dtype='float32')
-
-tadv3 = np.zeros((imax,jmax,zmax),dtype='float32')
-tadv2 = np.zeros((imax,jmax),dtype='float32')
-
-mse3 = np.zeros((imax,jmax,zmax),dtype='float32')
-mse2 = np.zeros((imax,jmax),dtype='float32')
-
 
 ##  climatology  array declaration 
 uu = np.zeros((imax,jmax,zmax),dtype='float32')

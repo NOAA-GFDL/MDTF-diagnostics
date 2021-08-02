@@ -3,9 +3,6 @@
 ;   to regrid the original NetCDF files to pre-defined 
 ;            data +  climatologies  as netCDF
 ;*******************************************************
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
@@ -18,14 +15,14 @@ begin
       case =  "ERA-INTERIM"  ;;;
       codedata = getenv ("POD_HOME")  ;; not used
 
-       Varname1 = getenv("rsus_var") ;;  "rsus"
-       Varname2 = getenv("rsds_var") ;;  "rsds"
-       Varname3 = getenv("rsdt_var") ;;  "rsdt"
-       Varname4 = getenv("rsut_var") ;;  "rsut"
+       Varname1 = "rsus" ;; 
+       Varname2 = "rsds" ;; 
+       Varname3 = "rsdt" ;;
+       Varname4 = "rsut" ;; 
 
-       Varname5 = getenv("rlus_var") ;;  "rlus"
-       Varname6 = getenv("rlds_var") ;;  "rlds"
-       Varname7 = getenv("rlut_var") ;;  "rlut"
+       Varname5 = "rlus" ;; 
+       Varname6 = "rlds" ;; 
+       Varname7 = "rlut" ;; 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -34,7 +31,6 @@ begin
         iy12 = asciiread(nameyear,(/2/),"integer")
         iy1 = iy12(0)
         iy2 = iy12(1)
-;;	print( iy1 +  " " + iy2)
         undef2 = 1.1E+20
 
        namein0 = obsdata +  "/DATA/mon/" +  case + "."
@@ -198,7 +194,7 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here    
        filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -227,7 +223,7 @@ begin
        setfileoption(fout,"DefineMode",True)
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here    
        filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -246,8 +242,7 @@ begin
        fout->lon    = (/lon2/)
        fout->$Varout2$  = (/LWout/)
        delete( fout)
-;;;;;
-;;;       print( "finished " +  yearchar )
+
       delete( SWout)
       delete( LWout)
 

@@ -43,7 +43,6 @@ def moisture_energy(imax, jmax, zmax, plev, hgt, ta, hus):
 
     dz = 0.5 * (hgt[:, :, k2] - hgt[:, :, k1])
 
-
     mse1 = np.sum(rho * mse3 * dz, axis=2)
  
 ##    print("moisture_energy processing end")

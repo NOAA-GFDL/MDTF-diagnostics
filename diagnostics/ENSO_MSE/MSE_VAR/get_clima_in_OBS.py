@@ -1,4 +1,3 @@
-import numpy as np
 import os.path
 import sys
 
@@ -10,8 +9,6 @@ shared_dir = os.path.join(
 sys.path.insert(0, shared_dir)
 
 from read_netcdf_2D import read_netcdf_2D
-
-from numpy import dtype
 
 def get_clima_in_OBS(imax, jmax,  mse, omse, madv, tadv, prefix, undef):
 

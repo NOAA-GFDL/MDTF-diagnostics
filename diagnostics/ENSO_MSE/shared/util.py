@@ -18,7 +18,6 @@ def setenv (varname,varvalue,env_dict,verbose=0):
 def check_required_dirs(verbose=3, already_exist =[], create_if_nec = []):
     # arguments can be envvar name or just the paths
 
-#   print("var_code/ENSO_MSE/COMPOSITE/util.py check_required_dirs")
     import os
     filestr = __file__+":check_required_dirs: "
     errstr = "ERROR "+filestr

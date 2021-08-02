@@ -2,18 +2,12 @@
 ;
 ;
 ;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
 ;; select the  cmin, cmax, cint
-   cmin = -1.0 ;; -1.2 ; min(datain)
-   cmax =  1.0 ;;  1.2 ; max(datain)
+   cmin = -1.0 ;; 
+   cmax =  1.0 ;; 
    cint = 0.1
    ccenter = 0
    clevs = 20
@@ -28,7 +22,7 @@ begin
       outdir2   = getenv("ENSO_MSE_WKDIR")+"/obs/"
       outdir   = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/"  ; set in ENSO_MSE.py
       varcode  = getenv("POD_HOME")
-      model =  " "   ;;;;   leave blank for observations  getenv( "CASENAME")
+      model =  " "   ;;;;   leave blank for observations  
 
       parameter_name = varcode + "/shared/parameters.txt"
 
@@ -43,7 +37,7 @@ begin
       undef2 = 1.1E+20
 
        data  = asciiread(parameter_name,-1,"string")
-       season = str_get_field(data(12), 3," ")
+       season = str_get_field(data(10), 3," ")
 
        xlon1 = 0
        xlon2 = 360
@@ -83,7 +77,6 @@ begin
    gsn_define_colormap(wks,  colormap)
 
  res = True
-;;   res@gsnMaximize  = True                        ; maximize plot in frame
 
   res@mpMinLonF              =  xlon1 
   res@mpMaxLonF              =  xlon2
@@ -91,7 +84,7 @@ begin
 
 
  res@cnFillOn              = True
- res@cnFillMode            = "CellFill"
+ res@cnFillMode            = "AreaFill"
  res@cnLinesOn             = False
  res@cnLevelSelectionMode  = "ManualLevels"
 
@@ -145,8 +138,6 @@ begin
 ;;;;;    
 
 	plot = gsn_csm_contour_map(wks, datain1, res)
-
-;;  frame(wks)      
 
   end do  ;  over variables
 end

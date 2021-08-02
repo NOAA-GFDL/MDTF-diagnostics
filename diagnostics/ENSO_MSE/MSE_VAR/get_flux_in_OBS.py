@@ -1,4 +1,3 @@
-import numpy as np
 import os.path
 import sys
 
@@ -11,7 +10,6 @@ sys.path.insert(0, shared_dir)
 
 from read_netcdf_2D import read_netcdf_2D
 
-from numpy import dtype
 
 def get_flux_in_OBS(imax, jmax,  pr, ts, lhf, shf, sw, lw, prefix, undef):
     filename = prefix+"/pr.nc"

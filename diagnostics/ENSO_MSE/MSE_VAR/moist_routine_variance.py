@@ -1,10 +1,5 @@
 import numpy as np
 
-import sys
-##import subprocess
-##import commands
-
-
 '''
   routine to calculate the variances and CO-variances 
     of vertically integrated MSE variables

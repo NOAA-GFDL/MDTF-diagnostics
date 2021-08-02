@@ -6,8 +6,9 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
 begin
 
-     outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" ; envvar set in ENSO_MSE.py,
-                                ;processed output from other scripts in this package
+     outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" 
+;  envvar set in ENSO_MSE.py,
+;  processed output from other scripts in this package
      varcode = getenv ("POD_HOME")
 
 
@@ -129,7 +130,6 @@ begin
 
        fAtt               = True            ; assign file attributes
 	fAtt@title         = "24 month evolution of " + mode(n) + "  year 0 developing and year 1 decaying phase" 
-;;; 	fAtt@Conventions   = "None"   
 	fAtt@creation_date = systemfunc ("date")        
 	fileattdef( fout, fAtt ) 
 ;;;;;;;;;;;;;;;;; define all attributes here 
@@ -179,7 +179,6 @@ begin
 
        fAtt               = True            ; assign file attributes
        fAtt@title         = "24 month evolution of " + mode(n) + "  year 0 developing and year 1 decaying phase"
-;;;    fAtt@Conventions   = "None"
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )
 ;;;;;;;;;;;;;;;;; define all attributes here

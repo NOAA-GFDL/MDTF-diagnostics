@@ -1,8 +1,5 @@
 ;;;*******************************************************
 ;*******************************************************
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/contrib/calendar_decode2.ncl"
 
@@ -18,14 +15,14 @@ begin
       iy1 =  toint (( getenv("FIRSTYR")) )
       iy2 = toint (( getenv("LASTYR")) )
 
-       Varname1 = getenv("rsus_var") ;;  "rsus"
-       Varname2 = getenv("rsds_var") ;;  "rsds"
-       Varname3 = getenv("rsdt_var") ;;  "rsdt"
-       Varname4 = getenv("rsut_var") ;;  "rsut"
+       Varname1 = "rsus" ;;  getenv("rsus_var") ;;  "rsus"
+       Varname2 = "rsds" ;;  getenv("rsds_var") ;;  "rsds"
+       Varname3 = "rsdt" ;;  getenv("rsdt_var") ;;  "rsdt"
+       Varname4 = "rsut" ;;  getenv("rsut_var") ;;  "rsut"
 
-       Varname5 = getenv("rlus_var") ;;  "rlus"
-       Varname6 = getenv("rlds_var") ;;  "rlds"
-       Varname7 = getenv("rlut_var") ;;  "rlut"
+       Varname5 = "rlus" ;;  getenv("rlus_var") ;;  "rlus"
+       Varname6 = "rlds" ;;  getenv("rlds_var") ;;  "rlds"
+       Varname7 = "rlut" ;;  getenv("rlut_var") ;;  "rlut"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         undef2 = 1.1E+20
@@ -110,7 +107,6 @@ begin
        timeout = new( 12, typeof(time0) )
        copy_VarAtts (time0, timeout)
        timeout@calendar = "standard"
-;;	printVarSummary( timeout)
 
        do it = 0, ntim - 1
 
@@ -193,7 +189,7 @@ begin
        fAtt@creation_date = systemfunc ("date")
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here   
        filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -222,7 +218,7 @@ begin
        setfileoption(fout,"DefineMode",True)
        fileattdef( fout, fAtt )            ; copy file attributes
 
-;;;;;;;;;;;;;;;;; define all attributes here     filevardef( ncf, "gw", "float", "lat" )
+;;;;;;;;;;;;;;;;; define all attributes here  
        filedimdef(fout, dimNames2, dimSizes22, dimUnlim2)
 
        filevardef(fout, "time" , typeof(timeout), (/"time"/) )
@@ -242,7 +238,6 @@ begin
        fout->$Varout2$  = (/LWout/)
        delete( fout)
 ;;;;;
-;;;       print( "finished " +  yearchar )
       delete( SWout)
       delete( LWout)
 

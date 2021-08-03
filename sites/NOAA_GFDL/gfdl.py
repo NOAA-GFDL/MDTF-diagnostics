@@ -247,8 +247,9 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
-    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
     _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
 
 
 @util.mdtf_dataclass
@@ -267,8 +268,9 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
-    _fetch_method = "gcp"
     _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "gcp"
 
 
 @util.mdtf_dataclass
@@ -286,6 +288,9 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "gcp"
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -457,8 +462,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
 
-    @staticmethod
-    def _filter_column(df, col_name, func, obj_name):
+    def _filter_column(self, df, col_name, func, obj_name):
         values = list(df[col_name].drop_duplicates())
         if len(values) <= 1:
             # unique value, no need to filter

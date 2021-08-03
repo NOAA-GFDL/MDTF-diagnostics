@@ -123,6 +123,15 @@ Python: Plotting
 NCL
 ---
 
+- **Large file support**: By default, NCL cannot read netCDF files larger than 2gb. To drop this limitation, call `setfileoption <https://www.ncl.ucar.edu/Document/Functions/Built-in/setfileoption.shtml>`__ with the following arguments in every script before any file operations:
+
+  .. code-block:: 
+
+    setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
+  ``"netCDF4"`` can also be used as the requested format in the above call.
+
+
 - **Deprecated calendar functions**: Check the `function reference <https://www.ncl.ucar.edu/Document/Functions/index.shtml>`__ to verify that the functions you use are not deprecated in the current version of `NCL <https://www.ncl.ucar.edu/>`__. This is especially necessary for `date/calendar functions <https://www.ncl.ucar.edu/Document/Functions/date.shtml>`__.
 
   *Why*: The framework uses a current version of `NCL <https://www.ncl.ucar.edu/>`__ (6.6.x), to avoid plotting bugs that were present in earlier versions. This is especially relevant for calendar functions: the ``ut_*`` set of functions have been deprecated in favor of counterparts beginning with ``cd_`` that take identical arguments (so code can be updated using find/replace). For example, use `cd_calendar <https://www.ncl.ucar.edu/Document/Functions/Built-in/cd_calendar.shtml>`__ instead of the deprecated `ut_calendar <https://www.ncl.ucar.edu/Document/Functions/Built-in/ut_calendar.shtml>`__.

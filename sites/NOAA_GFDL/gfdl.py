@@ -234,9 +234,9 @@ class GFDL_GCP_FileDataSourceBase(
 
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, model=None, experiment=None, log=_log):
         self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
-        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment, log)
 
 class Gfdludacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -253,9 +253,9 @@ class Gfdludacmip6DataManager(
 
 @util.mdtf_dataclass
 class GFDL_archive_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, model=None, experiment=None, log=_log):
         self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
-        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment, log)
 
 class Gfdlarchivecmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -273,9 +273,9 @@ class Gfdlarchivecmip6DataManager(
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, model=None, experiment=None, log=_log):
         self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
-        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment, log)
 
 class Gfdldatacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,

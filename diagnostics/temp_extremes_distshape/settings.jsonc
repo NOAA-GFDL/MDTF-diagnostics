@@ -40,45 +40,43 @@
     },
     // Programs and third-party libraries diagnostic needs to run.
     "runtime_requirements": {
-        "python": ["numpy","scipy","matplotlib","netcdf4","cftime","cartopy"]
+      "python3": ["numpy","scipy","matplotlib","netcdf4","cftime","cartopy"]
     }
-   },
-   "data" : {
-     "rename_dimensions": false,
-     "rename_variables": false,
-     "multi_file_ok": false,
-     "frequency": "day"
-   },
+  },
+  "data" : {
+    "rename_dimensions": false,
+    "rename_variables": false,
+    "multi_file_ok": false,
+    "frequency": "day"
+  },
   "dimensions": {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
-    "plev": {
+    "time": {"standard_name": "time"},
+    "plev": {  // only used to specify level of zg
       "standard_name": "air_pressure",
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
-    },
-    "time": {"standard_name": "time"}
+    }
   },
-  // Model data diagnostic uses.
-  "varlist" : {
-    // Variable identifier. An environment variable with this name will be set
-    // to what the corresponding field is called in the model being analyzed.
+  // Model data the diagnostic uses.
+  "varlist": {
     "tas_var": {
-      "standard_name" : "air_temperature",
+      "standard_name": "air_temperature",
       "units": "K",
-      "dimensions" : ["time", "lat", "lon"]
+      "dimensions": ["time", "lat", "lon"]
     },
     "zg_var": {
       "standard_name": "geopotential_height",
       "units": "m",
-      "dimensions" : ["time", "lat", "lon"],
+      "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500}
     },
     "psl_var": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
-      "dimensions" : ["time", "lat", "lon"]
+      "dimensions": ["time", "lat", "lon"]
     }
   }
 }

@@ -376,6 +376,8 @@ class SubprocessRuntimePODWrapper(object):
     def tear_down(self, retcode=None):
         # just to be safe
         if self.process is not None:
+            if hasattr(self.process, 'retcode'):
+                retcode = self.process.returncode
             try:
                 self.process.kill()
             except ProcessLookupError:
@@ -498,7 +500,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.pods:
             if p.process is not None:
                 p.process.wait()
-            p.tear_down(retcode=p.process.returncode)
+            p.tear_down()
         self.case.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
 

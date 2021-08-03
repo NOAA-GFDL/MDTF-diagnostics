@@ -179,7 +179,7 @@ Example
 
   - ``"any_netcdf_classic"`` includes all the above *except* ``"netcdf4"`` (classic data model only).
 
-  See the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html>`__ (under "Formats, Data Models, and Software Releases") for information on the distinctions. Any recent version of a supported language for diagnostics with netCDF support will be able to read all of these. However, the extended features of the ``"netcdf4"`` data model are not commonly used in practice and currently only supported at a beta level in NCL, which is why we've chosen ``"any_netcdf_classic"`` as the default.
+  See the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__ for information on the distinctions. Any recent version of a supported language for diagnostics with netCDF support will be able to read all of these. However, the extended features of the ``"netcdf4"`` data model are not commonly used in practice and currently only supported at a beta level in NCL, which is why we've chosen ``"any_netcdf_classic"`` as the default.
 
 
 ``rename_dimensions``:

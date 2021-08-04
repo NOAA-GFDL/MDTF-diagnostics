@@ -82,7 +82,7 @@ if ('time' in ds.coords.keys()):
   lm = ds.lsm.isel(time=0).values
 else: 
   lm = ds.lsm.values
-lm = (lm > defines.thresh_landsea)
+lm = (lm > defines.thresh_landsea_lsm)
 ds.close()
 
 # defining the dimensions of the composite values 

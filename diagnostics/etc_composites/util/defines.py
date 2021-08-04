@@ -93,7 +93,8 @@ else:
   # JJJ - b/c of interpolation and non-zero height of some SST region,
   # need to use a value larger than 0 otherwise parts of the ocean become land.
   # thresh_landsea = 50.0/100.0
-  thresh_landsea = 0.0/100.0 # was 50 for all testing, changed this to match the v2 version of the code
+  thresh_landsea_hgt = 50 # in meters # was 50 for all testing, changed this to match the v2 version of the code
+  thresh_landsea_lsm = 50.0/100.0 # in fractional amount of land #was 50 for all testing, changed this to match the v2 version of the code
 
   # Print a lot to screen to debug
   verbose = 0

@@ -219,7 +219,10 @@ def create_empty_figs():
 # os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
 # '/localdrive/drive6/erai/converts/invariants.nc'
 
-print('Start of ETC-Composites...')
+run_time = timelib.gmtime(timelib.time() - start_time)
+mid_time = timelib.time()
+print(f'Completed code initialization in {timelib.strftime("%H:%M:%S", run_time)}')
+
 os.environ['MODEL_OUTPUT_DIR']  = os.environ['DATADIR'] + '/6hr'
 
 ### Copying over the MDTF_DOC file
@@ -277,8 +280,6 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
     os.environ['clt_var_scale'] = '100.'
     os.environ['clt_file'] = '*.'+os.environ['clt_var']+'.6hr.nc'
     clt_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['clt_var'] + '.6hr.nc'
-
-print('Splitting into yearly files for the tracker ...')
 
 # Setting up the slp_file to be used
 slp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['slp_var'] + '.6hr.nc'
@@ -564,30 +565,44 @@ for year in range(sYear, eYear+1):
         # writing to the netcdf file
         out_var_ds.to_netcdf(out_clt_file)
 
-print('Splitting into yearly files for the tracker ... Completed.')
+run_time = timelib.gmtime(timelib.time() - mid_time)
+mid_time = timelib.time()
+print(f'Completed creation of yearly files for the tracker in {timelib.strftime("%H:%M:%S", run_time)}')
 
 if (os.environ['USE_EXTERNAL_TRACKS'] == 'True'): 
+  print('Using external tracks...')
   run_tracker_setup.init_setup()
   run_tracker_setup.copy_code_over()
 else:
-  print('Running the MCMS Tracker...')
+  print('Running the MCMS Tracker [not using external tracks]...')
   # Running the tracker 
   cmd = "python %s/util/run_tracker.py"%(os.environ['POD_HOME'])
   os.system(cmd)
-  print('Completed the MCMS Tracker')
+
+run_time = timelib.gmtime(timelib.time() - mid_time)
+mid_time = timelib.time()
+print(f'Completed the tracker portion of the code in {timelib.strftime("%H:%M:%S", run_time)}')
 
 # I have to create the matlab dictionaries from the track output file
 print('Creating matlab dict...')
 cmd = "python %s/util/run_create_dict.py"%(os.environ['POD_HOME'])
 os.system(cmd)
-print('Completed creating the mat file used for the analysis.')
+run_time = timelib.gmtime(timelib.time() - mid_time)
+mid_time = timelib.time()
+print(f'Completed creation of the mat file used for the analysis in {timelib.strftime("%H:%M:%S", run_time)}')
 
 # Running the track stats 
 cmd = "python %s/util/run_track_stats.py"%(os.environ['POD_HOME'])
 os.system(cmd)
+run_time = timelib.gmtime(timelib.time() - mid_time)
+mid_time = timelib.time()
+print(f'Completed the track stats in {timelib.strftime("%H:%M:%S", run_time)}')
 
-print('Composites -- Creating empty figures for the html page...')
 create_empty_figs()
+run_time = timelib.gmtime(timelib.time() - mid_time)
+mid_time = timelib.time()
+print(f'Created the empty composites figures in {timelib.strftime("%H:%M:%S", run_time)}')
+
 if (os.environ['RUN_COMPOSITES'] == 'True'): 
   # Running the composites code
   # create the necesssary variable files and composites 
@@ -1175,10 +1190,12 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
   plt.close('all')
 
   # End run composites true/false
+  run_time = timelib.gmtime(timelib.time() - mid_time)
+  mid_time = timelib.time()
+  print(f'Completed the compositing portion of the code and created the plots in {timelib.strftime("%H:%M:%S", run_time)}')
 
 end_time = timelib.time()
-
 run_time = timelib.gmtime(end_time - start_time)
 
 # Completed Code
-print(f'Done Completing ETC-composites driver code in {timelib.strftime("%H:%M:%S", run_time)}')
+print(f'Done Completing ETC-composites driver code in {timelib.strftime("%H:%M:%S", run_time)} from {start_time} to {end_time}')

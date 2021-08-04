@@ -93,7 +93,8 @@ else:
   # JJJ - b/c of interpolation and non-zero height of some SST region,
   # need to use a value larger than 0 otherwise parts of the ocean become land.
   # thresh_landsea = 50.0/100.0
-  thresh_landsea = 0.0/100.0 # was 50 for all testing, changed this to match the v2 version of the code
+  thresh_landsea_hgt = 50 # in meters # was 50 for all testing, changed this to match the v2 version of the code
+  thresh_landsea_lsm = 50.0/100.0 # in fractional amount of land #was 50 for all testing, changed this to match the v2 version of the code
 
   # Print a lot to screen to debug
   verbose = 0
@@ -107,6 +108,10 @@ else:
   # the .mat files are required to compute statistics and create plots
   # create_matlab_dictionaries = True
   # removed aboved flag because we have to always create the matlab dictionaries
+
+  # check if we have to run the MCMS tracker or not
+  if (os.environ['USE_EXTERNAL_TRACKS'] == 'True'):
+    track_file = os.environ['EXTERNAL_TRACKS_FILE']
 
   #########################################################################################
   ####################### FRONT DETECTION MODULE SETTINGS #################################
@@ -164,12 +169,34 @@ else:
   # composite_var_list = ['pr']
   # composite_var_list = ['prw']
   # composite_var_list = ['wap500', 'clt', 'prw', 'slp', 'cls850']
-  # composite_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
   folder_6hr =  os.environ['DATADIR'] + '/6hr/'
   files = os.listdir(folder_6hr)
 
-  # getting the composites var list from the created variable list
+  # getting the composites var list from the created variable in the "DATADIR"/6hr folder
   composite_var_list = [file.replace(os.environ['CASENAME']+'.', '').replace('.6hr.nc', '') for file in files if not '.psl.6hr.nc' in file]
+  if ('u10' in composite_var_list) & ('v10' in composite_var_list):
+    # if both exists then add uv10 to the list
+    composite_var_list.append('uv10')
+  # always remove the u10 and v10 from the list
+  if ('u10' in composite_var_list):
+    composite_var_list.remove('u10')
+  if ('v10' in composite_var_list):
+    composite_var_list.remove('v10')
+
+  #renaming the wap500 to w500 used by the code
+  if ('wap500' in composite_var_list):
+    composite_var_list.remove('wap500')
+    composite_var_list.append('w500')
+
+  #renaming the pr to tp used by the code
+  if ('pr' in composite_var_list):
+    composite_var_list.remove('pr')
+    composite_var_list.append('tp')
+
+  print(f'Variables to run composites: {composite_var_list}')
+
+  composite_available_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
+
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']
 

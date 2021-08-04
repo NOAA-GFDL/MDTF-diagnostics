@@ -1383,7 +1383,7 @@ if __name__=='__main__':
                 topo.shape = im*jm
                 # Use topo file to make land-sea mask
                 #land_gridids = [x for x in range(maxid) if topo[x] > 0.0]
-                land_gridids = [x for x in range(maxid) if topo[x] > defines.thresh_landsea]
+                land_gridids = [x for x in range(maxid) if topo[x] > defines.thresh_landsea_hgt]
             else:
                 # Mask created below
                 pass
@@ -1407,7 +1407,7 @@ if __name__=='__main__':
             tfile.close()
             mask.shape = im*jm
             # Make land-sea mask
-            land_gridids = [x for x in range(maxid) if mask[x] > defines.thresh_landsea]
+            land_gridids = [x for x in range(maxid) if mask[x] > defines.thresh_landsea_lsm]
             land_gridids.sort()
 
     # Purpose: Locate grids that fail the topography screen.
@@ -1452,7 +1452,7 @@ if __name__=='__main__':
             # Use topo file to make land-sea mask
             land_gridids = [x for x in range(maxid) if topo[x] > 0.0]
             #JJJ - using non-zero for land-sea mask so that
-            land_gridids = [x for x in range(maxid) if topo[x] > defines.thresh_landsea]
+            land_gridids = [x for x in range(maxid) if topo[x] > defines.thresh_landsea_hgt]
 
         # Troubled Grids: SLP away from sea level is a derived quantity.
         #   Certain conditions seem to allow for erroneous SLP values.

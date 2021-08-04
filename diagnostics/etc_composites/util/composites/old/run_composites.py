@@ -51,7 +51,7 @@ year_list = range(defines.over_write_years[0], defines.over_write_years[1]+1)
 # land mask 
 ds = xr.open_dataset(defines.topo_file)
 lm = ds.lsm.isel(time=0).values
-lm = (lm > defines.thresh_landsea)
+lm = (lm > defines.thresh_landsea_lsm)
 ds.close()
 
 # defining the dimensions of the composite values 

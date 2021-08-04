@@ -27,7 +27,9 @@
     }, 
     "altitude": {
       "standard_name": "altitude", 
-      "units": "m"
+      "units": "m",
+      "positive": "up",
+      "axis": "Z"
     }
   },
   "data": {
@@ -49,30 +51,30 @@
    "psl": {
       "standard_name" : "air_pressure_at_mean_sea_level",
       "units": "Pa",
-      "dimensions": ["time", "lat", "lon"], 
+      "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     },
     "clt": {
       "standard_name" : "cloud_area_fraction",
       "units": "1",
-      "dimensions": ["time", "lat", "lon"], 
+      "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     },
     "pr": {
       "standard_name" : "precipitation_flux",
       "units": "kg m-2 s-1",
-      "dimensions": ["time", "lat", "lon"], 
+      "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     },
     "wap500": {
-      "standard_name" : "custom_wap500",
+      "standard_name" : "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
-      "dimensions": ["time", "lat", "lon"], 
-      "use_exact_name": true
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 500} 
     },
     "prw": {
       "standard_name" : "atmosphere_mass_content_of_water_vapor",
-      "units": "kg m-2", 
+      "units": "kg m-2",
       "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     },

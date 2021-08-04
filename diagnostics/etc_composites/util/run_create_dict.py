@@ -109,7 +109,7 @@ if ('time' in ds.coords.keys()):
   lm = ds.lsm.isel(time=0).values
 else: 
   lm = ds.lsm.values
-lm = (lm > defines.thresh_landsea)
+lm = (lm > defines.thresh_landsea_lsm)
 
 # loop through all the years and create the datacycs
 for i_year in range(start_year, end_year+1):

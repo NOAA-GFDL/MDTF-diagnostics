@@ -1,17 +1,17 @@
 # This file is part of the temp_extremes_distshape module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 # ======================================================================
 # TempExtDistShape_Moments_util.py
-# 
+#
 #   Provide functions called by TempExtDistShape_Moments.py as part of temp_extremes_distshape.py
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 # Including:
 #   (1) Region_Mask
 #   (2) Seasonal_Moments
 #   (3) Moments_Plot
-#  
+#
 # ======================================================================
 
 # Import standard Python packages
@@ -62,7 +62,7 @@ def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
     lat=numpy.asarray(t2m_netcdf.variables[lat_var][:],dtype="float")
     t2m_netcdf.close()
 
-    ### Fix longitudes so values range from -180 to 180 
+    ### Fix longitudes so values range from -180 to 180
     if lon[lon>180].size>0:
         lon[lon>180]=lon[lon>180]-360
     LAT,LON=numpy.meshgrid(lat,lon,sparse=False,indexing="xy")
@@ -89,8 +89,8 @@ def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
 def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,monthsub,yearbeg,yearend,mask_region):
     print("   Computing seasonal temperature moments...")
     var_netcdf=Dataset(model_netcdf_filename,"r")
-    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float") 
-    lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float") 
+    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float")
+    lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float")
     var_data=numpy.asarray(var_netcdf.variables[field_var][:],dtype="float") #time, lat, lon
     datatime=numpy.asarray(var_netcdf.variables[time_var][:],dtype="float")
     timeunits=var_netcdf.variables[time_var].units
@@ -98,7 +98,7 @@ def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mo
     caltype=var_netcdf.variables[time_var].calendar
     var_netcdf.close()
 
-    ### Fix longitudes so values range from -180 to 180 
+    ### Fix longitudes so values range from -180 to 180
     if lon[lon>180].size>0:
         lon[lon>180]=lon[lon>180]-360
 
@@ -160,7 +160,7 @@ def Seasonal_Moments(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mo
 # -----  monthstr is string referring to months of seasonal analysis
 # -----  cmaps is Matlab file specifying colormap for plotting
 # -----  titles and data are arrays of moments being plotted, computed from Seasonal_Moments function above
-# -----  tickrange and var_units are plotting parameters specified in usp.py file 
+# -----  tickrange and var_units are plotting parameters specified in usp.py file
 # -----  fig_dir and fig_name are location to save figure output
 def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,tickrange,var_units,fig_dir,fig_name):
     print("   Plotting seasonal temperature moments...")
@@ -196,7 +196,7 @@ def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,ti
             cbar=fig.colorbar(p1,cax=cax,label=var_units,orientation='vertical',ticks=tickrange[idata])
         else:
             cbar=fig.colorbar(p1,cax=cax,orientation='vertical',ticks=tickrange[idata])
-        cbar.ax.set_xticklabels(tickrange[idata])
+        cbar.set_ticklabels(tickrange[idata])
         cbar.ax.tick_params(labelsize=14)
         ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
     fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
@@ -228,7 +228,7 @@ def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
     #cyclic           width of periodic domain (default 360)
     #==============   ====================================================
     #returns ``dataout,lonsout`` (data and longitudes on shifted grid).
-    
+
     if numpy.fabs(lonsin[-1]-lonsin[0]-cyclic) > 1.e-4:
         # Use all data instead of raise ValueError, 'cyclic point not included'
         start_idx = 0

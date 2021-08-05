@@ -1,10 +1,10 @@
 # This file is part of the temp_extremes_distshape module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 # ======================================================================
 # TempExtDistShape_CircComps_util.py
-# 
+#
 #    Provide functions called by TempExtDistShape_CircComps.py as part of temp_extremes_distshape.py
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape  Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape  Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 # Including:
@@ -16,7 +16,7 @@
 #   (6) Set_Colorbars
 #   (7) shiftgrid
 #   (8) Lag_Correct
-#  
+#
 # ======================================================================
 
 # Import standard Python packages
@@ -47,7 +47,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,monthsub,yearbeg,yearend):
     var_netcdf=Dataset(model_netcdf_filename,"r")
     lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float")
-    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float") 
+    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float")
     var_data=numpy.asarray(var_netcdf.variables[field_var][:],dtype="float") #time, lat, lon
     datatime=numpy.asarray(var_netcdf.variables[time_var][:],dtype="float")
     timeunits=var_netcdf.variables[time_var].units
@@ -55,7 +55,7 @@ def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mon
     caltype=var_netcdf.variables[time_var].calendar
     var_netcdf.close()
 
-    ### Fix longitudes so values range from -180 to 180 
+    ### Fix longitudes so values range from -180 to 180
     if lon[lon>180].size>0:
         lon[lon>180]=lon[lon>180]-360
 
@@ -127,7 +127,7 @@ def Labfunc(x):
     labfmt="%.4f" % x
     stript=labfmt.rstrip('0').rstrip('.')
     labfmt_fin=('%s' % (stript))
-    return labfmt_fin 
+    return labfmt_fin
 
 # ======================================================================
 ### Circ_Comp_Lag
@@ -190,7 +190,7 @@ def Circ_Comp_Lags(T2Manom_data,T2M_data,T2M_units,SLP_data,SLP_units,Z500_data,
 # -----  minval, maxval, and step are for plotting levels
 # -----  lag is the number of days prior to t=0
 # -----  anomminval, anommaxval, and anomrangestep are contour levels of anomalies
-# -----  statlonind and statlatind are indices for coordinates of location 
+# -----  statlonind and statlatind are indices for coordinates of location
 # -----  axes is provided as figure handle, defined prior to loop that calls function
 # ---------  Output is plotted variable handle for input to Set_Colorbars function below
 def Plot_Circ_Comp_Lags(model_netcdf_filename,lon_var,figstep,plotcol,lon,lat,tail_days_lag,var_data,varanom_data,var_name,minval,maxval,step,lag,anomminval,anommaxval,anomrangestep,statlonind,statlatind,axes,fig):
@@ -228,6 +228,8 @@ def Plot_Circ_Comp_Lags(model_netcdf_filename,lon_var,figstep,plotcol,lon,lat,ta
         t1 = axes[figstep,plotcol].pcolormesh(lonmesh,latmesh,var_lag,vmin=minval,vmax=maxval,linewidth=0,rasterized=True,zorder=1,transform=cartopy.crs.PlateCarree())
         t3 = axes[figstep,plotcol].contour(lonmesh,latmesh,var_laganom,levels=numpy.arange(anomminval,anommaxval+anomrangestep,anomrangestep),colors='red',zorder=2,transform=cartopy.crs.PlateCarree())
         cls = mplt.clabel(t3,t3.levels[:],fmt=Labfunc,colors='red')
+        if cls is None:
+            cls = []
         [txt.set_bbox(dict(facecolor='white', edgecolor='none', pad=0)) for txt in cls]
     else:
         ### Shiftdata for wrapping problem
@@ -274,12 +276,12 @@ def Set_Colorbars(minval,maxval,cbarstep,t,figstep,plotcol,var_units,axes,fig):
     cax2 = inset_axes(axes[figstep,plotcol],width="90%",height="5%",loc='lower center',bbox_to_anchor=(0, -0.1, 1, 1),bbox_transform=axes[figstep,plotcol].transAxes,borderpad=0,)
     cbar=fig.colorbar(sm,label=var_units,orientation='horizontal',cax=cax2,pad=0.1,ticks=numpy.arange(int(minval),int(maxval)+cbarstep,cbarstep))
     cbar.ax.set_xticklabels(numpy.arange(int(minval),int(maxval)+cbarstep,cbarstep))
-    
+
 # ======================================================================
 ### shiftgrid
 ### Shift global lat/lon grid east or west. Taken from Python 2 Basemap function
 def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
-    
+
     #.. tabularcolumns:: |l|L|
     #==============   ====================================================
     #Arguments        Description
@@ -301,7 +303,7 @@ def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
     #cyclic           width of periodic domain (default 360)
     #==============   ====================================================
     #returns ``dataout,lonsout`` (data and longitudes on shifted grid).
-    
+
     if numpy.fabs(lonsin[-1]-lonsin[0]-cyclic) > 1.e-4:
         # Use all data instead of raise ValueError, 'cyclic point not included'
         start_idx = 0

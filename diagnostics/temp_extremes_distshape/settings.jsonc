@@ -62,18 +62,18 @@
   },
   // Model data the diagnostic uses.
   "varlist": {
-    "tas_var": {
+    "tas": {
       "standard_name": "air_temperature",
       "units": "K",
       "dimensions": ["time", "lat", "lon"]
     },
-    "zg_var": {
+    "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500}
     },
-    "psl_var": {
+    "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
       "dimensions": ["time", "lat", "lon"]

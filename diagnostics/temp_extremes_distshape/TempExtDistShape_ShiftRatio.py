@@ -11,7 +11,7 @@
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 #   Computes the shifted underlying-to-Gaussian distribution tail exceedances ratio following Loikith and Neelin (2019), Loikith et al. (2018), Loikith and Neelin (2015), Ruff and Neelin (2012)
@@ -23,9 +23,9 @@
 #    (2) TempExtDistShape_ShiftRatio_util.py
 #
 #   Defaults for plotting parameters, etc. that can be altered by user are in TempExtDistShape_ShiftRatio_usp.py
-# 
+#
 #   Utility functions are defined in TempExtDistShape_ShiftRatio_util.py
-#  
+#
 # ======================================================================
 # Import standard Python packages
 import glob
@@ -47,7 +47,7 @@ print("**************************************************")
 
 print("Load user-specified parameters...")
 os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_ShiftRatio_usp.py")
-with open(os.environ["POD_HOME"]+"/TempExtDistShape_ShiftRatio_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/TempExtDistShape_ShiftRatio_parameters.json") as outfile:
     ratio_data=json.load(outfile)
 print("...Loaded!")
 monthsub=json.loads(ratio_data["monthsub"]) #change unicode string into array of integers

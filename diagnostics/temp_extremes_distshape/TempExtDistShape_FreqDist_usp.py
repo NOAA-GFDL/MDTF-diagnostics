@@ -5,7 +5,7 @@
 #   Called by TempExtDistShape_FreqDist.py
 #    Provides User-Specified Parameters for Calculating and Plotting
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Diagnostics Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Diagnostics Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 import json
@@ -84,7 +84,7 @@ data["plotrows"]=plotrows
 data["plotcols"]=plotcols
 
 # Taking care of function arguments for calculating/plotting Gaussian fit
-data["args1"]=[ 
+data["args1"]=[
 monthsub, \
 monthstr, \
 statlats, \
@@ -107,6 +107,6 @@ T2M_VAR, \
 LAT_VAR, \
 LON_VAR ]
 
-with open(os.environ["POD_HOME"]+"/TempExtDistShape_FreqDist_parameters.json", "w") as outfile:
+with open(os.environ["WK_DIR"]+"/TempExtDistShape_FreqDist_parameters.json", "w") as outfile:
     json.dump(data, outfile)
 

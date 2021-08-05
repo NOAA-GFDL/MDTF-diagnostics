@@ -11,7 +11,7 @@
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 #   Subsets input observational netcdf data to seasonal temperature distribution moment text files, seasonal shift ratio text files for both sides of the temperature distribution, and seasonal netcdf files
@@ -23,7 +23,7 @@
 #    (3) TempExtDistShape_ShiftRatio_util.py
 #        Including functions: Seasonal_Anomalies, and ShiftRatio_Calc
 #    (4) Seasonal_NCfile.sh
-#  
+#
 # ======================================================================
 # Import standard Python packages
 import glob
@@ -50,7 +50,7 @@ subprocess.call(['./Seasonal_NCfile.sh'])
 ### Load user-specified parameters
 print(("Load user-specified parameters..."), end=' ')
 os.system("python "+os.environ["POD_HOME"]+"/ObsSubset_usp.py")
-with open(os.environ["POD_HOME"]+"/ObsSubset_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/ObsSubset_parameters.json") as outfile:
     sub_data=json.load(outfile)
 print("...Loaded!")
 
@@ -80,9 +80,9 @@ for seasind in range(len(sub_data["monthsubs"])):
 
     ### Loop over each distribution tail
     for ptileval in sub_data["ptiles"]:
-        # ---- Calculate underlying-to-Gaussian distribution shift ratio  
+        # ---- Calculate underlying-to-Gaussian distribution shift ratio
         shiftratio=ShiftRatio_Calc(ptileval,sub_data["shift"],msk,T2Manom_data,lon,lat)
-        numpy.savetxt(sub_data["MODEL_OUTPUT_DIR"]+'/'+sub_data['MODEL']+'_shiftratio_'+sub_data["monthstrs"][seasind]+'_'+str(ptile)+'th-ptile.txt', seas_skew)
+        numpy.savetxt(sub_data["MODEL_OUTPUT_DIR"]+'/'+sub_data['MODEL']+'_shiftratio_'+sub_data["monthstrs"][seasind]+'_'+str(ptileval)+'th-ptile.txt', seas_skew)
 
 ### Save out latitude/longitude values
 numpy.savetxt(sub_data["MODEL_OUTPUT_DIR"]+'/'+sub_data['MODEL']+'_global_lons.txt',lon)

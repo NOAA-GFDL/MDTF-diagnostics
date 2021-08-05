@@ -11,7 +11,7 @@
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 #   Composites the seasonal circulation patterns associated with days in Non-Gaussian distribution tails at specified locations, following Loikith and Neelin (2019), Loikith et al. (2018), Loikith and Neelin (2015), Ruff and Neelin (2012)
@@ -24,9 +24,9 @@
 #
 #   Defaults for location, plotting parameters,  etc. that can be altered by user are in TempExtDistShape_CircComps_usp.py
 #   Defaults for season, tail percentile threshold, range of years, etc. that can be altered by user, are in TempExtDistShape_SeasonAndTail_usp.py
-# 
+#
 #   Utility functions are defined in TempExtDistShape_CircComps_util.py
-#  
+#
 # ======================================================================
 # Import standard Python packages
 import glob
@@ -54,7 +54,7 @@ print("**************************************************")
 
 print("Load user-specified parameters...")
 os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_CircComps_usp.py")
-with open(os.environ["POD_HOME"]+"/TempExtDistShape_CircComps_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/TempExtDistShape_CircComps_parameters.json") as outfile:
     circ_data=json.load(outfile)
 print("...Loaded!")
 monthsub=json.loads(circ_data["monthsub"]) #change unicode string into array of integers

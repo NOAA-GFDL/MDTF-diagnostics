@@ -6,7 +6,7 @@
 #             TempExtDistShape_CircComps.py, TempExtDistShape_Moments.py
 #    Provides User-Specified Parameters for Calculations
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 import json
@@ -50,6 +50,6 @@ monthsub, \
 monthstr, \
 ptile, \
 ]
-with open(os.environ["VARCODE"]+"/temp_extremes_distshape/"+"TempExtDistShape_SeasonAndTail.json", "w") as outfile:
+with open(os.environ["WK_DIR"]+"TempExtDistShape_SeasonAndTail.json", "w") as outfile:
     json.dump(data, outfile)
 

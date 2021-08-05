@@ -11,7 +11,7 @@
 #   Science lead: Paul C. Loikith (PSU; ploikith@pdx.edu)
 #   Current developer: Arielle J. Catalano (PSU; a.j.catalano@pdx.edu)
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 #   Computes the moments of the surface temperature probability distribution
@@ -23,9 +23,9 @@
 #    (2) TempExtDistShape_Moments_util.py
 #
 #   Defaults for plotting parameters, etc. that can be altered by user are in TempExtDistShape_Moments_usp.py
-# 
+#
 #   Utility functions are defined in TempExtDistShape_Moments_util.py
-#  
+#
 # ======================================================================
 # Import standard Python packages
 import glob
@@ -45,7 +45,7 @@ print("**************************************************")
 ### Load user-specified parameters (usp) for calcluating and plotting shift ratio
 print("Load user-specified parameters...")
 os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_Moments_usp.py")
-with open(os.environ["POD_HOME"]+"/TempExtDistShape_Moments_parameters.json") as outfile:
+with open(os.environ["WK_DIR"]+"/TempExtDistShape_Moments_parameters.json") as outfile:
     mom_data=json.load(outfile)
 print("...Loaded!")
 monthsub=json.loads(mom_data["monthsub"]) #change unicode string into array of integers

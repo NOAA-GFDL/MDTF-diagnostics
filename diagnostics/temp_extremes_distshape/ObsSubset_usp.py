@@ -5,7 +5,7 @@
 #   Called by ObsSubset.py
 #    Provides User-Specified Parameters for Subsetting Observation Files
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 import json
@@ -83,5 +83,5 @@ T2M_VAR, \
 LAT_VAR, \
 LON_VAR ]
 
-with open(os.environ["POD_HOME"]+"/ObsSubset_parameters.json", "w") as outfile:
+with open(os.environ["WK_DIR"]+"/ObsSubset_parameters.json", "w") as outfile:
     json.dump(data, outfile)

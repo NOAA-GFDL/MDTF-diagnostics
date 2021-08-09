@@ -424,7 +424,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
     experiment: dataclasses.InitVar = "" # synonym for experiment_id
     CATALOG_DIR: str = dataclasses.field(init=False)
 
-    def __post_init__(self, model=None, experiment=None, log=_log):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
         config = core.ConfigManager()
         cv = cmip6.CMIP6_CVs()

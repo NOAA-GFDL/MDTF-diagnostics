@@ -234,9 +234,9 @@ class GFDL_GCP_FileDataSourceBase(
 
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
-        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdludacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -247,15 +247,16 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
-    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
     _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
 
 
 @util.mdtf_dataclass
 class GFDL_archive_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
-        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdlarchivecmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -267,15 +268,16 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
-    _fetch_method = "gcp"
     _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "gcp"
 
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
-        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdldatacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -286,6 +288,9 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
+    _convention = "CMIP" # hard-code naming convention
+    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
+    _fetch_method = "gcp"
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
 _ignore_non_nc_regex = util.RegexPattern(r".*(?<!\.nc)")
@@ -457,8 +462,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
 
-    @staticmethod
-    def _filter_column(df, col_name, func, obj_name):
+    def _filter_column(self, df, col_name, func, obj_name):
         values = list(df[col_name].drop_duplicates())
         if len(values) <= 1:
             # unique value, no need to filter

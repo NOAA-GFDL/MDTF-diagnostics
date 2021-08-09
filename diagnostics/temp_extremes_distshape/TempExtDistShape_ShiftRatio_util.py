@@ -1,10 +1,10 @@
 # This file is part of the temp_extremes_distshape module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 # ======================================================================
 # TempExtDistShape_ShiftRatio_util.py
-# 
+#
 #   Provide functions called by TempExtDistShape_ShiftRatio.py as part of TempExtDistShape_MDTF.py
 #
-#   This file is part of the Surface Temperature Extremes and Distribution Shape Package 
+#   This file is part of the Surface Temperature Extremes and Distribution Shape Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 # Including:
@@ -12,7 +12,7 @@
 #   (2) Seasonal_Anomalies
 #   (3) ShiftRatio_Calc
 #   (4) ShiftRatio_Plot
-#  
+#
 # ======================================================================
 
 # Import standard Python packages
@@ -63,7 +63,7 @@ def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
     lat=numpy.asarray(t2m_netcdf.variables[lat_var][:],dtype="float")
     t2m_netcdf.close()
 
-    ### Fix longitudes so values range from -180 to 180 
+    ### Fix longitudes so values range from -180 to 180
     if lon[lon>180].size>0:
         lon[lon>180]=lon[lon>180]-360
     LAT,LON=numpy.meshgrid(lat,lon,sparse=False,indexing="xy")
@@ -89,8 +89,8 @@ def Region_Mask(region_mask_filename,model_netcdf_filename,lon_var,lat_var):
 # ---------  Output is two-meter temperature seasonal anomalies, longitude, and latitude arrays
 def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,monthsub,yearbeg,yearend):
     var_netcdf=Dataset(model_netcdf_filename,"r")
-    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float") 
-    lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float") 
+    lat=numpy.asarray(var_netcdf.variables[lat_var][:],dtype="float")
+    lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float")
     var_data=numpy.asarray(var_netcdf.variables[field_var][:],dtype="float") #time, lat, lon
     datatime=numpy.asarray(var_netcdf.variables[time_var][:],dtype="float")
     timeunits=var_netcdf.variables[time_var].units
@@ -98,7 +98,7 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     caltype=var_netcdf.variables[time_var].calendar
     var_netcdf.close()
 
-    ### Fix longitudes so values range from -180 to 180 
+    ### Fix longitudes so values range from -180 to 180
     if lon[lon>180].size>0:
         lon[lon>180]=lon[lon>180]-360
 
@@ -243,9 +243,9 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
     mycmap=mcolors.LinearSegmentedColormap.from_list('my_colormap', colormaps[cmap_name])
     fig=mplt.figure(figsize=(10,10))
     ax=mplt.axes(projection=cartopy.crs.PlateCarree())
-    ax.set_extent([-180,180,-60,90])
+    ax.set_extent([-180,180,-60,90], crs=ax.projection)
 
-    ### Read in longitude directly from model and use shiftdata function to avoid wrapping while plotting (and align latitudes with land borders) 
+    ### Read in longitude directly from model and use shiftdata function to avoid wrapping while plotting (and align latitudes with land borders)
     var_netcdf=Dataset(model_netcdf_filename,"r")
     lon=numpy.asarray(var_netcdf.variables[lon_var][:],dtype="float")
     if lon[lon>180].size>0: #0 to 360 grid
@@ -253,9 +253,9 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
     lat=lat - numpy.true_divide((lat[2]-lat[1]),2)
     lon=lon - numpy.true_divide((lon[2]-lon[1]),2)
     if ptile < 50:
-        p1=mplt.pcolormesh(lon,lat,numpy.log10(shiftratio),cmap=mycmap,vmin=numpy.log10(0.125),vmax=numpy.log10(2),transform=cartopy.crs.PlateCarree())
+        p1=mplt.pcolormesh(lon,lat,numpy.log10(shiftratio),cmap=mycmap,vmin=numpy.log10(0.125),vmax=numpy.log10(2),transform=ax.projection)
     elif ptile > 50:
-        p1=mplt.pcolormesh(lon,lat,numpy.log10(shiftratio),cmap=mycmap,vmin=numpy.log10(0.5),vmax=numpy.log10(2),transform=cartopy.crs.PlateCarree())
+        p1=mplt.pcolormesh(lon,lat,numpy.log10(shiftratio),cmap=mycmap,vmin=numpy.log10(0.5),vmax=numpy.log10(2),transform=ax.projection)
 
     ### Add coastlines and lake boundaries
     ax.add_feature(cartopy.feature.COASTLINE,zorder=1,linewidth=0.7)
@@ -273,7 +273,7 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
     cbar.ax.tick_params(labelsize=20)
     ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
     fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
-    
+
     print("...Completed!")
     print("      Figure saved as "+fig_dir+'/'+fig_name+"!")
 
@@ -281,7 +281,7 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
 ### shiftgrid
 ### Shift global lat/lon grid east or west. Taken from Python 2 Basemap function
 def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
-    
+
     #.. tabularcolumns:: |l|L|
     #==============   ====================================================
     #Arguments        Description
@@ -303,7 +303,7 @@ def shiftgrid(lon0,datain,lonsin,start=True,cyclic=360.0):
     #cyclic           width of periodic domain (default 360)
     #==============   ====================================================
     #returns ``dataout,lonsout`` (data and longitudes on shifted grid).
-    
+
     if numpy.fabs(lonsin[-1]-lonsin[0]-cyclic) > 1.e-4:
         # Use all data instead of raise ValueError, 'cyclic point not included'
         start_idx = 0

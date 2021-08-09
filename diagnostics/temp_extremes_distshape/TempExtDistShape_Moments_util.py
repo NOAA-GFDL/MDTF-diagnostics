@@ -170,7 +170,7 @@ def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,ti
     lat=lat - numpy.true_divide((lat[2]-lat[1]),2)
     for idata in numpy.arange(0,len(cmaps)):
         ax=fig.add_subplot(int('31'+str(idata+1)),projection=cartopy.crs.PlateCarree())
-        ax.set_extent([-180,180,-60,90])
+        ax.set_extent([-180,180,-60,90], crs=ax.projection)
 
         ### Read in longitude directly from model and use shiftdata function to avoid wrapping while plotting
         var_netcdf=Dataset(model_netcdf_filename,"r")
@@ -181,7 +181,7 @@ def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,ti
             data_plt=data[idata]
         lon=lon - numpy.true_divide((lon[2]-lon[1]),2)
 
-        p1=ax.pcolormesh(lon,lat,data_plt,cmap=cmaps[idata],vmin=numpy.min(tickrange[idata]),vmax=numpy.max(tickrange[idata]),linewidth=0,rasterized=True,transform=cartopy.crs.PlateCarree())
+        p1=ax.pcolormesh(lon,lat,data_plt,cmap=cmaps[idata],vmin=numpy.min(tickrange[idata]),vmax=numpy.max(tickrange[idata]),linewidth=0,rasterized=True,transform=ax.projection)
         ax.add_feature(cartopy.feature.COASTLINE,zorder=10,linewidth=0.7)
         ax.add_feature(cartopy.feature.LAKES,zorder=11,linewidth=0.7,edgecolor='k',facecolor='none')
         ax.set_title(titles[idata],fontdict={'fontsize': 15, 'fontweight': 'medium'})

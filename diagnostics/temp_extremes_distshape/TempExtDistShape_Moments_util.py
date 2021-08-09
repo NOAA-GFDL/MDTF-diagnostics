@@ -190,7 +190,7 @@ def Moments_Plot(model_netcdf_filename,lon_var,lat,monthstr,cmaps,titles,data,ti
         ### Create individual colorbars per subplot
         axpos = ax.get_position()
         axpos0 = axpos.x0
-        pos_x = axpos.width - 0.04
+        pos_x = axpos0 + axpos.width - 0.05
         cax = inset_axes(ax,width="7%", height="100%",loc='right',bbox_to_anchor=(pos_x,0,0.3,1),bbox_transform=ax.transAxes,borderpad=0)
         if idata != 2:
             cbar=fig.colorbar(p1,cax=cax,label=var_units,orientation='vertical',ticks=tickrange[idata])

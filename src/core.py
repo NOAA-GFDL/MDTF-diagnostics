@@ -472,12 +472,12 @@ class Fieldlist():
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
-            # dimensionality) -- should just make FieldlistEntry hashable
+            # dimensionality)
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
-                temp_d[entry.standard_name][entry.dim_axes_set] = entry
+                temp_d[entry.standard_name][entry.modifiers] = entry
             return (d, temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)

@@ -509,7 +509,7 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, axes_set=None):
+    def from_CF(self, var_or_name, modifiers=None):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing an axes_set to resolve ambiguity.
 
@@ -542,7 +542,7 @@ class Fieldlist():
 
         return copy.deepcopy(fl_entry)
 
-    def from_CF_name(self, var_or_name, axes_set=None):
+    def from_CF_name(self, var_or_name, modifiers=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
@@ -592,7 +592,7 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            fl_entry = self.from_CF(var.standard_name, var.axes_set)
+            fl_entry = self.from_CF(var.standard_name, var.modifiers)
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]

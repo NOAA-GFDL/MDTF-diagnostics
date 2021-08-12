@@ -3,9 +3,7 @@
 // in strings, so you'll want to turn word wrap on in your editor.
 //
 {
-"atmos_height" :
-   long_name : "atmospheric height",
-   description : "atmospheric height above the ground (relative to orography) in meters"
-
+  "atmos_height" : {
+    "description" : "atmospheric height above the ground (relative to orography) in meters"
+  }
 }
-

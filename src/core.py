@@ -351,7 +351,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
     # dims: list           # fields inherited from data_model.DMVariable
-    # modifiers : str
+    # modifier : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY # assigned from parent var
@@ -363,7 +363,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
     # units: Units
-    # modifiers : str
+    # modifier : str
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
@@ -477,7 +477,7 @@ class Fieldlist():
             for k,v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
-                temp_d[entry.standard_name][entry.modifiers] = entry
+                temp_d[entry.standard_name][entry.modifier] = entry
             return (d, temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)
@@ -509,7 +509,7 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifiers=None):
+    def from_CF(self, var_or_name, modifier=None):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing an axes_set to resolve ambiguity.
 
@@ -542,7 +542,7 @@ class Fieldlist():
 
         return copy.deepcopy(fl_entry)
 
-    def from_CF_name(self, var_or_name, modifiers=None):
+    def from_CF_name(self, var_or_name, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
@@ -592,7 +592,7 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            fl_entry = self.from_CF(var.standard_name, var.modifiers)
+            fl_entry = self.from_CF(var.standard_name, var.modifier)
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
@@ -632,11 +632,11 @@ class NoTranslationFieldlist(util.Singleton):
         else:
             return var_or_name
 
-    def from_CF(self, var_or_name, modifiers=None):
+    def from_CF(self, var_or_name, modifier=None):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def from_CF_name(self, var_or_name, modifiers=None):
+    def from_CF_name(self, var_or_name, modifier=None):
         if hasattr(var_or_name, 'name'):
             return var_or_name.name
         else:
@@ -663,7 +663,7 @@ class NoTranslationFieldlist(util.Singleton):
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
-            modifiers = var.modifiers,
+            modifier = var.modifier,
             log=var.log
         )
 
@@ -676,7 +676,7 @@ class VariableTranslator(util.Singleton):
         self._unittest = unittest
         self.conventions = util.WormDict()
         self.aliases = util.WormDict()
-        self.modifiers = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
+        self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifier.jsonc'), log=_log)
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

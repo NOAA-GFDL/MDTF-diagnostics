@@ -503,7 +503,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: src.units.Units = "" # not MANDATORY since may be set later from var translation
-    modifiers: str = ""
+    modifier: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -512,9 +512,9 @@ class DMDependentVariable(_DMDimensionsMixin):
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
         # if specified, verify that POD modifier attributes are valid
-        if not self.modifiers.lower.strip() in (None, ''):
+        if not self.modifier.lower.strip() in (None, ''):
             _str = self.VariableTranslator()
-            if self.modifiers not in _str.modifiers:
+            if self.modifier not in _str.modifier:
                 raise ValueError(f"Modifier {self.modfiers} is not a recognized value.")
 
     @property
@@ -642,7 +642,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
-    # modifiers: str
+    # modifier: str
     # units: src.units.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list

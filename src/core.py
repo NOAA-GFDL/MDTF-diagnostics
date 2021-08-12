@@ -350,7 +350,8 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
-    # dims: list           # field inherited from data_model.DMVariable
+    # dims: list           # fields inherited from data_model.DMVariable
+    # modifiers : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY # assigned from parent var
@@ -362,6 +363,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
     # units: Units
+    # modifiers : str
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
@@ -673,6 +675,7 @@ class VariableTranslator(util.Singleton):
         self._unittest = unittest
         self.conventions = util.WormDict()
         self.aliases = util.WormDict()
+        self.modifiers = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

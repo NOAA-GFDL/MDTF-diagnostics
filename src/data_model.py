@@ -503,6 +503,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
     units: src.units.Units = "" # not MANDATORY since may be set later from var translation
+    modifiers: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -636,6 +637,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
+    # modifiers: str
     # units: src.units.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list

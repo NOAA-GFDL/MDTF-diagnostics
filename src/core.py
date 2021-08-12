@@ -632,11 +632,11 @@ class NoTranslationFieldlist(util.Singleton):
         else:
             return var_or_name
 
-    def from_CF(self, var_or_name, axes_set=None):
+    def from_CF(self, var_or_name, modifiers=None):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def from_CF_name(self, var_or_name, axes_set=None):
+    def from_CF_name(self, var_or_name, modifiers=None):
         if hasattr(var_or_name, 'name'):
             return var_or_name.name
         else:
@@ -663,6 +663,7 @@ class NoTranslationFieldlist(util.Singleton):
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
+            modifiers = var.modifiers,
             log=var.log
         )
 

@@ -63,7 +63,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
     def __post_init__(self, log=_log):
         """Validate user input.
@@ -83,7 +83,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
             log.critical(
                 "Sample dataset '%s' not found in CASE_ROOT_DIR = '%s'.",
                 self.sample_dataset, self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
 sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
@@ -312,7 +312,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         if not self.config_file:
             log.critical(("No configuration file found for ExplicitFileDataSource "
                 "(--config-file)."))
-            exit(1)
+            util.exit_handler(code=1)
 
         if self.convention != core._NO_TRANSLATION_CONVENTION:
             log.debug("Received incompatible convention '%s'; setting to '%s'.",
@@ -451,7 +451,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
         # should really fix this at the level of CLI flag synonyms
         if model and not self.source_id:

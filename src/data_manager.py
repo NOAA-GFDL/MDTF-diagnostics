@@ -184,7 +184,7 @@ class DataSourceAttributesBase():
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
     def __post_init__(self, log=_log):
         self._set_case_root_dir(log=log)
@@ -640,7 +640,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         util.signal_logger(self.__class__.__name__, signum, frame, log=self.log)
         self.post_query_and_fetch_hook()
-        exit(1)
+        util.exit_handler(code=1)
 
 # --------------------------------------------------------------------------
 

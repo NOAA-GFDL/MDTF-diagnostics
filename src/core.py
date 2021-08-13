@@ -778,7 +778,7 @@ class MDTFFramework(MDTFObjectBase):
             tb_exc = traceback.TracebackException(*(sys.exc_info()))
             _log.critical("Framework caught exception %r", exc)
             print(''.join(tb_exc.format()))
-            exit(1)
+            util.exit_handler(code=1)
 
     @property
     def _children(self):
@@ -898,14 +898,14 @@ class MDTFFramework(MDTFObjectBase):
                 ', '.join(f"'{p}'" for p in valid_args),
                 str(list(args))
             )
-            exit(1)
+            util.exit_handler(code=1)
 
         pods = list(set(pods)) # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
                 f"\nReceived --pods = {str(list(args))}"))
-            exit(1)
+            util.exit_handler(code=1)
         return pods
 
     def set_case_pod_list(self, case, cli_obj, pod_info_tuple):
@@ -961,7 +961,7 @@ class MDTFFramework(MDTFObjectBase):
             _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
-            exit(1)
+            util.exit_handler(code=1)
 
     def verify_paths(self, config, p):
         # needs to be here, instead of PathManager, because we subclass it in

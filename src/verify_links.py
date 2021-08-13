@@ -302,7 +302,7 @@ if __name__ == '__main__':
     if missing_dict:
         print("ERROR: the following files are missing:")
         print(util.pretty_print_json(missing_dict))
-        exit(1)
+        sys.exit(1)
     else:
         print("SUCCESS: no missing links found.")
-        exit(0)
+        sys.exit(0)

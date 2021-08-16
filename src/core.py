@@ -676,7 +676,7 @@ class VariableTranslator(util.Singleton):
         self._unittest = unittest
         self.conventions = util.WormDict()
         self.aliases = util.WormDict()
-        self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifier.jsonc'), log=_log)
+        self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test

@@ -372,7 +372,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         super(FieldlistEntry, self).__post_init__(coords)
         assert len(self.scalar_coords) == 0
 
-    _ndim_to_ = {
+    _ndim_to_axes_set = {
         # allow specifying dimensionality as shorthand for explicit list
         # of coordinate dimension names
         1: ('PLACEHOLDER_T_COORD'),
@@ -411,7 +411,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in scalar "
-                    f"coord definition for fieldlist entry for {name}."))
+                    f"coord definition for fieldlist entr y for {name}."))
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
@@ -782,7 +782,7 @@ class MDTFFramework(MDTFObjectBase):
             tb_exc = traceback.TracebackException(*(sys.exc_info()))
             _log.critical("Framework caught exception %r", exc)
             print(''.join(tb_exc.format()))
-            util.exit_handler(code=1)
+            exit(1)
 
     @property
     def _children(self):
@@ -902,14 +902,14 @@ class MDTFFramework(MDTFObjectBase):
                 ', '.join(f"'{p}'" for p in valid_args),
                 str(list(args))
             )
-            util.exit_handler(code=1)
+            exit(1)
 
         pods = list(set(pods)) # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
                 f"\nReceived --pods = {str(list(args))}"))
-            util.exit_handler(code=1)
+            exit(1)
         return pods
 
     def set_case_pod_list(self, case, cli_obj, pod_info_tuple):
@@ -965,7 +965,7 @@ class MDTFFramework(MDTFObjectBase):
             _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
-            util.exit_handler(code=1)
+            exit(1)
 
     def verify_paths(self, config, p):
         # needs to be here, instead of PathManager, because we subclass it in

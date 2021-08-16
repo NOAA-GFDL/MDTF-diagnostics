@@ -512,7 +512,7 @@ class DMDependentVariable(_DMDimensionsMixin):
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
         # if specified, verify that POD modifier attributes are valid
-        if not self.modifier.lower.strip() in (None, ''):
+        if not self.modifier.lower().strip() in (None, ''):
             _str = self.VariableTranslator()
             if self.modifier not in _str.modifier:
                 raise ValueError(f"Modifier {self.modfiers} is not a recognized value.")

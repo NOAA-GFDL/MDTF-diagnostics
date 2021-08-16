@@ -372,7 +372,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         super(FieldlistEntry, self).__post_init__(coords)
         assert len(self.scalar_coords) == 0
 
-    _ndim_to_axes_set = {
+    _ndim_to_ = {
         # allow specifying dimensionality as shorthand for explicit list
         # of coordinate dimension names
         1: ('PLACEHOLDER_T_COORD'),
@@ -511,7 +511,7 @@ class Fieldlist():
 
     def from_CF(self, var_or_name, modifier=None):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
-        name, optionally providing an axes_set to resolve ambiguity.
+        name, optionally providing a modifier to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
@@ -526,19 +526,19 @@ class Fieldlist():
                 f"convention '{self.name}'."))
 
         lut1 = self.lut[standard_name] # abbreviate
-        if axes_set is None:
+        if modifier is None:
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 raise ValueError((f"Variable name in convention '{self.name}' "
                     f"not uniquely determined by standard name '{standard_name}'."))
             fl_entry = entries[0]
         else:
-            axes_set = frozenset(axes_set)
-            if axes_set not in lut1:
+            modifier = frozenset(modifier)
+            if modifier not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
-                    f"unexpected set of axes {axes_set} not in convention "
+                    f"unexpected set of axes {modifier} not in convention "
                     f"'{self.name}'."))
-            fl_entry = lut1[axes_set]
+            fl_entry = lut1[modifier]
 
         return copy.deepcopy(fl_entry)
 
@@ -546,7 +546,7 @@ class Fieldlist():
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
-        return self.from_CF(var_or_name, axes_set=axes_set).name
+        return self.from_CF(var_or_name, modifier=modifier).name
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
@@ -743,13 +743,13 @@ class VariableTranslator(util.Singleton):
     def to_CF_name(self, conv_name, name):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
-    def from_CF(self, conv_name, standard_name, axes_set=None):
+    def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
-            standard_name, axes_set=axes_set)
+            standard_name, modifier=modifier)
 
-    def from_CF_name(self, conv_name, standard_name, axes_set=None):
+    def from_CF_name(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
-            standard_name, axes_set=axes_set)
+            standard_name, modifier=modifier)
 
     def translate_coord(self, conv_name, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)

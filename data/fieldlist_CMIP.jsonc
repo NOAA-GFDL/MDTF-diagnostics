@@ -85,7 +85,7 @@
       "standard_name": "air_temperature",
       "units": "K",
       "ndim": 3,
-      "modifier": "atmos_surface"
+      "modifier": "atmos_height"
     },
     "tauu": {
       "standard_name": "surface_downward_eastward_stress",

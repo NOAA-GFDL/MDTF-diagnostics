@@ -515,7 +515,7 @@ class DMDependentVariable(_DMDimensionsMixin):
         if not self.modifier.lower().strip() in (None, ''):
             _str = self.VariableTranslator()
             if self.modifier not in _str.modifier:
-                raise ValueError(f"Modifier {self.modfiers} is not a recognized value.")
+                raise ValueError(f"Modifier {self.modfier} is not a recognized value.")
 
     @property
     def full_name(self):

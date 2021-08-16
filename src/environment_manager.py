@@ -520,4 +520,4 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             p.pod.close_log_file(log=True)
         self.tear_down()
         self.case.close_log_file()
-        exit(1)
+        util.exit_handler(code=1)

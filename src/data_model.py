@@ -7,7 +7,7 @@ import itertools
 import typing
 from src import util
 import src.units # fully qualify name to reduce confusion with "units" attributes
-
+import src.core
 import logging
 _log = logging.getLogger(__name__)
 
@@ -513,7 +513,7 @@ class DMDependentVariable(_DMDimensionsMixin):
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
         # if specified, verify that POD modifier attributes are valid
         if not self.modifier.lower().strip() in (None, ''):
-            _str = self.VariableTranslator()
+            _str = src.core.VariableTranslator()
             if self.modifier not in _str.modifier:
                 raise ValueError(f"Modifier {self.modfier} is not a recognized value.")
 

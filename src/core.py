@@ -411,7 +411,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in scalar "
-                    f"coord definition for fieldlist entr y for {name}."))
+                    f"coord definition for fieldlist entry for {name}."))
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']

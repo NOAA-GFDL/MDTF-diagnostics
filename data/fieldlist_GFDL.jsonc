@@ -36,13 +36,13 @@
     "ucomp": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"plev": "ucomp{value}"},
+      "scalar_coord_templates": {"plev": "u{value}"},
       "ndim": 4
     },
     "vcomp": {
       "standard_name": "northward_wind",
       "units": "m s-1",
-      "scalar_coord_templates": {"plev": "vcomp{value}"},
+      "scalar_coord_templates": {"plev": "v{value}"},
       "ndim": 4
     },
     "hght": {

@@ -7,7 +7,7 @@
   "data_manager": {
     "Local_file": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
-      "entry_point": "src.data_manager:SampleLocalFileDataSource",
+      "entry_point": "src.data_sources:SampleLocalFileDataSource",
       "cli": {
         "arguments": [
           {
@@ -19,9 +19,24 @@
         ]
       }
     },
+    "Explicit_file": {
+      "help": "DataManager which allows the user to explicitly specify what data files should be used to supply each variable in the PODs' data request.",
+      "entry_point": "src.data_sources:ExplicitFileDataSource",
+      "cli": {
+        "arguments": [
+          {
+            "name": "config_file",
+            "metavar" : "<PATH>",
+            "help": "Path to JSON configuration file mapping POD variables to filesystem relative paths.",
+            "default" : "",
+            "action": "PathAction"
+          }
+        ]
+      }
+    },
     "CMIP6": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
-      "entry_point": "src.data_manager:CMIP6LocalFileDataSource",
+      "entry_point": "src.data_sources:CMIP6LocalFileDataSource",
       "cli": {
         "arguments": [
           {

@@ -57,6 +57,12 @@
       "scalar_coord_templates": {"plev": "Z{value}"},
       "ndim": 4
     },
+    "Z500": {
+      "standard_name": "geopotential_height_500mb",
+      "units": "m",
+      // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
+      "ndim": 3
+    },
     "Q": {
       "standard_name": "specific_humidity",
       "units": "1",

@@ -335,7 +335,7 @@ class MDTFInstaller(object):
         if d.env_setup == 'conda-basic':
             d.conda_envs = [self.settings.conda['framework_env'], 'NCL_base']
             d.environment_manager = "Conda"
-            d.pods = ["Wheeler_Kiladis", "EOF_500hPa", "MJO_suite", "MJO_teleconnection"]
+            d.pods = ["Wheeler_Kiladis", "EOF_500hPa", "MJO_suite", "MJO_teleconnection","blocking_neale"]
             if 'model_am4' in d.downloads_list:
                 d.downloads_list.remove('model_am4')
         elif d.env_setup == 'conda-full':

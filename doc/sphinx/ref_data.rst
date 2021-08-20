@@ -30,6 +30,8 @@ Coordinates
 - The time coordinate of the data must follow the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#time-coordinate>`__; in particular, it must have a ``calendar`` attribute which matches one of the CF conventions' recognized calendars (case-insensitive).
 - The framework doesn't impose any limitations on the minimum or maximum resolution of model data, beyond the storage and memory available on the machine where the PODs are run.
 
+.. _ref-data-metadata:
+
 Metadata
 ++++++++
 
@@ -43,7 +45,9 @@ The framework currently makes use of two pieces of metadata (attributes for each
   
   If the user or data source has specified a :ref:`naming convention<ref-data-conventions>`, missing values for this attribute will be filled in based on the variable names used in that convention.
 
-Many utilities exist for editing metadata in netCDF headers. Popular examples are the `ncatted <http://nco.sourceforge.net/nco.html#ncatted>`__ tool in the `NCO <http://nco.sourceforge.net/>`__ utilities and the `setattribute <https://code.mpimet.mpg.de/projects/cdo/embedded/cdo_refcard.pdf>`__ operator in `CDO <https://code.mpimet.mpg.de/projects/cdo>`__, as well as the functionality provided by xarray itself.
+Many utilities exist for editing metadata in netCDF headers. Popular examples are the `ncatted <http://nco.sourceforge.net/nco.html#ncatted>`__ tool in the `NCO <http://nco.sourceforge.net/>`__ utilities and the `setattribute <https://code.mpimet.mpg.de/projects/cdo/embedded/cdo_refcard.pdf>`__ operator in `CDO <https://code.mpimet.mpg.de/projects/cdo>`__, as well as the functionality provided by xarray itself. Additionally, the :ref:`ref-data-source-explictfile` provides limited functionality for overwriting metadata attributes.
+
+In situations where none of the above options are feasible, the ``--disable-preprocessor`` :ref:`command-line flag<ref-cli-options>` may be used to disable all functionality based on this metadata. In this case, the user is fully responsible for ensuring that the input model data has the units required by each POD, is provided on the correct pressure levels, etc.
 
 xarray reference implementation
 -------------------------------

@@ -74,7 +74,7 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertEqual(temp.from_CF_name('B','pr_var'), 'PRECT')
 
     def test_variabletranslator_no_translation(self):
-        dummy_varlist = {  
+        dummy_varlist = {
             "data": {
                 "frequency": "day"
             },
@@ -101,6 +101,29 @@ class TestVariableTranslator(unittest.TestCase):
         # make sure copy of attrs was successful
         tve.standard_name = "foo"
         self.assertNotEqual(tve.standard_name, ve.standard_name)
+
+    def test_variabletranslator_bad_modifier(self):
+        dummy_varlist = {
+            "data": {
+                "frequency": "month"
+            },
+            "dimensions": {
+                "lat": {"standard_name": "latitude"},
+                "lon": {"standard_name": "longitude"},
+                "time": {"standard_name": "time"}
+            },
+            "varlist": {
+                "tref": {
+                    "standard_name": "air temperature",
+                    "units": "W m-2",
+                    "dimensions": ["time", "lat", "lon"],
+                    "modifier": "height"
+                }
+            }
+        }
+        varlist = diagnostic.Varlist.from_struct(dummy_varlist, parent=None)
+        translate = core.VariableTranslator()
+        self.assertRaises(KeyError, translate.translate, varlist.vars[0])
 
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):

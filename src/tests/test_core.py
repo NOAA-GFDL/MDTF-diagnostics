@@ -139,6 +139,7 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         raised = False
         try:
             translate = core.VariableTranslator(code_root, unittest=False)
+            translate.read_conventions(code_root, unittest=False)
         except Exception:
             raised = True
         self.assertFalse(raised)
@@ -150,6 +151,7 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         translate = core.VariableTranslator(code_root, unittest=False)
+        translate.read_conventions(code_root, unittest=False)
         self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_rate")
         self.assertEqual(translate.from_CF_name('CMIP', 'toa_outgoing_longwave_flux'), "rlut")
 

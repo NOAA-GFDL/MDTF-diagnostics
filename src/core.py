@@ -808,7 +808,8 @@ class MDTFFramework(MDTFObjectBase):
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        _ = VariableTranslator.read_conventions(self.code_root)
+        translate = VariableTranslator(self.code_root)
+        translate.read_conventions(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)

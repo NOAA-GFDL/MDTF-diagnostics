@@ -677,6 +677,16 @@ class VariableTranslator(util.Singleton):
         self.conventions = util.WormDict()
         self.aliases = util.WormDict()
         self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
+
+    def add_convention(self, d):
+        conv_name = d['name']
+        _log.debug("Adding variable name convention '%s'", conv_name)
+        for model in d.pop('models', []):
+            self.aliases[model] = conv_name
+        self.conventions[conv_name] = Fieldlist.from_struct(d)
+
+    def read_conventions(self,code_root, unittest=False):
+        """ Read in the conventions from the Fieldlists and populate the convention attribute. """
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
@@ -694,13 +704,6 @@ class VariableTranslator(util.Singleton):
                 _log.exception("Caught exception loading fieldlist file %s: %r",
                     f, exc)
                 continue
-
-    def add_convention(self, d):
-        conv_name = d['name']
-        _log.debug("Adding variable name convention '%s'", conv_name)
-        for model in d.pop('models', []):
-            self.aliases[model] = conv_name
-        self.conventions[conv_name] = Fieldlist.from_struct(d)
 
     def get_convention_name(self, conv_name):
         """Resolve the naming convention associated with a given
@@ -805,7 +808,7 @@ class MDTFFramework(MDTFObjectBase):
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        _ = VariableTranslator(self.code_root)
+        _ = VariableTranslator.read_conventions(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)

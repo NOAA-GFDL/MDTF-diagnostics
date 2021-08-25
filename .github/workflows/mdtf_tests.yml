@@ -1,0 +1,159 @@
+# This file builds and runs a lightweight version of the MDTF test suite.
+# Note that the tests assess functionality of the diagnostics,
+# and do not evaluate data or scientific content.
+name: MDTF_test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+defaults:
+  run:
+    shell: bash -l {0}
+jobs:
+  build:
+    runs-on: ${{matrix.os}}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        conda-root: [/usr/share/miniconda3, /Users/runner/miniconda3]
+        json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
+        json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
+        # if experimental is true, other jobs to run if one fails
+        experimental: [false]
+        exclude:
+          - os: ubuntu-latest
+            conda-root: /Users/runner/miniconda3
+          - os: ubuntu-latest
+            json-file: "tests/github_actions_test_macos_set1.jsonc"
+          - os: ubuntu-latest
+            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+          - os: macos-latest
+            conda-root: /usr/share/miniconda3
+          - os: macos-latest
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - os: macos-latest
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - conda-root: /usr/share/miniconda3
+            json-file: "tests/github_actions_test_macos_set1.jsonc"
+          - conda-root: /Users/runner/minconda3
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - conda-root: /usr/share/miniconda3
+            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+          - conda-root: /Users/runner/minconda3
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+      max-parallel: 2
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download Miniconda 3
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        python-version: 3.8
+    - name: Verify miniconda
+      run: |
+        conda info -a
+    - name: Install XQuartz if macOS
+      if: ${{ matrix.os == 'macos-latest' && matrix.conda-root == '/Users/runner/miniconda3' }}
+      run: |
+        echo "Installing XQuartz"
+        brew install --cask xquartz
+    - name: Set environment variables
+      run: |
+        echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
+    - name: Install Conda Environments
+      run: |
+        # create the synthetic data environment
+        echo "Creating the _MDTF_synthetic_data environment"
+        conda env create --force -q -f ./src/conda/_env_synthetic_data.yml
+        # install mamba (https://github.com/mamba-org/mamba) for faster dependency resolution
+        echo "Installing Mamba"
+        conda install mamba -n base -c conda-forge
+        echo "Installing Conda Environments"
+        # MDTF-specific setup: install all conda envs
+        ./src/conda/conda_env_setup.sh --all --mamba --conda_root ${{matrix.conda-root}}
+    - name: Generate Model Data
+      run: |
+        cd ../
+        conda activate _MDTF_synthetic_data
+        pip install mdtf-test-data
+        mkdir mdtf_test_data ; cd mdtf_test_data
+        # generate the data and run unit tests
+        mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
+        mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
+        cd ../
+        mkdir wkdir
+    - name: Get Observational Data for Set 1
+      run: |
+        echo "${PWD}"
+        cd ../
+        echo "Available Space"
+        df -h
+        # attempt FTP data fetch
+        # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
+        # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/convective_transition_diag_obs_data.tar --output convective_transition_diag_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/EOF_500hPa_obs_data.tar --output EOF_500hPa_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/Wheeler_Kiladis_obs_data.tar --output Wheeler_Kiladis_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_suite_obs_data.tar --output MJO_suite_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/precip_diurnal_cycle_obs_data.tar --output precip_diurnal_cycle_obs_data.tar
+        ## make input data directories
+        mkdir -p inputdata/obs_data
+        echo "Untarring test files"
+        tar -xvf convective_transition_diag_obs_data.tar
+        tar -xvf EOF_500hPa_obs_data.tar
+        tar -xvf precip_diurnal_cycle_obs_data.tar
+        tar -xvf MJO_teleconnection_obs_data.tar
+        tar -xvf MJO_suite_obs_data.tar
+        tar -xvf Wheeler_Kiladis_obs_data.tar
+        # clean up tarballs
+        rm -f *.tar
+    - name: Run diagnostic tests set 1
+      run: |
+        echo "POD_OUTPUT is: "
+        echo "${POD_OUTPUT}"
+        conda activate _MDTF_base
+        cat ./mdtf
+        # trivial check that install script worked
+        ./mdtf --version
+        # run the test PODs
+        ./mdtf -v -f ${{matrix.json-file}}
+    - name: Get observational data for set 2
+      run: |
+        echo "${PWD}"
+        # remove data from previous run
+        # Actions moves you to the root repo directory in every step, so need to cd again
+        cd ../inputdata/obs_data
+        echo "deleting obs data from set 1"
+        rm -rf *
+        cd ../../
+        echo "Available Space"
+        df -h
+        # attempt FTP data fetch
+        # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
+        # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_prop_amp_obs_data.tar --output MJO_prop_amp_obs_data.tar
+        echo "Untarring set 2 test files"
+        tar -xvf MJO_prop_amp_obs_data.tar
+        # clean up tarballs
+        rm -f *.tar
+    - name: Run diagnostic tests set 2
+      run: |
+        conda activate _MDTF_base
+        cat ./mdtf
+        # trivial check that install script worked
+        ./mdtf --version
+        # run the test PODs
+        ./mdtf -v -f ${{matrix.json-file-set2}}
+    - name: Run unit tests
+      run: |
+        echo "${PWD}"
+        conda activate _MDTF_base
+        python -m unittest discover

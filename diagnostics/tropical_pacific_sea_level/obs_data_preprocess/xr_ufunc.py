@@ -21,7 +21,6 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
     da_conf (xr.DataArray) - a 2 dimension gridded data representing the confidence interval of the linear trend
     
     """
-    
     if skipna == True:
 
         # make sure the order of the dataarray is correct

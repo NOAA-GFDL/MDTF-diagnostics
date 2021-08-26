@@ -5,9 +5,14 @@
     "realm" : "ocean",
     "description" : "Tropical pacific sea level diagnostic",
     "runtime_requirements": {
-        "python3" : ["matplotlib", "xarray", "cartopy","cftime","numpy"]
+        "python3" : ["matplotlib","xarray","cartopy","cftime","numpy","dask"]
     },
     "pod_env_vars" : {
+      "predef_obs" : "True",
+      "obs_start_year" : "1993",
+      "obs_end_year" : "2009",
+      "x_axis_name" : "nlon",
+      "y_axis_name" : "nlat",
       "lon_coord_name" : "lon",
       "lat_coord_name" : "lat",
       "lat_min" : "10",

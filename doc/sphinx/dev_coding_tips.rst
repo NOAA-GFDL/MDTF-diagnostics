@@ -119,6 +119,9 @@ Python: Plotting
 
   When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this backend difference.
 
+- **Pass the cartopy CRS to plotting functions**: See cartopy's `documentation <https://scitools.org.uk/cartopy/docs/latest/tutorials/understanding_transform.html>`__. A coordinate reference system (CRS) must be passed as a ``projection`` argument when plot axes are created. This should be passed to subsequent functions that set the plot range (``crs`` argument of ``set_extent``: avoid the use of ``set_xlim``/``set_ylim``) and to plotting functions (``transform`` argument). 
+
+Note that this applies even to simple lat/lon plots, for which the appropriate CRS is ``PlateCarree()``. Not specifying a CRS in this case will give rise to subtle errors, e.g. when trying to set longitude ranges of [-180,180] or [0, 360] in which the bounds map to the same location.
 
 NCL
 ---

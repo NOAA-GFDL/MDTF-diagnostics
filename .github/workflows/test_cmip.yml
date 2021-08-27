@@ -76,7 +76,8 @@ jobs:
         # generate the data and run unit tests
         mdtf_synthetic.py -c CMIP --startyear 1 --nyears 10 --unittest
         cd ../
-        mkdir wkdir
+        echo ${PWD}
+        ls */*
     - name: Get observational data for set 3
       run: |
         echo "${PWD}"
@@ -91,10 +92,11 @@ jobs:
         mkdir -p inputdata/obs_data
         echo "Untarring set 3 test files"
         tar -xvf temp_extremes_distshape_obs_data.tar
-        echo ${PWD}
-        ls */*
         # clean up tarballs
         rm -f *.tar
+        mkdir wkdir
+        echo ${PWD}
+        ls */*
     - name: Run diagnostic tests set 3
       run: |
         conda activate _MDTF_base

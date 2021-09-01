@@ -137,9 +137,9 @@ html_theme_options = {
 html_static_path = ['_static']
 
 # # Paths (filenames) here must be relative to (under) html_static_path as above:
-# html_css_files = [
-#     '_static/custom.css',
-# ]
+html_css_files = [
+    '_static/custom.css',
+]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

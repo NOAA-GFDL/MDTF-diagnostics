@@ -34,7 +34,8 @@ def resolve_path(path, root_path="", env=None, log=_log):
         root_path (:obj:`str`, optional): root path to resolve `path` with. If
             not given, resolves relative to `cwd`.
 
-    Returns: Absolute version of `path`, relative to `root_path` if given,
+    Returns:
+        Absolute version of `path`, relative to `root_path` if given,
         otherwise relative to `os.getcwd`.
     """
     def _expandvars(path, env_dict):
@@ -110,7 +111,8 @@ def check_executable(exec_name):
     Args:
         exec_name (:py:obj:`str`): Name of the executable to search for.
 
-    Returns: :py:obj:`bool` True/false if executable was found on $PATH.
+    Returns:
+        True/False according to whether executable was found on $PATH.
     """
     return (find_executable(exec_name) is not None)
 
@@ -127,7 +129,8 @@ def find_files(src_dirs, filename_globs, n_files=None):
             :class:`~framework.util.exceptions.MDTFFileNotFoundError` if the
             number of files found is not equal to this number.
 
-    Returns: :py:obj:`list` of paths to files matching any of the criteria.
+    Returns:
+        List of paths to files matching any of the criteria.
         If no files are found, the list is empty.
     """
     src_dirs = basic.to_iter(src_dirs)

@@ -459,7 +459,8 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
         key_fn (optional): If supplied, function applied to elements of ``list_``
             to compare to keys of ``splice_d``.
 
-    Returns: spliced ``list_`` as described above.
+    Returns:
+        Spliced ``list_`` as described above.
     """
     if key_fn is None:
         key_fn = lambda x: x
@@ -488,7 +489,8 @@ def deserialize_class(name):
     Args:
         name (str): name of the class to look up.
 
-    Returns: class with the given name, or raise ValueError.
+    Returns:
+        Class with the given name, or raise ValueError.
     """
     try:
         # for performance, search python builtin types first before going

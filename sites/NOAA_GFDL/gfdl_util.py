@@ -229,7 +229,8 @@ def parse_frepp_stub(frepp_stub, log=_log):
 
     See `<https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures>`__.
 
-    Returns: :py:obj:`dict` of frepp parameters.
+    Returns:
+        :py:obj:`dict` of frepp parameters.
     """
     # parse arguments and relabel keys
     d = {}

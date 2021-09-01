@@ -692,7 +692,8 @@ def filter_dataclass(d, dc, init=False):
                 and exclude any of dc's fields with init=False.
             - If 'all': Include the union of the above two options.
 
-    Returns: dict containing the subset of key:value pairs from d such that the
+    Returns:
+        Dict containing the subset of key:value pairs from d such that the
         keys are included in the set of dc's fields specified by the value of
         init.
     """

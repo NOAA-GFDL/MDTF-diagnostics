@@ -71,7 +71,8 @@ class CMIP6_CVs(util.Singleton):
             items (str or list of str): Entries whose validity we'd like to
                 check.
 
-        Returns: boolean or list of booleans, corresponding to the validity of
+        Returns:
+            Boolean or list of booleans, corresponding to the validity of
             the entries in *items*.
         """
         self._make_cv()
@@ -90,7 +91,8 @@ class CMIP6_CVs(util.Singleton):
             source (str): the CV category to use for the keys.
             dest (str): the CV category to use for the values.
 
-        Returns: :class:`util.MultiMap` providing a dict-like lookup interface,
+        Returns:
+            :class:`util.MultiMap` providing a dict-like lookup interface,
             ie dest_value = d[source_key].
         """
         if (source, dest) in self._lookups:
@@ -122,7 +124,8 @@ class CMIP6_CVs(util.Singleton):
                 belong to.
             dest (str): the CV category we'd like the corresponding values for.
 
-        Returns: list of *dest* values corresponding to each entry in *source_items*.
+        Returns:
+            List of *dest* values corresponding to each entry in *source_items*.
         """
         _lookup = self.get_lookup(source, dest)
         if util.is_iterable(source_items):
@@ -155,7 +158,8 @@ class CMIP6_CVs(util.Singleton):
         Args:
             frequency (:class:`CMIP6DateFrequency`): DateFrequency
 
-        Returns: list of MIP table ``table_id`` names, if any, that use data at
+        Returns:
+            List of MIP table ``table_id`` names, if any, that use data at
             the given *frequency*.
         """
         self._make_cv()

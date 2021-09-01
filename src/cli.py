@@ -54,7 +54,8 @@ def read_config_files(code_root, file_name, site=""):
             in all subdirectories of :meth:`._CLIConfigHandler.site_dir`
             and :meth:`._CLIConfigHandler.framework_dir`, respectively.
 
-    Returns: a tuple of the two files' contents. First entry is the
+    Returns:
+        A tuple of the two files' contents. First entry is the
         site specific file (empty dict if that file isn't found) and second
         is the framework file (fatal error; exit immediately if not found.)
     """
@@ -713,7 +714,8 @@ class CLIConfigManager(util.Singleton):
             choice_of_plugin (str, optional): if provided, the name of the
                 choice of plugin.
 
-        Returns: :class:`.CLICommand` object corresponding to the requested
+        Returns:
+            :class:`.CLICommand` object corresponding to the requested
             plugin choice if both arguments are given, or a dict of recognized
             choices if only the first argument is given.
         """

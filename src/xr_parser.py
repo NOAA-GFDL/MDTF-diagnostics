@@ -121,7 +121,7 @@ class MDTFCFAccessorMixin(object):
                 of all coordinates in the dataset.
 
         Returns:
-            dict mapping axes labels to lists of names of variables in the
+            Dict mapping axes labels to lists of names of variables in the
             DataSet that the accessor has mapped to that axis.
         """
         if var_name is None:
@@ -241,7 +241,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                 supplied, restrict the returned dict to coordinates in *filter\_set*.
 
         Returns:
-            dict mapping axis labels to lists of the Dataset variables themselves,
+            Dict mapping axis labels to lists of the Dataset variables themselves,
             instead of their names.
         """
         ds = self._obj

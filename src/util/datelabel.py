@@ -115,7 +115,8 @@ class AtomicInterval(object):
             ignore_inf: ignore infinities if functions are provided
                 (default is True).
 
-        Returns: an Interval instance
+        Returns:
+            An Interval instance.
         """
         if callable(left):
             left = left(self._left)

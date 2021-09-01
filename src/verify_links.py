@@ -180,8 +180,8 @@ class LinkVerifier(object):
             root_url (str): URL of an html file to start the search at.
 
         Returns:
-            list of (link_source, link_target) tuples where the file in
-                link_target couldn't be found.
+            List of (link_source, link_target) tuples where the file in
+            link_target couldn't be found.
         """
         missing = []
         known_urls = set([root_url])
@@ -226,10 +226,10 @@ class LinkVerifier(object):
                 :meth:`breadth_first`, whose targets correspond to missing files.
 
         Returns:
-            dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing.
-                Missing files are listed by their path relative to the POD's
-                output directory.
+            Dict, with keys given by the short names of PODs with missing files
+            and values given by a list of the files that POD is missing.
+            Missing files are listed by their path relative to the POD's
+            output directory.
         """
         missing_dict = collections.defaultdict(list)
         for link in missing:
@@ -249,7 +249,7 @@ class LinkVerifier(object):
 
         Returns:
             A list of the files that POD is missing. Missing files are listed by
-                their path relative to the POD's output directory.
+            their path relative to the POD's output directory.
         """
         self.pod_name = pod_name
         self.WK_DIR = util.remove_suffix(
@@ -267,10 +267,10 @@ class LinkVerifier(object):
         framework and collect them by POD.
 
         Returns:
-            dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing.
-                Missing files are listed by their path relative to the POD's
-                output directory.
+            Dict, with keys given by the short names of PODs with missing files
+            and values given by a list of the files that POD is missing.
+            Missing files are listed by their path relative to the POD's
+            output directory.
         """
         if not self.root_file:
             self.root_file = 'index.html'

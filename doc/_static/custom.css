@@ -10,19 +10,12 @@
 
 /* Override few pygments styles */
 
-pre, tt, code {
+code, tt {
     background-color: transparent;
-}
-code.xref {
-    background-color: rgba(165, 181, 206, 0.35);
-    border-bottom: 1px solid rgb(165, 181, 206);
 }
 
 .highlight .nn, .highlight .nc {
     text-decoration: none;
-}
-.highlight {
-    border: 1px solid #3E4349;
 }
 
 .shorturl {
@@ -114,13 +107,22 @@ dt[id] {
 }
 
 /* More space between autodoc divs for classes, functions */
-dl[class="py class"], dl[class="py function"], dl[class="py exception"], dl[class="py data"] {
+dl[class="py class"] {
     padding-left: 8px;
     padding-right: 8px;
-    padding-top: 5px;
+    padding-top: 3px;
     padding-bottom: 11px;
-    margin-top: 6px;
-    margin-bottom: 17px;
+    margin-top: 4px;
+    margin-bottom: 15px;
+    background-color: #f2f5fa;
+}
+dl[class="py function"] {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 3px;
+    padding-bottom: 11px;
+    margin-top: 4px;
+    margin-bottom: 15px;
     background-color: #f2f5fa;
 }
 /* Less space between autodoc divs for attributes */
@@ -131,40 +133,13 @@ dt[class="py attribute"] {
     padding: 0px;
 }
 
-dt:target, .highlight, span.highlighted {
-    background: #fbe54c;
-}
-
-/* API reference table (parameters, raises, returns */
+/* Subtle colours for parameters and returns info for API reference items */
 dl.field-list > dt {
+    background-color: #c9d5e9;
     word-break: keep-all;
-    padding-top: 7px;
-    padding-bottom: 12px;
-}
-dl.field-list > dd {
-    padding-right: 5px;
-    padding-top: 7px;
-    padding-bottom: 12px;
 }
 dl[class~="field-list"] {
     margin-bottom: 15px;
-}
-/* shade rows of table */
-dl.field-list > dt[class="field-odd"] {
-    /* sidebar, odd rows */
-    background-color: #BFCCE0;
-}
-dl.field-list > dd[class="field-odd"] {
-    /* contents, odd rows */
-    background-color: #DDE3ED;
-}
-dl.field-list > dt[class="field-even"] {
-    /* sidebar, even rows */
-    background-color: #c9d5e9;
-}
-dl.field-list > dd[class="field-even"] {
-    /* contents, even rows */
-    background-color: #E6EBF2;
 }
 
 /* hack to visually align baseline of [source] links */

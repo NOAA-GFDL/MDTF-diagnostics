@@ -64,7 +64,7 @@ def read_config_files(code_root, file_name, site=""):
         site (str): Name of the site-specific directory (in ``/sites``) to search.
 
     Returns:
-        A tuple of the two files' contents. First element is the
+        A tuple of the two files' contents. First entry is the
         site specific file (empty dict if that file isn't found) and second
         is the framework file (if not found, fatal error and exit immediately.)
     """

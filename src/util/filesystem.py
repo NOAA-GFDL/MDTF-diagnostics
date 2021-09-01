@@ -36,7 +36,8 @@ def resolve_path(path, root_path="", env=None, log=_log):
             not given, resolves relative to :py:func:`os.getcwd`.
 
     Returns:
-        str: Absolute version of *path*.
+        Absolute version of `path`, relative to `root_path` if given,
+        otherwise relative to `os.getcwd`.
     """
     def _expandvars(path, env_dict):
         """Expand quoted variables of the form ``$key`` and ``${key}`` in *path*,
@@ -117,6 +118,9 @@ def check_executable(exec_name):
 
     Args:
         exec_name (:py:obj:`str`): Name of the executable to search for.
+
+    Returns:
+        True/False according to whether executable was found on $PATH.
     """
     return (find_executable(exec_name) is not None)
 
@@ -131,14 +135,9 @@ def find_files(src_dirs, filename_globs, n_files=None):
             is a shell globbing pattern, not a full regex.
         n_files (int): Optional. Number of files expected to be found.
 
-    Raises:
-        :class:`~src.util.exceptions.MDTFFileNotFoundError`: If *n_files* is
-            supplied and the number of files found is different than this
-            number.
-
     Returns:
-        List of paths to files matching any of the criteria. If no files are
-        found, the list is empty.
+        List of paths to files matching any of the criteria.
+        If no files are found, the list is empty.
     """
     src_dirs = basic.to_iter(src_dirs)
     filename_globs = basic.to_iter(filename_globs)

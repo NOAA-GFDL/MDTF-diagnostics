@@ -545,7 +545,7 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
             of *list\_* to compare to keys of *splice_d*.
 
     Returns:
-        Spliced *list\_* as described above.
+        Spliced ``list_`` as described above.
     """
     if key_fn is None:
         key_fn = lambda x: x
@@ -575,10 +575,7 @@ def deserialize_class(name):
         name (str): name of the class to look up.
 
     Returns:
-        :obj:`class` with the given name, if currently imported.
-
-    Raises:
-        :py:class:`ValueError`: If class not found in current namespace.
+        Class with the given name, or raise ValueError.
     """
     try:
         # for performance, search python builtin types first before going

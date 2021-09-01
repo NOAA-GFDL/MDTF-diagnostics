@@ -179,8 +179,8 @@ class LinkVerifier(object):
             root_url (str): URL of an html file to start the search at.
 
         Returns:
-            List of :class:`Link` objects where the file referenced in
-            link.target couldn't be found.
+            List of (link_source, link_target) tuples where the file in
+            link_target couldn't be found.
         """
         missing = []
         known_urls = set([root_url])

@@ -782,8 +782,9 @@ def filter_dataclass(d, dc, init=False):
             - If 'all': Include the union of the above two options.
 
     Returns:
-        dict: The subset of key:value pairs from *d* such that the keys are
-        included in the set of *dc*\'s fields specified by the value of *init*.
+        Dict containing the subset of key:value pairs from d such that the
+        keys are included in the set of dc's fields specified by the value of
+        init.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):

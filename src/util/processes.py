@@ -75,7 +75,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
             `timeout` seconds. Set to 0 to disable.
 
     Returns:
-        List of str containing output that was written to stdout
+        List of :py:obj:`str` containing output that was written to stdout
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
@@ -139,7 +139,7 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
             which uses the current working directory.
 
     Returns:
-        List of str containing output that was written to stdout
+        List of :py:obj:`str` containing output that was written to stdout
         by each command. Note: this is split on newlines after the fact, so if
         commands give != 1 lines of output this will not map to the list of commands
         given.

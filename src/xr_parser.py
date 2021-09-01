@@ -138,7 +138,7 @@ class MDTFCFAccessorMixin(object):
 
         Returns:
             Dict mapping axes labels to lists of names of variables in the
-            Dataset that the accessor has mapped to that axis.
+            DataSet that the accessor has mapped to that axis.
         """
         if var_name is None:
             axes_obj = self._obj

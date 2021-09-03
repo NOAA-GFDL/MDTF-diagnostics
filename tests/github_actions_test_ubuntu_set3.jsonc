@@ -3,13 +3,8 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    // The cases below correspond to the different sample model data sets. Note
-    // that the MDTF package does not currently support analyzing multiple
-    // models in a single invocation. Comment out or delete the first entry and
-    // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
-    // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "CMIP.Synthetic",
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
       "convention" : "CMIP",
       "FIRSTYR" : 1,
       "LASTYR" : 10,

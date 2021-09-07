@@ -41,8 +41,8 @@ ObjectStatus.__doc__ = """
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     """Base class providing shared functionality for the object hierarchy, which is:
 
-    - The framework itself (:class:`MDTFFramework`);
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package
+      (:class:`MDTFFramework`);
     - :class:`~diagnostic.Diagnostic`\s (PODs) belonging to a
       :class:`~data_manager.DataSourceBase`;
     - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging

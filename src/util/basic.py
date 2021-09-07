@@ -215,7 +215,8 @@ class NameSpace(dict):
     :py:obj:`dict` are supported.
 
     Note:
-        Recursive access (`d.key.subkey`, as in C-style languages) is not supported.
+        Recursive access (`d.key.subkey`, as in C-style languages) is not
+            supported.
 
     Implementation is based on `<https://github.com/Infinidat/munch>`__.
 
@@ -255,7 +256,7 @@ class NameSpace(dict):
             object.__setattr__(self, k, v)
 
     def __delattr__(self, k):
-        """Deletes attribute k if it exists, otherwise deletes key k. A KeyError
+        """ Deletes attribute k if it exists, otherwise deletes key k. A KeyError
             raised by deleting the key -- such as when the key is missing -- will
             propagate as an AttributeError instead.
         """
@@ -300,7 +301,7 @@ class NameSpace(dict):
 
     @classmethod
     def _toDict(cls, x):
-        """Recursively converts a NameSpace back into a dictionary.
+        """ Recursively converts a NameSpace back into a dictionary.
         (Note: as dicts are not hashable, they cannot be nested in
         sets/frozensets.)
         """
@@ -317,7 +318,7 @@ class NameSpace(dict):
 
     @classmethod
     def fromDict(cls, x):
-        """Recursively transforms a dictionary into a NameSpace via copy.
+        """ Recursively transforms a dictionary into a NameSpace via copy.
         (Note: as dicts are not hashable, they cannot be nested in
         sets/frozensets.)
         """
@@ -537,15 +538,15 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
        ['a', 'b', 'b1', 'b2', 'c']
 
     Args:
-        list\_ (list): Parent list to splice sub-lists into.
-        splice_d (dict): Sub-lists to splice in. Keys are entries in *list\_*
+        list\_: parent list to splice sub-lists into.
+        splice_d: dict of sub-lists to splice in. Keys are entries in ``list_``
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
         key_fn (function): Optional. If supplied, function applied to elements
             of *list\_* to compare to keys of *splice_d*.
 
     Returns:
-        Spliced ``list_`` as described above.
+        Spliced *list\_* as described above.
     """
     if key_fn is None:
         key_fn = lambda x: x

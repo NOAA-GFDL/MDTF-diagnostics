@@ -308,17 +308,24 @@ epub_exclude_files = ['search.html']
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
-    'autoclass_content': 'both',
-    'member-order': 'bysource',
-    'private-members': False,
-    'undoc-members': False,
-    'show-inheritance': False
+    'autoclass_content': 'both'
 }
 
 # exclude unit tests from docs
 # https://stackoverflow.com/a/21449475
 def autodoc_skip_member(app, what, name, obj, skip, options):
     return skip or name.startswith("test_")
+
+# remove redundant entries in namedtuples
+# https://chrisdown.name/2015/09/20/removing-namedtuple-docstrings-from-sphinx.html
+def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
+    is_namedtuple_docstring = (
+        len(lines) == 1 and
+        lines[0].startswith('Alias for field number')
+    )
+    if is_namedtuple_docstring:
+        # We don't return, so we need to purge in-place
+        del lines[:]
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
@@ -366,8 +373,16 @@ def patched_parse(self):
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
 
+napoleon_include_private_with_doc = False
+
 # -- Options for intersphinx extension -----------------------------------------
-intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None)}
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.7', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'xarray': ('http://xarray.pydata.org/en/stable/', None)
+}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -379,6 +394,7 @@ todo_include_todos = True
 def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-process-docstring', no_namedtuple_attrib_docstring)
     # app.connect('autodoc-skip-member', autodoc_skip_member)
 
     # AutoStructify for recommonmark

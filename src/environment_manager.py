@@ -37,9 +37,8 @@ class AbstractEnvironmentManager(abc.ABC):
     def tear_down(self): pass
 
 class NullEnvironmentManager(AbstractEnvironmentManager):
-    """:class:`AbstractEnvironmentManager` which performs no environment
-    switching. Useful only as a dummy setting for building framework test
-    harnesses.
+    """EnvironmentManager which performs no environment switching. Useful only
+    as a dummy setting for building framework test harnesses.
     """
     def create_environment(self, env_name):
         pass
@@ -407,8 +406,7 @@ class SubprocessRuntimePODWrapper(object):
         # print(pod+" Elapsed time ",elapsed)
 
 class SubprocessRuntimeManager(AbstractRuntimeManager):
-    """:class:`AbstractRuntimeManager` that spawns a separate system subprocess
-    for each POD.
+    """RuntimeManager that spawns a separate system subprocess for each POD.
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 

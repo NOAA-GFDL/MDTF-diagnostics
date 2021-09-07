@@ -145,9 +145,13 @@ class AtomicInterval(object):
         If 'adjacent' is set to True (default is False), then it returns True
         for adjacent intervals as well (e.g., [1, 2) and [2, 3], but not
         [1, 2) and (2, 3]).
-        :param other: an atomic interval.
-        :param adjacent: set to True to accept adjacent intervals as well.
-        :return: True if intervals overlap, False otherwise.
+
+        Args:
+            other: an atomic interval.
+            adjacent: set to True to accept adjacent intervals as well.
+
+        Returns:
+            True if intervals overlap, False otherwise.
         """
         if not isinstance(other, AtomicInterval):
             raise TypeError('Only AtomicInterval instances are supported.')
@@ -169,8 +173,11 @@ class AtomicInterval(object):
     def intersection(self, other):
         """
         Return the intersection of two intervals.
-        :param other: an interval.
-        :return: the intersection of the intervals.
+
+        Args:
+            other: an interval.
+        Returns:
+            The intersection of the intervals.
         """
         return self & other
 
@@ -178,16 +185,24 @@ class AtomicInterval(object):
         """Return the union of two intervals. If the union cannot be represented
         using a single atomic interval, return an Interval instance (which
         corresponds to an union of atomic intervals).
-        :param other: an interval.
-        :return: the union of the intervals.
+
+        Args:
+            other: an interval.
+
+        Returns:
+            The union of the intervals.
         """
         return self | other
 
     def contains(self, item):
         """Test if given item is contained in this interval.
         This method accepts atomic intervals, intervals and arbitrary values.
-        :param item: an atomic interval, an interval or any arbitrary value.
-        :return: True if given item is contained, False otherwise.
+
+        Args:
+            item: an atomic interval, an interval or any arbitrary value.
+
+        Returns:
+            True if given item is contained, False otherwise.
         """
         return item in self
 
@@ -376,8 +391,8 @@ class _DateMixin(object):
     """
     @staticmethod
     def date_format(dt, precision=None):
-        """Print date in YYYYMMDDHHMMSS format, with length being set automatically
-        from precision.
+        """Print date *dt* in YYYYMMDDHHMMSS format, with length being set
+        automatically from *precision*.
 
         Note:
             strftime() is broken for dates prior to 1900 in python < 3.3, see
@@ -396,8 +411,8 @@ class _DateMixin(object):
 
     @classmethod
     def increment(cls, dt, precision):
-        """Return a copy of dt advanced by one time unit as specified by
-        the `precision` attribute.
+        """Return a copy of *dt* advanced by one time unit as specified by
+        the *precision* attribute.
         """
         if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 12:
@@ -409,8 +424,8 @@ class _DateMixin(object):
 
     @classmethod
     def decrement(cls, dt, precision):
-        """Return a copy of Date moved back by one time unit as specified by
-        the `precision` attribute.
+        """Return a copy of *dt* moved back by one time unit as specified by
+        the *precision* attribute.
         """
         if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 1:

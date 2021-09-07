@@ -167,14 +167,14 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         return obj
 
 class RegexPatternWithTemplate(RegexPattern):
-    """Adds formatted output to RegexPattern.
+    """Adds formatted output to :class:`RegexPattern`.
 
         Args:
             template: str, optional. Template string to use for formatting
                 contents of match in format() method. Contents of the matched
                 fields will be subsituted using the {}-syntax of python string
                 formatting.
-            Other arguments the same
+            Other arguments the same.
     """
     def __init__(self, regex, defaults=None, input_field=None,
         match_error_filter=None, template=None, log=_log):
@@ -220,7 +220,7 @@ class RegexPatternWithTemplate(RegexPattern):
         return obj
 
 class ChainedRegexPattern(RegexPatternBase):
-    """Class which takes an 'or' of multiple RegexPatterns. Matches are
+    """Class which takes an 'or' of multiple :class:`RegexPattern`\s. Matches are
     attempted on the supplied RegexPatterns in order, with the first one that
     succeeds determining the returned answer. Public methods work the same as
     on RegexPattern.
@@ -676,26 +676,26 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
 # ----------------------------------------------------
 
 def filter_dataclass(d, dc, init=False):
-    """Return a dict of the subset of fields or entries in d that correspond to
-    the fields in dataclass dc.
+    """Return a dict of the subset of fields or entries in *d* that correspond to
+    the fields in dataclass *dc*.
 
     Args:
         d: (dict, dataclass or dataclass instance):
         dc: (dataclass or dataclass instance):
         init: bool or 'all', default False:
 
-            - If False: Include only the fields of dc (as returned by
-                :py:func:`dataclasses.fields`.)
-            - If True: Include only the arguments to dc's constructor (ie, include
-                any `init-only fields
-                <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
-                and exclude any of dc's fields with init=False.
+            - If False: Include only the fields of *dc* (as returned by
+              :py:func:`dataclasses.fields`.)
+            - If True: Include only the arguments to *dc*\'s constructor (i.e.,
+              include any `init-only fields
+              <https://docs.python.org/3/library/dataclasses.html#init-only-variables>`__
+              and exclude any of *dc*\'s fields with *init*=False.
             - If 'all': Include the union of the above two options.
 
     Returns:
-        Dict containing the subset of key:value pairs from d such that the
-        keys are included in the set of dc's fields specified by the value of
-        init.
+        Dict containing the subset of key:value pairs from *d* such that the
+            keys are included in the set of *dc*\'s fields specified by the value
+            of *init*.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
@@ -716,10 +716,10 @@ def filter_dataclass(d, dc, init=False):
     return ans
 
 def coerce_to_dataclass(d, dc, **kwargs):
-    """Given a dataclass dc (may be the class or an instance of it), and a dict,
-    dataclass or dataclass instance d, return an instance of dc's class with
-    field values initialized from those in d, along with any extra values
-    passed in kwargs.
+    """Given a dataclass *dc* (may be the class or an instance of it), and a dict,
+    dataclass or dataclass instance *d*, return an instance of *dc*\'s class with
+    field values initialized from those in *d*, along with any extra values
+    passed in *kwargs*.
     """
     new_kwargs = filter_dataclass(d, dc, init=True)
     if kwargs:

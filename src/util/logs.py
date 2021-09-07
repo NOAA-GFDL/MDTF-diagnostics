@@ -264,7 +264,8 @@ class TagMatchFilter(logging.Filter):
     designated combination of 'tag' attributes. These are assigned by the
     methods in :class:`MDTFObjectLogger` or can be passed via the 'extra' kwarg
     on any logger (see discussion in entry for
-    <https://docs.python.org/3.7/library/logging.html#logging.Logger.debug>__.)
+    `logging.Logger
+    <https://docs.python.org/3.7/library/logging.html#logging.Logger.debug>`__.)
     """
     def __init__(self, name="", tags=None):
         super(TagMatchFilter, self).__init__(name=name)
@@ -294,11 +295,10 @@ class MDTFObjectLogger(logging.Logger):
     """This class wraps functionality for use by :class:`MDTFObjectLoggerMixin`:
 
     - A :py:class:`~logging.Logger` to record events affecting the parent object
-        only. This logger does not propagate events up the log hierarchy: the
-        module-level logger should be passed if that functionality is desired.
-
+      only. This logger does not propagate events up the log hierarchy: the
+      module-level logger should be passed if that functionality is desired.
     - A list for holding :py:class:`Exception` objects received by the parent
-        object.
+      object.
     """
     def __init__(self, name):
         super(MDTFObjectLogger, self).__init__(name)
@@ -382,12 +382,11 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
     This wraps related functionalities:
 
     - A :py:class:`~logging.Logger` to record events affecting the object
-        only. Log messages are cached in a :py:class:`~io.StringIO` buffer.
-
+      only. Log messages are cached in a :py:class:`~io.StringIO` buffer.
     - A method :meth:`~MDTFObjectLogger.format` for formatting the contents of
-        the above into a string, along with log messages of any child objects.
-        This is intended for preparing log files (at the per-POD or per-case
-        level); logging intended for the console should use the module loggers.
+      the above into a string, along with log messages of any child objects.
+      This is intended for preparing log files (at the per-POD or per-case
+      level); logging intended for the console should use the module loggers.
     """
     def init_log(self, fmt=None):
         # Mixin class, so no __init__ for simplicity

@@ -231,7 +231,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
 
     def axes(self, var_name=None, filter_set=None):
         """Override cf_xarray accessor behavior
-        (from :meth:`~MDTFCFAccessorMixin._old_axes_dict).
+        (from :meth:`~MDTFCFAccessorMixin._old_axes_dict`).
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset

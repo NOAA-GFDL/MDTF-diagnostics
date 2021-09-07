@@ -178,8 +178,9 @@ class NameSpace(dict):
     For example, `d['key'] = value` becomes `d.key = value`. All methods of
     :py:obj:`dict` are supported.
 
-    Note: recursive access (`d.key.subkey`, as in C-style languages) is not
-        supported.
+    Note:
+        Recursive access (`d.key.subkey`, as in C-style languages) is not
+            supported.
 
     Implementation is based on `<https://github.com/Infinidat/munch>`__.
     """
@@ -216,7 +217,7 @@ class NameSpace(dict):
 
     def __delattr__(self, k):
         """ Deletes attribute k if it exists, otherwise deletes key k. A KeyError
-            raised by deleting the key--such as when the key is missing--will
+            raised by deleting the key -- such as when the key is missing -- will
             propagate as an AttributeError instead.
         """
         try:
@@ -235,33 +236,34 @@ class NameSpace(dict):
     __members__ = __dir__  # for python2.x compatibility
 
     def __repr__(self):
-        """ Invertible* string-form of a Munch.
-            (*) Invertible so long as collection contents are each repr-invertible.
+        """Invertible string-form of a Munch. (Invertible so long as collection
+        contents are each ``repr``-invertible.)
         """
         return '{0}({1})'.format(self.__class__.__name__, dict.__repr__(self))
 
     def __getstate__(self):
-        """ Implement a serializable interface used for pickling.
+        """Implement a serializable interface used for pickling.
         See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
         return {k: v for k, v in iter(self.items())}
 
     def __setstate__(self, state):
-        """ Implement a serializable interface used for pickling.
+        """Implement a serializable interface used for pickling.
         See `<https://docs.python.org/3.6/library/pickle.html>`__.
         """
         self.clear()
         self.update(state)
 
     def toDict(self):
-        """ Recursively converts a NameSpace back into a dictionary.
+        """Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)
 
     @classmethod
     def _toDict(cls, x):
         """ Recursively converts a NameSpace back into a dictionary.
-            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        (Note: as dicts are not hashable, they cannot be nested in
+        sets/frozensets.)
         """
         if isinstance(x, dict):
             return dict((k, cls._toDict(v)) for k, v in iter(x.items()))
@@ -277,7 +279,8 @@ class NameSpace(dict):
     @classmethod
     def fromDict(cls, x):
         """ Recursively transforms a dictionary into a NameSpace via copy.
-            nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+        (Note: as dicts are not hashable, they cannot be nested in
+        sets/frozensets.)
         """
         if isinstance(x, dict):
             return cls((k, cls.fromDict(v)) for k, v in iter(x.items()))
@@ -452,7 +455,7 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
        ['a', 'b', 'b1', 'b2', 'c']
 
     Args:
-        list_: parent list to splice sub-lists into.
+        list\_: parent list to splice sub-lists into.
         splice_d: dict of sub-lists to splice in. Keys are entries in ``list_``
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
@@ -460,7 +463,7 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
             to compare to keys of ``splice_d``.
 
     Returns:
-        Spliced ``list_`` as described above.
+        Spliced *list\_* as described above.
     """
     if key_fn is None:
         key_fn = lambda x: x

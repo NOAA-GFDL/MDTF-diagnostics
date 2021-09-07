@@ -325,8 +325,7 @@ epub_exclude_files = ['search.html']
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
-    'special-members': '__init__, __post_init__',
-    'inherited-members': True
+    'autoclass_content': 'both'
 }
 
 def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
@@ -410,6 +409,17 @@ def skip_members_handler(app, what, name, obj, skip, options):
     except Exception:
         return None
 
+# remove redundant entries in namedtuples
+# https://chrisdown.name/2015/09/20/removing-namedtuple-docstrings-from-sphinx.html
+def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
+    is_namedtuple_docstring = (
+        len(lines) == 1 and
+        lines[0].startswith('Alias for field number')
+    )
+    if is_namedtuple_docstring:
+        # We don't return, so we need to purge in-place
+        del lines[:]
+
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
 def run_apidoc(_):
@@ -478,8 +488,7 @@ def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
     app.connect('autodoc-process-docstring', no_namedtuple_attrib_docstring)
-    app.connect('autodoc-process-signature', abbreviate_logger_in_signature)
-    app.connect('autodoc-skip-member', skip_members_handler)
+    # app.connect('autodoc-skip-member', autodoc_skip_member)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829

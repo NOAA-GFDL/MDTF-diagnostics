@@ -1,5 +1,5 @@
-Internal code documentation
-===========================
+Internal API documentation
+==========================
 
 .. warning::
    The information in this section only pertains to the development and 
@@ -7,7 +7,10 @@ Internal code documentation
    the package, or for POD developers to develop new diagnostics.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   fmwk_doc_toc
-   fmwk_autodoc_toc
+   fmwk_intro
+   fmwk_config
+   fmwk_sites
+   fmwk_data
+   fmwk_utils

@@ -125,6 +125,15 @@ dl[class="py function"] {
     margin-bottom: 15px;
     background-color: #f2f5fa;
 }
+dl[class="py exception"] {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 3px;
+    padding-bottom: 11px;
+    margin-top: 4px;
+    margin-bottom: 15px;
+    background-color: #f2f5fa;
+}
 /* Less space between autodoc divs for attributes */
 dl[class="py method"] {
     margin-bottom: 8px;

@@ -5,6 +5,7 @@
   "case_list" : [
     {
       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
+      "model" : "synthetic",
       "convention" : "CMIP",
       "FIRSTYR" : 1,
       "LASTYR" : 10,

@@ -236,7 +236,6 @@ class LinkVerifier(object):
             # NB: commonprefix not commonpath, since we have URLs
             prefix = os.path.commonprefix([self.rel_path_root, link.target])
             rel_link = link.target[len(prefix):]
-            print("Missing link is",rel_link)
             pod = rel_link.split('/')[0]
             missing_dict[pod].append(rel_link)
         return missing_dict
@@ -259,7 +258,6 @@ class LinkVerifier(object):
         if not self.root_file:
             self.root_file = pod_name+'.html'
         root_url = urllib.parse.urljoin(self.root_url, self.root_file)
-        print("root_url is ",root_url)
         missing = self.breadth_first(root_url)
         missing_dict = self.group_relative_links(missing)
         return missing_dict.get(pod_name, [])

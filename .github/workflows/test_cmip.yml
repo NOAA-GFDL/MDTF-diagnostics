@@ -103,6 +103,8 @@ jobs:
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
         ls ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/temp_extremes_distshape/*
+        chmod a+rx /home/runner/work/MDTF-diagnostics/wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/temp_extremes_distshape/temp_extremes_distshape.log
+        printf "%s" "$(</home/runner/work/MDTF-diagnostics/wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/temp_extremes_distshape/temp_extremes_distshape.log)"
     - name: Run unit tests
       run: |
         echo "${PWD}"

@@ -272,7 +272,9 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
         cbar.ax.set_xticklabels(['1/2','1','2'])
     cbar.ax.tick_params(labelsize=20)
     ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
-    fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
+    figure_path = os.path.join(fig_dir,fig_name)
+    fig.savefig(figure_path, bbox_inches="tight")
+    #fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
 
     print("...Completed!")
     print("      Figure saved as "+fig_dir+'/'+fig_name+"!")

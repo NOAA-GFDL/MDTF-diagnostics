@@ -236,6 +236,7 @@ class LinkVerifier(object):
             # NB: commonprefix not commonpath, since we have URLs
             prefix = os.path.commonprefix([self.rel_path_root, link.target])
             rel_link = link.target[len(prefix):]
+            print("Missing link is",rel_link)
             pod = rel_link.split('/')[0]
             missing_dict[pod].append(rel_link)
         return missing_dict

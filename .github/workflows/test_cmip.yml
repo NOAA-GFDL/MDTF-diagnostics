@@ -97,7 +97,7 @@ jobs:
         mkdir wkdir
     - name: Run diagnostic tests set 3
       run: |
-        echo "${PWD}""
+        echo "${PWD}"
         conda activate _MDTF_base
         cat ./mdtf
         # trivial check that install script worked

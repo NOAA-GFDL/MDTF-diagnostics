@@ -23,7 +23,7 @@ jobs:
         conda-root: [/usr/share/miniconda3, /Users/runner/miniconda3]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
-        experimental: [false]
+        experimental: [true]
         exclude:
           - os: ubuntu-latest
             conda-root: /Users/runner/miniconda3
@@ -95,16 +95,16 @@ jobs:
         # clean up tarballs
         rm -f *.tar
         mkdir wkdir
-        echo ${PWD}
-        ls ./inputdata/obs_data/*
     - name: Run diagnostic tests set 3
       run: |
+        echo "${PWD}""
         conda activate _MDTF_base
         cat ./mdtf
         # trivial check that install script worked
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
+        ls ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/temp_extremes_distshape/model
     - name: Run unit tests
       run: |
         echo "${PWD}"

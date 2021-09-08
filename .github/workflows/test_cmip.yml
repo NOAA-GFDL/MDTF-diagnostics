@@ -96,7 +96,7 @@ jobs:
         rm -f *.tar
         mkdir wkdir
         echo ${PWD}
-        ls */*
+        ls */inputdata/obs_data/*
     - name: Run diagnostic tests set 3
       run: |
         conda activate _MDTF_base

@@ -65,11 +65,11 @@ Z500anommaxval=2
 Z500anomrangestep=0.1
 
 ### Model output figure
-FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
+FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model"
 FIG_OUTPUT_FILENAME="CircComps_"+city+"_"+monthstr+".png"
 
 ### Reanalysis output figure for comparisons
-FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
+FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs"
 FIG_OBS_FILENAME="MERRA2_198001-200912_res=0.5-0.66.CircComps_"+city+"_"+monthstr+".png"
 
 # ======================================================================

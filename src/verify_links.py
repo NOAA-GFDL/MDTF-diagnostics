@@ -258,6 +258,7 @@ class LinkVerifier(object):
         if not self.root_file:
             self.root_file = pod_name+'.html'
         root_url = urllib.parse.urljoin(self.root_url, self.root_file)
+        print("root_url is ",root_url)
         missing = self.breadth_first(root_url)
         missing_dict = self.group_relative_links(missing)
         return missing_dict.get(pod_name, [])

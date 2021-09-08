@@ -317,6 +317,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             verbose=False,
             log=pod.log
         )
+        print("WORKING DIR IS  ",self.WK_DIR)
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
             pod.deactivate(

@@ -319,9 +319,10 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         )
         missing_out = verifier.verify_pod_links(pod.name)
         if missing_out:
-            pod.deactivate(
-                util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
-            )
+            #pod.deactivate(
+          #      util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
+          # )
+          pod.log.info('\tFiles missing, but continuing anyway')
         else:
             pod.log.info('\tNo files are missing.')
 

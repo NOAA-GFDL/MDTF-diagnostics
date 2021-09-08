@@ -21,17 +21,17 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "/home/runner/work/MDTF-diagnostics/inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "/home/runner/work/MDTF-diagnostics/mdtf_test_data",
+  "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
-  "WORKING_DIR": "/home/runner/work/MDTF-diagnostics/wkdir",
+  "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory.
-  "OUTPUT_DIR": "/home/runner/work/MDTF-diagnostics/wkdir",
+  "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned lsby running `conda info --base`.) If empty,

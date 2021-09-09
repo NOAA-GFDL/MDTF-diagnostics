@@ -2,6 +2,7 @@
 imports.
 """
 import os
+import sys
 import errno
 from subprocess import CalledProcessError
 
@@ -21,7 +22,15 @@ def exit_on_exception(exc, msg=None):
     print(f'ERROR: caught exception {repr(exc)}')
     if msg:
         print(msg)
-    exit(1)
+    exit_handler(code=1)
+
+def exit_handler(code=1, msg=None):
+    """Wraps all calls to :py:func:`sys.exit`; could do additional
+    cleanup not handled by atexit() here.
+    """
+    if msg:
+        print(msg)
+    sys.exit(code)
 
 def chain_exc(exc, new_msg, new_exc_class=None):
     if new_exc_class is None:

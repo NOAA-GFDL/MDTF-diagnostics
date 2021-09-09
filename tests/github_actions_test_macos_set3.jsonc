@@ -1,25 +1,17 @@
-// Configuration for MDTF-diagnostics driver script self-test.
+// Configuration for MDTF-diagnostics driver script self-test using the macOS github action.
+//
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    // The cases below correspond to the different sample model data sets. Note
-    // that the MDTF package does not currently support analyzing multiple
-    // models in a single invocation. Comment out or delete the first entry and
-    // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
-    // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "NCAR.Synthetic",
-      "convention" : "CESM",
-      "FIRSTYR" : 1975,
-      "LASTYR" : 1981,
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
+      "model" : "synthetic",
+      "convention" : "CMIP",
+      "FIRSTYR" : 1,
+      "LASTYR" : 10,
       "pod_list": [
-        "convective_transition_diag",
-        "Wheeler_Kiladis",
-        "MJO_suite",
-        "MJO_teleconnection",
-        "precip_diurnal_cycle",
-        "EOF_500hPa"
+          "temp_extremes_distshape"
       ]
     }
   ],
@@ -46,13 +38,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned lsby running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/usr/share/miniconda3",
+  "conda_root": "/Users/runner/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "/usr/share/miniconda3/envs",
+  "conda_env_root": "/Users/runner/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

@@ -180,7 +180,7 @@ jobs:
         rm -f *.tar
     - name: Run diagnostic tests set 3
       run: |
-        conda activate _MDTF_python3_base
+        conda activate _MDTF_base
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
     - name: Run unit tests

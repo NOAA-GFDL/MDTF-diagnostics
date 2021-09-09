@@ -157,9 +157,6 @@ jobs:
     - name: Run diagnostic tests set 2
       run: |
         conda activate _MDTF_base
-        cat ./mdtf
-        # trivial check that install script worked
-        ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set2}}
     - name: Get observational data for set 3
@@ -183,14 +180,10 @@ jobs:
         rm -f *.tar
     - name: Run diagnostic tests set 3
       run: |
-        conda activate _MDTF_base
-        cat ./mdtf
-        # trivial check that install script worked
-        ./mdtf --version
+        conda activate _MDTF_python3_base
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
     - name: Run unit tests
       run: |
-        echo "${PWD}"
         conda activate _MDTF_base
         python -m unittest discover

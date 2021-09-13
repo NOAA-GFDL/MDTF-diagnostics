@@ -9,7 +9,6 @@
       "FIRSTYR" : 1975,
       "LASTYR" : 1981,
       "pod_list": [
-          // Optional: PODs to run for this model only (defaults to all)
         "convective_transition_diag",
         "Wheeler_Kiladis",
         "MJO_suite",

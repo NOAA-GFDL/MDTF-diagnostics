@@ -12,12 +12,17 @@
 import os
 import os.path
 
+import time
+import datetime
 # ======================================================================
 # ======================================================================
 # ======================================================================`
 
-print( "Starting ENSO_RWS.py ") 
+###  the switches to select LEVEL_04 or LEVEL_05  either 0 or 1 but not both the same
+level4  = 1
+level5  = 0
 
+print( "Starting ENSO_RWS.py ") 
 
 os.environ["ENSO_RWS_WKDIR"] = os.environ["WK_DIR"]
 
@@ -56,7 +61,9 @@ print("=================================================================")
        
 ###  
 print("=================================================================")
-print(" Starting Observational LEVEL_01 module                         ")
+now = datetime.datetime.now()
+print(" Starting LEVEL_01 module " +  now.strftime("%Y-%m-%d %H:%M"))
+
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/check_input_files_OBS.py")
 print("        Finished check_input_files_OBS.py")
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/get_directories_OBS.py")
@@ -67,9 +74,6 @@ print("        Finished get_directories.py")
 
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/check_input_files.py")
 print("        Finished check_input_files.py")
-
-os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/process_data.py")
-print("        Finished process_data.py")
 
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_01/LEVEL_01.py")
 print("        Finished LEVEL_01.py")
@@ -84,11 +88,31 @@ if os.path.isfile( file_dest):
     os.system("rm -f "+file_dest)
 os.system("cp "+file_src+" "+file_dest)
 
-file_src  = os.environ["POD_HOME"]+"/ENSO_RWS.html"
-file_dest = os.environ["ENSO_RWS_WKDIR"]+"/ENSO_RWS.html"
-if os.path.isfile( file_dest ):
-    os.system("rm -f "+file_dest)
-os.system("cp "+file_src+" "+file_dest)
+### select either level 4 or 5 html
+if( level4  == 1): 
+    file_src  = os.environ["POD_HOME"]+"/ENSO_RWS_04.html"
+    file_dest  = os.environ["POD_HOME"]+"/ENSO_RWS.html"
+    if os.path.isfile( file_dest ):
+        os.system("rm -f "+file_dest)
+    os.system("cp "+file_src+" "+file_dest)
+
+    file_dest = os.environ["ENSO_RWS_WKDIR"]+"/ENSO_RWS.html"
+    if os.path.isfile( file_dest ):
+        os.system("rm -f "+file_dest)
+    os.system("cp "+file_src+" "+file_dest)
+
+if( level5  == 1): 
+    file_src  = os.environ["POD_HOME"]+"/ENSO_RWS_05.html"
+    file_dest  = os.environ["POD_HOME"]+"/ENSO_RWS.html"
+    if os.path.isfile( file_dest ):
+        os.system("rm -f "+file_dest)
+    os.system("cp "+file_src+" "+file_dest)
+
+    file_dest = os.environ["ENSO_RWS_WKDIR"]+"/ENSO_RWS.html"
+    if os.path.isfile( file_dest ):
+        os.system("rm -f "+file_dest)
+    os.system("cp "+file_src+" "+file_dest)
+
 
 file_src  = os.environ["POD_HOME"]+"/doc/ENSO_RWS.pdf"
 file_dest = os.environ["ENSO_RWS_WKDIR"]+"/ENSO_RWS.pdf"
@@ -107,6 +131,8 @@ print("=================================================================")
 print("=================================================================")
 print(" Scripts is going to calculate RWS terms based on results from LEVEL_01 ")
 print("=================================================================")
+now = datetime.datetime.now()
+print(" Starting LEVEL_02 module " +  now.strftime("%Y-%m-%d %H:%M"))
 print("=================================================================")
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_02/LEVEL_02.py")
 print("        Finished LEVEL_02.py")
@@ -120,23 +146,41 @@ print("=================================================================")
 print("=================================================================")
 print(" Scripts is going to calculate expanded set of RWS terms based on results from LEVEL_01 ")
 print("=================================================================")
+now = datetime.datetime.now()
+print(" Starting LEVEL_04/05 module " +  now.strftime("%Y-%m-%d %H:%M"))
 print("=================================================================")
 os.system("python "+os.environ["POD_HOME"]+"/LEVEL_03/LEVEL_03.py")
 print("        Finished LEVEL_03.py")
 print(" Finished LEVEL_03 module                         ")
 print("=================================================================")
 print("========================== END =================================")
+if( level4 == 1):
 # 4. LEVEL_04
 #
 # ==================================================================================================
-print("=================================================================")
-print(" Scripts is going to calculate expanded set of RWS terms based on results from LEVEL_01 ")
-print("=================================================================")
-print("=================================================================")
-os.system("python "+os.environ["POD_HOME"]+"/LEVEL_04/LEVEL_04.py")
-print("        Finished LEVEL_04.py")
-print(" Finished LEVEL_04 module                         ")
-print("=================================================================")
-print("========================== END =================================")
-
-
+    print("=================================================================")
+    print(" Scripts is going to calculate expanded set of RWS terms based on results from LEVEL_01 ")
+    print("=================================================================")
+    print("=================================================================")
+    os.system("python "+os.environ["POD_HOME"]+"/LEVEL_04/LEVEL_04.py")
+    print("        Finished LEVEL_04.py")
+    print(" Finished LEVEL_04 module                         ")
+    print("=================================================================")
+    print("========================== END =================================")
+###########################
+if( level5 == 1):
+# 5. LEVEL_05
+#
+# ==================================================================================================
+    print("=================================================================")
+    print(" Scripts is going to calculate expanded set of RWS terms based on results from LEVEL_01 ")
+    print("=================================================================")
+    print("=================================================================")
+    os.system("python "+os.environ["POD_HOME"]+"/LEVEL_05/LEVEL_05.py")
+    print("        Finished LEVEL_05.py")
+    print(" Finished LEVEL_05 module                         ")
+    print("=================================================================")
+    print("========================== END =================================")
+now = datetime.datetime.now()
+print(" RWS POD finished " +  now.strftime("%Y-%m-%d %H:%M"))
+print( "========= POD END =============================================")

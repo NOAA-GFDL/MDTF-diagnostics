@@ -142,6 +142,13 @@ dt[class="py attribute"] {
     padding: 0px;
 }
 
+dt:target, .highlight {
+    background: #fbe54c;
+}
+dt:target, span.highlighted {
+    background: #fbe54c;
+}
+
 /* Subtle colours for parameters and returns info for API reference items */
 dl.field-list > dt {
     background-color: #c9d5e9;

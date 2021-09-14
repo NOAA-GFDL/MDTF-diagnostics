@@ -74,11 +74,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def failed(self):
-        return (self.status == ObjectStatus.FAILED) # abbreviate
+        return self.status == ObjectStatus.FAILED # abbreviate
 
     @property
     def active(self):
-        return (self.status == ObjectStatus.ACTIVE) # abbreviate
+        return self.status == ObjectStatus.ACTIVE # abbreviate
 
     @property
     @abc.abstractmethod
@@ -526,7 +526,7 @@ class Fieldlist():
                 f"convention '{self.name}'."))
 
         lut1 = self.lut[standard_name] # abbreviate
-        if modifier is None:
+        if modifier is None or modifier.strip() == "":
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 raise ValueError((f"Variable name in convention '{self.name}' "

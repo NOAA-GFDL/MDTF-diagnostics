@@ -50,7 +50,7 @@ def get_parameters_in(lon1, lon2, lat1, lat2, sigma,  im1, im2, season, prefix):
         line = line.strip()
         column = line.split()
         season = column[2]
-
+    
         file.close()
 
     else:

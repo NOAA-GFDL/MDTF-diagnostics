@@ -212,7 +212,7 @@ begin
     res2@gsnFrame             = False               ; don't advance frame
     res2@gsnDraw              = False
 
-     delete(uuc@long_name)
+;;     delete(uuc@long_name)
 
     res2@cnLineThicknessF =   1;;    4 ;;   linethick
     res2@cnLineLabelInterval        = 1             ; default = 2

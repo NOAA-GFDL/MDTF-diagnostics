@@ -60,6 +60,7 @@ begin
     nameinV =  datadir + "/" + "va.nc"
     nameinU2 =  datadir2 + "/" + "ua.nc"
     nameinV2 =  datadir2 + "/" + "va.nc"   ;; climatologies
+    tt0 = 0 
 
 ;; calculate RR+ and  RWS terms 1234,  need climatology too
     f = addfile( nameinX, "r")
@@ -77,7 +78,7 @@ begin
 ;;;   make it  only positive
      pra = where( pra .ge. 0., pra, pra@_FillValue)
 ;;     make it area average lon1, lon2, lat1, lat2
-     xx = wgt_areaave_Wrap(pra( {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
+     xx = wgt_areaave_Wrap(pra(tt0, {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
 ;;;; all terms 
     omega = 7.292E-05
     pi = 3.142
@@ -122,7 +123,7 @@ begin
 
      cvort = cvort2
      do j = 0, ydim1 - 1
-     cvort(:, :, j, :) =  ( fcoriol(j)  + cvort2(:, :, j, :) )
+     cvort(:, :, j, :) =  ( tofloat(fcoriol(j))  + cvort2(:, :, j, :) )
      end do
 
      avortx = ua
@@ -133,10 +134,10 @@ begin
     avort_grad =  grad_latlon_cfd( avort, lat, lon, True, False) ;;
     cvort_grad =  grad_latlon_cfd( cvort, lat, lon, True, False) ;;
 
-      avortx = avort_grad[1]
-      avorty = avort_grad[0]
-      cvortx = cvort_grad[1]
-      cvorty = cvort_grad[0]
+      avortx = tofloat( avort_grad[1])
+      avorty = tofloat( avort_grad[0])
+      cvortx = tofloat( cvort_grad[1])
+      cvorty = tofloat( cvort_grad[0])
 
      adiv = ua
      cdiv = uc

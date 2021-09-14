@@ -94,7 +94,7 @@ begin
 
      cvort = cvort2
      do j = 0, ydim1 - 1
-     cvort(:, :, j, :) =  ( fcoriol(j)  + cvort2(:, :, j, :) )
+     cvort(:, :, j, :) =  ( tofloat(fcoriol(j))  + cvort2(:, :, j, :) )
      end do
 
      avortx = ua
@@ -105,10 +105,10 @@ begin
     avort_grad =  grad_latlon_cfd( avort, lat, lon, True, False) ;;
     cvort_grad =  grad_latlon_cfd( cvort, lat, lon, True, False) ;;
 
-     avortx = avort_grad[1]
-     avorty = avort_grad[0]
-     cvortx = cvort_grad[1]
-     cvorty = cvort_grad[0]
+     avortx = tofloat( avort_grad[1])
+     avorty = tofloat( avort_grad[0])
+     cvortx = tofloat( cvort_grad[1])
+     cvorty = tofloat( cvort_grad[0])
 
      adiv = ua
      cdiv = uc

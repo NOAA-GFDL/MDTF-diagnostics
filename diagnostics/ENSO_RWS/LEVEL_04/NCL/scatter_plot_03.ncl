@@ -6,7 +6,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
 
-   prefix =  getenv("OBS_DATA") + "/SCATTER/"
+  prefix =  getenv("OBS_DATA") + "/SCATTER/"
 
    datadir  =  getenv("ENSO_RWS_WKDIR") + "/model/netCDF/ELNINO/"
    datadir2  =  getenv("ENSO_RWS_WKDIR") + "/model/netCDF/"
@@ -46,7 +46,7 @@ begin
      ff2 = 1.E+11
 
     undef2 = -9999.
-
+    tt0 = 0 
 ;;;;;;;;;;;;  RR positive anomaly 
     lon1 = 110.
     lon2 = 140.
@@ -81,7 +81,7 @@ begin
 ;;;   make it  only positive
      pra = where( pra .ge. 0., pra, pra@_FillValue)
 ;;     make it area average lon1, lon2, lat1, lat2
-     xx = wgt_areaave_Wrap(pra( {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
+     xx = wgt_areaave_Wrap(pra(tt0,  {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
 ;;;  RW2 term 2
      omega = 7.292E-05
     pi = 3.142
@@ -124,8 +124,8 @@ begin
 
      cvort_grad =  grad_latlon_cfd( cvort, lat, lon, True, False)
    
-     cvortx = cvort_grad[1]
-     cvorty = cvort_grad[0]
+     cvortx = tofloat(cvort_grad[1])
+     cvorty = tofloat(cvort_grad[0])
 
      adiv = ua
      adiv = uv2dv_cfd (ua, va, lat, lon, 3)
@@ -142,7 +142,6 @@ begin
 ;;  mask the undefined   0 = zonal  1 = meridional
     aUVdiv(0, :, :, :, :) = where( .not.ismissing(ua(:, :, :, :)), aUVdiv(0, :, :, :, :), ua@_FillValue)
     aUVdiv(1, :, :, :, :) = where( .not.ismissing(ua(:, :, :, :)), aUVdiv(1, :, :, :, :), ua@_FillValue)
-
 
     term2(:, :, :, :) = -1.*( aUVdiv(0, :, :, :, :) * cvortx(:, :, :, :) +  aUVdiv(1, :, :, :, :) * cvorty(:, :, :, :))
 

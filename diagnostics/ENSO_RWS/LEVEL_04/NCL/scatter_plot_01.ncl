@@ -44,6 +44,7 @@ begin
     nameinU2 =  datadir2 + "/" + "ua.nc"
     nameinV2 =  datadir2 + "/" + "va.nc"
 
+     tt0 = 0 
 ;;---Tickmark resources
     xmin  =  2. ;; 
     xmax  =  8. ;;
@@ -92,7 +93,7 @@ begin
 ;;;   make it  only positive
       pra = where( pra .ge. 0., pra, pra@_FillValue)
 ;;     make it area average lon1, lon2, lat1, lat2
-       xx = wgt_areaave_Wrap(pra( {lat1:lat2}, {lon1:lon2}),1.0,1.0,0) 
+       xx = wgt_areaave_Wrap(pra(tt0, {lat1:lat2}, {lon1:lon2}),1.0,1.0,0) 
 ;;;   similar for Y variable
      fu = addfile( nameinU, "r")     
      fv = addfile( nameinV, "r")

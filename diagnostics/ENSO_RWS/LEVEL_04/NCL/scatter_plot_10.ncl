@@ -32,7 +32,7 @@ begin
 
     nameinX =  datadir + "/" + "pr.nc"
     nameinX2 =  datadir2 + "/" + "pr.nc"
-
+    tt0 = 0
 ;;---Tickmark resources
     xmin  = 0. ;; 0
     xmax  = 8. ;; 3.6
@@ -82,7 +82,7 @@ begin
 ;;;   make it  only positive
       pra = where( pra .ge. 0., pra, pra@_FillValue)
 ;;     make it area average lon1, lon2, lat1, lat2
-       xx = wgt_areaave_Wrap(pra( {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
+       xx = wgt_areaave_Wrap(pra(tt0,  {lat1:lat2}, {lon1:lon2}),1.0,1.0,0)
 
 ;;;   YY PNA index
     namein2 = datadir2 + "PNA.txt"

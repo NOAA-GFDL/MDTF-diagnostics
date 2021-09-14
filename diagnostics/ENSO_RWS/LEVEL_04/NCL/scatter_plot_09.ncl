@@ -205,7 +205,7 @@ begin
             jindex( k1) = j 
             bmask(j,i) = 1.
 	        if( lon22( i) .gt. xx_lon) 
-	          xx_lon = lon22( i)
+	          xx_lon = tofloat(lon22( i))
                end if  
            end if 
           end do 

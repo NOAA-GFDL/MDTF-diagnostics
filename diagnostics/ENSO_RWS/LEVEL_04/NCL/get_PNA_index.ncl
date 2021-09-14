@@ -46,6 +46,7 @@ begin
        lon2 =  tofloat ( dlon)
 
        time0 = fin->$timex$
+       time0@calendar  ="standard"
        time2 = calendar_decode2 ( time0 ,  -5)
 
         if (isfilevar(fin, "lev")) then

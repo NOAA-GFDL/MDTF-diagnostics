@@ -44,6 +44,7 @@ begin
      ys4 = 0.14
 
      colormap =  "precip4_diff_19lev"
+   tt0 = 0 
 
    do icase = 1, 2 
 
@@ -130,7 +131,7 @@ begin
      label4 = "  Months/Season= " + season + "                       units:" +  varunit
      end if
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
-     plot = gsn_csm_contour_map(wks, rr, res)
+     plot = gsn_csm_contour_map(wks, rr(tt0,:,:), res)
 
      end do 
   delete( [/ rr, rr1, rr2 /])

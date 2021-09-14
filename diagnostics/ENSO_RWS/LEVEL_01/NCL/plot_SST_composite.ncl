@@ -40,7 +40,7 @@ begin
 
      xs4 = 0.08
      ys4 = 0.14
-
+     tt0 = 0 
      colormap = "BlueWhiteOrangeRed" 
 
    do icase = 1, 2 
@@ -129,7 +129,7 @@ begin
      label4 = "  Months/Season= " + season + "                       units:" +  varunit
      end if
      gsn_text_ndc (wks, label4, xs4, ys4, txres2)
-     plot = gsn_csm_contour_map(wks, sst, res)
+     plot = gsn_csm_contour_map(wks, sst(tt0,:,:), res)
 
      end do 
  

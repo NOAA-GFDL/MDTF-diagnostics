@@ -108,9 +108,6 @@ begin
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;     READ DATA IN  here 
-;;;     get the input files from  mon/ERA-INTERIM.nc  
-;;;     filesin = systemfunc("ls " + namein + "*012*02.nc")
-;;       loop over variables  3D first 
 
 	d3var = 1
        d2var = 1

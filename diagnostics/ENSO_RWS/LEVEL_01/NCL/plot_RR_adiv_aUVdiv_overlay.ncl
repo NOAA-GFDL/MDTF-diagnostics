@@ -277,7 +277,7 @@ begin
      res@cnLevels    =   levels1 
      cmap = read_colormap_file("precip4_diff_19lev")
      gsn_define_colormap(wks,"precip4_diff_19lev")
-     plot1 = gsn_csm_contour_map(wks,  rra( :, :), res)
+     plot1 = gsn_csm_contour_map(wks,  rra(tt0,  :, :), res)
  
    delete(cmap)
    delete( res@cnLevels)

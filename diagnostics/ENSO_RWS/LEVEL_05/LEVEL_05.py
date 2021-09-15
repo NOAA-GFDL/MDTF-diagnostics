@@ -13,15 +13,11 @@
 #
 ##      This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
-import numpy as np
 import sys
-import math
 import os
 
-import time
 import datetime
 
-import os
 shared_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     'shared'

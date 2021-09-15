@@ -524,14 +524,21 @@ class Fieldlist():
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
                 f"convention '{self.name}'."))
-
         lut1 = self.lut[standard_name] # abbreviate
+        fl_entry = None
+        empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
         if modifier is None or modifier.strip() == "":
             entries = tuple(lut1.values())
             if len(entries) > 1:
-                raise ValueError((f"Variable name in convention '{self.name}' "
-                    f"not uniquely determined by standard name '{standard_name}'."))
-            fl_entry = entries[0]
+                for e in entries:
+                    if e.modifier.strip() == "":
+                        fl_entry = e
+                        empty_mod_count += 1
+                if fl_entry is None or empty_mod_count > 1:
+                    raise ValueError((f"Variable name in convention '{self.name}' "
+                        f"not uniquely determined by standard name '{standard_name}'."))
+            else:
+                fl_entry = entries[0]
         else:
             modifier = frozenset(modifier)
             if modifier not in lut1:

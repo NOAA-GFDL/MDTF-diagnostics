@@ -35,8 +35,8 @@ class MDTFABCMeta(abc.ABCMeta):
     `<https://stackoverflow.com/a/50381071>`__.
 
     Raises:
-        NotImplementedError: If a child class doesn't define an
-            abstract attribute, by analogy with :py:func:`abc.abstract_method`.
+        :py:class:`NotImplementedError`: If a child class doesn't define an
+        abstract attribute, by analogy with :py:func:`abc.abstract_method`.
     """
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
@@ -165,7 +165,7 @@ class WormDict(collections.UserDict, dict):
     @classmethod
     def from_struct(cls, d):
         """Construct a WormDict from a dict *d*. Intended to be used for automatic
-        type coercion done on fields of a :func:`~src.util.dataclass.mdtf_dataclass`.
+        type coercion done on fields of a :func:~src.util.dataclass.mdtf_dataclass.
         """
         return cls(**d)
 
@@ -215,8 +215,7 @@ class NameSpace(dict):
     :py:obj:`dict` are supported.
 
     Note:
-        Recursive access (`d.key.subkey`, as in C-style languages) is not
-            supported.
+        Recursive access (`d.key.subkey`, as in C-style languages) is not supported.
 
     Implementation is based on `<https://github.com/Infinidat/munch>`__.
 
@@ -256,7 +255,7 @@ class NameSpace(dict):
             object.__setattr__(self, k, v)
 
     def __delattr__(self, k):
-        """ Deletes attribute k if it exists, otherwise deletes key k. A KeyError
+        """Deletes attribute k if it exists, otherwise deletes key k. A KeyError
             raised by deleting the key -- such as when the key is missing -- will
             propagate as an AttributeError instead.
         """
@@ -301,7 +300,7 @@ class NameSpace(dict):
 
     @classmethod
     def _toDict(cls, x):
-        """ Recursively converts a NameSpace back into a dictionary.
+        """Recursively converts a NameSpace back into a dictionary.
         (Note: as dicts are not hashable, they cannot be nested in
         sets/frozensets.)
         """
@@ -318,7 +317,7 @@ class NameSpace(dict):
 
     @classmethod
     def fromDict(cls, x):
-        """ Recursively transforms a dictionary into a NameSpace via copy.
+        """Recursively transforms a dictionary into a NameSpace via copy.
         (Note: as dicts are not hashable, they cannot be nested in
         sets/frozensets.)
         """
@@ -379,7 +378,7 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     1) Assign (integer) values automatically to the members of the enumeration.
     2) Provide a :meth:`~_MDTFEnumMixin.from_struct` method to simplify
        instantiating an instance from a string. Intended to be used for automatic
-       type coercion done on fields of a :func:`~src.util.dataclass.mdtf_dataclass`.
+       type coercion done on fields of a :func:~src.util.dataclass.mdtf_dataclass.
        To avoid potential confusion with reserved keywords, we use the Python
        convention that members of the enumeration are all uppercase.
     """
@@ -538,8 +537,8 @@ def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
        ['a', 'b', 'b1', 'b2', 'c']
 
     Args:
-        list\_: parent list to splice sub-lists into.
-        splice_d: dict of sub-lists to splice in. Keys are entries in ``list_``
+        list\_ (list): Parent list to splice sub-lists into.
+        splice_d (dict): Sub-lists to splice in. Keys are entries in *list\_*
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
         key_fn (function): Optional. If supplied, function applied to elements
@@ -576,7 +575,10 @@ def deserialize_class(name):
         name (str): name of the class to look up.
 
     Returns:
-        Class with the given name, or raise ValueError.
+        :obj:`class` with the given name, if currently imported.
+
+    Raises:
+        :py:class:`ValueError`: If class not found in current namespace.
     """
     try:
         # for performance, search python builtin types first before going

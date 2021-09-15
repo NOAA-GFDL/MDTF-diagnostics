@@ -17,7 +17,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 def abbreviate_path(path, old_base, new_base=None):
-    """Express path as a path relative to *old_base*, optionally prepending
+    """Express *path* as a path relative to *old_base*, optionally prepending
     *new_base*.
     """
     ps = tuple(os.path.abspath(p) for p in (path, old_base))
@@ -36,8 +36,7 @@ def resolve_path(path, root_path="", env=None, log=_log):
             not given, resolves relative to :py:func:`os.getcwd`.
 
     Returns:
-        Absolute version of `path`, relative to `root_path` if given,
-        otherwise relative to :py:func:`os.getcwd`.
+        str: Absolute version of *path*.
     """
     def _expandvars(path, env_dict):
         """Expand quoted variables of the form ``$key`` and ``${key}`` in *path*,
@@ -80,15 +79,21 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     ``/D/B/C.txt``.
 
     Args:
-        src_files: Absolute path, or list of absolute paths, to files to copy.
-        src_root: Root subtree of all files in *src_files*. Raises a ValueError
-            if all files in *src_files* are not contained in the *src_root* directory.
-        dest_root: Destination directory in which to create the copied subtree.
-        copy_function: Function to use to copy individual files. Must take two
-            arguments, the source and destination paths, respectively. Defaults
-            to :py:meth:`shutil.copy2`.
-        overwrite: Boolean, deafult False. If False, raise an OSError if
-            any destination files already exist, otherwise silently overwrite.
+        src_files (str or iterable): Absolute path, or list of absolute paths,
+            to files to copy.
+        src_root (str): Root subtree of all files in *src_files*.
+        dest_root (str): Destination directory in which to create the copied subtree.
+        copy_function (function): Function to use to copy individual files. Must
+            take two arguments, the source and destination paths, respectively.
+            Defaults to :py:func:`shutil.copy2`.
+        overwrite (bool): Optional, default False. Determines whether to raise
+            error if files would be overwritten.
+
+    Raises:
+        :py:class:`ValueError`: If all files in *src_files* are not contained in
+            the *src_root* directory.
+        :py:class:`OSError`: If *overwrite* is False, raise if any destination
+            files already exist, otherwise silently overwrite.
     """
     if copy_function is None:
         copy_function = shutil.copy2
@@ -108,7 +113,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
         copy_function(src, dest)
 
 def check_executable(exec_name):
-    """Tests if *exec_name* is found on the current ``$PATH``.
+    """Tests if the executable *exec_name* is found on the current ``$PATH``.
 
     Args:
         exec_name (:py:obj:`str`): Name of the executable to search for.
@@ -117,7 +122,7 @@ def check_executable(exec_name):
 
 def find_files(src_dirs, filename_globs, n_files=None):
     """Return list of files in *src_dirs*, or any subdirectories, matching any
-    of *filename_globs*. Wraps :py:class:`glob.glob`.
+    of *filename_globs*. Wraps Python :py:class:`glob.glob`.
 
     Args:
         src_dirs: Directory, or a list of directories, to search for files in. The
@@ -126,9 +131,14 @@ def find_files(src_dirs, filename_globs, n_files=None):
             is a shell globbing pattern, not a full regex.
         n_files (int): Optional. Number of files expected to be found.
 
+    Raises:
+        :class:`~src.util.exceptions.MDTFFileNotFoundError`: If *n_files* is
+            supplied and the number of files found is different than this
+            number.
+
     Returns:
         List of paths to files matching any of the criteria. If no files are
-            found, the list is empty.
+        found, the list is empty.
     """
     src_dirs = basic.to_iter(src_dirs)
     filename_globs = basic.to_iter(filename_globs)
@@ -181,9 +191,21 @@ def check_dir(dir_, attr_name="", create=False):
                 from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):
-    """Return a filename that doesn't conflict with existing files. If *extra_dirs*
-    supplied, make sure *path* doesn't conflict with pre-existing files at those
-    locations either.
+    """Append a version number to *path*, if necessary, so that it doesn't
+    conflict with existing files.
+
+    Args:
+        path (str): Path to test and append version number to.
+        new_v (int): Optional. Version number to begin incrementing at.
+        extra_dirs (str or iterable): Optional. If supplied, increment the version
+            number of *path* so that it doesn't conflict with pre-existing files
+            at these locations either.
+
+    Returns:
+        str: *path* with a version number appended to it, if *path* exists. For
+        files, the version number is appended before the extension. For example,
+        repeated application would create a series of files ``file.txt``,
+        ``file.v1.txt``, ``file.v2.txt``, ...
     """
     def _split_version(file_):
         match = re.match(r"""
@@ -341,8 +363,13 @@ def read_json(file_path, log=_log):
     return parse_json(str_)
 
 def find_json(dir_, file_name, exit_if_missing=True, log=_log):
-    """Wrap :func:`read_json` with more elaborate error handling. Uses
-    :func:`find_files` to find *file_name* at any level within *dir\_*.
+    """Reads a JSONC file *file_name* anywhere within the root directory *dir\_*.
+
+    Args:
+        dir\_ (str): Root directory to search (using :func:`find_files`).
+        file_name (str): Filename to search for.
+        exit_if_missing (bool): Optional, default True. Exit with error code 1
+            if *file_name* not found.
     """
     try:
         f = find_files(dir_, file_name, n_files=1)
@@ -424,7 +451,7 @@ def append_html_template(template_file, target_file, template_dict={},
     `templating <https://docs.python.org/3.7/library/string.html#template-strings>`__,
     replacing *double* curly bracket-delimited keys with their values in *template_dict*.
     For example, if *template_dict* is ``{'A': 'foo'}``, all occurrences of the string
-    ``{{A}}`` in template_file are replaced with the string ``foo``. Spaces between
+    ``{{A}}`` in *template_file* are replaced with the string ``foo``. Spaces between
     the braces and variable names are ignored.
 
     Double-curly-bracketed strings that don't correspond to keys in *template_dict*
@@ -439,11 +466,12 @@ def append_html_template(template_file, target_file, template_dict={},
         target_file (str): Destination path for result.
         template_dict (dict): Template name-value pairs. Both names
             and values must be strings.
-        create: Boolean, default True. If true, create *target_file* if it doesn't
-            exist, otherwise raise an OSError.
-        append: Boolean, default True. If *target_file* exists and this is True,
-            append the substituted contents of *template_file* to it. If False,
-            overwrite *target_file* with the substituted contents of *template_file*.
+        create (bool): Optional, default True. If True, create *target_file* if
+            it doesn't exist, otherwise raise an ``OSError``.
+        append (bool): Optional, default True. If *target_file* exists and this
+            is True, append the substituted contents of *template_file* to it.
+            If False, overwrite *target_file* with the substituted contents of
+            *template_file*.
     """
     assert os.path.exists(template_file)
     with io.open(template_file, 'r', encoding='utf-8') as f:

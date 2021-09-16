@@ -67,6 +67,10 @@ Options that describe the input model data and how it should be obtained.
    |
    | See the :doc:`ref_conventions` for documentation on the recognized values for this option.
 
+--large_file   | Set this flag when running the package on a large volume of input model data: specifically, if the full time series for any requested variable is over 4gb. This may impact performance for variables less than 4gb but otherwise has no effect.
+   |
+   | When set, this causes the framework and PODs to use the netCDF-4 format (CDF-5 standard, using the HDF5 API; see the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__) for all intermediate data files generated during the package run. If the flag is not set (default), the netCDF4 Classic format is used instead. Regardless of this setting, the package can read input model data in any netCDF4 format.
+
 --strict    Disables any model data selection heuristics provided by <*data_manager*>. The details of what this does depend on the <*data_manager*>, but in general this means that model data will only be searched for based on a literal interpretation of the user's input, with an error raised if that input doesn't specify a unique model run/experiment.
 --disable-preprocessor    If set, this flag disables preprocessing of input model data done by the framework before the PODs are run. Specifically, this skips validation of ``standard_name`` and ``units`` CF attributes in file metadata, and skips unit conversion and level extraction functions. This is only provided as a workaround for input data which is known to have incorrect metadata: using this flag means that the user assumes responsibility for verifying that the input data has the units requested by all PODs being run.
 --overwrite-file-metadata     If set, this flag overwrites metadata in input model data files with the metadata in the framework's record. The framework's metadata record can either be set through the choice of a naming convention (the ``--convention`` flag above), or explicitly per variable in the configuration file used by the :ref:`ref-data-source-explictfile` option for ``--data-manager`` (see below). The default behavior is to either raise an error or update the framework's record in the event of a conflict with the file's metadata, since the latter is assumed to be an accurate description of the file's contents. Like the previous flag, this is setting is intended as a workaround for input data which is known to have incorrect metadata.
@@ -75,9 +79,6 @@ Options that describe the input model data and how it should be obtained.
    | Default value is ``"Local_file"``, which looks for sample model data in a local directory <*CASE_ROOT_DIR*>. This assumes you have downloaded this data beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
    |
    | See the :doc:`ref_data_sources` for documentation on the available options, and the settings that are specific to each.
---large_file   | Set this flag when running the package on a large volume of input model data: specifically, if the full time series for any requested variable is over 4gb. This may impact performance for variables less than 4gb but otherwise has no effect.
-   |
-   | When set, this causes the framework and PODs to use the netCDF-4 format (CDF-5 standard, using the HDF5 API; see the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__) for all intermediate data files generated during the package run. If the flag is not set (default), the netCDF4 Classic format is used instead. Regardless of this setting, the package can read input model data in any netCDF4 format.
 
 
 Analysis settings

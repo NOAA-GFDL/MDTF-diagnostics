@@ -859,9 +859,9 @@ class MDTFFramework(MDTFObjectBase):
             )
         # check this here, otherwise error raised about missing caselist is not informative
         try:
-            if not cli_obj.config.get('CASE_ROOT_DIR', ''):
-                raise Exception('CASE_ROOT_DIR not specified.')
-            util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR', create=False)
+            if cli_obj.config.get('CASE_ROOT_DIR', ''):
+                util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR',
+                    create=False)
         except Exception as exc:
             _log.fatal((f"Mis-specified input for CASE_ROOT_DIR (received "
                 f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))

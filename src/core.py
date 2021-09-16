@@ -509,7 +509,7 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifier=None):
+    def from_CF(self, var_or_name, modifier="", num_dims=0):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -523,15 +523,15 @@ class Fieldlist():
 
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
-                f"convention '{self.name}'."))
-        lut1 = self.lut[standard_name] # abbreviate
+                  f"convention '{self.name}'."))
+        lut1 = self.lut[standard_name]  # abbreviate
         fl_entry = None
         empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
-        if modifier is None or modifier.strip() == "":
+        if modifier.strip() == "":
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 for e in entries:
-                    if e.modifier.strip() == "":
+                    if e.modifier.strip() == "" and len(e.dims) == num_dims:
                         fl_entry = e
                         empty_mod_count += 1
                 if fl_entry is None or empty_mod_count > 1:
@@ -599,7 +599,7 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            fl_entry = self.from_CF(var.standard_name, var.modifier)
+            fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__())
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]

@@ -857,6 +857,15 @@ class MDTFFramework(MDTFObjectBase):
                 cli_obj.config.get('convention', ''),
                 tags=util.ObjectLogTag.BANNER
             )
+        # check this here, otherwise error raised about missing caselist is not informative
+        try:
+            if not cli_obj.config.get('CASE_ROOT_DIR', ''):
+                raise Exception('CASE_ROOT_DIR not specified.')
+            util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR', create=False)
+        except Exception as exc:
+            _log.fatal((f"Mis-specified input for CASE_ROOT_DIR (received "
+                f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
+            util.exit_handler(code=1)
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
@@ -981,7 +990,8 @@ class MDTFFramework(MDTFObjectBase):
             ):
                 util.check_dir(p, dir_name, create=create_)
         except Exception as exc:
-            _log.fatal(f"Input settings for {dir_name} mis-specified (caught {repr(exc)}.) ")
+            _log.fatal((f"Input settings for {dir_name} mis-specified (caught "
+                f"{repr(exc)}.)"))
             util.exit_handler(code=1)
 
     def _post_parse_hook(self, cli_obj, config, paths):

@@ -152,7 +152,7 @@
         {
           "name": "OBS_DATA_REMOTE",
           "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
-          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+          "default" : "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{

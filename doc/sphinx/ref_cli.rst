@@ -8,7 +8,7 @@ Command-line options
 Running the package
 -------------------
 
-If you followed the :ref:`recommended installation method<ref-conda-install>` for installing the framework with the `conda <https://docs.conda.io/en/latest/>`__ package manager, the installation process will have created a driver script named ``mdtf`` in the top level of the code directory. This script should always be used as the entry point for running the package. 
+If you followed the :ref:`recommended installation method<ref-conda-install>` for installing the framework with the `conda <https://docs.conda.io/en/latest/>`__ package manager, the installation process will have created a driver script named ``mdtf`` in the top level of the code directory. This script should always be used as the entry point for running the package.
 
 This script is minimal and shouldn't conflict with customized shell environments: it only sets the conda environment for the framework and calls `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__, the python script which should be used as the entry point if a different installation method was used. In all cases the command-line options are as described here.
 
@@ -32,14 +32,14 @@ Command-line options
 
 For long command line flags, words may be separated with hyphens (GNU standard) or with underscores (python variable name convention). For example, ``--file-transfer-timeout`` and ``--file_transfer_timeout`` are both recognized by the package as synonyms for the same setting.
 
-If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <site_name> --help`. 
+If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <site_name> --help`.
 
 General options
 +++++++++++++++
 
 -h, --help     Show a help message, potentially more up-to-date than this page, along with your site's default values for these options.
 --version      Show the program's version number and exit.
--s, --site <site_name>   | Setting to use site-specific customizations and functionality. <*site_name*> is the name of one of the directories in `sites/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites>`__, which contain additional code and configuration files to use. 
+-s, --site <site_name>   | Setting to use site-specific customizations and functionality. <*site_name*> is the name of one of the directories in `sites/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites>`__, which contain additional code and configuration files to use.
    |
    | Sites can define new command-line options and new values for existing options. This is reflected in the online help: run :console:`% mdtf --site <site_name> --help` to see a list of options and allowed values specific to <*site_name*>. In general, see the :doc:`site-specific documentation<site_toc>` for information on what functionality is added for a given site.
    |
@@ -96,7 +96,7 @@ Settings determining what analyses the package performs.
   - The name of a modeling realm, in which case all PODs analyzing data from that realm will be selected. Run :console:`% mdtf info realms` for a list of installed diagnostics sorted by realm.
   - ``all``, the default setting, which selects all installed diagnostics.
 
-  Giving multiple identifiers selects the union of all PODs described by each identifier. If given as the last command-line option, you will need to add ``--`` to distinguish the last entry from <*CASE_ROOT_DIR*> (standard shell syntax). 
+  Giving multiple identifiers selects the union of all PODs described by each identifier. If given as the last command-line option, you will need to add ``--`` to distinguish the last entry from <*CASE_ROOT_DIR*> (standard shell syntax).
 
 Runtime options
 +++++++++++++++

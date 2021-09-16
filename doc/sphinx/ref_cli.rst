@@ -32,7 +32,7 @@ Command-line options
 
 For long command line flags, words may be separated with hyphens (GNU standard) or with underscores (python variable name convention). For example, ``--file-transfer-timeout`` and ``--file_transfer_timeout`` are both recognized by the package as synonyms for the same setting.
 
-If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <your site> --help`. 
+If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <site_name> --help`. 
 
 General options
 +++++++++++++++
@@ -41,9 +41,9 @@ General options
 --version      Show the program's version number and exit.
 -s, --site <site_name>   | Setting to use site-specific customizations and functionality. <*site_name*> is the name of one of the directories in `sites/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites>`__, which contain additional code and configuration files to use. 
    |
-   | The default value for this setting is ``local``. The sites/local/ directory is left empty in order to enable any installation to be customized (e.g. settings the paths to where supporting data was installed) without needing to alter the framework code. For more information on how to do this, see the documentation for the `'local' site <../sphinx_sites/local.html>`__.
+   | Sites can define new command-line options and new values for existing options. This is reflected in the online help: run :console:`% mdtf --site <site_name> --help` to see a list of options and allowed values specific to <*site_name*>. In general, see the :doc:`site-specific documentation<site_toc>` for information on what functionality is added for a given site.
    |
-   | In general, see the :doc:`site-specific documentation<site_toc>` for information on what functionality is added for a given site.
+   | The default value for this setting is ``local``. The sites/local/ directory is left empty in order to enable any installation to be customized (e.g. settings the paths to where supporting data was installed) without needing to alter the framework code. For more information on how to do this, see the documentation for the `'local' site <../sphinx_sites/local.html>`__.
 
 -f, --input-file <input_file>    Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__ (which is intended to be copied and used as a template), or a text file containing flags and command-line arguments as they would be entered in the shell. Additional options set explicitly on the command line will still override settings in this file.
 
@@ -76,10 +76,9 @@ Options that describe the input model data and how it should be obtained.
 --overwrite-file-metadata     If set, this flag overwrites metadata in input model data files with the metadata in the framework's record. The framework's metadata record can either be set through the choice of a naming convention (the ``--convention`` flag above), or explicitly per variable in the configuration file used by the :ref:`ref-data-source-explictfile` option for ``--data-manager`` (see below). The default behavior is to either raise an error or update the framework's record in the event of a conflict with the file's metadata, since the latter is assumed to be an accurate description of the file's contents. Like the previous flag, this is setting is intended as a workaround for input data which is known to have incorrect metadata.
 --data-manager <data_manager>   | Method used to search for and fetch input model data. <*data_manager*> is case-insensitive, and spaces and underscores are ignored.
    |
-   | Default value is ``"Local_file"``, which looks for sample model data in a local directory <*CASE_ROOT_DIR*>. This assumes you have downloaded this data beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
+   | This is a "plug-in setting": Different choices of <*data_manager*> may define additional command-line options, which will be documented below the entry for ``--data-manager`` in the CLI help (run :console:`% mdtf --site <site_name> --data-manager <data_manager> --help`). See the :doc:`ref_data_sources` and site-specific documentation a list of available values for <*data_manager*>, and the command-line options that are specific to each value.
    |
-   | See the :doc:`ref_data_sources` for documentation on the available options, and the settings that are specific to each.
-
+   | Default value is ``"Local_file"``, which looks for sample model data in a local directory <*CASE_ROOT_DIR*>. This assumes you have downloaded this data beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
 
 Analysis settings
 +++++++++++++++++
@@ -106,9 +105,9 @@ Options that control how the package is deployed (how code dependencies are mana
 
 --environment-manager <environment_manager>   | Method the package should use to manage third-party code dependencies of diagnostics. <*environment_manager*> is case-insensitive, and spaces and underscores are ignored.
    |
-   | Default value is ``"Conda"``, which uses third-party dependencies installed via the `conda <https://docs.conda.io/en/latest/>`__ package manager. This assumes you have installed these dependencies beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
+   | This is a "plug-in setting": Different choices of <*environment_manager*> may define additional command-line options, which will be documented below the entry for ``--environment-manager`` in the CLI help (run :console:`% mdtf --site <site_name> --environment-manager <environment_manager> --help`). See the :doc:`ref_runtime_mgrs` and site-specific documentation a list of available values for <*environment_manager*>, and the command-line options that are specific to each value.
    |
-   | See the :doc:`ref_runtime_mgrs` for documentation on other available options, and the settings that are specific to each.
+   | Default value is ``"Conda"``, which uses third-party dependencies installed via the `conda <https://docs.conda.io/en/latest/>`__ package manager. This assumes you have installed these dependencies beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
 
    .. note::
       The values used for this option and its settings must be compatible with how the package was set up during :doc:`installation<start_install>`. Missing code dependencies are not installed at runtime; instead any POD with missing dependencies raises an error and is not run.

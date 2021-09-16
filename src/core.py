@@ -243,7 +243,9 @@ class PathManager(util.Singleton, util.NameSpace):
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
-            assert key in d, f"Error: {key} not initialized."
+            if not d.get(key, False):
+                _log.fatal(f"Error: {key} not initialized.")
+                util.exit_handler(code=1)
             return util.resolve_path(
                 util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env,
                 log=_log
@@ -972,10 +974,15 @@ class MDTFFramework(MDTFObjectBase):
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
 
-        util.check_dir(p, 'CODE_ROOT', create=False)
-        util.check_dir(p, 'OBS_DATA_ROOT', create=False)
-        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
-        util.check_dir(p, 'WORKING_DIR', create=True)
+        try:
+            for dir_name, create_ in (
+                ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
+                ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+            ):
+                util.check_dir(p, dir_name, create=create_)
+        except Exception as exc:
+            _log.fatal(f"Input settings for {dir_name} mis-specified (caught {repr(exc)}.) ")
+            util.exit_handler(code=1)
 
     def _post_parse_hook(self, cli_obj, config, paths):
         # init other services

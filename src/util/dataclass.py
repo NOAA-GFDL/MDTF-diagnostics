@@ -698,6 +698,10 @@ def regex_dataclass(pattern, **deco_kwargs):
         type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):
+            """Create an object instance from a string representation *str\_*.
+            Used by :func:`regex_dataclass` for parsing field values and automatic
+            type coercion.
+            """
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
         type.__setattr__(cls, 'from_string', classmethod(_from_string))

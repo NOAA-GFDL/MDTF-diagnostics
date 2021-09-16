@@ -13,6 +13,7 @@ Main framework modules
 
    src.core
    src.data_manager
+   src.data_sources
    src.diagnostic
    src.environment_manager
    src.preprocessor
@@ -25,7 +26,6 @@ Supporting framework modules
 
    src.cli
    src.cmip6
-   src.conflict_resolution
    src.data_model
    src.units
    src.verify_links
@@ -33,6 +33,8 @@ Supporting framework modules
 
 Utility modules
 ---------------
+
+The :doc:`fmwk_utils` documentation provides an overview of these modules.
 
 .. autosummary::
 

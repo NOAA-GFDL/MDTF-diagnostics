@@ -542,7 +542,6 @@ class Fieldlist():
             else:
                 fl_entry = entries[0]
         else:
-            modifier = frozenset(modifier)
             if modifier not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
                     f"unexpected set of axes {modifier} not in convention "

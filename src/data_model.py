@@ -502,7 +502,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: src.units.Units = "" # not MANDATORY since may be set later from var translation
+    units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
     modifier: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
@@ -515,11 +515,11 @@ class DMDependentVariable(_DMDimensionsMixin):
         if not self.modifier.lower().strip() in (None, ''):
             _str = src.core.VariableTranslator()
             if self.modifier not in _str.modifier:
-                raise ValueError(f"Modifier {self.modfier} is not a recognized value.")
+                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     @property
     def full_name(self):
-        return '<' + self.name + '>'# synonym here; child classes override
+        return '<' + self.name + '>'  # synonym here; child classes override
 
     def __str__(self):
         """Condensed string representation.

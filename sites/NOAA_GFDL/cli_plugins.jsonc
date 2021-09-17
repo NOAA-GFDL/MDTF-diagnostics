@@ -188,13 +188,13 @@
           {
             "name": "conda_root",
             "help": "Path to the conda installation. Set equal to '' to use conda from your system's $PATH.",
-            "default" : "/home/mdteam/anaconda",
+            "default" : "/home/oar.gfdl.mdtf/miniconda3",
             "metavar" : "<DIR>",
             "action": "PathAction"
           },{
             "name": "conda_env_root",
             "help": "Root directory for conda environment installs. Set equal to '' to install in your system's default location.",
-            "default" : "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
+            "default" : "/home/oar.gfdl.mdtf/miniconda3/envs",
             "metavar" : "<DIR>",
             "action": "PathAction"
           }
@@ -210,13 +210,13 @@
           {
             "name": "conda_root",
             "help": "Path to the conda installation. Set equal to '' to use conda from your system's $PATH.",
-            "default" : "/home/mdteam/anaconda",
+            "default" : "/home/oar.gfdl.mdtf/miniconda3",
             "metavar" : "<DIR>",
             "action": "PathAction"
           },{
             "name": "conda_env_root",
             "help": "Root directory for conda environment installs. Set equal to '' to install in your system's default location.",
-            "default" : "/home/mdteam/DET/analysis/mdtf/MDTF-diagnostics/envs",
+            "default" : "/home/oar.gfdl.mdtf/miniconda3/envs",
             "metavar" : "<DIR>",
             "action": "PathAction"
           }

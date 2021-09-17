@@ -15,30 +15,31 @@
     // models in a single invocation. Comment out or delete the first entry and
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
-    {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
-      "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list": [
+    //{
+    //  "CASENAME" : "QBOi.EXP1.AMIP.001",
+    //  "model" : "CESM",
+     // "convention" : "CESM",
+     // "FIRSTYR" : 1977,
+    //  "LASTYR" : 1981,
+    //  "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
-      ]
-    }
-    // {
-    //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
-    //   "model" : "AM4",
-    //   "convention" : "GFDL",
-    //   "FIRSTYR" : 1,
-    //   "LASTYR" : 10,
-    //   "pod_list" : ["MJO_prop_amp"]
-    // }
+     //     "Wheeler_Kiladis",
+     //     "EOF_500hPa",
+     //     "MJO_suite",
+      //    "MJO_teleconnection",
+       //   "precip_diurnal_cycle"
+          //"convective_transition_diag"
+      //]
+    //}
+     {
+       //"CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
+       "CASENAME" : "GFDL.Synthetic",
+       "model" : "AM4",
+       "convention" : "GFDL",
+       "FIRSTYR" : 1,
+       "LASTYR" : 10,
+       "pod_list" : ["MJO_prop_amp"]
+     }
     // {
     //   "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
     //   "model" : "CMIP",
@@ -64,10 +65,11 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT" : "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
+  //"MODEL_DATA_ROOT": "../inputdata/model",
+  "MODEL_DATA_ROOT": "../../mdtf_test_data",
 
   // Working directory.
   "WORKING_DIR": "../wkdir",
@@ -79,13 +81,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "~/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "~/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -106,7 +108,7 @@
   "save_nc": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": true,
+  "make_variab_tar": false,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.

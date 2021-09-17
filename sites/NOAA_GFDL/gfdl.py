@@ -75,11 +75,17 @@ class GFDLMDTFFramework(core.MDTFFramework):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             gfdl_util.rmtree_wrapper(p.WORKING_DIR)
-        util.check_dir(p, 'CODE_ROOT', create=False)
-        util.check_dir(p, 'OBS_DATA_REMOTE', create=False)
-        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
-        util.check_dir(p, 'OBS_DATA_ROOT', create=True)
-        util.check_dir(p, 'WORKING_DIR', create=True)
+
+        try:
+            for dir_name, create_ in (
+                ('CODE_ROOT', False), ('OBS_DATA_REMOTE', False),
+                ('OBS_DATA_ROOT', True), ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+            ):
+                util.check_dir(p, dir_name, create=create_)
+        except Exception as exc:
+            _log.fatal((f"Input settings for {dir_name} mis-specified (caught "
+                f"{repr(exc)}.)"))
+            util.exit_handler(code=1)
 
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):

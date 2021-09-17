@@ -511,7 +511,7 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifier="", num_dims=0):
+    def from_CF(self, var_or_name, modifier=None, num_dims=0):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -529,7 +529,7 @@ class Fieldlist():
         lut1 = self.lut[standard_name]  # abbreviate
         fl_entry = None
         empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
-        if modifier.strip() == "":
+        if not modifier:  # empty strings and None types evaluate to False
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 for e in entries:

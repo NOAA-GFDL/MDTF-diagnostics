@@ -481,7 +481,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     v.deactivate(chained_exc)
                     continue
             self.post_query_hook(vars_to_query)
-        else:  # only hit this if we don't break
+        else:
+            # only hit this if we don't break
             raise util.DataRequestError(
                 f"Too many iterations in query_data() for {self.full_name}."
             )

@@ -15,15 +15,22 @@
     // models in a single invocation. Comment out or delete the first entry and
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
-    
     {
-      "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
+      "CASENAME" : "CESM2_omip1_r1i1p1f1_gn_synthetic",
       "model" : "CESM2",
       "convention" : "CESM",
-      "FIRSTYR" : 249,
-      "LASTYR" : 310,
+      "FIRSTYR" : 1,
+      "LASTYR" : 10,
       "pod_list": ["tropical_pacific_sea_level"]
     }
+    //{
+    //  "CASENAME" : "CESM2_omip1_r1i1p1f1_gn",
+    //  "model" : "CESM2",
+    //  "convention" : "CESM",
+    //  "FIRSTYR" : 249,
+    //  "LASTYR" : 310,
+    //  "pod_list": ["tropical_pacific_sea_level"]
+    //}
     //{
     //  "CASENAME" : "QBOi.EXP1.AMIP.001",
     //  "model" : "CESM",

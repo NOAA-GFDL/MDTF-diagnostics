@@ -470,6 +470,7 @@ ind1 = np.where(lon_range_mod < np.float(0))[0]
 lon_range_mod[ind1] = lon_range_mod[ind1] + 360.0  # change Lon range to 0-360
 
 
+
 #####################
 # MODEL
 #####################
@@ -480,19 +481,25 @@ for nmodel, model in enumerate(Model_name):
 
         # read areacello
         da_area = ds_areacello[os.getenv("areacello_var")]
+        da_area_temp = da_area.copy()
+        da_area_temp['lon'] = xr.where(da_area_temp.lon<0,
+                                       da_area_temp.lon+360.,
+                                       da_area_temp.lon)  
 
         # crop region
         ds_mask = (
-            mean_mlist[model][var]
+            da_area
             .where(
-                (mean_mlist[model][var][Model_coordname[1]] >= np.min(lon_range_mod))
-                & (mean_mlist[model][var][Model_coordname[1]] <= np.max(lon_range_mod))
-                & (mean_mlist[model][var][Model_coordname[0]] >= np.min(lat_range))
-                & (mean_mlist[model][var][Model_coordname[0]] <= np.max(lat_range)),
+                  (da_area_temp[Model_coordname[1]] >= np.min(lon_range_mod))
+                & (da_area_temp[Model_coordname[1]] <= np.max(lon_range_mod))
+                & (da_area_temp[Model_coordname[0]] >= np.min(lat_range))
+                & (da_area_temp[Model_coordname[0]] <= np.max(lat_range)),
                 drop=True,
             )
             .compute()
         )
+        
+        
         ds_mask = ds_mask / ds_mask
 
         # calculate regional mean
@@ -519,6 +526,7 @@ for nmodel, model in enumerate(Model_name):
             (linear_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
             / (ds_mask * da_area).sum(dim=[xname, yname])
         ).compute()
+        
 
     regionalavg_mlist[model] = regionalavg_list
 
@@ -621,9 +629,11 @@ for nmodel, model in enumerate(Model_name):
     wsc = regionalavg_mlist[model][
         f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean"
     ]
+
     ssh = regionalavg_mlist[model][
         f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean"
     ]
+    
     ax1.scatter(wsc, ssh, label="%s" % (Model_legend_name[nmodel]))
     all_wsc.append(wsc)
     all_ssh.append(ssh)

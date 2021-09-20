@@ -121,8 +121,8 @@ html_theme = 'alabaster'
 # See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
     'page_width': '1024px',
-    'sidebar_collapse': True,
-    'fixed_sidebar': True,
+    'sidebar_collapse': False,
+    'fixed_sidebar': False,
     'extra_nav_links' : {
         "Getting Started [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
         "Developer's Walkthough [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",

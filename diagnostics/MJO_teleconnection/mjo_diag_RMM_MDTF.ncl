@@ -23,6 +23,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;--------------Choose Model--------------
 ;previously used models (already have RMM indices for all of these)
 ;As Multimodel daignostic the RMM following model are already calculated and will be used in diagnostic  

@@ -544,7 +544,7 @@ class Fieldlist():
         else:
             if modifier not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
-                    f"unexpected set of axes {modifier} not in convention "
+                    f"unexpected modifier {modifier} not in convention "
                     f"'{self.name}'."))
             fl_entry = lut1[modifier]
 

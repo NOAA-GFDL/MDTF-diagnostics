@@ -54,6 +54,11 @@
   "dimensions": {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"},
     "time": {"standard_name": "time"}
   },
 
@@ -64,13 +69,13 @@
     // Variable identifier. An environment variable with this name followed by _var 
     // will be set
    // to what the corresponding field is called in the model being analyzed.
-    "zg500": {    //this can be whatever
+    "zg500": {    
 
       // Standard name for the variable according to the CF conventions. This
       // is used to reliably identify the variable if it's called by a different
       // name in the output format of the model being analyzed.
       // Needs to match the model-specific names in data/fieldlist_*.jsonc
-      "standard_name" : "geopotential_height_500mb", 
+      "standard_name" : "geopotential_height", 
 
       "path_variable" : "MODEL_DATA_PATH",
 
@@ -84,7 +89,8 @@
       "frequency" : "day",
 
       // Coordinates of the variable (defined in the section above.)
-      "dimensions": ["time", "lat", "lon"]
+      "dimensions": ["time", "lat", "lon"],	 
+      "scalar_coordinates": {"lev" : 500}		
     }
     // If we needed a second variable, we'd list it here.
   }

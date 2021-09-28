@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import os
-import sys
 import json
-import pdb
 import requests
 from collections import OrderedDict
 

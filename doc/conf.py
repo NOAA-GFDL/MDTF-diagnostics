@@ -424,7 +424,7 @@ def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
 def run_apidoc(_):
-    ignore_paths = ["**/test*"]
+    ignore_paths = ["../tests", '../src/tests', '../src/util/tests']
     argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
         ] + ignore_paths
 

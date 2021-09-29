@@ -104,8 +104,10 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
+# NB: this is *only* applied to built .rst files, not to the imports done
+# by sphinx-apidoc.
 exclude_patterns = [u'_build', 'Thumbs.db',
-    '**/test_*'
+    '**/test*'
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -337,7 +339,7 @@ def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
 def run_apidoc(_):
-    ignore_paths = []
+    ignore_paths = ["../tests", '../src/tests', '../src/util/tests']
     argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
         ] + ignore_paths
 

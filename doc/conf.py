@@ -15,6 +15,7 @@
 import os
 import sys
 import re
+import unittest.mock as mock
 cwd = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
@@ -25,22 +26,30 @@ sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
 import recommonmark
 from recommonmark.transform import AutoStructify
 
-# mock out imports of non-standard library modules
+# mock out imports of non-standard library modules -- not installed when
+# we build docs on readthedocs
 autodoc_mock_imports = [
     'numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray',
     'pandas', 'intake', 'intake_esm'
 ]
 # need to manually mock out explicit patching of cf_xarray.accessor done
-# on import in xr_parser
-import unittest.mock as mock
+# on import in xr_parser; may be possible to do this with mock.patch() but the
+# following works
 mock_accessor = mock.Mock()
-mock_attrs = {
+mock_accessor.configure_mock(**({
     '__name__': 'accessor', '__doc__': '', # for functools.wraps
     'CFDatasetAccessor': object, 'CFDataArrayAccessor': object
-}
-mock_accessor.configure_mock(**mock_attrs)
+}))
 sys.modules['cf_xarray'] = mock.Mock()
 setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
+
+# Also necessary to manually mock out cfunits.Units since src.units.Units
+# inherits from it.
+class DummyUnits():
+    def __init__(self, units=None, calendar=None, formatted=False, names=False,
+        definition=False, _ut_unit=None):
+        pass
+mock.patch('src.util.units.cfunits.Units', autospec=DummyUnits)
 
 # -- Project information -----------------------------------------------------
 

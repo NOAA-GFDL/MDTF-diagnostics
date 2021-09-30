@@ -8,22 +8,15 @@
 .. Underline with '='s to set top-level heading: 
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
-Example Diagnostic Documentation
+Rich Neale's Blocking Diagnostic Documentation
 ================================
 
-Last update: 5/06/2020
+Last update: 09/30/2021
 
-This is an example document that you can use as a template for your diagnostics'
-own documentation: it describes what information you should provide in each 
-section. For example, if this were a real POD, you'd place a one-paragraph 
-synopsis of your diagnostic here (like an abstract). 
+The diagnostic evaluates the blocking frequency in a model by longitude and season
+as determined by the meridional gradient above a threshold value of daily
+500mb height following `D'Andrea et al 1998 <https://doi.org/10.1007/s003820050230>`__.
 
-It also serves as an example of the RestructuredText (ReST, .rst) format used to 
-generate this page: compare this output with the input `source file 
-<https://raw.githubusercontent.com/NOAA-GFDL/MDTF-diagnostics/develop/diagnostics/example/doc/example.rst>`__. 
-The easiest way to get started is to copy the source file into the online editor 
-at `https://livesphinx.herokuapp.com/ <https://livesphinx.herokuapp.com/>`__ and 
-experiment.
 
 .. Underline with '-'s to make a second-level heading.
 
@@ -36,26 +29,29 @@ Version & Contact info
 Here you should describe who contributed to the diagnostic, and who should be
 contacted for further information:
 
-- Version/revision information: version 1 (5/06/2020)
-- PI (name, affiliation, email)
-- Developer/point of contact (name, affiliation, email)
-- Other contributors
+- Version 2.0, implemented in MDTF v3.0beta3
+- PI: Rich Neale, NCAR, rneale at ucar dot edu
+- Contact: Dani Coleman, NCAR, bundy at ucar dot edu
 
 .. Underline with '^'s to make a third-level heading.
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-Unless you've distirbuted your script elsewhere, you don't need to change this.
+
 
 Functionality
 -------------
 
-In this section you should summarize the stages of the calculations your 
-diagnostic performs, and how they translate to the individual source code files 
-provided in your submission. This will, e.g., let maintainers fixing a bug or 
-people with questions about how your code works know where to look.
+
+The annual cycle of blocking frequency is shown for each analyzed case,
+reference ensemble (CESM1) and observational product (ERAI & MERRA)
+requested, in individual Hovmüller figures (longitude vs time) and all
+comparisons are combined in a line plot showing longitude vs blocking
+frequency. Each figure is available for DJF, JJA and ANN.
+
+
+
 
 Required programming language and libraries
 -------------------------------------------

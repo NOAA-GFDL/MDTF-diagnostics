@@ -46,8 +46,8 @@ plot_t = new(all_cases@nfiles,graphic)
 
 
 
-pan_t = get_plot_settings_t(all_cases)
-pan_m = get_plot_settings_m(all_cases)
+pan_t = get_plot_settings_t(all_cases) ; hovmueller
+pan_m = get_plot_settings_m(all_cases) ; line -plot
 
 
 ; sets attributes of all_cases that are used by subsequent  functions
@@ -418,8 +418,9 @@ block_freq_max_p  = lonPivot(block_freq_max,270.) ; Flip lon for plotting
 
 ; Set plotting attributes that would be a pain to put all in the function
 res = True   ;will be filled in by get_plot_* through arg list
-wks   = get_plot_season(all_cases,settings,res)
+wks   = get_plot_season(all_cases,settings,res) ; returns all properties in 'res' structure
 res@tiMainString = period_name
+
 res_m = get_plot_settings_panel(res,all_cases)
 res_m@tiMainString  = res@tiMainString   
 res_mm = res_m
@@ -437,22 +438,26 @@ do iens=0,all_cases@nens-1
 
 ; Plot minn/maxx/mean lines
   
-  plot_stds(iens) = gsn_csm_xy (wks,block_freq_aves_p&lon,(/block_freq_min_p(plot_inds,:),block_freq_max_p(plot_inds,:)/),res_mm) ; Ens. range 
+  plot_stds(iens) = gsn_csm_xy(wks,block_freq_aves_p&lon,(/block_freq_min_p(plot_inds,:),block_freq_max_p(plot_inds,:)/),res_mm)
+
+  ; Combine lines plots (ip) with standard deviation shading
   overlay(plot(ip),plot_stds(iens))
 
 end do ; ensembles
-delete([/res_mm@xyLineColors(0:1),res_mm@gsnXYFillOpacities,res_mm@gsnXYFillOpacities/])
 
 print("finished plotting all ensembles ")
 
-
+delete([/res_mm@xyLineColors(0:1),res_mm@gsnXYFillOpacities,res_mm@gsnXYFillOpacities/])
 delete([/block_freq_p,block_freq_pp,block_freq_min,block_freq_max,block_freq_min_p,block_freq_max_p,block_freq_aves,block_freq_aves_p,block_freq_p/])
 
 end do ; Periods/seasons
 
 ; Panel draw.
-print("Writing seasons plot (lines)")
+print("Writing seasons plot (lines). Ignore warning about more plots than panels:")
 
+
+; Panel plot because of the multiple lines
+; generates warning: you have more plots than you have panels
 gsn_panel(wks,plot,(/1,settings@nperiods/),pan_m)
 legend1 = get_legend(wks,all_cases)
 draw(legend1)

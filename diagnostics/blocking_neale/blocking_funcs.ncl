@@ -1440,20 +1440,25 @@ end ; function get_plot_settings_season(wks,all_cases)
 
 ; ------------------------------------------------------
 function get_plot_settings_panel(res,all_cases)
+; The panel is basically an overlay of figures
+
 begin
 
 res_m = True
 res_m@gsnDraw = False
 res_m@gsnFrame = False
 
-res_m@gsnMaximize = True
+;drb res_m@gsnMaximize = True
+res_m@gsnMaximize = False
 
 res_m@gsnDraw            = False                   ; don't draw
 res_m@gsnFrame           = False                   ; don't advance frame
 res_m@xyMonoLineColor    = False             ; want colored lines
 
-res_m@vpWidthF         = 0.9                      ; set width and height
+res_m@vpWidthF         = 0.9                  ; set width and height (axes!)
 res_m@vpHeightF        = 0.75
+;res_m@vpWidthF         = 0.2                    
+;res_m@vpHeightF        = 0.2
 
 res_m@tiXAxisString    = res@tiXAxisString    
 res_m@tiYAxisString    = res@tiYAxisString    
@@ -1669,8 +1674,9 @@ begin
 ; Graphics
   pan_m = True
   pan_m@gsnFrame = False
-  pan_m@gsnMaximize = True
-  pan_m@gsnPaperOrientation = "Portrait"
+;drb  pan_m@gsnMaximize = True
+  pan_m@gsnMaximize = False
+;drb  pan_m@gsnPaperOrientation = "Portrait"
 
   return pan_m
 
@@ -1684,13 +1690,15 @@ begin
   
   func_name = "get_legend"
 
+  print("** If legend is difficult to read, adjust parameters in blocking_funcs.ncl:function get_legend")
+
 legend0 = create "Legend" legendClass wks_in
 "lgTitleString"            : ""
 "lgTitleFontHeightF"        : 0.02
-"vpXF"                     : 0.05                  ; orientation on page
-"vpYF"                     : 1.05
-"vpWidthF"                 : 0.25                     ; width
-"vpHeightF"                : 0.15                     ; height
+"vpXF"                     : 0.0                  ; x location on page, 0=far left
+"vpYF"                     : 1.00                 ; y location, 1 = top
+"vpWidthF"                 : 0.25                 ; width of legend box 
+"vpHeightF"                : 0.11                 ; height of legend box
 "lgPerimOn"                : False                  ; no perimeter
 "lgItemCount"              : all_cases@nlines                   ; how many
 "lgLabelStrings"           : all_cases@legend_names

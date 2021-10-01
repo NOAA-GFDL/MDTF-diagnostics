@@ -15,7 +15,11 @@
 import os
 import sys
 import re
+import abc
+import inspect
 import unittest.mock as mock
+import traceback
+stdlib_path = os.path.dirname(traceback.__file__)
 cwd = os.path.dirname(os.path.realpath(__file__))
 code_root = os.path.abspath(os.path.join(cwd, '..'))
 sys.path.insert(0, os.path.abspath(cwd))
@@ -321,7 +325,8 @@ epub_exclude_files = ['search.html']
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
-    'special-members': '__init__'
+    'special-members': '__init__, __post_init__',
+    'inherited-members': True
 }
 
 def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
@@ -405,27 +410,10 @@ def skip_members_handler(app, what, name, obj, skip, options):
     except Exception:
         return None
 
-# remove redundant entries in namedtuples
-# https://chrisdown.name/2015/09/20/removing-namedtuple-docstrings-from-sphinx.html
-def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
-    is_namedtuple_docstring = (
-        len(lines) == 1 and
-        lines[0].startswith('Alias for field number')
-    )
-    if is_namedtuple_docstring:
-        # We don't return, so we need to purge in-place
-        del lines[:]
-
-def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
-    return_annotation):
-    if isinstance(signature, str):
-        signature = re.sub(r'log=<Logger[^>]+>', r'log=<Logger>', signature)
-    return (signature, return_annotation)
-
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
 def run_apidoc(_):
-    ignore_paths = ["../tests", '../src/tests', '../src/util/tests']
+    ignore_paths = ["**/test*"]
     argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
         ] + ignore_paths
 
@@ -491,7 +479,7 @@ def setup(app):
     app.connect('builder-inited', run_apidoc)
     app.connect('autodoc-process-docstring', no_namedtuple_attrib_docstring)
     app.connect('autodoc-process-signature', abbreviate_logger_in_signature)
-    # app.connect('autodoc-skip-member', autodoc_skip_member)
+    app.connect('autodoc-skip-member', skip_members_handler)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829

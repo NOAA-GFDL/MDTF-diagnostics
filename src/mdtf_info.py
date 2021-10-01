@@ -1,4 +1,4 @@
-"""Functions to collect settings metadata about installed PODs for the package
+"""Functions to collect settings metadata about installed PODs, for the package
 and for online help.
 """
 import os

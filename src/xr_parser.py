@@ -1,4 +1,4 @@
-"""Code for normalizing metadata in xarray Datasets; see :doc:`fmwk_preprocess`.
+"""Code for normalizing metadata in xarray Datasets.
 
 Familiarity with the  `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__
 package, used as a third-party dependency, as well as the :doc:`src.data_model`
@@ -138,7 +138,7 @@ class MDTFCFAccessorMixin(object):
 
         Returns:
             Dict mapping axes labels to lists of names of variables in the
-            DataSet that the accessor has mapped to that axis.
+            Dataset that the accessor has mapped to that axis.
         """
         if var_name is None:
             axes_obj = self._obj

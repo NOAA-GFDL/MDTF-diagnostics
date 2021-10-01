@@ -11,36 +11,54 @@
     so the target of each link only needs to be the relative path, 
     eg. "model/<plot_name>.png".
 -->
-<title>MDTF example diagnostic</title>
+<title>Blocking Diagnostic (Rich Neale)</title>
 <img src="../mdtf_diag_banner.png">
-<h3>Example diagnostic: time-averaged near-surface temperature</h3>
+<h3>Blocking Diagnostic (Rich Neale)</h3>
 <p>
-If this were a real diagnostic, this would be where you'd give a brief summary
-of what your diagnostic computes and how to interpret the output plots it 
-generated, which will be linked below. You can include hyperlinks to journal 
-articles, etc. for more detailed documentation on your methods or sources of 
-observational data.
+The diagnostic evaluates the blocking frequency in a model by longitude and season
+as determined by the meridional gradient above a threshold value of daily
+500mb height following <a href="https://doi.org/10.1007/s003820050230">D'Andrea et al 1998</a>
+
+
+The annual cycle of blocking frequency is shown for each analyzed case,
+reference ensemble (CESM1) and observational product (ERAI & MERRA)
+requested, in individual Hovmüller figures (longitude vs time) and all
+comparisons are combined in a line plot showing longitude vs blocking
+frequency. Each figure is currently shown for ANN. (Coming soon: DJF & JJA)
 </p>
-<p>
-The names of any environment variables set for the diagnostic (enclosed in 
-curly braces) will be replaced by the same values they had when the diagnostic 
-was run. For example, this diagnostic's favorite color is "{{EXAMPLE_FAV_COLOR}}."
 </p>
 <TABLE>
 <TR>
-<TH align=left><font color=navy>{{FIRSTYR}}-{{LASTYR}}
-<TH align=left>Case {{CASENAME}}
-<TH align=left>OBS
-<TH align=left>Model Ensembles (if available)
+<TH style='width: 50px' align=left><font color=navy>{{FIRSTYR}}-{{LASTYR}}
+<TH style='width: 50px' align=left>Combined
+<TH style='width: 50px' align=left>Case {{CASENAME}}
+<TH style='width: 50px' align=left>OBS
+<TH style='width: 50px' align=left>CESM Ensembles 
 
 <TR>
 <TH align=left>Average seasonal cycle(K)
-<TH align=center><A href=model/block_freq_season.png>Model & Obs combined</A>
-<TH>
+<TD align=center><A href=model/block_freq_season.png>Combined</A>
 
 <TR>
 <TH align=left>Annual cycle(K)
-<TH align=center><A href=model/block_freq_anncycle.{{CASENAME}}.png>Model</A>
-<TH align=center><A href=obs/block_freq_anncycle.OBS.png>OBS</A>
-<TH align=center><A href=model/block_freq_anncycle.CAM5.png>CAM5 ensemble</A>
+<TD>
+<TD align=center><A href=model/block_freq_anncycle.{{CASENAME}}.png>Model</A>
+<TD align=center><A href=obs/block_freq_anncycle.OBS.png>OBS</A>
+<TD align=center><A href=model/block_freq_anncycle.CAM5.png>CAM5 ensemble</A>
 </TABLE>
+
+
+</p>
+</p>
+<TABLE>
+<TR><TH align=left>Settings
+<TR><TD> SEASON <TD> ANN
+<TR><TD> MDTF_BLOCKING_OBS <TD>               "{{MDTF_BLOCKING_OBS}}"
+<TR><TD> MDTF_BLOCKING_CAM3 <TD> "{{MDTF_BLOCKING_CAM3}}"
+<TR><TD> MDTF_BLOCKING_CAM4 <TD> "{{MDTF_BLOCKING_CAM4}}"
+<TR><TD> MDTF_BLOCKING_CAM5 <TD> "{{MDTF_BLOCKING_CAM5}}"
+<TR><TD> MDTF_BLOCKING_READ_DIGESTED	<TD> "{{MDTF_BLOCKING_READ_DIGESTED}}"
+<TR><TD> MDTF_BLOCKING_WRITE_DIGESTED	<TD> "{{MDTF_BLOCKING_WRITE_DIGESTED}}"
+
+</table>
+

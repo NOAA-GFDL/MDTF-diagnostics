@@ -35,8 +35,8 @@ class MDTFABCMeta(abc.ABCMeta):
     `<https://stackoverflow.com/a/50381071>`__.
 
     Raises:
-        :py:class:`NotImplementedError`: If a child class doesn't define an
-        abstract attribute, by analogy with :py:func:`abc.abstract_method`.
+        NotImplementedError: If a child class doesn't define an
+            abstract attribute, by analogy with :py:func:`abc.abstract_method`.
     """
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
@@ -165,7 +165,7 @@ class WormDict(collections.UserDict, dict):
     @classmethod
     def from_struct(cls, d):
         """Construct a WormDict from a dict *d*. Intended to be used for automatic
-        type coercion done on fields of a :func:~src.util.dataclass.mdtf_dataclass.
+        type coercion done on fields of a :func:`~src.util.dataclass.mdtf_dataclass`.
         """
         return cls(**d)
 
@@ -378,7 +378,7 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     1) Assign (integer) values automatically to the members of the enumeration.
     2) Provide a :meth:`~_MDTFEnumMixin.from_struct` method to simplify
        instantiating an instance from a string. Intended to be used for automatic
-       type coercion done on fields of a :func:~src.util.dataclass.mdtf_dataclass.
+       type coercion done on fields of a :func:`~src.util.dataclass.mdtf_dataclass`.
        To avoid potential confusion with reserved keywords, we use the Python
        convention that members of the enumeration are all uppercase.
     """

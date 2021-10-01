@@ -553,7 +553,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
 
     Raises:
         :class:`~exceptions.DataclassParseError`: If we attempted to construct an
-            instance without giving values for ``MANDTAORY`` fields, or if values
+            instance without giving values for ``MANDATORY`` fields, or if values
             of some fields after ``__post_init__`` could not be coerced into the
             types given in their annotation.
     """
@@ -783,7 +783,7 @@ def filter_dataclass(d, dc, init=False):
 
     Returns:
         dict: The subset of key:value pairs from *d* such that the keys are
-            included in the set of *dc*\'s fields specified by the value of *init*.
+        included in the set of *dc*\'s fields specified by the value of *init*.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):

@@ -107,7 +107,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     def make_pod_html(self):
         """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~util.append_html_template`. Looks for all
+        Wraps :func:`~util.append_html_template`. Looks for all
         html files in ``$POD_CODE_DIR``, templates them, and copies them to
         ``$POD_WK_DIR``, respecting subdirectory structure (see
         :func:`~util.recursive_copy`).
@@ -134,15 +134,15 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
         """Convert all vector graphics in ``$POD_WK_DIR/`` *src\_subdir* to .png
-        files using ghostscript.
+        files using `ghostscript <https://www.ghostscript.com/>`__ (included in
+        the \_MDTF\_base conda environment).
 
         All vector graphics files (identified by extension) in any subdirectory
         of ``$POD_WK_DIR/`` *src\_subdir* are converted to .png files by running
-        `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
-        Ghostscript is included in the \_MDTF\_base conda environment. Afterwards,
-        any bitmap files (identified by extension) in any subdirectory of
-        ``$POD_WK_DIR/`` *src\_subdir* are moved to ``$POD_WK_DIR/`` *dest\_subdir*,
-        preserving subdirectories (see :func:`~util.recursive_copy`.)
+        ghostscript in a subprocess. Afterwards, any bitmap files (identified by
+        extension) in any subdirectory of ``$POD_WK_DIR/`` *src\_subdir* are
+        moved to ``$POD_WK_DIR/`` *dest\_subdir*, preserving subdirectories (via
+        :func:`~util.recursive_copy`.)
 
         Args:
             src_subdir: Subdirectory tree of ``$POD_WK_DIR`` to search for vector
@@ -319,7 +319,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     def verify_pod_links(self, pod):
         """Check for missing files linked to from POD's html page.
 
-        See documentation for :class:`~verify_links.LinkVerifier`. This method
+        See documentation for :class:`~src.verify_links.LinkVerifier`. This method
         calls :class:`~src.verify_links.LinkVerifier` to check existence of all
         files linked to from the POD's own top-level html page (after templating).
         If any files are missing, an error message listing them is written to

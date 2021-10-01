@@ -27,6 +27,7 @@ Supporting framework modules
    src.cli
    src.cmip6
    src.data_model
+   src.mdtf_info
    src.units
    src.verify_links
    src.xr_parser
@@ -34,7 +35,7 @@ Supporting framework modules
 Utility modules
 ---------------
 
-The :doc:`fmwk_utils` documentation provides an overview of these modules.
+The ``src.util`` subpackage provides non-MDTF-specific utility functionality used many places in the modules above. See the :doc:`fmwk_utils` documentation for an overview.
 
 .. autosummary::
 
@@ -45,3 +46,13 @@ The :doc:`fmwk_utils` documentation provides an overview of these modules.
    src.util.filesystem
    src.util.logs
    src.util.processes
+
+Unused modules
+--------------
+
+The following modules implement features moved to, or intended for, future releases. They can be removed from the current production branch with no effect.
+
+.. autosummary::
+
+   src.conflict_resolution
+   src.install

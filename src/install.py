@@ -271,7 +271,7 @@ def framework_verify(code_root, run_output):
 # classes just handle the configuration logic
 
 
-class InstallCLIHandler(cli.CLIHandler):
+class InstallCLIHandler(cli.MDTFArgParser):
     def make_parser(self, d):
         _ = d.setdefault('usage', "%(prog)s [options] [env_setup]")
         p = super(InstallCLIHandler, self).make_parser(d)

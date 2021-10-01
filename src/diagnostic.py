@@ -1,3 +1,6 @@
+"""Classes representing configuration and status of individual diagnostic scripts
+(PODs) and variables required by the scripts.
+"""
 import os
 import dataclasses as dc
 import io
@@ -515,6 +518,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     # log = util.MDTFObjectLogger
     # status: ObjectStatus
     long_name: str = ""
+    """Test docstring for long_name."""
     description: str = ""
     convention: str = "CF"
     realm: str = ""

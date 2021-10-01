@@ -1,3 +1,7 @@
+"""Classes which setup software dependencies for the PODs and which execute the
+PODs' code.
+"""
+
 import os
 import io
 import abc
@@ -12,7 +16,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 class AbstractEnvironmentManager(abc.ABC):
-    """Interface for EnvironmentManagers.
+    """Abstract interface for EnvironmentManagers.
     """
     def __init__(self, log=_log):
         self.log = log # log to case's logger

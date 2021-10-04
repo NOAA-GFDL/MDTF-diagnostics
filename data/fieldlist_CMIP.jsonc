@@ -96,6 +96,11 @@
       "units": "Pa",
       "ndim": 3
     },
+    "areacello": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "ndim": 2
+    },
     "ps": {
       "standard_name": "surface_air_pressure",
       "units": "Pa",

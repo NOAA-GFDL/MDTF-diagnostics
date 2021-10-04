@@ -157,6 +157,26 @@
       "units": "W m-2",
       "ndim": 3
     },
+    "zos": {
+      "standard_name": "sea_surface_height_above_geoid",
+      "units": "m",
+      "ndim": 3
+    },
+    "tauuo": {
+      "standard_name": "surface_downward_x_stress",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "tauvo": {
+      "standard_name": "surface_downward_y_stress",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "areacello": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "ndim": 2
+    },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
     //   "standard_name": "sea_water_x_velocity",

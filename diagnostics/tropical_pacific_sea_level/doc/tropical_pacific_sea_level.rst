@@ -9,7 +9,6 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 Tropical Pacific Sea Level Diagnostic Documentation 
-===================================================
 
 Last update: 11/16/2020
 
@@ -80,6 +79,7 @@ With monthly frequency from the model output. This diagnostic needs
 input model variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
 - tauuo (surface wind stress in the x direction from native model output resolution/grid) 
 - tauvo (surface wind stress in the y direction from native model output resolution/grid) 
 - zos (dynamic sea level height in the model from native model output resolution/grid) 
@@ -132,7 +132,7 @@ References
    Sea Level in GFDL-OM4 under OMIP-I and OMIP-II Forcings. *GMD*, under review.
    
 2. S. M. Griffies et al. (2016): OMIP contribution to CMIP6: experimental and 
-   diagnostic protocol for the physical component of the Ocean Model Intercomparison 
+   diagnostic protocol for the physical component of the Ocean Model Intercomparison
    Project. *GMD*, `https://doi.org/10.5194/gmd-9-3231-2016 <https://doi.org/10.5194/gmd-9-3231-2016>`__
    
 3. S. Kobayashi et al., (2015): The JRA-55 Reanalysis: General Specifications and Basic Characteristics.

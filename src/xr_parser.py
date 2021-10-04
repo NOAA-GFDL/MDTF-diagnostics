@@ -146,17 +146,14 @@ class MDTFCFAccessorMixin(object):
         coords_list = list(axes_obj.coords)
 
         # if the number of coordinates is greater than the number of dimensions,
-        # assume that we have a curvilinear grid that is defined by 2-dimensional lat & lon coords
+        # assume that we have a curvilinear grid that is defined by 2-dimensional
+        # lat & lon coords
         if len(coords_list) > len(dims_list):
-
             # subtract the coordinate list from the dimensions list
             subset_dims = list(set(dims_list)-set(coords_list))
-
-            # determine if we have a time dimension to deal with
-            timedim = vardict["T"][0] if len(vardict["T"]) > 0 else None
-
+            # determine if we have a time dimension to deal with;
             # add back in the time dimension if necessary
-            if timedim is not None:
+            if vardict["T"]:
                 dims_list = vardict["T"] + subset_dims
             else:
                 dims_list = subset_dims

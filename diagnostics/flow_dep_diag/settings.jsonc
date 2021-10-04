@@ -1,0 +1,77 @@
+{
+  "settings" : {
+    "long_name" : "Flow-Dependent, Cross-Timescale Model Diagnostics Documentation",
+    "driver" : "flow_dep_diag.py",
+    "realm" : "atmos",
+    "description" : "Comparing daily atmospheric circulation pattern characteristics in reanalysis and models",
+    "runtime_requirements" : {
+      "python3" : ["netCDF4", "xarray", "numpy", "sklearn", "cartopy", "matplotlib", "numba", "datetime", "typing"]
+    },
+    "pod_env_vars" : {
+    // Number of simulations run in reanalysis weather typing.
+    // Typically 25-50; try 25 for a quick preliminary computation only
+      "NSIM" : "25",
+    // number of weather types in clustering
+      "NCLUSTER" : "6"
+    }
+  },
+  "data" : {"frequency" : "day"},
+  "dimensions" : {
+    "lat" : {
+      "standard_name" : "latitude",
+      "units" : "degrees_N"
+    },
+    "lon" : {
+      "standard_name" : "longitude",
+      "units" : "degrees_E"
+    },
+    "plev" : {
+      "standard_name" : "air_pressure",
+      "units" : "hPa",
+      "positive" : "down"
+    },
+    "time" : {
+      "standard_name" : "time",
+      "units" : "days",
+      "calendar" : "noleap"
+    }
+  },
+  "varlist" : {
+    "Z250": {
+      // "var_name" : "Z250_var",
+      "standard_name" : "geopotential_height_250_mbar",
+      "path_variable" : "Z250_FILE",
+      "freq" : "day",
+      "requirement" : "required",
+      "units" : "m",
+      "dimensions" : ["time", "lat", "lon"]
+    },
+    "T500": {
+    "standard_name" : "temperature_500_mbar",
+    "path_variable" : "T500_FILE",
+    "freq" : "day",
+    "units" : "K",
+    "requirement" : "required",
+    "dimensions" : ["time", "lat", "lon"],
+    "alternates": ["T250"]
+    },
+    "T250": {
+      // "var_name" : "T250_var",
+      "standard_name" : "temperature_250_mbar",
+      "path_variable" : "T250_FILE",
+      "freq" : "day",
+      "units" : "K",
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]
+    },
+    "PRECT": {
+      // "var_name" : "PRECT_var",
+      "standard_name" : "precipitation_rate",
+      "path_variable" : "PRECT_FILE",
+      "freq" : "day",
+      "units": "m s-1",
+      "requirement" : "required",
+      "dimensions" : ["time", "lat", "lon"]
+    }
+  }
+}

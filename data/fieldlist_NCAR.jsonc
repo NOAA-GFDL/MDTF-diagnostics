@@ -90,7 +90,6 @@
       "ndim": 3
     },
     "TREFHT" : {
-      // correct name? CMIP6 equivalent should be tas, temp at 2m ref height
       "standard_name": "air_temperature",
       "units": "K",
       "ndim": 3
@@ -155,6 +154,22 @@
     "LHFLX": {
       "standard_name": "surface_upward_latent_heat_flux",
       "units": "W m-2",
+      "ndim": 3
+    },
+    // Variables for flow_dep_diag module:
+    "Z250": {
+      "standard_name": "geopotential_height_250_mbar",
+      "units": "m",
+      "ndim": 3
+    },
+    "T250": {
+      "standard_name": "temperature_250_mbar",
+      "units": "K",
+      "ndim": 3
+    },
+    "T500": {
+      "standard_name": "temperature_500_mbar",
+      "units": "K",
       "ndim": 3
     },
     // Variables for AMOC_3D_Structure module:

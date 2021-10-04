@@ -1,12 +1,11 @@
-# This file is part of the convective_transition_diag module of the MDTF code package (see LICENSE.txt)
-
+# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 # ======================================================================
 # convecTransCriticalCollapse_usp.py
 #
 #   Called by convecTransCriticalCollapse.py
 #    Provides User-Specified Parameters for Fitting and Plotting
 #
-#   This file is part of the Convective Transition Diagnostic Package 
+#   This file is part of the Convective Transition Diagnostic Package
 #    and the MDTF code package. See LICENSE.txt for the license.
 #
 import json
@@ -32,7 +31,7 @@ REGION_STR=["WPac","EPac","Atl","Ind"]
 
 TAVE_VAR=os.environ["tave_var"]
 QSAT_INT_VAR=os.environ["qsat_int_var"]
-# Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure 
+# Use 1:tave, or 2:qsat_int as Bulk Tropospheric Temperature Measure
 BULK_TROPOSPHERIC_TEMPERATURE_MEASURE=int(os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"])
 
 # Directory & Filename for saving binned results (netCDF4)
@@ -53,7 +52,7 @@ BIN_OUTPUT_FILENAME+="_"+TEMP_VAR
 # List binned data file (with filename corresponding to casename)
 bin_output_list=sorted(glob.glob(BIN_OUTPUT_DIR+"/"+BIN_OUTPUT_FILENAME+".nc"))
 
-# Directory & Filename for saving figures 
+# Directory & Filename for saving figures
 #  convecTransCriticalCollapse.py generates 2 sets figures for MODEL
 FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
 # Figure filename for Convective Transition Statistics (CTS)
@@ -87,7 +86,7 @@ CP_THRESHOLD=0.2
 ##### Start: FITTING-REQUIRED PARAMETERS #####
 # Use PRECIP_REF (units: mm/hr) to find a 0-th order approximation of Critical CWV w_c
 #  and PRECIP_FIT_MIN<precip<PRECIP_FIT_MAX (units: mm/hr) for Fitting
-# Different values for MODEL & OBS 
+# Different values for MODEL & OBS
 #  Change values for MODEL if necessary
 PRECIP_REF_MODEL=1
 PRECIP_FIT_MIN_MODEL=1.5
@@ -118,7 +117,7 @@ legend_fontsize = 9
 marker_size = 40 # size of markers in scatter plots
 xtick_pad = 10 # padding between x tick labels and actual plot
 figsize1 = 14 # figure size set by figsize=(figsize1,figsize2)
-figsize2 = 12 
+figsize2 = 12
 
 ### There are 4+2 figures in level 2 diagnostics ###
 ### Choose the plot parameters for each figure below ###
@@ -137,7 +136,7 @@ yticks={}
 #==========================================
 ##### Figure 1 : Precip vs. CWV-w_c #######
 #==========================================
-xlim1['f1']=-45 
+xlim1['f1']=-45
 xlim2['f1']=15
 
 ylim1['f1']=0
@@ -156,7 +155,7 @@ yticks['f1']=[0,1,2,3,4,5,6,7,8]
 #========================================================
 ##### Figure 2 : Probability of precip vs. CWV-w_c ######
 #========================================================
-xlim1['f2']=-45 
+xlim1['f2']=-45
 xlim2['f2']=15
 
 ylim1['f2']=0
@@ -321,7 +320,7 @@ data["fit_obs_params"]=[ PDF_THRESHOLD,\
 fig_params={}
 
 fig_params['f0']=[axes_fontsize,legend_fontsize,marker_size,xtick_pad,figsize1,figsize2]
-for i in ['f1','f2','f3','f4','f5','f6']:    
+for i in ['f1','f2','f3','f4','f5','f6']:
     fig_params[i]=[[xlim1[i],xlim2[i]],[ylim1[i],ylim2[i]],xlabel[i],ylabel[i],xticks[i],yticks[i]]
 
 data["plot_params"]=fig_params

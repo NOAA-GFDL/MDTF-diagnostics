@@ -161,3 +161,4 @@ tropical Pacific at seasonal time scale corrects a biased seasonal variability o
 equatorial counter-current in the CORE simulation. Both CORE and JRA55-do generate realistic 
 DSL variation during El Niño. We find an asymmetry in the DSL pattern on two sides of the equator
 is strongly related to wind stress curl that follows the sea level pressure evolution during El Niño.
+

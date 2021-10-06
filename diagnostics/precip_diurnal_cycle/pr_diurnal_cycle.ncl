@@ -1,9 +1,11 @@
-; This file is part of the precip_diurnal_cycle module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the precip_diurnal_cycle module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
+
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 begin
 
@@ -12,7 +14,7 @@ begin
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
 dir_stub = getenv("WK_DIR")
-filename = getenv("DATADIR")+"/3hr/"+casename+"."+getenv("pr_var")+".3hr.nc"
+filename = getenv("PR_FILE")
 ;fincl = getenv("fincl")
 ver = getenv("ver")
 file_obs_DJF = getenv("OBS_DATA")+"/TRMM_DJF.nc"
@@ -294,7 +296,7 @@ res@tmXBOn              = True
 
     this_var = vars(ivars)
     var_plot = f->$this_var$
-    var_plot = var_plot*tofloat(getenv("pr_conversion_factor"))*0.001
+    var_plot = var_plot*0.001
     var_plot@long_name = "Total precipitation rate" 
     var_plot@units = "mm/day"      
     res@tiYAxisString = "Total precipitation rate"+" ("+var_plot@units+")"

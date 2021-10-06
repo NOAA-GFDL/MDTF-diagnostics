@@ -1,0 +1,82 @@
+// Surface Temperature Extremes and Distribution Shape
+//    This requires daily two-meter temperature, sea level pressure, 500hPa Geopotential Height
+//    For further documentation & user options, see comments in temp_extremes_distshape.py
+//    This also requires the following Python modules:
+//         os,json,numpy,scipy,matplotlib,mpl_toolkits,h5py,netcdf4,netcdftime,math,cftime,cartopy
+//    The code is in Python 3
+
+{
+  "settings" : {
+    // Name of the driver script.
+    "driver" : "temp_extremes_distshape.py",
+
+    // Human-readable name of the diagnostic.
+    "long_name" : "Surface Temperature Extremes and Distribution Shape",
+
+    // Modeling realm.
+    "realm" : "atmos",
+
+    // Human-readable name of the diagnostic.
+    "description" : "Surface Temperature Extremes and Distribution Shape",
+
+    "pod_env_vars" : {
+      // test: enforce non-interactive backend here, instead of code
+      "MPLBACKEND": "Agg",
+      // optional pod-specific shell environment variables:
+      // Specify parameters for Surface Temperature Extremes and
+      // Distribution Shape.
+      // monthstr: Season being evaluated - Use DJF or JJA
+      "monthstr" : "DJF",
+      // monthsub: Based on season being evaluated
+      // Use [12,1,2] for DJF or [6,7,8] for JJA
+      "monthsub" : [12,1,2],
+      // ptile: Tail being evaluated - If interested in cold
+      // side of the temperature distribution, use 5th percentile
+      // threshold (5), if warm side use 95th (95)
+      "ptile" : 5,
+      // city: select location for circulation composites
+      // if monthstr DJF use Yellowknife; if JJA use Rennes (ptile=5)
+      "city" : "Yellowknife"
+    },
+    // Programs and third-party libraries diagnostic needs to run.
+    "runtime_requirements": {
+      "python3": ["numpy","scipy","matplotlib","netcdf4","cftime","cartopy"]
+    }
+  },
+  "data" : {
+    "rename_dimensions": false,
+    "rename_variables": false,
+    "multi_file_ok": false,
+    "frequency": "day"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"},
+    "plev": {  // only used to specify level of zg
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    }
+  },
+  // Model data the diagnostic uses.
+  "varlist": {
+    "tas": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "dimensions": ["time", "lat", "lon"]
+    },
+    "zg": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 500}
+    },
+    "psl": {
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "dimensions": ["time", "lat", "lon"]
+    }
+  }
+}

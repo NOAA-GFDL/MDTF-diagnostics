@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 ;-------------------------------------------------------------------------------------
 ;Composites of geopotential height for CMIP5 models
@@ -13,6 +13,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
+
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 begin
 
@@ -36,19 +38,14 @@ old_model = True
    yrLast  = ymdLast/10000
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
-diri     = getenv("DATADIR")+"/day/"                                           ;Input data directory
 dirobs   = getenv("OBS_DATA")+"/"                      ;Obs input directory
 diro     = getenv("WK_DIR")+"/model/netCDF/"        ;Output data directory
 filz250  = getenv("z250_file")                                              ; input file
 tfile    = "t_table_data.txt"
-print("Input data path :" + diri)
 print("Output data path :" + diro)
 print("Input data file for Z250 :" + filz250)
 print("t-statistics data table is read from:"+diro+tfile)
 
-
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
 
 z250var = getenv("z250_var")
 
@@ -62,7 +59,7 @@ print("data table for t stat is read in ")
 ;------------------read in geopotential height data --------------------
 
 
-    a = addfile(diri+filz250 , "r")
+    a = addfile(filz250 , "r")
   ;  print(a)
 ;--- read in time ---
    temp_time = a->time
@@ -73,15 +70,7 @@ print("data table for t stat is read in ")
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
    
-    ; HACK for merging in SPEAR code before we have general level extraction working
-    if (getenv("MDTF_3D_Z").eq."0") then
-      ; extract level from 4D data
-      zgt = a->$z250var$(iStrt:iLast,{25000/lev_factor},:,:)     ;time,lat,lon
-    else
-      ; 3D data
-      zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
-    end if
-    ; end HACK
+    zgt = a->$z250var$(iStrt:iLast,:,:)     ;time,lat,lon
     zgt@_FillValue = -999
 
     lon = tofloat(a->lon)

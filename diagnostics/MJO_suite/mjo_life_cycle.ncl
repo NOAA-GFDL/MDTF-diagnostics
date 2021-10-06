@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ;***********************************************************
 ; Generate life cycle composites based upon daily phase space
@@ -8,8 +8,11 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"  
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
+  routine_name = "mjo_life_cycle"
    casename = getenv("CASENAME")
    file_dir = getenv("WK_DIR")+"/model/netCDF/"
 
@@ -124,6 +127,15 @@ begin
   angBnd(1,:) = fspan( 45,360,nPhase)
 
   r2d         = 180./(4.*atan(1.0))
+
+  do pc_sign_flip = 1,2
+    if (pc_sign_flip.eq.2) then  ; 1 = v1, 2 = v2 
+      pc1     = pc1*-1.0
+      file_tail = ".v2"  ; this script just produces both figures, user
+                        ; needs to choose
+    else
+      file_tail = ""
+    end if ; pc_sign_flip
   ang         = atan2(pc2,pc1)*r2d     ; phase space 
   nn          = ind(ang.lt.0)
   ang(nn)     = ang(nn) + 360          ; make 0 to 360
@@ -203,11 +215,12 @@ begin
 
     if (nSeason.eq.1) then
         resP@txString  = yrStrt+"-"+yrLast+": May to Oct"
-        pltPath = pltDir+pltName+".summer"
+        pltPath = pltDir+pltName+".summer"+file_tail
     else
         resP@txString  = yrStrt+"-"+yrLast+": Nov to Apr"
-        pltPath = pltDir+pltName+".winter"
+        pltPath = pltDir+pltName+".winter"+file_tail
     end if
+    print(routine_name+" writing figure "+pltPath)
 
   wks  = gsn_open_wks(pltType,pltPath)
   gsn_define_colormap(wks,"ViBlGrWhYeOrRe") 
@@ -229,6 +242,13 @@ begin
          uAvg = dim_avg_Wrap( u(lat|:,lon|:,time|nt) )
          vAvg = dim_avg_Wrap( v(lat|:,lon|:,time|nt) )
          nDays(n) = dimsizes(nt)
+         ; Don't know why these get lost!
+         xAvg&lon@units = x&lon@units
+         uAvg&lon@units = x&lon@units
+         vAvg&lon@units = x&lon@units
+         xAvg&lat@units = x&lat@units
+         uAvg&lat@units = x&lat@units
+         vAvg&lat@units = x&lat@units
 
          res@tmXBLabelsOn         = False    ; do not draw lon labels
          res@tmXBOn               = False    ;             lon tickmarks
@@ -236,16 +256,17 @@ begin
              res@tmXBLabelsOn     = True     ; draw lon labels
              res@tmXBOn           = True     ;          tickmarks
          end if
-
          plot(n) = gsn_csm_vector_scalar_map_ce(wks,uAvg,vAvg,xAvg,res)
      end if
      delete(nt)                  ; will change next iteration
-  end do
+  end do ; n=0,nPhase-1
 
 ;;ann3  = gsn_add_annotation(plot(0), txid, amres)
   resP@gsnPanelFigureStrings= pLabel+nDays
   gsn_panel(wks,plot,(/nPhase,1/),resP)     ; now draw as one plot
- end do
+ end do ; nSeason=1,2 
+
+end do ; pc_sign_flip = 1,2
 
 ; system("gv "+pltPath+"."+pltType)
 end

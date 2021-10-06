@@ -1,4 +1,4 @@
-; This file is part of the precip_diurnal_cycle module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the precip_diurnal_cycle module of the MDTF code package (see LICENSE.txt)
 
 ;
 ; This series of "Evans" plots were created by Jason Evans, a
@@ -18,6 +18,7 @@ undef("add_ep_label_bar")
 undef("evans_plot_map")
 undef("evans_plot_vector_map")
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 ;**********************************************************************;
 ; Function : evans_plot_color_map

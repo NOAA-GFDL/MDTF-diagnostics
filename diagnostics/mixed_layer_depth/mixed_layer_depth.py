@@ -62,7 +62,6 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import gsw
 import time
-import cmath
 
 months = [
     "Jan",
@@ -227,7 +226,7 @@ def computemld(fieldso, fieldthetao):
     )  # units 'meters'
 
     # set MLD to water depth where MLD is NaN
-    mld = mld.where(mld == mld, bottom_depth)
+    mld = mld.where(~xr.ufuncs.isnan(mld), bottom_depth)
 
     return mld
 

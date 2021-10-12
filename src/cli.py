@@ -1,5 +1,5 @@
 """Classes which parse the framework's command line interface configuration files
-and implement the dynamic CLI.
+and implement the dynamic CLI. See the summary in :doc:`fmwk_cli`.
 
 Familiarity with the python :py:mod:`argparse` module is recommended.
 """

@@ -1,7 +1,7 @@
 Data layer: Query
 =================
 
-This section describes the **Query** stage of the data request process, implemented in the :doc:`src.data_manager`.
+This section describes the **Query** stage of the data request process, implemented in the :doc:`src.data_manager`. See :doc:`fmwk_datasources` for an overview of the process.
 
 Overview
 --------

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Currently unused; intended as a standalone installer script for the package's
-conda environments and supporting data.
+"""The code in this module is currently unused. It was intended as a standalone
+installer script for the package's conda environments and supporting data.
 """
 
 import sys

@@ -1,5 +1,5 @@
 """Functionality for transforming model data into the format expected by PODs
-once it's been download to local storage.
+once it's been downloaded. See summary in :doc:`fmwk_preprocess`.
 """
 import os
 import abc

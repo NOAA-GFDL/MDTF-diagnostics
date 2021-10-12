@@ -1,5 +1,5 @@
 """Base classes implementing logic for querying, fetching and preprocessing
-model data requested by the PODs; see :doc:`fmwk_datasources`.
+model data requested by the PODs. See summary in :doc:`fmwk_datasources`.
 """
 import os
 import abc

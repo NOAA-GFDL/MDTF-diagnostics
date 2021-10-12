@@ -30,5 +30,7 @@ These sections provide an overview of specific parts of the code that's more hig
 
    fmwk_cli
    fmwk_datasources
+   fmwk_dataquery
+   fmwk_datafetch
    fmwk_preprocess
    fmwk_utils

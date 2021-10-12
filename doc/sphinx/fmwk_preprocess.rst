@@ -1,7 +1,7 @@
 Data layer: Preprocessing
 =========================
 
-This section describes the :doc:`src.preprocessor`, responsible for converting model data into the format requested by PODs, and the :doc:`src.xr_parser`, responsible for "cleaning" model metadata beforehand.
+This section describes the :doc:`src.preprocessor`, responsible for converting model data into the format requested by PODs, and the :doc:`src.xr_parser`, responsible for "cleaning" model metadata beforehand. These implement the **Preprocess** stage of the data request; see :doc:`fmwk_datasources` for an overview.
 
 Overview
 --------

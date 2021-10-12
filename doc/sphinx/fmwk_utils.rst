@@ -1,10 +1,11 @@
 util subpackage
 ===============
 
-The utils package contains utility functions needed at many places in the code.
+This section summarizes code in the ``src/util`` subpackage, which contains utility 
+functions needed at many places in the code.
 It's implemented as a package because putting all the code in a single module
-would be difficult to navigate. All modules only depend on the python standard
-library.
+would be difficult to navigate. All modules depend on the python standard
+library only.
 
 This section is intended to give an introduction and context for the overall
 code organization, which might be difficult to gain from the complete docstring

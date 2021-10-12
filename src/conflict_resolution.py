@@ -1,3 +1,7 @@
+"""This module is currently unused. It implements dependency resolution for
+plug-ins, intended as part of a future release.
+"""
+
 from itertools import chain
 from collections import defaultdict
 

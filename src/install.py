@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""The code in this module is currently unused. It was intended as a standalone
+installer script for the package's conda environments and supporting data.
+"""
+
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 7:

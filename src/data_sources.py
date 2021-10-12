@@ -1,5 +1,5 @@
 """Implementation classes for model data query/fetch functionality, selected by
-the user via ``--data_manager``. See summary in :doc:`ref_data_sources` and
+the user via ``--data_manager``; see :doc:`ref_data_sources` and
 :doc:`fmwk_datasources`.
 """
 import os

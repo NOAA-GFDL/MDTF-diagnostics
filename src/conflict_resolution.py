@@ -1,5 +1,5 @@
-"""This module is currently unused. It implements dependency resolution for
-plug-ins, intended as part of a future release.
+"""Currently unused; implements dependency resolution for plug-ins, intended as
+part of a future release.
 """
 
 from itertools import chain

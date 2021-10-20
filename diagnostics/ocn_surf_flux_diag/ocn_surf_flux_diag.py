@@ -12,11 +12,10 @@ from groupby_variables import bin_2d
 
 
 
-
 # 0-360
-lon_lim = [30,180]
-lat_lim = [-20,20]
-year_lim = [1998,2014]
+lon_lim = [os.getenv("lon_min"),os.getenv("lon_max")]
+lat_lim = [os.getenv("lat_min"),os.getenv("lat_max")]
+year_lim = [os.getenv("FIRSTYR"),os.getenv("LASTYR")]
 
 
 # need CMOR variables including
@@ -31,15 +30,15 @@ year_lim = [1998,2014]
 warnings.simplefilter("ignore")
 
 
-varlist = ['/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*huss.day.nc',
-           '/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*ts.day.nc',
-           '/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*psl.day.nc',
-           '/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*sfcWind.day.nc',
-           '/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*hfls.day.nc',
-           '/home/joedhsu/mdtf/inputdata/model/NCAR.CESM2.hist.r1i1p1f1/day/*pr.day.nc']
+varlist = [os.getenv("HUSS_FILE"),
+           os.getenv("TS_FILE"),
+           os.getenv("PSL_FILE"),
+           os.getenv("SFCWIND_FILE"),
+           os.getenv("HFLS_FILE"),
+           os.getenv("PR_FILE")]
 
-obs_taotriton_dir = '/home/joedhsu/mdtf/inputdata/obs_data/tao_triton/'
-obs_rama_dir = '/home/joedhsu/mdtf/inputdata/obs_data/rama/'
+obs_taotriton_dir = '%s/tao_triton/'%os.getenv("OBS_DATA")
+obs_rama_dir = '%s/rama/'%os.getenv("OBS_DATA")
 
 ################## Main script start #############
 # Read model
@@ -250,7 +249,7 @@ ax2.set_xlabel('10m wind speed ($m/s$)',size=15)
 
 
 
-fig.savefig('LHFLXmatrix.pdf', dpi=300, facecolor='w', edgecolor='w',
+fig.savefig('LHFLXmatrix.png', dpi=300, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches="tight", pad_inches=None,
                 frameon=None)

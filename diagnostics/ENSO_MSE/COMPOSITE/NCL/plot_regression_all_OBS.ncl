@@ -41,6 +41,7 @@ begin
        data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(10), 3," ")
 
+       tt0 = 0 
        xlon1 = 0
        xlon2 = 360
        xcenter  = (xlon1 + xlon2)/2
@@ -73,6 +74,7 @@ begin
      datain1 =  new(  dims, "float")
      datain1@_FillValue = undef2
      datain1 = fin1->$variable2$
+
 
     datain1@units = " "
     datain1@long_name = " "

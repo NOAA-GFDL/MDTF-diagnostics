@@ -38,6 +38,7 @@ begin
       parameter_name = varcode + "/shared/parameters.txt"
       nameclima = obsdir +  "/netCDF/"
 
+      tt0 = 0 
       xlon1 = 0
       xlon2 = 360
       xcenter  = (xlon1 + xlon2)/2
@@ -116,7 +117,6 @@ begin
      datain&lon = lon
      
     datain = ff *( datain1  - datain2) 
-     
 
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)

@@ -9,7 +9,8 @@ begin
    ccenter = 0
   
 
-   variables = (/ "PR" , "SW", "LW", "LHF", "SHF" /)
+   variables2 = (/ "PR" , "SW", "LW", "LHF", "SHF" /)
+   variables = (/ "pr", "sw", "lw", "hfls", "hfss" /)
    varinames = (/ "PRECIP" , "SW~B~net~N", "LW~B~net~N", "LHF", "SHF" /)
    varunits =  (/ "[mm/day]/[deg. C]", "[W/m2]/[deg. C]", "[W/m2]/[deg. C]", "[W/m2]/[deg. C]", "[W/m2]/[deg. C]"  /)
 
@@ -17,21 +18,20 @@ begin
 ;;  read  in the data from 
 
       varcode  = getenv("POD_HOME")
-      outdir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model/" ; envvar set in ENSO_MSE.py
-      outdir2 = getenv("ENSO_MSE_WKDIR") +"/model/"
+      outdir = getenv("ENSO_MSE_WKDIR") +"/model/"
+      outdir2  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model" 
       model = getenv( "CASENAME")
 
-      parameter_name = varcode + "/shared/parameters.txt"
-      name_dimensions =  outdir + "/netCDF/DATA/xyz_dimensions.txt"
-      name_lon = outdir + "/netCDF/DATA/longitude.out"
-      name_lat = outdir + "/netCDF/DATA/latitude.out"
-      name_plevs = outdir + "/netCDF/DATA/plevels.out"
+     model = "CESM2"
 
-      namein = outdir + "/netCDF/"  
-      nameout = outdir2 +  "/PS/regression" 
+      parameter_name = varcode + "/shared/parameters.txt"
+
+      namein  = outdir2 + "/netCDF/"  
+      nameout = outdir +  "/PS/regression" 
 	 
       maintitle = "NINO3.4 SST on "
 
+      tt0 = 0 
       xlon1 = 0
       xlon2 = 360
       xcenter  = (xlon1 + xlon2)/2
@@ -42,48 +42,36 @@ begin
 
 	 data  = asciiread(parameter_name,-1,"string")
         season = str_get_field(data(10), 3," ")
-;;;   read the lat/lon and dimensions from external files - in DATA
-       dataxyz  = asciiread(name_dimensions,-1,"string")
-       xdum  = str_get_field(dataxyz(0), 1," ")
-       xmax =  stringtointeger( xdum)
-       ydum  = str_get_field(dataxyz(1), 1," ")
-       ymax =  stringtointeger( ydum)
-       zdum  = str_get_field(dataxyz(2), 1," ")
-       zmax =  stringtointeger( zdum)
-
-;;;  read in the lon/lat plevs here !!
-       lon = fbindirread (name_lon, 0, (/ xmax /) , "float")
-       lat = fbindirread (name_lat, 0, (/ ymax /) , "float")
-       lon@units = "degrees_east"
-       lon@long_name = "lon"
-       lat@units = "degrees_north"
-       lat@long_name = "lat"
 
 ;;;   read in various variables then  plot 
 ;;   
      do iv = 0, 4
-     variable = variables(iv) ;;;;    
+     variable = variables(iv) ;;;;
+     variable2 = variables2(iv)
+
      units = varunits(iv)
 
      colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
 ;;  the title 
 
-     namein1 = namein + "/REGRESS_" + variable + ".grd"  ;;  str_concat( string)
-     nameout12 = nameout + "_" + variable
+     namein1 = namein + "/REGRESS_" + variable + ".nc"  ;;  str_concat( string)
+     nameout12 = nameout + "_" + variable2
 
  
 ;;   read in the data
+     fin1 = addfile( namein1, "r")
+     lon = fin1->lon
+     lat = fin1->lat
+
+     xmax = dimsizes( lon)
+     ymax = dimsizes( lat)
      dims = (/  ymax, xmax /)
-     datain1 =  new(  dims, "float")
-     datain1@_FillValue = undef2
-     datain1  = fbindirread (namein1, 0, dims , "float")
 
+     dims = (/  ymax, xmax /)
+     datain1 = fin1->$variable$
 
-;;  make the anomaly for plotting
-       datain1!0="lat"
- 	datain1!1="lon"
-	datain1&lat = lat
-	datain1&lon = lon 
+    datain1@units = " "
+    datain1@long_name = " "  
 
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)

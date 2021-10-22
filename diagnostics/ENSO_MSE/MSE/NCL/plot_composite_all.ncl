@@ -8,19 +8,10 @@ begin
 ;;  read  in the data from MSE
         varcode = getenv("POD_HOME")
         outdir  =  getenv("ENSO_MSE_WKDIR") +"/model/"
-
-        composite_dir  = getenv("ENSO_MSE_WKDIR_COMPOSITE") +"/model/"
         mse_dir  = getenv("ENSO_MSE_WKDIR_MSE") +"/model/"
         model = getenv( "CASENAME")
 
-
-       parameter_name = varcode + "/shared/parameters.txt"
-       name_dimensions =  composite_dir + "netCDF/DATA/xyz_dimensions.txt"
-       name_lon = composite_dir + "netCDF/DATA/longitude.out"
-       name_lat = composite_dir + "netCDF/DATA/latitude.out"
-       name_plevs = composite_dir + "netCDF/DATA/plevels.out"
-
-       nameclima = mse_dir + "netCDF/"
+     nameclima = mse_dir + "netCDF/"
 
 
    ccenter = 0
@@ -59,25 +50,9 @@ begin
       lat2 = -9999.
       undef2 = 1.1E+20
 	
-       data  = asciiread(parameter_name,-1,"string")
+      parameter_name = varcode + "/shared/parameters.txt"
+      data  = asciiread(parameter_name,-1,"string")
        season = str_get_field(data(10), 3," ")
-
-;;;   read the lat/lon and dimensions from external files - in DATA
-       dataxyz  = asciiread(name_dimensions,-1,"string")
-       xdum  = str_get_field(dataxyz(0), 1," ")
-       xmax =  stringtointeger( xdum)
-       ydum  = str_get_field(dataxyz(1), 1," ")
-       ymax =  stringtointeger( ydum)
-       zdum  = str_get_field(dataxyz(2), 1," ")
-       zmax =  stringtointeger( zdum)
-
-;;;  read in the lon/lat plevs here !!
-       lon = fbindirread (name_lon, 0, (/ xmax /) , "float")
-       lat = fbindirread (name_lat, 0, (/ ymax /) , "float")
-       lon@units = "degrees_east"
-       lon@long_name = "lon"
-       lat@units = "degrees_north"
-       lat@long_name = "lat"
 
 ;;;   read in various variables then  plot 
 ;;    
@@ -107,40 +82,30 @@ begin
 	 
      colormap = "BlueWhiteOrangeRed" ;;  
 ;;  the title 
-    namein1 = namein + "/MSE_" + variable + ".out"  ;;  
-    namein2 = nameclima+ "/MSE_" + variable + "_clim.out"  ;;;
-
+    namein1 = namein    + "/MSE_" + variable + ".nc"  ;;  
+    namein2 = nameclima + "/MSE_" + variable + ".nc"  ;;;
 
    nameout12 = nameout + "_" + variable
 ;;   read in the data
-     dims = (/ zmax+1,  ymax, xmax /)
-     dims2 = (/ ymax, xmax /)
+     fin1 = addfile( namein1, "r")
+     fin2 = addfile( namein2, "r")
 
-     datain1 =  new(  dims2, "float")
-     datain2 =  new(  dims2, "float")
-     datain1@_FillValue = undef2
-     datain2@_FillValue = undef2
-     datain1  = fbindirread (namein1, 0, dims2 , "float")
-     datain2  = fbindirread (namein2, 0, dims2 , "float")
+      lat   = fin1->lat
+      lon   = fin1->lon
 
-
+      ydim = dimsizes(lat)
+      xdim = dimsizes(lon)
+ 
+      datain1  = fin1->$variable$
+      datain2  = fin2->$variable$
+      delete( [/ fin1, fin2  /])
 ;;  make the anomaly for plotting
-    datain =  new(  dims2, "float")
-    datain@_FillValue = undef2
+    datain = datain1
+    datain = datain1  - datain2 
+    datain =  where( (datain .gt.  -6.0E+07), datain,  datain@_FillValue) 
 
-       datain!0="lat"
- 	datain!1="lon"
-	datain&lat = lat
-	datain&lon = lon 
-
-       datain = datain1( :, :)  - datain2( :, :) 
-       do j = 0, ymax -1
-         do i = 0, xmax - 1
-          if( (.not.ismissing(datain(j,i)) ) .and. (datain(j, i) .le.  -6.0E+07) ) then
-	      datain(j, i) =  undef2
-          end if      
-	  end do 
-	end do
+   datain@units = " "
+   datain@long_name = " "
 
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
@@ -210,6 +175,7 @@ begin
 
 	plot = gsn_csm_contour_map(wks, datain, res)
 
+  
   end do 
   end do 
 end

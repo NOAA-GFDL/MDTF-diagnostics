@@ -170,7 +170,6 @@ begin
       xs1 = xs1 + dx2
       gsn_text_ndc (wks, label2, xs1, ys1, txres1)
 
-
 ;;;;;;;;;;;;
 
       txres2 = True

@@ -16,8 +16,8 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "NCAR.CESM2.hist.r1i1p1f1",
-      "model" : "CESM2",
+      "CASENAME" : "NCAR_CESM2_hist_r1i1p1f1",
+      "model" : "CMIP",
       "convention" : "CMIP",
       "FIRSTYR" : 2000,
       "LASTYR" : 2009,
@@ -59,7 +59,7 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data/",
 
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",

@@ -7,17 +7,22 @@
 #
 # This package and the MDTF code package are distributed under the LGPLv3 license
 #        (see LICENSE.txt).
-#   updated 2021-01-20
+#   updated 2021-10-21
 # ======================================================================
 import os
 import os.path
+
+import time
+import datetime
+
 
 # ======================================================================
 # ======================================================================
 # set ENSO_MSE switches  from  ../mdtf.py
 # ======================================================================`
 
-print( "Starting ENSO_MSE.py ")
+now = datetime.datetime.now()
+print( "STARTING ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 
 os.environ["ENSO_MSE_WKDIR"] = os.environ["WK_DIR"]
 
@@ -113,9 +118,7 @@ if os.environ["ENSO_COMPOSITE"] == "1":
 
 ###  check for model input dat
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/check_input_files.py")
-
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories.py")
-        os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/preprocess.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.py")
 ###       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by
 ###                             individual component html files
@@ -241,4 +244,6 @@ if os.environ["ENSO_SCATTER"] == "1":
         print('WARNING',e.errno,e.strerror)
         print("MSE VARIANCE is NOT Executed as Expected!")
 
+now = datetime.datetime.now()
+print( "FINISHED ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 # ======================================================================

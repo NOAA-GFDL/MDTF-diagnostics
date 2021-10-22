@@ -49,6 +49,12 @@
       "scalar_coord_templates": {"plev": "va{value}"},
       "ndim": 4
     },
+     "wind_speed": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "wind_speed{value}"},
+      "ndim": 4
+    },
     "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
@@ -109,6 +115,12 @@
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
+      "ndim": 3
+    },
+    "wind_speed": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "modifier": "atmos_height",
       "ndim": 3
     },
     // radiative fluxes:

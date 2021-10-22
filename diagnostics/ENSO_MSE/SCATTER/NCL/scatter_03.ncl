@@ -240,7 +240,6 @@ begin
       txres@txFontColor =  colors1(i)
       txres@txFont   = "helvetica"
       txres@txFontHeightF = 0.01
-     ;;mkres@gsMarkerColor  = True
      mkres@gsMarkerColor =  colors1(i)
      mkres@gsMarkerThicknessF = 3.5
      mkres@gsMarkerSizeF      = 0.012

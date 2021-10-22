@@ -10,12 +10,12 @@ begin
    prefix = wkdir + "/SCATTER/netCDF/"
 
 ;;---Tickmark resources
-    dxx = (/  50., 50. /)
-    dyy = (/  2., 2. /)
-    xmin     =  (/ 0.,  0. /)
-    xmax     =  (/ 180.,  200. /)
-    ymin    =  (/ -10.,  0. /)
-    ymax    =  (/ 15.,   50. /)
+    dxx    = (/  50., 50. /)
+    dyy    = (/  2., 2. /)
+    xmin   =  (/ 0.,  0. /)
+    xmax   =  (/ 180.,  200. /)
+    ymin   =  (/ -12.,  0. /)
+    ymax   =  (/ 15.,   50. /)
     xlabel = "Precipitation [W/m~S~2~N~]"
     ylabel = "THF [W/m~S~2~N~]"
 ;;;----------------------------------------------------------------------
@@ -210,7 +210,6 @@ begin
     
    res1@xyMarkLineMode      = "Lines"
    res1@xyLineColors        = "red"  ; choose which have markers
-;;   res1@xyMarkerSizeF       = 0.005  ; Marker size (default 0.01)
    res1@xyDashPatterns      = 0                ; solid line 
    res1@xyLineThicknesses   = 4                 ; 
 

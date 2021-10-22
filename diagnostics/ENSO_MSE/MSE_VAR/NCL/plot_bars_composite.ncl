@@ -14,23 +14,23 @@ begin
 	modes =  (/ "ELNINO" , "LANINA" /)
        title_modes = (/ "El Nino", "La Nina" /)
 
-      composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/netCDF/DATA/"
-      varcode  = getenv("POD_HOME")
-      model = getenv( "CASENAME")
+       varcode  = getenv("POD_HOME")
+       vardata  = getenv("ENSO_MSE_WKDIR_MSE_VAR")
+       outdir   = getenv("ENSO_MSE_WKDIR")
 
+       model = getenv( "CASENAME")
+
+;       varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
+;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/MSE_VAR/"
+;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/"
+;      model = "CESM2"
+
+      Varname = "output"
 
       parameter_name = varcode + "/shared/parameters.txt"
-      name_dimensions =  composite_dir_data+"/xyz_dimensions.txt"
-      name_lon = composite_dir_data+"/longitude.out"
-      name_lat = composite_dir_data+"/latitude.out"
-      name_plevs = composite_dir_data+"/plevels.out"
 
 	season = "XXX"
 
-      lon1 = -9999.
-      lon2 = -9999.
-      lat1 = -9999.
-      lat2 = -9999.
       undef2 = 1.1E+20
 
        data  = asciiread(parameter_name,-1,"string")
@@ -43,17 +43,18 @@ begin
       do n = 0, 1
 	mode =  modes(n) ;;
 	
-       namein1 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/netCDF/" +  mode +  "/MSE_variance_C.out"
-       namein2 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/model/netCDF/" +  mode +  "/MSE_variance_E.out"
+       namein1 =   vardata + "/model/netCDF/" +  mode +  "/MSE_variance_C.nc"
+       namein2 =   vardata + "/model/netCDF/" +  mode +  "/MSE_variance_E.nc"
 
-         nameout = getenv("ENSO_MSE_WKDIR")+"/model/PS/MSE_VAR_comp_" + mode
-;;;  construct the main title based on model, season and region
+      nameout = outdir + "/model/PS/MSE_VAR_comp_" + mode
+;;;     read in the data from netCDF files
 
-       ydim = 8
-       dims = ( [ydim] ) 
-       datain1  = fbindirread (namein1, 0, dims , "float")
+       fin1 = addfile(   namein1, "r")
+       datain1 = fin1->$Varname$ 
+       ydim = dimsizes( datain1)  
+
        datain1(0) =  factor * datain1(0)
- 
+
         data2       = new( (/  ydim-2 /), float) 
         data2(0)    =  datain1(1)/datain1(0)     ;;  omse
         data2(1)    =  datain1(2)/datain1(0)     ;;  moist adv. 
@@ -62,7 +63,9 @@ begin
         data2(4)    =  datain1(5)/datain1(0)      ;;   Lw  
         data2(5)    =  (datain1(6)+datain1(7))/datain1(0) ;; THF
 
-	 datain2  = fbindirread (namein2, 0, dims , "float")
+        fin2 = addfile(   namein2, "r")
+        datain2 = fin2->$Varname$ 
+
         datain2(0) = factor * datain2(0) 
 
         data22       = new( (/  ydim-2 /), float) 
@@ -225,6 +228,8 @@ begin
 ;;;
    
      frame(wks)      
+
+     delete([/ data22, data2 /])
 
       end do
 end

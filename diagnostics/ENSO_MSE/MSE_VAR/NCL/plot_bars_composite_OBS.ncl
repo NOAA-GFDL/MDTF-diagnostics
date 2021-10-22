@@ -12,17 +12,21 @@ begin
 	modes =  (/ "ELNINO" , "LANINA" /)
        title_modes = (/ "El Nino", "La Nina" /)
 
-      composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/obs/netCDF/DATA/"
       varcode  = getenv("POD_HOME")
+      vardata = getenv("ENSO_MSE_WKDIR_MSE_VAR")
+      outdir =  getenv("ENSO_MSE_WKDIR") 
       model =  "  " ;   leave  blank for OBS 
+     
+;;      varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
+;;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/MSE_VAR/"
+;;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/"
+
+
+      Varname = "output"
 
       parameter_name = varcode + "/shared/parameters.txt"
       season = "XXX"
 
-      lon1 = -9999.
-      lon2 = -9999.
-      lat1 = -9999.
-      lat2 = -9999.
       undef2 = 1.1E+20
 
        data  = asciiread(parameter_name,-1,"string")
@@ -32,21 +36,21 @@ begin
       tlabels = (/ "MSE~B~vert. advect.~N", "M~B~adv~N",  "T~B~adv~N" , "SW~B~net~N", \ 
                     "LW~B~net~N", "THF~B~net~N" /)
 
-
       do n = 0, 1
 	mode =  modes(n) ;;
 	
-       namein1 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/obs/netCDF/" +  mode +  "/MSE_variance_C.out"
-       namein2 =  getenv("ENSO_MSE_WKDIR_MSE_VAR")+"/obs/netCDF/" +  mode +  "/MSE_variance_E.out"
+       namein1 =   vardata + "/obs/netCDF/" +  mode +  "/MSE_variance_C.nc"
+       namein2 =   vardata + "/obs/netCDF/" +  mode +  "/MSE_variance_E.nc"
 
-       
-         nameout = getenv("ENSO_MSE_WKDIR")+"/obs/PS/MSE_VAR_comp_" + mode
+      nameout = outdir + "/obs/PS/MSE_VAR_comp_" + mode
+
 ;;;      maintitle = "MSE variance budget " + title_modes(n)
 ;;;  construct the main title based on model, season and region
 
-       ydim = 8
-       dims = ( [ydim] ) 
-       datain1  = fbindirread (namein1, 0, dims , "float")
+       fin1 = addfile(   namein1, "r")
+       datain1 = fin1->$Varname$
+       ydim = dimsizes( datain1)
+
        datain1(0) = factor * datain1(0)
 
         data2       = new( (/  ydim-2 /), float) 
@@ -57,7 +61,9 @@ begin
         data2(4)    =  datain1(5)/datain1(0)      ;;   Lw  
         data2(5)    = (datain1(6)+datain1(7))/datain1(0) ;; THF
 
-	 datain2  = fbindirread (namein2, 0, dims , "float")
+        fin2 = addfile(   namein2, "r")
+        datain2 = fin2->$Varname$
+
         datain2(0) = factor * datain2(0)        
 
         data22       = new( (/  ydim-2 /), float) 
@@ -220,6 +226,8 @@ begin
 ;;;
    
      frame(wks)      
+
+     delete([/ data22, data2 /])
 
       end do
 end

@@ -77,6 +77,12 @@
       "units": "K",
       "ndim": 3
     },
+    "hus": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "ndim": 3,
+      "modifier": "atmos_height"
+    },
     "pr": {
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1",

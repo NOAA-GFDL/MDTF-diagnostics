@@ -927,3 +927,4 @@ class DMDataSet(_DMDimensionsMixin):
                     raise
         # time coord for self derived from those for contents
         self.__post_init__(None, None)
+

@@ -1,0 +1,9 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "atmos_height" : {
+    "description" : "atmospheric height above the ground (relative to orography) in meters"
+  }
+}

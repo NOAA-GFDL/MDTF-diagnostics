@@ -65,7 +65,8 @@
     "tas": {
       "standard_name": "air_temperature",
       "units": "K",
-      "dimensions": ["time", "lat", "lon"]
+      "dimensions": ["time", "lat", "lon"],
+      "modifier" : "atmos_height"
     },
     "zg": {
       "standard_name": "geopotential_height",

@@ -2,8 +2,8 @@
 #SBATCH --job-name=MDTF-diags
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
-#SBATCH --chdir=/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics
-#SBATCH -o /home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics/%x.o%j
+#SBATCH --chdir=/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics
+#SBATCH -o /home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/%x.o%j
 #SBATCH --constraint=bigmem
 # ref: https://wiki.gfdl.noaa.gov/index.php/Moab-to-Slurm_Conversion
 
@@ -27,18 +27,19 @@ set staticfile
 set fremodule
 set script_path
 
-## set paths
-set REPO_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/MDTF-diagnostics"
-set OBS_DATA_DIR="/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data"
-# output always written to $out_dir; unset below to skip copy/linking to
-# MDteam experiment directory.
-set OUTPUT_HTML_DIR="/home/Oar.Gfdl.Mdteam/internal_html/mdtf_output"
+## set paths to site installation
+set REPO_DIR="/home/oar.gfdl.mdtf/mdtfmdtf/MDTF-diagnostics"
+set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
+# output is always written to $out_dir; set a path below to GCP a copy of output
+# for purposes of serving from a website
+set WEBSITE_OUTPUT_DIR=""
 set INPUT_DIR="${TMPDIR}/inputdata"
 set WK_DIR="${TMPDIR}/wkdir"
 
 # End of user-configurable paramters
 # ----------------------------------------------------
 
+echo "mdtf_gfdl.csh: script start"
 ## parse paths and check access
 # if ( ! -w "$WK_DIR" ) then
 # 	echo "${USER} doesn't have write access to ${WK_DIR}"
@@ -61,27 +62,23 @@ set CHUNK_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f2 | rev`
 set DATA_FREQ=`echo "$in_data_dir" | rev | cut -d/ -f3 | rev`
 # component = 5th directory from the end
 set COMPONENT=`echo "$in_data_dir" | rev | cut -d/ -f5 | rev`
-set cmpt_args=( '--ignore_component' )
-set flags=()
 
-## parse command line arguments
-# NB analysis doesn't have getopts
-# reference: https://github.com/blackberry/GetOpt/blob/master/getopt-parse.tcsh
-set temp=(`getopt -s tcsh -o Y:Z: --long component_only,save_nc,yr1:,yr2: -- $argu:q`)
-if ($? != 0) then
-    echo "Command line parse error 1" >/dev/stderr
-    exit 1
-endif
-
-eval set argv=\($temp:q\) # argv needed for shift etc. to work
-while (1)
+# parse command line arguments manually because getopt doesn't let us pass
+# through unrecognized arguments.
+set frepp_flag=( '--frepp' ) # multi-run/incremental mode, enabled by default
+set passed_args=()
+while ($#argv > 0)
     switch($1:q)
+    # arguments we need to recognize and handle in this script
+    case --run_once:
+        # disable multi-run/incremental mode -- should set this flag if this
+        # script only called once in an XML
+        set frepp_flag=()
+        breaksw
     case --component_only:
-        set cmpt_args=( '--component' "$COMPONENT" '--data_freq' "$DATA_FREQ" '--chunk_freq' "$CHUNK_FREQ" ) ; shift
-        breaksw;
-    case --save_nc:
-        set flags=( '--save_nc' ) ; shift
-        breaksw;
+        set passed_args=( $passed_args:q '--component' "$COMPONENT" '--chunk_freq' "$CHUNK_FREQ" )
+        shift
+        breaksw
     case -Y:
     case --yr1:
         set yr1="$2:q" ; shift ; shift
@@ -93,28 +90,38 @@ while (1)
     case --:
         shift
         break
+    # pass through everything else
     default:
-        echo "Command line parse error 2" ; exit 1
+	    if ("$1:q" =~ -*) then
+			set passed_args=( $passed_args:q $1:q )     # flag
+	    else
+			set passed_args=( $passed_args:q \"$1:q\" ) # quote arg
+		endif
+		if ($#argv > 0) then
+			shift
+		else
+			break
+		endif
+		breaksw
     endsw
 end
 # trim leading zeros
-set yr1 = `echo ${yr1} | sed 's/^0*//g'`
-set yr2 = `echo ${yr2} | sed 's/^0*//g'`
-
+set yr1 = `echo ${yr1} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
+set yr2 = `echo ${yr2} | sed 's/\([[:space:]0]*\)\([0-9].*\)/\2/g'`
 
 ## configure env modules
 if ( ! $?MODULESHOME ) then
-    echo "\$MODULESHOME is undefined"
+    echo "mdtf_gfdl.csh: \$MODULESHOME is undefined"
     exit 1
 else
     if ( "$MODULESHOME" == "" )  then
-        echo "\$MODULESHOME is empty"
+        echo "mdtf_gfdl.csh: \$MODULESHOME is empty"
         exit 1
     else
         source $MODULESHOME/init/tcsh
         # should probably 'module purge'
         if ( `where module` == "" ) then
-            echo "Still can't load modules"
+            echo "mdtf_gfdl.csh: Still can't load modules"
             exit 1
         endif
     endif
@@ -122,7 +129,7 @@ endif
 
 # modules may load other modules of different versions as dependencies,
 # so if any version of a version-unspecified module is already loaded skip it
-foreach mod ( 'gcp' 'python/2.7.12' 'perlbrew' )
+foreach mod ( 'gcp' 'perlbrew' )
     # () needed for csh quoting, also remember `module` only writes to stderr
     ( module list -t ) |& grep -qiF "$mod"
     if ( $status != 0 ) then
@@ -134,53 +141,59 @@ end
 ## clean up tmpdir
 wipetmp
 
-## run the command (unbuffered output)
-echo 'script start'
-/usr/bin/env python -u "${REPO_DIR}/src/mdtf_gfdl.py" \
---frepp \
+## run the command
+echo "mdtf_gfdl.csh: conda activate"
+source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
+conda activate "${REPO_DIR}/envs/_MDTF_base"
+
+echo "mdtf_gfdl.csh: MDTF start"
+
+"${REPO_DIR}/mdtf_framework.py" \
+--site="NOAA_GFDL" \
+$frepp_flag:q \
 --MODEL_DATA_ROOT "${INPUT_DIR}/model" \
 --OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
 --WORKING_DIR "$WK_DIR" \
 --OUTPUT_DIR "$out_dir" \
---data_manager "GfdlPP" \
---environment_manager "GfdlConda" \
+--data_manager "GFDL_PP" \
+--environment_manager "GFDL_conda" \
 --CASENAME "$descriptor" \
 --CASE_ROOT_DIR "$PP_DIR" \
 --FIRSTYR $yr1 \
 --LASTYR $yr2 \
-$cmpt_args:q \
-$flags:q
-echo 'script exit'
+$passed_args:q
 
-## copy/link output files, if requested
-if ( ! $?OUTPUT_HTML_DIR ) then
-    echo "Complete -- Exiting"
-    exit 0
-endif
-if ( "$OUTPUT_HTML_DIR" == "" ) then
-    echo "Complete -- Exiting"
-    exit 0
+pkg_status=$?
+echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"
+
+# ----------------------------------------------------
+# copy/link output files to website directory, if requested
+
+if ( ! $?WEBSITE_OUTPUT_DIR ) then
+    exit $pkg_status
+else if ( "$WEBSITE_OUTPUT_DIR" == "" )
+    exit $pkg_status
 endif
 
 # test for write access -- don't trust -w test
 # OK, but what about gcp read-only?
-( touch ${OUTPUT_HTML_DIR}/test && rm -f ${OUTPUT_HTML_DIR}/test ) >& /dev/null
+( touch ${WEBSITE_OUTPUT_DIR}/test && rm -f ${WEBSITE_OUTPUT_DIR}/test ) >& /dev/null
 if ($? == 0) then
-    echo "Configuring data for experiments website"
+    echo "mdtf_gfdl.csh: configuring data for experiments website"
 
     set shaOut = `perl -e "use Digest::SHA qw(sha1_hex); print sha1_hex('${out_dir}');"`
-    set mdteamDir="${OUTPUT_HTML_DIR}/${shaOut}"
-    if ( ! -d ${mdteamDir} ) then
-        mkdir -p "${mdteamDir}"
-        echo "Symlinking ${out_dir}/${mdtf_dir} to ${mdteamDir}/mdtf"
-        ln -s "${out_dir}/${mdtf_dir}" "${mdteamDir}/mdtf"
+    set WEB_COPY_DIR="${WEBSITE_OUTPUT_DIR}/${shaOut}"
+    if ( ! -d ${WEB_COPY_DIR} ) then
+        mkdir -p "${WEB_COPY_DIR}"
+        echo "mdtf_gfdl.csh: Symlinking ${out_dir}/${mdtf_dir} to ${WEB_COPY_DIR}/mdtf"
+        ln -s "${out_dir}/${mdtf_dir}" "${WEB_COPY_DIR}/mdtf"
     else
-        echo "Gcp'ing ${out_dir}/${mdtf_dir}/ to ${mdteamDir}/mdtf/"
-        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${mdteamDir}/mdtf/"
+        echo "mdtf_gfdl.csh: Gcp'ing ${out_dir}/${mdtf_dir}/ to ${WEB_COPY_DIR}/mdtf/"
+        gcp -v -r -cd "gfdl:${out_dir}/${mdtf_dir}/" "gfdl:${WEB_COPY_DIR}/mdtf/"
     endif
-    echo "Complete -- Exiting"
-    exit 0
+    echo "mdtf_gfdl.csh: copied data for experiments website"
+    exit $pkg_status
 else
-   echo "${USER} doesn't have write access to ${OUTPUT_HTML_DIR}"
-   exit 0
+   echo "mdtf_gfdl.csh: ${USER} doesn't have write access to ${WEBSITE_OUTPUT_DIR}"
+   exit 1
 endif

@@ -86,7 +86,7 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
     if bad_pods:
         _log.critical(("Errors were encountered when finding the following PODS: "
             "[%s]."), ', '.join(f"'{p}'" for p in bad_pods))
-        exit(1)
+        util.exit_handler(code=1)
     return PodDataTuple(
         pod_data=pods, realm_data=realms,
         sorted_pods=pod_list,

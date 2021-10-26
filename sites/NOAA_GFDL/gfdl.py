@@ -75,11 +75,17 @@ class GFDLMDTFFramework(core.MDTFFramework):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             gfdl_util.rmtree_wrapper(p.WORKING_DIR)
-        util.check_dir(p, 'CODE_ROOT', create=False)
-        util.check_dir(p, 'OBS_DATA_REMOTE', create=False)
-        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
-        util.check_dir(p, 'OBS_DATA_ROOT', create=True)
-        util.check_dir(p, 'WORKING_DIR', create=True)
+
+        try:
+            for dir_name, create_ in (
+                ('CODE_ROOT', False), ('OBS_DATA_REMOTE', False),
+                ('OBS_DATA_ROOT', True), ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+            ):
+                util.check_dir(p, dir_name, create=create_)
+        except Exception as exc:
+            _log.fatal((f"Input settings for {dir_name} mis-specified (caught "
+                f"{repr(exc)}.)"))
+            util.exit_handler(code=1)
 
         # Use GCP to create OUTPUT_DIR on a volume that may be read-only
         if not os.path.exists(p.OUTPUT_DIR):
@@ -234,9 +240,9 @@ class GFDL_GCP_FileDataSourceBase(
 
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('uda', 'CMIP6')
-        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_UDA_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdludacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -252,9 +258,9 @@ class Gfdludacmip6DataManager(
 
 @util.mdtf_dataclass
 class GFDL_archive_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('archive','pcmdi','repo','CMIP6')
-        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_archive_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdlarchivecmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -271,9 +277,9 @@ class Gfdlarchivecmip6DataManager(
 
 @util.mdtf_dataclass
 class GFDL_data_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
-    def __post_init__(self, model=None, experiment=None):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         self.CASE_ROOT_DIR = os.sep + os.path.join('data_cmip6', 'CMIP6')
-        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(model, experiment)
+        super(GFDL_data_CMIP6DataSourceAttributes, self).__post_init__(log, model, experiment)
 
 class Gfdldatacmip6DataManager(
     data_sources.CMIP6ExperimentSelectionMixin,
@@ -500,8 +506,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
 
-    @staticmethod
-    def _filter_column(df, col_name, func, obj_name):
+    def _filter_column(self, df, col_name, func, obj_name):
         values = list(df[col_name].drop_duplicates())
         if len(values) <= 1:
             # unique value, no need to filter

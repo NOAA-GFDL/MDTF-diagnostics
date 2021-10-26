@@ -25,6 +25,7 @@ jobs:
         conda-root: [/usr/share/miniconda3, /Users/runner/miniconda3]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
+        json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
         experimental: [false]
         exclude:
@@ -34,12 +35,16 @@ jobs:
             json-file: "tests/github_actions_test_macos_set1.jsonc"
           - os: ubuntu-latest
             json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+          - os: ubuntu-latest
+            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
           - os: macos-latest
             conda-root: /usr/share/miniconda3
           - os: macos-latest
             json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
           - os: macos-latest
             json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - os: macos-latest
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
           - conda-root: /usr/share/miniconda3
             json-file: "tests/github_actions_test_macos_set1.jsonc"
           - conda-root: /Users/runner/minconda3
@@ -48,6 +53,10 @@ jobs:
             json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
           - conda-root: /Users/runner/minconda3
             json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - conda-root: /usr/share/miniconda3
+            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
+          - conda-root: /Users/runner/minconda3
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
       max-parallel: 2
     steps:
     - uses: actions/checkout@v2
@@ -69,15 +78,15 @@ jobs:
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
     - name: Install Conda Environments
       run: |
-        # create the synthetic data environment
-        echo "Creating the _MDTF_synthetic_data environment"
-        conda env create --force -q -f ./src/conda/_env_synthetic_data.yml
         # install mamba (https://github.com/mamba-org/mamba) for faster dependency resolution
         echo "Installing Mamba"
         conda install mamba -n base -c conda-forge
+        # create the synthetic data environment
+        echo "Creating the _MDTF_synthetic_data environment"
+        mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
         echo "Installing Conda Environments"
         # MDTF-specific setup: install all conda envs
-        ./src/conda/conda_env_setup.sh --all --mamba --conda_root ${{matrix.conda-root}}
+        ./src/conda/conda_env_setup.sh --all --conda_root ${{matrix.conda-root}}
     - name: Generate Model Data
       run: |
         cd ../
@@ -87,6 +96,7 @@ jobs:
         # generate the data and run unit tests
         mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
         mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
+        mdtf_synthetic.py -c CMIP --startyear 1 --nyears 10
         cd ../
         mkdir wkdir
     - name: Get Observational Data for Set 1
@@ -147,13 +157,33 @@ jobs:
     - name: Run diagnostic tests set 2
       run: |
         conda activate _MDTF_base
-        cat ./mdtf
-        # trivial check that install script worked
-        ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set2}}
-    - name: Run unit tests
+    - name: Get observational data for set 3
       run: |
         echo "${PWD}"
+        # remove data from previous run
+        # Actions moves you to the root repo directory in every step, so need to cd again
+        cd ../inputdata/obs_data
+        echo "deleting obs data from set 2"
+        rm -rf *
+        cd ../../
+        echo "Available Space"
+        df -h
+        # attempt FTP data fetch
+        # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
+        # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
+        echo "Untarring set 3 test files"
+        tar -xvf temp_extremes_distshape_obs_data.tar
+        # clean up tarballs
+        rm -f *.tar
+    - name: Run diagnostic tests set 3
+      run: |
+        conda activate _MDTF_base
+        # run the test PODs
+        ./mdtf -v -f ${{matrix.json-file-set3}}
+    - name: Run unit tests
+      run: |
         conda activate _MDTF_base
         python -m unittest discover

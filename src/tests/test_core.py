@@ -74,7 +74,7 @@ class TestVariableTranslator(unittest.TestCase):
         self.assertEqual(temp.from_CF_name('B','pr_var'), 'PRECT')
 
     def test_variabletranslator_no_translation(self):
-        dummy_varlist = {  
+        dummy_varlist = {
             "data": {
                 "frequency": "day"
             },
@@ -102,6 +102,53 @@ class TestVariableTranslator(unittest.TestCase):
         tve.standard_name = "foo"
         self.assertNotEqual(tve.standard_name, ve.standard_name)
 
+    def test_variabletranslator_bad_modifier(self):
+        dummy_varlist_wrong = {
+            "data": {
+                "frequency": "month"
+            },
+            "dimensions": {
+                "lat": {"standard_name": "latitude"},
+                "lon": {"standard_name": "longitude"},
+                "time": {"standard_name": "time"}
+            },
+            "varlist": {
+                "tref": {
+                    "standard_name": "air temperature",
+                    "units": "W m-2",
+                    "dimensions": ["time", "lat", "lon"],
+                    "modifier": "height"
+                }
+            }
+        }
+        dummy_varlist_correct = {
+            "data": {
+                "frequency": "month"
+            },
+            "dimensions": {
+                "lat": {"standard_name": "latitude"},
+                "lon": {"standard_name": "longitude"},
+                "time": {"standard_name": "time"}
+            },
+            "varlist": {
+                "tref": {
+                    "standard_name": "air temperature",
+                    "units": "W m-2",
+                    "dimensions": ["time", "lat", "lon"],
+                    "modifier": "atmos_height"
+                }
+            }
+        }
+        # test that supported modifier atmos_height is correct
+        raised = False
+        try:
+            varlist = diagnostic.Varlist.from_struct(dummy_varlist_correct, parent=None)
+        except Exception:
+            raised = True
+        self.assertFalse(raised)
+        # test that incorrect modifier height throws an error
+        self.assertRaises(ValueError, diagnostic.Varlist.from_struct, dummy_varlist_wrong, parent=None)
+
 class TestVariableTranslatorFiles(unittest.TestCase):
     def tearDown(self):
         # call _reset method deleting clearing Translator for unit testing,
@@ -116,6 +163,7 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         raised = False
         try:
             translate = core.VariableTranslator(code_root, unittest=False)
+            translate.read_conventions(code_root, unittest=False)
         except Exception:
             raised = True
         self.assertFalse(raised)
@@ -127,6 +175,7 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         translate = core.VariableTranslator(code_root, unittest=False)
+        translate.read_conventions(code_root, unittest=False)
         self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_rate")
         self.assertEqual(translate.from_CF_name('CMIP', 'toa_outgoing_longwave_flux'), "rlut")
 

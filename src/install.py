@@ -43,7 +43,7 @@ def fatal_exception_handler(exc, msg=None):
     print('ERROR: caught exception {0}({1!r})'.format(type(exc).__name__, exc.args))
     if msg:
         print(msg)
-    exit(1)
+    util.exit_handler(code=1)
 
 def find_conda(code_root, conda_config):
     """Attempt to determine conda location on this system.
@@ -162,7 +162,7 @@ def untar_data(ftp_data, install_config):
                 tar_cmd = tar_cmd.format(test_path)
             else:
                 print("ERROR: could not find Archive Utility.app.")
-                exit(1)
+                util.exit_handler(code=1)
     else:
         tar_cmd = 'tar -xf '
 
@@ -262,7 +262,7 @@ def framework_verify(code_root, run_output):
     if missing_dict:
         print("ERROR: the following files are missing:")
         print(util.pretty_print_json(missing_dict))
-        exit(1)
+        util.exit_handler(code=1)
     print("SUCCESS: no missing links found.")
     print("Finished: framework test run successful!")
 

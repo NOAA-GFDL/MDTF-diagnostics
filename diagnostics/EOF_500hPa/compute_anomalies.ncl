@@ -5,6 +5,8 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 wk_dir = getenv("WK_DIR")
 casename = getenv("CASENAME")
 yr1 = getenv("FIRSTYR")

@@ -482,7 +482,7 @@ class CLIParser(object):
                     "(choose from %s)"),
                     _SCRIPT_NAME, flag_name, flag_value, ', '.join(choices)
                 )
-                exit(2) # exit code for  CLI syntax error
+                util.exit_handler(code=2) # exit code for  CLI syntax error
             d[flag_name] = list(plugin.cli.iter_args())
         self.arguments = _add_plugins_to_arg_list(self.arguments, d)
         for arg_gp in self.argument_groups:
@@ -527,7 +527,7 @@ class CLICommand(object):
                 )
             except util.MDTFFileNotFoundError:
                 _log.critical("Couldn't find CLI file %s.", self.cli_file)
-                exit(2) # exit code for  CLI syntax error
+                util.exit_handler(code=2) # exit code for  CLI syntax error
         if self.cli is not None:
             self.cli = CLIParser.from_dict(self.cli)
 
@@ -732,7 +732,7 @@ class CLIConfigManager(util.Singleton):
                 _SCRIPT_NAME, plugin_name, choice_of_plugin,
                 str(list(self.plugins[plugin_name].keys()))
             )
-            exit(2) # exit code for CLI syntax error
+            util.exit_handler(code=2) # exit code for CLI syntax error
         return self.plugins[plugin_name][p_key]
 
 # ===========================================================================
@@ -1104,7 +1104,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             and not (site == default_site and not self.installed):
             _log.critical("Requested site %s not found in sites directory %s.",
                 site, config.sites_dir)
-            exit(2) # exit code for  CLI syntax error
+            util.exit_handler(code=2) # exit code for  CLI syntax error
         config.default_site = default_site
         config.site = site
         self.site = site

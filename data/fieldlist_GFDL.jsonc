@@ -82,7 +82,8 @@
       // CMIP6 equivalent = tas, temp at 2m ref height
       "standard_name": "air_temperature",
       "units": "K",
-      "ndim": 3
+      "ndim": 3,
+      "modifier": "atmos_height"
     },
     "ps": {
       "standard_name": "surface_air_pressure",

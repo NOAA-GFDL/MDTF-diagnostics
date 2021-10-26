@@ -157,7 +157,7 @@ def check_dir(dir_, attr_name="", create=False):
     if not isinstance(dir_, str):
         dir_ = getattr(dir_, attr_name, None)
     if not isinstance(dir_, str):
-        raise ValueError(f"Received bad directory: {repr(dir_)}.")
+        raise ValueError(f"Expected string, received {repr(dir_)}.")
     try:
         if not os.path.isdir(dir_):
             if create:
@@ -168,12 +168,16 @@ def check_dir(dir_, attr_name="", create=False):
         if isinstance(exc, FileNotFoundError):
             path = getattr(exc, 'filename', '')
             if attr_name:
-                raise exceptions.MDTFFileNotFoundError(
-                    f"{attr_name} not found at '{path}'.")
+                if not os.path.exists(dir_):
+                    raise exceptions.MDTFFileNotFoundError(
+                        f"{attr_name} not found at '{path}'.")
+                else:
+                    raise exceptions.MDTFFileNotFoundError(
+                        f"{attr_name}: Path '{dir_}' exists but is not a directory.")
             else:
                 raise exceptions.MDTFFileNotFoundError(path)
         else:
-            raise OSError(f"Caught exception when checking {attr_name}={dir_}.") \
+            raise OSError(f"Caught exception when checking {attr_name}={dir_}: {repr(exc)}") \
                 from exc
 
 def bump_version(path, new_v=None, extra_dirs=None):

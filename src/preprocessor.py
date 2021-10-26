@@ -500,6 +500,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         self.convention = data_mgr.attrs.convention
         self.pod_convention = pod.convention
 
+        if getattr(pod, 'nc_largefile', False):
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
         # HACK only used for _FillValue workaround in clean_output_encoding
         self.output_to_ncl = ('ncl' in pod.runtime_requirements)
 
@@ -555,11 +559,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         "decode_times": False,
         "use_cftime": False
     }
+
     # arguments passed to xr.to_netcdf
-    save_dataset_kwargs = {
-        "engine": "netcdf4",
-        "format": "NETCDF4_CLASSIC" # NETCDF3* not supported by this engine (?)
-    }
+    @property
+    def save_dataset_kwargs(self):
+        return {
+            "engine": "netcdf4",
+            "format": self.nc_format
+        }
 
     def read_one_file(self, var, path_list):
         if len(path_list) != 1:
@@ -705,6 +712,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         except Exception as exc:
             raise util.chain_exc(exc, (f"loading "
                 f"dataset for {var.full_name}."), util.DataPreprocessEvent)
+        var.log.debug("Read %d mb for %s.", ds.nbytes / (1024*1024), var.full_name)
         try:
             ds = self.parser.parse(var, ds)
         except Exception as exc:
@@ -733,7 +741,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         that child classes can modify it.
         """
         path_str = util.abbreviate_path(var.dest_path, self.WK_DIR, '$WK_DIR')
-        var.log.info("Writing to %s", path_str)
+        var.log.info("Writing %d mb to %s", ds.nbytes / (1024*1024), path_str)
         try:
             ds = self.clean_output_attrs(var, ds)
             ds = self.log_history_attr(var, ds)

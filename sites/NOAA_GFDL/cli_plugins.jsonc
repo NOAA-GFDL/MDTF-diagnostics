@@ -49,14 +49,18 @@
       }
     },
     "GFDL_PP": {
-      "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
+      "help": "DataSource for using timeseries data post-processed by GFDL's in-house FREPP tool, in structured /pp/ directory hierarchies. Data can be on any locally mounted filesystem.",
       "entry_point": "sites.NOAA_GFDL.gfdl:GfdlppDataManager",
       "cli": {
         "arguments": [
           {
-            "name": "any_components",
-            "help": "Set flag to permit PODs to use variables from multiple /pp/ model components. Variables will be chosen from the same component if possible.",
-            "default" : false
+            "name": "component",
+            "help" : "Name of the /pp/ model component to use. If omitted, PODs will search for variables from all model components that are present at runtime. Variables will be chosen from the same component if possible.",
+            "default": ""
+          },{
+            "name": "chunk_freq",
+            "help": "Length of each chunk of timeseries data. If not specified, the shortest available chunks will be used.",
+            "default" : ""
           }
         ]
       }
@@ -201,7 +205,7 @@
         ]
       }
     },
-    // Alias for "conda" above; defined for backwards compatibility. Will be removed.
+    // Duplicate/Alias for "conda" above; defined for backwards compatibility. Will be removed.
     "GFDL_conda": {
       "help": "Manages dependencies with Conda.",
       "entry_point": "sites.NOAA_GFDL.gfdl:GfdlcondaEnvironmentManager",

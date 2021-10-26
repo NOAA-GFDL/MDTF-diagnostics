@@ -10,7 +10,7 @@ import itertools
 import typing
 from src import util
 import src.units # fully qualify name to reduce confusion with "units" attributes
-
+import src.core
 import logging
 _log = logging.getLogger(__name__)
 
@@ -609,7 +609,8 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: src.units.Units = "" # not MANDATORY since may be set later from var translation
+    units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
+    modifier: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -617,6 +618,11 @@ class DMDependentVariable(_DMDimensionsMixin):
         super(DMDependentVariable, self).__post_init__(coords)
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
+        # if specified, verify that POD modifier attributes are valid
+        if not self.modifier.lower().strip() in (None, ''):
+            _str = src.core.VariableTranslator()
+            if self.modifier not in _str.modifier:
+                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     @property
     def full_name(self):
@@ -746,6 +752,7 @@ class DMVariable(DMDependentVariable):
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
+    # modifier: str
     # units: src.units.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list

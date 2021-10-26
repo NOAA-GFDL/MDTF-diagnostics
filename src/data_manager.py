@@ -173,7 +173,7 @@ class DataSourceAttributesBase():
     LASTYR: str = util.MANDATORY
     date_range: util.DateRange = dc.field(init=False)
     CASE_ROOT_DIR: str = ""
-    convention: str = util.MANDATORY
+    convention: str = ""
     log: dc.InitVar = _log
 
     def _set_case_root_dir(self, log=_log):
@@ -191,12 +191,6 @@ class DataSourceAttributesBase():
         self._set_case_root_dir(log=log)
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
-        # validate convention name
-        translate = core.VariableTranslator()
-        if not self.convention:
-            raise util.GenericDataSourceEvent((f"'convention' not configured "
-                f"for {self.__class__.__name__}."))
-        self.convention = translate.get_convention_name(self.convention)
 
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
@@ -241,9 +235,25 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
         self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(
-            case_dict, self._AttributesClass, log=self.log
+            case_dict, self._AttributesClass, log=self.log, init=True
         )
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
+
+        # set variable name convention
+        translate = core.VariableTranslator()
+        if hasattr(self, '_convention'):
+            self.convention = self._convention
+            if hasattr(self.attrs, 'convention') \
+                and self.attrs.convention != self.convention:
+                self.log.warning(f"{self.__class__.__name__} requires convention"
+                    f"'{self.convention}'; ignoring argument "
+                    f"'{self.attrs.convention}'.")
+        elif hasattr(self.attrs, 'convention') and self.attrs.convention:
+            self.convention = self.attrs.convention
+        else:
+            raise util.GenericDataSourceEvent((f"'convention' not configured "
+                f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)
 
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
@@ -253,8 +263,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
         # add naming-convention-specific env vars
-        translate = core.VariableTranslator()
-        convention_obj = translate.get_convention(self.attrs.convention)
+        convention_obj = translate.get_convention(self.convention)
         self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
 
     @property
@@ -373,7 +382,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
-        translate = core.VariableTranslator().get_convention(self.attrs.convention)
+        translate = core.VariableTranslator().get_convention(self.convention)
         if v.T is not None:
             v.change_coord(
                 'T',

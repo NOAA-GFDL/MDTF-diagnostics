@@ -160,6 +160,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     # units: Units
     # dims: list
     # scalar_coords: list
+    # modifier: str
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)

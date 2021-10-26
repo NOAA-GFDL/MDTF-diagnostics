@@ -1,0 +1,67 @@
+{
+  "settings" : {
+    "driver" : "tropical_pacific_sea_level.py",
+    "long_name" : "tropical pacific sea level",
+    "realm" : "ocean",
+    "description" : "Tropical pacific sea level diagnostic",
+    "runtime_requirements": {
+        "python3" : ["matplotlib","xarray","cartopy","cftime","numpy","dask"]
+    },
+    "pod_env_vars" : {
+      "predef_obs" : "True",
+      "obs_start_year" : "1993",
+      "obs_end_year" : "2009",
+      "x_axis_name" : "nlon",
+      "y_axis_name" : "nlat",
+      "lon_coord_name" : "lon",
+      "lat_coord_name" : "lat",
+      "lat_min" : "10",
+      "lat_max" : "20",
+      "lon_min" : "120",
+      "lon_max" : "150"
+    }
+  },   
+  
+  "data": {
+      "frequency": "mon"
+    },
+    
+  "dimensions": {
+      "lat": {
+          "standard_name": "latitude"
+      },
+      "lon": {
+          "standard_name": "longitude"
+      },
+      "time": {
+          "standard_name": "time"
+      }
+    },
+  
+  "varlist" : {
+      "zos": {
+        "standard_name": "sea_surface_height_above_geoid",
+        "units": "m",
+        "dimensions" : ["time", "lat", "lon"]
+        },
+        
+      "tauuo": {
+        "standard_name": "surface_downward_x_stress",
+        "units": "N m-2",
+        "dimensions" : ["time", "lat", "lon"]
+        },
+        
+      "tauvo": {
+        "standard_name": "surface_downward_y_stress",
+        "units": "N m-2",
+        "dimensions" : ["time", "lat", "lon"]
+        },
+        
+      "areacello": {
+        "standard_name": "cell_area",
+        "units": "m2",
+        "dimensions" : ["lat", "lon"]
+        }
+  }
+  
+}

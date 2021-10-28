@@ -248,8 +248,7 @@ def computemean(field=None, firstyr=2010, lastyr=2014):
 
     Returns
     -------
-    themean, thestd, trend, detrendedstd: xarray.DataArray, dims of month, space
-    residuals: xarray.DataArray, dims of year, month, space
+    field.mean
     """
     firstyr = int(firstyr)
     lastyr = int(lastyr)

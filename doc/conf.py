@@ -505,3 +505,4 @@ def setup(app):
         # 'enable_auto_doc_ref': True, # deprecated, now default behavior
     }, True)
     app.add_transform(AutoStructify)
+

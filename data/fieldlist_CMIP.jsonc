@@ -124,7 +124,7 @@
       "units": "Pa",
       "ndim": 3
     },
-    "wind_speed": {
+    "sfcWind": {
       "standard_name": "wind_speed",
       "units": "m s-1",
       "modifier": "atmos_height",

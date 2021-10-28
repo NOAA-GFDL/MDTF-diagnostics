@@ -283,6 +283,7 @@ class CMIP6_VariantLabel():
     """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
     DRS variant label identifier string (e.g., ``r1i1p1f1``.)
 
+
     References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6. See also note 8 on
     page 9 of the CMIP6 `planning document <http://goo.gl/v1drZl>`__.

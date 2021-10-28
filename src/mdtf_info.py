@@ -1,4 +1,5 @@
-"""'mdtf info' subcommand for online (command-line) help about installed PODs.
+"""Functions to collect settings metadata about installed PODs for the package
+and for online help.
 """
 import os
 import collections
@@ -11,10 +12,35 @@ _log = logging.getLogger(__name__)
 PodDataTuple = collections.namedtuple(
     'PodDataTuple', 'sorted_pods sorted_realms pod_data realm_data'
 )
+""":py:func:`collections.namedtuple` class used to organize the data returned
+by :func:`load_pod_settings`.
+
+- ``pod_data``: Dict mapping each POD short name to a nested dict containing
+  the parsed contents of that POD's settings.json file.
+- ``realm_data``: Dict mapping each modeling realm name to a list of short names
+  of PODs using variables from that realm.
+- ``sorted_pods``: List of short names of PODs in alphabetical order.
+- ``sorted_realms``: List of names of modeling realms in alphabetical order.
+"""
+
 def load_pod_settings(code_root, pod=None, pod_list=None):
-    """Wrapper to load POD settings files, used by ConfigManager and CLIInfoHandler.
+    """Wrapper to load and parse the contents of POD settings files, used by
+    :class:`~src.core.MDTFFramework` and :class:`InfoCLIHandler`.
+
+    Args:
+        code_root (str): Absolute path to t
+        pod (str, optional):
+        pod_list (list, optional): List of POD names to load settings files.
+
+    Raises:
+        :class:`~src.util.PodConfigError`: If an error is raised opening or
+            parsing the contents of a settings file. In normal operation, this
+            is treated as a fatal error and will cause package exit.
+
+    Returns:
+        Instance of :data:`PodDataTuple`.
+
     """
-    # only place we can put it would be util.py if we want to avoid circular imports
     _pod_dir = 'diagnostics'
     _file_name = 'settings.jsonc'
 
@@ -95,7 +121,13 @@ def load_pod_settings(code_root, pod=None, pod_list=None):
 
 
 class InfoCLIHandler(object):
+    """Class which implements the ``mdtf info`` online help, which displays
+    information about PODs and their data dependencies from the CLI.
+    """
     def __init__(self, code_root, arg_list):
+        """Initialization. Reads in all POD metadata via :func:`load_pod_settings`
+        and parses it into recognized help topics.
+        """
         def _add_topic_handler(keywords, function):
             # keep cmd_list ordered
             keywords = util.to_iter(keywords)
@@ -129,10 +161,15 @@ class InfoCLIHandler(object):
             self.info_cmds()
 
     def info_cmds(self):
+        """Handler which prints recognized help topics.
+        """
         print('Recognized topics for `mdtf.py info`:')
         print(', '.join(self.cmd_list))
 
     def _print_pod_info(self, pod, verbose):
+        """Handler which prints information about PODs as taken from their
+        settings.json files, at configurable levels of verbosity.
+        """
         ds = self.pods[pod]['settings']
         dv = self.pods[pod]['varlist']
         if verbose == 1:
@@ -161,6 +198,8 @@ class InfoCLIHandler(object):
                 print(var_str)
 
     def info_pods_all(self, *args):
+        """Handler which prints summary information on all installed PODs.
+        """
         print('List of installed diagnostics:')
         print(('Do `mdtf info <diagnostic>` for more info on a specific diagnostic '
             'or check documentation at github.com/NOAA-GFDL/MDTF-diagnostics.'))
@@ -168,9 +207,14 @@ class InfoCLIHandler(object):
             self._print_pod_info(pod, verbose=1)
 
     def info_pod(self, pod):
+        """Handler which prints information about PODs as taken from their
+        settings.json files, at maximum verbosity.
+        """
         self._print_pod_info(pod, verbose=3)
 
     def info_realms_all(self, *args):
+        """Handler which prints installed PODs corresponding to all modeling realms.
+        """
         print('List of installed diagnostics by realm:')
         for realm in self.realms:
             if isinstance(realm, str):
@@ -182,6 +226,9 @@ class InfoCLIHandler(object):
                 self._print_pod_info(pod, verbose=1)
 
     def info_realm(self, realm):
+        """Handler which prints installed PODs corresponding to modeling realm
+        *realm*.
+        """
         print('List of installed diagnostics for {}:'.format(realm))
         for pod in self.realms[realm]:
             self._print_pod_info(pod, verbose=2)

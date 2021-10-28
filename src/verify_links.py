@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """
-Check output of the files returned by a run of the MDTF framework and determine
-if any PODs failed to generate files, as determined by non-functional html links
-in the output webpages.
+Checks html links in the output of the files returned by a run of the MDTF
+package and verifies that all linked files exist.
 
-Based on test_website by Dani Coleman, bundy@ucar.edu
+This is called by default at the end of each run, to determine if any PODs have
+failed without raising errors.
+
+Based on test_website by Dani Coleman, bundy@ucar.edu.
 """
 import sys
 # do version check before importing other stuff
@@ -38,15 +40,16 @@ Attributes:
 
 class LinkParser(HTMLParser):
     """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs
-    an iterable over each <a> tag.
-
-    Adapted from `<https://stackoverflow.com/a/41663924>`__.
+    an iterable over each ``<a>`` tag. Adapted from
+    `<https://stackoverflow.com/a/41663924>`__.
     """
     def reset(self):
         super(LinkParser, self).reset()
         self.links = iter([])
 
     def handle_starttag(self, tag, attrs):
+        """Custom code for this subclass that extracts contents of ``<a>`` tags.
+        """
         if tag.lower() == 'a':
             for name, value in attrs:
                 if name.lower() == 'href':
@@ -62,8 +65,8 @@ class LinkVerifier(object):
                 of the top-level html file to begin the search from.
             rel_path_root (str, optional): Either a URL or path on the local
                 filesystem. If given, used as the path that relative paths to
-                missing files are given relative to. Defaults to root (if root
-                is a directory) or the directory containing root (if root is a
+                missing files are given relative to. Defaults to *root* (if *root*
+                is a directory) or the directory containing *root* (if *root* is a
                 file.)
             verbose (bool, default False): Set to True to print each file
                 examined.
@@ -101,21 +104,20 @@ class LinkVerifier(object):
 
     @staticmethod
     def gen_links(f, parser):
-        """Generator which parses the contents of an HTML file f and yields
-        targets of all the links it contains.
-
-        Adapted from `<https://stackoverflow.com/a/41663924>`__.
+        """Generator which parses the contents of an HTML file *f* and yields
+        targets of all the links it contains. Adapted from
+        `<https://stackoverflow.com/a/41663924>`__.
 
         Args:
-            f: :py:mod:`urllib.respose` object of the form returned by
+            f: :py:class:`urllib.respose` object of the form returned by
                 :py:func:`~urllib.request.urlopen`: either
                 :py:class:`~http.client.HTTPResponse` for http or https, or
-                :py:class:`urllib.response.addinfourl` for files.
+                :py:class:`~urllib.response.addinfourl` for files.
             parser: instance of :class:`LinkParser`.
 
         Yields:
-            Contents of the `href` attribute of each `a` tag of f, as extracted
-                by :class:`LinkParser`.
+            Contents of the `href` attribute of each ``<a>`` tag of *f*, as
+            extracted by *parser*.
         """
         encoding = f.headers.get_content_charset() or 'UTF-8'
         for line in f:
@@ -123,19 +125,16 @@ class LinkVerifier(object):
             yield from parser.links
 
     def check_one_url(self, link):
-        """Get list of URLs linked to from the current URL (if any).
+        """Get list of URLs linked to from the current URL (in *link*.target).
 
         Args:
-            link (:obj:`Link`): Instance of :class:`Link`. Only the URL in
-                link.target is examined.
+            link (:class:`Link`): Link to check. Only the URL in *link*.target
+                is examined.
 
         Returns:
-            Either
-
-                #. None if link.target can't be opened,
-                #. the empty list if link.target is not an html document, or
-                #. a list of links contained in link.target, expressed as
-                    :class:`Link` objects.
+            Either 1) None if link.target can't be opened, 2) the empty list
+            if *link*.target is not an html document, or 3) a list of links
+            contained in *link*.target, expressed as :class:`Link` objects.
         """
         if hasattr(link, 'target'):
             url = link.target
@@ -169,19 +168,19 @@ class LinkVerifier(object):
             return links
 
     def breadth_first(self, root_url):
-        """Breadth-first search of all files linked from an initial root_url.
+        """Breadth-first search of all files linked from an initial *root_url*.
 
         The search correctly handles cycles (ie, A.html links to B.html and
         B.html links to A.html) and only examines files in subdirectories of
-        root_url's directory, so that links to external sites are ignored,
+        *root_url*\'s directory, so that links to external sites are ignored,
         rather than trying to trace the link structure of the whole internet.
 
         Args:
             root_url (str): URL of an html file to start the search at.
 
         Returns:
-            list of (link_source, link_target) tuples where the file in
-                link_target couldn't be found.
+            List of :class:`Link` objects where the file referenced in
+            link.target couldn't be found.
         """
         missing = []
         known_urls = set([root_url])
@@ -226,10 +225,10 @@ class LinkVerifier(object):
                 :meth:`breadth_first`, whose targets correspond to missing files.
 
         Returns:
-            dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing.
-                Missing files are listed by their path relative to the POD's
-                output directory.
+            Dict, with keys given by the short names of PODs with missing files
+            and values given by a list of the files that POD is missing.
+            Missing files are listed by their path relative to the POD's
+            output directory.
         """
         missing_dict = collections.defaultdict(list)
         for link in missing:
@@ -249,7 +248,7 @@ class LinkVerifier(object):
 
         Returns:
             A list of the files that POD is missing. Missing files are listed by
-                their path relative to the POD's output directory.
+            their path relative to the POD's output directory.
         """
         self.pod_name = pod_name
         self.WK_DIR = util.remove_suffix(
@@ -267,10 +266,10 @@ class LinkVerifier(object):
         framework and collect them by POD.
 
         Returns:
-            dict, with keys given by the short names of PODs with missing files
-                and values given by a list of the files that POD is missing.
-                Missing files are listed by their path relative to the POD's
-                output directory.
+            Dict, with keys given by the short names of PODs with missing files
+            and values given by a list of the files that POD is missing.
+            Missing files are listed by their path relative to the POD's
+            output directory.
         """
         if not self.root_file:
             self.root_file = 'index.html'

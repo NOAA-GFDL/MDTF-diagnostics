@@ -1,4 +1,5 @@
-"""Common functions and classes used in multiple places in the MDTF code.
+"""Definition of the MDTF framework main loop and classes implementing basic,
+supporting functionality.
 """
 import os
 import sys
@@ -24,26 +25,28 @@ ObjectStatus = util.MDTFEnum(
     module=__name__
 )
 ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of a :class:`MDTFObjectBase`:
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object
+(child class of :class:`MDTFObjectBase`):
 
 - *NOTSET*: the object hasn't been fully initialized.
 - *ACTIVE*: the object is currently being processed by the framework.
 - *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-    alternate :class:`~diagnostic.VarlistEntry`\s).
+  alternate :class:`~diagnostic.VarlistEntry`\s).
 - *FAILED*: processing of the object has encountered an error, and no further
-    work will be done.
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
 """
 
 @util.mdtf_dataclass
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
-    """Base class providing shared functionality for the "object hierarchy":
+    """Base class providing shared functionality for the object hierarchy, which is:
 
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package
-        (:class:`MDTFFramework`);
+    - The framework itself (:class:`MDTFFramework`);
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
     - :class:`~diagnostic.Diagnostic`\s (PODs) belonging to a
-        :class:`~data_manager.DataSourceBase`;
+      :class:`~data_manager.DataSourceBase`;
     - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
-        to a :class:`~diagnostic.Diagnostic`.
+      to a :class:`~diagnostic.Diagnostic`.
     """
     _id: util.MDTF_ID = None
     name: str = util.MANDATORY
@@ -151,7 +154,7 @@ ConfigTuple = collections.namedtuple(
     'ConfigTuple', 'name backup_filename contents'
 )
 ConfigTuple.__doc__ = """
-    Class wrapping general structs used for configuration
+    Class wrapping general structs used for configuration.
 """
 
 class ConfigManager(util.Singleton, util.NameSpace):
@@ -340,7 +343,7 @@ _NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translatio
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
     attributes inherited from :class:`~data_model.DMVariable` as being queryable
-    in :meth:`data_manager.DataframeQueryDataSourceBase.query_dataset`.
+    in :meth:`~data_manager.DataframeQueryDataSourceBase.query_dataset`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the

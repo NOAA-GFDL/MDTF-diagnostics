@@ -77,7 +77,7 @@
       "units": "K",
       "ndim": 3
     },
-    "hus": {
+    "huss": {
       "standard_name": "specific_humidity",
       "units": "1",
       "ndim": 3,

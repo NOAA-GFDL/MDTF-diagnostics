@@ -1,5 +1,7 @@
-"""Classes related to customizing the framework's command line interface and
-setting option values from user input.
+"""Classes which parse the framework's command line interface configuration files
+and implement the dynamic CLI; see :doc:`fmwk_cli`.
+
+Familiarity with the python :py:mod:`argparse` module is recommended.
 """
 import os
 import sys
@@ -20,25 +22,30 @@ from src import util
 import logging
 _log = logging.getLogger(__name__)
 
-_SCRIPT_NAME = 'mdtf.py' # mimick argparse error message text
+_SCRIPT_NAME = 'mdtf.py' # mimic argparse error message text
 
 def canonical_arg_name(str_):
     """Convert a flag or other specification to a destination variable name.
     The destination variable name always has underscores, never hyphens, in
-    accordance with PEP8. Eg., "--GNU-style-flag" -> "GNU_style_flag".
+    accordance with PEP8.
+
+    E.g., ``canonical_arg_name('--GNU-style-flag')`` returns "GNU_style_flag".
     """
     return str_.lstrip('-').rstrip().replace('-', '_')
 
 def plugin_key(plugin_name):
-    """Ignore spaces and underscores in supplied choices for CLI plugins, and
+    """Convert user input for plugin options to string used to lookup plugin
+    value from options defined in cli_plugins.jsonc files.
+
+    Ignores spaces and underscores in supplied choices for CLI plugins, and
     make matching of plugin names case-insensititve.
     """
     return re.sub(r"[\s_]+", "", plugin_name).lower()
 
 def word_wrap(str_):
-    """Clean whitespace and produces better word wrapping for multi-line help
+    """Clean whitespace and perform 80-column word wrapping for multi-line help
     and description strings. Explicit paragraph breaks must be encoded as a
-    double newline ( ``\n\n`` ).
+    double newline \(``\\n\\n``\).
     """
     paragraphs = textwrap.dedent(str_).split('\n\n')
     paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
@@ -46,17 +53,20 @@ def word_wrap(str_):
     return '\n\n'.join(paragraphs)
 
 def read_config_files(code_root, file_name, site=""):
-    """Utility function to read a *pair* of configuration files (one for the
-    framework defaults, another optional one for site-specific config.)
+    """Utility function to read a pair of configuration files: one for the
+    framework defaults, another optional one for site-specific configuration.
 
     Args:
+        code_root (str): Code repo directory.
         file_name (str): Name of file to search for. We search for the file
-            in all subdirectories of :meth:`._CLIConfigHandler.site_dir`
-            and :meth:`._CLIConfigHandler.framework_dir`, respectively.
+            in all subdirectories of :meth:`CLIConfigManager.site_dir`
+            and :meth:`CLIConfigManager.framework_dir`, respectively.
+        site (str): Name of the site-specific directory (in ``/sites``) to search.
 
-    Returns: a tuple of the two files' contents. First entry is the
+    Returns:
+        A tuple of the two files' contents. First element is the
         site specific file (empty dict if that file isn't found) and second
-        is the framework file (fatal error; exit immediately if not found.)
+        is the framework file (if not found, fatal error and exit immediately.)
     """
     src_dir = os.path.join(code_root, 'src')
     site_dir = os.path.join(code_root, 'sites', site)
@@ -65,7 +75,18 @@ def read_config_files(code_root, file_name, site=""):
     return (site_d, fmwk_d)
 
 def read_config_file(code_root, file_name, site=""):
-    """Return site's file if present, else the framework's file.
+    """Return the site's config file if present, else the framework's file. Wraps
+    :func:`read_config_files`.
+
+    Args:
+        code_root (str): Code repo directory.
+        file_name (str): Name of file to search for. We search for the file
+            in all subdirectories of :meth:`CLIConfigManager.site_dir`
+            and :meth:`CLIConfigManager.framework_dir`, respectively.
+        site (str): Name of the site-specific directory (in ``/sites``) to search.
+
+    Returns:
+        Path to the configuration file.
     """
     site_d, fmwk_d = read_config_files(code_root, file_name, site=site)
     if not site_d:
@@ -76,11 +97,11 @@ class CustomHelpFormatter(
         argparse.RawDescriptionHelpFormatter,
         argparse.ArgumentDefaultsHelpFormatter
     ):
-    """Modify help text formatter to only display variable placeholder
+    """Modify help text formatter to only display variable placeholder text
     ("metavar") once, to save space. Taken from
     `<https://stackoverflow.com/a/16969505>`__. Also inherit from
-    RawDescriptionHelpFormatter in order to preserve line breaks in description
-    only (`<https://stackoverflow.com/a/18462760>`__).
+    :py:class:`argparse.RawDescriptionHelpFormatter` in order to preserve line
+    breaks in description only (`<https://stackoverflow.com/a/18462760>`__).
     """
     def __init__(self, *args, **kwargs):
         # tweak indentation of help strings
@@ -129,15 +150,15 @@ class CustomHelpFormatter(
 
 
 class RecordDefaultsAction(argparse.Action):
-    """:py:class:`~argparse.Action` that adds a boolean to record if user
-    actually set argument's value, or if we're using the default value specified
+    """Argparse :py:class:`~argparse.Action` that adds a boolean to record if user
+    actually set the argument's value, or if we're using the default value specified
     in the parser. From `<https://stackoverflow.com/a/50936474>`__. This also
     re-implements the 'store_true' and 'store_false' actions, in order to give
     defaults information on boolean flags.
 
-    If the user specifies a value for ``<option>``, the :meth:`__call__` method
-    adds a variable named ``<option>_is_default_`` to the returned
-    :py:class:`argparse.Namespace`. This information is used by
+    If the user specifies a value for an option named ``<option>``, the
+    :meth:`__call__` method adds a variable named ``<option>_is_default_`` to
+    the returned :py:class:`argparse.Namespace`. This information is used by
     :meth:`.MDTFArgParser.parse_args` to populate the ``is_default`` attribute
     of :class:`.MDTFArgParser`.
 
@@ -174,9 +195,10 @@ class RecordDefaultsAction(argparse.Action):
         setattr(namespace, self.dest+self.default_value_suffix, False)
 
 class PathAction(RecordDefaultsAction):
-    """:py:class:`~argparse.Action` that performs shell environment variable
-    expansion and resolution of relative paths, using
-    :func:`src.util.filesystem.resolve_path`.
+    """Argparse :py:class:`~argparse.Action` that performs shell environment
+    variable expansion and resolution of relative paths, using
+    :func:`~src.util.filesystem.resolve_path`. Should be specified as the CLI
+    action for every option taking paths as a value.
     """
     call_on_defaults = True
 
@@ -190,9 +212,9 @@ class PathAction(RecordDefaultsAction):
         super(PathAction, self).__call__(parser, namespace, path, option_string)
 
 class ClassImportAction(RecordDefaultsAction):
-    """:py:class:`~argparse.Action` to import classes on demand. Values are
-    looked up from the 'cli_plugins.jsonc' file.
-    Placeholder used to trigger behavior when arguments are parsed.
+    """Argparse :py:class:`~argparse.Action` to import classes on demand. Values
+    are looked up from the 'cli_plugins.jsonc' file. This is a placeholder used
+    to trigger behavior when arguments are parsed.
     """
     call_on_defaults = False
 
@@ -205,8 +227,9 @@ class ClassImportAction(RecordDefaultsAction):
         )
 
 class PluginArgAction(ClassImportAction):
-    """:py:class:`~argparse.Action` to invoke the CLI plugin functionality.
-    Placeholder used to trigger behavior when arguments are parsed.
+    """Argparse :py:class:`~argparse.Action` to invoke the CLI plugin functionality,
+    specificially importing the plugin's entry point via :class:`ClassImportAction`.
+    All CLI options which define a plugin should specify this as the action.
     """
     call_on_defaults = False
 
@@ -217,9 +240,10 @@ class PluginArgAction(ClassImportAction):
 
 @dataclasses.dataclass
 class CLIArgument(object):
-    """Class holding configuration options for a single argument of an
+    """Class which stores configuration options for a single argument of an
     :py:class:`argparse.ArgumentParser`, with several custom options to simplify
-    the parsing of CLIs defined in JSON files.
+    the parsing of CLIs defined in JSON files. Attributes correspond to arguments
+    to :py:meth:`~argparse.ArgumentParser.add_argument`.
     """
     name: str
     action: str = None
@@ -239,7 +263,7 @@ class CLIArgument(object):
     hidden: bool = False
 
     def __post_init__(self):
-        """Post-initialization type converstion of attributes.
+        """Post-initialization type conversion of attributes.
         """
         def _flag_names(_arg_name):
             _arg_flags = [_arg_name]
@@ -312,7 +336,7 @@ class CLIArgument(object):
         :py:meth:`~argparse.ArgumentParser.add_argument`.
 
         Args:
-            target_p: Parser object (or parser group, or subparser) to which the
+            target_p: Parser object (or argument group, or subparser) to which the
                 argument will be added.
         """
         kwargs = {k:v for k,v in dataclasses.asdict(self).items() \
@@ -326,6 +350,8 @@ class CLIArgumentGroup(object):
     """Class holding configuration options for an
     :py:class:`argparse.ArgumentParser` `argument group
     <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__.
+    Attributes correspond to arguments
+    to :py:meth:`~argparse.ArgumentParser.add_argument_group`.
     """
     title: str
     description: str = None
@@ -333,7 +359,7 @@ class CLIArgumentGroup(object):
 
     @classmethod
     def from_dict(cls, d):
-        """Initialize an instance of this object from a nested dict obtained
+        """Initialize an instance of this object from a nested dict *d* obtained
         from reading a JSON file.
         """
         args_list = d.get('arguments', [])
@@ -346,7 +372,7 @@ class CLIArgumentGroup(object):
         :py:meth:`~argparse.ArgumentParser.add_argument_group`.
 
         Args:
-            target_p: Parser object (or parser group, or subparser) to which the
+            target_p: Parser object (or subparser) to which the
                 argument group will be added.
         """
         if self.arguments:
@@ -361,8 +387,9 @@ class CLIArgumentGroup(object):
 @dataclasses.dataclass
 class CLIParser(object):
     """Class holding configuration options for an instance of
-    :py:class:`argparse.ArgumentParser` (or equivalently a subparser or a
-    command plugin).
+    :py:class:`argparse.ArgumentParser` (or equivalently a subcommand parser or
+    a CLI plugin). Attributes correspond to arguments given to the
+    :py:class:`argparse.ArgumentParser` constructor.
     """
     prog: str = None
     usage: str = None
@@ -372,7 +399,7 @@ class CLIParser(object):
     argument_groups: list = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
-        """Post-initialization type converstion of attributes.
+        """Post-initialization type conversion of attributes.
         """
         for attr_ in ['prog', 'usage', 'description', 'epilog']:
             str_ = getattr(self, attr_, None)
@@ -381,7 +408,7 @@ class CLIParser(object):
 
     @classmethod
     def from_dict(cls, d):
-        """Initialize an instance of this object from a nested dict obtained
+        """Initialize an instance of this object from a nested dict *d* obtained
         from reading a JSON file.
         """
         args_list = d.get('arguments', [])
@@ -395,7 +422,8 @@ class CLIParser(object):
 
     def iter_args(self, filter_class=None):
         """Iterator over all :class:`.CLIArgument` objects associated with this
-        parser.
+        parser; if *filter_class* is specified, only iterate over objects having
+        (a subclass of) *filter_class* as their ``action``.
         """
         def _iter_all_args():
             yield from self.arguments
@@ -414,7 +442,7 @@ class CLIParser(object):
         all arguments and argument groups.
 
         Args:
-            target_p: Parser object (or parser group, or subparser) to configure.
+            target_p: Parser object to configure.
         """
         # enforce choices for plugin args:
         config = CLIConfigManager()
@@ -455,7 +483,8 @@ class CLIParser(object):
     def add_plugin_args(self, preparsed_d):
         """Revise arguments after we know what plugins are being used. This
         annotates the help string of the plugin selector argument and configures
-        its ``choices`` attribute. It then inserts the plugin-specifc CLI
+        its ``choices`` attribute (which lists the allowed values for each option
+        in the online help). It then inserts the plugin-specifc CLI
         arguments following that argument.
 
         Args:
@@ -514,7 +543,7 @@ class CLICommand(object):
     help: str = ""
     cli_file: str = None
     cli: dict = None
-    parser: dataclasses.field(init=False) = None
+    parser: typing.Any = dataclasses.field(init=False, default=None)
     code_root: dataclasses.InitVar = ""
 
     def __post_init__(self, code_root):
@@ -561,10 +590,10 @@ DefaultsFileTypes.__doc__ = """
     input settings files. In order of precedence:
 
     1. ``USER``: Input settings read from a file supplied by the user.
-    2. ``SITE``: Settings specific to the given site (``--site`` flag.)
+    2. ``SITE``: Settings specific to the given site (set with the ``--site`` flag.)
     3. ``GLOBAL``: Settings applicable to all sites. The main intended use case
-        of this file is to enable the user to configure a default site at
-        install time.
+       of this file is to enable the user to configure a default site at
+       install time.
 """
 
 class CLIConfigManager(util.Singleton):
@@ -574,9 +603,10 @@ class CLIConfigManager(util.Singleton):
     its children, to try to make the code easier to understand (not out of
     necessity).
 
-    .. warning::
-       This is intended to be initialized by a calling script *before* being
-       referenced by the classes in this module.
+    .. note::
+       This is initialized in :class:`MDTFTopLevelArgParser`; as a Singleton, it
+       must be properly initialized before being referenced by the classes in
+       this module.
     """
     def __init__(self, code_root=None, skip_defaults=False):
         # singleton, so this will only be invoked once
@@ -596,20 +626,35 @@ class CLIConfigManager(util.Singleton):
         self.user_defaults = dict()
 
     default_site = 'local'
+    """Name of the default value for the ``--site`` option.
+    """
     defaults_filename = "defaults.jsonc"
+    """Name of the JSONC file for site-specific default settings.
+    """
     subcommands_filename = "cli_subcommands.jsonc"
+    """Name of the JSONC files defining site-specific and built-in CLI subcommands.
+    """
     plugins_filename = "cli_plugins.jsonc"
+    """Name of the JSONC files defining site-specific and built-in CLI plugins.
+    """
 
     @property
     def framework_dir(self):
+        """Absolute path to the framework code directory, <CODE_ROOT>/src.
+        """
         return os.path.join(self.code_root, 'src')
 
     @property
     def sites_dir(self):
+        """Absolute path to the directory for site-specific code, <CODE_ROOT>/sites.
+        """
         return os.path.join(self.code_root, 'sites')
 
     @property
     def site_dir(self):
+        """Absolute path to the directory for the site-specific code for the
+        chosen site, <CODE_ROOT>/sites/<site>.
+        """
         assert self.site is not None
         return os.path.join(self.sites_dir, self.site)
 
@@ -645,6 +690,9 @@ class CLIConfigManager(util.Singleton):
             _log.debug('Config file %s not found; not updating defaults.', path)
 
     def site_default_text(self):
+        """Return text to be used in online help describing the paths to the
+        defaults files that are being used.
+        """
         files_str = [self.defaults_files.get(x, None) for x in [
             DefaultsFileTypes.SITE, DefaultsFileTypes.GLOBAL]]
         files_str = '\n'.join([x for x in files_str if x is not None])
@@ -705,7 +753,7 @@ class CLIConfigManager(util.Singleton):
                     CLICommand(name=kk, **vv, code_root=self.code_root)
 
     def get_plugin(self, plugin_name, choice_of_plugin=None):
-        """Lookup requested CLI plugin from ``plugins`` attribute, logging
+        """Look up requested CLI plugin from ``plugins`` attribute, logging
         appropriate errors where KeyErrors would be raised.
 
         Args:
@@ -713,7 +761,8 @@ class CLIConfigManager(util.Singleton):
             choice_of_plugin (str, optional): if provided, the name of the
                 choice of plugin.
 
-        Returns: :class:`.CLICommand` object corresponding to the requested
+        Returns:
+            :class:`.CLICommand` object corresponding to the requested
             plugin choice if both arguments are given, or a dict of recognized
             choices if only the first argument is given.
         """
@@ -847,13 +896,13 @@ class MDTFArgParser(argparse.ArgumentParser):
 
            a. Default values from a site-specfic file (defaults.jsonc), stored in
               CLIConfigManager.defaults[DefaultsFileTypes.SITE].
-           b. Default values from a defaults.jsonc file in the sites/ directory,
+           b. Default values from a defaults.jsonc file in the ``/sites`` directory,
               stored in CLIConfigManager.defaults[DefaultsFileTypes.GLOBAL].
            c. Default values hard-coded in the CLI definition file itself.
 
         Args:
             args (optional): String or list of strings to parse. If a single
-                string is passed, it's split using :py:meth:`shlex.split`.
+                string is passed, it's split using :meth:`split_args`.
                 If not supplied, the default behavior parses :py:meth:`sys.argv`.
             namespace (optional): An object to store the parsed arguments.
                 The default is a new empty :py:class:`argparse.Namespace` object.
@@ -920,8 +969,8 @@ class MDTFArgParser(argparse.ArgumentParser):
 
 class MDTFArgPreparser(MDTFArgParser):
     """Parser class used to "preparse" plugin selector arguments, to determine
-    which plugins to use. Plugin selector arguments are identified by having
-    their ``action`` set to :class:`.PluginArgAction`.
+    what site and plugin values were set by the user. Plugin selector arguments
+    are identified by having their ``action`` set to :class:`.PluginArgAction`.
     """
     def __init__(self):
         super(MDTFArgPreparser, self).__init__(add_help=False)
@@ -934,6 +983,9 @@ class MDTFArgPreparser(MDTFArgParser):
         return getattr(namespace, 'site', default_site)
 
     def parse_input_file(self, argv=None):
+        """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args`
+        used to determine what user input file to use.
+        """
         namespace = self.parse_known_args(argv)[0]
         return getattr(namespace, 'input_file', None)
 
@@ -969,6 +1021,9 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         self.setup()
 
     def iter_arg_groups(self, subcommand=None):
+        """Iterate over all arguments defined on the parser for the subcommand
+        *subcommand*.
+        """
         config = CLIConfigManager()
         if subcommand:
             subcmds = config.subcommands.get(subcommand, [])
@@ -979,6 +1034,9 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                 yield from cmd.cli.argument_groups
 
     def iter_group_actions(self, subcommand=None, group=None):
+        """Iterate over all arguments defined on the parser group *group* for the
+        subcommand *subcommand*.
+        """
         groups = util.to_iter(group)
         for arg_gp in self.iter_arg_groups(subcommand=subcommand):
             if groups:
@@ -1008,20 +1066,20 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
     def init_user_defaults(self):
         """Set user defaults using values read in from a configuration
-        file in one of two formats.
+        file in one of two formats. The format is determined from context: either
 
-        Args:
-            config_str (str): contents of the configuration file, either:
+        1) A JSON/JSONC file of key-value pairs. This is parsed using
+           :func:`~src.util.filesystem.parse_json`.
+        2) A plain text file containing flags and arguments as they would be
+           passed on the command line (except shell expansions are not performed).
+           This is parsed by the :meth:`MDTFArgParser.parse_args` method of the
+           configured parser.
 
-            1. A JSON/JSONC file of key-value pairs. This is parsed using
-                :func:`~src.util.filesystem.parse_json`.
-            2. A plain text file containing flags and arguments as they would
-                be passed on the command line (except shell expansions are not
-                performed). This is parsed by the :meth:`MDTFArgParser.parse_args`
-                method of the configured parser.
+        The file's path is determined from the argument to the ``-f`` flag via
+        :meth:`MDTFArgPreparser.parse_input_file`.
 
-        The format is determined from context. ValueError is raised if the string
-        cannot be parsed.
+        Raises:
+            ValueError: if the string cannot be parsed.
         """
         config = CLIConfigManager()
         input_p = MDTFArgPreparser()
@@ -1063,7 +1121,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
     def add_site_arg(self, target_p):
         """Convenience method to add the argument flag to select which
         site-specific code to use, to the parser ``target_p`` (either the
-        top-level parser, or the preparser.)
+        top-level parser, or a preparser.)
         """
         config = CLIConfigManager()
         kwargs = {'default': config.default_site, 'nargs': 1}
@@ -1112,7 +1170,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
     def add_contents(self, target_p):
         """Convenience method to fully configure a parser ``target_p`` (either
-        the top-level parser, or the preparser), adding subparsers for all
+        the top-level parser, or a preparser), adding subparsers for all
         subcommands.
         """
         config = CLIConfigManager()
@@ -1124,7 +1182,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
     def setup(self):
         """Method to wrap all configuration methods needed to configure the
-        parser before calling parse_arg: reading the defaults files and
+        parser before calling :meth:`parse_args`: reading the defaults files and
         configuring plugins based on existing values.
         """
         config = CLIConfigManager()
@@ -1145,11 +1203,12 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         self.configure()
 
     def configure(self):
-        """Method that assembles the top-level CLI parser. Options specific to
-        the script are hard-coded here; CLI options for each subcommand are
-        given in jsonc configuration files for each command which are read in
-        here. See associated documentation for :class:`~src.cli.MDTFArgParser`
-        for information on the configuration file mechanism.
+        """Method that assembles the top-level CLI parser; called at the end of
+        :meth:`setup`. Options specific to the script are hard-coded here; CLI
+        options for each subcommand are given in jsonc configuration files for
+        each command which are read in by :meth:`setup`. See documentation for
+        :meth:`~src.cli.MDTFArgParser.parse_known_args` for information on the
+        configuration file mechanism.
         """
         MDTFArgParser.__init__(self,
             prog="mdtf",
@@ -1174,7 +1233,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
     def parse_args(self, args=None, namespace=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_args` which
-        handles intermediate levels of default settings.
+        handles intermediate levels of default settings. See documentation for
+        :meth:`~src.cli.MDTFArgParser.parse_known_args`.
         """
         if args is None:
             args = self.argv
@@ -1184,7 +1244,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
     def parse_known_args(self, args=None, namespace=None):
         """Wrapper for :py:meth:`~argparse.ArgumentParser.parse_known_args` which
-        handles intermediate levels of default settings.
+        handles intermediate levels of default settings; see documentation for
+        :meth:`~src.cli.MDTFArgParser.parse_known_args`.
         """
         if args is None:
             args = self.argv
@@ -1193,7 +1254,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         return super(MDTFTopLevelArgParser, self).parse_known_args(args, namespace)
 
     def dispatch(self, args=None):
-        """Parse args, and call the subcommand that was selected.
+        """Parse *args*, and call the subcommand that was selected.
         """
         config = CLIConfigManager()
 
@@ -1218,7 +1279,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
 
 
 class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
-    """Implement top-level parser with multiple subcommands.
+    """Extends :class:`MDTFTopLevelArgParser` to add support for subcommands.
+    Currently unused, intended for a future release.
     """
 
     def _default_argv(self, parsed_args):
@@ -1234,7 +1296,7 @@ class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
 
     def add_contents(self, target_p):
         """Convenience method to fully configure a parser ``target_p`` (either
-        the top-level parser, or the preparser), adding subparsers for all
+        the top-level parser, or a preparser), adding subparsers for all
         subcommands.
         """
         config = CLIConfigManager()
@@ -1256,7 +1318,7 @@ class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
         """Method that assembles the top-level CLI parser. Options specific to
         the script are hard-coded here; CLI options for each subcommand are
         given in jsonc configuration files for each command which are read in
-        here. See associated documentation for :class:`~src.cli.MDTFArgParser`
+        here. See documentation for :meth:`~src.cli.MDTFArgParser.parse_known_args`
         for information on the configuration file mechanism.
         """
         MDTFArgParser.__init__(self,

@@ -16,45 +16,16 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
-      "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
+      "CASENAME" : "CCSM4",
+      "model" : "CESM2",
+      "convention" : "CMIP",
+      "FIRSTYR" : 1950,
+      "LASTYR" : 2005,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
+         "ENSO_MSE"
       ]
     }
-    // {
-    //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
-    //   "model" : "AM4",
-    //   "convention" : "GFDL",
-    //   "FIRSTYR" : 1,
-    //   "LASTYR" : 10,
-    //   "pod_list" : ["MJO_prop_amp"]
-    // }
-    // {
-    //   "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
-    //   "model" : "CMIP",
-    //   "convention" : "CMIP",
-    //   "FIRSTYR" : 1951,
-    //   "LASTYR" : 2005,
-    //   "pod_list" : ["SM_ET_coupling"]
-    // }
-    // {
-    //   "CASENAME" : "NCAR-CAM5.timeslice",
-    //   "model" : "CESM",
-    //   "convention" : "CMIP",
-    //   "FIRSTYR" : 2000,
-    //   "LASTYR" : 2004,
-    //   "pod_list": ["example"]
-    // }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
@@ -64,28 +35,28 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "./inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
+  "MODEL_DATA_ROOT": "./inputdata/model",
 
-  // Working directory. Defaults to OUTPUT_DIR if blank.
-  "WORKING_DIR": "../wkdir",
+  // Working directory.
+  "WORKING_DIR": "./wkdir",
 
   // Directory to write output. The results of each run of the framework will be
-  // put in a subdirectory of this directory.
-  "OUTPUT_DIR": "../wkdir",
+  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  "OUTPUT_DIR": "./wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "$HOME/APPS/CONDA/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "$HOME/APPS/CONDA/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -100,13 +71,13 @@
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": false,
+  "save_ps": true,
 
   // Set to true to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  "save_nc": true,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": true,
+  "make_variab_tar": false,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.

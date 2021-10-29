@@ -1,4 +1,4 @@
-# Conda environment for development work. 
+# Conda environment for development work.
 name: _MDTF_dev
 channels:
 - conda-forge
@@ -13,6 +13,7 @@ dependencies:
 - xarray=0.16
 - matplotlib=3.3
 - cartopy=0.18
+- pandas<1.3
 - pint=0.16
 - dask=2.30
 # additional development tools

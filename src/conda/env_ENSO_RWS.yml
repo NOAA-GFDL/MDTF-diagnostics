@@ -1,4 +1,4 @@
-name: _MDTF_ENSO_MSE
+name: _MDTF_ENSO_RWS
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults
@@ -15,3 +15,4 @@ dependencies:
 # - openblas=0.3.4 # otherwise ncl 6.5 installs but doesn't function on macs
 - ncl=6.6.2
 - nco>=4.7.6,<=4.8.1
+

@@ -1,4 +1,5 @@
-# This file is part of the Mixed Layer Depth Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+# This file is part of the Mixed Layer Depth Diagnostic POD of the MDTF code package
+# (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # This POD computes mixed layer depth from CMIP6 monthly temperature and salinity. Mixed layer depth computed from
 # the EN4 reanalysis temperature and salinity is included to compare with models
@@ -212,23 +213,11 @@ def computemld(fieldso, fieldthetao):
         .rename("mld")
     )
 
-    # calculate sigma2 - potential density anomaly with reference pressure of 2000 dbar,
-    # this being this particular potential density minus 1000 kg/m^3.
-    sigma2 = xr.apply_ufunc(
-        gsw.density.sigma2,
-        abs_salinity.isel(time=0),
-        cthetao.isel(time=0),
-        output_dtypes=[
-            float,
-        ],
-    ).rename(
-        "sigma2"
-    )  # sigma2.attrs['units']='kg/m^3'
-
     # compute water depth
+    # note: pressure.lev, cthetao.lev, and abs_salinity.lev are identical
     test = sigma0.isel(time=0) + sigma0.lev
     bottom_depth = (
-        sigma2.lev.where(test == test.max(dim="lev"))
+        pressure.lev.where(test == test.max(dim="lev"))
         .max(dim="lev")
         .rename("bottom_depth")
     )  # units 'meters'

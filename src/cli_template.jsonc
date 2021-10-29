@@ -1,11 +1,11 @@
 // Configuration for command-line arguments for MDTF-diagnostics driver script.
-// This is used by install.py to generate cli.jsonc. 
+// This is used by install.py to generate cli.jsonc.
 // DO NOT modify this file. Instead, edit cli.jsonc.
 //
-// Entries here are used in framework/cli.py to configure command-line options 
+// Entries here are used in framework/cli.py to configure command-line options
 // accepted by the script. Syntax is based on python's argparse library, see
-// https://docs.python.org/2.7/library/argparse.html or 
-// https://docs.python.org/2.7/howto/argparse.html. 
+// https://docs.python.org/2.7/library/argparse.html or
+// https://docs.python.org/2.7/howto/argparse.html.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
@@ -63,7 +63,15 @@
           "metavar" : "<convention>"
         },{
           "name": "strict",
-          "help": "If set, disables experiment selection hueristics and raises error if experiment not uniquely specified by user input.",
+          "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
+          "default" : false
+        },{
+          "name": "disable_preprocessor",
+          "help": "If set, disables metadata checks and unit conversion by the framework prior to POD execution. This is only provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
+        },{
+          "name": "overwrite_file_metadata",
+          "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile). This is provided as a workaround for input data which is known to have incorrect metadata.",
           "default" : false
         },{
           "name": "data_manager",
@@ -141,14 +149,14 @@
           "name": "verbose",
           "short_name": "v",
           "help": "Increase console log verbosity level. -v prints debug information.",
-          "default" : 0, 
-          "action": "count" 
+          "default" : 0,
+          "action": "count"
         },{
           "name": "quiet",
           "short_name": "q",
           "help": "Decrease console log verbosity level. -q prints warnings only, -qq prints errors only, and -qqq prints no output.",
-          "default" : 0, 
-          "action": "count" 
+          "default" : 0,
+          "action": "count"
         },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",

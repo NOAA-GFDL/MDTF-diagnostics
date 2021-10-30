@@ -32,8 +32,17 @@
 	"MDTF_BLOCKING_CAM4": "False",
 	"MDTF_BLOCKING_CAM5": "True",
 	"MDTF_BLOCKING_READ_DIGESTED": "True",
-	"MDTF_BLOCKING_WRITE_DIGESTED": "False"
+	"MDTF_BLOCKING_WRITE_DIGESTED": "False",
+	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",
+        "MDTF_BLOCKING_COMPARE_LONG_YEARS": "False",
+        "MDTF_BLOCKING_DEBUG": "False"
     },
+  // MDTF_BLOCKING_COMPARE_LONG_YEARS:
+  //            True  : uses 1979-1999 (or available) for comparisons
+  //            False : uses same years as the MDTF case
+  // MDTF_BLOCKING_DEBUG: True cuts ensembles to 2 members
+
+
 
     // Programs and third-party libraries your diagnostic needs to run. This is
     // a set of key:value pairs, where "key" is the name of a language's 

@@ -17,12 +17,15 @@ begin
 lstd = False     ; Plot standard dev lines (otherwise plot min/max which is UNTESTED).
 
 
-all_cases = blocking_get_all_case_info(False) 
-; data structure to hold all case information
-; Of length number of cases (= number of files)
-; @case_names = short names for groups (identifies ensembles)
-; @file_names = array of strings, all run names (obs + expanded ensembles)
-; @years_run0, years_run1 = start and stop years corresponding to above
+opts = True
+set_digested(opts) ; translates env vars to opts@read_digested,write_digested
+                   ; this is used by all_cases to set file names
+
+all_cases = blocking_get_all_case_info(opts) 
+; data structure to hold all case information of length number of files
+; case_names,case_type,file_names,@years_run0, years_run1 = start and stop years corresponding to above
+
+
 
 obs_inds = get_obs_inds(all_cases@case_names)
 
@@ -67,31 +70,25 @@ do ip=0,settings@nperiods-1
   period_name = settings@period_names(ip)
 
 ; Loop cases
+
 do ifile=0,all_cases@nfiles-1
-                                                                                                             
    if (isdefined(file_opts)) then
      delete(file_opts)
    end if
 
    file_opts = True
+
    print("--- Opening "+all_cases@case_names(ifile)+" (: "+all_cases@file_names(ifile))
    file_opts = extract_file_opts(all_cases,ifile)
-   ; Add additional settings;
+   ; Add additional settings
    file_opts@period_name = period_name  ; set above
    file_opts@latn_in = latn_in 
    file_opts@lats_in = lats_in
    file_opts@lone_in = lone_in
    file_opts@lonw_in = lonw_in
    
-   ; Need to change set_from_env to have a type=logical flag 
-   ; So this can happen in one line!
-
-   ; Check for global read digested settings
-   ;       and for this case's availability
-
-   read_digested_flag = decide_to_use_digested(file_opts)
-   
-   if (read_digested_flag) then  ; read in block_time
+   ; Check for global read digested settings (MDTF case restricted to only undigested)
+   if (opts@MDTF_BLOCKING_READ_DIGESTED.and.(file_opts@case_type.ne."MDTF")) then  ; read in block_time
      print("Opening digested file")
      f_dig = open_digested(file_opts)
 
@@ -108,7 +105,7 @@ do ifile=0,all_cases@nfiles-1
      lon = f_dig->lon
      nlons = dimsizes(lon)
 
-   else  ; read_digested_flag = False
+   else  ; opts@MDTF_BLOCKING_READ_DIGESTED = False
      print("Opening raw file")
      var_in_p = blocking_readfile_orig(file_opts)           ; Data actually read here
              ;file_opts in:  year0,year1,period_name,filename,var_name,lat/lon limits
@@ -169,7 +166,7 @@ do ifile=0,all_cases@nfiles-1
 
      delete([/ghgs,ghgn,lat/])
 
- end if ; read_digested_flag   
+ end if ; opts@MDTF_BLOCKING_READ_DIGESTED
 
 ;     print("  time_ymd(0)  time_ymd(ndays-1) "+time_ymd(0,:)+" "+time_ymd(ndays-1,:))
 ;     print(" idays(0) idays(ndays-1) "+idays(0)+" "+idays(ndays-1))
@@ -295,29 +292,31 @@ do ifile=0,all_cases@nfiles-1
       block_freq_yr = smth9_Wrap(block_freq_yr, 0.50,  0.50, True) 
     end do
 
-    ; get the file indices for this ensemble
+    ; get the file indices for this ensemble/group or individual
     this_ens_name = get_ens_name_or_obs_name(all_cases@case_names(ifile))
     ens_file_inds = get_file_indices_from_ens_name_group_obs(this_ens_name,all_cases@case_names)
 
-    ; if this is the first file in the ensemble, create the graphics object
+    ; if this is the first file in the ensemble, create the panel graphics object
     if (ifile.eq.min(ens_file_inds)) then  
       res_t = True  ;output from get_plot_*
       res_t@tiMainString = file_opts@case_name +file_opts@year_range
       wks_ens_page = get_plot_anncycle_ensname(this_ens_name,all_cases,settings,res_t)
     end if
 
-    ; draw the figure just for this file
+    ; draw the Hovmueller figure (individual panels for each file)
     plot_t(ifile) = gsn_csm_hov(wks_ens_page, lonPivot(block_freq_yr,270.), res_t) 
 
     ; if this is the last file in the ens, draw and write the panel plot of
-    ; all ensemble files
+    ; all ensemble Hov figures
     if (ifile.eq.max(ens_file_inds)) then 
+      print("Writing Hovmueller panel")
       panel_layout = get_panel_layout(dimsizes(ens_file_inds))
       gsn_panel(wks_ens_page,plot_t(ens_file_inds),panel_layout,pan_t)
       delete(ens_file_inds)  
       delete(wks_ens_page)
       delete(res_t)
       delete(panel_layout)
+      print("Wrote figure "+settings@figure_name_anncycle+"."+this_ens_name+"."+settings@figure_type)
     end if
 
     delete([/block_freq_yr/])
@@ -465,26 +464,5 @@ frame(wks)
 
 print("Wrote figure "+settings@figure_name_season+"."+settings@figure_type)
 
-; gsn plot ann cycle (Hov)
-print("Writing Hov plot (panels)")
-if (period_name.eq."ANN") then
-;  print("WARNING: number of panels limited to 16")
-;  wks_t = get_plot_anncycle(all_cases,settings,res_t)
-;  gsn_panel(wks_t,plot_t,(/4,4/),pan_t)
-;  print("Wrote figure "+settings@figure_name_anncycle+"."+settings@figure_type)
-;  print(wks_t)
-
-; Maybe use these to panel obs together!
-; obs_inds = get_obs_inds(all_cases@case_names)
-;  print("obs inds       "+ obs_inds)
-;  if (dimsizes(obs_inds).gt.0) then 
-;    wks_t2 = gsn_open_wks(settings@figure_type, settings@figure_name_anncycle+".OBS")
-;    panel_layout = (/dimsizes(obs_inds),1/)
-;    gsn_panel(wks_t2,plot_t(obs_inds),panel_layout,pan_t)
-;    print(wks_t2)
-;  end if
-
-
-end if
 
 end

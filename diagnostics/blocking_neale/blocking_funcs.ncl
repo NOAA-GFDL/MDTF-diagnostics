@@ -1,3 +1,4 @@
+;
 
 function isfilevar_TF(fin,var_name)
 ; strictly returns True (it is a file var) or False (it is not)
@@ -27,7 +28,7 @@ begin
   func_name = "string_to_logical"
   do i = 0,nstrs-1
     if any( (/"true","false"/) .eq. cargs(i))
-      largs(i)=cargs(i) .eq."true"   ;drb not sure how this works but it does
+      largs(i)=cargs(i) .eq."true"   ;not sure how this works but it does
     end if
     if (cargs(i).eq.0 ) then
       largs(i) = False
@@ -41,35 +42,45 @@ begin
 
 end
 
-
+; ------------------------------------------------------
+function string_looks_logical(string_in)
+begin
+  func_name = "string_looks_logical"
+;  print("into "+func_name+" with string_in "+string_in)
+  if ((str_lower(string_in).eq."true").or.(str_lower(string_in).eq."false")) then
+    return True
+  else
+    return False
+  end if
+end
 ; ------------------------------------------------------
 
-function set_from_env_logical(name_in) ;could put quit on failure here
+function set_from_env_logical(name_in,opts_in) ;quit on failure
 ; check envvars, opts_in attributes, changes strings to logical if nec.
 begin
 
   func_name = "set_from_env_logical"
-;  print(func_name+" looking for "+name_in)
 
-  found_good_setting = False
   setting = getenv(name_in)
 
   if (ismissing(setting)) then  ; if not in envs, check opts
-;    print("WARNING: "+func_name+" did not find an envvar of name "+name_in)
-   return setting ; string of type missing
-  else
-;    print(func_name+" found envvar "+name_in+" = "+setting)
+    print("WARNING: "+func_name+" did not find an envvar of name "+name_in)
+    opts_in@$name_in$ = setting
+    return setting ; string of type missing
   end if  ; if (ismissing(setting)) 
 
-
-   setting_log = string_to_logical(setting)
+  if (string_looks_logical(setting)) then
+    setting_log = string_to_logical(setting)
+  end if
 
    if ( ismissing(setting_log)) then
       print("ERROR: setting for envvar "+name_in+" must be True or  False")
       print("       instead of "+setting)
       delete(setting)
+      opts_in@$name_in$ = setting ; missing
       return setting ; missing
     else
+      opts_in@$name_in$ = setting_log ; 
       return  setting_log
     end if
 
@@ -77,19 +88,16 @@ end ; set_from_env_logical
 
 
 ; -------- Main ----------------------------------------------
+; This is for the testing purposes only!
 
-; set_from_env_logical("MDTF_DEBUG") ; switches to fewer ens members instead of 5
-debug = set_from_env_logical("MDTF_DEBUG")
+opts = True
+debug = set_from_env_logical("MDTF_DEBUG",opts) ; switches to fewer ens members instead of 5
 if ( ismissing(debug)) then
   delete(debug) ; because above sets it as string type (annoyingly!)
   debug = False; use full ensembles
 end if
 
 
-
-compare_long_years = False  
-; False = user input dates control obs/ensembles
-; True  = 1979-1999 used for obs/ensembles regardless of user input
 
 ; parameters that will be known by anyone loading this
 all_colors = (/"blue","red","green","purple","orange","magenta","cyan"/)
@@ -124,15 +132,16 @@ end
 function extract_file_opts(all_cases,ifile)
 begin
   func_name = "extract_file_opts"
-;  print(func_name+" starting")
+
    file_opts = True	; just contains info for one file
+                        ; All of these are set in case_info
    file_opts@file_name = all_cases@file_names(ifile)  ;file_names (with paths)
    file_opts@case_name = all_cases@case_names(ifile)  ;Ensemble name/legend label
    file_opts@var_name  = all_cases@var_names(ifile)
-   file_opts@year0     = all_cases@years_run0(ifile)    ; set in case_info
+   file_opts@year0     = all_cases@years_run0(ifile)  
    file_opts@year1     = all_cases@years_run1(ifile)
-
-;   print(func_name+" "+file_opts@year0+" - "+file_opts@year1 )
+   file_opts@case_type = all_cases@case_type(ifile)
+   file_opts@lcolors   = all_cases@plot_colors(ifile) ; is this used? DRB
 
    return file_opts
 end ; function extract_file_opts(all_cases,index)
@@ -410,24 +419,24 @@ end
 
 ;**here
 ; ------------------------------------------------------
-function check_if_setting_is_type_logical(name_in,opts_in)
+function check_if_setting_is_type_logical(name_in,setting,opts_in)
 begin 
 
   func_name = "check_if_setting_is_type_logical"
+
   if (isatt(opts_in,"type_logical")) then
     if ( any( opts_in@type_logical .eq. name_in)) then
-;      print(func_name+" found "+name_in+" in type_logical string "+opts_in@type_logical)
+      print(func_name+" found "+name_in+" in type_logical string "+opts_in@type_logical)
       return True
     else
-;      print(func_name+" did not find "+name_in+" in type_logical string "+opts_in@type_logical)
+      print(func_name+" did not find "+name_in+" in type_logical string "+opts_in@type_logical)
     end if
-  else
-;    print(func_name+" did not find opts_in@type_logical attritute")
-;    printVarSummary(opts_in@type_logical)
   end if
+
   return False
 
 end
+
 
 
 ; ------------------------------------------------------
@@ -460,70 +469,42 @@ end
 ; ------------------------------------------------------
 
 function set_from_env(name_in,opts_in)
-; check envvars, opts_in attributes, changes strings to logical if nec.
+; check envvars & opts_in attributes, changes strings to logical if nec.
 begin
 
   func_name = "set_from_env"
-;  print(func_name+" looking for "+name_in)
 
   opts = get_input_opts(func_name,opts_in)
   
-  found_good_setting = False
-  setting = getenv(name_in)
+  found_good_setting = False ; flag to check at the end
 
-  if (ismissing(setting)) then  ; if not in envs, check opts
-    if (isatt(opts,name_in)) then
-      setting = opts@$name_in$
-      ;print(name_in+" = "+setting+" (found in opts)")
-    end if ; if (isatt(opts,name_in)) 
-  else
-      ;print(name_in+" = "+setting+" (found in envvars)") 
-  end if ; if (ismissing(setting)) 
+  setting = getenv(name_in)  ; ncl function to grab env vars
 
-  ; These should be separated and modularized.
+  ; If it is supposed to be logical, check it or if it looks logical, convert it
+  if ( check_if_setting_is_type_logical(name_in,setting,opts).or.string_looks_logical(setting)) then
+    opts@$name_in$ = set_from_env_logical(name_in,opts_in)
+    if ( ismissing(opts@$name_in$) ) then
+      print("WARNING: "+name_in+" "+setting+" should be/looks logical but check/conversion failed")
+    end if ; ismissnig
 
-  ; If it is supposed to be logical, convert/check
-  if ( check_if_setting_is_type_logical(name_in,opts)) then
-;    print("trying to convert input to logical for setting "+name_in+" = "+setting)
-    setting_log = string_to_logical(setting)
-;    print("setting_log "+setting_log)
-    if ( ismissing(setting_log)) then
-      print("ERROR: setting for env var "+name_in+" must be True or  False")
-      exit
+  ; If it is supposed to be integer, try to convert it
+  else 
+    if ( check_if_setting_is_type_integer(name_in,opts)) then
+      opts@$name_in$ = stringtointeger(setting)
+      if ( ismissing(opts@$name_in$)) then
+        print("WARNING: error converting env var "+name_in+" = "+setting+" to integer")
+      end if ; ismissing
     else
-      delete(setting)
-      setting = setting_log
-    end if
-  end if ; if (isatt(opts,"type_logical"))
-
-  
-  if ( check_if_setting_is_type_integer(name_in,opts)) then
-; DRB: using tointerger(set_from_env("VAR")) instead
-;    print("trying to convert input to integer for setting "+name_in+" = "+setting)
-    setting_int = stringtointeger(setting)
-;    print("setting_int "+setting_int)
-    if ( ismissing(setting_int)) then
-      print("ERROR: error converting env var "+name_in+" to integer")
-      exit
-    else
-      delete(setting)
-      setting = setting_int
-    end if
-  end if ; if (isatt(opts,"type_integer"))
+      opts@$name_in$ = setting
+    end if ; check if integer 
+  end if ; check if logical (ncl doesn't really have an else if)
 
 
-  ; If it is still missing, try for default
-  if (ismissing(setting)) then
-    if (isatt(opts,"default")) then
-      setting = opts@default
-    end if
+  if (ismissing(opts@$name_in$)) then 
+    print("WARNING: "+func_name+" did not find a value for env var "+name_in)
   end if
 
-  if (ismissing(setting)) then 
-    print("WARNING: "+func_name+" did not find a value for env/opt "+name_in)
-  end if
-
-  return setting   ; might be missing
+  return opts@$name_in$   ; might be missing. Also returned in opts@name_in
 
 
 end ; set_from_env
@@ -582,32 +563,38 @@ begin
 end
 ; -------------------------------------------------------
 
-procedure append_case_info(case_info,file_names,case_names,var_names,years_run0,years_run1,lcolors)
+procedure append_case_info(case_info,file_names,case_names,case_type,var_names,years_run0,years_run1,lcolors)
 begin
   
   func_name = "append_case_info"
+
 
   if (.not.isatt(case_info,"file_names")) then    ; First time through
 ;    print(" "+func_name+" Creating new case_info data structure")
     case_info@file_names = file_names
     case_info@case_names = case_names
+    case_info@case_type  = case_type
     case_info@var_names  = var_names
     case_info@years_run0 = years_run0
     case_info@years_run1 = years_run1
     case_info@plot_colors = lcolors
+
+
   else  ; Every subsequent call
 ;    print(" "+func_name+" adding case_info on to data structure")
 
     case_info_copy = case_info ; save existing array
 
     ; need to delete all the arrays because they are the wrong length
-    ; eg: delete_VarAtts(x,(/"pineapple","peach","banana"/))
-    atts_to_delete = (/"file_names","case_names","var_names","years_run0","years_run1","plot_colors"/)
+    atts_to_delete = (/"file_names","case_names","case_type","var_names","years_run0","years_run1","plot_colors"/)
     delete_VarAtts(case_info, atts_to_delete) ; delete only array attributes
 
+    ; Note: if error = Dimension size of attribute and right-hand side of assignment do not match
+    ;       then make sure attribute is added to above list to delete!
     ; now put in the new, longer ones
     case_info@file_names = array_append_record(file_names,case_info_copy@file_names ,0)
     case_info@case_names = array_append_record(case_names,case_info_copy@case_names,0)
+    case_info@case_type  = array_append_record(case_type ,case_info_copy@case_type,0)
     case_info@var_names  = array_append_record(var_names ,case_info_copy@var_names,0)
     case_info@years_run0 = array_append_record(years_run0,case_info_copy@years_run0,0)
     case_info@years_run1 = array_append_record(years_run1,case_info_copy@years_run1,0)
@@ -615,9 +602,6 @@ begin
     delete(case_info_copy)
 
   end if
-; print(func_name+" returning case_info:")
-;  print(case_info@file_names)
-;  printVarSummary(case_info)
 
 
 end ; append_case_info
@@ -711,13 +695,128 @@ begin
       print("ERROR: Missing file "+file_name)
       exit
     else
-      print("  ...found file "+file_name)
+      print("      -found file "+file_name) ; indent is for formatted output
     end if
   end do
 
 end
 
 
+; -------------------------------------------------------
+; Digested/undigested file and directories
+; Digested is default, so in the top dir, undigested in labeled dir
+; but digested are made from other files so they have a .digested. tag
+; in their file names
+; eg. Digested:   obs_data/blocking/ERAI/ERAI.z500.day.digested.nc
+;     Undigested: obs_data/blocking/undigested/ERAI/ERAI.z500.day.nc
+; -------------------------------------------------------
+function get_digested_file_string()
+;return string in digested file filename
+;default is that file names are labeled when digested
+begin
+  return ".digested"
+end
+
+; -------------------------------------------------------
+function get_undigested_file_string()
+;return string in digested file filename
+;default is that file names are unlabeled when undigested
+begin
+  return ""
+end
+
+; -------------------------------------------------------
+function get_digested_dir_string()
+;return string in digested directory name
+;default is to put digested in the main dir
+begin
+  return "/"
+end
+
+; -------------------------------------------------------
+function get_undigested_dir_string()
+;return string in undigested directory name
+;default is to put undigested in a subdir
+begin
+  return "/undigested/"   
+end
+
+; -------------------------------------------
+function set_and_check_file_names(path_in,file_names_base_in,opts_in)
+; Sets full file name according to digested status
+; and checks if the file(s) exists
+; Input: single or array
+;
+; To Do: would be nice if if_digested but file not found, sets undigested
+; and returns a flag. Then digested/undigested could be on a per-file basis
+begin
+
+  if (opts_in@MDTF_BLOCKING_READ_DIGESTED) then
+    file_names_out = path_in+get_digested_dir_string   + file_names_base_in + get_digested_file_string()  +".nc"
+  else
+    file_names_out = path_in+get_undigested_dir_string + file_names_base_in + get_undigested_file_string()+".nc"
+  end if
+
+  check_required_file(file_names_out)
+
+  return file_names_out
+end 
+
+; ------------------------------------------------------
+function get_years_run(nruns,opts)
+; If compare_long_years = True, over-rides user settings 
+; to use (whatever is available from) 1979-1999
+;
+; extends single value to dimsize nfiles = dimseizes(opts@file_names)
+;
+; sets start years (years_run0 = years_run(0,:))  
+;  and   end years (years_run1 = years_run(1,:))  
+;
+
+begin
+
+  compare_long_years = set_from_env_logical("MDTF_BLOCKING_COMPARE_LONG_YEARS",opts)
+; False = user input dates control obs/ensembles
+; True  = 1979-1999 used for obs/ensembles regardless of user input
+
+  years_run = new((/2,nruns/),"integer")
+  
+  if ( compare_long_years ) then
+    years_run(0,:) = 1979 
+    years_run(1,:) = 1999
+  else 
+    years_run(0,:) = tointeger(set_from_env("FIRSTYR",opts))
+    years_run(1,:) = tointeger(set_from_env("LASTYR",opts))
+  end if
+  
+  return years_run
+end
+; ------------------------------------------------------
+procedure reduce_nens_for_debug(run_info,debug)
+; Reduces ensemble size for debug processing
+; modifies attributes to in/out argument run_info
+;     run_info@nruns = debug_nens 
+;     run_info@file_names(0:run_info@nruns-1)
+begin
+
+  if ( debug ) then  
+
+  debug_nens = 2 ; choose how many runs to include for each ensemble
+  print("       Debug set in blocking_funcs, cutting NENS to "+debug_nens)  ; indent is for formatted output
+    
+  nruns = min((/run_info@nruns,debug_nens/))
+  run_info@nruns = nruns
+
+  if ( nruns.lt.dimsizes(run_info@file_names)) then ; don't bother if it didn't change
+     ; file_names array needs to be reduced in size if using debug-sized ensemble
+    file_names = run_info@file_names(0:run_info@nruns-1)
+    delete_VarAtts(run_info, "file_names") ; need to delete in order to change size
+    run_info@file_names(0:run_info@nruns-1) = file_names
+  end if ; nruns
+
+  end if ; debug 
+
+end
 ; ------------------------------------------------------
 procedure get_run_info_mdtf(case_info,opts)
 ; This is for a single case. For ensembles ideas, see cam5 etc
@@ -727,8 +826,10 @@ begin
 
   ; settings in mdtf input jsonc file or opts in testing function below
   case_names = set_from_env("CASENAME",opts) ; provided by MDTF
-  print("--- Adding "+case_names)
+  print("--- Adding MDTF_CASE: "+case_names)
 
+  ; We don't over-ride this with compare_long_years 
+  ; but this will need to change for multiple cases
   years_run0 = tointeger(set_from_env("FIRSTYR",opts))
   years_run1 = tointeger(set_from_env("LASTYR",opts))
 
@@ -739,23 +840,45 @@ begin
     print("ERROR: missing env var "+model_data_env_var)
     exit
   end if
-  print("DRBDBG got model_data_path "+model_data_path)
 
   var_names = set_from_env("zg500_var",opts)  
               ;zg500_var decided in settings.jsonc file,
               ;actual variable name for input model determined in data/fieldlist_$model.jsonc
 
-;  file_names = model_data_path  + "/"+case_names+"."+var_names+".day.nc"
   file_names = model_data_path  
 
 
   lcolors = "magenta"
 
   check_required_file(file_names)
-        
+  case_type  = "MDTF"  ; currently used to prevent from using read_digested
+
   ; add this to other case info
-  append_case_info(case_info,file_names,case_names,var_names,\
+  append_case_info(case_info,file_names,case_names,case_type,var_names,\
                    years_run0,years_run1,lcolors)
+
+end
+
+; ------------------------------------------------------
+function new_array_with_value(value,size)
+begin
+  new_array = new(size,typeof(value))
+  new_array(:) = value
+  return new_array
+end
+; ------------------------------------------------------
+procedure extend_run_info_attributes_to_nfiles(run_info)
+begin 
+
+  nfiles = dimsizes(run_info@file_names)
+  attr_list = (/"var_name","line_colors","case_name","case_type"/)
+
+  do i=0,dimsizes(attr_list)-1
+    new_attr = new_array_with_value(run_info@$attr_list(i)$,nfiles)
+    delete_VarAtts(run_info, attr_list(i))
+    run_info@$attr_list(i)$ = new_attr
+  end do ; do iattr=0,dimsizes(attr_list)-1
+
 
 end
 
@@ -781,8 +904,10 @@ begin
   do ile=0,nruns-1
     file_names(ile)  = run_info@run_name+ "/"+\
                        run_info@run_name+"."+sprinti("%0.3i",ile+1)+\
-                       "_dmeans_ts_"+run_info@var_name+".nc"
+                       "_dmeans_ts_"+run_info@var_name  ; '.nc' added after digested logic
   end do
+
+
   run_info@file_names = file_names
   return run_info
 
@@ -806,7 +931,7 @@ begin
   do ile=0,nruns-1
     file_names(ile)  = run_info@run_name+ "/"+\
                        run_info@run_name+"."+sprinti("%0.3i",ile+1)+\
-                       "_dmeans_ts_"+run_info@var_name+".nc"
+                       "_dmeans_ts_"+run_info@var_name  ; '.nc' added after digested logic
   end do
   run_info@file_names = file_names
   return run_info
@@ -821,8 +946,8 @@ begin
   
   run_info = True ; return structure      
   run_info@run_name  = "eul128x256_d67iamip"
-  run_info@case_name = "CAM3"
   run_info@var_name = "Z500"
+  run_info@case_name = "CAM3"
   run_info@obs_data = False  ; does this matter anymore?
   run_info@file_path = opts@path_cam_ensembles
   run_info@line_colors = "green"  
@@ -836,7 +961,7 @@ begin
   do ile=0,nruns-1
       file_names(ile)  = run_info@run_name+"/"+\
                                 run_info@run_name+sprinti(".ES%0.2i",ile+1)+\
-                                "_dmeans_ts_"+run_info@var_name+".nc"
+                                "_dmeans_ts_"+run_info@var_name ; '.nc' added after digested logic
   end do
 
   run_info@file_names = file_names
@@ -846,7 +971,8 @@ begin
 end ; get_run_info_cam3
 
 ; --------------------------
-procedure get_run_info_cam_ensemble(case_info,opts,case_type) 
+
+procedure get_run_info_cam_ensemble(case_info,opts,group_name) 
 ;USAGE eg get_run_info_cam_ensemble(case_info,opts,"CAM3")
 
 begin
@@ -854,76 +980,62 @@ begin
   func_name = "get_run_info_cam_ensemble"
 
   case_found = False
-  if ( case_type .eq. "CAM3") then
+  if ( group_name .eq. "CAM3") then
     run_info  = get_run_info_cam3(case_info,opts) ; only passing opt  for path
     case_found = True
   end if
-  if ( case_type .eq. "CAM4") then
+  if ( group_name .eq. "CAM4") then
     run_info  = get_run_info_cam4(case_info,opts) ; only passing opt  for path
     case_found = True
   end if
-  if ( case_type .eq. "CAM5") then
+  if ( group_name .eq. "CAM5") then
     run_info  = get_run_info_cam5(case_info,opts) ; only passing opt  for path
     case_found = True
   end if
   if ( .not. case_found ) then
-    print("ERROR: "+func_name+" case type "+case_type+" not found.")
+    print("ERROR: "+func_name+"doesn't know how to set group name "+group_name)
     exit
   end if
 
-        ; this can probabaly go straight into append_ call below
-        nruns = run_info@nruns
-        case_name = run_info@case_name
-        var_name = run_info@var_name
-        if ( debug ) then  ; cut any ens > 2 to 2
-          nruns = min((/nruns,2/))
-          print("Debug set in blocking_funcs, cutting NENS to 2")
-        end if
+  run_info@case_type = "MODEL_COMPARISON"
 
-	case_names  = new(nruns,"string")
-        case_names  = run_info@case_name
+  ; If running in debug mode, reduce size of ensemble
+  reduce_nens_for_debug(run_info,debug)
 
-	obs_data    = new(nruns,"logical")
-        obs_data    = run_info@obs_data
+  ; Extends attributes that are group/ensemble wide to be size nfiles
+  extend_run_info_attributes_to_nfiles(run_info)
 
-	var_names   = new(nruns,"string")
-        var_names   = run_info@var_name
+ ; change depending on compare_long_years setting
+  years_run = get_years_run(dimsizes(run_info@file_names),opts)
 
-	line_colors =  new(nruns,"string")
-        line_colors = run_info@line_colors
-
-	years_run0 = new(nruns,"integer")
-	years_run1 = new(nruns,"integer")
-
-        if ( compare_long_years ) then
-          years_run0(:) = 1979 
-          years_run1(:) = 1999
-        else 
-          years_run0(:) = tointeger(set_from_env("FIRSTYR",opts))
-          years_run1(:) = tointeger(set_from_env("LASTYR",opts))
-        end if
-
-        ; file_names needs to be reduced in size if using debug-sized ensemble
-        file_names = run_info@file_names(0:nruns-1)
+  ; Add modifications if un/digested, and check if the file exists
+  file_names_path = set_and_check_file_names(run_info@file_path,run_info@file_names,opts)
 
 
-        ; Add the path
-        file_names_path = run_info@file_path +"/"+  file_names
-
-        check_required_file(file_names_path)
-
-        append_case_info(case_info,file_names_path,case_names,var_names,\
-                                 years_run0,years_run1,line_colors)
+ 
+  append_case_info(case_info,file_names_path,run_info@case_name,run_info@case_type,run_info@var_name,\
+                                 years_run(0,:),years_run(1,:),run_info@line_colors)
 
 end ; get_run_info_cam_ensemble(case_info)
 
 ; -------------------------------------------------------
 function get_obs_names()
-;if adding obs, check hard-coded file_names_o in get_run_info_obs
+; Obs case names
 begin
   return (/"ERAI","MERRA"/) 
 end
 
+
+; -------------------------------------------------------
+function get_obs_var_names()
+; obs variable names. Should make logic to tie it to 
+; case names. (eg if obs_name = ERAI then var_name = z500
+begin
+  return   (/"z500","H500"/)
+end
+
+
+; 
 ; -------------------------------------------------------
 function get_obs_inds(case_names)
 begin
@@ -936,46 +1048,40 @@ begin
 
   return obs_inds
 end
+
+
 ; -------------------------------------------
 procedure get_run_info_obs(case_info,opts)
 begin
-	; Construct final arrays.
+	; Construct case info. Note that OBS is hard-coded to run with 
+        ; both ERAI & MERRA, so arrays are length 2
+      
   
-
-	case_names_o = get_obs_names()  ; default ERAI, MERRA
-        print("  ...Adding case "+case_names_o)
+	case_names_o = get_obs_names()  ; case names: ERAI, MERRA
+        var_names_o =  get_obs_var_names()   ; z500, H500 
+        print("    --Adding case "+case_names_o)  ; indent is for formatted output
 
         ; Store for the subsquent processing which treats obs different
         ; from others
         case_info@obs_names = case_names_o
         case_info@nobs = dimsizes(case_names_o)
 
+        case_type = (/"OBS","OBS"/)
         path_obs = opts@path_obs
-        file_names_o  = path_obs + "/"+(/case_names_o(0)+"/z500.day.mean.nc",\
-		                    case_names_o(1)+"/H500.day.nc"/)
-        var_names_o =  (/"z500","H500"/)
 
-        if ( compare_long_years ) then
-          years_run0 = 1979
-          years_run1 = 1999
-        else
-          years_run0 = tointeger(set_from_env("FIRSTYR",opts))
-          years_run1 = tointeger(set_from_env("LASTYR",opts))
-        end if
+        ; eg ERAI/ERAI.z500.day (no 'nc' yet)
+        file_names_base = case_names_o+"/"+case_names_o+"."+ var_names_o+".day"
+        ; Add modifications if un/digested, and check if the file exists
+        file_names_full = set_and_check_file_names(path_obs,file_names_base,opts)
 
-	years_run0_o = (/years_run0,years_run0/)
-	years_run1_o = (/years_run1,years_run1/)
-;        print("obs years_run0 "+years_run0_o)
-;        print("obs years_run1 "+years_run1_o)
+        years_run = get_years_run(case_info@nobs,opts) 
 
-        
 	obs_data_o   = (/True,True/)
         plot_colors = (/"black","black"/)
 
-        check_required_file(file_names_o)
 
-        append_case_info(case_info,file_names_o,case_names_o,var_names_o,\
-                                  years_run0_o,years_run1_o,plot_colors)
+        append_case_info(case_info,file_names_full,case_names_o,case_type,var_names_o,\
+                                  years_run(0,:),years_run(1,:),plot_colors)
 
 end ; get_run_info(case_info)
 
@@ -994,13 +1100,11 @@ begin
   func_name = "add_case_info"
 
   opts = get_input_opts(func_name,opts_in)
-  ; This is used by the CAM versions as well as actual OBS, so set here
+  ; This is used by the CAM model ensembles as well as actual OBS, so set here
   path_obs   = get_path_obs(opts)
   opts@path_obs = path_obs
   opts@path_cam_ensembles = path_obs+"/CAM_ensembles"
 
-  opts@read_digested  = set_from_env("MDTF_BLOCKING_READ_DIGESTED",opts)
-  opts@write_digested = set_from_env("MDTF_BLOCKING_WRITE_DIGESTED",opts)
 
   case_name_found = False ; not used
   if ( case_name.eq."MDTF_BLOCKING_CAM5") then
@@ -1024,6 +1128,8 @@ begin
   end if
 
 
+
+
 end ; function add_case
 
 ; ------------------------------------------------------
@@ -1040,16 +1146,13 @@ begin
     case_name = case_names(i)
 
 ;    print("Searching for ensemble for case "+i+" "+case_name)
-;function str_match (string_array   : string,  sub_string [1] : string   )
     if ( i.eq.0 ) then
       ensemble_names = (/ case_name /)
     else
       if any( ensemble_names .eq. case_name) then
-;        print("found repeat "+case_name)
       else
         if any( get_obs_names .eq. case_name ) then
         else
-;          print("found new "+case_name)
           copy_ensemble_names = ensemble_names  
           delete(ensemble_names)
           ensemble_names = array_append_record(case_name,copy_ensemble_names,0)
@@ -1170,39 +1273,43 @@ end
 ; ------------------------------------------------------
 function blocking_get_all_case_info(opts_in)
 ; USAGE
-; all_cases = blocking_get_all_case_info
+; all_cases = blocking_get_all_case_info(opts)
+;
+; Flags already set: opts@read_digested, opts@write_digested
 ; all_cases is an array of STRINGS (that match env vars, ie. BLOCKING_CAM5)
 ; each case = all_cases(i) has attributes (each dimension nfiles)
 ;   case@case_names = short names/ensemble name/label for plot
+;   case@case_type  = "MDTF","OBS" or "MODEL_COMPARSION"
+;   case@var_names  = name of the variable in the file
 ;   case@file_names = array of strings, all run names (obs + expanded ensembles)
 ;   case@years_run0, years_run1 = start and stop years corresponding to above
 begin
 
 	func_name = "blocking_get_all_case_info"
-        opts = get_input_opts(func_name,opts_in)
 
-        ;Defaults of comparsions: models & obs
-        ; don't change these, to turn off, set matching envvars False in calling program
+        opts = opts_in
+
+        ;Defaults of logical variables to turn on/off comparsions
+        ; To change, set matching envvars in settings.jsonc or input file to MDTF
         default_cases = (/"MDTF_BLOCKING_OBS","MDTF_BLOCKING_CAM5","MDTF_BLOCKING_CAM4","MDTF_BLOCKING_CAM3"/)
-        opts@type_logical = default_cases  ; these will fail on non-logical input
 
         ; Check envvar settings, if found will change default
-        ; Could avoid the double line, even make it a loop, if have a
-        ; general type and use the env var as the type
         ncases_init = dimsizes(default_cases)
 
         case_info = True
         do icase = 0,ncases_init - 1
           case_name = default_cases(icase)
-          if ( set_from_env(case_name,opts) ) then  ; check  env/opts/defaults to decide to do this case
+
+          if ( set_from_env_logical(case_name,opts) ) then  ; check  env/opts/defaults to decide to do this case
             print("--- Adding   "+case_name)
             add_case_info(case_name,case_info,opts) ; load file names, var names, etc
           else
-            print("--- Skipping "+case_name)
+            print("--- Skipping "+case_name+". To turn on, setenv "+case_name)
           end if
         end do ; i
-          
-        ; Input models (single or ensembles)
+
+
+        ; Input models (single or eventually multiple/ensembles)
         if (.not.ismissing(set_from_env("CASENAME",opts))) then
           ncases_in = 1  ;for now
           do icase = 0,ncases_in - 1
@@ -1212,8 +1319,6 @@ begin
             print("--- Skipping MDTF input (no CASENAME env var found) ")
         end if
 
-        
-          
         if (verbose.gt.1) then
           print(func_name+" returning file_names : "+case_info@file_names)
           print(          "           years_run0: "+case_info@years_run0)
@@ -1237,8 +1342,6 @@ begin
         else
           case_info@nobs = 0
         end if
-        
-
         
         return case_info
 
@@ -1333,8 +1436,6 @@ begin
    print(" "+all_cases@case_names)
    exit
  end if
-
-;  print(func_name+" input casename "+casename+" found color  "+all_cases@plot_colors(i) )
 
   return all_cases@plot_colors(i)
 
@@ -1521,7 +1622,7 @@ begin
 ; previous did all solid
   line_types  = ones_1d_int(nlines) - 1 ; zeros
 
-  ; Only have MDTF_case (last ens) as solid
+  ; Only have MDTF_case (last ens) as solid (could use case_type = "MDTF" to distinguish)
   do i=1,nobs-1  ; obs1 solid (0), obs2 dash (1)
     line_types(i) = i   
   end do
@@ -1641,8 +1742,8 @@ begin
 
   figure_name_anncycle = "block_freq_anncycle"  ; path added at plot write time for wks_t2
 
-  print("Writing figures to: "+path_out_model)
-  print("Writing figures to: "+path_out_obs)
+  print("Will write model figures to: "+path_out_model)
+  print("Will write obs   figures to: "+path_out_obs)
   settings@path_out_model = path_out_model
   settings@path_out_obs = path_out_obs
   settings@figure_type = figure_type
@@ -1674,9 +1775,7 @@ begin
 ; Graphics
   pan_m = True
   pan_m@gsnFrame = False
-;drb  pan_m@gsnMaximize = True
   pan_m@gsnMaximize = False
-;drb  pan_m@gsnPaperOrientation = "Portrait"
 
   return pan_m
 

@@ -40,8 +40,7 @@ autodoc_mock_imports = [
 # need to manually mock out explicit patching of cf_xarray.accessor done
 # on import in xr_parser; may be possible to do this with mock.patch() but the
 # following works
-mock_accessor = mock.Mock()
-mock_accessor.configure_mock(**({
+mock_accessor = mock.MagicMock(**({
     '__name__': 'accessor', '__doc__': '', # for functools.wraps
     'CFDatasetAccessor': object, 'CFDataArrayAccessor': object
 }))
@@ -50,11 +49,15 @@ setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
 
 # Also necessary to manually mock out cfunits.Units since src.units.Units
 # inherits from it.
-class DummyUnits():
+class Units():
+    ""
     def __init__(self, units=None, calendar=None, formatted=False, names=False,
         definition=False, _ut_unit=None):
+        """Initialization is as in `cfunits.Units
+        <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__."""
         pass
-mock.patch('src.util.units.cfunits.Units', autospec=DummyUnits)
+sys.modules['cfunits'] = mock.Mock(name='cfunits')
+setattr(sys.modules['cfunits'], 'Units', Units)
 
 # -- Project information -----------------------------------------------------
 

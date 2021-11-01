@@ -327,8 +327,9 @@ epub_exclude_files = ['search.html']
 
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
+autoclass_content = 'class'
 autodoc_default_options = {
-    'special-members': '__init__, __post_init__',
+    'special-members': '__post_init__',
     'inherited-members': True
 }
 
@@ -355,7 +356,8 @@ def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
 def skip_members_handler(app, what, name, obj, skip, options):
     """1) Skip unit test related classes and methods;
     2) Skip all inherited methods from python builtins,
-    3) Skip __init__ on abstract base classes.
+    3) Skip __init__ on abstract base classes, or if it doesn't have its own
+        docstring.
     """
     def _get_class_that_defined_method(meth):
         # https://stackoverflow.com/a/25959545
@@ -386,10 +388,17 @@ def skip_members_handler(app, what, name, obj, skip, options):
         if cls_ is None:
             cls_ = obj
 
-        # Suppress init on abstract classes
+        # Suppress init on abstract classes, or without custom docstrings
         if name == '__init__':
             if inspect.isabstract(cls_) or issubclass(cls_, abc.ABC):
                 return True
+            docstring = getattr(obj, '__doc__', '')
+            if not docstring or docstring == object.__init__.__doc__:
+                return True
+            docstring = getattr(cls_.__init__, '__doc__', '')
+            if not docstring or docstring == object.__init__.__doc__:
+                return True
+            return False
 
         # Resort to manually excluding methods on some builtins
         if issubclass(cls_, tuple) and name in ('count', 'index'):

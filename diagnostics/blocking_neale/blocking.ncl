@@ -89,7 +89,6 @@ do ifile=0,all_cases@nfiles-1
    
    ; Check for global read digested settings (MDTF case restricted to only undigested)
    if (opts@MDTF_BLOCKING_READ_DIGESTED.and.(file_opts@case_type.ne."MDTF")) then  ; read in block_time
-     print("Opening digested file")
      f_dig = open_digested(file_opts)
 
      time_ymd = blocking_readtime(f_dig,file_opts)  ; time_ymd(idays)
@@ -106,7 +105,6 @@ do ifile=0,all_cases@nfiles-1
      nlons = dimsizes(lon)
 
    else  ; opts@MDTF_BLOCKING_READ_DIGESTED = False
-     print("Opening raw file")
      var_in_p = blocking_readfile_orig(file_opts)           ; Data actually read here
              ;file_opts in:  year0,year1,period_name,filename,var_name,lat/lon limits
              ;file_opts out: time_ymd, idays,time
@@ -167,9 +165,6 @@ do ifile=0,all_cases@nfiles-1
      delete([/ghgs,ghgn,lat/])
 
  end if ; opts@MDTF_BLOCKING_READ_DIGESTED
-
-;     print("  time_ymd(0)  time_ymd(ndays-1) "+time_ymd(0,:)+" "+time_ymd(ndays-1,:))
-;     print(" idays(0) idays(ndays-1) "+idays(0)+" "+idays(ndays-1))
 
 
 ;Initialize plotting arrays
@@ -235,9 +230,6 @@ do ifile=0,all_cases@nfiles-1
   file_opts@year_range =   " ("+case_years_used@min+\
                             "-"+case_years_used@max+")"
 
-;  print("Found data for year range "+file_opts@year_range)
-
-
 
 ; Need to intepolate here iff not the base longitude resolution
   block_freq = 100.*tofloat(block_days)/ndays
@@ -250,6 +242,7 @@ do ifile=0,all_cases@nfiles-1
   end if
 
   print(" Sanity check: min max "+min(block_freq_p(ifile,:))+" "+max(block_freq_p(ifile,:)))
+
 ; Plots of individual cases with time axes
 ; ndoys = 365 always (remove extra day in obs for simplicity)
 ; Only plot hov iff ANN period.
@@ -309,14 +302,12 @@ do ifile=0,all_cases@nfiles-1
     ; if this is the last file in the ens, draw and write the panel plot of
     ; all ensemble Hov figures
     if (ifile.eq.max(ens_file_inds)) then 
-      print("Writing Hovmueller panel")
       panel_layout = get_panel_layout(dimsizes(ens_file_inds))
       gsn_panel(wks_ens_page,plot_t(ens_file_inds),panel_layout,pan_t)
       delete(ens_file_inds)  
       delete(wks_ens_page)
       delete(res_t)
       delete(panel_layout)
-      print("Wrote figure "+settings@figure_name_anncycle+"."+this_ens_name+"."+settings@figure_type)
     end if
 
     delete([/block_freq_yr/])
@@ -462,7 +453,6 @@ legend1 = get_legend(wks,all_cases)
 draw(legend1)
 frame(wks)
 
-print("Wrote figure "+settings@figure_name_season+"."+settings@figure_type)
 
 
 end

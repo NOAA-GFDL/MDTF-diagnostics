@@ -37,7 +37,7 @@ begin
       largs(i) = True
     end if
   end do
-;  print(func_name+" returning largs "+largs)
+
   return(largs)
 
 end
@@ -46,7 +46,7 @@ end
 function string_looks_logical(string_in)
 begin
   func_name = "string_looks_logical"
-;  print("into "+func_name+" with string_in "+string_in)
+
   if ((str_lower(string_in).eq."true").or.(str_lower(string_in).eq."false")) then
     return True
   else
@@ -112,7 +112,6 @@ verbose = 1
 procedure print_if_verbose_gt(threshold,what_to_print)
 begin
   if ( verbose.gt.threshold ) then
-;    print(routine_name+": "+what_to_print)
     print("func_blocking: "+what_to_print)
   end if
 
@@ -191,7 +190,7 @@ function find_required_days(year0,year1,period_name,time_ymd)
 
 begin
   func_name = "find_required_days"
-;  print("starting "+func_name)
+
    mnths = extract_days(period_name)
 ; Time breakout of all data.
    time_y_in = time_ymd(:,0)
@@ -226,7 +225,6 @@ begin
      func_name = "blocking_check_var_units"
      if ( debug ) then
        print(func_name+" received var "+var_name)
-;       printVarSummary(var_in)
        printMinMax(var_in,False)
      end if
      ; convert from Geopotential to geopotential height 
@@ -263,7 +261,7 @@ begin
 	copy_VarMeta(var_in,var_out)
      end if	
 
-;     print(func_name+" returning")
+
      printVarSummary_if_verbose_gt(1,var_out)
 
      return var_out
@@ -282,12 +280,12 @@ begin; blocking_readvar
 
      func_name = "blocking_readvar"
      var_name = opts@var_name
-;     print(func_name +" received "+var_name)
+
 
 ;just use the main one!     verbose = get_possible_attr(opts,"verbose",0)
 
 ;    assume for now that the attibutes are present
-;     print(fin)
+
      var_0 = fin->$var_name$(opts@idays,{opts@lats_in:opts@latn_in},{opts@lonw_in:opts@lone_in})
 
      if (typeof(var_0).eq."short") then   ;drb make this a function
@@ -298,15 +296,11 @@ begin; blocking_readvar
         var_0 = var_1
 	copy_VarMeta(var_1,var_0)
 	delete(var_1)
-     else
-        if (verbose.gt.1) then
-;	   print("variable type ("+typeof(var_0)+") does not need conversion ")
-	end if	   
      end if	
 
      var = blocking_check_var_units(var_0,var_name)
 
-;     print(func_name+" returning")
+
      printVarSummary_if_verbose_gt(1,var)
 
      return var
@@ -322,7 +316,6 @@ begin; blocking_readtime
 ; if opts@period_name is set, calculates idays and returns as an attribute
 ; creates time_ymd appropriatly (using jul2greg or cd_calendar functions)
      func_name = "blocking_readtime"
-;     print(func_name +" starting")
 
      if (isfilevar_TF(fin,"time_ymd")) then ; this is what we want, read it directly!     
 
@@ -334,10 +327,8 @@ begin; blocking_readtime
        time = fin->time
 
        if ((time@units .eq. "julian day").or.(time@units .eq. "Julian Day")) then  ;drb stronger to strmatch case-insensitive julian 
-;         print(func_name+" converting time from "+time@units+" to time_ymd")
          time_ymd = jul2greg(time)	
        else  
-;       print(func_name+" attempting to use cd_calendar to convert time from "+time@units+" to time_ymd")
          time@calendar = "noleap"     
          time_ymd = cd_calendar(time,0)     
          
@@ -373,7 +364,6 @@ function blocking_readfile_orig (opts)
 begin ;  blocking_readfile_orig
      func_name = "blocking_readfile_orig"
 
-;     print(func_name +" opening "+opts@file_name+" to read time and "+opts@var_name)
      fin = addfile(opts@file_name,"r")
 
      opts@lon = fin->lon({opts@lonw_in:opts@lone_in})
@@ -409,8 +399,6 @@ begin
     opts = True
   end if
   if ( (isatt(opts_in,"test")).or.(isatt(opts_in,"debug")) )  then
-;    print("func_name+" get_input_opts: ")
-;    printVarSummary(opts)
   end if
 
   return opts
@@ -426,10 +414,7 @@ begin
 
   if (isatt(opts_in,"type_logical")) then
     if ( any( opts_in@type_logical .eq. name_in)) then
-      print(func_name+" found "+name_in+" in type_logical string "+opts_in@type_logical)
       return True
-    else
-      print(func_name+" did not find "+name_in+" in type_logical string "+opts_in@type_logical)
     end if
   end if
 
@@ -448,12 +433,7 @@ begin
     if ( any( opts_in@type_integer .eq. name_in)) then
       print("       converting "+name_in+" to integer ")
       return True
-    else
-;      print(func_name+" did not find "+name_in+" in type_integer string "+opts_in@type_integer)
     end if
-  else
-;    print(func_name+" did not find opts_in@type_integer attritute")
-;    printVarSummary(opts_in@type_integer)
   end if
   return False
 
@@ -570,7 +550,6 @@ begin
 
 
   if (.not.isatt(case_info,"file_names")) then    ; First time through
-;    print(" "+func_name+" Creating new case_info data structure")
     case_info@file_names = file_names
     case_info@case_names = case_names
     case_info@case_type  = case_type
@@ -581,7 +560,6 @@ begin
 
 
   else  ; Every subsequent call
-;    print(" "+func_name+" adding case_info on to data structure")
 
     case_info_copy = case_info ; save existing array
 
@@ -613,7 +591,6 @@ begin
 
   
   func_name = "get_light_color"
-;  print(func_name+" knows all_colors? "+all_colors)
 
   default = "LightGray"  
   light_color_name = default
@@ -1162,9 +1139,6 @@ begin
     end if ; i eq 0
   end do ; i 
 
-;  print(func_name+" returning: ")
-;  print(ensemble_names)
-
   return ensemble_names
 end ; function get_ensemble_names
 
@@ -1176,7 +1150,6 @@ begin
   do i = 0,nens - 1
     ne_name = ensemble_names(i)
     ne_size(i) = num(case_names.eq.ne_name)
-;    print("Found "+ne_size(i)+" cases for ensemble "+ensemble_names(i))
   end do
   return ne_size
 end ; function get_ensemble_sizes
@@ -1219,7 +1192,6 @@ begin
     end if
     it1 = it0+ne_size(iens)-1
 
-;    print(func_name+" returning iens "+iens+" it0 "+it0+" it1 "+it1+" iarr "+iarr)
     out = True
     out@iarr = iarr
     out@it0 = it0
@@ -1238,7 +1210,6 @@ begin
   do iens=0,nens-1
     ens_file_inds = get_file_indices_from_ens_name(ensemble_names(iens),all_cases@case_names)
     yearstring(iens) = all_cases@years_run0(ens_file_inds(0))+"-"+all_cases@years_run1(ens_file_inds(0))
-;    print("Ensemble "+iens+" "+ensemble_names(iens)+" "+yearstring)
     delete(ens_file_inds); different sized each time
   end do
 
@@ -1262,7 +1233,6 @@ begin
     else
       nfilestring(iens) = ""
     end if
-;    print("Ensemble "+iens+" "+ensemble_names(iens)+" "+nfilestring)
     delete(ens_file_inds); different sized each time
   end do
 
@@ -1304,7 +1274,7 @@ begin
             print("--- Adding   "+case_name)
             add_case_info(case_name,case_info,opts) ; load file names, var names, etc
           else
-            print("--- Skipping "+case_name+". To turn on, setenv "+case_name)
+            print("--- Skipping "+case_name+". To turn on, set env var "+case_name+" True")
           end if
         end do ; i
 
@@ -1352,7 +1322,7 @@ end ; blocking_get_all_case_info
 function get_attr_from_func(opts_in,attr_name)  
 begin     
   func_name = "get_attr_from_func"
-  print(func_name+": received attr_name "+attr_name)
+
   attr_value = _FillValue
   if (attr_name.eq."obs_names")
     attr_value = get_obs_names()
@@ -1369,23 +1339,17 @@ begin
 	func_name = "get_possible_attr"
 
         attr_in_opts =  opts_in@$attr_name$
-        print("attr_in_ops "+attr_in_opts)
 
         if ( any(isvar(attr_in_opts)) ) then 
      	   if (isatt(opts_in,attr_name)) then
-	      print(func_name+" found attribute with name"+attr_name+" and value "+opts_in@$attr_name$)
 	      attr_value = opts_in@$attr_name$
 	   else
-	      print(func_name+" did not find attribute with name "+attr_name+" from following opts")
-              print("Checking functions to set it")
               attr_value = get_attr_from_function(opts_in,attr_name)
-              print("After function check "+attr_name)
 	   end if	      
          else
            attr_value = attr_in_opts ; return missing
          end if
 
-;         print(func_name+" returning "+attr_value)
 	return attr_value
 
 end
@@ -1501,7 +1465,6 @@ begin
   res_t@cnLevelSelectionMode = "ExplicitLevels"
   res_t@cnFillColors  = (/-1,-1,20,20,12,12,12,12,12,12,12/)   ;hard-coded to 2 obs first
   res_t@cnLevels = (/5.,10,15,20,25,30,35,40,45,50/)
-;  print("WARNING: "+func_name+" is still hard-coding contour fill colors")
   
   return res_t
 
@@ -1654,10 +1617,6 @@ begin
   all_cases@line_types   = line_types
   all_cases@item_order   = item_order
 
-;  print(func_name+" "+all_cases@legend_names+" "+all_cases@line_colors)
-
-
-
 end
 ; ------------------------------------------------------
 function get_ens_name_or_obs_name(name)
@@ -1679,11 +1638,9 @@ begin
   if (any(settings@period_names.eq.(/"ANN"/))) then 
     
   if (any( get_obs_names().eq.name ).or.(name.eq."OBS")) then
-      print(func_name+" found obs")
       path_out = settings@path_out_obs 
     else
       iens = name
-      print(func_name+" found model ens "+iens)
       path_out = settings@path_out_model
     end if
 
@@ -1708,7 +1665,6 @@ begin
 
 ; Plot mean lon plot (line plot)
   full_path = settings@figure_name_season
-  print(func_name+" "+full_path)
   wks = gsn_open_wks(settings@figure_type, full_path)
   res = get_plot_settings_season(wks,all_cases)  
 

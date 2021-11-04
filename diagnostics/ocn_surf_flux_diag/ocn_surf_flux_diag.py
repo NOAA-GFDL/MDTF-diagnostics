@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import warnings
 import xarray as xr
 import numpy as np
@@ -9,25 +10,24 @@ from model_read import regional_var
 from obs_data_read import tao_triton,rama
 from groupby_variables import bin_2d
 
-
-
-
-# 0-360
-lon_lim = [os.getenv("lon_min"),os.getenv("lon_max")]
-lat_lim = [os.getenv("lat_min"),os.getenv("lat_max")]
-year_lim = [os.getenv("FIRSTYR"),os.getenv("LASTYR")]
-
-
-# need CMOR variables including
-# 1. 'huss'    : Surface 2m Humidity (kg/kg)
-# 2. 'ts'      : Skin Temperature (SST for open ocean; K)
-# 3. 'sfcWind' : Near-Surface Wind Speed (10 meter; m/s)
-# 4. 'psl'     : Sea Level Pressure (Pa)
-# 5. 'hfls'    : Surface Upward Latent Heat Flux (W/m^2 and positive upward)
-# 6. 'pr'      : Precipitation (kg/m^3)
-
-
 warnings.simplefilter("ignore")
+
+
+
+################## Define User setting #############
+# Read framework variables
+lon_lim = [np.float(os.getenv("lon_min")),np.float(os.getenv("lon_max"))]
+lat_lim = [np.float(os.getenv("lat_min")),np.float(os.getenv("lat_max"))]
+year_lim = [np.float(os.getenv("FIRSTYR")),np.float(os.getenv("LASTYR"))]
+
+print("===========================")
+print("User setting variables:")
+print("Longitude range : %0.2f - %0.2f"%(lon_lim[0],lon_lim[1]))
+print("Latitude range : %0.2f - %0.2f"%(lat_lim[0],lat_lim[1]))
+print("Year range : %0.0f - %0.0f"%(year_lim[0],year_lim[1]))
+print("===========================")
+
+
 
 
 varlist = [os.getenv("HUSS_FILE"),
@@ -42,9 +42,13 @@ obs_rama_dir = '%s/rama/'%os.getenv("OBS_DATA")
 
 ################## Main script start #############
 # Read model
+print("===========================")
+print('Reading model data...')    
 ds_cesm2 = regional_var(varlist, lon_lim, lat_lim, year_lim)
 
 # Read tao/triton
+print("===========================")
+print('Reading obs data (mooring from)...') 
 ds_tao,location_pac = tao_triton(obs_taotriton_dir,lon_lim,lat_lim,year_lim)
 
 # Read rama
@@ -65,12 +69,15 @@ bin1_range = [0,20]
 nbin2 = 16
 bin2_range = [0,16]
 
-
+print("===========================")
+print('Binning mooring variables including...') 
 ds_stn_bin = bin_2d(ds_stn,'sfcWind','del_q',['hfls'],
                           bin1=nbin1,bin2=nbin2,stTconfint=stt,
                           bin1_range=bin1_range,
                           bin2_range=bin2_range)
 
+print("===========================")
+print('Binning model variables including...') 
 ds_cesm2_bin = bin_2d(ds_cesm2.load(),'sfcWind','del_q',['hfls','pr'],
                           bin1=nbin1,bin2=nbin2,stTconfint=stt,
                           bin1_range=bin1_range,
@@ -247,9 +254,27 @@ ax2.tick_params(axis='x',labelsize=15,length=5,width=1)
 ax2.set_ylabel('',size=15)
 ax2.set_xlabel('10m wind speed ($m/s$)',size=15)
 
-
-
-fig.savefig('LHFLXmatrix.png', dpi=300, facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
-                transparent=False, bbox_inches="tight", pad_inches=None,
-                frameon=None)
+fig.savefig(
+    os.getenv("WK_DIR") + "/model/PS/example_model_plot.eps",
+    facecolor="w",
+    edgecolor="w",
+    orientation="portrait",
+    papertype=None,
+    format=None,
+    transparent=False,
+    bbox_inches="tight",
+    pad_inches=None,
+    frameon=None,
+)
+fig.savefig(
+    os.getenv("WK_DIR") + "/obs/PS/example_obs_plot.eps",
+    facecolor="w",
+    edgecolor="w",
+    orientation="portrait",
+    papertype=None,
+    format=None,
+    transparent=False,
+    bbox_inches="tight",
+    pad_inches=None,
+    frameon=None,
+)

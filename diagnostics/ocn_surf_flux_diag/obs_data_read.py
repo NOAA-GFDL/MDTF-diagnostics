@@ -158,11 +158,11 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         # calculate surface saturated specific humidity
         mixing_ratio_surf= metpy.calc.saturation_mixing_ratio(
                              ds_merge['bp'].values*units.hPa,
-                             ds_merge['sst'].values*units.degC)
+                             (ds_merge['sst'].values-0.2)*units.degC)
         q_surf = metpy.calc.specific_humidity_from_mixing_ratio(mixing_ratio_surf)
 
         # calculate del q
-        del_q = q_surf-q_2m
+        del_q = 0.98*q_surf-q_2m
 
         # initialization of xr.DataArray
         da_q_2m = ds_merge['sst']*np.nan
@@ -384,11 +384,11 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         # calculate surface saturated specific humidity
         mixing_ratio_surf= metpy.calc.saturation_mixing_ratio(
                              ds_merge['bp'].values*units.hPa,
-                             ds_merge['sst'].values*units.degC)
+                             (ds_merge['sst'].values-0.2)*units.degC)
         q_surf = metpy.calc.specific_humidity_from_mixing_ratio(mixing_ratio_surf)
 
         # calculate del q
-        del_q = q_surf-q_2m
+        del_q = 0.98*q_surf-q_2m
 
         # initialization of xr.DataArray
         da_q_2m = ds_merge['sst']*np.nan

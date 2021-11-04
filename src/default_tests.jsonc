@@ -23,7 +23,7 @@
       "LASTYR" : 2005,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-         "ENSO_MSE"
+         "ENSO_RWS"
       ]
     }
   ],

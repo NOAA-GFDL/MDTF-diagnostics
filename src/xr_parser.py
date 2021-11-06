@@ -1117,12 +1117,8 @@ class DefaultDatasetParser():
 
         # normal case: T axis has been parsed into cftime Datetime objects, and
         # the following works successfully.
-        cftime_cal = getattr(t_coord.values[0], 'calendar', None)
-        # look in other places if that failed:
-        if not cftime_cal:
-            self.log.warning("cftime calendar info parse failed on '%s'.",
-                t_coord.name)
-            cftime_cal = _get_calendar(t_coord.encoding)
+        cftime_cal = None
+        cftime_cal = _get_calendar(t_coord.encoding)
         if not cftime_cal:
             cftime_cal = _get_calendar(t_coord.attrs)
         if not cftime_cal:

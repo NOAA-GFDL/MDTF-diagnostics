@@ -41,7 +41,7 @@ def main():
     # poor man's subparser: argparse's subparser doesn't handle this
     # use case easily, so just dispatch on first argument
     if len(sys.argv) == 1 or \
-        len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
+        len(sys.argv) == 2 and sys.argv[1].lower() in ('-h', '--help'):
         # case where we print CLI help
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         cli_obj.print_help()

@@ -1,11 +1,13 @@
 """Code to parse CMIP6 controlled vocabularies and elements of the CMIP6 DRS.
 
-Specifications for the above were taken from the planning document
-`<http://goo.gl/v1drZl>`__, which doesn't seem to have a permanent link. The
-CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
+Specifications for the above were taken from the CMIP6 `planning document
+<http://goo.gl/v1drZl>`__. This was accessed at `<http://goo.gl/v1drZl>`__ -- we
+aren't aware of a permanent URL for this information.
+
+The CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
 are derived from data in the
 `PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__
-repo, which is included as a subtree under ``/data``.
+repo, which is included as a git subtree under ``/data``.
 
 .. warning::
    Functionality here has been added as needed for the project and is incomplete,
@@ -22,9 +24,8 @@ _log = logging.getLogger(__name__)
 class CMIP6_CVs(util.Singleton):
     """Interface for looking up information from the CMIP6 CV file.
 
-    .. note::
-       Lookups are implemented in an ad-hoc way with :class:`util.MultiMap`; a
-       more robust solution would use sqlite.
+    Lookups are implemented in an ad-hoc way with :class:`util.MultiMap`; a
+    more robust solution would use :py:mod:`sqlite`.
     """
     def __init__(self, unittest=False):
         if unittest:
@@ -67,11 +68,12 @@ class CMIP6_CVs(util.Singleton):
         *category*.
 
         Args:
-            category (str): the CV category to use to validate values.
+        category (str): The CV category to use to validate values.
             items (str or list of str): Entries whose validity we'd like to
                 check.
 
-        Returns: boolean or list of booleans, corresponding to the validity of
+        Returns:
+            Boolean or list of booleans, corresponding to the validity of
             the entries in *items*.
         """
         self._make_cv()
@@ -117,9 +119,11 @@ class CMIP6_CVs(util.Singleton):
         """Lookup the corresponding *dest* values for *source_items* (keys).
 
         Args:
-            source_items (str or list): one or more keys
-            source (str): the CV category that the items in *source_items*
+           
                 belong to.
+            source_items (str or list): One or more keys.
+            source (str): The CV category that the items in *source_items*
+                  belong to.  
             dest (str): the CV category we'd like the corresponding values for.
 
         Returns: list of *dest* values corresponding to each entry in *source_items*.
@@ -155,7 +159,8 @@ class CMIP6_CVs(util.Singleton):
         Args:
             frequency (:class:`CMIP6DateFrequency`): DateFrequency
 
-        Returns: list of MIP table ``table_id`` names, if any, that use data at
+        Returns:
+            List of MIP table ``table_id`` names, if any, that use data at
             the given *frequency*.
         """
         self._make_cv()
@@ -171,8 +176,7 @@ class CMIP6DateFrequency(util.DateFrequency):
 
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
-
-    Reference: `<http://goo.gl/v1drZl>`__ page 16.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
@@ -268,12 +272,11 @@ variant_label_regex = util.RegexPattern(r"""
 )
 @util.regex_dataclass(variant_label_regex)
 class CMIP6_VariantLabel():
-    """Dataclass which represents and parses the CMIP6 DRS variant label identifier
-    string.
+    """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
+    DRS variant label identifier string (e.g., `r1i1p1f1`.)
 
     References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6. See also note 8 on
-    page 9 of `<http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
     realization_index: int = None
@@ -391,9 +394,10 @@ drs_directory_regex = util.RegexPattern(r"""
 )
 @util.regex_dataclass(drs_directory_regex)
 class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
-    """Dataclass which represents and parses the DRS directory, using regex
-    defined above.
-
+   
+    """:class:`~src.util.regex_dataclass` which represents and parses the DRS
+    directory path.
+    
     Reference: `<http://goo.gl/v1drZl>`__, page 17.
 
     .. warning::
@@ -438,8 +442,8 @@ drs_filename_regex = util.ChainedRegexPattern(
 )
 @util.regex_dataclass(drs_filename_regex)
 class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
-    """Dataclass which represents and parses the DRS filename, using regex
-    defined above.
+    """:class:`~src.util.regex_dataclass` which represents and parses the DRS
+    filename.
 
     Reference: `<http://goo.gl/v1drZl>`__, page 14-15.
     """

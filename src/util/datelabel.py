@@ -522,7 +522,6 @@ class DateRange(AtomicInterval, DateMixin):
     _range_sep = '-'
 
     def __init__(self, start, end=None, precision=None, log=_log):
-        "Init method for DateRange."
         """Constructor.
 
         Args:
@@ -1205,4 +1204,5 @@ AbstractDate.register(_FXDateMin)
 AbstractDate.register(_FXDateMax)
 AbstractDateFrequency.register(DateFrequency)
 AbstractDateFrequency.register(_FXDateFrequency)
+
 

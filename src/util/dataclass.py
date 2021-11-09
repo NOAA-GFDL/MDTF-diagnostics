@@ -823,3 +823,4 @@ def coerce_to_dataclass(d, dc, **kwargs):
         dc = dc.__class__
     return dc(**new_kwargs)
 
+

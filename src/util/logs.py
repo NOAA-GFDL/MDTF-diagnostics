@@ -766,4 +766,3 @@ def transfer_log_cache(target_log=None, close=False):
             # delete it
             temp_log_cache.close()
             root_logger.removeHandler(temp_log_cache)
-

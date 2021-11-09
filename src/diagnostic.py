@@ -787,4 +787,3 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             except util.WormKeyError:
                 continue
 
-

@@ -872,4 +872,3 @@ class DefaultPreprocessor(DaskMultiFilePreprocessor):
     use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
-

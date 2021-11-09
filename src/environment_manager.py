@@ -379,6 +379,8 @@ class SubprocessRuntimePODWrapper(object):
     def tear_down(self, retcode=None):
         # just to be safe
         if self.process is not None:
+            if hasattr(self.process, 'retcode'):
+                retcode = self.process.returncode
             try:
                 self.process.kill()
             except ProcessLookupError:
@@ -396,6 +398,7 @@ class SubprocessRuntimePODWrapper(object):
                 log_str = f"{self.pod.full_name} exited abnormally (code={retcode})."
                 exc = util.PodExecutionError(log_str)
                 self.pod.deactivate(exc)
+
 
         if self.pod.log_file is not None:
             self.pod.log_file.write(80 * '-' + '\n')
@@ -521,4 +524,3 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.tear_down()
         self.case.close_log_file()
         util.exit_handler(code=1)
-

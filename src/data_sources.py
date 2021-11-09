@@ -526,6 +526,9 @@ class CMIP6ExperimentSelectionMixin():
 
     Assumes inheritance from DataframeQueryDataSourceBase -- should enforce this.
     """
+    # Mandate the CMIP naming convention for all data sources inheriting from this
+    _convention = "CMIP"
+
     # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
     _query_attrs_synonyms = {'name': 'variable_id'}
 
@@ -630,4 +633,3 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSo
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
-

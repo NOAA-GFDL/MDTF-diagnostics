@@ -1,4 +1,5 @@
-"""Common functions and classes used in multiple places in the MDTF code.
+"""Definition of the MDTF framework main loop and classes implementing basic,
+supporting functionality.
 """
 import os
 import sys
@@ -24,26 +25,28 @@ ObjectStatus = util.MDTFEnum(
     module=__name__
 )
 ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of a :class:`MDTFObjectBase`:
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object
+(child class of :class:`MDTFObjectBase`):
 
 - *NOTSET*: the object hasn't been fully initialized.
 - *ACTIVE*: the object is currently being processed by the framework.
 - *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-    alternate :class:`~diagnostic.VarlistEntry`\s).
+   alternate :class:`~diagnostic.VarlistEntry`\s).
 - *FAILED*: processing of the object has encountered an error, and no further
-    work will be done.
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
 """
 
 @util.mdtf_dataclass
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
-    """Base class providing shared functionality for the "object hierarchy":
+   """Base class providing shared functionality for the object hierarchy, which is:
 
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package
-        (:class:`MDTFFramework`);
+    - The framework itself (:class:`MDTFFramework`);
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
     - :class:`~diagnostic.Diagnostic`\s (PODs) belonging to a
-        :class:`~data_manager.DataSourceBase`;
+      :class:`~data_manager.DataSourceBase`;
     - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
-        to a :class:`~diagnostic.Diagnostic`.
+      to a :class:`~diagnostic.Diagnostic`.
     """
     _id: util.MDTF_ID = None
     name: str = util.MANDATORY
@@ -74,12 +77,13 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def failed(self):
-        return (self.status == ObjectStatus.FAILED) # abbreviate
+         return self.status == ObjectStatus.FAILED # abbreviate
 
     @property
+    
     def active(self):
-        return (self.status == ObjectStatus.ACTIVE) # abbreviate
-
+        return self.status == ObjectStatus.ACTIVE # abbreviate
+   
     @property
     @abc.abstractmethod
     def _children(self):
@@ -151,7 +155,7 @@ ConfigTuple = collections.namedtuple(
     'ConfigTuple', 'name backup_filename contents'
 )
 ConfigTuple.__doc__ = """
-    Class wrapping general structs used for configuration
+    Class wrapping general structs used for configuration.
 """
 
 class ConfigManager(util.Singleton, util.NameSpace):
@@ -338,7 +342,7 @@ _NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translatio
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
     attributes inherited from :class:`~data_model.DMVariable` as being queryable
-    in :meth:`data_manager.DataframeQueryDataSourceBase.query_dataset`.
+    in :meth:`~data_manager.DataframeQueryDataSourceBase.query_dataset`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the
@@ -350,7 +354,8 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
-    # dims: list           # field inherited from data_model.DMVariable
+    # dims: list           # fields inherited from data_model.DMVariable
+    # modifier : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY # assigned from parent var
@@ -470,7 +475,7 @@ class Fieldlist():
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
-            # dimensionality) -- should just make FieldlistEntry hashable
+            # dimensionality) 
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
@@ -507,9 +512,10 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, axes_set=None):
+
+   def from_CF(self, var_or_name, modifier=None, num_dims=0):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
-        name, optionally providing an axes_set to resolve ambiguity.
+        name, optionally providing a modifier to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
@@ -540,12 +546,11 @@ class Fieldlist():
 
         return copy.deepcopy(fl_entry)
 
-    def from_CF_name(self, var_or_name, axes_set=None):
+    def from_CF_name(self, var_or_name, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
-        return self.from_CF(var_or_name, axes_set=axes_set).name
-
+        return self.from_CF(var_or_name, modifier=modifier).name
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
@@ -620,11 +625,11 @@ class NoTranslationFieldlist(util.Singleton):
         # only a Singleton to ensure that we only log this message once
         _log.info('Variable name translation disabled.')
 
-    def to_CF(self, var_or_name):
+    def from_CF(self, var_or_name, modifier=None):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def to_CF_name(self, var_or_name):
+    def from_CF_name(self, var_or_name, modifier=None):
         if hasattr(var_or_name, 'name'):
             return var_or_name.name
         else:
@@ -661,6 +666,7 @@ class NoTranslationFieldlist(util.Singleton):
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
+            modifier = var.modifier,
             log=var.log
         )
 
@@ -738,15 +744,14 @@ class VariableTranslator(util.Singleton):
 
     def to_CF_name(self, conv_name, name):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
-
-    def from_CF(self, conv_name, standard_name, axes_set=None):
+    
+    def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
-            standard_name, axes_set=axes_set)
+            standard_name, modifier=modifier)
 
-    def from_CF_name(self, conv_name, standard_name, axes_set=None):
+    def from_CF_name(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
-            standard_name, axes_set=axes_set)
-
+            standard_name, modifier=modifier)
     def translate_coord(self, conv_name, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
 
@@ -778,7 +783,7 @@ class MDTFFramework(MDTFObjectBase):
             tb_exc = traceback.TracebackException(*(sys.exc_info()))
             _log.critical("Framework caught exception %r", exc)
             print(''.join(tb_exc.format()))
-            exit(1)
+            util.exit_handler(code=1)
 
     @property
     def _children(self):
@@ -801,7 +806,8 @@ class MDTFFramework(MDTFObjectBase):
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        _ = VariableTranslator(self.code_root)
+        translate = VariableTranslator(self.code_root)
+        translate.read_conventions(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)
@@ -855,7 +861,16 @@ class MDTFFramework(MDTFObjectBase):
                 cli_obj.config.get('convention', ''),
                 tags=util.ObjectLogTag.BANNER
             )
-
+         # check this here, otherwise error raised about missing caselist is not informative
+        try:
+            if cli_obj.config.get('CASE_ROOT_DIR', ''):
+                util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR',
+                    create=False)
+        except Exception as exc:
+            _log.fatal((f"Mis-specified input for CASE_ROOT_DIR (received "
+                f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
+            util.exit_handler(code=1)
+            
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
         # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
@@ -898,14 +913,14 @@ class MDTFFramework(MDTFObjectBase):
                 ', '.join(f"'{p}'" for p in valid_args),
                 str(list(args))
             )
-            exit(1)
+            util.exit_handler(code=1)
 
         pods = list(set(pods)) # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
                 f"\nReceived --pods = {str(list(args))}"))
-            exit(1)
+            util.exit_handler(code=1)
         return pods
 
     def set_case_pod_list(self, case, cli_obj, pod_info_tuple):
@@ -961,7 +976,7 @@ class MDTFFramework(MDTFObjectBase):
             _log.critical(("No valid entries in case_list. Please specify "
                 "model run information.\nReceived:"
                 f"\n{util.pretty_print_json(case_list_in)}"))
-            exit(1)
+            util.exit_handler(code=1)
 
     def verify_paths(self, config, p):
         # needs to be here, instead of PathManager, because we subclass it in
@@ -971,12 +986,18 @@ class MDTFFramework(MDTFObjectBase):
         if os.path.exists(p.WORKING_DIR) and not \
             (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
-
-        util.check_dir(p, 'CODE_ROOT', create=False)
-        util.check_dir(p, 'OBS_DATA_ROOT', create=False)
-        util.check_dir(p, 'MODEL_DATA_ROOT', create=True)
-        util.check_dir(p, 'WORKING_DIR', create=True)
-
+      
+    try:
+            for dir_name, create_ in (
+                ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
+                ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+            ):
+                util.check_dir(p, dir_name, create=create_)
+        except Exception as exc:
+            _log.fatal((f"Input settings for {dir_name} mis-specified (caught "
+                f"{repr(exc)}.)"))
+            util.exit_handler(code=1)   
+   
     def _post_parse_hook(self, cli_obj, config, paths):
         # init other services
         pass

@@ -497,3 +497,4 @@ class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
     path: str = util.MANDATORY
     directory: CMIP6_DRSDirectory = ""
     filename: CMIP6_DRSFilename = ""
+

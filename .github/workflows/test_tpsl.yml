@@ -86,6 +86,7 @@ jobs:
         #echo "deleting obs data from set 2"
         #rm -rf *
         #cd ../../
+        cd ../
         echo "Available Space"
         df -h
         # attempt FTP data fetch

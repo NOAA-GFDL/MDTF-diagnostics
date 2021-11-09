@@ -23,7 +23,7 @@ class AbstractQueryMixin(abc.ABC):
         pass
 
     def setup_query(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         pass
@@ -45,7 +45,7 @@ class AbstractQueryMixin(abc.ABC):
         pass
 
     def tear_down_query(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         pass
@@ -60,7 +60,7 @@ class AbstractFetchMixin(abc.ABC):
         pass
 
     def setup_fetch(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         pass
@@ -74,7 +74,7 @@ class AbstractFetchMixin(abc.ABC):
         pass
 
     def tear_down_fetch(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         pass
@@ -87,7 +87,7 @@ class AbstractDataSource(AbstractQueryMixin, AbstractFetchMixin,
         pass
 
     def pre_query_and_fetch_hook(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         # call methods if we're using mixins; if not, child classes will override
@@ -97,7 +97,7 @@ class AbstractDataSource(AbstractQueryMixin, AbstractFetchMixin,
             self.setup_fetch()
 
     def post_query_and_fetch_hook(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         # call methods if we're using mixins; if not, child classes will override
@@ -149,7 +149,7 @@ class DataKeyBase(core.MDTFObjectBase, metaclass=util.MDTFABCMeta):
 
     @abc.abstractmethod
     def remote_data(self):
-         """Returns paths, urls, etc. to be used as input to a
+        """Returns paths, urls, etc. to be used as input to a
         :meth:`~DataSourceBase.fetch_data` method to specify how this dataset is
         fetched.
         """
@@ -190,6 +190,7 @@ class DataSourceAttributesBase():
     def __post_init__(self, log=_log):
         self._set_case_root_dir(log=log)
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
+
 
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
@@ -234,7 +235,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
         self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(
-                       case_dict, self._AttributesClass, log=self.log, init=True
+            case_dict, self._AttributesClass, log=self.log, init=True
         )
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
@@ -269,8 +270,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     def full_name(self):
         return f"<#{self._id}:{self.name}>"
 
-    @property 
-
+    @property
     def _children(self):
         """Iterable of child objects (:class:`~diagnostic.Diagnostic`\s)
         associated with this object.
@@ -314,7 +314,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
     def iter_vars_only(self, active=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the
-         :class:`~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
+        :class:`~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
         in this DataSource.
         """
         yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None))
@@ -651,7 +651,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         util.signal_logger(self.__class__.__name__, signum, frame, log=self.log)
         self.post_query_and_fetch_hook()
-        exit(1)
+        util.exit_handler(code=1)
 
 # --------------------------------------------------------------------------
 
@@ -744,16 +744,15 @@ class DataframeQueryColumnSpec(metaclass=util.MDTFABCMeta):
       An example is the CMIP6 MIP table: the same variable can appear in
       multiple MIP tables, but the choice of table isn't relvant for PODs.
       Defaults to the empty set.
-     
+
     In addition, there are specially designated column names:
 
     - *remote_data_col*: Name of the column in the catalog containing the
-       location of the data for that row (e.g., path to a netCDF file).
+      location of the data for that row (e.g., path to a netCDF file).
     - *daterange_col*: Name of the column in the catalog containing
       :class:`util.DateRange` objects specifying the date range covered by
       the data for that row. If set to None, we assume this information isn't
-      available from the catalog and date range selection logic is skipped. 
-        
+      available from the catalog and date range selection logic is skipped.
     """
     expt_cols: DataFrameQueryColumnGroup = util.MANDATORY
     pod_expt_cols: DataFrameQueryColumnGroup = \
@@ -781,7 +780,7 @@ class DataframeQueryColumnSpec(metaclass=util.MDTFABCMeta):
             self.expt_cols.cols + self.pod_expt_cols.cols \
             + self.var_expt_cols.cols
         ))
-       
+
     def expt_key(self, df, idx=None):
         """Returns tuple of string-valued keys for grouping files by experiment:
         (<values of expt_key_cols>, <values of pod_expt_key_cols>,
@@ -1316,7 +1315,7 @@ class OnTheFlyDirectoryHierarchyQueryMixin(
         else:
             self.log.info("Directory crawl found %d files.", len(df))
         return df
-             
+
 FileGlobTuple = collections.namedtuple(
     'FileGlobTuple', 'name glob attrs'
 )
@@ -1432,3 +1431,4 @@ class SingleLocalFileDataSource(LocalFileDataSource):
                     "Query found multiple files when one was expected:",
                     d_key, log=var.log
                 )
+

@@ -1,5 +1,6 @@
-"""Implementation classes for the model data query/fetch functionality
-implemented in src/data_manager.py, selected by the user via  ``--data_manager``.
+"""Implementation classes for model data query/fetch functionality, selected by
+the user via ``--data_manager``; see :doc:`ref_data_sources` and
+:doc:`fmwk_datasources`.
 """
 import os
 import collections
@@ -43,8 +44,8 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
-    # convention: str
     # log: dataclasses.InitVar = _log
+    convention: str = "CMIP" # default value, can be overridden
     sample_dataset: str = ""
 
     def _set_case_root_dir(self, log=_log):
@@ -63,7 +64,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
     def __post_init__(self, log=_log):
         """Validate user input.
@@ -83,7 +84,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
             log.critical(
                 "Sample dataset '%s' not found in CASE_ROOT_DIR = '%s'.",
                 self.sample_dataset, self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
 sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
@@ -312,7 +313,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         if not self.config_file:
             log.critical(("No configuration file found for ExplicitFileDataSource "
                 "(--config-file)."))
-            exit(1)
+            util.exit_handler(code=1)
 
         if self.convention != core._NO_TRANSLATION_CONVENTION:
             log.debug("Received incompatible convention '%s'; setting to '%s'.",
@@ -424,7 +425,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
     experiment: dataclasses.InitVar = "" # synonym for experiment_id
     CATALOG_DIR: str = dataclasses.field(init=False)
 
-    def __post_init__(self, model=None, experiment=None, log=_log):
+    def __post_init__(self, log=_log, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
         config = core.ConfigManager()
         cv = cmip6.CMIP6_CVs()
@@ -451,7 +452,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
                 self.CASE_ROOT_DIR)
-            exit(1)
+            util.exit_handler(code=1)
 
         # should really fix this at the level of CLI flag synonyms
         if model and not self.source_id:
@@ -525,6 +526,9 @@ class CMIP6ExperimentSelectionMixin():
 
     Assumes inheritance from DataframeQueryDataSourceBase -- should enforce this.
     """
+    # Mandate the CMIP naming convention for all data sources inheriting from this
+    _convention = "CMIP"
+
     # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
     _query_attrs_synonyms = {'name': 'variable_id'}
 
@@ -629,5 +633,4 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSo
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
-    _convention = "CMIP" # hard-code naming convention
 

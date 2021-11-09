@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - develop
-  #    - add_temp_extremes_distshape_to_CI
+      - add_temp_extremes_distshape_to_CI
   pull_request:
     branches:
       - add_temp_extremes_distshape_to_CI

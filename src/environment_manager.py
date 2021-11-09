@@ -399,7 +399,6 @@ class SubprocessRuntimePODWrapper(object):
                 exc = util.PodExecutionError(log_str)
                 self.pod.deactivate(exc)
 
-
         if self.pod.log_file is not None:
             self.pod.log_file.write(80 * '-' + '\n')
             self.pod.log_file.write(log_str + '\n')
@@ -524,3 +523,4 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.tear_down()
         self.case.close_log_file()
         util.exit_handler(code=1)
+

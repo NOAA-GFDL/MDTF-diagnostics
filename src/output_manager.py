@@ -449,3 +449,4 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         if not self.obj.failed \
             and not any(p.failed for p in self.obj.iter_children()):
             self.obj.status = core.ObjectStatus.SUCCEEDED
+

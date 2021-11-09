@@ -8,6 +8,7 @@ import typing
 from src import util
 import src.units # fully qualify name to reduce confusion with "units" attributes
 
+import src.core
 import logging
 _log = logging.getLogger(__name__)
 
@@ -150,7 +151,7 @@ class _DMCoordinateShared(object):
 
     @property
     def bounds(self):
-        """Store bounds_var as a pointer to the actual object representing the
+        """Store *bounds_var* as a pointer to the actual object representing the
         bounds variable for this coordinate, but in order to parallel xarray's
         syntax define 'bounds' to return the name of this variable, not the
         variable itself.
@@ -162,6 +163,8 @@ class _DMCoordinateShared(object):
 
     @property
     def has_bounds(self):
+        """Whether the coordinate has an associated bounds variable (bool).
+        """
         return (self.bounds_var is not None)
 
     @property
@@ -465,7 +468,13 @@ class _DMDimensionsMixin(object):
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
         """Replace attributes on a given coordinate, but also optionally cast
-        them to new classes. Kind of hacky.
+        them to new classes.
+
+        Args:
+            ax_name: Name of the coodinate to modify.
+            new_class (optional): new class to cast the returned coordinate to.
+            kwargs: Set of attribute names and values to replace on the returned
+                copy.
         """
         # TODO: lookup by non-axis name
         old_coord = getattr(self, ax_name, None)
@@ -502,7 +511,8 @@ class DMDependentVariable(_DMDimensionsMixin):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
-    units: src.units.Units = "" # not MANDATORY since may be set later from var translation
+    units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
+    modifier: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -535,14 +545,14 @@ class DMDependentVariable(_DMDimensionsMixin):
 
     @property
     def axes(self):
-        """Superset of the .dim_axes dict (whose values contain coordinate dimensions
+         """Superset of the :meth:`dim_axes` dict (whose values contain coordinate dimensions
         only) that includes axes corresponding to scalar coordinates.
         """
         return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
     @property
     def axes_set(self):
-        """Superset of the .dim_axes_set frozenset (which contains axes labels
+        """Superset of the :meth:`dim_axes_set` frozenset (which contains axes labels
         corresponding to coordinate dimensions only) that includes axes labels
         corresponding to scalar coordinates.
         """
@@ -634,8 +644,9 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
 class DMVariable(DMDependentVariable):
     """Class to describe general properties of data variables.
     """
-    # name: str             # fields inherited from DMDependentVariable
+    # name: str         # fields inherited from DMDependentVariable
     # standard_name: str
+    # modifier: str
     # units: src.units.Units
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list

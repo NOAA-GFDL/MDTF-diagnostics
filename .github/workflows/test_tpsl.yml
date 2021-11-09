@@ -72,7 +72,7 @@ jobs:
       run: |
         cd ../
         conda activate _MDTF_synthetic_data
-        pip install mdtf-test-data
+        pip install mdtf-test-data==1.0.4
         mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests
         mdtf_synthetic.py -c CMIP --startyear 1 --nyears 10 --unittest

@@ -6,11 +6,10 @@ name: test_cmip
 on:
   push:
     branches:
-      - develop
-      - add_temp_extremes_distshape_to_ci
+      - add_trop_pac_sl_to_ci
   pull_request:
     branches:
-      - add_temp_extremes_distshape_to_ci
+      - add_trop_pac_sl_to_ci
 defaults:
   run:
     shell: bash -l {0}

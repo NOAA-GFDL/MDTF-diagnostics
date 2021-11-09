@@ -1,5 +1,6 @@
-"""Implementation classes for the model data query/fetch functionality
-implemented in src/data_manager.py, selected by the user via  ``--data_manager``.
+"""Implementation classes for model data query/fetch functionality, selected by
+the user via ``--data_manager``; see :doc:`ref_data_sources` and
+:doc:`fmwk_datasources`.
 """
 import os
 import collections
@@ -43,8 +44,8 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
-    # convention: str
     # log: dataclasses.InitVar = _log
+    convention: str = "CMIP" # default value, can be overridden
     sample_dataset: str = ""
 
     def _set_case_root_dir(self, log=_log):
@@ -525,6 +526,9 @@ class CMIP6ExperimentSelectionMixin():
 
     Assumes inheritance from DataframeQueryDataSourceBase -- should enforce this.
     """
+    # Mandate the CMIP naming convention for all data sources inheriting from this
+    _convention = "CMIP"
+
     # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
     _query_attrs_synonyms = {'name': 'variable_id'}
 
@@ -629,5 +633,3 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSo
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
-    _convention = "CMIP" # hard-code naming convention
-

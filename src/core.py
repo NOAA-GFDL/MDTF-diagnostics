@@ -1,4 +1,5 @@
-"""Common functions and classes used in multiple places in the MDTF code.
+"""Definition of the MDTF framework main loop and classes implementing basic,
+supporting functionality.
 """
 import os
 import sys
@@ -24,26 +25,28 @@ ObjectStatus = util.MDTFEnum(
     module=__name__
 )
 ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of a :class:`MDTFObjectBase`:
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object
+(child class of :class:`MDTFObjectBase`):
 
 - *NOTSET*: the object hasn't been fully initialized.
 - *ACTIVE*: the object is currently being processed by the framework.
 - *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-    alternate :class:`~diagnostic.VarlistEntry`\s).
+  alternate :class:`~diagnostic.VarlistEntry`\s).
 - *FAILED*: processing of the object has encountered an error, and no further
-    work will be done.
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
 """
 
 @util.mdtf_dataclass
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
-    """Base class providing shared functionality for the "object hierarchy":
+    """Base class providing shared functionality for the object hierarchy, which is:
 
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package
-        (:class:`MDTFFramework`);
+    - The framework itself (:class:`MDTFFramework`);
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
     - :class:`~diagnostic.Diagnostic`\s (PODs) belonging to a
-        :class:`~data_manager.DataSourceBase`;
+      :class:`~data_manager.DataSourceBase`;
     - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
-        to a :class:`~diagnostic.Diagnostic`.
+      to a :class:`~diagnostic.Diagnostic`.
     """
     _id: util.MDTF_ID = None
     name: str = util.MANDATORY
@@ -74,11 +77,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def failed(self):
-        return (self.status == ObjectStatus.FAILED) # abbreviate
+        return self.status == ObjectStatus.FAILED # abbreviate
 
     @property
     def active(self):
-        return (self.status == ObjectStatus.ACTIVE) # abbreviate
+        return self.status == ObjectStatus.ACTIVE # abbreviate
 
     @property
     @abc.abstractmethod
@@ -151,7 +154,7 @@ ConfigTuple = collections.namedtuple(
     'ConfigTuple', 'name backup_filename contents'
 )
 ConfigTuple.__doc__ = """
-    Class wrapping general structs used for configuration
+    Class wrapping general structs used for configuration.
 """
 
 class ConfigManager(util.Singleton, util.NameSpace):
@@ -340,7 +343,7 @@ _NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translatio
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
     attributes inherited from :class:`~data_model.DMVariable` as being queryable
-    in :meth:`data_manager.DataframeQueryDataSourceBase.query_dataset`.
+    in :meth:`~data_manager.DataframeQueryDataSourceBase.query_dataset`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the
@@ -352,7 +355,8 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     units: Units = util.MANDATORY
-    # dims: list           # field inherited from data_model.DMVariable
+    # dims: list           # fields inherited from data_model.DMVariable
+    # modifier : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY # assigned from parent var
@@ -364,6 +368,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
     # units: Units
+    # modifier : str
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
@@ -472,12 +477,12 @@ class Fieldlist():
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
-            # dimensionality) -- should just make FieldlistEntry hashable
+            # dimensionality)
             section_d = d.pop(section_name, dict())
             for k,v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
-                temp_d[entry.standard_name][entry.dim_axes_set] = entry
+                temp_d[entry.standard_name][entry.modifier] = entry
             return (d, temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)
@@ -509,9 +514,9 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, axes_set=None):
+    def from_CF(self, var_or_name, modifier=None, num_dims=0):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
-        name, optionally providing an axes_set to resolve ambiguity.
+        name, optionally providing a modifier to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
@@ -523,30 +528,36 @@ class Fieldlist():
 
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
-                f"convention '{self.name}'."))
-
-        lut1 = self.lut[standard_name] # abbreviate
-        if axes_set is None:
+                  f"convention '{self.name}'."))
+        lut1 = self.lut[standard_name]  # abbreviate
+        fl_entry = None
+        empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
+        if not modifier:  # empty strings and None types evaluate to False
             entries = tuple(lut1.values())
             if len(entries) > 1:
-                raise ValueError((f"Variable name in convention '{self.name}' "
-                    f"not uniquely determined by standard name '{standard_name}'."))
-            fl_entry = entries[0]
+                for e in entries:
+                    if e.modifier.strip() == "" and len(e.dims) == num_dims:
+                        fl_entry = e
+                        empty_mod_count += 1
+                if fl_entry is None or empty_mod_count > 1:
+                    raise ValueError((f"Variable name in convention '{self.name}' "
+                        f"not uniquely determined by standard name '{standard_name}'."))
+            else:
+                fl_entry = entries[0]
         else:
-            axes_set = frozenset(axes_set)
-            if axes_set not in lut1:
+            if modifier not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
-                    f"unexpected set of axes {axes_set} not in convention "
+                    f"unexpected modifier {modifier} not in convention "
                     f"'{self.name}'."))
-            fl_entry = lut1[axes_set]
+            fl_entry = lut1[modifier]
 
         return copy.deepcopy(fl_entry)
 
-    def from_CF_name(self, var_or_name, axes_set=None):
+    def from_CF_name(self, var_or_name, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
         """
-        return self.from_CF(var_or_name, axes_set=axes_set).name
+        return self.from_CF(var_or_name, modifier=modifier).name
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
@@ -592,7 +603,7 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            fl_entry = self.from_CF(var.standard_name, var.axes_set)
+            fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__())
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
@@ -632,11 +643,11 @@ class NoTranslationFieldlist(util.Singleton):
         else:
             return var_or_name
 
-    def from_CF(self, var_or_name, axes_set=None):
+    def from_CF(self, var_or_name, modifier=None):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def from_CF_name(self, var_or_name, axes_set=None):
+    def from_CF_name(self, var_or_name, modifier=None):
         if hasattr(var_or_name, 'name'):
             return var_or_name.name
         else:
@@ -663,6 +674,7 @@ class NoTranslationFieldlist(util.Singleton):
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
+            modifier = var.modifier,
             log=var.log
         )
 
@@ -675,6 +687,17 @@ class VariableTranslator(util.Singleton):
         self._unittest = unittest
         self.conventions = util.WormDict()
         self.aliases = util.WormDict()
+        self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
+
+    def add_convention(self, d):
+        conv_name = d['name']
+        _log.debug("Adding variable name convention '%s'", conv_name)
+        for model in d.pop('models', []):
+            self.aliases[model] = conv_name
+        self.conventions[conv_name] = Fieldlist.from_struct(d)
+
+    def read_conventions(self,code_root, unittest=False):
+        """ Read in the conventions from the Fieldlists and populate the convention attribute. """
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
@@ -692,13 +715,6 @@ class VariableTranslator(util.Singleton):
                 _log.exception("Caught exception loading fieldlist file %s: %r",
                     f, exc)
                 continue
-
-    def add_convention(self, d):
-        conv_name = d['name']
-        _log.debug("Adding variable name convention '%s'", conv_name)
-        for model in d.pop('models', []):
-            self.aliases[model] = conv_name
-        self.conventions[conv_name] = Fieldlist.from_struct(d)
 
     def get_convention_name(self, conv_name):
         """Resolve the naming convention associated with a given
@@ -741,13 +757,13 @@ class VariableTranslator(util.Singleton):
     def to_CF_name(self, conv_name, name):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
-    def from_CF(self, conv_name, standard_name, axes_set=None):
+    def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
-            standard_name, axes_set=axes_set)
+            standard_name, modifier=modifier)
 
-    def from_CF_name(self, conv_name, standard_name, axes_set=None):
+    def from_CF_name(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
-            standard_name, axes_set=axes_set)
+            standard_name, modifier=modifier)
 
     def translate_coord(self, conv_name, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
@@ -803,7 +819,8 @@ class MDTFFramework(MDTFObjectBase):
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        _ = VariableTranslator(self.code_root)
+        translate = VariableTranslator(self.code_root)
+        translate.read_conventions(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)

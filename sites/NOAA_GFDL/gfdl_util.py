@@ -198,7 +198,12 @@ def rmtree_wrapper(path):
         shutil.rmtree(path, ignore_errors=True)
 
 def frepp_freq(date_freq):
-    # logic as written would give errors for 1yr chunks (?)
+    """Formats a string representation of a DateFrequency object according to
+    the conventions used by frepp.
+
+    Note that the DateFrequency classmethod for creating an object from a string
+    can handle frepp conventions with no modification.
+    """
     if date_freq is None:
         return date_freq
     assert isinstance(date_freq, util.DateFrequency)
@@ -229,7 +234,8 @@ def parse_frepp_stub(frepp_stub, log=_log):
 
     See `<https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures>`__.
 
-    Returns: :py:obj:`dict` of frepp parameters.
+    Returns:
+        :py:obj:`dict` of frepp parameters.
     """
     # parse arguments and relabel keys
     d = {}

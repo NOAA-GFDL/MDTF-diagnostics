@@ -1,5 +1,5 @@
 """Base classes implementing logic for querying, fetching and preprocessing
-model data requested by the PODs.
+model data requested by the PODs; see :doc:`fmwk_datasources`.
 """
 import os
 import abc
@@ -23,7 +23,7 @@ class AbstractQueryMixin(abc.ABC):
         pass
 
     def setup_query(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         pass
@@ -45,7 +45,7 @@ class AbstractQueryMixin(abc.ABC):
         pass
 
     def tear_down_query(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         pass
@@ -60,7 +60,7 @@ class AbstractFetchMixin(abc.ABC):
         pass
 
     def setup_fetch(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         pass
@@ -74,7 +74,7 @@ class AbstractFetchMixin(abc.ABC):
         pass
 
     def tear_down_fetch(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         pass
@@ -87,7 +87,7 @@ class AbstractDataSource(AbstractQueryMixin, AbstractFetchMixin,
         pass
 
     def pre_query_and_fetch_hook(self):
-        """Called once, before the iterative query_and_fetch() process starts.
+        """Called once, before the iterative :meth:`~DataSourceBase.request_data` process starts.
         Use to, eg, initialize database or remote filesystem connections.
         """
         # call methods if we're using mixins; if not, child classes will override
@@ -97,7 +97,7 @@ class AbstractDataSource(AbstractQueryMixin, AbstractFetchMixin,
             self.setup_fetch()
 
     def post_query_and_fetch_hook(self):
-        """Called once, after the iterative query_and_fetch() process ends.
+        """Called once, after the iterative :meth:`~DataSourceBase.request_data` process ends.
         Use to, eg, close database or remote filesystem connections.
         """
         # call methods if we're using mixins; if not, child classes will override
@@ -149,8 +149,9 @@ class DataKeyBase(core.MDTFObjectBase, metaclass=util.MDTFABCMeta):
 
     @abc.abstractmethod
     def remote_data(self):
-        """Returns paths, urls, etc. to be used as input to a *fetch_data* method
-        to specify how this dataset is fetched.
+        """Returns paths, urls, etc. to be used as input to a
+        :meth:`~DataSourceBase.fetch_data` method to specify how this dataset is
+        fetched.
         """
         pass
 
@@ -172,7 +173,7 @@ class DataSourceAttributesBase():
     LASTYR: str = util.MANDATORY
     date_range: util.DateRange = dc.field(init=False)
     CASE_ROOT_DIR: str = ""
-    convention: str = util.MANDATORY
+    convention: str = ""
     log: dc.InitVar = _log
 
     def _set_case_root_dir(self, log=_log):
@@ -190,12 +191,6 @@ class DataSourceAttributesBase():
         self._set_case_root_dir(log=log)
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
-        # validate convention name
-        translate = core.VariableTranslator()
-        if not self.convention:
-            raise util.GenericDataSourceEvent((f"'convention' not configured "
-                f"for {self.__class__.__name__}."))
-        self.convention = translate.get_convention_name(self.convention)
 
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
@@ -240,9 +235,25 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
         self.strict = config.get('strict', False)
         self.attrs = util.coerce_to_dataclass(
-            case_dict, self._AttributesClass, log=self.log
+            case_dict, self._AttributesClass, log=self.log, init=True
         )
         self.pods = dict.fromkeys(case_dict.get('pod_list', []))
+
+        # set variable name convention
+        translate = core.VariableTranslator()
+        if hasattr(self, '_convention'):
+            self.convention = self._convention
+            if hasattr(self.attrs, 'convention') \
+                and self.attrs.convention != self.convention:
+                self.log.warning(f"{self.__class__.__name__} requires convention"
+                    f"'{self.convention}'; ignoring argument "
+                    f"'{self.attrs.convention}'.")
+        elif hasattr(self.attrs, 'convention') and self.attrs.convention:
+            self.convention = self.attrs.convention
+        else:
+            raise util.GenericDataSourceEvent((f"'convention' not configured "
+                f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)
 
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct(
@@ -252,8 +263,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
         })
         # add naming-convention-specific env vars
-        translate = core.VariableTranslator()
-        convention_obj = translate.get_convention(self.attrs.convention)
+        convention_obj = translate.get_convention(self.convention)
         self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
 
     @property
@@ -268,14 +278,15 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         return self.pods.values()
 
     def iter_vars(self, active=None, pod_active=None):
-        """Iterator over all :class:~diagnostic.VarlistEntry`\s (grandchildren)
+        """Iterator over all :class:`~diagnostic.VarlistEntry`\s (grandchildren)
         associated with this case. Returns :class:`PodVarTuple`\s (namedtuples)
-        of the :class:`~diagnostic.Diagnostic` and :class:~diagnostic.VarlistEntry`
+        of the :class:`~diagnostic.Diagnostic` and :class:`~diagnostic.VarlistEntry`
         objects corresponding to the POD and its variable, respectively.
 
         Args:
-            active: bool or None, default None. Selects subset of VarlistEntries
-                which are returned in the namedtuples:
+            active: bool or None, default None. Selects subset of
+                :class:`~diagnostic.VarlistEntry`\s which are returned in the
+                namedtuples:
 
                 - active = True: only iterate over currently active VarlistEntries.
                 - active = False: only iterate over inactive VarlistEntries
@@ -303,7 +314,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
     def iter_vars_only(self, active=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the
-        :class:~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
+        :class:`~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
         in this DataSource.
         """
         yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None))
@@ -371,7 +382,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
-        translate = core.VariableTranslator().get_convention(self.attrs.convention)
+        translate = core.VariableTranslator().get_convention(self.convention)
         if v.T is not None:
             v.change_coord(
                 'T',
@@ -646,7 +657,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
 class DataFrameDataKey(DataKeyBase):
     """:class:`DataKeyBase` for use with :class:`DataframeQueryDataSourceBase`
-    and child classes. The *value*s stored in the DataKey are row indices on the
+    and child classes. The *value*\s stored in the DataKey are row indices on the
     catalog DataFrame in the DataSource, and the *remote_data* method returns
     values from those rows from the column in the catalog containing the paths
     to remote data.
@@ -722,26 +733,26 @@ class DataFrameQueryColumnGroup():
 class DataframeQueryColumnSpec(metaclass=util.MDTFABCMeta):
     """
     - *expt_cols*: Catalog columns whose values must be the same for all
-        variables being fetched. This is the most common sense in which we
-        "specify an experiment."
+      variables being fetched. This is the most common sense in which we
+      "specify an experiment."
     - *pod_expt_cols*: Catalog columns whose values must be the same for each
-        POD, but may differ between PODs. An example could be spatial grid
-        resolution. Defaults to the empty set.
+      POD, but may differ between PODs. An example could be spatial grid
+      resolution. Defaults to the empty set.
     - *var_expt_cols*: Catalog columns whose values must "be the same for each
-        variable", i.e. are irrelevant differences for our purposes but must be
-        constrained to a unique value in order to uniquely specify an experiment.
-        An example is the CMIP6 MIP table: the same variable can appear in
-        multiple MIP tables, but the choice of table isn't relvant for PODs.
-        Defaults to the empty set.
+      variable", i.e. are irrelevant differences for our purposes but must be
+      constrained to a unique value in order to uniquely specify an experiment.
+      An example is the CMIP6 MIP table: the same variable can appear in
+      multiple MIP tables, but the choice of table isn't relvant for PODs.
+      Defaults to the empty set.
 
     In addition, there are specially designated column names:
 
     - *remote_data_col*: Name of the column in the catalog containing the
-        location of the data for that row (e.g., path to a netCDF file).
+      location of the data for that row (e.g., path to a netCDF file).
     - *daterange_col*: Name of the column in the catalog containing
-        :class:`util.DateRange` objects specifying the date range covered by
-        the data for that row. If set to None, we assume this information isn't
-        available from the catalog and date range selection logic is skipped.
+      :class:`util.DateRange` objects specifying the date range covered by
+      the data for that row. If set to None, we assume this information isn't
+      available from the catalog and date range selection logic is skipped.
     """
     expt_cols: DataFrameQueryColumnGroup = util.MANDATORY
     pod_expt_cols: DataFrameQueryColumnGroup = \
@@ -1309,9 +1320,9 @@ FileGlobTuple = collections.namedtuple(
     'FileGlobTuple', 'name glob attrs'
 )
 FileGlobTuple.__doc__ = """
-    Class representing one file glob pattern. 'attrs' is a dict containing the
-    data catalog values that will be associated with all files found using 'glob'.
-    'name' is used for logging only.
+    Class representing one file glob pattern. *attrs* is a dict containing the
+    data catalog values that will be associated with all files found using *glob*.
+    *name* is used for logging only.
 """
 
 class OnTheFlyGlobQueryMixin(

@@ -49,6 +49,12 @@
       "scalar_coord_templates": {"plev": "va{value}"},
       "ndim": 4
     },
+     "wind_speed": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "wind_speed{value}"},
+      "ndim": 4
+    },
     "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
@@ -71,6 +77,12 @@
       "units": "K",
       "ndim": 3
     },
+    "huss": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "ndim": 3,
+      "modifier": "atmos_height"
+    },
     "pr": {
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1",
@@ -84,7 +96,8 @@
     "tas" : {
       "standard_name": "air_temperature",
       "units": "K",
-      "ndim": 3
+      "ndim": 3,
+      "modifier": "atmos_height"
     },
     "tauu": {
       "standard_name": "surface_downward_eastward_stress",
@@ -109,6 +122,12 @@
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
+      "ndim": 3
+    },
+    "sfcWind": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "modifier": "atmos_height",
       "ndim": 3
     },
     // radiative fluxes:

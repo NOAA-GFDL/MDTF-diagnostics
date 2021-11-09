@@ -9,14 +9,15 @@ _log = logging.getLogger(__name__)
 
 class Units(cfunits.Units):
     """Wrap `Units <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__
-    class of cfunits to isolate dependence of the framework on cfunits to this
-    module.
+    class of `cfunits <https://ncas-cms.github.io/cfunits/>`__ to isolate this
+    third-party dependency to the code in this module.
     """
     def reftime_base_eq(self, other):
-        """Comparison function that recognizes reference time units (eg
+        """Comparison function that recognizes reference time units (e.g.,
         'days since 1970-01-01') as being equal to unqualified time units
-        of the same base unit ('days'). cfunits .equivalent() method returns
-        false on these cases.
+        of the same base unit ('days'). The cfunits `equivalent()
+        <https://ncas-cms.github.io/cfunits/generated/cfunits.Units.equivalent.html>`__
+        method returns False on these cases.
         """
         cls = type(self)
         if self.isreftime and other.isreftime:
@@ -26,8 +27,11 @@ class Units(cfunits.Units):
         return self_2.equals(other_2)
 
 def to_cfunits(*args):
-    """Coerce string-valued units and (quantity, unit) tuples to cfunits.Units
+    """Coerce string-valued units and (quantity, unit) tuples to :class:`Units`
     objects.
+
+    If more than one such argument is given in *args*, return a list containing
+    the results of coercing each argument.
     """
     def _coerce(u):
         if isinstance(u, tuple):
@@ -44,8 +48,8 @@ def to_cfunits(*args):
         return [_coerce(arg) for arg in args]
 
 def to_equivalent_units(*args):
-    """Same as to_cfunits, but raise TypeError if units of all
-    quantities not equivalent.
+    """Same as :func:`to_cfunits`, but raises TypeError if units of all
+    quantities in *args* are not equivalent after coercion.
     """
     args = to_cfunits(*args)
     ref_unit = args.pop() # last entry in list
@@ -57,8 +61,10 @@ def to_equivalent_units(*args):
     return args
 
 def relative_tol(x, y):
-    """HACK to return ``max(|x-y|/x, |x-y|/y)`` for unit-ful quantities x, y.
-    Vulnerable to underflow in principle.
+    """HACK to return ``max(|x-y|/x, |x-y|/y)`` for unit-ful quantities *x*, *y*
+    with equivalent units. Vulnerable to underflow in principle.
+
+    *x* and *y* are coerced to :class:`Units` objects via :func:`to_cfunits`.
     """
     x, y = to_equivalent_units(x,y)
     tol_1 = Units.conform(1.0, x, y) # = float(x/y)
@@ -66,30 +72,36 @@ def relative_tol(x, y):
     return max(abs(tol_1 - 1.0), abs(tol_2 - 1.0))
 
 def units_equivalent(*args):
-    """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplicative conversion
-    factor.)
+    """Returns True if and only if all unit-ful quantities in *args* are physically
+    equivalent: they represent the same physical quantity, up to a multiplicative
+    conversion factor.
+
+    *args* are coerced to :class:`Units` objects via :func:`to_cfunits`.
     """
     args = to_cfunits(*args)
     ref_unit = args.pop()
     return all(ref_unit.equivalent(unit) for unit in args)
 
 def units_reftime_base_eq(*args):
-    """Returns True if and only if all units in arguments are equivalent
-    (represent the same physical quantity, up to a multiplicative conversion
-    factor.)
+    """Returns True if and only if all unit-ful quantities in *args* are physically
+    equivalent: they represent the same physical quantity, up to a multiplicative
+    conversion factor.
+
+    *args* are coerced to :class:`Units` objects via :func:`to_cfunits`.
     """
     args = to_cfunits(*args)
     ref_unit = args.pop()
     return all(ref_unit.reftime_base_eq(unit) for unit in args)
 
 def units_equal(*args, rtol=None):
-    """Returns True if and only if all quantities in arguments are strictly equal
-    (represent the same physical quantity *and* conversion factor = 1).
+    """Returns True if and only if all unit-ful quantities in *args* are strictly
+    equal (:func:`units_equivalent` is True and :func:`conversion_factor` = 1).
 
     .. note::
-       rtol, atol tolerances on floating-point equality not currently implemented
-       in cfunits, so we implement rtol in a hacky way here.
+       rtol, atol tolerances on floating-point equality are not currently
+       implemented in cfunits, so we use :func:`relative_tol`.
+
+    *args* are coerced to :class:`Units` objects via :func:`to_cfunits`.
     """
     args = to_cfunits(*args)
     ref_unit = args.pop()
@@ -106,8 +118,12 @@ def units_equal(*args, rtol=None):
         return True
 
 def conversion_factor(source_unit, dest_unit):
-    """Defined so that (conversion factor) * (quantity in source_units) =
-    (quantity in dest_units).
+    """Return floating point factor which implements a given unit conversion.
+    Defined so that (conversion factor) * (quantity in *source_units*) =
+    (quantity in *dest_units*).
+
+    *source_unit*, *dest_unit* are coerced to :class:`Units` objects via
+    :func:`to_cfunits`.
     """
     source_unit, dest_unit = to_equivalent_units(source_unit, dest_unit)
     return Units.conform(1.0, source_unit, dest_unit)
@@ -136,8 +152,27 @@ def convert_scalar_coord(coord, dest_units, log=_log):
     return dest_value
 
 def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
-    """Wrapper for cfunits.conform() that does unit conversion in-place on a
-    member of an xarray Dataset, updating its units attribute.
+    """Wrapper for cfunits `conform()
+    <https://ncas-cms.github.io/cfunits/generated/cfunits.Units.conform.html#cfunits.Units.conform>`__
+    that does unit conversion in-place on a member of an xarray Dataset,
+    updating its units attribute.
+
+    Args:
+        ds (Dataset): xarray Dataset containing the DataArray to convert.
+        da_name (str): Name of the DataArray to do the unit conversion on.
+        src_unit: Current units of *da_name*. Coerced to a :class:`Units` object
+            via :func:`to_cfunits`. Optional; if not given this is populated from
+            the ``units`` attribute of *da_name*, if it exists.
+        dest_unit: Desired units for *da_name*. Coerced to a :class:`Units` object
+            via :func:`to_cfunits`.
+
+    Raises:
+        ValueError: if *da_name* not in *ds*.
+        TypeError: if *src_unit* or *dest_unit* not correctly defined, or if
+            *da_name* lacks units metadata.
+
+    Returns:
+        Dataset *ds*, with *da_name* modified in-place.
     """
     da = ds.get(da_name, None)
     if da is None:

@@ -13,8 +13,8 @@ _log = logging.getLogger(__name__)
 
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
-    thread when the child is join()ed.
-    Adapted from `<https://stackoverflow.com/a/31614591>`__.
+    thread when the child is join()ed. Adapted from
+    `<https://stackoverflow.com/a/31614591>`__.
     """
     def run(self):
         self.ret = None
@@ -32,19 +32,15 @@ class ExceptionPropagatingThread(threading.Thread):
 
 
 def poll_command(command, shell=False, env=None):
-    """Runs a shell command and prints stdout in real-time.
-
-    Optional ability to pass a different environment to the subprocess. See
-    documentation for the Python2 `subprocess
-    <https://docs.python.org/2/library/subprocess.html>`_ module.
+    """Runs a command in a subprocess and prints stdout in real-time. Wraps
+    :py:class:`~subprocess.Popen`.
 
     Args:
         command: list of command + arguments, or the same as a single string.
-            See `subprocess` syntax. Note this interacts with the `shell` setting.
-        shell (:py:obj:`bool`, optional): shell flag, passed to Popen,
-            default `False`.
-        env (:py:obj:`dict`, optional): environment variables to set, passed to
-            Popen, default `None`.
+            See :py:mod:`subprocess` syntax. Note this interacts with the `shell`
+            setting.
+        shell (bool): Optional. Whether to run *command* in a shell. Default False.
+        env (dict): Optional. Environment variables to set.
     """
     process = subprocess.Popen(
         command, shell=shell, env=env, stdout=subprocess.PIPE)
@@ -59,7 +55,7 @@ def poll_command(command, shell=False, env=None):
 
 
 def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log):
-    """Subprocess wrapper to facilitate running single command without starting
+    """Subprocess wrapper to facilitate running a single command without starting
     a shell.
 
     Note:
@@ -67,26 +63,25 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
         shell, but this means the command can't use piping, quoting, environment
         variables, or filename globbing etc.
 
-    See documentation for the Python2 `subprocess
-    <https://docs.python.org/2/library/subprocess.html>`_ module.
+    See documentation for :py:class:`~subprocess.Popen`.
 
     Args:
-        command (list of :py:obj:`str`): List of commands to execute
-        env (:py:obj:`dict`, optional): environment variables to set, passed to
-            `Popen`, default `None`.
-        cwd (:py:obj:`str`, optional): child processes' working directory, passed
-            to `Popen`. Default is `None`, which uses parent processes' directory.
-        timeout (:py:obj:`int`, optional): Optionally, kill the command's subprocess
+        command (list of str): List of commands to execute.
+        env (dict): Optional. Environment variables to set.
+        cwd (str): Optional. Child processes' working directory. Default is `None`,
+            which uses the current working directory.
+        timeout (int): Optionally, kill the command's subprocess
             and raise a MDTFCalledProcessError if the command doesn't finish in
-            `timeout` seconds.
+            `timeout` seconds. Set to 0 to disable.
 
     Returns:
-        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout
+        List of str containing output that was written to stdout
         by each command. Note: this is split on newlines after the fact.
 
     Raises:
-        MDTFCalledProcessError: If any commands return with nonzero exit code.
-            Stderr for that command is stored in `output` attribute.
+        :class:`~exceptions.MDTFCalledProcessError`: If any commands return with
+            nonzero exit code. Stderr for that command is stored in the ``output``
+            attribute of the exception.
     """
     def _timeout_handler(signum, frame):
         raise exceptions.TimeoutAlarm
@@ -134,27 +129,25 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
         return stdout.splitlines()
 
 def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
-    """Subprocess wrapper to facilitate running shell commands.
-
-    See documentation for the Python2 `subprocess
-    <https://docs.python.org/2/library/subprocess.html>`_ module.
+    """Subprocess wrapper to facilitate running shell commands. See documentation
+    for :py:class:`~subprocess.Popen`.
 
     Args:
-        commands (list of :py:obj:`str`): List of commands to execute
-        env (:py:obj:`dict`, optional): environment variables to set, passed to
-            `Popen`, default `None`.
-        cwd (:py:obj:`str`, optional): child processes' working directory, passed
-            to `Popen`. Default is `None`, which uses parent processes' directory.
+        commands (list of str): List of commands to execute.
+        env (dict): Optional. Environment variables to set.
+        cwd (str): Optional. Child processes' working directory. Default is `None`,
+            which uses the current working directory.
 
     Returns:
-        :py:obj:`list` of :py:obj:`str` containing output that was written to stdout
+        List of str containing output that was written to stdout
         by each command. Note: this is split on newlines after the fact, so if
         commands give != 1 lines of output this will not map to the list of commands
         given.
 
     Raises:
-        MDTFCalledProcessError: If any commands return with nonzero exit code.
-            Stderr for that command is stored in `output` attribute.
+        :class:`~exceptions.MDTFCalledProcessError`: If any commands return with
+            nonzero exit code. Stderr for that command is stored in the ``output``
+            attribute of the exception.
     """
     # shouldn't lookup on each invocation, but need abs path to bash in order
     # to pass as executable argument. Pass executable argument because we want

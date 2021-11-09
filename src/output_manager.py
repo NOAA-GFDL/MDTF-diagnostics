@@ -1,3 +1,6 @@
+"""Implementation of the OutputManager plugin, which templates HTML and organizes
+the PODs' output files.
+"""
 import os
 import abc
 import datetime
@@ -10,11 +13,11 @@ import logging
 _log = logging.getLogger(__name__)
 
 class AbstractOutputManager(abc.ABC):
-    """Interface for any OutputManager."""
+    """Abstract interface for any OutputManager."""
     def __init__(self, case): pass
 
 def html_templating_dict(pod):
-    """Get the dict of recognized substitutions to perform in HTML templates.
+    """Returns the dict of recognized substitutions to perform in HTML templating.
     """
     config = core.ConfigManager()
     template = config.global_env_vars.copy()
@@ -35,22 +38,22 @@ class HTMLSourceFileMixin():
         return os.path.join(self.WK_DIR, '_MDTF_pod_output_temp.html')
 
     def html_src_file(self, file_name):
-        """Get full path to a framework-supplied HTML template or other part of
-        the output page.
+        """Returns full path to a framework-supplied HTML template *file_name*
+        or other part of the output page.
         """
         return os.path.join(self.CODE_ROOT, 'src', 'html', file_name)
 
     @staticmethod
     def pod_html_template_file_name(pod):
-        """Name of the POD's HTML template file."""
+        """Name of the HTML template file for POD *pod*."""
         return pod.name+'.html'
 
     def POD_HTML(self, pod):
-        """Path to POD's HTML output file in the working directory."""
+        """Path to *pod*\'s HTML output file in the working directory."""
         return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
 
     def write_data_log_file(self):
-        """Writes *.data.log file to output containing info on data files used.
+        """Writes \*.data.log file to output containing info on data files used.
         """
         log_file = io.open(
             os.path.join(self.WK_DIR, self.obj.name+".data.log"),
@@ -77,8 +80,16 @@ class HTMLSourceFileMixin():
         log_file.close()
 
 class HTMLPodOutputManager(HTMLSourceFileMixin):
+    """Performs cleanup tasks when the POD has finished running.
+    """
     def __init__(self, pod, output_mgr):
-        """Performs cleanup tasks when the POD has finished running.
+        """Copy configuration info from POD object.
+
+        Args:
+            pod (:class:`~src.diagnostic.Diagnostic): POD which generated the
+                output files being processed.
+            output_mgr: OutputManager plugin handling the overall processing of
+                output files from all PODs.
         """
         config = core.ConfigManager()
         try:
@@ -96,9 +107,9 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     def make_pod_html(self):
         """Perform templating on POD's html results page(s).
 
-        A wrapper for :func:`~util.append_html_template`. Looks for all
-        html files in POD_CODE_DIR, templates them, and copies them to
-        POD_WK_DIR, respecting subdirectory structure (see doc for
+        Wraps :func:`~util.append_html_template`. Looks for all
+        html files in ``$POD_CODE_DIR``, templates them, and copies them to
+        ``$POD_WK_DIR``, respecting subdirectory structure (see
         :func:`~util.recursive_copy`).
         """
         test_path = os.path.join(
@@ -122,21 +133,21 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
 
     def convert_pod_figures(self, src_subdir, dest_subdir):
-        """Convert all vector graphics in `POD_WK_DIR/subdir` to .png files using
-        ghostscript.
+        """Convert all vector graphics in ``$POD_WK_DIR/`` *src\_subdir* to .png
+        files using `ghostscript <https://www.ghostscript.com/>`__ (included in
+        the \_MDTF\_base conda environment).
 
         All vector graphics files (identified by extension) in any subdirectory
-        of `POD_WK_DIR/src_subdir` are converted to .png files by running
-        `ghostscript <https://www.ghostscript.com/>`__ in a subprocess.
-        Ghostscript is included in the _MDTF_base conda environment. Afterwards,
-        any bitmap files (identified by extension) in any subdirectory of
-        `POD_WK_DIR/src_subdir` are moved to `POD_WK_DIR/dest_subdir`, preserving
-        and subdirectories (see doc for :func:`~util.recursive_copy`.)
+        of ``$POD_WK_DIR/`` *src\_subdir* are converted to .png files by running
+        ghostscript in a subprocess. Afterwards, any bitmap files (identified by
+        extension) in any subdirectory of ``$POD_WK_DIR/`` *src\_subdir* are
+        moved to ``$POD_WK_DIR/`` *dest\_subdir*, preserving subdirectories (via
+        :func:`~util.recursive_copy`.)
 
         Args:
-            src_subdir: Subdirectory tree of `POD_WK_DIR` to search for vector
+            src_subdir: Subdirectory tree of ``$POD_WK_DIR`` to search for vector
                 graphics files.
-            dest_subdir: Subdirectory tree of `POD_WK_DIR` to move converted
+            dest_subdir: Subdirectory tree of ``$POD_WK_DIR`` to move converted
                 bitmap files to.
         """
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
@@ -195,12 +206,12 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
 
     def cleanup_pod_files(self):
-        """Copy and remove remaining files to `POD_WK_DIR`.
+        """Copy and remove remaining files to ``$POD_WK_DIR``.
 
         In order, this 1) copies any bitmap figures in any subdirectory of
-        `POD_OBS_DATA` to `POD_WK_DIR/obs` (needed for legacy PODs without
+        ``$POD_OBS_DATA`` to ``$POD_WK_DIR/obs`` (needed for legacy PODs without
         digested observational data), 2) removes vector graphics if requested,
-        3) removes netCDF scratch files in `POD_WK_DIR` if requested.
+        3) removes netCDF scratch files in ``$POD_WK_DIR`` if requested.
 
         Settings are set at runtime, when :class:`~core.ConfigManager` is
         initialized.
@@ -247,7 +258,11 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.cleanup_pod_files()
 
 class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
-    """OutputManager that collects all the PODs' output as HTML pages.
+    """OutputManager that collects all the PODs' output as HTML pages. Currently
+    the only value for the OutputManager plugin, selected by default.
+
+    Instantiates :class:`HTMLPodOutputManager` objects to handle output of
+    each POD.
     """
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
@@ -277,9 +292,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """Update the top level index.html page with a link to this POD's results.
 
         This simply appends one of two html fragments to index.html:
-        pod_result_snippet.html if the POD completed successfully, or
-        pod_error_snippet.html if an exception was raised during the POD's setup
-        or execution.
+        ``src/html/pod_result_snippet.html`` if the POD completed successfully,
+        or ``src/html/pod_error_snippet.html`` if an exception was raised during
+        the POD's setup or execution.
         """
         template_d = html_templating_dict(pod)
         # add a warning banner if needed
@@ -304,11 +319,11 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     def verify_pod_links(self, pod):
         """Check for missing files linked to from POD's html page.
 
-        See documentation for :class:`~verify_links.LinkVerifier`. This method
-        calls LinkVerifier to check existence of all files linked to from the
-        POD's own top-level html page (after templating). If any files are
-        missing, an error message listing them is written to the run's index.html
-        (located in src/html/pod_missing_snippet.html).
+        See documentation for :class:`~src.verify_links.LinkVerifier`. This method
+        calls :class:`~src.verify_links.LinkVerifier` to check existence of all
+        files linked to from the POD's own top-level html page (after templating).
+        If any files are missing, an error message listing them is written to
+        the run's ``index.html`` page (located in ``src/html/pod_missing_snippet.html``).
         """
         pod.log.info('Checking linked output files for %s.', pod.full_name)
         verifier = verify_links.LinkVerifier(
@@ -349,7 +364,8 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
 
     def backup_config_files(self):
-        """Record settings in file config_save.json for rerunning.
+        """Record user input configuration in a file named ``config_save.json``
+        for rerunning.
         """
         config = core.ConfigManager()
         for config_tup in config._configs.values():

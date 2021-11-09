@@ -11,12 +11,13 @@ _log = logging.getLogger(__name__)
 
 
 def exit_on_exception(exc, msg=None):
-    """Prints information about a fatal exception to the console beofre exiting.
+    """Prints information about a fatal exception to the console before exiting.
     Use case is in user-facing subcommands (``mdtf install`` etc.), since we
     have more sophisticated logging in the framework itself.
+
     Args:
-        exc: :py:class:`Exception` object
-        msg (str, optional): additional message to print.
+        exc (:py:class:`Exception`): Exception to print.
+        msg (str): Optional, additional message to print.
     """
     # if subprocess failed, will have already logged its own info
     print(f'ERROR: caught exception {repr(exc)}')
@@ -33,6 +34,16 @@ def exit_handler(code=1, msg=None):
     sys.exit(code)
 
 def chain_exc(exc, new_msg, new_exc_class=None):
+    """Raise a new exception from an existing one, in order to give more
+    context for debugging. See Python documentation on
+    `exception chaining <https://docs.python.org/3.7/library/exceptions.html>`__.
+
+    Args:
+        exc (:py:class:`Exception`): Incoming exception to chain new exception from.
+        new_msg (str): Message for new Exception.
+        new_exc_class (class): Optional. Class of new exception to raise. If not
+            provided, raises a new exception of the same type as *exc*.
+    """
     if new_exc_class is None:
         new_exc_class = type(exc)
     try:

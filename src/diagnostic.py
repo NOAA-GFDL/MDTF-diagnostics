@@ -1,3 +1,6 @@
+"""Classes representing configuration and status of individual diagnostic scripts
+(PODs) and variables required by the scripts.
+"""
 import os
 import dataclasses as dc
 import io
@@ -157,6 +160,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     # units: Units
     # dims: list
     # scalar_coords: list
+    # modifier: str
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
@@ -402,7 +406,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             - The name for this variable in that data file,
             - The names for all of this variable's coordinate axes in that file,
             - The names of the bounds variables for all of those coordinate
-                dimensions, if provided by the data.
+              dimensions, if provided by the data.
 
         """
         if self.status != core.ObjectStatus.SUCCEEDED:
@@ -430,7 +434,7 @@ class Varlist(data_model.DMDataSet):
     @classmethod
     def from_struct(cls, d, parent):
         """Parse the "dimensions", "data" and "varlist" sections of the POD's
-        settings.jsonc file when instantiating a new Diagnostic() object.
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
         Args:
             d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
@@ -488,7 +492,7 @@ class Varlist(data_model.DMDataSet):
         return cls(contents = list(vlist_vars.values()))
 
     def find_var(self, v):
-        """If a variable matching v is already present in the Varlist, return
+        """If a variable matching *v* is already present in the Varlist, return
         (a reference to) it (so that we don't try to add duplicates), otherwise
         return None.
         """
@@ -515,6 +519,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     # log = util.MDTFObjectLogger
     # status: ObjectStatus
     long_name: str = ""
+    """Test docstring for long_name."""
     description: str = ""
     convention: str = "CF"
     realm: str = ""
@@ -710,7 +715,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         """Determine what executable should be used to run the driver script.
 
         .. note::
-           Existence of the program on teh environment's ``$PATH`` isn't checked
+           Existence of the program on the environment's ``$PATH`` isn't checked
            until before the POD runs (see :mod:`src.environment_manager`.)
         """
 
@@ -736,18 +741,18 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
         Note:
             The existence of data files is checked with
-            :meth:`data_manager.DataManager.fetchData`
+            :meth:`~data_manager.DataManager.fetchData`
             and the runtime environment is validated separately as a function of
-            :meth:`environment_manager.EnvironmentManager.run`. This is because
+            :meth:`~environment_manager.EnvironmentManager.run`. This is because
             each POD is run in a subprocess (due to the necessity of supporting
             multiple languages) so the validation must take place in that
             subprocess.
 
-        Raises: :exc:`~diagnostic.PodRuntimeError` if requirements
-            aren't met. This is re-raised from the
-            :meth:`~diagnostic.Diagnostic.set_entry_point` and
-            :meth:`~diagnostic.Diagnostic._check_for_varlist_files`
-            subroutines.
+        Raises:
+            :exc:`~diagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.Diagnostic._check_for_varlist_files`
+                subroutines.
         """
         try:
             self.set_pod_env_vars()

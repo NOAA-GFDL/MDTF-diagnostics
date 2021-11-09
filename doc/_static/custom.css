@@ -1,0 +1,174 @@
+/*
+ * CSS stylesheet to customize the 'alabaster' sphinx theme
+ * See https://alabaster.readthedocs.io/en/latest/customization.html
+ *
+ * Settings borrowed from those for coala (https://github.com/coala/coala/blob/master/docs/_static/custom.css)
+ * and NCAS-CMS/cf-python https://github.com/NCAS-CMS/cf-python/blob/master/docs/source/_static/customise-alabaster.css
+ */
+
+/* -- fonts ----------------------------------------------------------- */
+
+/* Override few pygments styles */
+
+pre, tt, code {
+    background-color: transparent;
+}
+code.xref {
+    background-color: rgba(165, 181, 206, 0.35);
+    border-bottom: 1px solid rgb(165, 181, 206);
+}
+
+.highlight .nn, .highlight .nc {
+    text-decoration: none;
+}
+.highlight {
+    border: 1px solid #3E4349;
+}
+
+.shorturl {
+    font-size: 0.9em;
+    overflow-x: auto;
+}
+
+/* -- tables ---------------------------------------------------------------- */
+
+table.docutils {
+    border: 0;
+    border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid #aaa;
+    padding-left: 0.75em;
+    padding-right: 1.0em;
+    padding-top: 0.75em;
+    padding-bottom: 0.75em;
+}
+
+th {
+    text-align: left;
+    vertical-align: top;
+    padding-right: 5px;
+    background-color: #5682ad;
+    color: white;
+}
+
+/*
+ * Force top alignment for table items so left reference item can align with
+ * the start of text to describe it in column to right, for better ease of
+ * comprehension in detailed rows where description text spans many lines.
+ */
+td {
+    vertical-align: top;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+/* Some tables are otherwise not left-aligned so force them to be. */
+table.align-default {
+    margin-left: 0;
+}
+
+table.field-list td, table.field-list th {
+    border: 0 !important;
+}
+
+table.footnote td, table.footnote th {
+    border: 0 !important;
+}
+
+table.citation {
+    border-left: solid 1px gray;
+    margin-left: 1px;
+}
+
+table.citation td {
+    border-bottom: none;
+}
+
+/* -- Sphinx build tweaks (hopefully needed only temporarily) --------- */
+
+/* Remove gap between a bullet and its sub-bullet list in contents listings */
+ul.simple > li > p {
+    margin-bottom: 0px;
+}
+
+/* Force one-line spacing between docstring paragraphs (missing for v 2.3.1) */
+.field-list p {
+    margin-bottom: 1.0em;
+}
+
+/*
+ * Alabaster theme is responsive and when screen width becomes small enough
+ * (e.g. with tablets/mobiles) it sets this to 0, making the bullet points sit
+ * outside of their boxes. Prevent that by overriding for all widths.
+ */
+ul {
+    margin-left: 30px;
+}
+
+dt[id] {
+    padding: 0px;
+}
+
+/* More space between autodoc divs for classes, functions */
+dl[class="py class"], dl[class="py function"], dl[class="py exception"], dl[class="py data"] {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 5px;
+    padding-bottom: 11px;
+    margin-top: 6px;
+    margin-bottom: 17px;
+    background-color: #f2f5fa;
+}
+/* Less space between autodoc divs for attributes */
+dl[class="py method"] {
+    margin-bottom: 8px;
+}
+dt[class="py attribute"] {
+    padding: 0px;
+}
+
+dt:target, .highlight, span.highlighted {
+    background: #fbe54c;
+}
+
+/* API reference table (parameters, raises, returns */
+dl.field-list > dt {
+    word-break: keep-all;
+    padding-top: 7px;
+    padding-bottom: 12px;
+}
+dl.field-list > dd {
+    padding-right: 5px;
+    padding-top: 7px;
+    padding-bottom: 12px;
+}
+dl[class~="field-list"] {
+    margin-bottom: 15px;
+}
+/* shade rows of table */
+dl.field-list > dt[class="field-odd"] {
+    /* sidebar, odd rows */
+    background-color: #BFCCE0;
+}
+dl.field-list > dd[class="field-odd"] {
+    /* contents, odd rows */
+    background-color: #DDE3ED;
+}
+dl.field-list > dt[class="field-even"] {
+    /* sidebar, even rows */
+    background-color: #c9d5e9;
+}
+dl.field-list > dd[class="field-even"] {
+    /* contents, even rows */
+    background-color: #E6EBF2;
+}
+
+/* hack to visually align baseline of [source] links */
+span[class="viewcode-link"] {
+    line-height: 1.6em;
+    display: inline-block;
+}

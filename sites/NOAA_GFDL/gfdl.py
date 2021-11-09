@@ -253,8 +253,6 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
-    _convention = "CMIP" # hard-code naming convention
-    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
     _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
 
 
@@ -274,8 +272,6 @@ class Gfdlarchivecmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
-    _convention = "CMIP" # hard-code naming convention
-    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
     _fetch_method = "gcp"
 
 
@@ -294,8 +290,6 @@ class Gfdldatacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_data_CMIP6DataSourceAttributes
-    _convention = "CMIP" # hard-code naming convention
-    col_spec = data_sources.cmip6LocalFileDataSource_col_spec
     _fetch_method = "gcp"
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
@@ -406,6 +400,17 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+    convention: str = "GFDL"
+    CASE_ROOT_DIR: str = ""
+    component: str = ""
+    chunk_freq: util.DateFrequency = None
+
+    def __post_init__(self):
+        """Validate user input.
+        """
+        super(PPDataSourceAttributes, self).__post_init__()
+        config = core.ConfigManager()
+
     pass
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
@@ -436,32 +441,65 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         else:
             return gfdlppDataManager_same_components_col_spec
 
-    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
+    # map "name" field in VarlistEntry's query_attrs() to "variable" field of
+    # PPTimeseriesDataFile
     _query_attrs_synonyms = {'name': 'variable'}
 
     def __init__(self, case_dict, parent):
         super(GfdlppDataManager, self).__init__(case_dict, parent)
+        # default behavior when run interactively:
+        # frepp_mode = False, any_components = True
+        # default behavior when invoked by FRE wrapper:
+        # frepp_mode = True (set to False by calling wrapper with --run_once)
+        # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
-        self.any_components = config.get('any_components', False)
+        self.frepp_mode = config.get('frepp', False)
+        # if no model component set, consider data from any components
+        self.any_components = not(self.attrs.component)
+
+    @property
+    def expt_key_cols(self):
+        """Catalog columns whose values must be the same for all data used in
+        this run of the package.
+        """
+        if not self.frepp_mode and not self.any_components:
+            return ('component', )
+        else:
+            return tuple()
 
     @property
     def pod_expt_key_cols(self):
-        return (tuple() if self.any_components else ('component', ))
-
-    @property
-    def pod_expt_cols(self):
-        # Catalog columns whose values must be the same for each POD.
-        return self.pod_expt_key_cols
+        """Catalog columns whose values must be the same for each POD, but can
+        differ for different PODs.
+        """
+        if self.frepp_mode and not self.any_components:
+            return ('component', )
+        else:
+            return tuple()
 
     @property
     def var_expt_key_cols(self):
-        return (('chunk_freq', 'component') if self.any_components else ('chunk_freq', ))
+        """Catalog columns whose values must "be the same for each variable", ie
+        are irrelevant but must be constrained to a unique value.
+        """
+        # if we aren't restricted to one component, use all components regardless
+        # of frepp_mode. This is the default behavior when called from the FRE
+        # wrapper.
+        if self.any_components:
+            return ('chunk_freq', 'component')
+        else:
+            return ('chunk_freq', )
+
+    # these have to be supersets of their *_key_cols counterparts; for this use
+    # case they're all just the same set of attributes.
+    @property
+    def expt_cols(self): return self.expt_key_cols
 
     @property
-    def var_expt_cols(self):
-        # Catalog columns whose values must "be the same for each variable", ie
-        # are irrelevant but must be constrained to a unique value.
-        return self.var_expt_key_cols
+    def pod_expt_cols(self): return self.pod_expt_key_cols
+
+    @property
+    def var_expt_cols(self): return self.var_expt_key_cols
 
     @property
     def CATALOG_DIR(self):
@@ -625,10 +663,10 @@ class GfdlvirtualenvEnvironmentManager(
         modMgr.revert_state()
 
 class GfdlcondaEnvironmentManager(environment_manager.CondaEnvironmentManager):
-    # Use mdteam's anaconda2
+    # Use miniconda3 in the mdtf role account
     def _call_conda_create(self, env_name):
         raise Exception(("Trying to create conda env {} "
-            "in read-only mdteam account.").format(env_name)
+            "in read-only mdtf role account.").format(env_name)
         )
 
 # ------------------------------------------------------------------------

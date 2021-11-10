@@ -64,61 +64,80 @@ Python function used
                              based on two other variables (bin1_var, bin2_var) in the same xr.Dataset. 
                              The function calculate the mean, std, and count values of the target_var 
                              after binning.
+                             
+- model_read.regional_var  : The function is written to read the model output and required varaibles.
+                             The function also crop the data based on the user set time period and 
+                             region. Two varibales is calculated in this function 1) saturation specific  
+                             humidity near surface (determined by surface temperature and surface pressure)
+                             and 2) dq which represent the vertical difference of specific humidity 
+                             near surface. 
+                             
+- obs_data_read.tao_triton : The function is written to read the observational data and required varaibles
+                             from the TAO/TRITON array.
+                             The function also crop the data based on the user set time period and 
+                             region. Two varibales is calculated in this function 1) saturation specific  
+                             humidity near surface (determined by surface temperature and surface pressure)
+                             and 2) dq which represent the vertical difference of specific humidity 
+                             near surface.
+                             
+- obs_data_read.rama       : The function is written to read the observational data and required varaibles
+                             from the RAMA array.
+                             The function also crop the data based on the user set time period and 
+                             region. Two varibales is calculated in this function 1) saturation specific  
+                             humidity near surface (determined by surface temperature and surface pressure)
+                             and 2) dq which represent the vertical difference of specific humidity 
+                             near surface.
 
 
 Required programming language and libraries
 -------------------------------------------
 
 The programming language is python version 3 or up. The third-party libraries
-include "matplotlib", "xarray", "cartopy","cftime","numpy","scipy". The conda environment
-can be set to _MDTF_python3_base.
+include "matplotlib", "xarray", "metpy","numpy","scipy". The conda environment
+need to be set to _MDTF_ocn_surf_flux_diag.
 
 Required model output variables
 -------------------------------
 
-With monthly frequency from the model output. This diagnostic needs
+With daily frequency from the model output. This diagnostic needs
 
-input model variables
+input atmosphere model variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- tauuo (surface wind stress in the x direction from native model output resolution/grid) 
-- tauvo (surface wind stress in the y direction from native model output resolution/grid) 
-- zos (dynamic sea level height in the model from native model output resolution/grid) 
+    1. 'huss'    : Surface 2m Humidity (kg kg-1)
+    2. 'ts'      : Skin Temperature (SST for open ocean; K)
+    3. 'sfcWind' : Near-Surface Wind Speed (10 meter; m s-1)
+    4. 'psl'     : Sea Level Pressure (Pa)
+    5. 'hfls'    : Surface Upward Latent Heat Flux (W m-2 and positive upward)
+    6. 'pr'      : Precipitation (kg m-2 s-1)
 
-The script is written based on the CESM2-OMIP1 download provided by CMIP6-OMIP 
-hosted by WCRP.
+The script is written based on the CESM2-CMIP6 daily data download hosted by WCRP.
 
-The dimension of all variable is 3-D with (time,nlat,nlon) in dimension and 2-D 
+The dimension of all variable is 3-D with (time,lat,lon) in dimension and 2-D 
 array for lat and lon as coordinate.
 
 
 Required observational data 
 -------------------------------
 
-This diagnostic needs
+With daily frequency from the observational data. This diagnostic needs
 
 input observational variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- adt (absolute dynamic topography from CMEMS)
-    preprocessing from daily to monthly mean is needed (use 'io_cmems_adt.py')
-- tx (surface wind stress in the x direction from WASwind)
-    no preprocessing needed
-- ty (surface wind stress in the y direction from WASwind)
-    no preprocessing needed
+    1. 'RH'           : Relative Humidity (%)
+    2. 'SST'          : Sea Surface Temperature (for open ocean; K)
+    3. 'WindSpeed10m' : Near-Surface Wind Speed (10 meter; m s-1)
+    4. 'SLP'          : Sea Level Pressure (Pa)
+    5. 'Latent'       : Surface Upward Latent Heat Flux (W m-2 and positive upward)
+    6. 'airT'         : Near Surface Temperature (K)
+   
 
 data access :
 **********************
      
-- adt : 
-    Ftp server is the fastest way to manage download
-    `http://marine.copernicus.eu/services-portfolio/access-to-products/  <http://marine.copernicus.eu/services-portfolio/access-to-products/>`_
-    search for product ID - "SEALEVEL_GLO_PHY_L4_REP_OBSERVATIONS_008_047"
-    Need to download the daily data with adt (absolute dynamic topography) available 
-    
-- tx,ty :
-    `https://www.riam.kyushu-u.ac.jp/oed/tokinaga/waswind.html  <https://www.riam.kyushu-u.ac.jp/oed/tokinaga/waswind.html>`_
+All variables can be downloaded from PMEL NOAA hosted website
+`https://www.pmel.noaa.gov/tao/drupal/flux/index.html  <https://www.pmel.noaa.gov/tao/drupal/flux/index.html>`_
     
 
-The dimension of all variable is 3-D with 2-D in space and time
 
 References
 ----------
@@ -128,36 +147,14 @@ References
 
 .. _ref-Hsu: 
    
-1. C.-W. Hsu et al. (2020): A Mechanistic Analysis of Tropical Pacific Dynamic 
-   Sea Level in GFDL-OM4 under OMIP-I and OMIP-II Forcings. *GMD*, under review.
-   
-2. S. M. Griffies et al. (2016): OMIP contribution to CMIP6: experimental and 
-   diagnostic protocol for the physical component of the Ocean Model Intercomparison 
-   Project. *GMD*, `https://doi.org/10.5194/gmd-9-3231-2016 <https://doi.org/10.5194/gmd-9-3231-2016>`_
-   
-3. S. Kobayashi et al., (2015): The JRA-55 Reanalysis: General Specifications and Basic Characteristics.
-   *Journal of the Meteorological Society of Japan. Ser. II*, 
-   `https://doi.org/10.2151/jmsj.2015-001<https://doi.org/10.2151/jmsj.2015-001>`_ 
-   
-4. W. G. Large and S. G. Yeager, (2009): The global climatology of an interannually varying air–sea flux data set.
-   *Climate Dynamics*,`https://doi.org/10.1007/s00382-008-0441-3<https://doi.org/10.1007/s00382-008-0441-3>`_
+1. C.-W. Hsu et al. (2020): Ocean Surface Flux Algorithm Effects on Tropical 
+    Indo-Pacific Intraseasonal Precipitation. *GRL*, under review.
+
 
 
 More about this diagnostic
 --------------------------
 
-The sea level over the tropical Pacific is a key indicator reflecting vertically 
-integrated heat distribution over the ocean. We find persisting mean state dynamic
-sea level (DSL) bias along 9◦N even with updated wind forcing in JRA55-do relative to CORE.
-The mean state bias is related to biases in wind stress forcing and geostrophic currents 
-in the 4◦N to 9◦N latitudinal band. The simulation forced by JRA55-do significantly reduces 
-the bias in DSL trend over the northern tropical Pacific relative to CORE. In the CORE forcing, 
-the anomalous westerly wind trend in the eastern tropical Pacific causes an underestimated 
-DSL trend across the entire Pacific basin along 10◦N. The simulation forced by JRA55-do 
-significantly reduces the bias in DSL trend over the northern tropical Pacific relative to CORE. 
-We also identify a bias in the 10 easterly wind trend along 20◦N in both JRA55-do and CORE, 
-thus motivating future improvement. In JRA55-do, an accurate Rossby wave initiated in the eastern 
-tropical Pacific at seasonal time scale corrects a biased seasonal variability of the northern 
-equatorial counter-current in the CORE simulation. Both CORE and JRA55-do generate realistic 
-DSL variation during El Niño. We find an asymmetry in the DSL pattern on two sides of the equator
-is strongly related to wind stress curl that follows the sea level pressure evolution during El Niño.
+Surface latent heat flux from ocean to the atmosphere is one of the important processes that provides water vapor and energy to the daily tropical rainfall. In this study, a visually intuitive latent heat flux diagnostic is proposed to better understand the model shortfall on its latent heat flux representation. This diagnostic allows a simple assessment of model latent heat flux biases arising either from biases in water vapor or surface wind speed as well as other empirical coefficients in the model. We demonstrate that, compared to ''observed'' fluxes also estimated from water vapor and surface wind speed measured at tropical moorings, tropical latent heat fluxes in the NCAR CEMS2 and DOE E3SMv1 models are significantly overestimated when extreme water vapor or surface wind speed happens. 
+
+Both offline and incline latent heat flux correction is applied to simulated fluxes. For both models, the correction reduces the percentage of latent heat flux on supporting the rainfall over the tropics which is in better agreement with observations. Particularly, the latent heat flux correction are non-uniform across different stages of the Madden–Julian oscillation (MJO). This finding suggests that a model improvement on the latent heat flux representation will change the simulated MJO.

@@ -2,7 +2,6 @@ load "blocking_funcs.ncl"
 
 ; For any one of these test cases, set True and run as main
 ; SETTINGS (for running as main:  ncl func_blocking.ncl )
-test_whole_shebang         = False  ; not implemented, since is from blocking.ncl!
 test_get_all_cases         = False
 test_ensemble_find         = False
 test_file_read             = False
@@ -78,7 +77,7 @@ if (test_file_read) then
 
 end if; (test_file_read) then
 
-if ( test_whole_shebang.or.test_get_all_cases.or.test_ensemble_find.or.test_get_legend.or.test_get_possible_attr.or.test_get_plot_settings_all ) then
+if ( test_get_all_cases.or.test_ensemble_find.or.test_get_legend.or.test_get_possible_attr.or.test_get_plot_settings_all ) then
   print("================ test_get_all_cases: ")
 
   all_cases = blocking_get_all_case_info(False)

@@ -15,7 +15,7 @@ setenv  LASTYR  1994
 setenv  zg500_var zg500
 
 #i/o   - code writes figures to $WK_DIR/obs/PS, $WK_DIR/model/PS
-setenv  WK_DIR /project/amp/bundy/mdtf/MDTF_v3.0beta.blocking.20210930/MDTF_30L_cam5301_FAMIP_1990_1994/blocking_neale
+setenv  WK_DIR /project/amp/bundy/mdtf/outdirs/MDTF_v3.0beta.blocking.20211110/MDTF_30L_cam5301_FAMIP_1990_1994/blocking_neale
 setenv  WORKING_DIR  $WK_DIR  #maybe new name?
 
 # Where the framework writes the pre-processed input model data
@@ -26,17 +26,17 @@ setenv  OBS_DATA    /project/amp/bundy/mdtf/inputdata/obs_data/blocking_neale
 
 
 #settings, related to OBS & Ensembles 
-setenv  MDTF_BLOCKING_READ_DIGESTED  True
-setenv  MDTF_BLOCKING_WRITE_DIGESTED False
-setenv  MDTF_BLOCKING_WRITE_DIGESTED_DIR /project/amp/bundy/mdtf/inputdata/obs_data/blocking_neale/digested_new
+setenv  MDTF_BLOCKING_READ_DIGESTED  False
+setenv  MDTF_BLOCKING_WRITE_DIGESTED True
+setenv  MDTF_BLOCKING_WRITE_DIGESTED_DIR digested.20211110  #rel to WK_DIR
 setenv  path_variable MODEL_DATA_PATH  
 
 #setenv  standard_name geopotential_height_500mb 
 setenv POD_HOME /home/bundy/mdtf/blocking/diagnostics/blocking_neale
 setenv TEST_HOME /home/bundy/mdtf/blocking/diagnostics/blocking_neale/test
 setenv MDTF_BLOCKING_OBS  True  # No figures produced without obs, but it works for writing digested data
-setenv MDTF_BLOCKING_CAM3 True
-setenv MDTF_BLOCKING_CAM4 True
+setenv MDTF_BLOCKING_CAM3 False
+setenv MDTF_BLOCKING_CAM4 False
 setenv MDTF_BLOCKING_CAM5 True
 setenv MDTF_DEBUG         True #True reduces size of ensemble number; only
 				#used by blocking_funcs.nlc main

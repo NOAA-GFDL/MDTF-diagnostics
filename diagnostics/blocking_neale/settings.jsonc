@@ -27,7 +27,7 @@
     // key:value pairs. The user can't change these at runtime, but they can be 
     // used to set site-specific installation settings for your diagnostic.
     "pod_env_vars" : {
-	"MDTF_BLOCKING_OBS": "True",
+	"MDTF_BLOCKING_OBS" : "True",
 	"MDTF_BLOCKING_CAM3": "False",
 	"MDTF_BLOCKING_CAM4": "False",
 	"MDTF_BLOCKING_CAM5": "True",

@@ -424,7 +424,7 @@ plot(ip) = gsn_csm_xy (wks,block_freq_aves_p&lon,block_freq_aves_p,res_m) ; Line
 fcolors = get_light_colors_array(all_cases@line_colors(all_cases@nobs:nlines-1))  ;not obs
 do iens=0,all_cases@nens-1
   plot_inds = all_cases@nobs+iens
-  res_mm@gsnXYFillColors = fcolors(iens)   ; drbdbg should grab shading color by ens name
+  res_mm@gsnXYFillColors = fcolors(iens)   ; should grab shading color by ens name
 
 ; Plot minn/maxx/mean lines
   
@@ -435,7 +435,7 @@ do iens=0,all_cases@nens-1
 
 end do ; ensembles
 
-print("finished plotting all ensembles ")
+print("Finished plotting all ensembles ")
 
 delete([/res_mm@xyLineColors(0:1),res_mm@gsnXYFillOpacities,res_mm@gsnXYFillOpacities/])
 delete([/block_freq_p,block_freq_pp,block_freq_min,block_freq_max,block_freq_min_p,block_freq_max_p,block_freq_aves,block_freq_aves_p,block_freq_p/])

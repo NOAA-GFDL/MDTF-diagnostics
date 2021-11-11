@@ -3,15 +3,18 @@ var_name = "block_time"  ; this could be sent in, obviously!
 
 
 
-function set_file_name_digested(file_opts_in)
-; Only used to WRITE_DIGESTED; read_digested set in blocking_funcs.ncl set_and_check_file
+function set_file_name_write_digested(file_opts_in)
+; Only used to WRITE_DIGESTED; 
+; READ_DIGESTED filename set through blocking_funcs.ncl set_and_check_file
 ; Set the file name and direction for the digested file
 ; based off the information in the undigested file name
 begin
 
+
   file_opts_out = file_opts_in  ; copy everything
-  
-  dir_out = set_from_env("MDTF_BLOCKING_WRITE_DIGESTED_DIR",False)     ; directory to write into
+  path_out        = set_from_env("WK_DIR",False)                    ; wkdir
+  dir_out = set_from_env("MDTF_BLOCKING_WRITE_DIGESTED_DIR",False)  ; write directory
+
   strs = str_split(file_opts_in@file_name, "/")  ; separate strings of path by "/"
 
   file_name_digested = strs(dimsizes(strs)-1)    ; file name is last string
@@ -21,7 +24,11 @@ begin
     file_name_digested = dir_one_up+"."+file_name_digested
   end if
 
-  file_opts_out@file_name_digested = dir_out+"/"+file_name_digested
+  path_plus_dir = path_out+"/"+dir_out
+  file_opts_out@file_name_digested = path_plus_dir+"/"+file_name_digested
+
+  print("Making directory to write digested files: "+path_plus_dir)
+  system("mkdir -p "+path_plus_dir)
 
 
   return file_opts_out
@@ -40,14 +47,14 @@ begin
   env_settings@type_logical = env_var_name
   write_digested_flag = set_from_env(env_var_name,env_settings)
   if ( write_digested_flag ) then
-    file_opts_out = set_file_name_digested(file_opts_in)
+    file_opts_out = set_file_name_write_digested(file_opts_in)
 
     time     = var&time
     lon = var&lon
 
     ; Create file
     file_out = file_opts_out@file_name_digested
-    system("/bin/rm -f " + file_out)    ; remove if exists !DRB tie to settings flags
+    system("/bin/rm -f " + file_out)    ; remove if exists 
     fout  = addfile (file_out, "c")  ; open output file
     setfileoption(fout,"DefineMode",True)
 
@@ -96,8 +103,7 @@ begin
 
     fout->time_ymd = time_ymd
     print("Wrote digested file "+file_out)
-  else ;   write_digested_flag = False
-    print("DEBUG: Not writing digested")
+    print("(if the file is not present after the run, set 'save_nc: true' in input to MDTF)")
   end if  
 
 
@@ -117,7 +123,6 @@ end
 ; ------------------------------------------------------
 procedure set_digested(opts)
 ; copies env vars to opts: READ_DIGESTED, WRITE_DIGESTED
-; if True, sets name of file and checks its existence ; DRBDBG NOT YET!
 begin
 
    read_digested_flag = set_from_env_logical("MDTF_BLOCKING_READ_DIGESTED",opts)
@@ -133,6 +138,9 @@ begin
    print("Read  Digested = "+read_digested_flag)
    print("Write Digested = "+write_digested_flag)
 
-
+   if ( read_digested_flag .and. write_digested_flag ) then
+     print("ERROR: MDTF_BLOCKING_WRITE_DIGESTED = True requires MDTF_BLOCKING_READ_DIGESTED = False")
+     exit
+   end if
 end
 

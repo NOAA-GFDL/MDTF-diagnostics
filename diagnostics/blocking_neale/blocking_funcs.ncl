@@ -91,7 +91,7 @@ end ; set_from_env_logical
 ; This is for the testing purposes only!
 
 opts = True
-debug = set_from_env_logical("MDTF_DEBUG",opts) ; switches to fewer ens members instead of 5
+debug = set_from_env_logical("MDTF_BLOCKING_DEBUG",opts) ; switches to fewer ens members instead of 5
 if ( ismissing(debug)) then
   delete(debug) ; because above sets it as string type (annoyingly!)
   debug = False; use full ensembles
@@ -140,7 +140,7 @@ begin
    file_opts@year0     = all_cases@years_run0(ifile)  
    file_opts@year1     = all_cases@years_run1(ifile)
    file_opts@case_type = all_cases@case_type(ifile)
-   file_opts@lcolors   = all_cases@plot_colors(ifile) ; is this used? DRB
+   file_opts@lcolors   = all_cases@plot_colors(ifile)
 
    return file_opts
 end ; function extract_file_opts(all_cases,index)
@@ -288,7 +288,7 @@ begin; blocking_readvar
 
      var_0 = fin->$var_name$(opts@idays,{opts@lats_in:opts@latn_in},{opts@lonw_in:opts@lone_in})
 
-     if (typeof(var_0).eq."short") then   ;drb make this a function
+     if (typeof(var_0).eq."short") then   ;this could become a function
      	print("Converting variable from type short to float")
 	var_1 = short2flt(var_0)
 	copy_VarMeta(var_0,var_1)
@@ -326,7 +326,7 @@ begin; blocking_readtime
 
        time = fin->time
 
-       if ((time@units .eq. "julian day").or.(time@units .eq. "Julian Day")) then  ;drb stronger to strmatch case-insensitive julian 
+       if ((time@units .eq. "julian day").or.(time@units .eq. "Julian Day")) then  ;stronger to strmatch case-insensitive julian 
          time_ymd = jul2greg(time)	
        else  
          time@calendar = "noleap"     
@@ -531,9 +531,7 @@ end
 ; ------------------------------------------------------
 function get_lons_plot()
 ; Longitudes to interpolate to for the figure
-; DRB TODO
-; this file is a static variable? But why not use one of the existing grids
-; instead of something else entirely? 
+
 begin
   obs_dir = get_path_obs(True)
   flons = addfile(obs_dir+"/cami_1987-01-01_0.9x1.25_L26_c060703.nc","r")
@@ -688,7 +686,7 @@ end
 ;     Undigested: obs_data/blocking/undigested/ERAI/ERAI.z500.day.nc
 ; -------------------------------------------------------
 function get_digested_file_string()
-;return string in digested file filename
+;return string in read digested file filename
 ;default is that file names are labeled when digested
 begin
   return ".digested"
@@ -696,7 +694,7 @@ end
 
 ; -------------------------------------------------------
 function get_undigested_file_string()
-;return string in digested file filename
+;return string in read undigested file filename
 ;default is that file names are unlabeled when undigested
 begin
   return ""
@@ -704,7 +702,7 @@ end
 
 ; -------------------------------------------------------
 function get_digested_dir_string()
-;return string in digested directory name
+;return string in read digested directory name
 ;default is to put digested in the main dir
 begin
   return "/"
@@ -712,7 +710,7 @@ end
 
 ; -------------------------------------------------------
 function get_undigested_dir_string()
-;return string in undigested directory name
+;return string in read undigested directory name
 ;default is to put undigested in a subdir
 begin
   return "/undigested/"   
@@ -879,7 +877,7 @@ begin
 
   file_names  = new(nruns,"string")
   do ile=0,nruns-1
-    file_names(ile)  = run_info@run_name+ "/"+\
+    file_names(ile)  = "CAM_ensembles/"+run_info@run_name+ "/"+\
                        run_info@run_name+"."+sprinti("%0.3i",ile+1)+\
                        "_dmeans_ts_"+run_info@var_name  ; '.nc' added after digested logic
   end do
@@ -906,7 +904,7 @@ begin
 
   file_names  = new(nruns,"string")
   do ile=0,nruns-1
-    file_names(ile)  = run_info@run_name+ "/"+\
+    file_names(ile)  = "CAM_ensembles/"+ run_info@run_name+ "/"+\
                        run_info@run_name+"."+sprinti("%0.3i",ile+1)+\
                        "_dmeans_ts_"+run_info@var_name  ; '.nc' added after digested logic
   end do
@@ -936,7 +934,7 @@ begin
   file_names  = new(nruns,"string")
 
   do ile=0,nruns-1
-      file_names(ile)  = run_info@run_name+"/"+\
+      file_names(ile)  = "CAM_ensembles/"+ run_info@run_name+"/"+\
                                 run_info@run_name+sprinti(".ES%0.2i",ile+1)+\
                                 "_dmeans_ts_"+run_info@var_name ; '.nc' added after digested logic
   end do
@@ -1080,7 +1078,7 @@ begin
   ; This is used by the CAM model ensembles as well as actual OBS, so set here
   path_obs   = get_path_obs(opts)
   opts@path_obs = path_obs
-  opts@path_cam_ensembles = path_obs+"/CAM_ensembles"
+  opts@path_cam_ensembles = path_obs
 
 
   case_name_found = False ; not used
@@ -1512,7 +1510,6 @@ res_m = True
 res_m@gsnDraw = False
 res_m@gsnFrame = False
 
-;drb res_m@gsnMaximize = True
 res_m@gsnMaximize = False
 
 res_m@gsnDraw            = False                   ; don't draw
@@ -1686,7 +1683,6 @@ begin
 
   nfiles = dimsizes(all_cases@file_names)
 
-; Documentation says WK_DIR but MDTF uses DATADIR (?)
   path_out        = set_from_env("WK_DIR",False)
 
 ; These are hard-coded into mdtf/src/output_manger.py:convert_pod_figures

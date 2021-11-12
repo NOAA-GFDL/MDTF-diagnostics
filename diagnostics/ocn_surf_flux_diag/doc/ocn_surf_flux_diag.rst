@@ -1,13 +1,3 @@
-.. This is a comment in RestructuredText format (two periods and a space).
-
-.. Note that all "statements" and "paragraphs" need to be separated by a blank 
-   line. This means the source code can be hard-wrapped to 80 columns for ease 
-   of reading. Multi-line comments or commands like this need to be indented by
-   exactly three spaces.
-
-.. Underline with '='s to set top-level heading: 
-   https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
-
 Ocean Surface Latent Heat Flux Diagnostic Documentation 
 ================================
 
@@ -32,21 +22,14 @@ demonstrate dependence on both sfcWind and dq. An offline latent heat bias corre
 can be performed on model simulations based on the bias latent heat fluxes matrix 
 as a function of dq and sfcWind.
 
-.. Underline with '-'s to make a second-level heading.
 
 Version & Contact info
 ----------------------
-
-.. '-' starts items in a bulleted list: 
-   https://docutils.sourceforge.io/docs/user/rst/quickref.html#bullet-lists
-
 
 - Version/revision information: version 1 (10/15/2021)
 - PI (Charlotte A. DeMott, Colorado State University, charlotte.demott@colostate.edu)
 - Developer/point of contact (Chia-Wei Hsu, Colorado State University, Chia-Wei.Hsu@colostate.edu)
 
-
-.. Underline with '^'s to make a third-level heading.
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -142,9 +125,6 @@ All variables can be downloaded from PMEL NOAA hosted website
 References
 ----------
 
-.. Note this syntax, which sets the "anchor" for the hyperlink: two periods, one
-   space, one underscore, the reference tag, and a colon, then a blank line.
-
 .. _ref-Hsu: 
    
 1. C.-W. Hsu et al. (2020): Ocean Surface Flux Algorithm Effects on Tropical 
@@ -155,6 +135,4 @@ References
 More about this diagnostic
 --------------------------
 
-Surface latent heat flux from ocean to the atmosphere is one of the important processes that provides water vapor and energy to the daily tropical rainfall. In this study, a visually intuitive latent heat flux diagnostic is proposed to better understand the model shortfall on its latent heat flux representation. This diagnostic allows a simple assessment of model latent heat flux biases arising either from biases in water vapor or surface wind speed as well as other empirical coefficients in the model. We demonstrate that, compared to ''observed'' fluxes also estimated from water vapor and surface wind speed measured at tropical moorings, tropical latent heat fluxes in the NCAR CEMS2 and DOE E3SMv1 models are significantly overestimated when extreme water vapor or surface wind speed happens. 
-
-Both offline and incline latent heat flux correction is applied to simulated fluxes. For both models, the correction reduces the percentage of latent heat flux on supporting the rainfall over the tropics which is in better agreement with observations. Particularly, the latent heat flux correction are non-uniform across different stages of the Madden–Julian oscillation (MJO). This finding suggests that a model improvement on the latent heat flux representation will change the simulated MJO.
+Surface latent heat flux from ocean to the atmosphere is one of the important processes that provides water vapor and energy to the daily tropical rainfall. A visually intuitive latent heat flux diagnostic is proposed to better understand the model shortfall on its latent heat flux representation. This diagnostic allows a simple assessment of model latent heat flux biases arising either from biases in water vapor or surface wind speed as well as other empirical coefficients in the model. Sample POD result shows that, compared to ''observed'' fluxes also estimated from water vapor and surface wind speed measured at tropical moorings, tropical latent heat fluxes in the NCAR CEMS2 models are significantly overestimated when extreme water vapor or surface wind speed happens.

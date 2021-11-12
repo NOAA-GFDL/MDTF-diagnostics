@@ -1,4 +1,3 @@
-import os
 import xarray as xr
 import numpy as np
 import metpy.calc
@@ -60,7 +59,6 @@ def regional_var(varlist, lon_lim, lat_lim, year_lim):
     ###########################################################################
     # cropping dataset
 
-    ds_atm_regional = xr.Dataset()
     ds_atm_regional = ((ds_atm).where(
                            (ds_atm.lon>=np.array(lon_lim).min())&
                            (ds_atm.lon<=np.array(lon_lim).max())&

@@ -1,5 +1,4 @@
 import os
-import sys
 import metpy.calc
 import numpy as np
 import xarray as xr
@@ -57,7 +56,6 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
 
     var_file_dict = {}
-    location_dict = {}
     #print('Read Variables:')
     for nvar,var in enumerate(varlist):
         var_file = []
@@ -116,7 +114,7 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
             print("%s included"%stn_loc)
         except FileNotFoundError:
             print('%s not enough data'%stn_loc)
-            pass
+
 
 
     ### clean fill_value
@@ -283,7 +281,6 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
 
     var_file_dict = {}
-    location_dict = {}
     #print('Read Variables:')
     for nvar,var in enumerate(varlist):
         var_file = []
@@ -342,7 +339,6 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
             print("%s included"%stn_loc)
         except FileNotFoundError:
             print('%s not enough data'%stn_loc)
-            pass
 
 
     ### clean fill_value

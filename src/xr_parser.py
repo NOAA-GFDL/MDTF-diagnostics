@@ -1,8 +1,4 @@
-"""Code for normalizing metadata in xarray Datasets; see :doc:`fmwk_preprocess`.
-
-Familiarity with the  `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__
-package, used as a third-party dependency, as well as the :doc:`src.data_model`
-is recommended.
+"""Utility functions for working with xarray Datasets.
 """
 import collections
 import functools
@@ -34,18 +30,16 @@ _cf_calendars = (
 )
 
 ATTR_NOT_FOUND = util.sentinel_object_factory('AttrNotFound')
-"""
+ATTR_NOT_FOUND.__doc__ = """
 Sentinel object serving as a placeholder for netCDF metadata attributes that
 are expected, but not present in the data.
 """
 
 @util.mdtf_dataclass
 class PlaceholderScalarCoordinate():
-    """Dummy object used to describe `scalar coordinates
-    <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#scalar-coordinate-variables>`__
-    referred to by name only in the 'coordinates' attribute of a variable or
-    dataset. We do this so that the attributes match those of coordinates
-    represented by real netCDF Variables.
+    """Dummy object used to describe scalar coordinates referred to by name only
+    in the 'coordinates' attribute of a variable or dataset. We do this so that
+    the attributes match those of coordinates represented by real netCDF Variables.
     """
     name: str
     axis: str
@@ -57,13 +51,8 @@ class PlaceholderScalarCoordinate():
 # (https://github.com/xarray-contrib/cf-xarray, https://cf-xarray.readthedocs.io/en/latest/)
 
 def patch_cf_xarray_accessor(mod):
-    """Monkey-patches ``_get_axis_coord``, a module-level function in
-    `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__,
-    to obtain desired axis-to-coordinate lookup behavior. Specifically, if a
-    variable has been recognized as one of the coordinates in the dict above
-    *and* no variable has been set as the corresponding axis, recognize the
-    variable as that axis as well. See discussion at
-    `<https://github.com/xarray-contrib/cf-xarray/issues/23>`__.
+    """Monkey-patches ``_get_axis_coord``, a module-level function in cf_xarray,
+    to obtain desired behavior.
     """
     _ax_to_coord = {
         "X": ("longitude", ),
@@ -80,7 +69,7 @@ def patch_cf_xarray_accessor(mod):
         """Modify cf_xarray behavior: If a variable has been recognized as one of
         the coordinates in the dict above **and** no variable has been set as the
         corresponding axis, recognize the variable as that axis as well.
-        See discussion at `<https://github.com/xarray-contrib/cf-xarray/issues/23>`__.
+        See discussion at `https://github.com/xarray-contrib/cf-xarray/issues/23`__.
 
         Args:
             var: Dataset or DataArray to be queried
@@ -102,22 +91,17 @@ def patch_cf_xarray_accessor(mod):
 patch_cf_xarray_accessor(cf_xarray.accessor)
 
 class MDTFCFAccessorMixin(object):
-    """Properties we add to both xarray Dataset and DataArray objects via the
-    accessor `extension mechanism
-    <http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`__.
+    """Methods we add for both xarray Dataset and DataArray objects, although
+    intended use case will be to call them once per Dataset.
     """
     @property
     def is_static(self):
-        """Returns bool according to whether the Dataset/DataArray has/is a time
-        coordinate.
-        """
         return bool(cf_xarray.accessor._get_axis_coord(self._obj, "T"))
 
     @property
     def calendar(self):
         """Reads 'calendar' attribute on time axis (intended to have been set
-        by :meth:`DefaultDatasetParser.normalize_calendar`). Returns None if
-        no time axis.
+        by set_calendar()). Returns None if no time axis.
         """
         ds = self._obj # abbreviate
         t_names = cf_xarray.accessor._get_axis_coord(ds, "T")
@@ -137,8 +121,8 @@ class MDTFCFAccessorMixin(object):
                 of all coordinates in the dataset.
 
         Returns:
-            Dict mapping axes labels to lists of names of variables in the
-            Dataset that the accessor has mapped to that axis.
+            dict mapping axes labels to lists of names of variables in the
+            DataSet that the accessor has mapped to that axis.
         """
         if var_name is None:
             axes_obj = self._obj
@@ -206,24 +190,18 @@ class MDTFCFAccessorMixin(object):
 
     @property
     def dim_axes_set(self):
-        """Returns a frozenset of names of axes which are dimension coordinates."""
         return frozenset(self._obj.cf.dim_axes().keys())
 
     @property
     def axes_set(self):
-        """Returns a frozenset of all axes names."""
         return frozenset(self._obj.cf.axes().keys())
 
 class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
-    """Methods we add for xarray Dataset objects via the accessor
-    `extension mechanism
-    <http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`__.
+    """Methods we add for xarray Dataset objects.
     """
     def scalar_coords(self, var_name=None):
-        """Return a list of the Dataset variable objects corresponding to scalar
-        coordinates on the entire Dataset, or on *var_name* if given. If a
-        coordinate was defined as an attribute only, return its name in a
-        :class:`PlaceholderScalarCoordinate` object instead.
+        """Return a list of the Dataset variables corresponding to scalar coordinates.
+        If coordinate was defined as an attribute only, store its name instead.
         """
         ds = self._obj
         axes_d = ds.cf._old_axes_dict(var_name=var_name)
@@ -243,9 +221,8 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
 
     def get_scalar(self, ax_name, var_name=None):
         """If the axis label *ax_name* is a scalar coordinate, return the
-        corresponding xarray DataArray (or :class:`PlaceholderScalarCoordinate`),
-        otherwise return None. Applies to the entire Dataset, or to *var_name*
-        if given.
+        corresponding xarray DataArray (or PlaceholderScalarCoordinate), otherwise
+        return None.
         """
         for c in self.scalar_coords(var_name=var_name):
             if c.axis == ax_name:
@@ -254,7 +231,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
 
     def axes(self, var_name=None, filter_set=None):
         """Override cf_xarray accessor behavior
-        (from :meth:`~MDTFCFAccessorMixin._old_axes_dict`).
+        (from :meth:`~MDTFCFAccessorMixin._old_axes_dict).
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset
@@ -264,7 +241,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                 supplied, restrict the returned dict to coordinates in *filter\_set*.
 
         Returns:
-            Dict mapping axis labels to lists of the Dataset variables themselves,
+            dict mapping axis labels to lists of the Dataset variables themselves,
             instead of their names.
         """
         ds = self._obj
@@ -303,9 +280,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
         return self.axes(var_name=var_name, filter_set=self._obj.dims)
 
 class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
-    """Methods we add for xarray DataArray objects via the accessor
-    `extension mechanism
-    <http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`__.
+    """Methods we add for xarray DataArray objects.
     """
     def dim_axes(self):
         """Map axes labels to the (unique) coordinate variable name,
@@ -345,38 +320,20 @@ with warnings.catch_warnings():
     class MDTFCFDatasetAccessor(
         MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor
     ):
-        """Accessor that's registered (under the attribute ``cf``) for xarray
-        Datasets. Combines methods in :class:`MDTFCFDatasetAccessorMixin` and the
-        cf_xarray Dataset accessor.
-        """
         pass
 
     @xr.register_dataarray_accessor("cf")
     class MDTFCFDataArrayAccessor(
         MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor
     ):
-        """Accessor that's registered (under the attribute ``cf``) for xarray
-        DataArrays. Combines methods in :class:`MDTFDataArrayAccessorMixin` and
-        the cf_xarray DataArray accessor.
-        """
         pass
 
 # ========================================================================
 
 class DefaultDatasetParser():
-    """Class containing MDTF-specific methods for cleaning and normalizing
-    xarray metadata.
-
-    Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
+    """Class which acts as a container for MDTF-specific dataset parsing logic.
     """
     def __init__(self, data_mgr, pod):
-        """Constructor.
-
-        Args:
-            data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
-        """
         config = core.ConfigManager()
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
@@ -387,14 +344,8 @@ class DefaultDatasetParser():
         self.log = pod.log # temporary
 
     def setup(self, data_mgr, pod):
-        """Hook for use by child classes (currently unused) to do additional
-        configuration immediately before :meth:`parse` is called on each
-        variable for *pod*.
-
-        Args:
-            data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
+        """Method to do additional configuration immediately before :meth:`parse`
+        is called on each variable for *pod*.
         """
         pass
 
@@ -417,10 +368,7 @@ class DefaultDatasetParser():
                 to use.
 
         Raises:
-            KeyError: if no element of *options* can be coerced to match *key_name*.
-
-        Returns:
-            Element of *options* matching *attr_name*.
+            KeyError if no element of *options* can be coerced to match *key_name*.
         """
         def str_munge(s):
             # for case-insensitive comparison function: make string lowercase
@@ -458,16 +406,14 @@ class DefaultDatasetParser():
         *d*, we check possible nonstandard representations of the key
         (case-insensitive match via :meth:`guess_attr` and whether the key
         starts with the string *key_startswith*.) If no match is found for
-        *key_name*, its value is set to the sentinel value :data:`ATTR_NOT_FOUND`.
+        *key_name*, its value is set to the sentinel value ATTR_NOT_FOUND.
 
         Args:
             new_attr_d (dict): dict to store all found attributes. We don't
                 change attributes on *d* here, since that can interfere with
-                `xarray.decode_cf()
-                <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
-                but instead modify this dict in place and pass it to
-                :meth:`restore_attrs` so they can be set once that's done.
-            d (dict): dict of Dataset attributes, whose keys are to be searched
+                xarray.decode_cf(), but instead pass this to :meth:`restore_attrs`
+                so they can be set once that's done.
+            d (dict): dict of DataSet attributes, whose keys are to be searched
                 for *key_name*.
             key_name (str): Expected name of the key.
             key_startswith (optional, str): If provided and if *key_name* isn't
@@ -502,9 +448,8 @@ class DefaultDatasetParser():
 
     def normalize_calendar(self, attr_d):
         """Finds the calendar attribute, if present, and normalizes it to one of
-        the values in the CF standard before `xarray.decode_cf()
-        <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
-        decodes the time axis.
+        the values in the CF standard before xarray.decode_cf decodes the
+        time axis.
         """
         self.normalize_attr(attr_d, attr_d, 'calendar', 'cal')
         if attr_d['calendar'] is ATTR_NOT_FOUND:
@@ -520,9 +465,7 @@ class DefaultDatasetParser():
 
     def normalize_pre_decode(self, ds):
         """Initial munging of xarray Dataset attribute dicts, before any
-        parsing by `xarray.decode_cf()
-        <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
-        or the cf_xarray accessor.
+        parsing by xarray.decode_cf() or the cf_xarray accessor.
         """
         def strip_(v):
             # strip leading, trailing whitespace from all string-valued attributes
@@ -572,14 +515,10 @@ class DefaultDatasetParser():
         self.normalize_attr(new_attr_d, attr_d, 'standard_name', 'standard')
 
     def normalize_unit(self, new_attr_d, attr_d):
-        """Hook to convert unit strings to values that are correctly parsed by
-        `cfunits <https://ncas-cms.github.io/cfunits/>`__\/`UDUnits2
-        <https://www.unidata.ucar.edu/software/udunits/>`__. Currently we handle
-        the case where "mb" is interpreted as "millibarn", a unit of area (see
-        UDUnits `mailing list
+        """HACK to convert unit strings to values that are correctly parsed by
+        cfunits/UDUnits2. Currently we handle the case where "mb" is interpreted
+        as "millibarn", a unit of area (see UDUnits `mailing list
         <https://www.unidata.ucar.edu/support/help/MailArchives/udunits/msg00721.html>`__.)
-        New cases of incorrectly parsed unit strings can be added here as they
-        are discovered.
         """
         self.normalize_attr(new_attr_d, attr_d, 'units', 'unit')
         unit_str = new_attr_d['units']
@@ -795,7 +734,7 @@ class DefaultDatasetParser():
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
-            ds: xarray Dataset.
+            ds: xarray DataSet.
             ds_var_name (str): Name of the variable in *ds* we expect to
                 correspond to *our_var*.
             overwrite_ours (bool, default False): If True, always update the name
@@ -988,7 +927,7 @@ class DefaultDatasetParser():
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
-            ds: xarray Dataset.
+            ds: xarray DataSet.
         """
         for coord in ds.cf.axes(our_var.name).values():
             # .axes() will have thrown TypeError if XYZT axes not all uniquely defined
@@ -1036,7 +975,7 @@ class DefaultDatasetParser():
         Args:
             our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
-            ds: xarray Dataset.
+            ds: xarray DataSet.
         """
         our_scalars = our_var.scalar_coords
         our_names = [c.name for c in our_scalars]
@@ -1063,7 +1002,7 @@ class DefaultDatasetParser():
                 continue # already logged
             ds_coord_name = ds_var.cf.axes().get(coord.axis)
             if ds_coord_name in ds:
-                # scalar coord is present in Dataset as a dimension coordinate of
+                # scalar coord is present in DataSet as a dimension coordinate of
                 # size 1.
                 if ds[ds_coord_name].size != 1:
                     self.log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
@@ -1071,7 +1010,7 @@ class DefaultDatasetParser():
                 self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
                 self.reconcile_scalar_value_and_units(our_var, ds[ds_coord_name])
             else:
-                # scalar coord has presumably been read from Dataset attribute.
+                # scalar coord has presumably been read from DataSet attribute.
                 # At any rate, we only have a PlaceholderScalarCoordinate object,
                 # which only gives us the name. Assume everything else OK.
                 self.log.warning(("Dataset only records scalar coordinate '%s' as "
@@ -1117,8 +1056,12 @@ class DefaultDatasetParser():
 
         # normal case: T axis has been parsed into cftime Datetime objects, and
         # the following works successfully.
-        cftime_cal = None
-        cftime_cal = _get_calendar(t_coord.encoding)
+        cftime_cal = getattr(t_coord.values[0], 'calendar', None)
+        # look in other places if that failed:
+        if not cftime_cal:
+            self.log.warning("cftime calendar info parse failed on '%s'.",
+                t_coord.name)
+            cftime_cal = _get_calendar(t_coord.encoding)
         if not cftime_cal:
             cftime_cal = _get_calendar(t_coord.attrs)
         if not cftime_cal:
@@ -1131,8 +1074,8 @@ class DefaultDatasetParser():
             'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
     def check_metadata(self, ds_var, *attr_names):
-        """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
-        to the case of getting a variable's standard_name.
+        """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized to the
+        case of getting a variable's standard_name.
         """
         for attr in attr_names:
             if attr not in ds_var.attrs:
@@ -1146,12 +1089,12 @@ class DefaultDatasetParser():
         """Final checking of xarray Dataset attribute dicts before starting
         functions in :mod:`src.preprocessor`.
 
-        Only checks attributes on the dependent variable *var* and its
+        Only check attributes on the dependent variable *var_name* and its
         coordinates: any other netCDF variables in the file are ignored.
         """
         self.check_calendar(ds)
         if var is None:
-            # check everything in Dataset
+            # check everything in DataSet
             names_to_check = ds.variables
         else:
             # Only check attributes on the dependent variable var_name and its
@@ -1168,33 +1111,22 @@ class DefaultDatasetParser():
 
     def parse(self, var, ds):
         """Calls the above metadata parsing functions in the intended order;
-        intended to be called immediately after the Dataset *ds* is opened.
+        intended to be called immediately after the Dataset is opened.
 
         .. note::
            ``decode_cf=False`` should be passed to the xarray open_dataset
            method, since that parsing is done here instead.
 
-        - Calls :meth:`normalize_pre_decode` to do basic cleaning of metadata
-          attributes.
+        - Strip whitespace from attributes as a precaution to avoid malformed
+          metadata.
         - Call xarray's `decode_cf
           <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
           using `cftime <https://unidata.github.io/cftime/>`__ to decode
           CF-compliant date/time axes.
         - Assign axis labels to dimension coordinates using cf_xarray.
-        - Verify that calendar is set correctly (:meth:`check_calendar`).
-        - Reconcile metadata in *var* and *ds* (``reconcile_*`` methods).
+        - Verify that calendar is set correctly.
         - Verify that the name, standard_name and units for the variable and its
-            coordinates are set correctly (``check_*`` methods).
-
-        Args:
-            var (:class:`~src.diagnostic.VarlistEntry`): VerlistEntry describing
-                metadata we expect to find in *ds*.
-            ds (Dataset): xarray Dataset of locally downloaded model data.
-
-        Returns:
-            *ds*, with data unchanged but metadata normalized to expected values.
-            Except in specific cases, attributes of *var* are updated to reflect
-            the 'ground truth' of data in *ds*.
+            coordinates are set correctly.
         """
         if var is not None:
             self.log = var.log
@@ -1222,11 +1154,9 @@ class DefaultDatasetParser():
     @staticmethod
     def get_unmapped_names(ds):
         """Get a dict whose keys are variable or attribute names referred to by
-        variables in the Dataset *ds*, but not present in the dataset itself.
-
-        Returns:
-            (dict): Values of the dict are sets of names of variables in the
-            dataset that referred to the missing name (keys).
+        variables in the dataset, but not present in the dataset itself. Values
+        of the dict are sets of names of variables in the dataset that referred
+        to the missing name.
         """
         all_arr_names = set(ds.dims).union(ds.variables)
         all_attr_names = set(getattr(ds, 'attrs', []))
@@ -1248,4 +1178,3 @@ class DefaultDatasetParser():
             if (ref not in all_arr_names) and (ref not in all_attr_names):
                 missing_refs[ref] = lookup[ref]
         return missing_refs
-

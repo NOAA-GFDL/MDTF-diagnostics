@@ -2,7 +2,6 @@
 imports.
 """
 import os
-import sys
 import errno
 from subprocess import CalledProcessError
 
@@ -11,39 +10,20 @@ _log = logging.getLogger(__name__)
 
 
 def exit_on_exception(exc, msg=None):
-    """Prints information about a fatal exception to the console before exiting.
+    """Prints information about a fatal exception to the console beofre exiting.
     Use case is in user-facing subcommands (``mdtf install`` etc.), since we
     have more sophisticated logging in the framework itself.
-
     Args:
-        exc (:py:class:`Exception`): Exception to print.
-        msg (str): Optional, additional message to print.
+        exc: :py:class:`Exception` object
+        msg (str, optional): additional message to print.
     """
     # if subprocess failed, will have already logged its own info
     print(f'ERROR: caught exception {repr(exc)}')
     if msg:
         print(msg)
-    exit_handler(code=1)
-
-def exit_handler(code=1, msg=None):
-    """Wraps all calls to :py:func:`sys.exit`; could do additional
-    cleanup not handled by atexit() here.
-    """
-    if msg:
-        print(msg)
-    sys.exit(code)
+    exit(1)
 
 def chain_exc(exc, new_msg, new_exc_class=None):
-    """Raise a new exception from an existing one, in order to give more
-    context for debugging. See Python documentation on
-    `exception chaining <https://docs.python.org/3.7/library/exceptions.html>`__.
-
-    Args:
-        exc (:py:class:`Exception`): Incoming exception to chain new exception from.
-        new_msg (str): Message for new Exception.
-        new_exc_class (class): Optional. Class of new exception to raise. If not
-            provided, raises a new exception of the same type as *exc*.
-    """
     if new_exc_class is None:
         new_exc_class = type(exc)
     try:
@@ -325,5 +305,3 @@ class PodExecutionError(PodExceptionBase):
     an error during execution.
     """
     _error_str = "Error during POD execution"
-
-

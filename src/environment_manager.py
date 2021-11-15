@@ -1,7 +1,3 @@
-"""Classes which setup software dependencies for the PODs and which execute the
-PODs' code.
-"""
-
 import os
 import io
 import abc
@@ -16,7 +12,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 class AbstractEnvironmentManager(abc.ABC):
-    """Abstract interface for EnvironmentManagers.
+    """Interface for EnvironmentManagers.
     """
     def __init__(self, log=_log):
         self.log = log # log to case's logger
@@ -41,8 +37,9 @@ class AbstractEnvironmentManager(abc.ABC):
     def tear_down(self): pass
 
 class NullEnvironmentManager(AbstractEnvironmentManager):
-    """EnvironmentManager which performs no environment switching. Useful only
-    as a dummy setting for building framework test harnesses.
+    """:class:`AbstractEnvironmentManager` which performs no environment
+    switching. Useful only as a dummy setting for building framework test
+    harnesses.
     """
     def create_environment(self, env_name):
         pass
@@ -379,8 +376,6 @@ class SubprocessRuntimePODWrapper(object):
     def tear_down(self, retcode=None):
         # just to be safe
         if self.process is not None:
-            if hasattr(self.process, 'retcode'):
-                retcode = self.process.returncode
             try:
                 self.process.kill()
             except ProcessLookupError:
@@ -410,7 +405,8 @@ class SubprocessRuntimePODWrapper(object):
         # print(pod+" Elapsed time ",elapsed)
 
 class SubprocessRuntimeManager(AbstractRuntimeManager):
-    """RuntimeManager that spawns a separate system subprocess for each POD.
+    """:class:`AbstractRuntimeManager` that spawns a separate system subprocess
+    for each POD.
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
@@ -502,7 +498,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.pods:
             if p.process is not None:
                 p.process.wait()
-            p.tear_down()
+            p.tear_down(retcode=p.process.returncode)
         self.case.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
 
@@ -522,5 +518,4 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             p.pod.close_log_file(log=True)
         self.tear_down()
         self.case.close_log_file()
-        util.exit_handler(code=1)
-
+        exit(1)

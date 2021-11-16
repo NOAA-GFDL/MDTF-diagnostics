@@ -10,7 +10,8 @@
       "FIRSTYR" : 1,
       "LASTYR" : 10,
       "pod_list": [
-        "temp_extremes_distshape"
+        "temp_extremes_distshape",
+        "tropical_pacific_sea_level"
       ]
     }
   ],

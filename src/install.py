@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""Currently unused; intended as a standalone installer script for the package's
+conda environments and supporting data.
+"""
+
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 7:
@@ -271,7 +275,7 @@ def framework_verify(code_root, run_output):
 # classes just handle the configuration logic
 
 
-class InstallCLIHandler(cli.CLIHandler):
+class InstallCLIHandler(cli.MDTFArgParser):
     def make_parser(self, d):
         _ = d.setdefault('usage', "%(prog)s [options] [env_setup]")
         p = super(InstallCLIHandler, self).make_parser(d)

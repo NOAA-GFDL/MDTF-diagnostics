@@ -1,7 +1,5 @@
 
-import numpy as np
 import os
-import math
 import sys
 ### import xarray as xr 
 
@@ -11,13 +9,13 @@ shared_dir = os.path.join(
     'shared'
 )
 sys.path.insert(0, shared_dir)
-from util import check_required_dirs
 
 ###   
 ###  check  the input data in COMPOSITE/model  directories 
 ## 3D
-size = 13
-vvar  = [ "Z",  "U", "V",  "T", "Q", "OMG", "PR",  "TS", "SHF", "LHF", "LW", "SW", "FRAD" ] 
+size = 12
+
+vvar  = [ "zg",  "ua", "va",  "ta", "hus", "wap", "pr",  "ts", "hfls", "hfss", "lw", "sw" ] 
 ##
  
 mode = [ "ELNINO", "LANINA" ]
@@ -28,7 +26,7 @@ mode = [ "ELNINO", "LANINA" ]
 for iv in range(0, size):
 
     for n in range(0, 2):
-        filevar = os.environ["WK_DIR"] + "/COMPOSITE/model/netCDF/" + mode[n] + "/" + vvar[iv] + ".grd"
+        filevar = os.environ["WK_DIR"] + "/COMPOSITE/model/netCDF/" + mode[n] + "/" + vvar[iv] + ".nc"
 
         if not os.path.exists(filevar):
             print ("=============================================")
@@ -38,7 +36,7 @@ for iv in range(0, size):
             sys.exit()
 
 
-    filevar = os.environ["WK_DIR"] + "/COMPOSITE/model/netCDF/" + vvar[iv] + "_clim.grd"
+    filevar = os.environ["WK_DIR"] + "/COMPOSITE/model/netCDF/" + vvar[iv] + "_clim.nc"
 
     if not os.path.exists(filevar):
         print ("=============================================")

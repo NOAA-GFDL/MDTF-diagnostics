@@ -1,21 +1,5 @@
 ;----------------------------------------------------------------------
-; contoursym_4.ncl
 ;
-; Concepts illustrated:
-;   - Using a blue-red color map
-;   - Setting resources to match contour levels with a two-color color table
-;   - Generating dummy data using "random_normal"
-;   - Explicitly setting contour levels
-;   - Drawing cell-filled contours
-;----------------------------------------------------------------------
-; This script was contributed by Chad Herman.
-;----------------------------------------------------------------------
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-
 ;----------------------------------------------------------------------
 ; This function sets the gsnSpreadXXX resources necessary to correctly
 ; span a two-color colortable.

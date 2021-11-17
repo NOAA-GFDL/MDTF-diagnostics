@@ -1,6 +1,4 @@
-import numpy as np
 import os.path
-import math
 import sys
 import os
 

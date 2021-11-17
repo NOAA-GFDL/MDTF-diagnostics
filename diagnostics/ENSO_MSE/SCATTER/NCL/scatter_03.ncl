@@ -1,11 +1,5 @@
 ;---------------------------------------------------------------------
 ;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-;
-; This file still has to be loaded manually
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 begin
@@ -49,7 +43,6 @@ begin
    ydim = 6
 
 ;; read in the models:
-;;     namemodel = varcode +  "/SCATTER/list-models-historical-obs"
      namemodel = prefix + "list-models-historical-obs"
      models = readAsciiTable ( namemodel, 1, "string", 0)
      models2 = new ( (/ xdim+1 /), "string" )
@@ -81,9 +74,6 @@ begin
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
 ;----------------------------------------------------------------------
-;;  colors  = (/"white","black","dodgerblue2","firebrick","forestgreen",\
-;              "dodgerblue2","darkorange2","forestgreen","deeppink2",\
-;              "darkorange2","purple"/)
 
    colors1  = (/ 2,  3,   2,   3,   2,   3,  4,   2,  3,  4,  \ ;;   10
                  8,  2,   2,   3,   2,   2,  3,   4,  2,  3, \ ;;   20
@@ -112,16 +102,10 @@ begin
                         10., 10., 6.,  6., 6./)      ;; ERA + NEW_MODEL
 
 
-;;  wks = gsn_open_wks ("ps","scatter")
-;;   wks_type = "png"
-;;   wks_type@wkWidth = 1000
-;;   wks_type@wkHeight = 1000 
    wks_type = "eps"
-;;   nameout2 = wkdir + "/SCATTER/PS/" + nameout(ibox)
    nameout2 = wkdir +  "/model/PS/" + nameout(ibox)
    wks = gsn_open_wks( wks_type, nameout2)
 
-;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
 
 ;----------------------------------------------------------------------
@@ -139,11 +123,7 @@ begin
     aminy = miny - dy
 ;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
-;----------------------------------------------------------------------
-;;  infoTimeStamp(wks,0.005,"")
 ;;;;;; ***********  regression line  
-   
    rc =   regline ( dataX, dataY)
    
 ;************************************************
@@ -184,45 +164,36 @@ begin
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.18 ;; 0.14
-  res1@vpYF              = 0.8  ;; 0.82
-  res1@vpWidthF          = 0.53 ;; 0.55
-  res1@vpHeightF         = 0.53 ;; 0.55
+  res1@vpXF              = 0.18 ;; 
+  res1@vpYF              = 0.8  ;; 
+  res1@vpWidthF          = 0.53 ;; 
+  res1@vpHeightF         = 0.53 ;; 
 
 ;---Title resources
   res1@txFont   = "helvetica"
   res1@tiMainString       = maintitle
-;;  res1@tiXAxisString      =  xlabel
- ;; res1@tiYAxisString      =  ylabel
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
     txres3@txFuncCode    = "~"
     txres3@txFont   = "helvetica"
-    txres3@txFontHeightF = 0.025 ;;  0.025
+    txres3@txFontHeightF = 0.025 ;;  
     gsn_text_ndc(wks, xlabel, 0.45, 0.17, txres3)
 ;;    
     txres4 = True
     txres4@txFuncCode    = "~"
     txres4@txFont   = "helvetica"
     txres4@txAngleF  = 90.
-    txres4@txFontHeightF = 0.02 ;;  0.025
+    txres4@txFontHeightF = 0.02 ;;  
     gsn_text_ndc(wks, ylabel, 0.07, 0.55, txres4)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    res1@tiMainFontHeightF  = 0.02
-;---Resources for X/Y axes.
-;  res1@trYMinF            =  aminy               ; min value on y-axis
-;  res1@trYMaxF            =  amaxy               ; max value on y-axis
-;  res1@trXMinF            =  minx                  ; min value on x-axis
-;  res1@trXMaxF            =  maxx                  ; max value on x-axis
  
   res1@tmLabelAutoStride = True
 ;--XY marker resources
   res1@xyMarkLineMode     = "Markers"
-;;  res1@xyMarkerSizeF      = 0.02
-;;  res1@xyMarkerThicknessF = 3.
   res1@xyMonoMarkerColor  = False          ; Allow different colors for markers
   res1@xyMarkerSizes            = markersizes(:)
   res1@xyMarkerThicknesses      = markerthick(:)
@@ -242,7 +213,6 @@ begin
     
    res1@xyMarkLineMode      = "Lines"
    res1@xyLineColors        = "red"  ; choose which have markers
-;;   res1@xyMarkerSizeF       = 0.005  ; Marker size (default 0.01)
    res1@xyDashPatterns      = 0                ; solid line 
    res1@xyLineThicknesses   = 4                 ; 
 
@@ -270,7 +240,6 @@ begin
       txres@txFontColor =  colors1(i)
       txres@txFont   = "helvetica"
       txres@txFontHeightF = 0.01
-     ;;mkres@gsMarkerColor  = True
      mkres@gsMarkerColor =  colors1(i)
      mkres@gsMarkerThicknessF = 3.5
      mkres@gsMarkerSizeF      = 0.012

@@ -15,10 +15,7 @@
 #    This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
 
-import numpy as np
 import sys
-import math
-import subprocess
 import time
 
 import datetime
@@ -31,7 +28,6 @@ shared_dir = os.path.join(
 )
 sys.path.insert(0, shared_dir)
 
-from get_scatter_data import get_scatter_data
 from generate_ncl_call import generate_ncl_call
 
 
@@ -81,14 +77,13 @@ elat1 = -5.
 elat2 = 5.
 
 ####  call  the model routine to select NEW MODEL data for SCATTER plots 
-
-get_scatter_data( clon1, clon2, clat1, clat2, elon1, elon2, elat1, elat2, undef)
-
 #############################
 time.sleep(6.)
 
 ###  make the plots  in NCL  
 ####     default domain plotting   
+generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/get_scatter_data.ncl")
+time.sleep(6.)
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_01.ncl")
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_02.ncl")
 generate_ncl_call(os.environ["POD_HOME"]+ "/SCATTER/NCL/scatter_03.ncl")

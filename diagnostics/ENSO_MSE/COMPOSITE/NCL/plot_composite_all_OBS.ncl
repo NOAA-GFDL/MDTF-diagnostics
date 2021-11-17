@@ -1,13 +1,7 @@
-;;;****************************************************
+;****************************************************
 ;
 ;
 ;*******************************************************
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
-;load "$POD_HOME/shared/gsnColorRange.ncl"
 
 begin 
 
@@ -44,6 +38,7 @@ begin
       parameter_name = varcode + "/shared/parameters.txt"
       nameclima = obsdir +  "/netCDF/"
 
+      tt0 = 0 
       xlon1 = 0
       xlon2 = 360
       xcenter  = (xlon1 + xlon2)/2
@@ -59,7 +54,7 @@ begin
 
        data  = asciiread(parameter_name,-1,"string")
 
-        season = str_get_field(data(12), 3," ")
+        season = str_get_field(data(10), 3," ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -76,24 +71,22 @@ begin
 	namein  = obsdir + "/netCDF/"  + mode
 	nameout = outdir2 + "/PS/composite_"  + mode
 
-;;      maintitle = "Composite " + title_mode(n)  + " " + varinames(iv)
 ;;;   read in various variables then  plot 
 ;;    
      variable = variables(iv) ;;;;  
      units = varunits(iv) ;;;  
 
-     colormap = "BlueWhiteOrangeRed" ;;   "BlWhRe"  ;;   "BlRe"
+     colormap = "BlueWhiteOrangeRed" ;;  
      if( iv .eq. 5 ) then
 	 colormap =  "precip4_diff_19lev"
      end if
 ;;  the title 
 
-   namein1 = namein + "/" + variable + ".nc"  ;;  str_concat( string)
-   namein2 = nameclima +  variable + "_clim.nc"  ;;; str_concat( string)
+   namein1 = namein + "/" + variable + ".nc"  ;;
+   namein2 = nameclima +  variable + "_clim.nc"  ;;; 
 
    nameout12 = nameout + "_" + variname2(iv)
-;    print( namein1) 
-;   print( namein2 ) 
+
 ;;   read in the data and dimensions lon/lat
 
      fin1 = addfile( namein1, "r")
@@ -124,7 +117,6 @@ begin
      datain&lon = lon
      
     datain = ff *( datain1  - datain2) 
-     
 
    wks_type = "eps"
    wks = gsn_open_wks( wks_type, nameout12)
@@ -138,7 +130,7 @@ begin
 
 
  res@cnFillOn              = True
- res@cnFillMode            = "CellFill"
+ res@cnFillMode            = "AreaFill"
  res@cnLinesOn             = False
  res@cnLevelSelectionMode  = "ManualLevels"
 

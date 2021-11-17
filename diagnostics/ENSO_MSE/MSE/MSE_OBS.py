@@ -19,9 +19,7 @@
 ###    pre-digested Observational Data 
 ##     
 
-import numpy as np
 import sys
-import math
 
 import datetime
 

@@ -22,9 +22,9 @@ class TestEnvironmentManager(unittest.TestCase):
     # @mock.patch('os.path.exists', return_value = True)
     # def test_check_pod_driver_no_program_2(self, mock_exists, mock_read_json):
     #     # assertion fail if explicitly specified program not found
-    #     pod = Diagnostic('A') 
-    #     self.assertRaises(AssertionError, pod._check_pod_driver)
-    
+    #     pod = Diagnostic('A')
+    #     self.assertRaises(AssertionError, pod.set_entry_point)
+
     # ---------------------------------------------------
 
     def test_run(self):

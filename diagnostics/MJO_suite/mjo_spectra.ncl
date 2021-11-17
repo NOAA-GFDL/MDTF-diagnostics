@@ -5,7 +5,9 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
 load "$POD_HOME/my_cam_diags.ncl"
-   
+
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 routine_name = "mjo_spectra.ncl"

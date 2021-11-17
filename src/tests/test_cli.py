@@ -29,9 +29,9 @@ class TestWordWrap(unittest.TestCase):
 
     def test_word_wrap(self):
         str1 = """
-            Here's a multiline test string; we'll test to see 
+            Here's a multiline test string; we'll test to see
             if the indentation is removed
-            and if it 
+            and if it
             gets word wrapped to 80 columns, etc.
         """
         str2 = ("Here's a multiline test string; we'll test to see if the "
@@ -40,10 +40,10 @@ class TestWordWrap(unittest.TestCase):
 
     def test_word_wrap_multipara(self):
         str1 = """
-            Here's a multiline test string; we'll test to see  
-            if the indentation is removed  
+            Here's a multiline test string; we'll test to see
+            if the indentation is removed
             and if it
-            
+
             gets word wrapped to 80 columns, etc.
             \n\nExplicit para break
         """
@@ -103,11 +103,11 @@ class TestMDTFArgParserHelpFormat(unittest.TestCase):
         p = _parser_from_dict({
             "usage": 'foo',
             "description": """long multiline description text, although strictly
-                speaking we covered this in TestWordWrap, but why not test it 
+                speaking we covered this in TestWordWrap, but why not test it
                 again
             """,
             "arguments": [{
-                "name": "foo", 
+                "name": "foo",
                 "help": "foo help",
                 "metavar": "<foo metavar>",
                 "default": "bar"}],
@@ -207,14 +207,16 @@ class TestCLIConfigManager(unittest.TestCase):
         except:
             pass
 
-    def test_no_partial_def(self):
-        c = cli.CLIConfigManager()
-        p = _parser_from_dict({
+    def _setup_parser(self):
+        return _parser_from_dict({
             "arguments": [
                 {"name": "foo"},
                 {"name": "foo2", "default": "bar"}
             ],
         })
+    def test_no_partial_def(self):
+        c = cli.CLIConfigManager()
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar', 'site': 'local'})
         config = vars(p.parse_args('--foo2 baz'))
@@ -222,69 +224,69 @@ class TestCLIConfigManager(unittest.TestCase):
 
     def test_partial_def_1(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
+
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
+        c.user_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
+        c.user_defaults = {'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
     def test_partial_def_2(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX', 'foo2': 'YY'}
+
+        c.site_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
+        config = vars(p.parse_args('--foo baz'))
+        self.assertDictEqual(config, {'foo':'baz', 'foo2': 'bar','site':'local'})
+
+        c.site_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XX'}
+        c.site_defaults = {'foo': 'XX'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo2': 'YY'}
+        c.site_defaults = {'foo2': 'YY'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':None, 'foo2': 'baz','site':'local'})
 
     def test_partial_def_3(self):
         c = cli.CLIConfigManager()
-        p = _parser_from_dict({
-            "arguments": [
-                {"name": "foo"},
-                {"name": "foo2", "default": "bar"}
-            ],
-        })
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YY','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX', 'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo': 'XX', 'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XX', 'foo2': 'baz','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo': 'XX'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo': 'XX'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo baz'))
         self.assertDictEqual(config, {'foo':'baz', 'foo2': 'YYQ','site':'local'})
 
-        c.defaults[cli.DefaultsFileTypes.USER] = {'foo2': 'YY'}
-        c.defaults[cli.DefaultsFileTypes.SITE] = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        c.user_defaults = {'foo2': 'YY'}
+        c.site_defaults = {'foo': 'XXQ', 'foo2': 'YYQ'}
+        p = self._setup_parser()
         config = vars(p.parse_args('--foo2 baz'))
         self.assertDictEqual(config, {'foo':'XXQ', 'foo2': 'baz','site':'local'})
 
@@ -297,11 +299,11 @@ class TestParseDummyInput(unittest.TestCase):
             pass
 
     def test_parse_dummy_input(self):
-        # get dir of currently executing script: 
-        cwd = os.path.dirname(os.path.realpath(__file__)) 
+        # get dir of currently executing script:
+        cwd = os.path.dirname(os.path.realpath(__file__))
         code_root = os.path.dirname(os.path.dirname(cwd))
         cli_obj = cli.MDTFTopLevelArgParser(
-            code_root, 
+            code_root,
             skip_defaults=True,
             argv= f"-f {os.path.join(cwd, 'dummy_config.json')}"
         )

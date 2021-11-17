@@ -11,8 +11,8 @@ from src.core import MDTFFramework
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
 DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
-# All this is a workaround because tests are programmatically generated at 
-# import time, but the tests are skipped at runtime. We're skipping tests 
+# All this is a workaround because tests are programmatically generated at
+# import time, but the tests are skipped at runtime. We're skipping tests
 # because we're not in an environment where we have the data to set them up,
 # so we just throw everything in an if-block to ensure they don't get generated
 # if they're going to be skipped later.
@@ -23,7 +23,7 @@ DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
 
 #     case_list = shared.get_test_data_configuration()
 
-#     # write temp configuration, one for each POD  
+#     # write temp configuration, one for each POD
 #     temp_config = config.copy()
 #     temp_config['pod_list'] = []
 #     temp_config['settings']['make_variab_tar'] = False
@@ -47,8 +47,8 @@ class TestModuleManager(unittest.TestCase):
         _ = gfdl_util.ModuleManager()
 
     def tearDown(self):
-        # call _reset method clearing ModuleManager for unit testing, 
-        # otherwise the second, third, .. tests will use the instance created 
+        # call _reset method clearing ModuleManager for unit testing,
+        # otherwise the second, third, .. tests will use the instance created
         # in the first test instead of being properly initialized
         temp = gfdl_util.ModuleManager()
         temp.revert_state()
@@ -67,7 +67,7 @@ class TestModuleManager(unittest.TestCase):
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         for mod in gfdl._current_module_versions.values():
             # module list writes to stderr, because all module user output does
-            list1 = subprocess.check_output([cmd, 'python', 'avail', '-t', mod], 
+            list1 = subprocess.check_output([cmd, 'python', 'avail', '-t', mod],
                 stderr=subprocess.STDOUT).splitlines()
             list1 = [s for s in list1 if not s.endswith(':')]
             self.assertNotEqual(list1, [],
@@ -76,7 +76,7 @@ class TestModuleManager(unittest.TestCase):
     def test_module_list(self):
         cmd = '{}/bin/modulecmd'.format(os.environ['MODULESHOME'])
         # module list writes to stderr, because all module user output does
-        list1 = subprocess.check_output([cmd, 'python', 'list', '-t'], 
+        list1 = subprocess.check_output([cmd, 'python', 'list', '-t'],
             stderr=subprocess.STDOUT).splitlines()
         del list1[0]
         list1 = set([s.replace('(default)','') for s in list1])
@@ -173,7 +173,7 @@ class TestFreppArgParsing(unittest.TestCase):
     def test_parse_mdtf_args_frepp_caselist(self):
         # overwrite defaults and command-line
         d = gfdl_util.parse_frepp_stub(self.frepp_stub)
-        args = {'frepp': True}        
+        args = {'frepp': True}
         mdtf = MDTFFramework.__new__(MDTFFramework)
         config = self.config_test.copy()
         config = MDTFFramework.parse_mdtf_args([d, args], config)
